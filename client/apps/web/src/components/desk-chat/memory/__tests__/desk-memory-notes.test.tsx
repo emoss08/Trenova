@@ -61,9 +61,13 @@ beforeEach(() => {
   for (const mock of Object.values(api)) {
     mock.mockReset();
   }
+  // The cards below are read by someone who manages agent memory, so an offer
+  // for everyone is theirs to keep; the last block reads them as someone who
+  // does not.
   api.fetchDeskMemorySettings.mockResolvedValue({
     savingMode: "Automatic",
-    canShareWithOrganization: false,
+    canShareWithOrganization: true,
+    managesShared: true,
     roles: [],
   });
 });
@@ -135,9 +139,15 @@ describe("DeskMemorySaved", () => {
     expect(screen.getByRole("button", { name: "Keep" })).toBeInTheDocument();
   });
 
-  it("asks about a fact, and about a memory the person asked to be asked about, in their own words", () => {
+  it("asks about a fact, and about a memory the person asked to be asked about, in their own words", async () => {
+    api.fetchDeskMemorySettings.mockResolvedValue({
+      savingMode: "AskFirst",
+      canShareWithOrganization: true,
+      managesShared: true,
+      roles: [],
+    });
     const { unmount } = renderCard(card({ status: "Suggested", kind: "Fact" }));
-    expect(screen.getByText(/Keep this for/)).toBeInTheDocument();
+    expect(await screen.findByText(/Keep this for/)).toBeInTheDocument();
     unmount();
 
     renderCard(card({ status: "Suggested", kind: "Instruction", source: "Agent", scope: "User" }));
@@ -148,7 +158,8 @@ describe("DeskMemorySaved", () => {
   it("chooses who the steps are for from the word in the sentence, and keeps them for that team", async () => {
     api.fetchDeskMemorySettings.mockResolvedValue({
       savingMode: "AskFirst",
-      canShareWithOrganization: false,
+      canShareWithOrganization: true,
+      managesShared: true,
       roles: [{ id: "rol_1", name: "Dispatch", writable: true }],
     });
     api.confirmDeskMemory.mockResolvedValue(
@@ -340,5 +351,40 @@ describe("DeskMemorySaved", () => {
     renderCard(kept as MemoryCard, client);
     expect(screen.getByText("Learned steps")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Keep" })).not.toBeInTheDocument();
+  });
+});
+
+/*
+A memory an agent offered for everyone using it, or for a team or the
+organization, is an administrator's to keep when the person does not manage
+agent memory. The card says so and offers them only a copy for themselves.
+*/
+describe("an offer the person may not keep for others", () => {
+  it("offers a copy for just them and keeps it as their own", async () => {
+    api.fetchDeskMemorySettings.mockResolvedValue({
+      savingMode: "Automatic",
+      canShareWithOrganization: true,
+      managesShared: false,
+      roles: [{ id: "rol_1", name: "Dispatch", writable: true }],
+    });
+    api.confirmDeskMemory.mockResolvedValue(
+      card({ status: "Active", scope: "User", roleName: null, version: 2 }),
+    );
+    renderCard(card({ status: "Suggested", scope: "Organization", kind: "Fact", source: "Agent" }));
+
+    expect(await screen.findByText(/^Offered for /)).toBeInTheDocument();
+    expect(screen.getByText(/An administrator decides/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Visible to/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep for just you" }));
+
+    await waitFor(() =>
+      expect(api.confirmDeskMemory).toHaveBeenCalledWith(
+        "amem_1",
+        "Read the move before assigning it.",
+        { scope: "User", roleId: null },
+        1,
+      ),
+    );
   });
 });

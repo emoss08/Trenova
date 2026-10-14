@@ -139,7 +139,8 @@ func TestRemember_PassesTheRunAndSubjectThrough(t *testing.T) {
 	assert.Equal(t, customerID, memories.remembered.SubjectID)
 	require.NotNil(t, memories.remembered.ExpiresAt)
 	assert.Equal(t, int64(1798761600), *memories.remembered.ExpiresAt, "the end of the day named")
-	assert.Equal(t, permission.ResourceAgentMemory, tool.Policy().Resource)
+	assert.Equal(t, permission.ResourceAssistant, tool.Policy().Resource,
+		"remembering is part of using the assistant; who keeps a shared memory is the service's")
 	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
 }
 

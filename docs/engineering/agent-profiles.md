@@ -28,7 +28,12 @@ A profile is made in three layers, and only one of them is written by a model.
 2. **Guidance** is what people say about how to read the facts (`agent_profile_guidance`):
    "the Laredo lane is seasonal", "I only handle the Midwest accounts". A person types it in
    AI Control or on the Desk Memory page, or tells an agent, which writes it down with the core
-   tool `guide_profile`. At most 50 active lines per profile.
+   tool `guide_profile`. A line about the organization shapes what every agent is told, so it
+   is kept at once only by a person holding `agent_memory:manage` (an administrator, unless a
+   role is given it on purpose); from anyone else, or written down by an agent, it is **offered**
+   — status `Suggested`, read into no version — until an administrator approves or dismisses it
+   in AI Control (`ApproveGuidance`, `DismissGuidance`). A person's own lines are theirs and
+   active at once. At most 50 open (active or offered) lines per profile.
 3. **The write-up** (`agent_profiles.content`) is a structured completion
    (`FeatureAgentProfile`, `TaskAssistantChat`) from the facts, the guidance and the current
    version. Guidance outranks a fact it explains. The model may summarise and prioritise; it
@@ -68,6 +73,9 @@ person is told why rather than left waiting.
 - **Gating.** No profile is written for an organization whose plan lacks
   `CapabilityAgentAutomation`, whose agent control has `LearningOff`, or that is in shadow
   mode. A person whose records show no work (`HasActivity`) gets no profile.
+- **Who keeps it.** `guide_profile` is used under the assistant, like `remember`; the service
+  decides from the person's `agent_memory:manage` whether a line about the organization is kept
+  or offered, so an agent never puts words in every prompt on its own.
 - **Taint.** `guide_profile` carries taint with a `TaintHold` that always applies: guidance
   written after a run read outside content waits for a person's approval, because every later
   prompt is written from it. It is held only on turns a person is in: unattended runs and
@@ -97,16 +105,21 @@ the person is `PersonID`, never `UserID`, so it is not mistaken for the actor).
 
 ## Reading and changing it
 
-- GraphQL (`schema/agent_profile.graphqls`): `agentOrganizationProfile` and
-  `agentOrganizationProfileHistory` need agent memory read;
-  `addAgentOrganizationProfileGuidance` create; `retireAgentOrganizationProfileGuidance` and
-  `regenerateAgentOrganizationProfile` update. `myAgentProfile`, `addMyAgentProfileGuidance`,
+- GraphQL (`schema/agent_profile.graphqls`): `agentOrganizationProfile`,
+  `agentOrganizationProfileHistory` and `addAgentOrganizationProfileGuidance` need agent memory
+  read (the service keeps or offers the line by whether the actor holds manage);
+  `retireAgentOrganizationProfileGuidance`, `approveAgentOrganizationProfileGuidance`,
+  `dismissAgentOrganizationProfileGuidance` and `regenerateAgentOrganizationProfile` need
+  `agent_memory:manage`. `myAgentProfile`, `addMyAgentProfileGuidance`,
   `retireMyAgentProfileGuidance` and `regenerateMyAgentProfile` are the person's own and need
-  assistant access. A line for another person's profile reads as not found.
+  assistant access. A line for another person's profile reads as not found. The profile's
+  `guidance` lists the active and the offered lines; closed ones (`Retired`, `Dismissed`) only
+  with `IncludeRetired`.
 - Guidance changes are audited under `ResourceAgentMemory`; every change is announced on the
   realtime resource `agent_profile` (a person's own only to them).
-- AI Control → Memory shows the organization's profile, its facts, guidance and versions; the
-  Desk Memory page shows the person's own.
+- AI Control → Memory shows the organization's profile, its facts, guidance and versions, with
+  offered lines apart for a manager to keep or dismiss; the Desk Memory page shows the person's
+  own.
 - Usage lands under `AIUsageFeature.AgentProfile`.
 
 ## Changing it

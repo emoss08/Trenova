@@ -18,9 +18,17 @@ enum AgentProfileTrigger {
   Guidance
 }
 
+"""
+Where a line stands. Active lines shape the next version. A Suggested line
+about the organization was offered by someone who does not manage agent memory,
+or written down by an agent, and waits for an administrator to approve or
+dismiss it. Retired and Dismissed lines are kept for the record.
+"""
 enum AgentProfileGuidanceStatus {
   Active
+  Suggested
   Retired
+  Dismissed
 }
 
 "Who worded a line of guidance: a person typing it, or an agent writing down what a person said."
@@ -80,7 +88,7 @@ type AgentProfile {
   current: AgentProfileVersion
   "The newest attempt, when it failed after the current version was written."
   latestFailure: AgentProfileVersion
-  "The active guidance, newest first."
+  "The active and the offered guidance, active first, then newest first."
   guidance: [AgentProfileGuidance!]!
 }
 
@@ -99,11 +107,19 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Add a line of guidance to the organization's profile; it is written again with it."
+  """
+  Add a line of guidance to the organization's profile. From someone who manages
+  agent memory it is kept and the profile is written again with it; from anyone
+  else it is offered (Suggested) for an administrator to approve.
+  """
   addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
-  "Retire a line of guidance from the organization's profile; it is written again without it."
+  "Retire a line of guidance from the organization's profile; it is written again without it. Needs agent memory manage."
   retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
-  "Write the organization's profile again now."
+  "Keep an offered line; the organization's profile is written again with it. Needs agent memory manage."
+  approveAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Turn an offered line down; it never shapes the profile. Needs agent memory manage."
+  dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the organization's profile again now. Needs agent memory manage."
   regenerateAgentOrganizationProfile: Boolean!
   "Add a line of guidance to the signed-in person's own profile."
   addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!

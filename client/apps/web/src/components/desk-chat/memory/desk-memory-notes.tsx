@@ -607,7 +607,14 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     queryFn: ({ signal }) => fetchDeskMemorySettings(signal),
     enabled: asking || editing,
   });
-  const teams = (settings.data?.roles ?? []).filter((role) => role.writable);
+  // A memory for a team or the organization is kept at once only by someone
+  // who manages agent memory. An offer the agent made for others is already in
+  // front of an administrator, so the person's own choice here is a copy for
+  // themselves, and the teams they may keep for are theirs only when they manage.
+  const manages = settings.data?.managesShared ?? false;
+  const teams = manages ? (settings.data?.roles ?? []) : [];
+  const offeredToAdministrators =
+    asking && settings.data !== undefined && !manages && card.scope !== "User";
 
   const settle = (memory: DeskMemory, next: MemorySaveState) => {
     setText(memory.content);
@@ -624,7 +631,12 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   const save = useApiMutation({
     mutationFn: (content: string) =>
       asking
-        ? confirmDeskMemory(card.id, content, audience, version)
+        ? confirmDeskMemory(
+            card.id,
+            content,
+            offeredToAdministrators ? { scope: "User", roleId: null } : audience,
+            version,
+          )
         : reviseDeskMemory(card.id, { content, audience, version }),
     onSuccess: (memory) => {
       setJustKept(asking);
@@ -695,8 +707,9 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     })),
   ];
   // A memory kept for everyone using the agent, or for a team the person
-  // cannot change, keeps its place in the choice, so nothing is ever unchosen.
-  if (!options.some((option) => sameAudience(option.value, audience))) {
+  // cannot change, keeps its place in the choice, so nothing is ever unchosen;
+  // an offer an administrator decides on leaves the person only their own copy.
+  if (!offeredToAdministrators && !options.some((option) => sameAudience(option.value, audience))) {
     options.push({
       key: "current",
       label: scopeWord(scope, t, true),
@@ -745,6 +758,36 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   let actions: ReactNode = null;
   switch (mode) {
     case "ask": {
+      if (offeredToAdministrators) {
+        title = (
+          <>
+            <b>{t("Offered for {0}", who)}</b>
+            <span>
+              · {t("An administrator decides whether everyone gets it. Keep a copy for yourself?")}
+            </span>
+          </>
+        );
+        actions = (
+          <>
+            <Button
+              variant="quiet"
+              size="sm"
+              disabled={decline.isPending || save.isPending}
+              onClick={() => decline.mutate()}
+            >
+              {t("Not now")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={save.isPending || (editing && edited() === "")}
+              onClick={keep}
+            >
+              {t("Keep for just you")}
+            </Button>
+          </>
+        );
+        break;
+      }
       const word = (
         <ScopeWord word={who} options={options} audience={audience} onPick={pickAudience} />
       );

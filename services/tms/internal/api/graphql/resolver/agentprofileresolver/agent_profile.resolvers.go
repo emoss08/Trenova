@@ -26,7 +26,7 @@ func (r *AgentProfileVersionResolver) Facts(ctx context.Context, obj *agentprofi
 }
 
 func (r *MutationResolver) AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpCreate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (r *MutationResolver) AddAgentOrganizationProfileGuidance(ctx context.Conte
 }
 
 func (r *MutationResolver) RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,42 @@ func (r *MutationResolver) RetireAgentOrganizationProfileGuidance(ctx context.Co
 	})
 }
 
+func (r *MutationResolver) ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	guidanceID, err := pulid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentProfileService.ApproveGuidance(ctx, &agentprofileports.DecideGuidanceRequest{
+		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		ID:    guidanceID,
+		Actor: actorutil.FromAuthContext(authCtx),
+	})
+}
+
+func (r *MutationResolver) DismissAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	guidanceID, err := pulid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentProfileService.DismissGuidance(ctx, &agentprofileports.DecideGuidanceRequest{
+		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		ID:    guidanceID,
+		Actor: actorutil.FromAuthContext(authCtx),
+	})
+}
+
 func (r *MutationResolver) RegenerateAgentOrganizationProfile(ctx context.Context) (bool, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return false, err
 	}

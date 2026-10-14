@@ -1,5 +1,5 @@
 {
-  "version": "sha256:7af3d61888af07ac0fd5a66b6cb0a441190b158e8adc0228e0da2403cba57aa2",
+  "version": "sha256:b18c6e9ab7f5741419c2a7f94542d9fe4184cd1ebe0852436992c35d195a16ee",
   "modules": [
     {
       "id": "home",
@@ -3014,7 +3014,8 @@
             "Select **New memory**.",
             "Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the **Memory**, and optionally set **Until**.",
             "To make it about one record, set **About** to the kind of record and pick the record; leave it on **Every agent** for something every agent should know. Then select **Save memory**.",
-            "To stop agents reading an entry, open it and select **Retire memory**, or right-click it and choose **Retire**; **Restore** brings it back."
+            "To stop agents reading an entry, open it and select **Retire memory**, or right-click it and choose **Retire**; **Restore** brings it back.",
+            "Recording, retiring, reviewing and approving memories here needs permission to manage agent memory, which administrators hold and the role templates never grant. Under **Waiting for approval**, memories an agent recorded for the organization, or a colleague offered for their team or the organization from the Desk, wait for you to **Approve** or **Dismiss**."
           ]
         },
         {
@@ -3045,7 +3046,8 @@
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.",
             "Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.",
-            "Under **Guidance**, type what the records cannot show, such as \"The Laredo lane is seasonal; it runs from October to March\", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it.",
+            "Under **Guidance**, type what the records cannot show, such as \"The Laredo lane is seasonal; it runs from October to March\", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it. If you don't manage agent memory the button reads **Offer guidance**, and the line waits under **Offered guidance** until an administrator keeps it.",
+            "Under **Offered guidance**, a line someone offered, or an agent wrote down from a conversation, waits with who offered it; select **Keep** to add it (the note is written again with it) or **Dismiss** to turn it down.",
             "To take a line back, select **Retire** on it.",
             "To have the note written again now, select **Write it again**. **Earlier versions** lists every version, including any attempt that did not finish."
           ]
@@ -3065,7 +3067,7 @@
             "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.",
             "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
             "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation) and each lesson it kept, offered or turned down, with the reason.",
-            "A lesson shared beyond one person waits under **Nova suggests**, with the memory it would retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.",
+            "A lesson shared beyond one person waits under **Waiting for approval**, with the memory it would retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.",
             "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
           ]
         }
@@ -9828,7 +9830,7 @@
           ]
         }
       ],
-      "notes": "- You can always keep a memory for **Just you**. Keeping one for a team or the **Organization** needs permission to create agent memories. Without it, those choices are greyed out. - Changing, pausing or forgetting a team or organization memory needs permission to update agent memories, and a team memory also needs you to hold that team's role. Memories you can't change show no **Edit**, **Pause** or **Forget** buttons, and their who-it-is-for menu is locked. - **Saving new memories** is your own setting. It doesn't change anyone else's. - When an agent looks back over its work, a memory meant for a team or the whole organization is always offered rather than saved straight away, whatever your setting. The same goes for anything learned in a conversation that read outside content. Administrators review memories offered for the whole organization in [AI control](/admin/agent-control). - A memory a newer one replaced says **Replaced by a newer memory** in the conversation and offers no **Undo**, so the two never apply at once.",
+      "notes": "- You can always keep a memory for **Just you**. You can also write one for a team you are on or the **Organization**: if you manage agent memory it is kept at once, and otherwise the button reads **Offer** and the memory is offered to an administrator, who decides whether to keep it. Until then it is listed as offered, with **Withdraw** to take it back, and no agent reads it. - Changing, pausing or forgetting a team or organization memory needs permission to manage agent memory, and a team memory also needs you to hold that team's role. Memories you can't change show no **Edit**, **Pause** or **Forget** buttons, and their who-it-is-for menu is locked. - When an agent offers a memory for a team or the organization in your conversation and you don't manage agent memory, the card says an administrator decides; **Keep for just you** keeps a copy of your own. - **Saving new memories** is your own setting. It doesn't change anyone else's. - When an agent looks back over its work, a memory meant for a team or the whole organization is always offered rather than saved straight away, whatever your setting. The same goes for anything learned in a conversation that read outside content. Administrators review memories offered for the whole organization in [AI control](/admin/agent-control). - A memory a newer one replaced says **Replaced by a newer memory** in the conversation and offers no **Undo**, so the two never apply at once.",
       "related": [
         "/desk",
         "/admin/agent-control"

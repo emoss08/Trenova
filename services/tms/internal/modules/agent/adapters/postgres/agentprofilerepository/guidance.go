@@ -77,8 +77,8 @@ func (r *guidanceRepository) ListActive(
 	})
 }
 
-// List is what AI Control and the Desk show: the active lines, and the
-// retired ones when asked, newest first, with who gave each.
+// List is what AI Control and the Desk show: the active and the offered lines,
+// and the closed ones when asked, newest first, with who gave each.
 func (r *guidanceRepository) List(
 	ctx context.Context,
 	req *agentprofileports.ListGuidanceRequest,
@@ -99,7 +99,7 @@ func (r *guidanceRepository) List(
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = scopeGuidanceSubject(sq, req.Ref)
 				if !req.IncludeRetired {
-					sq = sq.Where(cols.Status.Eq(), agentprofile.GuidanceStatusActive)
+					sq = sq.Where(cols.Status.In(), bun.List(openGuidanceStatuses()))
 				}
 
 				return sq
@@ -121,6 +121,21 @@ func (r *guidanceRepository) CountActive(
 	ctx context.Context,
 	ref agentprofileports.SubjectRef,
 ) (int, error) {
+	return r.count(ctx, ref, []agentprofile.GuidanceStatus{agentprofile.GuidanceStatusActive})
+}
+
+func (r *guidanceRepository) CountOpen(
+	ctx context.Context,
+	ref agentprofileports.SubjectRef,
+) (int, error) {
+	return r.count(ctx, ref, openGuidanceStatuses())
+}
+
+func (r *guidanceRepository) count(
+	ctx context.Context,
+	ref agentprofileports.SubjectRef,
+	statuses []agentprofile.GuidanceStatus,
+) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := agentprofilecol.GuidanceColumns
 
@@ -129,9 +144,18 @@ func (r *guidanceRepository) CountActive(
 			Model((*agentprofile.Guidance)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return scopeGuidanceSubject(sq, ref).
-					Where(cols.Status.Eq(), agentprofile.GuidanceStatusActive)
+					Where(cols.Status.In(), bun.List(statuses))
 			}))
 	})
+}
+
+// openGuidanceStatuses are the lines a profile still holds: those shaping it
+// and those offered and waiting.
+func openGuidanceStatuses() []agentprofile.GuidanceStatus {
+	return []agentprofile.GuidanceStatus{
+		agentprofile.GuidanceStatusActive,
+		agentprofile.GuidanceStatusSuggested,
+	}
 }
 
 func (r *guidanceRepository) GetByID(

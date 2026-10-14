@@ -93,7 +93,7 @@ func messageMemoryIDs(message *conversation.Message) []pulid.ID {
 	return ids
 }
 
-// deskMemoryActor is the reader with the permissions that decide whether
+// deskMemoryActor is the reader with the permission that decides whether
 // they may change a memory their team or organization shares.
 func (s *Service) deskMemoryActor(
 	ctx context.Context,
@@ -110,8 +110,7 @@ func (s *Service) deskMemoryActor(
 
 	return &agentports.DeskMemoryActor{
 		Actor:           actor,
-		MayCreateShared: s.allowed(ctx, actor, permission.OpCreate),
-		MayUpdateShared: s.allowed(ctx, actor, permission.OpUpdate),
+		MayManageShared: s.allowed(ctx, actor, permission.OpManage),
 	}
 }
 

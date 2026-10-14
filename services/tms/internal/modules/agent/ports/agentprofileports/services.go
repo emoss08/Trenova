@@ -86,6 +86,14 @@ type RetireGuidanceRequest struct {
 	Actor *permissionports.RequestActor
 }
 
+// DecideGuidanceRequest approves or dismisses a line offered about the
+// organization; the actor is the administrator deciding.
+type DecideGuidanceRequest struct {
+	Ref   SubjectRef
+	ID    pulid.ID
+	Actor *permissionports.RequestActor
+}
+
 type RegenerateRequest struct {
 	Ref   SubjectRef
 	Actor *permissionports.RequestActor
@@ -120,8 +128,13 @@ type Service interface {
 	View(ctx context.Context, ref SubjectRef) (*ProfileView, error)
 	History(ctx context.Context, req ListProfileHistoryRequest) ([]*agentprofile.Profile, error)
 	ListGuidance(ctx context.Context, req *ListGuidanceRequest) ([]*agentprofile.Guidance, error)
+	// AddGuidance keeps a line, or offers it: a line about the organization
+	// from a person who does not manage shared memory, or written down by an
+	// agent for such a person, waits as Suggested for an administrator.
 	AddGuidance(ctx context.Context, req *AddGuidanceRequest) (*agentprofile.Guidance, error)
 	RetireGuidance(ctx context.Context, req *RetireGuidanceRequest) (*agentprofile.Guidance, error)
+	ApproveGuidance(ctx context.Context, req *DecideGuidanceRequest) (*agentprofile.Guidance, error)
+	DismissGuidance(ctx context.Context, req *DecideGuidanceRequest) (*agentprofile.Guidance, error)
 	Regenerate(ctx context.Context, req *RegenerateRequest) error
 	ForPrompt(ctx context.Context, req PromptProfilesRequest) (PromptProfiles, error)
 }

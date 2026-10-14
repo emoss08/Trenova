@@ -23,16 +23,17 @@ import (
 // The Desk's memory page and the memory cards in a conversation work on the
 // memories a person keeps: their own, their roles', and the organization's.
 //
-// Who may do what is decided here, from the person and the two agent-memory
-// permissions their resolver read for them:
+// Who may do what is decided here, from the person and the one agent-memory
+// permission their resolver read for them:
 //
 //   - A person's own ("Just you") memories are theirs to write, change, pause
 //     and forget with no permission beyond using the Desk.
 //   - A role's memories reach everyone holding the role, and the
-//     organization's reach everyone, so writing one, or changing, pausing or
-//     forgetting one, needs the agent-memory create or update permission, and
-//     for a role also holding that role. Without them a person still reads
-//     them and sees them used, but cannot change them.
+//     organization's reach everyone, so keeping one at once, or changing,
+//     pausing or forgetting one, is agent-memory manage, and for a role also
+//     holding that role. Without it a person still writes one, but it is
+//     offered: kept as a suggestion an administrator approves in AI Control,
+//     listed to the person as offered until then, and theirs to withdraw.
 //
 // Agent-scoped memories are administered in AI Control and never listed here.
 
@@ -196,13 +197,13 @@ func (s *Service) person(
 
 // sees reports whether the memory is one the person keeps: theirs, their
 // roles' or the organization's. A suggestion is seen only by the person whose
-// conversation it was offered in.
+// conversation it was offered in, or who offered it themselves.
 func (p *deskPerson) sees(memory *agent.Memory) bool {
 	if memory.Scope == agent.MemoryScopeAgent {
 		return memory.Source == agent.MemorySourceReflection && p.offeredTo(memory)
 	}
 	if memory.Status.IsSuggestion() {
-		return memory.Source.OfferedByAgent() && p.offeredTo(memory)
+		return p.offeredTo(memory)
 	}
 
 	return p.reader.Reads(memory)
@@ -223,51 +224,50 @@ func (p *deskPerson) mayChange(memory *agent.Memory) bool {
 	case agent.MemoryScopeUser:
 		return memory.OwnerUserID != nil && *memory.OwnerUserID == p.userID
 	case agent.MemoryScopeRole:
-		return memory.RoleID != nil && p.holds(*memory.RoleID) && p.MayUpdateShared
+		return memory.RoleID != nil && p.holds(*memory.RoleID) && p.MayManageShared
 	case agent.MemoryScopeOrganization, agent.MemoryScopeAgent:
-		return p.MayUpdateShared
+		return p.MayManageShared
 	default:
 		return false
 	}
 }
 
+// errOfferInstead is the refusal for moving a kept memory in front of readers
+// the person may not keep one for. A new memory for them is offered; a kept
+// one is not quietly turned into an offer.
+func errOfferInstead() error {
+	return errortypes.NewAuthorizationError(
+		"Keeping a memory for your team or the organization is an administrator's. Keep " +
+			"this one for yourself, or write a new one for them and it will be offered to " +
+			"an administrator.",
+	)
+}
+
 // mayKeepFor reports whether the person may put a memory in front of the
-// scope's readers, writing a new one there or moving one there.
-func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) error {
+// scope's readers, and whether it is kept at once or offered: a role's or the
+// organization's is offered unless the person manages shared memory.
+func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) (bool, error) {
 	switch scope {
 	case agent.MemoryScopeUser:
-		return nil
+		return false, nil
 	case agent.MemoryScopeRole:
 		if !p.holds(roleID) {
-			return errortypes.NewValidationError(
+			return false, errortypes.NewValidationError(
 				"roleId", errortypes.ErrInvalid, "You can only keep a memory for a role you hold",
 			)
 		}
-		if !p.MayCreateShared {
-			return errortypes.NewAuthorizationError(
-				"Keeping a memory for your team needs permission to create agent memories",
-			)
-		}
 
-		return nil
+		return !p.MayManageShared, nil
 	case agent.MemoryScopeOrganization:
-		if !p.MayCreateShared {
-			return errortypes.NewAuthorizationError(
-				"Keeping a memory for the whole organization needs permission to create agent memories",
-			)
-		}
-
-		return nil
+		return !p.MayManageShared, nil
 	case agent.MemoryScopeAgent:
-		if !p.MayCreateShared {
-			return errortypes.NewAuthorizationError(
-				"Keeping a memory for everyone who uses this agent needs permission to create agent memories",
-			)
+		if !p.MayManageShared {
+			return false, errSharedMemoryManaged()
 		}
 
-		return nil
+		return false, nil
 	default:
-		return errortypes.NewValidationError(
+		return false, errortypes.NewValidationError(
 			"scope",
 			errortypes.ErrInvalid,
 			"Keep a memory for yourself, a role you hold or the organization",
@@ -534,16 +534,19 @@ func (s *Service) deskSettings(
 		return nil, err
 	}
 
+	// Anyone may write a memory for a team they are on or the organization:
+	// one who does not manage shared memory offers it rather than keeps it.
 	settings := &agentports.DeskMemorySettings{
 		SavingMode:               mode,
 		Roles:                    make([]agentports.DeskMemoryRole, 0, len(held)),
-		CanShareWithOrganization: person.MayCreateShared,
+		CanShareWithOrganization: true,
+		ManagesShared:            person.MayManageShared,
 	}
 	for _, role := range held {
 		settings.Roles = append(settings.Roles, agentports.DeskMemoryRole{
 			ID:       role.ID,
 			Name:     role.Name,
-			Writable: person.MayCreateShared,
+			Writable: true,
 		})
 	}
 
@@ -590,20 +593,23 @@ func (s *Service) CreateDesk(
 	if err != nil {
 		return nil, err
 	}
-	if err = person.mayKeepFor(req.Scope, req.RoleID); err != nil {
+	offer, err := person.mayKeepFor(req.Scope, req.RoleID)
+	if err != nil {
 		return nil, err
 	}
 
 	// What a person writes down for their agents is a rule to follow, not a
-	// fact to weigh.
-	created, err := s.Remember(ctx, &agentports.RememberRequest{
+	// fact to weigh. One for a team or the organization from a person who does
+	// not manage shared memory is offered for an administrator to approve.
+	created, err := s.remember(ctx, &agentports.RememberRequest{
 		TenantInfo:  person.tenant,
 		Kind:        agent.MemoryKindInstruction,
 		Content:     content,
 		Scope:       req.Scope,
 		OwnerUserID: person.userID,
 		RoleID:      req.RoleID,
-	}, person.Actor)
+		Suggest:     offer,
+	}, person.Actor, person.MayManageShared)
 	if err != nil {
 		return nil, err
 	}
@@ -642,8 +648,12 @@ func (s *Service) ReviseDesk(
 				"Keep a memory for yourself, a role you hold or the organization",
 			)
 		}
-		if err = person.mayKeepFor(req.Scope, req.RoleID); err != nil {
-			return nil, err
+		offer, keepErr := person.mayKeepFor(req.Scope, req.RoleID)
+		if keepErr != nil {
+			return nil, keepErr
+		}
+		if offer {
+			return nil, errOfferInstead()
 		}
 		scope, roleID = req.Scope, req.RoleID
 	}
@@ -704,9 +714,7 @@ func (s *Service) changeable(
 		)
 	}
 	if !person.mayChange(current) {
-		return nil, errortypes.NewAuthorizationError(
-			"Changing a memory your team or organization shares needs permission to update agent memories",
-		)
+		return nil, errSharedMemoryManaged()
 	}
 
 	return current, nil
@@ -731,11 +739,11 @@ func (s *Service) SetDeskStatus(
 		return nil, err
 	}
 
-	if _, err = s.SetStatus(ctx, agentports.SetAgentMemoryStatusRequest{
+	if _, err = s.setStatus(ctx, agentports.SetAgentMemoryStatusRequest{
 		ID:         req.ID,
 		TenantInfo: person.tenant,
 		Status:     req.Status,
-	}, person.Actor); err != nil {
+	}, person.Actor, person.MayManageShared); err != nil {
 		return nil, err
 	}
 
@@ -758,7 +766,7 @@ func (s *Service) offered(
 	if err != nil {
 		return nil, err
 	}
-	if !current.Source.OfferedByAgent() || !person.offeredTo(current) {
+	if !person.offeredTo(current) {
 		return nil, errortypes.NewNotFoundError("Memory not found")
 	}
 	waiting := current.Status == agent.MemoryStatusSuggested ||
@@ -782,6 +790,11 @@ func (s *Service) ConfirmDesk(
 	if err != nil {
 		return nil, err
 	}
+	if !current.Source.OfferedByAgent() {
+		return nil, errortypes.NewBusinessError(
+			"You offered this memory for others; an administrator decides whether it is kept",
+		)
+	}
 	content, err := checkDeskContent(req.Content)
 	if err != nil {
 		return nil, err
@@ -797,8 +810,15 @@ func (s *Service) ConfirmDesk(
 			"Keep a memory for yourself, a role you hold or the organization",
 		)
 	}
-	if err = person.mayKeepFor(scope, req.RoleID); err != nil {
+	offer, err := person.mayKeepFor(scope, req.RoleID)
+	if err != nil {
 		return nil, err
+	}
+	if offer {
+		return nil, errortypes.NewAuthorizationError(
+			"Keeping this for your team or the organization is an administrator's, and it is " +
+				"already in front of them. Keep it for yourself, or leave it for them to decide.",
+		)
 	}
 	if err = s.mayReplace(ctx, person, current); err != nil {
 		return nil, err
@@ -853,10 +873,10 @@ func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *a
 	if !Replaceable(replaced.Status) {
 		return nil
 	}
-	shared := replaced.Scope == agent.MemoryScopeAgent && person.MayUpdateShared
+	shared := replaced.Scope == agent.MemoryScopeAgent && person.MayManageShared
 	if !shared && (!person.sees(replaced) || !person.mayChange(replaced)) {
 		return errortypes.NewAuthorizationError(
-			"This replaces a memory your team or organization shares; saving it needs permission to update agent memories",
+			"This replaces a memory your team or organization shares; saving it needs permission to manage agent memory",
 		)
 	}
 

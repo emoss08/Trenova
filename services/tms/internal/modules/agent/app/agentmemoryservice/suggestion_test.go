@@ -81,8 +81,53 @@ func suggestion() *agent.Memory {
 	}
 }
 
+// suggestionService is the service for an administrator: one who manages
+// shared memory, which the suggestions kept for an agent or the organization
+// take to decide.
 func suggestionService(repo *suggestionRepo) *Service {
-	return &Service{l: zap.NewNop(), repo: repo}
+	return &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: true}}
+}
+
+// A memory kept for an agent or the organization is retired by someone who
+// manages shared memory and nobody else; a person's own is theirs.
+func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
+	t.Parallel()
+
+	shared := suggestion()
+	shared.Status = agent.MemoryStatusActive
+	repo := &suggestionRepo{memory: shared}
+	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+
+	_, err := svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+		ID: shared.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
+	}, userActor())
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	assert.Empty(t, repo.statuses)
+
+	_, err = svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+		ID: shared.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
+	}, agentActor())
+	require.Error(t, err, "a run with nobody in it never retires what others read")
+	assert.Empty(t, repo.statuses)
+
+	owner := userActor()
+	own := suggestion()
+	own.Status = agent.MemoryStatusActive
+	own.SetAudience(agent.MemoryScopeUser, owner.UserID, pulid.Nil)
+	repo = &suggestionRepo{memory: own}
+	svc = &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+
+	updated, err := svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+		ID: own.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
+	}, owner)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusRetired, updated.Status)
+
+	_, err = svc.SetStatus(t.Context(), agentports.SetAgentMemoryStatusRequest{
+		ID: own.ID, TenantInfo: tenant(), Status: agent.MemoryStatusRetired,
+	}, userActor())
+	require.Error(t, err, "another person's own memory is not theirs")
 }
 
 func TestSetStatus_RefusesASuggestedMemory(t *testing.T) {

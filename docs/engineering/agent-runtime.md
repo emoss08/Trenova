@@ -847,7 +847,7 @@ and the agent as its actor:
   or is an Instruction from a run with nobody in it;
 - a conversation's lesson is kept for the person (`User`), the agent
   (`Agent`), or offered to the team or organization; a person without
-  agent-memory create permission has shared lessons kept for themselves alone;
+  agent-memory manage permission has shared lessons kept for themselves alone;
 - team and organization lessons are always suggestions, and a run with nobody
   in it only ever suggests: its lessons wait at `Agent` scope (organization
   ones at `Organization`) for an administrator in AI Control. Bench runs kept

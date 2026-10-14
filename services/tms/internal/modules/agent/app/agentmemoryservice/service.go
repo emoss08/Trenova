@@ -88,20 +88,24 @@ type Params struct {
 	// Security records a review that clears a memory's taint as a critical
 	// change: it lets the turns that read the memory write on their own again.
 	Security permissionports.SecurityAuditor `optional:"true"`
+	// Permissions says who may manage shared memory. Without it nobody does:
+	// every memory for a team, the organization or every agent is offered.
+	Permissions permissionports.PermissionEngine `optional:"true"`
 }
 
 type Service struct {
-	l        *zap.Logger
-	repo     agentports.AgentMemoryRepository
-	runs     runReader
-	labeler  SubjectLabeler
-	audit    actionLogger
-	subjects SubjectResolver
-	ranker   agentports.MemoryRanker
-	indexer  agentports.RetrievalIndexer
-	vectors  agentports.MemoryVectorSearcher
-	roles    roleReader
-	security permissionports.SecurityAuditor
+	l           *zap.Logger
+	repo        agentports.AgentMemoryRepository
+	runs        runReader
+	labeler     SubjectLabeler
+	audit       actionLogger
+	subjects    SubjectResolver
+	ranker      agentports.MemoryRanker
+	indexer     agentports.RetrievalIndexer
+	vectors     agentports.MemoryVectorSearcher
+	roles       roleReader
+	security    permissionports.SecurityAuditor
+	permissions permissionports.PermissionEngine
 }
 
 func New(p Params) agentports.AgentMemoryService {
@@ -111,18 +115,73 @@ func New(p Params) agentports.AgentMemoryService {
 	}
 
 	return &Service{
-		l:        p.Logger.Named("service.agentmemory"),
-		repo:     p.Repo,
-		runs:     p.Runs,
-		labeler:  p.Labeler,
-		audit:    p.AuditService,
-		subjects: NewSubjectResolver(p.Subjects),
-		ranker:   ranker,
-		indexer:  p.Indexer,
-		vectors:  p.Vectors,
-		roles:    rolesOrNil(p.Roles),
-		security: p.Security,
+		l:           p.Logger.Named("service.agentmemory"),
+		repo:        p.Repo,
+		runs:        p.Runs,
+		labeler:     p.Labeler,
+		audit:       p.AuditService,
+		subjects:    NewSubjectResolver(p.Subjects),
+		ranker:      ranker,
+		indexer:     p.Indexer,
+		vectors:     p.Vectors,
+		roles:       rolesOrNil(p.Roles),
+		security:    p.Security,
+		permissions: p.Permissions,
 	}
+}
+
+func (s *Service) MayManageShared(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	userID pulid.ID,
+) bool {
+	if s.permissions == nil || userID.IsNil() {
+		return false
+	}
+
+	actor := permissionports.UserActor(
+		pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID, UserID: userID},
+	)
+	result, err := s.permissions.Check(
+		ctx,
+		actor.PermissionCheck(permission.ResourceAgentMemory, permission.OpManage),
+	)
+	if err != nil {
+		s.l.Warn(
+			"agent memory: the person's manage permission could not be read; treating shared memory as offered",
+			zap.String("user", userID.String()),
+			zap.Error(err),
+		)
+
+		return false
+	}
+
+	return result != nil && result.Allowed
+}
+
+// manages reports whether the actor keeps shared memory: a person holding
+// agent-memory manage. An agent principal never does, so what a run records
+// for the organization is offered for a person to approve.
+func (s *Service) manages(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) bool {
+	if actor == nil || !actor.IsUser() {
+		return false
+	}
+
+	return s.MayManageShared(ctx, tenant, actor.UserID)
+}
+
+// errSharedMemoryManaged is the refusal for keeping or changing a memory other
+// people's conversations read without the permission to.
+func errSharedMemoryManaged() error {
+	return errortypes.NewAuthorizationError(
+		"Keeping, changing, pausing or forgetting a memory shared with a team, the " +
+			"organization or every agent is an administrator's: it needs permission to " +
+			"manage agent memory",
+	)
 }
 
 func (s *Service) Remember(
@@ -130,7 +189,19 @@ func (s *Service) Remember(
 	req *agentports.RememberRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
-	plan, err := s.planRemember(ctx, req, actor)
+	return s.remember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
+}
+
+// remember keeps or offers the memory for an actor whose right to manage
+// shared memory is already known: the Desk reads it with the person, every
+// other caller asks the permission engine.
+func (s *Service) remember(
+	ctx context.Context,
+	req *agentports.RememberRequest,
+	actor *permissionports.RequestActor,
+	manages bool,
+) (*agent.Memory, error) {
+	plan, err := s.planRemember(ctx, req, actor, manages)
 	if err != nil {
 		return nil, err
 	}
@@ -194,13 +265,14 @@ func (s *Service) PreviewRemember(
 	req *agentports.RememberRequest,
 	actor *permissionports.RequestActor,
 ) (*agentports.RememberPlan, error) {
-	return s.planRemember(ctx, req, actor)
+	return s.planRemember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
 }
 
 func (s *Service) planRemember(
 	ctx context.Context,
 	req *agentports.RememberRequest,
 	actor *permissionports.RequestActor,
+	manages bool,
 ) (*agentports.RememberPlan, error) {
 	if actor == nil {
 		return nil, errortypes.NewValidationError(
@@ -247,6 +319,15 @@ func (s *Service) planRemember(
 		if held {
 			entity.Status = agent.MemoryStatusSuggested
 		}
+	}
+
+	// A memory for a team, the organization or every agent reaches other
+	// people's conversations, so only a person who manages shared memory
+	// keeps one at once; anyone else, and every run with nobody in it,
+	// offers it for an administrator to approve. The readers are final here:
+	// a replacement has taken the replaced memory's.
+	if entity.Scope.Shared() && entity.Status == agent.MemoryStatusActive && !manages {
+		entity.Status = agent.MemoryStatusSuggested
 	}
 
 	if err := s.label(ctx, req.TenantInfo, entity); err != nil {
@@ -353,6 +434,9 @@ func (s *Service) Update(
 	if err != nil {
 		return nil, err
 	}
+	if entity.Scope.Shared() && !s.manages(ctx, req.TenantInfo, actor) {
+		return nil, errSharedMemoryManaged()
+	}
 
 	previous := jsonutils.MustToJSON(entity)
 	entity.Kind = req.Kind
@@ -389,10 +473,47 @@ func (s *Service) Update(
 	return updated, nil
 }
 
+// mayChangeStatus says who resumes, pauses or retires a memory: a shared one
+// takes a person who manages shared memory; a person's own takes that person,
+// or such a manager.
+func mayChangeStatus(
+	current *agent.Memory,
+	actor *permissionports.RequestActor,
+	manages bool,
+) error {
+	if current.Scope.Shared() {
+		if manages {
+			return nil
+		}
+
+		return errSharedMemoryManaged()
+	}
+	if actor.IsUser() && current.OwnerUserID != nil && *current.OwnerUserID == actor.UserID {
+		return nil
+	}
+	if manages {
+		return nil
+	}
+
+	return errortypes.NewAuthorizationError(
+		"Only the person a memory is kept for, or someone who manages agent memory, " +
+			"pauses, forgets or restores it",
+	)
+}
+
 func (s *Service) SetStatus(
 	ctx context.Context,
 	req agentports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
+) (*agent.Memory, error) {
+	return s.setStatus(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
+}
+
+func (s *Service) setStatus(
+	ctx context.Context,
+	req agentports.SetAgentMemoryStatusRequest,
+	actor *permissionports.RequestActor,
+	manages bool,
 ) (*agent.Memory, error) {
 	if actor == nil {
 		return nil, errortypes.NewValidationError(
@@ -410,6 +531,9 @@ func (s *Service) SetStatus(
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err = mayChangeStatus(current, actor, manages); err != nil {
 		return nil, err
 	}
 

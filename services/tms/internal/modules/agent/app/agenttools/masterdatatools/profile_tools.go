@@ -77,8 +77,11 @@ func (t *GuideProfileTool) Description() string {
 		"lanes, how it is set up (\"the Laredo lane is seasonal\", \"we stopped running " +
 		"reefers\"). about me is the person's own work (\"I only handle the Midwest " +
 		"accounts\", \"I'm in billing now\"). Write one plain sentence in your own words " +
-		"from what they said; the profile is written again with it. Not for a rule about " +
-		"one customer, record or task, or how to do something: use remember for those."
+		"from what they said; the profile is written again with it. Guidance about the " +
+		"organization is kept at once only when the person may manage agent memory; " +
+		"otherwise it is offered for an administrator to approve, and you should say so. " +
+		"Not for a rule about one customer, record or task, or how to do something: use " +
+		"remember for those."
 }
 
 func (t *GuideProfileTool) ParamSchema() map[string]any {
@@ -107,7 +110,7 @@ func (t *GuideProfileTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
-		Resource:            permission.ResourceAgentMemory,
+		Resource:            permission.ResourceAssistant,
 		Operation:           permission.OpCreate,
 		Scope:               agent.ToolScopeTenant,
 		DefaultTier:         agent.TierActWithApproval,

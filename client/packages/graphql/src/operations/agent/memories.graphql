@@ -5,6 +5,8 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   kind
   source
   status
+  scope
+  roleId
   subjectType
   subjectId
   subjectLabel

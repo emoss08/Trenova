@@ -3,6 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createDeskMemory,
   DESK_MEMORIES_KEY,
+  dismissDeskMemory,
   fetchDeskMemories,
   reviseDeskMemory,
   setDeskMemoryStatus,
@@ -32,7 +33,12 @@ import {
 } from "react";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
-import { savedLine, scopeLabel, usageLine } from "@/components/desk-chat/memory/memory-format";
+import {
+  memoryDay,
+  savedLine,
+  scopeLabel,
+  usageLine,
+} from "@/components/desk-chat/memory/memory-format";
 import { DeskMemoryWhy } from "@/components/desk-chat/memory/desk-memory-why";
 import {
   ALL_MEMORIES,
@@ -123,6 +129,9 @@ export function DeskMemoryPage() {
 
   const settingsQuery = useQuery(deskMemorySettingsQueryOptions());
   const settings = settingsQuery.data;
+  // What the person writes for others is kept at once only when they manage
+  // agent memory; otherwise it is offered to an administrator.
+  const offers = settings !== undefined && !settings.managesShared && addAudience !== "User";
 
   const scope = useMemo(() => filterScope(filter), [filter]);
   const listQuery = useInfiniteQuery({
@@ -209,6 +218,12 @@ export function DeskMemoryPage() {
       }
       void refresh();
     },
+    resourceName: "Memory",
+  });
+
+  const withdrawMutation = useApiMutation({
+    mutationFn: (memory: DeskMemory) => dismissDeskMemory(memory.id),
+    onSuccess: () => void refresh(),
     resourceName: "Memory",
   });
 
@@ -344,9 +359,16 @@ export function DeskMemoryPage() {
             className="rounded-lg px-3.25 disabled:opacity-35"
             disabled={add.trim() === "" || createMutation.isPending}
           >
-            {t("Save")}
+            {offers ? t("Offer") : t("Save")}
           </Button>
         </form>
+        {offers && (
+          <p className="dk-mm-offer">
+            {t(
+              "A memory for your team or the organization reaches other people's conversations, so it is offered to an administrator, who decides whether to keep it.",
+            )}
+          </p>
+        )}
 
         <div className="dk-mm-tools">
           <div className="dk-mm-f" role="tablist" aria-label={t("Show")}>
@@ -410,6 +432,7 @@ export function DeskMemoryPage() {
                     onSave={(content) => reviseMutation.mutate({ memory: row.memory, content })}
                     onMove={(audience) => reviseMutation.mutate({ memory: row.memory, audience })}
                     onStatus={(status) => statusMutation.mutate({ memory: row.memory, status })}
+                    onWithdraw={() => withdrawMutation.mutate(row.memory)}
                   />
                 );
               })}
@@ -437,6 +460,7 @@ function MemoryRowView({
   onSave,
   onMove,
   onStatus,
+  onWithdraw,
 }: {
   index: number;
   /** Set when the list is virtual: measures the row and places it at top. */
@@ -454,11 +478,27 @@ function MemoryRowView({
   onSave: (content: string) => void;
   onMove: (audience: DeskMemoryAudience) => void;
   onStatus: (status: "Active" | "Paused" | "Retired") => void;
+  onWithdraw: () => void;
 }) {
   const t = useT();
   const { memory } = row;
   const paused = memory.status === "Paused";
+  const offered = memory.status === "Suggested";
+  const withdrawn = memory.status === "Dismissed";
   const style = top === null ? undefined : { transform: `translateY(${top}px)` };
+
+  if (withdrawn) {
+    return (
+      <div
+        ref={measure}
+        data-index={index}
+        style={style}
+        className={cn("dk-mm-r dk-gone", index === 0 && "dk-first")}
+      >
+        <span>{t("Withdrawn. No administrator will see this offer.")}</span>
+      </div>
+    );
+  }
 
   if (row.gone) {
     return (
@@ -490,6 +530,7 @@ function MemoryRowView({
         "dk-mm-r",
         index === 0 && "dk-first",
         paused && "dk-paused",
+        offered && "dk-offered",
         row.fresh && "dk-fresh",
       )}
     >
@@ -543,8 +584,27 @@ function MemoryRowView({
         >
           <AudienceOptions settings={settings} current={memory} />
         </select>
-        <span>{savedLine(memory, timezone, t)}</span>
-        <span>{usageLine(memory, timezone, t)}</span>
+        {offered ? (
+          <>
+            <span>
+              {t(
+                "Offered {0} to an administrator, who decides whether to keep it for {1}",
+                memoryDay(memory.createdAt, timezone, t),
+                scopeLabel(memory, t),
+              )}
+            </span>
+            <span className="dk-mm-acts">
+              <Button variant="quiet" size="sm" onClick={onWithdraw}>
+                {t("Withdraw")}
+              </Button>
+            </span>
+          </>
+        ) : (
+          <>
+            <span>{savedLine(memory, timezone, t)}</span>
+            <span>{usageLine(memory, timezone, t)}</span>
+          </>
+        )}
         {memory.editable && (
           <span className="dk-mm-acts">
             <Button

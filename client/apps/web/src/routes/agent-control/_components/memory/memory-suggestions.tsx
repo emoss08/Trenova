@@ -23,11 +23,13 @@ import { Button } from "@trenova/shared/components/ui/button";
 export const agentMemorySuggestionsQueryKey = [AGENT_MEMORY_SUGGESTIONS_KEY] as const;
 
 /**
- * Memories drawn from what people said about an agent's answers, or learned by an
- * agent looking back over its work, waiting for an administrator. Nothing here is read
- * by an agent until it is approved: approving makes the text active as it stands or as
- * edited, dismissing keeps the same pattern from being suggested again for thirty days.
- * What people wrote is shown as quoted evidence, never as the memory itself.
+ * Memories waiting for an administrator: drawn from what people said about an agent's
+ * answers, learned by an agent looking back over its work, recorded by an agent for the
+ * organization, or offered by a colleague for their team or the organization without
+ * the permission to keep them. Nothing here is read by an agent until it is approved:
+ * approving makes the text active as it stands or as edited, dismissing keeps the same
+ * pattern from being suggested again for thirty days. What people wrote is shown as
+ * quoted evidence, never as the memory itself.
  */
 export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
   const t = useT();
@@ -50,7 +52,7 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
     <section className="sec sg-s">
       <header className="sh2">
         <span className="dm" />
-        <h3>{t("Nova suggests")}</h3>
+        <h3>{t("Waiting for approval")}</h3>
         <em className="mono">{suggestions.length}</em>
         <span className="sp" />
         <span className="sh2-n">{t("Agents read none of these until you approve")}</span>
@@ -143,28 +145,41 @@ function SuggestionCard({
   const people = evidence?.distinctUsers ?? 0;
   const quotes = evidence?.quotes ?? [];
   const learned = suggestion.source === "Reflection";
+  const offeredByPerson = suggestion.source === "User";
+  const offeredFor =
+    suggestion.scope === "Role"
+      ? t("their team")
+      : suggestion.scope === "Agent"
+        ? t("everyone using this agent")
+        : t("the organization");
 
   return (
     <div className="sgm">
       <p className="sgm-c">{suggestion.content}</p>
       <p className="sgm-e">
-        {learned
+        {offeredByPerson
           ? t(
-              "Learned by an agent looking back over its work · {0}",
+              "Offered by a colleague for {0} · {1}",
+              offeredFor,
               formatUnixDateTimeMedium(suggestion.createdAt),
             )
-          : evidence
+          : learned
             ? t(
-                "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}} · last rated {2}",
-                ratings,
-                people,
-                formatUnixDateTimeMedium(evidence.lastRatedAt),
+                "Learned by an agent looking back over its work · {0}",
+                formatUnixDateTimeMedium(suggestion.createdAt),
               )
-            : t(
-                "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}}",
-                ratings,
-                people,
-              )}
+            : evidence
+              ? t(
+                  "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}} · last rated {2}",
+                  ratings,
+                  people,
+                  formatUnixDateTimeMedium(evidence.lastRatedAt),
+                )
+              : t(
+                  "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}}",
+                  ratings,
+                  people,
+                )}
         {suggestion.tainted && <> · {t("drawn from content written outside the organization")}</>}
       </p>
       {learned && evidence?.reason && <p className="sgm-e">{evidence.reason}</p>}

@@ -339,7 +339,7 @@ func (s *Service) mayShare(
 	)
 	result, err := s.permissions.Check(
 		ctx,
-		actor.PermissionCheck(permission.ResourceAgentMemory, permission.OpCreate),
+		actor.PermissionCheck(permission.ResourceAgentMemory, permission.OpManage),
 	)
 	if err != nil {
 		s.l.Warn(
