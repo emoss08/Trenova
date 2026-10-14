@@ -1,5 +1,5 @@
 import type { NavModule } from "@/config/navigation.types";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ModuleRail } from "../module-rail";
@@ -68,7 +68,10 @@ vi.mock("../../notification-center/notification-sheet", () => ({
   NotificationSheet: () => null,
 }));
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 function renderRail(panelFolded: boolean) {
   return render(
@@ -110,5 +113,51 @@ describe("the module rail", () => {
       "hover-card-trigger",
     );
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
+  });
+
+  it("opens a folded module's pages when its tile takes keyboard focus", () => {
+    vi.useFakeTimers();
+    renderRail(true);
+
+    fireEvent.focus(screen.getByRole("link", { name: "Billing" }));
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(screen.getByRole("link", { name: "Billing queue" })).toHaveAttribute(
+      "href",
+      "/billing/queue",
+    );
+    expect(screen.getByRole("link", { name: "Invoices" })).toHaveAttribute(
+      "href",
+      "/billing/invoices",
+    );
+  });
+
+  it("keeps a folded module's pages away after its tile is pressed", () => {
+    vi.useFakeTimers();
+    renderRail(true);
+    const tile = screen.getByRole("link", { name: "Billing" });
+
+    fireEvent.pointerEnter(tile, { pointerType: "mouse" });
+    fireEvent.pointerDown(tile, { pointerType: "mouse" });
+    fireEvent.focus(tile);
+    fireEvent.click(tile);
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(screen.queryByRole("link", { name: "Billing queue" })).not.toBeInTheDocument();
+  });
+
+  it("opens a pressed tile's pages again once the pointer has left it", () => {
+    vi.useFakeTimers();
+    renderRail(true);
+    const tile = screen.getByRole("link", { name: "Billing" });
+
+    fireEvent.pointerDown(tile, { pointerType: "mouse" });
+    fireEvent.click(tile);
+    fireEvent.pointerLeave(tile, { pointerType: "mouse" });
+    fireEvent.blur(tile);
+    fireEvent.focus(tile);
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(screen.getByRole("link", { name: "Billing queue" })).toBeInTheDocument();
   });
 });
