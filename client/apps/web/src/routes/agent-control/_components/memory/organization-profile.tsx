@@ -11,6 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { isOffered } from "@/components/desk-chat/memory/memory-format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { AgentProfileTrigger } from "@trenova/graphql/generated/graphql";
@@ -29,16 +30,21 @@ const TRIGGER_LABEL: Record<AgentProfileTrigger, string> = defineLabels({
  * gave. The write-up is never edited by hand; a line of guidance is how a person
  * corrects it, and the next version honours every line. Only facts and guidance are
  * shown as the source, so nobody mistakes a figure in the write-up for a live one.
+ *
+ * Anyone who can read the profile may offer a line; one who manages agent memory keeps
+ * lines at once and decides on what others offered, which waits here as offered until
+ * they do.
  */
-export function OrganizationProfile({
-  canCreate,
-  canUpdate,
-}: {
-  canCreate: boolean;
-  canUpdate: boolean;
-}) {
+export function OrganizationProfile({ canManage }: { canManage: boolean }) {
   const t = useT();
-  const { profileQuery, addGuidance, retireGuidance, regenerate } = useAgentProfile("organization");
+  const {
+    profileQuery,
+    addGuidance,
+    retireGuidance,
+    approveGuidance,
+    dismissGuidance,
+    regenerate,
+  } = useAgentProfile("organization");
   const [draft, setDraft] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -60,6 +66,8 @@ export function OrganizationProfile({
     );
   }
   const current = profile.current;
+  const active = profile.guidance.filter((line) => line.status === "Active");
+  const offered = profile.guidance.filter(isOffered);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -81,7 +89,7 @@ export function OrganizationProfile({
             {t("Checked {0}", formatUnixDateTimeMedium(current.checkedAt))}
           </span>
         )}
-        {canUpdate && (
+        {canManage && (
           <Button
             type="button"
             variant="outline"
@@ -127,55 +135,128 @@ export function OrganizationProfile({
         )}
       </div>
 
+      {offered.length > 0 && (
+        <>
+          <header className="sh2">
+            <h3>{t("Offered guidance")}</h3>
+            <em className="mono">{offered.length}</em>
+            <span className="sp" />
+            <span className="sh2-n">
+              {canManage
+                ? t("Waiting for you; the profile is written again with what you keep")
+                : t("Waiting for an administrator; agents read none of it until then")}
+            </span>
+          </header>
+          {offered.map((line) => (
+            <OfferedGuidanceRow
+              key={line.id}
+              line={line}
+              canDecide={canManage}
+              busy={approveGuidance.isPending || dismissGuidance.isPending}
+              onApprove={() => approveGuidance.mutate(line.id)}
+              onDismiss={() => dismissGuidance.mutate(line.id)}
+            />
+          ))}
+        </>
+      )}
+
       <header className="sh2">
         <h3>{t("Guidance")}</h3>
-        <em className="mono">{profile.guidance.length}</em>
+        <em className="mono">{active.length}</em>
         <span className="sp" />
         <span className="sh2-n">
           {t("What the records can't show, such as a seasonal lane or a customer winding down")}
         </span>
       </header>
-      {profile.guidance.map((line) => (
+      {active.map((line) => (
         <GuidanceRow
           key={line.id}
           line={line}
-          canRetire={canUpdate}
+          canRetire={canManage}
           busy={retireGuidance.isPending}
           onRetire={() => retireGuidance.mutate(line.id)}
         />
       ))}
-      {canCreate && (
-        <form className="sgm" onSubmit={submit} aria-label={t("Add guidance")}>
-          <Textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            maxLength={MAX_PROFILE_GUIDANCE_CHARS}
-            minRows={2}
-            placeholder={t("e.g. “The Laredo lane is seasonal; it runs from October to March”")}
-            aria-label={t("Guidance")}
-          />
-          <div className="sgm-a">
-            <span className="sgm-e">
-              {t("{0} of {1}", draft.length, MAX_PROFILE_GUIDANCE_CHARS)}
-            </span>
-            <Button
-              type="submit"
-              variant="default"
-              size="sm"
-              disabled={draft.trim() === "" || addGuidance.isPending}
-            >
-              <Ic n="plus" s={12} />
-              {t("Add guidance")}
-            </Button>
-          </div>
-        </form>
-      )}
+      <form
+        className="sgm"
+        onSubmit={submit}
+        aria-label={canManage ? t("Add guidance") : t("Offer guidance")}
+      >
+        <Textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          maxLength={MAX_PROFILE_GUIDANCE_CHARS}
+          minRows={2}
+          placeholder={t("e.g. “The Laredo lane is seasonal; it runs from October to March”")}
+          aria-label={t("Guidance")}
+        />
+        <div className="sgm-a">
+          <span className="sgm-e">
+            {canManage
+              ? t("{0} of {1}", draft.length, MAX_PROFILE_GUIDANCE_CHARS)
+              : t(
+                  "{0} of {1} · offered to an administrator, who decides whether the profile keeps it",
+                  draft.length,
+                  MAX_PROFILE_GUIDANCE_CHARS,
+                )}
+          </span>
+          <Button
+            type="submit"
+            variant="default"
+            size="sm"
+            disabled={draft.trim() === "" || addGuidance.isPending}
+          >
+            <Ic n="plus" s={12} />
+            {canManage ? t("Add guidance") : t("Offer guidance")}
+          </Button>
+        </div>
+      </form>
 
       <details onToggle={(event) => setHistoryOpen(event.currentTarget.open)}>
         <summary className="sgm-e cursor-pointer">{t("Earlier versions")}</summary>
         {historyOpen && <ProfileHistory />}
       </details>
     </section>
+  );
+}
+
+function OfferedGuidanceRow({
+  line,
+  canDecide,
+  busy,
+  onApprove,
+  onDismiss,
+}: {
+  line: AgentProfileGuidance;
+  canDecide: boolean;
+  busy: boolean;
+  onApprove: () => void;
+  onDismiss: () => void;
+}) {
+  const t = useT();
+  const who = line.createdByName ?? t("Someone");
+  const when = formatUnixDateTimeMedium(line.createdAt);
+
+  return (
+    <div className="sgm">
+      <p className="sgm-c">{line.content}</p>
+      <p className="sgm-e">
+        {line.source === "Agent"
+          ? t("Offered by {0} in a conversation, written down by an agent · {1}", who, when)
+          : t("Offered by {0} · {1}", who, when)}
+      </p>
+      {canDecide && (
+        <div className="sgm-a">
+          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onDismiss}>
+            {t("Dismiss")}
+          </Button>
+          <Button type="button" variant="default" size="sm" disabled={busy} onClick={onApprove}>
+            <Ic n="check" s={12} w={2.2} />
+            {t("Keep")}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 

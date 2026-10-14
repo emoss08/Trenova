@@ -205,10 +205,12 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpCreate: {},
 	},
-	ResourceAgentMemory: {
+	// Memory and profile guidance are used under the assistant, as on the
+	// Desk: a run reads what its reader may read and offers what it would keep
+	// for the organization, which an administrator approves.
+	ResourceAssistant: {
 		OpRead:   {},
 		OpCreate: {},
-		OpUpdate: {},
 	},
 	ResourceInsight: {
 		OpRead:   {},

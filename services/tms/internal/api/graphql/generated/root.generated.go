@@ -1732,6 +1732,8 @@ type MutationResolver interface {
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	DismissAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	RegenerateAgentOrganizationProfile(ctx context.Context) (bool, error)
 	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -6661,9 +6663,17 @@ enum AgentProfileTrigger {
   Guidance
 }
 
+"""
+Where a line stands. Active lines shape the next version. A Suggested line
+about the organization was offered by someone who does not manage agent memory,
+or written down by an agent, and waits for an administrator to approve or
+dismiss it. Retired and Dismissed lines are kept for the record.
+"""
 enum AgentProfileGuidanceStatus {
   Active
+  Suggested
   Retired
+  Dismissed
 }
 
 "Who worded a line of guidance: a person typing it, or an agent writing down what a person said."
@@ -6723,7 +6733,7 @@ type AgentProfile {
   current: AgentProfileVersion
   "The newest attempt, when it failed after the current version was written."
   latestFailure: AgentProfileVersion
-  "The active guidance, newest first."
+  "The active and the offered guidance, active first, then newest first."
   guidance: [AgentProfileGuidance!]!
 }
 
@@ -6742,11 +6752,19 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Add a line of guidance to the organization's profile; it is written again with it."
+  """
+  Add a line of guidance to the organization's profile. From someone who manages
+  agent memory it is kept and the profile is written again with it; from anyone
+  else it is offered (Suggested) for an administrator to approve.
+  """
   addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
-  "Retire a line of guidance from the organization's profile; it is written again without it."
+  "Retire a line of guidance from the organization's profile; it is written again without it. Needs agent memory manage."
   retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
-  "Write the organization's profile again now."
+  "Keep an offered line; the organization's profile is written again with it. Needs agent memory manage."
+  approveAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Turn an offered line down; it never shapes the profile. Needs agent memory manage."
+  dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the organization's profile again now. Needs agent memory manage."
   regenerateAgentOrganizationProfile: Boolean!
   "Add a line of guidance to the signed-in person's own profile."
   addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
@@ -14960,7 +14978,7 @@ type DeskMemory {
   lastUsedAt: Timestamp
   createdAt: Timestamp!
   version: Int!
-  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  "The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable."
   editable: Boolean!
   "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
   reason: String!
@@ -15001,7 +15019,7 @@ type DeskMemoryPage {
 type DeskMemoryRole {
   id: ID!
   name: String!
-  "The person may keep memories for the role: it needs permission to create agent memories."
+  "The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise."
   writable: Boolean!
 }
 
@@ -15009,8 +15027,10 @@ type DeskMemorySettings {
   savingMode: AgentMemorySavingMode!
   "The person's roles by name."
   roles: [DeskMemoryRole!]!
-  "The person may keep memories for the whole organization."
+  "The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise."
   canShareWithOrganization: Boolean!
+  "The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share."
+  managesShared: Boolean!
 }
 
 input DeskMemoriesInput {
@@ -15027,7 +15047,7 @@ input DeskMemoriesInput {
 
 input CreateDeskMemoryInput {
   content: String!
-  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  "User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise."
   scope: AgentMemoryScope!
   roleId: ID
 }

@@ -846,8 +846,9 @@ and the agent as its actor:
   a tool the work did not touch, replaces a memory the look back was not shown,
   or is an Instruction from a run with nobody in it;
 - a conversation's lesson is kept for the person (`User`), the agent
-  (`Agent`), or offered to the team or organization; a person without
-  agent-memory create permission has shared lessons kept for themselves alone;
+  (`Agent`), or offered to the team or organization; who may keep a shared
+  lesson at once is the memory service's call (`agent_memory:manage`), the same
+  as for any memory a person keeps, so the look back never narrows a lesson;
 - team and organization lessons are always suggestions, and a run with nobody
   in it only ever suggests: its lessons wait at `Agent` scope (organization
   ones at `Organization`) for an administrator in AI Control. Bench runs kept

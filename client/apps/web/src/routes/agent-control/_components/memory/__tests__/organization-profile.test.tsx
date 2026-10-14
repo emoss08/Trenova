@@ -10,6 +10,8 @@ const api = vi.hoisted(() => ({
   fetchAgentProfileHistory: vi.fn(),
   addAgentProfileGuidance: vi.fn(),
   retireAgentProfileGuidance: vi.fn(),
+  approveAgentProfileGuidance: vi.fn(),
+  dismissAgentProfileGuidance: vi.fn(),
   regenerateAgentProfile: vi.fn(),
 }));
 
@@ -55,7 +57,7 @@ function profile(overrides: Partial<AgentProfile> = {}): AgentProfile {
   };
 }
 
-function renderProfile(permissions: { canCreate: boolean; canUpdate: boolean }) {
+function renderProfile(permissions: { canManage: boolean }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
@@ -79,7 +81,7 @@ afterEach(() => {
 
 describe("OrganizationProfile", () => {
   it("shows what agents are told, what it was written from, and who gave each line", async () => {
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     expect(
       await screen.findByText("Acme Freight runs a regional fleet out of Dallas."),
@@ -91,18 +93,69 @@ describe("OrganizationProfile", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers no change to someone who may only read", async () => {
-    renderProfile({ canCreate: false, canUpdate: false });
+  it("lets someone who does not manage agent memory offer guidance but change nothing", async () => {
+    renderProfile({ canManage: false });
 
     await screen.findByText("Acme Freight runs a regional fleet out of Dallas.");
     expect(screen.queryByRole("button", { name: "Retire" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Write it again/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("form", { name: "Add guidance" })).not.toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "Offer guidance" })).toBeInTheDocument();
+    expect(screen.getByText(/offered to an administrator/)).toBeInTheDocument();
+  });
+
+  it("shows offered lines apart from the kept ones, for a manager to keep or dismiss", async () => {
+    const user = userEvent.setup();
+    const offered = {
+      ...profile().guidance[0],
+      id: "aprg_2",
+      content: "The Chicago lane is new this quarter.",
+      status: "Suggested" as const,
+      source: "Person" as const,
+      createdByName: "Jordan Reyes",
+    };
+    api.fetchAgentProfile.mockResolvedValue(
+      profile({ guidance: [offered, ...profile().guidance] }),
+    );
+    api.approveAgentProfileGuidance.mockResolvedValue({ ...offered, status: "Active" });
+    api.dismissAgentProfileGuidance.mockResolvedValue({ ...offered, status: "Dismissed" });
+    renderProfile({ canManage: true });
+
+    expect(await screen.findByText("Offered guidance")).toBeInTheDocument();
+    expect(screen.getByText(/Offered by Jordan Reyes ·/)).toBeInTheDocument();
+    expect(screen.getByText("The Laredo lane is seasonal.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Keep/ }));
+    await waitFor(() => expect(api.approveAgentProfileGuidance).toHaveBeenCalledWith("aprg_2"));
+
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    await waitFor(() => expect(api.dismissAgentProfileGuidance).toHaveBeenCalledWith("aprg_2"));
+  });
+
+  it("shows someone who cannot decide that an offered line waits for an administrator", async () => {
+    api.fetchAgentProfile.mockResolvedValue(
+      profile({
+        guidance: [
+          {
+            ...profile().guidance[0],
+            id: "aprg_2",
+            content: "The Chicago lane is new this quarter.",
+            status: "Suggested",
+            source: "Person",
+          },
+        ],
+      }),
+    );
+    renderProfile({ canManage: false });
+
+    expect(await screen.findByText(/Waiting for an administrator/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Keep/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss" })).not.toBeInTheDocument();
   });
 
   it("adds guidance for the organization and clears the box", async () => {
     const user = userEvent.setup();
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     const box = await screen.findByRole("textbox", { name: "Guidance" });
     await user.type(box, "We stopped running reefers in June.");
@@ -119,7 +172,7 @@ describe("OrganizationProfile", () => {
 
   it("retires a line and asks for the profile again", async () => {
     const user = userEvent.setup();
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     await user.click(await screen.findByRole("button", { name: "Retire" }));
     await waitFor(() =>
@@ -142,7 +195,7 @@ describe("OrganizationProfile", () => {
         },
       }),
     );
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     expect(
       await screen.findByText(
@@ -153,7 +206,7 @@ describe("OrganizationProfile", () => {
 
   it("says when there is no profile yet", async () => {
     api.fetchAgentProfile.mockResolvedValue(profile({ current: null, guidance: [] }));
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     expect(await screen.findByText(/No profile yet/)).toBeInTheDocument();
   });
@@ -165,7 +218,7 @@ describe("OrganizationProfile", () => {
         resolve = done;
       }),
     );
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     const section = screen.getByRole("region", { name: "Organization profile" });
     expect(section).toHaveAttribute("aria-busy", "true");
@@ -183,7 +236,7 @@ describe("OrganizationProfile", () => {
 
   it("says when the profile could not be loaded instead of showing nothing", async () => {
     api.fetchAgentProfile.mockRejectedValue(new Error("agent memory read is not allowed"));
-    renderProfile({ canCreate: true, canUpdate: true });
+    renderProfile({ canManage: true });
 
     expect(await screen.findByRole("alert")).toHaveTextContent("agent memory read is not allowed");
     expect(screen.queryByRole("form", { name: "Add guidance" })).not.toBeInTheDocument();

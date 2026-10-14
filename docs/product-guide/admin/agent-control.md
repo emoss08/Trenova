@@ -482,6 +482,10 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
    on **Every agent** for something every agent should know. Then select **Save memory**.
 5. To stop agents reading an entry, open it and select **Retire memory**, or right-click it and
    choose **Retire**; **Restore** brings it back.
+6. Recording, retiring, reviewing and approving memories here needs permission to manage agent
+   memory, which administrators hold and the role templates never grant. Under **Waiting for
+   approval**, memories an agent recorded for the organization, or a colleague offered for their
+   team or the organization from the Desk, wait for you to **Approve** or **Dismiss**.
 
 ### Review a memory an agent wrote after reading outside content
 Keywords: tainted memory, outside content, writes waiting for approval, review memory, why every proposal needs approval
@@ -498,9 +502,10 @@ Keywords: tainted memory, outside content, writes waiting for approval, review m
 Keywords: organization profile, what agents know about us, business profile, agents assume, steer the agents, guidance
 1. Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.
 2. Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.
-3. Under **Guidance**, type what the records cannot show, such as "The Laredo lane is seasonal; it runs from October to March", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it.
-4. To take a line back, select **Retire** on it.
-5. To have the note written again now, select **Write it again**. **Earlier versions** lists every version, including any attempt that did not finish.
+3. Under **Guidance**, type what the records cannot show, such as "The Laredo lane is seasonal; it runs from October to March", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it. If you don't manage agent memory the button reads **Offer guidance**, and the line waits under **Offered guidance** until an administrator keeps it.
+4. Under **Offered guidance**, a line someone offered, or an agent wrote down from a conversation, waits with who offered it; select **Keep** to add it (the note is written again with it) or **Dismiss** to turn it down.
+5. To take a line back, select **Retire** on it.
+6. To have the note written again now, select **Write it again**. **Earlier versions** lists every version, including any attempt that did not finish.
 
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
@@ -512,7 +517,7 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    back over its work: what made it look (a tool that worked after failing, a person correcting
    it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation)
    and each lesson it kept, offered or turned down, with the reason.
-4. A lesson shared beyond one person waits under **Nova suggests**, with the memory it would
+4. A lesson shared beyond one person waits under **Waiting for approval**, with the memory it would
    retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.
 5. Open any memory in the list to see **Where it came from**: why it was kept, what made the
    agent look back, what was said, the conversation or run it was drawn from, and the memory it

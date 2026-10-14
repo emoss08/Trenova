@@ -69,18 +69,6 @@ func (f *fakeMemories) Remember(
 	}, nil
 }
 
-type fakePermissions struct {
-	permissionports.PermissionEngine
-	allowed bool
-}
-
-func (f *fakePermissions) Check(
-	context.Context,
-	*permissionports.PermissionCheckRequest,
-) (*permissionports.PermissionCheckResult, error) {
-	return &permissionports.PermissionCheckResult{Allowed: f.allowed}, nil
-}
-
 type fakeReflections struct {
 	agentports.AgentReflectionRepository
 	stored *agent.Reflection
@@ -116,12 +104,11 @@ func (f *fakeConversations) AddSavedMemories(
 	return nil
 }
 
-func lessonService(memories *fakeMemories, allowed bool) *Service {
+func lessonService(memories *fakeMemories) *Service {
 	return &Service{
-		l:           zap.NewNop(),
-		memories:    memories,
-		permissions: &fakePermissions{allowed: allowed},
-		now:         func() int64 { return 1_790_000_000 },
+		l:        zap.NewNop(),
+		memories: memories,
+		now:      func() int64 { return 1_790_000_000 },
 	}
 }
 
@@ -168,7 +155,7 @@ func procedure(audience string) *lesson {
 func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 	t.Parallel()
 
-	svc := lessonService(&fakeMemories{}, true)
+	svc := lessonService(&fakeMemories{})
 	cases := []struct {
 		name   string
 		plan   *agentports.ReflectionPlan
@@ -245,31 +232,15 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 	}
 }
 
-func TestLessonRequest_APersonWithoutPermissionKeepsSharedLessonsForThemselves(t *testing.T) {
-	t.Parallel()
-
-	plan := threadPlan()
-	svc := lessonService(&fakeMemories{}, false)
-
-	for _, audience := range []string{audienceAgent, audienceTeam, audienceOrganization} {
-		req, reason, err := svc.lessonRequest(t.Context(), plan, procedure(audience))
-		require.NoError(t, err)
-		require.Empty(t, reason)
-		assert.Equal(t, agent.MemoryScopeUser, req.Scope, audience)
-		assert.Equal(t, plan.PersonUserID, req.OwnerUserID, audience)
-		assert.False(t, req.Suggest, audience)
-		assert.Equal(t, agent.MemorySourceReflection, req.Source)
-		assert.Equal(t, plan.ReflectionID, req.ReflectionID)
-		assert.Equal(t, "assign_move", req.ToolName)
-	}
-}
-
+// Who may keep a shared lesson at once is the memory service's to decide: a
+// team or organization lesson is always offered, and the memory service keeps
+// it or puts it in front of an administrator by the person's permission.
 func TestLessonRequest_SharedLessonsFollowWhoTheyReach(t *testing.T) {
 	t.Parallel()
 
 	plan := threadPlan()
 	role := pulid.MustNew("rol_")
-	svc := lessonService(&fakeMemories{roles: []pulid.ID{role}}, true)
+	svc := lessonService(&fakeMemories{roles: []pulid.ID{role}})
 
 	agentWide, _, err := svc.lessonRequest(t.Context(), plan, procedure(audienceAgent))
 	require.NoError(t, err)
@@ -291,7 +262,7 @@ func TestLessonRequest_SharedLessonsFollowWhoTheyReach(t *testing.T) {
 func TestLessonRequest_APersonWhoAskedToBeAskedIsOfferedEverything(t *testing.T) {
 	t.Parallel()
 
-	svc := lessonService(&fakeMemories{mode: agent.MemorySavingAskFirst}, true)
+	svc := lessonService(&fakeMemories{mode: agent.MemorySavingAskFirst})
 
 	req, _, err := svc.lessonRequest(t.Context(), threadPlan(), procedure(audienceMe))
 	require.NoError(t, err)
@@ -304,7 +275,7 @@ func TestLessonRequest_WorkThatReadOutsideContentOnlyEverOffers(t *testing.T) {
 
 	plan := threadPlan()
 	plan.Taint = &agent.RunTaint{Marks: []agent.TaintMark{{Source: agent.TaintSourceDocument}}}
-	svc := lessonService(&fakeMemories{}, true)
+	svc := lessonService(&fakeMemories{})
 
 	req, _, err := svc.lessonRequest(t.Context(), plan, procedure(audienceMe))
 	require.NoError(t, err)
@@ -321,7 +292,7 @@ func TestLessonRequest_WorkThatReadOutsideContentOnlyEverOffers(t *testing.T) {
 func TestLessonRequest_ARunOffersLessonsForItsAgent(t *testing.T) {
 	t.Parallel()
 
-	svc := lessonService(&fakeMemories{}, false)
+	svc := lessonService(&fakeMemories{})
 
 	for _, audience := range []string{audienceMe, audienceTeam, audienceAgent} {
 		req, reason, err := svc.lessonRequest(t.Context(), runPlan(), procedure(audience))
@@ -352,7 +323,7 @@ func TestLessonRequest_ASubjectAndAReplacementTheWorkVouchesFor(t *testing.T) {
 		{Type: agent.MemorySubjectCustomer, ID: customer},
 	}
 	plan.KnownMemoryIDs = []pulid.ID{known}
-	svc := lessonService(&fakeMemories{}, false)
+	svc := lessonService(&fakeMemories{})
 
 	req, reason, err := svc.lessonRequest(t.Context(), plan, &lesson{
 		Kind:        "Fact",
@@ -402,7 +373,7 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	}}
 	conversations := &fakeConversations{}
 	memories := &fakeMemories{}
-	svc := lessonService(memories, false)
+	svc := lessonService(memories)
 	svc.repo = reflections
 	svc.conversations = conversations
 
@@ -454,7 +425,7 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	memories := &fakeMemories{refuse: errortypes.NewValidationError(
 		"subjectId", errortypes.ErrInvalid, "No customer with that id is visible to you",
 	)}
-	svc := lessonService(memories, false)
+	svc := lessonService(memories)
 	svc.repo = reflections
 	svc.conversations = &fakeConversations{}
 
@@ -474,7 +445,7 @@ func TestFinish_AnUnreadableAnswerFailsTheLookBack(t *testing.T) {
 		ID:     plan.ReflectionID,
 		Status: agent.ReflectionStatusRunning,
 	}}
-	svc := lessonService(&fakeMemories{}, false)
+	svc := lessonService(&fakeMemories{})
 	svc.repo = reflections
 
 	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{Text: "{"})

@@ -32,7 +32,7 @@ type DeskMemory {
   lastUsedAt: Timestamp
   createdAt: Timestamp!
   version: Int!
-  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  "The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable."
   editable: Boolean!
   "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
   reason: String!
@@ -73,7 +73,7 @@ type DeskMemoryPage {
 type DeskMemoryRole {
   id: ID!
   name: String!
-  "The person may keep memories for the role: it needs permission to create agent memories."
+  "The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise."
   writable: Boolean!
 }
 
@@ -81,8 +81,10 @@ type DeskMemorySettings {
   savingMode: AgentMemorySavingMode!
   "The person's roles by name."
   roles: [DeskMemoryRole!]!
-  "The person may keep memories for the whole organization."
+  "The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise."
   canShareWithOrganization: Boolean!
+  "The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share."
+  managesShared: Boolean!
 }
 
 input DeskMemoriesInput {
@@ -99,7 +101,7 @@ input DeskMemoriesInput {
 
 input CreateDeskMemoryInput {
   content: String!
-  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  "User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise."
   scope: AgentMemoryScope!
   roleId: ID
 }

@@ -11,6 +11,7 @@ import { DeskMemoryPage } from "../desk-memory-page";
 
 const api = vi.hoisted(() => ({
   fetchDeskMemories: vi.fn(),
+  dismissDeskMemory: vi.fn(),
   fetchDeskMemorySettings: vi.fn(),
   createDeskMemory: vi.fn(),
   reviseDeskMemory: vi.fn(),
@@ -75,8 +76,9 @@ const team = memory({
 const settings: DeskMemorySettings = {
   __typename: "DeskMemorySettings",
   savingMode: "Automatic",
-  canShareWithOrganization: false,
-  roles: [{ id: "rol_billing", name: "Billing", writable: false }],
+  canShareWithOrganization: true,
+  managesShared: false,
+  roles: [{ id: "rol_billing", name: "Billing", writable: true }],
 } as DeskMemorySettings;
 
 function page(items: DeskMemory[]): MemoryPage {
@@ -190,6 +192,50 @@ describe("DeskMemoryPage", () => {
     await waitFor(() => expect(api.setDeskMemoryStatus).toHaveBeenLastCalledWith("m1", "Active"));
     expect(await screen.findByText("Group AR by facility.")).toBeTruthy();
     expect(screen.queryByText("Forgotten. Agents won't use this again.")).toBeNull();
+  });
+
+  it("lists what the person offered for the organization as waiting, with a way to withdraw it", async () => {
+    const offered = memory({
+      id: "m3",
+      content: "Granite wants the POD on the invoice.",
+      scope: "Organization",
+      status: "Suggested",
+      editable: false,
+      createdAt: 1_790_000_400,
+    });
+    api.fetchDeskMemories.mockResolvedValue(page([offered, own]));
+    api.dismissDeskMemory.mockResolvedValue({ ...offered, status: "Dismissed" });
+    renderPage();
+
+    expect(
+      await screen.findByText(
+        /Offered .* to an administrator, who decides whether to keep it for Organization/,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("Saved today from “Added by hand”")).toBeNull();
+
+    // Once withdrawn the server no longer lists it, but the row says what happened.
+    api.fetchDeskMemories.mockResolvedValue(page([own]));
+    await userEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    await waitFor(() => expect(api.dismissDeskMemory).toHaveBeenCalledWith("m3"));
+    expect(
+      await screen.findByText("Withdrawn. No administrator will see this offer."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Granite wants the POD on the invoice.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
+  });
+
+  it("says a memory for others is offered when the person does not manage agent memory", async () => {
+    api.fetchDeskMemories.mockResolvedValue(page([own]));
+    renderPage();
+    await screen.findByText("Group AR by facility.");
+
+    const [adding] = screen.getAllByRole("combobox", { name: "Who it is for" });
+    await userEvent.selectOptions(adding, "Organization");
+
+    expect(screen.getByRole("button", { name: "Offer" })).toBeTruthy();
+    expect(screen.getByText(/offered to an administrator/)).toBeTruthy();
   });
 
   it("offers no changes on a memory the person may not change", async () => {

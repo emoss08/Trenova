@@ -175,8 +175,10 @@ const SUGGESTION_PAGE_SIZE = 50;
 
 /**
  * Memories that wait for an administrator, newest first: those drawn from
- * feedback and those an agent learned that reach beyond one person. A memory
- * offered to one person in their own conversation is theirs to decide on the Desk.
+ * feedback, those an agent learned that reach beyond one person, and those a
+ * person offered for their team or the organization without the permission to
+ * keep them. A memory offered to one person in their own conversation is theirs
+ * to decide on the Desk.
  */
 export async function fetchAgentMemorySuggestions(options?: {
   signal?: AbortSignal;
@@ -189,7 +191,7 @@ export async function fetchAgentMemorySuggestions(options?: {
         first: SUGGESTION_PAGE_SIZE,
         fieldFilters: [
           { field: "status", operator: "eq", value: "Suggested" },
-          { field: "scope", operator: "in", value: ["Agent", "Organization"] },
+          { field: "scope", operator: "in", value: ["Agent", "Organization", "Role"] },
         ],
         sort: [{ field: "createdAt", direction: "desc" }],
       },

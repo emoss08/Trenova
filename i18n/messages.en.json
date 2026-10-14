@@ -6686,6 +6686,15 @@
       "go/other"
     ]
   },
+  "A memory for your team or the organization reaches other people's conversations, so it is offered to an administrator, who decides whether to keep it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A memory is at most {0} characters": {
     "sites": 1,
     "scope": [
@@ -22910,6 +22919,15 @@
     ]
   },
   "An admin can connect one in Agent Control.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "An administrator decides whether everyone gets it. Keep a copy for yourself?": {
     "sites": 1,
     "scope": [
       "ts"
@@ -45886,15 +45904,6 @@
       "go/other"
     ]
   },
-  "Change, retire, restore or review a memory": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Change, split and bill the order on its page": {
     "sites": 1,
     "scope": [
@@ -46295,15 +46304,6 @@
     ]
   },
   "Changing a dispute requires an authenticated user": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Changing a memory your team or organization shares needs permission to update agent memories": {
     "sites": 1,
     "scope": [
       "go"
@@ -75326,7 +75326,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -109211,6 +109211,15 @@
       "apps/web/hooks"
     ]
   },
+  "Guidance dismissed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Guidance from people": {
     "sites": 1,
     "scope": [
@@ -109247,13 +109256,31 @@
       "go/other"
     ]
   },
+  "Guidance kept; the profile will be written again with it shortly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Guidance not found": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Guidance offered; an administrator decides whether the profile keeps it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it.": {
@@ -123821,12 +123848,13 @@
     ]
   },
   "Keep": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/holiday"
     ]
   },
@@ -123955,6 +123983,15 @@
     ],
     "areas": [
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "Keep for just you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep guide": {
@@ -124463,25 +124500,7 @@
       "routes/admin"
     ]
   },
-  "Keeping a memory for everyone who uses this agent needs permission to create agent memories": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Keeping a memory for the whole organization needs permission to create agent memories": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Keeping a memory for your team needs permission to create agent memories": {
+  "Keep, change, retire, review and approve memories and profile guidance shared with a team, the organization or every agent": {
     "sites": 1,
     "scope": [
       "go"
@@ -156338,7 +156357,7 @@
     ]
   },
   "Not now": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -160348,15 +160367,6 @@
       "routes/inbox"
     ]
   },
-  "Nova suggests": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Nova was off when it arrived, so nothing was read from it.": {
     "sites": 1,
     "scope": [
@@ -161273,6 +161283,15 @@
       "routes/worker"
     ]
   },
+  "Offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Offer expires {0}": {
     "sites": 1,
     "scope": [
@@ -161321,6 +161340,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Offer guidance": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Offer has no deliverable channel": {
@@ -161424,6 +161452,60 @@
       "routes/worker"
     ]
   },
+  "Offered by a colleague for {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Offered by {0} in a conversation, written down by an agent · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Offered by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Offered for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Offered guidance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Offered guidance is decided by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Offered to them": {
     "sites": 1,
     "scope": [
@@ -161440,6 +161522,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Offered {0} to an administrator, who decides whether to keep it for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Offers a brokered load to a carrier with accept and decline links. Not customer-scoped: the recipient is a carrier, so a per-customer assignment would never fire.": {
@@ -164290,6 +164381,24 @@
       "go/other"
     ]
   },
+  "Only an administrator keeps a memory for your team or the organization. Keep this one for yourself, or write a new one for them and it will be offered to an administrator.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an administrator keeps, changes, pauses or forgets a memory shared with a team, the organization or every agent: it needs permission to manage agent memory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only an agent people talk to can hand work to other agents": {
     "sites": 1,
     "scope": [
@@ -164632,7 +164741,7 @@
       "go/other"
     ]
   },
-  "Only feedback or an agent can suggest a memory": {
+  "Only feedback, an agent, or a person offering a shared memory can suggest one": {
     "sites": 1,
     "scope": [
       "go"
@@ -165220,7 +165329,7 @@
       "routes/worker"
     ]
   },
-  "Only retired guidance says when": {
+  "Only retired or dismissed guidance says when": {
     "sites": 1,
     "scope": [
       "go"
@@ -165456,6 +165565,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Only the person a memory is kept for, or someone who manages agent memory, pauses, forgets or restores it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only the person this change is for can approve it": {
@@ -195064,15 +195182,6 @@
     ]
   },
   "Record a look back that failed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Record a memory for agents": {
     "sites": 1,
     "scope": [
       "go"
@@ -229906,7 +230015,7 @@
     ]
   },
   "Someone": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -232142,7 +232251,7 @@
       "go/other"
     ]
   },
-  "Standing instructions, facts and corrections kept for agents between runs": {
+  "Standing instructions, facts, corrections and profile guidance kept for agents between runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -247798,6 +247907,24 @@
       "apps/web/hooks"
     ]
   },
+  "The guidance could not be dismissed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "The guidance could not be kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "The guidance could not be retired": {
     "sites": 1,
     "scope": [
@@ -260329,7 +260456,7 @@
       "go/other"
     ]
   },
-  "This profile already has 50 lines of guidance. Retire one that no longer holds first.": {
+  "This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.": {
     "sites": 1,
     "scope": [
       "go"
@@ -260548,15 +260675,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "This replaces a memory your team or organization shares; saving it needs permission to update agent memories": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "This reply failed before it started.": {
@@ -278834,6 +278952,24 @@
       "routes/agent-control"
     ]
   },
+  "Waiting for an administrator; agents read none of it until then": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Waiting for approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Waiting for it to arrive…": {
     "sites": 1,
     "scope": [
@@ -278960,6 +279096,15 @@
     "areas": [
       "apps/web/hooks",
       "routes/accounting-inbound"
+    ]
+  },
+  "Waiting for you; the profile is written again with what you keep": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Waiting for your answer below": {
@@ -287283,13 +287428,14 @@
     ]
   },
   "Withdraw": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/dash/routes",
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -287413,6 +287559,15 @@
       "packages/shared/lib",
       "routes/desk",
       "routes/settlement-dispute"
+    ]
+  },
+  "Withdrawn. No administrator will see this offer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Withdrew a proposal it replaced": {
@@ -290706,6 +290861,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You offered this memory for others; an administrator decides whether it is kept": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You raised this credit memo, so someone else must approve and post it": {
@@ -296115,6 +296279,15 @@
       "routes/admin"
     ]
   },
+  "everyone using this agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -299041,6 +299214,15 @@
       "routes/agent-control"
     ]
   },
+  "the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "the picked shipment": {
     "sites": 1,
     "scope": [
@@ -299124,6 +299306,15 @@
     ]
   },
   "the whole organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "their team": {
     "sites": 1,
     "scope": [
       "ts"
@@ -311866,6 +312057,15 @@
     ]
   },
   "{0} of {1} · it passes the conversation along with what it found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} of {1} · offered to an administrator, who decides whether the profile keeps it": {
     "sites": 1,
     "scope": [
       "ts"

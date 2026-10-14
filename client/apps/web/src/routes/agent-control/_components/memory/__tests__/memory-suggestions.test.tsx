@@ -77,7 +77,7 @@ describe("MemorySuggestions", () => {
     api.fetchAgentMemorySuggestions.mockResolvedValue([suggestion({ id: "amem_1" })]);
     renderSuggestions();
 
-    expect(await screen.findByText("Nova suggests")).toBeInTheDocument();
+    expect(await screen.findByText("Waiting for approval")).toBeInTheDocument();
     expect(screen.getByText(/Drawn from 4 ratings by 3 people/)).toBeInTheDocument();
     expect(screen.getByText("It forgot the AP inbox again")).toBeInTheDocument();
 
@@ -138,11 +138,36 @@ describe("MemorySuggestions", () => {
     expect(screen.queryByText(/Drawn from/)).not.toBeInTheDocument();
   });
 
+  it("says who a colleague's offer is for, so a manager knows what they would be keeping", async () => {
+    api.fetchAgentMemorySuggestions.mockResolvedValue([
+      suggestion({
+        id: "amem_7",
+        source: "User",
+        scope: "Role",
+        roleId: "rol_billing",
+        content: "Columbus loads need a lumper receipt.",
+        evidence: null,
+      }),
+      suggestion({
+        id: "amem_8",
+        source: "User",
+        scope: "Organization",
+        content: "Granite wants the POD on the invoice.",
+        evidence: null,
+      }),
+    ]);
+    renderSuggestions();
+
+    expect(await screen.findByText(/Offered by a colleague for their team ·/)).toBeInTheDocument();
+    expect(screen.getByText(/Offered by a colleague for the organization ·/)).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Approve" })).toHaveLength(2);
+  });
+
   it("offers no decision to someone who cannot make one", async () => {
     api.fetchAgentMemorySuggestions.mockResolvedValue([suggestion({ id: "amem_1" })]);
     renderSuggestions(false);
 
-    await screen.findByText("Nova suggests");
+    await screen.findByText("Waiting for approval");
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
   });
 });
