@@ -142,22 +142,15 @@ func (s *Service) Calculate(
 		return nil, err
 	}
 
-	if template.Status != formulatemplate.StatusActive {
-		return nil, errortypes.NewValidationError(
-			"formulaTemplateId",
-			errortypes.ErrInvalid,
-			"Formula template must be Active to rate shipments",
-		)
-	}
-
-	scheduled, err := s.ResolveScheduledVersion(ctx, template, req.TenantInfo, req.RatingDate)
+	asOf := ratingAsOf(req.Entity, req.RatingDate)
+	billing, err := s.ResolveBillingVersion(ctx, template, req.TenantInfo, asOf)
 	if err != nil {
-		log.Error("failed to resolve effective template version", zap.Error(err))
+		log.Error("failed to resolve the billing version", zap.Error(err))
 		return nil, err
 	}
-	resolved := template
-	if scheduled != nil {
-		resolved = template.ApplyVersion(scheduled)
+	resolved, err := billingContent(template, billing)
+	if err != nil {
+		return nil, err
 	}
 
 	if err = refuseUnavailableInputs(resolved, req); err != nil {
@@ -169,7 +162,7 @@ func (s *Service) Calculate(
 		Entity:     req.Entity,
 		Variables:  req.Variables,
 		Overrides:  req.Overrides,
-		RatingDate: req.RatingDate,
+		RatingDate: asOf,
 	})
 	if err != nil {
 		log.Error(
@@ -177,8 +170,9 @@ func (s *Service) Calculate(
 			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, err
 	}
-	if scheduled != nil && resp.Receipt != nil {
-		resp.Receipt.EffectiveFrom = scheduled.EffectiveFrom
+	if billing != nil && resp.Receipt != nil {
+		start := billing.EffectiveStart()
+		resp.Receipt.EffectiveFrom = &start
 	}
 
 	if resp.Guardrail != nil && resp.Guardrail.Applied {
@@ -233,48 +227,43 @@ func templateReads(template *formulatemplate.FormulaTemplate, name string) bool 
 	return false
 }
 
-// ResolveEffectiveTemplate resolves the template content that is in effect for
-// the given rating date, honouring scheduled version activations. The version
-// list is memoized per unit of work via effectiveversioncache when a caller
-// installed one, so batch re-rating does not query per shipment.
-func (s *Service) ResolveEffectiveTemplate(
-	ctx context.Context,
+func billingContent(
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	ratingDate int64,
+	billing *formulatemplate.FormulaTemplateVersion,
 ) (*formulatemplate.FormulaTemplate, error) {
-	version, err := s.ResolveScheduledVersion(ctx, template, tenantInfo, ratingDate)
-	if err != nil {
-		return nil, err
-	}
-
-	if version == nil {
+	switch {
+	case template.Status == formulatemplate.StatusInactive:
+		return nil, errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			"Formula template {0} is archived and no longer rates shipments",
+			template.Name,
+		)
+	case billing != nil:
+		return template.ApplyVersion(billing), nil
+	case template.Status == formulatemplate.StatusActive:
 		return template, nil
+	default:
+		return nil, errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			"Formula template {0} has never been approved, so it cannot rate shipments yet",
+			template.Name,
+		)
 	}
-
-	return template.ApplyVersion(version), nil
 }
 
-// ResolveScheduledVersion returns the scheduled snapshot in effect for the
-// rating date, or nil when none is scheduled that early. Callers that need to
-// know whether a schedule applied at all, rather than just what content to
-// use, ask this directly.
-func (s *Service) ResolveScheduledVersion(
+func (s *Service) ResolveBillingVersion(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
-	ratingDate int64,
+	asOf int64,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	asOf := ratingDate
-	if asOf == 0 {
-		asOf = timeutils.NowUnix()
-	}
-
-	versions, err := effectiveversioncache.GetVersions(
+	approved, err := effectiveversioncache.GetVersions(
 		ctx,
 		template.ID,
 		func(loadCtx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
-			return s.versionRepo.ListScheduled(
+			return s.versionRepo.ListApproved(
 				loadCtx,
 				&formulatemplateports.ListScheduledVersionsRequest{
 					TenantInfo: tenantInfo,
@@ -287,7 +276,7 @@ func (s *Service) ResolveScheduledVersion(
 		return nil, err
 	}
 
-	return effectiveversioncache.EffectiveAsOf(versions, asOf), nil
+	return effectiveversioncache.EffectiveAsOf(approved, asOf), nil
 }
 
 type RateRequest struct {

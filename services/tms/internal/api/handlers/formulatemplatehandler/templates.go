@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -333,6 +335,20 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
+
+	mayApprove, err := h.permEngine.Check(
+		c.Request.Context(),
+		middleware.BuildPermissionCheckRequest(
+			authCtx,
+			permission.ResourceFormulaTemplate.String(),
+			permission.OpApprove,
+		),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.MayArchiveInUse = mayApprove.Allowed
 
 	results, err := h.service.BulkUpdateStatus(c.Request.Context(), req)
 	if err != nil {

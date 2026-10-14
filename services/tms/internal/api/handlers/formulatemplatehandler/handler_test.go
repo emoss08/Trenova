@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -287,6 +288,20 @@ func (m *mockVersionRepo) ListScheduled(
 	return []*formulatemplate.FormulaTemplateVersion{}, nil
 }
 
+func (m *mockVersionRepo) ListApproved(
+	_ context.Context,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return []*formulatemplate.FormulaTemplateVersion{}, nil
+}
+
+func (m *mockVersionRepo) ListAuthorIDsSince(
+	_ context.Context,
+	_ *formulatemplateports.ListVersionAuthorsRequest,
+) ([]pulid.ID, error) {
+	return nil, nil
+}
+
 func newTestFormulaService(t *testing.T) *formula.Service {
 	t.Helper()
 
@@ -315,6 +330,13 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 
 type stubFormulaVersionRepo struct {
 	formulatemplateports.FormulaTemplateVersionRepository
+}
+
+func (s *stubFormulaVersionRepo) ListApproved(
+	_ context.Context,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
 }
 
 func (s *stubFormulaVersionRepo) GetEffectiveVersion(
@@ -2673,12 +2695,14 @@ func TestFormulaTemplateHandler_UpdateEffectiveDate_Success(t *testing.T) {
 
 	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusActive)
 	future := timeutils.NowUnix() + 7200
+	pending := timeutils.NowUnix() + 3600
 
 	versionRepo := &mockVersionRepo{
 		getByTemplateAndVersionFn: func(_ context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				VersionNumber: req.VersionNumber,
 				Status:        formulatemplate.StatusActive,
+				EffectiveFrom: &pending,
 			}, nil
 		},
 		updateEffectiveDateFunc: func(_ context.Context, req *formulatemplateports.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
@@ -3136,4 +3160,58 @@ func (s *stubReviewRepo) Latest(
 		return nil, nil
 	}
 	return s.created[len(s.created)-1], nil
+}
+
+func TestFormulaTemplateHandler_Impact_NeedsAuthoringOrApprove(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		granted permission.Operation
+		want    int
+	}{
+		"read only is refused": {permission.OpRead, http.StatusForbidden},
+		"an approver passes":   {permission.OpApprove, http.StatusOK},
+		"an author passes":     {permission.OpUpdate, http.StatusOK},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			permEngine := permissionportsmock.NewMockPermissionEngine(t)
+			permEngine.EXPECT().
+				Check(mock.Anything, mock.Anything).
+				RunAndReturn(func(
+					_ context.Context,
+					req *permissionports.PermissionCheckRequest,
+				) (*permissionports.PermissionCheckResult, error) {
+					return &permissionports.PermissionCheckResult{
+						Allowed: req.Resource == "shipment" || req.Operation == tc.granted,
+					}, nil
+				}).
+				Maybe()
+
+			handler := setupHandlerWithPermissions(
+				t,
+				&mockFormulaTemplateRepo{},
+				&mockVersionRepo{},
+				permEngine,
+			)
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(http.MethodPost).
+				WithPath("/api/v1/formula-templates/" + pulid.MustNew("ft_").String() + "/impact").
+				WithDefaultAuthContext().
+				WithJSONBody(map[string]any{})
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			if tc.want == http.StatusForbidden {
+				assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+				return
+			}
+			assert.NotEqual(t, http.StatusForbidden, ginCtx.ResponseCode())
+		})
+	}
 }

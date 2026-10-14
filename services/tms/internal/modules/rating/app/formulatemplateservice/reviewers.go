@@ -20,7 +20,6 @@ type Reviewer struct {
 	ID            pulid.ID `json:"id"`
 	Name          string   `json:"name"`
 	Username      string   `json:"username"`
-	EmailAddress  string   `json:"emailAddress"`
 	ProfilePicURL string   `json:"profilePicUrl,omitempty"`
 }
 
@@ -73,7 +72,6 @@ func (s *Service) eligibleReviewers(
 			ID:            user.UserID,
 			Name:          user.Name,
 			Username:      user.Username,
-			EmailAddress:  user.EmailAddress,
 			ProfilePicURL: user.ProfilePicURL,
 		})
 	}

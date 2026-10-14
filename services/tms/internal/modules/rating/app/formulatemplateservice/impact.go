@@ -64,20 +64,15 @@ func (s *Service) ApprovalImpact(
 		return nil, err
 	}
 
-	results := make([]*BacktestResult, 0, len(shipments))
-	for _, entity := range shipments {
-		results = append(
-			results,
-			s.backtestShipment(ctx, template, template, entity, req.TenantInfo),
-		)
-	}
+	resp := s.rateEach(ctx, &rateEachRequest{
+		current:    template,
+		candidate:  template,
+		shipments:  shipments,
+		tenantInfo: req.TenantInfo,
+	})
+	sortResultsByImpact(resp.Results)
 
-	sortResultsByImpact(results)
-
-	return &BacktestResponse{
-		Results: results,
-		Summary: buildBacktestSummary(results),
-	}, nil
+	return resp, nil
 }
 
 // sortResultsByImpact puts the biggest movers first and shipments that failed

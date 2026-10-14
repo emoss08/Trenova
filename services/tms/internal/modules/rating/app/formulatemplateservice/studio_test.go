@@ -4,14 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -192,6 +194,8 @@ func TestUpdateTestCase_RerecordsOnlyWithACandidate(t *testing.T) {
 	firstRecorder := pulid.MustNew("usr_")
 	original.Record(template.ScenarioContent(), 0, firstRecorder, 100)
 	deps.testCaseRepo.cases = []*formulatemplate.TestCase{original}
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
 
 	editor := newTenantInfo()
 	updated, err := deps.svc.UpdateTestCase(t.Context(), &UpdateTestCaseRequest{
@@ -209,7 +213,6 @@ func TestUpdateTestCase_RerecordsOnlyWithACandidate(t *testing.T) {
 	assert.Equal(t, firstRecorder, *updated.RecordedByID, "no candidate leaves the recording")
 	assert.EqualValues(t, 100, *updated.RecordedAt)
 
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	rerecorded, err := deps.svc.UpdateTestCase(t.Context(), &UpdateTestCaseRequest{
 		TenantInfo: editor,
@@ -311,6 +314,7 @@ func TestReadiness_ChecksMirrorTheStudio(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.testCaseRepo.cases = []*formulatemplate.TestCase{newTestCase("exact", 350, 0.01)}
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -365,6 +369,7 @@ func TestReadiness_BreakdownReconcilesThroughTheRoundingRemainder(t *testing.T) 
 	}
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -389,6 +394,7 @@ func TestReadiness_BreakdownWarnsWhenAGuardrailMovesTheTotal(t *testing.T) {
 	}
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -436,6 +442,7 @@ func TestApprove_RequiresAtLeastOneScenario(t *testing.T) {
 	template.SubmittedAt = &submittedAt
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
 		EntityID:   template.ID,
@@ -531,7 +538,7 @@ func TestSubmit_RefusesAnOverlongReviewerNote(t *testing.T) {
 	assert.Contains(t, fieldsOf(t, err), "reviewerNote")
 }
 
-func TestListReviewers_ExcludesTheCaller(t *testing.T) {
+func TestListReviewers_ExcludesTheCallerAndNamesWithoutEmail(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
@@ -561,9 +568,12 @@ func TestListReviewers_ExcludesTheCaller(t *testing.T) {
 		ID:            other,
 		Name:          "Priya Raman",
 		Username:      "praman",
-		EmailAddress:  "priya@example.com",
 		ProfilePicURL: "https://example.com/p.png",
 	}, reviewers[0])
+
+	encoded, err := sonic.Marshal(reviewers[0])
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "priya@example.com")
 }
 
 func scenarioTraceFixture(

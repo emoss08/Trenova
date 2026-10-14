@@ -124,6 +124,18 @@ func bandedUnsupported(function, table string) error {
 	)
 }
 
+func IsReservedName(name string) bool {
+	if isReservedName(name) {
+		return true
+	}
+	for _, spec := range functionSpecs {
+		if spec.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func isReservedName(name string) bool {
 	switch name {
 	case lookupFuncName, lookupOrFuncName, lookup2FuncName, lookup2OrFuncName,

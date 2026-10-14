@@ -538,10 +538,10 @@ func (stubTotalsVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-// ListScheduled is reached through the effective-version cache whenever a
-// formula resolves. The embedded interface is nil, so leaving it unimplemented
-// panics rather than failing: these tests have no scheduled versions.
-func (stubTotalsVersionRepo) ListScheduled(
+// ListApproved is reached through the effective-version cache whenever a
+// formula rates. The embedded interface is nil, so leaving it unimplemented
+// panics rather than failing: these tests have no approved snapshots.
+func (stubTotalsVersionRepo) ListApproved(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {

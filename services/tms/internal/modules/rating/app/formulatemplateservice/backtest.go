@@ -2,12 +2,14 @@ package formulatemplateservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -35,23 +37,62 @@ type BacktestRequest struct {
 	Limit         int
 }
 
+type BacktestCurrentSource string
+
+const (
+	BacktestCurrentBilled     BacktestCurrentSource = "Billed"
+	BacktestCurrentRecomputed BacktestCurrentSource = "Recomputed"
+)
+
 type BacktestResult struct {
-	ShipmentID       pulid.ID        `json:"shipmentId"`
-	ProNumber        string          `json:"proNumber"`
-	CurrentAmount    decimal.Decimal `json:"currentAmount"`
-	CandidateAmount  decimal.Decimal `json:"candidateAmount"`
-	Delta            decimal.Decimal `json:"delta"`
-	DeltaPct         decimal.Decimal `json:"deltaPct"`
-	CurrentError     string          `json:"currentError,omitempty"`
-	CandidateError   string          `json:"candidateError,omitempty"`
-	GuardrailApplied bool            `json:"guardrailApplied"`
+	ShipmentID       pulid.ID              `json:"shipmentId"`
+	ProNumber        string                `json:"proNumber"`
+	CurrentSource    BacktestCurrentSource `json:"currentSource"`
+	CurrentAmount    decimal.Decimal       `json:"currentAmount"`
+	CandidateAmount  decimal.Decimal       `json:"candidateAmount"`
+	Delta            decimal.Decimal       `json:"delta"`
+	DeltaPct         decimal.Decimal       `json:"deltaPct"`
+	CurrentError     string                `json:"currentError,omitempty"`
+	CandidateError   string                `json:"candidateError,omitempty"`
+	GuardrailApplied bool                  `json:"guardrailApplied"`
 }
 
 type BacktestSummary = formulatemplateports.BacktestSummary
 
 type BacktestResponse struct {
-	Results []*BacktestResult `json:"results"`
-	Summary BacktestSummary   `json:"summary"`
+	Results   []*BacktestResult `json:"results"`
+	Summary   BacktestSummary   `json:"summary"`
+	Truncated bool              `json:"truncated"`
+}
+
+const backtestDeadline = 60 * time.Second
+
+type rateEachRequest struct {
+	current        *formulatemplate.FormulaTemplate
+	candidate      *formulatemplate.FormulaTemplate
+	shipments      []*shipment.Shipment
+	tenantInfo     pagination.TenantInfo
+	billedBaseline bool
+}
+
+func (s *Service) rateEach(ctx context.Context, req *rateEachRequest) *BacktestResponse {
+	ctx, cancel := context.WithTimeout(
+		engine.WithEvaluationTimeout(ctx, previewEvaluationTimeout),
+		backtestDeadline,
+	)
+	defer cancel()
+
+	resp := &BacktestResponse{Results: make([]*BacktestResult, 0, len(req.shipments))}
+	for _, entity := range req.shipments {
+		if ctx.Err() != nil {
+			resp.Truncated = true
+			break
+		}
+		resp.Results = append(resp.Results, s.backtestShipment(ctx, req, entity))
+	}
+	resp.Summary = buildBacktestSummary(resp.Results)
+
+	return resp
 }
 
 func (s *Service) Backtest(
@@ -94,18 +135,13 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	results := make([]*BacktestResult, 0, len(shipments))
-	for _, entity := range shipments {
-		results = append(
-			results,
-			s.backtestShipment(ctx, template, candidate, entity, req.TenantInfo),
-		)
-	}
-
-	return &BacktestResponse{
-		Results: results,
-		Summary: buildBacktestSummary(results),
-	}, nil
+	return s.rateEach(ctx, &rateEachRequest{
+		current:        template,
+		candidate:      candidate,
+		shipments:      shipments,
+		tenantInfo:     req.TenantInfo,
+		billedBaseline: true,
+	}), nil
 }
 
 func validateBacktestRequest(req *BacktestRequest) error {
@@ -180,32 +216,26 @@ func (s *Service) resolveBacktestCandidate(
 
 func (s *Service) backtestShipment(
 	ctx context.Context,
-	template, candidate *formulatemplate.FormulaTemplate,
+	req *rateEachRequest,
 	entity *shipment.Shipment,
-	tenantInfo pagination.TenantInfo,
 ) *BacktestResult {
 	result := &BacktestResult{
 		ShipmentID: entity.ID,
 		ProNumber:  entity.ProNumber,
 	}
 
-	current, err := s.resolveCurrentForShipment(ctx, template, entity, tenantInfo)
-	if err != nil {
-		result.CurrentError = err.Error()
-	} else if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
-		Template: current,
-		Entity:   entity,
-	}); rateErr != nil {
-		result.CurrentError = rateErr.Error()
+	if billed, ok := billedFormulaAmount(req.current, entity); req.billedBaseline && ok {
+		result.CurrentSource = BacktestCurrentBilled
+		result.CurrentAmount = billed
+		result.GuardrailApplied = entity.RatingDetail.Guardrail != nil &&
+			entity.RatingDetail.Guardrail.Applied
 	} else {
-		result.CurrentAmount = resp.Amount
-		if resp.Guardrail != nil && resp.Guardrail.Applied {
-			result.GuardrailApplied = true
-		}
+		result.CurrentSource = BacktestCurrentRecomputed
+		s.recomputeCurrent(ctx, req, entity, result)
 	}
 
 	if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
-		Template: candidate,
+		Template: req.candidate,
 		Entity:   entity,
 	}); rateErr != nil {
 		result.CandidateError = rateErr.Error()
@@ -229,17 +259,59 @@ func (s *Service) backtestShipment(
 	return result
 }
 
+func (s *Service) recomputeCurrent(
+	ctx context.Context,
+	req *rateEachRequest,
+	entity *shipment.Shipment,
+	result *BacktestResult,
+) {
+	current, err := s.resolveCurrentForShipment(ctx, req.current, entity, req.tenantInfo)
+	if err != nil {
+		result.CurrentError = err.Error()
+		return
+	}
+
+	resp, err := s.formulaService.Rate(ctx, &formula.RateRequest{
+		Template: current,
+		Entity:   entity,
+	})
+	if err != nil {
+		result.CurrentError = err.Error()
+		return
+	}
+
+	result.CurrentAmount = resp.Amount
+	if resp.Guardrail != nil && resp.Guardrail.Applied {
+		result.GuardrailApplied = true
+	}
+}
+
+func billedFormulaAmount(
+	template *formulatemplate.FormulaTemplate,
+	entity *shipment.Shipment,
+) (decimal.Decimal, bool) {
+	detail := entity.RatingDetail
+	if detail == nil || detail.FormulaTemplateID != template.ID.String() {
+		return decimal.Zero, false
+	}
+	if !entity.FreightChargeAmount.Valid || entity.RateOverrideAmount.Valid {
+		return decimal.Zero, false
+	}
+
+	return entity.FreightChargeAmount.Decimal, true
+}
+
 // resolveCurrentForShipment reconstructs the content a shipment was actually
-// charged with, so the "current" side of a backtest is the number on the
-// invoice rather than whatever the template row happens to hold today.
+// charged with, for the rows whose "current" side has to be recomputed: an
+// approval impact, which isolates the content change from rate-table drift, and
+// a backtest row with no stored formula charge to compare against.
 //
 // The row is the wrong baseline more often than not: while a template is in
 // review the row already carries the pending edit, and a template under
 // revision has been demoted to Draft. So the search goes from most to least
-// specific — the version stamped on the shipment's own rating detail, then a
-// version scheduled into effect for its ship date, then the newest snapshot
-// the template took while Active — and only falls back to the row when the
-// template has no approved history at all.
+// specific — the version stamped on the shipment's own rating detail, then the
+// approved snapshot in force on its rating date — and only falls back to the
+// row when the template has no approved history at all.
 func (s *Service) resolveCurrentForShipment(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
@@ -263,38 +335,17 @@ func (s *Service) resolveCurrentForShipment(
 		}
 	}
 
-	scheduled, err := s.formulaService.ResolveScheduledVersion(
+	billing, err := s.formulaService.ResolveBillingVersion(
 		ctx,
 		template,
 		tenantInfo,
-		shipmentRatingDate(entity),
+		entity.RatingAsOf(timeutils.NowUnix()),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if scheduled != nil {
-		return template.ApplyVersion(scheduled), nil
-	}
-
-	active, err := effectiveversioncache.GetLatestActive(
-		ctx,
-		template.ID,
-		func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			return s.versionRepo.GetLatestByStatus(
-				loadCtx,
-				&formulatemplateports.GetLatestVersionByStatusRequest{
-					TenantInfo: tenantInfo,
-					TemplateID: template.ID,
-					Status:     formulatemplate.StatusActive,
-				},
-			)
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if active != nil {
-		return template.ApplyVersion(active), nil
+	if billing != nil {
+		return template.ApplyVersion(billing), nil
 	}
 
 	return template, nil
@@ -337,18 +388,6 @@ func recordedVersionNumber(
 	}
 
 	return detail.VersionNumber
-}
-
-func shipmentRatingDate(entity *shipment.Shipment) int64 {
-	asOf := entity.CreatedAt
-	if entity.ActualShipDate != nil && *entity.ActualShipDate > 0 {
-		asOf = *entity.ActualShipDate
-	}
-	if asOf == 0 {
-		asOf = timeutils.NowUnix()
-	}
-
-	return asOf
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {

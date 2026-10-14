@@ -266,6 +266,13 @@ func (noScheduledVersions) ListScheduled(
 	return nil, nil
 }
 
+func (noScheduledVersions) ListApproved(
+	context.Context,
+	*formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
 type noLookupTables struct {
 	ratematrixports.RateMatrixRepository
 }

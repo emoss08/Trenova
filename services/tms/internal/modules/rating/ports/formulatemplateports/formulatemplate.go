@@ -26,9 +26,11 @@ type ListFormulaTemplateConnectionRequest struct {
 }
 
 type BulkUpdateFormulaTemplateStatusRequest struct {
-	TenantInfo  pagination.TenantInfo  `json:"-"`
-	TemplateIDs []pulid.ID             `json:"templateIds"`
-	Status      formulatemplate.Status `json:"status"`
+	TenantInfo      pagination.TenantInfo  `json:"-"`
+	TemplateIDs     []pulid.ID             `json:"templateIds"`
+	Status          formulatemplate.Status `json:"status"`
+	ConfirmInUse    bool                   `json:"confirmInUse"`
+	MayArchiveInUse bool                   `json:"-"`
 }
 
 type BulkDuplicateFormulaTemplateRequest struct {

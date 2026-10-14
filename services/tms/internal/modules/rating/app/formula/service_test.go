@@ -212,6 +212,16 @@ func (s *stubVersionRepo) GetEffectiveVersion(
 	return s.effectiveVersion, nil
 }
 
+func (s *stubVersionRepo) ListApproved(
+	_ context.Context,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	if s.effectiveVersion == nil {
+		return nil, nil
+	}
+	return []*formulatemplate.FormulaTemplateVersion{s.effectiveVersion}, nil
+}
+
 func (s *stubVersionRepo) ListScheduled(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,

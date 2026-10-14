@@ -781,3 +781,31 @@ func TestFormulaTemplate_ValidateCaps(t *testing.T) {
 	tooMany.Validate(multiErr)
 	assert.True(t, multiErr.HasErrors(), "too many variables must be rejected")
 }
+
+func TestFormulaTemplate_Validate_BoundsDescriptionAndMetadata(t *testing.T) {
+	t.Parallel()
+
+	template := &FormulaTemplate{
+		Name:        "Bounded",
+		Expression:  "1",
+		Type:        TemplateTypeFreightCharge,
+		Status:      StatusDraft,
+		Description: strings.Repeat("d", MaxDescriptionLength+1),
+		Metadata:    map[string]any{"notes": strings.Repeat("m", MaxMetadataBytes)},
+	}
+
+	multiErr := errortypes.NewMultiError()
+	template.Validate(multiErr)
+
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields = append(fields, fieldErr.Field)
+	}
+	assert.ElementsMatch(t, []string{"description", "metadata"}, fields)
+
+	template.Description = "A per-mile linehaul"
+	template.Metadata = map[string]any{"owner": "pricing"}
+	multiErr = errortypes.NewMultiError()
+	template.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors())
+}

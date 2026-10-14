@@ -47,7 +47,7 @@ workstreams follows from that.
 | WS2. Data-contract defects (silent mispricing) | done, in review |
 | WS3. Data-contract defects (loud failures the preview hides) | done, in review |
 | WS4. Engine hardening and money arithmetic | done, in review |
-| WS5. Template lifecycle: billing continuity, effective dating, approval | open |
+| WS5. Template lifecycle: billing continuity, effective dating, approval | done, in review |
 | WS6. Language conformance between editor and server | open |
 
 ---
@@ -632,10 +632,11 @@ Fix:
   already started is refused.
 - `RateQuote` records the formula template version alongside the agreement version
   (`rating/domain/ratequote/quote.go:55-56`).
-- **Decision needed before implementing the lock:** nothing in this repository sets
-  `RateLocked` to true (checked at `shipmentcommercial/commercial.go:222`). Confirm with the
-  product owner whether invoiced shipments are protected elsewhere (Cloud overlay, invoice
-  status); if not, lock rating on invoice and record the decision in this file.
+- **Decision (product owner, while WS5 was in progress): lock when the invoice posts.** Nothing
+  in this repository set `RateLocked` to true, and nothing elsewhere protects an invoiced
+  shipment. Posting an invoice now sets `RateLocked` on every leg it bills, in the same
+  transaction; a credit-and-rebill or a void that reopens the shipment clears it, and a leg
+  another posted invoice still bills stays locked.
 
 ### 5.3 Stale schedules override approved content — high, reported
 
@@ -702,6 +703,111 @@ critical with request metadata, audit scenario changes, and record old and new v
   (`formulatemplatetestcaserepository/formulatemplatetestcase.go:112-117`). Use buncolgen.
 - Backtest's "current" side recomputes with today's tables (`backtest.go:198-211`); compare
   against the stored billed amount as its comment says.
+
+### Done
+
+Tests: `formula/lifecycle_test.go`, `effectiveversioncache_test.go`, and in
+`formulatemplateservice/` `approval_rounds_test.go`, `audit_test.go`, `effectivedate_test.go`,
+`impact_test.go`, `notifications_test.go`, `service_test.go`, `studio_test.go`,
+`testcases_test.go` and `standards_test.go`. Also the domain's `formulatemplate_test.go`,
+`formulatypes/variable_validation_test.go`, `rateagreementservice/template_reference_test.go`,
+`rateengine_test.go`, billing's `invoicevoid/release_test.go` and
+`invoiceservice/mark_invoiced_test.go`, the formula template handler's `handler_test.go`, and
+GraphQL's `shipmentresolver/formulavisibility_test.go`. Integration tests
+(`formulatemplaterepository/usage_integration_test.go`,
+`formulatemplateversionrepository/billing_integration_test.go`,
+`formulatemplatetestcaserepository/delete_integration_test.go`) were vetted with
+`-tags integration` but not run here, as this environment has no Docker. Client tests:
+`archive-refusal.test.ts`, `studio/model/__tests__/billing.test.ts`,
+`version/__tests__/schedule-state.test.ts` and `backtest-export.test.ts`.
+
+The model behind all of it: an approved snapshot (version status Active) bills from its start,
+`EffectiveFrom` if it was scheduled and its approval time otherwise
+(`FormulaTemplateVersion.EffectiveStart`). Rating resolves the snapshot in force at the rating
+date (`formula.Service.ResolveBillingVersion`, `effectiveversioncache.EffectiveAsOf`); before
+the first window it uses the earliest approved snapshot. The template row is what is being
+edited, never what bills, unless the template is Active and has no approved snapshot at all
+(templates approved before snapshots existed).
+
+- **5.1.**
+  - A Draft or InReview template bills with its approved snapshot. One that was never approved
+    refuses ("has never been approved"), and an archived one refuses as archived.
+  - Reject returns a template that has an approved snapshot to Draft, and archives only one that
+    never had any. The notification and the dialog say which happened.
+  - Archiving an Active template that something uses (5.6 counts usage) needs approve
+    permission. The handler checks it and the service refuses without it. It also needs
+    `confirmInUse`: without it the 422 names each template and what uses it, and the list page
+    shows that message and offers "Archive anyway".
+  - `GET /formula-templates/:id` carries `billing` (the version and its start), and the studio
+    shows "Billing v5 while v6 is in review", "… while v7 is a draft" or "… until v6 takes
+    effect".
+  - Rate agreements accept a template that is Active or has an approved snapshot.
+- **5.2.**
+  - Approval closes the previous window: the new snapshot bills from approval time, or from a
+    chosen future start (`effectiveFrom` on approve, at most an hour in the past). The approve
+    dialog offers the date.
+  - `ClearScheduled` touches only pending windows (`effective_from > now`) and retires them to
+    Inactive instead of nulling dates.
+  - On an approved snapshot, `UpdateVersionEffectiveDate` works as follows:
+    - Clearing a pending window starts it now.
+    - Unscheduling a window that already started is refused ("already billed shipments").
+    - A new date on a started window approves the same content again as a new snapshot that
+      starts then, after validating it and running its scenarios, so history keeps its prices.
+  - `RateQuote.formulaTemplateVersionNumber` records the snapshot that priced the linehaul
+    (migration `20261231009250`).
+  - The lock follows the decision recorded under 5.2.
+- **5.3.** Every transition out of Active clears pending windows: archive (`BulkUpdateStatus`),
+  rollback to Draft, and material edits, which already did. ReviewDiff and Readiness list
+  `pendingSchedules`.
+- **5.4.**
+  - Approval is refused to anyone who authored a version created since the last approved one
+    (`ListAuthorIDsSince`), not only to the submitter.
+  - Moving a started window re-validates and re-runs scenarios, as above. A pending window's
+    content was validated when it was approved and has billed nothing, so moving it does not
+    re-run them.
+  - Reject, RequestChanges and stale-submission expiry each run in one transaction with their
+    review row and schedule clearing.
+  - `BulkUpdateStatus` updates only rows still Active or Inactive and bumps `version`.
+  - Standard templates install as Draft. The catalog's "Per Hour" declared an input named
+    `totalHours`, which shadows the shipment value (5.6), so it is now `billedHours` and falls
+    back to `totalHours`.
+- **5.5.**
+  - Approve, reject, schedule, rollback, archive and material edits are audited as critical
+    entries with request metadata.
+  - Scenario update and delete are audited with the scenario before and after.
+  - The effective-date entry records `previousEffectiveFrom`.
+  - Audit writes still follow the commit, as everywhere else in the service. A critical entry
+    is inserted directly and, if that fails, buffered and retried, so a failure no longer only
+    shows up in the log.
+- **5.6.**
+  - Variable definitions are checked on save (`formulatypes.ValidateVariableDefinitions`):
+    name pattern, duplicates, type (case-insensitive, stored canonical) and a default of the
+    declared type. A name that is a formula function, or that shadows a schema field or
+    provided value, is refused.
+  - Fork runs create's validation.
+  - The preview enforces the expression length (10,000) and breakdown count (20) caps.
+  - Description is capped at 2,000 characters and metadata at 16 KiB.
+  - `CountUsages` counts the billing-control fallback.
+  - `/impact` needs create, update or approve.
+  - Backtest and impact share one runner: a 60-second overall deadline, the preview timeout
+    per evaluation, `truncated` when the deadline cut the run short, and the WS4.2 slots
+    through the engine. The UI says when a run was truncated.
+- **5.7.**
+  - `Shipment.formulaTemplate` and `ShipmentRatingDetail.expression` resolve only for a
+    reader with formula template read; anyone else gets null and an empty string.
+  - Found while fixing this and not changed here: REST `GET /shipments/:id?expandShipmentDetails=true`
+    (and the list, create and update responses that load details) still return the template
+    relation and the rating detail's expression to anyone with shipment read. That needs the
+    same check on about ten handlers and is left for a follow-up.
+  - Reviewers are listed by name and username, without email.
+  - ListConnection, CountUsages and SelectOptions run in `dbtx.Read`.
+  - `DeleteTestCase` uses the generated tenant scope and columns. This is a refactor with no
+    behaviour to fail first; the integration test pins the template and tenant scoping.
+  - Backtest's current side is the amount the shipment was billed (`currentSource: Billed`):
+    its stored freight charge, when its rating detail names this template and no hand-set rate
+    replaced it. Otherwise the billed content is rated again (`Recomputed`). Approval impact
+    always recomputes, so a reviewer sees what the content change does, separate from table
+    drift since billing.
 
 ---
 

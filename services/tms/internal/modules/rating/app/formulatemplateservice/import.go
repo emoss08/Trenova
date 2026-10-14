@@ -124,6 +124,7 @@ func (s *Service) Import(
 
 	for _, entity := range created {
 		s.logAuditAction(
+			ctx,
 			log,
 			entity,
 			permission.OpCreate,

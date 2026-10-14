@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -146,6 +148,7 @@ func (s *Service) CreateWithTestCases(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		createdEntity,
 		permission.OpCreate,
@@ -255,12 +258,14 @@ func (s *Service) Update(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		updatedEntity,
 		permission.OpUpdate,
 		userID,
 		original,
 		auditComment,
+		criticalWhen(material)...,
 	)
 
 	return updatedEntity, nil
@@ -334,6 +339,7 @@ func (s *Service) Duplicate(
 
 	for _, entity := range entities {
 		s.logAuditAction(
+			ctx,
 			log,
 			entity,
 			permission.OpCreate,
@@ -386,12 +392,34 @@ func (s *Service) BulkUpdateStatus(
 		)
 	}
 
+	if err = s.guardArchivingInUse(ctx, req, templates); err != nil {
+		return nil, err
+	}
+
 	previousStates := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
 	for _, template := range templates {
 		previousStates[template.ID] = template
 	}
 
-	updated, err := s.repo.BulkUpdateStatus(ctx, req)
+	var updated []*formulatemplate.FormulaTemplate
+	cleared := make(map[pulid.ID]int64, len(templates))
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		saved, txErr := s.repo.BulkUpdateStatus(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+
+		for _, template := range saved {
+			count, clearErr := s.clearScheduledVersions(txCtx, template)
+			if clearErr != nil {
+				return clearErr
+			}
+			cleared[template.ID] = count
+		}
+
+		updated = saved
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -399,23 +427,119 @@ func (s *Service) BulkUpdateStatus(
 	log := s.l.With(zap.String("operation", "BulkUpdateStatus"))
 	for _, template := range updated {
 		s.logAuditAction(
+			ctx,
 			log,
 			template,
 			permission.OpUpdate,
 			req.TenantInfo.UserID,
 			previousStates[template.ID],
-			fmt.Sprintf("Status changed to %s in bulk update", req.Status),
+			withClearedSchedules(
+				fmt.Sprintf("Status changed to %s in bulk update", req.Status),
+				cleared[template.ID],
+			),
+			auditservice.WithCritical(),
 		)
 	}
 
 	return updated, nil
 }
 
+func (s *Service) guardArchivingInUse(
+	ctx context.Context,
+	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
+	templates []*formulatemplate.FormulaTemplate,
+) error {
+	inUse := make([]string, 0, len(templates))
+	for _, template := range templates {
+		if template.Status != formulatemplate.StatusActive {
+			continue
+		}
+
+		usage, err := s.repo.CountUsages(ctx, &formulatemplateports.GetTemplateUsageRequest{
+			TemplateID: template.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return err
+		}
+		if usage == nil || !usage.InUse {
+			continue
+		}
+
+		inUse = append(inUse, template.Name+" ("+describeUsages(usage.Usages)+")")
+	}
+
+	if len(inUse) == 0 {
+		return nil
+	}
+
+	if !req.MayArchiveInUse {
+		return errortypes.NewAuthorizationError(
+			"Archiving a formula template that is still in use needs approve permission",
+		)
+	}
+
+	if !req.ConfirmInUse {
+		return errortypes.NewValidationError(
+			"confirmInUse",
+			errortypes.ErrInvalid,
+			"Archiving stops these templates rating anything: {0}. Confirm to archive them anyway",
+			strings.Join(inUse, "; "),
+		)
+	}
+
+	return nil
+}
+
+var usageNouns = map[string][2]string{
+	"shipment":                   {"shipment", "shipments"},
+	"rate_matrix":                {"rate matrix", "rate matrices"},
+	"rate_agreement_rule":        {"rate agreement rule", "rate agreement rules"},
+	"rate_agreement_accessorial": {"agreement accessorial", "agreement accessorials"},
+	"billing_control_fallback":   {"billing fallback", "billing fallbacks"},
+}
+
+func describeUsages(usages []formulatemplateports.TemplateUsageCount) string {
+	parts := make([]string, 0, len(usages))
+	for _, usage := range usages {
+		if usage.Count <= 0 {
+			continue
+		}
+		noun, ok := usageNouns[usage.Type]
+		if !ok {
+			noun = [2]string{usage.Type, usage.Type}
+		}
+		parts = append(parts, stringutils.CountNoun(usage.Count, noun[0], noun[1]))
+	}
+	return strings.Join(parts, ", ")
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.repo.GetByID(ctx, req)
+	template, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	billing, err := s.formulaService.ResolveBillingVersion(
+		ctx,
+		template,
+		req.TenantInfo,
+		timeutils.NowUnix(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if billing != nil {
+		template.Billing = &formulatemplate.BillingVersion{
+			VersionNumber: billing.VersionNumber,
+			EffectiveFrom: billing.EffectiveStart(),
+		}
+	}
+
+	return template, nil
 }
 
 func (s *Service) List(
@@ -468,6 +592,7 @@ func (s *Service) getTemplateByIDWithTenant(
 }
 
 func (s *Service) logAuditAction(
+	ctx context.Context,
 	log *zap.Logger,
 	entity *formulatemplate.FormulaTemplate,
 	operation permission.Operation,
@@ -486,7 +611,10 @@ func (s *Service) logAuditAction(
 		BusinessUnitID: entity.BusinessUnitID,
 	}
 
-	opts := []auditports.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{
+		auditservice.WithComment(comment),
+		auditservice.WithRequest(ctx),
+	}
 
 	if previousState != nil {
 		params.PreviousState = jsonutils.MustToJSON(previousState)
@@ -498,6 +626,13 @@ func (s *Service) logAuditAction(
 	if err := s.auditService.LogAction(params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
+}
+
+func criticalWhen(critical bool) []auditports.LogOption {
+	if !critical {
+		return nil
+	}
+	return []auditports.LogOption{auditservice.WithCritical()}
 }
 
 const MaxHeldTestCases = 50

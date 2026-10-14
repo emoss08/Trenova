@@ -26678,15 +26678,6 @@
       "routes/rate-agreement"
     ]
   },
-  "Approving activates this template so it can be used to rate shipments.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Approving and designating are separate decisions — nothing is drawn down yet.": {
     "sites": 1,
     "scope": [
@@ -26721,6 +26712,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Approving makes this content the one that rates shipments, from now or from the date you choose.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Approving makes you their biller.": {
@@ -26851,6 +26851,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Archive anyway": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Archive customers": {
@@ -27123,6 +27132,15 @@
       "routes/admin"
     ]
   },
+  "Archiving a formula template that is still in use needs approve permission": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Archiving is permanent. The agreement stops pricing and is kept only because quotes point at it.": {
     "sites": 1,
     "scope": [
@@ -27148,6 +27166,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Archiving stops these templates rating anything: {0}. Confirm to archive them anyway": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Archiving...": {
@@ -35766,7 +35793,7 @@
     ]
   },
   "Billed": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -36213,6 +36240,15 @@
       "go/other"
     ]
   },
+  "Billing fallback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Billing for this shipment has been canceled. No further modifications can be made.": {
     "sites": 1,
     "scope": [
@@ -36615,6 +36651,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Billing v{0} until v{1} takes effect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Billing v{0} while v{1} is a draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Billing v{0} while v{1} is in review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Billing warnings": {
@@ -52842,6 +52905,24 @@
       "apps/web/components"
     ]
   },
+  "Compares what recent shipments billed with what the editor's content would charge them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Compares what {0} recent shipments billed with what the editor's content would charge them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Comparing report runs…": {
     "sites": 1,
     "scope": [
@@ -62799,7 +62880,7 @@
     ]
   },
   "Current": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -63051,6 +63132,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Current source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Current standing is not available.": {
@@ -68384,6 +68474,15 @@
       "go/other"
     ]
   },
+  "Default value must be a {0} to match the input's type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Default version cannot be longer than 20 characters": {
     "sites": 2,
     "scope": [
@@ -71132,6 +71231,15 @@
   },
   "Description cannot be longer than 500 characters": {
     "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Description cannot exceed 2,000 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -82430,7 +82538,7 @@
       "routes/worker"
     ]
   },
-  "Effective date cannot be more than one hour in the past": {
+  "Effective date cannot be more than one hour in the past; earlier shipments keep the version that billed them": {
     "sites": 1,
     "scope": [
       "go"
@@ -101278,6 +101386,15 @@
       "go/other"
     ]
   },
+  "Formula Template Version Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula assistant": {
     "sites": 2,
     "scope": [
@@ -101375,6 +101492,24 @@
       "go/other"
     ]
   },
+  "Formula template has never been approved, so it cannot price shipments yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template is archived and no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula template is required": {
     "sites": 4,
     "scope": [
@@ -101384,24 +101519,6 @@
     "areas": [
       "go/other",
       "packages/shared/types"
-    ]
-  },
-  "Formula template must be Active to price shipments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Formula template must be Active to rate shipments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Formula template must be a freight charge template": {
@@ -101432,6 +101549,24 @@
     ]
   },
   "Formula template submitted for review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template {0} has never been approved, so it cannot rate shipments yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template {0} is archived and no longer rates shipments": {
     "sites": 1,
     "scope": [
       "go"
@@ -114330,6 +114465,15 @@
       "routes/formula-template"
     ]
   },
+  "Input {0} is declared twice; the first is input {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Inputs": {
     "sites": 2,
     "scope": [
@@ -124452,6 +124596,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Leave empty to bill with it as soon as it is approved. With a date, the approved content in force today keeps billing until then.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Leave empty to copy the link and share it with {0} yourself.": {
@@ -135735,6 +135888,24 @@
       "routes/formula-template"
     ]
   },
+  "Metadata cannot exceed 16 KiB": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Metadata must be plain JSON values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Meters": {
     "sites": 1,
     "scope": [
@@ -140063,7 +140234,7 @@
     ]
   },
   "Name is required": {
-    "sites": 153,
+    "sites": 154,
     "scope": [
       "go",
       "ts"
@@ -140188,7 +140359,7 @@
     ]
   },
   "Name must start with a letter and contain only letters, digits, and underscores": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -156012,12 +156183,13 @@
     ]
   },
   "Now": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/formula-template",
       "routes/shipment"
     ]
   },
@@ -186643,16 +186815,7 @@
       "routes/formula-template"
     ]
   },
-  "Re-rates recent shipments with the active version and with the editor's.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Re-rates {0} recent shipments with the active version and with the editor's.": {
+  "Re-rated with the content it billed with: the shipment holds no formula charge to compare, or its rate was set by hand.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -193411,7 +193574,7 @@
       "routes/worker"
     ]
   },
-  "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.": {
+  "Rejecting closes this review round. A template that was approved before returns to draft and its approved content keeps billing; one that never was is archived. Use Request Changes to send it back to the author instead.": {
     "sites": 2,
     "scope": [
       "ts"
@@ -194590,15 +194753,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Remove the scheduled activation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Remove the waiting message": {
@@ -226526,6 +226680,24 @@
       "routes/accounting-sync"
     ]
   },
+  "Start billing on (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Start billing with this version now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Start blank": {
     "sites": 1,
     "scope": [
@@ -233500,7 +233672,7 @@
       "go/other"
     ]
   },
-  "Template rejected and archived": {
+  "Template rejected": {
     "sites": 2,
     "scope": [
       "ts"
@@ -246303,6 +246475,15 @@
       "apps/web/lib"
     ]
   },
+  "The schedule was not changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "The scheduled report could not be queued for generation": {
     "sites": 1,
     "scope": [
@@ -247017,15 +247198,6 @@
     ]
   },
   "The standard library is empty.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "The standard rating library is ready to use.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -249499,6 +249671,15 @@
       "routes/formula-template"
     ]
   },
+  "They are drafts: add scenarios and send each for review before it rates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "They are in the purchases table now and will be counted the next time the quarter's return is computed.": {
     "sites": 1,
     "scope": [
@@ -249827,7 +250008,7 @@
       "routes/agent-control"
     ]
   },
-  "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.": {
+  "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one rates shipments once it has scenarios and someone else approves it. Templates you already have are left untouched.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -262056,6 +262237,15 @@
       "go/other"
     ]
   },
+  "Type must be Number, String, Boolean, Date, Array, Object or Any": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Type must be static or dynamic separation of duty": {
     "sites": 1,
     "scope": [
@@ -268140,6 +268330,15 @@
       "routes/cost-control"
     ]
   },
+  "Variable definition is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Variable is repeated": {
     "sites": 1,
     "scope": [
@@ -268999,6 +269198,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Version {0} has already billed shipments; a window that has started keeps its date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Version {0} is already the current one": {
@@ -282204,6 +282412,15 @@
       "apps/web/lib"
     ]
   },
+  "You authored part of this revision, so another reviewer must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You can answer in a moment.": {
     "sites": 1,
     "scope": [
@@ -291788,7 +292005,16 @@
       "apps/web/components"
     ]
   },
-  "v{0} will no longer activate automatically": {
+  "v{0} bills from now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "v{0} has already billed shipments, so its window stays as it was: a new date approves the same content again as a new version that starts then.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -296728,6 +296954,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {The run reached its time limit after # shipment; the figures cover only that one.} other {The run reached its time limit after # shipments; the figures cover only those.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {The selected PTO request failed} other {All # selected PTO requests failed}}": {
     "sites": 1,
     "scope": [
@@ -300706,6 +300941,15 @@
       "go/other"
     ]
   },
+  "{0} is already a shipment value; an input cannot replace it, so choose another name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} is already defined above; use another name": {
     "sites": 1,
     "scope": [
@@ -301523,6 +301767,15 @@
     ]
   },
   "{0} is set not to receive payment reminders. Turn reminders on in the customer's billing profile to send one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is the name of a formula function; choose another name for the input": {
     "sites": 1,
     "scope": [
       "go"

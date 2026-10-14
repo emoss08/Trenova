@@ -292,7 +292,7 @@ func (s *Service) rateFromFallbackTemplate(
 		Source:     ratetypes.ComponentSourceFormulaTemplate,
 		SourceID:   resp.FormulaTemplateID,
 		SourceName: resp.FormulaTemplateName,
-		Detail:     map[string]any{"expression": resp.Expression},
+		Detail:     formulaLinehaulDetail(resp),
 	})
 	trace.Totals = totalsFor(resp.Amount)
 
@@ -450,6 +450,7 @@ func (s *Service) buildQuote(
 		ContextHash:         rateCtx.Hash(),
 		Trace:               trace,
 	}
+	quote.FormulaTemplateVersionNumber = linehaulTemplateVersion(trace)
 
 	if req.Shipment != nil {
 		shipmentID := req.Shipment.ID
@@ -498,4 +499,29 @@ func (s *Service) hydrate(
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
 	})
+}
+
+func formulaLinehaulDetail(resp *formulatemplatetypes.CalculateResponse) map[string]any {
+	detail := map[string]any{"expression": resp.Expression}
+	if resp.VersionNumber > 0 {
+		detail["versionNumber"] = resp.VersionNumber
+	}
+	return detail
+}
+
+func linehaulTemplateVersion(trace *ratetypes.Trace) *int64 {
+	if trace == nil {
+		return nil
+	}
+	for i := range trace.Components {
+		component := &trace.Components[i]
+		if component.Kind != ratetypes.ComponentKindLinehaul {
+			continue
+		}
+		if version, ok := component.Detail["versionNumber"].(int64); ok && version > 0 {
+			return &version
+		}
+		return nil
+	}
+	return nil
 }

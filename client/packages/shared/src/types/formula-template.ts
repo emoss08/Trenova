@@ -70,6 +70,25 @@ const roundingPrecisionSchema = z
     error: () => translate("Rounding precision cannot exceed {0}", MAX_ROUNDING_PRECISION),
   });
 
+/** An approved snapshot whose start has not come yet: approved content waiting to bill. */
+export const scheduledWindowSchema = z.object({
+  versionNumber: z.number(),
+  effectiveFrom: z.number(),
+});
+export type ScheduledWindow = z.output<typeof scheduledWindowSchema>;
+
+const scheduledWindowsSchema = z
+  .array(scheduledWindowSchema)
+  .nullish()
+  .transform((v) => v ?? []);
+
+/** The approved snapshot that prices shipments today, whatever the row holds. */
+export const billingVersionSchema = z.object({
+  versionNumber: z.number(),
+  effectiveFrom: z.number(),
+});
+export type BillingVersion = z.output<typeof billingVersionSchema>;
+
 export const formulaTemplateSchema = z
   .object({
     id: z.string().optional(),
@@ -100,6 +119,7 @@ export const formulaTemplateSchema = z
     sourceTemplateId: z.string().nullish(),
     sourceVersionNumber: z.number().nullish(),
     currentVersionNumber: z.number().optional(),
+    billing: billingVersionSchema.nullish(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
     usageCount: z.number().optional(),
@@ -430,6 +450,8 @@ export const backtestResultSchema = z.object({
     .string()
     .nullish()
     .transform((v) => v ?? ""),
+  /** Billed: the amount on the shipment. Recomputed: its billed content rated again today. */
+  currentSource: z.enum(["Billed", "Recomputed"]).default("Recomputed"),
   currentAmount: z.coerce.number(),
   candidateAmount: z.coerce.number(),
   delta: z.coerce.number(),
@@ -465,6 +487,8 @@ export const backtestResponseSchema = z.object({
     .nullish()
     .transform((v) => v ?? []),
   summary: backtestSummarySchema,
+  /** True when the run hit its time limit before rating every shipment. */
+  truncated: z.boolean().default(false),
 });
 export type BacktestResponse = z.output<typeof backtestResponseSchema>;
 
@@ -804,6 +828,8 @@ export const AVAILABLE_FUNCTIONS = [
 export const bulkUpdateStatusRequestSchema = z.object({
   templateIds: z.array(z.string()),
   status: formulaTemplateStatusSchema,
+  /** Sent after the person has seen what uses the templates and still means to archive them. */
+  confirmInUse: z.boolean().optional(),
 });
 
 export type BulkUpdateStatusRequest = z.infer<typeof bulkUpdateStatusRequestSchema>;
@@ -971,6 +997,7 @@ export const reviewDiffResponseSchema = z.object({
   currentExpression: z.string(),
   changes: z.record(z.string(), fieldChangeSchema),
   changeCount: z.number(),
+  pendingSchedules: scheduledWindowsSchema,
 });
 export type ReviewDiffResponse = z.output<typeof reviewDiffResponseSchema>;
 
@@ -1038,6 +1065,7 @@ export const readinessResponseSchema = z.object({
   scenarioTotal: z.number(),
   scenarioPassed: z.number(),
   scenarioFailing: z.array(z.string()).nullish(),
+  pendingSchedules: scheduledWindowsSchema,
 });
 export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
 
@@ -1055,7 +1083,6 @@ export const formulaReviewerSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string().nullish(),
-  emailAddress: z.string().nullish(),
   profilePicUrl: z.string().nullish(),
 });
 export type FormulaReviewer = z.output<typeof formulaReviewerSchema>;

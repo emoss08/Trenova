@@ -756,6 +756,7 @@ func (r *repository) UpdateDerivedState(
 					sp.RatingDetail.Bare(),
 					sp.MarkedReadyToBillAt.Bare(),
 					sp.BilledAt.Bare(),
+					sp.RateLocked.Bare(),
 					sp.Version.Bare(),
 					sp.UpdatedAt.Bare(),
 				).

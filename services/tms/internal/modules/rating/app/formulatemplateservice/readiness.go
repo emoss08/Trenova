@@ -40,7 +40,6 @@ const (
 	ReadinessCheckAge        = "submissionAge"
 )
 
-
 type ReadinessRequest struct {
 	TenantInfo pagination.TenantInfo
 	TemplateID pulid.ID
@@ -64,12 +63,13 @@ func (c *ReadinessCheck) refusalMessage() string {
 }
 
 type ReadinessResponse struct {
-	CanSubmit       bool             `json:"canSubmit"`
-	CanApprove      bool             `json:"canApprove"`
-	Checks          []ReadinessCheck `json:"checks"`
-	ScenarioTotal   int              `json:"scenarioTotal"`
-	ScenarioPassed  int              `json:"scenarioPassed"`
-	ScenarioFailing []string         `json:"scenarioFailing,omitempty"`
+	CanSubmit        bool              `json:"canSubmit"`
+	CanApprove       bool              `json:"canApprove"`
+	Checks           []ReadinessCheck  `json:"checks"`
+	ScenarioTotal    int               `json:"scenarioTotal"`
+	ScenarioPassed   int               `json:"scenarioPassed"`
+	ScenarioFailing  []string          `json:"scenarioFailing,omitempty"`
+	PendingSchedules []ScheduledWindow `json:"pendingSchedules"`
 }
 
 type submissionGate struct {
@@ -138,6 +138,12 @@ func (s *Service) Readiness(
 		resp.Checks = append(resp.Checks, breakdownCheck)
 	}
 	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
+
+	resp.PendingSchedules, err = s.pendingSchedules(ctx, template.ID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to list pending schedules", zap.Error(err))
+		return nil, err
+	}
 
 	blocking := gate.blocking()
 	resp.CanSubmit = !blocking && submittable(template.Status)

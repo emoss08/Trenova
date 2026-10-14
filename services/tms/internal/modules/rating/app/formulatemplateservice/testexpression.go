@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -106,10 +107,33 @@ func (s *Service) TestExpression(
 	return resp
 }
 
+func previewBoundsError(req *TestExpressionRequest) string {
+	if len(req.Expression) > formulatemplate.MaxExpressionLength {
+		return "Expression cannot exceed 10,000 characters"
+	}
+	if len(req.Breakdowns) > formulatypes.MaxBreakdownDefinitions {
+		return "A template cannot have more than 20 breakdown definitions"
+	}
+	for _, def := range req.Breakdowns {
+		if def != nil && len(def.Expression) > formulatemplate.MaxExpressionLength {
+			return "Breakdown expression cannot exceed 10,000 characters"
+		}
+	}
+	return ""
+}
+
 func (s *Service) testExpression(
 	ctx context.Context,
 	req *TestExpressionRequest,
 ) *TestExpressionResponse {
+	if message := previewBoundsError(req); message != "" {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   message,
+			Message: msgExpressionValidationFailed,
+		}
+	}
+
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
 		return &TestExpressionResponse{

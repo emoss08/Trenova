@@ -214,3 +214,10 @@ const (
 	maxVersionNameLength   = 100
 	maxVersionSchemaLength = 100
 )
+
+func (v *FormulaTemplateVersion) EffectiveStart() int64 {
+	if v.EffectiveFrom != nil {
+		return *v.EffectiveFrom
+	}
+	return v.CreatedAt
+}

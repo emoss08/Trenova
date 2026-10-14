@@ -102,10 +102,11 @@ func (s *Service) notifyRequestedReviewer(
 }
 
 type reviewOutcome struct {
-	Template    *formulatemplate.FormulaTemplate
-	SubmitterID *pulid.ID
-	Decision    formulatemplate.ReviewDecision
-	Comment     string
+	Template       *formulatemplate.FormulaTemplate
+	SubmitterID    *pulid.ID
+	Decision       formulatemplate.ReviewDecision
+	Comment        string
+	BillingVersion int64
 }
 
 // notifyReviewOutcome tells the submitter their template was approved or sent
@@ -154,6 +155,17 @@ func describeReviewOutcome(
 	name := outcome.Template.Name
 	switch outcome.Decision {
 	case formulatemplate.ReviewDecisionRejected:
+		if outcome.BillingVersion > 0 {
+			return "Formula template revision rejected",
+				fmt.Sprintf(
+					"The revision of %q was rejected and returned to draft: %s v%d keeps billing until a revision is approved.",
+					name,
+					outcome.Comment,
+					outcome.BillingVersion,
+				),
+				eventTemplateRejected,
+				notification.PriorityHigh
+		}
 		return "Formula template rejected",
 			fmt.Sprintf(
 				"%q was rejected and archived: %s Edit and resubmit it from the archive if it should be reconsidered.",
