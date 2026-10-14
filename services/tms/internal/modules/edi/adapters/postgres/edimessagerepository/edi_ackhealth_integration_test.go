@@ -34,6 +34,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	require.NoError(t, db.NewSelect().
 		Table("organizations").
 		Column("id", "business_unit_id").
+		Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
 		Limit(1).
 		Scan(ctx, &org))
 	var documentType seededSummaryDocumentType
@@ -224,4 +225,51 @@ func messageIDs(messages []*edi.EDIMessage) []pulid.ID {
 	}
 
 	return ids
+}
+
+func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.T) {
+	ctx, db := seededDevelopmentDB(t)
+
+	var partner struct {
+		ID             pulid.ID `bun:"id"`
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+	require.NoError(t, db.NewSelect().
+		Table("edi_partners").
+		Column("id", "organization_id", "business_unit_id").
+		Where("code = ?", "ACMEMFG").
+		Scan(ctx, &partner))
+	tenant := pagination.TenantInfo{OrgID: partner.OrganizationID, BuID: partner.BusinessUnitID}
+	repo := edimessagerepository.New(edimessagerepository.Params{
+		DB:     postgres.NewTestConnection(db),
+		Logger: zap.NewNop(),
+	})
+
+	overdue, err := repo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
+		TenantInfo:   tenant,
+		PendingSince: timeutils.NowUnix() - overdueAge,
+		PartnerID:    partner.ID,
+		Limit:        10,
+	})
+	require.NoError(t, err)
+	require.Len(t, overdue.Messages, 3)
+	require.Len(t, overdue.Partners, 1)
+	require.Equal(t, "Acme Manufacturing EDI", overdue.Partners[0].PartnerName)
+
+	counts, err := repo.GetAckStatusCounts(ctx, ediports.GetEDIMessageStatusCountsRequest{
+		TenantInfo: tenant,
+		PartnerID:  partner.ID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 4, counts[edi.MessageAcknowledgmentStatusPending])
+	require.Equal(t, 1, counts[edi.MessageAcknowledgmentStatusAcceptedWithErrors])
+	require.Equal(t, 1, counts[edi.MessageAcknowledgmentStatusRejected])
+
+	dead, err := repo.ListRecentDeadLettered(ctx, &ediports.ListRecentEDIMessageFailuresRequest{
+		TenantInfo: tenant,
+		PartnerID:  partner.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, dead, 1)
 }
