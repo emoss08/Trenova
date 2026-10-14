@@ -52957,13 +52957,12 @@
     ]
   },
   "Collapse": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/org-structure",
-      "routes/shipment"
+      "routes/org-structure"
     ]
   },
   "Collapse all": {
@@ -89565,14 +89564,13 @@
     ]
   },
   "Esc": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk",
-      "routes/shipment"
+      "routes/desk"
     ]
   },
   "Escalate an overdue exception every": {
@@ -132425,6 +132423,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Loading older activity": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Loading older comments…": {
     "sites": 1,
     "scope": [
@@ -162413,6 +162420,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "Older activity could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Older history could not be loaded": {
@@ -224531,7 +224547,7 @@
     ]
   },
   "Settings": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -269991,7 +270007,7 @@
     ]
   },
   "Try again": {
-    "sites": 60,
+    "sites": 61,
     "scope": [
       "ts"
     ],
