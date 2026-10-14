@@ -13,6 +13,7 @@ import {
 import { edition } from "@/lib/edition";
 import { withRouteCatalogs } from "@/lib/route-catalogs";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
+import { legacySettingsRedirect } from "@/lib/settings-path";
 import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
@@ -59,6 +60,13 @@ const onboardingLoader: LoaderFunction = async () => {
   return target ? redirect(target) : null;
 };
 
+// Settings used to open over the page from `/?settings=<section>`, and emails already sent
+// still link there.
+const legacySettingsLoader: LoaderFunction = ({ request }) => {
+  const target = legacySettingsRedirect(new URL(request.url).search);
+  return target ? redirect(target) : null;
+};
+
 const guestLoader: LoaderFunction = async () => {
   const { checkAuth } = useAuthStore.getState();
 
@@ -89,11 +97,26 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/",
             loader: combineLoaders(
               protectedLoader,
+              legacySettingsLoader,
               createPrefetchLoader(lazyPrefetch(() => import("@/routes/home/page"))),
             ),
             async lazy() {
               const { Home } = await import("@/routes/home/page");
               return { Component: Home };
+            },
+          },
+          {
+            path: "/settings",
+            // Settings is a room: the module rail stays, and its sections take the panel's
+            // place and its fold.
+            handle: { frame: "room" } satisfies RouteHandle,
+            loader: combineLoaders(
+              protectedLoader,
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/settings/page"))),
+            ),
+            async lazy() {
+              const { SettingsPage } = await import("@/routes/settings/page");
+              return { Component: SettingsPage };
             },
           },
           {

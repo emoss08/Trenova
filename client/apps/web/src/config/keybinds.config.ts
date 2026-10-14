@@ -36,7 +36,7 @@ export const keybindGroups: KeybindGroup[] = [
         id: "user-settings",
         label: "User settings",
         keys: ["Ctrl", "Shift", "S"],
-        description: "Open the user settings dialog",
+        description: "Open your settings from any page",
       },
       {
         id: "keyboard-shortcuts",
