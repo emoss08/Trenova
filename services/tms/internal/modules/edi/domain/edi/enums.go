@@ -183,9 +183,11 @@ const (
 	MessageAcknowledgmentStatusNotExpected        = MessageAcknowledgmentStatus("NotExpected")
 	MessageAcknowledgmentStatusPending            = MessageAcknowledgmentStatus("Pending")
 	MessageAcknowledgmentStatusAccepted           = MessageAcknowledgmentStatus("Accepted")
-	MessageAcknowledgmentStatusAcceptedWithErrors = MessageAcknowledgmentStatus("AcceptedWithErrors")
-	MessageAcknowledgmentStatusRejected           = MessageAcknowledgmentStatus("Rejected")
-	MessageAcknowledgmentStatusFailed             = MessageAcknowledgmentStatus("Failed")
+	MessageAcknowledgmentStatusAcceptedWithErrors = MessageAcknowledgmentStatus(
+		"AcceptedWithErrors",
+	)
+	MessageAcknowledgmentStatusRejected = MessageAcknowledgmentStatus("Rejected")
+	MessageAcknowledgmentStatusFailed   = MessageAcknowledgmentStatus("Failed")
 )
 
 type ValidationMode string

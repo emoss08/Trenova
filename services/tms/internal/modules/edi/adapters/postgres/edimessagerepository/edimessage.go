@@ -591,7 +591,7 @@ func (r *repository) ListOverdueAcks(
 			ColumnExpr(buncolgen.Max(partner.Code, "partner_code")).
 			ColumnExpr(buncolgen.Count("count")).
 			ColumnExpr(buncolgen.Min(cols.GeneratedAt, "oldest_generated_at")).
-			Join("JOIN " + edicol.EDIPartnerTable.Name + " AS " + edicol.EDIPartnerTable.Alias).
+			Join("JOIN "+edicol.EDIPartnerTable.Name+" AS "+edicol.EDIPartnerTable.Alias).
 			JoinOn(partner.ID.EqColumn(cols.EDIPartnerID)).
 			JoinOn(partner.OrganizationID.EqColumn(cols.OrganizationID)).
 			JoinOn(partner.BusinessUnitID.EqColumn(cols.BusinessUnitID)).

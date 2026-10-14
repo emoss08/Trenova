@@ -8,9 +8,9 @@
 package agentquerytoolservice
 
 import (
-	"math"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"

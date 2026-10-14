@@ -233,14 +233,15 @@ func (s *Service) GetEDIAckHealth(
 	return health, nil
 }
 
-func groupOverdueAcks(overdue *ediports.OverdueEDIAcks) ([]*EDIOverduePartner, int) {
+func groupOverdueAcks(
+	overdue *ediports.OverdueEDIAcks,
+) (groups []*EDIOverduePartner, omitted int) {
 	if overdue == nil || len(overdue.Partners) == 0 {
 		return []*EDIOverduePartner{}, 0
 	}
 
-	groups := make([]*EDIOverduePartner, 0, len(overdue.Partners))
+	groups = make([]*EDIOverduePartner, 0, len(overdue.Partners))
 	byPartner := make(map[pulid.ID]*EDIOverduePartner, len(overdue.Partners))
-	omitted := 0
 	for _, partner := range overdue.Partners {
 		group := &EDIOverduePartner{
 			PartnerID:         partner.PartnerID,
