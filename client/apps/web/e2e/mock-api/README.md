@@ -369,13 +369,13 @@ Settings has its own walkthrough, the same way:
 node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
 ```
 
-It opens the fullscreen Settings dialog over the shipments board with ⌘⇧S and captures each
-section in light and dark, the Away sub-rows, an expanded notification category, the Saved ·
-Undo toast, a pause, the inline password change, ⌘K search and its jump, an 800px width and the
-page left as it was after Escape. Writes are stateful: the profile, availability, notification
-preferences and sessions the dialog saves are what it reads back. The password change accepts
-`correct-horse` as the current password. It writes to `e2e/mock-api/screenshots/settings` by
-default.
+It opens the Settings page from the shipments board with ⌘⇧S and captures each section in
+light and dark, the Away sub-rows, an expanded notification category, the Saved · Undo toast, a
+pause, the inline password change, ⌘K search and its jump, an 800px width, the board again after
+going back, and an old email link (`/?settings=notifications`) landing on Notifications. Writes
+are stateful: the profile, availability, notification preferences and sessions the page saves
+are what it reads back. The password change accepts `correct-horse` as the current password. It
+writes to `e2e/mock-api/screenshots/settings` by default.
 
 The command palette has its own walkthrough. Start the mock with `MOCK_PALETTE=1`, which also
 serves the palette's records, the counts under "Needs you" and Nova's streamed answer:

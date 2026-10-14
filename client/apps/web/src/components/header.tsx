@@ -1,13 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { NotificationSheet } from "@/components/notification-center/notification-sheet";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@trenova/shared/components/ui/breadcrumb";
 import { useSidebarFold } from "@/components/navigation/sidebar-fold";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
@@ -25,31 +16,11 @@ import {
   LayoutLeftIcon,
   Star01Icon,
 } from "@trenova/shared/components/icons";
-import React from "react";
-import { Link, useLocation, useNavigation } from "react-router";
+import { useLocation } from "react-router";
 import { toast } from "sonner";
-import { SystemInformation } from "./system-information";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-export function Header() {
-  return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 flex h-10 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6",
-        "bg-background/95 supports-backdrop-filter:bg-background/50 backdrop-blur-sm",
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <SidebarToggle />
-        <HistoryNavigation />
-        <HeaderBreadcrumbs />
-      </div>
-      <NavActions />
-    </header>
-  );
-}
 
 export function HistoryNavigation() {
   const t = useT();
@@ -92,16 +63,6 @@ export function HistoryNavigation() {
         />
         <TooltipContent>{t("Go forward")}</TooltipContent>
       </Tooltip>
-    </div>
-  );
-}
-
-function NavActions() {
-  return (
-    <div className="ml-auto flex items-center gap-1 px-3 text-center">
-      <SystemInformation />
-      <NotificationSheet />
-      <FavoriteToggle />
     </div>
   );
 }
@@ -166,57 +127,6 @@ export function FavoriteToggle({ className }: { className?: string }) {
         {isFavorited ? t("Remove from favorites") : t("Add to favorites")}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-/**
- * The trail as the header draws it: Home first, then every crumb the route
- * provides, the last one as plain text.
- */
-export function HeaderBreadcrumbs() {
-  const t = useT();
-
-  const navigation = useNavigation();
-  const breadcrumbs = useBreadcrumbs();
-  const isLoading = navigation.state === "loading";
-
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            render={<Link to="/" />}
-            className={cn(
-              "text-muted-foreground hover:text-foreground transition-opacity",
-              isLoading ? "opacity-50" : "",
-            )}
-          >
-            {t("Home")}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
-        {breadcrumbs.map((crumb, index) => (
-          <React.Fragment key={crumb.id}>
-            <BreadcrumbItem>
-              {index < breadcrumbs.length - 1 ? (
-                <BreadcrumbLink
-                  render={<Link to={crumb.pathname} />}
-                  className={cn(
-                    "text-muted-foreground hover:text-foreground transition-opacity",
-                    isLoading ? "opacity-50" : "",
-                  )}
-                >
-                  {crumb.crumb}
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage className="line-clamp-1">{crumb.crumb}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-            {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-          </React.Fragment>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
   );
 }
 

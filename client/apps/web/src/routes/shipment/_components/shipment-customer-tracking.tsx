@@ -2,8 +2,8 @@ import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { useRegister } from "@/hooks/use-register";
 import { usePermission } from "@/hooks/use-permission";
+import { useRegister } from "@/hooks/use-register";
 import {
   linkState,
   liveLinkCount,
@@ -23,8 +23,11 @@ import {
 } from "@/lib/graphql/customer-tracking";
 import { customer as customerQueries } from "@/lib/queries/customer";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
+import { TrackingViewSkeleton } from "@/routes/shipment-tracking-public/_components/tracking-view-skeleton";
 import { issueTrackingLinkFormSchema, type IssueTrackingLinkFormValues } from "@/types/check-call";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   AlertTriangleIcon,
   ArrowUpRightIcon,
@@ -41,7 +44,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   Collapsible,
   CollapsibleContent,
@@ -52,16 +54,18 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatSecondsAgo, formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
+import {
+  formatSecondsAgo,
+  formatUnixDateMedium,
+  formatUnixDateTime,
+} from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { TrackingViewSkeleton } from "@/routes/shipment-tracking-public/_components/tracking-view-skeleton";
 
 const CustomerTrackingPreview = lazy(() => import("./customer-tracking-preview"));
 
@@ -77,7 +81,12 @@ function Section({
   className?: string;
 }) {
   return (
-    <section className={cn("flex flex-col gap-3 border-b border-border-subtle px-4 py-5 last:border-b-0", className)}>
+    <section
+      className={cn(
+        "flex flex-col gap-3 border-b border-border-subtle px-4 py-5 last:border-b-0",
+        className,
+      )}
+    >
       <div className="flex min-h-7 items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold">{title}</h3>
         {aside}
@@ -87,11 +96,6 @@ function Section({
   );
 }
 
-/**
- * Sharing a shipment with its customer: what the customer sees, the links out
- * to its tracking page, and the status emails its rules send. What the page
- * shows and which emails go out are set on the customer.
- */
 export default function ShipmentCustomerTracking({ shipment }: { shipment?: Shipment | null }) {
   const shipmentId = shipment?.id ?? "";
   const customerId = shipment?.customerId ?? "";
@@ -208,7 +212,9 @@ function Audience({
           </DialogTitle>
           <div className="h-dvh overflow-y-auto">
             <LazyComponent fallback={<TrackingViewSkeleton />}>
-              {previewing && <CustomerTrackingPreview shipmentId={shipmentId} audience={audience} />}
+              {previewing && (
+                <CustomerTrackingPreview shipmentId={shipmentId} audience={audience} />
+              )}
             </LazyComponent>
           </div>
         </DialogContent>
@@ -405,11 +411,7 @@ function LinkRow({
       <span
         className={cn(
           "size-2 shrink-0 rounded-full",
-          state === "live"
-            ? link.viewCount > 0
-              ? "bg-success"
-              : "bg-success/40"
-            : "bg-border",
+          state === "live" ? (link.viewCount > 0 ? "bg-success" : "bg-success/40") : "bg-border",
         )}
         aria-hidden
       />
@@ -499,7 +501,12 @@ function ShareForm({
             <span className="text-xs text-danger-foreground">{errors.recipientEmail.message}</span>
           )}
         </div>
-        <Button type="submit" isLoading={isSubmitting && !copying} loadingText={t("Sending...")}>
+        <Button
+          size="sm"
+          type="submit"
+          isLoading={isSubmitting && !copying}
+          loadingText={t("Sending...")}
+        >
           <Send01Icon className="size-3.5" aria-hidden />
           {t("Send")}
         </Button>
@@ -595,14 +602,24 @@ function StepMark({ step }: { step: StatusEmailStep }) {
   }
   if (status === "Pending") {
     return (
-      <span className={cn(base, "bg-warning-subtle text-warning-subtle-foreground ring-1 ring-warning-border")}>
+      <span
+        className={cn(
+          base,
+          "bg-warning-subtle text-warning-subtle-foreground ring-1 ring-warning-border",
+        )}
+      >
         <ClockIcon className="size-3.5" aria-hidden />
       </span>
     );
   }
   if (status === "Failed") {
     return (
-      <span className={cn(base, "bg-danger-subtle text-danger-subtle-foreground ring-1 ring-danger-border")}>
+      <span
+        className={cn(
+          base,
+          "bg-danger-subtle text-danger-subtle-foreground ring-1 ring-danger-border",
+        )}
+      >
         <XCloseIcon className="size-3.5" aria-hidden />
       </span>
     );
@@ -668,9 +685,7 @@ function StatusEmails({
       (row): row is NonNullable<typeof row> =>
         row != null && row.status !== "Sent" && row.lastError != null,
     );
-  const recipients = (profile?.recipients ?? "")
-    .split(/[\s,;]+/)
-    .filter(Boolean);
+  const recipients = (profile?.recipients ?? "").split(/[\s,;]+/).filter(Boolean);
   const anyOn = steps.some((step) => step.enabled);
 
   return (
@@ -694,7 +709,10 @@ function StatusEmails({
       ) : (
         <>
           <ol className="relative grid grid-cols-4">
-            <span className="absolute top-3.5 right-[12.5%] left-[12.5%] h-px bg-border" aria-hidden />
+            <span
+              className="absolute top-3.5 right-[12.5%] left-[12.5%] h-px bg-border"
+              aria-hidden
+            />
             {steps.map((step) => (
               <li key={step.event} className="flex flex-col items-center gap-1.5 text-center">
                 <StepMark step={step} />
@@ -717,7 +735,11 @@ function StatusEmails({
             ))}
           </ol>
           {troubled.map((row) => (
-            <Alert key={row.id} size="sm" variant={row.status === "Failed" ? "destructive" : "warning"}>
+            <Alert
+              key={row.id}
+              size="sm"
+              variant={row.status === "Failed" ? "destructive" : "warning"}
+            >
               <AlertTriangleIcon aria-hidden />
               <AlertTitle>
                 {row.status === "Failed"

@@ -388,16 +388,47 @@ build, a test or a type check. This happened once. `pnpm lint:design` now
 compiles the real file and asserts every declared `@utility` reaches the output,
 so it cannot happen quietly again.
 
+## Shell anatomy
+
+The app has one shell, drawn by `RailShell` (`components/navigation/rail-shell.tsx`),
+and it has no global header. What applies everywhere lives on a 48px **rail** down
+the left edge (`module-rail.tsx`): the organization mark at the top, one tile per
+module in its domain with hairlines between domains, then notifications, settings
+and the user at the bottom. The tile you are in is filled `--nav-active` and marked
+with a 2px `--ink` bar on the rail's edge; a count on a tile's corner is how much
+work waits behind that module, in the attention tone. `G` then a module's letter
+(`rail-shortcuts.ts`) jumps there from anywhere; the letter shows in the tile's
+tooltip.
+
+Beside the rail the **panel** (`rail-panel.tsx`, 224px, dragged between 200 and
+320) holds search and the pages of the module you are in, grouped the way the
+module groups them, configuration last; on Home it lists what needs you, pins and
+recent activity (`home-panel.tsx`). ⌘B folds the panel and the rail stays; folded,
+resting on a tile opens the module's pages as a flyout, and search returns to the
+rail. Below `md` the rail and the panel come out together as one sheet from the
+page bar's fold.
+
+A room (Triage, the Formula Studio, Settings, `frame: "room"` on its route) draws
+its own rail where the panel would be, folded by the same ⌘B and by a fold tile the
+module rail carries only for rooms; the rail's search tile is always on for a room, since
+the panel's field is not there. On a phone a room gets one strip (the sheet's
+toggle, search, notifications, you) because its own rail is not on screen either.
+The Desk has no shell at all.
+
 ## Page anatomy
 
 Every page is `PageLayout` from `components/navigation/sidebar-layout.tsx`. There
 is no second layout; a page that builds its own top bar is a bug.
 
-**The title bar** is one 44px row: the title at `text-lg` semibold, the
-description behind an info icon, actions on the right. The workspace bar above it
-already shows where you are, so the page does not spend two more lines saying it
-again. Pass `title`, `description`, `actions` and `context` through
-`pageHeaderProps`; never mount `PageHeader` by hand.
+**The title bar is the page bar.** One 44px row and the only bar above the body:
+the shell leads it with the panel's fold and history, then the trail of the pages
+above this one (never Home, never a crumb that repeats the title), then the title
+at `text-lg` semibold with the description behind an info icon; actions on the
+right, and the star behind a hairline after them. Pass `title`, `description`,
+`actions` and `context` through `pageHeaderProps`; never mount `PageHeader` by hand,
+and never set its `leading` or `trailing` slots, which belong to the shell. The two
+pages that draw their own bar (Home's briefing, AI control's head) put
+`PageBarControls` from `rail-page-bar.tsx` where the fold and history would be.
 
 **A list page bleeds.** When the page body's only child is a data table, the body
 drops its padding and the table runs edge to edge: no outer box, no page gutter,

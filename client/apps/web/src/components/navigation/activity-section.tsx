@@ -1,18 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@trenova/shared/components/ui/collapsible";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRecentActivityInfinite, type RecentActivityEntry } from "@/hooks/use-attention";
+import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   auditEntryTitle,
   operationLabel,
@@ -20,8 +14,8 @@ import {
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { translateRich } from "@trenova/shared/i18n/rich";
-import { ChevronRightIcon, SpinnerIcon } from "@trenova/shared/components/icons";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { SpinnerIcon } from "@trenova/shared/components/icons";
+import { type ReactNode, useEffect, useRef } from "react";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 
 type ActorTag = (children: ReactNode) => ReactNode;
@@ -277,50 +271,5 @@ export function ActivityFeed({
         maxHeightClassName={maxHeightClassName}
       />
     </>
-  );
-}
-
-export function ActivitySection() {
-  const t = useT();
-
-  const { data: preferences } = useSidebarPreferences();
-  const [openOverride, setOpenOverride] = useState<boolean | null>(null);
-  const open = openOverride ?? preferences?.activity.defaultOpen ?? true;
-  const feed = useActivityFeed(preferences?.activity.pageSize, open);
-
-  if (feed.isEmpty || feed.isUnavailable) {
-    return null;
-  }
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpenOverride}>
-      <div className="flex flex-col gap-0.5">
-        <div className="flex h-6 items-center justify-between pr-2">
-          <CollapsibleTrigger
-            render={(props) => (
-              <button
-                {...props}
-                className="group text-xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold transition-colors select-none"
-              >
-                <span>{t("Recent activity")}</span>
-                <ChevronRightIcon
-                  className={cn("size-3 shrink-0 transition-transform", open && "rotate-90")}
-                />
-              </button>
-            )}
-          />
-          <ActivityOnlineIndicator />
-        </div>
-        <CollapsibleContent>
-          <ActivityFeedList
-            entries={feed.data}
-            isLoading={feed.isLoading}
-            isFetchingNextPage={feed.isFetchingNextPage}
-            observerTarget={feed.observerTarget}
-            maxHeightClassName="max-h-56"
-          />
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
   );
 }

@@ -21,6 +21,7 @@ export type ScrollAreaMaskVariant =
   | "field"
   | "muted"
   | "popover"
+  | "raised"
   | "sidebar";
 
 export type ScrollAreaContextProps = {
@@ -39,6 +40,7 @@ const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   field: "before:from-field after:from-field",
   muted: "before:from-muted after:from-muted",
   popover: "before:from-popover after:from-popover",
+  raised: "before:from-raised after:from-raised",
   sidebar: "before:from-sidebar after:from-sidebar",
 };
 

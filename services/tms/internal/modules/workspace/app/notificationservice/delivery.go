@@ -256,5 +256,5 @@ func (s *Service) settingsURL() string {
 	if s.webBaseURL == "" {
 		return ""
 	}
-	return s.webBaseURL + "/?settings=notifications"
+	return s.webBaseURL + "/settings?section=notifications"
 }

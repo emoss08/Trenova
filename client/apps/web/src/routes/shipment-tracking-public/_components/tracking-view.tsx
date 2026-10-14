@@ -1,3 +1,5 @@
+import logo from "@/assets/logo.webp";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
   dayAndTime,
   journeyOf,
@@ -7,8 +9,6 @@ import {
   trackingHeadline,
   windowRange,
 } from "@/lib/shipment-tracking";
-import logo from "@/assets/logo.webp";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
   CalendarPlus01Icon,
   EyeIcon,
@@ -32,10 +32,10 @@ import type {
   PublicShipmentStop,
   PublicShipmentView,
 } from "@trenova/shared/types/shipment-tracking";
+import "../tracking.css";
 import { RouteRibbon } from "./route-ribbon";
 import { StopTimeline } from "./stop-timeline";
 import { TrackingAside } from "./tracking-aside";
-import "../tracking.css";
 
 /**
  * How the page is being read: by the customer through its link, live and
@@ -136,10 +136,19 @@ function ArrivalActions({
           downloadCalendarFile(
             {
               uid: `${view.shipmentProNumber}-${stop.sequence}@trenova`,
-              title: t("{0} of load {1} at {2}", stopTypeLabel(stop.type), view.shipmentProNumber, place),
+              title: t(
+                "{0} of load {1} at {2}",
+                stopTypeLabel(stop.type),
+                view.shipmentProNumber,
+                place,
+              ),
               start,
               end: stop.windowEnd ?? undefined,
-              location: [stop.locationName, stop.addressLine, [stop.city, stop.stateCode].filter(Boolean).join(", ")]
+              location: [
+                stop.locationName,
+                stop.addressLine,
+                [stop.city, stop.stateCode].filter(Boolean).join(", "),
+              ]
                 .filter(Boolean)
                 .join(", "),
               description: t("Follow the load: {0}", window.location.href),
@@ -339,25 +348,29 @@ export function TrackingView({
         </section>
 
         {view.stops.length > 1 && (
-          <section className="st-in border-y border-border-subtle py-8" style={{ animationDelay: "120ms" }}>
-            <RouteRibbon view={view} journey={journey} now={now} />
-          </section>
+          <>
+            <section
+              className="st-in border-y border-border-subtle py-8"
+              style={{ animationDelay: "120ms" }}
+            >
+              <RouteRibbon view={view} journey={journey} now={now} />
+            </section>
+            <div
+              className="st-in grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16"
+              style={{ animationDelay: "220ms" }}
+            >
+              <section className="flex flex-col gap-5">
+                <h2 className="text-sm font-semibold">{t("Stops")}</h2>
+                <StopTimeline view={view} journey={journey} now={now} />
+              </section>
+              <TrackingAside
+                view={view}
+                token={mode.kind === "link" ? mode.token : null}
+                now={now}
+              />
+            </div>
+          </>
         )}
-
-        <div
-          className="st-in grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16"
-          style={{ animationDelay: "220ms" }}
-        >
-          <section className="flex flex-col gap-5">
-            <h2 className="text-sm font-semibold">{t("Stops")}</h2>
-            <StopTimeline view={view} journey={journey} now={now} />
-          </section>
-          <TrackingAside
-            view={view}
-            token={mode.kind === "link" ? mode.token : null}
-            now={now}
-          />
-        </div>
       </main>
 
       <footer className="relative mx-auto flex w-full max-w-6xl flex-col gap-1 border-t border-border-subtle px-5 py-8 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-8">
@@ -374,5 +387,3 @@ export function TrackingView({
     </div>
   );
 }
-
-

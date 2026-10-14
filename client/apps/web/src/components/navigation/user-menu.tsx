@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LanguageSubmenu } from "@/components/navigation/language-submenu";
-import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   DropdownMenu,
@@ -12,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useSignOut } from "@/hooks/use-sign-out";
-import { useAppDialogsStore } from "@/stores/app-dialogs-store";
+import { settingsPath } from "@/lib/settings-path";
+import { useNavigate } from "react-router";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   ChevronSelectorVerticalIcon,
@@ -29,7 +29,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
 
   const user = useAuthStore((s) => s.user);
   const signOut = useSignOut();
-  const openDialog = useAppDialogsStore((state) => state.openDialog);
+  const navigate = useNavigate();
 
   const displayName = user?.name ?? user?.username ?? "User";
 
@@ -108,9 +108,8 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem
               title={t("Settings")}
               startContent={<Settings01Icon className="size-4" />}
-              onClick={() => openDialog("settings")}
+              onClick={() => void navigate(settingsPath())}
             />
-            <SidebarLayoutSubmenu />
             <LanguageSubmenu />
             <DropdownMenuSeparator />
             <DropdownMenuItem

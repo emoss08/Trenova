@@ -1,13 +1,11 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { STAGE_META } from "@/lib/shipment-board/stage";
+import { getDestinationStop, getOriginStop, getRouteProgress } from "@/lib/shipment-utils";
 import { Truck01Icon } from "@trenova/shared/components/icons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useIsTruncated } from "@trenova/shared/hooks/use-is-truncated";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { STAGE_META } from "@/lib/shipment-board/stage";
-import {
-  getDestinationStop,
-  getOriginStop,
-  getRouteProgress,
-} from "@/lib/shipment-utils";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { useEtaDelta } from "../cells/eta-cell";
 
@@ -17,7 +15,9 @@ const time = (value: number | null | undefined) =>
 function windowText(stop: Stop | null) {
   if (!stop?.scheduledWindowStart) return "";
   const start = time(stop.scheduledWindowStart);
-  return stop.scheduledWindowEnd ? `${start}–${time(stop.scheduledWindowEnd).split(" ").at(-1)}` : start;
+  return stop.scheduledWindowEnd
+    ? `${start}–${time(stop.scheduledWindowEnd).split(" ").at(-1)}`
+    : start;
 }
 
 function Endpoint({
@@ -42,6 +42,23 @@ function Endpoint({
       </span>
       <span className={cn("text-xs font-medium", statusClassName)}>{status}</span>
     </div>
+  );
+}
+
+function TruncatedStatus({ text, className }: { text: string; className?: string }) {
+  const [ref, truncated] = useIsTruncated<HTMLSpanElement>();
+
+  return (
+    <Tooltip disabled={!truncated}>
+      <TooltipTrigger
+        render={
+          <span ref={ref} className={cn("max-w-full truncate text-sm font-medium", className)}>
+            {text}
+          </span>
+        }
+      />
+      <TooltipContent>{text}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -75,7 +92,9 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
         <span
           className={cn(
             "size-2.5 shrink-0 rounded-full border-2",
-            progress.percent > 0 ? cn("border-transparent", meta.swatchClassName) : "border-border-strong",
+            progress.percent > 0
+              ? cn("border-transparent", meta.swatchClassName)
+              : "border-border-strong",
           )}
         />
         <span className="relative h-0.5 flex-1 border-t border-dashed border-border-strong">
@@ -94,8 +113,18 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
               className="absolute top-1/2 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center"
               style={{ left: `${progress.percent}%` }}
             >
-              <span className={cn("animate-live-ping absolute inset-0 rounded-full opacity-40", meta.swatchClassName)} />
-              <span className={cn("text-foreground-on-solid relative grid size-5 place-items-center rounded-full", meta.swatchClassName)}>
+              <span
+                className={cn(
+                  "animate-live-ping absolute inset-0 rounded-full opacity-40",
+                  meta.swatchClassName,
+                )}
+              />
+              <span
+                className={cn(
+                  "text-foreground-on-solid relative grid size-5 place-items-center rounded-full",
+                  meta.swatchClassName,
+                )}
+              >
                 <Truck01Icon className="size-3" />
               </span>
             </span>
@@ -116,12 +145,13 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
           statusClassName={origin?.actualDeparture ? "text-success" : "text-muted-foreground"}
           align="start"
         />
-        <div className="flex flex-col items-center gap-0.5 pt-4 text-center">
+        <div className="flex max-w-sm min-w-0 flex-col items-center gap-0.5 pt-4 text-center">
           {moving ? (
             <>
-              <span className={cn("text-sm font-medium", late && "text-danger")}>
-                {late ? (shipment.eta?.reason ?? t("Running late")) : t("On schedule")}
-              </span>
+              <TruncatedStatus
+                text={late ? (shipment.eta?.reason ?? t("Running late")) : t("On schedule")}
+                className={cn(late && "text-danger")}
+              />
               <span className="text-muted-foreground font-mono text-xs tabular-nums">
                 {t(
                   "{0} mi done · {1} to go",
@@ -142,7 +172,9 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
           label={t("Delivery")}
           stop={destination}
           status={deliveryStatus}
-          statusClassName={late ? "text-danger" : delivered ? "text-success" : "text-muted-foreground"}
+          statusClassName={
+            late ? "text-danger" : delivered ? "text-success" : "text-muted-foreground"
+          }
           align="end"
         />
       </div>
