@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:34eee7ee220d800dabe4cb0c700c55064322826447538eae272940bd2b091318"
+const Version = "sha256:4ca4603ffa237ad81570d23db7d984c5aefd5d1751549e4a23e80dd88be8869b"
 
 var Default = indexed(defaultCatalog)
 
@@ -6584,16 +6584,6 @@ var defaultCatalog = Catalog{
 					Groupable:    true,
 				},
 				{
-					Key:          "letterDocumentId",
-					Column:       buncolgen.NewColumn("letter_document_id", "facnoa"),
-					Label:        "Letter Document ID",
-					Type:         FieldRef,
-					Nullable:     true,
-					Aggregations: []Aggregation{AggCount, AggCountDistinct},
-					Filterable:   true,
-					Groupable:    true,
-				},
-				{
 					Key:          "sentAt",
 					Column:       buncolgen.NewColumn("sent_at", "facnoa"),
 					Label:        "Sent At",
@@ -10162,6 +10152,16 @@ var defaultCatalog = Catalog{
 						{Value: "Default", Label: "Default"},
 						{Value: "Exclude", Label: "Exclude"},
 					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "factoringOverrideReason",
+					Column:       buncolgen.NewColumn("factoring_override_reason", "inv"),
+					Label:        "Factoring Override Reason",
+					Type:         FieldString,
+					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,

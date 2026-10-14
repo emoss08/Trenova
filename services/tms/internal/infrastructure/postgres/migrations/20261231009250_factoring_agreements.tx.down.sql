@@ -1,6 +1,8 @@
 ALTER TABLE "invoices" DROP CONSTRAINT IF EXISTS "fk_invoices_factoring_agreement";
 DROP INDEX IF EXISTS "idx_invoices_factoring_agreement";
 ALTER TABLE "invoices" DROP COLUMN IF EXISTS "factoring_agreement_id";
+ALTER TABLE "invoices" DROP CONSTRAINT IF EXISTS "chk_invoices_factoring_override_reason";
+ALTER TABLE "invoices" DROP COLUMN IF EXISTS "factoring_override_reason";
 ALTER TABLE "invoices" DROP CONSTRAINT IF EXISTS "chk_invoices_factoring_override";
 ALTER TABLE "invoices" DROP COLUMN IF EXISTS "factoring_override";
 DROP TABLE IF EXISTS "factoring_invoice_states";

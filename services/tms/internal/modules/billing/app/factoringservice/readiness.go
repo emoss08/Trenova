@@ -467,6 +467,7 @@ func (s *ReadinessService) SetOverride(
 		TenantInfo:           req.TenantInfo,
 		InvoiceID:            plan.After.ID,
 		Override:             plan.After.FactoringOverride,
+		Reason:               plan.After.FactoringOverrideReason,
 		FactoringCompanyID:   plan.After.FactoringCompanyID,
 		FactoringAgreementID: plan.After.FactoringAgreementID,
 	}); err != nil {
@@ -546,6 +547,10 @@ func (s *ReadinessService) PlanOverride(
 	}
 	after := *inv
 	after.FactoringOverride = req.Override
+	after.FactoringOverrideReason = ""
+	if req.Override.Excludes() {
+		after.FactoringOverrideReason = reason
+	}
 	after.FactoringCompanyID = factorID
 	after.FactoringAgreementID = agreementID
 	return &factoringports.OverridePlan{Before: inv, After: &after, Changed: true}, nil

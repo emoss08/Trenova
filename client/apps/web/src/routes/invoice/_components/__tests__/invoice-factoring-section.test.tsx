@@ -112,6 +112,7 @@ function factoring(overrides: Partial<InvoiceFactoring> = {}): InvoiceFactoring 
     billType: "Invoice",
     currencyCode: "USD",
     factoringOverride: "Default",
+    factoringOverrideReason: null,
     factoringAgreementId: "facagr_1",
     factoringCompany: { id: "fac_1", code: "RTS", name: "RTS Financial" },
     factoringState: state(),
@@ -222,6 +223,7 @@ describe("invoice factoring section", () => {
     mocks.fetchInvoiceFactoring.mockResolvedValue(
       factoring({
         factoringOverride: "Exclude",
+        factoringOverrideReason: "Customer pays us directly",
         factoringCompany: null,
         factoringAgreementId: null,
         factoringState: state({ verdict: "Excluded", failedChecks: 0, factoringCompany: null }),
@@ -236,5 +238,7 @@ describe("invoice factoring section", () => {
     const section = await loadedSection();
     expect(within(section).getByText("Not factored")).toBeInTheDocument();
     expect(within(section).queryByText("The customer is disputing the invoice")).toBeNull();
+    expect(within(section).getByText("Why it stays out")).toBeInTheDocument();
+    expect(within(section).getByText("Customer pays us directly")).toBeInTheDocument();
   });
 });

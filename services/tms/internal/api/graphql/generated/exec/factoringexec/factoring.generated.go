@@ -1000,6 +1000,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride),
 			},
 			{
+				Name:     "factoringOverrideReason",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoice.Invoice)
+					return obj.FactoringOverrideReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
 				Name:     "factoringAgreementId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {

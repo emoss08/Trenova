@@ -17251,6 +17251,10 @@ func init() {
 				FieldMapKey: "factoringOverride",
 			},
 			{
+				Name:        "factoringOverrideReason",
+				FieldMapKey: "factoringOverrideReason",
+			},
+			{
 				Name:        "factoringAgreementId",
 				FieldMapKey: "factoringAgreementId",
 			},

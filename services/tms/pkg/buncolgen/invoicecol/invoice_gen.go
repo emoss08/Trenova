@@ -1004,6 +1004,7 @@ var InvoiceColumns = struct {
 	FactoringCompanyID        buncolgen.Column // "factoring_company_id" → qualified: "inv.factoring_company_id"
 	FactoringAgreementID      buncolgen.Column // "factoring_agreement_id" → qualified: "inv.factoring_agreement_id"
 	FactoringOverride         buncolgen.Column // "factoring_override" → qualified: "inv.factoring_override"
+	FactoringOverrideReason   buncolgen.Column // "factoring_override_reason" → qualified: "inv.factoring_override_reason"
 	IsSplitBill               buncolgen.Column // "is_split_bill" → qualified: "inv.is_split_bill"
 	VoidedAt                  buncolgen.Column // "voided_at" → qualified: "inv.voided_at"
 	VoidedByID                buncolgen.Column // "voided_by_id" → qualified: "inv.voided_by_id"
@@ -1091,6 +1092,7 @@ var InvoiceColumns = struct {
 	FactoringCompanyID:        buncolgen.NewColumn("factoring_company_id", "inv"),
 	FactoringAgreementID:      buncolgen.NewColumn("factoring_agreement_id", "inv"),
 	FactoringOverride:         buncolgen.NewColumn("factoring_override", "inv"),
+	FactoringOverrideReason:   buncolgen.NewColumn("factoring_override_reason", "inv"),
 	IsSplitBill:               buncolgen.NewColumn("is_split_bill", "inv"),
 	VoidedAt:                  buncolgen.NewColumn("voided_at", "inv"),
 	VoidedByID:                buncolgen.NewColumn("voided_by_id", "inv"),
@@ -1184,6 +1186,7 @@ var InvoiceFieldMap = map[string]string{
 	"factoringCompanyId":        "factoring_company_id",
 	"factoringAgreementId":      "factoring_agreement_id",
 	"factoringOverride":         "factoring_override",
+	"factoringOverrideReason":   "factoring_override_reason",
 	"isSplitBill":               "is_split_bill",
 	"voidedAt":                  "voided_at",
 	"voidedById":                "voided_by_id",
@@ -1275,6 +1278,7 @@ var InvoiceInsertableColumns = []string{
 	"factoring_company_id",
 	"factoring_agreement_id",
 	"factoring_override",
+	"factoring_override_reason",
 	"is_split_bill",
 	"voided_at",
 	"voided_by_id",
@@ -1443,6 +1447,7 @@ var InvoiceFilter = struct {
 	FactoringCompanyID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
 	FactoringAgreementID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringAgreementId" → DB: "factoring_agreement_id"
 	FactoringOverride         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringOverride" → DB: "factoring_override"
+	FactoringOverrideReason   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringOverrideReason" → DB: "factoring_override_reason"
 	IsSplitBill               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSplitBill" → DB: "is_split_bill"
 	VoidedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidedByID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
@@ -1666,6 +1671,9 @@ var InvoiceFilter = struct {
 	},
 	FactoringOverride: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("factoringOverride", op, value)
+	},
+	FactoringOverrideReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringOverrideReason", op, value)
 	},
 	IsSplitBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("isSplitBill", op, value)

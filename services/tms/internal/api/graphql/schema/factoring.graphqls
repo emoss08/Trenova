@@ -304,6 +304,8 @@ input RequestMissingFactoringDocumentsInput {
 
 extend type Invoice {
   factoringOverride: InvoiceFactoringOverride!
+  "Why the invoice stays out of factoring; null unless it is excluded."
+  factoringOverrideReason: String
   "The agreement in force when the invoice posted."
   factoringAgreementId: ID
   "The factor the invoice was assigned to when it posted."

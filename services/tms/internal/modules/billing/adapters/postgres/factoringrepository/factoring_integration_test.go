@@ -3,6 +3,7 @@
 package factoringrepository
 
 import (
+	"strings"
 	"context"
 	"testing"
 	"time"
@@ -453,6 +454,30 @@ func TestInvoiceStateProjection(t *testing.T) {
 	require.Len(t, page.Items[0].Checks, 1)
 	assert.Equal(t, factoring.FixSendNoa, page.Items[0].Checks[0].Fix)
 
+	search := func(term string) *pagination.CursorListResult[*factoring.InvoiceState] {
+		t.Helper()
+		found, searchErr := env.states.ListConnection(
+			env.ctx,
+			&factoringports.ListInvoiceStateConnectionRequest{
+				Filter: &pagination.QueryOptions{
+					TenantInfo: env.tenantInfo,
+					Pagination: pagination.Info{Limit: 10},
+					Query:      term,
+				},
+				Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+			},
+		)
+		require.NoError(t, searchErr)
+		return found
+	}
+	byNumber := search(strings.ToLower(factored.Number))
+	require.Len(t, byNumber.Items, 1)
+	assert.Equal(t, factored.ID, byNumber.Items[0].InvoiceID)
+	require.NotNil(t, byNumber.TotalCount)
+	assert.Equal(t, 1, *byNumber.TotalCount)
+	assert.Len(t, search(factor.Name).Items, 1)
+	assert.Empty(t, search("no-such-invoice_%").Items)
+
 	byID, err := env.states.ListByInvoiceIDs(env.ctx, &factoringports.ListInvoiceStatesByInvoiceIDsRequest{
 		TenantInfo: env.tenantInfo,
 		InvoiceIDs: []pulid.ID{factored.ID, unfactored.ID},
@@ -469,4 +494,53 @@ func TestInvoiceStateProjection(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{factored.ID}, customerInvoices)
+}
+
+func TestSetInvoiceOverrideKeepsTheReasonOnlyWhileExcluded(t *testing.T) {
+	env := setupFactoringEnv(t)
+	factor := env.createFactor(t, "OVRD")
+	inv := env.postInvoice(t, 30000, &factor.ID)
+
+	read := func() *invoice.Invoice {
+		t.Helper()
+		got := new(invoice.Invoice)
+		require.NoError(t, env.db.NewSelect().
+			Model(got).
+			Where("inv.id = ?", inv.ID).
+			Where("inv.organization_id = ?", env.tenantInfo.OrgID).
+			Scan(env.ctx))
+		return got
+	}
+
+	require.NoError(t, env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
+		TenantInfo: env.tenantInfo,
+		InvoiceID:  inv.ID,
+		Override:   invoice.FactoringOverrideExclude,
+		Reason:     "Customer pays us directly",
+	}))
+	excluded := read()
+	assert.Equal(t, invoice.FactoringOverrideExclude, excluded.FactoringOverride)
+	assert.Equal(t, "Customer pays us directly", excluded.FactoringOverrideReason)
+	assert.Nil(t, excluded.FactoringCompanyID)
+	assert.Greater(t, excluded.Version, inv.Version)
+
+	require.NoError(t, env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
+		TenantInfo:         env.tenantInfo,
+		InvoiceID:          inv.ID,
+		Override:           invoice.FactoringOverrideDefault,
+		FactoringCompanyID: &factor.ID,
+	}))
+	restored := read()
+	assert.Equal(t, invoice.FactoringOverrideDefault, restored.FactoringOverride)
+	assert.Empty(t, restored.FactoringOverrideReason)
+	require.NotNil(t, restored.FactoringCompanyID)
+	assert.Equal(t, factor.ID, *restored.FactoringCompanyID)
+
+	err := env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
+		TenantInfo: env.tenantInfo,
+		InvoiceID:  inv.ID,
+		Override:   invoice.FactoringOverrideDefault,
+		Reason:     "A reason on an invoice that is not excluded",
+	})
+	require.Error(t, err, "the database refuses a reason on an invoice that follows its customer")
 }

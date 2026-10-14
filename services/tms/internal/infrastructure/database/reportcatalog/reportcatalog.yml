@@ -1511,7 +1511,6 @@ entities:
     category: Billing
     fields:
       status: { label: "Status" }
-      letterDocumentId: { label: "Letter Document ID" }
       sentAt: { label: "Sent At" }
       sentTo: { label: "Sent To" }
       acknowledgedAt: { label: "Acknowledged At" }

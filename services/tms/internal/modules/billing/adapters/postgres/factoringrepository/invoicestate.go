@@ -3,6 +3,7 @@ package factoringrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -10,13 +11,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -50,6 +56,7 @@ func (r *invoiceStateRepository) SetInvoiceOverride(
 		res, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*invoice.Invoice)(nil)).
 			Set(inv.FactoringOverride.Set(), req.Override).
+			Set(inv.FactoringOverrideReason.Set(), bun.NullZero(req.Reason)).
 			Set(inv.FactoringCompanyID.Set(), req.FactoringCompanyID).
 			Set(inv.FactoringAgreementID.Set(), req.FactoringAgreementID).
 			Set(inv.Version.Inc(1)).
@@ -168,6 +175,7 @@ func (r *invoiceStateRepository) ListConnection(
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.InvoiceState], error) {
 			dba := r.db.DBForContext(ctx)
 			alias := factoringcol.InvoiceStateTable.Alias
+			filter, term := withoutQuery(req.Filter)
 
 			var totalCount *int
 			if req.Cursor.IncludeTotalCount {
@@ -175,13 +183,15 @@ func (r *invoiceStateRepository) ListConnection(
 					Model((*factoring.InvoiceState)(nil)).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return r.scope(
+							dba,
 							querybuilder.ApplyFiltersWithoutSort(
 								sq,
 								alias,
-								req.Filter,
+								filter,
 								(*factoring.InvoiceState)(nil),
 							),
 							req,
+							term,
 						)
 					}).
 					Count(ctx)
@@ -194,7 +204,7 @@ func (r *invoiceStateRepository) ListConnection(
 			result, err := dbhelper.CursorList(
 				ctx,
 				dbhelper.CursorListParams[*factoring.InvoiceState]{
-					Filter:     req.Filter,
+					Filter:     filter,
 					Cursor:     req.Cursor,
 					TotalCount: totalCount,
 					Query: func(entities *[]*factoring.InvoiceState) *bun.SelectQuery {
@@ -206,14 +216,14 @@ func (r *invoiceStateRepository) ListConnection(
 						q, applyErr := querybuilder.ApplyCursorFilters(
 							sq,
 							alias,
-							req.Filter,
+							filter,
 							req.Cursor,
 							(*factoring.InvoiceState)(nil),
 						)
 						if applyErr != nil {
 							return nil, applyErr
 						}
-						return r.scope(q, req), nil
+						return r.scope(dba, q, req, term), nil
 					},
 				},
 			)
@@ -227,10 +237,15 @@ func (r *invoiceStateRepository) ListConnection(
 }
 
 func (r *invoiceStateRepository) scope(
+	dba bun.IDB,
 	q *bun.SelectQuery,
 	req *factoringports.ListInvoiceStateConnectionRequest,
+	term string,
 ) *bun.SelectQuery {
 	cols := factoringcol.InvoiceStateColumns
+	if term != "" {
+		q = searchStates(dba, q, term)
+	}
 	if len(req.Verdicts) > 0 {
 		q = q.Where(cols.Verdict.In(), bun.List(req.Verdicts))
 	}
@@ -450,4 +465,57 @@ func boundedLimit(limit, ceiling int) int {
 		return ceiling
 	}
 	return limit
+}
+
+func withoutQuery(
+	filter *pagination.QueryOptions,
+) (stripped *pagination.QueryOptions, term string) {
+	if filter == nil {
+		return nil, ""
+	}
+	term = strings.TrimSpace(filter.Query)
+	if term == "" {
+		return filter, ""
+	}
+	copied := *filter
+	copied.Query = ""
+	return &copied, term
+}
+
+func searchStates(dba bun.IDB, q *bun.SelectQuery, term string) *bun.SelectQuery {
+	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
+	st := factoringcol.InvoiceStateColumns
+	inv := invoicecol.InvoiceColumns
+	cus := customercol.CustomerColumns
+	fac := factoringcompanycol.FactoringCompanyColumns
+
+	invoices := dba.NewSelect().
+		Model((*invoice.Invoice)(nil)).
+		ColumnExpr("1").
+		Where(inv.ID.Qualified()+" = "+st.InvoiceID.Qualified()).
+		Where(inv.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
+		Where(inv.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
+		Where(inv.Number.ILike(), pattern)
+	customers := dba.NewSelect().
+		Model((*customer.Customer)(nil)).
+		ColumnExpr("1").
+		Where(cus.ID.Qualified()+" = "+st.CustomerID.Qualified()).
+		Where(cus.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
+		Where(cus.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(cus.Name.ILike(), pattern).WhereOr(cus.Code.ILike(), pattern)
+		})
+	factors := dba.NewSelect().
+		Model((*factoringcompany.FactoringCompany)(nil)).
+		ColumnExpr("1").
+		Where(fac.ID.Qualified()+" = "+st.FactoringCompanyID.Qualified()).
+		Where(fac.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
+		Where(fac.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
+		Where(fac.Name.ILike(), pattern)
+
+	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("EXISTS (?)", invoices).
+			WhereOr("EXISTS (?)", customers).
+			WhereOr("EXISTS (?)", factors)
+	})
 }

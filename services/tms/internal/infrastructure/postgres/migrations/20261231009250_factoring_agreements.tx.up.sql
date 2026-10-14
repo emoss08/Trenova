@@ -99,7 +99,6 @@ CREATE TABLE IF NOT EXISTS "factoring_noas"(
     "customer_id" varchar(100) NOT NULL,
     "factoring_company_id" varchar(100) NOT NULL,
     "status" varchar(20) NOT NULL DEFAULT 'Draft',
-    "letter_document_id" varchar(100),
     "sent_at" bigint,
     "sent_to" varchar(320),
     "acknowledged_at" bigint,
@@ -173,6 +172,18 @@ CREATE INDEX IF NOT EXISTS "idx_factoring_invoice_states_ready"
 --bun:split
 ALTER TABLE "invoices"
     ADD COLUMN IF NOT EXISTS "factoring_override" varchar(20) NOT NULL DEFAULT 'Default';
+
+--bun:split
+ALTER TABLE "invoices"
+    ADD COLUMN IF NOT EXISTS "factoring_override_reason" varchar(500);
+
+--bun:split
+ALTER TABLE "invoices"
+    DROP CONSTRAINT IF EXISTS "chk_invoices_factoring_override_reason";
+
+--bun:split
+ALTER TABLE "invoices"
+    ADD CONSTRAINT "chk_invoices_factoring_override_reason" CHECK ("factoring_override" = 'Exclude' OR "factoring_override_reason" IS NULL);
 
 --bun:split
 ALTER TABLE "invoices"

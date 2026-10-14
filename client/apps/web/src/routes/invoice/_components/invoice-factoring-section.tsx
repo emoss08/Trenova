@@ -215,6 +215,11 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
           <DescriptionItem label={t("Factoring")}>
             {INVOICE_FACTORING_OVERRIDE_LABELS[factoring.factoringOverride]}
           </DescriptionItem>
+          {factoring.factoringOverrideReason ? (
+            <DescriptionItem label={t("Why it stays out")}>
+              {factoring.factoringOverrideReason}
+            </DescriptionItem>
+          ) : null}
         </DescriptionList>
       </div>
     );
@@ -258,6 +263,13 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
               </FormControl>
             ) : null}
           </FormGroup>
+          {!changed && factoring.factoringOverrideReason ? (
+            <DescriptionList layout="inline" className="mt-2">
+              <DescriptionItem label={t("Why it stays out")}>
+                {factoring.factoringOverrideReason}
+              </DescriptionItem>
+            </DescriptionList>
+          ) : null}
         </Form>
       </FormProvider>
       {changed ? (

@@ -841,7 +841,6 @@ var NoaColumns = struct {
 	CustomerID         buncolgen.Column // "customer_id" → qualified: "facnoa.customer_id"
 	FactoringCompanyID buncolgen.Column // "factoring_company_id" → qualified: "facnoa.factoring_company_id"
 	Status             buncolgen.Column // "status" → qualified: "facnoa.status"
-	LetterDocumentID   buncolgen.Column // "letter_document_id" → qualified: "facnoa.letter_document_id"
 	SentAt             buncolgen.Column // "sent_at" → qualified: "facnoa.sent_at"
 	SentTo             buncolgen.Column // "sent_to" → qualified: "facnoa.sent_to"
 	AcknowledgedAt     buncolgen.Column // "acknowledged_at" → qualified: "facnoa.acknowledged_at"
@@ -861,7 +860,6 @@ var NoaColumns = struct {
 	CustomerID:         buncolgen.NewColumn("customer_id", "facnoa"),
 	FactoringCompanyID: buncolgen.NewColumn("factoring_company_id", "facnoa"),
 	Status:             buncolgen.NewColumn("status", "facnoa"),
-	LetterDocumentID:   buncolgen.NewColumn("letter_document_id", "facnoa"),
 	SentAt:             buncolgen.NewColumn("sent_at", "facnoa"),
 	SentTo:             buncolgen.NewColumn("sent_to", "facnoa"),
 	AcknowledgedAt:     buncolgen.NewColumn("acknowledged_at", "facnoa"),
@@ -887,7 +885,6 @@ var NoaFieldMap = map[string]string{
 	"customerId":         "customer_id",
 	"factoringCompanyId": "factoring_company_id",
 	"status":             "status",
-	"letterDocumentId":   "letter_document_id",
 	"sentAt":             "sent_at",
 	"sentTo":             "sent_to",
 	"acknowledgedAt":     "acknowledged_at",
@@ -911,7 +908,6 @@ var NoaInsertableColumns = []string{
 	"customer_id",
 	"factoring_company_id",
 	"status",
-	"letter_document_id",
 	"sent_at",
 	"sent_to",
 	"acknowledged_at",
@@ -995,7 +991,6 @@ var NoaFilter = struct {
 	CustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	FactoringCompanyID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
 	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	LetterDocumentID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "letterDocumentId" → DB: "letter_document_id"
 	SentAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
 	SentTo             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentTo" → DB: "sent_to"
 	AcknowledgedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgedAt" → DB: "acknowledged_at"
@@ -1026,9 +1021,6 @@ var NoaFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
-	},
-	LetterDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("letterDocumentId", op, value)
 	},
 	SentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("sentAt", op, value)

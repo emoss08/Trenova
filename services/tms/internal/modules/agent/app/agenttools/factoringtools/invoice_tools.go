@@ -25,6 +25,7 @@ const (
 	toolGetReadiness       = "get_factoring_readiness"
 	maxRequestedDocuments  = 20
 	fieldFactoringOverride = "factoringOverride"
+	fieldOverrideReason    = "factoringOverrideReason"
 	fieldFactoringCompany  = "factoringCompanyId"
 	fieldFactoringAgree    = "factoringAgreementId"
 )
@@ -162,13 +163,19 @@ func (t *SetInvoiceFactoringOverrideTool) Preview(
 		return refused(summary, err)
 	}
 	change, err := toolpreview.Changed(invoiceRecord(plan.Before), plan.Before, plan.After,
-		toolpreview.Only(fieldFactoringOverride, fieldFactoringCompany, fieldFactoringAgree),
+		toolpreview.Only(
+			fieldFactoringOverride,
+			fieldOverrideReason,
+			fieldFactoringCompany,
+			fieldFactoringAgree,
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			fieldFactoringCompany: permission.ResourceFactoringCompany,
 			fieldFactoringAgree:   permission.ResourceFactoringAgreement,
 		}),
 		toolpreview.Labels(map[string]string{
 			fieldFactoringOverride: "Factoring",
+			fieldOverrideReason:    "Why it stays out",
 			fieldFactoringCompany:  "Assigned to",
 			fieldFactoringAgree:    "Agreement",
 		}),

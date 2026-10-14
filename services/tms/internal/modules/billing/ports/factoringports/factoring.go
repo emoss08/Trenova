@@ -188,6 +188,7 @@ type SetInvoiceOverrideRequest struct {
 	TenantInfo pagination.TenantInfo     `json:"-"`
 	InvoiceID  pulid.ID                  `json:"invoiceId"`
 	Override   invoice.FactoringOverride `json:"override"`
+	Reason     string                    `json:"reason"`
 
 	FactoringCompanyID   *pulid.ID `json:"factoringCompanyId"`
 	FactoringAgreementID *pulid.ID `json:"factoringAgreementId"`

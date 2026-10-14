@@ -38,7 +38,6 @@ type Noa struct {
 	CustomerID         pulid.ID  `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
 	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
 	Status             NoaStatus `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
-	LetterDocumentID   pulid.ID  `json:"letterDocumentId"   bun:"letter_document_id,type:VARCHAR(100),nullzero"`
 	SentAt             *int64    `json:"sentAt"             bun:"sent_at,type:BIGINT,nullzero"`
 	SentTo             string    `json:"sentTo"             bun:"sent_to,type:VARCHAR(320),nullzero"`
 	AcknowledgedAt     *int64    `json:"acknowledgedAt"     bun:"acknowledged_at,type:BIGINT,nullzero"`

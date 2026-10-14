@@ -13124,7 +13124,7 @@ export type InvoiceFactoringQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceFactoringQuery = { invoice: { id: string, number: string, status: InvoiceStatus, billType: BillType, currencyCode: string, factoringOverride: InvoiceFactoringOverride, factoringAgreementId: string | null, factoringCompany: { id: string, code: string, name: string } | null, factoringState: { ' $fragmentRefs'?: { 'FactoringInvoiceStateFieldsFragment': FactoringInvoiceStateFieldsFragment } } | null } | null };
+export type InvoiceFactoringQuery = { invoice: { id: string, number: string, status: InvoiceStatus, billType: BillType, currencyCode: string, factoringOverride: InvoiceFactoringOverride, factoringOverrideReason: string | null, factoringAgreementId: string | null, factoringCompany: { id: string, code: string, name: string } | null, factoringState: { ' $fragmentRefs'?: { 'FactoringInvoiceStateFieldsFragment': FactoringInvoiceStateFieldsFragment } } | null } | null };
 
 export type SetInvoiceFactoringOverrideMutationVariables = Exact<{
   input: SetInvoiceFactoringOverrideInput;

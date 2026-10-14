@@ -30399,6 +30399,7 @@
   "Why it failed, when it failed. Print it: a failure with no cause becomes a support ticket.": "失败时的失败原因。请打印：没有原因的失败最终都会变成一张支持工单。",
   "Why it is being withdrawn, optional": "撤回原因，可选填",
   "Why it looked": "回顾原因",
+  "Why it stays out": "排除原因",
   "Why it waits": "等待原因",
   "Why it was kept": "保留原因",
   "Why it would not read": "无法读取的原因",

@@ -118,26 +118,27 @@ type Invoice struct {
 	ShipperCustomerID         pulid.ID              `json:"shipperCustomerId"         bun:"shipper_customer_id,type:VARCHAR(100),nullzero"`
 	// FactoringCompanyID is the factor the invoice was assigned to when it
 	// posted: it is remitted to the factor and carries its notice.
-	FactoringCompanyID   *pulid.ID         `json:"factoringCompanyId"   bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
-	FactoringAgreementID *pulid.ID         `json:"factoringAgreementId" bun:"factoring_agreement_id,type:VARCHAR(100),nullzero"`
-	FactoringOverride    FactoringOverride `json:"factoringOverride"    bun:"factoring_override,type:VARCHAR(20),notnull,default:'Default'"`
-	IsSplitBill          bool              `json:"isSplitBill"          bun:"is_split_bill,type:BOOLEAN,notnull"`
-	VoidedAt             *int64            `json:"voidedAt"             bun:"voided_at,type:BIGINT,nullzero"`
-	VoidedByID           pulid.ID          `json:"voidedById"           bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidReason           string            `json:"voidReason"           bun:"void_reason,type:TEXT,nullzero"`
-	VoidDisposition      VoidDisposition   `json:"voidDisposition"      bun:"void_disposition,type:VARCHAR(20),nullzero"`
-	VoidedByAdjustmentID pulid.ID          `json:"voidedByAdjustmentId" bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
-	ReferenceInvoiceID   pulid.ID          `json:"referenceInvoiceId"   bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
-	MemoReason           string            `json:"memoReason"           bun:"memo_reason,type:TEXT,nullzero"`
-	MemoKind             MemoKind          `json:"memoKind"             bun:"memo_kind,type:VARCHAR(30),nullzero"`
-	EDISendStatus        EDISendStatus     `json:"ediSendStatus"        bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
-	LastEDIMessageID     pulid.ID          `json:"lastEdiMessageId"     bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
-	EDISentAt            *int64            `json:"ediSentAt"            bun:"edi_sent_at,type:BIGINT,nullzero"`
-	LastEDIError         string            `json:"lastEdiError"         bun:"last_edi_error,type:TEXT,nullzero"`
-	BalanceDueMinor      int64             `json:"balanceDueMinor"      bun:"balance_due_minor,scanonly"`
-	Version              int64             `json:"version"              bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64             `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64             `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	FactoringCompanyID      *pulid.ID         `json:"factoringCompanyId"      bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
+	FactoringAgreementID    *pulid.ID         `json:"factoringAgreementId"    bun:"factoring_agreement_id,type:VARCHAR(100),nullzero"`
+	FactoringOverride       FactoringOverride `json:"factoringOverride"       bun:"factoring_override,type:VARCHAR(20),notnull,default:'Default'"`
+	FactoringOverrideReason string            `json:"factoringOverrideReason" bun:"factoring_override_reason,type:VARCHAR(500),nullzero"`
+	IsSplitBill             bool              `json:"isSplitBill"             bun:"is_split_bill,type:BOOLEAN,notnull"`
+	VoidedAt                *int64            `json:"voidedAt"                bun:"voided_at,type:BIGINT,nullzero"`
+	VoidedByID              pulid.ID          `json:"voidedById"              bun:"voided_by_id,type:VARCHAR(100),nullzero"`
+	VoidReason              string            `json:"voidReason"              bun:"void_reason,type:TEXT,nullzero"`
+	VoidDisposition         VoidDisposition   `json:"voidDisposition"         bun:"void_disposition,type:VARCHAR(20),nullzero"`
+	VoidedByAdjustmentID    pulid.ID          `json:"voidedByAdjustmentId"    bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
+	ReferenceInvoiceID      pulid.ID          `json:"referenceInvoiceId"      bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
+	MemoReason              string            `json:"memoReason"              bun:"memo_reason,type:TEXT,nullzero"`
+	MemoKind                MemoKind          `json:"memoKind"                bun:"memo_kind,type:VARCHAR(30),nullzero"`
+	EDISendStatus           EDISendStatus     `json:"ediSendStatus"           bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
+	LastEDIMessageID        pulid.ID          `json:"lastEdiMessageId"        bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
+	EDISentAt               *int64            `json:"ediSentAt"               bun:"edi_sent_at,type:BIGINT,nullzero"`
+	LastEDIError            string            `json:"lastEdiError"            bun:"last_edi_error,type:TEXT,nullzero"`
+	BalanceDueMinor         int64             `json:"balanceDueMinor"         bun:"balance_due_minor,scanonly"`
+	Version                 int64             `json:"version"                 bun:"version,type:BIGINT,notnull"`
+	CreatedAt               int64             `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt               int64             `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BillingQueueItem *billingqueue.BillingQueueItem     `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Shipment         *shipment.Shipment                 `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`

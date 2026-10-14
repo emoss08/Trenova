@@ -17026,6 +17026,8 @@ type Invoice {
   """
   factoringCompanyId: ID
   factoringOverride: InvoiceFactoringOverride!
+  """Why the invoice stays out of factoring; null unless it is excluded."""
+  factoringOverrideReason: String
   """
   Whether the invoice is ready to factor. Null until it is first evaluated.
   """

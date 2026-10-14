@@ -124,6 +124,7 @@ query InvoiceFactoring($id: ID!) {
     billType
     currencyCode
     factoringOverride
+    factoringOverrideReason
     factoringAgreementId
     factoringCompany {
       id
