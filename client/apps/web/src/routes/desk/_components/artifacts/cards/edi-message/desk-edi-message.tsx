@@ -24,6 +24,8 @@ import {
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
+import { plainReading } from "../../record-card/edi-reading";
+import { transactionName } from "../../record-card/edi-transaction-sets";
 import { cardMoment, neighborsIn } from "../../record-card/record-card-values";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
@@ -32,9 +34,7 @@ import {
   messageJourney,
   messageLinks,
   messageStanding,
-  plainReading,
   tapeSegments,
-  transactionName,
   type MessageLink,
   wayHalt,
 } from "./edi-message-card";

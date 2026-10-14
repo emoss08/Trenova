@@ -1227,9 +1227,17 @@ export type AgentProfileGuidanceSource =
   | 'Agent'
   | 'Person';
 
+/**
+ * Where a line stands. Active lines shape the next version. A Suggested line
+ * about the organization was offered by someone who does not manage agent memory,
+ * or written down by an agent, and waits for an administrator to approve or
+ * dismiss it. Retired and Dismissed lines are kept for the record.
+ */
 export type AgentProfileGuidanceStatus =
   | 'Active'
-  | 'Retired';
+  | 'Dismissed'
+  | 'Retired'
+  | 'Suggested';
 
 /** Where a version of a profile stands. Only the current version is told to agents. */
 export type AgentProfileStatus =
@@ -1396,6 +1404,7 @@ export type AgentSubjectType =
   | 'Document'
   | 'EDIInboundFile'
   | 'FactoringNoa'
+  | 'FactoringSubmission'
   | 'FormulaTemplate'
   | 'InboundMessage'
   | 'Insight'
@@ -1889,6 +1898,12 @@ export type CsaBasic =
   | 'HazmatCompliance'
   | 'UnsafeDriving'
   | 'VehicleMaintenance';
+
+export type CancelFactoringSubmissionInput = {
+  id: string | number;
+  reason: string;
+  version: number;
+};
 
 export type CancelFuelCardInput = {
   id: string | number;
@@ -2682,7 +2697,7 @@ export type CreateCarrierInvoiceMatchInput = {
 export type CreateDeskMemoryInput = {
   content: string;
   roleId?: string | number | null | undefined;
-  /** User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds. */
+  /** User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise. */
   scope: AgentMemoryScope;
 };
 
@@ -3969,11 +3984,41 @@ export type FactoringRecourse =
   /** The factor can charge an unpaid invoice back after the chargeback window. */
   | 'Recourse';
 
+export type FactoringSftpAuthMethod =
+  | 'Password'
+  | 'PrivateKey';
+
+export type FactoringSubmissionItemStatus =
+  | 'Pending'
+  /** Released when its schedule was cancelled. */
+  | 'Released';
+
+export type FactoringSubmissionPlanInput = {
+  factoringCompanyId: string | number;
+  invoiceIds: Array<string | number>;
+};
+
+export type FactoringSubmissionStatus =
+  /** Cancelled after a failed send; its invoices were released. */
+  | 'Cancelled'
+  /** Could not be delivered after every retry; retry it or cancel it. */
+  | 'Failed'
+  /** Being built and delivered; retried automatically before it fails. */
+  | 'Sending'
+  | 'Sent';
+
+/** How schedules reach a factor. */
+export type FactoringTransportMethod =
+  | 'Email'
+  | 'Sftp';
+
 export type FactoringVerdict =
   /** Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored. */
   | 'Excluded'
   | 'NotReady'
-  | 'Ready';
+  | 'Ready'
+  /** On a schedule sent, being sent, or that failed to send to the factor. */
+  | 'Submitted';
 
 export type FieldFilterInput = {
   field: string;
@@ -6360,6 +6405,11 @@ export type RetryAccountingSyncInput = {
   integrationType: AccountingSystem;
 };
 
+export type RetryFactoringSubmissionInput = {
+  id: string | number;
+  version: number;
+};
+
 export type ReturnToDutyStatus =
   | 'Complete'
   | 'FollowUpTesting'
@@ -6507,6 +6557,23 @@ export type SaveAccountingAppInput = {
   environment: AccountingAppEnvironment;
   integrationType: AccountingSystem;
   webhookVerifierToken?: string | null | undefined;
+};
+
+export type SaveFactoringTransportInput = {
+  attachPackets?: boolean | null | undefined;
+  emailRecipients?: Array<string> | null | undefined;
+  factoringCompanyId: string | number;
+  method: FactoringTransportMethod;
+  sftpAuthMethod?: FactoringSftpAuthMethod | null | undefined;
+  sftpDirectory?: string | null | undefined;
+  sftpHost?: string | null | undefined;
+  sftpKnownHostKey?: string | null | undefined;
+  sftpPort?: number | null | undefined;
+  /** Leave empty to keep the stored password or key. */
+  sftpSecret?: string | null | undefined;
+  sftpUsername?: string | null | undefined;
+  /** Required when the factor already has delivery settings. */
+  version?: number | null | undefined;
 };
 
 export type SaveHomeLayoutPresetInput = {
@@ -9835,7 +9902,7 @@ export type AgentProposalCountQuery = { agentProposals: { totalCount: number | n
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
-export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
+export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, managesShared: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
 
 export type DeskMemoriesQueryVariables = Exact<{
   input: DeskMemoriesInput;
@@ -10007,7 +10074,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10186,6 +10253,20 @@ export type RegenerateAgentOrganizationProfileMutationVariables = Exact<{ [key: 
 
 
 export type RegenerateAgentOrganizationProfileMutation = { regenerateAgentOrganizationProfile: boolean };
+
+export type ApproveAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApproveAgentOrganizationProfileGuidanceMutation = { approveAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type DismissAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DismissAgentOrganizationProfileGuidanceMutation = { dismissAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
 
 export type AddMyAgentProfileGuidanceMutationVariables = Exact<{
   input: AgentProfileGuidanceInput;
@@ -13377,7 +13458,7 @@ export type ReleaseFactoringNoaMutationVariables = Exact<{
 
 export type ReleaseFactoringNoaMutation = { releaseFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
 
-export type FactoringInvoiceStateFieldsFragment = { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringInvoiceStateFieldsFragment' };
+export type FactoringInvoiceStateFieldsFragment = { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringInvoiceStateFieldsFragment' };
 
 export type FactoringInvoiceStateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13388,12 +13469,12 @@ export type FactoringInvoiceStateTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type FactoringSummaryQuery = { factoringSummary: { ready: { count: number, amountMinor: number }, notReady: { count: number, amountMinor: number }, readyUnsubmitted: { count: number, amountMinor: number } } };
+export type FactoringSummaryQuery = { factoringSummary: { ready: { count: number, amountMinor: number }, notReady: { count: number, amountMinor: number }, submitted: { count: number, amountMinor: number }, readyUnsubmitted: { count: number, amountMinor: number } } };
 
 export type InvoiceFactoringQueryVariables = Exact<{
   id: string | number;
@@ -13415,6 +13496,81 @@ export type RequestMissingFactoringDocumentsMutationVariables = Exact<{
 
 
 export type RequestMissingFactoringDocumentsMutation = { requestMissingFactoringDocuments: { recipient: string, recipientKind: string, documentTypes: Array<string>, shipmentIds: Array<string>, sent: boolean } };
+
+export type FactoringSubmissionItemFieldsFragment = { id: string, submissionId: string, invoiceId: string, invoiceNumber: string, customerId: string, position: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, packetDocumentId: string | null, status: FactoringSubmissionItemStatus, releasedAt: number | null, customer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionItemFieldsFragment' };
+
+export type FactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, agreementId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, schedulePdfDocumentId: string | null, scheduleCsvDocumentId: string | null, transportMethod: FactoringTransportMethod, transportTarget: string, transportReference: string | null, sendAttemptGroup: number, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, cancelledAt: number | null, cancelReason: string | null, submittedById: string | null, version: number, createdAt: number, updatedAt: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionFieldsFragment' };
+
+export type FactoringSubmissionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  factoringCompanyId?: string | number | null | undefined;
+  statuses?: Array<FactoringSubmissionStatus> | FactoringSubmissionStatus | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringSubmissionTableQuery = { factoringSubmissions: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, factoringCompanyId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, lastError: string | null, sentAt: number | null, failedAt: number | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FactoringSubmissionDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FactoringSubmissionDetailQuery = { factoringSubmission: (
+    { items: Array<{ ' $fragmentRefs'?: { 'FactoringSubmissionItemFieldsFragment': FactoringSubmissionItemFieldsFragment } }> }
+    & { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } }
+  ) };
+
+export type FactoringSubmissionPlanQueryVariables = Exact<{
+  input: FactoringSubmissionPlanInput;
+}>;
+
+
+export type FactoringSubmissionPlanQuery = { factoringSubmissionPlan: { factoringCompanyId: string, factoringCompanyName: string, agreementId: string, transportMethod: FactoringTransportMethod, transportTarget: string, attachPackets: boolean, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, items: Array<{ invoiceId: string, invoiceNumber: string, customerId: string, customerName: string, invoiceDate: number, dueDate: number | null, funding: { faceMinor: number, advanceMinor: number, feeMinor: number, reserveMinor: number, restOnReleaseMinor: number, days: number, feeRateBp: number } }> } };
+
+export type SubmitInvoicesToFactorMutationVariables = Exact<{
+  input: FactoringSubmissionPlanInput;
+}>;
+
+
+export type SubmitInvoicesToFactorMutation = { submitInvoicesToFactor: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type RetryFactoringSubmissionMutationVariables = Exact<{
+  input: RetryFactoringSubmissionInput;
+}>;
+
+
+export type RetryFactoringSubmissionMutation = { retryFactoringSubmission: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type CancelFactoringSubmissionMutationVariables = Exact<{
+  input: CancelFactoringSubmissionInput;
+}>;
+
+
+export type CancelFactoringSubmissionMutation = { cancelFactoringSubmission: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type FactoringTransportFieldsFragment = { id: string, factoringCompanyId: string, method: FactoringTransportMethod, emailRecipients: Array<string>, attachPackets: boolean, sftpHost: string | null, sftpPort: number | null, sftpUsername: string | null, sftpAuthMethod: FactoringSftpAuthMethod | null, sftpSecretSet: boolean, sftpKnownHostKey: string | null, sftpDirectory: string | null, lastTestedAt: number | null, lastTestError: string | null, version: number } & { ' $fragmentName'?: 'FactoringTransportFieldsFragment' };
+
+export type FactoringTransportQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type FactoringTransportQuery = { factoringTransport: { ' $fragmentRefs'?: { 'FactoringTransportFieldsFragment': FactoringTransportFieldsFragment } } | null };
+
+export type SaveFactoringTransportMutationVariables = Exact<{
+  input: SaveFactoringTransportInput;
+}>;
+
+
+export type SaveFactoringTransportMutation = { saveFactoringTransport: { ' $fragmentRefs'?: { 'FactoringTransportFieldsFragment': FactoringTransportFieldsFragment } } };
+
+export type TestFactoringTransportMutationVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type TestFactoringTransportMutation = { testFactoringTransport: { passed: boolean, message: string, transport: { ' $fragmentRefs'?: { 'FactoringTransportFieldsFragment': FactoringTransportFieldsFragment } } } };
 
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
@@ -18109,7 +18265,7 @@ export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFrag
 export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
 export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
-export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
+export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, ApproveAgentOrganizationProfileGuidanceDocument, DismissAgentOrganizationProfileGuidanceDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
 export { AgentEvidenceRefFieldsFragmentDoc, AgentProposalTableRowFieldsFragmentDoc, AgentProposalDetailFieldsFragmentDoc, AgentProposalTableDocument, AgentProposalDetailDocument, DecideAgentProposalDocument } from "./documents/agent/proposals";
 export { AgentSuiteRunFieldsFragmentDoc, AgentQualityPointFieldsFragmentDoc, AgentWorstRatedAnswerFieldsFragmentDoc, AgentQualityControlFieldsFragmentDoc, AgentSuiteRunCaseFieldsFragmentDoc, AgentQualityOverviewDocument, AgentQualityAgentTableDocument, AgentWorstRatedAnswerTableDocument, AgentQualityDocument, AgentSuiteRunTableDocument, AgentSuiteRunDocument, AgentSuiteRunCaseTableDocument, AgentQualityControlDocument, UpdateAgentQualityControlDocument, RunAgentSuiteDocument } from "./documents/agent/quality";
 export { AiRetrievalStatusFieldsFragmentDoc, AiRetrievalFailedEntryFieldsFragmentDoc, AiRetrievalStatusDocument, AiRetrievalReindexEstimateDocument, AiRetrievalFailedEntryTableDocument, UpdateAiRetrievalSettingsDocument, ReindexAiRetrievalSourceDocument } from "./documents/agent/retrieval";
@@ -18166,6 +18322,8 @@ export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocumen
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
 export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";
 export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocument, FactoringSummaryDocument, InvoiceFactoringDocument, SetInvoiceFactoringOverrideDocument, RequestMissingFactoringDocumentsDocument } from "./documents/factoring/readiness";
+export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";
+export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";

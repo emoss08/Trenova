@@ -1,0 +1,201 @@
+{
+  "id": "ediinf_sim",
+  "businessUnitId": "bu_1",
+  "organizationId": "org_1",
+  "communicationProfileId": "edicp_sim",
+  "ediPartnerId": "edip_sim",
+  "method": "AS2",
+  "remotePath": "as2:<sim-1791716400000000000@edi-partner-sim>",
+  "fileName": "sim-204-1791716400000000000.edi",
+  "checksum": "9f2c1a7b4e8d3f60a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718",
+  "sizeBytes": 494,
+  "rawContent": "ISA*00*          *00*          *ZZ*SIMPARTNER     *ZZ*TRENOVA        *261014*1513*^*00401*000000042*0*T*>~GS*SM*SIMPARTNER*TRENOVA*20261014*1513*42*X*004010~ST*204*0001~B2**SIML**SIM000042**PP~B2A*00~L11*SIM000042*CR~S5*1*CL~G62*10*20261014*Y*1513~N1*SF*Simulator Shipper*93*SIM-SHIP~N3*100 Simulator Way~N4*Chicago*IL*60601*US~S5*2*CU~G62*68*20261016*Z*1513~N1*ST*Simulator Consignee*93*SIM-CONS~N3*200 Receiver Road~N4*Dallas*TX*75201*US~L3*1000*G***150000~SE*16*0001~GE*1*42~IEA*1*000000042~",
+  "interchangeControlNumber": "000000042",
+  "isaSenderQualifier": "ZZ",
+  "isaSenderId": "SIMPARTNER",
+  "isaReceiverQualifier": "ZZ",
+  "isaReceiverId": "TRENOVA",
+  "status": "Processed",
+  "failureReason": "",
+  "transactionCount": 1,
+  "receivedAt": 1791716400,
+  "processedAt": 1791716404,
+  "rawPurgedAt": null,
+  "version": 2,
+  "createdAt": 1791716400,
+  "updatedAt": 1791716404,
+  "partner": {
+    "id": "edip_sim",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "SIMPARTNER",
+    "name": "EDI Partner Simulator",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "America/Chicago",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": {},
+    "version": 1,
+    "createdAt": 1757160000,
+    "updatedAt": 1789128000
+  },
+  "communicationProfile": {
+    "id": "edicp_sim",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "ediConnectionId": null,
+    "ediPartnerId": "edip_sim",
+    "method": "AS2",
+    "status": "Active",
+    "name": "Simulator AS2",
+    "description": "",
+    "config": {
+      "inboundDirectory": "/inbound"
+    },
+    "secretState": null,
+    "lastPollAttemptAt": 1791719400,
+    "lastPollSuccessAt": 1791719400,
+    "lastPollError": "",
+    "version": 3,
+    "createdAt": 1774440000,
+    "updatedAt": 1791719400
+  },
+  "messages": [
+    {
+      "id": "edimsg_sim_204",
+      "businessUnitId": "bu_1",
+      "organizationId": "org_1",
+      "ediPartnerId": "edip_sim",
+      "documentTypeId": "edidt_inbound_204",
+      "partnerDocumentProfileId": null,
+      "templateId": null,
+      "templateVersionId": null,
+      "shipmentId": null,
+      "invoiceId": null,
+      "transferId": null,
+      "inboundFileId": "ediinf_sim",
+      "direction": "Inbound",
+      "standard": "X12",
+      "transactionSet": "204",
+      "x12Version": "004010",
+      "status": "Generated",
+      "validationMode": "Disabled",
+      "interchangeControlNumber": "000000042",
+      "groupControlNumber": "42",
+      "transactionControlNumber": "0001",
+      "segmentCount": 16,
+      "rawX12": "ST*204*0001~B2**SIML**SIM000042**PP~B2A*00~L11*SIM000042*CR~S5*1*CL~G62*10*20261014*Y*1513~N1*SF*Simulator Shipper*93*SIM-SHIP~N3*100 Simulator Way~N4*Chicago*IL*60601*US~S5*2*CU~G62*68*20261016*Z*1513~N1*ST*Simulator Consignee*93*SIM-CONS~N3*200 Receiver Road~N4*Dallas*TX*75201*US~L3*1000*G***150000~SE*16*0001~",
+      "payloadSnapshot": {
+        "transactionSet": "204",
+        "purposeCode": "00",
+        "loadTender": {
+          "purposeCode": "00",
+          "shipmentId": null,
+          "businessUnitId": null,
+          "organizationId": null,
+          "serviceTypeId": "DEFAULT",
+          "serviceTypeLabel": "Default service type for inbound tenders",
+          "customerId": "DEFAULT",
+          "customerLabel": "Default customer for inbound tenders",
+          "formulaTemplateId": "DEFAULT",
+          "formulaTemplateLabel": "Default rating formula for inbound tenders",
+          "weight": 1000,
+          "freightChargeAmount": null,
+          "otherChargeAmount": null,
+          "baseRate": null,
+          "totalChargeAmount": "150000",
+          "ratingUnit": 0,
+          "ratingDetail": {
+            "externalShipmentId": "SIM000042",
+            "paymentMethod": "PP"
+          },
+          "moves": [
+            {
+              "loaded": true,
+              "sequence": 0,
+              "stops": [
+                {
+                  "locationId": "SIM-SHIP",
+                  "locationLabel": "Simulator Shipper - 100 Simulator Way, Chicago, IL, 60601",
+                  "locationName": "Simulator Shipper",
+                  "locationCode": "SIM-SHIP",
+                  "locationAddressLine1": "100 Simulator Way",
+                  "locationCity": "Chicago",
+                  "locationStateCode": "IL",
+                  "locationPostalCode": "60601",
+                  "type": "Pickup",
+                  "scheduleType": "Open",
+                  "sequence": 1,
+                  "scheduledWindowStart": 1791990780,
+                  "addressLine": "100 Simulator Way, Chicago, IL, 60601"
+                },
+                {
+                  "locationId": "SIM-CONS",
+                  "locationLabel": "Simulator Consignee - 200 Receiver Road, Dallas, TX, 75201",
+                  "locationName": "Simulator Consignee",
+                  "locationCode": "SIM-CONS",
+                  "locationAddressLine1": "200 Receiver Road",
+                  "locationCity": "Dallas",
+                  "locationStateCode": "TX",
+                  "locationPostalCode": "75201",
+                  "type": "Delivery",
+                  "scheduleType": "Open",
+                  "sequence": 2,
+                  "scheduledWindowStart": 1792163580,
+                  "addressLine": "200 Receiver Road, Dallas, TX, 75201"
+                }
+              ]
+            }
+          ],
+          "commodities": null,
+          "additionalCharges": null,
+          "requiredMappingEntityIds": {
+            "Customer": [
+              "DEFAULT"
+            ],
+            "FormulaTemplate": [
+              "DEFAULT"
+            ],
+            "Location": [
+              "SIM-SHIP",
+              "SIM-CONS"
+            ],
+            "ServiceType": [
+              "DEFAULT"
+            ]
+          }
+        }
+      },
+      "rawPurgedAt": null,
+      "deliveryStatus": "",
+      "deliveryRemotePath": "",
+      "deliveryAttempts": 0,
+      "deliveryLastAttemptAt": null,
+      "deliverySentAt": null,
+      "deliveryLastError": "",
+      "as2MessageId": "",
+      "as2Mic": "",
+      "ackStatus": "NotExpected",
+      "ackMessageId": null,
+      "ackReceivedAt": null,
+      "ackLastError": "",
+      "generatedById": null,
+      "generatedAt": 1791716404,
+      "version": 1,
+      "createdAt": 1791716404,
+      "updatedAt": 1791716404,
+      "diagnosticCount": 0
+    }
+  ]
+}

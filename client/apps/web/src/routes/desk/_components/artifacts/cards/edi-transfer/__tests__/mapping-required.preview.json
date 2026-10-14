@@ -1,0 +1,80 @@
+{
+  "all": [
+    {
+      "entityType": "Customer",
+      "sourceId": "ACME",
+      "sourceLabel": "Acme Foods",
+      "targetId": "cus_acme",
+      "targetLabel": "Acme Foods, Inc.",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "ACME-DAL",
+      "sourceLabel": "Acme Plant 2",
+      "targetId": "loc_acme_dal",
+      "targetLabel": "Acme Plant 2 (Dallas)",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "HEB-SAT",
+      "sourceLabel": "HEB San Antonio",
+      "resolved": false
+    },
+    {
+      "entityType": "Commodity",
+      "sourceId": "FROZEN",
+      "sourceLabel": "Frozen poultry",
+      "targetId": "com_frozen",
+      "targetLabel": "Frozen poultry",
+      "resolved": true
+    },
+    {
+      "entityType": "AccessorialCharge",
+      "sourceId": "FSC",
+      "sourceLabel": "Fuel surcharge",
+      "resolved": false
+    }
+  ],
+  "resolved": [
+    {
+      "entityType": "Customer",
+      "sourceId": "ACME",
+      "sourceLabel": "Acme Foods",
+      "targetId": "cus_acme",
+      "targetLabel": "Acme Foods, Inc.",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "ACME-DAL",
+      "sourceLabel": "Acme Plant 2",
+      "targetId": "loc_acme_dal",
+      "targetLabel": "Acme Plant 2 (Dallas)",
+      "resolved": true
+    },
+    {
+      "entityType": "Commodity",
+      "sourceId": "FROZEN",
+      "sourceLabel": "Frozen poultry",
+      "targetId": "com_frozen",
+      "targetLabel": "Frozen poultry",
+      "resolved": true
+    }
+  ],
+  "unresolved": [
+    {
+      "entityType": "Location",
+      "sourceId": "HEB-SAT",
+      "sourceLabel": "HEB San Antonio",
+      "resolved": false
+    },
+    {
+      "entityType": "AccessorialCharge",
+      "sourceId": "FSC",
+      "sourceLabel": "Fuel surcharge",
+      "resolved": false
+    }
+  ]
+}

@@ -59,6 +59,15 @@ var Bindings = []Binding{
 		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
 	},
 	{Tool: "set_invoice_factoring_override", Input: "SetInvoiceFactoringOverrideInput"},
+	{
+		Tool:  "retry_factoring_submission",
+		Input: "RetryFactoringSubmissionInput",
+		Defaulted: map[string]string{
+			"id":         namedID("submissionId"),
+			versionField: readVersion,
+		},
+		Extra: map[string]string{"submissionId": namedID("submissionId")},
+	},
 	{Tool: "request_missing_factoring_document", Input: "RequestMissingFactoringDocumentsInput"},
 	{
 		Tool:  "assign_exception",

@@ -12,9 +12,10 @@ import (
 )
 
 // deskActor is the person on the Desk. Reading memories is part of using the
-// assistant, and so is changing one's own; the agent-memory permissions they
-// hold decide whether they may also change what their team or organization
-// shares, which the service enforces memory by memory.
+// assistant, and so is changing one's own and offering one for others; the
+// agent-memory manage permission decides whether they keep and change what
+// their team or organization shares, which the service enforces memory by
+// memory.
 func (r *Deps) deskActor(
 	ctx context.Context,
 	operation permission.Operation,
@@ -26,17 +27,11 @@ func (r *Deps) deskActor(
 
 	return &agentports.DeskMemoryActor{
 		Actor: actorutil.FromAuthContext(authCtx),
-		MayCreateShared: r.HasPermission(
+		MayManageShared: r.HasPermission(
 			ctx,
 			authCtx,
 			permission.ResourceAgentMemory,
-			permission.OpCreate,
-		),
-		MayUpdateShared: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourceAgentMemory,
-			permission.OpUpdate,
+			permission.OpManage,
 		),
 	}, nil
 }
@@ -136,6 +131,7 @@ func deskSettingsToModel(settings *agentports.DeskMemorySettings) *gqlmodel.Desk
 		SavingMode:               settings.SavingMode,
 		Roles:                    make([]*gqlmodel.DeskMemoryRole, 0, len(settings.Roles)),
 		CanShareWithOrganization: settings.CanShareWithOrganization,
+		ManagesShared:            settings.ManagesShared,
 	}
 	for _, role := range settings.Roles {
 		out.Roles = append(out.Roles, &gqlmodel.DeskMemoryRole{

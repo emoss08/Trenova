@@ -42,10 +42,10 @@ func (s *Service) IssueLink(
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
-	base := s.cfg.Tendering.GetPublicBaseURL()
+	base := s.cfg.PublicLinkBaseURL()
 	if base == "" {
 		return nil, errortypes.NewBusinessError(
-			"Carrier tracking links need a public base URL; set tendering.publicBaseUrl",
+			"Carrier tracking links need a public base URL; set app.webBaseUrl",
 		)
 	}
 	if req.RecipientEmail != "" && (s.templates == nil || s.emailService == nil) {

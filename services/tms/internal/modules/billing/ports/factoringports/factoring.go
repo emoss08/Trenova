@@ -168,6 +168,7 @@ type VerdictTotals struct {
 type Summary struct {
 	Ready            VerdictTotals `json:"ready"`
 	NotReady         VerdictTotals `json:"notReady"`
+	Submitted        VerdictTotals `json:"submitted"`
 	ReadyUnsubmitted VerdictTotals `json:"readyUnsubmitted"`
 }
 

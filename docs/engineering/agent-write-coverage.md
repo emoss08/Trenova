@@ -86,10 +86,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 275 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 277 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 99 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1135 writes: 620 GraphQL mutations and 515 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1142 writes: 627 GraphQL mutations and 515 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 407 |
-| Exempt | 694 |
+| Covered by a tool | 410 |
+| Exempt | 698 |
 | — Security | 83 |
-| — Configuration | 275 |
+| — Configuration | 277 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
-| — Agent administration | 99 |
+| — Agent administration | 101 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1135 |
+| Total | 1142 |
 
-Of the 441 writes an agent should be able to make, 407 have a tool (92%).
+Of the 444 writes an agent should be able to make, 410 have a tool (92%).
 
 ## Pending
 
@@ -170,7 +170,7 @@ The writes no tool performs yet, and what the tool would do.
 | agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 12 | 0 | 12 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
-| agentprofile | 6 | 2 | 4 | 0 |
+| agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
 | agentsafety | 1 | 0 | 1 | 0 |
@@ -236,7 +236,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 10 | 6 | 4 | 0 |
+| factoring | 15 | 9 | 6 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
@@ -473,6 +473,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation addAgentOrganizationProfileGuidance` | Tool: `guide_profile` |
 | `mutation addMyAgentProfileGuidance` | Tool: `guide_profile` |
+| `mutation approveAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator keeping a line someone offered about the organization; an agent offers guidance through guide_profile and never approves its own. |
+| `mutation dismissAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator turning down a line someone offered about the organization; an agent offers guidance through guide_profile and never decides on it. |
 | `mutation regenerateAgentOrganizationProfile` | Exempt, agent-administration: Asks for the organization's agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
 | `mutation regenerateMyAgentProfile` | Exempt, agent-administration: Asks for a person's own agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
 | `mutation retireAgentOrganizationProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about the organization; an agent records guidance through guide_profile and never retires what a person gave. |
@@ -1238,13 +1240,18 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeFactoringNoa` | Tool: `record_factoring_noa_acknowledgement` |
 | `mutation activateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation cancelFactoringSubmission` | Tool: `cancel_factoring_submission` |
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
 | `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
+| `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
+| `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
 | `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
 | `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
+| `mutation submitInvoicesToFactor` | Tool: `submit_invoices_to_factor` |
+| `mutation testFactoringTransport` | Exempt, configuration: Testing a factor's delivery settings connects with the administrator's stored credential and changes nothing but the recorded test result. |
 | `mutation updateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 
 ### factoringcompany

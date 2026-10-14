@@ -42,10 +42,10 @@ func (s *Service) mintLink(
 	recipient string,
 	createdByID pulid.ID,
 ) (*mintedLink, error) {
-	base := s.cfg.Tendering.GetPublicBaseURL()
+	base := s.cfg.PublicLinkBaseURL()
 	if base == "" {
 		return nil, errortypes.NewBusinessError(
-			"Customer tracking links need a public base URL; set tendering.publicBaseUrl",
+			"Customer tracking links need a public base URL; set app.webBaseUrl",
 		)
 	}
 	token, tokenHash, err := tokenutils.New()
@@ -87,9 +87,9 @@ func (s *Service) shareable(
 			"Email delivery is not configured for this environment",
 		)
 	}
-	if s.cfg.Tendering.GetPublicBaseURL() == "" {
+	if s.cfg.PublicLinkBaseURL() == "" {
 		return nil, nil, errortypes.NewBusinessError(
-			"Customer tracking links need a public base URL; set tendering.publicBaseUrl",
+			"Customer tracking links need a public base URL; set app.webBaseUrl",
 		)
 	}
 

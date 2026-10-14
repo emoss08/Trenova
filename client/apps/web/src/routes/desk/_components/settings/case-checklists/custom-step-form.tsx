@@ -1,5 +1,6 @@
 import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
+import { useRegister } from "@/hooks/use-register";
 import type { ChecklistKind, CustomCheck } from "@/types/case-checklist";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -31,8 +32,11 @@ export function CustomStepForm({
   onRemove: () => void;
 }) {
   const t = useT();
-  const { control, register, setValue } = useFormContext<ChecklistEditorValues>();
+  const { control, setValue } = useFormContext<ChecklistEditorValues>();
   const base = `items.${index}.custom` as const;
+  const labelField = useRegister(control, `${base}.label`);
+  const stepLabelField = useRegister(control, `${base}.stepLabel`);
+  const promptField = useRegister(control, `${base}.prompt`);
   const custom = useWatch({ control, name: base });
   const { errors, isSubmitted } = useFormState({ control, name: base });
   const fieldErrors = isSubmitted ? errors.items?.[index]?.custom : undefined;
@@ -71,9 +75,14 @@ export function CustomStepForm({
   return (
     <div className="dk-ck-form">
       <div className="dk-ck-fsec">
-        <Field label={t("Name")} error={fieldErrors?.label?.message} count={label.length} max={NAME_MAX}>
+        <Field
+          label={t("Name")}
+          error={fieldErrors?.label?.message}
+          count={label.length}
+          max={NAME_MAX}
+        >
           <input
-            {...register(`${base}.label`)}
+            {...labelField}
             // oxlint-disable-next-line jsx-a11y/no-autofocus -- a new step opens to be named
             autoFocus={label === ""}
             placeholder={t("Lumper receipt checked")}
@@ -135,7 +144,9 @@ export function CustomStepForm({
       <div className="dk-ck-fsec">
         <div className="dk-ck-fsh">
           <b>{t("When it's the next step")}</b>
-          <span>{t("The case offers a button that asks its agent to help. Both are optional.")}</span>
+          <span>
+            {t("The case offers a button that asks its agent to help. Both are optional.")}
+          </span>
         </div>
         <div className="dk-ck-nx">
           <div className="dk-ck-nxf">
@@ -145,10 +156,7 @@ export function CustomStepForm({
               count={stepLabel.length}
               max={BUTTON_MAX}
             >
-              <input
-                {...register(`${base}.stepLabel`)}
-                placeholder={label || t("Check the lumper receipt")}
-              />
+              <input {...stepLabelField} placeholder={label || t("Check the lumper receipt")} />
             </Field>
             <Field
               label={t("What it asks the agent")}
@@ -157,7 +165,7 @@ export function CustomStepForm({
               max={PROMPT_MAX}
             >
               <textarea
-                {...register(`${base}.prompt`)}
+                {...promptField}
                 rows={3}
                 placeholder={t("Find the lumper receipt and check it against the charge.")}
               />
@@ -172,10 +180,7 @@ export function CustomStepForm({
             <span className="dk-ck-nxa">{t("Sends as your message")}</span>
             <span className="dk-ck-nxm">
               {prompt.trim() || button}
-              <i>
-                {" "}
-                {kind === "ReadyToBill" ? t("— for the shipment") : t("— for the invoice")}
-              </i>
+              <i> {kind === "ReadyToBill" ? t("— for the shipment") : t("— for the invoice")}</i>
             </span>
           </div>
         </div>

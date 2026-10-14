@@ -290,22 +290,23 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
-	// Configuring an agent decides which tools it may reach and how much it may do
 	// What the organization has told its agents. Reading it shows what every
-	// agent is told; writing it changes how every agent behaves, so it sits
-	// with the agent definitions.
+	// agent is told. A person's own memories need only the assistant, and
+	// anyone may offer one for their team or the organization; keeping,
+	// changing, retiring and approving what reaches other people's
+	// conversations is manage, which the role templates never hand out, so it
+	// stays an administrator's unless a role is given it on purpose.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentMemory.String(),
 		DisplayName: "Agent Memory",
-		Description: "Standing instructions, facts and corrections kept for agents between runs",
+		Description: "Standing instructions, facts, corrections and profile guidance kept for agents between runs",
 		Category:    "Administration",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View what agents remember"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Record a memory for agents"},
 			{
-				Operation:   OpUpdate,
-				DisplayName: "Update",
-				Description: "Change, retire, restore or review a memory",
+				Operation:   OpManage,
+				DisplayName: operationDefinitions[OpManage].DisplayName,
+				Description: "Keep, change, retire, review and approve memories and profile guidance shared with a team, the organization or every agent",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -648,6 +649,37 @@ func (r *Registry) registerBillingResources() {
 				Operation:   OpExport,
 				DisplayName: "Export",
 				Description: "Export notices of assignment",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringSubmission.String(),
+		DisplayName: "Factoring Schedule",
+		Description: "Schedules of accounts sent to a factor, with each invoice's expected funding",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View factoring schedules"},
+			{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Send invoices to a factor on a schedule",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Retry a schedule that failed to send",
+			},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Cancel",
+				Description: "Cancel a schedule that failed to send and release its invoices",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export factoring schedules",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,

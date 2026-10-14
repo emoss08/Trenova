@@ -6,11 +6,14 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -34,6 +37,7 @@ type Params struct {
 	ImportAssistant      shipmentports.ShipmentImportAssistantService
 	PermitService        permitports.PermitService
 	Etas                 shipmenttrackingports.ShipmentEtaReader
+	CustomerTracking     customertrackingports.CustomerTrackingService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -46,8 +50,10 @@ type Handler struct {
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
+	tracking        customertrackingports.CustomerTrackingService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
+	formulas        formulavisibility.Gate
 	logger          *zap.Logger
 }
 
@@ -59,8 +65,10 @@ func New(p Params) *Handler {
 		importAssistant: p.ImportAssistant,
 		permitService:   p.PermitService,
 		etas:            p.Etas,
+		tracking:        p.CustomerTracking,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
+		formulas:        formulavisibility.NewGate(p.PermissionMiddleware, p.Logger),
 		logger:          p.Logger.Named("api.shipment-handler"),
 	}
 }
@@ -86,6 +94,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		"/:shipmentID/eta/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getEta,
+	)
+	api.GET(
+		"/:shipmentID/customer-tracking/preview/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.previewCustomerTracking,
 	)
 	api.GET(
 		"/:shipmentID/permit-assessment/",
@@ -286,7 +299,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			return h.service.List(c.Request.Context(), &shipmentports.ListShipmentsRequest{
+			result, err := h.service.List(c.Request.Context(), &shipmentports.ListShipmentsRequest{
 				Filter: req,
 				Cursor: cursor,
 				ShipmentOptions: shipmentports.ShipmentOptions{
@@ -294,6 +307,11 @@ func (h *Handler) list(c *gin.Context) {
 					Status:                helpers.QueryString(c, "status"),
 				},
 			})
+			if err != nil {
+				return nil, err
+			}
+
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -324,7 +342,7 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			return h.service.GetUnassigned(
+			result, err := h.service.GetUnassigned(
 				c.Request.Context(),
 				&shipmentports.GetUnassignedShipmentsRequest{
 					Filter: req,
@@ -334,6 +352,11 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 					},
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -445,6 +468,45 @@ func (h *Handler) getEta(c *gin.Context) {
 	c.JSON(http.StatusOK, eta)
 }
 
+// @Summary Preview a shipment's customer tracking page
+// @Description Returns what the shipment's customer would see through a tracking link opened now, built from the customer's tracking settings. No link is created and no view is recorded.
+// @ID previewShipmentCustomerTracking
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} customertrackingports.PublicTrackingView
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/customer-tracking/preview/ [get]
+func (h *Handler) previewCustomerTracking(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	view, err := h.tracking.PreviewForShipment(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+		shipmentID,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, view)
+}
+
 // @Summary Get shipment permit assessment
 // @Description Returns the oversize/overweight assessment for a shipment: the measured envelope, every jurisdiction on the route with its limits and headroom, derived permit requirements, escorts, restrictions, estimated fees and the earliest feasible pickup.
 // @ID getShipmentPermitAssessment
@@ -531,7 +593,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Create a shipment
@@ -598,7 +660,7 @@ func (h *Handler) create(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, created)
+	h.respondShipment(c, http.StatusCreated, created)
 }
 
 // @Summary Update a shipment
@@ -639,7 +701,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	h.respondShipment(c, http.StatusOK, updated)
 }
 
 // @Summary Calculate shipment totals
@@ -885,7 +947,7 @@ func (h *Handler) getDelayedShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Delay eligible shipments
@@ -914,7 +976,7 @@ func (h *Handler) delayShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary List auto-cancelable shipments
@@ -942,7 +1004,7 @@ func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Auto-cancel eligible shipments
@@ -971,7 +1033,7 @@ func (h *Handler) autoCancelShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Cancel a shipment
@@ -1018,7 +1080,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Re-rate a shipment from its contract
@@ -1095,7 +1157,7 @@ func (h *Handler) uncancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Transfer shipment ownership
@@ -1142,7 +1204,7 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 func (h *Handler) transferToBilling(c *gin.Context) {
@@ -1169,7 +1231,13 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		item,
+		(*billingqueue.BillingQueueItem).WithoutFormulaContent,
+	)
 }
 
 func (h *Handler) bulkTransferToBilling(c *gin.Context) {
@@ -1188,5 +1256,11 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		response,
+		(*shipmentports.BulkTransferToBillingResponse).WithoutFormulaContent,
+	)
 }

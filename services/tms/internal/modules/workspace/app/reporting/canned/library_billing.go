@@ -426,3 +426,33 @@ func invoicesReadyToFactor() *Entry {
 		},
 	}
 }
+
+func factoringSchedules() *Entry {
+	return &Entry{
+		Key:     "factoring-schedules",
+		Version: initialVersion,
+		Name:    "Factoring Schedules",
+		Description: "Every schedule of accounts sent to a factor, newest first, with how many " +
+			"invoices it carried, their total, the advance, fee and reserve the agreement " +
+			"expected, and whether it was delivered",
+		Category:      categoryBilling,
+		Tags:          []string{"invoices", tagAR, "factoring"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringSchedule,
+			Columns: []report.ColumnSpec{
+				dimCol("schedule_number", "Schedule", "number"),
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				dateDim("submitted_on", "Submitted", "createdAt"),
+				dimCol("status", "Status", "status"),
+				dimCol("sent_to", "Sent To", "transportTarget"),
+				sumMinor("face", "Face Amount", "faceMinor"),
+				sumMinor("expected_advance", "Expected Advance", "expectedAdvanceMinor"),
+				sumMinor("expected_fee", "Expected Fee", "expectedFeeMinor"),
+				sumMinor("expected_reserve", "Expected Reserve", "expectedReserveMinor"),
+			},
+			Sort: []report.SortSpec{desc("submitted_on")},
+		},
+	}
+}

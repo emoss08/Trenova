@@ -399,6 +399,12 @@ var FactoringInvoiceStateSpec TypeSpec
 
 var FactoringNoaSpec TypeSpec
 
+var FactoringSubmissionSpec TypeSpec
+
+var FactoringSubmissionItemSpec TypeSpec
+
+var FactoringTransportSpec TypeSpec
+
 var FiscalPeriodSpec TypeSpec
 
 var FiscalYearSpec TypeSpec
@@ -14328,6 +14334,10 @@ func init() {
 					Target: &FactoringCompanySpec,
 				},
 			},
+			{
+				Name:    "submission",
+				Special: "submission",
+			},
 		},
 	}
 
@@ -14420,6 +14430,298 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
+			},
+		},
+	}
+
+	FactoringSubmissionSpec = TypeSpec{
+		TypeName: "FactoringSubmission",
+		FieldMap: factoringcol.SubmissionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "number",
+				FieldMapKey: "number",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "agreementId",
+				FieldMapKey: "agreementId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "invoiceCount",
+				FieldMapKey: "invoiceCount",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "expectedAdvanceMinor",
+				FieldMapKey: "expectedAdvanceMinor",
+			},
+			{
+				Name:        "expectedFeeMinor",
+				FieldMapKey: "expectedFeeMinor",
+			},
+			{
+				Name:        "expectedReserveMinor",
+				FieldMapKey: "expectedReserveMinor",
+			},
+			{
+				Name:        "schedulePdfDocumentId",
+				FieldMapKey: "schedulePdfDocumentId",
+			},
+			{
+				Name:        "scheduleCsvDocumentId",
+				FieldMapKey: "scheduleCsvDocumentId",
+			},
+			{
+				Name:        "transportMethod",
+				FieldMapKey: "transportMethod",
+			},
+			{
+				Name:        "transportTarget",
+				FieldMapKey: "transportTarget",
+			},
+			{
+				Name:        "transportReference",
+				FieldMapKey: "transportReference",
+			},
+			{
+				Name:        "sendAttemptGroup",
+				FieldMapKey: "sendAttemptGroup",
+			},
+			{
+				Name:        "attempts",
+				FieldMapKey: "attempts",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "failedAt",
+				FieldMapKey: "failedAt",
+			},
+			{
+				Name:        "cancelledAt",
+				FieldMapKey: "cancelledAt",
+			},
+			{
+				Name:        "cancelReason",
+				FieldMapKey: "cancelReason",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &FactoringSubmissionItemSpec,
+				},
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
+	FactoringSubmissionItemSpec = TypeSpec{
+		TypeName: "FactoringSubmissionItem",
+		FieldMap: factoringcol.SubmissionItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "submissionId",
+				FieldMapKey: "submissionId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "invoiceNumber",
+				FieldMapKey: "invoiceNumber",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "position",
+				FieldMapKey: "position",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "expectedAdvanceMinor",
+				FieldMapKey: "expectedAdvanceMinor",
+			},
+			{
+				Name:        "expectedFeeMinor",
+				FieldMapKey: "expectedFeeMinor",
+			},
+			{
+				Name:        "expectedReserveMinor",
+				FieldMapKey: "expectedReserveMinor",
+			},
+			{
+				Name:        "expectedDays",
+				FieldMapKey: "expectedDays",
+			},
+			{
+				Name:        "packetDocumentId",
+				FieldMapKey: "packetDocumentId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "releasedAt",
+				FieldMapKey: "releasedAt",
+			},
+			{
+				Name:        "invoice",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &InvoiceSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+		},
+	}
+
+	FactoringTransportSpec = TypeSpec{
+		TypeName: "FactoringTransport",
+		FieldMap: factoringcol.TransportFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "emailRecipients",
+				FieldMapKey: "emailRecipients",
+			},
+			{
+				Name:        "attachPackets",
+				FieldMapKey: "attachPackets",
+			},
+			{
+				Name:        "sftpHost",
+				FieldMapKey: "sftpHost",
+			},
+			{
+				Name:        "sftpPort",
+				FieldMapKey: "sftpPort",
+			},
+			{
+				Name:        "sftpUsername",
+				FieldMapKey: "sftpUsername",
+			},
+			{
+				Name:        "sftpAuthMethod",
+				FieldMapKey: "sftpAuthMethod",
+			},
+			{
+				Name:    "sftpSecretSet",
+				Special: "sftpSecretSet",
+			},
+			{
+				Name:        "sftpKnownHostKey",
+				FieldMapKey: "sftpKnownHostKey",
+			},
+			{
+				Name:        "sftpDirectory",
+				FieldMapKey: "sftpDirectory",
+			},
+			{
+				Name:        "lastTestedAt",
+				FieldMapKey: "lastTestedAt",
+			},
+			{
+				Name:        "lastTestError",
+				FieldMapKey: "lastTestError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 		},
 	}

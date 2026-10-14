@@ -454,11 +454,7 @@ func transferIdentity(transfer *edi.EDITransfer, orgID pulid.ID) string {
 	if bol := strings.TrimSpace(transfer.TenderPayload.BOL); bol != "" {
 		identity += " BOL " + bol
 	}
-	partner := transfer.SourcePartner
-	if transfer.TargetOrganizationID == orgID {
-		partner = transfer.TargetPartner
-	}
-	if partner != nil && partner.Name != "" {
+	if partner := transfer.Counterparty(orgID); partner != nil && partner.Name != "" {
 		identity += " with " + partner.Name
 	}
 

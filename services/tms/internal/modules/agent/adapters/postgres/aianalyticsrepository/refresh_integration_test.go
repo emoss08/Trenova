@@ -165,7 +165,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	req := aianalyticsports.RefreshRequest{
 		TenantInfo: tenant,
 		From:       now - 3600,
-		To:         now + 1,
+		To:         timeutils.NowUnix() + 1,
 		Stamp:      stamp,
 	}
 	units, err := repo.RefreshUnits(ctx, req)

@@ -25,6 +25,11 @@ func (h *Handler) registerInboundFileRoutes(inboundFiles *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.getInboundFile,
 	)
+	inboundFiles.GET(
+		"/:fileID/inspect/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.inspectInboundFile,
+	)
 	inboundFiles.POST(
 		"/:fileID/reprocess/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
@@ -73,6 +78,27 @@ func (h *Handler) getInboundFile(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, file)
+}
+
+func (h *Handler) inspectInboundFile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fileID, err := pulid.MustParse(c.Param("fileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	inspection, err := h.inboundService.InspectInboundFile(
+		c.Request.Context(),
+		ediports.GetEDIInboundFileByIDRequest{
+			ID:         fileID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, inspection)
 }
 
 func (h *Handler) reprocessInboundFile(c *gin.Context) {

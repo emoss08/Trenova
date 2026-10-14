@@ -329,6 +329,32 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentProfileGuidance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentprofileᚐGuidance),
 			},
 			{
+				Name:       "approveAgentOrganizationProfileGuidance",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentProfileGuidance",
+				Args:       field_Mutation_approveAgentOrganizationProfileGuidance_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveAgentOrganizationProfileGuidance(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentProfileGuidance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentprofileᚐGuidance),
+			},
+			{
+				Name:       "dismissAgentOrganizationProfileGuidance",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentProfileGuidance",
+				Args:       field_Mutation_dismissAgentOrganizationProfileGuidance_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAgentOrganizationProfileGuidance(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentProfileGuidance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentprofileᚐGuidance),
+			},
+			{
 				Name:       "regenerateAgentOrganizationProfile",
 				NonNull:    true,
 				IsResolver: true,
@@ -438,6 +464,8 @@ type resolverAgentProfileVersion interface {
 type resolverMutation interface {
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	DismissAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	RegenerateAgentOrganizationProfile(ctx context.Context) (bool, error)
 	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -476,6 +504,32 @@ func field_Mutation_addAgentOrganizationProfileGuidance_args(ctx context.Context
 }
 
 func field_Mutation_retireAgentOrganizationProfileGuidance_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_approveAgentOrganizationProfileGuidance_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_dismissAgentOrganizationProfileGuidance_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (string, error) {

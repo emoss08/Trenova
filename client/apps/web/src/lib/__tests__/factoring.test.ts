@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   factoringNoaDisplayStatus,
   factoringNoaPhase,
+  factoringSubmissionPhase,
   factoringVerdictPhase,
   formatBasisPoints,
   formatMinutesOfDay,
+  groupInvoicesByFactor,
   parseMinutesOfDay,
   percentToBasisPoints,
   readyOverADay,
@@ -87,5 +89,62 @@ describe("factoring readiness", () => {
     expect(readyOverADay(now - DAY, now)).toBe(true);
     expect(readyOverADay(now - DAY + 1, now)).toBe(false);
     expect(readyOverADay(null, now)).toBe(false);
+  });
+});
+
+describe("groupInvoicesByFactor", () => {
+  const row = (invoiceId: string, factorId: string | null, name?: string) => ({
+    invoiceId,
+    factoringCompanyId: factorId,
+    factoringCompany: factorId ? { id: factorId, name: name ?? factorId } : null,
+  });
+
+  it("puts the factor most of the selection is with first, keeping each factor's invoices in selection order", () => {
+    const groups = groupInvoicesByFactor([
+      row("inv_1", "fac_a", "Apex Capital"),
+      row("inv_2", "fac_b", "RTS Financial"),
+      row("inv_3", "fac_b", "RTS Financial"),
+      row("inv_4", "fac_a", "Apex Capital"),
+      row("inv_5", "fac_b", "RTS Financial"),
+    ]);
+
+    expect(groups).toEqual([
+      {
+        factoringCompanyId: "fac_b",
+        name: "RTS Financial",
+        invoiceIds: ["inv_2", "inv_3", "inv_5"],
+      },
+      { factoringCompanyId: "fac_a", name: "Apex Capital", invoiceIds: ["inv_1", "inv_4"] },
+    ]);
+  });
+
+  it("orders factors with as many invoices by name, and leaves out invoices with no factor", () => {
+    const groups = groupInvoicesByFactor([
+      row("inv_1", "fac_z", "Zeal Funding"),
+      row("inv_2", null),
+      row("inv_3", "fac_a", "Apex Capital"),
+    ]);
+
+    expect(groups.map((group) => group.factoringCompanyId)).toEqual(["fac_a", "fac_z"]);
+    expect(groups.flatMap((group) => group.invoiceIds)).toEqual(["inv_3", "inv_1"]);
+  });
+
+  it("names a factor by its id when the row did not carry the factor", () => {
+    expect(groupInvoicesByFactor([{ invoiceId: "inv_1", factoringCompanyId: "fac_a" }])).toEqual([
+      { factoringCompanyId: "fac_a", name: "fac_a", invoiceIds: ["inv_1"] },
+    ]);
+  });
+});
+
+describe("factoring submission phases", () => {
+  it("reads a failed schedule as failed and a cancelled one as closed", () => {
+    expect(factoringSubmissionPhase("Sending")).toBe("queued");
+    expect(factoringSubmissionPhase("Sent")).toBe("complete");
+    expect(factoringSubmissionPhase("Failed")).toBe("failed");
+    expect(factoringSubmissionPhase("Cancelled")).toBe("closed");
+  });
+
+  it("reads a submitted invoice as active, between ready and closed", () => {
+    expect(factoringVerdictPhase("Submitted")).toBe("active");
   });
 });

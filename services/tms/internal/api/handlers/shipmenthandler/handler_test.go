@@ -1,21 +1,22 @@
 package shipmenthandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -202,6 +203,8 @@ type handlerDeps struct {
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
+	permissions     permissionports.PermissionEngine
+	tracking        customertrackingports.CustomerTrackingService
 }
 
 func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handler {
@@ -219,8 +222,13 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 		Config: cfg,
 	})
 
+	permissions := deps.permissions
+	if permissions == nil {
+		permissions = &mocks.AllowAllPermissionEngine{}
+	}
+
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: &mocks.AllowAllPermissionEngine{},
+		PermissionEngine: permissions,
 		ErrorHandler:     errorHandler,
 	})
 
@@ -231,6 +239,7 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 		ImportAssistant:      deps.importAssistant,
 		PermitService:        deps.permitService,
 		Etas:                 deps.etas,
+		CustomerTracking:     deps.tracking,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 		Logger:               logger,

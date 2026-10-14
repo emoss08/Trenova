@@ -89,8 +89,9 @@ Keywords: undo saved memory, learned steps, saved to memory, edit learned steps
 4. Select **Why** to see why it was kept, what was said, and what it replaced. For learned steps, the replaced steps appear under **Before**.
 
 ## Notes
-- You can always keep a memory for **Just you**. Keeping one for a team or the **Organization** needs permission to create agent memories. Without it, those choices are greyed out.
-- Changing, pausing or forgetting a team or organization memory needs permission to update agent memories, and a team memory also needs you to hold that team's role. Memories you can't change show no **Edit**, **Pause** or **Forget** buttons, and their who-it-is-for menu is locked.
+- You can always keep a memory for **Just you**. You can also write one for a team you are on or the **Organization**: if you manage agent memory it is kept at once, and otherwise the button reads **Offer** and the memory is offered to an administrator, who decides whether to keep it. Until then it is listed as offered, with **Withdraw** to take it back, and no agent reads it.
+- Changing, pausing or forgetting a team or organization memory needs permission to manage agent memory, and a team memory also needs you to hold that team's role. Memories you can't change show no **Edit**, **Pause** or **Forget** buttons, and their who-it-is-for menu is locked.
+- When an agent offers a memory for a team or the organization in your conversation and you don't manage agent memory, the card says an administrator decides; **Keep for just you** keeps a copy of your own.
 - **Saving new memories** is your own setting. It doesn't change anyone else's.
 - When an agent looks back over its work, a memory meant for a team or the whole organization is always offered rather than saved straight away, whatever your setting. The same goes for anything learned in a conversation that read outside content. Administrators review memories offered for the whole organization in [AI control](/admin/agent-control).
 - A memory a newer one replaced says **Replaced by a newer memory** in the conversation and offers no **Undo**, so the two never apply at once.

@@ -10,6 +10,7 @@ import {
   ediValidationModeSchema,
 } from "@trenova/shared/types/edi";
 import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
+import { MAPPING_ENTITY_LABELS } from "@/lib/edi/mapping-entity-labels";
 
 const templateElementSourceLabels: Record<
   (typeof ediTemplateElementSourceSchema.options)[number],
@@ -24,18 +25,6 @@ const templateElementSourceLabels: Record<
   transform: "Transform",
   starlark: "Starlark",
 });
-
-const mappingEntityTypeLabels: Record<(typeof ediMappingEntityTypeSchema.options)[number], string> =
-  defineLabels({
-    Customer: "Customer",
-    ServiceType: "Service type",
-    ShipmentType: "Shipment type",
-    FormulaTemplate: "Formula template",
-    Location: "Location",
-    Commodity: "Commodity",
-    AccessorialCharge: "Accessorial charge",
-    ServiceFailureReasonCode: "Service failure reason code",
-  });
 
 const validationModeLabels: Record<(typeof ediValidationModeSchema.options)[number], string> =
   defineLabels({
@@ -64,7 +53,7 @@ export const transformBaseSourceOptions = templateElementSourceOptions.filter(
 
 export const mappingEntityTypeOptions = toOptions(
   ediMappingEntityTypeSchema.options,
-  sourceLabels(mappingEntityTypeLabels),
+  sourceLabels(MAPPING_ENTITY_LABELS),
 );
 
 export const validationModeOptions = toOptions(

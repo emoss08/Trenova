@@ -1,0 +1,39 @@
+fragment FactoringTransportFields on FactoringTransport {
+  id
+  factoringCompanyId
+  method
+  emailRecipients
+  attachPackets
+  sftpHost
+  sftpPort
+  sftpUsername
+  sftpAuthMethod
+  sftpSecretSet
+  sftpKnownHostKey
+  sftpDirectory
+  lastTestedAt
+  lastTestError
+  version
+}
+
+query FactoringTransport($factoringCompanyId: ID!) {
+  factoringTransport(factoringCompanyId: $factoringCompanyId) {
+    ...FactoringTransportFields
+  }
+}
+
+mutation SaveFactoringTransport($input: SaveFactoringTransportInput!) {
+  saveFactoringTransport(input: $input) {
+    ...FactoringTransportFields
+  }
+}
+
+mutation TestFactoringTransport($factoringCompanyId: ID!) {
+  testFactoringTransport(factoringCompanyId: $factoringCompanyId) {
+    passed
+    message
+    transport {
+      ...FactoringTransportFields
+    }
+  }
+}

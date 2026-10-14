@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -1479,5 +1480,41 @@ func (f *FactoringAgreementsByCompanyIDLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.factoringAgreementsByCompanyID = newFactoringAgreementsByCompanyIDLoader(f, tenantInfo)
+	})
+}
+
+func FactoringSubmissionItems(
+	ctx context.Context,
+	key string,
+) ([]*factoring.SubmissionItem, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*factoring.SubmissionItem] {
+		return s.factoringSubmissionItems
+	})
+}
+
+func (f *FactoringSubmissionItemsLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringSubmissionItems = newFactoringSubmissionItemsLoader(f, tenantInfo)
+	})
+}
+
+func FactoringLiveItemByInvoiceID(
+	ctx context.Context,
+	key string,
+) (*factoringports.LiveItem, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoringports.LiveItem] {
+		return s.factoringLiveItemByInvoiceID
+	})
+}
+
+func (f *FactoringLiveItemByInvoiceIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringLiveItemByInvoiceID = newFactoringLiveItemByInvoiceIDLoader(f, tenantInfo)
 	})
 }

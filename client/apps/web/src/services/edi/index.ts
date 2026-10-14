@@ -13,6 +13,7 @@ import {
   ediConnectionSchema,
   ediDocumentPreviewSchema,
   ediMessageInspectionSchema,
+  ediInboundFileInspectionSchema,
   ediInboundFileSchema,
   ediMessageListSchema,
   ediMessageSchema,
@@ -24,6 +25,7 @@ import {
   ediTemplateSchema,
   ediTemplateValidationResponseSchema,
   ediTemplateVersionSchema,
+  ediTransferListSchema,
   ediTransferSchema,
   internalPartnerPairSchema,
   type ApproveEDITransferRequest,
@@ -54,6 +56,9 @@ import {
   type UpsertEDIPartnerDocumentProfileRequest,
 } from "@trenova/shared/types/edi";
 import { ediTransferEndpoints } from "./transfers";
+
+/** The most tenders one inbound file is listed with: the transfer list's page limit. */
+const INBOUND_FILE_TRANSFER_LIMIT = 100;
 
 export class EDIService {
   public async listConnections(query = "") {
@@ -294,9 +299,16 @@ export class EDIService {
     return safeParse(ediMessageSchema, response, "EDIMessage");
   }
 
-  public async getInboundFile(fileId: string) {
-    const response = await api.get(`/edi/inbound-files/${fileId}/`);
+  public async getInboundFile(fileId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/inbound-files/${fileId}/`, { signal: options?.signal });
     return safeParse(ediInboundFileSchema, response, "EDIInboundFile");
+  }
+
+  public async inspectInboundFile(fileId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/inbound-files/${fileId}/inspect/`, {
+      signal: options?.signal,
+    });
+    return safeParse(ediInboundFileInspectionSchema, response, "EDIInboundFileInspection");
   }
 
   public async reprocessInboundFile(fileId: string) {
@@ -386,13 +398,47 @@ export class EDIService {
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 
-  public async getTransfer(transferId: string) {
-    const response = await api.get(`/edi/transfers/${transferId}/`);
+  public async getTransfer(transferId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/transfers/${transferId}/`, { signal: options?.signal });
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 
-  public async getMappingPreview(transferId: string) {
-    const response = await api.get(`/edi/transfers/${transferId}/mapping-preview/`);
+  /**
+   * Every tender one inbound file's 204s opened. A batch can carry more than a
+   * page, so the first page's count tells how many more to read, and those are
+   * read together.
+   */
+  public async listInboundFileTransfers(fileId: string, options?: { signal?: AbortSignal }) {
+    const page = async (offset: number) => {
+      const query = new URLSearchParams({
+        direction: "inbound",
+        inboundFileId: fileId,
+        limit: String(INBOUND_FILE_TRANSFER_LIMIT),
+      });
+      if (offset > 0) query.set("offset", String(offset));
+      const response = await api.get(`/edi/transfers/?${query.toString()}`, {
+        signal: options?.signal,
+      });
+      return safeParse(ediTransferListSchema, response, "EDITransferList");
+    };
+
+    const first = await page(0);
+    const offsets: number[] = [];
+    for (
+      let offset = INBOUND_FILE_TRANSFER_LIMIT;
+      offset < first.count;
+      offset += INBOUND_FILE_TRANSFER_LIMIT
+    ) {
+      offsets.push(offset);
+    }
+    const rest = await Promise.all(offsets.map(page));
+    return [first, ...rest].flatMap((list) => list.results);
+  }
+
+  public async getMappingPreview(transferId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/transfers/${transferId}/mapping-preview/`, {
+      signal: options?.signal,
+    });
     return safeParse(ediMappingPreviewSchema, response, "EDIMappingPreview");
   }
 

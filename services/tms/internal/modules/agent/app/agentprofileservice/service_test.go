@@ -153,6 +153,18 @@ func (f *fakeGuidance) matching(ref agentprofileports.SubjectRef, active bool) [
 	return out
 }
 
+// open are the lines a profile still holds: active and offered.
+func (f *fakeGuidance) open(ref agentprofileports.SubjectRef) []*agentprofile.Guidance {
+	out := make([]*agentprofile.Guidance, 0, len(f.lines))
+	for _, line := range f.lines {
+		if sameSubject(line, ref) && !line.Status.Closed() {
+			out = append(out, line)
+		}
+	}
+
+	return out
+}
+
 func (f *fakeGuidance) ListActive(
 	_ context.Context,
 	ref agentprofileports.SubjectRef,
@@ -170,7 +182,11 @@ func (f *fakeGuidance) List(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	return f.matching(req.Ref, !req.IncludeRetired), nil
+	if req.IncludeRetired {
+		return f.matching(req.Ref, false), nil
+	}
+
+	return f.open(req.Ref), nil
 }
 
 func (f *fakeGuidance) CountActive(_ context.Context, ref agentprofileports.SubjectRef) (int, error) {
@@ -178,6 +194,24 @@ func (f *fakeGuidance) CountActive(_ context.Context, ref agentprofileports.Subj
 	defer f.mu.Unlock()
 
 	return len(f.matching(ref, true)), nil
+}
+
+func (f *fakeGuidance) CountOpen(_ context.Context, ref agentprofileports.SubjectRef) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return len(f.open(ref)), nil
+}
+
+// fakeMemories answers the one question the profile service asks the memory
+// service: whether the person manages agent memory.
+type fakeMemories struct {
+	agentports.AgentMemoryService
+	manages bool
+}
+
+func (f *fakeMemories) MayManageShared(context.Context, pagination.TenantInfo, pulid.ID) bool {
+	return f.manages
 }
 
 func (f *fakeGuidance) GetByID(
@@ -273,6 +307,7 @@ type harness struct {
 	facts     *fakeFacts
 	controls  *fakeControls
 	scheduler *fakeScheduler
+	memories  *fakeMemories
 	plans     *platformplanportsmock.MockPlanService
 	tenant    pagination.TenantInfo
 	userID    pulid.ID
@@ -281,12 +316,15 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
+	// The harness's person manages agent memory, as an administrator does;
+	// tests about offering turn it off.
 	h := &harness{
 		profiles:  newFakeProfiles(),
 		guidance:  &fakeGuidance{},
 		facts:     &fakeFacts{organization: sampleActivity()},
 		controls:  &fakeControls{},
 		scheduler: &fakeScheduler{},
+		memories:  &fakeMemories{manages: true},
 		plans:     platformplanportsmock.NewMockPlanService(t),
 		tenant:    pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		userID:    pulid.MustNew("usr_"),
@@ -309,6 +347,7 @@ func newHarness(t *testing.T) *harness {
 		Controls:      h.controls,
 		Plans:         h.plans,
 		Scheduler:     h.scheduler,
+		Memories:      h.memories,
 	})
 	h.svc.now = func() int64 { return testNow }
 
@@ -523,6 +562,94 @@ func TestAddGuidance_IsAPersonsAndAsksForTheProfileAgain(t *testing.T) {
 
 	require.Len(t, h.scheduler.requests, 1)
 	assert.Equal(t, agentprofile.TriggerGuidance, h.scheduler.requests[0].Trigger)
+}
+
+// Guidance about the organization shapes what every agent is told, so from a
+// person who does not manage agent memory it is offered: kept as Suggested,
+// read into no profile, and not written again until an administrator approves
+// it. Their own profile stays theirs to steer at once.
+func TestAddGuidance_IsOfferedByAPersonWhoDoesNotManageAgentMemory(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.memories.manages = false
+
+	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
+		Ref:     h.org(),
+		Content: "The Laredo lane is seasonal.",
+		Source:  agentprofile.GuidanceSourceAgent,
+		Actor:   h.person(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusSuggested, offered.Status)
+	assert.Equal(t, h.userID, offered.CreatedByID, "the offer carries whose words they are")
+	assert.Empty(t, h.scheduler.requests, "nothing is written again from an offer")
+
+	active, err := h.guidance.ListActive(t.Context(), h.org())
+	require.NoError(t, err)
+	assert.Empty(t, active, "no version is written from an offered line")
+
+	own, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
+		Ref:     agentprofileports.UserSubject(h.tenant, h.userID),
+		Content: "I only handle the Midwest accounts.",
+		Actor:   h.person(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusActive, own.Status, "a person's own profile is theirs")
+	require.Len(t, h.scheduler.requests, 1)
+}
+
+func TestApproveGuidance_KeepsAnOfferedLineAndAsksForTheProfileAgain(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.memories.manages = false
+	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
+		Ref: h.org(), Content: "The Laredo lane is seasonal.", Actor: h.person(),
+	})
+	require.NoError(t, err)
+	h.memories.manages = true
+
+	approved, err := h.svc.ApproveGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
+		Ref: h.org(), ID: offered.ID, Actor: h.person(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusActive, approved.Status)
+	require.Len(t, h.scheduler.requests, 1, "the profile is written again with it")
+	assert.Equal(t, agentprofile.TriggerGuidance, h.scheduler.requests[0].Trigger)
+
+	again, err := h.svc.ApproveGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
+		Ref: h.org(), ID: offered.ID, Actor: h.person(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusActive, again.Status)
+	assert.Len(t, h.scheduler.requests, 1, "deciding a decided line changes nothing")
+}
+
+func TestDismissGuidance_ClosesAnOfferedLineWithoutWritingAgain(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.memories.manages = false
+	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
+		Ref: h.org(), Content: "We stopped running reefers.", Actor: h.person(),
+	})
+	require.NoError(t, err)
+	h.memories.manages = true
+
+	dismissed, err := h.svc.DismissGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
+		Ref: h.org(), ID: offered.ID, Actor: h.person(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusDismissed, dismissed.Status)
+	require.NotNil(t, dismissed.RetiredAt, "who closed it and when are kept")
+	assert.Equal(t, h.userID, *dismissed.RetiredByID)
+	assert.Empty(t, h.scheduler.requests)
+
+	_, err = h.svc.DismissGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
+		Ref: agentprofileports.UserSubject(h.tenant, h.userID), ID: offered.ID, Actor: h.person(),
+	})
+	assert.True(t, errortypes.IsNotFoundError(err), "lines are offered about the organization alone")
 }
 
 func TestAddGuidance_RefusesPastTheCap(t *testing.T) {

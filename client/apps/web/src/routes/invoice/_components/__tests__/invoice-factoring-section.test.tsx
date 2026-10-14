@@ -56,6 +56,7 @@ function state(overrides: Partial<FactoringInvoiceState> = {}): FactoringInvoice
     openBalanceMinor: 125_000,
     readySince: null,
     evaluatedAt: NOW,
+    submission: null,
     checks: [
       {
         code: "Eligible",
@@ -165,6 +166,31 @@ describe("invoice factoring section", () => {
       "/billing/invoices?item=inv_1&tab=disputes",
     );
     expect(within(section).getByRole("button", { name: /Request documents/ })).toBeInTheDocument();
+  });
+
+  it("links the schedule an invoice is on while it is with the factor", async () => {
+    mocks.fetchInvoiceFactoring.mockResolvedValue(
+      factoring({
+        factoringState: state({
+          verdict: "Submitted",
+          failedChecks: 0,
+          submission: {
+            submissionId: "facsub_1",
+            submissionNumber: "FS2610-00007",
+            submissionStatus: "Failed",
+          },
+        }),
+      }),
+    );
+    renderSection();
+
+    const section = await loadedSection();
+    expect(within(section).getByText("Submitted")).toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: "FS2610-00007" })).toHaveAttribute(
+      "href",
+      "/billing/factoring/submissions/facsub_1",
+    );
+    expect(within(section).getByText("Failed to send")).toBeInTheDocument();
   });
 
   it("asks for the one missing document the check names", async () => {

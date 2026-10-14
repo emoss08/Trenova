@@ -1036,7 +1036,7 @@ type AgentProfile struct {
 	Current *agentprofile.Profile `json:"current,omitempty"`
 	// The newest attempt, when it failed after the current version was written.
 	LatestFailure *agentprofile.Profile `json:"latestFailure,omitempty"`
-	// The active guidance, newest first.
+	// The active and the offered guidance, active first, then newest first.
 	Guidance []*agentprofile.Guidance `json:"guidance"`
 }
 
@@ -1803,6 +1803,12 @@ type BulkWorkerPTOActionInput struct {
 	Reason *string                       `json:"reason,omitempty"`
 }
 
+type CancelFactoringSubmissionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Reason  string `json:"reason"`
+}
+
 type CancelFuelCardInput struct {
 	ID      string `json:"id"`
 	Version int    `json:"version"`
@@ -2486,7 +2492,7 @@ type CreateCarrierInvoiceMatchInput struct {
 
 type CreateDeskMemoryInput struct {
 	Content string `json:"content"`
-	// User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+	// User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
 	Scope  agent.MemoryScope `json:"scope"`
 	RoleID *string           `json:"roleId,omitempty"`
 }
@@ -2917,7 +2923,7 @@ type DeskMemory struct {
 	LastUsedAt *int `json:"lastUsedAt,omitempty"`
 	CreatedAt  int  `json:"createdAt"`
 	Version    int  `json:"version"`
-	// The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+	// The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable.
 	Editable bool `json:"editable"`
 	// Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
 	Reason string `json:"reason"`
@@ -2958,7 +2964,7 @@ type DeskMemoryPage struct {
 type DeskMemoryRole struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	// The person may keep memories for the role: it needs permission to create agent memories.
+	// The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise.
 	Writable bool `json:"writable"`
 }
 
@@ -2966,8 +2972,10 @@ type DeskMemorySettings struct {
 	SavingMode agent.MemorySavingMode `json:"savingMode"`
 	// The person's roles by name.
 	Roles []*DeskMemoryRole `json:"roles"`
-	// The person may keep memories for the whole organization.
+	// The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise.
 	CanShareWithOrganization bool `json:"canShareWithOrganization"`
+	// The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share.
+	ManagesShared bool `json:"managesShared"`
 }
 
 type DetachPayEventInput struct {
@@ -4490,6 +4498,28 @@ type FactoringNoaListInput struct {
 	CustomerID         *string                   `json:"customerId,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
+}
+
+type FactoringSubmissionConnection struct {
+	Edges      []*FactoringSubmissionEdge `json:"edges"`
+	PageInfo   *PageInfo                  `json:"pageInfo"`
+	TotalCount *int                       `json:"totalCount,omitempty"`
+}
+
+type FactoringSubmissionEdge struct {
+	Node   *factoring.Submission `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type FactoringSubmissionListInput struct {
+	Table              *DataTableConnectionInput    `json:"table"`
+	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
+	Statuses           []factoring.SubmissionStatus `json:"statuses,omitempty"`
+}
+
+type FactoringSubmissionPlanInput struct {
+	FactoringCompanyID string   `json:"factoringCompanyId"`
+	InvoiceIds         []string `json:"invoiceIds"`
 }
 
 type FieldFilterInput struct {
@@ -7172,6 +7202,11 @@ type RetryAccountingSyncInput struct {
 	ErrorCategories []accountingsync.SyncErrorCategory `json:"errorCategories,omitempty"`
 }
 
+type RetryFactoringSubmissionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+}
+
 type ReverseCustomerPaymentInput struct {
 	PaymentID      string  `json:"paymentId"`
 	AccountingDate int     `json:"accountingDate"`
@@ -7347,6 +7382,23 @@ type SaveAccountingAppInput struct {
 	WebhookVerifierToken *string `json:"webhookVerifierToken,omitempty"`
 	// Removes the saved webhook verifier token.
 	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
+}
+
+type SaveFactoringTransportInput struct {
+	FactoringCompanyID string `json:"factoringCompanyId"`
+	// Required when the factor already has delivery settings.
+	Version         *int                      `json:"version,omitempty"`
+	Method          factoring.TransportMethod `json:"method"`
+	EmailRecipients []string                  `json:"emailRecipients,omitempty"`
+	AttachPackets   *bool                     `json:"attachPackets,omitempty"`
+	SftpHost        *string                   `json:"sftpHost,omitempty"`
+	SftpPort        *int                      `json:"sftpPort,omitempty"`
+	SftpUsername    *string                   `json:"sftpUsername,omitempty"`
+	SftpAuthMethod  *factoring.SftpAuthMethod `json:"sftpAuthMethod,omitempty"`
+	// Leave empty to keep the stored password or key.
+	SftpSecret       *string `json:"sftpSecret,omitempty"`
+	SftpKnownHostKey *string `json:"sftpKnownHostKey,omitempty"`
+	SftpDirectory    *string `json:"sftpDirectory,omitempty"`
 }
 
 type SaveHomeLayoutPresetInput struct {

@@ -395,7 +395,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 					{
 						Path:        invoiceDatePath,
 						Type:        VariableDate,
-						Description: "When the invoice was issued.",
+						Description: invoiceIssuedDescription,
 					},
 					{Path: dueDatePath, Type: VariableDate, Description: "When payment is due."},
 					{

@@ -1,0 +1,73 @@
+@import "@fontsource-variable/newsreader/opsz.css";
+
+/* The customer's tracking page. Colour is spent only on where the load stands:
+   the glow behind the headline and the halo round the truck take the tone of
+   its status, and everything else is drawn in ink. */
+.st-page {
+  --st-tone: var(--brand);
+}
+.st-page[data-tone="attention"] {
+  --st-tone: var(--warning);
+}
+.st-page[data-tone="complete"] {
+  --st-tone: var(--success);
+}
+.st-page[data-tone="closed"],
+.st-page[data-tone="queued"] {
+  --st-tone: var(--muted-foreground);
+}
+
+.st-glow {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 560px;
+  pointer-events: none;
+  background:
+    radial-gradient(56% 90% at 50% -10%, color-mix(in oklch, var(--st-tone) 13%, transparent), transparent 72%),
+    radial-gradient(30% 60% at 82% 0%, color-mix(in oklch, var(--st-tone) 7%, transparent), transparent 70%);
+}
+
+.st-halo {
+  background: color-mix(in oklch, var(--st-tone) 28%, transparent);
+}
+.st-dot {
+  background: var(--st-tone);
+}
+
+@keyframes st-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+.st-fill {
+  transform-origin: left center;
+  animation: st-draw 1.2s var(--ease-settle) 240ms both;
+}
+
+@keyframes st-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+.st-puck {
+  animation: st-arrive 520ms var(--ease-settle) 1.1s both;
+}
+
+@keyframes st-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.st-in {
+  animation: st-in 520ms var(--ease-settle) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-fill,
+  .st-puck,
+  .st-in {
+    animation: none;
+  }
+}

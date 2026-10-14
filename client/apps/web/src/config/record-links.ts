@@ -74,6 +74,10 @@ export const RECORD_LINKS = {
     path: "/billing/configuration-files/factoring-companies",
     params: { section: "notices", noa: "{id}" },
   },
+  factoring_submission: {
+    label: "Factoring schedule",
+    path: "/billing/factoring/submissions/{id}",
+  },
   factoring_company: {
     label: "Factoring company",
     path: "/billing/configuration-files/factoring-companies",
@@ -151,6 +155,11 @@ export const RECORD_LINKS = {
   edi_message: {
     label: "EDI message",
     path: "/edi/messages",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
+  edi_transfer: {
+    label: "EDI transfer",
+    path: "/edi/transfers/inbound",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
   capture_batch: {

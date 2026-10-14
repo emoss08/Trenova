@@ -412,6 +412,10 @@ type ResolverRoot interface {
 	FactoringCompany() FactoringCompanyResolver
 	FactoringInvoiceState() FactoringInvoiceStateResolver
 	FactoringNoa() FactoringNoaResolver
+	FactoringSubmission() FactoringSubmissionResolver
+	FactoringSubmissionItem() FactoringSubmissionItemResolver
+	FactoringSubmissionPlan() FactoringSubmissionPlanResolver
+	FactoringTransport() FactoringTransportResolver
 	FiscalYear() FiscalYearResolver
 	FleetSafetyRank() FleetSafetyRankResolver
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
@@ -1276,12 +1280,36 @@ type FactoringInvoiceStateResolver interface {
 	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
 	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
 	FactoringCompany(ctx context.Context, obj *factoring.InvoiceState) (*factoringcompany.FactoringCompany, error)
+	Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error)
 }
 
 type FactoringNoaResolver interface {
 	SignedDocumentID(ctx context.Context, obj *factoring.Noa) (*string, error)
 	Customer(ctx context.Context, obj *factoring.Noa) (*customer.Customer, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Noa) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringSubmissionResolver interface {
+	SchedulePDFDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
+	ScheduleCSVDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
+	SubmittedByID(ctx context.Context, obj *factoring.Submission) (*string, error)
+	Items(ctx context.Context, obj *factoring.Submission) ([]*factoring.SubmissionItem, error)
+	FactoringCompany(ctx context.Context, obj *factoring.Submission) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringSubmissionItemResolver interface {
+	PacketDocumentID(ctx context.Context, obj *factoring.SubmissionItem) (*string, error)
+	Invoice(ctx context.Context, obj *factoring.SubmissionItem) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoring.SubmissionItem) (*customer.Customer, error)
+}
+
+type FactoringSubmissionPlanResolver interface {
+	AgreementID(ctx context.Context, obj *factoringports.SubmissionPlan) (string, error)
+}
+
+type FactoringTransportResolver interface {
+	EmailRecipients(ctx context.Context, obj *factoring.Transport) ([]string, error)
+	SftpSecretSet(ctx context.Context, obj *factoring.Transport) (bool, error)
 }
 
 type FiscalYearResolver interface {
@@ -1704,6 +1732,8 @@ type MutationResolver interface {
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	DismissAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	RegenerateAgentOrganizationProfile(ctx context.Context) (bool, error)
 	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -1934,6 +1964,11 @@ type MutationResolver interface {
 	ReleaseFactoringNoa(ctx context.Context, input gqlmodel.ReleaseFactoringNoaInput) (*factoring.Noa, error)
 	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoring.InvoiceState, error)
 	RequestMissingFactoringDocuments(ctx context.Context, input gqlmodel.RequestMissingFactoringDocumentsInput) (*factoringports.RequestMissingDocumentsResult, error)
+	SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoring.Submission, error)
+	RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoring.Submission, error)
+	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error)
+	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error)
+	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
@@ -2756,6 +2791,10 @@ type QueryResolver interface {
 	FactoringReadiness(ctx context.Context, invoiceID string) (*factoring.InvoiceState, error)
 	FactoringInvoiceStates(ctx context.Context, input gqlmodel.FactoringInvoiceStateListInput) (*gqlmodel.FactoringInvoiceStateConnection, error)
 	FactoringSummary(ctx context.Context) (*factoringports.Summary, error)
+	FactoringSubmissions(ctx context.Context, input gqlmodel.FactoringSubmissionListInput) (*gqlmodel.FactoringSubmissionConnection, error)
+	FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error)
+	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error)
+	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -3773,6 +3812,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FactoringCompany":                   func() any { return r.FactoringCompany() },
 			"FactoringInvoiceState":              func() any { return r.FactoringInvoiceState() },
 			"FactoringNoa":                       func() any { return r.FactoringNoa() },
+			"FactoringSubmission":                func() any { return r.FactoringSubmission() },
+			"FactoringSubmissionItem":            func() any { return r.FactoringSubmissionItem() },
+			"FactoringSubmissionPlan":            func() any { return r.FactoringSubmissionPlan() },
+			"FactoringTransport":                 func() any { return r.FactoringTransport() },
 			"FiscalYear":                         func() any { return r.FiscalYear() },
 			"FleetSafetyRank":                    func() any { return r.FleetSafetyRank() },
 			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
@@ -5633,6 +5676,7 @@ enum AgentSubjectType {
   Invoice
   InvoiceDispute
   FactoringNoa
+  FactoringSubmission
 }
 
 enum AgentRunTrigger {
@@ -6622,9 +6666,17 @@ enum AgentProfileTrigger {
   Guidance
 }
 
+"""
+Where a line stands. Active lines shape the next version. A Suggested line
+about the organization was offered by someone who does not manage agent memory,
+or written down by an agent, and waits for an administrator to approve or
+dismiss it. Retired and Dismissed lines are kept for the record.
+"""
 enum AgentProfileGuidanceStatus {
   Active
+  Suggested
   Retired
+  Dismissed
 }
 
 "Who worded a line of guidance: a person typing it, or an agent writing down what a person said."
@@ -6684,7 +6736,7 @@ type AgentProfile {
   current: AgentProfileVersion
   "The newest attempt, when it failed after the current version was written."
   latestFailure: AgentProfileVersion
-  "The active guidance, newest first."
+  "The active and the offered guidance, active first, then newest first."
   guidance: [AgentProfileGuidance!]!
 }
 
@@ -6703,11 +6755,19 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Add a line of guidance to the organization's profile; it is written again with it."
+  """
+  Add a line of guidance to the organization's profile. From someone who manages
+  agent memory it is kept and the profile is written again with it; from anyone
+  else it is offered (Suggested) for an administrator to approve.
+  """
   addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
-  "Retire a line of guidance from the organization's profile; it is written again without it."
+  "Retire a line of guidance from the organization's profile; it is written again without it. Needs agent memory manage."
   retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
-  "Write the organization's profile again now."
+  "Keep an offered line; the organization's profile is written again with it. Needs agent memory manage."
+  approveAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Turn an offered line down; it never shapes the profile. Needs agent memory manage."
+  dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the organization's profile again now. Needs agent memory manage."
   regenerateAgentOrganizationProfile: Boolean!
   "Add a line of guidance to the signed-in person's own profile."
   addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
@@ -14921,7 +14981,7 @@ type DeskMemory {
   lastUsedAt: Timestamp
   createdAt: Timestamp!
   version: Int!
-  "The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories."
+  "The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable."
   editable: Boolean!
   "Why it was kept, in the words of the agent that kept it; empty for one a person wrote down."
   reason: String!
@@ -14962,7 +15022,7 @@ type DeskMemoryPage {
 type DeskMemoryRole {
   id: ID!
   name: String!
-  "The person may keep memories for the role: it needs permission to create agent memories."
+  "The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise."
   writable: Boolean!
 }
 
@@ -14970,8 +15030,10 @@ type DeskMemorySettings {
   savingMode: AgentMemorySavingMode!
   "The person's roles by name."
   roles: [DeskMemoryRole!]!
-  "The person may keep memories for the whole organization."
+  "The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise."
   canShareWithOrganization: Boolean!
+  "The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share."
+  managesShared: Boolean!
 }
 
 input DeskMemoriesInput {
@@ -14988,7 +15050,7 @@ input DeskMemoriesInput {
 
 input CreateDeskMemoryInput {
   content: String!
-  "User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds."
+  "User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise."
   scope: AgentMemoryScope!
   roleId: ID
 }
@@ -20147,6 +20209,8 @@ enum FactoringNoaStatus {
 enum FactoringVerdict {
   Ready
   NotReady
+  "On a schedule sent, being sent, or that failed to send to the factor."
+  Submitted
   "Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored."
   Excluded
 }
@@ -20170,6 +20234,33 @@ enum FactoringFixAction {
   ResolveDispute
   RequestDocument
   ReviewShipment
+}
+
+enum FactoringSubmissionStatus {
+  "Being built and delivered; retried automatically before it fails."
+  Sending
+  Sent
+  "Could not be delivered after every retry; retry it or cancel it."
+  Failed
+  "Cancelled after a failed send; its invoices were released."
+  Cancelled
+}
+
+enum FactoringSubmissionItemStatus {
+  Pending
+  "Released when its schedule was cancelled."
+  Released
+}
+
+"How schedules reach a factor."
+enum FactoringTransportMethod {
+  Email
+  Sftp
+}
+
+enum FactoringSftpAuthMethod {
+  Password
+  PrivateKey
 }
 
 enum InvoiceFactoringOverride {
@@ -20311,6 +20402,8 @@ type FactoringVerdictTotals {
 type FactoringSummary {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
+  "On a schedule with the factor or being sent to it."
+  submitted: FactoringVerdictTotals!
   "Ready for more than a day without being submitted."
   readyUnsubmitted: FactoringVerdictTotals!
 }
@@ -20322,6 +20415,189 @@ type FactoringDocumentRequestResult {
   documentTypes: [String!]!
   shipmentIds: [ID!]!
   sent: Boolean!
+}
+
+"What the agreement in force says one invoice should bring in."
+type FactoringFunding {
+  faceMinor: Int!
+  advanceMinor: Int!
+  feeMinor: Int!
+  reserveMinor: Int!
+  "What is left after the advance and the fee, paid when the customer pays."
+  restOnReleaseMinor: Int!
+  "Days of terms left when submitted, which picks the fee tier."
+  days: Int!
+  feeRateBp: Int!
+}
+
+"One invoice on a schedule of accounts."
+type FactoringSubmissionItem {
+  id: ID!
+  submissionId: ID!
+  invoiceId: ID!
+  invoiceNumber: String!
+  customerId: ID!
+  position: Int!
+  faceMinor: Int!
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+  expectedDays: Int!
+  "The invoice and its supporting documents merged into one PDF."
+  packetDocumentId: ID
+  status: FactoringSubmissionItemStatus!
+  releasedAt: Timestamp
+  invoice: Invoice
+  customer: Customer
+}
+
+"A schedule of accounts: invoices sold to a factor in one delivery."
+type FactoringSubmission {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  number: String!
+  factoringCompanyId: ID!
+  agreementId: ID!
+  status: FactoringSubmissionStatus!
+  currencyCode: String!
+  invoiceCount: Int!
+  faceMinor: Int!
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+  schedulePdfDocumentId: ID
+  scheduleCsvDocumentId: ID
+  transportMethod: FactoringTransportMethod!
+  "Where the schedule was sent: the recipients, or user@host:directory."
+  transportTarget: String!
+  "The sent message ids, or the remote directory."
+  transportReference: String
+  "Counts each send started by a person; a retry starts the next."
+  sendAttemptGroup: Int!
+  attempts: Int!
+  lastError: String
+  sentAt: Timestamp
+  failedAt: Timestamp
+  cancelledAt: Timestamp
+  cancelReason: String
+  submittedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  items: [FactoringSubmissionItem!]!
+  factoringCompany: FactoringCompany
+}
+
+type FactoringSubmissionEdge {
+  node: FactoringSubmission!
+  cursor: String!
+}
+
+type FactoringSubmissionConnection {
+  edges: [FactoringSubmissionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringSubmissionPlanItem {
+  invoiceId: ID!
+  invoiceNumber: String!
+  customerId: ID!
+  customerName: String!
+  invoiceDate: Timestamp!
+  dueDate: Timestamp
+  funding: FactoringFunding!
+}
+
+"The schedule that submitting these invoices would send, before anything is sent."
+type FactoringSubmissionPlan {
+  factoringCompanyId: ID!
+  factoringCompanyName: String!
+  agreementId: ID!
+  transportMethod: FactoringTransportMethod!
+  transportTarget: String!
+  "Whether each invoice's packet goes with the schedule."
+  attachPackets: Boolean!
+  currencyCode: String!
+  items: [FactoringSubmissionPlanItem!]!
+  invoiceCount: Int!
+  faceMinor: Int!
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+}
+
+"The schedule an invoice is on while it is with the factor."
+type FactoringLiveSubmission {
+  submissionId: ID!
+  submissionNumber: String!
+  submissionStatus: FactoringSubmissionStatus!
+}
+
+"How schedules reach a factor. The SFTP secret is never returned."
+type FactoringTransport {
+  id: ID!
+  factoringCompanyId: ID!
+  method: FactoringTransportMethod!
+  emailRecipients: [String!]!
+  "Whether invoice packets are emailed with the schedule. SFTP always uploads them."
+  attachPackets: Boolean!
+  sftpHost: String
+  sftpPort: Int
+  sftpUsername: String
+  sftpAuthMethod: FactoringSftpAuthMethod
+  sftpSecretSet: Boolean!
+  sftpKnownHostKey: String
+  sftpDirectory: String
+  lastTestedAt: Timestamp
+  lastTestError: String
+  version: Int!
+}
+
+type FactoringTransportTestResult {
+  transport: FactoringTransport!
+  passed: Boolean!
+  message: String!
+}
+
+input FactoringSubmissionListInput {
+  table: DataTableConnectionInput!
+  factoringCompanyId: ID
+  statuses: [FactoringSubmissionStatus!]
+}
+
+input FactoringSubmissionPlanInput {
+  factoringCompanyId: ID!
+  invoiceIds: [ID!]!
+}
+
+input RetryFactoringSubmissionInput {
+  id: ID!
+  version: Int!
+}
+
+input CancelFactoringSubmissionInput {
+  id: ID!
+  version: Int!
+  reason: String!
+}
+
+input SaveFactoringTransportInput {
+  factoringCompanyId: ID!
+  "Required when the factor already has delivery settings."
+  version: Int
+  method: FactoringTransportMethod!
+  emailRecipients: [String!]
+  attachPackets: Boolean = true
+  sftpHost: String
+  sftpPort: Int
+  sftpUsername: String
+  sftpAuthMethod: FactoringSftpAuthMethod
+  "Leave empty to keep the stored password or key."
+  sftpSecret: String
+  sftpKnownHostKey: String
+  sftpDirectory: String
 }
 
 input FactoringFeeTierInput {
@@ -20431,6 +20707,11 @@ extend type Invoice {
   factoringState: FactoringInvoiceState
 }
 
+extend type FactoringInvoiceState {
+  "The schedule the invoice is on, while it is with the factor."
+  submission: FactoringLiveSubmission
+}
+
 extend type CustomerBillingProfile {
   factoringCompany: FactoringCompany
 }
@@ -20448,6 +20729,12 @@ extend type Query {
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
   factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
   factoringSummary: FactoringSummary!
+  factoringSubmissions(input: FactoringSubmissionListInput!): FactoringSubmissionConnection!
+  factoringSubmission(id: ID!): FactoringSubmission!
+  "The schedule these invoices would make, with expected funding, without sending anything."
+  factoringSubmissionPlan(input: FactoringSubmissionPlanInput!): FactoringSubmissionPlan!
+  "Null until the factor's delivery is set up."
+  factoringTransport(factoringCompanyId: ID!): FactoringTransport
 }
 
 extend type Mutation {
@@ -20462,6 +20749,15 @@ extend type Mutation {
   releaseFactoringNoa(input: ReleaseFactoringNoaInput!): FactoringNoa!
   setInvoiceFactoringOverride(input: SetInvoiceFactoringOverrideInput!): FactoringInvoiceState!
   requestMissingFactoringDocuments(input: RequestMissingFactoringDocumentsInput!): FactoringDocumentRequestResult!
+  "Builds the schedule and its packets and sends them to the factor. Submitting the same Ready invoices again returns the first schedule."
+  submitInvoicesToFactor(input: FactoringSubmissionPlanInput!): FactoringSubmission!
+  "Sends a failed schedule again with the factor's current delivery settings."
+  retryFactoringSubmission(input: RetryFactoringSubmissionInput!): FactoringSubmission!
+  "Cancels a failed schedule and releases its invoices for another."
+  cancelFactoringSubmission(input: CancelFactoringSubmissionInput!): FactoringSubmission!
+  saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
+  "Connects with the saved settings without sending anything, and records the result."
+  testFactoringTransport(factoringCompanyId: ID!): FactoringTransportTestResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."

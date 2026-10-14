@@ -67,8 +67,9 @@ export default function MemoryTab() {
   const queryClient = useQueryClient();
   const go = useAIControlNavigation();
   const columns = useMemo(() => getMemoryColumns(t), [t]);
-  const { allowed: canUpdate } = usePermission(Resource.AgentMemory, Operation.Update);
-  const { allowed: canCreate } = usePermission(Resource.AgentMemory, Operation.Create);
+  // Keeping, changing, retiring and approving what agents remember for the
+  // organization is one permission, manage; reading the page is another.
+  const { allowed: canManage } = usePermission(Resource.AgentMemory, Operation.Manage);
   const totalQuery = useQuery({
     queryKey: agentMemoryTotalQueryKey,
     queryFn: ({ signal }) => fetchAgentMemoryTotal({ signal }),
@@ -90,7 +91,7 @@ export default function MemoryTab() {
         : null,
     [starterKind, t],
   );
-  const starterOpen = canCreate && empty && (starterKind !== null || panelType === "create");
+  const starterOpen = canManage && empty && (starterKind !== null || panelType === "create");
 
   const setStatus = async (row: Row<AgentMemoryRow>, status: AgentMemoryRow["status"]) => {
     await setAgentMemoryStatus(row.original.id, status);
@@ -120,7 +121,7 @@ export default function MemoryTab() {
       label: t("Reviewed, keep it"),
       icon: CheckVerified01Icon,
       onClick: (row) => void review(row),
-      hidden: (row) => !canUpdate || !row.original.taints,
+      hidden: (row) => !canManage || !row.original.taints,
     },
     {
       id: "retire",
@@ -128,14 +129,14 @@ export default function MemoryTab() {
       icon: ArchiveIcon,
       variant: "destructive",
       onClick: (row) => void setStatus(row, "Retired"),
-      hidden: (row) => !canUpdate || row.original.status !== "Active",
+      hidden: (row) => !canManage || row.original.status !== "Active",
     },
     {
       id: "restore",
       label: t("Restore"),
       icon: ArchiveRestoreIcon,
       onClick: (row) => void setStatus(row, "Active"),
-      hidden: (row) => !canUpdate || row.original.status !== "Retired",
+      hidden: (row) => !canManage || row.original.status !== "Retired",
     },
   ];
 
@@ -157,10 +158,10 @@ export default function MemoryTab() {
         )}
         {learningOff && <> {t("Learning is off, so agents won't suggest new ones.")}</>}
       </p>
-      <OrganizationProfile canCreate={canCreate} canUpdate={canUpdate} />
+      <OrganizationProfile canManage={canManage} />
       <MemoryUsageNotice />
-      <MemoryTaintNotice canDecide={canUpdate} />
-      <MemorySuggestions canDecide={canUpdate} />
+      <MemoryTaintNotice canDecide={canManage} />
+      <MemorySuggestions canDecide={canManage} />
       <AgentReflections />
       <section className="sec">
         {empty ? (
@@ -173,7 +174,7 @@ export default function MemoryTab() {
               {!learningOff &&
                 ` ${t("With Learn from their work on, they'll also suggest lessons for you to approve.")}`}
             </span>
-            {canCreate && (
+            {canManage && (
               <div className="mem-x">
                 {memoryStarterKinds.map((kind) => (
                   <button

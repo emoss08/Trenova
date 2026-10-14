@@ -38,3 +38,24 @@ func (e *InvoiceState) GetStaticFieldMap() map[string]string {
 func (e *Noa) GetStaticFieldMap() map[string]string {
 	return factoringcol.NoaFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Submission].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.SubmissionFieldMap] instead of parsing struct tags via reflection.
+func (e *Submission) GetStaticFieldMap() map[string]string {
+	return factoringcol.SubmissionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SubmissionItem].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.SubmissionItemFieldMap] instead of parsing struct tags via reflection.
+func (e *SubmissionItem) GetStaticFieldMap() map[string]string {
+	return factoringcol.SubmissionItemFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Transport].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.TransportFieldMap] instead of parsing struct tags via reflection.
+func (e *Transport) GetStaticFieldMap() map[string]string {
+	return factoringcol.TransportFieldMap
+}

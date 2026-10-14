@@ -37,6 +37,11 @@ var Workflows = []registry.WorkflowDefinition{
 		Fn:          FactoringReadinessSweepWorkflow,
 		Description: sweepDescription,
 	},
+	{
+		Name:        factoringcontract.SendWorkflowName,
+		Fn:          FactoringSubmissionSendWorkflow,
+		Description: sendDescription,
+	},
 }
 
 type RegistryParams struct {

@@ -1,0 +1,217 @@
+{
+  "id": "edilt_acme_88241",
+  "sourceOrganizationId": "org_1",
+  "sourceBusinessUnitId": "bu_1",
+  "targetOrganizationId": "org_1",
+  "targetBusinessUnitId": "bu_1",
+  "sourcePartnerId": "edip_acme",
+  "targetPartnerId": "edip_acme",
+  "sourceShipmentId": null,
+  "targetShipmentId": null,
+  "inboundMessageId": "edimsg_acme_204b",
+  "status": "MappingRequired",
+  "tenderPayload": {
+    "purposeCode": "04",
+    "shipmentId": null,
+    "businessUnitId": null,
+    "organizationId": null,
+    "serviceTypeId": "DEFAULT",
+    "serviceTypeLabel": "Default service type for inbound tenders",
+    "customerId": "ACME",
+    "customerLabel": "Acme Foods",
+    "formulaTemplateId": "DEFAULT",
+    "formulaTemplateLabel": "Default rating formula for inbound tenders",
+    "bol": "LT-88241",
+    "pieces": 24,
+    "weight": 42000,
+    "temperatureMin": 34,
+    "temperatureMax": 38,
+    "freightChargeAmount": "2650",
+    "otherChargeAmount": "230",
+    "baseRate": null,
+    "totalChargeAmount": "2880",
+    "ratingUnit": 1,
+    "ratingDetail": {
+      "externalShipmentId": "LT-88241",
+      "paymentMethod": "PP"
+    },
+    "moves": [
+      {
+        "loaded": true,
+        "sequence": 0,
+        "distance": 271.4,
+        "stops": [
+          {
+            "locationId": "ACME-DAL",
+            "locationLabel": "Acme Plant 2",
+            "locationName": "Acme Plant 2",
+            "locationCode": "ACME-DAL",
+            "locationAddressLine1": "4100 Irving Blvd",
+            "locationCity": "Dallas",
+            "locationStateCode": "TX",
+            "locationPostalCode": "75247",
+            "type": "Pickup",
+            "scheduleType": "Appointment",
+            "sequence": 1,
+            "pieces": 24,
+            "weight": 42000,
+            "scheduledWindowStart": 1791806400,
+            "scheduledWindowEnd": 1791813600
+          },
+          {
+            "locationId": "HEB-SAT",
+            "locationName": "HEB San Antonio",
+            "locationCode": "HEB-SAT",
+            "locationCity": "San Antonio",
+            "locationStateCode": "TX",
+            "type": "Delivery",
+            "scheduleType": "Open",
+            "sequence": 2,
+            "scheduledWindowStart": 1791892800
+          }
+        ]
+      }
+    ],
+    "commodities": [
+      {
+        "commodityId": "FROZEN",
+        "commodityLabel": "Frozen poultry",
+        "commodityName": "Frozen poultry",
+        "weight": 42000,
+        "pieces": 24
+      }
+    ],
+    "additionalCharges": [
+      {
+        "accessorialChargeId": "FSC",
+        "accessorialLabel": "Fuel surcharge",
+        "accessorialCode": "FSC",
+        "method": "Flat",
+        "amount": "230",
+        "unit": 1
+      }
+    ],
+    "requiredMappingEntityIds": {
+      "AccessorialCharge": [
+        "FSC"
+      ],
+      "Commodity": [
+        "FROZEN"
+      ],
+      "Customer": [
+        "ACME"
+      ],
+      "Location": [
+        "ACME-DAL",
+        "HEB-SAT"
+      ]
+    }
+  },
+  "mappingSnapshot": [
+    {
+      "entityType": "Customer",
+      "sourceId": "ACME",
+      "sourceLabel": "Acme Foods",
+      "targetId": "cus_acme",
+      "targetLabel": "Acme Foods, Inc.",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "ACME-DAL",
+      "sourceLabel": "Acme Plant 2",
+      "targetId": "loc_acme_dal",
+      "targetLabel": "Acme Plant 2 (Dallas)",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "HEB-SAT",
+      "sourceLabel": "HEB San Antonio",
+      "resolved": false
+    },
+    {
+      "entityType": "Commodity",
+      "sourceId": "FROZEN",
+      "sourceLabel": "Frozen poultry",
+      "targetId": "com_frozen",
+      "targetLabel": "Frozen poultry",
+      "resolved": true
+    },
+    {
+      "entityType": "AccessorialCharge",
+      "sourceId": "FSC",
+      "sourceLabel": "Fuel surcharge",
+      "resolved": false
+    }
+  ],
+  "rejectionReason": "",
+  "failureReason": "",
+  "approvalWorkflowId": "",
+  "approvalWorkflowRunId": "",
+  "submittedById": null,
+  "submittedAt": 1791712800,
+  "approvedById": null,
+  "approvedAt": null,
+  "processingStartedAt": null,
+  "processedAt": null,
+  "rejectedById": null,
+  "rejectedAt": null,
+  "canceledById": null,
+  "canceledAt": null,
+  "version": 1,
+  "createdAt": 1791712800,
+  "updatedAt": 1791712800,
+  "sourcePartner": {
+    "id": "edip_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "ACME",
+    "name": "Acme Foods",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": null,
+    "version": 2,
+    "createdAt": 1765800000,
+    "updatedAt": 1789128000
+  },
+  "targetPartner": {
+    "id": "edip_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "ACME",
+    "name": "Acme Foods",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": null,
+    "version": 2,
+    "createdAt": 1765800000,
+    "updatedAt": 1789128000
+  }
+}

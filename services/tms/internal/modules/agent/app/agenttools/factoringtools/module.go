@@ -8,5 +8,8 @@ func Providers() []any {
 		NewReleaseFactoringNoaTool,
 		NewSetInvoiceFactoringOverrideTool,
 		NewRequestMissingFactoringDocumentTool,
+		NewSubmitInvoicesToFactorTool,
+		NewRetryFactoringSubmissionTool,
+		NewCancelFactoringSubmissionTool,
 	}
 }

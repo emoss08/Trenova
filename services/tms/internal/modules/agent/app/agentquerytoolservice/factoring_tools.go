@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -187,10 +188,13 @@ func provideListFactoringReadyInvoicesTool(
 func (t *listFactoringReadyInvoicesTool) Name() string { return "list_factoring_ready_invoices" }
 
 func (t *listFactoringReadyInvoicesTool) Description() string {
-	return "List factored customers' invoices by readiness, newest first, with the totals " +
-		"ready, not ready, and ready for more than a day without being submitted. Ready is " +
-		"the default; ask for NotReady to see what is holding invoices back, each with its " +
-		"failed checks. Pass an invoice to get_factoring_readiness for every check."
+	return "List factored customers' invoices by readiness, newest first, with the totals. " +
+		"The totals are ready, not ready, submitted, and ready for more than a day without " +
+		"being submitted. " +
+		"Ready is the default; ask for NotReady to see what is holding invoices back, each " +
+		"with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices " +
+		"to submit_invoices_to_factor, one factor per call, and an invoice to " +
+		"get_factoring_readiness for every check."
 }
 
 func (t *listFactoringReadyInvoicesTool) SearchTerms() []string {
@@ -200,7 +204,7 @@ func (t *listFactoringReadyInvoicesTool) SearchTerms() []string {
 func (t *listFactoringReadyInvoicesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringVerdict: agenttoolschema.Enum(
-			"Which invoices: Ready (the default) or NotReady.",
+			"Which invoices: Ready (the default), NotReady, or Submitted (on a schedule with the factor).",
 			agenttoolschema.FactoringQueueVerdicts,
 		),
 		paramFactoringFactor: agenttoolschema.RecordIDText(
@@ -236,8 +240,11 @@ func (t *listFactoringReadyInvoicesTool) Query(
 	if verdict == "" {
 		verdict = factoring.VerdictReady
 	}
-	if verdict != factoring.VerdictReady && verdict != factoring.VerdictNotReady {
-		return nil, fmt.Errorf("parameter %q must be Ready or NotReady", paramFactoringVerdict)
+	if !slices.Contains(factoring.QueueVerdicts(), verdict) {
+		return nil, fmt.Errorf(
+			"parameter %q must be Ready, NotReady or Submitted",
+			paramFactoringVerdict,
+		)
 	}
 	factorID, err := optionalID(params.Params, paramFactoringFactor)
 	if err != nil {
@@ -606,5 +613,7 @@ func factoringToolProviders() []any {
 		provideListFactoringReadyInvoicesTool,
 		provideGetFactoringAgreementTool,
 		provideListFactoringNoasTool,
+		provideListFactoringSubmissionsTool,
+		provideGetFactoringSubmissionTool,
 	}
 }

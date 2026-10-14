@@ -1762,6 +1762,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.InvoiceState
     fields:
+      submission:
+        resolver: true
       invoice:
         resolver: true
       customer:
@@ -1777,6 +1779,68 @@ models:
   FactoringDocumentRequestResult:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RequestMissingDocumentsResult
+  FactoringSubmissionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionStatus
+  FactoringSubmissionItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItemStatus
+  FactoringTransportMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.TransportMethod
+  FactoringSftpAuthMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SftpAuthMethod
+  FactoringFunding:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Funding
+  FactoringSubmissionItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItem
+    fields:
+      packetDocumentId:
+        resolver: true
+      invoice:
+        resolver: true
+      customer:
+        resolver: true
+  FactoringSubmission:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Submission
+    fields:
+      schedulePdfDocumentId:
+        resolver: true
+      scheduleCsvDocumentId:
+        resolver: true
+      submittedById:
+        resolver: true
+      items:
+        resolver: true
+      factoringCompany:
+        resolver: true
+  FactoringSubmissionPlanItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlanItem
+  FactoringSubmissionPlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlan
+    fields:
+      agreementId:
+        resolver: true
+  FactoringLiveSubmission:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.LiveItem
+  FactoringTransport:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Transport
+    fields:
+      emailRecipients:
+        resolver: true
+      sftpSecretSet:
+        resolver: true
+  FactoringTransportTestResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.TransportTestResult
   InvoiceDisputeCaseStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus

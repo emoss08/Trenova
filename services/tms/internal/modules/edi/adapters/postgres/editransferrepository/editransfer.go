@@ -84,12 +84,20 @@ func (r *repository) ListInbound(
 			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
 			cols := edicol.EDITransferColumns
 
-			total, err := r.db.DBForContext(ctx).
+			dba := r.db.DBForContext(ctx)
+			query := dba.
 				NewSelect().
 				Model(&entities).
 				Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-				Order(cols.CreatedAt.OrderDesc()).
+				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID)
+			if req.InboundFileID.IsNotNil() {
+				query = query.Where(
+					cols.InboundMessageID.In(),
+					inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
+				)
+			}
+			total, err := query.
+				Order(newestFirst...).
 				Limit(int64(req.Filter.Pagination.SafeLimit())).
 				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
@@ -122,7 +130,7 @@ func (r *repository) ListOutbound(
 				Where(cols.SourceOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
 				Where(cols.SourceBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
 				Where("eltt.inbound_message_id IS NULL").
-				Order(cols.CreatedAt.OrderDesc()).
+				Order(newestFirst...).
 				Limit(int64(req.Filter.Pagination.SafeLimit())).
 				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
@@ -145,7 +153,13 @@ func (r *repository) GetTransferByID(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
 		cols := edicol.EDITransferColumns
-		query := r.db.DBForContext(ctx).NewSelect().Model(entity).Where(cols.ID.Eq(), req.ID)
+		rel := edicol.EDITransferRelations
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(rel.SourcePartner).
+			Relation(rel.TargetPartner).
+			Where(cols.ID.Eq(), req.ID)
 
 		query = applyTransferTenantFilter(query, req.TenantInfo, req.Direction)
 
@@ -193,7 +207,6 @@ func (r *repository) SelectOptions(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 			entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-			cols := edicol.EDITransferColumns
 			rel := edicol.EDITransferRelations
 
 			query := r.db.DBForContext(ctx).
@@ -204,7 +217,7 @@ func (r *repository) SelectOptions(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return applyTransferTenantFilter(sq, req.SelectQueryRequest.TenantInfo, "")
 				}).
-				Order(cols.CreatedAt.OrderDesc()).
+				Order(newestFirst...).
 				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
 				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset()))
 
@@ -271,6 +284,11 @@ func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.
 	return applyTransferTenantFilter(query, tenantInfo, "")
 }
 
+var newestFirst = []string{
+	edicol.EDITransferColumns.CreatedAt.OrderDesc(),
+	edicol.EDITransferColumns.ID.OrderDesc(),
+}
+
 func applyTransferTenantFilter(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
@@ -327,7 +345,7 @@ func (r *repository) GetActionableInboundTransferByExternalReference(
 				edi.TransferStatusMappingRequired,
 				edi.TransferStatusPendingApproval,
 			})).
-			Order(cols.CreatedAt.OrderDesc()).
+			Order(newestFirst...).
 			Limit(1).
 			Scan(ctx)
 		if err != nil {

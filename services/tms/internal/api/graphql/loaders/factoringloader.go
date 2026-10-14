@@ -109,3 +109,66 @@ func newFactoringAgreementsByCompanyIDLoader(
 		},
 	))
 }
+
+type FactoringSubmissionItemsLoaderFactoryParams struct {
+	fx.In
+
+	Submissions factoringports.SubmissionRepository
+}
+
+type FactoringSubmissionItemsLoaderFactory struct {
+	submissions factoringports.SubmissionRepository
+}
+
+func NewFactoringSubmissionItemsLoaderFactory(
+	p FactoringSubmissionItemsLoaderFactoryParams,
+) *FactoringSubmissionItemsLoaderFactory {
+	return &FactoringSubmissionItemsLoaderFactory{submissions: p.Submissions}
+}
+
+func newFactoringSubmissionItemsLoader(
+	f *FactoringSubmissionItemsLoaderFactory,
+	tenantInfo pagination.TenantInfo,
+) *dataloadgen.Loader[string, []*factoring.SubmissionItem] {
+	return newLoader(batchGroupFunc(
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*factoring.SubmissionItem, error) {
+			return f.submissions.ListItemsBySubmissionIDs(
+				ctx,
+				&factoringports.ListItemsBySubmissionIDsRequest{
+					TenantInfo:    tenantInfo,
+					SubmissionIDs: ids,
+				},
+			)
+		},
+	))
+}
+
+type FactoringLiveItemByInvoiceIDLoaderFactoryParams struct {
+	fx.In
+
+	Submissions factoringports.SubmissionRepository
+}
+
+type FactoringLiveItemByInvoiceIDLoaderFactory struct {
+	submissions factoringports.SubmissionRepository
+}
+
+func NewFactoringLiveItemByInvoiceIDLoaderFactory(
+	p FactoringLiveItemByInvoiceIDLoaderFactoryParams,
+) *FactoringLiveItemByInvoiceIDLoaderFactory {
+	return &FactoringLiveItemByInvoiceIDLoaderFactory{submissions: p.Submissions}
+}
+
+func newFactoringLiveItemByInvoiceIDLoader(
+	f *FactoringLiveItemByInvoiceIDLoaderFactory,
+	tenantInfo pagination.TenantInfo,
+) *dataloadgen.Loader[string, *factoringports.LiveItem] {
+	return newLoader(batchValueFunc(
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoringports.LiveItem, error) {
+			return f.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+				TenantInfo: tenantInfo,
+				InvoiceIDs: ids,
+			})
+		},
+	))
+}

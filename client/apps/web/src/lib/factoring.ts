@@ -4,6 +4,10 @@ import type {
   FactoringFixAction,
   FactoringNoaStatus,
   FactoringRecourse,
+  FactoringSftpAuthMethod,
+  FactoringSubmissionItemStatus,
+  FactoringSubmissionStatus,
+  FactoringTransportMethod,
   FactoringVerdict,
   InvoiceFactoringOverride,
 } from "@trenova/graphql/generated/graphql";
@@ -11,6 +15,9 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
 export const FACTORING_PATH = "/billing/factoring";
+
+/** The most invoices one schedule of accounts carries; the server refuses more. */
+export const FACTORING_SUBMISSION_MAX_INVOICES = 200;
 
 /** Basis points in a whole: 10,000 bp is 100%. */
 const BP_PER_WHOLE = 10_000;
@@ -21,12 +28,14 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 export const FACTORING_VERDICT_LABELS = defineLabels({
   Ready: "Ready",
   NotReady: "Not ready",
+  Submitted: "Submitted",
   Excluded: "Not factored",
 });
 
 const VERDICT_PHASES: Record<FactoringVerdict, StatusPhase> = {
   Ready: "complete",
   NotReady: "attention",
+  Submitted: "active",
   Excluded: "closed",
 };
 
@@ -67,6 +76,104 @@ export function factoringNoaDisplayStatus(
 
 export function factoringNoaPhase(status: FactoringNoaStatus | "Expired"): StatusPhase {
   return NOA_PHASES[status];
+}
+
+export const FACTORING_SUBMISSION_STATUS_LABELS = defineLabels({
+  Sending: "Sending",
+  Sent: "Sent",
+  Failed: "Failed to send",
+  Cancelled: "Cancelled",
+});
+
+const SUBMISSION_PHASES: Record<FactoringSubmissionStatus, StatusPhase> = {
+  Sending: "queued",
+  Sent: "complete",
+  Failed: "failed",
+  Cancelled: "closed",
+};
+
+export function factoringSubmissionPhase(status: FactoringSubmissionStatus): StatusPhase {
+  return SUBMISSION_PHASES[status];
+}
+
+export const FACTORING_SUBMISSION_ITEM_STATUS_LABELS = defineLabels({
+  Pending: "On schedule",
+  Released: "Released",
+});
+
+const SUBMISSION_ITEM_PHASES: Record<FactoringSubmissionItemStatus, StatusPhase> = {
+  Pending: "active",
+  Released: "closed",
+};
+
+export function factoringSubmissionItemPhase(status: FactoringSubmissionItemStatus): StatusPhase {
+  return SUBMISSION_ITEM_PHASES[status];
+}
+
+export const FACTORING_TRANSPORT_METHOD_LABELS = defineLabels({
+  Email: "Email",
+  Sftp: "SFTP",
+});
+
+export const FACTORING_TRANSPORT_METHOD_DESCRIPTIONS = defineLabels({
+  Email: "The schedule goes to the factor's inbox, with each invoice's packet attached.",
+  Sftp: "The schedule and every packet are uploaded to a folder on the factor's server.",
+});
+
+export const FACTORING_TRANSPORT_METHOD_VALUES: readonly FactoringTransportMethod[] = [
+  "Email",
+  "Sftp",
+];
+
+export const FACTORING_SFTP_AUTH_METHOD_LABELS = defineLabels({
+  Password: "Password",
+  PrivateKey: "Private key",
+});
+
+export const FACTORING_SFTP_AUTH_METHOD_VALUES: readonly FactoringSftpAuthMethod[] = [
+  "Password",
+  "PrivateKey",
+];
+
+/** The most addresses one factor's schedules are emailed to; the server refuses more. */
+export const FACTORING_EMAIL_RECIPIENT_LIMIT = 10;
+
+export const DEFAULT_SFTP_PORT = 22;
+
+/**
+ * The factors a selection of queue rows spans, largest first, so a schedule
+ * (which goes to one factor) starts from the factor most of the selection is with.
+ */
+export function groupInvoicesByFactor<
+  T extends {
+    invoiceId: string;
+    factoringCompanyId?: string | null;
+    factoringCompany?: { id: string; name: string } | null;
+  },
+>(rows: readonly T[]): { factoringCompanyId: string; name: string; invoiceIds: string[] }[] {
+  const groups = new Map<
+    string,
+    { factoringCompanyId: string; name: string; invoiceIds: string[] }
+  >();
+  for (const row of rows) {
+    const factorId = row.factoringCompanyId;
+    if (!factorId) {
+      continue;
+    }
+    const group = groups.get(factorId);
+    if (group) {
+      group.invoiceIds.push(row.invoiceId);
+    } else {
+      groups.set(factorId, {
+        factoringCompanyId: factorId,
+        name: row.factoringCompany?.name ?? factorId,
+        invoiceIds: [row.invoiceId],
+      });
+    }
+  }
+  return [...groups.values()].sort(
+    (a, b) => b.invoiceIds.length - a.invoiceIds.length || a.name.localeCompare(b.name),
+  );
 }
 
 export const FACTORING_AGREEMENT_STATUS_LABELS = defineLabels({

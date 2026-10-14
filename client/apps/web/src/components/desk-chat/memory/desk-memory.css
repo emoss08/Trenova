@@ -774,3 +774,15 @@
   height: 38px;
   border-radius: 10px;
 }
+
+/* ---- offered to an administrator ---- */
+.dk-mm-offer {
+  margin: -6px 2px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+  text-wrap: pretty;
+}
+.dk-mm-r.dk-offered p {
+  color: var(--dsk-fg2);
+}

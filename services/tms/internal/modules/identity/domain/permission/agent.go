@@ -24,6 +24,14 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 		OpUpdate: {},
 	},
+	// The clerk proposes each schedule and each retry or cancellation of a
+	// failed one; a person approves every one of them before it runs.
+	ResourceFactoringSubmission: {
+		OpRead:   {},
+		OpSubmit: {},
+		OpUpdate: {},
+		OpCancel: {},
+	},
 	// Creating a shipment from a document is the intake desk's whole job.
 	// Editing or cancelling one that already exists is a person's: those
 	// tools are offered in chat, where the actor is the person asking.
@@ -197,10 +205,12 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpCreate: {},
 	},
-	ResourceAgentMemory: {
+	// Memory and profile guidance are used under the assistant, as on the
+	// Desk: a run reads what its reader may read and offers what it would keep
+	// for the organization, which an administrator approves.
+	ResourceAssistant: {
 		OpRead:   {},
 		OpCreate: {},
-		OpUpdate: {},
 	},
 	ResourceInsight: {
 		OpRead:   {},

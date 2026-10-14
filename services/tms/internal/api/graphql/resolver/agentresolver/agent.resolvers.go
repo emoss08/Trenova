@@ -324,7 +324,7 @@ func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*a
 }
 
 func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpCreate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel
 }
 
 func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +383,7 @@ func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, inp
 }
 
 func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +401,7 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 }
 
 func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +419,7 @@ func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, ver
 }
 
 func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +450,7 @@ func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 }
 
 func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}

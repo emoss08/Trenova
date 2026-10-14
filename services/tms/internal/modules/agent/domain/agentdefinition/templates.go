@@ -259,8 +259,9 @@ func (t Template) Description() string {
 		return "Builds, runs and explains reports and dashboards, compares runs to say what " +
 			"moved, and proposes schedules that email a report for a person to approve."
 	case TemplateFactoringClerk:
-		return "Gets factored invoices ready to sell: chases the notices of assignment and " +
-			"documents the factor needs, and says which invoices are ready and what holds the rest."
+		return "Gets factored invoices ready to sell and sends them: chases the notices of " +
+			"assignment and documents the factor needs, proposes one schedule per factor for " +
+			"the invoices that are ready, and follows up schedules that fail to send."
 	default:
 		return ""
 	}

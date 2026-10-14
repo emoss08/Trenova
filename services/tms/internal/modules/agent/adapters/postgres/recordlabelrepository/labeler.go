@@ -231,6 +231,12 @@ var sources = map[permission.Resource]source{
 		id:    factoringcompanycol.FactoringCompanyColumns.ID,
 		label: factoringcompanycol.FactoringCompanyColumns.Name.Qualified(),
 	},
+	permission.ResourceFactoringSubmission: {
+		model: func() any { return (*factoring.Submission)(nil) },
+		scope: factoringcol.SubmissionScopeTenant,
+		id:    factoringcol.SubmissionColumns.ID,
+		label: factoringcol.SubmissionColumns.Number.Qualified(),
+	},
 	permission.ResourceInvoice: {
 		model: func() any { return (*invoice.Invoice)(nil) },
 		scope: invoicecol.InvoiceScopeTenant,

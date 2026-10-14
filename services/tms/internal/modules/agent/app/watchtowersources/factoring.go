@@ -23,6 +23,8 @@ const (
 	factoringReadyPrefix        = "ready:"
 	factoringMissingNoaPrefix   = "noa-missing:"
 	factoringExpiringNoaPrefix  = "noa-expiring:"
+	factoringSendFailedPrefix   = "send-failed:"
+	pathFactoringQueue          = "/billing/factoring"
 	FactoringReadyCriticalAfter = int64(3 * timeutils.SecondsPerDay)
 	FactoringNoaCriticalWithin  = int64(7 * timeutils.SecondsPerDay)
 	pathFactoringInvoices       = "/billing/invoices"
@@ -97,7 +99,19 @@ func (s *FactoringSource) Snapshot(
 		return nil, err
 	}
 
-	items := make([]watchtowerports.WatchtowerItemInput, 0, len(ready)+len(missing)+len(expiring))
+	failed, err := s.reader.ListFailedSubmissions(ctx, &factoringports.ListFailedSubmissionsRequest{
+		TenantInfo: tenant,
+		Limit:      snapshotLimit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make(
+		[]watchtowerports.WatchtowerItemInput,
+		0,
+		len(ready)+len(missing)+len(expiring)+len(failed),
+	)
 	for _, state := range ready {
 		if state == nil {
 			continue
@@ -121,6 +135,11 @@ func (s *FactoringSource) Snapshot(
 			items = append(items, item)
 		}
 	}
+	for _, row := range failed {
+		if item, open := DescribeFactoringSendFailed(tenant, row); open {
+			items = append(items, item)
+		}
+	}
 
 	return items, nil
 }
@@ -139,6 +158,48 @@ func FactoringMissingNoaSourceID(customerID, factoringCompanyID pulid.ID) string
 
 func FactoringExpiringNoaSourceID(noaID pulid.ID) string {
 	return factoringExpiringNoaPrefix + noaID.String()
+}
+
+func FactoringSendFailedSourceID(submissionID pulid.ID) string {
+	return factoringSendFailedPrefix + submissionID.String()
+}
+
+func DescribeFactoringSendFailed(
+	tenant pagination.TenantInfo,
+	row *factoringports.FailedSubmission,
+) (watchtowerports.WatchtowerItemInput, bool) {
+	if row == nil || row.SubmissionID.IsNil() || row.FailedAt <= 0 {
+		return watchtowerports.WatchtowerItemInput{}, false
+	}
+
+	factorName := stringutils.FirstNonEmpty(row.FactorName, "the factor")
+	title := "Schedule " + row.Number + " could not be sent to " + factorName
+	summary := strconv.Itoa(row.InvoiceCount) + " invoices (" +
+		money.FormatMinor(row.FaceMinor, row.CurrencyCode) + ") did not reach " +
+		stringutils.FirstNonEmpty(row.TransportTarget, factorName) + " after every retry"
+	if row.LastError != "" {
+		summary += ": " + row.LastError
+	}
+	summary += ". Fix the factor's delivery settings and retry, or cancel the schedule to " +
+		"release its invoices."
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceFactoring,
+		SourceID:    FactoringSendFailedSourceID(row.SubmissionID),
+		Severity:    watchtower.SeverityCritical,
+		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
+		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		SubjectType: agent.SubjectFactoringSubmission,
+		SubjectID:   row.SubmissionID,
+		EventKind:   agent.EventFactoringSubmissionFailed,
+		Path: factoringRecordPath(
+			"factoring_submission",
+			row.SubmissionID,
+			pathFactoringQueue,
+		),
+		OccurredAt: row.FailedAt,
+	}, true
 }
 
 func DescribeFactoringReadyUnsubmitted(

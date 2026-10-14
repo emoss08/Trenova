@@ -750,7 +750,7 @@ func (r *repository) ResolveSuggestion(
 				Set(cols.Scope.Set(), scope).
 				Set(cols.OwnerUserID.Set(), nullableID(owner)).
 				Set(cols.RoleID.Set(), nullableID(role)).
-				Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
+				Set(cols.CreatedByUserID.SetExpr("COALESCE({}, ?)"), nullableID(req.ByUserID)).
 				Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
 				Set(cols.ReviewedAt.Set(), reviewedAt).
 				Set(cols.RetiredAt.Set(), nil).

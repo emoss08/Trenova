@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,6 +97,100 @@ func (f *fakeLabeler) Label(
 
 func newService(repo *fakeMemoryRepo, runs *fakeRuns, labeler *fakeLabeler) *Service {
 	return &Service{l: zap.NewNop(), repo: repo, runs: runs, labeler: labeler}
+}
+
+// fakePermissions answers every check the same way: a manager of shared
+// memory, or not.
+type fakePermissions struct {
+	permissionports.PermissionEngine
+	manages bool
+	checks  []*permissionports.PermissionCheckRequest
+}
+
+func (f *fakePermissions) Check(
+	_ context.Context,
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	f.checks = append(f.checks, req)
+
+	return &permissionports.PermissionCheckResult{Allowed: f.manages}, nil
+}
+
+func agentActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeAgent,
+		PrincipalID:   pulid.MustNew("agdef_"),
+	}
+}
+
+// A memory for the organization reaches everyone's conversations, so a person
+// who does not manage shared memory offers it and an administrator keeps it;
+// one who does keeps it at once. A run with nobody in it always offers.
+func TestRemember_SharedScopeIsOfferedUnlessTheActorManagesSharedMemory(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		actor   *permissionports.RequestActor
+		manages bool
+		scope   agent.MemoryScope
+		want    agent.MemoryStatus
+	}{
+		{"a person without manage offers to the organization", userActor(), false, agent.MemoryScopeOrganization, agent.MemoryStatusSuggested},
+		{"a person with manage keeps for the organization", userActor(), true, agent.MemoryScopeOrganization, agent.MemoryStatusActive},
+		{"a person without manage offers to a team", userActor(), false, agent.MemoryScopeRole, agent.MemoryStatusSuggested},
+		{"a person keeps their own without manage", userActor(), false, agent.MemoryScopeUser, agent.MemoryStatusActive},
+		{"an unattended run offers to the organization", agentActor(), true, agent.MemoryScopeOrganization, agent.MemoryStatusSuggested},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeMemoryRepo{}
+			svc := newService(repo, &fakeRuns{run: &agent.AgentRun{}}, &fakeLabeler{})
+			permissions := &fakePermissions{manages: tc.manages}
+			svc.permissions = permissions
+
+			req := &agentports.RememberRequest{
+				TenantInfo: tenant(),
+				Kind:       agent.MemoryKindInstruction,
+				Content:    "Quote in dollars.",
+				Scope:      tc.scope,
+			}
+			switch tc.scope {
+			case agent.MemoryScopeUser:
+				req.OwnerUserID = tc.actor.UserID
+			case agent.MemoryScopeRole:
+				req.RoleID = pulid.MustNew("rol_")
+			default:
+			}
+			got, err := svc.Remember(t.Context(), req, tc.actor)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got.Status)
+			assert.Equal(t, tc.scope, got.Scope, "offering never narrows who the memory is for")
+			if tc.actor.IsUser() && tc.scope != agent.MemoryScopeUser {
+				require.NotEmpty(t, permissions.checks)
+				assert.Equal(t, permission.ResourceAgentMemory.String(), permissions.checks[0].Resource)
+				assert.Equal(t, permission.OpManage, permissions.checks[0].Operation)
+			}
+		})
+	}
+}
+
+// Nobody holds the permission that cannot be checked: a memory for the
+// organization is offered rather than kept.
+func TestRemember_WithoutAPermissionEngineSharedMemoryIsOffered(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(&fakeMemoryRepo{}, &fakeRuns{run: &agent.AgentRun{}}, &fakeLabeler{})
+
+	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
+		TenantInfo: tenant(),
+		Content:    "Quote in dollars.",
+		Scope:      agent.MemoryScopeOrganization,
+	}, userActor())
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusSuggested, got.Status)
 }
 
 func tenant() pagination.TenantInfo {

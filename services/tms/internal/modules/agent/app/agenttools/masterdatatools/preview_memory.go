@@ -51,15 +51,16 @@ func (t *RememberTool) Preview(
 		return nil, err
 	}
 
-	summary := previewAudience(request.Scope)
 	plan, err := t.memories.PreviewRemember(ctx, request, params.Actor)
 	if err != nil {
 		if common.IsRefusal(err) {
+			summary := previewAudience(request.Scope, agent.MemoryStatusActive)
 			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
+	summary := previewAudience(plan.Memory.Scope, plan.Memory.Status)
 	if plan.Existing != nil {
 		return toolpreview.Build(
 			"This is already remembered as it stands, so that memory would be refreshed " +
@@ -123,11 +124,14 @@ func (t *ForgetMemoryTool) Preview(
 		return nil, err
 	}
 
-	memory, err := t.memories.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
-		ID:         request.ID,
-		TenantInfo: request.TenantInfo,
-	})
+	memory, err := t.memories.PreviewSetStatus(ctx, &request, params.Actor)
 	if err != nil {
+		if common.IsRefusal(err) {
+			return common.WarnWouldFail(toolpreview.Build(
+				"Would retire the memory so no later run reads it.",
+			), err), nil
+		}
+
 		return nil, err
 	}
 
@@ -155,14 +159,30 @@ func (t *ForgetMemoryTool) Preview(
 	), nil
 }
 
-// previewAudience says whose later runs the memory would reach.
-func previewAudience(scope agent.MemoryScope) string {
+// previewAudience says whose later runs the memory would reach, and whether
+// it would be kept at once or offered: to the person, for one of their own
+// they asked to be asked about; to an administrator, for one shared beyond
+// them.
+func previewAudience(scope agent.MemoryScope, status agent.MemoryStatus) string {
+	offered := status == agent.MemoryStatusSuggested
 	switch scope {
 	case agent.MemoryScopeUser:
+		if offered {
+			return "Would offer a memory for this person to keep, read in their later conversations once they do."
+		}
+
 		return "Would record a memory read in this person's later conversations."
 	case agent.MemoryScopeRole:
+		if offered {
+			return "Would offer a memory for an administrator to keep, read in the later conversations of everyone in this person's role once they do."
+		}
+
 		return "Would record a memory read in the later conversations of everyone in this person's role."
 	default:
+		if offered {
+			return "Would offer a memory for an administrator to keep, read by every later run of every agent once they do."
+		}
+
 		return "Would record a memory every later run of every agent reads."
 	}
 }

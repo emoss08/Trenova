@@ -1,6 +1,7 @@
 import {
   AcknowledgeFactoringNoaDocument,
   ActivateFactoringAgreementDocument,
+  CancelFactoringSubmissionDocument,
   CreateFactoringAgreementDocument,
   DraftFactoringNoaDocument,
   EndFactoringAgreementDocument,
@@ -13,14 +14,26 @@ import {
   FactoringNoaFieldsFragmentDoc,
   FactoringNoaOwnerDocument,
   FactoringNoasDocument,
+  FactoringSubmissionDetailDocument,
+  FactoringSubmissionFieldsFragmentDoc,
+  FactoringSubmissionItemFieldsFragmentDoc,
+  FactoringSubmissionPlanDocument,
+  FactoringSubmissionTableDocument,
   FactoringSummaryDocument,
+  FactoringTransportDocument,
+  FactoringTransportFieldsFragmentDoc,
   InvoiceFactoringDocument,
   ReleaseFactoringNoaDocument,
   RequestMissingFactoringDocumentsDocument,
+  RetryFactoringSubmissionDocument,
+  SaveFactoringTransportDocument,
   SendFactoringNoaDocument,
   SetInvoiceFactoringOverrideDocument,
+  SubmitInvoicesToFactorDocument,
+  TestFactoringTransportDocument,
   UpdateFactoringAgreementDocument,
   type AcknowledgeFactoringNoaInput,
+  type CancelFactoringSubmissionInput,
   type ChangeFactoringAgreementStatusInput,
   type DraftFactoringNoaInput,
   type FactoringAgreementFieldsFragment,
@@ -28,12 +41,20 @@ import {
   type FactoringInvoiceStateFieldsFragment,
   type FactoringNoaFieldsFragment,
   type FactoringNoaStatus,
+  type FactoringSubmissionFieldsFragment,
+  type FactoringSubmissionItemFieldsFragment,
+  type FactoringSubmissionPlanInput,
+  type FactoringSubmissionPlanQuery,
+  type FactoringSubmissionStatus,
   type FactoringSummaryQuery,
+  type FactoringTransportFieldsFragment,
   type FactoringVerdict,
   type InvoiceFactoringQuery,
   type ReleaseFactoringNoaInput,
   type RequestMissingFactoringDocumentsInput,
   type RequestMissingFactoringDocumentsMutation,
+  type RetryFactoringSubmissionInput,
+  type SaveFactoringTransportInput,
   type SendFactoringNoaInput,
   type SetInvoiceFactoringOverrideInput,
   type UpdateFactoringAgreementInput,
@@ -60,7 +81,20 @@ export type InvoiceFactoring = Omit<
   factoringState: FactoringInvoiceState | null;
 };
 
+export type FactoringSubmission = FactoringSubmissionFieldsFragment;
+export type FactoringSubmissionItem = FactoringSubmissionItemFieldsFragment;
+export type FactoringSubmissionDetail = FactoringSubmission & { items: FactoringSubmissionItem[] };
+export type FactoringSubmissionPlan = FactoringSubmissionPlanQuery["factoringSubmissionPlan"];
+export type FactoringSubmissionPlanItem = FactoringSubmissionPlan["items"][number];
+export type FactoringTransport = FactoringTransportFieldsFragment;
+export type FactoringTransportTestResult = {
+  passed: boolean;
+  message: string;
+  transport: FactoringTransport;
+};
+
 export const FACTORING_INVOICE_STATE_KEY = "factoring-invoice-state-list";
+export const FACTORING_SUBMISSION_KEY = "factoring-submission-list";
 
 /** The readiness queue, one row per evaluated invoice, keyed by the invoice it describes. */
 export function createFactoringInvoiceStateTableConfig(verdicts: FactoringVerdict[]) {
@@ -76,6 +110,125 @@ export function createFactoringInvoiceStateTableConfig(verdicts: FactoringVerdic
 export type FactoringInvoiceStateRow = DataTableConfigRow<
   ReturnType<typeof createFactoringInvoiceStateTableConfig>
 >;
+
+/** Schedules of accounts sent to factors, newest first unless the table sorts otherwise. */
+export function createFactoringSubmissionTableConfig(statuses: FactoringSubmissionStatus[] | null) {
+  return defineDataTableGraphQLConfig({
+    document: FactoringSubmissionTableDocument,
+    operationName: "FactoringSubmissionTable",
+    connectionKey: "factoringSubmissions",
+    extraVariables: { statuses },
+  });
+}
+
+export type FactoringSubmissionRow = DataTableConfigRow<
+  ReturnType<typeof createFactoringSubmissionTableConfig>
+>;
+
+export async function fetchFactoringSubmission(
+  id: string,
+  options?: RequestOptions,
+): Promise<FactoringSubmissionDetail> {
+  const data = await requestGraphQL({
+    document: FactoringSubmissionDetailDocument,
+    operationName: "FactoringSubmissionDetail",
+    variables: { id },
+    signal: options?.signal,
+  });
+  const { items, ...submission } = data.factoringSubmission;
+  return {
+    ...getFragmentData(FactoringSubmissionFieldsFragmentDoc, submission),
+    items: items.map((item) => getFragmentData(FactoringSubmissionItemFieldsFragmentDoc, item)),
+  };
+}
+
+export async function fetchFactoringSubmissionPlan(
+  input: FactoringSubmissionPlanInput,
+  options?: RequestOptions,
+): Promise<FactoringSubmissionPlan> {
+  const data = await requestGraphQL({
+    document: FactoringSubmissionPlanDocument,
+    operationName: "FactoringSubmissionPlan",
+    variables: { input },
+    signal: options?.signal,
+  });
+  return data.factoringSubmissionPlan;
+}
+
+export async function submitInvoicesToFactor(
+  input: FactoringSubmissionPlanInput,
+): Promise<FactoringSubmission> {
+  const data = await requestGraphQL({
+    document: SubmitInvoicesToFactorDocument,
+    operationName: "SubmitInvoicesToFactor",
+    variables: { input },
+  });
+  return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.submitInvoicesToFactor);
+}
+
+export async function retryFactoringSubmission(
+  input: RetryFactoringSubmissionInput,
+): Promise<FactoringSubmission> {
+  const data = await requestGraphQL({
+    document: RetryFactoringSubmissionDocument,
+    operationName: "RetryFactoringSubmission",
+    variables: { input },
+  });
+  return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.retryFactoringSubmission);
+}
+
+export async function cancelFactoringSubmission(
+  input: CancelFactoringSubmissionInput,
+): Promise<FactoringSubmission> {
+  const data = await requestGraphQL({
+    document: CancelFactoringSubmissionDocument,
+    operationName: "CancelFactoringSubmission",
+    variables: { input },
+  });
+  return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.cancelFactoringSubmission);
+}
+
+export async function fetchFactoringTransport(
+  factoringCompanyId: string,
+  options?: RequestOptions,
+): Promise<FactoringTransport | null> {
+  const data = await requestGraphQL({
+    document: FactoringTransportDocument,
+    operationName: "FactoringTransport",
+    variables: { factoringCompanyId },
+    signal: options?.signal,
+  });
+  return data.factoringTransport
+    ? getFragmentData(FactoringTransportFieldsFragmentDoc, data.factoringTransport)
+    : null;
+}
+
+export async function saveFactoringTransport(
+  input: SaveFactoringTransportInput,
+): Promise<FactoringTransport> {
+  const data = await requestGraphQL({
+    document: SaveFactoringTransportDocument,
+    operationName: "SaveFactoringTransport",
+    variables: { input },
+  });
+  return getFragmentData(FactoringTransportFieldsFragmentDoc, data.saveFactoringTransport);
+}
+
+export async function testFactoringTransport(
+  factoringCompanyId: string,
+): Promise<FactoringTransportTestResult> {
+  const data = await requestGraphQL({
+    document: TestFactoringTransportDocument,
+    operationName: "TestFactoringTransport",
+    variables: { factoringCompanyId },
+  });
+  const result = data.testFactoringTransport;
+  return {
+    passed: result.passed,
+    message: result.message,
+    transport: getFragmentData(FactoringTransportFieldsFragmentDoc, result.transport),
+  };
+}
 
 export async function fetchFactoringSummary(options?: RequestOptions): Promise<FactoringSummary> {
   const data = await requestGraphQL({

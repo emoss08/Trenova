@@ -1,0 +1,366 @@
+{
+  "id": "ediinf_acme",
+  "businessUnitId": "bu_1",
+  "organizationId": "org_1",
+  "communicationProfileId": "edicp_acme",
+  "ediPartnerId": "edip_acme",
+  "method": "SFTP",
+  "remotePath": "/inbound/acme/ACME_20261013_0912.x12",
+  "fileName": "ACME_20261013_0912.x12",
+  "checksum": "4d1e9a0c7b3f2e8d6a5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e",
+  "sizeBytes": 623,
+  "rawContent": "ISA*00*          *00*          *ZZ*ACMEFOODS      *ZZ*TRENOVA        *261013*0912*^*00401*000000317*0*P*>~GS*SM*ACMEFOODS*TRENOVA*20261013*0912*317*X*004010~ST*204*0001~B2**ACME**LT-88240**PP~B2A*00~L11*LT-88240*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*Kroger Houston*93*KR-HOU~L3*42000*G***280000~SE*10*0001~ST*204*0002~B2**ACME**LT-88241**PP~B2A*04~L11*LT-88241*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*HEB San Antonio*93*HEB-SAT~SE*7*0002~GE*2*317~GS*FA*ACMEFOODS*TRENOVA*20261013*0912*318*X*004010~ST*997*0001~AK1*IM*433~AK2*210*0001~AK5*A~AK9*A*1*1*1~SE*6*0001~GE*1*318~IEA*2*000000317~",
+  "interchangeControlNumber": "000000317",
+  "isaSenderQualifier": "ZZ",
+  "isaSenderId": "ACMEFOODS",
+  "isaReceiverQualifier": "ZZ",
+  "isaReceiverId": "TRENOVA",
+  "status": "PartiallyProcessed",
+  "failureReason": "load tender change 204/0002 did not match a pending tender for LT-88241; review manually; load tender 204/0002 requires mapping before approval (1 unresolved entities); acknowledgment for control number 0001 could not be matched to an outbound message",
+  "transactionCount": 3,
+  "receivedAt": 1791626400,
+  "processedAt": 1791626404,
+  "rawPurgedAt": null,
+  "version": 2,
+  "createdAt": 1791626400,
+  "updatedAt": 1791626404,
+  "partner": {
+    "id": "edip_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "ACME",
+    "name": "Acme Foods",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "America/Chicago",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": {},
+    "version": 1,
+    "createdAt": 1757160000,
+    "updatedAt": 1789128000
+  },
+  "communicationProfile": {
+    "id": "edicp_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "ediConnectionId": null,
+    "ediPartnerId": "edip_acme",
+    "method": "SFTP",
+    "status": "Active",
+    "name": "Acme SFTP mailbox",
+    "description": "",
+    "config": {
+      "inboundDirectory": "/inbound"
+    },
+    "secretState": null,
+    "lastPollAttemptAt": 1791719400,
+    "lastPollSuccessAt": 1791719400,
+    "lastPollError": "",
+    "version": 3,
+    "createdAt": 1774440000,
+    "updatedAt": 1791719400
+  },
+  "messages": [
+    {
+      "id": "edimsg_acme_204a",
+      "businessUnitId": "bu_1",
+      "organizationId": "org_1",
+      "ediPartnerId": "edip_acme",
+      "documentTypeId": "edidt_inbound_204",
+      "partnerDocumentProfileId": null,
+      "templateId": null,
+      "templateVersionId": null,
+      "shipmentId": null,
+      "invoiceId": null,
+      "transferId": "edilt_acme_1",
+      "inboundFileId": "ediinf_acme",
+      "direction": "Inbound",
+      "standard": "X12",
+      "transactionSet": "204",
+      "x12Version": "004010",
+      "status": "Generated",
+      "validationMode": "Disabled",
+      "interchangeControlNumber": "000000317",
+      "groupControlNumber": "317",
+      "transactionControlNumber": "0001",
+      "segmentCount": 10,
+      "rawX12": "ST*204*0001~B2**ACME**LT-88240**PP~B2A*00~L11*LT-88240*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*Kroger Houston*93*KR-HOU~L3*42000*G***280000~SE*10*0001~",
+      "payloadSnapshot": {
+        "transactionSet": "204",
+        "purposeCode": "00",
+        "loadTender": {
+          "purposeCode": "00",
+          "shipmentId": null,
+          "businessUnitId": null,
+          "organizationId": null,
+          "serviceTypeId": "DEFAULT",
+          "serviceTypeLabel": "Default service type for inbound tenders",
+          "customerId": "DEFAULT",
+          "customerLabel": "Default customer for inbound tenders",
+          "formulaTemplateId": "DEFAULT",
+          "formulaTemplateLabel": "Default rating formula for inbound tenders",
+          "bol": "LT-88240",
+          "weight": 42000,
+          "freightChargeAmount": null,
+          "otherChargeAmount": null,
+          "baseRate": null,
+          "totalChargeAmount": "280000",
+          "ratingUnit": 0,
+          "ratingDetail": {
+            "externalShipmentId": "LT-88240",
+            "paymentMethod": "PP"
+          },
+          "moves": [
+            {
+              "loaded": true,
+              "sequence": 0,
+              "stops": [
+                {
+                  "locationId": "ACME-DAL",
+                  "locationLabel": "Acme Foods DC",
+                  "locationName": "Acme Foods DC",
+                  "locationCode": "ACME-DAL",
+                  "type": "Pickup",
+                  "scheduleType": "Open",
+                  "sequence": 1,
+                  "scheduledWindowStart": 0
+                },
+                {
+                  "locationId": "KR-HOU",
+                  "locationLabel": "Kroger Houston",
+                  "locationName": "Kroger Houston",
+                  "locationCode": "KR-HOU",
+                  "type": "Delivery",
+                  "scheduleType": "Open",
+                  "sequence": 2,
+                  "scheduledWindowStart": 0
+                }
+              ]
+            }
+          ],
+          "commodities": null,
+          "additionalCharges": null,
+          "requiredMappingEntityIds": {
+            "Customer": [
+              "DEFAULT"
+            ],
+            "FormulaTemplate": [
+              "DEFAULT"
+            ],
+            "Location": [
+              "ACME-DAL",
+              "KR-HOU"
+            ],
+            "ServiceType": [
+              "DEFAULT"
+            ]
+          }
+        }
+      },
+      "rawPurgedAt": null,
+      "deliveryStatus": "",
+      "deliveryRemotePath": "",
+      "deliveryAttempts": 0,
+      "deliveryLastAttemptAt": null,
+      "deliverySentAt": null,
+      "deliveryLastError": "",
+      "as2MessageId": "",
+      "as2Mic": "",
+      "ackStatus": "NotExpected",
+      "ackMessageId": null,
+      "ackReceivedAt": null,
+      "ackLastError": "",
+      "generatedById": null,
+      "generatedAt": 1791626404,
+      "version": 1,
+      "createdAt": 1791626404,
+      "updatedAt": 1791626404,
+      "diagnosticCount": 0
+    },
+    {
+      "id": "edimsg_acme_204b",
+      "businessUnitId": "bu_1",
+      "organizationId": "org_1",
+      "ediPartnerId": "edip_acme",
+      "documentTypeId": "edidt_inbound_204",
+      "partnerDocumentProfileId": null,
+      "templateId": null,
+      "templateVersionId": null,
+      "shipmentId": null,
+      "invoiceId": null,
+      "transferId": "edilt_acme_2",
+      "inboundFileId": "ediinf_acme",
+      "direction": "Inbound",
+      "standard": "X12",
+      "transactionSet": "204",
+      "x12Version": "004010",
+      "status": "Generated",
+      "validationMode": "Disabled",
+      "interchangeControlNumber": "000000317",
+      "groupControlNumber": "317",
+      "transactionControlNumber": "0002",
+      "segmentCount": 9,
+      "rawX12": "ST*204*0002~B2**ACME**LT-88241**PP~B2A*04~L11*LT-88241*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*HEB San Antonio*93*HEB-SAT~SE*7*0002~",
+      "payloadSnapshot": {
+        "transactionSet": "204",
+        "purposeCode": "04",
+        "loadTender": {
+          "purposeCode": "04",
+          "shipmentId": null,
+          "businessUnitId": null,
+          "organizationId": null,
+          "serviceTypeId": "DEFAULT",
+          "serviceTypeLabel": "Default service type for inbound tenders",
+          "customerId": "DEFAULT",
+          "customerLabel": "Default customer for inbound tenders",
+          "formulaTemplateId": "DEFAULT",
+          "formulaTemplateLabel": "Default rating formula for inbound tenders",
+          "bol": "LT-88241",
+          "weight": null,
+          "freightChargeAmount": null,
+          "otherChargeAmount": null,
+          "baseRate": null,
+          "totalChargeAmount": null,
+          "ratingUnit": 0,
+          "ratingDetail": {
+            "externalShipmentId": "LT-88241",
+            "paymentMethod": "PP"
+          },
+          "moves": [
+            {
+              "loaded": true,
+              "sequence": 0,
+              "stops": [
+                {
+                  "locationId": "ACME-DAL",
+                  "locationLabel": "Acme Foods DC",
+                  "locationName": "Acme Foods DC",
+                  "locationCode": "ACME-DAL",
+                  "type": "Pickup",
+                  "scheduleType": "Open",
+                  "sequence": 1,
+                  "scheduledWindowStart": 0
+                },
+                {
+                  "locationId": "HEB-SAT",
+                  "locationLabel": "HEB San Antonio",
+                  "locationName": "HEB San Antonio",
+                  "locationCode": "HEB-SAT",
+                  "type": "Delivery",
+                  "scheduleType": "Open",
+                  "sequence": 2,
+                  "scheduledWindowStart": 0
+                }
+              ]
+            }
+          ],
+          "commodities": null,
+          "additionalCharges": null,
+          "requiredMappingEntityIds": {
+            "Customer": [
+              "DEFAULT"
+            ],
+            "FormulaTemplate": [
+              "DEFAULT"
+            ],
+            "Location": [
+              "ACME-DAL",
+              "HEB-SAT"
+            ],
+            "ServiceType": [
+              "DEFAULT"
+            ]
+          }
+        }
+      },
+      "rawPurgedAt": null,
+      "deliveryStatus": "",
+      "deliveryRemotePath": "",
+      "deliveryAttempts": 0,
+      "deliveryLastAttemptAt": null,
+      "deliverySentAt": null,
+      "deliveryLastError": "",
+      "as2MessageId": "",
+      "as2Mic": "",
+      "ackStatus": "NotExpected",
+      "ackMessageId": null,
+      "ackReceivedAt": null,
+      "ackLastError": "",
+      "generatedById": null,
+      "generatedAt": 1791626404,
+      "version": 1,
+      "createdAt": 1791626404,
+      "updatedAt": 1791626404,
+      "diagnosticCount": 0
+    },
+    {
+      "id": "edimsg_acme_997",
+      "businessUnitId": "bu_1",
+      "organizationId": "org_1",
+      "ediPartnerId": "edip_acme",
+      "documentTypeId": "edidt_inbound_997",
+      "partnerDocumentProfileId": null,
+      "templateId": null,
+      "templateVersionId": null,
+      "shipmentId": null,
+      "invoiceId": null,
+      "transferId": null,
+      "inboundFileId": "ediinf_acme",
+      "direction": "Inbound",
+      "standard": "X12",
+      "transactionSet": "997",
+      "x12Version": "004010",
+      "status": "Generated",
+      "validationMode": "Disabled",
+      "interchangeControlNumber": "000000317",
+      "groupControlNumber": "318",
+      "transactionControlNumber": "0001",
+      "segmentCount": 6,
+      "rawX12": "ST*997*0001~AK1*IM*433~AK2*210*0001~AK5*A~AK9*A*1*1*1~SE*6*0001~",
+      "payloadSnapshot": {
+        "transactionSet": "997",
+        "functionalAck": {
+          "originalFunctionalGroupId": "IM",
+          "originalGroupControlNumber": "433",
+          "originalTransactionSet": "210",
+          "originalTransactionControlNumber": "0001",
+          "groupAcknowledgmentCode": "A",
+          "transactionAcknowledgmentCode": "A",
+          "acceptedTransactionSetCount": 1,
+          "receivedTransactionSetCount": 1,
+          "includedTransactionSetCount": 1
+        }
+      },
+      "rawPurgedAt": null,
+      "deliveryStatus": "",
+      "deliveryRemotePath": "",
+      "deliveryAttempts": 0,
+      "deliveryLastAttemptAt": null,
+      "deliverySentAt": null,
+      "deliveryLastError": "",
+      "as2MessageId": "",
+      "as2Mic": "",
+      "ackStatus": "NotExpected",
+      "ackMessageId": null,
+      "ackReceivedAt": null,
+      "ackLastError": "",
+      "generatedById": null,
+      "generatedAt": 1791626404,
+      "version": 1,
+      "createdAt": 1791626404,
+      "updatedAt": 1791626404,
+      "diagnosticCount": 0
+    }
+  ]
+}

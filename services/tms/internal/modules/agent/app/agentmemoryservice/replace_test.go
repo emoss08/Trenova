@@ -179,6 +179,9 @@ func TestRemember_AnAgentReplacesOnlyItsOwnAgentMemory(t *testing.T) {
 	}
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
+	// Whose memory may be replaced is the question here; a manager of shared
+	// memory keeps the replacement at once, so the answer shows as its status.
+	svc.permissions = &fakePermissions{manages: true}
 
 	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 		TenantInfo:        tenant(),
