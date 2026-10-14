@@ -10,6 +10,7 @@ const SetHotContext = createContext<SetHot>(() => {});
  * chip border and an outlined dot while the rest of the page dims.
  */
 export function highlightRule(scope: string, key: string): string {
+  // i18n-ignore: CSS selector injected into a stylesheet, not interface text
   return `[data-hl="${CSS.escape(scope)}"] [data-series="${CSS.escape(key)}"]{--an-hot:1}`;
 }
 

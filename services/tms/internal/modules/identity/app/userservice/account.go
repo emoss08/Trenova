@@ -70,7 +70,7 @@ type SessionScope struct {
 	CurrentSessionID pulid.ID
 }
 
-type selfUpdate struct {
+type columnUpdate struct {
 	tenantInfo pagination.TenantInfo
 	user       *tenant.User
 	original   *tenant.User
@@ -78,10 +78,10 @@ type selfUpdate struct {
 	comment    string
 }
 
-func (s *Service) updateSelf(ctx context.Context, req selfUpdate) (*tenant.User, error) {
+func (s *Service) updateColumns(ctx context.Context, req *columnUpdate) (*tenant.User, error) {
 	log := s.l.With(
-		zap.String("operation", "updateSelf"),
-		zap.String("userID", req.tenantInfo.UserID.String()),
+		zap.String("operation", "updateColumns"),
+		zap.String("userID", req.user.ID.String()),
 	)
 
 	updated, err := s.repo.UpdateColumns(ctx, tenantports.UpdateUserColumnsRequest{
@@ -126,6 +126,7 @@ func (s *Service) updateSelf(ctx context.Context, req selfUpdate) (*tenant.User,
 
 	return s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         req.tenantInfo,
+		LookupUserID:       updated.ID,
 		IncludeMemberships: true,
 	})
 }
@@ -185,7 +186,7 @@ func (s *Service) UpdateMyProfile(
 		columns = append(columns, cols.AvatarStyle.String())
 	}
 
-	return s.updateSelf(ctx, selfUpdate{
+	return s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   original,
@@ -221,7 +222,7 @@ func (s *Service) UpdateMyAvailability(
 	user.ApplyAvailability(&req)
 
 	cols := tenantcol.UserColumns
-	return s.updateSelf(ctx, selfUpdate{
+	return s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   original,

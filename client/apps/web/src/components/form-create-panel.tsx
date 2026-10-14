@@ -52,6 +52,11 @@ type FormCreatePanelProps<
   /** More at the left of the footer, such as a test button. */
   footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues) => Promise<TMutationData>;
+  /** Replaces the generic "created" toast, for a save whose outcome needs saying. */
+  successToast?: (
+    data: TMutationData,
+    values: TSubmitValues,
+  ) => { title: string; description?: string };
 };
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
@@ -81,6 +86,7 @@ export function FormCreatePanel<
   changeFields,
   footerProblem,
   footerLeading,
+  successToast,
 }: FormCreatePanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const t = useT();
 
@@ -134,9 +140,10 @@ export function FormCreatePanel<
 
         return api.post<TMutationData>(url, values);
       },
-      onSuccess: (_data, variables) => {
-        toast.success(t("Changes have been saved."), {
-          description: t("{0} created successfully", title),
+      onSuccess: (data, variables) => {
+        const custom = successToast?.(data, variables.values);
+        toast.success(custom?.title ?? t("Changes have been saved."), {
+          description: custom ? custom.description : t("{0} created successfully", title),
         });
         void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
@@ -161,8 +168,11 @@ export function FormCreatePanel<
     },
   );
 
+  // A failed save has already been reported by useApiMutation (field errors on the
+  // form, anything else as a toast); letting the rejection escape the submit handler
+  // only leaves an unhandled rejection behind.
   const onSubmit = async (values: TSubmitValues, action: CreatePanelSaveAction) => {
-    await mutateAsync({ values, action });
+    await mutateAsync({ values, action }).catch(() => undefined);
   };
 
   const handleOptionSelect = (action: CreatePanelSaveAction) => {

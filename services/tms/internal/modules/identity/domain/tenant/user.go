@@ -133,6 +133,26 @@ func (u *User) IsActive() bool {
 	return u.Status == domaintypes.StatusActive
 }
 
+func NewDuplicateEmailAddressError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"emailAddress",
+		errortypes.ErrDuplicate,
+		"A user with this email address already exists",
+	)
+}
+
+func NewDuplicateUsernameError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"username",
+		errortypes.ErrDuplicate,
+		"A user with this username already exists",
+	)
+}
+
+func (u *User) AwaitingAccountSetup() bool {
+	return u.LastLoginAt == nil && u.PasswordChangedAt == nil
+}
+
 func (u *User) ValidateStatus() error {
 	if !u.IsActive() {
 		return errortypes.NewAuthorizationError(
@@ -216,6 +236,21 @@ func (u *User) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&u.Locale,
 			validation.By(domainvalidation.ValidateLocale),
+		),
+		validation.Field(&u.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
+				Error("Status must be either Active or Inactive"),
+		),
+		validation.Field(&u.TimeFormat,
+			validation.In(domaintypes.TimeFormat12Hour, domaintypes.TimeFormat24Hour).
+				Error("Time format must be either 12-hour or 24-hour"),
+		),
+		validation.Field(&u.JobTitle,
+			validation.Length(0, 100).Error("Job title must be at most 100 characters"),
+		),
+		validation.Field(&u.PhoneNumber,
+			validation.Length(0, 30).Error("Phone number must be at most 30 characters"),
 		),
 	)
 	if err != nil {

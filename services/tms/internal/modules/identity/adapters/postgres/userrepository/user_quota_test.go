@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -53,6 +54,42 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 	)
 
 	require.Nil(t, memberships)
+	require.True(t, errortypes.IsQuotaExceededError(err))
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func TestCreateRefusesASeatPastTheQuotaBeforeInsertingAnything(t *testing.T) {
+	t.Parallel()
+
+	conn, sqlMock := dbtest.NewSQLMock(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
+	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
+	buID := pulid.MustNew("bu_")
+	orgID := pulid.MustNew("org_")
+
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Meter:      platformcatalog.MeterUserSeats,
+		Quantity:   1,
+	}).Return(errortypes.NewQuotaExceededError(string(platformcatalog.MeterUserSeats), 3, 3, "starter"))
+
+	created, err := repo.Create(t.Context(), tenantports.CreateUserRequest{
+		User: &tenant.User{
+			BusinessUnitID:        buID,
+			CurrentOrganizationID: orgID,
+			Name:                  "Dana Whitfield",
+			Username:              "dwhitfield",
+			EmailAddress:          "dana@example.com",
+			Timezone:              "America/Chicago",
+		},
+		Membership: &tenant.OrganizationMembership{
+			BusinessUnitID: buID,
+			OrganizationID: orgID,
+			IsDefault:      true,
+		},
+	})
+
+	require.Nil(t, created)
 	require.True(t, errortypes.IsQuotaExceededError(err))
 	require.NoError(t, sqlMock.ExpectationsWereMet())
 }

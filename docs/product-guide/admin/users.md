@@ -19,14 +19,23 @@ business unit they can access.
 ## Tasks
 
 ### Add a user
-Keywords: new user, create account, invite user, add login
+Keywords: new user, create account, invite user, add login, send invite, set password
 1. Open [Users](/admin/users) on the **Users** tab.
 2. Select **New user**.
 3. Set **Status**, and enter the **Full name**, **Username**, **Email address** and
-   **Timezone**.
-4. Leave **Require password change on first login** on if the person should set a new password
-   after signing in.
-5. Choose one or more **Roles**, then select **Save**.
+   **Timezone**. Pick their **Time format** and **Language** if they differ from the defaults.
+4. Choose one or more **Roles**, then select **Save**. You can only grant access you hold
+   yourself.
+5. Trenova emails the person a link to choose their own password and finish setting up the
+   account; the confirmation names the address it went to. You never see or set their password.
+   An inactive user is not sent an invitation.
+
+### Resend an invitation or send a password reset link
+Keywords: resend invite, invitation expired, forgot password, reset link, locked out
+1. Open [Users](/admin/users) and select the user's row.
+2. Under **Sign-in access**, select **Resend invitation** for someone who has not set up their
+   account yet, or **Send password reset link** for someone who has. Any earlier link stops
+   working.
 
 ### Change a user's roles
 Keywords: assign role, remove role, temporary role, role expiry, grant permissions to user
@@ -46,9 +55,13 @@ Keywords: organization access, multi-organization, business unit access
 ### Edit or deactivate a user
 Keywords: change email, disable user, inactivate account, bulk deactivate
 1. Open [Users](/admin/users) and select the user's row.
-2. Change **Status**, **Full name**, **Email address** or **Timezone** and select **Save**. The
-   **Username** cannot be changed.
-3. To change several users at once, tick their rows, then use **Update status** in the bar that
+2. Change **Status**, **Full name**, **Email address**, **Timezone**, **Time format**,
+   **Language**, **Job title** or **Phone number** and select **Save**. Only the fields you
+   change are saved. The **Username** cannot be changed.
+3. Turn on **Account locked** to stop the person signing in, or **Require a password change at
+   next sign-in** to make them choose a new password. You cannot lock or deactivate your own
+   account.
+4. To change several users at once, tick their rows, then use **Update status** in the bar that
    appears and pick **Active** or **Inactive**.
 
 ### Manage roles from this page

@@ -473,6 +473,56 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "locale",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.Locale, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "jobTitle",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.JobTitle, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "phoneNumber",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.PhoneNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "avatarStyle",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AvatarStyle, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAvatarStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle),
+			},
+			{
+				Name:     "availabilityStatus",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.AvailabilityStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -508,6 +558,15 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.User)
 					return obj.LastLoginAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "passwordChangedAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.User)
+					return obj.PasswordChangedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
@@ -569,6 +628,8 @@ var (
 	errNoChild4 = errors.New("field of type Boolean does not have child fields")
 	errNoChild5 = errors.New("field of type EntityStatus does not have child fields")
 	errNoChild6 = errors.New("field of type TimeFormat does not have child fields")
+	errNoChild7 = errors.New("field of type AvatarStyle does not have child fields")
+	errNoChild8 = errors.New("field of type AvailabilityStatus does not have child fields")
 )
 
 func field_Mutation_updateOrganization_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -790,6 +851,22 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAvailabilityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvailabilityStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.AvailabilityStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAvatarStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAvatarStyle(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.AvatarStyle) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

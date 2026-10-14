@@ -27,16 +27,25 @@ export const resetPasswordSchema = z
 
 export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
 
+export type SetPasswordPurpose = "reset" | "invite";
+
+export function setPasswordPurpose(value: string | null): SetPasswordPurpose {
+  return value === "invite" ? "invite" : "reset";
+}
+
 export function ResetPasswordForm({
   token,
+  purpose = "reset",
   onDone,
   onRequestNewLink,
 }: {
   token: string;
+  purpose?: SetPasswordPurpose;
   onDone: () => void;
   onRequestNewLink: () => void;
 }) {
   const t = useT();
+  const isInvite = purpose === "invite";
 
   const form = useForm<ResetPasswordRequest>({
     resolver: zodResolver(resetPasswordSchema),
@@ -58,10 +67,20 @@ export function ResetPasswordForm({
 
   return (
     <>
-      <StepCrumbs left="Account recovery" right="Choose a password" />
-      <AuthHeading title={t("Choose a new password")}>
-        {t("This link works once. Pick a password you have not used here before.")}
-      </AuthHeading>
+      {isInvite ? (
+        <StepCrumbs left={t("Account setup")} right={t("Choose a password")} />
+      ) : (
+        <StepCrumbs left="Account recovery" right="Choose a password" />
+      )}
+      {isInvite ? (
+        <AuthHeading title={t("Set up your account")}>
+          {t("Choose the password you will sign in with. This link works once.")}
+        </AuthHeading>
+      ) : (
+        <AuthHeading title={t("Choose a new password")}>
+          {t("This link works once. Pick a password you have not used here before.")}
+        </AuthHeading>
+      )}
 
       <form
         className="flex flex-col gap-4"
@@ -71,7 +90,7 @@ export function ResetPasswordForm({
         <AuthPasswordField
           name="newPassword"
           control={control}
-          label={t("New password")}
+          label={isInvite ? t("Password") : t("New password")}
           placeholder={t("At least 8 characters")}
           autoComplete="new-password"
           disabled={isPending}
@@ -79,7 +98,7 @@ export function ResetPasswordForm({
         <AuthPasswordField
           name="confirmPassword"
           control={control}
-          label={t("Confirm new password")}
+          label={isInvite ? t("Confirm password") : t("Confirm new password")}
           placeholder="••••••••"
           autoComplete="new-password"
           disabled={isPending}
@@ -93,7 +112,7 @@ export function ResetPasswordForm({
           </>
         )}
         <AuthSubmit type="submit" busy={isPending} busyLabel={t("Setting password")}>
-          {t("Set new password")}
+          {isInvite ? t("Set password") : t("Set new password")}
         </AuthSubmit>
       </form>
     </>
@@ -119,16 +138,26 @@ function InvalidLink({ onRequestNewLink }: { onRequestNewLink: () => void }) {
   );
 }
 
-export function ResetPasswordDone({ onSignIn }: { onSignIn: () => void }) {
+export function ResetPasswordDone({
+  purpose = "reset",
+  onSignIn,
+}: {
+  purpose?: SetPasswordPurpose;
+  onSignIn: () => void;
+}) {
   const t = useT();
 
   return (
     <AuthSuccess
       mark={<AuthCheckMark />}
-      title={t("Password changed")}
-      lead={t(
-        "Your new password is active. Any other sessions on this account have been signed out.",
-      )}
+      title={purpose === "invite" ? t("Your account is ready") : t("Password changed")}
+      lead={
+        purpose === "invite"
+          ? t("Your password is set. Sign in to get started.")
+          : t(
+              "Your new password is active. Any other sessions on this account have been signed out.",
+            )
+      }
       actions={<AuthSubmit onClick={onSignIn}>{t("Sign in")}</AuthSubmit>}
     />
   );

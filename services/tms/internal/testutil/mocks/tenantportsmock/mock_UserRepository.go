@@ -245,6 +245,142 @@ func (_c *MockUserRepository_FindByIDForLogin_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// Create provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) Create(ctx context.Context, req tenantports.CreateUserRequest) (*tenant.User, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 *tenant.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.CreateUserRequest) (*tenant.User, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.CreateUserRequest) *tenant.User); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenant.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.CreateUserRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockUserRepository_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req tenantports.CreateUserRequest
+func (_e *MockUserRepository_Expecter) Create(ctx any, req any) *MockUserRepository_Create_Call {
+	return &MockUserRepository_Create_Call{Call: _e.mock.On("Create", ctx, req)}
+}
+
+func (_c *MockUserRepository_Create_Call) Run(run func(ctx context.Context, req tenantports.CreateUserRequest)) *MockUserRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 tenantports.CreateUserRequest
+		if args[1] != nil {
+			arg1 = args[1].(tenantports.CreateUserRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_Create_Call) Return(user *tenant.User, err error) *MockUserRepository_Create_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockUserRepository_Create_Call) RunAndReturn(run func(ctx context.Context, req tenantports.CreateUserRequest) (*tenant.User, error)) *MockUserRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindIdentityConflicts provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) FindIdentityConflicts(ctx context.Context, req tenantports.UserIdentityConflictsRequest) (tenantports.UserIdentityConflicts, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindIdentityConflicts")
+	}
+
+	var r0 tenantports.UserIdentityConflicts
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.UserIdentityConflictsRequest) (tenantports.UserIdentityConflicts, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.UserIdentityConflictsRequest) tenantports.UserIdentityConflicts); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(tenantports.UserIdentityConflicts)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.UserIdentityConflictsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_FindIdentityConflicts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindIdentityConflicts'
+type MockUserRepository_FindIdentityConflicts_Call struct {
+	*mock.Call
+}
+
+// FindIdentityConflicts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req tenantports.UserIdentityConflictsRequest
+func (_e *MockUserRepository_Expecter) FindIdentityConflicts(ctx any, req any) *MockUserRepository_FindIdentityConflicts_Call {
+	return &MockUserRepository_FindIdentityConflicts_Call{Call: _e.mock.On("FindIdentityConflicts", ctx, req)}
+}
+
+func (_c *MockUserRepository_FindIdentityConflicts_Call) Run(run func(ctx context.Context, req tenantports.UserIdentityConflictsRequest)) *MockUserRepository_FindIdentityConflicts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 tenantports.UserIdentityConflictsRequest
+		if args[1] != nil {
+			arg1 = args[1].(tenantports.UserIdentityConflictsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindIdentityConflicts_Call) Return(userIdentityConflicts tenantports.UserIdentityConflicts, err error) *MockUserRepository_FindIdentityConflicts_Call {
+	_c.Call.Return(userIdentityConflicts, err)
+	return _c
+}
+
+func (_c *MockUserRepository_FindIdentityConflicts_Call) RunAndReturn(run func(ctx context.Context, req tenantports.UserIdentityConflictsRequest) (tenantports.UserIdentityConflicts, error)) *MockUserRepository_FindIdentityConflicts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetByID(ctx context.Context, req tenantports.GetUserByIDRequest) (*tenant.User, error) {
 	ret := _mock.Called(ctx, req)
@@ -1072,74 +1208,6 @@ func (_c *MockUserRepository_SelectOptions_Call) Return(listResult *pagination.L
 }
 
 func (_c *MockUserRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*tenant.User], error)) *MockUserRepository_SelectOptions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Update provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) Update(ctx context.Context, entity *tenant.User) (*tenant.User, error) {
-	ret := _mock.Called(ctx, entity)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Update")
-	}
-
-	var r0 *tenant.User
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.User) (*tenant.User, error)); ok {
-		return returnFunc(ctx, entity)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.User) *tenant.User); ok {
-		r0 = returnFunc(ctx, entity)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.User)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.User) error); ok {
-		r1 = returnFunc(ctx, entity)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
-type MockUserRepository_Update_Call struct {
-	*mock.Call
-}
-
-// Update is a helper method to define mock.On call
-//   - ctx context.Context
-//   - entity *tenant.User
-func (_e *MockUserRepository_Expecter) Update(ctx any, entity any) *MockUserRepository_Update_Call {
-	return &MockUserRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
-}
-
-func (_c *MockUserRepository_Update_Call) Run(run func(ctx context.Context, entity *tenant.User)) *MockUserRepository_Update_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *tenant.User
-		if args[1] != nil {
-			arg1 = args[1].(*tenant.User)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_Update_Call) Return(user *tenant.User, err error) *MockUserRepository_Update_Call {
-	_c.Call.Return(user, err)
-	return _c
-}
-
-func (_c *MockUserRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.User) (*tenant.User, error)) *MockUserRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -2962,15 +2962,18 @@ writes:
     reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
 
   # user
+  "mutation createUser":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "mutation patchUser":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
   "DELETE /api/v1/users/me/profile-picture/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "DELETE /api/v1/users/:userID/mfa/":
     exempt: security
     reason: "Resetting a person's second sign-in factor decides who can sign in as them."
-  "PATCH /api/v1/users/:userID/":
-    exempt: security
-    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
   "PATCH /api/v1/users/me/settings/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
@@ -3017,9 +3020,6 @@ writes:
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "POST /api/v1/users/me/switch-organization/":
-    exempt: security
-    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
-  "PUT /api/v1/users/:userID/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
   "PUT /api/v1/users/:userID/organization-memberships/":

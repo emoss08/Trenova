@@ -3,6 +3,7 @@ package userservice
 import (
 	"context"
 	"mime/multipart"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -40,6 +42,9 @@ type Params struct {
 	Storage           kernelports.Client
 	Config            *config.Config
 	Validator         *Validator
+	DB                kernelports.DBConnection
+	Roles             RoleAssigner
+	Invites           AccountInviter
 	AuthEventHistory  iamports.AuthEventHistoryRepository `optional:"true"`
 	AuthEvents        iamports.AuthEventRecorder          `optional:"true"`
 }
@@ -55,6 +60,9 @@ type Service struct {
 	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	validator    *Validator
+	db           kernelports.DBConnection
+	roles        RoleAssigner
+	invites      AccountInviter
 	signIns      iamports.AuthEventHistoryRepository
 	authEvents   iamports.AuthEventRecorder
 }
@@ -71,6 +79,9 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		storage:      p.Storage,
 		storageCfg:   p.Config.GetStorageConfig(),
 		validator:    p.Validator,
+		db:           p.DB,
+		roles:        p.Roles,
+		invites:      p.Invites,
 		signIns:      p.AuthEventHistory,
 		authEvents:   p.AuthEvents,
 	}
@@ -105,6 +116,15 @@ func (s *Service) BulkUpdateStatus(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
+
+	if req.Status != domaintypes.StatusActive &&
+		slices.Contains(req.UserIDs, req.TenantInfo.UserID) {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrForbidden,
+			"You cannot deactivate your own account",
+		)
+	}
 
 	originalEntities, err := s.repo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: req.TenantInfo,
@@ -330,12 +350,20 @@ func (s *Service) UploadProfilePicture(
 			WithInternal(err)
 	}
 
+	original := *user
 	previousProfilePicture := user.ProfilePicURL
 	previousThumbnail := user.ThumbnailURL
 	user.ProfilePicURL = key
 	user.ThumbnailURL = key
 
-	updatedUser, err := s.Update(ctx, user, tenantInfo.UserID)
+	cols := tenantcol.UserColumns
+	updatedUser, err := s.updateColumns(ctx, &columnUpdate{
+		tenantInfo: tenantInfo,
+		user:       user,
+		original:   &original,
+		columns:    []string{cols.ProfilePicURL.String(), cols.ThumbnailURL.String()},
+		comment:    "Profile picture updated",
+	})
 	if err != nil {
 		_ = s.storage.Delete(ctx, key)
 		return nil, err
@@ -368,7 +396,7 @@ func (s *Service) DeleteProfilePicture(
 	user.ThumbnailURL = ""
 
 	cols := tenantcol.UserColumns
-	updatedUser, err := s.updateSelf(ctx, selfUpdate{
+	updatedUser, err := s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   &original,
@@ -497,14 +525,24 @@ func (s *Service) UpdateMySettings(
 		return nil, err
 	}
 
+	original := *user
 	user.Timezone = req.Timezone
 	user.TimeFormat = req.TimeFormat
 
+	cols := tenantcol.UserColumns
+	columns := []string{cols.Timezone.String(), cols.TimeFormat.String()}
 	if req.Locale != "" {
 		user.Locale = req.Locale
+		columns = append(columns, cols.Locale.String())
 	}
 
-	updated, err := s.Update(ctx, user, tenantInfo.UserID)
+	updated, err := s.updateColumns(ctx, &columnUpdate{
+		tenantInfo: tenantInfo,
+		user:       user,
+		original:   &original,
+		columns:    columns,
+		comment:    "Settings updated",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -623,72 +661,6 @@ func (s *Service) ChangeMyPassword(
 	}
 
 	return updatedUser, nil
-}
-
-func (s *Service) Update(
-	ctx context.Context,
-	entity *tenant.User,
-	userID pulid.ID,
-) (*tenant.User, error) {
-	log := s.l.With(
-		zap.String("operation", "Update"),
-		zap.String("userID", userID.String()),
-	)
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			UserID: userID,
-			OrgID:  entity.CurrentOrganizationID,
-			BuID:   entity.BusinessUnitID,
-		},
-		IncludeMemberships: true,
-	})
-	if err != nil {
-		log.Error("failed to get user", zap.Error(err))
-		return nil, err
-	}
-
-	updatedEntity, err := s.repo.Update(ctx, entity)
-	if err != nil {
-		log.Error("failed to update user", zap.Error(err))
-		return nil, err
-	}
-
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceUser,
-		ResourceID:     updatedEntity.ID.String(),
-		Operation:      permission.OpUpdate,
-		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(updatedEntity),
-		PreviousState:  jsonutils.MustToJSON(original),
-		OrganizationID: updatedEntity.CurrentOrganizationID,
-		BusinessUnitID: updatedEntity.BusinessUnitID,
-	},
-		auditservice.WithComment("User updated"),
-		auditservice.WithDiff(original, updatedEntity),
-		auditservice.WithRequest(ctx),
-	); err != nil {
-		s.l.Error("failed to log audit action", zap.Error(err))
-		return nil, err
-	}
-
-	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: updatedEntity.CurrentOrganizationID,
-		BusinessUnitID: updatedEntity.BusinessUnitID,
-		ActorUserID:    userID,
-		Resource:       permission.ResourceUser.String(),
-		Action:         "updated",
-		RecordID:       updatedEntity.ID,
-		Entity:         updatedEntity,
-	}); err != nil {
-		log.Warn("failed to publish user invalidation", zap.Error(err))
-	}
-
-	return updatedEntity, nil
 }
 
 func (s *Service) ListOrganizationMemberships(

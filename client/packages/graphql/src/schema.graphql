@@ -6655,6 +6655,23 @@ enum AvailabilityPreference {
   Unavailable
 }
 
+enum AvailabilityStatus {
+  available
+  away
+  focus
+}
+
+enum AvatarStyle {
+  auto
+  citrus
+  dusk
+  ember
+  lagoon
+  mint
+  orchid
+  slate
+}
+
 input BackfillJurisdictionMilesInput {
   """
   Count the moves and miles that would be attributed without starting the workflow.
@@ -10083,6 +10100,23 @@ input CreateSettlementDisputeInput {
   description: String!
   settlementId: ID!
   settlementLineId: ID
+}
+
+input CreateUserInput {
+  emailAddress: String!
+  """Defaults to the instance's default language."""
+  locale: String
+  mustChangePassword: Boolean = false
+  name: String!
+  """
+  Roles granted in the current organization. Every grant is checked against the caller's own access.
+  """
+  roleIds: [ID!]
+  status: EntityStatus!
+  """Defaults to TwelveHour."""
+  timeFormat: TimeFormat
+  timezone: String!
+  username: String!
 }
 
 input CreateWorkerPTOInput {
@@ -18896,6 +18930,10 @@ type Mutation {
   createTrainingCourse(input: TrainingCourseInput!): TrainingCourse!
   createTriageReplyTemplate(input: TriageReplyTemplateInput!): TriageReplyTemplate!
   createTriageRule(input: TriageRuleInput!): TriageRule!
+  """
+  Creates a user in the current organization and emails them an invitation to choose their own password.
+  """
+  createUser(input: CreateUserInput!): User!
   createWorkerChecklistTemplate(input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
   createWorkerCredential(input: WorkerCredentialInput!): WorkerCredential!
   createWorkerCredentialType(input: WorkerCredentialTypeInput!): WorkerCredentialType!
@@ -19164,6 +19202,7 @@ type Mutation {
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
+  patchUser(id: ID!, input: UserPatchInput!): User!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   """Holds sending. Posted documents keep queueing and go out on resume."""
   pauseAccountingSync(input: PauseAccountingSyncInput!): AccountingConnection!
@@ -29176,6 +29215,8 @@ type UsState {
 }
 
 type User {
+  availabilityStatus: AvailabilityStatus!
+  avatarStyle: AvatarStyle!
   businessUnit: BusinessUnit
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -29184,9 +29225,13 @@ type User {
   emailAddress: String!
   id: ID!
   isLocked: Boolean!
+  jobTitle: String!
   lastLoginAt: Timestamp
+  locale: String!
   mustChangePassword: Boolean!
   name: String!
+  passwordChangedAt: Timestamp
+  phoneNumber: String!
   profilePicUrl: String!
   status: EntityStatus!
   thumbnailUrl: String!
@@ -29206,6 +29251,29 @@ type UserConnection {
 type UserEdge {
   cursor: String!
   node: User!
+}
+
+input UserPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  emailAddress: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  isLocked: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected. An empty string clears it."""
+  jobTitle: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  locale: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  mustChangePassword: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected. An empty string clears it."""
+  phoneNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  timeFormat: TimeFormat @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  timezone: String @goField(omittable: true)
 }
 
 type VehicleInspection {

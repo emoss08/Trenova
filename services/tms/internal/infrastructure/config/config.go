@@ -295,6 +295,7 @@ type SecurityConfig struct {
 
 const (
 	defaultPasswordResetTokenTTL           = 30 * time.Minute
+	defaultPasswordResetInviteTokenTTL     = 7 * 24 * time.Hour
 	defaultPasswordResetMaxRequestsPerHour = 5
 )
 
@@ -312,6 +313,7 @@ type PasswordResetConfig struct {
 	// TokenTTL is how long a link stays redeemable. Short by default: a reset link is
 	// a bearer credential sitting in a mailbox.
 	TokenTTL time.Duration `mapstructure:"tokenTtl" validate:"omitempty,min=0"`
+	InviteTokenTTL time.Duration `mapstructure:"inviteTokenTtl" validate:"omitempty,min=0"`
 	// MaxRequestsPerHour caps how many links one account can be sent in an hour, so
 	// the endpoint cannot be used to flood somebody's inbox.
 	MaxRequestsPerHour int `mapstructure:"maxRequestsPerHour" validate:"omitempty,min=1"`
@@ -326,6 +328,13 @@ func (c PasswordResetConfig) GetTokenTTL() time.Duration {
 		return defaultPasswordResetTokenTTL
 	}
 	return c.TokenTTL
+}
+
+func (c PasswordResetConfig) GetInviteTokenTTL() time.Duration {
+	if c.InviteTokenTTL <= 0 {
+		return defaultPasswordResetInviteTokenTTL
+	}
+	return c.InviteTokenTTL
 }
 
 func (c PasswordResetConfig) GetMaxRequestsPerHour() int {

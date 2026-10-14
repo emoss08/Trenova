@@ -27,10 +27,43 @@ type PasswordResetContext struct {
 	ExpiresAt        string
 }
 
+type AccountInviteContext struct {
+	FirstName     string
+	FullName      string
+	Username      string
+	EmailAddress  string
+	InvitedByName string
+
+	CompanyName string
+
+	SetupURL template.URL
+
+	ExpiresInDays  int
+	ExpiresInHours int
+	ExpiresAt      string
+}
+
+func newAccountInviteSampleContext() any {
+	return AccountInviteContext{
+		FirstName:     sampleUserFirstName,
+		FullName:      sampleUserFullName,
+		Username:      "dwhitfield",
+		EmailAddress:  "dana.whitfield@example.com",
+		InvitedByName: "Morgan Ellis",
+		CompanyName:   sampleCompanyName,
+		SetupURL: template.URL(
+			"https://app.example.com/auth/reset?purpose=invite&token=sample-invite-link",
+		),
+		ExpiresInDays:  7,
+		ExpiresInHours: 168,
+		ExpiresAt:      "2026-07-29 11:00 CDT",
+	}
+}
+
 func newPasswordResetSampleContext() any {
 	return PasswordResetContext{
-		FirstName:        "Dana",
-		FullName:         "Dana Whitfield",
+		FirstName:        sampleUserFirstName,
+		FullName:         sampleUserFullName,
 		CompanyName:      sampleCompanyName,
 		ResetURL:         template.URL("https://app.example.com/auth/reset?token=8f2c41a9b7e34d05"),
 		ExpiresInMinutes: 30,
@@ -64,6 +97,60 @@ func (r *Registry) registerAccountKinds() {
 				Description: "How many minutes the link is good for. Use this rather than " +
 					"writing a number into the copy, or the wording will drift from the " +
 					"real expiry.",
+			},
+			{
+				Path:        "ExpiresAt",
+				Type:        VariableDateTime,
+				Description: "The exact moment the link stops working.",
+			},
+		},
+	})
+
+	_ = r.Register(&KindDefinition{
+		Kind:        KindAccountInviteEmail,
+		DisplayName: "Account Invitation",
+		Description: "Carries the single-use link a new user follows to choose their first " +
+			"password and finish setting up the account an administrator created for them. " +
+			"Not customer-scoped: the recipient is a user.",
+		Category:      "Account",
+		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		sampleFactory: newAccountInviteSampleContext,
+		Variables: []VariableDefinition{
+			{Path: "FirstName", Type: VariableString, Description: "The new user's first name."},
+			{Path: "FullName", Type: VariableString, Description: "The new user's full name."},
+			{
+				Path:        "Username",
+				Type:        VariableString,
+				Description: "The username the account was created with.",
+			},
+			{
+				Path:        "EmailAddress",
+				Type:        VariableString,
+				Description: "The address the user signs in with, which is where this message is sent.",
+			},
+			{
+				Path:        "InvitedByName",
+				Type:        VariableString,
+				Description: "The name of the administrator who created the account. Empty when it is not known.",
+			},
+			companyNameVariable(),
+			{
+				Path:     "SetupURL",
+				Type:     VariableString,
+				Required: true,
+				Description: "The single-use link that sets the first password. Required: without it " +
+					"the message has no purpose.",
+			},
+			{
+				Path: expiresInDaysPath,
+				Type: VariableInt,
+				Description: "How many whole days the link is good for, or zero when the expiry is " +
+					"not a whole number of days. Use this rather than writing a number into the copy.",
+			},
+			{
+				Path:        "ExpiresInHours",
+				Type:        VariableInt,
+				Description: "How many hours the link is good for.",
 			},
 			{
 				Path:        "ExpiresAt",

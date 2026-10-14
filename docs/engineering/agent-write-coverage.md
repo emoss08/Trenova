@@ -97,7 +97,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1124 writes: 606 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1124 writes: 608 GraphQL mutations and 516 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
@@ -2167,10 +2167,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation createUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation patchUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `DELETE /api/v1/users/:userID/mfa/`<br>userhandler.resetUserMFA | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
 | `DELETE /api/v1/users/me/profile-picture/`<br>userhandler.deleteProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `DELETE /api/v1/users/me/sessions/:sessionID/`<br>userhandler.revokeMySession | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
-| `PATCH /api/v1/users/:userID/`<br>userhandler.patch | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PATCH /api/v1/users/me/profile/`<br>userhandler.updateMyProfile | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
 | `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/:userID/permissions/simulate/`<br>userhandler.simulatePermissions | Exempt, read-only: Shows what a user could do with a set of roles and saves nothing. |
@@ -2184,7 +2185,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/me/profile-picture/`<br>userhandler.uploadProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `PUT /api/v1/users/:userID/`<br>userhandler.update | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 

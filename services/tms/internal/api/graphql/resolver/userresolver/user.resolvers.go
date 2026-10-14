@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -55,5 +56,39 @@ func (r *QueryResolver) User(ctx context.Context, id string) (*tenant.User, erro
 	return r.UserService.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   base.TenantInfo(authCtx),
 		LookupUserID: userID,
+	})
+}
+
+func (r *MutationResolver) CreateUser(ctx context.Context, input gqlmodel.CreateUserInput) (*tenant.User, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := createUserRequestFromInput(base.TenantInfo(authCtx), &input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.UserService.Create(ctx, req)
+}
+
+func (r *MutationResolver) PatchUser(ctx context.Context, id string, input gqlmodel.UserPatchInput) (*tenant.User, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceUser, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.UserService.Patch(ctx, &userservice.PatchUserRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		UserID:     userID,
+		Apply: func(user *tenant.User) error {
+			return applyUserPatch(user, &input)
+		},
 	})
 }
