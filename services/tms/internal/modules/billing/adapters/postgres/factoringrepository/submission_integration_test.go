@@ -217,3 +217,25 @@ func TestTransportOnePerFactor(t *testing.T) {
 	assert.Equal(t, "sealed", got.SftpSecret)
 	assert.NotNil(t, got.LastTestedAt)
 }
+
+func TestTransportKeepsPacketsOffWhenCreatedWithout(t *testing.T) {
+	e := setupFactoringEnv(t)
+	_, transports := newSubmissionRepos(e)
+	factor := e.createFactor(t, "FNOP")
+
+	_, err := transports.Create(e.ctx, &factoring.Transport{
+		OrganizationID:     e.tenantInfo.OrgID,
+		BusinessUnitID:     e.tenantInfo.BuID,
+		FactoringCompanyID: factor.ID,
+		Method:             factoring.TransportMethodEmail,
+		EmailRecipients:    []string{"schedules@factor.test"},
+		AttachPackets:      false,
+	})
+	require.NoError(t, err)
+
+	got, err := transports.Get(e.ctx, factoringports.GetTransportRequest{
+		TenantInfo: e.tenantInfo, FactoringCompanyID: factor.ID,
+	})
+	require.NoError(t, err)
+	assert.False(t, got.AttachPackets)
+}

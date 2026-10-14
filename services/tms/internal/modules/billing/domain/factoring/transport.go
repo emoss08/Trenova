@@ -35,7 +35,7 @@ type Transport struct {
 	FactoringCompanyID pulid.ID        `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
 	Method             TransportMethod `json:"method"             bun:"method,type:VARCHAR(20),notnull,default:'Email'"`
 	EmailRecipients    []string        `json:"emailRecipients"    bun:"email_recipients,array,type:text[],nullzero"`
-	AttachPackets      bool            `json:"attachPackets"      bun:"attach_packets,type:BOOLEAN,notnull,default:true"`
+	AttachPackets      bool            `json:"attachPackets"      bun:"attach_packets,type:BOOLEAN,notnull"`
 	SftpHost           string          `json:"sftpHost"           bun:"sftp_host,type:VARCHAR(255),nullzero"`
 	SftpPort           int             `json:"sftpPort"           bun:"sftp_port,type:INTEGER,nullzero"`
 	SftpUsername       string          `json:"sftpUsername"       bun:"sftp_username,type:VARCHAR(255),nullzero"`
