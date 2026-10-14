@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/expr-lang/expr/ast"
-	"github.com/expr-lang/expr/parser"
 )
 
 const (
@@ -167,7 +166,7 @@ func ExtractLookupTables(expression string) ([]string, error) {
 }
 
 func ExtractLookupTableRefs(expression string) (LookupTableRefs, error) {
-	tree, err := parser.Parse(expression)
+	tree, err := parseExpression(expression)
 	if err != nil {
 		return LookupTableRefs{}, fmt.Errorf("failed to parse expression: %w", err)
 	}

@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/expr-lang/expr/ast"
 	"github.com/expr-lang/expr/file"
-	"github.com/expr-lang/expr/parser"
 	"github.com/expr-lang/expr/parser/lexer"
 	"github.com/shopspring/decimal"
 )
@@ -103,7 +102,7 @@ func SplitStatements(expression string) ([]formulatemplatetypes.Statement, error
 }
 
 func splitStatements(expression string) ([]statementSpan, error) {
-	tree, err := parser.Parse(expression)
+	tree, err := parseExpression(expression)
 	if err != nil {
 		return nil, err
 	}

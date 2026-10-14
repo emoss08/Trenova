@@ -90,15 +90,11 @@ func NewEngine(p Params) (*Engine, error) {
 	}
 
 	return &Engine{
-		registry:   p.Registry,
-		resolver:   p.Resolver,
-		envBuilder: p.EnvBuilder,
-		cache:      cache,
-		exprOptions: append(
-			BuiltinFunctions(),
-			expr.MaxNodes(maxExpressionNodes),
-			expr.WithContext(ctxEnvKey),
-		),
+		registry:    p.Registry,
+		resolver:    p.Resolver,
+		envBuilder:  p.EnvBuilder,
+		cache:       cache,
+		exprOptions: append(languageOptions(), expr.WithContext(ctxEnvKey)),
 	}, nil
 }
 

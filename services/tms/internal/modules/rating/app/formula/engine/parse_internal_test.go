@@ -19,3 +19,11 @@ func TestReferencedPaths_ParsesWithTheEnginesBuiltins(t *testing.T) {
 	assert.Contains(t, paths, "customer.code")
 	assert.Contains(t, paths, "stopFee")
 }
+
+func TestExtractLookupTables_ParsesTheEnginesOwnFunctions(t *testing.T) {
+	t.Parallel()
+
+	tables, err := ExtractLookupTables(`sum(lookup("fsc", fuelPrice) * linehaul, stopFee, 25)`)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"fsc"}, tables)
+}

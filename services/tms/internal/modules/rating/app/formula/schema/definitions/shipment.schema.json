@@ -45,14 +45,15 @@
             "type": "string",
             "enum": [
                 "New",
-                "InTransit",
-                "Delayed",
-                "Completed",
-                "Billed",
                 "PartiallyAssigned",
                 "Assigned",
+                "InTransit",
+                "Delayed",
                 "PartiallyCompleted",
-                "Cancelled"
+                "ReadyToInvoice",
+                "Completed",
+                "Invoiced",
+                "Canceled"
             ],
             "x-source": {
                 "field": "status",

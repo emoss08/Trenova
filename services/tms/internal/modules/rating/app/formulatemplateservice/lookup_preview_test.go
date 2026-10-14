@@ -678,3 +678,20 @@ func TestReadiness_WarnsWhenAFreightChargeReadsTheStoredTotal(t *testing.T) {
 	assert.Equal(t, ReadinessWarn, check.Status)
 	assert.Contains(t, check.Detail, "currentTotalCharge")
 }
+
+func TestTestExpression_LoadsTablesNamedInsideTheEnginesOwnFunctions(t *testing.T) {
+	t.Parallel()
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
+		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
+	})
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: `sum(lookup("fsc", "DIESEL") * totalDistance, 10, 25)`,
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"totalDistance": 100.0},
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, result.Valid, result.Error)
+	assert.True(t, decimal.NewFromFloat(70).Equal(resultAmount(t, result)), result.Result)
+}

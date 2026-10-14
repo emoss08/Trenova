@@ -8,9 +8,13 @@ import (
 	"github.com/expr-lang/expr/parser"
 )
 
+func languageOptions() []expr.Option {
+	return append(BuiltinFunctions(), expr.MaxNodes(maxExpressionNodes))
+}
+
 var parseConfig = sync.OnceValue(func() *conf.Config {
 	config := conf.CreateNew()
-	for _, option := range append(BuiltinFunctions(), expr.MaxNodes(maxExpressionNodes)) {
+	for _, option := range languageOptions() {
 		option(config)
 	}
 	for name := range config.Disabled {

@@ -45,7 +45,7 @@ workstreams follows from that.
 | WS0. Relation fields reach a real shipment's environment | done, on `master` as `a7b2653e` (landed ahead of WS1) |
 | WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review |
 | WS2. Data-contract defects (silent mispricing) | done, in review |
-| WS3. Data-contract defects (loud failures the preview hides) | open |
+| WS3. Data-contract defects (loud failures the preview hides) | done, in review |
 | WS4. Engine hardening and money arithmetic | open |
 | WS5. Template lifecycle: billing continuity, effective dating, approval | open |
 | WS6. Language conformance between editor and server | open |
@@ -415,6 +415,24 @@ Fix: every parse goes through one function that applies the engine's parser conf
 Acceptance: `sum(lookup("fsc", fuelPrice) * linehaul, stopFee, 25)` (with a real `fsc` table)
 validates its table reference on save, previews with the table loaded, and traces its
 statements.
+
+### Done
+
+`formula/loud_failures_test.go` and `formulatemplateservice/lookup_preview_test.go`.
+
+- **3.1.** `status` reaches the VM as a plain `string` (the WS2 conversion of named kinds);
+  without it `status == "InTransit"` fails to compile with "mismatched types shipment.Status and
+  string", which the test reproduces when the conversion is taken out. The schema's enum is the
+  domain's ten statuses, pinned by a test against `shipment.Stages()` (whose own test already
+  requires every status to have a stage).
+- **3.2.** `temperatureDifferential` is `0.0` when either temperature is missing; done with
+  WS2's typed computed fields, pinned here by
+  `requiresTemperatureControl ? temperatureDifferential * 2 : 0` on a dry van and a reefer.
+- **3.3.** Every parse goes through `engine.parseExpression`, configured from `languageOptions()`,
+  the same function set and node limit the compiler uses (`NewEngine` builds its options from
+  it). `ExtractLookupTableRefs`, `ExtractLookupTables`, `SplitStatements` and `referencedPaths`
+  all use it: save-time table validation, the preview's table loading, statement traces and the
+  missing-field and unresolved-field checks no longer go blank on `sum(a, b, 25)`.
 
 ---
 
