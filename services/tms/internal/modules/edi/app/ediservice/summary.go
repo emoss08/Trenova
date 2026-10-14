@@ -6,12 +6,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
-	defaultOverdueAckAgeSeconds = int64(4 * 60 * 60)
+	DefaultOverdueAckAgeSeconds = int64(4 * 60 * 60)
 	defaultSummaryFeedLimit     = 10
+
+	defaultAckHealthWindowSeconds = int64(24 * 60 * 60)
+	defaultAckHealthOverdueLimit  = 25
+	MaxAckHealthOverdueLimit      = 100
 
 	scorecardPendingOver4hSeconds  = int64(4 * 60 * 60)
 	scorecardPendingOver24hSeconds = int64(24 * 60 * 60)
@@ -49,10 +54,7 @@ func (s *Service) GetEDISummary(
 	ctx context.Context,
 	req *GetEDISummaryRequest,
 ) (*EDISummary, error) {
-	overdueAge := req.OverdueAckAge
-	if overdueAge <= 0 {
-		overdueAge = defaultOverdueAckAgeSeconds
-	}
+	overdueAge := overdueAckAge(req.OverdueAckAge)
 	feedLimit := req.FeedLimit
 	if feedLimit <= 0 {
 		feedLimit = defaultSummaryFeedLimit
@@ -132,14 +134,149 @@ func (s *Service) GetEDISummary(
 	}, nil
 }
 
+type GetEDIAckHealthRequest struct {
+	TenantInfo    pagination.TenantInfo
+	PartnerID     pulid.ID
+	Since         int64
+	OverdueAckAge int64
+	OverdueLimit  int
+	FeedLimit     int
+}
+
+type EDIOverduePartner struct {
+	PartnerID         pulid.ID
+	PartnerName       string
+	PartnerCode       string
+	OverdueCount      int
+	OldestGeneratedAt int64
+	Messages          []*edi.EDIMessage
+}
+
+type EDIAckHealth struct {
+	Since              int64
+	OverdueAckAge      int64
+	PendingSince       int64
+	AckStatusCounts    map[edi.MessageAcknowledgmentStatus]int
+	OverdueAckCount    int
+	OverdueByPartner   []*EDIOverduePartner
+	OverdueOmitted     int
+	RecentDeadLettered []*edi.EDIMessage
+}
+
+func (s *Service) GetEDIAckHealth(
+	ctx context.Context,
+	req *GetEDIAckHealthRequest,
+) (*EDIAckHealth, error) {
+	now := timeutils.NowUnix()
+	health := &EDIAckHealth{
+		Since:         req.Since,
+		OverdueAckAge: overdueAckAge(req.OverdueAckAge),
+	}
+	if health.Since <= 0 {
+		health.Since = now - defaultAckHealthWindowSeconds
+	}
+	health.PendingSince = now - health.OverdueAckAge
+	overdueLimit := req.OverdueLimit
+	if overdueLimit <= 0 {
+		overdueLimit = defaultAckHealthOverdueLimit
+	}
+	feedLimit := req.FeedLimit
+	if feedLimit <= 0 {
+		feedLimit = defaultSummaryFeedLimit
+	}
+
+	counts, err := s.messageRepo.GetAckStatusCounts(ctx, ediports.GetEDIMessageStatusCountsRequest{
+		TenantInfo: req.TenantInfo,
+		Since:      health.Since,
+		PartnerID:  req.PartnerID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	health.AckStatusCounts = counts
+
+	health.OverdueAckCount, err = s.messageRepo.GetOverdueAckCount(
+		ctx,
+		ediports.GetEDIOverdueAckCountRequest{
+			TenantInfo:   req.TenantInfo,
+			PendingSince: health.PendingSince,
+			PartnerID:    req.PartnerID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	overdue, err := s.messageRepo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
+		TenantInfo:   req.TenantInfo,
+		PendingSince: health.PendingSince,
+		PartnerID:    req.PartnerID,
+		Limit:        min(overdueLimit, MaxAckHealthOverdueLimit),
+	})
+	if err != nil {
+		return nil, err
+	}
+	health.OverdueByPartner, health.OverdueOmitted = groupOverdueAcks(overdue)
+
+	health.RecentDeadLettered, err = s.messageRepo.ListRecentDeadLettered(
+		ctx,
+		&ediports.ListRecentEDIMessageFailuresRequest{
+			TenantInfo: req.TenantInfo,
+			PartnerID:  req.PartnerID,
+			Limit:      feedLimit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return health, nil
+}
+
+func groupOverdueAcks(overdue *ediports.OverdueEDIAcks) ([]*EDIOverduePartner, int) {
+	if overdue == nil || len(overdue.Partners) == 0 {
+		return []*EDIOverduePartner{}, 0
+	}
+
+	groups := make([]*EDIOverduePartner, 0, len(overdue.Partners))
+	byPartner := make(map[pulid.ID]*EDIOverduePartner, len(overdue.Partners))
+	omitted := 0
+	for _, partner := range overdue.Partners {
+		group := &EDIOverduePartner{
+			PartnerID:         partner.PartnerID,
+			PartnerName:       partner.PartnerName,
+			PartnerCode:       partner.PartnerCode,
+			OverdueCount:      partner.Count,
+			OldestGeneratedAt: partner.OldestGeneratedAt,
+			Messages:          make([]*edi.EDIMessage, 0, partner.Count),
+		}
+		groups = append(groups, group)
+		byPartner[partner.PartnerID] = group
+		omitted += partner.Count
+	}
+	for _, message := range overdue.Messages {
+		if group, ok := byPartner[message.EDIPartnerID]; ok {
+			group.Messages = append(group.Messages, message)
+			omitted--
+		}
+	}
+
+	return groups, max(omitted, 0)
+}
+
+func overdueAckAge(requested int64) int64 {
+	if requested <= 0 {
+		return DefaultOverdueAckAgeSeconds
+	}
+
+	return requested
+}
+
 func (s *Service) GetEDIAttentionCount(
 	ctx context.Context,
 	req *GetEDIAttentionCountRequest,
 ) (int, error) {
-	overdueAge := req.OverdueAckAge
-	if overdueAge <= 0 {
-		overdueAge = defaultOverdueAckAgeSeconds
-	}
+	overdueAge := overdueAckAge(req.OverdueAckAge)
 	deliveryCounts, err := s.messageRepo.GetDeliveryStatusCounts(
 		ctx,
 		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
@@ -180,10 +317,7 @@ func (s *Service) GetEDIPartnerScorecards(
 	ctx context.Context,
 	req *GetEDIPartnerScorecardsRequest,
 ) ([]*ediports.EDIPartnerScorecardRow, error) {
-	overdueAge := req.OverdueAckAge
-	if overdueAge <= 0 {
-		overdueAge = defaultOverdueAckAgeSeconds
-	}
+	overdueAge := overdueAckAge(req.OverdueAckAge)
 	now := timeutils.NowUnix()
 	return s.messageRepo.GetPartnerScorecards(ctx, &ediports.GetEDIPartnerScorecardsRequest{
 		TenantInfo:             req.TenantInfo,

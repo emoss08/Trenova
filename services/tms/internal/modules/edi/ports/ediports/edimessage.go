@@ -96,6 +96,7 @@ type UpdateEDIMessageDeliveryRequest struct {
 type GetEDIMessageStatusCountsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Since      int64                 `json:"since"`
+	PartnerID  pulid.ID              `json:"partnerId"`
 }
 
 type GetEDIPartnerScorecardsRequest struct {
@@ -140,10 +141,32 @@ type EDIVolumePoint struct {
 type GetEDIOverdueAckCountRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	PendingSince int64                 `json:"pendingSince"`
+	PartnerID    pulid.ID              `json:"partnerId"`
+}
+
+type ListOverdueEDIAcksRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	PendingSince int64                 `json:"pendingSince"`
+	PartnerID    pulid.ID              `json:"partnerId"`
+	Limit        int                   `json:"limit"`
+}
+
+type OverdueEDIAckPartner struct {
+	PartnerID         pulid.ID `bun:"edi_partner_id"`
+	PartnerName       string   `bun:"partner_name"`
+	PartnerCode       string   `bun:"partner_code"`
+	Count             int      `bun:"count"`
+	OldestGeneratedAt int64    `bun:"oldest_generated_at"`
+}
+
+type OverdueEDIAcks struct {
+	Messages []*edi.EDIMessage
+	Partners []*OverdueEDIAckPartner
 }
 
 type ListRecentEDIMessageFailuresRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
 	Limit      int                   `json:"limit"`
 }
 
@@ -190,6 +213,7 @@ type EDIMessageRepository interface {
 		req GetEDIMessageStatusCountsRequest,
 	) (map[edi.MessageAcknowledgmentStatus]int, error)
 	GetOverdueAckCount(ctx context.Context, req GetEDIOverdueAckCountRequest) (int, error)
+	ListOverdueAcks(ctx context.Context, req *ListOverdueEDIAcksRequest) (*OverdueEDIAcks, error)
 	ListRecentDeadLettered(
 		ctx context.Context,
 		req *ListRecentEDIMessageFailuresRequest,

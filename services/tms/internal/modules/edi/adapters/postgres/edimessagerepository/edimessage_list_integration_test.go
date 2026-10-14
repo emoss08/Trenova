@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -56,17 +57,7 @@ type listedMessage struct {
 func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture) {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	ctx, db := seededDevelopmentDB(t)
 
 	var shipment seededListShipment
 	require.NoError(t, db.NewSelect().
@@ -102,7 +93,7 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 		Code:           "LIST-FILTERS",
 		Name:           "List Filters Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
+	_, err := db.NewInsert().Model(partner).Exec(ctx)
 	require.NoError(t, err)
 	fixture.partner = partner.ID
 
@@ -191,6 +182,24 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 	}
 
 	return ctx, fixture
+}
+
+func seededDevelopmentDB(t *testing.T) (context.Context, *bun.DB) {
+	t.Helper()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	seedRegistry := seeder.NewRegistry()
+	seeds.Register(seedRegistry)
+	engine := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
+	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	return ctx, db
 }
 
 func (f *messageListFixture) list(

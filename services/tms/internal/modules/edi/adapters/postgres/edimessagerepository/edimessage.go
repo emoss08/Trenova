@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -397,6 +398,9 @@ func (r *repository) GetDeliveryStatusCounts(
 			if req.Since > 0 {
 				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
 			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
 			if err := query.Scan(ctx, &rows); err != nil {
 				return nil, err
 			}
@@ -432,6 +436,9 @@ func (r *repository) GetAckStatusCounts(
 				GroupExpr(cols.AckStatus.Qualified())
 			if req.Since > 0 {
 				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
 			}
 			if err := query.Scan(ctx, &rows); err != nil {
 				return nil, err
@@ -554,14 +561,92 @@ func (r *repository) GetOverdueAckCount(
 	req ediports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := edicol.EDIMessageColumns
-		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIMessage)(nil)).
-			Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
-			Where(cols.GeneratedAt.Lt(), req.PendingSince).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)))
+		return dbhelper.Count(ctx, whereOverdueAck(
+			r.db.DBForContext(ctx).NewSelect().Model((*edi.EDIMessage)(nil)),
+			req.TenantInfo,
+			req.PendingSince,
+			req.PartnerID,
+		))
 	})
+}
+
+func (r *repository) ListOverdueAcks(
+	ctx context.Context,
+	req *ediports.ListOverdueEDIAcksRequest,
+) (*ediports.OverdueEDIAcks, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.OverdueEDIAcks, error) {
+		cols := edicol.EDIMessageColumns
+		dba := r.db.DBForContext(ctx)
+
+		partner := edicol.EDIPartnerColumns
+		partners := make([]*ediports.OverdueEDIAckPartner, 0)
+		if err := whereOverdueAck(
+			dba.NewSelect().Model((*edi.EDIMessage)(nil)),
+			req.TenantInfo,
+			req.PendingSince,
+			req.PartnerID,
+		).
+			ColumnExpr(cols.EDIPartnerID.Qualified()).
+			ColumnExpr(buncolgen.Max(partner.Name, "partner_name")).
+			ColumnExpr(buncolgen.Max(partner.Code, "partner_code")).
+			ColumnExpr(buncolgen.Count("count")).
+			ColumnExpr(buncolgen.Min(cols.GeneratedAt, "oldest_generated_at")).
+			Join("JOIN " + edicol.EDIPartnerTable.Name + " AS " + edicol.EDIPartnerTable.Alias).
+			JoinOn(partner.ID.EqColumn(cols.EDIPartnerID)).
+			JoinOn(partner.OrganizationID.EqColumn(cols.OrganizationID)).
+			JoinOn(partner.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+			GroupExpr(cols.EDIPartnerID.Qualified()).
+			OrderExpr("oldest_generated_at ASC").
+			Order(cols.EDIPartnerID.OrderAsc()).
+			Scan(ctx, &partners); err != nil {
+			return nil, err
+		}
+
+		total := 0
+		for _, group := range partners {
+			total += group.Count
+		}
+		overdue := &ediports.OverdueEDIAcks{
+			Messages: make([]*edi.EDIMessage, 0, min(max(req.Limit, 0), total)),
+			Partners: partners,
+		}
+		if total == 0 || req.Limit <= 0 {
+			return overdue, nil
+		}
+
+		if err := whereOverdueAck(
+			dba.NewSelect().Model(&overdue.Messages),
+			req.TenantInfo,
+			req.PendingSince,
+			req.PartnerID,
+		).
+			ExcludeColumn(cols.RawX12.String(), cols.PayloadSnapshot.String()).
+			Relation(edicol.EDIMessageRelations.Partner).
+			Order(cols.GeneratedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Limit(int64(req.Limit)).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return overdue, nil
+	})
+}
+
+func whereOverdueAck(
+	q *bun.SelectQuery,
+	tenantInfo pagination.TenantInfo,
+	pendingSince int64,
+	partnerID pulid.ID,
+) *bun.SelectQuery {
+	cols := edicol.EDIMessageColumns
+	q = q.Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
+		Where(cols.GeneratedAt.Lt(), pendingSince).
+		Apply(edicol.EDIMessageApplyTenant(tenantInfo))
+	if partnerID.IsNotNil() {
+		q = q.Where(cols.EDIPartnerID.Eq(), partnerID)
+	}
+
+	return q
 }
 
 func (r *repository) ListRecentDeadLettered(
@@ -575,13 +660,17 @@ func (r *repository) ListRecentDeadLettered(
 			limit = 10
 		}
 		entities := make([]*edi.EDIMessage, 0, limit)
-		if err := r.db.DBForContext(ctx).
+		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			ExcludeColumn("raw_x12", "payload_snapshot").
-			Relation("Partner").
+			ExcludeColumn(cols.RawX12.String(), cols.PayloadSnapshot.String()).
+			Relation(edicol.EDIMessageRelations.Partner).
 			Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo))
+		if req.PartnerID.IsNotNil() {
+			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+		}
+		if err := query.
 			Order(cols.UpdatedAt.OrderDesc()).
 			Limit(int64(limit)).
 			Scan(ctx); err != nil {
