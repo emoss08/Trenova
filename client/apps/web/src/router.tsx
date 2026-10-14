@@ -355,7 +355,18 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               protectedLoader,
               createPlanCapabilityLoader(PlanCapability.Integrations),
               createPermissionLoader(Resource.EDI),
+              // A tender's record link opens here; one we sent is carried to the outbound page.
+              async ({ request }) => {
+                const url = new URL(request.url);
+                if (!url.searchParams.has("panelEntityId")) return null;
+                const { sentTransferPath } = await import("@/lib/edi/transfer-page");
+                const sent = await sentTransferPath(url, request.signal);
+                return sent ? redirect(sent) : null;
+              },
             ),
+            // Opening a row only changes the query; the page's guards ran when it was entered.
+            shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
+              currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
             async lazy() {
               const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIInboundTransfersPage };

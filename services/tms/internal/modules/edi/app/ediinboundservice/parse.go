@@ -60,16 +60,38 @@ func parseInterchange(rawX12 string) (*parsedInterchange, error) {
 		for segmentIndex := range segments {
 			raw.WriteString(segments[segmentIndex].RawWithTerminator)
 		}
+		functionalGroupID, groupControlNumber := interchange.functionalGroupID,
+			interchange.groupControlNumber
+		if group := enclosingGroup(inspection.Groups, transaction); group != nil {
+			functionalGroupID = strings.TrimSpace(group.FunctionalIDCode)
+			groupControlNumber = strings.TrimSpace(group.GSControlNumber)
+		}
 		interchange.transactions = append(interchange.transactions, parsedTransaction{
 			set:                edi.TransactionSet(transaction.TransactionSet),
 			controlNumber:      strings.TrimSpace(transaction.STControlNumber),
-			groupControlNumber: interchange.groupControlNumber,
-			functionalGroupID:  interchange.functionalGroupID,
+			groupControlNumber: groupControlNumber,
+			functionalGroupID:  functionalGroupID,
 			segments:           segments,
 			raw:                raw.String(),
 		})
 	}
 	return interchange, nil
+}
+
+func enclosingGroup(
+	groups []edix12inspect.X12FunctionalGroup,
+	transaction *edix12inspect.X12Transaction,
+) *edix12inspect.X12FunctionalGroup {
+	for index := range groups {
+		group := &groups[index]
+		if transaction.StartSegmentIndex <= group.StartSegmentIndex {
+			continue
+		}
+		if group.EndSegmentIndex == 0 || transaction.StartSegmentIndex < group.EndSegmentIndex {
+			return group
+		}
+	}
+	return nil
 }
 
 func transactionSegments(
@@ -685,6 +707,58 @@ func applyFreightInvoiceTotals(
 	}
 }
 
+var shipmentPaymentMethods = map[string]struct{}{
+	"BP": {}, "CA": {}, "CC": {}, "CD": {}, "CF": {}, "DE": {}, "DF": {}, "FO": {},
+	"HP": {}, "MX": {}, "NC": {}, "NR": {}, "PA": {}, "PB": {}, "PC": {}, "PD": {},
+	"PE": {}, "PL": {}, "PO": {}, "PP": {}, "PS": {}, "PU": {}, "RC": {}, "RF": {},
+	"RS": {}, "SC": {}, "TP": {}, "WC": {},
+}
+
+func isShipmentPaymentMethod(value string) bool {
+	_, ok := shipmentPaymentMethods[value]
+	return ok
+}
+
+type TenderReference struct {
+	ShipmentID    string
+	PaymentMethod string
+}
+
+func TenderReferences(
+	rawTransaction string,
+	envelope *edi.X12EnvelopeSettings,
+) (TenderReference, bool) {
+	if strings.TrimSpace(rawTransaction) == "" {
+		return TenderReference{}, false
+	}
+	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+		RawX12:   rawTransaction,
+		Envelope: envelope,
+	})
+	b2 := findSegment(inspection.Segments, "B2")
+	if b2 == nil {
+		return TenderReference{}, false
+	}
+	shipmentID, paymentMethod := readB2(b2)
+	return TenderReference{ShipmentID: shipmentID, PaymentMethod: paymentMethod}, true
+}
+
+const trenovaShipmentIDPrefix = "shp_"
+
+func readB2(b2 *edix12inspect.X12Segment) (shipmentID, paymentMethod string) {
+	element := func(position int) string {
+		return strings.TrimSpace(elementValue(b2, position))
+	}
+	b202, b204, b206 := element(2), element(4), element(6)
+	legacy := b206 == "" &&
+		(isShipmentPaymentMethod(b204) ||
+			(b204 == "" && strings.HasPrefix(b202, trenovaShipmentIDPrefix)))
+	if legacy {
+		return b202, b204
+	}
+	return b204, b206
+}
+
 func parseLoadTender(t *parsedTransaction) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
 		PurposeCode:              edi.LoadTenderPurposeOriginal,
@@ -698,10 +772,11 @@ func parseLoadTender(t *parsedTransaction) edi.LoadTenderPayload {
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 	}
 	if b2 := findSegment(t.segments, "B2"); b2 != nil {
-		if ref := strings.TrimSpace(elementValue(b2, 2)); ref != "" {
-			payload.RatingDetail["externalShipmentId"] = ref
+		shipmentID, paymentMethod := readB2(b2)
+		if shipmentID != "" {
+			payload.RatingDetail["externalShipmentId"] = shipmentID
 		}
-		if paymentMethod := strings.TrimSpace(elementValue(b2, 4)); paymentMethod != "" {
+		if paymentMethod != "" {
 			payload.RatingDetail["paymentMethod"] = paymentMethod
 		}
 	}

@@ -164,10 +164,14 @@ func TestSelectOptionMappers(t *testing.T) {
 		shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt,
 	)
 
+	tenderSender := pulid.MustNew("org_")
+	tenderReceiver := pulid.MustNew("org_")
 	transferEntity := &edi.EDITransfer{
-		ID:        pulid.MustNew("edilt_"),
-		Status:    edi.TransferStatusSubmitted,
-		CreatedAt: 1780415500,
+		ID:                   pulid.MustNew("edilt_"),
+		SourceOrganizationID: tenderSender,
+		TargetOrganizationID: tenderReceiver,
+		Status:               edi.TransferStatusSubmitted,
+		CreatedAt:            1780415500,
 		TenderPayload: edi.LoadTenderPayload{
 			BOL:           "BOL-3003",
 			CustomerLabel: "ACME Freight",
@@ -175,28 +179,29 @@ func TestSelectOptionMappers(t *testing.T) {
 		SourcePartner: &edi.EDIPartner{Name: "Partner A"},
 		TargetPartner: &edi.EDIPartner{Name: "Partner B"},
 	}
-	transferOption := ediTransferSelectOption(transferEntity)
+	transferOption := ediTransferSelectOption(transferEntity, tenderReceiver)
 	assert.Equal(t, "BOL-3003", transferOption.Label)
 	assert.Equal(t, "ACME Freight", *transferOption.Description)
 	assert.Equal(t, string(edi.TransferStatusSubmitted), transferOption.Meta["status"])
-	assert.Equal(t, "Partner A", transferOption.Meta["sourcePartner"])
-	assert.Equal(t, "Partner B", transferOption.Meta["targetPartner"])
+	assert.Equal(t, "Partner B", transferOption.Meta["partner"])
+	assert.NotContains(t, transferOption.Meta, "sourcePartner")
+	assert.NotContains(t, transferOption.Meta, "targetPartner")
+	assert.Equal(t, "Partner A", ediTransferSelectOption(transferEntity, tenderSender).Meta["partner"])
 	assert.Equal(
 		t,
 		transferEntity.CreatedAt,
-		ediTransferSelectOptionItem(transferEntity).cursor.CreatedAt,
+		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.CreatedAt,
 	)
 
 	fallbackTransfer := &edi.EDITransfer{
-		ID:        pulid.MustNew("edilt_"),
-		Status:    edi.TransferStatusSubmitted,
-		CreatedAt: 1780415600,
+		ID:                   pulid.MustNew("edilt_"),
+		TargetOrganizationID: tenderReceiver,
+		Status:               edi.TransferStatusSubmitted,
+		CreatedAt:            1780415600,
 	}
-	assert.Equal(
-		t,
-		"Load tender "+fallbackTransfer.ID.String(),
-		ediTransferSelectOption(fallbackTransfer).Label,
-	)
+	unnamedTransfer := ediTransferSelectOption(fallbackTransfer, tenderReceiver)
+	assert.Equal(t, "Load tender "+fallbackTransfer.ID.String(), unnamedTransfer.Label)
+	assert.NotContains(t, unnamedTransfer.Meta, "partner")
 
 	connectionEntity := &edi.EDIConnection{
 		ID:                   pulid.MustNew("edic_"),

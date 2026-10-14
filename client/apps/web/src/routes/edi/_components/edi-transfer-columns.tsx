@@ -4,13 +4,14 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediTransferStatusChoices } from "@/lib/choices";
+import { counterparty, type TransferDirection } from "@/lib/edi/transfer-sides";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 
 export function getTransferColumns(
-  direction: "inbound" | "outbound",
+  direction: TransferDirection,
   t: TranslateFn,
 ): ColumnDef<EDITransferRow>[] {
   return [
@@ -33,8 +34,7 @@ export function getTransferColumns(
       id: "partner",
       header: t("Partner"),
       cell: ({ row }) => {
-        const partner =
-          direction === "inbound" ? row.original.sourcePartner : row.original.targetPartner;
+        const partner = counterparty(row.original, direction);
         return partner?.name ? (
           <span className="font-medium">{partner.name}</span>
         ) : (
@@ -44,7 +44,7 @@ export function getTransferColumns(
       size: 240,
       meta: {
         label: t("Partner"),
-        apiField: direction === "inbound" ? "sourcePartnerId" : "targetPartnerId",
+        apiField: direction === "inbound" ? "targetPartnerId" : "sourcePartnerId",
         filterable: false,
         sortable: false,
       },

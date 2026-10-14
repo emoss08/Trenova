@@ -257,36 +257,40 @@ export function CardStepper({
  * How a status reads on a card: still moving, done, closed out, held, retired
  * or not yet started.
  */
-export type CardTone = "progress" | "success" | "ink" | "warn" | "muted" | "draft";
+export type CardTone = "progress" | "success" | "ink" | "warn" | "danger" | "muted" | "draft";
+
+/** What a status pill is marked with. */
+export type CardStatusMark = "dot" | "check" | "pause" | "x";
+
+const STATUS_STROKE: Record<Exclude<CardStatusMark, "dot">, number> = {
+  check: 2.8,
+  pause: 2.6,
+  x: 2.6,
+};
 
 const TONE_CLASS: Record<CardTone, string> = {
   progress: "",
   success: "dk-s1",
   ink: "dk-s2",
   warn: "dk-st-warn",
+  danger: "dk-st-bad",
   muted: "dk-off",
   draft: "dk-draft",
 };
 
-/** A record's status as a pill, marked with a dot, a tick or a pause. */
+/** A record's status as a pill, marked with a dot, a tick, a pause or a cross. */
 export function CardStatus({
   tone,
   mark = "dot",
   children,
 }: {
   tone: CardTone;
-  mark?: "dot" | "check" | "pause";
+  mark?: CardStatusMark;
   children: ReactNode;
 }) {
   return (
     <span className={cn("dk-rec-st", TONE_CLASS[tone])}>
-      {mark === "pause" ? (
-        <CardIcon name="pause" size={11} stroke={2.6} />
-      ) : mark === "check" ? (
-        <CardIcon name="check" size={11} stroke={2.8} />
-      ) : (
-        <i />
-      )}
+      {mark === "dot" ? <i /> : <CardIcon name={mark} size={11} stroke={STATUS_STROKE[mark]} />}
       {children}
     </span>
   );

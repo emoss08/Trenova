@@ -366,7 +366,7 @@ func (r *Deps) resolveEDITransferSelectOptions(
 			req.IDs,
 			entities,
 			ediTransferID,
-			ediTransferSelectOptionItem,
+			ediTransferSelectOptionItemFor(req.TenantInfo.OrgID),
 		)
 		return selectOptionConnection(items, len(items), 0)
 	}
@@ -384,6 +384,6 @@ func (r *Deps) resolveEDITransferSelectOptions(
 	return selectOptionListConnection(
 		result,
 		req.SelectQuery.Pagination.SafeOffset(),
-		ediTransferSelectOptionItem,
+		ediTransferSelectOptionItemFor(req.TenantInfo.OrgID),
 	)
 }

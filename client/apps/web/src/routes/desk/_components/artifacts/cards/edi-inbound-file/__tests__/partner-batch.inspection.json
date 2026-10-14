@@ -1,0 +1,92 @@
+{
+  "transactionSet": "",
+  "x12Version": "",
+  "separators": {
+    "element": "*",
+    "segment": "~",
+    "component": "\u003e",
+    "repetition": "^",
+    "source": "isa",
+    "hasConflict": false
+  },
+  "summary": {
+    "segmentCount": 31,
+    "groupCount": 2,
+    "transactionCount": 3,
+    "errorCount": 1,
+    "warningCount": 0,
+    "infoCount": 0
+  },
+  "envelope": {
+    "isaControlNumber": "000000317",
+    "ieaControlNumber": "000000317",
+    "expectedGroups": 2,
+    "actualGroups": 2
+  },
+  "groups": [
+    {
+      "index": 1,
+      "functionalIdCode": "SM",
+      "gsControlNumber": "317",
+      "geControlNumber": "317",
+      "expectedCount": 2,
+      "actualCount": 2,
+      "startSegmentIndex": 2,
+      "endSegmentIndex": 22
+    },
+    {
+      "index": 2,
+      "functionalIdCode": "FA",
+      "gsControlNumber": "318",
+      "geControlNumber": "318",
+      "expectedCount": 1,
+      "actualCount": 1,
+      "startSegmentIndex": 23,
+      "endSegmentIndex": 30
+    }
+  ],
+  "transactions": [
+    {
+      "index": 1,
+      "transactionSet": "204",
+      "stControlNumber": "0001",
+      "seControlNumber": "0001",
+      "expectedSegments": 10,
+      "actualSegments": 10,
+      "startSegmentIndex": 3,
+      "endSegmentIndex": 12
+    },
+    {
+      "index": 2,
+      "transactionSet": "204",
+      "stControlNumber": "0002",
+      "seControlNumber": "0002",
+      "expectedSegments": 7,
+      "actualSegments": 9,
+      "startSegmentIndex": 13,
+      "endSegmentIndex": 21
+    },
+    {
+      "index": 3,
+      "transactionSet": "997",
+      "stControlNumber": "0001",
+      "seControlNumber": "0001",
+      "expectedSegments": 6,
+      "actualSegments": 6,
+      "startSegmentIndex": 24,
+      "endSegmentIndex": 29
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "Error",
+      "code": "x12.count.se01_mismatch",
+      "source": "inspection",
+      "segmentId": "SE",
+      "segmentIndex": 21,
+      "message": "SE01 reports 7 segments but 9 were found from ST through SE.",
+      "suggestedFix": "Set SE01 to the count of segments from ST through SE, inclusive."
+    }
+  ],
+  "interchange": true
+}
