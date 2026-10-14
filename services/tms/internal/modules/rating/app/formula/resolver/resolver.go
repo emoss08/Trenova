@@ -3,6 +3,7 @@ package resolver
 import (
 	goErrors "errors"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"sync"
@@ -93,7 +94,29 @@ func (r *Resolver) ResolveField(entity any, source *formulatypes.FieldSource) (a
 		return transformed, nil
 	}
 
-	return value, nil
+	return plainScalar(value), nil
+}
+
+func plainScalar(value any) any {
+	v := reflect.ValueOf(value)
+	switch v.Kind() { //nolint:exhaustive // only scalar kinds are converted; everything else passes through
+	case reflect.String:
+		return v.String()
+	case reflect.Bool:
+		return v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		unsigned := v.Uint()
+		if unsigned > math.MaxInt64 {
+			return float64(unsigned)
+		}
+		return int64(unsigned)
+	case reflect.Float32, reflect.Float64:
+		return v.Float()
+	default:
+		return value
+	}
 }
 
 func (r *Resolver) ResolveComputed(
@@ -156,11 +179,14 @@ func (r *Resolver) resolvePath(entity any, path string) (any, error) {
 		current = field
 	}
 
-	if !current.IsValid() {
-		return nil, ErrNilValue
+	for current.IsValid() && current.Kind() == reflect.Pointer {
+		if current.IsNil() {
+			return nil, ErrNilValue
+		}
+		current = current.Elem()
 	}
 
-	if current.Kind() == reflect.Pointer && current.IsNil() {
+	if !current.IsValid() {
 		return nil, ErrNilValue
 	}
 

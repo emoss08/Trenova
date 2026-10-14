@@ -1,9 +1,11 @@
-import {
-  AVAILABLE_FUNCTIONS,
-  SHIPMENT_VARIABLES,
-  type FormulaSchemaResponse,
-  type VariableDefinitionInput,
+import type {
+  FormulaDisabledReason,
+  FormulaSchemaResponse,
+  FormulaValueType,
+  VariableDefinitionInput,
 } from "@trenova/shared/types/formula-template";
+import { VARIADIC_ARGS } from "@trenova/shared/types/formula-template";
+import { KEYWORDS, WORD_OPERATORS } from "./expr-parser";
 
 export type VariableDoc = {
   name: string;
@@ -25,127 +27,70 @@ export type FunctionDoc = {
   operator?: boolean;
 };
 
+/** How a function is called and what it gives back, as the engine publishes it. */
+export type FunctionShape = {
+  name: string;
+  signature: string;
+  minArgs: number;
+  /** Infinity when it takes any number of arguments. */
+  maxArgs: number;
+  returns: FormulaValueType;
+  numericArgs: boolean;
+  /** Its second argument is evaluated per item, where `#` and `.field` read the item. */
+  predicate: boolean;
+};
+
+export type DisabledFunction = {
+  name: string;
+  reason: FormulaDisabledReason;
+  replacement: string | null;
+};
+
 export type KnownIdentifiers = {
+  /** False until the engine's schema has arrived; nothing can be called unknown before then. */
+  ready: boolean;
   variables: VariableDoc[];
+  /** The documented functions the reference lists. */
   functions: FunctionDoc[];
+  /** Every callable name, documented or a builtin the engine keeps, with its shape. */
+  shapes: Map<string, FunctionShape>;
+  disabled: Map<string, DisabledFunction>;
   variableRoots: Set<string>;
   variablePaths: Set<string>;
   functionNames: Set<string>;
   operatorNames: Set<string>;
 };
 
-/**
- * Words expr parses as binary operators. They look like identifiers to a
- * tokenizer, so the linter and highlighter must not treat them as variables.
- */
-export const EXPR_OPERATOR_WORDS = new Set(["startsWith", "endsWith", "contains", "matches"]);
+/** Words expr parses as binary operators; a tokenizer must not take them for variables. */
+export const EXPR_OPERATOR_WORDS: ReadonlySet<string> = WORD_OPERATORS;
 
-export const EXPR_KEYWORDS = new Set([
-  "true",
-  "false",
-  "nil",
-  "in",
-  "not",
-  "and",
-  "or",
-  "let",
-  "if",
-  "else",
-]);
+export const EXPR_KEYWORDS: ReadonlySet<string> = KEYWORDS;
 
-/**
- * Functions the expr runtime ships beyond Trenova's own. The linter must not
- * flag a call to these even though the reference panel does not list them.
- */
-export const EXPR_BUILTIN_FUNCTIONS = new Set([
-  "all",
-  "any",
-  "one",
-  "none",
-  "map",
-  "filter",
-  "find",
-  "findIndex",
-  "findLast",
-  "findLastIndex",
-  "count",
-  "concat",
-  "flatten",
-  "uniq",
-  "join",
-  "reduce",
-  "mean",
-  "median",
-  "first",
-  "last",
-  "take",
-  "sortBy",
-  "sort",
-  "groupBy",
-  "len",
-  "int",
-  "float",
-  "string",
-  "trim",
-  "trimPrefix",
-  "trimSuffix",
-  "upper",
-  "lower",
-  "split",
-  "splitAfter",
-  "replace",
-  "repeat",
-  "indexOf",
-  "lastIndexOf",
-  "hasPrefix",
-  "hasSuffix",
-  "toJSON",
-  "fromJSON",
-  "toBase64",
-  "fromBase64",
-  "now",
-  "duration",
-  "date",
-  "timezone",
-  "get",
-  "keys",
-  "values",
-  "type",
-  "lookup",
-  "lookupOr",
-  "lookup2",
-  "lookup2Or",
-  "lookupInterp",
-  "deficitWeight",
-]);
+type SchemaSource = Pick<FormulaSchemaResponse, "variables" | "functions"> &
+  Partial<Pick<FormulaSchemaResponse, "builtins" | "disabled">>;
 
-export const FALLBACK_SCHEMA: Pick<FormulaSchemaResponse, "variables" | "functions"> = {
-  variables: SHIPMENT_VARIABLES.map((variable) => ({
-    name: variable.name,
-    type: variable.type,
-    description: variable.description,
-    category: variable.category,
-    nullable: variable.nullable ?? false,
-    computed: variable.category === "computed",
-    enum: undefined,
-  })),
-  functions: AVAILABLE_FUNCTIONS.map((fn) => ({
+function toShape(fn: FormulaSchemaResponse["functions"][number]): FunctionShape {
+  return {
     name: fn.name,
     signature: fn.signature,
-    description: fn.description,
-    example: "",
-    category: "",
-    operator: false,
-  })),
-};
+    minArgs: fn.minArgs,
+    maxArgs: fn.maxArgs === VARIADIC_ARGS ? Number.POSITIVE_INFINITY : fn.maxArgs,
+    returns: fn.returns,
+    numericArgs: fn.numericArgs,
+    predicate: fn.predicate,
+  };
+}
 
+/**
+ * What the editor knows about names, from the engine's own description of the
+ * schema (`GET /formula-templates/schema`) and the template's inputs. Until the
+ * description has loaded, only the inputs are known and `ready` is false.
+ */
 export function buildKnownIdentifiers(
-  schema: Pick<FormulaSchemaResponse, "variables" | "functions"> | undefined,
+  schema: SchemaSource | undefined,
   customVariables: VariableDefinitionInput[] = [],
 ): KnownIdentifiers {
-  const source = schema && schema.variables.length > 0 ? schema : FALLBACK_SCHEMA;
-
-  const variables: VariableDoc[] = source.variables.map((variable) => ({
+  const variables: VariableDoc[] = (schema?.variables ?? []).map((variable) => ({
     name: variable.name,
     type: variable.type,
     description: variable.description ?? "",
@@ -165,7 +110,7 @@ export function buildKnownIdentifiers(
     });
   }
 
-  const functions: FunctionDoc[] = source.functions.map((fn) => ({
+  const functions: FunctionDoc[] = (schema?.functions ?? []).map((fn) => ({
     name: fn.name,
     signature: fn.signature,
     description: fn.description ?? "",
@@ -173,6 +118,29 @@ export function buildKnownIdentifiers(
     category: fn.category || undefined,
     operator: fn.operator || undefined,
   }));
+
+  const shapes = new Map<string, FunctionShape>();
+  const functionNames = new Set<string>();
+  const operatorNames = new Set<string>(EXPR_OPERATOR_WORDS);
+  for (const fn of schema?.functions ?? []) {
+    if (fn.operator) {
+      operatorNames.add(fn.name);
+      continue;
+    }
+    functionNames.add(fn.name);
+    shapes.set(fn.name, toShape(fn));
+  }
+  for (const fn of schema?.builtins ?? []) {
+    functionNames.add(fn.name);
+    shapes.set(fn.name, toShape(fn));
+  }
+
+  const disabled = new Map<string, DisabledFunction>(
+    (schema?.disabled ?? []).map((fn) => [
+      fn.name,
+      { name: fn.name, reason: fn.reason, replacement: fn.replacement ?? null },
+    ]),
+  );
 
   const variableRoots = new Set<string>();
   const variablePaths = new Set<string>();
@@ -182,17 +150,17 @@ export function buildKnownIdentifiers(
     variableRoots.add(dot === -1 ? variable.name : variable.name.slice(0, dot));
   }
 
-  const functionNames = new Set<string>();
-  const operatorNames = new Set<string>(EXPR_OPERATOR_WORDS);
-  for (const fn of functions) {
-    if (fn.operator) {
-      operatorNames.add(fn.name);
-    } else {
-      functionNames.add(fn.name);
-    }
-  }
-
-  return { variables, functions, variableRoots, variablePaths, functionNames, operatorNames };
+  return {
+    ready: schema !== undefined,
+    variables,
+    functions,
+    shapes,
+    disabled,
+    variableRoots,
+    variablePaths,
+    functionNames,
+    operatorNames,
+  };
 }
 
 export function isOperatorWord(known: KnownIdentifiers, identifier: string): boolean {
@@ -229,5 +197,5 @@ export function isKnownVariable(known: KnownIdentifiers, identifier: string): bo
 }
 
 export function isKnownFunction(known: KnownIdentifiers, identifier: string): boolean {
-  return known.functionNames.has(identifier) || EXPR_BUILTIN_FUNCTIONS.has(identifier);
+  return known.functionNames.has(identifier);
 }

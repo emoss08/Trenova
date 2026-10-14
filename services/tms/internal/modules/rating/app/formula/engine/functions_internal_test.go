@@ -28,8 +28,10 @@ func TestToFloat64_AllBranches(t *testing.T) {
 		{name: "nil", input: nil, wantErr: true},
 		{name: "slice", input: []int{1}, wantErr: true},
 		{name: "map", input: map[string]int{"a": 1}, wantErr: true},
-		{name: "uint", input: uint(5), wantErr: true},
-		{name: "uint64", input: uint64(10), wantErr: true},
+		{name: "uint", input: uint(5), want: 5},
+		{name: "uint64", input: uint64(10), want: 10},
+		{name: "int16", input: int16(-7), want: -7},
+		{name: "uint8", input: uint8(9), want: 9},
 	}
 
 	for _, tt := range tests {
@@ -38,7 +40,8 @@ func TestToFloat64_AllBranches(t *testing.T) {
 			got, err := toFloat64(tt.input)
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), "cannot convert")
+				assert.Contains(t, err.Error(), "expected a number, got ")
+				assert.NotContains(t, err.Error(), "got a number")
 				return
 			}
 			require.NoError(t, err)
@@ -74,7 +77,7 @@ func TestToInt_AllBranches(t *testing.T) {
 			got, err := toInt(tt.input)
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), "cannot convert")
+				assert.Contains(t, err.Error(), "expected a whole number, got ")
 				return
 			}
 			require.NoError(t, err)
@@ -446,7 +449,7 @@ func TestToDecimal_AllBranches(t *testing.T) {
 				if tt.wantErrIs != nil {
 					require.ErrorIs(t, err, tt.wantErrIs)
 				} else {
-					assert.Contains(t, err.Error(), "cannot convert")
+					require.ErrorIs(t, err, ErrNonNumericResult)
 				}
 				return
 			}
@@ -460,28 +463,28 @@ func TestValidateResultType(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		input   any
-		wantErr bool
+		name  string
+		input any
+		want  error
 	}{
-		{name: "float64", input: float64(1.5), wantErr: false},
-		{name: "int", input: int(1), wantErr: false},
-		{name: "uint64", input: uint64(1), wantErr: false},
-		{name: "decimal", input: decimal.NewFromInt(1), wantErr: false},
-		{name: "null decimal", input: decimal.NullDecimal{}, wantErr: false},
-		{name: "bool", input: true, wantErr: false},
-		{name: "string", input: "hello", wantErr: true},
-		{name: "nil", input: nil, wantErr: true},
-		{name: "slice", input: []any{1.0}, wantErr: true},
-		{name: "map", input: map[string]any{"a": 1.0}, wantErr: true},
+		{name: "float64", input: float64(1.5)},
+		{name: "int", input: int(1)},
+		{name: "uint64", input: uint64(1)},
+		{name: "decimal", input: decimal.NewFromInt(1)},
+		{name: "null decimal", input: decimal.NullDecimal{}},
+		{name: "bool", input: true, want: ErrBooleanAmount},
+		{name: "string", input: "hello", want: ErrNonNumericResult},
+		{name: "nil", input: nil, want: ErrNonNumericResult},
+		{name: "slice", input: []any{1.0}, want: ErrNonNumericResult},
+		{name: "map", input: map[string]any{"a": 1.0}, want: ErrNonNumericResult},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateResultType(tt.input)
-			if tt.wantErr {
-				require.ErrorIs(t, err, ErrNonNumericResult)
+			if tt.want != nil {
+				require.ErrorIs(t, err, tt.want)
 				return
 			}
 			require.NoError(t, err)

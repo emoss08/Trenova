@@ -2,17 +2,33 @@ package formulatemplateservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
+const versionNumberField = "versionNumber"
+
 const effectiveFromGraceSeconds int64 = 3600
+
+func validateEffectiveFrom(effectiveFrom int64) error {
+	if effectiveFrom <= timeutils.NowUnix()-effectiveFromGraceSeconds {
+		return errortypes.NewValidationError(
+			"effectiveFrom",
+			errortypes.ErrInvalid,
+			"Effective date cannot be more than one hour in the past; earlier shipments keep the version that billed them",
+		)
+	}
+	return nil
+}
 
 func (s *Service) UpdateVersionEffectiveDate(
 	ctx context.Context,
@@ -21,7 +37,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 	log := s.l.With(
 		zap.String("operation", "UpdateVersionEffectiveDate"),
 		zap.String("templateID", req.TemplateID.String()),
-		zap.Int64("versionNumber", req.VersionNumber),
+		zap.Int64(versionNumberField, req.VersionNumber),
 	)
 
 	version, err := s.versionRepo.GetByTemplateAndVersion(
@@ -43,33 +59,47 @@ func (s *Service) UpdateVersionEffectiveDate(
 		return nil, err
 	}
 
-	if req.EffectiveFrom != nil {
-		if template.Status != formulatemplate.StatusActive {
-			return nil, errortypes.NewValidationError(
-				"effectiveFrom",
-				errortypes.ErrInvalid,
-				"Only Active templates can have scheduled versions",
-			)
-		}
+	if template.Status != formulatemplate.StatusActive {
+		return nil, errortypes.NewValidationError(
+			"effectiveFrom",
+			errortypes.ErrInvalid,
+			"Only Active templates can have scheduled versions",
+		)
+	}
 
-		// A schedule puts content into production on a date without anyone
-		// looking at it then, so the content must already have passed review.
-		if version.Status != formulatemplate.StatusActive {
-			return nil, errortypes.NewValidationError(
-				"versionNumber",
-				errortypes.ErrInvalid,
-				"Only approved snapshots can be scheduled; this version was captured while the template was {0}",
-				version.Status.String(),
-			)
-		}
+	// A schedule puts content into production on a date without anyone
+	// looking at it then, so the content must already have passed review.
+	if version.Status != formulatemplate.StatusActive {
+		return nil, errortypes.NewValidationError(
+			versionNumberField,
+			errortypes.ErrInvalid,
+			"Only approved snapshots can be scheduled; this version was captured while the template was {0}",
+			version.Status.String(),
+		)
+	}
 
-		if *req.EffectiveFrom <= timeutils.NowUnix()-effectiveFromGraceSeconds {
-			return nil, errortypes.NewValidationError(
-				"effectiveFrom",
-				errortypes.ErrInvalid,
-				"Effective date cannot be more than one hour in the past",
-			)
+	now := timeutils.NowUnix()
+	previousStart := version.EffectiveStart()
+	started := previousStart <= now
+
+	switch {
+	case req.EffectiveFrom == nil && started:
+		return nil, errortypes.NewValidationError(
+			"effectiveFrom",
+			errortypes.ErrInvalid,
+			"Version {0} has already billed shipments; a window that has started keeps its date",
+			version.VersionNumber,
+		)
+	case req.EffectiveFrom == nil:
+		req.EffectiveFrom = &now
+	default:
+		if err = validateEffectiveFrom(*req.EffectiveFrom); err != nil {
+			return nil, err
 		}
+	}
+
+	if started {
+		return s.rescheduleBilledContent(ctx, log, template, version, req)
 	}
 
 	updated, err := s.versionRepo.UpdateEffectiveDate(ctx, req)
@@ -79,6 +109,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		template,
 		permission.OpUpdate,
@@ -86,12 +117,82 @@ func (s *Service) UpdateVersionEffectiveDate(
 		nil,
 		"Formula template version effective date updated",
 		auditservice.WithMetadata(map[string]any{
-			"versionNumber": req.VersionNumber,
-			"effectiveFrom": req.EffectiveFrom,
+			versionNumberField:      req.VersionNumber,
+			"previousEffectiveFrom": previousStart,
+			"effectiveFrom":         *req.EffectiveFrom,
 		}),
+		auditservice.WithCritical(),
 	)
 
 	return updated, nil
+}
+
+func (s *Service) rescheduleBilledContent(
+	ctx context.Context,
+	log *zap.Logger,
+	template *formulatemplate.FormulaTemplate,
+	version *formulatemplate.FormulaTemplateVersion,
+	req *formulatemplateports.UpdateEffectiveDateRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	resolved := template.ApplyVersionFull(version)
+	resolved.CurrentVersionNumber = template.CurrentVersionNumber + 1
+
+	if err := s.validateTemplate(ctx, resolved); err != nil {
+		return nil, err
+	}
+	if err := s.requirePassingTestCases(ctx, resolved, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
+	changeMessage := fmt.Sprintf("Version %d scheduled to bill again", version.VersionNumber)
+
+	var scheduled *formulatemplate.FormulaTemplateVersion
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		updated, txErr := s.repo.Update(txCtx, resolved)
+		if txErr != nil {
+			return txErr
+		}
+
+		snapshot := formulatemplate.NewVersionFromTemplate(
+			updated,
+			updated.CurrentVersionNumber,
+			req.TenantInfo.UserID,
+			changeMessage,
+			nil,
+		)
+		snapshot.Status = formulatemplate.StatusActive
+		snapshot.EffectiveFrom = req.EffectiveFrom
+
+		created, txErr := s.versionRepo.Create(txCtx, snapshot)
+		if txErr != nil {
+			return txErr
+		}
+
+		scheduled = created
+		return nil
+	})
+	if err != nil {
+		log.Error("failed to schedule billed content again", zap.Error(err))
+		return nil, err
+	}
+
+	s.logAuditAction(
+		ctx,
+		log,
+		resolved,
+		permission.OpUpdate,
+		req.TenantInfo.UserID,
+		template,
+		changeMessage,
+		auditservice.WithMetadata(map[string]any{
+			"sourceVersionNumber": version.VersionNumber,
+			versionNumberField:    scheduled.VersionNumber,
+			"effectiveFrom":       *req.EffectiveFrom,
+		}),
+		auditservice.WithCritical(),
+	)
+
+	return scheduled, nil
 }
 
 func (s *Service) ListScheduledVersions(

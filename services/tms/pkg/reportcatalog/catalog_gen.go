@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:4ca4603ffa237ad81570d23db7d984c5aefd5d1751549e4a23e80dd88be8869b"
+const Version = "sha256:d5383cb238bb1dbd466b033e2870520eadc32010e65d719a47023193db085729"
 
 var Default = indexed(defaultCatalog)
 
@@ -14157,6 +14157,15 @@ var defaultCatalog = Catalog{
 					Groupable:    true,
 				},
 				{
+					Key:          "conditionLanguageVersion",
+					Column:       buncolgen.NewColumn("condition_language_version", "raga"),
+					Label:        "Condition Language Version",
+					Type:         FieldInt,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
 					Key:          "freeUnits",
 					Column:       buncolgen.NewColumn("free_units", "raga"),
 					Label:        "Free Units",
@@ -15566,6 +15575,16 @@ var defaultCatalog = Catalog{
 					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "formulaTemplateVersionNumber",
+					Column:       buncolgen.NewColumn("formula_template_version_number", "rqt"),
+					Label:        "Formula Template Version Number",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
 				},

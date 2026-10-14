@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,12 +21,51 @@ func (s *Service) validateTemplate(
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
+	s.validateVariableNames(entity, multiErr)
 
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return s.validateExpression(ctx, entity)
+}
+
+func (s *Service) validateVariableNames(
+	entity *formulatemplate.FormulaTemplate,
+	multiErr *errortypes.MultiError,
+) {
+	if len(entity.VariableDefinitions) == 0 {
+		return
+	}
+
+	fields, err := s.formulaService.BuildValidationEnvironment(entity.SchemaID, nil)
+	if err != nil {
+		return
+	}
+
+	for i, def := range entity.VariableDefinitions {
+		if def == nil || def.Name == "" {
+			continue
+		}
+		field := fmt.Sprintf("variableDefinitions[%d].name", i)
+		if engine.IsReservedName(def.Name) {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"{0} is the name of a formula function; choose another name for the input",
+				def.Name,
+			)
+			continue
+		}
+		if _, shadows := fields[def.Name]; shadows {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"{0} is already a shipment value; an input cannot replace it, so choose another name",
+				def.Name,
+			)
+		}
+	}
 }
 
 func (s *Service) validateExpression(

@@ -27,6 +27,12 @@ type ReviewDiffResponse struct {
 	CurrentExpression string                           `json:"currentExpression"`
 	Changes           map[string]jsonutils.FieldChange `json:"changes"`
 	ChangeCount       int                              `json:"changeCount"`
+	PendingSchedules  []ScheduledWindow                `json:"pendingSchedules"`
+}
+
+type ScheduledWindow struct {
+	VersionNumber int64 `json:"versionNumber"`
+	EffectiveFrom int64 `json:"effectiveFrom"`
 }
 
 // ReviewDiff compares the newest Active snapshot with the template's current
@@ -93,5 +99,41 @@ func (s *Service) ReviewDiff(
 	resp.Changes = changes
 	resp.ChangeCount = len(changes)
 
+	resp.PendingSchedules, err = s.pendingSchedules(ctx, req.TemplateID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to list pending schedules", zap.Error(err))
+		return nil, err
+	}
+
 	return resp, nil
+}
+
+func (s *Service) pendingSchedules(
+	ctx context.Context,
+	templateID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) ([]ScheduledWindow, error) {
+	scheduled, err := s.versionRepo.ListScheduled(
+		ctx,
+		&formulatemplateports.ListScheduledVersionsRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: templateID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	windows := make([]ScheduledWindow, 0, len(scheduled))
+	for _, version := range scheduled {
+		if version == nil || version.EffectiveFrom == nil {
+			continue
+		}
+		windows = append(windows, ScheduledWindow{
+			VersionNumber: version.VersionNumber,
+			EffectiveFrom: *version.EffectiveFrom,
+		})
+	}
+
+	return windows, nil
 }

@@ -36,4 +36,6 @@ type ShipmentMoveJurisdictionMileResolver struct{ *Deps }
 
 type ShipmentMoveResolver struct{ *Deps }
 
+type ShipmentRatingDetailResolver struct{ *Deps }
+
 type ShipmentResolver struct{ *Deps }

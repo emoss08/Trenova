@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { arityOf, checkExpression, engineErrorRange, engineErrorText } from "../expr-check";
+import { checkExpression, engineErrorRange, engineErrorText } from "../expr-check";
 import { parseExpression } from "../expr-parser";
 import { buildKnownIdentifiers } from "../known-identifiers";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
-const known = buildKnownIdentifiers(undefined, [
+const known = buildKnownIdentifiers(describedShipment, [
   { name: "fuelPct", type: "Number", description: "", required: false },
   { name: "hazmatFee", type: "Number", description: "", required: false },
 ]);
@@ -69,6 +70,31 @@ describe("checkExpression", () => {
       name: "weekendFee",
       type: "Number",
     });
+  });
+
+  it("refuses now() and points at ratingTime with a fix", () => {
+    const { diagnostics } = checkExpression("now().Year() == 2026 ? 10 : 0", known);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toMatchObject({ severity: "error", code: "disabled-function", from: 0 });
+    expect(diagnostics[0].message).toBe(
+      "`now()` isn't available in formulas: a formula must price a shipment the same way every time it runs. Use `ratingTime`, the date the contract terms are read at",
+    );
+    expect(diagnostics[0].fixes).toEqual([
+      {
+        kind: "replace",
+        label: "Change to ratingTime",
+        changes: [{ from: 0, to: 5, insert: "ratingTime" }],
+      },
+    ]);
+  });
+
+  it("refuses the functions the engine leaves out, without a suggestion", () => {
+    for (const expression of ["len(toJSON(totalStops))", 'fromJSON("1")', 'len(repeat("x", 3))']) {
+      const { diagnostics } = checkExpression(expression, known);
+      expect(diagnostics.map((d) => d.code)).toEqual(["disabled-function"]);
+      expect(diagnostics[0].message).toContain("isn't available in formulas");
+      expect(diagnostics[0].fixes).toEqual([]);
+    }
   });
 
   it("infers a flag type for is/has names", () => {
@@ -139,19 +165,26 @@ describe("checkExpression", () => {
   });
 });
 
-describe("arityOf", () => {
-  it("reads optional and variadic parameters", () => {
-    expect(arityOf("round(x, decimals?)")).toEqual({ min: 1, max: 2 });
-    expect(arityOf("min(...values)")).toEqual({ min: 1, max: Number.POSITIVE_INFINITY });
-    expect(arityOf("sum(a, b, ...)")).toEqual({ min: 2, max: Number.POSITIVE_INFINITY });
-    expect(arityOf("now()")).toEqual({ min: 0, max: 0 });
+describe("arity", () => {
+  it("takes each function's arguments from the engine's description", () => {
+    const messages = (expression: string) =>
+      checkExpression(expression, known)
+        .diagnostics.filter((d) => d.code === "arity")
+        .map((d) => d.message);
+
+    expect(messages("round(1, 2, 3)")).toEqual([
+      "round(x, decimals?) takes 1 to 2 arguments; 3 were given",
+    ]);
+    expect(messages("max()")).toEqual(["max(...values) takes at least 1 argument; 0 were given"]);
+    expect(messages("count([1, 2])")).toEqual([]);
+    expect(messages("reverse([1], [2])")).toEqual(["reverse(list) takes 1 argument; 2 were given"]);
   });
 });
 
 describe("engine errors", () => {
   it("maps the engine's (line:column) onto the expression", () => {
     const expression = "let a = 1;\na + weekendFee";
-    expect(engineErrorRange("unknown name weekendFee (2:4)", expression)).toEqual({
+    expect(engineErrorRange("unknown name weekendFee (2:5)", expression)).toEqual({
       from: 15,
       to: 25,
     });
@@ -160,7 +193,7 @@ describe("engine errors", () => {
   it("strips the wrapping and the position from the message", () => {
     expect(
       engineErrorText(
-        "schema error for 'x' during compile: unknown name weekendFee (2:4)\n | a + weekendFee\n | ....^",
+        "schema error for 'x' during compile: unknown name weekendFee (2:5)\n | a + weekendFee\n | ....^",
       ),
     ).toBe("Unknown name weekendFee");
   });

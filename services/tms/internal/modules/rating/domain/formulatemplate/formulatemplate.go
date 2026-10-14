@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -26,6 +28,8 @@ const (
 	MaxExpressionLength = 10_000
 	// MaxVariableDefinitions bounds the custom variables a template declares.
 	MaxVariableDefinitions = 50
+	MaxDescriptionLength   = 2_000
+	MaxMetadataBytes       = 16 * 1024
 )
 
 var (
@@ -33,6 +37,11 @@ var (
 	_ validationframework.TenantedEntity = (*FormulaTemplate)(nil)
 	_ domaintypes.PostgresSearchable     = (*FormulaTemplate)(nil)
 )
+
+type BillingVersion struct {
+	VersionNumber int64 `json:"versionNumber"`
+	EffectiveFrom int64 `json:"effectiveFrom"`
+}
 
 type FormulaTemplate struct {
 	bun.BaseModel `bun:"table:formula_templates,alias:ft" json:"-"`
@@ -48,6 +57,7 @@ type FormulaTemplate struct {
 	Expression           string                              `json:"expression"           bun:"expression,type:TEXT,notnull"`
 	Status               Status                              `json:"status"               bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
 	SchemaID             string                              `json:"schemaId"             bun:"schema_id,type:VARCHAR(100),notnull,default:'shipment'"`
+	LanguageVersion      formulatypes.LanguageVersion        `json:"languageVersion"      bun:"language_version,type:SMALLINT,notnull,default:1"`
 	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"  bun:"variable_definitions,type:JSONB,notnull,default:'[]'"`
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
@@ -68,6 +78,8 @@ type FormulaTemplate struct {
 	CurrentVersionNumber int64                               `json:"currentVersionNumber" bun:"current_version_number,type:BIGINT,notnull,default:1"`
 	CreatedAt            int64                               `json:"createdAt"            bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64                               `json:"updatedAt"            bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	Billing *BillingVersion `json:"billing,omitempty" bun:"-"`
 
 	Organization   *tenant.Organization      `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit   *tenant.BusinessUnit      `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -107,14 +119,40 @@ func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	ft.validateGuardrails(multiErr)
+	ft.validateSizes(multiErr)
+	formulatypes.ValidateLanguageVersion("languageVersion", ft.LanguageVersion, multiErr)
 	if len(ft.VariableDefinitions) > MaxVariableDefinitions {
 		multiErr.Add(
 			"variableDefinitions",
 			errortypes.ErrInvalid,
 			"A template cannot declare more than 50 custom variables",
 		)
+	} else {
+		formulatypes.ValidateVariableDefinitions(ft.VariableDefinitions, multiErr)
 	}
 	formulatypes.ValidateBreakdownDefinitions(ft.BreakdownDefinitions, multiErr)
+}
+
+func (ft *FormulaTemplate) validateSizes(multiErr *errortypes.MultiError) {
+	if len(ft.Description) > MaxDescriptionLength {
+		multiErr.Add(
+			"description",
+			errortypes.ErrInvalid,
+			"Description cannot exceed 2,000 characters",
+		)
+	}
+
+	if len(ft.Metadata) == 0 {
+		return
+	}
+	encoded, err := sonic.Marshal(ft.Metadata)
+	if err != nil {
+		multiErr.Add("metadata", errortypes.ErrInvalid, "Metadata must be plain JSON values")
+		return
+	}
+	if len(encoded) > MaxMetadataBytes {
+		multiErr.Add("metadata", errortypes.ErrInvalid, "Metadata cannot exceed 16 KiB")
+	}
 }
 
 func (ft *FormulaTemplate) validateGuardrails(multiErr *errortypes.MultiError) {
@@ -140,6 +178,7 @@ func (ft *FormulaTemplate) ApplyVersion(version *FormulaTemplateVersion) *Formul
 	resolved := *ft
 	resolved.Expression = version.Expression
 	resolved.SchemaID = version.SchemaID
+	resolved.LanguageVersion = version.LanguageVersion.OrCurrent()
 	resolved.Type = version.Type
 	resolved.VariableDefinitions = version.VariableDefinitions
 	resolved.BreakdownDefinitions = version.BreakdownDefinitions
@@ -187,6 +226,7 @@ func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 
 	return ft.Expression != other.Expression ||
 		ft.SchemaID != other.SchemaID ||
+		ft.LanguageVersion.OrCurrent() != other.LanguageVersion.OrCurrent() ||
 		ft.Type != other.Type ||
 		!nullDecimalEqual(ft.MinCharge, other.MinCharge) ||
 		!nullDecimalEqual(ft.MaxCharge, other.MaxCharge) ||
@@ -245,8 +285,10 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 			ft.ID = pulid.MustNew("ft_")
 		}
 		ft.NormalizeRounding()
+		ft.LanguageVersion = ft.LanguageVersion.OrCurrent()
 		ft.CreatedAt = now
 	case *bun.UpdateQuery:
+		ft.LanguageVersion = ft.LanguageVersion.OrCurrent()
 		ft.UpdatedAt = now
 	}
 

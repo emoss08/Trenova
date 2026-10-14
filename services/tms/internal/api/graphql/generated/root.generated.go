@@ -486,6 +486,7 @@ type ResolverRoot interface {
 	ShipmentCustomer() ShipmentCustomerResolver
 	ShipmentMove() ShipmentMoveResolver
 	ShipmentMoveJurisdictionMile() ShipmentMoveJurisdictionMileResolver
+	ShipmentRatingDetail() ShipmentRatingDetailResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -3079,6 +3080,7 @@ type ShipmentResolver interface {
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
+	FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error)
 }
 
 type ShipmentCustomerResolver interface {
@@ -3093,6 +3095,10 @@ type ShipmentMoveJurisdictionMileResolver interface {
 	TollDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	FerryDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	Source(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (string, error)
+}
+
+type ShipmentRatingDetailResolver interface {
+	Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error)
 }
 
 type TCASubscriptionResolver interface {
@@ -3812,6 +3818,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ShipmentCustomer":                   func() any { return r.ShipmentCustomer() },
 			"ShipmentMove":                       func() any { return r.ShipmentMove() },
 			"ShipmentMoveJurisdictionMile":       func() any { return r.ShipmentMoveJurisdictionMile() },
+			"ShipmentRatingDetail":               func() any { return r.ShipmentRatingDetail() },
 			"TCASubscription":                    func() any { return r.TCASubscription() },
 			"TableConfiguration":                 func() any { return r.TableConfiguration() },
 			"Tender":                             func() any { return r.Tender() },

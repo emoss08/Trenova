@@ -3,6 +3,7 @@ package formulatemplateservice
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"unicode/utf8"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -92,12 +94,14 @@ func (s *Service) CreateTestCase(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		template,
 		permission.OpUpdate,
 		req.TenantInfo.UserID,
 		nil,
 		fmt.Sprintf("Test scenario %q added", created.Name),
+		auditservice.WithMetadata(map[string]any{"scenarioAfter": scenarioRecord(created)}),
 	)
 
 	return s.reloadTestCase(ctx, created, req.TenantInfo), nil
@@ -122,6 +126,8 @@ func (s *Service) UpdateTestCase(
 		return nil, err
 	}
 
+	before := scenarioRecord(existing)
+
 	existing.Name = req.Name
 	existing.Description = req.Description
 	existing.Variables = req.Variables
@@ -139,12 +145,13 @@ func (s *Service) UpdateTestCase(
 		return nil, vErr
 	}
 
+	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to get template", zap.Error(err))
+		return nil, err
+	}
+
 	if req.Candidate != nil {
-		template, tErr := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
-		if tErr != nil {
-			log.Error("failed to get template", zap.Error(tErr))
-			return nil, tErr
-		}
 		existing.Record(
 			recordedContent(template, req.Candidate),
 			s.recordingVersion(ctx, template, req.TenantInfo),
@@ -159,6 +166,20 @@ func (s *Service) UpdateTestCase(
 		return nil, err
 	}
 
+	s.logAuditAction(
+		ctx,
+		log,
+		template,
+		permission.OpUpdate,
+		req.TenantInfo.UserID,
+		nil,
+		fmt.Sprintf("Test scenario %q updated", updated.Name),
+		auditservice.WithMetadata(map[string]any{
+			"scenarioBefore": before,
+			"scenarioAfter":  scenarioRecord(updated),
+		}),
+	)
+
 	return s.reloadTestCase(ctx, updated, req.TenantInfo), nil
 }
 
@@ -171,12 +192,46 @@ func (s *Service) DeleteTestCase(
 		zap.String("testCaseID", req.TestCaseID.String()),
 	)
 
-	if err := s.testCaseRepo.Delete(ctx, req); err != nil {
+	existing, err := s.testCaseRepo.GetByID(ctx, req)
+	if err != nil {
+		log.Error("failed to get test case", zap.Error(err))
+		return err
+	}
+
+	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to get template", zap.Error(err))
+		return err
+	}
+
+	if err = s.testCaseRepo.Delete(ctx, req); err != nil {
 		log.Error("failed to delete test case", zap.Error(err))
 		return err
 	}
 
+	s.logAuditAction(
+		ctx,
+		log,
+		template,
+		permission.OpUpdate,
+		req.TenantInfo.UserID,
+		nil,
+		fmt.Sprintf("Test scenario %q deleted", existing.Name),
+		auditservice.WithMetadata(map[string]any{"scenarioBefore": scenarioRecord(existing)}),
+	)
+
 	return nil
+}
+
+func scenarioRecord(testCase *formulatemplate.TestCase) map[string]any {
+	return map[string]any{
+		"id":             testCase.ID.String(),
+		"name":           testCase.Name,
+		"description":    testCase.Description,
+		"variables":      maps.Clone(testCase.Variables),
+		"expectedAmount": testCase.ExpectedAmount.String(),
+		"tolerance":      testCase.Tolerance.String(),
+	}
 }
 
 // buildTestCaseEntity is the single place a scenario's storage shape and

@@ -2,6 +2,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BacktestResponse } from "@trenova/shared/types/formula-template";
+import { BacktestTruncatedNote } from "../../backtest-truncated-note";
 import { formatMoney } from "../model/format";
 
 const MOVERS_SHOWN = 3;
@@ -101,6 +102,7 @@ export function ImpactSummary({
           {t("No recent shipment would rate differently.")}
         </p>
       )}
+      <BacktestTruncatedNote data={data} />
     </div>
   );
 }

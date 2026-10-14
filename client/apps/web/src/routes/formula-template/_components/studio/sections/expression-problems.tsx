@@ -140,6 +140,16 @@ export function ExpressionProblems({
       list.push(diagnosticRow(problem, repeat === 0 ? base : `${base}#${repeat}`));
     }
 
+    if (analysis.pending && !analysis.empty) {
+      list.push({
+        key: "pending",
+        tone: "info",
+        range: null,
+        message: t("Field and function names are checked once the shipment schema has loaded"),
+        actions: null,
+      });
+    }
+
     if (analysis.errorCount === 0 && result && !result.valid && !analysis.empty) {
       const engine = engineProblem(
         expression,

@@ -15,8 +15,9 @@ func NewTestValidator() *Validator {
 func NewTestValidatorWithTemplateRepo(
 	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
 ) *Validator {
+	refs := templateRefs{templates: formulaTemplateRepo}
 	return &Validator{
-		validator:           newBuilder(nil, formulaTemplateRepo).Build(),
-		formulaTemplateRepo: formulaTemplateRepo,
+		validator: newBuilder(nil, refs).Build(),
+		refs:      refs,
 	}
 }

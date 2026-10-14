@@ -2,18 +2,12 @@ package resolver
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/shopspring/decimal"
 )
 
-var (
-	ErrNilPointer = errors.New("nil pointer")
-	ErrNotStruct  = errors.New("not a struct")
-)
+var ErrNilPointer = errors.New("nil pointer")
 
 func RegisterDefaultComputed(r *Resolver) {
 	r.RegisterComputed("computeTotalDistance", computeTotalDistance)
@@ -38,151 +32,70 @@ func RegisterDefaultComputed(r *Resolver) {
 	r.RegisterComputed("computeCurrentTotalCharge", computeCurrentTotalCharge)
 }
 
-func computeTotalDistance(entity any) (any, error) {
-	moves, err := movesOf(entity)
-	if err != nil {
-		return 0.0, err
-	}
-
-	var total float64
-	for _, move := range moves {
-		if distance, distanceErr := getFieldFloat64(move, "Distance"); distanceErr == nil {
-			total += distance
+func fromShipment(zero any, read func(*shipment.Shipment) any) ComputedFunc {
+	return func(entity any) (any, error) {
+		entry, err := shipmentOf(entity)
+		if err != nil {
+			return zero, err
 		}
+		return read(entry), nil
 	}
-
-	return total, nil
 }
 
-func computeTotalStops(entity any) (any, error) {
-	stops, err := orderedStops(entity)
-	if err != nil {
-		return 0, err
-	}
-
-	total := len(stops)
-
-	return total, nil
-}
-
-func computeHasHazmat(entity any) (any, error) {
-	commodities, err := getFieldSlice(entity, "Commodities")
-	if err != nil {
-		return false, err
-	}
-
-	for _, sc := range commodities {
-		commodity, commErr := getFieldValue(sc, "Commodity")
-		if commErr != nil || commodity == nil {
-			continue
+var (
+	computeTotalDistance = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return s.RatingDistance().InexactFloat64()
+	})
+	computeTotalStops = fromShipment(0, func(s *shipment.Shipment) any {
+		return s.RatedStopCount()
+	})
+	computeHasHazmat = fromShipment(false, func(s *shipment.Shipment) any {
+		return s.HasHazardousMaterial()
+	})
+	computeRequiresTemperatureControl = fromShipment(false, func(s *shipment.Shipment) any {
+		return s.TemperatureMin != nil || s.TemperatureMax != nil
+	})
+	computeTemperatureDifferential = fromShipment(0.0, func(s *shipment.Shipment) any {
+		if s.TemperatureMin == nil || s.TemperatureMax == nil {
+			return 0.0
 		}
+		return float64(*s.TemperatureMax) - float64(*s.TemperatureMin)
+	})
+	computeTotalWeight = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return s.RatingWeight().InexactFloat64()
+	})
+	computeTotalPieces = fromShipment(int64(0), func(s *shipment.Shipment) any {
+		return s.RatingPieces()
+	})
+	computeTotalLinearFeet = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return s.RatingLinearFeet().InexactFloat64()
+	})
+	computeBaseRate = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return nullDecimalFloat(s.BaseRate)
+	})
+	computeFreightChargeAmount = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return nullDecimalFloat(s.FreightChargeAmount)
+	})
+	computeOtherChargeAmount = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return shipment.AdditionalChargesTotal(
+			s.AdditionalCharges,
+			s.FreightChargeAmount.Decimal,
+		).InexactFloat64()
+	})
+	computeCurrentTotalCharge = fromShipment(0.0, func(s *shipment.Shipment) any {
+		return nullDecimalFloat(s.TotalChargeAmount)
+	})
+)
 
-		hazmat, hazmatErr := getFieldValue(commodity, "HazardousMaterial")
-		if hazmatErr == nil && hazmat != nil && !isNilInterface(hazmat) {
-			return true, nil
-		}
+func nullDecimalFloat(value decimal.NullDecimal) float64 {
+	if !value.Valid {
+		return 0
 	}
-
-	return false, nil
-}
-
-func computeRequiresTemperatureControl(entity any) (any, error) {
-	tempMin, errMin := getFieldValue(entity, "TemperatureMin")
-	tempMax, errMax := getFieldValue(entity, "TemperatureMax")
-
-	hasMin := errMin == nil && tempMin != nil && !isNilInterface(tempMin)
-	hasMax := errMax == nil && tempMax != nil && !isNilInterface(tempMax)
-
-	return hasMin || hasMax, nil
-}
-
-func computeTemperatureDifferential(entity any) (any, error) {
-	tempMin, errMin := getFieldInt16(entity, "TemperatureMin")
-	tempMax, errMax := getFieldInt16(entity, "TemperatureMax")
-
-	if err := errors.Join(errMin, errMax); err != nil {
-		return 0.0, err
-	}
-
-	return float64(tempMax - tempMin), nil
-}
-
-func computeTotalWeight(entity any) (any, error) {
-	weight, err := getFieldInt64(entity, "Weight")
-	if err == nil && weight > 0 {
-		return float64(weight), nil
-	}
-
-	commodities, err := getFieldSlice(entity, "Commodities")
-	if err != nil {
-		return 0.0, err
-	}
-
-	var total int64
-	for _, sc := range commodities {
-		if w, wErr := getFieldInt64(sc, "Weight"); wErr == nil {
-			total += w
-		}
-	}
-
-	return float64(total), nil
-}
-
-func computeTotalPieces(entity any) (any, error) {
-	pieces, err := getFieldInt64(entity, "Pieces")
-	if err == nil && pieces > 0 {
-		return pieces, nil
-	}
-
-	commodities, err := getFieldSlice(entity, "Commodities")
-	if err != nil {
-		return int64(0), err
-	}
-
-	var total int64
-	for _, sc := range commodities {
-		if p, pErr := getFieldInt64(sc, "Pieces"); pErr == nil {
-			total += p
-		}
-	}
-
-	return total, nil
-}
-
-func computeTotalLinearFeet(entity any) (any, error) {
-	commodities, err := getFieldSlice(entity, "Commodities")
-	if err != nil {
-		if errors.Is(err, ErrNotStruct) {
-			return 0.0, nil
-		}
-		return 0.0, err
-	}
-
-	var total float64
-	for _, sc := range commodities {
-		pieces, pErr := getFieldInt64(sc, "Pieces")
-		if pErr != nil || pieces == 0 {
-			continue
-		}
-
-		commodity, commErr := getFieldValue(sc, "Commodity")
-		if commErr != nil || commodity == nil || isNilInterface(commodity) {
-			continue
-		}
-
-		linearFeetPerUnit, lfErr := getFieldFloat64(commodity, "LinearFeetPerUnit")
-		if lfErr != nil {
-			continue
-		}
-
-		total += float64(pieces) * linearFeetPerUnit
-	}
-
-	return total, nil
+	return value.Decimal.InexactFloat64()
 }
 
 func computeTotalHours(entity any) (any, error) {
-	stops, err := orderedStops(entity)
+	_, rated, err := stopsOf(entity)
 	if err != nil {
 		return 0.0, err
 	}
@@ -193,13 +106,16 @@ func computeTotalHours(entity any) (any, error) {
 		found       bool
 	)
 
-	for _, stop := range stops {
+	for _, stop := range rated {
 		start, ok := stopWindowStart(stop)
 		if !ok {
 			continue
 		}
 
-		end := stopWindowEnd(stop, start)
+		end, hasEnd := stopWindowEnd(stop)
+		if !hasEnd {
+			end = start
+		}
 
 		if !found || start < windowStart {
 			windowStart = start
@@ -215,300 +131,4 @@ func computeTotalHours(entity any) (any, error) {
 	}
 
 	return float64(windowEnd-windowStart) / 3600.0, nil
-}
-
-func stopWindowStart(stop any) (int64, bool) {
-	if arrival, err := getFieldInt64(stop, "ActualArrival"); err == nil {
-		return arrival, true
-	}
-
-	if scheduled, err := getFieldInt64(stop, "ScheduledWindowStart"); err == nil && scheduled > 0 {
-		return scheduled, true
-	}
-
-	return 0, false
-}
-
-func stopWindowEnd(stop any, fallback int64) int64 {
-	if departure, err := getFieldInt64(stop, "ActualDeparture"); err == nil {
-		return departure
-	}
-
-	if arrival, err := getFieldInt64(stop, "ActualArrival"); err == nil {
-		return arrival
-	}
-
-	if scheduledEnd, err := getFieldInt64(stop, "ScheduledWindowEnd"); err == nil {
-		return scheduledEnd
-	}
-
-	return fallback
-}
-
-func getFieldValue(entity any, fieldName string) (any, error) {
-	v := reflect.ValueOf(Unwrap(entity))
-	if v.Kind() == reflect.Pointer {
-		if v.IsNil() {
-			return nil, ErrNilPointer
-		}
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		return nil, ErrNotStruct
-	}
-
-	field := v.FieldByName(fieldName)
-	if !field.IsValid() {
-		return nil, fmt.Errorf("field %s not found", fieldName)
-	}
-
-	return field.Interface(), nil
-}
-
-func getFieldSlice(entity any, fieldName string) ([]any, error) {
-	val, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return nil, err
-	}
-
-	v := reflect.ValueOf(val)
-	if v.Kind() == reflect.Pointer {
-		if v.IsNil() {
-			return nil, nil
-		}
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Slice {
-		return nil, fmt.Errorf("field %s is not a slice", fieldName)
-	}
-
-	result := make([]any, v.Len())
-	for i := 0; i < v.Len(); i++ {
-		result[i] = v.Index(i).Interface()
-	}
-
-	return result, nil
-}
-
-func getFieldFloat64(entity any, fieldName string) (float64, error) {
-	val, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return 0, err
-	}
-
-	switch v := val.(type) {
-	case float64:
-		return v, nil
-	case *float64:
-		if v == nil {
-			return 0, nil
-		}
-		return *v, nil
-	case float32:
-		return float64(v), nil
-	case int64:
-		return float64(v), nil
-	case int:
-		return float64(v), nil
-	default:
-		return 0, fmt.Errorf("cannot convert %T to float64", val)
-	}
-}
-
-func getFieldInt64(entity any, fieldName string) (int64, error) {
-	val, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return 0, err
-	}
-
-	switch v := val.(type) {
-	case int64:
-		return v, nil
-	case *int64:
-		if v == nil {
-			return 0, ErrNilPointer
-		}
-		return *v, nil
-	case int:
-		return int64(v), nil
-	case *int:
-		if v == nil {
-			return 0, ErrNilPointer
-		}
-		return int64(*v), nil
-	default:
-		return 0, fmt.Errorf("cannot convert %T to int64", val)
-	}
-}
-
-func getFieldInt16(entity any, fieldName string) (int16, error) {
-	val, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return 0, err
-	}
-
-	switch v := val.(type) {
-	case int16:
-		return v, nil
-	case *int16:
-		if v == nil {
-			return 0, ErrNilPointer
-		}
-		return *v, nil
-	default:
-		return 0, fmt.Errorf("cannot convert %T to int16", val)
-	}
-}
-
-func isNilInterface(i any) bool {
-	if i == nil {
-		return true
-	}
-	v := reflect.ValueOf(i)
-	return v.Kind() == reflect.Pointer && v.IsNil()
-}
-
-func computeBaseRate(entity any) (any, error) {
-	return getFieldDecimal(entity, "BaseRate")
-}
-
-func computeFreightChargeAmount(entity any) (any, error) {
-	return getFieldDecimal(entity, "FreightChargeAmount")
-}
-
-func computeOtherChargeAmount(entity any) (any, error) {
-	switch typed := entity.(type) {
-	case *shipment.Shipment:
-		return calculateShipmentOtherChargeAmount(typed), nil
-	case shipment.Shipment:
-		return calculateShipmentOtherChargeAmount(&typed), nil
-	}
-
-	return getFieldDecimal(entity, "OtherChargeAmount")
-}
-
-func computeCurrentTotalCharge(entity any) (any, error) {
-	return getFieldDecimal(entity, "TotalChargeAmount")
-}
-
-func calculateShipmentOtherChargeAmount(entity *shipment.Shipment) float64 {
-	if entity == nil {
-		return 0
-	}
-
-	baseCharge := decimal.Zero
-	if entity.FreightChargeAmount.Valid {
-		baseCharge = entity.FreightChargeAmount.Decimal
-	}
-
-	total := decimal.Zero
-	for _, charge := range entity.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-
-		switch charge.Method {
-		case accessorialcharge.MethodFlat:
-			unit := max(charge.Unit, 1)
-			total = total.Add(charge.Amount.Mul(decimal.NewFromInt32(int32(unit))))
-		case accessorialcharge.MethodPerUnit:
-			if charge.Unit < 1 {
-				continue
-			}
-			total = total.Add(charge.Amount.Mul(decimal.NewFromInt32(int32(charge.Unit))))
-		case accessorialcharge.MethodPercentage:
-			total = total.Add(baseCharge.Mul(charge.Amount.Div(decimal.NewFromInt(100))))
-		}
-	}
-
-	return total.InexactFloat64()
-}
-
-func getFieldDecimal(entity any, fieldName string) (float64, error) {
-	val, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return 0, err
-	}
-
-	if val == nil || isNilInterface(val) {
-		return 0, nil
-	}
-
-	v := reflect.ValueOf(val)
-
-	if v.Kind() == reflect.Pointer {
-		if v.IsNil() {
-			return 0, nil
-		}
-		v = v.Elem()
-	}
-
-	if v.Kind() == reflect.Struct {
-		if isNullableInvalid(v) {
-			return 0, nil
-		}
-
-		if f, ok := tryDecimalFieldFloat(v); ok {
-			return f, nil
-		}
-
-		if f, ok := tryInexactFloat64Method(v); ok {
-			return f, nil
-		}
-	}
-
-	switch typedVal := val.(type) {
-	case float64:
-		return typedVal, nil
-	case *float64:
-		if typedVal == nil {
-			return 0, nil
-		}
-		return *typedVal, nil
-	}
-
-	return 0, nil
-}
-
-func isNullableInvalid(v reflect.Value) bool {
-	validField := v.FieldByName("Valid")
-	if !validField.IsValid() || validField.Kind() != reflect.Bool {
-		return false
-	}
-	return !validField.Bool()
-}
-
-func tryDecimalFieldFloat(v reflect.Value) (float64, bool) {
-	decimalField := v.FieldByName("Decimal")
-	if !decimalField.IsValid() {
-		return 0, false
-	}
-
-	method := decimalField.MethodByName("InexactFloat64")
-	if !method.IsValid() {
-		return 0, false
-	}
-
-	results := method.Call(nil)
-	if len(results) == 0 {
-		return 0, false
-	}
-
-	return results[0].Float(), true
-}
-
-func tryInexactFloat64Method(v reflect.Value) (float64, bool) {
-	method := v.MethodByName("InexactFloat64")
-	if !method.IsValid() {
-		return 0, false
-	}
-
-	results := method.Call(nil)
-	if len(results) == 0 {
-		return 0, false
-	}
-
-	return results[0].Float(), true
 }

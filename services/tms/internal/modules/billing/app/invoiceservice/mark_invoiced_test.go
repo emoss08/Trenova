@@ -97,4 +97,5 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 	require.NotNil(t, persisted.BilledAt)
 	assert.Equal(t, int64(1_789_339_461), *persisted.BilledAt)
 	assert.Equal(t, charges, persisted.AdditionalCharges)
+	assert.True(t, persisted.RateLocked, "an invoiced leg keeps the rate it was billed at")
 }

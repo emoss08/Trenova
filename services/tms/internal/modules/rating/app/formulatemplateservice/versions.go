@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -123,6 +124,7 @@ func (s *Service) CreateVersion(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		template,
 		permission.OpUpdate,
@@ -220,6 +222,15 @@ func (s *Service) Rollback(
 			return txErr
 		}
 
+		if resolved.Status == formulatemplate.StatusDraft &&
+			currentTemplate.Status != formulatemplate.StatusDraft {
+			cleared, clearErr := s.clearScheduledVersions(txCtx, updated)
+			if clearErr != nil {
+				return clearErr
+			}
+			auditComment = withClearedSchedules(auditComment, cleared)
+		}
+
 		updatedTemplate = updated
 		return nil
 	})
@@ -228,12 +239,14 @@ func (s *Service) Rollback(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		updatedTemplate,
 		permission.OpUpdate,
 		req.TenantInfo.UserID,
 		currentTemplate,
 		auditComment,
+		auditservice.WithCritical(),
 	)
 
 	return updatedTemplate, nil
@@ -274,6 +287,10 @@ func (s *Service) Fork(
 	seed.SourceVersionNumber = &sourceVersionNum
 	forkedTemplate := seed.Build()
 
+	if err = s.validateTemplate(ctx, forkedTemplate); err != nil {
+		return nil, err
+	}
+
 	changeMessage := req.ChangeMessage
 	if changeMessage == "" {
 		changeMessage = fmt.Sprintf("Forked from template %s", sourceTemplate.Name)
@@ -302,6 +319,7 @@ func (s *Service) Fork(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		createdTemplate,
 		permission.OpCreate,
@@ -435,6 +453,7 @@ func (s *Service) UpdateVersionTags(
 	}
 
 	s.logAuditAction(
+		ctx,
 		log,
 		template,
 		permission.OpUpdate,
@@ -465,6 +484,26 @@ func (s *Service) createVersionSnapshot(
 		changeMessage,
 		changeSummary,
 	)
+
+	_, err := s.versionRepo.Create(ctx, version)
+	return err
+}
+
+func (s *Service) createApprovedSnapshot(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	userID pulid.ID,
+	effectiveFrom int64,
+) error {
+	version := formulatemplate.NewVersionFromTemplate(
+		template,
+		template.CurrentVersionNumber,
+		userID,
+		"Approved",
+		nil,
+	)
+	version.Status = formulatemplate.StatusActive
+	version.EffectiveFrom = &effectiveFrom
 
 	_, err := s.versionRepo.Create(ctx, version)
 	return err

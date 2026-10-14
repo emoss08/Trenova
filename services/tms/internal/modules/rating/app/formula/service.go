@@ -5,8 +5,10 @@ import (
 	goErrors "errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
@@ -99,6 +101,29 @@ func (s *Service) ContextVariables(
 	})
 }
 
+func (s *Service) providedValues(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity any,
+	ratingDate int64,
+) map[string]any {
+	contextual := s.ContextVariables(ctx, tenantInfo)
+	provided := make(map[string]any, len(contextual)+1)
+	maps.Copy(provided, contextual)
+	provided[engine.RatingTimeVariable] = time.Unix(ratingAsOf(entity, ratingDate), 0).UTC()
+	return provided
+}
+
+func ratingAsOf(entity any, ratingDate int64) int64 {
+	if ratingDate > 0 {
+		return ratingDate
+	}
+	if rated, ok := resolver.Unwrap(entity).(*shipment.Shipment); ok {
+		return rated.RatingAsOf(timeutils.NowUnix())
+	}
+	return timeutils.NowUnix()
+}
+
 func (s *Service) Calculate(
 	ctx context.Context,
 	req *formulatemplatetypes.CalculateRequest,
@@ -117,36 +142,37 @@ func (s *Service) Calculate(
 		return nil, err
 	}
 
-	if template.Status != formulatemplate.StatusActive {
-		return nil, errortypes.NewValidationError(
-			"formulaTemplateId",
-			errortypes.ErrInvalid,
-			"Formula template must be Active to rate shipments",
-		)
-	}
-
-	scheduled, err := s.ResolveScheduledVersion(ctx, template, req.TenantInfo, req.RatingDate)
+	asOf := ratingAsOf(req.Entity, req.RatingDate)
+	billing, err := s.ResolveBillingVersion(ctx, template, req.TenantInfo, asOf)
 	if err != nil {
-		log.Error("failed to resolve effective template version", zap.Error(err))
+		log.Error("failed to resolve the billing version", zap.Error(err))
 		return nil, err
 	}
-	resolved := template
-	if scheduled != nil {
-		resolved = template.ApplyVersion(scheduled)
+	resolved, err := billingContent(template, billing)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = refuseUnavailableInputs(resolved, req); err != nil {
+		return nil, err
 	}
 
 	resp, err := s.Rate(ctx, &RateRequest{
-		Template:  resolved,
-		Entity:    req.Entity,
-		Variables: req.Variables,
-		Overrides: req.Overrides,
+		Template:   resolved,
+		Entity:     req.Entity,
+		Variables:  req.Variables,
+		Overrides:  req.Overrides,
+		RatingDate: asOf,
 	})
 	if err != nil {
-		log.Error("failed to evaluate formula", zap.Error(err))
+		log.Error(
+			"failed to evaluate formula",
+			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, err
 	}
-	if scheduled != nil && resp.Receipt != nil {
-		resp.Receipt.EffectiveFrom = scheduled.EffectiveFrom
+	if billing != nil && resp.Receipt != nil {
+		start := billing.EffectiveStart()
+		resp.Receipt.EffectiveFrom = &start
 	}
 
 	if resp.Guardrail != nil && resp.Guardrail.Applied {
@@ -160,48 +186,84 @@ func (s *Service) Calculate(
 	return resp, nil
 }
 
-// ResolveEffectiveTemplate resolves the template content that is in effect for
-// the given rating date, honouring scheduled version activations. The version
-// list is memoized per unit of work via effectiveversioncache when a caller
-// installed one, so batch re-rating does not query per shipment.
-func (s *Service) ResolveEffectiveTemplate(
-	ctx context.Context,
+func refuseUnavailableInputs(
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	ratingDate int64,
-) (*formulatemplate.FormulaTemplate, error) {
-	version, err := s.ResolveScheduledVersion(ctx, template, tenantInfo, ratingDate)
-	if err != nil {
-		return nil, err
+	req *formulatemplatetypes.CalculateRequest,
+) error {
+	if len(req.UnavailableInputs) == 0 {
+		return nil
 	}
 
-	if version == nil {
-		return template, nil
+	names := slices.Sorted(maps.Keys(req.UnavailableInputs))
+	for _, name := range names {
+		if _, supplied := req.Overrides[name]; supplied {
+			continue
+		}
+		if _, supplied := req.Variables[name]; supplied {
+			continue
+		}
+		if !templateReads(template, name) {
+			continue
+		}
+		return errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			req.UnavailableInputs[name],
+		)
 	}
 
-	return template.ApplyVersion(version), nil
+	return nil
 }
 
-// ResolveScheduledVersion returns the scheduled snapshot in effect for the
-// rating date, or nil when none is scheduled that early. Callers that need to
-// know whether a schedule applied at all, rather than just what content to
-// use, ask this directly.
-func (s *Service) ResolveScheduledVersion(
+func templateReads(template *formulatemplate.FormulaTemplate, name string) bool {
+	if engine.ReferencesPath(template.Expression, name) {
+		return true
+	}
+	for _, def := range template.BreakdownDefinitions {
+		if def != nil && engine.ReferencesPath(def.Expression, name) {
+			return true
+		}
+	}
+	return false
+}
+
+func billingContent(
+	template *formulatemplate.FormulaTemplate,
+	billing *formulatemplate.FormulaTemplateVersion,
+) (*formulatemplate.FormulaTemplate, error) {
+	switch {
+	case template.Status == formulatemplate.StatusInactive:
+		return nil, errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			"Formula template {0} is archived and no longer rates shipments",
+			template.Name,
+		)
+	case billing != nil:
+		return template.ApplyVersion(billing), nil
+	case template.Status == formulatemplate.StatusActive:
+		return template, nil
+	default:
+		return nil, errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			"Formula template {0} has never been approved, so it cannot rate shipments yet",
+			template.Name,
+		)
+	}
+}
+
+func (s *Service) ResolveBillingVersion(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
-	ratingDate int64,
+	asOf int64,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	asOf := ratingDate
-	if asOf == 0 {
-		asOf = timeutils.NowUnix()
-	}
-
-	versions, err := effectiveversioncache.GetVersions(
+	approved, err := effectiveversioncache.GetVersions(
 		ctx,
 		template.ID,
 		func(loadCtx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
-			return s.versionRepo.ListScheduled(
+			return s.versionRepo.ListApproved(
 				loadCtx,
 				&formulatemplateports.ListScheduledVersionsRequest{
 					TenantInfo: tenantInfo,
@@ -214,14 +276,15 @@ func (s *Service) ResolveScheduledVersion(
 		return nil, err
 	}
 
-	return effectiveversioncache.EffectiveAsOf(versions, asOf), nil
+	return effectiveversioncache.EffectiveAsOf(approved, asOf), nil
 }
 
 type RateRequest struct {
-	Template  *formulatemplate.FormulaTemplate
-	Entity    any
-	Variables map[string]any
-	Overrides map[string]any
+	Template   *formulatemplate.FormulaTemplate
+	Entity     any
+	Variables  map[string]any
+	Overrides  map[string]any
+	RatingDate int64
 }
 
 func (s *Service) Rate(
@@ -243,26 +306,19 @@ func (s *Service) Rate(
 		Template:  req.Template,
 		Entity:    req.Entity,
 		Variables: req.Variables,
-		Provided:  s.ContextVariables(ctx, tenantInfo),
+		Provided:  s.providedValues(ctx, tenantInfo, req.Entity, req.RatingDate),
 		Overrides: req.Overrides,
 		Lookup:    lookup,
 	})
 	if err != nil {
-		// A record missing a field the formula never guarded is an authoring
-		// problem with a clear fix, and the caller should see it as one rather
-		// than as an internal failure.
-		var missing *formulaerrors.MissingFieldError
-		if goErrors.As(err, &missing) {
-			return nil, errortypes.NewValidationError(
-				"expression",
-				errortypes.ErrInvalid,
-				missing.Error(),
-			)
-		}
-		return nil, err
+		return nil, s.asRatingValidationError(err)
 	}
 
-	amount, guardrail, rounding := ApplyChargePolicy(req.Template.ChargePolicy(), result.Value)
+	policy := req.Template.ChargePolicy()
+	amount, guardrail, rounding, err := ApplyChargePolicy(policy, result.Value)
+	if err != nil {
+		return nil, err
+	}
 
 	receipt := result.Receipt
 	if receipt != nil {
@@ -276,12 +332,39 @@ func (s *Service) Rate(
 		FormulaTemplateID:   req.Template.ID.String(),
 		FormulaTemplateName: req.Template.Name,
 		Expression:          req.Template.Expression,
-		Breakdown:           result.Breakdown,
+		Breakdown:           RoundBreakdown(policy, result.Breakdown, result.Value),
 		Guardrail:           guardrail,
 		Rounding:            rounding,
 		VersionNumber:       req.Template.CurrentVersionNumber,
 		Receipt:             receipt,
 	}, nil
+}
+
+func (s *Service) asRatingValidationError(err error) error {
+	var missing *formulaerrors.MissingFieldError
+	if goErrors.As(err, &missing) {
+		return errortypes.NewValidationError("expression", errortypes.ErrInvalid, missing.Error())
+	}
+
+	var unresolved *formulaerrors.UnresolvedFieldError
+	if goErrors.As(err, &unresolved) {
+		for field, cause := range unresolved.Causes {
+			s.l.Warn("formula reads a field the record could not supply",
+				append(
+					formulaerrors.LogFields(cause),
+					zap.String("field", field),
+					zap.Error(cause),
+				)...,
+			)
+		}
+		return errortypes.NewValidationError(
+			"expression",
+			errortypes.ErrInvalid,
+			unresolved.Error(),
+		)
+	}
+
+	return err
 }
 
 // BuildLookup reads the tenant's lookup tables, once per unit of work.
@@ -304,7 +387,7 @@ func (s *Service) BuildLookup(
 		func(ctx context.Context) (string, error) {
 			return s.rateMatrixRepo.GetLookupStamp(ctx, tenantInfo)
 		},
-		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+		func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,
 				&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
@@ -313,7 +396,7 @@ func (s *Service) BuildLookup(
 				return nil, err
 			}
 
-			return NewMatrixLookup(data), nil
+			return NewStampedMatrixLookup(data, stamp), nil
 		},
 	)
 }
@@ -327,7 +410,7 @@ func (s *Service) BuildLookup(
 func ApplyChargePolicy(
 	policy formulatypes.ChargePolicy,
 	rawAmount decimal.Decimal,
-) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult) {
+) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult, error) {
 	policy = policy.Normalized()
 
 	clamped, guardrail := ApplyGuardrailBounds(policy.MinCharge, policy.MaxCharge, rawAmount)
@@ -340,7 +423,19 @@ func ApplyChargePolicy(
 		UnroundedAmount: clamped,
 	}
 
-	return rounded, guardrail, rounding
+	if rounded.IsNegative() {
+		return rounded, guardrail, rounding, errortypes.NewValidationError(
+			"expression",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"The formula came to %s, and a charge cannot be negative. "+
+					"Keep it at zero or above with max(..., 0), or set a minimum charge",
+				rounded.StringFixed(policy.RoundingPrecision),
+			),
+		)
+	}
+
+	return rounded, guardrail, rounding, nil
 }
 
 func ApplyGuardrailBounds(
@@ -411,14 +506,16 @@ func (s *Service) EvaluateExpression(
 			Entity:     req.Entity,
 			SchemaID:   req.SchemaID,
 			Variables:  req.Variables,
-			Provided:   s.ContextVariables(ctx, req.TenantInfo),
+			Provided:   s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 			Breakdowns: req.Breakdowns,
 			Lookup:     lookup,
 		},
 	)
 	if err != nil {
-		log.Error("failed to evaluate expression", zap.Error(err))
-		return nil, err
+		log.Error(
+			"failed to evaluate expression",
+			append(formulaerrors.LogFields(err), zap.Error(err))...)
+		return nil, s.asRatingValidationError(err)
 	}
 
 	return &formulatemplatetypes.CalculateResponse{
@@ -454,7 +551,7 @@ func (s *Service) TraceStatements(
 	env, resolveFailures, err := s.engine.GetEnvironmentBuilder().BuildWithProvided(
 		req.Entity,
 		req.SchemaID,
-		s.ContextVariables(ctx, req.TenantInfo),
+		s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 		req.Variables,
 	)
 	if err != nil {
@@ -504,6 +601,7 @@ func (s *Service) EvaluatePredicate(
 			Expression:   req.Expression,
 			Entity:       req.Entity,
 			SchemaID:     req.SchemaID,
+			Provided:     s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 			Lookup:       engine.StubLookup{},
 			AllowBoolean: true,
 		},
@@ -547,6 +645,10 @@ func (s *Service) ValidateExpressionWithEnv(
 	env map[string]any,
 ) error {
 	return s.engine.ValidateExpressionWithEnv(ctx, expression, env)
+}
+
+func (s *Service) ReferencesField(expression, field string) bool {
+	return engine.ReferencesPath(expression, field)
 }
 
 // UnguardedNullableFields lists the nullable schema fields an expression uses
@@ -654,7 +756,7 @@ func (s *Service) BuildValidationEnvironmentForTenant(
 	env, _, err := s.engine.GetEnvironmentBuilder().
 		BuildValidationEnvironmentWithProvided(
 			schemaID,
-			s.ContextVariables(ctx, tenantInfo),
+			s.providedValues(ctx, tenantInfo, nil, 0),
 			variables,
 		)
 	return env, err

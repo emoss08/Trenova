@@ -1251,7 +1251,7 @@ func (shipIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-func (shipIntgStubVersionRepo) ListScheduled(
+func (shipIntgStubVersionRepo) ListApproved(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {

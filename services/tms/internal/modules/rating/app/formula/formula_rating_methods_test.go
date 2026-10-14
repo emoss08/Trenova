@@ -5,8 +5,12 @@ package formula_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,103 +19,81 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type RatingMethodShipment struct {
-	ID                  string
-	ProNumber           string
-	Weight              *int64
-	Pieces              *int64
-	BaseRate            *decimal.NullDecimal
-	FreightChargeAmount *decimal.NullDecimal
-	OtherChargeAmount   *decimal.NullDecimal
-	TotalChargeAmount   *decimal.NullDecimal
-	Moves               []*RatingMethodMove
-	Commodities         []*RatingMethodShipmentCommodity
+func linearFootLine(
+	name string,
+	weight, pieces int64,
+	linearFeetPerUnit float64,
+) *shipment.ShipmentCommodity {
+	item := &commodity.Commodity{
+		ID:                pulid.MustNew("com_"),
+		Name:              name,
+		LinearFeetPerUnit: &linearFeetPerUnit,
+	}
+	return &shipment.ShipmentCommodity{
+		ID:          pulid.MustNew("sc_"),
+		CommodityID: item.ID,
+		Weight:      weight,
+		Pieces:      pieces,
+		Commodity:   item,
+	}
 }
 
-type RatingMethodMove struct {
-	ID       string
-	Distance *float64
-	Stops    []*RatingMethodStop
+func ratingMethodStop(stopType shipment.StopType, sequence int64) *shipment.Stop {
+	return stopAt(
+		stopType,
+		shipment.StopStatusNew,
+		sequence,
+		"Dallas",
+		1_800_000_000+sequence*3_600,
+	)
 }
 
-type RatingMethodStop struct {
-	ID   string
-	Type string
+func pickupThenTwoDeliveries(firstLeg, secondLeg float64) []*shipment.ShipmentMove {
+	return []*shipment.ShipmentMove{
+		loadedMove(
+			0,
+			firstLeg,
+			ratingMethodStop(shipment.StopTypePickup, 0),
+			ratingMethodStop(shipment.StopTypeDelivery, 1),
+		),
+		loadedMove(1, secondLeg, ratingMethodStop(shipment.StopTypeDelivery, 0)),
+	}
 }
 
-type RatingMethodShipmentCommodity struct {
-	ID        string
-	Weight    int64
-	Pieces    int64
-	Commodity *RatingMethodCommodity
-}
-
-type RatingMethodCommodity struct {
-	ID                string
-	Name              string
-	LinearFeetPerUnit float64
-}
-
-func createRatingMethodShipment() *RatingMethodShipment {
+func createRatingMethodShipment() *shipment.Shipment {
 	weight := int64(25000)
 	pieces := int64(12)
-	distance1 := 300.0
-	distance2 := 150.0
-
-	baseRate := decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
-	freightCharge := decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
-	otherCharge := decimal.NewNullDecimal(decimal.NewFromFloat(250.00))
-	totalCharge := decimal.NewNullDecimal(decimal.NewFromFloat(1750.00))
-
-	return &RatingMethodShipment{
-		ID:                  "SP_RATING",
-		ProNumber:           "PRO-RATING-001",
-		Weight:              &weight,
-		Pieces:              &pieces,
-		BaseRate:            &baseRate,
-		FreightChargeAmount: &freightCharge,
-		OtherChargeAmount:   &otherCharge,
-		TotalChargeAmount:   &totalCharge,
-		Moves: []*RatingMethodMove{
-			{
-				ID:       "SM_001",
-				Distance: &distance1,
-				Stops: []*RatingMethodStop{
-					{ID: "STP_001", Type: "Pickup"},
-					{ID: "STP_002", Type: "Delivery"},
-				},
-			},
-			{
-				ID:       "SM_002",
-				Distance: &distance2,
-				Stops: []*RatingMethodStop{
-					{ID: "STP_003", Type: "Delivery"},
-				},
-			},
-		},
-		Commodities: []*RatingMethodShipmentCommodity{
-			{
-				ID:     "SC_001",
-				Weight: 15000,
-				Pieces: 8,
-				Commodity: &RatingMethodCommodity{
-					ID:                "COM_001",
-					Name:              "Palletized Goods",
-					LinearFeetPerUnit: 2.5,
-				},
-			},
-			{
-				ID:     "SC_002",
-				Weight: 10000,
-				Pieces: 4,
-				Commodity: &RatingMethodCommodity{
-					ID:                "COM_002",
-					Name:              "Crated Items",
-					LinearFeetPerUnit: 3.0,
-				},
-			},
-		},
+	accessorial := &accessorialcharge.AccessorialCharge{
+		ID:          pulid.MustNew("acc_"),
+		Code:        "LUMPER",
+		Description: "Lumper Service",
+		Method:      accessorialcharge.MethodFlat,
 	}
+
+	return shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-RATING-001"
+		s.Weight = &weight
+		s.Pieces = &pieces
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
+		s.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
+		s.OtherChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(250.00))
+		s.TotalChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(1750.00))
+		s.Moves = pickupThenTwoDeliveries(300.0, 150.0)
+		s.Commodities = []*shipment.ShipmentCommodity{
+			linearFootLine("Palletized Goods", 15000, 8, 2.5),
+			linearFootLine("Crated Items", 10000, 4, 3.0),
+		}
+		s.AdditionalCharges = []*shipment.AdditionalCharge{
+			{
+				ID:                  pulid.MustNew("ac_"),
+				AccessorialChargeID: accessorial.ID,
+				Method:              accessorialcharge.MethodFlat,
+				Amount:              decimal.NewFromFloat(250.00),
+				Unit:                1,
+				AccessorialCharge:   accessorial,
+			},
+		}
+	})
 }
 
 func TestRatingMethod_FlatRate(t *testing.T) {
@@ -125,11 +107,11 @@ func TestRatingMethod_FlatRate(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	shipment := createRatingMethodShipment()
+	entity := createRatingMethodShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -149,21 +131,15 @@ func TestRatingMethod_PerMile(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
-	distance := 450.0
-	shipment := &RatingMethodShipment{
-		ID:        "SP_PERMILE",
-		ProNumber: "PRO-PERMILE-001",
-		BaseRate:  &freightRate,
-		Moves: []*RatingMethodMove{
-			{ID: "SM_001", Distance: &distance, Stops: []*RatingMethodStop{}},
-		},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERMILE-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
+		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 450.0)}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -185,28 +161,23 @@ func TestRatingMethod_PerStop(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(125.00))
-	distance := 100.0
-	shipment := &RatingMethodShipment{
-		ID:        "SP_PERSTOP",
-		ProNumber: "PRO-PERSTOP-001",
-		BaseRate:  &freightRate,
-		Moves: []*RatingMethodMove{
-			{
-				ID: "SM_001", Distance: &distance,
-				Stops: []*RatingMethodStop{
-					{ID: "STP_001", Type: "Pickup"},
-					{ID: "STP_002", Type: "Delivery"},
-					{ID: "STP_003", Type: "Delivery"},
-				},
-			},
-		},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERSTOP-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(125.00))
+		s.Moves = []*shipment.ShipmentMove{
+			loadedMove(
+				0,
+				100.0,
+				ratingMethodStop(shipment.StopTypePickup, 0),
+				ratingMethodStop(shipment.StopTypeDelivery, 1),
+				ratingMethodStop(shipment.StopTypeDelivery, 2),
+			),
+		}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -228,20 +199,16 @@ func TestRatingMethod_PerPound(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(0.08))
 	weight := int64(25000)
-	shipment := &RatingMethodShipment{
-		ID:          "SP_PERPOUND",
-		ProNumber:   "PRO-PERPOUND-001",
-		Weight:      &weight,
-		BaseRate:    &freightRate,
-		Moves:       []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERPOUND-001"
+		s.Weight = &weight
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(0.08))
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -263,20 +230,16 @@ func TestRatingMethod_PerPallet(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(85.00))
 	pieces := int64(12)
-	shipment := &RatingMethodShipment{
-		ID:          "SP_PERPALLET",
-		ProNumber:   "PRO-PERPALLET-001",
-		Pieces:      &pieces,
-		BaseRate:    &freightRate,
-		Moves:       []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERPALLET-001"
+		s.Pieces = &pieces
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(85.00))
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -298,37 +261,18 @@ func TestRatingMethod_PerLinearFoot(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(35.00))
-	shipment := &RatingMethodShipment{
-		ID:        "SP_PERLINEARFOOT",
-		ProNumber: "PRO-PERLINEARFOOT-001",
-		BaseRate:  &freightRate,
-		Moves:     []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{
-			{
-				ID:     "SC_001",
-				Pieces: 8,
-				Commodity: &RatingMethodCommodity{
-					ID:                "COM_001",
-					Name:              "Palletized Goods",
-					LinearFeetPerUnit: 2.5,
-				},
-			},
-			{
-				ID:     "SC_002",
-				Pieces: 4,
-				Commodity: &RatingMethodCommodity{
-					ID:                "COM_002",
-					Name:              "Crated Items",
-					LinearFeetPerUnit: 3.0,
-				},
-			},
-		},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERLINEARFOOT-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(35.00))
+		s.Commodities = []*shipment.ShipmentCommodity{
+			linearFootLine("Palletized Goods", 0, 8, 2.5),
+			linearFootLine("Crated Items", 0, 4, 3.0),
+		}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -351,11 +295,11 @@ func TestRatingMethod_FlatFee_ExistingCharges(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	shipment := createRatingMethodShipment()
+	entity := createRatingMethodShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -377,20 +321,16 @@ func TestRatingMethod_PerCWT(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(15.00))
 	weight := int64(25000)
-	shipment := &RatingMethodShipment{
-		ID:          "SP_PERCWT",
-		ProNumber:   "PRO-PERCWT-001",
-		Weight:      &weight,
-		BaseRate:    &freightRate,
-		Moves:       []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-PERCWT-001"
+		s.Weight = &weight
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(15.00))
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -418,25 +358,15 @@ func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
 		},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
-	distance := 50.0
-	shipment := &RatingMethodShipment{
-		ID:        "SP_SHORT",
-		ProNumber: "PRO-SHORT-001",
-		BaseRate:  &freightRate,
-		Moves: []*RatingMethodMove{
-			{
-				ID:       "SM_001",
-				Distance: &distance,
-				Stops:    []*RatingMethodStop{},
-			},
-		},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-SHORT-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
+		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 50.0)}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -461,18 +391,14 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 		},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(150.00))
-	shipment := &RatingMethodShipment{
-		ID:          "SP_RATINGUNIT",
-		ProNumber:   "PRO-RATINGUNIT-001",
-		BaseRate:    &freightRate,
-		Moves:       []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-RATINGUNIT-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(150.00))
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
-		Entity:   shipment,
+		Entity:   entity,
 		Variables: map[string]any{
 			"ratingUnit": 5.0,
 		},
@@ -521,34 +447,15 @@ func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
 		},
 	}
 
-	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(2.25))
-	distance1 := 300.0
-	distance2 := 150.0
-	shipment := &RatingMethodShipment{
-		ID:        "SP_COMBINED",
-		ProNumber: "PRO-COMBINED-001",
-		BaseRate:  &freightRate,
-		Moves: []*RatingMethodMove{
-			{
-				ID: "SM_001", Distance: &distance1,
-				Stops: []*RatingMethodStop{
-					{ID: "STP_001", Type: "Pickup"},
-					{ID: "STP_002", Type: "Delivery"},
-				},
-			},
-			{
-				ID: "SM_002", Distance: &distance2,
-				Stops: []*RatingMethodStop{
-					{ID: "STP_003", Type: "Delivery"},
-				},
-			},
-		},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-COMBINED-001"
+		s.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.25))
+		s.Moves = pickupThenTwoDeliveries(300.0, 150.0)
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -573,11 +480,11 @@ func TestRatingMethod_UseCurrentTotalCharge(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	shipment := createRatingMethodShipment()
+	entity := createRatingMethodShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -598,24 +505,21 @@ func TestRatingMethod_NilChargeAmounts(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	shipment := &RatingMethodShipment{
-		ID:                  "SP_NIL",
-		ProNumber:           "PRO-NIL-001",
-		FreightChargeAmount: nil,
-		OtherChargeAmount:   nil,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
-	}
+	var entity *shipment.Shipment
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "unresolved fields")
+	var unresolved *formulaerrors.UnresolvedFieldError
+	require.ErrorAs(t, err, &unresolved)
+	assert.Equal(t, []string{"freightChargeAmount", "otherChargeAmount"}, unresolved.Fields)
+	require.Error(t, unresolved.Causes["freightChargeAmount"])
+	require.Error(t, unresolved.Causes["otherChargeAmount"])
 	assert.Contains(t, err.Error(), "freightChargeAmount")
 	assert.Contains(t, err.Error(), "otherChargeAmount")
 }
@@ -689,16 +593,15 @@ func TestRatingMethod_ZeroLinearFeet(t *testing.T) {
 		},
 	}
 
-	shipment := &RatingMethodShipment{
-		ID:          "SP_EMPTY",
-		ProNumber:   "PRO-EMPTY-001",
-		Moves:       []*RatingMethodMove{},
-		Commodities: []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-EMPTY-001"
+		s.Moves = []*shipment.ShipmentMove{}
+		s.Commodities = []*shipment.ShipmentCommodity{}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -719,19 +622,15 @@ func TestRatingMethod_InvalidNullDecimalHandling(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	invalidDecimal := decimal.NullDecimal{Valid: false}
-	shipment := &RatingMethodShipment{
-		ID:                  "SP_INVALID",
-		ProNumber:           "PRO-INVALID-001",
-		FreightChargeAmount: &invalidDecimal,
-		OtherChargeAmount:   &invalidDecimal,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-INVALID-001"
+		s.FreightChargeAmount = decimal.NullDecimal{Valid: false}
+		s.OtherChargeAmount = decimal.NullDecimal{Valid: false}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -752,20 +651,15 @@ func TestRatingMethod_MixedValidInvalidCharges(t *testing.T) {
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
-	validCharge := decimal.NewNullDecimal(decimal.NewFromFloat(500.00))
-	invalidCharge := decimal.NullDecimal{Valid: false}
-	shipment := &RatingMethodShipment{
-		ID:                  "SP_MIXED",
-		ProNumber:           "PRO-MIXED-001",
-		FreightChargeAmount: &validCharge,
-		OtherChargeAmount:   &invalidCharge,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO-MIXED-001"
+		s.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(500.00))
+		s.OtherChargeAmount = decimal.NullDecimal{Valid: false}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 

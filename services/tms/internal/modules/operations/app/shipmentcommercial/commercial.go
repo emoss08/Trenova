@@ -47,6 +47,7 @@ type Params struct {
 	BillingControlRepo tenantports.BillingControlRepository
 	FuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	DetentionEngine    *detentionservice.Service
+	Hydrator           ratequoteports.ShipmentRatingHydrator
 }
 
 type Calculator struct {
@@ -59,6 +60,7 @@ type Calculator struct {
 	billingControlRepo tenantports.BillingControlRepository
 	fuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	detentionEngine    *detentionservice.Service
+	hydrator           ratequoteports.ShipmentRatingHydrator
 	now                func() int64
 }
 
@@ -73,6 +75,7 @@ func New(p Params) *Calculator {
 		billingControlRepo: p.BillingControlRepo,
 		fuelSurcharge:      p.FuelSurcharge,
 		detentionEngine:    p.DetentionEngine,
+		hydrator:           p.Hydrator,
 		now:                timeutils.NowUnix,
 	}
 }
@@ -132,6 +135,20 @@ func (c *Calculator) CalculateTotals(
 	}, nil
 }
 
+func (c *Calculator) hydrate(ctx context.Context, entity *shipment.Shipment) error {
+	if c.hydrator == nil || entity == nil {
+		return nil
+	}
+
+	return c.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
+		Shipment: entity,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
+}
+
 func findGeneratedFuelSurchargeCharge(entity *shipment.Shipment) *shipment.AdditionalCharge {
 	for _, charge := range entity.AdditionalCharges {
 		if charge != nil && charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil {
@@ -156,6 +173,10 @@ func (c *Calculator) calculateCommercialTotals(
 	ctx = ratetablecache.With(ctx)
 	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
+
+	if err := c.hydrate(ctx, entity); err != nil {
+		return decimal.Zero, decimal.Zero, nil, err
+	}
 
 	if sync.detention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {

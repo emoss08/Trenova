@@ -468,12 +468,18 @@ export class FormulaTemplateService {
     return safeParse(reviewNoteResponseSchema, response, "Reviewer Note");
   }
 
+  /**
+   * Approves the template. With `effectiveFrom` the approved content bills from
+   * that moment; until then the previously approved content keeps billing.
+   */
   public async approve(
     templateId: FormulaTemplate["id"],
     comment: string,
+    effectiveFrom?: number | null,
   ): Promise<FormulaTemplate> {
     const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/approve`, {
       comment,
+      effectiveFrom: effectiveFrom ?? null,
     });
 
     return safeParse(formulaTemplateSchema, response, "Formula Template");

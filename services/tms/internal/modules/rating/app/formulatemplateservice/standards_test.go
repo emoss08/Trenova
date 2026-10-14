@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice/standardcatalog"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestInstallStandards_CreatesMissingTemplates(t *testing.T) {
 		Return([]*formulatemplate.FormulaTemplate{}, nil)
 	deps.repo.On("Create", mock.Anything, mock.MatchedBy(
 		func(entity *formulatemplate.FormulaTemplate) bool {
-			return entity.Status == formulatemplate.StatusActive &&
+			return entity.Status == formulatemplate.StatusDraft &&
 				entity.CurrentVersionNumber == 1
 		},
 	)).Return(func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {

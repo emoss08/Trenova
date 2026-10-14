@@ -27,7 +27,7 @@ func TestResolveError(t *testing.T) {
 		cause := errors.New("cause")
 		err := formulaerrors.NewResolveError("weight", "Order", cause)
 
-		assert.Equal(t, "failed to resolve weight on Order: cause", err.Error())
+		assert.Equal(t, "failed to resolve weight: cause", err.Error())
 	})
 
 	t.Run("Unwrap returns cause", func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestComputeError(t *testing.T) {
 		cause := errors.New("cause")
 		err := formulaerrors.NewComputeError("AVG", "Charge", cause)
 
-		assert.Equal(t, "failed to compute AVG for Charge: cause", err.Error())
+		assert.Equal(t, "failed to compute AVG: cause", err.Error())
 	})
 
 	t.Run("Unwrap returns cause", func(t *testing.T) {

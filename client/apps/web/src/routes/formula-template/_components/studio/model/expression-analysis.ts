@@ -29,6 +29,8 @@ export type ExpressionAnalysis = {
   bindings: ReadonlySet<string>;
   program: Program;
   resultType: ExprType;
+  /** The engine's schema is still loading, so names have not been checked yet. */
+  pending: boolean;
 };
 
 const EMPTY_SET: ReadonlySet<string> = new Set();
@@ -54,6 +56,7 @@ export function analyzeExpression(expression: string, known: KnownIdentifiers): 
     bindings: new Set(analysis.bindings.keys()),
     program: analysis.program,
     resultType: analysis.resultType,
+    pending: analysis.pending,
   };
 }
 

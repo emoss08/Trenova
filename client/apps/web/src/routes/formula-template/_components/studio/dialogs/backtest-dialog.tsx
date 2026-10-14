@@ -54,10 +54,12 @@ export function BacktestDialog({
           <DialogDescription>
             {backtest.data
               ? t(
-                  "Re-rates {0} recent shipments with the active version and with the editor's.",
+                  "Compares what {0} recent shipments billed with what the editor's content would charge them.",
                   backtest.data.summary.shipmentCount,
                 )
-              : t("Re-rates recent shipments with the active version and with the editor's.")}
+              : t(
+                  "Compares what recent shipments billed with what the editor's content would charge them.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <ImpactSummary

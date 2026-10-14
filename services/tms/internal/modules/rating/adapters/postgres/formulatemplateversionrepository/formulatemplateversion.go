@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
@@ -418,9 +419,10 @@ func (r *repository) ListScheduled(
 						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
 						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
 						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull())
+						Where(formulatemplatecol.FormulaTemplateVersionColumns.Status.Eq(), formulatemplate.StatusActive).
+						Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.Gt(), timeutils.NowUnix())
 				}).
-				OrderExpr("ftv.effective_from ASC").
+				Order(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.OrderAsc()).
 				Scan(ctx)
 			if err != nil {
 				log.Error("failed to list scheduled versions", zap.Error(err))
@@ -430,6 +432,71 @@ func (r *repository) ListScheduled(
 			return versions, nil
 		},
 	)
+}
+
+func (r *repository) ListApproved(
+	ctx context.Context,
+	req *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
+			ftv := formulatemplatecol.FormulaTemplateVersionColumns
+
+			versions := make([]*formulatemplate.FormulaTemplateVersion, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&versions).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
+						Where(ftv.TemplateID.Eq(), req.TemplateID).
+						Where(ftv.Status.Eq(), formulatemplate.StatusActive)
+				}).
+				Order(ftv.VersionNumber.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.With(
+					zap.String("operation", "ListApproved"),
+					zap.String("templateID", req.TemplateID.String()),
+				).Error("failed to list approved versions", zap.Error(err))
+				return nil, err
+			}
+
+			return versions, nil
+		},
+	)
+}
+
+func (r *repository) ListAuthorIDsSince(
+	ctx context.Context,
+	req *formulatemplateports.ListVersionAuthorsRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		ftv := formulatemplatecol.FormulaTemplateVersionColumns
+
+		authors := make([]pulid.ID, 0, 2)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*formulatemplate.FormulaTemplateVersion)(nil)).
+			Distinct().
+			Column(ftv.CreatedByID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
+					Where(ftv.TemplateID.Eq(), req.TemplateID).
+					Where(ftv.VersionNumber.Gt(), req.AfterVersion)
+			}).
+			Scan(ctx, &authors)
+		if err != nil {
+			r.l.With(
+				zap.String("operation", "ListAuthorIDsSince"),
+				zap.String("templateID", req.TemplateID.String()),
+			).Error("failed to list version authors", zap.Error(err))
+			return nil, err
+		}
+
+		return authors, nil
+	})
 }
 
 func (r *repository) GetLatestByStatus(
@@ -488,11 +555,12 @@ func (r *repository) ClearScheduled(
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*formulatemplate.FormulaTemplateVersion)(nil)).
-			Set(ftv.EffectiveFrom.String()+" = NULL").
+			Set(ftv.Status.Set(), formulatemplate.StatusInactive).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return formulatemplatecol.FormulaTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(ftv.TemplateID.Eq(), req.TemplateID).
-					Where(ftv.EffectiveFrom.IsNotNull())
+					Where(ftv.Status.Eq(), formulatemplate.StatusActive).
+					Where(ftv.EffectiveFrom.Gt(), timeutils.NowUnix())
 			}).
 			Exec(ctx)
 		if err != nil {

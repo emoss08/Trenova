@@ -93,7 +93,7 @@ func TestService_EvaluateExpression_AbsentOptionalRelationReadsAsEmpty(t *testin
 	}
 
 	resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-		Expression: `(trailerType.code ?? "none") == "none" && shipmentType.code == nil ? 1 : 0`,
+		Expression: `(trailerType?.code ?? "none") == "none" && shipmentType == nil ? 1 : 0`,
 		Entity:     entity,
 		SchemaID:   "shipment",
 	})

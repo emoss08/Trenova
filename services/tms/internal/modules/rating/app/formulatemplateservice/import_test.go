@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -267,4 +268,50 @@ func TestImport_IgnoresUnresolvableSourceTemplate(t *testing.T) {
 
 	require.NoError(t, err)
 	deps.repo.AssertExpectations(t)
+}
+
+func TestImport_AnOlderExportIsInTheCurrentLanguage(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	deps.repo.On("FindByNames", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplate{}, nil)
+	deps.repo.On("Create", mock.Anything, mock.MatchedBy(
+		func(entity *formulatemplate.FormulaTemplate) bool {
+			return entity.LanguageVersion == formulatypes.CurrentLanguageVersion
+		},
+	)).Return(newTestTemplate(), nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Import(t.Context(), &ImportTemplatesRequest{
+		ExportVersion: "1.3",
+		Template:      newImportPayload("Older export"),
+		TenantInfo:    newTenantInfo(),
+	})
+
+	require.NoError(t, err)
+	deps.repo.AssertExpectations(t)
+}
+
+func TestImport_RefusesALanguageThisServerCannotRead(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	deps.repo.On("FindByNames", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplate{}, nil)
+
+	payload := newImportPayload("From a newer server")
+	payload.LanguageVersion = formulatypes.LanguageVersion(2)
+
+	_, err := deps.svc.Import(t.Context(), &ImportTemplatesRequest{
+		ExportVersion: "1.4",
+		Templates:     []*ImportTemplatePayload{payload},
+		TenantInfo:    newTenantInfo(),
+	})
+
+	require.Error(t, err)
+	assert.Contains(t, importErrorFields(err), "templates[0].languageVersion")
+	deps.repo.AssertNotCalled(t, "Create")
 }

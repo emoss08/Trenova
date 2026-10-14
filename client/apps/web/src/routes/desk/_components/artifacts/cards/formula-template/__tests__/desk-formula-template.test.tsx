@@ -7,6 +7,7 @@ import type {
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskFormulaTemplate } from "../desk-formula-template";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
 const service = vi.hoisted(() => ({
   get: vi.fn(),
@@ -36,6 +37,7 @@ function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
       "max(baseRate * totalDistance, minimumLinehaul) + reeferFee + (teamService ? 150 : 0)",
     status: "Active",
     schemaId: "shipment",
+    languageVersion: 1,
     variableDefinitions: [
       {
         name: "baseRate",
@@ -117,7 +119,7 @@ beforeEach(() => {
   access.write = true;
   for (const fn of Object.values(service)) fn.mockReset();
   service.get.mockResolvedValue(template());
-  service.getSchema.mockResolvedValue({ schemaId: "shipment", variables: [], functions: [] });
+  service.getSchema.mockResolvedValue(describedShipment);
   service.getUsage.mockResolvedValue({
     inUse: true,
     usages: [
@@ -185,7 +187,9 @@ describe("DeskFormulaTemplate", () => {
     const formula = await screen.findByLabelText("Formula", { selector: "pre" });
     expect(formula).toHaveTextContent(template().expression);
     expect(within(formula).getByText("baseRate")).toHaveClass("dk-ft-var");
-    expect(within(formula).getByText("totalDistance")).toHaveClass("dk-ft-field");
+    await waitFor(() =>
+      expect(within(formula).getByText("totalDistance")).toHaveClass("dk-ft-field"),
+    );
     expect(within(formula).getByText("max")).toHaveClass("dk-ft-fn");
   });
 

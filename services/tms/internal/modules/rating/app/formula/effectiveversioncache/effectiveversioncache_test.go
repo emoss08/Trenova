@@ -61,24 +61,6 @@ func TestGetVersion_MemoizesAbsence(t *testing.T) {
 	assert.Equal(t, 1, calls)
 }
 
-func TestGetLatestActive_IsSeparateFromNumberedVersions(t *testing.T) {
-	t.Parallel()
-
-	ctx := effectiveversioncache.With(t.Context())
-	templateID := pulid.MustNew("ft_")
-	active := &formulatemplate.FormulaTemplateVersion{VersionNumber: 2}
-	calls := 0
-
-	got, err := effectiveversioncache.GetLatestActive(ctx, templateID, countingLoad(&calls, active))
-	require.NoError(t, err)
-	assert.Same(t, active, got)
-
-	got, err = effectiveversioncache.GetVersion(ctx, templateID, 2, countingLoad(&calls, active))
-	require.NoError(t, err)
-	assert.Same(t, active, got)
-	assert.Equal(t, 2, calls, "latest-active and version 2 are distinct slots")
-}
-
 func TestGetVersion_WithoutMemoLoadsEveryTime(t *testing.T) {
 	t.Parallel()
 
@@ -95,4 +77,26 @@ func TestGetVersion_WithoutMemoLoadsEveryTime(t *testing.T) {
 		require.NoError(t, err)
 	}
 	assert.Equal(t, 2, calls)
+}
+
+func TestEffectiveAsOf_PicksTheWindowInForceElseTheEarliest(t *testing.T) {
+	t.Parallel()
+
+	scheduled := int64(900)
+	approved := []*formulatemplate.FormulaTemplateVersion{
+		{VersionNumber: 2, CreatedAt: 500},
+		{VersionNumber: 1, CreatedAt: 100},
+		{VersionNumber: 3, CreatedAt: 600, EffectiveFrom: &scheduled},
+		nil,
+	}
+
+	versionAt := func(asOf int64) int64 {
+		return effectiveversioncache.EffectiveAsOf(approved, asOf).VersionNumber
+	}
+	assert.EqualValues(t, 1, versionAt(50), "before every window, the earliest approved snapshot")
+	assert.EqualValues(t, 1, versionAt(499))
+	assert.EqualValues(t, 2, versionAt(500))
+	assert.EqualValues(t, 2, versionAt(899), "a scheduled start is not in force before its date")
+	assert.EqualValues(t, 3, versionAt(900))
+	assert.Nil(t, effectiveversioncache.EffectiveAsOf(nil, 900))
 }

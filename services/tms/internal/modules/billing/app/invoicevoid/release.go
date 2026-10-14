@@ -196,11 +196,13 @@ func restoreShipments(
 		case rebill:
 			shp.Status = shipment.StatusReadyToInvoice
 			shp.BilledAt = nil
+			shp.RateLocked = false
 		case stillBilled:
 			shp.BilledAt = nil
 		default:
 			shp.Status = shipment.StatusCompleted
 			shp.BilledAt = nil
+			shp.RateLocked = false
 		}
 		if _, err = deps.ShipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 			return err

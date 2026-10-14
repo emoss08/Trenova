@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -39,8 +40,6 @@ const (
 	ReadinessCheckAge        = "submissionAge"
 )
 
-var reconcileTolerance = decimal.New(5, -3)
-
 type ReadinessRequest struct {
 	TenantInfo pagination.TenantInfo
 	TemplateID pulid.ID
@@ -64,12 +63,13 @@ func (c *ReadinessCheck) refusalMessage() string {
 }
 
 type ReadinessResponse struct {
-	CanSubmit       bool             `json:"canSubmit"`
-	CanApprove      bool             `json:"canApprove"`
-	Checks          []ReadinessCheck `json:"checks"`
-	ScenarioTotal   int              `json:"scenarioTotal"`
-	ScenarioPassed  int              `json:"scenarioPassed"`
-	ScenarioFailing []string         `json:"scenarioFailing,omitempty"`
+	CanSubmit        bool              `json:"canSubmit"`
+	CanApprove       bool              `json:"canApprove"`
+	Checks           []ReadinessCheck  `json:"checks"`
+	ScenarioTotal    int               `json:"scenarioTotal"`
+	ScenarioPassed   int               `json:"scenarioPassed"`
+	ScenarioFailing  []string          `json:"scenarioFailing,omitempty"`
+	PendingSchedules []ScheduledWindow `json:"pendingSchedules"`
 }
 
 type submissionGate struct {
@@ -138,6 +138,12 @@ func (s *Service) Readiness(
 		resp.Checks = append(resp.Checks, breakdownCheck)
 	}
 	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
+
+	resp.PendingSchedules, err = s.pendingSchedules(ctx, template.ID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to list pending schedules", zap.Error(err))
+		return nil, err
+	}
 
 	blocking := gate.blocking()
 	resp.CanSubmit = !blocking && submittable(template.Status)
@@ -291,13 +297,24 @@ func (s *Service) nullableReadiness(
 		}
 	}
 
+	details := make([]string, 0, 2)
 	if len(fields) > 0 {
-		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf(
+		details = append(details, fmt.Sprintf(
 			"%s can be empty: %s",
 			stringutils.CountNoun(len(fields), "value", "values"),
 			strings.Join(fields, ", "),
-		)
+		))
+	}
+	if template.Type == formulatemplate.TemplateTypeFreightCharge &&
+		slices.ContainsFunc(expressions, func(expression string) bool {
+			return s.formulaService.ReferencesField(expression, storedTotalField)
+		}) {
+		details = append(details, storedTotalField+
+			" is the total stored before this rating, so the freight charge trails by one save")
+	}
+	if len(details) > 0 {
+		check.Status = ReadinessWarn
+		check.Detail = strings.Join(details, "; ")
 		return check
 	}
 
@@ -405,7 +422,10 @@ func (s *Service) breakdownReadiness(
 	}
 
 	raw := result.RawAmount()
-	if sum.Sub(raw).Abs().GreaterThan(reconcileTolerance) {
+	policy := template.ChargePolicy()
+	if sum.Sub(policy.RoundingMode.Round(raw, policy.RoundingPrecision)).
+		Abs().
+		GreaterThan(formula.BreakdownReconcileTolerance) {
 		check.Status = ReadinessWarn
 		check.Detail = fmt.Sprintf(
 			"Lines don't add up to the formula: they come to %s and the formula to %s",

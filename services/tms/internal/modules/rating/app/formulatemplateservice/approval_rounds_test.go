@@ -192,6 +192,7 @@ func TestApprove_RefusesAStaleSubmission(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
 		EntityID:   template.ID,
@@ -283,4 +284,120 @@ func TestSubmissionAgeCheck(t *testing.T) {
 	draft.Status = formulatemplate.StatusDraft
 	assert.Equal(t, ReadinessPass, submissionAgeCheck(draft, now).Status,
 		"age only matters while a decision is pending")
+}
+
+func approvableTemplate(deps *testDeps) *formulatemplate.FormulaTemplate {
+	submitterID := pulid.MustNew("usr_")
+	submittedAt := timeutils.NowUnix() - 3600
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.SubmittedByID = &submitterID
+	template.SubmittedAt = &submittedAt
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
+	return template
+}
+
+func TestApprove_TheApprovedSnapshotTakesEffectWhenApproved(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, nil)
+	template := approvableTemplate(deps)
+
+	var snapshot *formulatemplate.FormulaTemplateVersion
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			snapshot = args.Get(1).(*formulatemplate.FormulaTemplateVersion)
+		}).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	before := timeutils.NowUnix()
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo: newTenantInfo(),
+		EntityID:   template.ID,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, snapshot)
+	assert.Equal(t, formulatemplate.StatusActive, snapshot.Status)
+	require.NotNil(t, snapshot.EffectiveFrom, "approval closes the previous window")
+	assert.GreaterOrEqual(t, *snapshot.EffectiveFrom, before)
+}
+
+func TestApproveFrom_AChosenDateStartsTheWindowThen(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, nil)
+	template := approvableTemplate(deps)
+
+	var snapshot *formulatemplate.FormulaTemplateVersion
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			snapshot = args.Get(1).(*formulatemplate.FormulaTemplateVersion)
+		}).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	firstOfNextMonth := timeutils.NowUnix() + 30*86_400
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	_, err := deps.svc.ApproveFrom(t.Context(), &ApproveRequest{
+		ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: newTenantInfo(),
+			EntityID:   template.ID,
+		},
+		EffectiveFrom: &firstOfNextMonth,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, snapshot)
+	require.NotNil(t, snapshot.EffectiveFrom)
+	assert.Equal(t, firstOfNextMonth, *snapshot.EffectiveFrom)
+}
+
+func TestApproveFrom_RefusesADateInThePast(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, nil)
+
+	lastWeek := timeutils.NowUnix() - 7*86_400
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	_, err := deps.svc.ApproveFrom(t.Context(), &ApproveRequest{
+		ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: newTenantInfo(),
+			EntityID:   pulid.MustNew("ft_"),
+		},
+		EffectiveFrom: &lastWeek,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "past")
+	deps.repo.AssertNotCalled(t, "Update")
+}
+
+func TestApprove_RefusesAnyoneWhoAuthoredTheRevision(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, &formulatemplate.Review{
+		Round: 2, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 4,
+	})
+	template := approvableTemplate(deps)
+	approver := newTenantInfo()
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.MatchedBy(
+		func(req *formulatemplateports.ListVersionAuthorsRequest) bool {
+			return req.TemplateID == template.ID && req.AfterVersion == 4
+		},
+	)).Return([]pulid.ID{pulid.MustNew("usr_"), approver.UserID}, nil)
+
+	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo: approver,
+		EntityID:   template.ID,
+	})
+	require.Error(t, err, "the approver edited the revision even though someone else submitted it")
+	assert.Contains(t, err.Error(), "authored")
+	deps.repo.AssertNotCalled(t, "Update")
 }

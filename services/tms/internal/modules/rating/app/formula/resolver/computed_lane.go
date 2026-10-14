@@ -1,11 +1,10 @@
 package resolver
 
-import "time"
+import (
+	"time"
 
-// Lane and temporal variables never error: a shipment mid-entry may not have
-// its stop locations loaded or any stops at all, and a formula referencing
-// origin.state on it should price with an empty value rather than fail the
-// save. Timestamps are interpreted in UTC because stops carry no timezone.
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+)
 
 func registerLaneComputed(r *Resolver) {
 	r.RegisterComputed("computeOriginCity", computeOriginCity)
@@ -22,125 +21,107 @@ func registerLaneComputed(r *Resolver) {
 	r.RegisterComputed("computeDeliveryDate", computeDeliveryDate)
 }
 
-func firstStopOf(entity any) any {
-	stops, err := orderedStops(entity)
-	if err != nil || len(stops) == 0 {
-		return nil
-	}
-	return stops[0]
-}
-
-func lastStopOf(entity any) any {
-	stops, err := orderedStops(entity)
-	if err != nil || len(stops) == 0 {
-		return nil
-	}
-	return stops[len(stops)-1]
-}
-
-func stopLocationString(stop any, fieldName string) string {
-	if stop == nil {
-		return ""
-	}
-
-	location, err := getFieldValue(stop, "Location")
-	if err != nil || location == nil || isNilInterface(location) {
-		return ""
-	}
-
-	value, err := getFieldString(location, fieldName)
+func originStopOf(entity any) (*shipment.Stop, error) {
+	entry, err := shipmentOf(entity)
 	if err != nil {
-		return ""
+		return nil, err
 	}
-
-	return value
+	return entry.ShipperStop(), nil
 }
 
-func stopLocationState(stop any) string {
-	if stop == nil {
-		return ""
-	}
-
-	location, err := getFieldValue(stop, "Location")
-	if err != nil || location == nil || isNilInterface(location) {
-		return ""
-	}
-
-	state, err := getFieldValue(location, "State")
-	if err != nil || state == nil || isNilInterface(state) {
-		return ""
-	}
-
-	abbreviation, err := getFieldString(state, "Abbreviation")
+func destinationStopOf(entity any) (*shipment.Stop, error) {
+	entry, err := shipmentOf(entity)
 	if err != nil {
+		return nil, err
+	}
+	return entry.DeliveryStop(), nil
+}
+
+func stopCity(stop *shipment.Stop) string {
+	if stop == nil || stop.Location == nil {
 		return ""
 	}
-
-	return abbreviation
+	return stop.Location.City
 }
 
-func computeOriginCity(entity any) (any, error) {
-	return stopLocationString(firstStopOf(entity), "City"), nil
+func stopZip(stop *shipment.Stop) string {
+	if stop == nil || stop.Location == nil {
+		return ""
+	}
+	return stop.Location.PostalCode
 }
 
-func computeOriginState(entity any) (any, error) {
-	return stopLocationState(firstStopOf(entity)), nil
+func stopTimezone(stop *shipment.Stop) string {
+	if stop == nil || stop.Location == nil {
+		return ""
+	}
+	return stop.Location.Timezone
 }
 
-func computeOriginZip(entity any) (any, error) {
-	return stopLocationString(firstStopOf(entity), "PostalCode"), nil
+func stopState(stop *shipment.Stop) string {
+	if stop == nil || stop.Location == nil || stop.Location.State == nil {
+		return ""
+	}
+	return stop.Location.State.Abbreviation
 }
 
-func computeDestinationCity(entity any) (any, error) {
-	return stopLocationString(lastStopOf(entity), "City"), nil
+func laneText(
+	pick func(any) (*shipment.Stop, error),
+	read func(*shipment.Stop) string,
+) ComputedFunc {
+	return func(entity any) (any, error) {
+		stop, err := pick(entity)
+		if err != nil {
+			return "", err
+		}
+		return read(stop), nil
+	}
 }
 
-func computeDestinationState(entity any) (any, error) {
-	return stopLocationState(lastStopOf(entity)), nil
-}
+var (
+	computeOriginCity       = laneText(originStopOf, stopCity)
+	computeOriginState      = laneText(originStopOf, stopState)
+	computeOriginZip        = laneText(originStopOf, stopZip)
+	computeDestinationCity  = laneText(destinationStopOf, stopCity)
+	computeDestinationState = laneText(destinationStopOf, stopState)
+	computeDestinationZip   = laneText(destinationStopOf, stopZip)
+)
 
-func computeDestinationZip(entity any) (any, error) {
-	return stopLocationString(lastStopOf(entity), "PostalCode"), nil
-}
-
-// pickupTime is the first stop's arrival in that stop's local time. A
-// weekend or after-hours surcharge is about the shipper's clock, not the
-// server's, so the location's IANA timezone decides; a location without one
-// falls back to UTC, as does one whose zone the runtime cannot load.
-func pickupTime(entity any) (time.Time, bool) {
-	stop := firstStopOf(entity)
+func stopWindowStart(stop *shipment.Stop) (int64, bool) {
 	if stop == nil {
-		return time.Time{}, false
+		return 0, false
 	}
-
-	timestamp, ok := stopWindowStart(stop)
-	if !ok {
-		return time.Time{}, false
+	if stop.ActualArrival != nil {
+		return *stop.ActualArrival, true
 	}
-
-	return stopLocalTime(stop, timestamp), true
+	if stop.ScheduledWindowStart > 0 {
+		return stop.ScheduledWindowStart, true
+	}
+	return 0, false
 }
 
-// deliveryTime is the last stop's departure in that stop's local time,
-// falling back through actual arrival and the scheduled window end.
-func deliveryTime(entity any) (time.Time, bool) {
-	stop := lastStopOf(entity)
+func stopWindowEnd(stop *shipment.Stop) (int64, bool) {
 	if stop == nil {
-		return time.Time{}, false
+		return 0, false
 	}
-
-	timestamp := stopWindowEnd(stop, 0)
-	if timestamp <= 0 {
-		return time.Time{}, false
+	switch {
+	case stop.ActualDeparture != nil:
+		return *stop.ActualDeparture, true
+	case stop.ActualArrival != nil:
+		return *stop.ActualArrival, true
+	case stop.ScheduledWindowEnd != nil && *stop.ScheduledWindowEnd > 0:
+		return *stop.ScheduledWindowEnd, true
+	case stop.ScheduledWindowStart > 0:
+		return stop.ScheduledWindowStart, true
+	default:
+		return 0, false
 	}
-
-	return stopLocalTime(stop, timestamp), true
 }
 
-func stopLocalTime(stop any, timestamp int64) time.Time {
+func stopLocalTime(stop *shipment.Stop, timestamp int64) time.Time {
 	instant := time.Unix(timestamp, 0).UTC()
 
-	zoneName := stopLocationString(stop, "Timezone")
+	zoneName := stopTimezone(stop)
 	if zoneName == "" {
 		return instant
 	}
@@ -153,76 +134,68 @@ func stopLocalTime(stop any, timestamp int64) time.Time {
 	return instant.In(zone)
 }
 
-func computePickupDate(entity any) (any, error) {
-	pickup, ok := pickupTime(entity)
-	if !ok {
-		return nil, nil //nolint:nilnil // a shipment without stops has no pickup date
+func pickupTime(entity any) (time.Time, bool, error) {
+	stop, err := originStopOf(entity)
+	if err != nil {
+		return time.Time{}, false, err
 	}
 
+	timestamp, ok := stopWindowStart(stop)
+	if !ok {
+		return time.Time{}, false, nil
+	}
+
+	return stopLocalTime(stop, timestamp), true, nil
+}
+
+func deliveryTime(entity any) (time.Time, bool, error) {
+	stop, err := destinationStopOf(entity)
+	if err != nil {
+		return time.Time{}, false, err
+	}
+
+	timestamp, ok := stopWindowEnd(stop)
+	if !ok {
+		return time.Time{}, false, nil
+	}
+
+	return stopLocalTime(stop, timestamp), true, nil
+}
+
+func computePickupDate(entity any) (any, error) {
+	pickup, ok, err := pickupTime(entity)
+	if err != nil || !ok {
+		return nil, err
+	}
 	return pickup, nil
 }
 
 func computeDeliveryDate(entity any) (any, error) {
-	delivery, ok := deliveryTime(entity)
-	if !ok {
-		return nil, nil //nolint:nilnil // a shipment without stops has no delivery date
+	delivery, ok, err := deliveryTime(entity)
+	if err != nil || !ok {
+		return nil, err
 	}
-
 	return delivery, nil
 }
 
-func computePickupDayOfWeek(entity any) (any, error) {
-	pickup, ok := pickupTime(entity)
-	if !ok {
-		return 0, nil
-	}
-
-	return int(pickup.Weekday()), nil
-}
-
-func computePickupHour(entity any) (any, error) {
-	pickup, ok := pickupTime(entity)
-	if !ok {
-		return 0, nil
-	}
-
-	return pickup.Hour(), nil
-}
-
-func computePickupMonth(entity any) (any, error) {
-	pickup, ok := pickupTime(entity)
-	if !ok {
-		return 0, nil
-	}
-
-	return int(pickup.Month()), nil
-}
-
-func computeIsWeekendPickup(entity any) (any, error) {
-	pickup, ok := pickupTime(entity)
-	if !ok {
-		return false, nil
-	}
-
-	weekday := pickup.Weekday()
-	return weekday == time.Saturday || weekday == time.Sunday, nil
-}
-
-func getFieldString(entity any, fieldName string) (string, error) {
-	value, err := getFieldValue(entity, fieldName)
-	if err != nil {
-		return "", err
-	}
-
-	switch typed := value.(type) {
-	case string:
-		return typed, nil
-	case *string:
-		if typed == nil {
-			return "", nil
+func pickupPart(read func(time.Time) any, zero any) ComputedFunc {
+	return func(entity any) (any, error) {
+		pickup, ok, err := pickupTime(entity)
+		if err != nil {
+			return zero, err
 		}
-		return *typed, nil
-	default:
-		return "", nil
+		if !ok {
+			return zero, nil
+		}
+		return read(pickup), nil
 	}
 }
+
+var (
+	computePickupDayOfWeek = pickupPart(func(t time.Time) any { return int(t.Weekday()) }, 0)
+	computePickupHour      = pickupPart(func(t time.Time) any { return t.Hour() }, 0)
+	computePickupMonth     = pickupPart(func(t time.Time) any { return int(t.Month()) }, 0)
+	computeIsWeekendPickup = pickupPart(func(t time.Time) any {
+		return t.Weekday() == time.Saturday || t.Weekday() == time.Sunday
+	}, false)
+)

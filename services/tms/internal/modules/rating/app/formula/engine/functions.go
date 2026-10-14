@@ -5,7 +5,9 @@ import (
 	"math"
 	"reflect"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/expr-lang/expr"
 	"github.com/shopspring/decimal"
 )
@@ -47,11 +49,12 @@ func roundWith(mode ratetypes.RoundingMode, args ...any) (any, error) {
 		decimals = d
 	}
 
-	if math.IsNaN(value) || math.IsInf(value, 0) {
+	exact, ok := decimalutils.FromFloat(value)
+	if !ok {
 		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
 	}
 
-	return mode.Round(decimal.NewFromFloat(value), int32(decimals)).InexactFloat64(), nil
+	return mode.Round(exact, int32(decimals)).InexactFloat64(), nil
 }
 
 func roundFn(args ...any) (any, error) {
@@ -81,15 +84,16 @@ func roundToFn(args ...any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if increment <= 0 || math.IsNaN(increment) || math.IsInf(increment, 0) {
+	step, ok := decimalutils.FromFloat(increment)
+	if !ok || !step.IsPositive() {
 		return nil, fmt.Errorf("roundTo increment must be a positive number, got %v", increment)
 	}
-	if math.IsNaN(value) || math.IsInf(value, 0) {
+	exact, ok := decimalutils.FromFloat(value)
+	if !ok {
 		return nil, fmt.Errorf("cannot round a non-finite value: %v", value)
 	}
 
-	step := decimal.NewFromFloat(increment)
-	multiples := decimal.NewFromFloat(value).Div(step).Round(0)
+	multiples := exact.Div(step).Round(0)
 
 	return multiples.Mul(step).InexactFloat64(), nil
 }
@@ -147,30 +151,38 @@ func extremum(name string, args []any, better func(candidate, best float64) bool
 }
 
 func sumFn(args ...any) (any, error) {
-	values, err := flattenNumbers(args)
+	total, _, err := decimalTotal(args)
 	if err != nil {
 		return nil, err
 	}
-	var total float64
-	for _, v := range values {
-		total += v
-	}
-	return total, nil
+	return total.InexactFloat64(), nil
 }
 
 func avgFn(args ...any) (any, error) {
-	values, err := flattenNumbers(args)
+	total, count, err := decimalTotal(args)
 	if err != nil {
 		return nil, err
 	}
-	if len(values) == 0 {
+	if count == 0 {
 		return 0.0, nil
 	}
-	var total float64
-	for _, v := range values {
-		total += v
+	return total.Div(decimal.NewFromInt(int64(count))).InexactFloat64(), nil
+}
+
+func decimalTotal(args []any) (decimal.Decimal, int, error) {
+	values, err := flattenNumbers(args)
+	if err != nil {
+		return decimal.Zero, 0, err
 	}
-	return total / float64(len(values)), nil
+	total := decimal.Zero
+	for _, value := range values {
+		exact, ok := decimalutils.FromFloat(value)
+		if !ok {
+			return decimal.Zero, 0, fmt.Errorf("cannot add a non-finite value: %v", value)
+		}
+		total = total.Add(exact)
+	}
+	return total, len(values), nil
 }
 
 // flattenNumbers accepts the mix an aggregate is called with — plain numbers
@@ -265,8 +277,22 @@ func toFloat64(v any) (float64, error) {
 		return float64(val), nil
 	case int32:
 		return float64(val), nil
+	case int16:
+		return float64(val), nil
+	case int8:
+		return float64(val), nil
+	case uint:
+		return float64(val), nil
+	case uint64:
+		return float64(val), nil
+	case uint32:
+		return float64(val), nil
+	case uint16:
+		return float64(val), nil
+	case uint8:
+		return float64(val), nil
 	default:
-		return 0, fmt.Errorf("cannot convert %T to float64", v)
+		return 0, fmt.Errorf("expected a number, got %s", errors.DescribeValue(v))
 	}
 }
 
@@ -281,6 +307,6 @@ func toInt(v any) (int, error) {
 	case float64:
 		return int(val), nil
 	default:
-		return 0, fmt.Errorf("cannot convert %T to int", v)
+		return 0, fmt.Errorf("expected a whole number, got %s", errors.DescribeValue(v))
 	}
 }

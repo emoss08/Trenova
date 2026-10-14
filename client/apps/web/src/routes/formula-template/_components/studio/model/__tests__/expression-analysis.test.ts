@@ -1,8 +1,9 @@
 import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { describe, expect, it } from "vitest";
 import { analyzeExpression, inferInputType, keyFromLabel } from "../expression-analysis";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
-const known = buildKnownIdentifiers(undefined, [
+const known = buildKnownIdentifiers(describedShipment, [
   { name: "fuelSurchargePercent", type: "Number", description: "", required: false },
 ]);
 
