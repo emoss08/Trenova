@@ -464,6 +464,8 @@ virtuals:
   AIAnalyticsProvider:
     - removed
     - shortName
+  AIAnalyticsCauseCount:
+    - blame
 
 specials:
   Tractor:
