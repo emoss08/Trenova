@@ -461,6 +461,9 @@ virtuals:
   CustomerPaymentApplication:
     - invoice
     - payment
+  AIAnalyticsProvider:
+    - removed
+    - shortName
 
 specials:
   Tractor:

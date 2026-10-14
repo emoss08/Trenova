@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -300,6 +301,7 @@ type Params struct {
 	AgentDraftingService         agentports.AgentDraftingService
 	AIControlSummaryService      aicontrolsummaryports.AIControlSummaryService
 	AITuneUpService              aituneupports.AITuneUpService
+	AIAnalyticsService           aianalyticsports.AnalyticsService
 	AgentRosterService           agentrosterports.AgentRosterService
 	AIProviderService            agentports.AIProviderService
 	AIUsageService               aiusageports.AIUsageService
@@ -518,6 +520,7 @@ type Services struct {
 	AgentDraftingService         agentports.AgentDraftingService
 	AiControlSummaryService      aicontrolsummaryports.AIControlSummaryService
 	AiTuneUpService              aituneupports.AITuneUpService
+	AiAnalyticsService           aianalyticsports.AnalyticsService
 	AgentRosterService           agentrosterports.AgentRosterService
 	AiProviderService            agentports.AIProviderService
 	AiUsageService               aiusageports.AIUsageService
@@ -742,6 +745,7 @@ func newServices(p *Params) *Services {
 		AgentDraftingService:         p.AgentDraftingService,
 		AiControlSummaryService:      p.AIControlSummaryService,
 		AiTuneUpService:              p.AITuneUpService,
+		AiAnalyticsService:           p.AIAnalyticsService,
 		AgentRosterService:           p.AgentRosterService,
 		AiProviderService:            p.AIProviderService,
 		AiUsageService:               p.AIUsageService,

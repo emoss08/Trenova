@@ -17,6 +17,7 @@ type Fingerprint struct {
 	PromptVersion     string   `json:"promptVersion,omitempty"`
 	InstructionsHash  string   `json:"instructionsHash,omitempty"`
 	Tools             []string `json:"tools,omitempty"`
+	StoppedAtLimit    bool     `json:"stoppedAtLimit,omitempty"`
 }
 
 type FingerprintField string

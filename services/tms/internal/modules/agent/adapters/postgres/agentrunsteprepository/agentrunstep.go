@@ -121,6 +121,7 @@ func (r *repository) Settle(
 			Set(cols.Status.Set(), req.Status).
 			Set(cols.Outcome.Set(), outcome).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.SettledAtMs.Set(), timeutils.NowUnixMilli()).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 			Where(cols.OwnerID.Eq(), req.OwnerID).

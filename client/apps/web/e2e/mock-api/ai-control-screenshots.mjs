@@ -10,7 +10,12 @@ const OUT = resolve(process.argv[2] ?? "e2e/mock-api/screenshots/ai-control");
 const ONLY = process.argv[3] ? new Set(process.argv[3].split(",")) : null;
 const SETTLE_MS = Number(process.env.SETTLE_MS ?? 7000);
 
-const DEFAULT_SCENARIO = { ai: true, aiProviders: "configured", aiPaused: false };
+const DEFAULT_SCENARIO = {
+  ai: true,
+  aiProviders: "configured",
+  aiPaused: false,
+  aiAnalytics: "ok",
+};
 
 /** Scrolls the page's scrolling ancestor so the lower half of a tab is in view. */
 async function scrollDown(page, by = 760) {
@@ -29,7 +34,285 @@ async function scrollDown(page, by = 760) {
   await page.waitForTimeout(400);
 }
 
+/** Scrolls the page so the section heading with this text sits just under the sticky header. */
+async function scrollToSection(page, text, offset = 230) {
+  await page.evaluate(
+    ([label, gap]) => {
+      const target = [...document.querySelectorAll("h2.an-h, .an-card h3")].find(
+        (element) => element.textContent?.trim() === label,
+      );
+      if (!target) throw new Error(`no section "${label}"`);
+      let element = target.parentElement;
+      while (element && element !== document.body) {
+        const style = getComputedStyle(element);
+        if (/(auto|scroll)/.test(style.overflowY) && element.scrollHeight > element.clientHeight)
+          break;
+        element = element.parentElement;
+      }
+      const scroller = element && element !== document.body ? element : document.scrollingElement;
+      const top =
+        target.getBoundingClientRect().top -
+        (scroller === document.scrollingElement ? 0 : scroller.getBoundingClientRect().top);
+      scroller.scrollTop += top - gap;
+    },
+    [text, offset],
+  );
+  await page.waitForTimeout(500);
+}
+
 const SHOTS = [
+  { name: "analytics-dark", scenario: { aiProviders: "all" }, query: "?tab=analytics" },
+  {
+    name: "analytics-light",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    colorScheme: "light",
+  },
+  {
+    name: "analytics-leaderboard",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Leaderboard"),
+  },
+  {
+    name: "analytics-leaderboard-lower",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Tool calls that failed"),
+  },
+  {
+    name: "analytics-tradeoffs",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Trade-offs"),
+  },
+  {
+    name: "analytics-tradeoffs-cost",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Trade-offs");
+      await page.getByRole("combobox", { name: "Across" }).click();
+      await page.getByRole("option", { name: "Cost per completed run" }).click();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "analytics-run-time",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Run time"),
+  },
+  {
+    name: "analytics-run-time-failed",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Run time");
+      await page
+        .getByRole("radiogroup", { name: "Outcome" })
+        .getByRole("radio", { name: "Failed" })
+        .click();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "analytics-over-time",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Over time", 120),
+  },
+  {
+    name: "analytics-over-time-hover",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Over time", 120);
+      const chart = page.getByRole("img", { name: "Over time" });
+      const box = await chart.boundingBox();
+      await page.mouse.move(box.x + box.width * 0.62, box.y + box.height * 0.6);
+      await page.waitForTimeout(400);
+    },
+  },
+  {
+    name: "analytics-tool-calls",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Tool calls"),
+  },
+  {
+    name: "analytics-task-fit",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Routing and judgment"),
+  },
+  {
+    name: "analytics-decisions-health",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "What people did with its proposals", 120),
+  },
+  {
+    name: "analytics-sheet-model",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await page.getByRole("link", { name: "Claude Sonnet 5" }).first().click();
+      await page.waitForTimeout(700);
+    },
+  },
+  {
+    name: "analytics-sheet-tool-failures",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Tool calls");
+      await page
+        .getByRole("row")
+        .filter({ hasText: "assign_driver" })
+        .getByRole("cell", { name: /^Llama 3\.3 70B · / })
+        .click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "analytics-route-confirm",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Routing and judgment");
+      await page.getByRole("button", { name: /Use Bedrock/ }).click();
+      await page.waitForTimeout(600);
+    },
+  },
+  {
+    name: "analytics-routed",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Routing and judgment");
+      await page.getByRole("button", { name: /Use Bedrock/ }).click();
+      await page.waitForTimeout(500);
+      await page.getByRole("button", { name: "Route it" }).click();
+      await page.waitForTimeout(1500);
+    },
+  },
+  {
+    name: "analytics-same-model",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: (page) => scrollToSection(page, "Same model, different provider", 120),
+  },
+  {
+    name: "analytics-put-first",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Same model, different provider", 120);
+      await page.getByRole("button", { name: /^Put Groq first/ }).click();
+      await page.waitForTimeout(1500);
+    },
+  },
+  {
+    name: "analytics-highlight",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Leaderboard", 140);
+      await page
+        .getByRole("button", { name: /^Qwen 2\.5 14B/ })
+        .first()
+        .hover();
+      await page.waitForTimeout(400);
+    },
+  },
+  {
+    name: "analytics-hidden-series",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await page
+        .getByRole("button", { name: /^GPT-5\.1 mini/ })
+        .first()
+        .click();
+      await page
+        .getByRole("button", { name: /^Gemini 3 Flash/ })
+        .first()
+        .click();
+      await page.mouse.move(0, 0);
+      await scrollToSection(page, "Leaderboard", 140);
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "analytics-agent-few",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&analyticsAgent=agd_billev",
+    act: (page) => scrollToSection(page, "Leaderboard", 140),
+  },
+  {
+    name: "analytics-no-match",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&window=Day&analyticsAgent=agd_settle",
+  },
+  { name: "analytics-no-provider", scenario: { aiProviders: "none" }, query: "?tab=analytics" },
+  {
+    name: "analytics-light-lower",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    colorScheme: "light",
+    act: (page) => scrollToSection(page, "Tool calls", 140),
+  },
+  {
+    name: "analytics-by-provider",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&compare=Provider",
+  },
+  {
+    name: "analytics-by-provider-leaderboard",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&compare=Provider",
+    act: (page) => scrollToSection(page, "Leaderboard"),
+  },
+  {
+    name: "analytics-24-hours",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&window=Day",
+  },
+  {
+    name: "analytics-24-hours-over-time",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&window=Day",
+    act: (page) => scrollToSection(page, "Over time", 120),
+  },
+  {
+    name: "analytics-task-filter",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&analyticsTask=AssistantChat",
+  },
+  {
+    name: "analytics-new-york-week",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&window=Week",
+    timezoneId: "America/New_York",
+    act: (page) => scrollToSection(page, "Run time", 60),
+  },
+  {
+    name: "analytics-error",
+    scenario: { aiProviders: "all", aiAnalytics: "error" },
+    query: "?tab=analytics",
+  },
+  {
+    name: "analytics-unknown-task",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&analyticsTask=NotATask",
+  },
+  {
+    name: "analytics-narrow-1000",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    viewport: { width: 1000, height: 900 },
+  },
   { name: "overview-dark", scenario: {} },
   { name: "overview-lower", scenario: {}, act: (page) => scrollDown(page) },
   { name: "overview-light", scenario: {}, colorScheme: "light" },
@@ -62,7 +345,12 @@ const SHOTS = [
   },
   { name: "overview-narrow-1000", scenario: {}, viewport: { width: 1000, height: 900 } },
   { name: "agents", scenario: {}, query: "?tab=agents" },
-  { name: "agents-lower", scenario: {}, query: "?tab=agents", act: (page) => scrollDown(page, 900) },
+  {
+    name: "agents-lower",
+    scenario: {},
+    query: "?tab=agents",
+    act: (page) => scrollDown(page, 900),
+  },
   { name: "agents-light", scenario: {}, query: "?tab=agents", colorScheme: "light" },
   { name: "agents-shadow-filter", scenario: {}, query: "?tab=agents&agents=shadow" },
   { name: "agents-no-provider", scenario: { aiProviders: "none" }, query: "?tab=agents" },
@@ -80,7 +368,10 @@ const SHOTS = [
     scenario: {},
     query: "?tab=agents",
     act: async (page) => {
-      await page.getByRole("button", { name: /Billing exceptions/ }).first().click();
+      await page
+        .getByRole("button", { name: /Billing exceptions/ })
+        .first()
+        .click();
       await page.waitForTimeout(500);
     },
   },
@@ -89,7 +380,10 @@ const SHOTS = [
     scenario: {},
     query: "?tab=agents",
     act: async (page) => {
-      await page.getByRole("button", { name: /Report analyst/ }).first().click();
+      await page
+        .getByRole("button", { name: /Report analyst/ })
+        .first()
+        .click();
       await page.waitForTimeout(400);
       await page.getByRole("button", { name: "Remove", exact: true }).click();
     },
@@ -156,7 +450,11 @@ const SHOTS = [
       await page.getByRole("button", { name: "Add tools" }).first().click();
     },
   },
-  { name: "builder-create", scenario: {}, query: "?tab=agents&panelType=create&panelEntityId=blank" },
+  {
+    name: "builder-create",
+    scenario: {},
+    query: "?tab=agents&panelType=create&panelEntityId=blank",
+  },
   {
     name: "builder-create-started",
     scenario: {},
@@ -172,12 +470,27 @@ const SHOTS = [
     query: "?tab=agents&panelType=create&panelEntityId=blank",
   },
   { name: "providers", scenario: {}, query: "?tab=providers" },
-  { name: "providers-lower", scenario: {}, query: "?tab=providers", act: (page) => scrollDown(page, 700) },
+  {
+    name: "providers-lower",
+    scenario: {},
+    query: "?tab=providers",
+    act: (page) => scrollDown(page, 700),
+  },
   { name: "providers-light", scenario: {}, query: "?tab=providers", colorScheme: "light" },
   { name: "providers-many", scenario: { aiProviders: "many" }, query: "?tab=providers" },
   { name: "providers-empty", scenario: { aiProviders: "none" }, query: "?tab=providers" },
-  { name: "providers-empty-light", scenario: { aiProviders: "none" }, query: "?tab=providers", colorScheme: "light" },
-  { name: "providers-many-light", scenario: { aiProviders: "many" }, query: "?tab=providers", colorScheme: "light" },
+  {
+    name: "providers-empty-light",
+    scenario: { aiProviders: "none" },
+    query: "?tab=providers",
+    colorScheme: "light",
+  },
+  {
+    name: "providers-many-light",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    colorScheme: "light",
+  },
   {
     name: "providers-show-off",
     scenario: { aiProviders: "many" },
@@ -408,6 +721,7 @@ for (const shot of SHOTS) {
   const page = await browser.newPage({
     viewport: shot.viewport ?? { width: 1440, height: 1000 },
     colorScheme: shot.colorScheme ?? "dark",
+    ...(shot.timezoneId ? { timezoneId: shot.timezoneId } : {}),
   });
   await page.clock.install({ time: new Date(anchor * 1000) });
   const errors = [];

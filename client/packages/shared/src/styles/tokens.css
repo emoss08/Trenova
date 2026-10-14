@@ -429,6 +429,25 @@
   --syntax-type: oklch(0.5 0.085 var(--hue-teal));
   --syntax-meta: oklch(0.5 0.16 var(--hue-rose));
 
+  /* Series ---------------------------------------------------------------
+     Comparison charts give every model and every provider a hue of its own,
+     held by a stable key rather than by sort order, so the same model is the
+     same colour in every chart and on every visit. Twelve hues thirty degrees
+     apart at one lightness; the chroma is trimmed only where the full 0.15
+     would leave sRGB. The same values serve both themes. */
+  --series-1: oklch(0.72 0.144 258);
+  --series-2: oklch(0.72 0.12 198);
+  --series-3: oklch(0.72 0.15 28);
+  --series-4: oklch(0.72 0.15 78);
+  --series-5: oklch(0.72 0.15 318);
+  --series-6: oklch(0.72 0.15 138);
+  --series-7: oklch(0.72 0.15 348);
+  --series-8: oklch(0.72 0.138 228);
+  --series-9: oklch(0.72 0.15 108);
+  --series-10: oklch(0.72 0.15 48);
+  --series-11: oklch(0.72 0.15 288);
+  --series-12: oklch(0.72 0.142 168);
+
   /* Categorical accents ---------------------------------------------------
      The same eight hues, given the same five rungs as a tone, because they do
      the same work: a badge for a HOS duty status or an agent trigger type needs
@@ -631,6 +650,18 @@
   --chart-6: var(--accent-emerald);
   --chart-7: var(--accent-indigo);
   --chart-8: var(--accent-slate);
+  --series-1: oklch(0.72 0.144 258);
+  --series-2: oklch(0.72 0.12 198);
+  --series-3: oklch(0.72 0.15 28);
+  --series-4: oklch(0.72 0.15 78);
+  --series-5: oklch(0.72 0.15 318);
+  --series-6: oklch(0.72 0.15 138);
+  --series-7: oklch(0.72 0.15 348);
+  --series-8: oklch(0.72 0.138 228);
+  --series-9: oklch(0.72 0.15 108);
+  --series-10: oklch(0.72 0.15 48);
+  --series-11: oklch(0.72 0.15 288);
+  --series-12: oklch(0.72 0.142 168);
 
   --syntax-keyword: oklch(0.8 0.12 var(--hue-violet));
   --syntax-string: oklch(0.8 0.12 var(--hue-emerald));
@@ -1045,6 +1076,18 @@
   --color-chart-6: var(--chart-6);
   --color-chart-7: var(--chart-7);
   --color-chart-8: var(--chart-8);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+  --color-series-9: var(--series-9);
+  --color-series-10: var(--series-10);
+  --color-series-11: var(--series-11);
+  --color-series-12: var(--series-12);
 
   /* Syntax */
   --color-syntax-keyword: var(--syntax-keyword);

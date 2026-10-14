@@ -954,6 +954,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProviderᚄ),
 			},
 			{
+				Name:       "routeAITask",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AIProvider",
+				Args:       field_Mutation_routeAITask_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RouteAITask(ctx, fc.Args["task"].(aiprovider.Task), fc.Args["providerId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProviderᚄ),
+			},
+			{
 				Name:       "patchAIProvider",
 				NonNull:    true,
 				IsResolver: true,
@@ -1062,6 +1075,7 @@ type resolverAIRouteChoice interface {
 type resolverMutation interface {
 	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
+	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 }
 
@@ -1116,6 +1130,27 @@ func field_Mutation_reorderAIProviders_args(ctx context.Context, ec *gqlexec.Exe
 		return nil, err
 	}
 	args["ids"] = arg0
+	return args, nil
+}
+
+func field_Mutation_routeAITask_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "task",
+		func(ctx context.Context, v any) (aiprovider.Task, error) {
+			return unmarshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["task"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "providerId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["providerId"] = arg1
 	return args, nil
 }
 

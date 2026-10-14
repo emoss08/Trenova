@@ -85,6 +85,7 @@ var AIUsageRecordColumns = struct {
 	CacheReadTokens        buncolgen.Column // "cache_read_tokens" → qualified: "aiu.cache_read_tokens"
 	CacheWriteTokens       buncolgen.Column // "cache_write_tokens" → qualified: "aiu.cache_write_tokens"
 	FirstTokenMs           buncolgen.Column // "first_token_ms" → qualified: "aiu.first_token_ms"
+	RecordedAtMs           buncolgen.Column // "recorded_at_ms" → qualified: "aiu.recorded_at_ms"
 	CreatedAt              buncolgen.Column // "created_at" → qualified: "aiu.created_at"
 }{
 	ID:                     buncolgen.NewColumn("id", "aiu"),
@@ -122,6 +123,7 @@ var AIUsageRecordColumns = struct {
 	CacheReadTokens:        buncolgen.NewColumn("cache_read_tokens", "aiu"),
 	CacheWriteTokens:       buncolgen.NewColumn("cache_write_tokens", "aiu"),
 	FirstTokenMs:           buncolgen.NewColumn("first_token_ms", "aiu"),
+	RecordedAtMs:           buncolgen.NewColumn("recorded_at_ms", "aiu"),
 	CreatedAt:              buncolgen.NewColumn("created_at", "aiu"),
 }
 
@@ -165,6 +167,7 @@ var AIUsageRecordFieldMap = map[string]string{
 	"cacheReadTokens":        "cache_read_tokens",
 	"cacheWriteTokens":       "cache_write_tokens",
 	"firstTokenMs":           "first_token_ms",
+	"recordedAtMs":           "recorded_at_ms",
 	"createdAt":              "created_at",
 }
 

@@ -79,6 +79,9 @@ type AgentRunStep struct {
 	AgentDefinitionVersion *int64   `json:"agentDefinitionVersion" bun:"agent_definition_version,type:BIGINT,nullzero"`
 	DelegateCallID         string   `json:"delegateCallId"         bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
 
+	StartedAtMs *int64 `json:"startedAtMs" bun:"started_at_ms,type:BIGINT,scanonly"`
+	SettledAtMs *int64 `json:"settledAtMs" bun:"settled_at_ms,type:BIGINT,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

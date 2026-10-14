@@ -11,16 +11,20 @@ func Translate(locale Locale, message string, args ...any) string {
 		locale = Default
 	}
 
-	translated := message
-	if locale != Default {
-		if messages := catalog(locale); messages != nil {
-			if found, ok := messages[message]; ok && found != "" {
-				translated = found
-			}
+	return format(locale, lookup(locale, message), args)
+}
+
+func lookup(locale Locale, message string) string {
+	if locale == Default {
+		return message
+	}
+	if messages := catalog(locale); messages != nil {
+		if found, ok := messages[message]; ok && found != "" {
+			return found
 		}
 	}
 
-	return format(locale, translated, args)
+	return message
 }
 
 func Format(message string, args ...any) string {

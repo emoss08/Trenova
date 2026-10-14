@@ -761,6 +761,7 @@ modules:
       - agentroster
       - agentshadow
       - agentwait
+      - aianalytics
       - aiaudit
       - aicontrolsummary
       - aicorrection
@@ -825,6 +826,7 @@ modules:
       - agenttoolservice
       - agenttrustservice
       - agentwaitservice
+      - aianalyticsservice
       - aiauditservice
       - aicontrolsummaryservice
       - aicorrectionretention
@@ -873,6 +875,7 @@ modules:
       - agentjobs
       - agentqualityjobs
       - agentwaitjobs
+      - aianalyticsjobs
       - aiauditjobs
       - aicorrectionjobs
       - aifeedbackjobs
@@ -914,6 +917,7 @@ modules:
       - agenttoolrulerepository
       - agenttooltrustrepository
       - agentwaitrepository
+      - aianalyticsrepository
       - aiauditrepository
       - aicontrolfactsrepository
       - aicorrectionrepository

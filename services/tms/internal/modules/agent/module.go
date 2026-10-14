@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttoolrulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentwaitrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aianalyticsrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiauditrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aicontrolfactsrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aicorrectionrepository"
@@ -89,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttrustservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentwaitservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aianalyticsservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aicontrolsummaryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aicorrectionservice"
@@ -137,6 +139,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -222,6 +225,7 @@ func SharedOptions() fx.Option {
 			agenttoolrulerepository.New,
 			aiproviderrepository.NewKeyRepository,
 			aituneuprepository.New,
+			aianalyticsrepository.New,
 			agentdefinitionrepository.NewTestPromptRepository,
 			agentscorecardrepository.New,
 			agenttooltrustrepository.New,
@@ -276,6 +280,8 @@ func SharedOptions() fx.Option {
 			func(s *agentrosterservice.Service) agentrosterports.AgentRosterService { return s },
 			aituneupservice.New,
 			func(s *aituneupservice.Service) aituneupports.AITuneUpService { return s },
+			aianalyticsservice.New,
+			func(s *aianalyticsservice.Service) aianalyticsports.AnalyticsService { return s },
 			agenttestpromptservice.New,
 			func(s *agenttestpromptservice.Service) agentdefinitionports.AgentTestPromptService { return s },
 			func(s *aiproviderservice.Service) agentports.AIProviderProbe { return s },

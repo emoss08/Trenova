@@ -163,6 +163,10 @@ export function buildRailItems(
   }
 
   if (permissions.runs) {
+    items.push({ tab: "analytics", status: "", attention: false, children: [] });
+  }
+
+  if (permissions.runs) {
     const pending = counts?.pendingProposals ?? 0;
     const children: RailItem["children"] = [{ view: "runs", label: t("Runs") }];
     if (permissions.proposals) {

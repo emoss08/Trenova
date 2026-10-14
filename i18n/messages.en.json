@@ -1080,6 +1080,15 @@
       "routes/agent-control"
     ]
   },
+  "1 in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "1 issue blocks this close": {
     "sites": 2,
     "scope": [
@@ -1590,12 +1599,13 @@
     ]
   },
   "24 hours": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/agent-control"
     ]
   },
   "24 months": {
@@ -1706,6 +1716,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "30 minutes": {
@@ -1974,7 +1993,7 @@
     ]
   },
   "7 days": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -2587,6 +2606,105 @@
       "routes/detention-intelligence"
     ]
   },
+  "<b>{0}</b> completed {1} on <p>{2}</p> but {3} on <q>{4}</q>. It's the same model, so the gap comes from the connection.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<b>{0}</b> costs {1} per finished run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> costs {1} per finished run; <b>{2}</b> costs {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> finishes {1} of every 100 runs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> finishes {1} of every 100 runs; <b>{2}</b> finishes {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> gets no tool calls wrong.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> gets no tool calls wrong; <b>{1}</b> gets {2} wrong.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> gets {1} tool calls wrong.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> gets {1} tool calls wrong; <b>{2}</b> gets {3} wrong.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> is better on {1} of {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> is rated helpful {1} of the time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "<b>{0}</b> is writing a reply too": {
     "sites": 1,
     "scope": [
@@ -2605,6 +2723,42 @@
       "routes/admin"
     ]
   },
+  "<b>{0}</b> runs on your own hardware, so a run costs nothing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> runs on your own hardware, so a run costs nothing; <b>{1}</b> costs {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> starts answering in {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> starts answering in {1}; <b>{2}</b> in {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "<b>{0}</b> unsaved changes": {
     "sites": 1,
     "scope": [
@@ -2612,6 +2766,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "<b>{0}</b> usually finishes in {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> usually finishes in {1}; <b>{2}</b> takes {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "<b>{0}</b> wants to:": {
@@ -2855,6 +3027,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "<s>{0}</s> gets tool calls wrong <b>{1}</b> as often as the rest, mostly {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<s>{0}</s> gets tool calls wrong <b>{1}</b> as often as the rest.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   ">24h": {
@@ -7741,6 +7931,15 @@
       "go/other"
     ]
   },
+  "A read on judgment, not just completion.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A reason for reopening is required": {
     "sites": 2,
     "scope": [
@@ -11090,6 +11289,15 @@
       "apps/web/components"
     ]
   },
+  "AI analytics": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "AI audit event": {
     "sites": 1,
     "scope": [
@@ -11317,6 +11525,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "AI provider not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "AI provider {0} cannot report on background calls": {
@@ -12406,12 +12623,13 @@
     ]
   },
   "Access denied": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/agent-control"
     ]
   },
   "Access is required when roles are given": {
@@ -13968,6 +14186,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Across": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Across every active driver": {
@@ -18595,7 +18822,7 @@
     ]
   },
   "Agent": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -23747,6 +23974,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "Analytics": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Analytics and reporting": {
     "sites": 1,
     "scope": [
@@ -23754,6 +23990,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Analytics fills in once a provider is connected and agents start running.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Analyzing rate confirmation": {
@@ -26655,6 +26900,15 @@
     ]
   },
   "Approved as proposed": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Approved as proposed %": {
     "sites": 1,
     "scope": [
       "ts"
@@ -35213,6 +35467,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Best for the task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Best here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Best load for {0}": {
     "sites": 1,
     "scope": [
@@ -35418,6 +35690,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Bigger dots ran more. Click a dot for the full breakdown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Biggest movers": {
@@ -37267,6 +37548,15 @@
       "go/other",
       "routes/desk",
       "routes/dispatch-console"
+    ]
+  },
+  "Blocked by a tool rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Blocked by policy": {
@@ -39682,6 +39972,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Called a tool it doesn't hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Called a tool the agent did not hold when the case was captured": {
@@ -43718,6 +44017,15 @@
       "go/other"
     ]
   },
+  "Catch a model or provider getting worse after a change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Categories": {
     "sites": 2,
     "scope": [
@@ -45281,6 +45589,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Changing routing needs the right to edit providers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Changing somebody's hours needs a reason": {
@@ -49617,7 +49934,7 @@
     ]
   },
   "Clear": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -52910,6 +53227,15 @@
       "routes/agent-control"
     ]
   },
+  "Compare by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Compare previous": {
     "sites": 1,
     "scope": [
@@ -53009,6 +53335,15 @@
       "routes/formula-template"
     ]
   },
+  "Compared": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Compared as": {
     "sites": 1,
     "scope": [
@@ -53055,6 +53390,24 @@
     ]
   },
   "Comparing since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Comparing {0, plural, one {# model} other {# models}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Comparing {0, plural, one {# provider} other {# providers}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -53179,7 +53532,7 @@
     ]
   },
   "Completed": {
-    "sites": 41,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -53199,6 +53552,15 @@
       "routes/invoice-adjustment-batch",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Completed %": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Completed At": {
@@ -53280,6 +53642,42 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Completed runs by task and series": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Completed runs per task, counting only the tasks each model was routed to.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Completed runs per task, counting only the tasks each provider took.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Completed runs, from the first token to the last tool call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Completed shipment moves cannot be assigned": {
@@ -55173,7 +55571,7 @@
     ]
   },
   "Connect a provider": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -58515,7 +58913,7 @@
     ]
   },
   "Cost": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -58707,6 +59105,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Cost per completed run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Cost per mile and shipment profitability estimation configuration": {
@@ -59608,6 +60015,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Couldn't connect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Couldn't copy": {
@@ -81316,6 +81732,15 @@
       "packages/shared/types"
     ]
   },
+  "Each bar spans the middle half of runs. The line runs out to the slowest 5%, and the tick marks the median.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each code signs you in once if you lose your authenticator. They are shown only this time.": {
     "sites": 1,
     "scope": [
@@ -87447,13 +87872,14 @@
     ]
   },
   "Errors": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/stories",
+      "routes/agent-control",
       "routes/edi",
       "routes/fuel-purchase",
       "routes/rate-agreement"
@@ -87466,6 +87892,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Errors that happened before the model could answer. Always shown by provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Errors: {0} (matches expected)": {
@@ -88808,7 +89243,7 @@
     ]
   },
   "Every agent": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -89629,6 +90064,15 @@
       "routes/ifta-return"
     ]
   },
+  "Every model on one chart. The shaded corner is where you want a model to be.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every open position is filled": {
     "sites": 1,
     "scope": [
@@ -89735,6 +90179,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Every provider on one chart. The shaded corner is where you want one to be.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every rate moves by this amount per rating unit": {
@@ -89846,6 +90299,15 @@
     ]
   },
   "Every row is sealed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every run was on a local provider": {
     "sites": 1,
     "scope": [
       "ts"
@@ -90088,6 +90550,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Every task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every term listed here must appear somewhere in the document text for the rule to match.": {
@@ -92768,7 +93239,7 @@
     ]
   },
   "Export": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -94363,7 +94834,7 @@
     ]
   },
   "Failed": {
-    "sites": 57,
+    "sites": 60,
     "scope": [
       "go",
       "ts"
@@ -94428,6 +94899,24 @@
     ],
     "areas": [
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "Failed runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Failed runs on <p>{0}</p> take <b>{1}</b> as long as its completed ones.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Failed runs, service failures, expiring credentials, quarantined EDI and anything else worth a look will appear here as it happens.": {
@@ -96447,6 +96936,24 @@
       "apps/web/components"
     ]
   },
+  "Failed tool calls by tool and series": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Failed tool calls split by cause, as a share of all calls.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Failed verification": {
     "sites": 1,
     "scope": [
@@ -97002,6 +97509,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Fell to next": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Female": {
@@ -99547,6 +100063,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "First token": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "First token (ms)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "First value": {
@@ -105640,7 +106174,25 @@
       "routes/worker"
     ]
   },
+  "Goes here now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Goes to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Goes to {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -106272,11 +106824,12 @@
     ]
   },
   "Group": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/edi",
       "routes/reports",
@@ -107027,6 +107580,15 @@
       "routes/agent-control"
     ]
   },
+  "Handed off": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Handed off to {0}": {
     "sites": 2,
     "scope": [
@@ -107071,6 +107633,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Handed to a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Handed to {0}": {
@@ -108634,6 +109205,15 @@
       "routes/carrier"
     ]
   },
+  "Hide from charts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Hide ineligible": {
     "sites": 1,
     "scope": [
@@ -108799,6 +109379,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Higher is better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Higher priority rules take precedence when multiple rules match the same document.": {
@@ -110377,6 +110966,15 @@
       "routes/benefits"
     ]
   },
+  "How long before the model starts answering": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How long one call may run before it's abandoned.": {
     "sites": 1,
     "scope": [
@@ -110393,6 +110991,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How long runs take": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How long this carrier holds the offer.": {
@@ -119900,6 +120507,15 @@
       "routes/intake"
     ]
   },
+  "Its runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Its runs and audit trail are kept. Open proposals are withdrawn and people can no longer pick it in Desk.": {
     "sites": 2,
     "scope": [
@@ -124352,6 +124968,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Leaderboard": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Leadership": {
@@ -129437,7 +130062,7 @@
     ]
   },
   "Local": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -130839,6 +131464,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Lower is better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Lower numbers appear first in the packet": {
@@ -135077,12 +135711,13 @@
     ]
   },
   "Measure": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/home",
       "routes/reports"
     ]
@@ -135251,7 +135886,7 @@
     ]
   },
   "Median": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -135262,6 +135897,33 @@
   },
   "Median response": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Median run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Median run (ms)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Median run time": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -137639,7 +138301,7 @@
     ]
   },
   "Model": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -137750,6 +138412,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Model's mistakes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Models": {
@@ -138915,6 +139586,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Most of them wait out the {0}-second timeout first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Most pages": {
@@ -140266,6 +140946,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Name a tool": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Name and code identify the checklist; the trigger decides when it starts on its own.": {
@@ -144943,6 +145632,15 @@
       "routes/detention-desk"
     ]
   },
+  "No calls": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No calls this week": {
     "sites": 1,
     "scope": [
@@ -145480,6 +146178,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "No completed runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No computer is set up to scan for you": {
@@ -146834,6 +147541,15 @@
     ],
     "areas": [
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "No failures in this range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No feeds have run yet. They start once a provider is connected and carriers are enrolled.": {
@@ -148906,11 +149622,13 @@
     ]
   },
   "No provider": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/carrier-monitoring"
     ]
   },
@@ -148978,6 +149696,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "No provider was called in this scope.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No providers yet": {
@@ -149621,6 +150348,15 @@
       "routes/random-testing"
     ]
   },
+  "No routed task ran in this scope.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No routing guide matches this lane. Create one or use a spot tender": {
     "sites": 1,
     "scope": [
@@ -149700,6 +150436,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No runs match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No runs yet": {
@@ -150596,6 +151341,15 @@
       "apps/web/components"
     ]
   },
+  "No tool calls": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No tool calls in the last 30 days.": {
     "sites": 1,
     "scope": [
@@ -150642,6 +151396,15 @@
     ]
   },
   "No tool runs without a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No tool was called in this scope.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151047,6 +151810,15 @@
       "apps/web/components"
     ]
   },
+  "No {0} runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nobody": {
     "sites": 6,
     "scope": [
@@ -151094,6 +151866,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nobody decided a proposal in this scope.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nobody decided on the original, so this says nothing yet.": {
@@ -151499,7 +152280,7 @@
     ]
   },
   "None": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -153001,6 +153782,15 @@
       "routes/formula-template"
     ]
   },
+  "Not routed here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not run yet": {
     "sites": 1,
     "scope": [
@@ -153849,6 +154639,15 @@
       "routes/worker"
     ]
   },
+  "Nothing completed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing drawn this year": {
     "sites": 1,
     "scope": [
@@ -154293,6 +155092,24 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "Nothing in this scope has both figures yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nothing in this scope has this figure yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing in this statement is new: every row is a duplicate, already on file, or could not be read.": {
@@ -154859,6 +155676,42 @@
       "apps/web/components"
     ]
   },
+  "Nothing ran for this agent and task in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nothing ran for this agent in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nothing ran for this task in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nothing ran in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing rated down.": {
     "sites": 1,
     "scope": [
@@ -155183,6 +156036,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Nothing to measure yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing to plan": {
@@ -156439,12 +157301,13 @@
     ]
   },
   "Now": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/formula-template",
       "routes/shipment"
     ]
@@ -166269,6 +167132,15 @@
       "apps/web/components"
     ]
   },
+  "Out of every tool call the model made": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Out of service": {
     "sites": 9,
     "scope": [
@@ -166414,7 +167286,7 @@
     ]
   },
   "Outcome": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -166446,6 +167318,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Outcome mix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Outcome reason cannot be longer than 500 characters": {
@@ -166671,6 +167552,33 @@
       "routes/billing-queue"
     ]
   },
+  "Over the last 24 hours": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Over the last 30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Over the last 7 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Over the road": {
     "sites": 1,
     "scope": [
@@ -166678,6 +167586,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Over time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.": {
@@ -172595,6 +173512,24 @@
       "routes/org-structure"
     ]
   },
+  "People accept {1} of <b>{0}</b>'s proposals as written, and {3} of <b>{2}</b>'s.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "People accept {1} of <b>{0}</b>'s proposals as written.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.": {
     "sites": 1,
     "scope": [
@@ -172782,6 +173717,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Per completed run (USD)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Per day": {
@@ -181452,6 +182396,15 @@
       "routes/agent-control"
     ]
   },
+  "Proposals a person accepted without changing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Proposals are offered to a person for a decision.": {
     "sites": 1,
     "scope": [
@@ -182059,7 +183012,7 @@
     ]
   },
   "Provider": {
-    "sites": 35,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -182238,6 +183191,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Provider health": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Provider inspection id is required": {
@@ -182486,7 +183448,7 @@
     ]
   },
   "Providers": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -183425,6 +184387,15 @@
       "routes/agent-control"
     ]
   },
+  "Put {0} first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Puts the first rows in the message body, so recipients read the answer without opening a file.": {
     "sites": 1,
     "scope": [
@@ -183836,6 +184807,15 @@
       "go/other",
       "routes/ifta-return",
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Quarter {0} · median {1} · three quarters {2} · slowest 5% {3} · {4} runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Quarterly": {
@@ -185124,7 +186104,7 @@
     ]
   },
   "Rate": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -185782,12 +186762,13 @@
     ]
   },
   "Rate limited": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/agent-control"
     ]
   },
   "Rate locked": {
@@ -186446,6 +187427,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Rated helpful": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Rated helpful %": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Rated with a price more than 3 weeks old.": {
@@ -189685,11 +190684,12 @@
     ]
   },
   "Recent failures": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -193665,7 +194665,7 @@
     ]
   },
   "Rejected": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -195212,11 +196212,13 @@
     ]
   },
   "Removed provider": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/agent-control"
     ]
   },
@@ -195866,6 +196868,15 @@
     ]
   },
   "Repeated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Repeated the same call": {
     "sites": 1,
     "scope": [
       "ts"
@@ -203974,6 +204985,15 @@
       "go/other"
     ]
   },
+  "Route it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Route not resolved": {
     "sites": 1,
     "scope": [
@@ -204019,6 +205039,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Route {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Route {0} to {1}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Routed": {
@@ -204085,6 +205123,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Routing and judgment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Routing data region used for all stops in this profile.": {
@@ -205228,6 +206275,24 @@
       "apps/web/components"
     ]
   },
+  "Run time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Run time by outcome": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Run timeout": {
     "sites": 3,
     "scope": [
@@ -205424,7 +206489,7 @@
     ]
   },
   "Runs": {
-    "sites": 10,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -205553,6 +206618,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Runs that finished without handing off or failing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Runs today": {
@@ -206476,6 +207550,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Same model, different provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Same name": {
@@ -216642,12 +217725,13 @@
     ]
   },
   "Server error": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Server error (attempt {0}/{1})": {
@@ -218992,6 +220076,15 @@
     ]
   },
   "Share of documents (%)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Share of each tool's calls that failed. Click a cell to see real examples.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -221671,13 +222764,14 @@
     ]
   },
   "Show all": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -221918,6 +223012,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Show in charts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Show ineligible": {
@@ -223692,6 +224795,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Slowest 5%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Slowest 5% (ms)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Slowest 5% took {0} or more": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Slowest 5% took {0}s or more": {
@@ -225731,13 +226861,22 @@
     ]
   },
   "Spend": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Spend (USD)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -229421,13 +230560,22 @@
     ]
   },
   "Stopped": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Stopped at a limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stopped at {0} of {1}": {
@@ -232904,7 +234052,7 @@
     ]
   },
   "Task": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -236786,6 +237934,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The analytics could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The announced date. Shipments before it keep pricing at the old rates.": {
@@ -242236,6 +243393,15 @@
       "go/other"
     ]
   },
+  "The last 30 days of runs are being read. They appear within a few minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The last 30 days.": {
     "sites": 1,
     "scope": [
@@ -243150,12 +244316,13 @@
     ]
   },
   "The model": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "The model could not draft an agent from that description. Try saying what it should look at and what it should do.": {
@@ -246407,6 +247574,15 @@
       "go/other"
     ]
   },
+  "The routing could not be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The rows could not be counted.": {
     "sites": 1,
     "scope": [
@@ -246702,6 +247878,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The scope in figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The score starts at 100 and loses 5 for each active point, 10 for each preventable accident, 15 for each out-of-service order and 5 for each disciplinary action still active. Event counts cover the last twelve months.": {
@@ -247871,6 +249056,24 @@
       "go/other"
     ]
   },
+  "The task already goes to this provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The task could not be routed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.": {
     "sites": 1,
     "scope": [
@@ -248125,6 +249328,24 @@
     ]
   },
   "The tool calls could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The tool gave no reason.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The tool or a rule": {
     "sites": 1,
     "scope": [
       "ts"
@@ -255594,6 +256815,15 @@
       "routes/agent-control"
     ]
   },
+  "Thumbs up from the people who rated an answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Thursday": {
     "sites": 2,
     "scope": [
@@ -256290,6 +257520,15 @@
       "routes/shipment"
     ]
   },
+  "Time to first token": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Time to pickup": {
     "sites": 1,
     "scope": [
@@ -256383,12 +257622,13 @@
     ]
   },
   "Timed out": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Timeline": {
@@ -256982,7 +258222,7 @@
     ]
   },
   "Today": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -257726,6 +258966,24 @@
     ]
   },
   "Tool calls": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool calls failed": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool calls failed %": {
     "sites": 1,
     "scope": [
       "ts"
@@ -257742,6 +259000,15 @@
     ],
     "areas": [
       "go/other",
+      "routes/agent-control"
+    ]
+  },
+  "Tool calls that failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -257853,6 +259120,15 @@
       "routes/agent-control"
     ]
   },
+  "Tool returned an error": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tool rule": {
     "sites": 1,
     "scope": [
@@ -257863,7 +259139,7 @@
     ]
   },
   "Tool rules": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -257872,6 +259148,15 @@
     ]
   },
   "Tool tier on the agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool timed out": {
     "sites": 1,
     "scope": [
       "ts"
@@ -257901,6 +259186,15 @@
     ]
   },
   "Tools held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tools it gets wrong most": {
     "sites": 1,
     "scope": [
       "ts"
@@ -259292,6 +260586,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trade-offs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Trading partner this transport profile delivers documents for.": {
@@ -261594,7 +262897,7 @@
     ]
   },
   "Try again": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -264125,6 +265428,15 @@
       "go/other"
     ]
   },
+  "Unknown comparison": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Unknown core responsibility": {
     "sites": 1,
     "scope": [
@@ -264296,6 +265608,15 @@
       "go/other"
     ]
   },
+  "Unknown model": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Unknown outside text setting": {
     "sites": 1,
     "scope": [
@@ -264432,6 +265753,15 @@
       "routes/inbox"
     ]
   },
+  "Unknown series": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Unknown severity": {
     "sites": 1,
     "scope": [
@@ -264505,7 +265835,7 @@
     ]
   },
   "Unknown task": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -264541,7 +265871,7 @@
     ]
   },
   "Unknown timezone": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -264587,6 +265917,15 @@
     ]
   },
   "Unknown widget: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Unknown window": {
     "sites": 1,
     "scope": [
       "go"
@@ -265549,7 +266888,7 @@
     ]
   },
   "Up": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -265557,6 +266896,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/agent-control",
       "routes/edi",
       "routes/formula-template",
       "routes/worker-checklist-template"
@@ -265969,7 +267309,7 @@
     ]
   },
   "Updated {0}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -265977,6 +267317,7 @@
       "apps/dash/routes",
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/desk",
       "routes/detention-desk"
     ]
@@ -267408,11 +268749,12 @@
     ]
   },
   "Use {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -275171,6 +276513,15 @@
       "go/other"
     ]
   },
+  "What people did with its proposals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What people pick from when they start a scan. The default is used when nobody picks one.": {
     "sites": 2,
     "scope": [
@@ -275529,6 +276880,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What the provider charged, divided by runs that finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What the rate is per, so the figure reads correctly later.": {
@@ -277739,6 +279099,15 @@
       "routes/worker"
     ]
   },
+  "Where tool calls fail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Where volume is concentrating, origin against destination": {
     "sites": 1,
     "scope": [
@@ -278351,6 +279720,15 @@
       "routes/agent-control"
     ]
   },
+  "Which model fits which task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Which of our reports shows on-time delivery by customer, and what does it contain?": {
     "sites": 1,
     "scope": [
@@ -278376,6 +279754,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Which provider fits which task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Which report answers this?": {
@@ -279092,6 +280479,15 @@
       "apps/dash/routes"
     ]
   },
+  "Whose mistake was it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Whose records this change is for is set when it is proposed and cannot be changed": {
     "sites": 1,
     "scope": [
@@ -279102,7 +280498,7 @@
     ]
   },
   "Why": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -279759,7 +281155,7 @@
     ]
   },
   "Window": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -279767,6 +281163,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/agent-control",
       "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
@@ -279948,6 +281345,15 @@
     ]
   },
   "With Learn from their work on, they'll also suggest lessons for you to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "With changes": {
     "sites": 1,
     "scope": [
       "ts"
@@ -280399,6 +281805,15 @@
   },
   "Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again. Run it after assign_fuel_card or once a missing tractor exists. A feed posts the rows that now resolve; an upload waits for commit_fuel_purchase_import.": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Work out each organization's AI analytics from its newest runs, turns and calls": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -281128,6 +282543,24 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Working out the analytics": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Working out the first analytics": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Working out what it does...": {
@@ -282010,6 +283443,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Wrong arguments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Wrong bill-to": {
@@ -285926,6 +287368,24 @@
       "apps/web/components"
     ]
   },
+  "calling tools it doesn't hold": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "calls a rule blocked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "can be empty": {
     "sites": 1,
     "scope": [
@@ -289437,6 +290897,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "last ran {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "last score": {
     "sites": 1,
     "scope": [
@@ -290927,6 +292396,15 @@
       "go/other"
     ]
   },
+  "repeating the same call": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "replies@example.com": {
     "sites": 1,
     "scope": [
@@ -291562,6 +293040,42 @@
       "apps/web/components"
     ]
   },
+  "the last 24 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "the last 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "the last 7 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "the model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "the picked shipment": {
     "sites": 1,
     "scope": [
@@ -291624,6 +293138,15 @@
     "areas": [
       "routes/carrier-monitoring",
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "the tool or a rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "the web": {
@@ -291915,6 +293438,24 @@
     ]
   },
   "tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "tools returning errors": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "tools timing out": {
     "sites": 1,
     "scope": [
       "go"
@@ -292576,6 +294117,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "wrong arguments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "you@carrier.com": {
@@ -294370,6 +295920,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# model call} other {# model calls}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# module} other {# modules}}": {
     "sites": 1,
     "scope": [
@@ -295328,6 +296887,15 @@
     ]
   },
   "{0, plural, one {# running now} other {# running now}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# run} other {# runs}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -298385,6 +299953,15 @@
       "apps/web/components"
     ]
   },
+  "{0} against {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} ago": {
     "sites": 1,
     "scope": [
@@ -298446,6 +300023,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} already goes first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} already has a change on its way to {1}. Fix it once that change is sent": {
@@ -298582,6 +300168,15 @@
     ],
     "areas": [
       "apps/web/lib",
+      "routes/agent-control"
+    ]
+  },
+  "{0} approved as proposed, {1} with changes, {2} rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -298783,6 +300378,24 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0} becomes the first provider to take it, and {1} stops taking it. Every other task stays where it goes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} becomes the first provider to take it. Every other task stays where it goes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} before overtime": {
@@ -300203,6 +301816,15 @@
       "routes/formula-template"
     ]
   },
+  "{0} failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} feasible": {
     "sites": 1,
     "scope": [
@@ -300481,6 +302103,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0} handed to a person · {1} failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} handled this shift": {
@@ -302671,6 +304302,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "{0} lost access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} lost to no notice": {
     "sites": 1,
     "scope": [
@@ -302787,6 +304427,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0} median": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} mentioned you": {
@@ -303407,6 +305056,15 @@
       "routes/random-testing"
     ]
   },
+  "{0} now goes ahead of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} now goes before {1}": {
     "sites": 1,
     "scope": [
@@ -303417,7 +305075,7 @@
     ]
   },
   "{0} now goes to {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -303705,7 +305363,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 31,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -303737,6 +305395,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} of {1} calls failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} change": {
@@ -303908,6 +305575,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} of {1} runs completed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} of {1} runs completed · routed here now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} scenarios pass": {
@@ -304084,6 +305769,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} of {1} · {2} the model's mistake": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} off": {
@@ -304545,6 +306239,15 @@
       "routes/desk"
     ]
   },
+  "{0} per completed run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} per increment": {
     "sites": 1,
     "scope": [
@@ -304879,6 +306582,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} recovered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} recovery codes": {
@@ -305353,6 +307065,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} runs on both. Since the model is the same, every gap here comes from the connection.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} runtime configuration is not available to clients": {
     "sites": 1,
     "scope": [
@@ -305805,6 +307526,15 @@
       "apps/web/components"
     ]
   },
+  "{0} stopped answering": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} stopped receiving mail": {
     "sites": 1,
     "scope": [
@@ -305877,6 +307607,15 @@
     "areas": [
       "routes/detention-intelligence",
       "routes/detention-policy"
+    ]
+  },
+  "{0} switched to {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} tabs": {
@@ -306222,6 +307961,15 @@
       "template/notification.dash.training_due"
     ]
   },
+  "{0} turned off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} turned off {1} on {2}.": {
     "sites": 1,
     "scope": [
@@ -306229,6 +307977,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} turned on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} unassigned it": {
@@ -307490,6 +309247,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} · {1} a run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} · {1} ago": {
     "sites": 1,
     "scope": [
@@ -307535,6 +309301,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} · {1} of {2} calls failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} · {1} points": {
     "sites": 1,
     "scope": [
@@ -307542,6 +309317,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "{0} · {1} the model's mistake": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} · {1} to {2}": {
@@ -307597,6 +309381,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "{0} · {1} · too few runs to rank": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} · {1} · {2, plural, one {read # time} other {read # times}}": {
@@ -308047,6 +309840,42 @@
       "routes/desk"
     ]
   },
+  "{0}, <s>{1}</s> completed <b>{2}</b> of its runs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0}, <s>{1}</s> completed the most of its runs — <b>{2}</b>.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0}, <s>{1}</s> did the most work, but nothing has run often enough yet to say which model finishes more of its runs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0}, <s>{1}</s> did the most work, but nothing has run often enough yet to say which provider finishes more of its runs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0}, element {1}": {
     "sites": 2,
     "scope": [
@@ -308081,6 +309910,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0}, no agent run, conversation or AI call finished, so there is nothing to compare yet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0}, non-preventable": {
@@ -308588,11 +310426,12 @@
     ]
   },
   "{0}h ago": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -309944,6 +311783,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "← better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "−{0} removed": {

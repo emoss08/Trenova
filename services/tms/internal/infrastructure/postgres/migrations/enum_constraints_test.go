@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -17,17 +18,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,6 +61,22 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	t.Parallel()
 
 	constraints := []enumConstraint{
+		{
+			name:   "ck_ai_work_units_source",
+			values: stringsOf(aianalytics.AllSources()),
+		},
+		{
+			name:   "ck_ai_work_units_outcome",
+			values: stringsOf(aianalytics.AllOutcomes()),
+		},
+		{
+			name:   "ck_ai_work_unit_tools_cause",
+			values: stringsOf(aianalytics.AllCauses()),
+		},
+		{
+			name:   "ck_ai_provider_hourly_stats_error_class",
+			values: stringsOf(aianalytics.StoredProviderErrors()),
+		},
 		{
 			name:   "ck_ai_retraining_cycles_status",
 			values: stringsOf(aitraining.AllRetrainingStatuses()),

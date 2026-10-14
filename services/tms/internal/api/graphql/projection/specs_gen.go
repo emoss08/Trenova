@@ -103,6 +103,8 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 )
 
+var AIAnalyticsProviderSpec TypeSpec
+
 var AIAuditEventSpec TypeSpec
 
 var AIAuditExportSpec TypeSpec
@@ -739,6 +741,45 @@ var WorkerTrainingRecordSpec TypeSpec
 // package-level initialisers. Assigning inside init lets the zero-valued vars
 // exist first and be filled in afterwards.
 func init() {
+	AIAnalyticsProviderSpec = TypeSpec{
+		TypeName: "AIAnalyticsProvider",
+		FieldMap: aiprovidercol.ProviderFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:    "shortName",
+				Special: "shortName",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "baseUrl",
+				FieldMapKey: "baseUrl",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:    "removed",
+				Special: "removed",
+			},
+		},
+	}
+
 	AIAuditEventSpec = TypeSpec{
 		TypeName: "AIAuditEvent",
 		FieldMap: aiauditcol.AIAuditEventFieldMap,

@@ -204,3 +204,15 @@ func TestCatalogsLoad(t *testing.T) {
 		assert.True(t, ok, "catalog missing for %s", locale)
 	}
 }
+
+func TestFormatPluralGroupsTheCountTheWayEachLocaleWritesNumbers(t *testing.T) {
+	t.Parallel()
+
+	message := "{0, plural, one {# run} other {# runs}}"
+	assert.Equal(t, "21,375 runs", format(EN, message, []any{21375}))
+	assert.Equal(t, "1,234,567 runs", format(ES, message, []any{int64(1234567)}))
+	assert.Equal(t, "2.5 runs", format(ZhCN, message, []any{2.5}))
+	assert.Equal(t, "-1,234 runs", format(ZhTW, message, []any{-1234}))
+	assert.Equal(t, "999 runs", format(EN, message, []any{999}))
+	assert.Equal(t, "0.123 runs", format(EN, message, []any{0.12345}))
+}

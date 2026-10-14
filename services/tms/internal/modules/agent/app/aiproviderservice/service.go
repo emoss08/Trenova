@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -35,8 +36,9 @@ type Params struct {
 	Prober       *Prober
 	AuditService auditports.AuditService
 	// Tester runs a test on a worker, which calls back into RunTest.
-	Tester agentports.AIProviderTester
-	Config *config.Config
+	Tester    agentports.AIProviderTester
+	Config    *config.Config
+	Analytics aianalyticsports.AnalyticsCache `optional:"true"`
 }
 
 // EndpointProber issues a live call against a configured endpoint.
@@ -64,6 +66,7 @@ type Service struct {
 	audit      auditports.AuditService
 	tester     agentports.AIProviderTester
 	ai         *config.AIConfig
+	analytics  aianalyticsports.AnalyticsCache
 }
 
 var (
@@ -88,6 +91,16 @@ func New(p Params) *Service {
 		audit:      p.AuditService,
 		tester:     p.Tester,
 		ai:         ai,
+		analytics:  p.Analytics,
+	}
+}
+
+func (s *Service) analyticsChanged(ctx context.Context, tenant pagination.TenantInfo) {
+	if s.analytics == nil {
+		return
+	}
+	if err := s.analytics.BumpEpoch(ctx, tenant); err != nil {
+		s.l.Warn("failed to invalidate ai analytics after a provider change", zap.Error(err))
 	}
 }
 
@@ -184,6 +197,7 @@ func (s *Service) Create(
 		actor:     actor,
 		comment:   "AI provider created",
 	})
+	s.analyticsChanged(ctx, req.TenantInfo)
 
 	return created.Redacted(), nil
 }
@@ -245,6 +259,7 @@ func (s *Service) Update(
 		actor:     actor,
 		comment:   "AI provider updated",
 	})
+	s.analyticsChanged(ctx, req.TenantInfo)
 
 	return saved.Redacted(), nil
 }
@@ -270,6 +285,7 @@ func (s *Service) Delete(
 		actor:     actor,
 		comment:   "AI provider deleted",
 	})
+	s.analyticsChanged(ctx, req.TenantInfo)
 
 	return nil
 }

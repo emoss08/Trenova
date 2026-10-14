@@ -313,6 +313,9 @@ writes:
   "mutation reorderAIProviders":
     exempt: agent-administration
     reason: "Sets the order in which the model providers agents run on take work."
+  "mutation routeAITask":
+    exempt: agent-administration
+    reason: "Makes one model provider the first to take a task, from the AI analytics; it is the human check on where agents' work goes."
   "mutation testAIProviderDraft":
     exempt: read-only
     reason: "Tests an unsaved provider's credentials once and returns the result; it saves nothing."
