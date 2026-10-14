@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { DispatchControlSkeleton } from "./skeleton";
 
 const DispatchControlForm = lazy(() => import("./_components/dispatch-control-form"));
 
@@ -15,9 +16,9 @@ export function DispatchControlPage() {
         description: t("Configure and manage your dispatch control settings"),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<DispatchControlSkeleton />}>
         <DispatchControlForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

@@ -1,13 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
 import { ClockRewindIcon, Edit02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { FuelIndicesEmpty } from "./fuel-management-empty";
+import { IndexTableSkeleton } from "./fuel-management-skeleton";
 import { IndexPanel } from "./index-panel";
 import { PriceHistoryDrawer } from "./price-history-drawer";
 
@@ -44,7 +44,7 @@ export default function IndexSection() {
       </div>
 
       {isLoading ? (
-        <Skeleton className="h-64" />
+        <IndexTableSkeleton />
       ) : !entries || entries.length === 0 ? (
         <FuelIndicesEmpty
           title={t("No indices yet")}

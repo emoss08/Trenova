@@ -15,7 +15,7 @@
   "How multiple conditions are evaluated together.": "多个条件如何合并判定。",
   "Leave empty to use auto-generated summary.": "留空则使用自动生成的摘要。",
   "Leave empty to watch all records": "留空则监视所有记录",
-  "Loading notifications...": "正在加载通知...",
+  "Loading notifications": "正在加载通知",
   "Match ALL conditions": "符合所有条件",
   "Match ANY condition": "符合任一条件",
   "My shipment alerts": "我的运单提醒",

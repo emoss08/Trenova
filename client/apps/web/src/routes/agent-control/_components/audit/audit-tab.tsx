@@ -1,6 +1,7 @@
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import type { AuditView } from "../../ai-control-tabs";
+import { AuditTrailSkeleton, EXPORT_COLUMNS } from "./audit-skeleton";
 import { ChainStatusHeader } from "./chain-status";
 
 const AuditTrailView = lazy(() => import("./audit-trail-view"));
@@ -21,10 +22,16 @@ export default function AuditTab({
   return (
     <div className="tabp">
       <ChainStatusHeader />
-      <DataTableLazyComponent>
-        {view === "trail" && <AuditTrailView onOpenExports={onOpenExports} />}
-        {view === "exports" && <AuditExportsView />}
-      </DataTableLazyComponent>
+      {view === "trail" && (
+        <LazyComponent fallback={<AuditTrailSkeleton />}>
+          <AuditTrailView onOpenExports={onOpenExports} />
+        </LazyComponent>
+      )}
+      {view === "exports" && (
+        <DataTableLazyComponent columnCount={EXPORT_COLUMNS}>
+          <AuditExportsView />
+        </DataTableLazyComponent>
+      )}
     </div>
   );
 }

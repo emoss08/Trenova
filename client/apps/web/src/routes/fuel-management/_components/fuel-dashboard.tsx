@@ -7,7 +7,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
@@ -16,6 +15,7 @@ import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { FuelDashboardEmpty } from "./fuel-management-empty";
+import { FuelDashboardSkeleton, PriceChartBodySkeleton } from "./fuel-management-skeleton";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 const priceChartConfig = {
@@ -68,17 +68,7 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
   const latestWeek = defaultEntry?.latest?.priceDate;
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-96" />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <Skeleton key={index} className="h-24" />
-          ))}
-        </div>
-        <Skeleton className="h-72" />
-      </div>
-    );
+    return <FuelDashboardSkeleton />;
   }
 
   if (activeEntries.length === 0) {
@@ -246,7 +236,7 @@ function PriceTrendChart({
       </CardHeader>
       <CardContent className="p-4">
         {isLoading ? (
-          <Skeleton className="h-64 w-full" />
+          <PriceChartBodySkeleton />
         ) : chartData.length === 0 ? (
           <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
             {t("No price history for this index yet")}

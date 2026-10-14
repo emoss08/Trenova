@@ -85,7 +85,7 @@ export function TimeAttendanceOverview({
           awaiting ? (
             <NumberFlow value={awaitingSummary.count} aria-label={t("Awaiting approval")} />
           ) : (
-            <Skeleton className="h-6 w-10" />
+            <Skeleton className="h-4.25 w-10" />
           )
         }
         sub={
@@ -115,7 +115,7 @@ export function TimeAttendanceOverview({
           openEntries ? (
             <NumberFlow value={openEntries.length} aria-label={t("On the clock now")} />
           ) : (
-            <Skeleton className="h-6 w-10" />
+            <Skeleton className="h-4.25 w-10" />
           )
         }
         sub={
@@ -150,7 +150,7 @@ export function TimeAttendanceOverview({
         {thisWeek ? (
           <span className={KPI_VALUE_CLASS}>{formatHours(weekSummary.totalMinutes)}</span>
         ) : (
-          <Skeleton className="h-6 w-16" />
+          <Skeleton className="h-4.25 w-16" />
         )}
         <CompositionBar
           size="sm"
@@ -182,7 +182,7 @@ export function TimeAttendanceOverview({
             unpaid ? (
               <NumberFlow value={unpaidSummary.count} aria-label={t("Approved, not paid")} />
             ) : (
-              <Skeleton className="h-6 w-10" />
+              <Skeleton className="h-4.25 w-10" />
             )
           }
           sub={

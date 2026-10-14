@@ -5,7 +5,6 @@ import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { RecommendedBadge } from "../recommended-badge";
 import { Label } from "@trenova/shared/components/ui/label";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
@@ -157,14 +156,4 @@ export function SwitchField<T extends FieldValues>({
   );
 }
 
-export function SwitchFieldSkeleton() {
-  return (
-    <div className="group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5">
-      <Skeleton className="size-5" />
-      <div className="grid grow gap-1">
-        <Skeleton className="h-4 w-37.5" />
-        <Skeleton className="h-4 w-50" />
-      </div>
-    </div>
-  );
-}
+export { SwitchFieldSkeleton } from "./field-skeletons";

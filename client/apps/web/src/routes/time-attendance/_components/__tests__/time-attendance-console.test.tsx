@@ -555,4 +555,25 @@ describe("TimeAttendanceConsole", () => {
     expect(days[1]).toHaveTextContent("3h");
     expect(days[2]).toHaveTextContent("—");
   });
+
+  // The console's first read draws the page's own outline (the strip, the
+  // tabs and the board) rather than a strip of zeros over an empty board.
+  it("draws the page's outline while its first lists are read", () => {
+    const pending = new Promise<never>(() => {});
+    mocks.fetchTimesheets.mockReturnValue(pending);
+    mocks.fetchOpenTimeEntries.mockReturnValue(pending);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <TimeAttendanceConsole />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByLabelText("Loading time and attendance")).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.queryByText("Nothing waiting on you")).toBeNull();
+  });
 });

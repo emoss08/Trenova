@@ -1,7 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { usePermission } from "@/hooks/use-permission";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { lazy } from "react";
+import { HolidayCalendarSkeleton } from "./_components/holiday-calendar-skeleton";
 
 const Calendar = lazy(() =>
   import("./_components/holiday-calendar").then((module) => ({
@@ -11,6 +14,7 @@ const Calendar = lazy(() =>
 
 export function HolidayCalendarPage() {
   const t = useT();
+  const { allowed: canCreate } = usePermission(Resource.OrgHoliday, Operation.Create);
 
   return (
     <PageLayout
@@ -21,9 +25,9 @@ export function HolidayCalendarPage() {
         ),
       }}
     >
-      <DataTableLazyComponent>
+      <LazyComponent fallback={<HolidayCalendarSkeleton canCreate={canCreate} />}>
         <Calendar />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

@@ -1,9 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PdfViewer } from "@/components/elements/pdf-viewer";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { File06Icon, FileSearch02Icon } from "@trenova/shared/components/icons";
+import { BillingQueueDocumentPreviewSkeleton } from "./billing-queue-document-preview-skeleton";
 
 export default function BillingQueueDocumentPreview({
   documentId,
@@ -31,13 +31,7 @@ export default function BillingQueueDocumentPreview({
   }
 
   if (isLoading) {
-    return (
-      <div className="bg-muted/20 flex h-full items-center justify-center">
-        <TextShimmer as="span" className="text-sm" duration={1.5}>
-          {t("Loading document preview")}
-        </TextShimmer>
-      </div>
-    );
+    return <BillingQueueDocumentPreviewSkeleton />;
   }
 
   if (!viewUrl) {

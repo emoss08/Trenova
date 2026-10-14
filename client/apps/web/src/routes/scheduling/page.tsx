@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { startOfRotaWeek } from "@trenova/shared/lib/scheduling";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -48,9 +48,9 @@ export function SchedulingPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<SchedulingSkeleton />}>
+      <LazyComponent fallback={<SchedulingSkeleton />}>
         <SchedulingConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

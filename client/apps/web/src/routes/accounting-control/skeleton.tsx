@@ -1,93 +1,24 @@
-import { InputFieldSkeleton } from "@/components/fields/input-field";
-import { SwitchFieldSkeleton } from "@/components/fields/switch-field";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+  SettingsFormSkeleton,
+  type SettingsSectionSpec,
+} from "@/components/settings-form-skeleton";
 
-export function PageSkeleton() {
-  return (
-    <div className="flex flex-col gap-y-4 p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-[150px]" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-[150px]" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InputFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <InputFieldSkeleton />
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-    </div>
-  );
+const sections: readonly SettingsSectionSpec[] = [
+  { narrow: true, fields: [{ kind: "input", count: 3 }] },
+  {
+    title: "sm",
+    narrow: true,
+    fields: [{ kind: "input", count: 2 }, "switch", { kind: "input", count: 10 }],
+  },
+  { title: "lg", narrow: true, fields: [{ kind: "input", count: 6 }] },
+  {
+    title: "lg",
+    narrow: true,
+    fields: ["input", "switch", { kind: "input", count: 3 }, { kind: "switch", count: 2 }],
+  },
+  { narrow: true, fields: [{ kind: "input", count: 2 }] },
+];
+
+export function AccountingControlSkeleton() {
+  return <SettingsFormSkeleton sections={sections} />;
 }

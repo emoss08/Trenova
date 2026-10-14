@@ -92,7 +92,7 @@ function status(overrides: Partial<AIRetrievalStatus> = {}): AIRetrievalStatus {
 function renderTab() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const onOpenProviders = vi.fn();
-  render(
+  const { container } = render(
     <NuqsTestingAdapter>
       <QueryClientProvider client={client}>
         <RetrievalTab onOpenProviders={onOpenProviders} />
@@ -100,7 +100,7 @@ function renderTab() {
     </NuqsTestingAdapter>,
   );
 
-  return { onOpenProviders };
+  return { onOpenProviders, container };
 }
 
 beforeEach(() => {
@@ -119,6 +119,30 @@ afterEach(() => {
 });
 
 describe("RetrievalTab", () => {
+  it("holds the whole tab's layout while where the index stands is read", async () => {
+    let resolve!: (value: AIRetrievalStatus) => void;
+    api.fetchAIRetrievalStatus.mockReturnValue(
+      new Promise<AIRetrievalStatus>((done) => {
+        resolve = done;
+      }),
+    );
+    const { container } = renderTab();
+
+    const busy = container.querySelector('[aria-busy="true"]');
+    expect(busy).toHaveAttribute("aria-label", "Loading retrieval");
+    expect(busy?.querySelectorAll(".figs .fg")).toHaveLength(5);
+    expect(busy?.querySelectorAll(".srcs .src")).toHaveLength(3);
+    expect(busy?.querySelectorAll(".ov-a .pol .po")).toHaveLength(2);
+    expect(busy?.textContent).toBe("");
+
+    resolve(status());
+
+    expect(
+      await screen.findByText(/Everything is searchable by meaning under/),
+    ).toBeInTheDocument();
+    expect(container.querySelector('[aria-label="Loading retrieval"]')).toBeNull();
+  });
+
   it("says everything is searchable except what failed, and names the provider first in line", async () => {
     renderTab();
 

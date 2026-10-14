@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { DataEntryControlSkeleton } from "./skeleton";
 
 const DataEntryControlForm = lazy(() => import("./_components/data-entry-control-form"));
 
@@ -15,9 +16,9 @@ export function DataEntryControlPage() {
         description: t("Configure case formatting rules for data entry across the system"),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<DataEntryControlSkeleton />}>
         <DataEntryControlForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

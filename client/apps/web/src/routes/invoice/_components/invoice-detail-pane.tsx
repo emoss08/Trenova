@@ -4,7 +4,6 @@ import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import AuditTab from "@/components/audit-tab";
-import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
 import {
   PlainInvoiceScopeBadge,
@@ -61,6 +60,7 @@ import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billin
 import { InvoiceActionsMenu } from "./invoice-actions-menu";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
 import { InvoiceChargesTab } from "./invoice-charges-tab";
+import { InvoiceDetailSkeleton, InvoiceDetailUnselected } from "./invoice-detail-skeleton";
 import { InvoiceDisputesTab } from "./invoice-disputes-tab";
 import { InvoiceDeliveryDialog } from "./invoice-delivery-dialog";
 import { InvoiceEdiDeliveryCard } from "./invoice-edi-delivery-card";
@@ -122,26 +122,11 @@ export default function InvoiceDetailPane({
   const [postDialogOpen, setPostDialogOpen] = useState(false);
 
   if (!selectedInvoiceId) {
-    return (
-      <BillingDetailUnselected
-        layout="tabs"
-        title={t("Nothing open")}
-        description={t(
-          "Pick an invoice from the list to review its charges, documents and what has been sent or paid.",
-        )}
-      />
-    );
+    return <InvoiceDetailUnselected />;
   }
 
   if (isLoading || !invoice) {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
+    return <InvoiceDetailSkeleton />;
   }
 
   const shipment = invoice.shipment;
