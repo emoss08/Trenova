@@ -85,7 +85,7 @@ var (
 	_ agentprofileports.Reader    = (*Service)(nil)
 )
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
 		l:                p.Logger.Named("service.agentprofile"),
 		profiles:         p.Profiles,

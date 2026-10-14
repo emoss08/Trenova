@@ -134,7 +134,9 @@ func (t *GuideProfileTool) Policy() agentports.ToolPolicy {
 // classifyGuideProfile calls guidance about the person's own work personal: it
 // shapes only the profile their own conversations read. Guidance about the
 // organization shapes every conversation, so it is internal.
-func classifyGuideProfile(params agentports.ToolExecuteParams) agentports.CallPolicy {
+func classifyGuideProfile(
+	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agentports.CallPolicy {
 	actor := params.Actor
 	if common.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
 		actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
@@ -197,7 +199,10 @@ func guidanceActor(
 	return &recorded
 }
 
-func (t *GuideProfileTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
+func (t *GuideProfileTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the Tool interface passes params by value
+) error {
 	req, err := t.request(&params)
 	if err != nil {
 		return err

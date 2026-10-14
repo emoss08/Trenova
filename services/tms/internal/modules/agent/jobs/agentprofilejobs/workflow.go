@@ -191,7 +191,7 @@ func OrganizationWorkflow(
 	}
 
 	var a *Activities
-	listCtx := withPriority(ctx, listOptions, tenantInfo)
+	listCtx := withPriority(ctx, &listOptions, tenantInfo)
 	var users []pulid.ID
 	if err := workflow.ExecuteActivity(listCtx, a.ListActiveUsersActivity, &ActiveUsersInput{
 		TenantWorkItem: input.TenantWorkItem,
@@ -295,7 +295,7 @@ func generate(
 	var a *Activities
 	var plan agentprofileports.GenerationPlan
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, prepareOptions, tenantInfo),
+		withPriority(ctx, &prepareOptions, tenantInfo),
 		a.PrepareProfileActivity, req,
 	).Get(ctx, &plan); err != nil {
 		return err
@@ -311,7 +311,7 @@ func generate(
 	finish := &agentprofileports.FinishGenerationRequest{Plan: &plan}
 	var reply ModelReply
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, modelOptions, tenantInfo),
+		withPriority(ctx, &modelOptions, tenantInfo),
 		a.ProfileModelActivity, &plan,
 	).Get(ctx, &reply); err != nil {
 		finish.Error = "The model could not write the profile: " + err.Error()
@@ -325,7 +325,7 @@ func generate(
 
 	var outcome agentprofileports.GenerationOutcome
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, finishOptions, tenantInfo),
+		withPriority(ctx, &finishOptions, tenantInfo),
 		a.FinishProfileActivity, finish,
 	).Get(ctx, &outcome); err != nil {
 		return err
@@ -333,7 +333,7 @@ func generate(
 	result.absorb(&outcome)
 
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, pruneOptions, tenantInfo),
+		withPriority(ctx, &pruneOptions, tenantInfo),
 		a.PruneProfileActivity, &plan.Ref,
 	).Get(ctx, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("could not prune an agent profile's old versions",
@@ -445,10 +445,11 @@ func priorityFor(tenantInfo pagination.TenantInfo) temporal.Priority {
 
 func withPriority(
 	ctx workflow.Context,
-	options workflow.ActivityOptions,
+	options *workflow.ActivityOptions,
 	tenantInfo pagination.TenantInfo,
 ) workflow.Context {
-	options.Priority = priorityFor(tenantInfo)
+	prioritized := *options
+	prioritized.Priority = priorityFor(tenantInfo)
 
-	return workflow.WithActivityOptions(ctx, options)
+	return workflow.WithActivityOptions(ctx, prioritized)
 }
