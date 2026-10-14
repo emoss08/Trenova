@@ -5,6 +5,7 @@ import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { paletteHandlers } from "./palette.mjs";
+import { CUSTOMER_TRACKING_HANDLERS } from "./customertracking.mjs";
 import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
@@ -1152,6 +1153,7 @@ const SHELL_HANDLERS = {
 
 const HANDLERS = {
   ...SHELL_HANDLERS,
+  ...CUSTOMER_TRACKING_HANDLERS,
   ...PROVIDER_HANDLERS,
   ...AI_HANDLERS,
   ...AI_ANALYTICS_HANDLERS,

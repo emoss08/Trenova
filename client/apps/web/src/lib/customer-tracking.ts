@@ -122,3 +122,40 @@ export function trackingFieldLabel(t: TranslateFn, field: CustomerTrackingField)
       return t("Proof of delivery");
   }
 }
+
+export const STATUS_EVENTS: readonly CustomerStatusNotificationRow["event"][] = [
+  "PickedUp",
+  "Delayed",
+  "Delivered",
+  "PodReady",
+];
+
+/** Where one status email stands on this shipment. */
+export type StatusEmailStep = {
+  event: CustomerStatusNotificationRow["event"];
+  /** Whether the customer's rules send this email at all. */
+  enabled: boolean;
+  /** The latest email owed for the event, if one has been. */
+  latest: CustomerStatusNotificationRow | null;
+  /** How many have been owed, e.g. a delay email per late stop. */
+  count: number;
+};
+
+/**
+ * The four status emails in the order a shipment earns them, each with
+ * whether the rules send it and the latest one owed. A rule turned off after
+ * an email went out still shows that email.
+ */
+export function statusEmailSteps(
+  rules: Readonly<Record<CustomerStatusNotificationRow["event"], boolean>>,
+  rows: readonly CustomerStatusNotificationRow[],
+): StatusEmailStep[] {
+  return STATUS_EVENTS.map((event) => {
+    const owed = rows.filter((row) => row.event === event);
+    const latest = owed.reduce<CustomerStatusNotificationRow | null>(
+      (best, row) => (best == null || row.occurredAt > best.occurredAt ? row : best),
+      null,
+    );
+    return { event, enabled: rules[event], latest, count: owed.length };
+  });
+}
