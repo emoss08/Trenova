@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  factoringItemActions,
   factoringNoaDisplayStatus,
   factoringNoaPhase,
+  factoringSubmissionAwaitsFunding,
   factoringSubmissionPhase,
   factoringVerdictPhase,
   formatBasisPoints,
@@ -139,12 +141,44 @@ describe("groupInvoicesByFactor", () => {
 describe("factoring submission phases", () => {
   it("reads a failed schedule as failed and a cancelled one as closed", () => {
     expect(factoringSubmissionPhase("Sending")).toBe("queued");
-    expect(factoringSubmissionPhase("Sent")).toBe("complete");
     expect(factoringSubmissionPhase("Failed")).toBe("failed");
     expect(factoringSubmissionPhase("Cancelled")).toBe("closed");
   });
 
+  it("reads a delivered schedule as awaiting the factor until every invoice is decided", () => {
+    expect(factoringSubmissionPhase("Sent")).toBe("awaiting");
+    expect(factoringSubmissionPhase("PartiallyFunded")).toBe("awaiting");
+    expect(factoringSubmissionPhase("Funded")).toBe("complete");
+    expect(factoringSubmissionPhase("Rejected")).toBe("failed");
+  });
+
   it("reads a submitted invoice as active, between ready and closed", () => {
     expect(factoringVerdictPhase("Submitted")).toBe("active");
+  });
+});
+
+describe("factoring item actions", () => {
+  it("offers a funded invoice's release, and its chargeback only under recourse", () => {
+    expect(factoringItemActions("Funded", true)).toEqual(["release", "chargeback"]);
+    expect(factoringItemActions("Funded", false)).toEqual(["release"]);
+  });
+
+  it("offers a charged-back invoice only the reversal of its chargeback", () => {
+    expect(factoringItemActions("ChargedBack", true)).toEqual(["reverse"]);
+    expect(factoringItemActions("ChargedBack", false)).toEqual(["reverse"]);
+  });
+
+  it("offers nothing on an invoice the factor has not funded or is done with", () => {
+    for (const status of ["Pending", "Released", "Rejected", "Settled"] as const) {
+      expect(factoringItemActions(status, true)).toEqual([]);
+    }
+  });
+
+  it("lets funding be recorded only on a delivered schedule the factor has not finished", () => {
+    expect(
+      (
+        ["Sending", "Sent", "PartiallyFunded", "Funded", "Rejected", "Failed", "Cancelled"] as const
+      ).filter(factoringSubmissionAwaitsFunding),
+    ).toEqual(["Sent", "PartiallyFunded"]);
   });
 });

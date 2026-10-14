@@ -11,6 +11,8 @@ fragment FactoringInvoiceStateFields on FactoringInvoiceState {
     submissionId
     submissionNumber
     submissionStatus
+    itemId
+    itemStatus
   }
   checks {
     code
@@ -71,6 +73,8 @@ query FactoringInvoiceStateTable(
           submissionId
           submissionNumber
           submissionStatus
+          itemId
+          itemStatus
         }
         checks {
           code
@@ -124,6 +128,18 @@ query FactoringSummary {
       amountMinor
     }
     readyUnsubmitted {
+      count
+      amountMinor
+    }
+    funded {
+      count
+      amountMinor
+    }
+    reserveHeld {
+      count
+      amountMinor
+    }
+    chargebacksDue {
       count
       amountMinor
     }

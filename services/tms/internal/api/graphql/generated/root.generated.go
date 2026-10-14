@@ -20505,6 +20505,10 @@ type FactoringSummary {
   readyUnsubmitted: FactoringVerdictTotals!
   "Funded by the factor, by face value, until the reserve is released or charged back."
   funded: FactoringVerdictTotals!
+  "Funded invoices whose reserve the factor still holds, by the reserve held."
+  reserveHeld: FactoringVerdictTotals!
+  "Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay."
+  chargebacksDue: FactoringVerdictTotals!
 }
 
 type FactoringDocumentRequestResult {

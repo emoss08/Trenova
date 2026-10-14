@@ -270,12 +270,28 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Zero(t, e.invoice(t, rejected.ID).AppliedAmountMinor)
 
 	summary, err := e.states.GetSummary(e.ctx, factoringports.GetSummaryRequest{
-		TenantInfo:  e.tenantInfo,
-		ReadyBefore: now,
+		TenantInfo:       e.tenantInfo,
+		ReadyBefore:      now,
+		ChargebackBefore: now + 100*86400,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, summary.Funded.Count)
 	assert.Equal(t, int64(150000), summary.Funded.AmountMinor)
+	assert.Equal(t, 2, summary.ReserveHeld.Count)
+	assert.Equal(t, balance.ReserveMinor, summary.ReserveHeld.AmountMinor,
+		"the reserve held is what the reserve ledger says the factor holds")
+	assert.Equal(t, 2, summary.ChargebacksDue.Count)
+	assert.Equal(t, int64(150000)-balance.ReserveMinor, summary.ChargebacksDue.AmountMinor,
+		"what would be repaid is each funded invoice's advance and fee")
+
+	notYetDue, err := e.states.GetSummary(e.ctx, factoringports.GetSummaryRequest{
+		TenantInfo:       e.tenantInfo,
+		ReadyBefore:      now,
+		ChargebackBefore: now,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, notYetDue.ChargebacksDue.Count)
+	assert.Zero(t, notYetDue.ChargebacksDue.AmountMinor)
 
 	unfunded, err = e.attention.ListUnfundedSubmissions(e.ctx,
 		&factoringports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
@@ -354,6 +370,8 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Zero(t, summary.Funded.Count, "a settled item and a charged-back one are no longer funded")
+	assert.Zero(t, summary.ReserveHeld.Count)
+	assert.Zero(t, summary.ReserveHeld.AmountMinor)
 
 	reopened := e.invoice(t, charged.ID)
 	assert.Zero(t, reopened.AppliedAmountMinor)

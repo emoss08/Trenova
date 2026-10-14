@@ -62,6 +62,7 @@ export const RecordKindIDPrefix = {
   factoring_agreement: "facagr_",
   factoring_company: "fac_",
   factoring_noa: "facnoa_",
+  factoring_reserve: "facres_",
   factoring_submission: "facsub_",
   fiscal_period: "fp_",
   fleet_code: "fc_",

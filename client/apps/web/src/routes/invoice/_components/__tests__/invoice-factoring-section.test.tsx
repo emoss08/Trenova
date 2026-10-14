@@ -4,13 +4,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceFactoringSection } from "../invoice-factoring-section";
 
 const mocks = vi.hoisted(() => ({
   fetchInvoiceFactoring: vi.fn(),
   setInvoiceFactoringOverride: vi.fn(),
   requestMissingFactoringDocuments: vi.fn(),
+  listFactoringReserveEntries: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -20,6 +21,7 @@ vi.mock("@/lib/graphql/factoring", async (importOriginal) => ({
   fetchInvoiceFactoring: mocks.fetchInvoiceFactoring,
   setInvoiceFactoringOverride: mocks.setInvoiceFactoringOverride,
   requestMissingFactoringDocuments: mocks.requestMissingFactoringDocuments,
+  listFactoringReserveEntries: mocks.listFactoringReserveEntries,
 }));
 vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError, info: vi.fn() },
@@ -27,6 +29,10 @@ vi.mock("sonner", () => ({
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
+
+beforeEach(() => {
+  mocks.listFactoringReserveEntries.mockResolvedValue({ entries: [], totalCount: 0 });
+});
 
 afterEach(() => {
   cleanup();
@@ -178,6 +184,8 @@ describe("invoice factoring section", () => {
             submissionId: "facsub_1",
             submissionNumber: "FS2610-00007",
             submissionStatus: "Failed",
+            itemId: "facsit_1",
+            itemStatus: "Pending",
           },
         }),
       }),
@@ -191,6 +199,88 @@ describe("invoice factoring section", () => {
       "/billing/factoring/submissions/facsub_1",
     );
     expect(within(section).getByText("Failed to send")).toBeInTheDocument();
+  });
+
+  it("shows where a funded invoice stands with the factor and every movement booked for it", async () => {
+    mocks.fetchInvoiceFactoring.mockResolvedValue(
+      factoring({
+        factoringState: state({
+          verdict: "Funded",
+          failedChecks: 0,
+          submission: {
+            submissionId: "facsub_1",
+            submissionNumber: "FS2610-00007",
+            submissionStatus: "PartiallyFunded",
+            itemId: "facsit_1",
+            itemStatus: "ChargedBack",
+          },
+        }),
+      }),
+    );
+    const entry = {
+      factoringCompanyId: "fac_1",
+      agreementId: "facagr_1",
+      submissionId: "facsub_1",
+      submissionItemId: "facsit_1",
+      invoiceId: "inv_1",
+      customerId: "cus_1",
+      treatment: "Sale" as const,
+      currencyCode: "USD",
+      liabilityMinor: 0,
+      reversesEntryId: null,
+      createdAt: NOW,
+      invoice: { id: "inv_1", number: "INV-1" },
+      customer: null,
+      submission: { id: "facsub_1", number: "FS2610-00007" },
+    };
+    mocks.listFactoringReserveEntries.mockResolvedValue({
+      entries: [
+        {
+          ...entry,
+          id: "facres_1",
+          kind: "Funding",
+          cashMinor: 112_500,
+          feeMinor: 3_750,
+          reserveMinor: 8_750,
+          arMinor: -125_000,
+          journalEntryId: "je_1",
+          accountingDate: NOW,
+          occurredOn: NOW,
+          memo: "Remittance 4471",
+        },
+        {
+          ...entry,
+          id: "facres_2",
+          kind: "Chargeback",
+          cashMinor: -116_250,
+          feeMinor: 0,
+          reserveMinor: -8_750,
+          arMinor: 125_000,
+          journalEntryId: "je_2",
+          accountingDate: NOW + 86_400,
+          occurredOn: NOW + 86_400,
+          memo: "Debtor did not pay",
+        },
+      ],
+      totalCount: 2,
+    });
+    renderSection();
+
+    const section = await loadedSection();
+    expect(within(section).getByText("Charged back")).toBeInTheDocument();
+    expect(mocks.listFactoringReserveEntries).toHaveBeenCalledWith(
+      { invoiceId: "inv_1" },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    const funding = await within(section).findByRole("row", { name: /Funding/ });
+    expect(within(funding).getByText("$1,125.00")).toBeInTheDocument();
+    expect(within(funding).getByText("Remittance 4471")).toBeInTheDocument();
+    const chargeback = within(section).getByRole("row", { name: /Chargeback/ });
+    expect(within(chargeback).getByText("-$1,162.50")).toBeInTheDocument();
+    expect(within(chargeback).getByRole("link", { name: "View" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("je_2"),
+    );
   });
 
   it("asks for the one missing document the check names", async () => {

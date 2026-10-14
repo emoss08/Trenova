@@ -1,5 +1,5 @@
 {
-  "version": "sha256:700eebaf0d0e9371a2141789d812afe38a42fd980bb4c94e5774a0c182c34d31",
+  "version": "sha256:34b45ea22cc632ab1b3594b8b5f5593af170154b5e7b723238f63b377c190103",
   "modules": [
     {
       "id": "home",
@@ -7556,7 +7556,7 @@
         "Billing management",
         "Factoring"
       ],
-      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.",
+      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.",
       "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, **Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.\n\nReady invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each opens on its own page with its delivery, documents and invoices.",
       "requires": [
         {

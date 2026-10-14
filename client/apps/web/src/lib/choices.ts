@@ -1120,6 +1120,10 @@ export const journalSourceEventChoices = [
   { value: "CarrierSettlementPosted", label: "Carrier settlement posted" },
   { value: "CarrierSettlementVoided", label: "Carrier settlement voided" },
   { value: "CarrierSettlementPaid", label: "Carrier settlement paid" },
+  { value: "FactoringFunded", label: "Factor funding recorded" },
+  { value: "FactoringReserveReleased", label: "Factoring reserve released" },
+  { value: "FactoringChargedBack", label: "Factoring chargeback recorded" },
+  { value: "FactoringChargebackReversed", label: "Factoring chargeback reversed" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
 export const manualJournalEntryPolicyChoices = [

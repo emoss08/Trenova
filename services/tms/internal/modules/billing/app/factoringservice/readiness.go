@@ -477,9 +477,11 @@ func (s *ReadinessService) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*factoringports.Summary, error) {
+	now := s.now()
 	return s.states.GetSummary(ctx, factoringports.GetSummaryRequest{
-		TenantInfo:  tenantInfo,
-		ReadyBefore: s.now() - factoring.ReadyUnsubmittedSeconds,
+		TenantInfo:       tenantInfo,
+		ReadyBefore:      now - factoring.ReadyUnsubmittedSeconds,
+		ChargebackBefore: now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
 	})
 }
 

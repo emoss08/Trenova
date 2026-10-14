@@ -2874,6 +2874,28 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals),
 			},
+			{
+				Name:      "reserveHeld",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringVerdictTotals",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.Summary)
+					return obj.ReserveHeld, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals),
+			},
+			{
+				Name:      "chargebacksDue",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringVerdictTotals",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.Summary)
+					return obj.ChargebacksDue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals),
+			},
 		}},
 		{Object: "FactoringTransport", Fields: []*gqlexec.Field{
 			{

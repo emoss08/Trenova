@@ -1,4 +1,7 @@
-import { DocumentTypeMultiSelectField } from "@/components/autocomplete-fields";
+import {
+  DocumentTypeMultiSelectField,
+  GLAccountAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
@@ -133,6 +136,7 @@ export function FactoringAgreementDialog({
     description: FACTORING_ACCOUNTING_TREATMENT_DESCRIPTIONS[value],
   }));
   const { control } = form;
+  const treatment = useWatch({ control, name: "accountingTreatment" });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -256,6 +260,59 @@ export function FactoringAgreementDialog({
                 )}
               >
                 <FeeTiersEditor control={control} />
+              </FormSection>
+
+              <FormSection
+                title={t("Accounts")}
+                description={t(
+                  "Where funding, reserve releases and chargebacks are booked. Nothing is booked for this factor until the accounts its treatment needs are set.",
+                )}
+              >
+                <FormGroup cols={2}>
+                  <FormControl>
+                    <GLAccountAutocompleteField
+                      control={control}
+                      name="feeExpenseAccountId"
+                      label={t("Factoring fee account")}
+                      description={t("Where the factor's fees are expensed.")}
+                      clearable
+                    />
+                  </FormControl>
+                  {treatment === "SecuredBorrowing" ? (
+                    <FormControl>
+                      <GLAccountAutocompleteField
+                        control={control}
+                        name="liabilityAccountId"
+                        label={t("Owed to factor")}
+                        description={t(
+                          "The liability for what the factor advanced, until the customer pays.",
+                        )}
+                        clearable
+                      />
+                    </FormControl>
+                  ) : (
+                    <FormControl>
+                      <GLAccountAutocompleteField
+                        control={control}
+                        name="dueFromFactorAccountId"
+                        label={t("Due from factor")}
+                        description={t("The reserve the factor holds until the customer pays it.")}
+                        clearable
+                      />
+                    </FormControl>
+                  )}
+                  <FormControl>
+                    <GLAccountAutocompleteField
+                      control={control}
+                      name="cashAccountId"
+                      label={t("Cash account")}
+                      description={t(
+                        "Where the factor's payments land. Empty uses the organization's cash account.",
+                      )}
+                      clearable
+                    />
+                  </FormControl>
+                </FormGroup>
               </FormSection>
 
               <FormSection title={t("Submission")}>

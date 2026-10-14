@@ -3901,6 +3901,14 @@ export type FacilityType =
   | 'IntermodalFacility'
   | 'StorageWarehouse';
 
+/** The account a factoring journal line books to. */
+export type FactoringAccountRole =
+  | 'AccountsReceivable'
+  | 'Cash'
+  | 'DueFromFactor'
+  | 'FeeExpense'
+  | 'Liability';
+
 /** How factored invoices are booked. */
 export type FactoringAccountingTreatment =
   /** Each funded invoice leaves receivables, with the fee as an expense. */
@@ -3911,13 +3919,17 @@ export type FactoringAccountingTreatment =
 export type FactoringAgreementInput = {
   accountingTreatment: FactoringAccountingTreatment;
   advanceRateBp: number;
+  cashAccountId?: string | number | null | undefined;
   chargebackWindowDays: number;
   documentTypeIds?: Array<string | number> | null | undefined;
+  dueFromFactorAccountId?: string | number | null | undefined;
   effectiveFrom: number;
   effectiveTo?: number | null | undefined;
   factoringCompanyId: string | number;
+  feeExpenseAccountId?: string | number | null | undefined;
   feeTiers: Array<FactoringFeeTierInput>;
   fundingDays: number;
+  liabilityAccountId?: string | number | null | undefined;
   minimumFeeMinor?: number | null | undefined;
   notes?: string | null | undefined;
   recourse: FactoringRecourse;
@@ -3935,6 +3947,8 @@ export type FactoringCheckCode =
   | 'AgreementDocument'
   | 'BillingDocument'
   | 'BillingValidation'
+  /** The factor charged the invoice back, so it is collected as the organization's own. */
+  | 'ChargedBack'
   | 'Dispute'
   | 'Eligible'
   | 'Factored'
@@ -3956,6 +3970,30 @@ export type FactoringFixAction =
   | 'SendNoa'
   | 'SetUpAgreement';
 
+export type FactoringFundingItemInput = {
+  /** What the factor advanced. Defaults to the expected advance. */
+  advanceMinor?: number | null | undefined;
+  /** What the factor kept as its fee. Defaults to the expected fee. */
+  feeMinor?: number | null | undefined;
+  itemId: string | number;
+  outcome: FactoringFundingOutcome;
+  /** Why the factor rejected the invoice. */
+  reason?: string | null | undefined;
+};
+
+export type FactoringFundingOutcome =
+  | 'Funded'
+  | 'Rejected';
+
+/** What a factoring entry does to the invoice. */
+export type FactoringInvoiceEffect =
+  /** Leaves the invoice as it is. */
+  | 'None'
+  /** Puts the invoice's balance back open. */
+  | 'Reopen'
+  /** Settles the invoice's open balance. */
+  | 'Settle';
+
 export type FactoringNoaListInput = {
   customerId?: string | number | null | undefined;
   factoringCompanyId?: string | number | null | undefined;
@@ -3976,14 +4014,50 @@ export type FactoringRecourse =
   /** The factor can charge an unpaid invoice back after the chargeback window. */
   | 'Recourse';
 
+/** What a factoring reserve entry records. */
+export type FactoringReserveEntryKind =
+  | 'Chargeback'
+  | 'ChargebackReversal'
+  | 'Funding'
+  | 'ReserveRelease';
+
+export type FactoringReserveEntryListInput = {
+  factoringCompanyId?: string | number | null | undefined;
+  invoiceId?: string | number | null | undefined;
+  kinds?: Array<FactoringReserveEntryKind> | null | undefined;
+  submissionId?: string | number | null | undefined;
+  table: DataTableConnectionInput;
+};
+
+export type FactoringReserveMovementInput = {
+  /** The cash that moved. A release defaults to the reserve held; a chargeback to the advance and fee. A reversal takes none. */
+  cashMinor?: number | null | undefined;
+  itemId: string | number;
+  /** The day it happened. */
+  occurredOn: number;
+  /** A memo for a release; why for a chargeback or its reversal. */
+  reason?: string | null | undefined;
+  submissionId: string | number;
+  /** The schedule's version. */
+  version: number;
+};
+
 export type FactoringSftpAuthMethod =
   | 'Password'
   | 'PrivateKey';
 
 export type FactoringSubmissionItemStatus =
+  /** The factor charged it back; the organization collects it again. */
+  | 'ChargedBack'
+  /** The factor advanced it; its reserve is held until the customer pays the factor. */
+  | 'Funded'
   | 'Pending'
+  /** The factor would not buy it; it goes back to the queue. */
+  | 'Rejected'
   /** Released when its schedule was cancelled. */
-  | 'Released';
+  | 'Released'
+  /** The factor released its reserve; the factor's part is done. */
+  | 'Settled';
 
 export type FactoringSubmissionPlanInput = {
   factoringCompanyId: string | number;
@@ -3995,6 +4069,12 @@ export type FactoringSubmissionStatus =
   | 'Cancelled'
   /** Could not be delivered after every retry; retry it or cancel it. */
   | 'Failed'
+  /** Every invoice is decided and at least one was funded. */
+  | 'Funded'
+  /** Some invoices are funded or rejected and some still wait on the factor. */
+  | 'PartiallyFunded'
+  /** The factor rejected every invoice on it. */
+  | 'Rejected'
   /** Being built and delivered; retried automatically before it fails. */
   | 'Sending'
   | 'Sent';
@@ -4005,8 +4085,10 @@ export type FactoringTransportMethod =
   | 'Sftp';
 
 export type FactoringVerdict =
-  /** Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored. */
+  /** Not something to factor: unposted, voided, paid, a credit memo, kept out, charged back, or not factored. */
   | 'Excluded'
+  /** Funded by the factor; its reserve comes back when the customer pays the factor. */
+  | 'Funded'
   | 'NotReady'
   | 'Ready'
   /** On a schedule sent, being sent, or that failed to send to the factor. */
@@ -5931,6 +6013,15 @@ export type RecordEmploymentVerificationInput = {
   status?: EmploymentVerificationStatus | null | undefined;
   wasDotRegulated?: boolean | null | undefined;
   workerId: string | number;
+};
+
+export type RecordFactoringFundingInput = {
+  /** The day the factor funded. */
+  fundedOn: number;
+  items: Array<FactoringFundingItemInput>;
+  memo?: string | null | undefined;
+  submissionId: string | number;
+  version: number;
 };
 
 export type RecordLeaveCertificationInput = {
@@ -9370,7 +9461,7 @@ export type ArCashFlowForecastQueryVariables = Exact<{
 }>;
 
 
-export type ArCashFlowForecastQuery = { arCashFlowForecast: Array<{ weekStart: number, expectedMinor: number, openDueMinor: number, actualMinor: number, isForecast: boolean }> };
+export type ArCashFlowForecastQuery = { arCashFlowForecast: Array<{ weekStart: number, expectedMinor: number, openDueMinor: number, actualMinor: number, factorAdvancesMinor: number, reserveReleasesMinor: number, isForecast: boolean }> };
 
 export type ArCollectionPerformanceQueryVariables = Exact<{
   periodDays?: number | null | undefined;
@@ -13331,7 +13422,7 @@ export type FactoringCompanyTableQueryVariables = Exact<{
 
 export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }> } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
+export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, dueFromFactorAccountId: string | null, feeExpenseAccountId: string | null, liabilityAccountId: string | null, cashAccountId: string | null, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }> } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
 
 export type FactoringAgreementsQueryVariables = Exact<{
   factoringCompanyId: string | number;
@@ -13382,6 +13473,82 @@ export type FactoringCompanyRecordQueryVariables = Exact<{
 
 export type FactoringCompanyRecordQuery = { factoringCompany: { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } | null };
 
+export type FactoringReserveEntryFieldsFragment = { id: string, factoringCompanyId: string, agreementId: string, submissionId: string, submissionItemId: string, invoiceId: string, customerId: string, kind: FactoringReserveEntryKind, treatment: FactoringAccountingTreatment, currencyCode: string, cashMinor: number, feeMinor: number, reserveMinor: number, liabilityMinor: number, arMinor: number, journalEntryId: string, accountingDate: number, occurredOn: number, reversesEntryId: string | null, memo: string | null, createdAt: number, invoice: { id: string, number: string } | null, customer: { id: string, code: string, name: string } | null, submission: { id: string, number: string } | null } & { ' $fragmentName'?: 'FactoringReserveEntryFieldsFragment' };
+
+export type FactoringPlannedMovementFieldsFragment = { itemId: string, invoiceId: string, invoiceNumber: string, customerId: string, requestedDate: number, accountingDate: number, fiscalPeriodId: string | null, fiscalPeriodName: string | null, requiresApproval: boolean, movement: { kind: FactoringReserveEntryKind, treatment: FactoringAccountingTreatment, cashMinor: number, feeMinor: number, reserveMinor: number, liabilityMinor: number, arMinor: number, invoiceEffect: FactoringInvoiceEffect, invoiceMinor: number }, lines: Array<{ role: FactoringAccountRole, accountId: string, debit: number, credit: number, account: { id: string, accountCode: string, name: string } | null }> } & { ' $fragmentName'?: 'FactoringPlannedMovementFieldsFragment' };
+
+export type FactoringReserveMovementPlanFieldsFragment = { submissionId: string, itemId: string, itemStatus: FactoringSubmissionItemStatus, movement: { ' $fragmentRefs'?: { 'FactoringPlannedMovementFieldsFragment': FactoringPlannedMovementFieldsFragment } } | null, reverses: { ' $fragmentRefs'?: { 'FactoringReserveEntryFieldsFragment': FactoringReserveEntryFieldsFragment } } | null } & { ' $fragmentName'?: 'FactoringReserveMovementPlanFieldsFragment' };
+
+export type FactoringReserveEntriesQueryVariables = Exact<{
+  input: FactoringReserveEntryListInput;
+}>;
+
+
+export type FactoringReserveEntriesQuery = { factoringReserveEntries: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringReserveEntryFieldsFragment': FactoringReserveEntryFieldsFragment } } }> } };
+
+export type FactoringReserveBalanceQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type FactoringReserveBalanceQuery = { factoringReserveBalance: { factoringCompanyId: string, reserveMinor: number, liabilityMinor: number, advancedMinor: number, releasedMinor: number, chargedBackMinor: number, feeMinor: number, entryCount: number, lastOccurredOn: number | null } };
+
+export type FactoringFundingPlanQueryVariables = Exact<{
+  input: RecordFactoringFundingInput;
+}>;
+
+
+export type FactoringFundingPlanQuery = { factoringFundingPlan: { submissionId: string, status: FactoringSubmissionStatus, fundedCount: number, rejectCount: number, advanceMinor: number, feeMinor: number, reserveMinor: number, movements: Array<{ ' $fragmentRefs'?: { 'FactoringPlannedMovementFieldsFragment': FactoringPlannedMovementFieldsFragment } }> } };
+
+export type FactoringReleasePlanQueryVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type FactoringReleasePlanQuery = { factoringReleasePlan: { ' $fragmentRefs'?: { 'FactoringReserveMovementPlanFieldsFragment': FactoringReserveMovementPlanFieldsFragment } } };
+
+export type FactoringChargebackPlanQueryVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type FactoringChargebackPlanQuery = { factoringChargebackPlan: { ' $fragmentRefs'?: { 'FactoringReserveMovementPlanFieldsFragment': FactoringReserveMovementPlanFieldsFragment } } };
+
+export type FactoringChargebackReversalPlanQueryVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type FactoringChargebackReversalPlanQuery = { factoringChargebackReversalPlan: { ' $fragmentRefs'?: { 'FactoringReserveMovementPlanFieldsFragment': FactoringReserveMovementPlanFieldsFragment } } };
+
+export type RecordFactoringFundingMutationVariables = Exact<{
+  input: RecordFactoringFundingInput;
+}>;
+
+
+export type RecordFactoringFundingMutation = { recordFactoringFunding: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type ReleaseFactoringReserveMutationVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type ReleaseFactoringReserveMutation = { releaseFactoringReserve: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type RecordFactoringChargebackMutationVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type RecordFactoringChargebackMutation = { recordFactoringChargeback: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
+export type ReverseFactoringChargebackMutationVariables = Exact<{
+  input: FactoringReserveMovementInput;
+}>;
+
+
+export type ReverseFactoringChargebackMutation = { reverseFactoringChargeback: { ' $fragmentRefs'?: { 'FactoringSubmissionFieldsFragment': FactoringSubmissionFieldsFragment } } };
+
 export type FactoringNoaFieldsFragment = { id: string, customerId: string, factoringCompanyId: string, status: FactoringNoaStatus, sentAt: number | null, sentTo: string | null, acknowledgedAt: number | null, signedDocumentId: string | null, expiresAt: number | null, releasedAt: number | null, releaseReason: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringNoaFieldsFragment' };
 
 export type FactoringNoasQueryVariables = Exact<{
@@ -13426,7 +13593,7 @@ export type ReleaseFactoringNoaMutationVariables = Exact<{
 
 export type ReleaseFactoringNoaMutation = { releaseFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
 
-export type FactoringInvoiceStateFieldsFragment = { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringInvoiceStateFieldsFragment' };
+export type FactoringInvoiceStateFieldsFragment = { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus, itemId: string, itemStatus: FactoringSubmissionItemStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringInvoiceStateFieldsFragment' };
 
 export type FactoringInvoiceStateTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13437,12 +13604,12 @@ export type FactoringInvoiceStateTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus, itemId: string, itemStatus: FactoringSubmissionItemStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type FactoringSummaryQuery = { factoringSummary: { ready: { count: number, amountMinor: number }, notReady: { count: number, amountMinor: number }, submitted: { count: number, amountMinor: number }, readyUnsubmitted: { count: number, amountMinor: number } } };
+export type FactoringSummaryQuery = { factoringSummary: { ready: { count: number, amountMinor: number }, notReady: { count: number, amountMinor: number }, submitted: { count: number, amountMinor: number }, readyUnsubmitted: { count: number, amountMinor: number }, funded: { count: number, amountMinor: number }, reserveHeld: { count: number, amountMinor: number }, chargebacksDue: { count: number, amountMinor: number } } };
 
 export type InvoiceFactoringQueryVariables = Exact<{
   id: string | number;
@@ -13465,9 +13632,9 @@ export type RequestMissingFactoringDocumentsMutationVariables = Exact<{
 
 export type RequestMissingFactoringDocumentsMutation = { requestMissingFactoringDocuments: { recipient: string, recipientKind: string, documentTypes: Array<string>, shipmentIds: Array<string>, sent: boolean } };
 
-export type FactoringSubmissionItemFieldsFragment = { id: string, submissionId: string, invoiceId: string, invoiceNumber: string, customerId: string, position: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, packetDocumentId: string | null, status: FactoringSubmissionItemStatus, releasedAt: number | null, customer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionItemFieldsFragment' };
+export type FactoringSubmissionItemFieldsFragment = { id: string, submissionId: string, invoiceId: string, invoiceNumber: string, customerId: string, position: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, packetDocumentId: string | null, status: FactoringSubmissionItemStatus, releasedAt: number | null, fundedOn: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, rejectionReason: string | null, settledOn: number | null, chargedBackOn: number | null, chargebackReason: string | null, chargebackWarnedAt: number | null, customer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionItemFieldsFragment' };
 
-export type FactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, agreementId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, schedulePdfDocumentId: string | null, scheduleCsvDocumentId: string | null, transportMethod: FactoringTransportMethod, transportTarget: string, transportReference: string | null, sendAttemptGroup: number, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, cancelledAt: number | null, cancelReason: string | null, submittedById: string | null, version: number, createdAt: number, updatedAt: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionFieldsFragment' };
+export type FactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, agreementId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, schedulePdfDocumentId: string | null, scheduleCsvDocumentId: string | null, transportMethod: FactoringTransportMethod, transportTarget: string, transportReference: string | null, sendAttemptGroup: number, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, fundedAt: number | null, cancelledAt: number | null, cancelReason: string | null, submittedById: string | null, version: number, createdAt: number, updatedAt: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionFieldsFragment' };
 
 export type FactoringSubmissionTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -18288,6 +18455,7 @@ export { ExtractionRolloutFieldsFragmentDoc, ExtractionRolloutArmFieldsFragmentD
 export { ExtractionShadowSettingsFieldsFragmentDoc, ExtractionShadowResultTableRowFieldsFragmentDoc, ExtractionShadowResultDetailFieldsFragmentDoc, ExtractionShadowSettingsDocument, ExtractionShadowReportDocument, ExtractionShadowResultTableDocument, ExtractionShadowResultDetailDocument, UpdateExtractionShadowSettingsDocument } from "./documents/extraction-shadow/extraction-shadow";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
+export { FactoringPlannedMovementFieldsFragmentDoc, FactoringReserveEntryFieldsFragmentDoc, FactoringReserveMovementPlanFieldsFragmentDoc, FactoringReserveEntriesDocument, FactoringReserveBalanceDocument, FactoringFundingPlanDocument, FactoringReleasePlanDocument, FactoringChargebackPlanDocument, FactoringChargebackReversalPlanDocument, RecordFactoringFundingDocument, ReleaseFactoringReserveDocument, RecordFactoringChargebackDocument, ReverseFactoringChargebackDocument } from "./documents/factoring/ledger";
 export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";
 export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocument, FactoringSummaryDocument, InvoiceFactoringDocument, SetInvoiceFactoringOverrideDocument, RequestMissingFactoringDocumentsDocument } from "./documents/factoring/readiness";
 export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";

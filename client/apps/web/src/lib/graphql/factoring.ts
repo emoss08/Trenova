@@ -14,6 +14,19 @@ import {
   FactoringNoaFieldsFragmentDoc,
   FactoringNoaOwnerDocument,
   FactoringNoasDocument,
+  FactoringChargebackPlanDocument,
+  FactoringChargebackReversalPlanDocument,
+  FactoringFundingPlanDocument,
+  FactoringPlannedMovementFieldsFragmentDoc,
+  FactoringReleasePlanDocument,
+  FactoringReserveBalanceDocument,
+  FactoringReserveEntriesDocument,
+  FactoringReserveEntryFieldsFragmentDoc,
+  FactoringReserveMovementPlanFieldsFragmentDoc,
+  RecordFactoringChargebackDocument,
+  RecordFactoringFundingDocument,
+  ReleaseFactoringReserveDocument,
+  ReverseFactoringChargebackDocument,
   FactoringSubmissionDetailDocument,
   FactoringSubmissionFieldsFragmentDoc,
   FactoringSubmissionItemFieldsFragmentDoc,
@@ -41,6 +54,13 @@ import {
   type FactoringInvoiceStateFieldsFragment,
   type FactoringNoaFieldsFragment,
   type FactoringNoaStatus,
+  type FactoringFundingPlanQuery,
+  type FactoringPlannedMovementFieldsFragment,
+  type FactoringReserveBalanceQuery,
+  type FactoringReserveEntryFieldsFragment,
+  type FactoringReserveMovementInput,
+  type FactoringReserveMovementPlanFieldsFragment,
+  type RecordFactoringFundingInput,
   type FactoringSubmissionFieldsFragment,
   type FactoringSubmissionItemFieldsFragment,
   type FactoringSubmissionPlanInput,
@@ -59,7 +79,7 @@ import {
   type SetInvoiceFactoringOverrideInput,
   type UpdateFactoringAgreementInput,
 } from "@trenova/graphql/generated/graphql";
-import { getFragmentData } from "@trenova/graphql/fragment-data";
+import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
@@ -93,8 +113,42 @@ export type FactoringTransportTestResult = {
   transport: FactoringTransport;
 };
 
+export type FactoringReserveEntry = FactoringReserveEntryFieldsFragment;
+export type FactoringReserveBalance = FactoringReserveBalanceQuery["factoringReserveBalance"];
+export type FactoringPlannedMovement = FactoringPlannedMovementFieldsFragment;
+export type FactoringPlannedLine = FactoringPlannedMovement["lines"][number];
+export type FactoringFundingPlan = Omit<
+  FactoringFundingPlanQuery["factoringFundingPlan"],
+  "movements"
+> & { movements: FactoringPlannedMovement[] };
+export type FactoringReserveMovementPlan = Omit<
+  FactoringReserveMovementPlanFieldsFragment,
+  "movement" | "reverses"
+> & {
+  movement: FactoringPlannedMovement | null;
+  reverses: FactoringReserveEntry | null;
+};
+
+/** The movements a person books against one funded invoice on a schedule. */
+export type FactoringReserveAction = "release" | "chargeback" | "reverse";
+
 export const FACTORING_INVOICE_STATE_KEY = "factoring-invoice-state-list";
 export const FACTORING_SUBMISSION_KEY = "factoring-submission-list";
+
+/** The most ledger rows one invoice lists; an invoice moves a handful of times at most. */
+export const FACTORING_INVOICE_ENTRY_LIMIT = 50;
+
+/** The most recent movements a factor's reserve section lists. */
+export const FACTORING_FACTOR_ENTRY_LIMIT = 25;
+
+export type FactoringReserveEntryFilter =
+  | { invoiceId: string; factoringCompanyId?: never }
+  | { factoringCompanyId: string; invoiceId?: never };
+
+export type FactoringReserveEntryPage = {
+  entries: FactoringReserveEntry[];
+  totalCount: number;
+};
 
 /** The readiness queue, one row per evaluated invoice, keyed by the invoice it describes. */
 export function createFactoringInvoiceStateTableConfig(verdicts: FactoringVerdict[]) {
@@ -451,4 +505,161 @@ export async function fetchFactoringCompany(
     signal: options?.signal,
   });
   return data.factoringCompany;
+}
+
+export async function fetchFactoringReserveBalance(
+  factoringCompanyId: string,
+  options?: RequestOptions,
+): Promise<FactoringReserveBalance> {
+  const data = await requestGraphQL({
+    document: FactoringReserveBalanceDocument,
+    operationName: "FactoringReserveBalance",
+    variables: { factoringCompanyId },
+    signal: options?.signal,
+  });
+  return data.factoringReserveBalance;
+}
+
+/**
+ * Reserve movements for one invoice, oldest first so they read as its
+ * history, or for one factor, newest first so the latest movements lead.
+ */
+export async function listFactoringReserveEntries(
+  filter: FactoringReserveEntryFilter,
+  options?: RequestOptions,
+): Promise<FactoringReserveEntryPage> {
+  const byInvoice = filter.invoiceId !== undefined;
+  const data = await requestGraphQL({
+    document: FactoringReserveEntriesDocument,
+    operationName: "FactoringReserveEntries",
+    variables: {
+      input: {
+        table: {
+          first: byInvoice ? FACTORING_INVOICE_ENTRY_LIMIT : FACTORING_FACTOR_ENTRY_LIMIT,
+          sort: [{ field: "createdAt", direction: byInvoice ? "asc" : "desc" }],
+        },
+        invoiceId: filter.invoiceId ?? null,
+        factoringCompanyId: filter.factoringCompanyId ?? null,
+      },
+    },
+    signal: options?.signal,
+  });
+  const entries = data.factoringReserveEntries.edges.map((edge) =>
+    getFragmentData(FactoringReserveEntryFieldsFragmentDoc, edge.node),
+  );
+  return { entries, totalCount: data.factoringReserveEntries.totalCount ?? entries.length };
+}
+
+export async function fetchFactoringFundingPlan(
+  input: RecordFactoringFundingInput,
+  options?: RequestOptions,
+): Promise<FactoringFundingPlan> {
+  const data = await requestGraphQL({
+    document: FactoringFundingPlanDocument,
+    operationName: "FactoringFundingPlan",
+    variables: { input },
+    signal: options?.signal,
+  });
+  const { movements, ...plan } = data.factoringFundingPlan;
+  return {
+    ...plan,
+    movements: movements.map((movement) =>
+      getFragmentData(FactoringPlannedMovementFieldsFragmentDoc, movement),
+    ),
+  };
+}
+
+function readMovementPlan(
+  raw: FragmentType<typeof FactoringReserveMovementPlanFieldsFragmentDoc>,
+): FactoringReserveMovementPlan {
+  const { movement, reverses, ...plan } = getFragmentData(
+    FactoringReserveMovementPlanFieldsFragmentDoc,
+    raw,
+  );
+  return {
+    ...plan,
+    movement: movement
+      ? getFragmentData(FactoringPlannedMovementFieldsFragmentDoc, movement)
+      : null,
+    reverses: reverses ? getFragmentData(FactoringReserveEntryFieldsFragmentDoc, reverses) : null,
+  };
+}
+
+export async function fetchFactoringReserveMovementPlan(
+  action: FactoringReserveAction,
+  input: FactoringReserveMovementInput,
+  options?: RequestOptions,
+): Promise<FactoringReserveMovementPlan> {
+  switch (action) {
+    case "release": {
+      const data = await requestGraphQL({
+        document: FactoringReleasePlanDocument,
+        operationName: "FactoringReleasePlan",
+        variables: { input },
+        signal: options?.signal,
+      });
+      return readMovementPlan(data.factoringReleasePlan);
+    }
+    case "chargeback": {
+      const data = await requestGraphQL({
+        document: FactoringChargebackPlanDocument,
+        operationName: "FactoringChargebackPlan",
+        variables: { input },
+        signal: options?.signal,
+      });
+      return readMovementPlan(data.factoringChargebackPlan);
+    }
+    case "reverse": {
+      const data = await requestGraphQL({
+        document: FactoringChargebackReversalPlanDocument,
+        operationName: "FactoringChargebackReversalPlan",
+        variables: { input },
+        signal: options?.signal,
+      });
+      return readMovementPlan(data.factoringChargebackReversalPlan);
+    }
+  }
+}
+
+export async function recordFactoringFunding(
+  input: RecordFactoringFundingInput,
+): Promise<FactoringSubmission> {
+  const data = await requestGraphQL({
+    document: RecordFactoringFundingDocument,
+    operationName: "RecordFactoringFunding",
+    variables: { input },
+  });
+  return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.recordFactoringFunding);
+}
+
+export async function bookFactoringReserveMovement(
+  action: FactoringReserveAction,
+  input: FactoringReserveMovementInput,
+): Promise<FactoringSubmission> {
+  switch (action) {
+    case "release": {
+      const data = await requestGraphQL({
+        document: ReleaseFactoringReserveDocument,
+        operationName: "ReleaseFactoringReserve",
+        variables: { input },
+      });
+      return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.releaseFactoringReserve);
+    }
+    case "chargeback": {
+      const data = await requestGraphQL({
+        document: RecordFactoringChargebackDocument,
+        operationName: "RecordFactoringChargeback",
+        variables: { input },
+      });
+      return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.recordFactoringChargeback);
+    }
+    case "reverse": {
+      const data = await requestGraphQL({
+        document: ReverseFactoringChargebackDocument,
+        operationName: "ReverseFactoringChargeback",
+        variables: { input },
+      });
+      return getFragmentData(FactoringSubmissionFieldsFragmentDoc, data.reverseFactoringChargeback);
+    }
+  }
 }
