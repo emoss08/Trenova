@@ -1,3 +1,20 @@
+enum AvatarStyle {
+  auto
+  dusk
+  lagoon
+  citrus
+  orchid
+  ember
+  mint
+  slate
+}
+
+enum AvailabilityStatus {
+  available
+  focus
+  away
+}
+
 type UserEdge {
   node: User!
   cursor: String!
@@ -12,4 +29,48 @@ type UserConnection {
 extend type Query {
   users(input: DataTableConnectionInput!): UserConnection!
   user(id: ID!): User
+}
+
+input CreateUserInput {
+  name: String!
+  username: String!
+  emailAddress: String!
+  timezone: String!
+  "Defaults to TwelveHour."
+  timeFormat: TimeFormat
+  "Defaults to the instance's default language."
+  locale: String
+  status: EntityStatus!
+  mustChangePassword: Boolean = false
+  "Roles granted in the current organization. Every grant is checked against the caller's own access."
+  roleIds: [ID!]
+}
+
+input UserPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  emailAddress: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  timezone: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  timeFormat: TimeFormat @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  locale: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isLocked: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  mustChangePassword: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected. An empty string clears it."
+  jobTitle: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected. An empty string clears it."
+  phoneNumber: String @goField(omittable: true)
+}
+
+extend type Mutation {
+  "Creates a user in the current organization and emails them an invitation to choose their own password."
+  createUser(input: CreateUserInput!): User!
+  patchUser(id: ID!, input: UserPatchInput!): User!
 }

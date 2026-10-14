@@ -70,10 +70,16 @@ type User {
   timezone: String!
   isLocked: Boolean!
   mustChangePassword: Boolean!
+  locale: String!
+  jobTitle: String!
+  phoneNumber: String!
+  avatarStyle: AvatarStyle!
+  availabilityStatus: AvailabilityStatus!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   lastLoginAt: Timestamp
+  passwordChangedAt: Timestamp
   businessUnit: BusinessUnit
   currentOrganization: Organization
 }

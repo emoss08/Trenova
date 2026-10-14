@@ -98,14 +98,14 @@ export function buildMessageInspectorContext({
     },
     provenanceRows: [
       ["Message ID", provenance.messageId],
-      ["Profile ID", provenance.profileId],
+      ["Profile ID", provenance.profileId ?? "-"],
       ["Profile Name", message.partnerDocumentProfile?.name ?? "-"],
-      ["Template ID", provenance.templateId],
+      ["Template ID", provenance.templateId ?? "-"],
       [
         "Template Name",
         message.template?.name ?? message.partnerDocumentProfile?.template?.name ?? "-",
       ],
-      ["Template Version ID", provenance.templateVersionId],
+      ["Template Version ID", provenance.templateVersionId ?? "-"],
       ["Template Version", messageVersionLabel(message) ?? "-"],
       ["Template Version Status", message.templateVersion?.status ?? "-"],
       ["Script Libraries", scriptLibraryLabel(message)],

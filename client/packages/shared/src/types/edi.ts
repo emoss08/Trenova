@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableArraySchema, nullableStringSchema } from "./helpers";
+import { defaultedEnumSchema, nullableArraySchema, nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -790,7 +790,7 @@ export const ediAcknowledgmentConfigSchema = z.object({
   expected: z.boolean().default(false),
   type: z.string().default("None"),
   slaInMinutes: z.number().default(0),
-  missingAckSeverity: ediValidationSeveritySchema.default("Warning"),
+  missingAckSeverity: defaultedEnumSchema(ediValidationSeveritySchema, "Warning"),
 });
 
 export const serviceFailure214PartnerSettingsSchema = z
@@ -1145,9 +1145,9 @@ export const ediMessageInspectionSchema = z.object({
   inspection: ediX12InspectionSchema,
   provenance: z.object({
     messageId: z.string(),
-    profileId: z.string(),
-    templateId: z.string(),
-    templateVersionId: z.string(),
+    profileId: z.string().nullish(),
+    templateId: z.string().nullish(),
+    templateVersionId: z.string().nullish(),
     generatedAt: z.number(),
     generatedById: z.string().nullish(),
   }),

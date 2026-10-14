@@ -1,0 +1,1 @@
+{{ t "Set up your {0} account" .CompanyName }}

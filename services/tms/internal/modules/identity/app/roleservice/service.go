@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -282,26 +283,28 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		return err
 	}
 
-	s.recordChange(ctx, &roleChange{
-		actorID:        req.ActorID,
-		organizationID: req.OrganizationID,
-		resourceID:     req.Assignment.RoleID.String(),
-		operation:      permission.OpAssign,
-		after:          req.Assignment,
-		comment:        "Role assigned",
-		metadata: map[string]any{
-			metadataAssignmentID: req.Assignment.ID.String(),
-			metadataUserID:       req.Assignment.UserID.String(),
-		},
-	})
+	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
+		s.recordChange(committedCtx, &roleChange{
+			actorID:        req.ActorID,
+			organizationID: req.OrganizationID,
+			resourceID:     req.Assignment.RoleID.String(),
+			operation:      permission.OpAssign,
+			after:          req.Assignment,
+			comment:        "Role assigned",
+			metadata: map[string]any{
+				metadataAssignmentID: req.Assignment.ID.String(),
+				metadataUserID:       req.Assignment.UserID.String(),
+			},
+		})
 
-	if err := s.permEngine.InvalidateUser(
-		ctx,
-		req.Assignment.UserID,
-		req.OrganizationID,
-	); err != nil {
-		log.Warn("failed to invalidate user permission cache", zap.Error(err))
-	}
+		if err := s.permEngine.InvalidateUser(
+			committedCtx,
+			req.Assignment.UserID,
+			req.OrganizationID,
+		); err != nil {
+			log.Warn("failed to invalidate user permission cache", zap.Error(err))
+		}
+	})
 
 	return nil
 }

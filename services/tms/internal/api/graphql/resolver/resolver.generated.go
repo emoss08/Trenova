@@ -1330,6 +1330,7 @@ func FromServices(s *Services) *Resolver {
 			tractorMutation:               &tractorMutation{Deps: tractorDeps},
 			trailerMutation:               &trailerMutation{Deps: trailerDeps},
 			triageMutation:                &triageMutation{Deps: triageDeps},
+			userMutation:                  &userMutation{Deps: userDeps},
 			watchtowerMutation:            &watchtowerMutation{Deps: watchtowerDeps},
 			workerMutation:                &workerMutation{Deps: workerDeps},
 			workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
@@ -2328,6 +2329,7 @@ type mutationResolver struct {
 	*tractorMutation
 	*trailerMutation
 	*triageMutation
+	*userMutation
 	*watchtowerMutation
 	*workerMutation
 	*workerchecklistMutation
@@ -2911,6 +2913,7 @@ type (
 	tractorMutation                 = tractorresolver.MutationResolver
 	trailerMutation                 = trailerresolver.MutationResolver
 	triageMutation                  = triageresolver.MutationResolver
+	userMutation                    = userresolver.MutationResolver
 	watchtowerMutation              = watchtowerresolver.MutationResolver
 	workerMutation                  = workerresolver.MutationResolver
 	workerchecklistMutation         = workerchecklistresolver.MutationResolver

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -116,9 +117,11 @@ func (r *repository) CountSince(
 	since int64,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := tenantcol.PasswordResetTokenColumns
 		return dbhelper.Count(ctx, r.db.DBForContext(ctx).NewSelect().
 			Model((*tenant.PasswordResetToken)(nil)).
-			Where("prt.user_id = ?", userID).
-			Where("prt.created_at >= ?", since))
+			Where(cols.UserID.Eq(), userID).
+			Where(cols.Purpose.Eq(), tenant.PasswordResetPurposeReset).
+			Where(cols.CreatedAt.Gte(), since))
 	})
 }
