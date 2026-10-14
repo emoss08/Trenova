@@ -58,7 +58,7 @@ func (s *Service) ApprovalImpact(
 		return nil, err
 	}
 
-	shipments, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
+	shipments, unresolved, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
 	if err != nil {
 		log.Error("failed to list rated shipments", zap.Error(err))
 		return nil, err
@@ -69,6 +69,7 @@ func (s *Service) ApprovalImpact(
 		candidate:  template,
 		shipments:  shipments,
 		tenantInfo: req.TenantInfo,
+		unresolved: unresolved,
 	})
 	sortResultsByImpact(resp.Results)
 

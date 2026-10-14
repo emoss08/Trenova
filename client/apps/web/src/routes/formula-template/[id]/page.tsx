@@ -4,6 +4,7 @@ import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaTemplate } from "@/lib/queries/formula-template";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,6 +25,11 @@ import { toast } from "sonner";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 import { StudioSkeleton } from "../_components/studio/studio-skeletons";
+
+export const prefetch: RoutePrefetch = ({ params }) => [
+  formulaTemplate.schema("shipment"),
+  ...(params.id ? [formulaTemplate.get(params.id)] : []),
+];
 
 export function FormulaStudioEditPage() {
   const t = useT();

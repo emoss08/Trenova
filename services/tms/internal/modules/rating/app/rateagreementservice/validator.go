@@ -176,9 +176,8 @@ func (v *Validator) ValidateAmendment(
 
 // templateReferenceRule refuses a rule that points at a formula template the
 // rating engine could never price with — one that does not exist in the
-// tenant, has no approved content billing, or is not a freight-charge
-// template. Without it the failure surfaces only at rating time, where it
-// blocks the shipment save.
+// tenant, is not Active, or is not a freight-charge template. Without it the
+// failure surfaces only at rating time, where it blocks the shipment save.
 func templateReferenceRule(
 	refs templateRefs,
 ) validationframework.TenantedRule[*rateagreement.RateAgreement] {

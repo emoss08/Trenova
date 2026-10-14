@@ -2,6 +2,7 @@ package formulatemplateservice
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -73,6 +74,7 @@ type rateEachRequest struct {
 	shipments      []*shipment.Shipment
 	tenantInfo     pagination.TenantInfo
 	billedBaseline bool
+	unresolved     map[pulid.ID]error
 }
 
 func (s *Service) rateEach(ctx context.Context, req *rateEachRequest) *BacktestResponse {
@@ -129,7 +131,7 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	shipments, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
+	shipments, unresolved, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
 	if err != nil {
 		log.Error("failed to list rated shipments", zap.Error(err))
 		return nil, err
@@ -141,6 +143,7 @@ func (s *Service) Backtest(
 		shipments:      shipments,
 		tenantInfo:     req.TenantInfo,
 		billedBaseline: true,
+		unresolved:     unresolved,
 	}), nil
 }
 
@@ -224,17 +227,24 @@ func (s *Service) backtestShipment(
 		ProNumber:  entity.ProNumber,
 	}
 
-	if billed, ok := billedFormulaAmount(req.current, entity); req.billedBaseline && ok {
+	unresolved := req.unresolved[entity.ID]
+	switch billed, ok := billedFormulaAmount(req.current, entity); {
+	case req.billedBaseline && ok:
 		result.CurrentSource = BacktestCurrentBilled
 		result.CurrentAmount = billed
 		result.GuardrailApplied = entity.RatingDetail.Guardrail != nil &&
 			entity.RatingDetail.Guardrail.Applied
-	} else {
+	case unresolved != nil:
+		result.CurrentSource = BacktestCurrentRecomputed
+		result.CurrentError = unresolved.Error()
+	default:
 		result.CurrentSource = BacktestCurrentRecomputed
 		s.recomputeCurrent(ctx, req, entity, result)
 	}
 
-	if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
+	if unresolved != nil {
+		result.CandidateError = unresolved.Error()
+	} else if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
 		Template: req.candidate,
 		Entity:   entity,
 	}); rateErr != nil {
@@ -302,16 +312,16 @@ func billedFormulaAmount(
 }
 
 // resolveCurrentForShipment reconstructs the content a shipment was actually
-// charged with, for the rows whose "current" side has to be recomputed: an
-// approval impact, which isolates the content change from rate-table drift, and
-// a backtest row with no stored formula charge to compare against.
+// charged with, so the "current" side of a backtest is the number on the
+// invoice rather than whatever the template row happens to hold today.
 //
 // The row is the wrong baseline more often than not: while a template is in
 // review the row already carries the pending edit, and a template under
 // revision has been demoted to Draft. So the search goes from most to least
-// specific — the version stamped on the shipment's own rating detail, then the
-// approved snapshot in force on its rating date — and only falls back to the
-// row when the template has no approved history at all.
+// specific — the version stamped on the shipment's own rating detail, then a
+// version scheduled into effect for its ship date, then the newest snapshot
+// the template took while Active — and only falls back to the row when the
+// template has no approved history at all.
 func (s *Service) resolveCurrentForShipment(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
@@ -344,8 +354,8 @@ func (s *Service) resolveCurrentForShipment(
 	if err != nil {
 		return nil, err
 	}
-	if billing != nil {
-		return template.ApplyVersion(billing), nil
+	if billing.InForce != nil {
+		return template.ApplyVersion(billing.InForce), nil
 	}
 
 	return template, nil
@@ -438,7 +448,7 @@ func (s *Service) listRatedShipments(
 	templateID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	limit int,
-) ([]*shipment.Shipment, error) {
+) ([]*shipment.Shipment, map[pulid.ID]error, error) {
 	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
 		ctx,
 		&shipmentports.ListRatedByFormulaTemplateRequest{
@@ -448,27 +458,71 @@ func (s *Service) listRatedShipments(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if err = s.hydrateShipments(ctx, shipments, tenantInfo); err != nil {
-		return nil, err
+	unresolved, err := s.hydrateShipments(ctx, shipments, tenantInfo)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return shipments, nil
+	return shipments, unresolved, nil
 }
 
 func (s *Service) hydrateShipments(
 	ctx context.Context,
 	shipments []*shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
+) (map[pulid.ID]error, error) {
+	if s.hydrator == nil {
+		return nil, nil
+	}
+
+	err := s.hydrator.HydrateShipments(ctx, &ratequoteports.HydrateShipmentsRequest{
+		Shipments:  shipments,
+		TenantInfo: tenantInfo,
+	})
+	if err == nil {
+		return nil, nil
+	}
+	if !unresolvedReference(err) {
+		return nil, err
+	}
+
+	unresolved := make(map[pulid.ID]error)
+	for _, entity := range shipments {
+		if entity == nil {
+			continue
+		}
+		hydrateErr := s.hydrateShipment(ctx, entity, tenantInfo)
+		switch {
+		case hydrateErr == nil:
+		case unresolvedReference(hydrateErr):
+			unresolved[entity.ID] = hydrateErr
+		default:
+			return nil, hydrateErr
+		}
+	}
+
+	return unresolved, nil
+}
+
+func (s *Service) hydrateShipment(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
 ) error {
 	if s.hydrator == nil {
 		return nil
 	}
 
-	return s.hydrator.HydrateShipments(ctx, &ratequoteports.HydrateShipmentsRequest{
-		Shipments:  shipments,
+	return s.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
+		Shipment:   entity,
 		TenantInfo: tenantInfo,
 	})
+}
+
+func unresolvedReference(err error) bool {
+	var validation *errortypes.Error
+	return errors.As(err, &validation) && validation.Code == errortypes.ErrInvalidReference
 }

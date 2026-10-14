@@ -107,9 +107,9 @@ func GetVersions(
 
 func EffectiveAsOf(
 	approved []*formulatemplate.FormulaTemplateVersion,
-	asOf int64,
-) *formulatemplate.FormulaTemplateVersion {
-	var inForce, earliest *formulatemplate.FormulaTemplateVersion
+	asOf, now int64,
+) (inForce, scheduled *formulatemplate.FormulaTemplateVersion) {
+	var earliest *formulatemplate.FormulaTemplateVersion
 	for _, version := range approved {
 		if version == nil {
 			continue
@@ -133,9 +133,12 @@ func EffectiveAsOf(
 	}
 
 	if inForce != nil {
-		return inForce
+		return inForce, nil
 	}
-	return earliest
+	if earliest == nil || earliest.EffectiveStart() <= now {
+		return earliest, nil
+	}
+	return nil, earliest
 }
 
 func from(ctx context.Context) *cache {

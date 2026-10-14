@@ -24,6 +24,8 @@ type PageHeadProps = {
   active: AIControlTab;
   counts: Partial<Record<AIControlTab, TabCount | null>>;
   onSelect: (tab: AIControlTab) => void;
+  /** The pointer or focus reached a tab, before it is chosen. */
+  onIntent?: (tab: AIControlTab) => void;
 };
 
 function typing(target: EventTarget | null): boolean {
@@ -34,7 +36,7 @@ function typing(target: EventTarget | null): boolean {
 }
 
 /** The page's title and its tabs, with what each tab holds and a line under the open one. */
-export function PageHead({ tabs, active, counts, onSelect }: PageHeadProps) {
+export function PageHead({ tabs, active, counts, onSelect, onIntent }: PageHeadProps) {
   const t = useT();
   const bar = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
@@ -87,6 +89,8 @@ export function PageHead({ tabs, active, counts, onSelect }: PageHeadProps) {
               aria-selected={tab === active}
               className={cn("tab", tab === active && "on")}
               onClick={() => onSelect(tab)}
+              onPointerEnter={() => onIntent?.(tab)}
+              onFocus={() => onIntent?.(tab)}
             >
               {t(LABELS[tab].label)}
               {count && <em className={cn("mono", count.tone)}>{count.text}</em>}

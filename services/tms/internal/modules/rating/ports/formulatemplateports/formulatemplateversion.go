@@ -173,9 +173,6 @@ type FormulaTemplateVersionRepository interface {
 		req *GetLatestVersionByStatusRequest,
 	) (*formulatemplate.FormulaTemplateVersion, error)
 
-	// ClearScheduled cancels every approved snapshot whose window has not
-	// started yet, so it never bills, and reports how many it cancelled.
-	// Windows already in force keep the shipments they priced.
 	ClearScheduled(
 		ctx context.Context,
 		req *ListScheduledVersionsRequest,
