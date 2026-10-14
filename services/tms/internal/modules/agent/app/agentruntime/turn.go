@@ -486,6 +486,15 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 			func(name string) bool { return name == agentdefinition.CoreToolRaiseException },
 		)
 	}
+	// Guidance on a profile is a person's words, written down by the agent
+	// they are talking to: a run nobody is in, or a delegate working on a
+	// handed-over task, has nobody's words to write down.
+	if req.Unattended || req.Delegation != nil || req.Actor.PersonUserID().IsNil() {
+		held = slices.DeleteFunc(
+			held,
+			func(name string) bool { return name == agentdefinition.CoreToolGuideProfile },
+		)
+	}
 	// Only the agent a person is talking to delegates, and only to agents
 	// they may use; the tool is held on that turn and on no other, so a
 	// turn working for another agent cannot hand its task on.

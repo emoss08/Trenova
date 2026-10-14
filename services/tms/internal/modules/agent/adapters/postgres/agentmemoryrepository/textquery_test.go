@@ -11,7 +11,7 @@ import (
 func TestTextQuery_MatchesTheWholeQueryOrEveryWordAsAPrefix(t *testing.T) {
 	t.Parallel()
 
-	query := newTextQuery("  Acme dock-hours ")
+	query := newTextQuery("  Acme dock-hours ", nil)
 	require.False(t, query.empty())
 	require.False(t, query.unmatchable())
 
@@ -22,17 +22,49 @@ func TestTextQuery_MatchesTheWholeQueryOrEveryWordAsAPrefix(t *testing.T) {
 	)
 	assert.Equal(t, []any{"Acme dock-hours", "acme:* & dock:* & hours:*"}, primary.args)
 
+	assert.Nil(t, query.fallback(), "with no meaningful words named there is no looser pass")
+}
+
+func TestTextQuery_FallsBackToAnyTwoMeaningfulWords(t *testing.T) {
+	t.Parallel()
+
+	query := newTextQuery(
+		"what are the dock hours for acme",
+		[]string{"dock", "hour", "acme", "acme", "a b", "it"},
+	)
+
 	fallback := query.fallback()
-	require.NotNil(t, fallback, "a question of several words falls back to any of them")
+	require.NotNil(t, fallback)
 	assert.Equal(t, "to_tsquery('simple', ?)", fallback.tsquery)
-	assert.Equal(t, []any{"acme:* | dock:* | hours:*"}, fallback.args)
+	assert.Equal(t,
+		[]any{"(dock:* & hour:*) | (dock:* & acme:*) | (hour:* & acme:*)"},
+		fallback.args,
+		"a memory must share two words; a repeat, a phrase and a short word are not terms",
+	)
+}
+
+func TestTextQuery_OneMeaningfulWordHasNoLooserPass(t *testing.T) {
+	t.Parallel()
+
+	query := newTextQuery("what is the plan for acme", []string{"plan"})
+	assert.Nil(t, query.fallback(), "a single word would match every memory that uses it")
+}
+
+func TestTextQuery_BoundsTheFallbackTerms(t *testing.T) {
+	t.Parallel()
+
+	terms := []string{"aaa", "bbb", "ccc", "ddd", "eee", "fff", "ggg", "hhh", "iii", "jjj"}
+	query := newTextQuery(strings.Join(terms, " "), terms)
+	assert.Len(t, query.terms, maxFallbackTerms)
+	pairs := strings.Count(query.fallback().args[0].(string), "&")
+	assert.Equal(t, maxFallbackTerms*(maxFallbackTerms-1)/2, pairs)
 }
 
 func TestTextQuery_KeepsWebsearchOperatorsWhole(t *testing.T) {
 	t.Parallel()
 
 	for _, raw := range []string{`"dock 9"`, "acme -friday", "acme OR beta", "acme or beta"} {
-		query := newTextQuery(raw)
+		query := newTextQuery(raw, nil)
 		primary := query.primary()
 		assert.Equal(t, "websearch_to_tsquery('simple', ?)", primary.tsquery, raw)
 		assert.Equal(t, []any{raw}, primary.args, raw)
@@ -43,7 +75,7 @@ func TestTextQuery_KeepsWebsearchOperatorsWhole(t *testing.T) {
 func TestTextQuery_OneWordHasNoLooserPass(t *testing.T) {
 	t.Parallel()
 
-	query := newTextQuery("deliver")
+	query := newTextQuery("deliver", nil)
 	assert.Equal(t, []any{"deliver", "deliver:*"}, query.primary().args,
 		"deliver finds delivery through its prefix")
 	assert.Nil(t, query.fallback())
@@ -52,7 +84,7 @@ func TestTextQuery_OneWordHasNoLooserPass(t *testing.T) {
 func TestTextQuery_SingleLettersAreNotPrefixes(t *testing.T) {
 	t.Parallel()
 
-	query := newTextQuery("a b")
+	query := newTextQuery("a b", nil)
 	assert.Equal(t, "websearch_to_tsquery('simple', ?)", query.primary().tsquery,
 		"a one-letter prefix would match nearly every memory")
 	assert.Nil(t, query.fallback())
@@ -61,17 +93,17 @@ func TestTextQuery_SingleLettersAreNotPrefixes(t *testing.T) {
 func TestTextQuery_PunctuationAloneMatchesNothing(t *testing.T) {
 	t.Parallel()
 
-	query := newTextQuery("?!,")
+	query := newTextQuery("?!,", nil)
 	assert.False(t, query.empty())
 	assert.True(t, query.unmatchable())
-	assert.True(t, newTextQuery("   ").empty())
+	assert.True(t, newTextQuery("   ", nil).empty())
 }
 
 func TestTextQuery_BoundsTheWordsAndDropsRepeats(t *testing.T) {
 	t.Parallel()
 
-	query := newTextQuery(strings.Repeat("acme ", 3) + strings.Repeat("word ", 1) +
-		"a1 a2 a3 a4 a5 a6 a7 a8 a9 b1 b2 b3 b4 b5 b6 b7 b8")
+	query := newTextQuery(strings.Repeat("acme ", 3)+strings.Repeat("word ", 1)+
+		"a1 a2 a3 a4 a5 a6 a7 a8 a9 b1 b2 b3 b4 b5 b6 b7 b8", nil)
 	assert.Len(t, query.words, maxQueryWords)
 	assert.Equal(t, "acme", query.words[0])
 	assert.Equal(t, "word", query.words[1], "repeats are dropped and the order typed is kept")

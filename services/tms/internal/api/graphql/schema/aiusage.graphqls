@@ -29,6 +29,10 @@ enum AIUsageFeature {
   ShipmentImportChat
   DocumentIntelligenceRoute
   DocumentIntelligenceExtract
+  AccountingMapping
+  AgentReflection
+  AgentDrafting
+  AgentProfile
 }
 
 """

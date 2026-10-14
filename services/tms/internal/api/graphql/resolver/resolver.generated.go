@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/accounttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentdefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentpreviewresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentprofileresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentqualityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentruneventresolver"
@@ -176,6 +177,8 @@ type Resolver struct {
 	agentPreviewRecordChange           *agentpreviewresolver.AgentPreviewRecordChangeResolver
 	agentPreviewRef                    *agentpreviewresolver.AgentPreviewRefResolver
 	agentPreviewWarning                *agentpreviewresolver.AgentPreviewWarningResolver
+	agentProfileGuidance               *agentprofileresolver.AgentProfileGuidanceResolver
+	agentProfileVersion                *agentprofileresolver.AgentProfileVersionResolver
 	agentProposal                      *agentProposalResolver
 	agentProposalField                 *agentresolver.AgentProposalFieldResolver
 	agentQualityAgent                  *agentqualityresolver.AgentQualityAgentResolver
@@ -449,6 +452,10 @@ func FromServices(s *Services) *Resolver {
 		AgentPlanService:       s.AgentPlanService,
 		AgentDecisionService:   s.AgentDecisionService,
 		ProposalPreviewService: s.ProposalPreviewService,
+	}
+	agentprofileDeps := &agentprofileresolver.Deps{
+		Core:                s.Core,
+		AgentProfileService: s.AgentProfileService,
 	}
 	agentqualityDeps := &agentqualityresolver.Deps{
 		Core:                   s.Core,
@@ -1111,6 +1118,8 @@ func FromServices(s *Services) *Resolver {
 		agentPreviewRecordChange: &agentpreviewresolver.AgentPreviewRecordChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewRef:          &agentpreviewresolver.AgentPreviewRefResolver{Deps: agentpreviewDeps},
 		agentPreviewWarning:      &agentpreviewresolver.AgentPreviewWarningResolver{Deps: agentpreviewDeps},
+		agentProfileGuidance:     &agentprofileresolver.AgentProfileGuidanceResolver{Deps: agentprofileDeps},
+		agentProfileVersion:      &agentprofileresolver.AgentProfileVersionResolver{Deps: agentprofileDeps},
 		agentProposal: &agentProposalResolver{
 			agentAgentProposal:     &agentAgentProposal{Deps: agentDeps},
 			decisionsAgentProposal: &decisionsAgentProposal{Deps: decisionsDeps},
@@ -1256,6 +1265,7 @@ func FromServices(s *Services) *Resolver {
 			accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 			agentMutation:                 &agentMutation{Deps: agentDeps},
 			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
+			agentprofileMutation:          &agentprofileMutation{Deps: agentprofileDeps},
 			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
 			agentsafetyMutation:           &agentsafetyMutation{Deps: agentsafetyDeps},
 			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
@@ -1362,6 +1372,7 @@ func FromServices(s *Services) *Resolver {
 			agentQuery:                    &agentQuery{Deps: agentDeps},
 			agentdefinitionQuery:          &agentdefinitionQuery{Deps: agentdefinitionDeps},
 			agentpreviewQuery:             &agentpreviewQuery{Deps: agentpreviewDeps},
+			agentprofileQuery:             &agentprofileQuery{Deps: agentprofileDeps},
 			agentqualityQuery:             &agentqualityQuery{Deps: agentqualityDeps},
 			agentruneventQuery:            &agentruneventQuery{Deps: agentruneventDeps},
 			agentsafetyQuery:              &agentsafetyQuery{Deps: agentsafetyDeps},
@@ -1711,6 +1722,14 @@ func (r *Resolver) AgentPreviewRef() generated.AgentPreviewRefResolver {
 
 func (r *Resolver) AgentPreviewWarning() generated.AgentPreviewWarningResolver {
 	return r.agentPreviewWarning
+}
+
+func (r *Resolver) AgentProfileGuidance() generated.AgentProfileGuidanceResolver {
+	return r.agentProfileGuidance
+}
+
+func (r *Resolver) AgentProfileVersion() generated.AgentProfileVersionResolver {
+	return r.agentProfileVersion
 }
 
 func (r *Resolver) AgentProposal() generated.AgentProposalResolver {
@@ -2244,6 +2263,7 @@ type mutationResolver struct {
 	*accountingsyncMutation
 	*agentMutation
 	*agentdefinitionMutation
+	*agentprofileMutation
 	*agentqualityMutation
 	*agentsafetyMutation
 	*aiauditMutation
@@ -2421,6 +2441,7 @@ type queryResolver struct {
 	*agentQuery
 	*agentdefinitionQuery
 	*agentpreviewQuery
+	*agentprofileQuery
 	*agentqualityQuery
 	*agentruneventQuery
 	*agentsafetyQuery
@@ -2825,6 +2846,7 @@ type (
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
 	agentMutation                   = agentresolver.MutationResolver
 	agentdefinitionMutation         = agentdefinitionresolver.MutationResolver
+	agentprofileMutation            = agentprofileresolver.MutationResolver
 	agentqualityMutation            = agentqualityresolver.MutationResolver
 	agentsafetyMutation             = agentsafetyresolver.MutationResolver
 	aiauditMutation                 = aiauditresolver.MutationResolver
@@ -2907,6 +2929,7 @@ type (
 	agentQuery                      = agentresolver.QueryResolver
 	agentdefinitionQuery            = agentdefinitionresolver.QueryResolver
 	agentpreviewQuery               = agentpreviewresolver.QueryResolver
+	agentprofileQuery               = agentprofileresolver.QueryResolver
 	agentqualityQuery               = agentqualityresolver.QueryResolver
 	agentruneventQuery              = agentruneventresolver.QueryResolver
 	agentsafetyQuery                = agentsafetyresolver.QueryResolver

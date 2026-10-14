@@ -42,6 +42,7 @@ import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryTaintNotice } from "./memory-taint-notice";
 import { MemoryUsageNotice } from "./memory-usage-notice";
+import { OrganizationProfile } from "./organization-profile";
 
 const starterParsers = {
   ...panelSearchParamsParser,
@@ -156,6 +157,7 @@ export default function MemoryTab() {
         )}
         {learningOff && <> {t("Learning is off, so agents won't suggest new ones.")}</>}
       </p>
+      <OrganizationProfile canCreate={canCreate} canUpdate={canUpdate} />
       <MemoryUsageNotice />
       <MemoryTaintNotice canDecide={canUpdate} />
       <MemorySuggestions canDecide={canUpdate} />

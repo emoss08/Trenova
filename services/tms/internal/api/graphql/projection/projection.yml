@@ -118,6 +118,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AgentProfileGuidance:
+    - createdByName
   CustomerEmailProfile:
     - fromEmail
   ShipmentEta:
@@ -462,6 +464,8 @@ virtuals:
   AIAnalyticsProvider:
     - removed
     - shortName
+  AIAnalyticsCauseCount:
+    - blame
 
 specials:
   Tractor:

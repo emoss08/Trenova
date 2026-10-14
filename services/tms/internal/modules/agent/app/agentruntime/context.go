@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,6 +37,9 @@ type ContextBuilderParams struct {
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 	Permissions permissionports.PermissionEngine               `optional:"true"`
 	Vectorizer  agentports.QueryVectorizer                     `optional:"true"`
+	// Profiles tells the turn what kind of business the organization is and
+	// what the person works on. Without it the turn goes without.
+	Profiles agentprofileports.Reader `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -48,6 +52,7 @@ type ContextBuilder struct {
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	permissions   permissionports.PermissionEngine
 	vectorizer    agentports.QueryVectorizer
+	profiles      agentprofileports.Reader
 }
 
 func NewContextBuilder(p ContextBuilderParams) agentports.RuntimeContextBuilder {
@@ -61,6 +66,7 @@ func NewContextBuilder(p ContextBuilderParams) agentports.RuntimeContextBuilder 
 		definitions:   p.Definitions,
 		permissions:   p.Permissions,
 		vectorizer:    p.Vectorizer,
+		profiles:      p.Profiles,
 	}
 }
 
@@ -96,6 +102,7 @@ func (b *ContextBuilder) Build(
 		org       organizationContext
 		user      *userContext
 		memories  *agentports.MemoryContext
+		profiles  agentprofileports.PromptProfiles
 	)
 	delegator := strings.TrimSpace(req.DelegatedBy)
 	if delegator == "" {
@@ -114,6 +121,11 @@ func (b *ContextBuilder) Build(
 		records := rc.MemoryRecords()
 		toolNames := agentdefinition.ToolNamesOf(rc.Tools)
 		wg.Go(func() { memories = b.readMemories(ctx, req, records, toolNames, tenant) })
+	}
+	if b.profiles != nil {
+		wg.Go(
+			func() { profiles = b.readProfiles(ctx, definition, req.Actor.PersonUserID(), tenant) },
+		)
 	}
 	wg.Wait()
 
@@ -136,8 +148,42 @@ func (b *ContextBuilder) Build(
 		rc.MemorySubjects = memories.Subjects
 		rc.MemoryRelevance = memories.Relevance
 	}
+	rc.OrganizationProfile = profiles.Organization
+	rc.UserProfile = profiles.User
 
 	return rc, nil
+}
+
+// readProfiles reads the organization's profile for an agent that is told
+// about the organization, and the person's for one that is told about the
+// person and has a person to be told about. A profile that cannot be read
+// leaves the turn without it.
+func (b *ContextBuilder) readProfiles(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	personID pulid.ID,
+	tenant pagination.TenantInfo,
+) agentprofileports.PromptProfiles {
+	req := agentprofileports.PromptProfilesRequest{
+		TenantInfo:   pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
+		Organization: definition.HasContextProvider(agentdefinition.ContextOrganization),
+	}
+	if definition.HasContextProvider(agentdefinition.ContextUser) {
+		req.UserID = personID
+	}
+	if !req.Organization && req.UserID.IsNil() {
+		return agentprofileports.PromptProfiles{}
+	}
+
+	profiles, err := b.profiles.ForPrompt(ctx, req)
+	if err != nil {
+		b.logger.Warn("agent context: a profile could not be read",
+			zap.String("organization", tenant.OrgID.String()),
+			zap.Error(err),
+		)
+	}
+
+	return profiles
 }
 
 // organizationContext is what the turn is told about the organization.
@@ -198,6 +244,7 @@ func (b *ContextBuilder) readMemories(
 		Records:           records,
 		Query:             b.memoryQuery(ctx, &req.Query),
 		Text:              req.Query.Text,
+		Focus:             req.Query.Focus,
 	})
 	if err != nil {
 		b.logger.Warn("agent context: memory lookup failed",

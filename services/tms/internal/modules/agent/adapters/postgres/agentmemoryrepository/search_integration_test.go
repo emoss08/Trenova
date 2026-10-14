@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,10 +68,17 @@ func (f searchFixture) search(
 ) []pulid.ID {
 	t.Helper()
 
+	terms := make([]string, 0, 4)
+	for _, word := range stringutils.SearchWords(query) {
+		if len(word) >= minTermRunes {
+			terms = append(terms, word)
+		}
+	}
 	found, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      query,
+		Terms:      terms,
 	})
 	require.NoError(t, err)
 
@@ -91,8 +99,11 @@ func TestSearch_FindsAMemoryByItsWordsNotTheWholePhrase(t *testing.T) {
 
 	assert.Equal(t, []pulid.ID{dock.ID}, f.search(ctx, t, "acme dock"),
 		"the subject's name and the content are one set of words")
-	assert.Equal(t, []pulid.ID{dock.ID, hours.ID}, f.search(ctx, t, "acme dock hours"),
-		"no memory has every word, so the one sharing most of them ranks first")
+	assert.Equal(t, []pulid.ID{dock.ID}, f.search(ctx, t, "acme dock hours"),
+		"no memory has every word, so the one sharing two of them is found")
+	assert.Equal(t, []pulid.ID{hours.ID}, f.search(ctx, t, "office hours"))
+	assert.Empty(t, f.search(ctx, t, "warehouse hours"),
+		"a memory sharing a single word of a longer question is not found")
 	assert.Equal(t, []pulid.ID{dock.ID}, f.search(ctx, t, "appoint"),
 		"a word finds the longer words it begins")
 	assert.Empty(t, f.search(ctx, t, "detention"))

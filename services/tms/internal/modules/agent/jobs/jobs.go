@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/runstepledger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/aianalyticsjobs"
@@ -39,6 +40,7 @@ func WorkerOptions() fx.Option {
 		runstepledger.Module,
 		conversationschedulejobs.Module,
 		insightjobs.Module,
+		agentprofilejobs.Module,
 		watchtowerjobs.Module,
 		briefingjobs.Module,
 		aicorrectionjobs.Module,

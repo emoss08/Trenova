@@ -243,6 +243,7 @@ func (q *ContextQuery) Request() QueryVectorRequest {
 	return QueryVectorRequest{
 		TenantInfo: q.Actor.TenantInfo(),
 		Text:       TurnQueryText(q.Input, q.History),
+		Focus:      q.Input,
 		Attribution: aiusageports.AIUsageAttribution{
 			UserID:            q.Actor.UserID,
 			AgentDefinitionID: q.DefinitionID,

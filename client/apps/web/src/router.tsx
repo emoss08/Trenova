@@ -2246,6 +2246,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               },
               {
                 path: "memory",
+                loader: createPrefetchLoader(
+                  lazyPrefetch(() => import("@/routes/desk/memory-page")),
+                ),
                 async lazy() {
                   const { DeskMemoryRoutePage } = await import("@/routes/desk/memory-page");
                   return { Component: DeskMemoryRoutePage };
