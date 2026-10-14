@@ -27,6 +27,8 @@ type Request struct {
 	OrganizationID pulid.ID
 	DryRun         bool
 	BatchSize      int
+	OnRepair       func(Repair)
+	OnSkip         func(Skip)
 }
 
 type Reference struct {
@@ -48,8 +50,8 @@ type Skip struct {
 }
 
 type Report struct {
-	Repaired          []Repair
-	Skipped           []Skip
+	Repaired          int
+	Skipped           int
 	Unchanged         int
 	Unreadable        int
 	TransfersRepaired int
@@ -80,13 +82,13 @@ func (s *Service) Repair(ctx context.Context, req *Request) (*Report, error) {
 		if err != nil {
 			return nil, fmt.Errorf("list inbound tenders to re-read: %w", err)
 		}
+		if len(page) == 0 {
+			break
+		}
 		for _, candidate := range page {
-			if err = s.repairOne(ctx, req.DryRun, candidate, report); err != nil {
+			if err = s.repairOne(ctx, req, candidate, report); err != nil {
 				return nil, err
 			}
-		}
-		if len(page) < batchSize {
-			break
 		}
 		afterID = page[len(page)-1].MessageID
 	}
@@ -104,7 +106,7 @@ func (s *Service) Repair(ctx context.Context, req *Request) (*Report, error) {
 
 func (s *Service) repairOne(
 	ctx context.Context,
-	dryRun bool,
+	req *Request,
 	candidate *ediports.TenderReferenceCandidate,
 	report *Report,
 ) error {
@@ -113,11 +115,14 @@ func (s *Service) repairOne(
 		separatorsFor(candidate),
 	)
 	if !found {
-		report.Skipped = append(report.Skipped, Skip{
-			MessageID:      candidate.MessageID,
-			OrganizationID: candidate.OrganizationID,
-			Reason:         "the kept transaction has no B2 segment",
-		})
+		report.Skipped++
+		if req.OnSkip != nil {
+			req.OnSkip(Skip{
+				MessageID:      candidate.MessageID,
+				OrganizationID: candidate.OrganizationID,
+				Reason:         "the kept transaction has no B2 segment",
+			})
+		}
 		return nil
 	}
 
@@ -128,13 +133,16 @@ func (s *Service) repairOne(
 		return nil
 	}
 
-	report.Repaired = append(report.Repaired, Repair{
-		MessageID:      candidate.MessageID,
-		OrganizationID: candidate.OrganizationID,
-		From:           stored,
-		To:             reread,
-	})
-	if dryRun {
+	report.Repaired++
+	if req.OnRepair != nil {
+		req.OnRepair(Repair{
+			MessageID:      candidate.MessageID,
+			OrganizationID: candidate.OrganizationID,
+			From:           stored,
+			To:             reread,
+		})
+	}
+	if req.DryRun {
 		return nil
 	}
 

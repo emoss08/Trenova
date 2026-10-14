@@ -49,6 +49,24 @@ func (r *fakeRepo) RepairTenderReference(
 	return &result, nil
 }
 
+type observed struct {
+	report   *Report
+	repaired []Repair
+	skipped  []Skip
+}
+
+func run(t *testing.T, repo *fakeRepo, req Request) observed {
+	t.Helper()
+
+	var seen observed
+	req.OnRepair = func(repair Repair) { seen.repaired = append(seen.repaired, repair) }
+	req.OnSkip = func(skip Skip) { seen.skipped = append(seen.skipped, skip) }
+	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &req)
+	require.NoError(t, err)
+	seen.report = report
+	return seen
+}
+
 func candidate(id, raw, head, shipmentID, payment string) *ediports.TenderReferenceCandidate {
 	return &ediports.TenderReferenceCandidate{
 		MessageID:      pulid.ID(id),
@@ -76,9 +94,8 @@ func TestRepairCorrectsATenderReadOneElementEarly(t *testing.T) {
 		result: ediports.RepairTenderReferenceResult{Transfers: 1, Shipments: 1},
 	}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{})
+	seen := run(t, repo, Request{})
 
-	require.NoError(t, err)
 	require.Equal(t, []*ediports.RepairTenderReferenceRequest{{
 		Candidate:     misread,
 		ShipmentID:    "LT-88240",
@@ -89,9 +106,10 @@ func TestRepairCorrectsATenderReadOneElementEarly(t *testing.T) {
 		OrganizationID: "org_1",
 		From:           Reference{ShipmentID: "ACME", PaymentMethod: "LT-88240"},
 		To:             Reference{ShipmentID: "LT-88240", PaymentMethod: "PP"},
-	}}, report.Repaired)
-	require.Equal(t, 1, report.TransfersRepaired)
-	require.Equal(t, 1, report.ShipmentsRepaired)
+	}}, seen.repaired)
+	require.Equal(t, 1, seen.report.Repaired)
+	require.Equal(t, 1, seen.report.TransfersRepaired)
+	require.Equal(t, 1, seen.report.ShipmentsRepaired)
 }
 
 func TestRepairLeavesATenderThatWasReadRight(t *testing.T) {
@@ -114,12 +132,12 @@ func TestRepairLeavesATenderThatWasReadRight(t *testing.T) {
 		),
 	}}}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{})
+	seen := run(t, repo, Request{})
 
-	require.NoError(t, err)
 	require.Empty(t, repo.repairs)
-	require.Empty(t, report.Repaired)
-	require.Equal(t, 2, report.Unchanged)
+	require.Empty(t, seen.repaired)
+	require.Zero(t, seen.report.Repaired)
+	require.Equal(t, 2, seen.report.Unchanged)
 }
 
 func TestRepairReadsAPurgedFilesTransactionWithItsOwnSeparators(t *testing.T) {
@@ -135,11 +153,10 @@ func TestRepairReadsAPurgedFilesTransactionWithItsOwnSeparators(t *testing.T) {
 		),
 	}}}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{})
+	seen := run(t, repo, Request{})
 
-	require.NoError(t, err)
-	require.Len(t, report.Repaired, 1)
-	require.Equal(t, Reference{ShipmentID: "LT-88240", PaymentMethod: "CC"}, report.Repaired[0].To)
+	require.Len(t, seen.repaired, 1)
+	require.Equal(t, Reference{ShipmentID: "LT-88240", PaymentMethod: "CC"}, seen.repaired[0].To)
 }
 
 func TestRepairDryRunListsWithoutWriting(t *testing.T) {
@@ -155,12 +172,12 @@ func TestRepairDryRunListsWithoutWriting(t *testing.T) {
 		),
 	}}}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{DryRun: true})
+	seen := run(t, repo, Request{DryRun: true})
 
-	require.NoError(t, err)
 	require.Empty(t, repo.repairs)
-	require.Len(t, report.Repaired, 1)
-	require.Zero(t, report.TransfersRepaired)
+	require.Len(t, seen.repaired, 1)
+	require.Equal(t, 1, seen.report.Repaired)
+	require.Zero(t, seen.report.TransfersRepaired)
 }
 
 func TestRepairPagesByMessageAndCountsWhatCannotBeReRead(t *testing.T) {
@@ -177,12 +194,29 @@ func TestRepairPagesByMessageAndCountsWhatCannotBeReRead(t *testing.T) {
 		unreadable: 4,
 	}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{BatchSize: 2})
+	seen := run(t, repo, Request{BatchSize: 2})
 
-	require.NoError(t, err)
-	require.Equal(t, []pulid.ID{"", "edimsg_2"}, repo.afterIDs)
-	require.Equal(t, 3, report.Unchanged)
-	require.Equal(t, 4, report.Unreadable)
+	require.Equal(t, []pulid.ID{"", "edimsg_2", "edimsg_3"}, repo.afterIDs)
+	require.Equal(t, 3, seen.report.Unchanged)
+	require.Equal(t, 4, seen.report.Unreadable)
+}
+
+func TestRepairReadsEveryPageWhenTheStoreReturnsFewerThanAsked(t *testing.T) {
+	t.Parallel()
+
+	read := func(id string) *ediports.TenderReferenceCandidate {
+		return candidate(id, "ST*204*0001~B2**ACME**LT-1**PP~SE*3*0001~", isaHead, "LT-1", "PP")
+	}
+	repo := &fakeRepo{pages: [][]*ediports.TenderReferenceCandidate{
+		{read("edimsg_1"), read("edimsg_2")},
+		{read("edimsg_3"), read("edimsg_4")},
+		{read("edimsg_5")},
+	}}
+
+	seen := run(t, repo, Request{BatchSize: 5000})
+
+	require.Equal(t, 5, seen.report.Unchanged, "a page shorter than the batch is not the last")
+	require.Equal(t, []pulid.ID{"", "edimsg_2", "edimsg_4", "edimsg_5"}, repo.afterIDs)
 }
 
 func TestRepairSkipsATransactionWithoutB2(t *testing.T) {
@@ -192,13 +226,13 @@ func TestRepairSkipsATransactionWithoutB2(t *testing.T) {
 		candidate("edimsg_1", "ST*204*0001~B2A*00~SE*3*0001~", isaHead, "ACME", ""),
 	}}}
 
-	report, err := New(Deps{Repo: repo}).Repair(t.Context(), &Request{})
+	seen := run(t, repo, Request{})
 
-	require.NoError(t, err)
 	require.Empty(t, repo.repairs)
 	require.Equal(t, []Skip{{
 		MessageID:      "edimsg_1",
 		OrganizationID: "org_1",
 		Reason:         "the kept transaction has no B2 segment",
-	}}, report.Skipped)
+	}}, seen.skipped)
+	require.Equal(t, 1, seen.report.Skipped)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
@@ -178,24 +179,39 @@ func (r *repository) RepairTenderReference(
 			if err != nil {
 				return nil, err
 			}
-			dba := r.db.DBForContext(ctx)
 			now := timeutils.NowUnix()
 
-			shipments, err := r.repairShipments(ctx, dba, req, now)
+			result := &ediports.RepairTenderReferenceResult{}
+			err = r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, _ bun.Tx) error {
+					dba := r.db.DBForContext(ctx)
+					var txErr error
+					if result.Shipments, txErr = r.repairShipments(
+						ctx,
+						dba,
+						req,
+						now,
+					); txErr != nil {
+						return txErr
+					}
+					if result.Transfers, txErr = r.repairTransfers(
+						ctx,
+						dba,
+						req,
+						references,
+						now,
+					); txErr != nil {
+						return txErr
+					}
+					return r.repairMessage(ctx, dba, req, references, now)
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
-			transfers, err := r.repairTransfers(ctx, dba, req, references, now)
-			if err != nil {
-				return nil, err
-			}
-			if err = r.repairMessage(ctx, dba, req, references, now); err != nil {
-				return nil, err
-			}
-			return &ediports.RepairTenderReferenceResult{
-				Transfers: transfers,
-				Shipments: shipments,
-			}, nil
+			return result, nil
 		},
 	)
 }

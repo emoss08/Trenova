@@ -208,14 +208,21 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 	return fixture, db, postgres.NewTestConnection(db)
 }
 
-func repair(
+type repairRun struct {
+	*editenderrepairservice.Report
+
+	repairs []editenderrepairservice.Repair
+}
+
+func runRepair(
 	t *testing.T,
 	conn *postgres.Connection,
 	orgID pulid.ID,
 	dryRun bool,
-) *editenderrepairservice.Report {
+) (*repairRun, error) {
 	t.Helper()
 
+	run := &repairRun{}
 	report, err := editenderrepairservice.New(editenderrepairservice.Deps{
 		Repo: editenderrepairrepository.New(editenderrepairrepository.Params{
 			DB:     conn,
@@ -224,9 +231,20 @@ func repair(
 	}).Repair(t.Context(), &editenderrepairservice.Request{
 		OrganizationID: orgID,
 		DryRun:         dryRun,
+		OnRepair: func(repair editenderrepairservice.Repair) {
+			run.repairs = append(run.repairs, repair)
+		},
 	})
+	run.Report = report
+	return run, err
+}
+
+func repair(t *testing.T, conn *postgres.Connection, orgID pulid.ID, dryRun bool) *repairRun {
+	t.Helper()
+
+	run, err := runRepair(t, conn, orgID, dryRun)
 	require.NoError(t, err)
-	return report
+	return run
 }
 
 func ratingDetail(t *testing.T, db *bun.DB, table, column, path string, id pulid.ID) string {
@@ -257,18 +275,19 @@ func TestRepairEDITenderReferencesCorrectsATenderReadOneElementEarly(t *testing.
 	fixture, db, conn := seedTenders(t)
 
 	preview := repair(t, conn, fixture.orgID, true)
-	require.Len(t, preview.Repaired, 1)
-	require.Equal(t, fixture.misread, preview.Repaired[0].MessageID)
+	require.Equal(t, 1, preview.Repaired)
+	require.Len(t, preview.repairs, 1)
+	require.Equal(t, fixture.misread, preview.repairs[0].MessageID)
 	require.Equal(
 		t,
 		editenderrepairservice.Reference{ShipmentID: "LT-88240", PaymentMethod: "PP"},
-		preview.Repaired[0].To,
+		preview.repairs[0].To,
 	)
 	require.Equal(t, "ACME", externalReference(t, db, fixture.shipment))
 
 	report := repair(t, conn, fixture.orgID, false)
 
-	require.Len(t, report.Repaired, 1)
+	require.Equal(t, 1, report.Repaired)
 	require.Equal(t, 1, report.Unchanged)
 	require.Equal(t, 1, report.Unreadable)
 	require.Equal(t, 1, report.TransfersRepaired)
@@ -309,7 +328,7 @@ func TestRepairEDITenderReferencesCorrectsATenderReadOneElementEarly(t *testing.
 	)
 
 	again := repair(t, conn, fixture.orgID, false)
-	require.Empty(t, again.Repaired)
+	require.Zero(t, again.Repaired)
 	require.Equal(t, 2, again.Unchanged)
 }
 
@@ -325,6 +344,31 @@ func TestRepairEDITenderReferencesReadsAPurgedFileFromItsTransaction(t *testing.
 
 	report := repair(t, conn, fixture.orgID, false)
 
-	require.Len(t, report.Repaired, 1)
+	require.Equal(t, 1, report.Repaired)
 	require.Equal(t, "LT-88240", externalReference(t, db, fixture.shipment))
+}
+
+func TestRepairEDITenderReferencesLeavesATenderWholeWhenOneWriteFails(t *testing.T) {
+	fixture, db, conn := seedTenders(t)
+	for _, statement := range []string{
+		`CREATE FUNCTION refuse_message_update() RETURNS trigger LANGUAGE plpgsql AS
+			$$ BEGIN RAISE EXCEPTION 'refused for the test'; END $$`,
+		`CREATE TRIGGER refuse_message_update BEFORE UPDATE ON edi_messages
+			FOR EACH ROW EXECUTE FUNCTION refuse_message_update()`,
+	} {
+		_, err := db.ExecContext(t.Context(), statement)
+		require.NoError(t, err)
+	}
+
+	_, err := runRepair(t, conn, fixture.orgID, false)
+
+	require.ErrorContains(t, err, "refused for the test")
+	require.Equal(t, "ACME", externalReference(t, db, fixture.shipment),
+		"the shipment keeps its reference when the message could not be corrected")
+	require.JSONEq(
+		t,
+		`{"externalShipmentId":"ACME","paymentMethod":"LT-88240"}`,
+		ratingDetail(t, db, "edi_load_tender_transfers", "tender_payload",
+			"'{ratingDetail}'", fixture.transfer),
+	)
 }

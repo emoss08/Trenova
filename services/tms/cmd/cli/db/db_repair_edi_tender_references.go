@@ -39,7 +39,8 @@ re-read; they are counted and left as they are.
 Examples:
   trenova db repair-edi-tender-references --dry-run         # Preview without writing
   trenova db repair-edi-tender-references                   # Repair every organization
-  trenova db repair-edi-tender-references --org org_01H...  # Repair one organization`,
+  trenova db repair-edi-tender-references --org org_01H...  # Repair one organization
+  trenova db repair-edi-tender-references --dry-run --verbose  # List each tender as it is read`,
 	RunE: runRepairEDITenderReferences,
 }
 
@@ -64,8 +65,12 @@ func runRepairEDITenderReferences(_ *cobra.Command, _ []string) error {
 	report, err := repairEDITenderReferences(
 		ctx,
 		postgres.WrapDB(manager.GetDB()),
-		orgID,
-		dryRun,
+		&editenderrepairservice.Request{
+			OrganizationID: orgID,
+			DryRun:         dryRun,
+			OnRepair:       printRepairedTender(verbose),
+			OnSkip:         printSkippedTender(verbose),
+		},
 	)
 	if err != nil {
 		return err
@@ -78,8 +83,7 @@ func runRepairEDITenderReferences(_ *cobra.Command, _ []string) error {
 func repairEDITenderReferences(
 	ctx context.Context,
 	conn *postgres.Connection,
-	orgID pulid.ID,
-	preview bool,
+	req *editenderrepairservice.Request,
 ) (*editenderrepairservice.Report, error) {
 	service := editenderrepairservice.New(editenderrepairservice.Deps{
 		Repo: editenderrepairrepository.New(editenderrepairrepository.Params{
@@ -88,18 +92,41 @@ func repairEDITenderReferences(
 		}),
 	})
 
-	report, err := service.Repair(ctx, &editenderrepairservice.Request{
-		OrganizationID: orgID,
-		DryRun:         preview,
-	})
+	report, err := service.Repair(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to repair EDI tender references: %w", err)
 	}
 	return report, nil
 }
 
+func printRepairedTender(verbose bool) func(editenderrepairservice.Repair) {
+	if !verbose {
+		return nil
+	}
+	return func(repair editenderrepairservice.Repair) {
+		color.White(
+			"  • %s in %s: shipment %q → %q, payment %q → %q",
+			repair.MessageID,
+			repair.OrganizationID,
+			repair.From.ShipmentID,
+			repair.To.ShipmentID,
+			repair.From.PaymentMethod,
+			repair.To.PaymentMethod,
+		)
+	}
+}
+
+func printSkippedTender(verbose bool) func(editenderrepairservice.Skip) {
+	if !verbose {
+		return nil
+	}
+	return func(skip editenderrepairservice.Skip) {
+		color.Yellow("  • skipped %s in %s: %s", skip.MessageID, skip.OrganizationID, skip.Reason)
+	}
+}
+
 func printEDITenderReferenceReport(report *editenderrepairservice.Report, preview bool) {
-	if len(report.Repaired) == 0 {
+	if report.Repaired == 0 {
 		color.Green(
 			"✓ Nothing to repair. %d inbound tender(s) already read their B2 right.",
 			report.Unchanged,
@@ -109,18 +136,7 @@ func printEDITenderReferenceReport(report *editenderrepairservice.Report, previe
 		if preview {
 			verb = "Dry run: would repair"
 		}
-		color.Cyan("→ %s %d inbound tender(s):", verb, len(report.Repaired))
-		for _, repair := range report.Repaired {
-			color.White(
-				"  • %s in %s: shipment %q → %q, payment %q → %q",
-				repair.MessageID,
-				repair.OrganizationID,
-				repair.From.ShipmentID,
-				repair.To.ShipmentID,
-				repair.From.PaymentMethod,
-				repair.To.PaymentMethod,
-			)
-		}
+		color.Cyan("→ %s %d inbound tender(s)", verb, report.Repaired)
 		if !preview {
 			color.White("  • %d transfer(s) corrected", report.TransfersRepaired)
 			color.White(
@@ -137,8 +153,11 @@ func printEDITenderReferenceReport(report *editenderrepairservice.Report, previe
 			report.Unreadable,
 		)
 	}
-	for _, skip := range report.Skipped {
-		color.Yellow("  • %s in %s: %s", skip.MessageID, skip.OrganizationID, skip.Reason)
+	if report.Skipped > 0 {
+		color.Yellow(
+			"→ %d inbound tender(s) skipped: the kept transaction has no B2 segment",
+			report.Skipped,
+		)
 	}
 }
 
