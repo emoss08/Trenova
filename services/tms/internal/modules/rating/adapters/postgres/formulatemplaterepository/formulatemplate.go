@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -452,6 +454,17 @@ func (r *repository) BulkUpdateStatus(
 				req.TemplateIDs,
 			); err != nil {
 				return nil, err
+			}
+
+			updatedIDs := make([]pulid.ID, 0, len(entities))
+			for _, entity := range entities {
+				updatedIDs = append(updatedIDs, entity.ID)
+			}
+			if skipped := sliceutils.Difference(
+				sliceutils.Dedupe(req.TemplateIDs),
+				updatedIDs,
+			); len(skipped) > 0 {
+				return nil, dberror.CreateBulkVersionMismatchError("FormulaTemplate", skipped)
 			}
 
 			return entities, nil

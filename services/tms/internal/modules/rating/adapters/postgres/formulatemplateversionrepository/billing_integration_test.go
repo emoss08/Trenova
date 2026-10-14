@@ -25,6 +25,7 @@ type versionFixture struct {
 	template   *formulatemplate.FormulaTemplate
 	tenantInfo pagination.TenantInfo
 	author     pulid.ID
+	other      pulid.ID
 }
 
 func setupVersions(t *testing.T) *versionFixture {
@@ -52,12 +53,21 @@ func setupVersions(t *testing.T) *versionFixture {
 	}.Build())
 	require.NoError(t, err)
 
+	tx, err := db.BeginTx(ctx, nil)
+	require.NoError(t, err)
+	other := seedtest.NewUser(tenantInfo.OrgID, tenantInfo.BuID).
+		WithUsername("other_author").
+		WithEmail("other_author@example.com").
+		Build(t, ctx, tx)
+	require.NoError(t, tx.Commit())
+
 	return &versionFixture{
 		ctx:        ctx,
 		repo:       New(Params{DB: conn, Logger: zap.NewNop()}),
 		template:   template,
 		tenantInfo: tenantInfo,
 		author:     data.User.ID,
+		other:      other.ID,
 	}
 }
 
@@ -122,10 +132,9 @@ func TestApprovedSnapshotsScheduleAndClearOnlyPendingWindows(t *testing.T) {
 func TestListAuthorIDsSinceNamesEveryoneWhoWroteAfterTheBase(t *testing.T) {
 	f := setupVersions(t)
 
-	other := pulid.MustNew("usr_")
 	f.snapshot(t, 1, formulatemplate.StatusActive, nil, f.author)
-	f.snapshot(t, 2, formulatemplate.StatusDraft, nil, other)
-	f.snapshot(t, 3, formulatemplate.StatusDraft, nil, other)
+	f.snapshot(t, 2, formulatemplate.StatusDraft, nil, f.other)
+	f.snapshot(t, 3, formulatemplate.StatusDraft, nil, f.other)
 
 	authors, err := f.repo.ListAuthorIDsSince(f.ctx, &formulatemplateports.ListVersionAuthorsRequest{
 		TenantInfo:   f.tenantInfo,
@@ -133,5 +142,5 @@ func TestListAuthorIDsSinceNamesEveryoneWhoWroteAfterTheBase(t *testing.T) {
 		AfterVersion: 1,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []pulid.ID{other}, authors)
+	assert.Equal(t, []pulid.ID{f.other}, authors)
 }

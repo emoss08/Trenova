@@ -121,11 +121,7 @@ func (r *repository) Delete(
 			return err
 		}
 
-		return dberror.CheckRowsAffected(
-			results,
-			"FormulaTemplateTestCase",
-			req.TestCaseID.String(),
-		)
+		return dberror.CheckFound(results, "FormulaTemplateTestCase")
 	})
 }
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -58,11 +59,11 @@ func TestCountUsagesCountsTheBillingFallback(t *testing.T) {
 	require.NoError(t, err)
 	if updated, _ := result.RowsAffected(); updated == 0 {
 		_, err = db.NewInsert().
-			TableExpr("billing_controls").
-			Value("id", "?", pulid.MustNew("bc_")).
-			Value("organization_id", "?", tenantInfo.OrgID).
-			Value("business_unit_id", "?", tenantInfo.BuID).
-			Value("fallback_formula_template_id", "?", template.ID).
+			Model(&tenant.BillingControl{
+				OrganizationID:            tenantInfo.OrgID,
+				BusinessUnitID:            tenantInfo.BuID,
+				FallbackFormulaTemplateID: &template.ID,
+			}).
 			Exec(ctx)
 		require.NoError(t, err)
 	}
