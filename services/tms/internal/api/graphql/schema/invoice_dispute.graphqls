@@ -52,6 +52,8 @@ type InvoiceDispute {
   updatedAt: Timestamp!
   invoice: Invoice
   customer: Customer
+  openedBy: User
+  resolvedBy: User
 }
 
 input OpenInvoiceDisputeInput {

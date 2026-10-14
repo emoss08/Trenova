@@ -726,11 +726,19 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 	if err != nil {
 		return nil, err
 	}
+	shipmentIDs, err := r.shipmentsInvoicesBill(ctx, input.InvoiceIds)
+	if err != nil {
+		return nil, err
+	}
+	if input.InvoiceIds != nil && len(shipmentIDs) == 0 {
+		return emptyShipmentConnection(), nil
+	}
 
 	result, err := r.ShipmentService.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		ShipmentOptions: shipmentports.ShipmentOptions{
+			IDs:                     shipmentIDs,
 			TractorIDs:              tractorIDs,
 			TrailerIDs:              trailerIDs,
 			WorkerIDs:               workerIDs,

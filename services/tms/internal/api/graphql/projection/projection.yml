@@ -5,6 +5,11 @@ aliases:
     overdue: dueAt
   WatchtowerItemEvent:
     actor: actorId
+  Invoice:
+    voidedBy: voidedById
+  InvoiceDispute:
+    openedBy: openedById
+    resolvedBy: resolvedById
   AgentToolRule:
     updatedBy: updatedById
   Shipment:
@@ -270,6 +275,7 @@ virtuals:
     - lateChargeAssessments
     - ediSendPlan
     - factoringState
+    - chargeSummary
   LateChargeAssessment:
     - sourceInvoice
     - debitMemo

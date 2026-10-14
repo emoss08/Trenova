@@ -20,7 +20,6 @@
   "Dismisses the pairing — the invoice stays open for a different assignment or a dispute with the carrier.": "Descarta el emparejamiento: la factura queda abierta para otra asignación o para una disputa con el transportista.",
   "Document AI": "IA de documentos",
   "Duplicate invoice": "Factura duplicada",
-  "EDI 210": "EDI 210",
   "EDI 210 carrier freight invoice · received {0}": "Factura de flete del transportista EDI 210 · recibida el {0}",
   "Every carrier invoice is linked to a carrier and matched. Clear the filter to see them anyway.": "Todas las facturas de transportistas están vinculadas a un transportista y cotejadas. Borre el filtro para verlas de todos modos.",
   "Expected amount": "Importe esperado",

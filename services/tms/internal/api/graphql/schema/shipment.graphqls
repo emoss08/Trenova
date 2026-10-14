@@ -1868,6 +1868,11 @@ input ShipmentsInput {
   stopLocationIds: [ID!]
   "Only shipments with a live move tendered to one of these carriers."
   carrierIds: [ID!]
+  """
+  Only shipments one of these invoices bills, as its shipment or on one of its
+  lines. Needs permission to read invoices.
+  """
+  invoiceIds: [ID!]
 }
 
 input ShipmentEventsInput {

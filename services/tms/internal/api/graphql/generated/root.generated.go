@@ -445,6 +445,7 @@ type ResolverRoot interface {
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
 	InvoiceAdjustmentLine() InvoiceAdjustmentLineResolver
+	InvoiceChargeGroup() InvoiceChargeGroupResolver
 	InvoiceDispute() InvoiceDisputeResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
@@ -1580,6 +1581,8 @@ type InvoiceResolver interface {
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
 	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
+	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error)
+	VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error)
 	FactoringCompany(ctx context.Context, obj *invoice.Invoice) (*factoringcompany.FactoringCompany, error)
 	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoring.InvoiceState, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
@@ -1611,9 +1614,23 @@ type InvoiceAdjustmentLineResolver interface {
 	RebillAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
 }
 
+type InvoiceChargeGroupResolver interface {
+	ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
+	ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error)
+	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.RateUnit, error)
+	Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
+	RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
+	Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
+	FormulaTemplateID(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
+	FormulaTemplateName(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
+	Amount(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
+}
+
 type InvoiceDisputeResolver interface {
 	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (string, error)
 	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
+	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
 }
 
 type InvoiceLineResolver interface {
@@ -3842,6 +3859,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
 			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
 			"InvoiceAdjustmentLine":              func() any { return r.InvoiceAdjustmentLine() },
+			"InvoiceChargeGroup":                 func() any { return r.InvoiceChargeGroup() },
 			"InvoiceDispute":                     func() any { return r.InvoiceDispute() },
 			"InvoiceLine":                        func() any { return r.InvoiceLine() },
 			"JobPosition":                        func() any { return r.JobPosition() },
@@ -24166,6 +24184,44 @@ type Invoice {
   customer: Customer
   order: Order
   lines: [InvoiceLine!]
+  """
+  The lines summed by how each was billed: one entry per freight rating,
+  accessorial charge or memo line, however many shipments share it. Freight
+  comes first, then accessorials, then memo lines.
+  """
+  chargeSummary: [InvoiceChargeGroup!]!
+  "Who voided the invoice; null while it stands."
+  voidedBy: User
+}
+
+"Every line of an invoice billed the same way, summed across the shipments it ran on."
+type InvoiceChargeGroup {
+  type: InvoiceLineType!
+  "What the first line in the group says."
+  description: String!
+  chargeCode: String
+  "How an accessorial was charged; null on freight and memo lines."
+  chargeMethod: AccessorialMethod
+  "What a per-unit charge was counted in."
+  rateUnit: RateUnit
+  """
+  The rate every line in the group was billed at: a freight load's base rate,
+  an accessorial's amount per unit or its percentage. Null when the lines
+  differ.
+  """
+  rate: Decimal
+  "The amount a percentage was taken of, when the group is one line."
+  rateBasisAmount: Decimal
+  "Units billed across the group."
+  quantity: Decimal!
+  "The formula template that rated the freight, when the line kept it."
+  formulaTemplateId: ID
+  "The template's name as it stood when the freight was billed."
+  formulaTemplateName: String
+  lineCount: Int!
+  "Distinct shipments the group bills; zero for memo lines."
+  shipmentCount: Int!
+  amount: Decimal!
 }
 
 enum InvoiceLineType {
@@ -24195,6 +24251,10 @@ type InvoiceLine {
   rate: Decimal
   "The share of the charge this line bills, when it is less than all of it."
   allocationPercent: Decimal
+  "The formula template that rated a freight line, when the line kept it."
+  formulaTemplateId: ID
+  "The template's name as it stood when the line was billed."
+  formulaTemplateName: String
   chargeAllocationId: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -24590,6 +24650,8 @@ type InvoiceDispute {
   updatedAt: Timestamp!
   invoice: Invoice
   customer: Customer
+  openedBy: User
+  resolvedBy: User
 }
 
 input OpenInvoiceDisputeInput {
@@ -29979,6 +30041,11 @@ input ShipmentsInput {
   stopLocationIds: [ID!]
   "Only shipments with a live move tendered to one of these carriers."
   carrierIds: [ID!]
+  """
+  Only shipments one of these invoices bills, as its shipment or on one of its
+  lines. Needs permission to read invoices.
+  """
+  invoiceIds: [ID!]
 }
 
 input ShipmentEventsInput {

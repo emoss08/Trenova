@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a8e58baba548955257dec03ec79b18434efa3dddf1fe7c15bf1c5c65729b05d4",
+  "version": "sha256:2948ac9ccebfe706a1b4beb642d1f8922438b9c2f48d6027604a6cc173529fe2",
   "modules": [
     {
       "id": "home",
@@ -17887,7 +17887,8 @@
       "path": "/billing/invoices",
       "params": {
         "item": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "journal_entry",

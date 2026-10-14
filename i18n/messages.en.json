@@ -10846,6 +10846,15 @@
       "go/other"
     ]
   },
+  "A voided invoice is kept for the record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A voided invoice must say when": {
     "sites": 1,
     "scope": [
@@ -13119,7 +13128,7 @@
     ]
   },
   "Accessorials": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -13129,6 +13138,7 @@
       "go/other",
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
+      "routes/desk",
       "routes/invoice",
       "routes/rate-agreement",
       "routes/shipment"
@@ -13507,7 +13517,7 @@
     ]
   },
   "Accounting": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -13515,7 +13525,8 @@
       "apps/web/components",
       "packages/shared/lib",
       "routes/accounting-dashboard",
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Accounting Date": {
@@ -22394,7 +22405,7 @@
     ]
   },
   "Amount": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -22411,6 +22422,7 @@
       "routes/billing-queue",
       "routes/carrier-cost-event",
       "routes/customer-payments",
+      "routes/desk",
       "routes/driver-expense",
       "routes/driver-pay-event",
       "routes/escrow-account",
@@ -24316,6 +24328,15 @@
       "go/other"
     ]
   },
+  "An invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "An invoice assigned to a factor is remitted to it and carries its notice of assignment. It can be sold once every check passes.": {
     "sites": 1,
     "scope": [
@@ -25993,7 +26014,7 @@
     ]
   },
   "Applied": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -26005,6 +26026,7 @@
       "routes/admin",
       "routes/ar-open-items",
       "routes/customer-payments",
+      "routes/desk",
       "routes/escrow-account",
       "routes/invoice"
     ]
@@ -26155,6 +26177,15 @@
       "go/other"
     ]
   },
+  "Applied to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.": {
     "sites": 1,
     "scope": [
@@ -26209,6 +26240,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Applied {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Applied {0}, taken back {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Applied · {0}": {
@@ -26439,6 +26488,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Apply or take back the credit on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Apply payment": {
@@ -28892,6 +28950,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "As {0} · synced {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "As-of date is required": {
@@ -34347,7 +34414,7 @@
     ]
   },
   "BOL {0}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -34413,6 +34480,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Back in the billing queue to bill again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Back on": {
@@ -34606,7 +34682,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -34633,7 +34709,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -34986,11 +35062,13 @@
     ]
   },
   "Balance due": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/desk",
       "template/customer.statement.email",
       "template/customer.statement.pdf"
     ]
@@ -42385,6 +42463,15 @@
       "go/other"
     ]
   },
+  "Cannot send": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Cannot transition carrier settlement from {0} to {1}": {
     "sites": 1,
     "scope": [
@@ -46617,7 +46704,7 @@
     ]
   },
   "Charge": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -46830,7 +46917,7 @@
     ]
   },
   "Charges": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -52266,6 +52353,15 @@
       "go/other"
     ]
   },
+  "Closed by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Closed date cannot be before the opened date": {
     "sites": 1,
     "scope": [
@@ -52420,11 +52516,12 @@
     ]
   },
   "Closed {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -59936,6 +60033,15 @@
       "routes/agent-control"
     ]
   },
+  "Corrected invoice · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Corrected — Nova will remember": {
     "sites": 1,
     "scope": [
@@ -59990,6 +60096,15 @@
       "go/other"
     ]
   },
+  "Corrects": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Corrects the recorded date only; what the event already did is not replayed.": {
     "sites": 1,
     "scope": [
@@ -59997,6 +60112,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Corrects {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Correlation ID": {
@@ -63664,7 +63788,7 @@
     ]
   },
   "Credit": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -63958,7 +64082,7 @@
     ]
   },
   "Credit memo": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -63967,6 +64091,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "routes/billing-queue",
+      "routes/desk",
       "routes/invoice",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
@@ -64016,6 +64141,24 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Credit memo {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Credit memo · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Credit memos and rebills against an issued invoice": {
@@ -64158,12 +64301,14 @@
     ]
   },
   "Credited": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Credited to": {
@@ -68492,6 +68637,24 @@
     "areas": [
       "apps/web/hooks",
       "apps/web/lib"
+    ]
+  },
+  "Debit memo {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Debit memo · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Debited to": {
@@ -76073,7 +76236,7 @@
     ]
   },
   "Dispute": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -76219,7 +76382,7 @@
     ]
   },
   "Disputed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -76231,6 +76394,7 @@
       "packages/shared/lib",
       "routes/accounting-dashboard",
       "routes/ar-open-items",
+      "routes/desk",
       "routes/invoice-register",
       "routes/shipment"
     ]
@@ -78854,7 +79018,7 @@
     ]
   },
   "Draft": {
-    "sites": 47,
+    "sites": 49,
     "scope": [
       "go",
       "ts"
@@ -81124,7 +81288,7 @@
     ]
   },
   "Due": {
-    "sites": 17,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -81369,12 +81533,13 @@
     ]
   },
   "Due today": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Due today only": {
@@ -81405,7 +81570,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -81962,12 +82127,13 @@
     ]
   },
   "EDI 210": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-invoice-matching"
+      "routes/carrier-invoice-matching",
+      "routes/desk"
     ]
   },
   "EDI 210 carrier freight invoice · received {0}": {
@@ -83519,6 +83685,15 @@
       "go/other"
     ]
   },
+  "Each row totals every line billed the same way. The invoice lists each line by shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Each schedule is uploaded to a folder named for it inside.": {
     "sites": 1,
     "scope": [
@@ -84900,7 +85075,7 @@
     ]
   },
   "Email": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -96608,6 +96783,15 @@
       "routes/invoice"
     ]
   },
+  "Factored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Factored invoices that pass every readiness check and are waiting to be submitted, with their factor, open balance and how long they have been ready, oldest first": {
     "sites": 1,
     "scope": [
@@ -96950,7 +97134,7 @@
     ]
   },
   "Failed": {
-    "sites": 62,
+    "sites": 64,
     "scope": [
       "go",
       "ts"
@@ -102944,7 +103128,7 @@
     ]
   },
   "Flat": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -102954,6 +103138,7 @@
       "go/other",
       "routes/accessorial-charge",
       "routes/billing-queue",
+      "routes/desk",
       "routes/detention-policy"
     ]
   },
@@ -104349,7 +104534,7 @@
     ]
   },
   "Formula Template ID": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -104951,7 +105136,7 @@
     ]
   },
   "Freight": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -106590,6 +106775,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Fully applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Fully recovered from the driver's settlements.": {
@@ -108612,6 +108806,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Goes to {0} when posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Goes to {0} when sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Going live after {0} shadow proposals": {
@@ -111239,7 +111451,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Held fuel imports": {
@@ -116222,11 +116434,13 @@
     ]
   },
   "In dispute": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/desk",
       "template/customer.statement.pdf"
     ]
   },
@@ -116459,7 +116673,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "apps/web/lib",
       "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync"
@@ -120332,7 +120546,7 @@
     ]
   },
   "Invoice": {
-    "sites": 46,
+    "sites": 49,
     "scope": [
       "go",
       "ts"
@@ -120730,7 +120944,7 @@
     ]
   },
   "Invoice date": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -120842,6 +121056,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Invoice for an order · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Invoice for order {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Invoice has been generated and posted for completed transportation services.": {
@@ -121418,7 +121650,7 @@
     ]
   },
   "Invoice {0}": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -121663,7 +121895,7 @@
     ]
   },
   "Invoiced": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -123265,6 +123497,15 @@
       "routes/agent-control"
     ]
   },
+  "Its shipments settled without another bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Its suite runs": {
     "sites": 1,
     "scope": [
@@ -123281,6 +123522,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Its terms count from the invoice date, so 1 of its {0} days has run while it waits to be posted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Its terms count from the invoice date, so {0} of its {1} days have run while it waits to be posted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.": {
@@ -128728,6 +128987,15 @@
       "routes/edi"
     ]
   },
+  "Left to apply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Left unapplied": {
     "sites": 1,
     "scope": [
@@ -130098,7 +130366,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -132964,6 +133232,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Loading the invoice…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading the location…": {
@@ -147503,6 +147780,15 @@
       "routes/shipment"
     ]
   },
+  "Next invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next item": {
     "sites": 1,
     "scope": [
@@ -147922,6 +148208,15 @@
       "routes/document-packet-rule",
       "routes/journal-entry",
       "routes/reports"
+    ]
+  },
+  "No 210 is set up for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No AI corrections yet": {
@@ -149468,6 +149763,15 @@
     ]
   },
   "No charge has been added to this order.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No charge is on this invoice.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151206,6 +151510,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No formula template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No formula templates selected": {
@@ -154312,6 +154625,15 @@
       "packages/shared/lib"
     ]
   },
+  "No shipment is billed on this invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No shipment is created and the series waits for the next scheduled pickup.": {
     "sites": 1,
     "scope": [
@@ -156443,6 +156765,15 @@
       "routes/invoice"
     ]
   },
+  "Not applied yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not applied: the engine could not run it.": {
     "sites": 1,
     "scope": [
@@ -156663,6 +156994,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Not delivered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not delivered yet": {
@@ -157481,7 +157821,7 @@
     ]
   },
   "Not sent": {
-    "sites": 7,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -157513,12 +157853,21 @@
     ]
   },
   "Not sent to {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
+    ]
+  },
+  "Not sent to {0} yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not sent yet": {
@@ -157549,7 +157898,7 @@
     ]
   },
   "Not set up": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -157557,6 +157906,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -158520,6 +158870,15 @@
       "routes/desk"
     ]
   },
+  "Nothing has been done to this invoice yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing has been done to this order yet.": {
     "sites": 1,
     "scope": [
@@ -158536,6 +158895,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Nothing has been paid or credited against this invoice yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing has been posted to the general ledger for this customer payment yet. Its entries appear here, account by account, once it posts.": {
@@ -158887,6 +159255,15 @@
     ]
   },
   "Nothing is open. Every invoice is paid.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Nothing is owed until it is posted.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -166553,7 +166930,7 @@
     ]
   },
   "Open": {
-    "sites": 64,
+    "sites": 65,
     "scope": [
       "go",
       "ts"
@@ -167056,8 +167433,17 @@
       "apps/web/hooks"
     ]
   },
+  "Open credit memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open customer": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -167248,6 +167634,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Open formula template {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open fuel indices": {
     "sites": 1,
     "scope": [
@@ -167379,7 +167774,7 @@
     ]
   },
   "Open in {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -167423,12 +167818,13 @@
     ]
   },
   "Open invoice": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/factoring",
       "routes/invoice",
       "template/invoice.share.email"
@@ -167548,7 +167944,7 @@
     ]
   },
   "Open message": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -168315,6 +168711,15 @@
       "routes/osha"
     ]
   },
+  "Open, not disputed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open, overdue, unapplied cash, and days sales outstanding": {
     "sites": 1,
     "scope": [
@@ -168464,6 +168869,15 @@
       "go/other"
     ]
   },
+  "Opened by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Opened date is required": {
     "sites": 1,
     "scope": [
@@ -168483,12 +168897,13 @@
     ]
   },
   "Opened {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/invoice",
       "routes/worker"
     ]
@@ -170973,7 +171388,7 @@
     ]
   },
   "Other charges": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -173129,7 +173544,7 @@
     ]
   },
   "PRO {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -173874,7 +174289,7 @@
     ]
   },
   "Paid": {
-    "sites": 17,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -174724,6 +175139,15 @@
       "routes/desk"
     ]
   },
+  "Partly applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Partly filed": {
     "sites": 1,
     "scope": [
@@ -174743,7 +175167,7 @@
     ]
   },
   "Partly paid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -174752,6 +175176,15 @@
     ]
   },
   "Partly processed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Partly sent": {
     "sites": 1,
     "scope": [
       "ts"
@@ -176859,7 +177292,7 @@
     ]
   },
   "Payment": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -177334,11 +177767,13 @@
     ]
   },
   "Payments and credits": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/desk",
       "template/customer.statement.pdf"
     ]
   },
@@ -178538,6 +178973,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Percentage of linehaul": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Percentage of linehaul, freight charges, or declared value": {
@@ -183074,6 +183518,15 @@
       "routes/invoice"
     ]
   },
+  "Post, send and change the invoice on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Post-accident": {
     "sites": 2,
     "scope": [
@@ -184651,6 +185104,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Previous invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Previous item": {
@@ -189604,7 +190066,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Queued to send": {
@@ -191844,6 +192306,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Rated by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Rated by {0}": {
@@ -195104,7 +195575,7 @@
     ]
   },
   "Received {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -199504,11 +199975,12 @@
     ]
   },
   "Related invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -201804,7 +202276,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Replaced by newer numbers": {
@@ -205066,12 +205538,13 @@
     ]
   },
   "Resolve in the sync ledger": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resolve or deny settlement disputes": {
@@ -205283,6 +205756,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Resolved by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Resolved fiscal period is required": {
     "sites": 1,
     "scope": [
@@ -205311,12 +205793,13 @@
     ]
   },
   "Resolved {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resolved {0} {1}": {
@@ -206641,7 +207124,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Retrying...": {
@@ -207305,7 +207788,7 @@
     ]
   },
   "Reversal": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -207313,7 +207796,8 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/desk"
     ]
   },
   "Reversal Batch ID": {
@@ -207479,14 +207963,15 @@
     ]
   },
   "Reversed": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/desk"
     ]
   },
   "Reversed At": {
@@ -221848,6 +222333,15 @@
       "routes/desk"
     ]
   },
+  "Send, apply payments and void on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Send, confirm, and void rate confirmations": {
     "sites": 1,
     "scope": [
@@ -221987,7 +222481,7 @@
     ]
   },
   "Sending": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -222036,7 +222530,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Sending to {0} is already paused: {1}": {
@@ -222316,7 +222810,7 @@
     ]
   },
   "Sent": {
-    "sites": 24,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -224537,7 +225031,7 @@
     ]
   },
   "Settled": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -224547,6 +225041,7 @@
       "go/other",
       "packages/shared/components",
       "routes/accounting-drift",
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -227057,6 +227552,15 @@
       "go/other"
     ]
   },
+  "Shipment it bills": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Shipment it built": {
     "sites": 1,
     "scope": [
@@ -227762,6 +228266,15 @@
       "apps/web/lib"
     ]
   },
+  "Shipments it bills": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Shipments moving on or after this date price against this contract": {
     "sites": 1,
     "scope": [
@@ -228068,6 +228581,15 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
+    ]
+  },
+  "Short {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Short-Haul Exempt": {
@@ -232513,12 +233035,13 @@
     ]
   },
   "Split bill": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/desk"
     ]
   },
   "Split delivery": {
@@ -232687,6 +233210,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Split with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Split {0, plural, one {# way} other {# ways}}": {
@@ -238498,6 +239030,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Synced {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Synchronize workers from TMS to Samsara": {
@@ -259232,6 +259773,15 @@
       "packages/shared/types"
     ]
   },
+  "This credit has not been applied to an invoice yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This credit memo application has already been unapplied": {
     "sites": 1,
     "scope": [
@@ -260419,6 +260969,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "This invoice could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This invoice does not currently have shipment context loaded for document review.": {
@@ -265155,7 +265714,7 @@
     ]
   },
   "To {0}": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -265188,7 +265747,7 @@
     ]
   },
   "Today": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -265269,12 +265828,13 @@
     ]
   },
   "Today, {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/desk"
     ]
   },
   "Together AI": {
@@ -266323,7 +266883,7 @@
     ]
   },
   "Total": {
-    "sites": 44,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -279894,7 +280454,7 @@
     ]
   },
   "Voided": {
-    "sites": 25,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -279984,12 +280544,22 @@
     ]
   },
   "Voided {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/invoice"
+    ]
+  },
+  "Voided {0} by {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/desk"
     ]
   },
   "Voided · {0, plural, one {# minute after grace} other {# minutes after grace}}": {
@@ -280727,7 +281297,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "Waiting to be resolved": {
@@ -280755,6 +281325,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Waiting to post": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting to send": {
@@ -283335,6 +283914,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What is owed": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What is picking up today?": {
@@ -286044,6 +286632,24 @@
       "routes/agent-control"
     ]
   },
+  "Where it went": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Where it will go": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Where its last move left it": {
     "sites": 1,
     "scope": [
@@ -288096,6 +288702,15 @@
       "routes/desk"
     ]
   },
+  "Why it was issued": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why it was kept": {
     "sites": 1,
     "scope": [
@@ -288103,6 +288718,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Why it was voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Why it would not read": {
@@ -288923,7 +289547,7 @@
     ]
   },
   "Withdrawn": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -295133,6 +295757,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "credit left of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "current_view": {
     "sites": 1,
     "scope": [
@@ -295339,6 +295972,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "draft total": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "drafted by Nova": {
@@ -298806,7 +299448,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "no billed detention": {
@@ -299619,6 +300261,15 @@
       "apps/web/components"
     ]
   },
+  "owed, due {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "p.{0}": {
     "sites": 1,
     "scope": [
@@ -299644,6 +300295,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "paid in full": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "pallets, cases, pieces": {
@@ -300268,7 +300928,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "apps/web/lib",
       "routes/time-attendance"
     ]
   },
@@ -300378,6 +301038,15 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "still owed of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "sum of {0}": {
@@ -301333,6 +302002,15 @@
       "routes/carrier"
     ]
   },
+  "voided, nothing owed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "vs previous": {
     "sites": 1,
     "scope": [
@@ -302281,11 +302959,12 @@
     ]
   },
   "{0, plural, one {# charge} other {# charges}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -302398,6 +303077,33 @@
       "packages/shared/lib"
     ]
   },
+  "{0, plural, one {# day open} other {# days open}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# day past due} other {# days past due}}": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# day unposted} other {# days unposted}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# day's notice} other {# days' notice}}": {
     "sites": 1,
     "scope": [
@@ -302408,7 +303114,7 @@
     ]
   },
   "{0, plural, one {# day} other {# days}}": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -303047,12 +303753,13 @@
     ]
   },
   "{0, plural, one {# hour} other {# hours}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -303537,12 +304244,13 @@
     ]
   },
   "{0, plural, one {# mile} other {# miles}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "{0, plural, one {# minute} other {# minutes}}": {
@@ -304763,7 +305471,7 @@
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -304893,7 +305601,7 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -305095,12 +305803,13 @@
     ]
   },
   "{0, plural, one {# unit} other {# units}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "{0, plural, one {# unprofitable load} other {# unprofitable loads}}": {
@@ -305610,6 +306319,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {Consolidated invoice for # shipment} other {Consolidated invoice for # shipments}} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Copied # cell} other {Copied # cells}}": {
     "sites": 1,
     "scope": [
@@ -305710,12 +306428,13 @@
     ]
   },
   "{0, plural, one {Due in # day} other {Due in # days}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "{0, plural, one {Duplicate # row?} other {Duplicate # rows?}}": {
@@ -305915,6 +306634,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {Invoice for # shipment} other {Invoice for # shipments}} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {It refreshes in # day.} other {It refreshes in # days.}}": {
@@ -306720,6 +307448,15 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {Unposted # day} other {Unposted # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Up to # character.} other {Up to # characters.}}": {
     "sites": 1,
     "scope": [
@@ -306888,7 +307625,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {in production, last # day} other {in production, last # days}}": {
@@ -307876,6 +308613,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "{0} applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} applied to {1, plural, one {# invoice} other {# invoices}}": {
     "sites": 1,
     "scope": [
@@ -308113,6 +308859,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0} base rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} becomes the first provider to take it, and {1} stops taking it. Every other task stays where it goes.": {
     "sites": 1,
     "scope": [
@@ -308259,7 +309014,7 @@
     ]
   },
   "{0} by {1}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -308267,7 +309022,8 @@
       "apps/web/components",
       "routes/accounting-drift",
       "routes/accounting-inbound",
-      "routes/collections"
+      "routes/collections",
+      "routes/desk"
     ]
   },
   "{0} by {1}, promised to {2}": {
@@ -309168,6 +309924,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} does not take invoices by EDI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} does not use this mapping": {
@@ -310441,6 +311206,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0} in dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} in force": {
@@ -315368,6 +316142,15 @@
       "routes/desk"
     ]
   },
+  "{0} still owed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} still running": {
     "sites": 1,
     "scope": [
@@ -315689,7 +316472,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -315711,6 +316494,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} to {1} by {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} to {1}. Once posted, it can only be corrected by an adjustment.": {
@@ -316754,6 +317546,15 @@
       "routes/shipment"
     ]
   },
+  "{0} · drafted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} · due {1}": {
     "sites": 1,
     "scope": [
@@ -316928,6 +317729,24 @@
     ]
   },
   "{0} · reason {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} · ref {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} · reversed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -317223,6 +318042,24 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "{0} · {1} reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} · {1} taken back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} · {1} the model's mistake": {
@@ -317574,6 +318411,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0}% of linehaul": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}% of target": {
     "sites": 1,
     "scope": [
@@ -317611,11 +318457,12 @@
     ]
   },
   "{0}% of {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/reports"
     ]
   },

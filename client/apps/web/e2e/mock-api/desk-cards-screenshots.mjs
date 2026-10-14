@@ -118,6 +118,20 @@ const CARDS = [
     empty: "tender-declined",
     gone: "tender-gone",
   },
+  {
+    card: "invoice",
+    loaded: "invoice-acme",
+    attention: "invoice-tyson-draft",
+    empty: "invoice-riverside",
+    gone: "invoice-gone",
+  },
+  {
+    card: "invoice-closed",
+    loaded: "invoice-credit",
+    attention: "invoice-voided",
+    empty: "invoice-riverside",
+    gone: "invoice-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {
