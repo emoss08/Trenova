@@ -122,7 +122,9 @@ export function ExpressionEditor<T extends FieldValues>({
   }, [inlineValues]);
 
   const cursorRef = useRef(onCursorChange);
-  cursorRef.current = onCursorChange;
+  useEffect(() => {
+    cursorRef.current = onCursorChange;
+  }, [onCursorChange]);
 
   const handleRef = useCallback(
     (instance: ReactCodeMirrorRef | null) => {

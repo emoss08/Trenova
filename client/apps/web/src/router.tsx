@@ -1075,6 +1075,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate, Operation.Create),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/formula-template/new/page")),
+              ),
             ),
             async lazy() {
               const { FormulaStudioCreatePage } =
@@ -1088,6 +1091,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/formula-template/[id]/page")),
+              ),
             ),
             async lazy() {
               const { FormulaStudioEditPage } = await import("@/routes/formula-template/[id]/page");
