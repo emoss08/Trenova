@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS "ai_provider_hourly_stats" (
 );
 
 --bun:split
-COMMENT ON TABLE "ai_provider_hourly_stats" IS 'Model calls per UTC hour by provider, model, task, agent and provider error (empty for answered calls; Declined and Cancelled are not the provider's fault), with how many fell through to the next provider and a first-token histogram; rebuilt by the analytics refresh';
+COMMENT ON TABLE "ai_provider_hourly_stats" IS 'Model calls per UTC hour by provider, model, task, agent and provider error (empty for answered calls; Declined and Cancelled are not the provider''s fault), with how many fell through to the next provider and a first-token histogram; rebuilt by the analytics refresh';
 
 --bun:split
 -- How far each organization's analytics have been worked out.
