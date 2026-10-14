@@ -2,16 +2,6 @@ import type { ModuleId } from "@/config/navigation.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export const SIDEBAR_VARIANTS = ["rail", "workspace", "classic"] as const;
-
-export type SidebarVariant = (typeof SIDEBAR_VARIANTS)[number];
-
-export const DEFAULT_SIDEBAR_VARIANT: SidebarVariant = "workspace";
-
-export function isSidebarVariant(value: unknown): value is SidebarVariant {
-  return typeof value === "string" && (SIDEBAR_VARIANTS as readonly string[]).includes(value);
-}
-
 interface NavigationState {
   activeModuleId: ModuleId | null;
   sidebarCollapsed: boolean;
@@ -20,8 +10,7 @@ interface NavigationState {
    * sits beside the page. It starts closed on every visit and is not kept.
    */
   compactSidebarOpen: boolean;
-  sidebarVariant: SidebarVariant;
-  /** How wide the rail layout's page panel is, in pixels, between its bounds. */
+  /** How wide the panel beside the rail is, in pixels, between its bounds. */
   railPanelWidth: number;
 
   setActiveModuleId: (id: ModuleId | null) => void;
@@ -30,7 +19,6 @@ interface NavigationState {
   setCompactSidebarOpen: (open: boolean) => void;
   /** Folds the sidebar beside the page, or on a phone slides its sheet in or out. */
   toggleSidebarFor: (compact: boolean) => void;
-  setSidebarVariant: (variant: SidebarVariant) => void;
   setRailPanelWidth: (width: number) => void;
 }
 
@@ -51,7 +39,6 @@ export const useNavigationStore = create<NavigationState>()(
       activeModuleId: null,
       sidebarCollapsed: false,
       compactSidebarOpen: false,
-      sidebarVariant: DEFAULT_SIDEBAR_VARIANT,
       railPanelWidth: RAIL_PANEL_DEFAULT_WIDTH,
 
       setActiveModuleId: (id: ModuleId | null) => {
@@ -78,10 +65,6 @@ export const useNavigationStore = create<NavigationState>()(
         );
       },
 
-      setSidebarVariant: (variant: SidebarVariant) => {
-        set({ sidebarVariant: variant });
-      },
-
       setRailPanelWidth: (width: number) => {
         set({ railPanelWidth: clampRailPanelWidth(width) });
       },
@@ -90,17 +73,13 @@ export const useNavigationStore = create<NavigationState>()(
       name: "navigation-storage",
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
-        sidebarVariant: state.sidebarVariant,
         railPanelWidth: state.railPanelWidth,
       }),
       merge: (persisted, current) => {
         const stored = (persisted ?? {}) as Partial<NavigationState>;
         return {
           ...current,
-          ...stored,
-          sidebarVariant: isSidebarVariant(stored.sidebarVariant)
-            ? stored.sidebarVariant
-            : current.sidebarVariant,
+          sidebarCollapsed: stored.sidebarCollapsed === true,
           railPanelWidth: clampRailPanelWidth(stored.railPanelWidth ?? current.railPanelWidth),
         };
       },

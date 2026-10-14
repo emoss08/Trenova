@@ -1,16 +1,23 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ModuleRail } from "@/components/navigation/module-rail";
+import { PageBarLeading, PageBarTrailing } from "@/components/navigation/rail-page-bar";
+import { RailPanel, RailPanelBody } from "@/components/navigation/rail-panel";
+import { MODULE_GO_KEYS } from "@/components/navigation/rail-shortcuts";
+import { PageBarSlotsContext, type PageBarSlots } from "@/components/navigation/shell-frame";
 import { useSidebarFold } from "@/components/navigation/sidebar-fold";
+import { useGoToChords } from "@/components/navigation/use-go-to-chords";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { edition } from "@/lib/edition";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { Sheet, SheetContent, SheetTitle } from "@trenova/shared/components/ui/sheet";
 import { useMemo, type ReactNode } from "react";
-import { ModuleRail } from "./module-rail";
-import { RailPanel, RailPanelBody } from "./rail-panel";
-import { MODULE_GO_KEYS } from "./rail-shortcuts";
-import { useGoToChords } from "./use-go-to-chords";
 
 const AppBanner = edition.slots.AppBanner;
+
+const PAGE_BAR_SLOTS: PageBarSlots = {
+  leading: (title) => <PageBarLeading title={title} />,
+  trailing: <PageBarTrailing />,
+};
 
 function useModuleChordTargets() {
   const { views, home, settings } = useSidebarNavigation();
@@ -55,10 +62,10 @@ function RailSheet({ shown }: { shown: boolean }) {
 }
 
 /**
- * The rail layout: the product's map down the left edge, the module you are
- * in beside it, and the page with one bar of its own. There is no global
- * header; what applied everywhere lives on the rail, and where you are is
- * the page's title. The panel folds with ⌘B and the rail stays.
+ * The shell of every page: the product's map down the left edge, the module
+ * you are in beside it, and the page with one bar of its own. There is no
+ * global header; what applies everywhere lives on the rail, and where you
+ * are is the page's title. The panel folds with ⌘B and the rail stays.
  */
 export function RailShell({ children }: { children: ReactNode }) {
   const { compact, shown } = useSidebarFold();
@@ -76,7 +83,11 @@ export function RailShell({ children }: { children: ReactNode }) {
             <RailPanel shown={shown} />
           </>
         )}
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <PageBarSlotsContext.Provider value={PAGE_BAR_SLOTS}>
+            {children}
+          </PageBarSlotsContext.Provider>
+        </main>
       </div>
     </div>
   );

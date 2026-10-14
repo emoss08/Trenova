@@ -1,9 +1,11 @@
 # Workspace rail redesign
 
-A proposal to replace the Workspace and Classic layouts with one shell. The prototype lives on
-this branch as a third `sidebarVariant` (`rail`) so it can be compared against both in the same
-session; every screenshot in `workspace-rail/` is the real app rendered against the mock API
-(`client/apps/web/e2e/mock-api`), not a mockup.
+The design note for the shell that replaced the Workspace and Classic layouts. It was first
+built as a third layout so the three could be compared in one session, then shipped as the only
+one; the Workspace and Classic shells, their preference and the modules dropdown on pages are
+gone. Every screenshot in `workspace-rail/` is the real app rendered against the mock API
+(`client/apps/web/e2e/mock-api`), not a mockup. The living description is "Shell anatomy" in
+[design-system.md](../engineering/design-system.md).
 
 ## The shape
 
@@ -91,31 +93,20 @@ MOCK_PALETTE=1 node e2e/mock-api/server.mjs   # terminal 1
 pnpm exec vite                                # terminal 2
 ```
 
-Then set `navigation-storage` in local storage to
-`{"state":{"sidebarVariant":"rail","sidebarCollapsed":false},"version":0}`, or pick Rail under
-Sidebar layout in the user menu. The mock returns no sidebar preferences and an empty attention
-summary, so the rail counts were captured with those two operations answered from the capture
-script.
+The mock returns no sidebar preferences and an empty attention summary, so the rail counts were
+captured with those two operations answered from the capture script.
 
-## Where the prototype lives
+## Where it lives
 
-`client/apps/web/src/components/navigation/variants/rail/`: `module-rail.tsx`, `rail-panel.tsx`,
-`rail-page-bar.tsx`, `rail-shell.tsx`, `rail-shortcuts.ts`, `use-go-to-chords.ts`. The store
-gained `railPanelWidth`; `PageHeader` gained `leading` and `trailing` slots the shell fills;
-`NotificationSheet` takes a `className` so the bell can be a rail tile.
+`client/apps/web/src/components/navigation/`: `rail-shell.tsx`, `module-rail.tsx`,
+`rail-panel.tsx`, `home-panel.tsx`, `rail-page-bar.tsx`, `rail-shortcuts.ts`,
+`use-go-to-chords.ts`; `room-header.tsx` is the header a room keeps. The store holds
+`railPanelWidth`; `PageHeader` has `leading` and `trailing` slots the shell fills;
+`NotificationSheet` takes a `className` so the bell can be a rail tile. The chords are listed
+in `config/keybinds.config.ts` so the shortcuts dialog shows them.
 
-## Open decisions
+## Still open
 
-1. Ship Rail as the only layout and retire Workspace and Classic (recommended), or keep three.
-2. Which modules carry a chord letter; People, Payroll, Detention and EDI have none for now.
-3. Whether the bell stays on the rail or returns to each page bar beside the star.
-4. Whether the panel keeps its quiet module heading or drops it.
-
-## What implementing takes
-
-- Make Rail the default and remove the other two shells, their preference and their tests.
-- Give Home's greeting bar and the admin header the page bar's leading slot.
-- Tests for the chords, the resize bounds, the breadcrumb trimming, the flyout only when
-  folded, and the sheet never opening on first paint.
-- Translations for the new strings, the chords in the keyboard shortcuts dialog, the
-  design-system "Page anatomy" section, and a product-guide regeneration.
+- People, Payroll, Detention and EDI carry no chord letter.
+- Rooms keep the old header rather than sitting beside the module rail; moving Triage and the
+  Formula Studio onto the rail is a follow-up, once their own rails are looked at with it.

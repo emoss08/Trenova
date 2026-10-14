@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { GO_CHORD_KEY, GO_CHORD_WINDOW_MS } from "./rail-shortcuts";
+import { GO_CHORD_KEY, GO_CHORD_WINDOW_MS } from "@/components/navigation/rail-shortcuts";
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {

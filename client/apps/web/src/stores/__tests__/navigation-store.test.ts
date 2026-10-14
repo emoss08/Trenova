@@ -45,3 +45,34 @@ describe("the sidebar's fold", () => {
     expect(kept.state).not.toHaveProperty("compactSidebarOpen");
   });
 });
+
+/**
+ * The panel beside the rail is as wide as the person dragged it, within the
+ * bounds the layout can hold, and a width that was kept by an older build or
+ * edited by hand lands inside those bounds too.
+ */
+describe("the panel's width", () => {
+  it("holds a dragged width between its bounds", () => {
+    useNavigationStore.getState().setRailPanelWidth(260);
+    expect(useNavigationStore.getState().railPanelWidth).toBe(260);
+
+    useNavigationStore.getState().setRailPanelWidth(120);
+    expect(useNavigationStore.getState().railPanelWidth).toBe(200);
+
+    useNavigationStore.getState().setRailPanelWidth(900);
+    expect(useNavigationStore.getState().railPanelWidth).toBe(320);
+
+    useNavigationStore.getState().setRailPanelWidth(Number.NaN);
+    expect(useNavigationStore.getState().railPanelWidth).toBe(224);
+  });
+
+  it("keeps the width with the fold", () => {
+    useNavigationStore.getState().setRailPanelWidth(288);
+
+    const kept = JSON.parse(localStorage.getItem("navigation-storage") ?? "{}") as {
+      state?: Record<string, unknown>;
+    };
+
+    expect(kept.state?.railPanelWidth).toBe(288);
+  });
+});

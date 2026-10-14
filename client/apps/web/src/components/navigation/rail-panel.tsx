@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ModulePageList, SearchTrigger } from "@/components/navigation/sidebar-chrome";
 import { moduleDisplayLabel, moduleSidebarView } from "@/components/navigation/sidebar-model";
-import { HomePanel } from "@/components/navigation/workspace-sidebar";
+import { HomePanel } from "@/components/navigation/home-panel";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import {
   clampRailPanelWidth,

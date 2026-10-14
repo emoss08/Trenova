@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LanguageSubmenu } from "@/components/navigation/language-submenu";
-import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   DropdownMenu,
@@ -110,7 +109,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               startContent={<Settings01Icon className="size-4" />}
               onClick={() => openDialog("settings")}
             />
-            <SidebarLayoutSubmenu />
             <LanguageSubmenu />
             <DropdownMenuSeparator />
             <DropdownMenuItem

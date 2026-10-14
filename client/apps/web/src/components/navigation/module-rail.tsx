@@ -1,9 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
-import {
-  AttentionCountBadge,
-  ModulePageList,
-} from "@/components/navigation/sidebar-chrome";
+import { AttentionCountBadge, ModulePageList } from "@/components/navigation/sidebar-chrome";
 import {
   moduleDisplayLabel,
   type ModuleAttention,
@@ -27,7 +24,7 @@ import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { GO_CHORD_KEY, MODULE_GO_KEYS } from "./rail-shortcuts";
+import { GO_CHORD_KEY, MODULE_GO_KEYS } from "@/components/navigation/rail-shortcuts";
 
 export const RAIL_WIDTH_CLASS = "w-12";
 
@@ -215,7 +212,13 @@ function moduleTile({
  * bottom. It never scrolls the page and never folds; the panel beside it
  * does.
  */
-export function ModuleRail({ panelFolded, className }: { panelFolded: boolean; className?: string }) {
+export function ModuleRail({
+  panelFolded,
+  className,
+}: {
+  panelFolded: boolean;
+  className?: string;
+}) {
   const t = useT();
   const { home, settings, domains, views, activeModule, activePath, attention, pageAttention } =
     useSidebarNavigation();

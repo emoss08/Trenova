@@ -7,7 +7,6 @@ import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useUpdateStore } from "@/stores/update-store";
-import type { ShellFrame } from "@/types/router";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect } from "react";
@@ -15,18 +14,15 @@ import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { edition } from "@/lib/edition";
-import { Header, SidebarToggle } from "../header";
+import { SidebarToggle } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
-import { ShellFrameContext, useRouteFrame, useShellFrame } from "./shell-frame";
+import { ShellFrameContext, usePageBarSlots, useRouteFrame, useShellFrame } from "./shell-frame";
 import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { UserSettingsHost } from "./user-settings-host";
-import { ClassicSidebar } from "./variants/classic-sidebar";
-import { RailPageBarLeading, RailPageBarTrailing } from "./variants/rail/rail-page-bar";
-import { RailShell } from "./variants/rail/rail-shell";
-import { WorkspaceContextBar, WorkspaceHeader } from "./workspace-header";
-import { WorkspaceSidebar } from "./workspace-sidebar";
+import { RailShell } from "./rail-shell";
+import { RoomHeader } from "./room-header";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -109,57 +105,29 @@ function useLayoutEffects() {
 
 const AppBanner = edition.slots.AppBanner;
 
-type ShellProps = SidebarLayoutProps & { frame: ShellFrame };
-
 /**
- * A page sits under the module's sidebar and the bar that says where you
- * are. A room keeps only the header: its own rail stands in the sidebar's
- * place and folds with the same toggle, which moves to the header's leading
- * edge, and with ⌘B.
+ * A room (Triage, the Formula Studio) keeps the header it was drawn for: its
+ * own rail stands in the module rail's place and folds with the same toggle,
+ * which leads the header, and with ⌘B.
  */
-function WorkspaceShell({ children, frame }: ShellProps) {
-  const room = frame === "room";
-
+function RoomShell({ children }: SidebarLayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <AppBanner />
-      <WorkspaceHeader leading={room ? <SidebarToggle className="max-md:hidden" /> : undefined} />
+      <RoomHeader leading={<SidebarToggle className="max-md:hidden" />} />
       <div className="flex min-h-0 flex-1">
-        {!room && <WorkspaceSidebar />}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {!room && <WorkspaceContextBar />}
-          <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ClassicShell({ children }: ShellProps) {
-  return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <AppBanner />
-      <div className="flex min-h-0 flex-1">
-        <ClassicSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Header />
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
+        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
 }
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
-  const variant = useNavigationStore((state) => state.sidebarVariant);
   const assistantSide = useAssistantSideInset();
   const frame = useRouteFrame();
   useLayoutEffects();
 
-  // A room keeps the chrome it was drawn for whatever the layout: Triage and
-  // the Desk are full screen and draw their own rail.
-  const Shell =
-    variant === "classic" ? ClassicShell : variant === "rail" && frame !== "room" ? RailShell : WorkspaceShell;
+  const Shell = frame === "room" ? RoomShell : RailShell;
 
   return (
     <>
@@ -171,7 +139,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           rather than sitting under it. */}
       <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
         <ShellFrameContext.Provider value={frame}>
-          <Shell frame={frame}>{children}</Shell>
+          <Shell>{children}</Shell>
         </ShellFrameContext.Provider>
       </div>
     </>
@@ -199,8 +167,8 @@ export function PageLayout({
   bleed = false,
 }: PageLayoutProps) {
   const frame = useShellFrame();
-  const variant = useNavigationStore((state) => state.sidebarVariant);
-  const railBar = variant === "rail" && frame === "page";
+  const shellSlots = usePageBarSlots();
+  const slots = frame === "page" ? shellSlots : null;
 
   return (
     <div
@@ -213,8 +181,8 @@ export function PageLayout({
       <PageHeader
         {...pageHeaderProps}
         visuallyHidden={frame === "room"}
-        leading={railBar ? <RailPageBarLeading title={pageHeaderProps.title} /> : undefined}
-        trailing={railBar ? <RailPageBarTrailing /> : undefined}
+        leading={slots?.leading(pageHeaderProps.title)}
+        trailing={slots?.trailing}
       />
       <div
         data-slot="page-body"
