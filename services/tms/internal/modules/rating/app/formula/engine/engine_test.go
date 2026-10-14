@@ -941,7 +941,8 @@ func TestEngine_EvaluateWithEnv_CoalesceAllNilResult(t *testing.T) {
 		&formulatemplatetypes.EnvEvaluationRequest{Expression: "coalesce(a, b)", Env: env},
 	)
 	require.Error(t, err)
-	require.ErrorContains(t, err, "cannot convert <nil> to decimal")
+	require.ErrorIs(t, err, engine.ErrNonNumericResult)
+	require.ErrorContains(t, err, "got an empty value")
 }
 
 func TestEngine_EvaluateWithEnv_StringResultError(t *testing.T) {

@@ -96,12 +96,14 @@ type matrixLookup struct {
 	exact  map[string]exactTable
 	ranges map[string]rangeTable
 	two    map[string]*twoAxisTable
+	stamp  string
 }
 
 var (
 	_ formulatemplatetypes.RateTableLookup = (*matrixLookup)(nil)
 	_ formulatemplatetypes.LookupExplainer = (*matrixLookup)(nil)
 	_ formulatemplatetypes.BandedLookup    = (*matrixLookup)(nil)
+	_ formulatemplatetypes.StampedLookup   = (*matrixLookup)(nil)
 )
 
 // NewMatrixLookup builds the lookup provider from every one- and two-axis
@@ -115,10 +117,18 @@ var (
 func NewMatrixLookup(
 	data []*ratematrixports.RateMatrixLookupData,
 ) formulatemplatetypes.RateTableLookup {
+	return NewStampedMatrixLookup(data, "")
+}
+
+func NewStampedMatrixLookup(
+	data []*ratematrixports.RateMatrixLookupData,
+	stamp string,
+) formulatemplatetypes.RateTableLookup {
 	lookup := &matrixLookup{
 		exact:  make(map[string]exactTable),
 		ranges: make(map[string]rangeTable),
 		two:    make(map[string]*twoAxisTable),
+		stamp:  stamp,
 	}
 
 	for _, item := range data {
@@ -135,6 +145,10 @@ func NewMatrixLookup(
 	}
 
 	return lookup
+}
+
+func (l *matrixLookup) RateTableStamp() string {
+	return l.stamp
 }
 
 func indexSingleAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLookupData) {

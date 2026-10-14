@@ -1004,10 +1004,11 @@ func TestApplyChargePolicy_GuardrailsThenRounding(t *testing.T) {
 		RoundingPrecision: 0,
 	}
 
-	amount, guardrail, rounding := formula.ApplyChargePolicy(
+	amount, guardrail, rounding, err := formula.ApplyChargePolicy(
 		policy,
 		decimal.RequireFromString("249.996"),
 	)
+	require.NoError(t, err)
 	require.NotNil(t, guardrail)
 	assert.True(t, guardrail.Applied)
 	assert.True(t, decimal.NewFromInt(250).Equal(amount), amount.String())
@@ -1015,7 +1016,8 @@ func TestApplyChargePolicy_GuardrailsThenRounding(t *testing.T) {
 	assert.False(t, rounding.Applied, "the floor is already whole")
 	assert.Equal(t, "Up", rounding.Mode)
 
-	amount, _, rounding = formula.ApplyChargePolicy(policy, decimal.RequireFromString("312.01"))
+	amount, _, rounding, err = formula.ApplyChargePolicy(policy, decimal.RequireFromString("312.01"))
+	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(313).Equal(amount), amount.String())
 	assert.True(t, rounding.Applied)
 	assert.True(t, decimal.RequireFromString("312.01").Equal(rounding.UnroundedAmount))
@@ -1024,18 +1026,20 @@ func TestApplyChargePolicy_GuardrailsThenRounding(t *testing.T) {
 func TestApplyChargePolicy_DefaultsAndNone(t *testing.T) {
 	t.Parallel()
 
-	amount, _, rounding := formula.ApplyChargePolicy(
+	amount, _, rounding, err := formula.ApplyChargePolicy(
 		formulatypes.ChargePolicy{},
 		decimal.RequireFromString("2.675"),
 	)
+	require.NoError(t, err)
 	assert.True(t, decimal.RequireFromString("2.68").Equal(amount), amount.String())
 	assert.Equal(t, "HalfUp", rounding.Mode)
 	assert.Equal(t, int32(2), rounding.Precision)
 
-	amount, _, rounding = formula.ApplyChargePolicy(
+	amount, _, rounding, err = formula.ApplyChargePolicy(
 		formulatypes.ChargePolicy{RoundingMode: ratetypes.RoundingModeNone},
 		decimal.RequireFromString("2.675"),
 	)
+	require.NoError(t, err)
 	assert.True(t, decimal.RequireFromString("2.675").Equal(amount))
 	assert.False(t, rounding.Applied)
 }

@@ -270,3 +270,16 @@ func (sp *Shipment) HighestFreightClass() commodity.FreightClass {
 
 	return highest
 }
+
+func (sp *Shipment) RatingAsOf(now int64) int64 {
+	if sp == nil {
+		return now
+	}
+	if sp.ActualShipDate != nil && *sp.ActualShipDate > 0 {
+		return *sp.ActualShipDate
+	}
+	if sp.CreatedAt > 0 {
+		return sp.CreatedAt
+	}
+	return now
+}

@@ -42,7 +42,7 @@ func (s *Service) buildContext(
 
 	asOf := req.AsOf
 	if asOf == 0 {
-		asOf = ratingDate(entity, s.now)
+		asOf = entity.RatingAsOf(s.now())
 	}
 
 	rateCtx := &RateContext{
@@ -153,24 +153,6 @@ func partyName(entity *shipment.Shipment, partyType rateagreement.PartyType) str
 	}
 
 	return ""
-}
-
-// ratingDate is when the contract terms are read at.
-//
-// The actual ship date leads because that is the day the service was performed,
-// and a contract amended between then and invoicing must not change what was
-// already earned. It matches how the existing commercial calculator picks its
-// rating date, so a shipment does not silently rate against two different days.
-func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
-	if entity.ActualShipDate != nil && *entity.ActualShipDate > 0 {
-		return *entity.ActualShipDate
-	}
-
-	if entity.CreatedAt > 0 {
-		return entity.CreatedAt
-	}
-
-	return now()
 }
 
 // placeOf reads one end of the lane from a stop.

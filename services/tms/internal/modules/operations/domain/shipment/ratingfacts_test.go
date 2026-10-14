@@ -147,3 +147,21 @@ func TestShipment_FreightClasses(t *testing.T) {
 	assert.Equal(t, commodity.FreightClass100, entity.HighestFreightClass())
 	assert.Empty(t, (&shipment.Shipment{}).HighestFreightClass())
 }
+
+func TestShipment_RatingAsOfPrefersTheShipDateThenEntry(t *testing.T) {
+	t.Parallel()
+
+	const now int64 = 1_800_000_000
+	assert.Equal(t, now, (*shipment.Shipment)(nil).RatingAsOf(now))
+	assert.Equal(t, now, (&shipment.Shipment{}).RatingAsOf(now))
+	assert.Equal(t, int64(1_700_000_000),
+		(&shipment.Shipment{CreatedAt: 1_700_000_000}).RatingAsOf(now))
+	assert.Equal(t, int64(1_750_000_000), (&shipment.Shipment{
+		CreatedAt:      1_700_000_000,
+		ActualShipDate: int64Ptr(1_750_000_000),
+	}).RatingAsOf(now))
+	assert.Equal(t, int64(1_700_000_000), (&shipment.Shipment{
+		CreatedAt:      1_700_000_000,
+		ActualShipDate: int64Ptr(0),
+	}).RatingAsOf(now))
+}

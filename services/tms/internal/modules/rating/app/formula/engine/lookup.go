@@ -127,7 +127,7 @@ func bandedUnsupported(function, table string) error {
 func isReservedName(name string) bool {
 	switch name {
 	case lookupFuncName, lookupOrFuncName, lookup2FuncName, lookup2OrFuncName,
-		lookupInterpFuncName, deficitWeightFuncName, ctxEnvKey:
+		lookupInterpFuncName, deficitWeightFuncName, ctxEnvKey, concatFuncName:
 		return true
 	default:
 		return false

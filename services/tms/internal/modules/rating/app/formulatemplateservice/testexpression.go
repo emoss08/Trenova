@@ -304,12 +304,19 @@ func (s *Service) evaluateAgainstShipment(
 		}
 	}
 
-	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), resp.Amount)
+	amount, guardrail, rounding, err := formula.ApplyChargePolicy(req.chargePolicy(), resp.Amount)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Expression evaluation failed",
+		}
+	}
 
 	return &TestExpressionResponse{
 		Valid:             true,
 		Result:            amount,
-		Breakdown:         resp.Breakdown,
+		Breakdown:         formula.RoundBreakdown(req.chargePolicy(), resp.Breakdown, resp.Amount),
 		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
 		Guardrail:         guardrail,
 		Rounding:          rounding,
@@ -390,7 +397,14 @@ func (s *Service) evaluateWithEnv(
 		}
 	}
 
-	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), result.Amount)
+	amount, guardrail, rounding, err := formula.ApplyChargePolicy(req.chargePolicy(), result.Amount)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Expression evaluation failed",
+		}
+	}
 
 	resp := &TestExpressionResponse{
 		Valid:     true,
@@ -403,7 +417,9 @@ func (s *Service) evaluateWithEnv(
 
 	if len(req.Breakdowns) > 0 {
 		var lookups []formulatypes.LookupTrace
-		resp.Breakdown, lookups = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		var breakdown []formulatemplatetypes.BreakdownAmount
+		breakdown, lookups = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		resp.Breakdown = formula.RoundBreakdown(req.chargePolicy(), breakdown, result.Amount)
 		if resp.Receipt != nil {
 			resp.Receipt.Lookups = append(resp.Receipt.Lookups, lookups...)
 		}

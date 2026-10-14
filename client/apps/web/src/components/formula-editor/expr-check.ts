@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import {
+  DISABLED_FUNCTIONS,
   EXPR_BUILTIN_FUNCTIONS,
   isKnownFunction,
   isOperatorWord,
@@ -42,6 +43,7 @@ export type DiagnosticCode =
   | "unknown-variable"
   | "unknown-field"
   | "unknown-function"
+  | "disabled-function"
   | "arity"
   | "type"
   | "nullable"
@@ -211,8 +213,6 @@ const RETURN_TYPES: Record<string, ExprType> = {
   trimSuffix: "String",
   join: "String",
   replace: "String",
-  repeat: "String",
-  toJSON: "String",
   toBase64: "String",
   fromBase64: "String",
   type: "String",
@@ -586,13 +586,72 @@ function rootOf(node: Node): Node {
   return node.kind === "member" ? rootOf(node.object) : node;
 }
 
+const RATING_TIME = "ratingTime";
+
+function reportDisabledFunction(scope: Scope, node: Node & { kind: "call" }, name: string) {
+  if (name === "now") {
+    report(
+      scope,
+      node.callee,
+      "error",
+      "disabled-function",
+      translate(
+        "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at",
+        quote("now()"),
+        quote(RATING_TIME),
+      ),
+      {
+        name,
+        fixes:
+          node.args.length === 0
+            ? [
+                {
+                  kind: "replace",
+                  label: translate("Change to {0}", RATING_TIME),
+                  changes: [{ from: node.from, to: node.to, insert: RATING_TIME }],
+                },
+              ]
+            : [],
+      },
+    );
+    return;
+  }
+  report(
+    scope,
+    node.callee,
+    "error",
+    "disabled-function",
+    name === "repeat"
+      ? translate(
+          "{0} isn't available in formulas: formulas compare codes and do not build text",
+          quote(name),
+        )
+      : translate(
+          "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON",
+          quote(name),
+        ),
+    { name, fixes: [] },
+  );
+}
+
 function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
   const name = memberPath(node.callee);
   if (name === null || node.callee.kind !== "ident") {
+    if (node.callee.kind === "member") typeOf(scope, node.callee.object);
     for (const arg of node.args) typeOf(scope, arg);
     return "Any";
   }
   const doc = scope.functions.get(name);
+  if (
+    !doc &&
+    DISABLED_FUNCTIONS.has(name) &&
+    !scope.variables.has(name) &&
+    !scope.bindings.has(name)
+  ) {
+    reportDisabledFunction(scope, node, name);
+    for (const arg of node.args) typeOf(scope, arg);
+    return "Any";
+  }
   if (!doc && !isKnownFunction(scope.known, name)) {
     const suggestion = nearestKnown(name, [
       ...scope.known.functionNames,

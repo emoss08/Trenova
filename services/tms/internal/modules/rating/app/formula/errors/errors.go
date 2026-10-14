@@ -12,8 +12,7 @@ type ResolveError struct {
 }
 
 func (e *ResolveError) Error() string {
-	return fmt.Sprintf("failed to resolve %s on %s: %v",
-		e.Path, e.EntityType, e.Cause)
+	return fmt.Sprintf("failed to resolve %s: %v", e.Path, e.Cause)
 }
 
 func (e *ResolveError) Unwrap() error {
@@ -70,8 +69,7 @@ type ComputeError struct {
 }
 
 func (e *ComputeError) Error() string {
-	return fmt.Sprintf("failed to compute %s for %s: %v",
-		e.Function, e.EntityType, e.Cause)
+	return fmt.Sprintf("failed to compute %s: %v", e.Function, e.Cause)
 }
 
 func (e *ComputeError) Unwrap() error {

@@ -474,6 +474,14 @@
                 "nullable": true
             }
         },
+        "ratingTime": {
+            "description": "The date the contract terms are read at, as a UTC instant: the date the rating asked for, else the actual ship date, else when the shipment was entered. It is fixed for a shipment, so it stands in for \"now\" and re-rating gives the same answer. Supports date methods such as ratingTime.Year() and comparisons with date(\"2026-01-01\")",
+            "type": "string",
+            "format": "date-time",
+            "x-source": {
+                "provided": true
+            }
+        },
         "fuelIndexCode": {
             "description": "Code of the fuel index behind fuelPrice, such as DOE_US; empty when no index has a price",
             "type": ["string", "null"],

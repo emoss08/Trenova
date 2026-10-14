@@ -159,6 +159,22 @@ counted only under `rejections_total` when the persisted-operation layer refuses
 them. In production and staging that layer rejects anything not in the manifest,
 so unparseable documents cannot reach the executor at all.
 
+## Formula Evaluation Metrics
+
+Rating formulas run in-process, each on its own goroutine under a deadline. A
+goroutine that outlives its deadline cannot be interrupted, so it keeps its slot
+in the process-wide bound (`formula.maxConcurrentEvaluations`) until it really
+finishes. The rating engine emits:
+
+- `trenova_formula_evaluations_in_flight`: slots held, abandoned evaluations included
+- `trenova_formula_evaluations_abandoned`: evaluations still running after their caller stopped waiting
+- `trenova_formula_evaluation_timeouts_total{stage}`: `queued` when no slot came free
+  before the deadline, `running` when the formula itself ran past it
+
+An abandoned count that stays above zero names a formula that never finishes; when
+in-flight sits at the bound and `queued` timeouts climb, rating is waiting on those
+goroutines rather than on the database.
+
 ## Suggested Grafana Panels
 
 Use rate-based panels for operational visibility and raw increase panels for incident review.

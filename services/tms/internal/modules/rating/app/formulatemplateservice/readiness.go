@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -39,7 +40,6 @@ const (
 	ReadinessCheckAge        = "submissionAge"
 )
 
-var reconcileTolerance = decimal.New(5, -3)
 
 type ReadinessRequest struct {
 	TenantInfo pagination.TenantInfo
@@ -416,7 +416,10 @@ func (s *Service) breakdownReadiness(
 	}
 
 	raw := result.RawAmount()
-	if sum.Sub(raw).Abs().GreaterThan(reconcileTolerance) {
+	policy := template.ChargePolicy()
+	if sum.Sub(policy.RoundingMode.Round(raw, policy.RoundingPrecision)).
+		Abs().
+		GreaterThan(formula.BreakdownReconcileTolerance) {
 		check.Status = ReadinessWarn
 		check.Detail = fmt.Sprintf(
 			"Lines don't add up to the formula: they come to %s and the formula to %s",

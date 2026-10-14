@@ -200,3 +200,16 @@ func sourceForPrefix(path string, sources provenance) formulatypes.ValueSource {
 	}
 	return formulatypes.ValueSourceSample
 }
+
+func stampedReceipt(
+	receipt *formulatypes.Receipt,
+	lookup formulatemplatetypes.RateTableLookup,
+) *formulatypes.Receipt {
+	if len(receipt.Lookups) == 0 {
+		return receipt
+	}
+	if stamped, ok := lookup.(formulatemplatetypes.StampedLookup); ok {
+		receipt.RateTableStamp = stamped.RateTableStamp()
+	}
+	return receipt
+}

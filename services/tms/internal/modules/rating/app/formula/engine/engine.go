@@ -8,25 +8,30 @@ import (
 	"fmt"
 	"hash"
 	"maps"
-	"math"
 	"reflect"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -34,6 +39,7 @@ const (
 	maxExpressionNodes = 1_000
 	evaluationTimeout  = 5 * time.Second
 	ctxEnvKey          = "__ctx"
+	RatingTimeVariable = "ratingTime"
 )
 
 type evaluationTimeoutKey struct{}
@@ -69,6 +75,9 @@ type Params struct {
 	// default. One entry per distinct expression and schema shape is enough
 	// for a tenant's live templates, so the default is generous.
 	CompileCacheSize int `optional:"true"`
+
+	Config  *config.Config    `optional:"true"`
+	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Engine struct {
@@ -77,6 +86,8 @@ type Engine struct {
 	envBuilder  *EnvironmentBuilder
 	cache       *lru.Cache[string, *CompiledExpression]
 	exprOptions []expr.Option
+	slots       *semaphore.Weighted
+	metrics     *metrics.Formula
 }
 
 func NewEngine(p Params) (*Engine, error) {
@@ -89,12 +100,24 @@ func NewEngine(p Params) (*Engine, error) {
 		return nil, fmt.Errorf("failed to create compile cache: %w", err)
 	}
 
+	formulaConfig := new(config.FormulaConfig)
+	if p.Config != nil {
+		formulaConfig = &p.Config.Formula
+	}
+
+	var observer *metrics.Formula
+	if p.Metrics != nil {
+		observer = p.Metrics.Formula
+	}
+
 	return &Engine{
 		registry:    p.Registry,
 		resolver:    p.Resolver,
 		envBuilder:  p.EnvBuilder,
 		cache:       cache,
 		exprOptions: append(languageOptions(), expr.WithContext(ctxEnvKey)),
+		slots:       semaphore.NewWeighted(int64(formulaConfig.GetMaxConcurrentEvaluations())),
+		metrics:     observer,
 	}, nil
 }
 
@@ -130,7 +153,7 @@ func (e *Engine) Compile(
 
 	program, err := expr.Compile(expression, e.compileOptions(env)...)
 	if err != nil {
-		return nil, errors.NewSchemaError(expression, "compile", err)
+		return nil, compileError(expression, err)
 	}
 
 	compiled := &CompiledExpression{
@@ -190,9 +213,14 @@ func (e *Engine) Evaluate(
 		return nil, err
 	}
 
-	recorder := newLookupRecorder(req.Lookup)
-	shape := e.shapeFor(ctx, definition, env, recorder)
-	result, err := e.evaluateShaped(ctx, req.Template.Expression, env, shape, resolveFailures)
+	shape := e.shapeFor(ctx, definition, env, req.Lookup)
+	result, lookups, err := e.evaluateShaped(ctx, &evaluation{
+		expression:      req.Template.Expression,
+		scope:           mainExpressionScope,
+		env:             env,
+		shape:           shape,
+		resolveFailures: resolveFailures,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -200,12 +228,18 @@ func (e *Engine) Evaluate(
 		return nil, err
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Template.BreakdownDefinitions, env, shape)
-	result.Receipt = &formulatypes.Receipt{
+	breakdown, breakdownLookups := e.evaluateBreakdowns(
+		ctx,
+		req.Template.BreakdownDefinitions,
+		env,
+		shape,
+	)
+	result.Breakdown = breakdown
+	result.Receipt = stampedReceipt(&formulatypes.Receipt{
 		Variables: receiptVariables(env, sources),
-		Lookups:   recorder.entries,
+		Lookups:   append(lookups, breakdownLookups...),
 		RawAmount: result.Value,
-	}
+	}, req.Lookup)
 
 	return result, nil
 }
@@ -263,13 +297,18 @@ func (e *Engine) EvaluateExpression(
 		return nil, err
 	}
 
-	recorder := newLookupRecorder(req.Lookup)
 	var definition *formulatypes.Definition
 	if known, ok := e.registry.Get(req.SchemaID); ok {
 		definition = known
 	}
-	shape := e.shapeFor(ctx, definition, env, recorder)
-	result, err := e.evaluateShaped(ctx, req.Expression, env, shape, resolveFailures)
+	shape := e.shapeFor(ctx, definition, env, req.Lookup)
+	result, lookups, err := e.evaluateShaped(ctx, &evaluation{
+		expression:      req.Expression,
+		scope:           mainExpressionScope,
+		env:             env,
+		shape:           shape,
+		resolveFailures: resolveFailures,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -279,12 +318,13 @@ func (e *Engine) EvaluateExpression(
 		}
 	}
 
-	result.Breakdown = e.evaluateBreakdowns(ctx, req.Breakdowns, env, shape)
-	result.Receipt = &formulatypes.Receipt{
+	breakdown, breakdownLookups := e.evaluateBreakdowns(ctx, req.Breakdowns, env, shape)
+	result.Breakdown = breakdown
+	result.Receipt = stampedReceipt(&formulatypes.Receipt{
 		Variables: receiptVariables(env, sources),
-		Lookups:   recorder.entries,
+		Lookups:   append(lookups, breakdownLookups...),
 		RawAmount: result.Value,
-	}
+	}, req.Lookup)
 
 	return result, nil
 }
@@ -293,8 +333,13 @@ func (e *Engine) EvaluateWithEnv(
 	ctx context.Context,
 	req *formulatemplatetypes.EnvEvaluationRequest,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	recorder := newLookupRecorder(req.Lookup)
-	result, err := e.evaluateProgram(ctx, req.Expression, req.Env, recorder, nil)
+	shape := e.shapeFor(ctx, nil, req.Env, req.Lookup)
+	result, lookups, err := e.evaluateShaped(ctx, &evaluation{
+		expression: req.Expression,
+		scope:      mainExpressionScope,
+		env:        req.Env,
+		shape:      shape,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -304,92 +349,80 @@ func (e *Engine) EvaluateWithEnv(
 
 	sources := make(provenance, len(req.Env))
 	sources.markAll(req.Env, formulatypes.ValueSourceSample)
-	result.Receipt = &formulatypes.Receipt{
+	result.Receipt = stampedReceipt(&formulatypes.Receipt{
 		Variables: receiptVariables(req.Env, sources),
-		Lookups:   recorder.entries,
+		Lookups:   lookups,
 		RawAmount: result.Value,
-	}
+	}, req.Lookup)
 
 	return result, nil
 }
 
-func (e *Engine) evaluateProgram(
-	ctx context.Context,
-	expression string,
-	env map[string]any,
-	lookup formulatemplatetypes.RateTableLookup,
-	resolveFailures map[string]error,
-) (*formulatemplatetypes.EvaluationResult, error) {
-	shape := e.shapeFor(ctx, nil, env, lookup)
-	return e.evaluateShaped(ctx, expression, env, shape, resolveFailures)
+type evaluation struct {
+	expression      string
+	scope           string
+	env             map[string]any
+	shape           *compileShape
+	resolveFailures map[string]error
 }
 
-// evaluateShaped compiles against the evaluation's shape — computed once, so
-// the main expression and every breakdown line share the schema-level cache
-// key — and runs against the real environment.
 func (e *Engine) evaluateShaped(
 	ctx context.Context,
-	expression string,
-	env map[string]any,
-	shape *compileShape,
-	resolveFailures map[string]error,
-) (*formulatemplatetypes.EvaluationResult, error) {
-	output, err := e.runShaped(ctx, expression, env, shape, resolveFailures)
+	ev *evaluation,
+) (*formulatemplatetypes.EvaluationResult, []formulatypes.LookupTrace, error) {
+	output, lookups, err := e.runShaped(ctx, ev)
 	if err != nil {
-		return nil, err
+		return nil, lookups, err
 	}
 
 	result := &formulatemplatetypes.EvaluationResult{
 		RawValue:  output,
-		Variables: maputils.WithoutFuncValues(env),
+		Variables: maputils.WithoutFuncValues(ev.env),
 	}
 
 	result.Value, err = e.toDecimal(output)
 	if err != nil {
-		return nil, errors.NewTransformError(
+		return nil, lookups, errors.NewTransformError(
 			"expression result",
 			"decimal",
 			output,
-			withResolveFailures(err, resolveFailures),
+			withResolveFailures(err, ev.resolveFailures),
 		)
 	}
 
-	return result, nil
+	return result, lookups, nil
 }
 
 func (e *Engine) runShaped(
 	ctx context.Context,
-	expression string,
-	env map[string]any,
-	shape *compileShape,
-	resolveFailures map[string]error,
-) (any, error) {
-	injectLookupFunctions(env, shape.lookup)
-
-	env[ctxEnvKey] = ctx
-	defer delete(env, ctxEnvKey)
-
-	compiled, err := e.compileShaped(expression, shape)
+	ev *evaluation,
+) (any, []formulatypes.LookupTrace, error) {
+	compiled, err := e.compileShaped(ev.expression, ev.shape)
 	if err != nil {
-		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
-			return nil, missing
+		if missing := missingFieldError(ev.expression, ev.env, ev.resolveFailures); missing != nil {
+			return nil, nil, missing
 		}
-		return nil, withResolveFailures(err, resolveFailures)
+		return nil, nil, withResolveFailures(err, ev.resolveFailures)
 	}
 
-	output, err := e.run(ctx, compiled.program, env)
+	output, lookups, err := e.run(ctx, &vmRun{
+		program: compiled.program,
+		env:     ev.env,
+		lookup:  ev.shape.lookup,
+		scope:   ev.scope,
+	})
 	if err != nil {
-		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
-			return nil, missing
+		if missing := missingFieldError(ev.expression, ev.env, ev.resolveFailures); missing != nil {
+			return nil, lookups, missing
 		}
-		return nil, errors.NewComputeError(
-			expression,
+		return nil, lookups, errors.NewComputeError(
+			ev.expression,
 			"expression",
-			withResolveFailures(err, resolveFailures),
+			withResolveFailures(humanized(err), ev.resolveFailures),
 		)
 	}
 
-	return output, nil
+	return output, lookups, nil
 }
 
 func (e *Engine) evaluateBreakdowns(
@@ -397,13 +430,13 @@ func (e *Engine) evaluateBreakdowns(
 	definitions []*formulatypes.BreakdownDefinition,
 	env map[string]any,
 	shape *compileShape,
-) []formulatemplatetypes.BreakdownAmount {
+) ([]formulatemplatetypes.BreakdownAmount, []formulatypes.LookupTrace) {
 	if len(definitions) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(definitions))
-	defer shape.recorder().setScope(mainExpressionScope)
+	lookups := make([]formulatypes.LookupTrace, 0, len(definitions))
 
 	for _, def := range definitions {
 		if def == nil {
@@ -415,8 +448,16 @@ func (e *Engine) evaluateBreakdowns(
 			Label: def.Label,
 		}
 
-		shape.recorder().setScope(def.Name)
-		result, err := e.evaluateShaped(ctx, def.Expression, env, shape, nil)
+		result, traces, err := e.evaluateShaped(ctx, &evaluation{
+			expression: def.Expression,
+			scope:      def.Name,
+			env:        env,
+			shape:      shape,
+		})
+		lookups = append(lookups, traces...)
+		if err == nil {
+			err = rejectBooleanAmount(def.Expression, result)
+		}
 		if err != nil {
 			item.Error = err.Error()
 		} else {
@@ -426,59 +467,100 @@ func (e *Engine) evaluateBreakdowns(
 		items = append(items, item)
 	}
 
-	return items
+	return items, lookups
 }
 
-// vm.Run cannot be interrupted, so a timed-out evaluation goroutine is
-// abandoned; its work stays bounded by expr's memory budget and MaxNodes.
-// run executes a compiled program under the evaluation deadline.
-//
-// The VM gets its own copy of the environment. The caller keeps using — and
-// mutating — its map the moment run returns, and on a timeout it returns while
-// the VM goroutine may still be reading; a shared map at that point is a
-// concurrent read and write, which the runtime treats as fatal rather than as
-// an error anyone can recover from. Copying a few dozen entries costs far
-// less than the evaluation itself.
+type vmRun struct {
+	program *vm.Program
+	env     map[string]any
+	lookup  formulatemplatetypes.RateTableLookup
+	scope   string
+}
+
+const (
+	runRunning int32 = iota
+	runFinished
+	runAbandoned
+)
+
+type outcome struct {
+	value   any
+	lookups []formulatypes.LookupTrace
+	err     error
+}
+
 func (e *Engine) run(
 	ctx context.Context,
-	program *vm.Program,
-	env map[string]any,
-) (any, error) {
+	req *vmRun,
+) (any, []formulatypes.LookupTrace, error) {
 	parent := ctx
 	timeout := evaluationTimeoutFor(ctx)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	vmEnv := make(map[string]any, len(env)+1)
-	maps.Copy(vmEnv, env)
-	vmEnv[ctxEnvKey] = ctx
-
-	type outcome struct {
-		value any
-		err   error
+	if err := e.slots.Acquire(ctx, 1); err != nil {
+		if parentErr := parent.Err(); parentErr != nil {
+			return nil, nil, parentErr
+		}
+		e.metrics.RecordTimeout(metrics.FormulaTimeoutStageQueued)
+		return nil, nil, fmt.Errorf(
+			"%w (%s waiting for a free evaluation slot)",
+			ErrEvaluationTimeout,
+			timeout,
+		)
 	}
+	e.metrics.EvaluationStarted()
 
+	recorder := newLookupRecorder(req.lookup)
+	recorder.scope = req.scope
+
+	vmEnv := maputils.CloneDeep(req.env)
+	if vmEnv == nil {
+		vmEnv = make(map[string]any, lookupFunctionCount+1)
+	}
+	injectLookupFunctions(vmEnv, recorder)
+	vmEnv[ctxEnvKey] = withStringMeter(ctx)
+
+	var state atomic.Int32
 	resultCh := make(chan outcome, 1)
 
 	go func() {
+		var result outcome
 		defer func() {
 			if r := recover(); r != nil {
-				resultCh <- outcome{err: fmt.Errorf("evaluation panicked: %v", r)}
+				result = outcome{
+					lookups: recorder.entries,
+					err:     errors.NewPanicError(r, debug.Stack()),
+				}
 			}
+			e.slots.Release(1)
+			e.metrics.EvaluationFinished()
+			if state.CompareAndSwap(runRunning, runFinished) {
+				resultCh <- result
+				return
+			}
+			e.metrics.AbandonedEvaluationFinished()
 		}()
 
-		value, err := vm.Run(program, vmEnv)
-		resultCh <- outcome{value: value, err: err}
+		machine := vm.VM{MemoryBudget: vmMemoryBudget}
+		value, err := machine.Run(req.program, vmEnv)
+		result = outcome{value: value, lookups: recorder.entries, err: err}
 	}()
 
 	select {
-	case <-ctx.Done():
-		if parentErr := parent.Err(); parentErr != nil {
-			return nil, parentErr
-		}
-		return nil, fmt.Errorf("%w (%s)", ErrEvaluationTimeout, timeout)
 	case res := <-resultCh:
-		return res.value, res.err
+		return res.value, res.lookups, res.err
+	case <-ctx.Done():
+		if !state.CompareAndSwap(runRunning, runAbandoned) {
+			res := <-resultCh
+			return res.value, res.lookups, res.err
+		}
+		e.metrics.EvaluationAbandoned()
+		if parentErr := parent.Err(); parentErr != nil {
+			return nil, nil, parentErr
+		}
+		e.metrics.RecordTimeout(metrics.FormulaTimeoutStageRunning)
+		return nil, nil, fmt.Errorf("%w (%s)", ErrEvaluationTimeout, timeout)
 	}
 }
 
@@ -511,12 +593,17 @@ func (e *Engine) ValidateExpressionDetailed(
 		return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 	}
 
-	output, err := e.run(ctx, compiled.program, env)
+	output, _, err := e.run(ctx, &vmRun{
+		program: compiled.program,
+		env:     env,
+		lookup:  StubLookup{},
+		scope:   mainExpressionScope,
+	})
 	if err != nil {
 		if goErrors.Is(err, context.DeadlineExceeded) || goErrors.Is(err, ErrEvaluationTimeout) {
 			return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 		}
-		return ValidationOutcome{Warning: err.Error()}
+		return ValidationOutcome{Warning: humanized(err).Error()}
 	}
 
 	if err = validateResultType(output); err != nil {
@@ -605,15 +692,20 @@ func (e *Engine) toDecimal(value any) (decimal.Decimal, error) {
 		}
 		return decimal.NewFromInt(0), nil
 	default:
-		return decimal.Zero, fmt.Errorf("cannot convert %T to decimal", value)
+		return decimal.Zero, fmt.Errorf(
+			"%w, got %s",
+			ErrNonNumericResult,
+			errors.DescribeValue(value),
+		)
 	}
 }
 
 func decimalFromFloat(value float64) (decimal.Decimal, error) {
-	if math.IsNaN(value) || math.IsInf(value, 0) {
+	exact, ok := decimalutils.FromFloat(value)
+	if !ok {
 		return decimal.Zero, fmt.Errorf("%w: %v", ErrNonFiniteResult, value)
 	}
-	return decimal.NewFromFloat(value), nil
+	return exact, nil
 }
 
 func validateResultType(value any) error {
@@ -624,7 +716,7 @@ func validateResultType(value any) error {
 		decimal.Decimal, decimal.NullDecimal, bool:
 		return nil
 	default:
-		return fmt.Errorf("%w, got %T", ErrNonNumericResult, value)
+		return fmt.Errorf("%w, got %s", ErrNonNumericResult, errors.DescribeValue(value))
 	}
 }
 
@@ -682,12 +774,7 @@ func withResolveFailures(err error, resolveFailures map[string]error) error {
 	}
 	sort.Strings(paths)
 
-	details := make([]string, 0, len(paths))
-	for _, path := range paths {
-		details = append(details, path+": "+resolveFailures[path].Error())
-	}
-
-	return fmt.Errorf("%w (unresolved fields: %s)", err, strings.Join(details, "; "))
+	return fmt.Errorf("%w (unresolved fields: %s)", err, strings.Join(paths, ", "))
 }
 
 func compileCacheKey(expression string, env map[string]any) string {
@@ -749,13 +836,6 @@ type compileShape struct {
 	env       map[string]any
 	signature string
 	lookup    formulatemplatetypes.RateTableLookup
-}
-
-func (s *compileShape) recorder() *lookupRecorder {
-	if rec, ok := s.lookup.(*lookupRecorder); ok {
-		return rec
-	}
-	return newLookupRecorder(s.lookup)
 }
 
 func (e *Engine) shapeFor(
@@ -848,6 +928,13 @@ func setShapePath(env map[string]any, path string, value any) {
 	current[segments[len(segments)-1]] = value
 }
 
+func compileError(expression string, err error) error {
+	if disabled := disabledBuiltinUse(expression); disabled != nil {
+		return errors.NewSchemaError(expression, "compile", disabled)
+	}
+	return errors.NewSchemaError(expression, "compile", humanized(err))
+}
+
 func (e *Engine) compileShaped(
 	expression string,
 	shape *compileShape,
@@ -863,7 +950,7 @@ func (e *Engine) compileShaped(
 
 	program, err := expr.Compile(expression, e.compileOptions(shape.env)...)
 	if err != nil {
-		return nil, errors.NewSchemaError(expression, "compile", err)
+		return nil, compileError(expression, err)
 	}
 
 	compiled := &CompiledExpression{program: program, expression: expression}

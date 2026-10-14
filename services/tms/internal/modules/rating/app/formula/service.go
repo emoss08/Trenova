@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
@@ -100,6 +101,29 @@ func (s *Service) ContextVariables(
 	})
 }
 
+func (s *Service) providedValues(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity any,
+	ratingDate int64,
+) map[string]any {
+	contextual := s.ContextVariables(ctx, tenantInfo)
+	provided := make(map[string]any, len(contextual)+1)
+	maps.Copy(provided, contextual)
+	provided[engine.RatingTimeVariable] = time.Unix(ratingAsOf(entity, ratingDate), 0).UTC()
+	return provided
+}
+
+func ratingAsOf(entity any, ratingDate int64) int64 {
+	if ratingDate > 0 {
+		return ratingDate
+	}
+	if rated, ok := resolver.Unwrap(entity).(*shipment.Shipment); ok {
+		return rated.RatingAsOf(timeutils.NowUnix())
+	}
+	return timeutils.NowUnix()
+}
+
 func (s *Service) Calculate(
 	ctx context.Context,
 	req *formulatemplatetypes.CalculateRequest,
@@ -141,13 +165,16 @@ func (s *Service) Calculate(
 	}
 
 	resp, err := s.Rate(ctx, &RateRequest{
-		Template:  resolved,
-		Entity:    req.Entity,
-		Variables: req.Variables,
-		Overrides: req.Overrides,
+		Template:   resolved,
+		Entity:     req.Entity,
+		Variables:  req.Variables,
+		Overrides:  req.Overrides,
+		RatingDate: req.RatingDate,
 	})
 	if err != nil {
-		log.Error("failed to evaluate formula", zap.Error(err))
+		log.Error(
+			"failed to evaluate formula",
+			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, err
 	}
 	if scheduled != nil && resp.Receipt != nil {
@@ -264,10 +291,11 @@ func (s *Service) ResolveScheduledVersion(
 }
 
 type RateRequest struct {
-	Template  *formulatemplate.FormulaTemplate
-	Entity    any
-	Variables map[string]any
-	Overrides map[string]any
+	Template   *formulatemplate.FormulaTemplate
+	Entity     any
+	Variables  map[string]any
+	Overrides  map[string]any
+	RatingDate int64
 }
 
 func (s *Service) Rate(
@@ -289,7 +317,7 @@ func (s *Service) Rate(
 		Template:  req.Template,
 		Entity:    req.Entity,
 		Variables: req.Variables,
-		Provided:  s.ContextVariables(ctx, tenantInfo),
+		Provided:  s.providedValues(ctx, tenantInfo, req.Entity, req.RatingDate),
 		Overrides: req.Overrides,
 		Lookup:    lookup,
 	})
@@ -297,7 +325,11 @@ func (s *Service) Rate(
 		return nil, s.asRatingValidationError(err)
 	}
 
-	amount, guardrail, rounding := ApplyChargePolicy(req.Template.ChargePolicy(), result.Value)
+	policy := req.Template.ChargePolicy()
+	amount, guardrail, rounding, err := ApplyChargePolicy(policy, result.Value)
+	if err != nil {
+		return nil, err
+	}
 
 	receipt := result.Receipt
 	if receipt != nil {
@@ -311,7 +343,7 @@ func (s *Service) Rate(
 		FormulaTemplateID:   req.Template.ID.String(),
 		FormulaTemplateName: req.Template.Name,
 		Expression:          req.Template.Expression,
-		Breakdown:           result.Breakdown,
+		Breakdown:           RoundBreakdown(policy, result.Breakdown, result.Value),
 		Guardrail:           guardrail,
 		Rounding:            rounding,
 		VersionNumber:       req.Template.CurrentVersionNumber,
@@ -329,8 +361,11 @@ func (s *Service) asRatingValidationError(err error) error {
 	if goErrors.As(err, &unresolved) {
 		for field, cause := range unresolved.Causes {
 			s.l.Warn("formula reads a field the record could not supply",
-				zap.String("field", field),
-				zap.Error(cause),
+				append(
+					formulaerrors.LogFields(cause),
+					zap.String("field", field),
+					zap.Error(cause),
+				)...,
 			)
 		}
 		return errortypes.NewValidationError(
@@ -363,7 +398,7 @@ func (s *Service) BuildLookup(
 		func(ctx context.Context) (string, error) {
 			return s.rateMatrixRepo.GetLookupStamp(ctx, tenantInfo)
 		},
-		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+		func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,
 				&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
@@ -372,7 +407,7 @@ func (s *Service) BuildLookup(
 				return nil, err
 			}
 
-			return NewMatrixLookup(data), nil
+			return NewStampedMatrixLookup(data, stamp), nil
 		},
 	)
 }
@@ -386,7 +421,7 @@ func (s *Service) BuildLookup(
 func ApplyChargePolicy(
 	policy formulatypes.ChargePolicy,
 	rawAmount decimal.Decimal,
-) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult) {
+) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult, error) {
 	policy = policy.Normalized()
 
 	clamped, guardrail := ApplyGuardrailBounds(policy.MinCharge, policy.MaxCharge, rawAmount)
@@ -399,7 +434,19 @@ func ApplyChargePolicy(
 		UnroundedAmount: clamped,
 	}
 
-	return rounded, guardrail, rounding
+	if rounded.IsNegative() {
+		return rounded, guardrail, rounding, errortypes.NewValidationError(
+			"expression",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"The formula came to %s, and a charge cannot be negative. "+
+					"Keep it at zero or above with max(..., 0), or set a minimum charge",
+				rounded.StringFixed(policy.RoundingPrecision),
+			),
+		)
+	}
+
+	return rounded, guardrail, rounding, nil
 }
 
 func ApplyGuardrailBounds(
@@ -470,13 +517,15 @@ func (s *Service) EvaluateExpression(
 			Entity:     req.Entity,
 			SchemaID:   req.SchemaID,
 			Variables:  req.Variables,
-			Provided:   s.ContextVariables(ctx, req.TenantInfo),
+			Provided:   s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 			Breakdowns: req.Breakdowns,
 			Lookup:     lookup,
 		},
 	)
 	if err != nil {
-		log.Error("failed to evaluate expression", zap.Error(err))
+		log.Error(
+			"failed to evaluate expression",
+			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, s.asRatingValidationError(err)
 	}
 
@@ -513,7 +562,7 @@ func (s *Service) TraceStatements(
 	env, resolveFailures, err := s.engine.GetEnvironmentBuilder().BuildWithProvided(
 		req.Entity,
 		req.SchemaID,
-		s.ContextVariables(ctx, req.TenantInfo),
+		s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 		req.Variables,
 	)
 	if err != nil {
@@ -563,7 +612,7 @@ func (s *Service) EvaluatePredicate(
 			Expression:   req.Expression,
 			Entity:       req.Entity,
 			SchemaID:     req.SchemaID,
-			Provided:     s.ContextVariables(ctx, req.TenantInfo),
+			Provided:     s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
 			Lookup:       engine.StubLookup{},
 			AllowBoolean: true,
 		},
@@ -718,7 +767,7 @@ func (s *Service) BuildValidationEnvironmentForTenant(
 	env, _, err := s.engine.GetEnvironmentBuilder().
 		BuildValidationEnvironmentWithProvided(
 			schemaID,
-			s.ContextVariables(ctx, tenantInfo),
+			s.providedValues(ctx, tenantInfo, nil, 0),
 			variables,
 		)
 	return env, err

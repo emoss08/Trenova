@@ -2,7 +2,6 @@ package resolver
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -41,7 +40,7 @@ func shipmentOf(entity any) (*shipment.Shipment, error) {
 	case shipment.Shipment:
 		return &typed, nil
 	default:
-		return nil, fmt.Errorf("%w: %T", ErrUnsupportedEntity, typed)
+		return nil, ErrUnsupportedEntity
 	}
 }
 

@@ -71,6 +71,31 @@ describe("checkExpression", () => {
     });
   });
 
+  it("refuses now() and points at ratingTime with a fix", () => {
+    const { diagnostics } = checkExpression("now().Year() == 2026 ? 10 : 0", known);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toMatchObject({ severity: "error", code: "disabled-function", from: 0 });
+    expect(diagnostics[0].message).toBe(
+      "`now()` isn't available in formulas: a formula must price a shipment the same way every time it runs. Use `ratingTime`, the date the contract terms are read at",
+    );
+    expect(diagnostics[0].fixes).toEqual([
+      {
+        kind: "replace",
+        label: "Change to ratingTime",
+        changes: [{ from: 0, to: 5, insert: "ratingTime" }],
+      },
+    ]);
+  });
+
+  it("refuses the functions the engine leaves out, without a suggestion", () => {
+    for (const expression of ["len(toJSON(totalStops))", 'fromJSON("1")', 'len(repeat("x", 3))']) {
+      const { diagnostics } = checkExpression(expression, known);
+      expect(diagnostics.map((d) => d.code)).toEqual(["disabled-function"]);
+      expect(diagnostics[0].message).toContain("isn't available in formulas");
+      expect(diagnostics[0].fixes).toEqual([]);
+    }
+  });
+
   it("infers a flag type for is/has names", () => {
     const { diagnostics } = checkExpression("isTeam ? 1 : 0", known);
     expect(diagnostics[0].fixes.at(-1)).toMatchObject({ kind: "declare", type: "Boolean" });

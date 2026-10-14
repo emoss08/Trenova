@@ -94,16 +94,12 @@ export const EXPR_BUILTIN_FUNCTIONS = new Set([
   "split",
   "splitAfter",
   "replace",
-  "repeat",
   "indexOf",
   "lastIndexOf",
   "hasPrefix",
   "hasSuffix",
-  "toJSON",
-  "fromJSON",
   "toBase64",
   "fromBase64",
-  "now",
   "duration",
   "date",
   "timezone",
@@ -117,6 +113,14 @@ export const EXPR_BUILTIN_FUNCTIONS = new Set([
   "lookup2Or",
   "lookupInterp",
   "deficitWeight",
+]);
+
+/** expr builtins the engine turns off (`engine/disabled.go`); calling one fails the save. */
+export const DISABLED_FUNCTIONS: ReadonlySet<string> = new Set([
+  "now",
+  "toJSON",
+  "fromJSON",
+  "repeat",
 ]);
 
 export const FALLBACK_SCHEMA: Pick<FormulaSchemaResponse, "variables" | "functions"> = {

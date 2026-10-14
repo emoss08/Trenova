@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -346,6 +347,33 @@ func TestReadiness_ChecksMirrorTheStudio(t *testing.T) {
 		breakdown.Detail,
 	)
 	assert.True(t, resp.CanSubmit, "a breakdown warning does not block")
+}
+
+func TestReadiness_BreakdownReconcilesThroughTheRoundingRemainder(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Expression = "10.001 + 20.001 + 30.001"
+	template.RoundingMode = ratetypes.RoundingModeUp
+	template.RoundingPrecision = 2
+	template.BreakdownDefinitions = []*formulatypes.BreakdownDefinition{
+		{Name: "linehaul", Label: "Linehaul", Expression: "10.001"},
+		{Name: "fuel", Label: "Fuel", Expression: "20.001"},
+		{Name: "handling", Label: "Handling", Expression: "30.001"},
+	}
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+	require.NoError(t, err)
+
+	breakdown := readinessByKey(resp)[ReadinessCheckBreakdown]
+	assert.Equal(t, ReadinessPass, breakdown.Status, breakdown.Detail)
+	assert.Equal(t, "Lines explain the total", breakdown.Detail)
 }
 
 func TestReadiness_BreakdownWarnsWhenAGuardrailMovesTheTotal(t *testing.T) {

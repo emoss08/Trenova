@@ -121,9 +121,13 @@ func (e *Engine) probeRuns(
 	env map[string]any,
 	definition *formulatypes.Definition,
 ) bool {
-	probe := maps.Clone(env)
-	shape := e.shapeFor(ctx, definition, probe, StubLookup{})
-	_, err := e.runShaped(ctx, expression, probe, shape, nil)
+	shape := e.shapeFor(ctx, definition, env, StubLookup{})
+	_, _, err := e.runShaped(ctx, &evaluation{
+		expression: expression,
+		scope:      mainExpressionScope,
+		env:        env,
+		shape:      shape,
+	})
 	return err == nil
 }
 
@@ -144,7 +148,7 @@ func guardZero(fieldType string) string {
 	case "string":
 		return "\"\""
 	case "datetime":
-		return "now()"
+		return RatingTimeVariable
 	default:
 		return "0"
 	}

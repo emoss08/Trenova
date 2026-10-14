@@ -44529,7 +44529,7 @@
     ]
   },
   "Change to {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -93217,7 +93217,7 @@
     ]
   },
   "Expression evaluation failed": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -101405,6 +101405,15 @@
     ]
   },
   "Formula template must be a freight charge template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template not found": {
     "sites": 1,
     "scope": [
       "go"
@@ -301711,6 +301720,33 @@
       "apps/web/components"
     ]
   },
+  "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} isn't available in formulas: formulas compare codes and do not build text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} isn't connected. The scan waits a few minutes for it to come online.": {
     "sites": 1,
     "scope": [
@@ -306327,6 +306363,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} {1} does not exist in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} {1} posted, {2} waiting.": {

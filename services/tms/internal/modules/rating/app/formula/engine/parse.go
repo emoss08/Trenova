@@ -9,7 +9,9 @@ import (
 )
 
 func languageOptions() []expr.Option {
-	return append(BuiltinFunctions(), expr.MaxNodes(maxExpressionNodes))
+	options := append(BuiltinFunctions(), limitOptions()...)
+	options = append(options, disabledBuiltinOptions()...)
+	return append(options, expr.MaxNodes(maxExpressionNodes))
 }
 
 var parseConfig = sync.OnceValue(func() *conf.Config {

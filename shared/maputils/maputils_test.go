@@ -137,3 +137,30 @@ func TestSortedValues_ReadsValuesInKeyOrder(t *testing.T) {
 	assert.Equal(t, []string{"a", "b", "c"}, SortedValues(map[string]string{"z": "c", "m": "b", "a": "a"}))
 	assert.Empty(t, SortedValues(map[string]int(nil)))
 }
+
+func TestCloneDeep(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, CloneDeep(nil))
+
+	original := map[string]any{
+		"name":     "Acme",
+		"customer": map[string]any{"code": "ACME"},
+		"stops":    []any{map[string]any{"city": "Dallas"}, "plain"},
+		"lines":    []map[string]any{{"weight": 10}},
+		"empty":    []any(nil),
+	}
+	cloned := CloneDeep(original)
+	assert.Equal(t, original, cloned)
+
+	cloned["customer"].(map[string]any)["code"] = "OTHER"
+	cloned["stops"].([]any)[0].(map[string]any)["city"] = "Austin"
+	cloned["lines"].([]map[string]any)[0]["weight"] = 20
+	cloned["name"] = "Changed"
+
+	assert.Equal(t, "ACME", original["customer"].(map[string]any)["code"])
+	assert.Equal(t, "Dallas", original["stops"].([]any)[0].(map[string]any)["city"])
+	assert.Equal(t, 10, original["lines"].([]map[string]any)[0]["weight"])
+	assert.Equal(t, "Acme", original["name"])
+	assert.Nil(t, cloned["empty"])
+}

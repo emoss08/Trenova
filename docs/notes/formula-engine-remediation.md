@@ -46,7 +46,7 @@ workstreams follows from that.
 | WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review |
 | WS2. Data-contract defects (silent mispricing) | done, in review |
 | WS3. Data-contract defects (loud failures the preview hides) | done, in review |
-| WS4. Engine hardening and money arithmetic | open |
+| WS4. Engine hardening and money arithmetic | done, in review |
 | WS5. Template lifecycle: billing continuity, effective dating, approval | open |
 | WS6. Language conformance between editor and server | open |
 
@@ -521,6 +521,68 @@ three-line template.
   (`engine.go:383-418` vs `engine.go:217-223`). Apply it.
 - Decide whether a negative amount with no minimum charge is allowed; if not, reject it in
   `ApplyChargePolicy`.
+
+### Done
+
+Tests: `engine/abandoned_lookup_test.go`, `engine/resource_limits_test.go`,
+`formula/determinism_test.go`, `formula/money_test.go`, `formula/hardening_test.go`,
+`metrics/formula_test.go`, `decimalutils/float_test.go`, the readiness remainder case in
+`formulatemplateservice/studio_test.go`, and the `disabled-function` cases in the editor's
+`expr-check.test.ts`.
+
+- **4.1.** `Engine.run` makes a recorder per evaluation (the main expression and each breakdown
+  line) and returns its traces only when the VM returned; a timed-out run's recorder is dropped
+  with its goroutine. The VM gets a deep copy of the environment (`maputils.CloneDeep`), so an
+  abandoned goroutine shares nothing with the next line. The test reproduced the race (lost
+  and foreign traces in the receipt) before the change and passes under `-race` after it.
+- **4.2.** Every run executes on its own `vm.VM` with `MemoryBudget` 100,000 (expr 1.17 sets the
+  budget on the VM, not through an option). A process-wide weighted semaphore, sized by
+  `formula.maxConcurrentEvaluations` (default 64), admits evaluations; one that cannot get a
+  slot before its deadline fails with `ErrEvaluationTimeout`, and an abandoned goroutine keeps
+  its slot until it really finishes, so a burst of runaway formulas queues callers rather than
+  piling up goroutines. String growth is metered per evaluation (1 MiB): `+` on text is patched
+  to a metered concatenation (only where both sides may be text, so `"lane" + 5` stays a compile
+  error), and `replace`, `join`, `string`, `toBase64`, `upper` and `lower` wrap expr's own
+  implementations with the meter. `repeat` is disabled (4.3). Metrics:
+  `trenova_formula_evaluations_in_flight`, `trenova_formula_evaluations_abandoned` and
+  `trenova_formula_evaluation_timeouts_total{stage}`, documented in the metrics README.
+- **4.3.** `now`, `toJSON`, `fromJSON` and `repeat` are disabled. A formula that calls one fails
+  to compile with a message naming the replacement (`now()` → `ratingTime`), and the editor
+  flags the same calls (`disabled-function`, with a one-click `ratingTime` fix for `now()`).
+  `date()` and `duration()` stay: `date()` without a zone already parses in UTC (the test pins
+  it), so neither depends on the server or the clock. `ratingTime` is a provided variable on
+  every evaluation: the rating date the request carries, else the shipment's actual ship date,
+  else when it was entered (`Shipment.RatingAsOf`, which the rate engine now uses too), and the
+  receipt records it. The nullable-date guard suggests `coalesce(pickupDate, ratingTime)`.
+  Stored templates could not be queried from this branch for `date`/`duration` with constant
+  arguments; since both stay enabled, nothing stored can break.
+- **4.4.** Floats become decimals through 15 significant digits (`decimalutils.FromFloat`) in the
+  round family, `roundTo` and the final conversion, and `sum`/`avg` accumulate in decimal: all
+  the acceptance cases hold, plus `1.15 * 100` = 115. Breakdown lines are rounded with the
+  template's policy (`formula.RoundBreakdown`, on the billing path and both previews), and when
+  the unrounded lines reconcile with the formula a `roundingRemainder` line ("Rounding") makes
+  them sum to the bill. Lines that do not reconcile get no remainder: a missing line is not
+  rounding drift. Readiness compares the lines with the rounded total.
+- **4.5.**
+  - A resolver panic during environment build is recovered per field and recorded as that
+    field's failure even when it is nullable. A formula that reads the field gets the
+    unresolved-field validation error (422), and one that does not still prices.
+  - Messages no longer carry Go types or struct paths. `ResolveError`/`ComputeError` drop the
+    entity type from `Error()` but keep it on the struct, and the unresolved-field note lists
+    formula fields only. Values are described in words ("got a list"), and expr's own type
+    tokens (`[]interface {}`, `float64`, `time.Time`) are humanized. Panics carry a
+    `PanicError` with the value and stack. `formulaerrors.LogFields` puts the entity type, panic
+    value and stack back into the logs.
+  - The receipt carries `rateTableStamp`, the stamp the lookup was built under, whenever the
+    formula read a table.
+  - Breakdown lines already refused true/false since the 4.1 refactor, and a test now pins it.
+  - Negative amounts: refused. Both template types price charges, and credits are separate,
+    positive adjustments, so a negative charge with no minimum is a formula bug.
+    `ApplyChargePolicy` returns a validation error naming the amount and the fix (`max(..., 0)`
+    or a minimum charge). With a minimum charge the clamp stands, and zero is allowed.
+- The i18n extractor did not know `NewUnresolvedFieldError` (WS1) or `NewPanicError`, which made
+  `task i18n` fail on this branch. Both are listed under `noMessage`, and the catalogs carry the
+  new editor messages and WS1's untranslated strings.
 
 ---
 

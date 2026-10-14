@@ -50,6 +50,7 @@ export const DEFAULT_TEST_VALUES: Record<string, unknown> = {
   fuelPrice: 3.85,
   fuelPriceDate: "2026-06-01",
   fuelIndexCode: "DOE_US",
+  ratingTime: "2026-06-02T09:00:00",
   totalDistance: 500,
   totalStops: 3,
   totalWeight: 10000,

@@ -256,7 +256,13 @@ func (e *Engine) traceLet(
 	req *TraceRequest,
 ) {
 	probe := prefix + "\n" + statement.Name
-	output, err := e.runShaped(ctx, probe, env, shape, req.ResolveFailures)
+	output, _, err := e.runShaped(ctx, &evaluation{
+		expression:      probe,
+		scope:           mainExpressionScope,
+		env:             env,
+		shape:           shape,
+		resolveFailures: req.ResolveFailures,
+	})
 	if err != nil {
 		statement.Error = err.Error()
 		return
@@ -278,7 +284,13 @@ func (e *Engine) traceResult(
 	shape *compileShape,
 	req *TraceRequest,
 ) {
-	result, err := e.evaluateShaped(ctx, expression, env, shape, req.ResolveFailures)
+	result, _, err := e.evaluateShaped(ctx, &evaluation{
+		expression:      expression,
+		scope:           mainExpressionScope,
+		env:             env,
+		shape:           shape,
+		resolveFailures: req.ResolveFailures,
+	})
 	if err == nil {
 		err = rejectBooleanAmount(expression, result)
 	}

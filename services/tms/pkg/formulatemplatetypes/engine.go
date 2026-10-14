@@ -45,6 +45,12 @@ type LookupExplainer interface {
 	ExplainLookup2(table string, rowKey, colKey any) (formulatypes.LookupMatch, bool)
 }
 
+// StampedLookup is implemented by providers that know the version of the
+// tables they were built from, so a receipt names the rates it read.
+type StampedLookup interface {
+	RateTableStamp() string
+}
+
 // EnvEvaluationRequest evaluates one expression against an already-built
 // environment, the shape the Studio preview and saved scenarios use.
 type EnvEvaluationRequest struct {
