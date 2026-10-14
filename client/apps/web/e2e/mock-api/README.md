@@ -40,7 +40,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
 | `aiProviders` | `configured` \| `many` \| `all` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, both together, or none |
 | `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
-| `aiAnalytics` | `ok` \| `error` | `ok` | AI control › Analytics: the query answers, or every read fails (the error state) |
+| `aiAnalytics` | `ok` \| `error` \| `hold` | `ok` | AI control › Analytics: the query answers, every read fails (the error state), or every read is left open (the skeleton) |
 | `triage` | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live` | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off |
 | `triageTime` | `afternoon` \| `endOfDay` | `afternoon` | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up |
 | `triageReplyAfterMs` | number | `6500` | How long after "Wait for reply" the sender answers on the thread |
