@@ -138,6 +138,75 @@ func invoiceStateConnectionToModel(
 	}, nil
 }
 
+func submissionConnectionToModel(
+	result *pagination.CursorListResult[*factoring.Submission],
+) (*gqlmodel.FactoringSubmissionConnection, error) {
+	page, err := base.EntityCursorConnection(
+		result,
+		func(node *factoring.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
+			return &gqlmodel.FactoringSubmissionEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.FactoringSubmissionEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &gqlmodel.FactoringSubmissionConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func planRequestFromModel(
+	in *gqlmodel.FactoringSubmissionPlanInput,
+	authCtx *authctx.AuthContext,
+) (*factoringports.PlanSubmissionRequest, error) {
+	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	invoiceIDs, err := parseIDs(in.InvoiceIds, "invoiceIds")
+	if err != nil {
+		return nil, err
+	}
+	return &factoringports.PlanSubmissionRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+		InvoiceIDs:         invoiceIDs,
+	}, nil
+}
+
+func transportRequestFromModel(
+	in *gqlmodel.SaveFactoringTransportInput,
+	authCtx *authctx.AuthContext,
+) (*factoringports.SaveTransportRequest, error) {
+	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	req := &factoringports.SaveTransportRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+		Version:            int64Ptr(in.Version),
+		Input: factoringports.TransportInput{
+			Method:           in.Method,
+			EmailRecipients:  in.EmailRecipients,
+			AttachPackets:    in.AttachPackets == nil || *in.AttachPackets,
+			SftpHost:         stringutils.FromPtr(in.SftpHost),
+			SftpPort:         intOrZero(in.SftpPort),
+			SftpUsername:     stringutils.FromPtr(in.SftpUsername),
+			SftpSecret:       in.SftpSecret,
+			SftpKnownHostKey: stringutils.FromPtr(in.SftpKnownHostKey),
+			SftpDirectory:    stringutils.FromPtr(in.SftpDirectory),
+		},
+	}
+	if in.SftpAuthMethod != nil {
+		req.Input.SftpAuthMethod = *in.SftpAuthMethod
+	}
+	return req, nil
+}
+
 func parseID(value, field string) (pulid.ID, error) {
 	id, err := pulid.MustParse(value)
 	if err != nil || id.IsNil() {

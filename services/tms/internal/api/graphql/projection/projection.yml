@@ -468,6 +468,10 @@ virtuals:
     - documentTypes
   FactoringCompany:
     - agreements
+  FactoringInvoiceState:
+    - submission
+  FactoringTransport:
+    - sftpSecretSet
   AIAnalyticsProvider:
     - removed
     - shortName

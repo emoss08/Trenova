@@ -294,6 +294,8 @@ type Params struct {
 	FactoringAgreementService    factoringports.AgreementService
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
+	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringTransportService    factoringports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
@@ -516,6 +518,8 @@ type Services struct {
 	FactoringAgreementService    factoringports.AgreementService
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
+	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringTransportService    factoringports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
@@ -745,6 +749,8 @@ func newServices(p *Params) *Services {
 		FactoringAgreementService:    p.FactoringAgreementService,
 		FactoringNoaService:          p.FactoringNoaService,
 		FactoringReadinessService:    p.FactoringReadinessService,
+		FactoringSubmissionService:   p.FactoringSubmissionService,
+		FactoringTransportService:    p.FactoringTransportService,
 		LateChargeService:            p.LateChargeService,
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,

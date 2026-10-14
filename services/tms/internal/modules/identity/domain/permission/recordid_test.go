@@ -134,6 +134,9 @@ var minters = map[permission.Resource]minter{
 		func(e *factoring.Agreement) pulid.ID { return e.ID },
 	),
 	permission.ResourceFactoringNoa: mint(func(e *factoring.Noa) pulid.ID { return e.ID }),
+	permission.ResourceFactoringSubmission: mint(
+		func(e *factoring.Submission) pulid.ID { return e.ID },
+	),
 	permission.ResourceInvoiceRun: mint(
 		func(e *invoicerun.InvoiceRun) pulid.ID { return e.ID },
 	),

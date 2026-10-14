@@ -409,7 +409,7 @@ func (r *invoiceStateRepository) GetSummary(
 		}
 
 		late := cols.ReadySince.Qualified() + " <= ?"
-		rows := make([]row, 0, 3)
+		rows := make([]row, 0, 4)
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*factoring.InvoiceState)(nil)).
 			Column(cols.Verdict.Bare()).
@@ -425,6 +425,7 @@ func (r *invoiceStateRepository) GetSummary(
 			Where(cols.Verdict.In(), bun.List([]factoring.Verdict{
 				factoring.VerdictReady,
 				factoring.VerdictNotReady,
+				factoring.VerdictSubmitted,
 			})).
 			Group(cols.Verdict.Bare()).
 			Scan(ctx, &rows); err != nil {
@@ -443,6 +444,8 @@ func (r *invoiceStateRepository) GetSummary(
 				}
 			case factoring.VerdictNotReady:
 				summary.NotReady = totals
+			case factoring.VerdictSubmitted:
+				summary.Submitted = totals
 			case factoring.VerdictExcluded:
 			}
 		}

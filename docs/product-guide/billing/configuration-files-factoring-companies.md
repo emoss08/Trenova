@@ -99,6 +99,16 @@ Keywords: release NOA, stop the factor collecting, customer pays us again
 2. Under **Notices of assignment**, select **Release** on the notice.
 3. Enter the **Reason**, then select **Release notice**.
 
+### Set up where schedules are sent
+Keywords: factor email, factor SFTP, schedule delivery, factoring upload, factor inbox, host key
+1. Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).
+2. Under **Schedule delivery**, select **Set up** (or **Edit**).
+3. Choose **Send by**:
+   - **Email**: add the **Recipients** and choose whether to **Attach invoice packets**.
+   - **SFTP**: fill in **Host**, **Port**, **User name** and **Folder**, choose **Sign in with**,
+     enter the **Password** or **Private key**, and paste the server's **Host key** from the factor.
+4. Select **Save**, then select **Test** to connect with the saved settings without sending anything.
+
 ## Notes
 Opening the page needs read access to factoring companies; adding and changing them needs create and
 update access. Only an active factor can be assigned to a customer, and a factor cannot be made
@@ -117,3 +127,7 @@ agreement cannot be changed, and a factor has one active agreement at a time.
 
 When **Notice of assignment** is blank, invoices print a standard notice saying the invoice is
 payable only to the factor. Your factoring agreement may require exact wording; use it if so.
+
+Schedule delivery needs update access to factoring companies. A stored password or key is never shown
+again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused
+if it presents another, and only public addresses are reached.

@@ -1,0 +1,156 @@
+fragment FactoringSubmissionItemFields on FactoringSubmissionItem {
+  id
+  submissionId
+  invoiceId
+  invoiceNumber
+  customerId
+  position
+  faceMinor
+  expectedAdvanceMinor
+  expectedFeeMinor
+  expectedReserveMinor
+  expectedDays
+  packetDocumentId
+  status
+  releasedAt
+  customer {
+    id
+    code
+    name
+  }
+}
+
+fragment FactoringSubmissionFields on FactoringSubmission {
+  id
+  number
+  factoringCompanyId
+  agreementId
+  status
+  currencyCode
+  invoiceCount
+  faceMinor
+  expectedAdvanceMinor
+  expectedFeeMinor
+  expectedReserveMinor
+  schedulePdfDocumentId
+  scheduleCsvDocumentId
+  transportMethod
+  transportTarget
+  transportReference
+  sendAttemptGroup
+  attempts
+  lastError
+  sentAt
+  failedAt
+  cancelledAt
+  cancelReason
+  submittedById
+  version
+  createdAt
+  updatedAt
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+query FactoringSubmissionTable(
+  $input: DataTableConnectionInput!
+  $factoringCompanyId: ID
+  $statuses: [FactoringSubmissionStatus!]
+  $includeTotalCount: Boolean = true
+) {
+  factoringSubmissions(
+    input: { table: $input, factoringCompanyId: $factoringCompanyId, statuses: $statuses }
+  ) {
+    edges {
+      node {
+        id
+        number
+        factoringCompanyId
+        status
+        currencyCode
+        invoiceCount
+        faceMinor
+        expectedAdvanceMinor
+        transportMethod
+        transportTarget
+        lastError
+        sentAt
+        failedAt
+        createdAt
+        factoringCompany {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query FactoringSubmissionDetail($id: ID!) {
+  factoringSubmission(id: $id) {
+    ...FactoringSubmissionFields
+    items {
+      ...FactoringSubmissionItemFields
+    }
+  }
+}
+
+query FactoringSubmissionPlan($input: FactoringSubmissionPlanInput!) {
+  factoringSubmissionPlan(input: $input) {
+    factoringCompanyId
+    factoringCompanyName
+    agreementId
+    transportMethod
+    transportTarget
+    attachPackets
+    currencyCode
+    invoiceCount
+    faceMinor
+    expectedAdvanceMinor
+    expectedFeeMinor
+    expectedReserveMinor
+    items {
+      invoiceId
+      invoiceNumber
+      customerId
+      customerName
+      invoiceDate
+      dueDate
+      funding {
+        faceMinor
+        advanceMinor
+        feeMinor
+        reserveMinor
+        restOnReleaseMinor
+        days
+        feeRateBp
+      }
+    }
+  }
+}
+
+mutation SubmitInvoicesToFactor($input: FactoringSubmissionPlanInput!) {
+  submitInvoicesToFactor(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}
+
+mutation RetryFactoringSubmission($input: RetryFactoringSubmissionInput!) {
+  retryFactoringSubmission(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}
+
+mutation CancelFactoringSubmission($input: CancelFactoringSubmissionInput!) {
+  cancelFactoringSubmission(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}

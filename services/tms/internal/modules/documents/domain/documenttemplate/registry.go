@@ -141,6 +141,7 @@ func (r *Registry) registerAll() {
 	r.registerPaymentReminderKinds()
 	r.registerCustomerStatementKinds()
 	r.registerFactoringNoaKinds()
+	r.registerFactoringScheduleKinds()
 	r.registerDetentionKinds()
 	r.registerRateConfirmationKinds()
 	r.registerReportingKinds()

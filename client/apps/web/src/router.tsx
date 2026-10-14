@@ -430,6 +430,22 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/billing/factoring/submissions",
+            loader: () => redirect("/billing/factoring?view=schedules"),
+          },
+          {
+            path: "/billing/factoring/submissions/:id",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringSubmission),
+            ),
+            async lazy() {
+              const { FactoringSubmissionPage } =
+                await import("@/routes/factoring-submission/page");
+              return { Component: FactoringSubmissionPage };
+            },
+          },
+          {
             path: "/payroll/workspace",
             loader: combineLoaders(
               protectedLoader,

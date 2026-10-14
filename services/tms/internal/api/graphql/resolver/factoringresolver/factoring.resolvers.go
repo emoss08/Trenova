@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -446,4 +447,265 @@ func (r *QueryResolver) FactoringSummary(ctx context.Context) (*factoringports.S
 		return nil, err
 	}
 	return r.FactoringReadinessService.Summary(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *FactoringInvoiceStateResolver) Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error) {
+	if obj == nil || obj.Verdict != factoring.VerdictSubmitted || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringSubmission, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.FactoringLiveItemByInvoiceID(ctx, obj.InvoiceID.String())
+}
+
+func (r *FactoringSubmissionItemResolver) PacketDocumentID(ctx context.Context, obj *factoring.SubmissionItem) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.PacketDocumentID), nil
+}
+
+func (r *FactoringSubmissionItemResolver) Invoice(ctx context.Context, obj *factoring.SubmissionItem) (*invoice.Invoice, error) {
+	if obj == nil || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+}
+
+func (r *FactoringSubmissionItemResolver) Customer(ctx context.Context, obj *factoring.SubmissionItem) (*customer.Customer, error) {
+	if obj == nil || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	if _, err := r.RequireAuth(ctx); err != nil {
+		return nil, err
+	}
+	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+}
+
+func (r *FactoringSubmissionPlanResolver) AgreementID(ctx context.Context, obj *factoringports.SubmissionPlan) (string, error) {
+	if obj == nil || obj.Agreement == nil {
+		return "", nil
+	}
+	return obj.Agreement.ID.String(), nil
+}
+
+func (r *FactoringSubmissionResolver) SchedulePDFDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.SchedulePDFDocumentID), nil
+}
+
+func (r *FactoringSubmissionResolver) ScheduleCSVDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.ScheduleCSVDocumentID), nil
+}
+
+func (r *FactoringSubmissionResolver) SubmittedByID(ctx context.Context, obj *factoring.Submission) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.SubmittedByID), nil
+}
+
+func (r *FactoringSubmissionResolver) Items(ctx context.Context, obj *factoring.Submission) ([]*factoring.SubmissionItem, error) {
+	if obj == nil {
+		return []*factoring.SubmissionItem{}, nil
+	}
+	if obj.Items != nil {
+		return obj.Items, nil
+	}
+	if !loaders.Available(ctx) {
+		return []*factoring.SubmissionItem{}, nil
+	}
+	if _, err := r.RequireAuth(ctx); err != nil {
+		return nil, err
+	}
+	items, err := loaders.FactoringSubmissionItems(ctx, obj.ID.String())
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		return []*factoring.SubmissionItem{}, nil
+	}
+	return items, nil
+}
+
+func (r *FactoringSubmissionResolver) FactoringCompany(ctx context.Context, obj *factoring.Submission) (*factoringcompany.FactoringCompany, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.factorFor(ctx, obj.FactoringCompanyID)
+}
+
+func (r *FactoringTransportResolver) SftpSecretSet(ctx context.Context, obj *factoring.Transport) (bool, error) {
+	return obj.SecretSet(), nil
+}
+
+func (r *MutationResolver) SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpSubmit)
+	if err != nil {
+		return nil, err
+	}
+	req, err := planRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringSubmissionService.Submit(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID(input.ID, "id")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringSubmissionService.Retry(ctx, &factoringports.SubmissionActionRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		SubmissionID: id,
+		Version:      int64(input.Version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpCancel)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID(input.ID, "id")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringSubmissionService.Cancel(ctx, &factoringports.SubmissionActionRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		SubmissionID: id,
+		Version:      int64(input.Version),
+		Reason:       input.Reason,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := transportRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringTransportService.Save(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringTransportService.Test(ctx, &factoringports.TestTransportRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) FactoringSubmissions(ctx context.Context, input gqlmodel.FactoringSubmissionListInput) (*gqlmodel.FactoringSubmissionConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, input.Table, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseOptionalID(input.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringSubmissionService.List(ctx, &factoringports.ListSubmissionConnectionRequest{
+		Filter:             tableInput.Filter,
+		Cursor:             tableInput.Cursor,
+		FactoringCompanyID: factorID,
+		Statuses:           input.Statuses,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return submissionConnectionToModel(result)
+}
+
+func (r *QueryResolver) FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	submissionID, err := parseID(id, "id")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringSubmissionService.Get(ctx, factoringports.GetSubmissionRequest{
+		ID:           submissionID,
+		TenantInfo:   base.TenantInfo(authCtx),
+		IncludeItems: true,
+	})
+}
+
+func (r *QueryResolver) FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringSubmission, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
+		return nil, permissionDenied(permission.ResourceInvoice, permission.OpRead)
+	}
+	req, err := planRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringSubmissionService.Plan(ctx, req)
+}
+
+func (r *QueryResolver) FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	transport, err := r.FactoringTransportService.Get(ctx, factoringports.GetTransportRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return nil, nil
+	}
+	return transport, err
+}
+
+func (r *FactoringTransportResolver) EmailRecipients(ctx context.Context, obj *factoring.Transport) ([]string, error) {
+	if obj == nil || obj.EmailRecipients == nil {
+		return []string{}, nil
+	}
+	return obj.EmailRecipients, nil
 }

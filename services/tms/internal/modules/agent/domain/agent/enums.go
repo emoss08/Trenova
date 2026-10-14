@@ -59,6 +59,7 @@ const (
 	SubjectInvoice              = SubjectType("Invoice")
 	SubjectInvoiceDispute       = SubjectType("InvoiceDispute")
 	SubjectFactoringNoa         = SubjectType("FactoringNoa")
+	SubjectFactoringSubmission  = SubjectType("FactoringSubmission")
 )
 
 // Resource is the permission a person needs to read a record of this kind.
@@ -104,6 +105,8 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceInvoiceDispute, true
 	case SubjectFactoringNoa:
 		return permission.ResourceFactoringNoa, true
+	case SubjectFactoringSubmission:
+		return permission.ResourceFactoringSubmission, true
 	default:
 		return "", false
 	}
@@ -160,7 +163,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectAccountingDrift,
 		SubjectInvoice,
 		SubjectInvoiceDispute,
-		SubjectFactoringNoa:
+		SubjectFactoringNoa,
+		SubjectFactoringSubmission:
 		return true
 	default:
 		return false
@@ -192,6 +196,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectInvoice,
 		SubjectInvoiceDispute,
 		SubjectFactoringNoa,
+		SubjectFactoringSubmission,
 	}
 }
 

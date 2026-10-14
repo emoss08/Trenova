@@ -19,7 +19,7 @@ export function FactoringSummaryStrip({
   const { data, isLoading, isError, refetch } = useQuery(factoringQueries.summary());
 
   if (isLoading) {
-    return <KpiStripSkeleton count={3} />;
+    return <KpiStripSkeleton count={4} />;
   }
 
   if (isError || !data) {
@@ -52,6 +52,13 @@ export function FactoringSummaryStrip({
         tone={data.notReady.count > 0 ? "warning" : undefined}
         active={active === "not-ready"}
         onClick={() => onSelect("not-ready")}
+      />
+      <KpiStripItem
+        label={t("Submitted")}
+        value={formatCurrency(data.submitted.amountMinor / 100)}
+        sub={t("{0, plural, one {# invoice} other {# invoices}}", data.submitted.count)}
+        active={active === "submitted"}
+        onClick={() => onSelect("submitted")}
       />
       <KpiStripItem
         label={t("Ready over a day")}

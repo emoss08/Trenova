@@ -268,6 +268,10 @@ type Resolver struct {
 	factoringCompany                   *factoringresolver.FactoringCompanyResolver
 	factoringInvoiceState              *factoringresolver.FactoringInvoiceStateResolver
 	factoringNoa                       *factoringresolver.FactoringNoaResolver
+	factoringSubmission                *factoringresolver.FactoringSubmissionResolver
+	factoringSubmissionItem            *factoringresolver.FactoringSubmissionItemResolver
+	factoringSubmissionPlan            *factoringresolver.FactoringSubmissionPlanResolver
+	factoringTransport                 *factoringresolver.FactoringTransportResolver
 	fiscalYear                         *fiscalyearresolver.FiscalYearResolver
 	fleetSafetyRank                    *fleetsafetyresolver.FleetSafetyRankResolver
 	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
@@ -710,10 +714,12 @@ func FromServices(s *Services) *Resolver {
 		ExtractionShadowService: s.ExtractionShadowService,
 	}
 	factoringDeps := &factoringresolver.Deps{
-		Core:                      s.Core,
-		FactoringAgreementService: s.FactoringAgreementService,
-		FactoringNoaService:       s.FactoringNoaService,
-		FactoringReadinessService: s.FactoringReadinessService,
+		Core:                       s.Core,
+		FactoringAgreementService:  s.FactoringAgreementService,
+		FactoringNoaService:        s.FactoringNoaService,
+		FactoringReadinessService:  s.FactoringReadinessService,
+		FactoringSubmissionService: s.FactoringSubmissionService,
+		FactoringTransportService:  s.FactoringTransportService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
 		Core:                    s.Core,
@@ -1229,6 +1235,10 @@ func FromServices(s *Services) *Resolver {
 		factoringCompany:             &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps},
 		factoringInvoiceState:        &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps},
 		factoringNoa:                 &factoringresolver.FactoringNoaResolver{Deps: factoringDeps},
+		factoringSubmission:          &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps},
+		factoringSubmissionItem:      &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps},
+		factoringSubmissionPlan:      &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps},
+		factoringTransport:           &factoringresolver.FactoringTransportResolver{Deps: factoringDeps},
 		fiscalYear:                   &fiscalyearresolver.FiscalYearResolver{Deps: fiscalyearDeps},
 		fleetSafetyRank:              &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps},
 		fleetSafetyTerminal:          &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps},
@@ -2122,6 +2132,22 @@ func (r *Resolver) FactoringInvoiceState() generated.FactoringInvoiceStateResolv
 
 func (r *Resolver) FactoringNoa() generated.FactoringNoaResolver {
 	return r.factoringNoa
+}
+
+func (r *Resolver) FactoringSubmission() generated.FactoringSubmissionResolver {
+	return r.factoringSubmission
+}
+
+func (r *Resolver) FactoringSubmissionItem() generated.FactoringSubmissionItemResolver {
+	return r.factoringSubmissionItem
+}
+
+func (r *Resolver) FactoringSubmissionPlan() generated.FactoringSubmissionPlanResolver {
+	return r.factoringSubmissionPlan
+}
+
+func (r *Resolver) FactoringTransport() generated.FactoringTransportResolver {
+	return r.factoringTransport
 }
 
 func (r *Resolver) FiscalYear() generated.FiscalYearResolver {

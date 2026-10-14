@@ -13,5 +13,11 @@ import (
 var PDFRenderModule = fx.Module("pdf-render",
 	gotenberg.Module,
 	pdfreader.Module,
-	fx.Provide(pdfassembly.New, captureimaging.New, captureqr.New, officedoc.New),
+	fx.Provide(
+		pdfassembly.New,
+		pdfassembly.NewImageConverter,
+		captureimaging.New,
+		captureqr.New,
+		officedoc.New,
+	),
 )

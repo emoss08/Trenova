@@ -1,5 +1,6 @@
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FactoringVerdictBadge } from "@/components/factoring/factoring-badges";
+import { FactoringSubmissionLink } from "@/components/factoring/factoring-submission-link";
 import { FactoringChecksList } from "@/components/factoring/factoring-checks-list";
 import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
@@ -120,6 +121,11 @@ export function FactoringInvoicePanel({
           <DescriptionItem label={t("Failed checks")} numeric>
             {state.failedChecks}
           </DescriptionItem>
+          {state.submission ? (
+            <DescriptionItem label={t("Schedule")}>
+              <FactoringSubmissionLink submission={state.submission} />
+            </DescriptionItem>
+          ) : null}
         </DescriptionList>
         <SectionPanel
           title={t("Checks")}

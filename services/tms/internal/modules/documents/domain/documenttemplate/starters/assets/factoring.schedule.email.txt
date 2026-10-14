@@ -1,0 +1,17 @@
+{{ if .FactorName }}{{ t "Hello {0}," .FactorName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ t "Please find schedule {0} from {1} attached, with {2} invoices totalling {3}." .Number .CompanyName .InvoiceCount .TotalFace }}
+{{ if gt .Parts 1 }}
+{{ t "The packets are too large for one message, so this schedule is sent in {0} messages. This is message {1}." .Parts .Part }}
+{{ end }}
+{{ t "Schedule" }}: {{ .Number }}
+{{ if .ScheduleDate }}{{ t "Date" }}: {{ .ScheduleDate }}
+{{ end }}{{ t "Invoices" }}: {{ .InvoiceCount }}
+{{ t "Total" }}: {{ .TotalFace }}
+{{ if .ExpectedPayment }}{{ t "Expected payment" }}: {{ .ExpectedPayment }}
+{{ end }}
+{{ t "Attached" }}:
+{{ range .Attachments }}- {{ . }}
+{{ end }}
+{{ if .ReplyTo }}{{ t "Questions? Reply to this message or write to {0}." .ReplyTo }}
+{{ end }}{{ .CompanyName }}

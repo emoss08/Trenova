@@ -48,7 +48,6 @@
   "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.": "Las instantáneas de X12 sin procesar y de carga útil de los mensajes entregados o entrantes anteriores a este período se vacían. 0 conserva las cargas útiles para siempre. Los mensajes purgados ya no pueden reproducirse.",
   "Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.": "El contenido de los archivos EDI entrantes anterior a este período se vacía y se conservan los metadatos. 0 conserva las cargas útiles para siempre.",
   "Recipient email": "Correo del destinatario",
-  "Recipients": "Destinatarios",
   "Reply-To": "Responder a",
   "Reply-to email": "Correo de respuesta",
   "Retention windows": "Ventanas de retención",

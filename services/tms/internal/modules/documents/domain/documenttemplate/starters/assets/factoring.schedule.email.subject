@@ -1,0 +1,1 @@
+{{ t "Schedule {0} from {1}" .Number .CompanyName }}{{ if gt .Parts 1 }} ({{ t "part {0} of {1}" .Part .Parts }}){{ end }}

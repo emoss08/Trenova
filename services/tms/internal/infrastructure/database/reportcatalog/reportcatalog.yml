@@ -1539,7 +1539,7 @@ entities:
       - checks
     fields:
       id: { label: "Invoice ID" }
-      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Excluded: "Excluded" } }
+      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Submitted: "Submitted", Excluded: "Excluded" } }
       failedChecks: { label: "Failed Checks", format: count }
       openBalanceMinor: { label: "Open Balance (Minor)" }
       readySince: { label: "Ready Since", type: epoch }
@@ -1549,3 +1549,62 @@ entities:
       invoice: { label: Invoice }
       customer: { label: Customer }
       factoringCompany: { label: "Factoring Company" }
+
+  # A schedule of accounts sent to a factor. The amounts are what the agreement
+  # in force expected when it was submitted; funding comes later.
+  factoring_submission:
+    struct: factoring.Submission
+    resource: factoring_submission
+    label: Factoring Schedule
+    pluralLabel: Factoring Schedules
+    description: Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went
+    category: Billing
+    fields:
+      number: { label: "Schedule Number" }
+      status: { label: "Status" }
+      currencyCode: { label: "Currency" }
+      invoiceCount: { label: "Invoices", format: count }
+      faceMinor: { label: "Face Amount (Minor)" }
+      expectedAdvanceMinor: { label: "Expected Advance (Minor)" }
+      expectedFeeMinor: { label: "Expected Fee (Minor)" }
+      expectedReserveMinor: { label: "Expected Reserve (Minor)" }
+      schedulePdfDocumentId: { label: "Schedule PDF Document ID" }
+      scheduleCsvDocumentId: { label: "Schedule CSV Document ID" }
+      transportMethod: { label: "Sent By", enumLabels: { Sftp: "SFTP" } }
+      transportTarget: { label: "Sent To" }
+      transportReference: { label: "Delivery Reference" }
+      sendAttemptGroup: { label: "Send Number", type: int }
+      attempts: { label: "Attempts", type: int }
+      lastError: { label: "Last Error" }
+      sentAt: { label: "Sent At" }
+      failedAt: { label: "Failed At" }
+      cancelledAt: { label: "Cancelled At" }
+      cancelReason: { label: "Cancel Reason" }
+      submittedById: { label: "Submitted By ID" }
+      agentRunId: { label: "Agent Run ID" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+      agreement: { label: "Agreement" }
+
+  factoring_submission_item:
+    struct: factoring.SubmissionItem
+    resource: factoring_submission
+    label: Factoring Schedule Invoice
+    pluralLabel: Factoring Schedule Invoices
+    description: Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it
+    category: Billing
+    fields:
+      submissionId: { label: "Schedule ID" }
+      invoiceNumber: { label: "Invoice Number" }
+      position: { label: "Line", type: int }
+      faceMinor: { label: "Face Amount (Minor)" }
+      expectedAdvanceMinor: { label: "Expected Advance (Minor)" }
+      expectedFeeMinor: { label: "Expected Fee (Minor)" }
+      expectedReserveMinor: { label: "Expected Reserve (Minor)" }
+      expectedDays: { label: "Expected Days to Pay", type: int }
+      packetDocumentId: { label: "Packet Document ID" }
+      status: { label: "Status" }
+      releasedAt: { label: "Released At" }
+    edges:
+      invoice: { label: Invoice }
+      customer: { label: Customer }

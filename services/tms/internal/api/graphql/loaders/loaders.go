@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 
@@ -106,6 +107,8 @@ type FactoryParams struct {
 	FactoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
 	FactoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	FactoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
+	FactoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	FactoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 	CarrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
@@ -184,6 +187,8 @@ type Factory struct {
 	factoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
 	factoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	factoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
+	factoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	factoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 	carrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
@@ -262,6 +267,8 @@ type set struct {
 	factoringCompanyByID                      *dataloadgen.Loader[string, *factoringcompany.FactoringCompany]
 	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoring.InvoiceState]
 	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
+	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoring.SubmissionItem]
+	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
 	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
@@ -347,6 +354,8 @@ func NewFactory(p FactoryParams) *Factory {
 		factoringCompanyByID:                      p.FactoringCompanyByID,
 		factoringStateByInvoiceID:                 p.FactoringStateByInvoiceID,
 		factoringAgreementsByCompanyID:            p.FactoringAgreementsByCompanyID,
+		factoringSubmissionItems:                  p.FactoringSubmissionItems,
+		factoringLiveItemByInvoiceID:              p.FactoringLiveItemByInvoiceID,
 		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
 		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
 		carrierIntelSnapshotByCarrierID:           p.CarrierIntelSnapshotByCarrierID,
@@ -503,6 +512,14 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		factoringAgreementsByCompanyID: newFactoringAgreementsByCompanyIDLoader(
 			f.factoringAgreementsByCompanyID,
+			tenantInfo,
+		),
+		factoringSubmissionItems: newFactoringSubmissionItemsLoader(
+			f.factoringSubmissionItems,
+			tenantInfo,
+		),
+		factoringLiveItemByInvoiceID: newFactoringLiveItemByInvoiceIDLoader(
+			f.factoringLiveItemByInvoiceID,
 			tenantInfo,
 		),
 		lateChargeAssessmentsByInvoiceID: newLateChargeAssessmentsByInvoiceIDLoader(

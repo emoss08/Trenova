@@ -1,15 +1,21 @@
 import {
   FACTORING_AGREEMENT_STATUS_LABELS,
   FACTORING_NOA_STATUS_LABELS,
+  FACTORING_SUBMISSION_ITEM_STATUS_LABELS,
+  FACTORING_SUBMISSION_STATUS_LABELS,
   FACTORING_VERDICT_LABELS,
   factoringAgreementPhase,
   factoringNoaDisplayStatus,
   factoringNoaPhase,
+  factoringSubmissionItemPhase,
+  factoringSubmissionPhase,
   factoringVerdictPhase,
 } from "@/lib/factoring";
 import type {
   FactoringAgreementStatus,
   FactoringNoaStatus,
+  FactoringSubmissionItemStatus,
+  FactoringSubmissionStatus,
   FactoringVerdict,
 } from "@trenova/graphql/generated/graphql";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -42,6 +48,26 @@ export function FactoringAgreementStatusBadge({ status }: { status: FactoringAgr
   return (
     <Badge variant={phaseTone(factoringAgreementPhase(status))}>
       {FACTORING_AGREEMENT_STATUS_LABELS[status]}
+    </Badge>
+  );
+}
+
+export function FactoringSubmissionStatusBadge({ status }: { status: FactoringSubmissionStatus }) {
+  return (
+    <Badge variant={phaseTone(factoringSubmissionPhase(status))}>
+      {FACTORING_SUBMISSION_STATUS_LABELS[status]}
+    </Badge>
+  );
+}
+
+export function FactoringSubmissionItemStatusBadge({
+  status,
+}: {
+  status: FactoringSubmissionItemStatus;
+}) {
+  return (
+    <Badge variant={phaseTone(factoringSubmissionItemPhase(status))}>
+      {FACTORING_SUBMISSION_ITEM_STATUS_LABELS[status]}
     </Badge>
   );
 }
