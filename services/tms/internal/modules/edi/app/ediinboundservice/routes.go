@@ -101,23 +101,30 @@ func acknowledgmentResolution(
 		code = entry.groupAcknowledgmentCode
 	}
 	switch code {
-	case "A", "E":
+	case "A":
 		return edi.MessageAcknowledgmentStatusAccepted, ""
+	case "E":
+		return edi.MessageAcknowledgmentStatusAcceptedWithErrors, acknowledgmentDetails(code, entry)
 	default:
-		details := make([]string, 0, len(entry.diagnostics)+1)
-		details = append(details, "acknowledgment code "+stringutils.FirstNonEmpty(code, "missing"))
-		for _, diagnostic := range entry.diagnostics {
-			detail := diagnostic.Message
-			if diagnostic.ErrorCode != "" {
-				detail += " (code " + diagnostic.ErrorCode + ")"
-			}
-			if diagnostic.SegmentID != "" {
-				detail += " segment " + diagnostic.SegmentID
-			}
-			details = append(details, detail)
-		}
-		return edi.MessageAcknowledgmentStatusRejected, joinDetails(details)
+		return edi.MessageAcknowledgmentStatusRejected, acknowledgmentDetails(code, entry)
 	}
+}
+
+func acknowledgmentDetails(code string, entry *acknowledgmentEntry) string {
+	details := make([]string, 0, len(entry.diagnostics)+1)
+	details = append(details, "acknowledgment code "+stringutils.FirstNonEmpty(code, "missing"))
+	for _, diagnostic := range entry.diagnostics {
+		detail := diagnostic.Message
+		if diagnostic.ErrorCode != "" {
+			detail += " (code " + diagnostic.ErrorCode + ")"
+		}
+		if diagnostic.SegmentID != "" {
+			detail += " segment " + diagnostic.SegmentID
+		}
+		details = append(details, detail)
+	}
+
+	return joinDetails(details)
 }
 
 func (s *Service) routeTenderResponse(

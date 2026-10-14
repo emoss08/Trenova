@@ -74,18 +74,7 @@ func (r *repository) ListMessages(
 				Relation(rel.PartnerDocumentProfile).
 				Relation(rel.Template).
 				Apply(edicol.EDIMessageApplyTenant(req.Filter.TenantInfo))
-			if req.TransactionSet != "" {
-				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-			}
-			if req.Direction != "" {
-				query = query.Where(cols.Direction.Eq(), req.Direction)
-			}
-			if !req.PartnerID.IsNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
+			query = applyMessageListFilters(query, req)
 			if req.GeneratedFrom > 0 {
 				query = query.Where(cols.GeneratedAt.Gte(), req.GeneratedFrom)
 			}
@@ -823,6 +812,21 @@ func applyMessageListFilters(
 	}
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
+	}
+	if req.AckStatus != "" {
+		q = q.Where(cols.AckStatus.Eq(), req.AckStatus)
+	}
+	if req.ShipmentID.IsNotNil() {
+		q = q.Where(cols.ShipmentID.Eq(), req.ShipmentID)
+	}
+	if req.InvoiceID.IsNotNil() {
+		q = q.Where(cols.InvoiceID.Eq(), req.InvoiceID)
+	}
+	if req.CreatedAfter > 0 {
+		q = q.Where(cols.CreatedAt.Gte(), req.CreatedAfter)
+	}
+	if req.CreatedBefore > 0 {
+		q = q.Where(cols.CreatedAt.Lt(), req.CreatedBefore)
 	}
 	return q
 }

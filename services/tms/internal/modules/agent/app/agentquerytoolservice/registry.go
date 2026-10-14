@@ -8,6 +8,7 @@
 package agentquerytoolservice
 
 import (
+	"math"
 	"errors"
 	"fmt"
 	"slices"
@@ -245,6 +246,53 @@ func optionalInt(params map[string]any, key string, fallback int) int {
 	default:
 		return fallback
 	}
+}
+
+// maxUnixSeconds is the last instant a seconds parameter is read as: a value
+// past it is almost always milliseconds, and reading it as seconds would put
+// the window centuries away and match nothing without saying why.
+const maxUnixSeconds = int64(9_999_999_999)
+
+// optionalUnixSeconds reads an instant given as whole Unix seconds. Unlike
+// optionalInt it refuses what it cannot read, because a time bound dropped
+// silently widens the answer to everything.
+func optionalUnixSeconds(params map[string]any, key string) (int64, error) {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return 0, nil
+	}
+
+	var value int64
+	switch typed := raw.(type) {
+	case float64:
+		if typed != math.Trunc(typed) {
+			return 0, fmt.Errorf("parameter %q must be whole Unix seconds, not %v", key, typed)
+		}
+		value = int64(typed)
+	case int:
+		value = int64(typed)
+	case int64:
+		value = typed
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("parameter %q must be whole Unix seconds, not %q", key, typed)
+		}
+		value = parsed
+	default:
+		return 0, fmt.Errorf("parameter %q must be whole Unix seconds", key)
+	}
+
+	switch {
+	case value < 0:
+		return 0, fmt.Errorf("parameter %q must not be negative", key)
+	case value > maxUnixSeconds:
+		return 0, fmt.Errorf(
+			"parameter %q is %d, which reads as milliseconds; give Unix seconds", key, value,
+		)
+	}
+
+	return value, nil
 }
 
 // optionalObject reads a nested object the caller may leave out. A model that

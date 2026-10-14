@@ -180,11 +180,12 @@ func (s InboundFileStatus) IsReprocessable() bool {
 type MessageAcknowledgmentStatus string
 
 const (
-	MessageAcknowledgmentStatusNotExpected = MessageAcknowledgmentStatus("NotExpected")
-	MessageAcknowledgmentStatusPending     = MessageAcknowledgmentStatus("Pending")
-	MessageAcknowledgmentStatusAccepted    = MessageAcknowledgmentStatus("Accepted")
-	MessageAcknowledgmentStatusRejected    = MessageAcknowledgmentStatus("Rejected")
-	MessageAcknowledgmentStatusFailed      = MessageAcknowledgmentStatus("Failed")
+	MessageAcknowledgmentStatusNotExpected        = MessageAcknowledgmentStatus("NotExpected")
+	MessageAcknowledgmentStatusPending            = MessageAcknowledgmentStatus("Pending")
+	MessageAcknowledgmentStatusAccepted           = MessageAcknowledgmentStatus("Accepted")
+	MessageAcknowledgmentStatusAcceptedWithErrors = MessageAcknowledgmentStatus("AcceptedWithErrors")
+	MessageAcknowledgmentStatusRejected           = MessageAcknowledgmentStatus("Rejected")
+	MessageAcknowledgmentStatusFailed             = MessageAcknowledgmentStatus("Failed")
 )
 
 type ValidationMode string
@@ -516,6 +517,7 @@ func (s MessageAcknowledgmentStatus) IsValid() bool {
 	case MessageAcknowledgmentStatusNotExpected,
 		MessageAcknowledgmentStatusPending,
 		MessageAcknowledgmentStatusAccepted,
+		MessageAcknowledgmentStatusAcceptedWithErrors,
 		MessageAcknowledgmentStatusRejected,
 		MessageAcknowledgmentStatusFailed:
 		return true
