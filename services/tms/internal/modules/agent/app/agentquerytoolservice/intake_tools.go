@@ -389,7 +389,7 @@ func (t *quoteShipmentTool) Query(
 
 	clk := clockFor(params)
 	tenantInfo := tenantOf(params)
-	entity, lane, err := t.hypotheticalShipment(ctx, tenantInfo, stopParams, clk)
+	entity, err := t.hypotheticalShipment(ctx, tenantInfo, stopParams, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +433,7 @@ func (t *quoteShipmentTool) Query(
 		return nil, err
 	}
 
-	view := quoteViewOf(rated, lane)
+	view := quoteViewOf(rated, laneOf(entity))
 	view.TotalDistance = movesDistance(entity.Moves)
 	if view.TotalDistance <= 0 && rated.Outcome.Priced() {
 		view.Note = strings.TrimSpace(view.Note + " No distance could be worked out for these " +
@@ -463,12 +463,12 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 	tenantInfo pagination.TenantInfo,
 	stopParams []quoteStopParam,
 	clk clock,
-) (*shipment.Shipment, []string, error) {
+) (*shipment.Shipment, error) {
 	ids := make([]pulid.ID, 0, len(stopParams))
 	for idx, stop := range stopParams {
 		id, err := pulid.Parse(stop.LocationID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("stops[%d].locationId is not a location id", idx)
+			return nil, fmt.Errorf("stops[%d].locationId is not a location id", idx)
 		}
 		ids = append(ids, id)
 	}
@@ -478,7 +478,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		LocationIDs: ids,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	byID := make(map[pulid.ID]*location.Location, len(locations))
 	for _, loc := range locations {
@@ -492,11 +492,10 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		Loaded:         true,
 		Sequence:       0,
 	}
-	lane := make([]string, 0, len(stopParams))
 	for idx, stop := range stopParams {
 		loc, ok := byID[ids[idx]]
 		if !ok {
-			return nil, nil, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"stops[%d].locationId %s is not a location in this organization",
 				idx,
 				ids[idx],
@@ -504,7 +503,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		}
 		stopType := shipment.StopType(stop.Type)
 		if !stopType.IsValid() {
-			return nil, nil, fmt.Errorf("stops[%d].type %q is not a stop type", idx, stop.Type)
+			return nil, fmt.Errorf("stops[%d].type %q is not a stop type", idx, stop.Type)
 		}
 
 		var scheduled int64
@@ -514,7 +513,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 				stop.Date,
 				clk,
 			); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 
@@ -529,7 +528,6 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 			Sequence:             int64(idx),
 			ScheduledWindowStart: scheduled,
 		})
-		lane = append(lane, placeLabel(loc))
 	}
 
 	return &shipment.Shipment{
@@ -538,7 +536,22 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		Status:         shipment.StatusNew,
 		RatingUnit:     1,
 		Moves:          []*shipment.ShipmentMove{move},
-	}, lane, nil
+	}, nil
+}
+
+func laneOf(entity *shipment.Shipment) []string {
+	lane := make([]string, 0, 2)
+	for _, move := range entity.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop != nil && stop.Location != nil {
+				lane = append(lane, placeLabel(stop.Location))
+			}
+		}
+	}
+	return lane
 }
 
 func placeLabel(loc *location.Location) string {

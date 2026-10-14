@@ -29,6 +29,10 @@ type contextKey struct{}
 // Build produces a tenant's lookup. It is the expensive call being memoized.
 type Build func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error)
 
+// StampedBuild produces a tenant's lookup knowing the stamp it is built under,
+// empty when the stamp could not be read.
+type StampedBuild func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error)
+
 // tenantKey scopes a memo entry to one organization in one business unit. An
 // organization belongs to exactly one business unit, so the pair is never
 // ambiguous for a well-formed caller — carrying both means a malformed tenant
@@ -124,7 +128,7 @@ func GetStamped(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 	stamp Stamp,
-	build Build,
+	build StampedBuild,
 ) (formulatemplatetypes.RateTableLookup, error) {
 	return Get(
 		ctx,
@@ -133,7 +137,7 @@ func GetStamped(
 		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
 			current, err := stamp(ctx)
 			if err != nil || current == "" {
-				return build(ctx)
+				return build(ctx, "")
 			}
 
 			key := tenantKey{orgID: orgID, buID: buID}
@@ -145,7 +149,7 @@ func GetStamped(
 				return entry.lookup, nil
 			}
 
-			lookup, err := build(ctx)
+			lookup, err := build(ctx, current)
 			if err != nil {
 				return nil, err
 			}

@@ -4,7 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
-import { queries } from "@/lib/queries";
+import { user } from "@/lib/queries/user";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { LazyImage } from "./image";
@@ -15,7 +15,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
   const { data: hoveredUserData } = useQuery({
-    ...queries.user.detail(hoveredUserId || ""),
+    ...user.detail(hoveredUserId || ""),
     enabled: !!hoveredUserId,
   });
 
@@ -47,9 +47,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
               />
               <div className="flex flex-col text-xs">
                 <h4 className="font-semibold">{hoveredUserData?.name || t("Loading...")}</h4>
-                <p className="text-info-foreground">
-                  @{hoveredUserData?.username || username}
-                </p>
+                <p className="text-info-foreground">@{hoveredUserData?.username || username}</p>
               </div>
             </div>
             {hoveredUserData?.emailAddress && (

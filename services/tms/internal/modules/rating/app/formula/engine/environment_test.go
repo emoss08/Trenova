@@ -3,6 +3,7 @@ package engine_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
@@ -47,6 +48,10 @@ type CommodityDetail struct {
 
 type HazardousMaterial struct {
 	Class string
+}
+
+func distance(miles float64) *float64 {
+	return &miles
 }
 
 func setupEnvironmentBuilder(t *testing.T) (*engine.EnvironmentBuilder, *schema.Registry) {
@@ -154,17 +159,19 @@ func TestEnvironmentBuilder_Build_AllComputedFields(t *testing.T) {
 	minTemp := int16(32)
 	maxTemp := int16(40)
 
-	entity := &TestShipment{
+	headerWeight := int64(5000)
+	headerPieces := int64(100)
+	entity := &shipment.Shipment{
 		ProNumber:      "PRO123",
-		Weight:         5000,
-		Pieces:         100,
+		Weight:         &headerWeight,
+		Pieces:         &headerPieces,
 		TemperatureMin: &minTemp,
 		TemperatureMax: &maxTemp,
-		Moves: []Move{
-			{Distance: 100.5, Stops: []Stop{{Name: "A"}, {Name: "B"}}},
-			{Distance: 200.3, Stops: []Stop{{Name: "C"}}},
+		Moves: []*shipment.ShipmentMove{
+			{Distance: distance(100.5), Stops: []*shipment.Stop{{Sequence: 0}, {Sequence: 1}}},
+			{Distance: distance(200.3), Sequence: 1, Stops: []*shipment.Stop{{Sequence: 0}}},
 		},
-		Commodities: []TestCommodity{
+		Commodities: []*shipment.ShipmentCommodity{
 			{Weight: 1000, Pieces: 10},
 			{Weight: 2000, Pieces: 20},
 		},
@@ -180,8 +187,8 @@ func TestEnvironmentBuilder_Build_AllComputedFields(t *testing.T) {
 	assert.Equal(t, false, env["hasHazmat"])
 	assert.Equal(t, true, env["requiresTemperatureControl"])
 	assert.Equal(t, 8.0, env["temperatureDifferential"])
-	assert.Equal(t, 5000.0, env["totalWeight"])
-	assert.Equal(t, int64(100), env["totalPieces"])
+	assert.Equal(t, 3000.0, env["totalWeight"], "the commodity lines outrank the header")
+	assert.Equal(t, int64(30), env["totalPieces"], "the commodity lines outrank the header")
 }
 
 func TestEnvironmentBuilder_Build_WithNilNested(t *testing.T) {
@@ -212,7 +219,7 @@ func TestEnvironmentBuilder_Build_WithNilNested(t *testing.T) {
 	err := registry.Register("test-nil-nested", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	entity := &TestShipment{
+	entity := &shipment.Shipment{
 		ProNumber: "PRO123",
 		Customer:  nil,
 	}
@@ -253,10 +260,10 @@ func TestEnvironmentBuilder_BuildWithVariables(t *testing.T) {
 	err := registry.Register("test-build-vars", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	entity := &TestShipment{
+	entity := &shipment.Shipment{
 		ProNumber: "PRO123",
-		Moves: []Move{
-			{Distance: 100.0},
+		Moves: []*shipment.ShipmentMove{
+			{Distance: distance(100.0)},
 		},
 	}
 
@@ -444,10 +451,10 @@ func TestEnvironmentBuilder_Build_ComputedFields(t *testing.T) {
 	err := registry.Register("test-computed", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	entity := &TestShipment{
-		Moves: []Move{
-			{Distance: 100.5, Stops: []Stop{{Name: "A"}, {Name: "B"}}},
-			{Distance: 200.3, Stops: []Stop{{Name: "C"}}},
+	entity := &shipment.Shipment{
+		Moves: []*shipment.ShipmentMove{
+			{Distance: distance(100.5), Stops: []*shipment.Stop{{Sequence: 0}, {Sequence: 1}}},
+			{Distance: distance(200.3), Sequence: 1, Stops: []*shipment.Stop{{Sequence: 0}}},
 		},
 	}
 

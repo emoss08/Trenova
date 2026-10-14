@@ -11,7 +11,7 @@ import {
   resumeCarrierIntelMonitoring,
   type CarrierIntelFeedState,
 } from "@/lib/graphql/carrier-intel-settings";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -217,7 +217,7 @@ function CostEstimatePreview({ open }: { open: boolean }) {
   const validDays = typeof debouncedDays === "number" && debouncedDays >= 7 && debouncedDays <= 365;
 
   const estimateQuery = useQuery({
-    ...queries.carrierIntelSettings.costEstimate({
+    ...carrierIntelSettings.costEstimate({
       policy,
       recentUsageDays: policy === "RecentlyUsed" ? debouncedDays : undefined,
       includeOpenTenders: policy === "RecentlyUsed" ? includeOpenTenders : undefined,
@@ -254,7 +254,7 @@ function MonitoringFeedStatus({ open, canManage }: { open: boolean; canManage: b
   const t = useT();
   const queryClient = useQueryClient();
   const statusQuery = useQuery({
-    ...queries.carrierIntelSettings.monitoringStatus(),
+    ...carrierIntelSettings.monitoringStatus(),
     enabled: open,
   });
 
@@ -264,7 +264,7 @@ function MonitoringFeedStatus({ open, canManage }: { open: boolean; canManage: b
     onSuccess: async () => {
       toast.success(t("Monitoring resumed"));
       await queryClient.invalidateQueries({
-        queryKey: queries.carrierIntelSettings.monitoringStatus().queryKey,
+        queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       });
     },
   });

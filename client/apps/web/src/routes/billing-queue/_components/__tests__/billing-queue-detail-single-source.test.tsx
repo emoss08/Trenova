@@ -8,11 +8,9 @@ import { queueItem } from "./split-shipment-fixture";
 
 const { getItem } = vi.hoisted(() => ({ getItem: vi.fn() }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    billingQueue: {
-      get: (id: string) => ({ queryKey: ["billingQueue", "get", id], queryFn: () => getItem(id) }),
-    },
+vi.mock("@/lib/queries/billing-queue", () => ({
+  billingQueue: {
+    get: (id: string) => ({ queryKey: ["billingQueue", "get", id], queryFn: () => getItem(id) }),
   },
 }));
 vi.mock("@/services/api", () => ({

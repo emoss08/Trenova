@@ -7,7 +7,8 @@ import {
   type AIProviderRow,
   type AIProviderUsageDay,
 } from "@/lib/graphql/ai-provider";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { apiService } from "@/services/api";
 import type { AIProviderKind, AIProviderPreset, AITask } from "@/types/ai-provider";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,16 +98,16 @@ export default function ProvidersTab() {
   const { allowed: canDelete } = usePermission(Resource.AIProvider, Operation.Delete);
   const { allowed: canManage } = usePermission(Resource.AIProvider, Operation.Manage);
 
-  const listQuery = useQuery(queries.aiProvider.list());
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
-  const limitsQuery = useQuery(queries.aiProvider.limits());
+  const listQuery = useQuery(aiProvider.list());
+  const catalogQuery = useQuery(aiProvider.catalog());
+  const limitsQuery = useQuery(aiProvider.limits());
   const summaryQuery = useQuery({
-    ...queries.aiControl.summary("Providers"),
+    ...aiControl.summary("Providers"),
     staleTime: SUMMARY_STALE_MS,
     refetchInterval: (state) => (state.state.data?.pending ? PENDING_REFRESH_MS : false),
   });
   const usageQuery = useQuery({
-    ...queries.aiProvider.usage(WEEK_DAYS),
+    ...aiProvider.usage(WEEK_DAYS),
     staleTime: USAGE_STALE_MS,
   });
 
@@ -144,7 +145,7 @@ export default function ProvidersTab() {
 
   const dailies = useQueries({
     queries: saved.map((provider) => ({
-      ...queries.aiProvider.daily(provider.id, WEEK_DAYS, timezone),
+      ...aiProvider.daily(provider.id, WEEK_DAYS, timezone),
       staleTime: USAGE_STALE_MS,
     })),
     combine: dailyData,
@@ -193,8 +194,8 @@ export default function ProvidersTab() {
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
-      queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+      queryClient.invalidateQueries({ queryKey: aiProvider._def }),
+      queryClient.invalidateQueries({ queryKey: aiControl._def }),
     ]);
   }, [queryClient]);
 

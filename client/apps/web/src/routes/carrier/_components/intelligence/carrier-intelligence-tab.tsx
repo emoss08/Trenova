@@ -15,7 +15,7 @@ import {
   CARRIER_INTEL_SYNC_PLAN_KEY,
   fetchCarrierIntelligence,
 } from "@/lib/graphql/carrier-intelligence";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
@@ -68,7 +68,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
   });
 
   const settingsQuery = useQuery({
-    ...queries.carrierIntelSettings.settings(),
+    ...carrierIntelSettings.settings(),
     enabled: canRead,
   });
 

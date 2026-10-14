@@ -20,10 +20,11 @@ import {
   type FormulaToken,
 } from "../formula-template-card";
 import { money } from "../../../record-card/record-card-values";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
 const t: TranslateFn = (message, ...args) => formatMessage("en", message ?? "", args);
 
-const known = buildKnownIdentifiers(undefined, []);
+const known = buildKnownIdentifiers(describedShipment, []);
 
 function tokens(expression: string, variables: string[] = []): FormulaToken[] {
   return tokenizeFormula(expression, known, new Set(variables));

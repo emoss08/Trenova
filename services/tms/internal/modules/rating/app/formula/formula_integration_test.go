@@ -5,7 +5,10 @@ package formula_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,49 +17,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type IntegrationShipment struct {
-	ProNumber      string
-	Weight         int64
-	Pieces         int64
-	TemperatureMin *int16
-	TemperatureMax *int16
-	Customer       *IntegrationCustomer
-	TractorType    *IntegrationTractorType
-	Moves          []IntegrationMove
-	Commodities    []IntegrationCommodity
+func loadedMove(
+	sequence int64,
+	distance float64,
+	stops ...*shipment.Stop,
+) *shipment.ShipmentMove {
+	return &shipment.ShipmentMove{
+		ID:       pulid.MustNew("sm_"),
+		Status:   shipment.MoveStatusNew,
+		Loaded:   true,
+		Sequence: sequence,
+		Distance: &distance,
+		Stops:    stops,
+	}
 }
 
-type IntegrationCustomer struct {
-	Name string
-	Code string
+func unmeasuredMove(sequence int64, stops ...*shipment.Stop) *shipment.ShipmentMove {
+	move := loadedMove(sequence, 0, stops...)
+	move.Distance = nil
+	return move
 }
 
-type IntegrationTractorType struct {
-	Name        string
-	CostPerMile float64
+func hazmatLine(class hazardousmaterial.HazardousClass) *shipment.ShipmentCommodity {
+	material := &hazardousmaterial.HazardousMaterial{
+		ID:    pulid.MustNew("hm_"),
+		Class: class,
+	}
+	item := &commodity.Commodity{
+		ID:                  pulid.MustNew("com_"),
+		HazardousMaterialID: material.ID,
+		HazardousMaterial:   material,
+	}
+	return &shipment.ShipmentCommodity{
+		ID:          pulid.MustNew("sc_"),
+		CommodityID: item.ID,
+		Commodity:   item,
+	}
 }
 
-type IntegrationMove struct {
-	Distance float64
-	Stops    []IntegrationStop
+func nonHazmatLine() *shipment.ShipmentCommodity {
+	item := &commodity.Commodity{ID: pulid.MustNew("com_")}
+	return &shipment.ShipmentCommodity{
+		ID:          pulid.MustNew("sc_"),
+		CommodityID: item.ID,
+		Commodity:   item,
+	}
 }
 
-type IntegrationStop struct {
-	Name string
-}
-
-type IntegrationCommodity struct {
-	Weight    int64
-	Pieces    int64
-	Commodity *IntegrationCommodityDetail
-}
-
-type IntegrationCommodityDetail struct {
-	HazardousMaterial *IntegrationHazardousMaterial
-}
-
-type IntegrationHazardousMaterial struct {
-	Class string
+func shipmentWith(configure func(*shipment.Shipment)) *shipment.Shipment {
+	entity := ratedShipment()
+	entity.ID = pulid.MustNew("shp_")
+	configure(entity)
+	return entity
 }
 
 func TestIntegration_FlatRateBilling(t *testing.T) {
@@ -76,14 +88,15 @@ func TestIntegration_FlatRateBilling(t *testing.T) {
 		},
 	}
 
-	shipment := &IntegrationShipment{
-		ProNumber: "PRO123",
-		Weight:    5000,
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		weight := int64(5000)
+		s.ProNumber = "PRO123"
+		s.Weight = &weight
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -109,17 +122,14 @@ func TestIntegration_PerMileBilling(t *testing.T) {
 		},
 	}
 
-	shipment := &IntegrationShipment{
-		ProNumber: "PRO123",
-		Moves: []IntegrationMove{
-			{Distance: 100.0},
-			{Distance: 150.0},
-		},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO123"
+		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 100.0), loadedMove(1, 150.0)}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -150,17 +160,24 @@ func TestIntegration_PerStopBilling(t *testing.T) {
 		},
 	}
 
-	shipment := &IntegrationShipment{
-		ProNumber: "PRO123",
-		Moves: []IntegrationMove{
-			{Stops: []IntegrationStop{{Name: "A"}, {Name: "B"}}},
-			{Stops: []IntegrationStop{{Name: "C"}}},
-		},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO123"
+		s.Moves = []*shipment.ShipmentMove{
+			unmeasuredMove(
+				0,
+				stopAt(shipment.StopTypePickup, shipment.StopStatusNew, 0, "A", 1_800_000_000),
+				stopAt(shipment.StopTypeDelivery, shipment.StopStatusNew, 1, "B", 1_800_010_000),
+			),
+			unmeasuredMove(
+				1,
+				stopAt(shipment.StopTypeDelivery, shipment.StopStatusNew, 0, "C", 1_800_020_000),
+			),
+		}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -186,14 +203,15 @@ func TestIntegration_CWTBilling(t *testing.T) {
 		},
 	}
 
-	shipment := &IntegrationShipment{
-		ProNumber: "PRO123",
-		Weight:    4550,
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		weight := int64(4550)
+		s.ProNumber = "PRO123"
+		s.Weight = &weight
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -220,34 +238,24 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		shipment *IntegrationShipment
-		want     decimal.Decimal
+		name   string
+		entity *shipment.Shipment
+		want   decimal.Decimal
 	}{
 		{
 			name: "with hazmat",
-			shipment: &IntegrationShipment{
-				Commodities: []IntegrationCommodity{
-					{
-						Commodity: &IntegrationCommodityDetail{
-							HazardousMaterial: &IntegrationHazardousMaterial{Class: "3"},
-						},
-					},
-				},
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.Commodities = []*shipment.ShipmentCommodity{
+					hazmatLine(hazardousmaterial.HazardousClass3),
+				}
+			}),
 			want: decimal.NewFromFloat(150.0),
 		},
 		{
 			name: "without hazmat",
-			shipment: &IntegrationShipment{
-				Commodities: []IntegrationCommodity{
-					{
-						Commodity: &IntegrationCommodityDetail{
-							HazardousMaterial: nil,
-						},
-					},
-				},
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.Commodities = []*shipment.ShipmentCommodity{nonHazmatLine()}
+			}),
 			want: decimal.NewFromFloat(0),
 		},
 	}
@@ -256,7 +264,7 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
-				Entity:    tt.shipment,
+				Entity:    tt.entity,
 				Variables: map[string]any{},
 			})
 
@@ -288,24 +296,24 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 	maxTemp := int16(40)
 
 	tests := []struct {
-		name     string
-		shipment *IntegrationShipment
-		want     decimal.Decimal
+		name   string
+		entity *shipment.Shipment
+		want   decimal.Decimal
 	}{
 		{
 			name: "requires temperature control",
-			shipment: &IntegrationShipment{
-				TemperatureMin: &minTemp,
-				TemperatureMax: &maxTemp,
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.TemperatureMin = &minTemp
+				s.TemperatureMax = &maxTemp
+			}),
 			want: decimal.NewFromFloat(200.0),
 		},
 		{
 			name: "no temperature control",
-			shipment: &IntegrationShipment{
-				TemperatureMin: nil,
-				TemperatureMax: nil,
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.TemperatureMin = nil
+				s.TemperatureMax = nil
+			}),
 			want: decimal.NewFromFloat(0),
 		},
 	}
@@ -314,7 +322,7 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
-				Entity:    tt.shipment,
+				Entity:    tt.entity,
 				Variables: map[string]any{},
 			})
 
@@ -348,26 +356,22 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		shipment *IntegrationShipment
-		want     decimal.Decimal
+		name   string
+		entity *shipment.Shipment
+		want   decimal.Decimal
 	}{
 		{
 			name: "calculated exceeds minimum",
-			shipment: &IntegrationShipment{
-				Moves: []IntegrationMove{
-					{Distance: 100.0},
-				},
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.Moves = []*shipment.ShipmentMove{loadedMove(0, 100.0)}
+			}),
 			want: decimal.NewFromFloat(250.0),
 		},
 		{
 			name: "minimum applies",
-			shipment: &IntegrationShipment{
-				Moves: []IntegrationMove{
-					{Distance: 10.0},
-				},
-			},
+			entity: shipmentWith(func(s *shipment.Shipment) {
+				s.Moves = []*shipment.ShipmentMove{loadedMove(0, 10.0)}
+			}),
 			want: decimal.NewFromFloat(100.0),
 		},
 	}
@@ -376,7 +380,7 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
-				Entity:    tt.shipment,
+				Entity:    tt.entity,
 				Variables: map[string]any{},
 			})
 
@@ -417,32 +421,31 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 	minTemp := int16(32)
 	maxTemp := int16(40)
 
-	shipment := &IntegrationShipment{
-		ProNumber:      "PRO123",
-		TemperatureMin: &minTemp,
-		TemperatureMax: &maxTemp,
-		Moves: []IntegrationMove{
-			{
-				Distance: 200.0,
-				Stops:    []IntegrationStop{{Name: "A"}, {Name: "B"}},
-			},
-			{
-				Distance: 100.0,
-				Stops:    []IntegrationStop{{Name: "C"}},
-			},
-		},
-		Commodities: []IntegrationCommodity{
-			{
-				Commodity: &IntegrationCommodityDetail{
-					HazardousMaterial: &IntegrationHazardousMaterial{Class: "3"},
-				},
-			},
-		},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.ProNumber = "PRO123"
+		s.TemperatureMin = &minTemp
+		s.TemperatureMax = &maxTemp
+		s.Moves = []*shipment.ShipmentMove{
+			loadedMove(
+				0,
+				200.0,
+				stopAt(shipment.StopTypePickup, shipment.StopStatusNew, 0, "A", 1_800_000_000),
+				stopAt(shipment.StopTypeDelivery, shipment.StopStatusNew, 1, "B", 1_800_010_000),
+			),
+			loadedMove(
+				1,
+				100.0,
+				stopAt(shipment.StopTypeDelivery, shipment.StopStatusNew, 0, "C", 1_800_020_000),
+			),
+		}
+		s.Commodities = []*shipment.ShipmentCommodity{
+			hazmatLine(hazardousmaterial.HazardousClass3),
+		}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -470,15 +473,13 @@ func TestIntegration_RuntimeVariableOverride(t *testing.T) {
 		},
 	}
 
-	shipment := &IntegrationShipment{
-		Moves: []IntegrationMove{
-			{Distance: 100.0},
-		},
-	}
+	entity := shipmentWith(func(s *shipment.Shipment) {
+		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 100.0)}
+	})
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
-		Entity:   shipment,
+		Entity:   entity,
 		Variables: map[string]any{
 			"ratePerMile": 3.75,
 		},

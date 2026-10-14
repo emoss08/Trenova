@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -86,7 +86,7 @@ export function DeskEdiMessage({
 }: EdiMessageCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.edi.message(recordId),
+    ...edi.message(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -141,7 +141,7 @@ function EdiMessageCard({
   const id = message.id;
   const purged = message.rawPurgedAt !== null && message.rawPurgedAt !== undefined;
   const inspection = useQuery({
-    ...queries.edi.messageInspection(id),
+    ...edi.messageInspection(id),
     retry: false,
     enabled: !purged,
   });

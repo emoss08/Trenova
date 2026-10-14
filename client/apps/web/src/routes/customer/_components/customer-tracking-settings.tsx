@@ -10,7 +10,7 @@ import {
   updateCustomerTrackingProfile,
   type CustomerTrackingProfile,
 } from "@/lib/graphql/customer-tracking";
-import { queries } from "@/lib/queries";
+import { customer } from "@/lib/queries/customer";
 import {
   customerTrackingSettingsSchema,
   type CustomerTrackingSettings,
@@ -47,7 +47,7 @@ function settingsOf(profile: CustomerTrackingProfile): CustomerTrackingSettings 
  * sits inside the customer form and a nested form cannot submit.
  */
 export function CustomerTrackingSettingsTab({ customerId }: { customerId: string }) {
-  const profileQuery = useQuery(queries.customer.trackingProfile(customerId));
+  const profileQuery = useQuery(customer.trackingProfile(customerId));
 
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
@@ -103,7 +103,7 @@ function CustomerTrackingSettingsForm({
     resourceName: "Customer tracking settings",
     form,
     onSuccess: (saved) => {
-      queryClient.setQueryData(queries.customer.trackingProfile(customerId).queryKey, saved);
+      queryClient.setQueryData(customer.trackingProfile(customerId).queryKey, saved);
       reset(settingsOf(saved));
       toast.success(t("Tracking settings saved"));
     },

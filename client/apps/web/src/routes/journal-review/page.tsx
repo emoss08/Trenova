@@ -1,6 +1,6 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { journalEntry } from "@/lib/queries/journal-entry";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -17,7 +17,7 @@ const Table = lazy(() => import("./_components/review-table"));
 
 export function JournalReviewPage() {
   const t = useT();
-  const summaryQuery = useQuery(queries.journalEntry.reviewSummary());
+  const summaryQuery = useQuery(journalEntry.reviewSummary());
   const { allowed: canApprove } = usePermission(Resource.JournalEntry, Operation.Approve);
   const summary = summaryQuery.data;
   const automatic = summary?.postingMode === "Automatic";

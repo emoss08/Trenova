@@ -4,7 +4,7 @@ import { CapabilityExplainer } from "@trenova/shared/components/capability-expla
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { TruckIcon } from "@trenova/shared/components/ui/truck";
 import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "@trenova/shared/components/icons";
@@ -36,7 +36,7 @@ export default function ShipmentMoveDetails() {
     open: false,
   });
   const { data: shipmentUIPolicy } = useQuery({
-    ...queries.shipment.uiPolicy(),
+    ...shipment.uiPolicy(),
   });
   const profile = getProfile(shipmentUIPolicy);
   // An unsaved shipment has no persisted moves to detach history from, so removal

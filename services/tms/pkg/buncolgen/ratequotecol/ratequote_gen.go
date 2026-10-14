@@ -50,79 +50,81 @@ var RateQuoteTable = buncolgen.TableInfo{
 //	q.Where(RateQuoteColumns.ID.Eq(), id)           // WHERE rqt.id = ?
 //	q.Order(RateQuoteColumns.CreatedAt.OrderDesc())  // ORDER BY rqt.created_at DESC
 var RateQuoteColumns = struct {
-	ID                     buncolgen.Column // "id" → qualified: "rqt.id"
-	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "rqt.business_unit_id"
-	OrganizationID         buncolgen.Column // "organization_id" → qualified: "rqt.organization_id"
-	ShipmentID             buncolgen.Column // "shipment_id" → qualified: "rqt.shipment_id"
-	ShipmentMoveID         buncolgen.Column // "shipment_move_id" → qualified: "rqt.shipment_move_id"
-	PartyType              buncolgen.Column // "party_type" → qualified: "rqt.party_type"
-	PartyID                buncolgen.Column // "party_id" → qualified: "rqt.party_id"
-	Purpose                buncolgen.Column // "purpose" → qualified: "rqt.purpose"
-	Outcome                buncolgen.Column // "outcome" → qualified: "rqt.outcome"
-	Status                 buncolgen.Column // "status" → qualified: "rqt.status"
-	RateAgreementID        buncolgen.Column // "rate_agreement_id" → qualified: "rqt.rate_agreement_id"
-	RateAgreementRuleID    buncolgen.Column // "rate_agreement_rule_id" → qualified: "rqt.rate_agreement_rule_id"
-	AgreementVersionNumber buncolgen.Column // "agreement_version_number" → qualified: "rqt.agreement_version_number"
-	FormulaTemplateID      buncolgen.Column // "formula_template_id" → qualified: "rqt.formula_template_id"
-	SpecificityScore       buncolgen.Column // "specificity_score" → qualified: "rqt.specificity_score"
-	Currency               buncolgen.Column // "currency" → qualified: "rqt.currency"
-	LinehaulAmount         buncolgen.Column // "linehaul_amount" → qualified: "rqt.linehaul_amount"
-	FuelAmount             buncolgen.Column // "fuel_amount" → qualified: "rqt.fuel_amount"
-	AccessorialAmount      buncolgen.Column // "accessorial_amount" → qualified: "rqt.accessorial_amount"
-	TotalAmount            buncolgen.Column // "total_amount" → qualified: "rqt.total_amount"
-	CostAmount             buncolgen.Column // "cost_amount" → qualified: "rqt.cost_amount"
-	MarginAmount           buncolgen.Column // "margin_amount" → qualified: "rqt.margin_amount"
-	MarginPercent          buncolgen.Column // "margin_percent" → qualified: "rqt.margin_percent"
-	BillingCurrency        buncolgen.Column // "billing_currency" → qualified: "rqt.billing_currency"
-	BillingAmount          buncolgen.Column // "billing_amount" → qualified: "rqt.billing_amount"
-	FxRate                 buncolgen.Column // "fx_rate" → qualified: "rqt.fx_rate"
-	ExchangeRateID         buncolgen.Column // "exchange_rate_id" → qualified: "rqt.exchange_rate_id"
-	AsOf                   buncolgen.Column // "as_of" → qualified: "rqt.as_of"
-	RatedAt                buncolgen.Column // "rated_at" → qualified: "rqt.rated_at"
-	RatedByID              buncolgen.Column // "rated_by_id" → qualified: "rqt.rated_by_id"
-	EngineVersion          buncolgen.Column // "engine_version" → qualified: "rqt.engine_version"
-	ContextHash            buncolgen.Column // "context_hash" → qualified: "rqt.context_hash"
-	OverrideReason         buncolgen.Column // "override_reason" → qualified: "rqt.override_reason"
-	ForegoneAmount         buncolgen.Column // "foregone_amount" → qualified: "rqt.foregone_amount"
-	Trace                  buncolgen.Column // "trace" → qualified: "rqt.trace"
-	CreatedAt              buncolgen.Column // "created_at" → qualified: "rqt.created_at"
+	ID                           buncolgen.Column // "id" → qualified: "rqt.id"
+	BusinessUnitID               buncolgen.Column // "business_unit_id" → qualified: "rqt.business_unit_id"
+	OrganizationID               buncolgen.Column // "organization_id" → qualified: "rqt.organization_id"
+	ShipmentID                   buncolgen.Column // "shipment_id" → qualified: "rqt.shipment_id"
+	ShipmentMoveID               buncolgen.Column // "shipment_move_id" → qualified: "rqt.shipment_move_id"
+	PartyType                    buncolgen.Column // "party_type" → qualified: "rqt.party_type"
+	PartyID                      buncolgen.Column // "party_id" → qualified: "rqt.party_id"
+	Purpose                      buncolgen.Column // "purpose" → qualified: "rqt.purpose"
+	Outcome                      buncolgen.Column // "outcome" → qualified: "rqt.outcome"
+	Status                       buncolgen.Column // "status" → qualified: "rqt.status"
+	RateAgreementID              buncolgen.Column // "rate_agreement_id" → qualified: "rqt.rate_agreement_id"
+	RateAgreementRuleID          buncolgen.Column // "rate_agreement_rule_id" → qualified: "rqt.rate_agreement_rule_id"
+	AgreementVersionNumber       buncolgen.Column // "agreement_version_number" → qualified: "rqt.agreement_version_number"
+	FormulaTemplateID            buncolgen.Column // "formula_template_id" → qualified: "rqt.formula_template_id"
+	FormulaTemplateVersionNumber buncolgen.Column // "formula_template_version_number" → qualified: "rqt.formula_template_version_number"
+	SpecificityScore             buncolgen.Column // "specificity_score" → qualified: "rqt.specificity_score"
+	Currency                     buncolgen.Column // "currency" → qualified: "rqt.currency"
+	LinehaulAmount               buncolgen.Column // "linehaul_amount" → qualified: "rqt.linehaul_amount"
+	FuelAmount                   buncolgen.Column // "fuel_amount" → qualified: "rqt.fuel_amount"
+	AccessorialAmount            buncolgen.Column // "accessorial_amount" → qualified: "rqt.accessorial_amount"
+	TotalAmount                  buncolgen.Column // "total_amount" → qualified: "rqt.total_amount"
+	CostAmount                   buncolgen.Column // "cost_amount" → qualified: "rqt.cost_amount"
+	MarginAmount                 buncolgen.Column // "margin_amount" → qualified: "rqt.margin_amount"
+	MarginPercent                buncolgen.Column // "margin_percent" → qualified: "rqt.margin_percent"
+	BillingCurrency              buncolgen.Column // "billing_currency" → qualified: "rqt.billing_currency"
+	BillingAmount                buncolgen.Column // "billing_amount" → qualified: "rqt.billing_amount"
+	FxRate                       buncolgen.Column // "fx_rate" → qualified: "rqt.fx_rate"
+	ExchangeRateID               buncolgen.Column // "exchange_rate_id" → qualified: "rqt.exchange_rate_id"
+	AsOf                         buncolgen.Column // "as_of" → qualified: "rqt.as_of"
+	RatedAt                      buncolgen.Column // "rated_at" → qualified: "rqt.rated_at"
+	RatedByID                    buncolgen.Column // "rated_by_id" → qualified: "rqt.rated_by_id"
+	EngineVersion                buncolgen.Column // "engine_version" → qualified: "rqt.engine_version"
+	ContextHash                  buncolgen.Column // "context_hash" → qualified: "rqt.context_hash"
+	OverrideReason               buncolgen.Column // "override_reason" → qualified: "rqt.override_reason"
+	ForegoneAmount               buncolgen.Column // "foregone_amount" → qualified: "rqt.foregone_amount"
+	Trace                        buncolgen.Column // "trace" → qualified: "rqt.trace"
+	CreatedAt                    buncolgen.Column // "created_at" → qualified: "rqt.created_at"
 }{
-	ID:                     buncolgen.NewColumn("id", "rqt"),
-	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "rqt"),
-	OrganizationID:         buncolgen.NewColumn("organization_id", "rqt"),
-	ShipmentID:             buncolgen.NewColumn("shipment_id", "rqt"),
-	ShipmentMoveID:         buncolgen.NewColumn("shipment_move_id", "rqt"),
-	PartyType:              buncolgen.NewColumn("party_type", "rqt"),
-	PartyID:                buncolgen.NewColumn("party_id", "rqt"),
-	Purpose:                buncolgen.NewColumn("purpose", "rqt"),
-	Outcome:                buncolgen.NewColumn("outcome", "rqt"),
-	Status:                 buncolgen.NewColumn("status", "rqt"),
-	RateAgreementID:        buncolgen.NewColumn("rate_agreement_id", "rqt"),
-	RateAgreementRuleID:    buncolgen.NewColumn("rate_agreement_rule_id", "rqt"),
-	AgreementVersionNumber: buncolgen.NewColumn("agreement_version_number", "rqt"),
-	FormulaTemplateID:      buncolgen.NewColumn("formula_template_id", "rqt"),
-	SpecificityScore:       buncolgen.NewColumn("specificity_score", "rqt"),
-	Currency:               buncolgen.NewColumn("currency", "rqt"),
-	LinehaulAmount:         buncolgen.NewColumn("linehaul_amount", "rqt"),
-	FuelAmount:             buncolgen.NewColumn("fuel_amount", "rqt"),
-	AccessorialAmount:      buncolgen.NewColumn("accessorial_amount", "rqt"),
-	TotalAmount:            buncolgen.NewColumn("total_amount", "rqt"),
-	CostAmount:             buncolgen.NewColumn("cost_amount", "rqt"),
-	MarginAmount:           buncolgen.NewColumn("margin_amount", "rqt"),
-	MarginPercent:          buncolgen.NewColumn("margin_percent", "rqt"),
-	BillingCurrency:        buncolgen.NewColumn("billing_currency", "rqt"),
-	BillingAmount:          buncolgen.NewColumn("billing_amount", "rqt"),
-	FxRate:                 buncolgen.NewColumn("fx_rate", "rqt"),
-	ExchangeRateID:         buncolgen.NewColumn("exchange_rate_id", "rqt"),
-	AsOf:                   buncolgen.NewColumn("as_of", "rqt"),
-	RatedAt:                buncolgen.NewColumn("rated_at", "rqt"),
-	RatedByID:              buncolgen.NewColumn("rated_by_id", "rqt"),
-	EngineVersion:          buncolgen.NewColumn("engine_version", "rqt"),
-	ContextHash:            buncolgen.NewColumn("context_hash", "rqt"),
-	OverrideReason:         buncolgen.NewColumn("override_reason", "rqt"),
-	ForegoneAmount:         buncolgen.NewColumn("foregone_amount", "rqt"),
-	Trace:                  buncolgen.NewColumn("trace", "rqt"),
-	CreatedAt:              buncolgen.NewColumn("created_at", "rqt"),
+	ID:                           buncolgen.NewColumn("id", "rqt"),
+	BusinessUnitID:               buncolgen.NewColumn("business_unit_id", "rqt"),
+	OrganizationID:               buncolgen.NewColumn("organization_id", "rqt"),
+	ShipmentID:                   buncolgen.NewColumn("shipment_id", "rqt"),
+	ShipmentMoveID:               buncolgen.NewColumn("shipment_move_id", "rqt"),
+	PartyType:                    buncolgen.NewColumn("party_type", "rqt"),
+	PartyID:                      buncolgen.NewColumn("party_id", "rqt"),
+	Purpose:                      buncolgen.NewColumn("purpose", "rqt"),
+	Outcome:                      buncolgen.NewColumn("outcome", "rqt"),
+	Status:                       buncolgen.NewColumn("status", "rqt"),
+	RateAgreementID:              buncolgen.NewColumn("rate_agreement_id", "rqt"),
+	RateAgreementRuleID:          buncolgen.NewColumn("rate_agreement_rule_id", "rqt"),
+	AgreementVersionNumber:       buncolgen.NewColumn("agreement_version_number", "rqt"),
+	FormulaTemplateID:            buncolgen.NewColumn("formula_template_id", "rqt"),
+	FormulaTemplateVersionNumber: buncolgen.NewColumn("formula_template_version_number", "rqt"),
+	SpecificityScore:             buncolgen.NewColumn("specificity_score", "rqt"),
+	Currency:                     buncolgen.NewColumn("currency", "rqt"),
+	LinehaulAmount:               buncolgen.NewColumn("linehaul_amount", "rqt"),
+	FuelAmount:                   buncolgen.NewColumn("fuel_amount", "rqt"),
+	AccessorialAmount:            buncolgen.NewColumn("accessorial_amount", "rqt"),
+	TotalAmount:                  buncolgen.NewColumn("total_amount", "rqt"),
+	CostAmount:                   buncolgen.NewColumn("cost_amount", "rqt"),
+	MarginAmount:                 buncolgen.NewColumn("margin_amount", "rqt"),
+	MarginPercent:                buncolgen.NewColumn("margin_percent", "rqt"),
+	BillingCurrency:              buncolgen.NewColumn("billing_currency", "rqt"),
+	BillingAmount:                buncolgen.NewColumn("billing_amount", "rqt"),
+	FxRate:                       buncolgen.NewColumn("fx_rate", "rqt"),
+	ExchangeRateID:               buncolgen.NewColumn("exchange_rate_id", "rqt"),
+	AsOf:                         buncolgen.NewColumn("as_of", "rqt"),
+	RatedAt:                      buncolgen.NewColumn("rated_at", "rqt"),
+	RatedByID:                    buncolgen.NewColumn("rated_by_id", "rqt"),
+	EngineVersion:                buncolgen.NewColumn("engine_version", "rqt"),
+	ContextHash:                  buncolgen.NewColumn("context_hash", "rqt"),
+	OverrideReason:               buncolgen.NewColumn("override_reason", "rqt"),
+	ForegoneAmount:               buncolgen.NewColumn("foregone_amount", "rqt"),
+	Trace:                        buncolgen.NewColumn("trace", "rqt"),
+	CreatedAt:                    buncolgen.NewColumn("created_at", "rqt"),
 }
 
 // RateQuoteFieldMap maps JSON API field names to database column names.
@@ -130,42 +132,43 @@ var RateQuoteColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateQuote.GetStaticFieldMap().
 var RateQuoteFieldMap = map[string]string{
-	"id":                     "id",
-	"businessUnitId":         "business_unit_id",
-	"organizationId":         "organization_id",
-	"shipmentId":             "shipment_id",
-	"shipmentMoveId":         "shipment_move_id",
-	"partyType":              "party_type",
-	"partyId":                "party_id",
-	"purpose":                "purpose",
-	"outcome":                "outcome",
-	"status":                 "status",
-	"rateAgreementId":        "rate_agreement_id",
-	"rateAgreementRuleId":    "rate_agreement_rule_id",
-	"agreementVersionNumber": "agreement_version_number",
-	"formulaTemplateId":      "formula_template_id",
-	"specificityScore":       "specificity_score",
-	"currency":               "currency",
-	"linehaulAmount":         "linehaul_amount",
-	"fuelAmount":             "fuel_amount",
-	"accessorialAmount":      "accessorial_amount",
-	"totalAmount":            "total_amount",
-	"costAmount":             "cost_amount",
-	"marginAmount":           "margin_amount",
-	"marginPercent":          "margin_percent",
-	"billingCurrency":        "billing_currency",
-	"billingAmount":          "billing_amount",
-	"fxRate":                 "fx_rate",
-	"exchangeRateId":         "exchange_rate_id",
-	"asOf":                   "as_of",
-	"ratedAt":                "rated_at",
-	"ratedById":              "rated_by_id",
-	"engineVersion":          "engine_version",
-	"contextHash":            "context_hash",
-	"overrideReason":         "override_reason",
-	"foregoneAmount":         "foregone_amount",
-	"trace":                  "trace",
-	"createdAt":              "created_at",
+	"id":                           "id",
+	"businessUnitId":               "business_unit_id",
+	"organizationId":               "organization_id",
+	"shipmentId":                   "shipment_id",
+	"shipmentMoveId":               "shipment_move_id",
+	"partyType":                    "party_type",
+	"partyId":                      "party_id",
+	"purpose":                      "purpose",
+	"outcome":                      "outcome",
+	"status":                       "status",
+	"rateAgreementId":              "rate_agreement_id",
+	"rateAgreementRuleId":          "rate_agreement_rule_id",
+	"agreementVersionNumber":       "agreement_version_number",
+	"formulaTemplateId":            "formula_template_id",
+	"formulaTemplateVersionNumber": "formula_template_version_number",
+	"specificityScore":             "specificity_score",
+	"currency":                     "currency",
+	"linehaulAmount":               "linehaul_amount",
+	"fuelAmount":                   "fuel_amount",
+	"accessorialAmount":            "accessorial_amount",
+	"totalAmount":                  "total_amount",
+	"costAmount":                   "cost_amount",
+	"marginAmount":                 "margin_amount",
+	"marginPercent":                "margin_percent",
+	"billingCurrency":              "billing_currency",
+	"billingAmount":                "billing_amount",
+	"fxRate":                       "fx_rate",
+	"exchangeRateId":               "exchange_rate_id",
+	"asOf":                         "as_of",
+	"ratedAt":                      "rated_at",
+	"ratedById":                    "rated_by_id",
+	"engineVersion":                "engine_version",
+	"contextHash":                  "context_hash",
+	"overrideReason":               "override_reason",
+	"foregoneAmount":               "foregone_amount",
+	"trace":                        "trace",
+	"createdAt":                    "created_at",
 }
 
 // RateQuoteInsertableColumns lists column names suitable for INSERT statements on the "rate_quotes" table.
@@ -185,6 +188,7 @@ var RateQuoteInsertableColumns = []string{
 	"rate_agreement_rule_id",
 	"agreement_version_number",
 	"formula_template_id",
+	"formula_template_version_number",
 	"specificity_score",
 	"currency",
 	"linehaul_amount",
@@ -276,42 +280,43 @@ func RateQuoteApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.
 //	RateQuoteFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateQuoteFilter = struct {
-	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShipmentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	ShipmentMoveID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentMoveId" → DB: "shipment_move_id"
-	PartyType              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyType" → DB: "party_type"
-	PartyID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyId" → DB: "party_id"
-	Purpose                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
-	Outcome                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
-	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	RateAgreementID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
-	RateAgreementRuleID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementRuleId" → DB: "rate_agreement_rule_id"
-	AgreementVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementVersionNumber" → DB: "agreement_version_number"
-	FormulaTemplateID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	SpecificityScore       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "specificityScore" → DB: "specificity_score"
-	Currency               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	LinehaulAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "linehaulAmount" → DB: "linehaul_amount"
-	FuelAmount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelAmount" → DB: "fuel_amount"
-	AccessorialAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialAmount" → DB: "accessorial_amount"
-	TotalAmount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
-	CostAmount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costAmount" → DB: "cost_amount"
-	MarginAmount           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginAmount" → DB: "margin_amount"
-	MarginPercent          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginPercent" → DB: "margin_percent"
-	BillingCurrency        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
-	BillingAmount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingAmount" → DB: "billing_amount"
-	FxRate                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fxRate" → DB: "fx_rate"
-	ExchangeRateID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateId" → DB: "exchange_rate_id"
-	AsOf                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "asOf" → DB: "as_of"
-	RatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratedAt" → DB: "rated_at"
-	RatedByID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratedById" → DB: "rated_by_id"
-	EngineVersion          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "engineVersion" → DB: "engine_version"
-	ContextHash            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextHash" → DB: "context_hash"
-	OverrideReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "overrideReason" → DB: "override_reason"
-	ForegoneAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "foregoneAmount" → DB: "foregone_amount"
-	Trace                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trace" → DB: "trace"
-	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	ShipmentMoveID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentMoveId" → DB: "shipment_move_id"
+	PartyType                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyType" → DB: "party_type"
+	PartyID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyId" → DB: "party_id"
+	Purpose                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
+	Outcome                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
+	Status                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	RateAgreementID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
+	RateAgreementRuleID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementRuleId" → DB: "rate_agreement_rule_id"
+	AgreementVersionNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementVersionNumber" → DB: "agreement_version_number"
+	FormulaTemplateID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
+	FormulaTemplateVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateVersionNumber" → DB: "formula_template_version_number"
+	SpecificityScore             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "specificityScore" → DB: "specificity_score"
+	Currency                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
+	LinehaulAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "linehaulAmount" → DB: "linehaul_amount"
+	FuelAmount                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelAmount" → DB: "fuel_amount"
+	AccessorialAmount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialAmount" → DB: "accessorial_amount"
+	TotalAmount                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
+	CostAmount                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costAmount" → DB: "cost_amount"
+	MarginAmount                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginAmount" → DB: "margin_amount"
+	MarginPercent                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginPercent" → DB: "margin_percent"
+	BillingCurrency              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
+	BillingAmount                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingAmount" → DB: "billing_amount"
+	FxRate                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fxRate" → DB: "fx_rate"
+	ExchangeRateID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateId" → DB: "exchange_rate_id"
+	AsOf                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "asOf" → DB: "as_of"
+	RatedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratedAt" → DB: "rated_at"
+	RatedByID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratedById" → DB: "rated_by_id"
+	EngineVersion                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "engineVersion" → DB: "engine_version"
+	ContextHash                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextHash" → DB: "context_hash"
+	OverrideReason               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "overrideReason" → DB: "override_reason"
+	ForegoneAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "foregoneAmount" → DB: "foregone_amount"
+	Trace                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trace" → DB: "trace"
+	CreatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -354,6 +359,9 @@ var RateQuoteFilter = struct {
 	},
 	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("formulaTemplateId", op, value)
+	},
+	FormulaTemplateVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("formulaTemplateVersionNumber", op, value)
 	},
 	SpecificityScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("specificityScore", op, value)

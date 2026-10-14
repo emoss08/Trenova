@@ -21,12 +21,11 @@ vi.mock("@/lib/graphql/worker-mutations", () => ({
   bulkWorkerPTOAction,
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    worker: {
-      listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
-      ptoChartData: { _def: ["worker", "pto-chart-data"] },
-    },
+vi.mock("@/lib/queries/worker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
+  worker: {
+    listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
+    ptoChartData: { _def: ["worker", "pto-chart-data"] },
   },
 }));
 

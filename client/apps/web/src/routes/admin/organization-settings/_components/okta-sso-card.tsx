@@ -17,7 +17,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { type OktaSSOConfig } from "@trenova/shared/types/organization";
@@ -85,7 +85,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
     typeof window !== "undefined" ? `${window.location.origin}/login/{loginSlug}` : "";
 
   const configQuery = useQuery({
-    ...queries.organization.oktaSSO(organizationId),
+    ...organization.oktaSSO(organizationId),
     enabled: Boolean(organizationId),
   });
 
@@ -152,7 +152,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
         redirectUrl: data.redirectUrl || redirectUrl,
       });
       await queryClient.invalidateQueries({
-        queryKey: queries.organization.oktaSSO(organizationId).queryKey,
+        queryKey: organization.oktaSSO(organizationId).queryKey,
       });
       toast.success(t("Okta SSO settings updated"));
     },

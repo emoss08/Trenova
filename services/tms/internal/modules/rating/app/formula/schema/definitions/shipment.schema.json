@@ -26,7 +26,7 @@
             "Moves.Stops",
             "Moves.Stops.Location",
             "Moves.Stops.Location.State",
-            "AdditionalCharges.AccessorialCharge",
+            "AdditionalCharges",
             "Commodities.Commodity",
             "Commodities.Commodity.HazardousMaterial"
         ]
@@ -45,14 +45,15 @@
             "type": "string",
             "enum": [
                 "New",
-                "InTransit",
-                "Delayed",
-                "Completed",
-                "Billed",
                 "PartiallyAssigned",
                 "Assigned",
+                "InTransit",
+                "Delayed",
                 "PartiallyCompleted",
-                "Cancelled"
+                "ReadyToInvoice",
+                "Completed",
+                "Invoiced",
+                "Canceled"
             ],
             "x-source": {
                 "field": "status",
@@ -143,7 +144,7 @@
             }
         },
         "currentTotalCharge": {
-            "description": "Current total shipment charge in USD",
+            "description": "The total charge stored on the shipment before this rating ran: 0 on a new shipment, and the previous save's total afterwards. A freight charge formula that reads it prices against its own last result",
             "type": "number",
             "minimum": 0,
             "x-source": {
@@ -198,13 +199,6 @@
                 "nullable": true
             },
             "properties": {
-                "name": {
-                    "description": "Equipment type name",
-                    "type": "string",
-                    "x-source": {
-                        "path": "TractorType.Name"
-                    }
-                },
                 "code": {
                     "description": "Equipment type code",
                     "type": "string",
@@ -212,17 +206,11 @@
                         "path": "TractorType.Code"
                     }
                 },
-                "costPerMile": {
-                    "description": "Operating cost per mile in USD",
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "minimum": 0,
+                "description": {
+                    "description": "Equipment type description",
+                    "type": "string",
                     "x-source": {
-                        "path": "TractorType.CostPerMile",
-                        "transform": "decimalToFloat64",
-                        "nullable": true
+                        "path": "TractorType.Description"
                     }
                 }
             }
@@ -238,13 +226,6 @@
                 "nullable": true
             },
             "properties": {
-                "name": {
-                    "description": "Equipment type name",
-                    "type": "string",
-                    "x-source": {
-                        "path": "TrailerType.Name"
-                    }
-                },
                 "code": {
                     "description": "Equipment type code",
                     "type": "string",
@@ -252,17 +233,11 @@
                         "path": "TrailerType.Code"
                     }
                 },
-                "costPerMile": {
-                    "description": "Operating cost per mile in USD",
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "minimum": 0,
+                "description": {
+                    "description": "Equipment type description",
+                    "type": "string",
                     "x-source": {
-                        "path": "TrailerType.CostPerMile",
-                        "transform": "decimalToFloat64",
-                        "nullable": true
+                        "path": "TrailerType.Description"
                     }
                 }
             }
@@ -499,6 +474,14 @@
                 "nullable": true
             }
         },
+        "ratingTime": {
+            "description": "The date the contract terms are read at, as a UTC instant: the date the rating asked for, else the actual ship date, else when the shipment was entered. It is fixed for a shipment, so it stands in for \"now\" and re-rating gives the same answer. Supports date methods such as ratingTime.Year() and comparisons with date(\"2026-01-01\")",
+            "type": "string",
+            "format": "date-time",
+            "x-source": {
+                "provided": true
+            }
+        },
         "fuelIndexCode": {
             "description": "Code of the fuel index behind fuelPrice, such as DOE_US; empty when no index has a price",
             "type": ["string", "null"],
@@ -508,11 +491,10 @@
             }
         },
         "serviceType": {
-            "description": "Service level the shipment was booked under",
-            "type": ["object", "null"],
+            "description": "Service level the shipment was booked under; every shipment has one",
+            "type": "object",
             "x-source": {
-                "relation": "ServiceType",
-                "nullable": true
+                "relation": "ServiceType"
             },
             "properties": {
                 "code": {
@@ -663,7 +645,7 @@
             }
         },
         "pickupDate": {
-            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first stop's actual arrival or scheduled window. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no stops",
+            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first pickup stop's actual arrival or scheduled window start. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no pickup stop",
             "type": ["string", "null"],
             "format": "date-time",
             "x-source": {
@@ -676,7 +658,7 @@
             }
         },
         "deliveryDate": {
-            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the last stop's actual departure, actual arrival, or scheduled window end; empty when the shipment has no stops",
+            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the final delivery stop's actual departure, actual arrival, scheduled window end, or scheduled window start; empty when the shipment has no delivery stop",
             "type": ["string", "null"],
             "format": "date-time",
             "x-source": {

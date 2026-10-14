@@ -3,7 +3,7 @@ import { AgentPickerList } from "@/components/assistant/agent-picker";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { setRoleAgentAccess, type RoleAgent } from "@/lib/graphql/agent-access";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -48,7 +48,7 @@ export function RoleAgentsSection({ roleId }: { roleId: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const agentsQuery = useQuery(queries.assistant.roleAgents(roleId));
+  const agentsQuery = useQuery(assistant.roleAgents(roleId));
   const agents = useMemo(
     () => sortRoleAgents(agentsQuery.data?.agents ?? []),
     [agentsQuery.data?.agents],
@@ -58,16 +58,16 @@ export function RoleAgentsSection({ roleId }: { roleId: string }) {
   const saveMutation = useApiMutation({
     mutationFn: (agentIds: string[]) => setRoleAgentAccess(roleId, agentIds),
     onSuccess: async (saved) => {
-      queryClient.setQueryData(queries.assistant.roleAgents(roleId).queryKey, saved);
+      queryClient.setQueryData(assistant.roleAgents(roleId).queryKey, saved);
       // Who may use each agent changed, so every list of agents and every
       // agent's access in AI Control is read again.
-      await queryClient.invalidateQueries({ queryKey: queries.assistant._def });
+      await queryClient.invalidateQueries({ queryKey: assistant._def });
     },
     // A refused change leaves the list as the server has it, not as it was
     // drawn before the change was tried.
     onError: () =>
       void queryClient.invalidateQueries({
-        queryKey: queries.assistant.roleAgents(roleId).queryKey,
+        queryKey: assistant.roleAgents(roleId).queryKey,
       }),
     resourceName: "Role",
   });

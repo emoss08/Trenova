@@ -6,7 +6,7 @@ import {
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
 import { hasMaterialChange } from "@/lib/formula-template-material";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type {
@@ -192,7 +192,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const scenarios = useStudioScenarios({ templateId: template?.id ?? null, author });
 
   const { data: usage } = useQuery({
-    ...queries.formulaTemplate.usage(template?.id ?? ""),
+    ...formulaTemplate.usage(template?.id ?? ""),
     enabled: mode === "edit" && !!template?.id,
     staleTime: 60_000,
   });

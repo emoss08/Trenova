@@ -1,9 +1,9 @@
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import type { QueryClient } from "@tanstack/react-query";
 
 export async function invalidateEDIConnections(queryClient: QueryClient) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queries.edi.connections._def }),
+    queryClient.invalidateQueries({ queryKey: edi.connections._def }),
     queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] }),
     queryClient.invalidateQueries({ queryKey: ["edi-communication-profile-list"] }),
   ]);
@@ -27,7 +27,7 @@ export async function invalidateEDITransfers(queryClient: QueryClient, transferI
     ...(transferId
       ? [
           queryClient.invalidateQueries({
-            queryKey: queries.edi.mappingPreview(transferId).queryKey,
+            queryKey: edi.mappingPreview(transferId).queryKey,
           }),
         ]
       : []),
@@ -37,12 +37,12 @@ export async function invalidateEDITransfers(queryClient: QueryClient, transferI
 export async function invalidateEDIMessages(queryClient: QueryClient, messageId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-message-list"] }),
-    queryClient.invalidateQueries({ queryKey: queries.edi.messages._def }),
+    queryClient.invalidateQueries({ queryKey: edi.messages._def }),
     ...(messageId
       ? [
-          queryClient.invalidateQueries({ queryKey: queries.edi.message(messageId).queryKey }),
+          queryClient.invalidateQueries({ queryKey: edi.message(messageId).queryKey }),
           queryClient.invalidateQueries({
-            queryKey: queries.edi.messageInspection(messageId).queryKey,
+            queryKey: edi.messageInspection(messageId).queryKey,
           }),
         ]
       : []),
@@ -52,9 +52,9 @@ export async function invalidateEDIMessages(queryClient: QueryClient, messageId?
 export async function invalidateEDITestCases(queryClient: QueryClient, testCaseId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-test-case-list"] }),
-    queryClient.invalidateQueries({ queryKey: queries.edi.testCases._def }),
+    queryClient.invalidateQueries({ queryKey: edi.testCases._def }),
     ...(testCaseId
-      ? [queryClient.invalidateQueries({ queryKey: queries.edi.testCase(testCaseId).queryKey })]
+      ? [queryClient.invalidateQueries({ queryKey: edi.testCase(testCaseId).queryKey })]
       : []),
   ]);
 }
@@ -63,9 +63,9 @@ export async function invalidateEDIInboundFiles(queryClient: QueryClient, fileId
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-inbound-file-list"] }),
     queryClient.invalidateQueries({ queryKey: ["edi-message-list"] }),
-    queryClient.invalidateQueries({ queryKey: queries.edi.messages._def }),
+    queryClient.invalidateQueries({ queryKey: edi.messages._def }),
     ...(fileId
-      ? [queryClient.invalidateQueries({ queryKey: queries.edi.inboundFile(fileId).queryKey })]
+      ? [queryClient.invalidateQueries({ queryKey: edi.inboundFile(fileId).queryKey })]
       : []),
   ]);
 }

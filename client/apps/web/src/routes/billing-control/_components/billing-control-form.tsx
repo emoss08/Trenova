@@ -27,7 +27,7 @@ import {
   transferScheduleChoices,
   unratedShipmentDispositionChoices,
 } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { billingControl } from "@/lib/queries/billing-control";
 import { apiService } from "@/services/api";
 import type { BillingControl } from "@/types/billing-control";
 import { billingControlSchema } from "@/types/billing-control";
@@ -42,7 +42,7 @@ export default function BillingControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.billingControl.get(),
+    ...billingControl.get(),
   });
 
   const form = useForm<BillingControl>({
@@ -58,12 +58,12 @@ export default function BillingControlForm() {
     unknown,
     BillingControl
   >({
-    queryKey: queries.billingControl.get._def,
+    queryKey: billingControl.get._def,
     mutationFn: async (values: BillingControl) => apiService.billingControlService.update(values),
     resourceName: "Billing Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.billingControl.get._def],
+    invalidateQueries: [billingControl.get._def],
   });
 
   const onSubmit = useCallback(

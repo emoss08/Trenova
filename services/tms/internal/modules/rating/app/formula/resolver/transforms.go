@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/shopspring/decimal"
 )
 
@@ -60,7 +61,7 @@ func decimalToFloat64(value any) (any, error) {
 		f, _ := v.Decimal.Float64()
 		return f, nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to float64", value)
+		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
 	}
 }
 
@@ -81,7 +82,7 @@ func int64ToFloat64(value any) (any, error) {
 		}
 		return float64(*v), nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to float64", value)
+		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
 	}
 }
 
@@ -95,7 +96,7 @@ func int16ToFloat64(value any) (any, error) {
 		}
 		return float64(*v), nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to float64", value)
+		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
 	}
 }
 
@@ -109,7 +110,7 @@ func stringToUpper(value any) (any, error) {
 		}
 		return strings.ToUpper(*v), nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to uppercase string", value)
+		return nil, fmt.Errorf("expected text to uppercase, got %s", errors.DescribeValue(value))
 	}
 }
 
@@ -123,7 +124,7 @@ func stringToLower(value any) (any, error) {
 		}
 		return strings.ToLower(*v), nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to lowercase string", value)
+		return nil, fmt.Errorf("expected text to lowercase, got %s", errors.DescribeValue(value))
 	}
 }
 
@@ -137,6 +138,6 @@ func unixToISO8601(value any) (any, error) {
 		}
 		return time.Unix(*v, 0).UTC().Format(time.RFC3339), nil
 	default:
-		return nil, fmt.Errorf("cannot convert %T to ISO8601", value)
+		return nil, fmt.Errorf("expected a date, got %s", errors.DescribeValue(value))
 	}
 }

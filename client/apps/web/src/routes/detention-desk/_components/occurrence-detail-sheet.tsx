@@ -5,7 +5,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { detentionWaiverReasonChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -603,7 +603,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
   const invalidate = useInvalidateDetention();
 
   const { data: detail, isLoading } = useQuery({
-    ...queries.detention.occurrence(occurrenceId ?? ""),
+    ...detention.occurrence(occurrenceId ?? ""),
     enabled: Boolean(occurrenceId),
   });
 

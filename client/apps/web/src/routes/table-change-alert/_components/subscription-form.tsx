@@ -5,7 +5,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { Checkbox } from "@/components/animate-ui/components/base/checkbox";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
-import { queries } from "@/lib/queries";
+import { tableChangeAlert } from "@/lib/queries/table-change-alert";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { TCASubscriptionFormValues } from "@/types/table-change-alert";
 import { useQuery } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ export function SubscriptionForm() {
 
   const { control } = useFormContext<TCASubscriptionFormValues>();
 
-  const { data: allowlistedTables } = useQuery(queries.tableChangeAlert.allowlistedTables());
+  const { data: allowlistedTables } = useQuery(tableChangeAlert.allowlistedTables());
 
   const tableOptions = useMemo<SelectOption[]>(
     () =>

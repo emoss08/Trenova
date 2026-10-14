@@ -10,7 +10,7 @@ import {
   setAgentMemoryStatus,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
-import { queries } from "@/lib/queries";
+import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
@@ -73,7 +73,7 @@ export default function MemoryTab() {
     queryKey: agentMemoryTotalQueryKey,
     queryFn: ({ signal }) => fetchAgentMemoryTotal({ signal }),
   });
-  const retrievalQuery = useQuery(queries.aiRetrieval.status());
+  const retrievalQuery = useQuery(aiRetrieval.status());
   const controlQuery = useQuery(agentControlQueryOptions());
   const [{ panelType, [MEMORY_STARTER_PARAM]: starterKind }, setStarter] =
     useQueryStates(starterParsers);

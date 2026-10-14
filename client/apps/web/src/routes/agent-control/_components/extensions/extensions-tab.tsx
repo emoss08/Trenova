@@ -1,5 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { agentExtension } from "@/lib/queries/agent-extension";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -43,8 +44,8 @@ export default function ExtensionsTab() {
   const t = useT();
   const searchRef = useRef<HTMLInputElement>(null);
   useSlashFocus(searchRef);
-  const catalogQuery = useQuery(queries.agentExtension.catalog());
-  const agentsQuery = useQuery(queries.assistant.agents(false));
+  const catalogQuery = useQuery(agentExtension.catalog());
+  const agentsQuery = useQuery(assistant.agents(false));
   const { allowed: canUpdate } = usePermission(Resource.AgentExtension, Operation.Update);
   const { allowed: canUpdateAgents } = usePermission(Resource.AgentDefinition, Operation.Update);
 
@@ -171,7 +172,8 @@ export default function ExtensionsTab() {
                 <>
                   <Button
                     type="button"
-                    variant="default" size="lg"
+                    variant="default"
+                    size="lg"
                     onClick={() => void setOpenType(featured.type)}
                   >
                     {t("Set up {0}", featured.name)}

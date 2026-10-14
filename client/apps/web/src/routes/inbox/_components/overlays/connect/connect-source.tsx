@@ -1,5 +1,5 @@
 import type { InboundMailbox, InboundProvider } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
@@ -597,7 +597,7 @@ function TestStep({
     if (waiting === null) {
       return;
     }
-    void queryClient.invalidateQueries({ queryKey: queries.inbox.mailboxes().queryKey });
+    void queryClient.invalidateQueries({ queryKey: inbox.mailboxes().queryKey });
   }, [received, waiting, queryClient]);
 
   useEffect(() => {

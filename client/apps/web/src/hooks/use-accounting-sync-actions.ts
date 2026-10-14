@@ -10,7 +10,7 @@ import {
   skipAccountingSync,
 } from "@/lib/graphql/accounting-sync-ledger";
 import { ACCOUNTING_SYNC_LEDGER_KEY } from "@/lib/graphql/accounting-sync-ledger-table";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type {
   AccountingBackfillAction,
   AccountingSyncErrorCategory,
@@ -36,7 +36,7 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
   const refresh = useCallback(
     () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.accountingSync._def }),
+        queryClient.invalidateQueries({ queryKey: accountingSync._def }),
         queryClient.invalidateQueries({ queryKey: [ACCOUNTING_SYNC_LEDGER_KEY] }),
       ]),
     [queryClient],

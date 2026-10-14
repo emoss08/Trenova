@@ -162,3 +162,38 @@ describe("math in a reply", () => {
     expect(document.querySelector(".md-math-pending, .katex")).toBeNull();
   });
 });
+
+describe("code in a reply", () => {
+  function fenced(label: string, code: string) {
+    renderReply(["```" + label, code, "```"].join("\n"));
+    return document.querySelector(".md-code pre") as HTMLElement;
+  }
+
+  it("colours a fenced block on its first render, under the label it was written with", () => {
+    const pre = fenced("plsql", "select id from shipment where status = 'Ready'");
+
+    expect(document.querySelector(".md-code-h")?.textContent).toContain("plsql");
+    expect(pre.dataset.language).toBe("sql");
+    expect(pre.textContent).toBe("select id from shipment where status = 'Ready'");
+    expect(
+      [...pre.querySelectorAll(".text-syntax-keyword")].map((node) => node.textContent),
+    ).toEqual(["select", "from", "where"]);
+    expect(pre.querySelector(".text-syntax-string")?.textContent).toBe("'Ready'");
+  });
+
+  it("colours GraphQL written as gql", () => {
+    const pre = fenced("gql", "query { shipment(id: $id) { proNumber } }");
+
+    expect(pre.dataset.language).toBe("graphql");
+    expect(pre.querySelector(".text-syntax-keyword")?.textContent).toBe("query");
+    expect(pre.querySelector(".text-syntax-function")?.textContent).toBe("$id");
+  });
+
+  it("shows a language the app has no grammar for as the text it is", () => {
+    const pre = fenced("cobol", "PERFORM 100-MAIN.");
+
+    expect(pre.dataset.language).toBeUndefined();
+    expect(pre.textContent).toBe("PERFORM 100-MAIN.");
+    expect(pre.querySelector("[class*='text-syntax-']")).toBeNull();
+  });
+});

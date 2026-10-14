@@ -1,5 +1,5 @@
 import { isScheduleRequest } from "@/components/assistant/composer-commands";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { ConversationSchedule, ConversationScheduleList } from "@/types/assistant";
 import {
@@ -165,7 +165,7 @@ function writeSchedule(
   next: ConversationSchedule | null,
 ) {
   queryClient.setQueryData<ConversationScheduleList>(
-    queries.assistant.schedules(threadId).queryKey,
+    assistant.schedules(threadId).queryKey,
     (list) => patchScheduleList(list, id, next),
   );
 }
@@ -176,7 +176,7 @@ function writeSchedule(
  */
 export function useScheduleActions(threadId: string) {
   const queryClient = useQueryClient();
-  const key = queries.assistant.schedules(threadId).queryKey;
+  const key = assistant.schedules(threadId).queryKey;
 
   const restore = (previous: ConversationScheduleList | undefined) => {
     queryClient.setQueryData(key, previous);
@@ -236,7 +236,7 @@ export function useCreateSchedule(threadId: string) {
   const mutation = useMutation({
     mutationFn: (content: string) => apiService.assistantService.createSchedule(threadId, content),
     onSuccess: async ({ schedule, message }) => {
-      const historyKey = queries.assistant.messages(threadId).queryKey;
+      const historyKey = assistant.messages(threadId).queryKey;
       const cached = queryClient.getQueryData<ThreadHistory>(historyKey);
       if (continuesHistory(cached, [message])) {
         queryClient.setQueryData<ThreadHistory>(historyKey, (history) =>
@@ -246,13 +246,13 @@ export function useCreateSchedule(threadId: string) {
         await queryClient.invalidateQueries({ queryKey: historyKey });
       }
 
-      const scheduleKey = queries.assistant.schedules(threadId).queryKey;
+      const scheduleKey = assistant.schedules(threadId).queryKey;
       if (queryClient.getQueryData(scheduleKey)) {
         writeSchedule(queryClient, threadId, schedule.id, schedule);
       } else {
         await queryClient.invalidateQueries({ queryKey: scheduleKey });
       }
-      void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+      void queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
     },
     onError: (error) => handleMutationError({ error, resourceName: "Schedule" }),
   });

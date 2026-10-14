@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { useEDITransactionSetOptions } from "@/hooks/use-edi-transaction-set-options";
 
 vi.mock("@/lib/graphql/select-options", () => ({
@@ -98,9 +98,7 @@ describe("useEDITransactionSetOptions", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     await waitFor(() =>
-      expect(queryClient.getQueryState(queries.edi.transactionSetOptions().queryKey)?.status).toBe(
-        "error",
-      ),
+      expect(queryClient.getQueryState(edi.transactionSetOptions().queryKey)?.status).toBe("error"),
     );
     expect(result.current).toEqual(fallback);
   });

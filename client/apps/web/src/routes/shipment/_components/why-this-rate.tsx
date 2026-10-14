@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { rateGuardrailKindChoices, rateQuoteOutcomeChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { rateQuote } from "@/lib/queries/rate-quote";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -25,7 +25,7 @@ export function WhyThisRate({ shipmentId }: WhyThisRateProps) {
   const t = useT();
 
   const { data: quote, isLoading } = useQuery({
-    ...queries.rateQuote.appliedForShipment(shipmentId ?? ""),
+    ...rateQuote.appliedForShipment(shipmentId ?? ""),
     enabled: Boolean(shipmentId),
   });
 

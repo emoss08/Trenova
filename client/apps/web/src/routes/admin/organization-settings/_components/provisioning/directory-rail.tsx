@@ -6,7 +6,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
@@ -33,7 +33,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
   );
   const directoriesQuery = useInfiniteQuery({
     queryKey: [
-      ...queries.organization.scimDirectories(organizationId).queryKey,
+      ...organization.scimDirectories(organizationId).queryKey,
       "rail",
       { limit: directoryPageSize },
     ],

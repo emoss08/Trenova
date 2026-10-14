@@ -9,7 +9,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
@@ -33,7 +33,7 @@ export function VersionCompareDialog({
   const t = useT();
 
   const { data, isLoading, error } = useQuery({
-    ...queries.formulaTemplate.versionDiff(templateId, fromVersion, toVersion),
+    ...formulaTemplate.versionDiff(templateId, fromVersion, toVersion),
     enabled: open,
   });
 

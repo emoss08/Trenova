@@ -1,7 +1,7 @@
 import { isAppPath } from "@/lib/app-path";
 import { artifactRefId } from "@/lib/artifact-ref";
 import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
-import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
+import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   Children,
@@ -30,28 +30,6 @@ import { remarkDeskSubset } from "./remark-desk-subset";
 import { rehypeStreamWords } from "./rehype-stream-words";
 
 type PluggableList = NonNullable<MarkdownOptions["rehypePlugins"]>;
-
-const HIGHLIGHTED_LANGS = new Set(["json", "javascript", "graphql", "plsql"]);
-
-type HighlightedLang = "json" | "javascript" | "graphql" | "plsql";
-
-const LANG_ALIASES: Record<string, HighlightedLang> = {
-  js: "javascript",
-  jsonc: "json",
-  sql: "plsql",
-  gql: "graphql",
-};
-
-function resolveLang(className: string | undefined): HighlightedLang | null {
-  const match = /language-([a-z0-9]+)/iu.exec(className ?? "");
-  if (!match) {
-    return null;
-  }
-  const raw = match[1].toLowerCase();
-  const lang = LANG_ALIASES[raw] ?? raw;
-
-  return HIGHLIGHTED_LANGS.has(lang) ? (lang as HighlightedLang) : null;
-}
 
 /** The text inside a code node: react-markdown hands it as one or more strings. */
 function textOf(children: ReactNode): string {
@@ -103,12 +81,11 @@ function CopyCode({ code }: { code: string }) {
 
 /**
  * A fenced block: its language as a label, a way to copy it, and the code,
- * highlighted where the language is one the app highlights. A block still
+ * highlighted where the app has a grammar for the language. A block still
  * arriving shows what has come so far.
  */
 function CodeBlock({ className, children }: ComponentProps<"code">) {
   const code = textOf(children).replace(/\n$/u, "");
-  const lang = resolveLang(className);
   const label = fenceLabel(className);
   if (label === RAW_MATH_FENCE) {
     return <pre className="md-math-raw">{code}</pre>;
@@ -120,13 +97,11 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
         <span>{label}</span>
         <CopyCode code={code} />
       </div>
-      {lang ? (
-        <ShikiCodeBlock code={code} lang={lang} className="text-xs" />
-      ) : (
-        <pre className="scrollbar-overlay overflow-x-auto p-3 font-mono text-xs leading-relaxed">
-          <code>{code}</code>
-        </pre>
-      )}
+      <HighlightedCode
+        code={code}
+        language={label}
+        className="scrollbar-overlay overflow-x-auto p-3"
+      />
     </div>
   );
 }

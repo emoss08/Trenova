@@ -6,7 +6,7 @@ import {
   type CaptureDevice,
   type CaptureRequest,
 } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { api } from "@trenova/shared/lib/api";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -125,7 +125,7 @@ export function useDeskScans(threadId: string | null) {
   const active = threadId !== null && scans.length > 0;
 
   const requests = useQuery({
-    ...queries.capture.requests(THREAD_TARGET, threadId ?? ""),
+    ...capture.requests(THREAD_TARGET, threadId ?? ""),
     enabled: active,
     refetchInterval: active ? SCAN_POLL_MS : false,
   });
@@ -138,7 +138,7 @@ export function useDeskScans(threadId: string | null) {
     .filter((id): id is string => Boolean(id));
   const batches = useQueries({
     queries: batchIds.map((id) => ({
-      ...queries.capture.batch(id),
+      ...capture.batch(id),
       refetchInterval: SCAN_POLL_MS,
     })),
   });
@@ -178,7 +178,7 @@ export function useDeskScans(threadId: string | null) {
         { requestId: request.id, device: input.device.name, startedAt: Date.now() },
       ]);
       void queryClient.invalidateQueries({
-        queryKey: queries.capture.requests(THREAD_TARGET, threadId).queryKey,
+        queryKey: capture.requests(THREAD_TARGET, threadId).queryKey,
       });
     },
     [queryClient, threadId],
@@ -242,8 +242,8 @@ export function DeskCapturePanel({
   scans: DeskScans;
 }) {
   const t = useT();
-  const devicesQuery = useQuery(queries.capture.myDevices("Active"));
-  const profilesQuery = useQuery(queries.capture.availableProfiles());
+  const devicesQuery = useQuery(capture.myDevices("Active"));
+  const profilesQuery = useQuery(capture.availableProfiles());
   const devices = devicesQuery.data ?? [];
   const typesQuery = useDocumentTypeOptions(devices.length > 0);
   const preferredDevice = useDeskSetting("scanDevice");

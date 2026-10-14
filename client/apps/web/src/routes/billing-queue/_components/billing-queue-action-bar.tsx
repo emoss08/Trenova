@@ -6,7 +6,7 @@ import {
   assignBillingQueueBillerGraphQL,
   updateBillingQueueStatusGraphQL,
 } from "@/lib/graphql/billing-queue";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
   BillingQueueItem,
@@ -65,7 +65,7 @@ export function BillingQueueActionBar({
   const invalidate = useInvalidateBillingQueue();
 
   const { data: billingReadiness } = useQuery({
-    ...queries.shipment.billingReadiness(item.shipmentId),
+    ...shipment.billingReadiness(item.shipmentId),
     enabled: item.status === "InReview",
   });
 

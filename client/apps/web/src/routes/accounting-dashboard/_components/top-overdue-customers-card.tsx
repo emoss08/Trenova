@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -9,7 +9,7 @@ import { Link } from "react-router";
 export function TopOverdueCustomersCard() {
   const t = useT();
 
-  const { data: customers, isLoading } = useQuery(queries.ar.topOverdueCustomers(10));
+  const { data: customers, isLoading } = useQuery(ar.topOverdueCustomers(10));
 
   const rows = customers ?? [];
   const maxOverdue = rows.reduce((max, row) => Math.max(max, row.overdueMinor), 0);

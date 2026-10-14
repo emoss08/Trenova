@@ -1,3 +1,4 @@
+import { formulaSchemaResponseSchema } from "@trenova/shared/types/formula-template";
 import { describe, expect, it } from "vitest";
 import {
   buildKnownIdentifiers,
@@ -5,44 +6,69 @@ import {
   isKnownFunction,
   isKnownVariable,
 } from "../known-identifiers";
+import { describedShipment } from "./described-shipment";
 
 describe("buildKnownIdentifiers", () => {
-  it("falls back to the bundled shipment schema when no server schema exists", () => {
-    const known = buildKnownIdentifiers(undefined);
+  it("knows only the template's inputs until the engine's schema has loaded", () => {
+    const known = buildKnownIdentifiers(undefined, [{ name: "fuelPct", type: "Number" }]);
+    expect(known.ready).toBe(false);
+    expect([...known.variablePaths]).toEqual(["fuelPct"]);
+    expect(known.functionNames.size).toBe(0);
+    expect(known.disabled.size).toBe(0);
+  });
+
+  it("takes functions, builtins and the disabled list from the engine", () => {
+    const known = buildKnownIdentifiers(describedShipment);
+    expect(known.ready).toBe(true);
     expect(known.variablePaths.has("totalDistance")).toBe(true);
-    expect(known.functionNames.has("round")).toBe(true);
+    expect(known.shapes.get("round")).toMatchObject({ minArgs: 1, maxArgs: 2, returns: "Number" });
+    expect(known.shapes.get("min")?.maxArgs).toBe(Number.POSITIVE_INFINITY);
+    expect(known.shapes.get("filter")?.predicate).toBe(true);
+    expect(known.shapes.get("sum")?.predicate).toBe(false);
+    for (const builtin of ["reverse", "toPairs", "fromPairs", "bitnot"]) {
+      expect(known.functionNames.has(builtin), builtin).toBe(true);
+    }
+    expect(known.functions.some((fn) => fn.name === "reverse")).toBe(false);
+    expect(known.disabled.get("now")).toEqual({
+      name: "now",
+      reason: "nondeterministic",
+      replacement: "ratingTime",
+    });
   });
 
   it("uses the server schema when it has variables", () => {
-    const known = buildKnownIdentifiers({
-      variables: [
-        {
-          name: "newServerVariable",
-          type: "number",
-          description: "",
-          category: "shipment",
-          nullable: false,
-          computed: false,
-          enum: undefined,
-        },
-      ],
-      functions: [
-        {
-          name: "lookup",
-          signature: "lookup(t, k)",
-          description: "",
-          example: "",
-          category: "",
-          operator: false,
-        },
-      ],
-    });
+    const known = buildKnownIdentifiers(
+      formulaSchemaResponseSchema.parse({
+        schemaId: "shipment",
+        variables: [
+          {
+            name: "newServerVariable",
+            type: "number",
+            description: "",
+            category: "shipment",
+            nullable: false,
+            computed: false,
+            enum: undefined,
+          },
+        ],
+        functions: [
+          {
+            name: "lookup",
+            signature: "lookup(t, k)",
+            description: "",
+            example: "",
+            category: "",
+            operator: false,
+          },
+        ],
+      }),
+    );
     expect(known.variablePaths.has("newServerVariable")).toBe(true);
     expect(known.variablePaths.has("totalDistance")).toBe(false);
   });
 
   it("adds custom variables with a custom category", () => {
-    const known = buildKnownIdentifiers(undefined, [
+    const known = buildKnownIdentifiers(describedShipment, [
       { name: "fuelPct", type: "Number", description: "", required: false },
     ]);
     expect(known.variablePaths.has("fuelPct")).toBe(true);
@@ -51,7 +77,7 @@ describe("buildKnownIdentifiers", () => {
 });
 
 describe("isKnownVariable", () => {
-  const known = buildKnownIdentifiers(undefined);
+  const known = buildKnownIdentifiers(describedShipment);
 
   it("recognizes exact paths and dotted-root matches", () => {
     expect(isKnownVariable(known, "customer.name")).toBe(true);
@@ -61,7 +87,7 @@ describe("isKnownVariable", () => {
 });
 
 describe("isKnownFunction", () => {
-  const known = buildKnownIdentifiers(undefined);
+  const known = buildKnownIdentifiers(describedShipment);
 
   it("recognizes Trenova functions and expr builtins", () => {
     expect(isKnownFunction(known, "round")).toBe(true);

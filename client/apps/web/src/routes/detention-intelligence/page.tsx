@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { cn } from "@trenova/shared/lib/utils";
@@ -17,7 +17,7 @@ function RefreshAction() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const isFetching = useIsFetching({ queryKey: queries.detention._def }) > 0;
+  const isFetching = useIsFetching({ queryKey: detention._def }) > 0;
 
   return (
     <Button
@@ -27,7 +27,7 @@ function RefreshAction() {
       className="h-7"
       disabled={isFetching}
       aria-label={t("Recalculate detention intelligence")}
-      onClick={() => void queryClient.invalidateQueries({ queryKey: queries.detention._def })}
+      onClick={() => void queryClient.invalidateQueries({ queryKey: detention._def })}
     >
       <RefreshCw01Icon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
       {isFetching ? t("Recalculating…") : t("Refresh")}

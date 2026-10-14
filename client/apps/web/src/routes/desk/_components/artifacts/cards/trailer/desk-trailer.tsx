@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import type { DeskTrailer as DeskTrailerRecord } from "@/lib/graphql/trailer-card";
-import { queries } from "@/lib/queries";
+import { trailer as trailerQueries } from "@/lib/queries/trailer";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -73,7 +73,7 @@ export function DeskTrailer({
 }: TrailerCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.trailer.card(recordId),
+    ...trailerQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });

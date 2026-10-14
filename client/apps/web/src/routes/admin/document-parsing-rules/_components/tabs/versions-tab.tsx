@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import type { RuleVersion } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -86,7 +86,7 @@ function VersionList({
   const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
   const { data: versions, isLoading } = useQuery({
-    ...queries.documentParsingRule.versions(ruleSetId),
+    ...documentParsingRule.versions(ruleSetId),
   });
 
   const sortedVersions = useMemo(
@@ -99,7 +99,7 @@ function VersionList({
       apiService.documentParsingRuleService.createVersion(ruleSetId, NEW_VERSION_TEMPLATE),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.versions._def,
+        queryKey: documentParsingRule.versions._def,
       });
       toast.success(t("Draft version created (auto-numbered by server)"));
       if (data.id) onSelectVersion(data.id);

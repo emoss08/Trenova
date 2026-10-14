@@ -9,7 +9,7 @@ import {
   useTemplateDesignerTemplateListInfiniteQuery,
   useTemplateDesignerUrlActions,
 } from "@/hooks/use-template-designer-state";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { cn } from "@trenova/shared/lib/utils";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import {
@@ -213,9 +213,9 @@ function TemplateEditDialog({
         };
       }}
       onSuccess={async (updatedTemplate) => {
-        await queryClient.invalidateQueries({ queryKey: queries.edi.templates._def });
+        await queryClient.invalidateQueries({ queryKey: edi.templates._def });
         await queryClient.invalidateQueries({
-          queryKey: queries.edi.template(updatedTemplate.id).queryKey,
+          queryKey: edi.template(updatedTemplate.id).queryKey,
         });
       }}
     />

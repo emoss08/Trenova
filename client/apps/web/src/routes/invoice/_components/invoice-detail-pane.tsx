@@ -31,7 +31,8 @@ import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
-import { queries } from "@/lib/queries";
+import { invoice as invoiceQueries } from "@/lib/queries/invoice";
+import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
@@ -89,17 +90,17 @@ export default function InvoiceDetailPane({
 
   const [{ tab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
   const { data: invoice, isLoading } = useQuery({
-    ...queries.invoice.get(selectedInvoiceId ?? ""),
+    ...invoiceQueries.get(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
   });
   // The AR side (balance, applications, disputes, EDI plan) is resolver-only
   // and is read beside the REST detail rather than folded into it.
   const arContextQuery = useQuery({
-    ...queries.invoice.arContext(selectedInvoiceId ?? ""),
+    ...invoiceQueries.arContext(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
   });
   const lineageQuery = useQuery({
-    ...queries["invoice-adjustment"].lineage(invoice?.correctionGroupId ?? ""),
+    ...invoiceAdjustment.lineage(invoice?.correctionGroupId ?? ""),
     enabled: Boolean(invoice?.correctionGroupId),
   });
   const latestAdjustment = useMemo(() => {
@@ -114,7 +115,7 @@ export default function InvoiceDetailPane({
     );
   }, [lineageQuery.data]);
   const latestAdjustmentDetailQuery = useQuery({
-    ...queries["invoice-adjustment"].get(latestAdjustment?.id ?? ""),
+    ...invoiceAdjustment.get(latestAdjustment?.id ?? ""),
     enabled: Boolean(latestAdjustment?.id),
   });
 
@@ -373,7 +374,7 @@ function InvoiceDeliveryTab({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const sendPlanQuery = useQuery(queries.invoice.sendPlan(invoice.id));
+  const sendPlanQuery = useQuery(invoiceQueries.sendPlan(invoice.id));
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   const invalidateInvoiceDelivery = () => {
@@ -397,9 +398,9 @@ function InvoiceDeliveryTab({
     mutationFn: () => apiService.invoiceService.send(invoice.id),
     onSuccess: () => {
       invalidateInvoiceDelivery();
-      void queryClient.invalidateQueries(queries.invoice.sendPlan(invoice.id));
+      void queryClient.invalidateQueries(invoiceQueries.sendPlan(invoice.id));
       void queryClient.invalidateQueries({
-        queryKey: queries.invoice.emailAttempts(invoice.id).queryKey,
+        queryKey: invoiceQueries.emailAttempts(invoice.id).queryKey,
       });
       toast.success(t("{0} send attempted", invoice.number));
     },
@@ -790,7 +791,7 @@ function formatCount(count: number, kind: "part" | "attachment" | "link"): strin
 function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
   const t = useT();
 
-  const queryKey = queries.invoice.emailAttempts(invoiceId).queryKey;
+  const queryKey = invoiceQueries.emailAttempts(invoiceId).queryKey;
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const query = useInfiniteQuery({

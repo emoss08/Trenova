@@ -2,7 +2,7 @@ import { SectionPanel } from "@/components/section-panel";
 import { usePermission, usePermissions } from "@/hooks/use-permission";
 import { capturePixelTypeLabel, captureSeparatorLabel } from "@/lib/capture";
 import { deleteCaptureProfile, type CaptureProfile } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -118,7 +118,7 @@ export function ProfilesPanel() {
   const queryClient = useQueryClient();
   const { canCreate, canUpdate } = usePermissions(Resource.CaptureProfile);
   const { allowed: canDelete } = usePermission(Resource.CaptureProfile, Operation.Delete);
-  const profilesQuery = useQuery(queries.capture.profiles(null, ""));
+  const profilesQuery = useQuery(capture.profiles(null, ""));
 
   const [panelMode, setPanelMode] = useState<ProfilePanelMode>("create");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -130,8 +130,8 @@ export function ProfilesPanel() {
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.capture.profiles._def }),
-      queryClient.invalidateQueries({ queryKey: queries.capture.availableProfiles._def }),
+      queryClient.invalidateQueries({ queryKey: capture.profiles._def }),
+      queryClient.invalidateQueries({ queryKey: capture.availableProfiles._def }),
     ]);
   }, [queryClient]);
 

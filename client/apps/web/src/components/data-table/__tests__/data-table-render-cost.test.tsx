@@ -18,30 +18,27 @@ type TestRow = { id: string; name: string; stage: number };
 const ROW_COUNT = 100;
 const COLUMN_COUNT = 14;
 
-const {
-  countCellRender,
-  countHeaderRender,
-  queryResult,
-  useDataTableQueryMock,
-} = vi.hoisted(() => {
-  const results = Array.from({ length: 100 }, (_, index) => ({
-    id: `r${index}`,
-    name: `Row ${index}`,
-    stage: index % 3,
-  }));
-  const queryResult = {
-    data: { results, count: results.length },
-    isLoading: false,
-    isError: false,
-    error: null,
-  };
-  return {
-    countCellRender: vi.fn(),
-    countHeaderRender: vi.fn(),
-    queryResult,
-    useDataTableQueryMock: vi.fn((..._args: unknown[]): unknown => queryResult),
-  };
-});
+const { countCellRender, countHeaderRender, queryResult, useDataTableQueryMock } = vi.hoisted(
+  () => {
+    const results = Array.from({ length: 100 }, (_, index) => ({
+      id: `r${index}`,
+      name: `Row ${index}`,
+      stage: index % 3,
+    }));
+    const queryResult = {
+      data: { results, count: results.length },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+    return {
+      countCellRender: vi.fn(),
+      countHeaderRender: vi.fn(),
+      queryResult,
+      useDataTableQueryMock: vi.fn((..._args: unknown[]): unknown => queryResult),
+    };
+  },
+);
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
@@ -60,10 +57,19 @@ vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", async () => ({
-  queries: {
-    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
-  },
+vi.mock("@/lib/queries/bulk-edit", async () => ({
+  bulkEdit: (await import("@/test/data-table-queries")).dataTableQueryMocks.bulkEdit,
+}));
+vi.mock("@/lib/queries/table-layout", async () => ({
+  tableLayout: (await import("@/test/data-table-queries")).dataTableQueryMocks.tableLayout,
+}));
+vi.mock("@/lib/queries/data-table-insight", async () => ({
+  dataTableInsight: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .dataTableInsight,
+}));
+vi.mock("@/lib/queries/table-configuration", async () => ({
+  tableConfiguration: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .tableConfiguration,
 }));
 
 vi.mock("@trenova/shared/hooks/use-debounce", () => ({
@@ -166,9 +172,11 @@ function Board() {
 }
 
 function renderBoard() {
-  const queryClient = seedDataTableQueries(new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  }));
+  const queryClient = seedDataTableQueries(
+    new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    }),
+  );
   render(
     <QueryClientProvider client={queryClient}>
       <NuqsTestingAdapter hasMemory searchParams="?pageSize=100">

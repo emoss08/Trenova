@@ -13,7 +13,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { bankReceiptBatch } from "@/lib/queries/bank-receipt-batch";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceipt } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ export function BankReceiptBatchDetailPage() {
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
-    ...queries.bankReceiptBatch.get(batchId!),
+    ...bankReceiptBatch.get(batchId!),
     enabled: Boolean(batchId),
   });
 

@@ -1,6 +1,6 @@
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundMessageDetail, TriageAction, TriageStopsDecision } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useQuery } from "@tanstack/react-query";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -35,7 +35,7 @@ export function StopsStep({
   const t = useT();
   const actions = useTriageActions();
   const panel = useReaderPanel();
-  const query = useQuery(queries.inbox.stopTimes(message.id));
+  const query = useQuery(inbox.stopTimes(message.id));
   const [pending, setPending] = useState<TriageStopsDecision | null>(null);
   const [error, setError] = useState<string | null>(null);
   const stops = query.data ?? null;

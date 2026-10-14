@@ -15,7 +15,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
-    ...queries.integration.config("OpenWeatherMap"),
+    ...integration.config("OpenWeatherMap"),
     enabled: open,
   });
 
@@ -68,10 +68,10 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
       toast.success(t("OpenWeatherMap integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("OpenWeatherMap").queryKey,
+          queryKey: integration.config("OpenWeatherMap").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     },

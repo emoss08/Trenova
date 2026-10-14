@@ -10,7 +10,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { EDIInboundFileRow } from "@/lib/graphql/edi-table";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -38,7 +38,7 @@ export function InboundFilePanel({
     state.hasPermission(Resource.EDI, Operation.Update),
   );
   const { data: file } = useQuery({
-    ...queries.edi.inboundFile(row?.id ?? ""),
+    ...edi.inboundFile(row?.id ?? ""),
     enabled: open && !!row?.id,
   });
   const detail = file ?? row;

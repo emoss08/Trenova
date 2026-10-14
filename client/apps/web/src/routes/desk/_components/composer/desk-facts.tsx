@@ -1,5 +1,5 @@
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { AssistantThread } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ const NO_FACTS: readonly string[] = [];
  */
 function usePinnedFacts(thread: AssistantThread) {
   const queryClient = useQueryClient();
-  const threadKey = queries.assistant.thread(thread.id).queryKey;
+  const threadKey = assistant.thread(thread.id).queryKey;
 
   return useMutation({
     mutationFn: (facts: readonly string[]) =>

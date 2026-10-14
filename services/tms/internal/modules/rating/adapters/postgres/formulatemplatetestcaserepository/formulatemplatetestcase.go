@@ -106,14 +106,14 @@ func (r *repository) Delete(
 			zap.String("testCaseID", req.TestCaseID.String()),
 		)
 
+		cols := formulatemplatecol.TestCaseColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*formulatemplate.TestCase)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("ftc.id = ?", req.TestCaseID).
-					Where("ftc.template_id = ?", req.TemplateID).
-					Where("ftc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("ftc.business_unit_id = ?", req.TenantInfo.BuID)
+				return formulatemplatecol.TestCaseScopeTenantDelete(dq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.TestCaseID).
+					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -121,11 +121,7 @@ func (r *repository) Delete(
 			return err
 		}
 
-		return dberror.CheckRowsAffected(
-			results,
-			"FormulaTemplateTestCase",
-			req.TestCaseID.String(),
-		)
+		return dberror.CheckFound(results, "FormulaTemplateTestCase")
 	})
 }
 

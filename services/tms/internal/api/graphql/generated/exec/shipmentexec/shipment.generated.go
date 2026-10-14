@@ -2207,12 +2207,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
-				Name:      "formulaTemplate",
-				HasChild:  true,
-				ChildType: "ShipmentFormulaTemplate",
+				Name:       "formulaTemplate",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ShipmentFormulaTemplate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return obj.FormulaTemplate, nil
+					return gqlexec.Resolver[resolverShipment](ec, "Shipment").FormulaTemplate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOShipmentFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaTemplate),
 			},
@@ -8483,12 +8485,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "expression",
-				NonNull:  true,
-				ChildErr: errNoChild2,
+				Name:       "expression",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return obj.Expression, nil
+					return gqlexec.Resolver[resolverShipmentRatingDetail](ec, "ShipmentRatingDetail").Expression(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -9789,6 +9793,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "ShipmentCustomer", Check: func(r any) bool { _, ok := r.(resolverShipmentCustomer); return ok }},
 		{Root: "ShipmentMove", Check: func(r any) bool { _, ok := r.(resolverShipmentMove); return ok }},
 		{Root: "ShipmentMoveJurisdictionMile", Check: func(r any) bool { _, ok := r.(resolverShipmentMoveJurisdictionMile); return ok }},
+		{Root: "ShipmentRatingDetail", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingDetail); return ok }},
 	},
 }
 
@@ -9858,6 +9863,7 @@ type resolverShipment interface {
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
+	FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error)
 }
 
 type resolverShipmentCustomer interface {
@@ -9872,6 +9878,10 @@ type resolverShipmentMoveJurisdictionMile interface {
 	TollDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	FerryDistance(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (*float64, error)
 	Source(ctx context.Context, obj *shipment.ShipmentMoveJurisdictionMile) (string, error)
+}
+
+type resolverShipmentRatingDetail interface {
+	Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error)
 }
 
 var (

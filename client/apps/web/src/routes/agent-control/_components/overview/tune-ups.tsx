@@ -7,7 +7,8 @@ import {
   restoreAITuneUp,
   type AITuneUp,
 } from "@/lib/graphql/ai-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -49,7 +50,7 @@ const KIND_ICON = {
  */
 export function TuneUps() {
   const t = useT();
-  const tuneUpsQuery = useQuery(queries.aiControl.tuneUps());
+  const tuneUpsQuery = useQuery(aiControl.tuneUps());
   const items = tuneUpsQuery.data?.items ?? [];
 
   return (
@@ -93,7 +94,7 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
   const queryClient = useQueryClient();
   const [leaving, setLeaving] = useState(false);
   const [now] = useState(() => Math.floor(Date.now() / 1000));
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const catalogQuery = useQuery(aiProvider.catalog());
   const changesProviders = tuneUp.kind === "ReorderProviders" || tuneUp.kind === "AssignTask";
   const { allowed: canChange } = usePermission(
     changesProviders ? Resource.AIProvider : Resource.AgentDefinition,
@@ -118,8 +119,8 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
-      queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
+      queryClient.invalidateQueries({ queryKey: aiControl._def }),
+      queryClient.invalidateQueries({ queryKey: aiProvider._def }),
       queryClient.invalidateQueries({ queryKey: ["agent-definitions"] }),
       invalidateAIControlCounts(queryClient),
     ]);
@@ -188,7 +189,9 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
         <div className="nd-a">
           <Button
             type="button"
-            variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
             title={t("Dismiss for 30 days")}
             aria-label={t("Dismiss for 30 days")}
             disabled={busy || !canDecide}
@@ -198,7 +201,8 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
           </Button>
           <Button
             type="button"
-            variant="outline" size="sm"
+            variant="outline"
+            size="sm"
             disabled={busy || !canDecide || !canChange}
             isLoading={apply.isPending}
             loadingText={copy.action}

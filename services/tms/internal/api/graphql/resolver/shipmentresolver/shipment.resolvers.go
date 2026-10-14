@@ -1202,3 +1202,29 @@ func (r *QueryResolver) ShipmentTrackingEvents(ctx context.Context, shipmentID s
 		ShipmentID: parsedShipmentID,
 	})
 }
+
+func (r *ShipmentRatingDetailResolver) Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error) {
+	if obj == nil || obj.Expression == "" {
+		return "", nil
+	}
+
+	allowed, err := mayReadFormulas(ctx, r.Core)
+	if err != nil || !allowed {
+		return "", err
+	}
+
+	return obj.Expression, nil
+}
+
+func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error) {
+	if obj == nil || obj.FormulaTemplate == nil {
+		return nil, nil
+	}
+
+	allowed, err := mayReadFormulas(ctx, r.Core)
+	if err != nil || !allowed {
+		return nil, err
+	}
+
+	return obj.FormulaTemplate, nil
+}

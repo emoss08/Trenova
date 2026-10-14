@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMemo } from "react";
@@ -26,7 +26,7 @@ export function DeskArtifactPage() {
   const navigate = useNavigate();
   const { threadId = "", slug = "" } = useParams<{ threadId: string; slug: string }>();
   const lineageQuery = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.slug(slug),
+    ...assistant.artifacts(threadId)._ctx.slug(slug),
     enabled: threadId !== "" && slug !== "",
     retry: false,
   });

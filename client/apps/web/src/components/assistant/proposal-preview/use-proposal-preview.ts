@@ -1,5 +1,5 @@
 import type { PreviewScope } from "@/lib/graphql/agent-preview";
-import { queries } from "@/lib/queries";
+import { agentPreview } from "@/lib/queries/agent-preview";
 import { modificationsKey } from "@/lib/queries/agent-preview";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { keepPreviousData, useQuery, type QueryClient } from "@tanstack/react-query";
@@ -42,7 +42,7 @@ export function useProposalPreview({
   keepPrevious?: boolean;
 }) {
   return useQuery({
-    ...queries.agentPreview.proposal(scope, id, modifications),
+    ...agentPreview.proposal(scope, id, modifications),
     enabled: enabled && id !== "",
     staleTime: PREVIEW_STALE_TIME,
     placeholderData: keepPrevious ? keepPreviousData : undefined,
@@ -59,7 +59,7 @@ export function usePlanPreview({
   enabled?: boolean;
 }) {
   return useQuery({
-    ...queries.agentPreview.plan(scope, id),
+    ...agentPreview.plan(scope, id),
     enabled: enabled && id !== "",
     staleTime: PREVIEW_STALE_TIME,
   });
@@ -68,14 +68,14 @@ export function usePlanPreview({
 /** Warms the cache for a row the person is about to read. */
 export function prefetchProposalPreview(client: QueryClient, scope: PreviewScope, id: string) {
   return client.prefetchQuery({
-    ...queries.agentPreview.proposal(scope, id),
+    ...agentPreview.proposal(scope, id),
     staleTime: PREVIEW_STALE_TIME,
   });
 }
 
 export function prefetchPlanPreview(client: QueryClient, scope: PreviewScope, id: string) {
   return client.prefetchQuery({
-    ...queries.agentPreview.plan(scope, id),
+    ...agentPreview.plan(scope, id),
     staleTime: PREVIEW_STALE_TIME,
   });
 }

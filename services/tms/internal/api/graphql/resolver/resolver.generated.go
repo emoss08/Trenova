@@ -340,6 +340,7 @@ type Resolver struct {
 	shipmentCustomer                   *shipmentresolver.ShipmentCustomerResolver
 	shipmentMove                       *shipmentresolver.ShipmentMoveResolver
 	shipmentMoveJurisdictionMile       *shipmentresolver.ShipmentMoveJurisdictionMileResolver
+	shipmentRatingDetail               *shipmentresolver.ShipmentRatingDetailResolver
 	tCASubscription                    *tablechangealertresolver.TCASubscriptionResolver
 	tableConfiguration                 *tableconfigurationresolver.TableConfigurationResolver
 	tender                             *tenderresolver.TenderResolver
@@ -1501,6 +1502,7 @@ func FromServices(s *Services) *Resolver {
 		shipmentCustomer:             &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps},
 		shipmentMove:                 &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps},
 		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
+		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
 		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
 		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
 		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
@@ -2609,6 +2611,10 @@ func (r *Resolver) ShipmentMove() generated.ShipmentMoveResolver {
 
 func (r *Resolver) ShipmentMoveJurisdictionMile() generated.ShipmentMoveJurisdictionMileResolver {
 	return r.shipmentMoveJurisdictionMile
+}
+
+func (r *Resolver) ShipmentRatingDetail() generated.ShipmentRatingDetailResolver {
+	return r.shipmentRatingDetail
 }
 
 func (r *Resolver) TCASubscription() generated.TCASubscriptionResolver {

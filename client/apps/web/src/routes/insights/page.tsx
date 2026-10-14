@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { insight as insightQueries } from "@/lib/queries/insight";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeftIcon,
@@ -52,7 +52,7 @@ export function InsightsPage() {
     [filters],
   );
 
-  const insightsQuery = useQuery(queries.insight.browse(browseParams));
+  const insightsQuery = useQuery(insightQueries.browse(browseParams));
   const insights = insightsQuery.data?.results ?? [];
   const total = insightsQuery.data?.total ?? 0;
   const pages = pageCount(total, PAGE_SIZE);
@@ -63,7 +63,7 @@ export function InsightsPage() {
   );
 
   const refresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queries.insight._def });
+    void queryClient.invalidateQueries({ queryKey: insightQueries._def });
   }, [queryClient]);
 
   return (

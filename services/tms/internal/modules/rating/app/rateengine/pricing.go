@@ -122,18 +122,13 @@ func (s *Service) formulaCharge(
 		overrides["baseRate"] = boundRate.Decimal.InexactFloat64()
 	}
 
-	// SellTotal is only present on the buy side; binding it is what lets a
-	// carrier agreement be written as a share of what the customer pays.
-	if rateCtx.SellTotal.Valid {
-		overrides["sellTotal"] = rateCtx.SellTotal.Decimal.InexactFloat64()
-	}
-
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: *rule.FormulaTemplateID,
-		Entity:     rateCtx.Entity,
-		Overrides:  overrides,
-		TenantInfo: rateCtx.TenantInfo,
-		RatingDate: rateCtx.AsOf,
+		TemplateID:        *rule.FormulaTemplateID,
+		Entity:            rateCtx.Entity,
+		Overrides:         overrides,
+		TenantInfo:        rateCtx.TenantInfo,
+		RatingDate:        rateCtx.AsOf,
+		UnavailableInputs: bindSellTotal(rateCtx, overrides),
 	})
 	if err != nil {
 		return decimal.Zero, err
@@ -456,4 +451,19 @@ func applyRounding(
 	})
 
 	return rounded
+}
+
+const (
+	sellTotalInput       = "sellTotal"
+	sellTotalUnavailable = "This formula template reads sellTotal, which is only known when a " +
+		"carrier is priced against what the customer pays; it cannot price the customer's side"
+)
+
+func bindSellTotal(rateCtx *RateContext, overrides map[string]any) map[string]string {
+	if rateCtx.SellTotal.Valid {
+		overrides[sellTotalInput] = rateCtx.SellTotal.Decimal.InexactFloat64()
+		return nil
+	}
+
+	return map[string]string{sellTotalInput: sellTotalUnavailable}
 }

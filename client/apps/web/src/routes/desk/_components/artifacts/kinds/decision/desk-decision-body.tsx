@@ -4,7 +4,7 @@ import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact, AssistantProposal } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -34,9 +34,9 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
   const t = useT();
   const queryClient = useQueryClient();
   const request = decisionRequestOf({ proposalId: artifact.proposalId, ...artifact.payload });
-  const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
+  const proposalsQuery = useQuery(assistant.proposals(artifact.threadId));
   const plansQuery = useQuery({
-    ...queries.assistant.plans(artifact.threadId),
+    ...assistant.plans(artifact.threadId),
     enabled: request !== null && request.planId !== "",
   });
   const all = proposalsQuery.data?.results ?? [];

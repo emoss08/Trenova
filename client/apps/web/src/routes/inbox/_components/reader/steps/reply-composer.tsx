@@ -1,7 +1,7 @@
 import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundMessageDetail, TriageAction, TriageReplyTemplate } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { inboxReferenceQuery } from "@/lib/queries/inbox";
 import {
   fileFromDocument,
@@ -130,13 +130,13 @@ function TemplatesMenu({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const templates = useQuery({
-    ...inboxReferenceQuery(queries.inbox.templates()),
+    ...inboxReferenceQuery(inbox.templates()),
     enabled: open,
   });
   const list = templates.data ?? [];
   const rendered = useQueries({
     queries: list.map((template) => ({
-      ...queries.inbox.renderedTemplate(template.id, messageId),
+      ...inbox.renderedTemplate(template.id, messageId),
       enabled: open,
       staleTime: 60_000,
     })),
@@ -145,7 +145,7 @@ function TemplatesMenu({
   const pick = (template: TriageReplyTemplate) => {
     setError(null);
     void queryClient
-      .fetchQuery({ ...queries.inbox.renderedTemplate(template.id, messageId), staleTime: 60_000 })
+      .fetchQuery({ ...inbox.renderedTemplate(template.id, messageId), staleTime: 60_000 })
       .then(
         (text) => {
           onPick(text, template);
@@ -336,10 +336,10 @@ export function ReplyComposer({
     }
   }
 
-  const attachables = useQuery(queries.inbox.replyAttachables(message.id));
+  const attachables = useQuery(inbox.replyAttachables(message.id));
   const limitBytes = attachables.data?.limitBytes ?? null;
   const target = uploadTarget(message);
-  const attachablesKey = queries.inbox.replyAttachables(message.id).queryKey;
+  const attachablesKey = inbox.replyAttachables(message.id).queryKey;
   const onUploaded = useCallback((result: unknown) => {
     const document = result as Document;
     setFiles((current) => withFile(current, fileFromDocument(document)));

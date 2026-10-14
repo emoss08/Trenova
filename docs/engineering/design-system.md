@@ -576,6 +576,27 @@ Do not hand-pick series colours. Before this, light was a five-hue rainbow and
 dark was two hues plus three greys, so the same chart encoded its data
 differently depending on the theme.
 
+## Code
+
+Code is shown with `HighlightedCode` from
+`@trenova/shared/components/ui/highlighted-code`: a fenced block in a reply, an audit record, a
+raw payload. It highlights synchronously with TanStack Highlight (`lib/highlight/code.ts` holds
+the languages: JSON, JS, TS, SQL, GraphQL, YAML, shell and diff, with their aliases, so a fence
+labelled `plsql` or `gql` is coloured too), and renders elements rather than an HTML string, so
+nothing in the code can become markup. A language without a grammar is shown as plain text. It
+can mark a search's matches across tokens (`query`), draw something after a line (`lineEnd`) and
+report a clicked line (`onLineClick`).
+
+Colour is by role, on the categorical hues, through seven tokens: `--syntax-keyword` (violet),
+`--syntax-string` (emerald), `--syntax-number` (amber), `--syntax-property` (sky),
+`--syntax-function` (indigo), `--syntax-type` (teal) and `--syntax-meta` (rose). Comments and
+punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
+lines take the success and danger text. Each syntax token is written out in both themes rather
+than pointing at an accent, so `pnpm lint:design` holds it to AA on `--card`, `--sunken` and
+`--surface-hover` (the ground under a Desk reply's code block). A theme switch recolours code
+through CSS alone; nothing is highlighted again. A new grammar goes in `lib/highlight/`, built with
+`defineLanguage` (see `graphql.ts`), and is added to the highlighter's list.
+
 ## Adding a token
 
 1. Check no existing token covers it. Most "missing" colours are a rung you have

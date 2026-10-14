@@ -15,7 +15,7 @@ import {
   type CaptureRequest,
   type CaptureRequestMode,
 } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { RECORD_STACKS_SHOWN, recordBatchesQuery } from "@/lib/queries/capture";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -55,7 +55,7 @@ const CLOCK_TICK_MS = 15_000;
 export function useCaptureKind(resourceType: string): CaptureRecordKind | null {
   const kind = isCaptureRecordKind(resourceType) ? resourceType : null;
   const accessQuery = useQuery({
-    ...queries.capture.access(),
+    ...capture.access(),
     staleTime: 5 * 60 * 1000,
     enabled: kind !== null,
   });
@@ -245,7 +245,7 @@ export function CaptureRequestsPanel({
   const t = useT();
   const queryClient = useQueryClient();
   const [now, setNow] = useState(nowInSeconds);
-  const requestsQuery = useQuery(queries.capture.requests(kind, recordId));
+  const requestsQuery = useQuery(capture.requests(kind, recordId));
   const shown = captureRequestsToShow(requestsQuery.data ?? [], now);
   const anyOpen = shown.some((request) => request.isOpen);
 
@@ -261,7 +261,7 @@ export function CaptureRequestsPanel({
     mutationFn: (id: string) => cancelCaptureRequest(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: queries.capture.requests(kind, recordId).queryKey,
+        queryKey: capture.requests(kind, recordId).queryKey,
       });
     },
     resourceName: "Capture request",

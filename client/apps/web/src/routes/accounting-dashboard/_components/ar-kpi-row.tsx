@@ -7,7 +7,7 @@ import {
   AR_CEI_WARNING_THRESHOLD,
   AR_DSO_TARGET_DAYS,
 } from "@/lib/accounting-constants";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -23,7 +23,7 @@ function ceiTone(cei: number): Tone {
 export function ARKpiRow() {
   const t = useT();
 
-  const { data: kpis, isLoading } = useQuery(queries.ar.dashboardKpis());
+  const { data: kpis, isLoading } = useQuery(ar.dashboardKpis());
 
   if (isLoading || !kpis) {
     return <KpiStripSkeleton count={AR_KPI_COUNT} size="lg" minItemWidth={AR_KPI_MIN_WIDTH} />;

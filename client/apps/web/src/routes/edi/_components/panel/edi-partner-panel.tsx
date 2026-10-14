@@ -3,7 +3,7 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { organization as organizationQueries } from "@/lib/queries/organization";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -71,7 +71,7 @@ function CreatePartnerPanel({
   const targetCode = useWatch({ control: pairControl, name: "targetCode" });
   const targetName = useWatch({ control: pairControl, name: "targetName" });
   const { data: currentOrganization } = useQuery({
-    ...queries.organization.detail(currentOrganizationId),
+    ...organizationQueries.detail(currentOrganizationId),
     enabled: open && Boolean(currentOrganizationId),
   });
   const createExternalMutation = useApiMutation({

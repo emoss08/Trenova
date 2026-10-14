@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -50,6 +51,11 @@ type RateAgreementAccessorial struct {
 	// same language and against the same schema the formula editor already
 	// exposes — "totalStops > 2", say. Blank means always.
 	ApplyCondition string `json:"applyCondition" bun:"apply_condition,type:TEXT,nullzero"`
+
+	// ConditionLanguageVersion is the formula language ApplyCondition is
+	// written in, so a later language can change semantics without changing
+	// what an existing condition matches.
+	ConditionLanguageVersion formulatypes.LanguageVersion `json:"conditionLanguageVersion" bun:"condition_language_version,type:SMALLINT,notnull,default:1"`
 
 	// FreeUnits are granted before the charge starts counting, which is how
 	// detention and storage allowances are written.
@@ -114,6 +120,7 @@ func (raga *RateAgreementAccessorial) applyDefaults() {
 	if raga.Method != accessorialcharge.MethodPerUnit {
 		raga.RateUnit = ""
 	}
+	raga.ConditionLanguageVersion = raga.ConditionLanguageVersion.OrCurrent()
 }
 
 func (raga *RateAgreementAccessorial) Validate(multiErr *errortypes.MultiError) {
@@ -150,6 +157,11 @@ func (raga *RateAgreementAccessorial) Validate(multiErr *errortypes.MultiError) 
 	))
 
 	raga.validateAmounts(multiErr)
+	formulatypes.ValidateLanguageVersion(
+		"conditionLanguageVersion",
+		raga.ConditionLanguageVersion,
+		multiErr,
+	)
 
 	if raga.EffectiveFrom != nil && raga.EffectiveTo != nil &&
 		*raga.EffectiveTo <= *raga.EffectiveFrom {

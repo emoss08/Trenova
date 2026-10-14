@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { DETENTION_STATS_LIMIT } from "@/lib/queries/detention";
 import type { FacilityDetentionStat } from "@trenova/shared/types/detention";
 import { useQuery } from "@tanstack/react-query";
@@ -90,9 +90,9 @@ export function useDetentionIntelligence(days: number) {
     return { from: to - days * SECONDS_PER_DAY, to };
   }, [days]);
 
-  const facilities = useQuery(queries.detention.facilities(range.from, range.to));
-  const customers = useQuery(queries.detention.customers(range.from, range.to));
-  const waivers = useQuery(queries.detention.waivers(range.from, range.to));
+  const facilities = useQuery(detention.facilities(range.from, range.to));
+  const customers = useQuery(detention.customers(range.from, range.to));
+  const waivers = useQuery(detention.waivers(range.from, range.to));
 
   const rollup = useMemo(() => rollupFacilities(facilities.data), [facilities.data]);
 

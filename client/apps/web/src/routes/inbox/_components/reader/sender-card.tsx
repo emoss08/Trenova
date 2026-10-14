@@ -1,6 +1,6 @@
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { InboundMessageDetail, InboundSenderRole } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { senderName } from "@/lib/triage/message-state";
 import { useQuery } from "@tanstack/react-query";
 import { ZapIcon } from "@trenova/shared/components/icons";
@@ -55,7 +55,7 @@ function CardLabel({ children }: { children: string }) {
 function SenderCardBody({ message }: { message: InboundMessageDetail }) {
   const t = useT();
   const navigation = useTriageNavigation();
-  const query = useQuery(queries.inbox.senderProfile(message.id));
+  const query = useQuery(inbox.senderProfile(message.id));
   const profile = query.data;
   const name = senderName(message);
   const now = useNowSeconds();

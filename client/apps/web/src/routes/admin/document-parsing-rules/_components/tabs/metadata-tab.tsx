@@ -8,7 +8,7 @@ import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/compo
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { documentKindChoices } from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import { ruleSetSchema, type RuleSet } from "@/types/document-parsing-rule";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 export default function MetadataTab({ ruleSetId }: { ruleSetId: string }) {
   const { data } = useQuery({
-    ...queries.documentParsingRule.detail(ruleSetId),
+    ...documentParsingRule.detail(ruleSetId),
   });
 
   if (!data) return null;
@@ -31,7 +31,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
   const t = useT();
 
   const { data: versions } = useQuery({
-    ...queries.documentParsingRule.versions(ruleSet.id!),
+    ...documentParsingRule.versions(ruleSet.id!),
     enabled: !!ruleSet.publishedVersionId,
   });
 
@@ -100,16 +100,13 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
   const showDocumentKindWarning = documentKind !== ruleSet.documentKind;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.documentParsingRule.detail._def,
+    queryKey: documentParsingRule.detail._def,
     mutationFn: async (values: RuleSet) =>
       apiService.documentParsingRuleService.update(ruleSet.id!, values),
     resourceName: "Rule Set",
     resetForm: reset,
     form,
-    invalidateQueries: [
-      queries.documentParsingRule.detail._def,
-      queries.documentParsingRule.list._def,
-    ],
+    invalidateQueries: [documentParsingRule.detail._def, documentParsingRule.list._def],
   });
 
   const onSubmit = useCallback(

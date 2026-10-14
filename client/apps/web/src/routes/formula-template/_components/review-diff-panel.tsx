@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { GitCompareIcon } from "@trenova/shared/components/icons";
@@ -16,7 +16,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
   const t = useT();
 
   const { data, isLoading, isError } = useQuery({
-    ...queries.formulaTemplate.reviewDiff(templateId),
+    ...formulaTemplate.reviewDiff(templateId),
     enabled: !!templateId,
     staleTime: 0,
   });

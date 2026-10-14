@@ -17,7 +17,7 @@ vi.mock("@/lib/graphql/ai-audit", async (importOriginal) => {
 });
 
 const { ChainStatusHeader } = await import("../chain-status");
-const { queries } = await import("@/lib/queries");
+const { aiAudit } = await import("@/lib/queries/ai-audit");
 
 /** A signed chain last verified clean, as aiAuditChainStatus returns it. */
 function chainStatus(overrides: Partial<AIAuditChainStatus> = {}): AIAuditChainStatus {
@@ -156,7 +156,7 @@ describe("ChainStatusHeader", () => {
     // verifying on its own. The button stays held.
     fetchAIAuditChainStatus.mockResolvedValue(chainStatus({ sealedThroughSeq: 1_204 }));
     await act(async () => {
-      await client.invalidateQueries({ queryKey: queries.aiAudit.chainStatus().queryKey });
+      await client.invalidateQueries({ queryKey: aiAudit.chainStatus().queryKey });
     });
     expect(await screen.findByText("#1,204")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /verifying/i })).toBeDisabled();
@@ -166,7 +166,7 @@ describe("ChainStatusHeader", () => {
       chainStatus({ lastVerifiedAt: 1_758_900_000, lastVerifiedSeq: 1_204 }),
     );
     await act(async () => {
-      await client.invalidateQueries({ queryKey: queries.aiAudit.chainStatus().queryKey });
+      await client.invalidateQueries({ queryKey: aiAudit.chainStatus().queryKey });
     });
     await waitFor(() => expect(screen.getByRole("button", { name: /verify now/i })).toBeEnabled());
   });

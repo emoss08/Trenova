@@ -3,7 +3,7 @@ import { useLaneScopeLabels } from "@/hooks/use-lane-scope-labels";
 import { useRecordNames } from "@/hooks/use-record-names";
 import { describeApiError } from "@/lib/api-error-message";
 import { choiceLabel, ratePartyTypeChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { rateAgreement } from "@/lib/queries/rate-agreement";
 import { rateAgreementLanesQuery } from "@/lib/queries/rate-agreement";
 import { agreementTypeLabel, agreementWindow } from "@/lib/rate-agreement";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -108,7 +108,7 @@ export function DeskRateAgreement({
 }: RateAgreementCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.rateAgreement.get(recordId),
+    ...rateAgreement.get(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -163,15 +163,15 @@ function AgreementCard({
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const currency = agreement.currency;
 
-  const { data: versions = NO_VERSIONS } = useQuery(queries.rateAgreement.versions(recordId));
+  const { data: versions = NO_VERSIONS } = useQuery(rateAgreement.versions(recordId));
   const pricing = useQuery({
-    ...queries.rateAgreement.pricing(recordId),
+    ...rateAgreement.pricing(recordId),
     enabled: access.pricing,
     retry: false,
   });
 
   const laneSummary = useQuery({
-    ...queries.rateAgreement.laneSummary(recordId),
+    ...rateAgreement.laneSummary(recordId),
     retry: false,
   });
   const activity = useRecordActivity({

@@ -1,5 +1,5 @@
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReadinessCheck, ReadinessResponse } from "@trenova/shared/types/formula-template";
@@ -66,7 +66,7 @@ export function ReadinessPanel({
   const t = useT();
 
   const { data, isLoading, isError } = useQuery({
-    ...queries.formulaTemplate.readiness(templateId),
+    ...formulaTemplate.readiness(templateId),
     enabled: !!templateId,
     staleTime: 0,
   });

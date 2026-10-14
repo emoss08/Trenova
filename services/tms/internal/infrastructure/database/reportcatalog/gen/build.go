@@ -497,6 +497,11 @@ func (b *builder) inferFieldType(
 		return reportcatalog.FieldDecimal, nil
 	}
 
+	switch strings.ToUpper(field.SQLType) {
+	case "SMALLINT", "INTEGER", "INT", "BIGINT":
+		return reportcatalog.FieldInt, nil
+	}
+
 	if values := b.resolveEnumValues(pkgName, goType); len(values) > 0 {
 		return reportcatalog.FieldEnum, values
 	}

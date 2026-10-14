@@ -1,6 +1,6 @@
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundReplyAttachable, InboundReplyAttachableSource } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import {
   attachableSections,
   fileFromAttachable,
@@ -335,7 +335,7 @@ export function AttachMenu({
   const t = useT();
   const [open, setOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const attachables = useQuery({ ...queries.inbox.replyAttachables(messageId), enabled: open });
+  const attachables = useQuery({ ...inbox.replyAttachables(messageId), enabled: open });
   const sections = attachableSections(attachables.data?.documents ?? []);
   const attached = new Set(files.map((file) => file.documentId));
   const limit = limitBytes ?? attachables.data?.limitBytes ?? null;

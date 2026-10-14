@@ -7,7 +7,7 @@ import {
   type CarrierIntelEvent,
 } from "@/lib/graphql/carrier-intelligence";
 import { CARRIER_INTEL_EVENT_LIST_KEY } from "@/lib/graphql/carrier-monitoring-table";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useState } from "react";
@@ -33,7 +33,7 @@ export function useInvalidateInbox() {
       queryClient.invalidateQueries({ queryKey: [CARRIER_INTEL_EVENTS_KEY] }),
       queryClient.invalidateQueries({ queryKey: [CARRIER_INTELLIGENCE_KEY] }),
       queryClient.invalidateQueries({
-        queryKey: queries.carrierIntelSettings.monitoringStatus().queryKey,
+        queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       }),
     ]);
   }, [queryClient]);

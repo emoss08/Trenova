@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import { queries } from "@/lib/queries";
+import { weatherAlert } from "@/lib/queries/weather-alert";
 import {
   ACTIVITY_TYPE_COLORS,
   SEVERITY_BADGE_MAP,
@@ -87,7 +87,7 @@ export function WeatherAlertDetailPanel({
   const t = useT();
 
   const { data, isLoading } = useQuery({
-    ...queries.weatherAlert.detail(alertId),
+    ...weatherAlert.detail(alertId),
     enabled: !!alertId,
   });
 

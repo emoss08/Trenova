@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -91,7 +91,7 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
   const [requested, setRequested] = useState(false);
   const askAgent = useDeskStore((state) => state.askAgent);
   const asked = useDeskStore((state) => state.asks[artifact.threadId] ?? null);
-  const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
+  const proposalsQuery = useQuery(assistant.proposals(artifact.threadId));
   const drafted = (proposalsQuery.data?.results ?? []).find(
     (proposal) =>
       proposal.toolName === "create_shipment" &&

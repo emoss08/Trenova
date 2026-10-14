@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { usePermission } from "@/hooks/use-permission";
 import { findChoice, serviceFailureStatusChoices, serviceFailureTypeChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { serviceFailure } from "@/lib/queries/service-failure";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -65,7 +65,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
   const canArchive = usePermission(Resource.ServiceFailure, Operation.Archive);
 
   const failuresQuery = useQuery({
-    ...queries.serviceFailure.listByShipment(shipmentId),
+    ...serviceFailure.listByShipment(shipmentId),
     enabled: !!shipmentId,
   });
 
@@ -91,7 +91,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
           description: t("{0} created, {1} updated, 0 skipped.", summary.created, summary.updated),
         });
       }
-      void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
+      void queryClient.invalidateQueries(serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
     },
@@ -126,7 +126,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
     onSuccess: () => {
       toast.success(t("Service failure updated"));
       void queryClient.invalidateQueries({ queryKey: ["serviceFailure"] });
-      void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
+      void queryClient.invalidateQueries(serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
     },
@@ -374,12 +374,12 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
 
   const trigger = ediReadinessTrigger(failure);
   const readinessQuery = useQuery({
-    ...queries.serviceFailure.edi214Readiness(failure.id ?? "", trigger),
+    ...serviceFailure.edi214Readiness(failure.id ?? "", trigger),
     enabled: !!failure.id && !!trigger,
     staleTime: 30_000,
   });
   const statusQuery = useQuery({
-    ...queries.serviceFailure.edi214Status(failure.id ?? ""),
+    ...serviceFailure.edi214Status(failure.id ?? ""),
     enabled: !!failure.id && !!trigger,
     staleTime: 30_000,
   });

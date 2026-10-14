@@ -1,5 +1,5 @@
 import { describeApiError } from "@/lib/api-error-message";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -71,11 +71,11 @@ export function SubmitReviewDialog({
   const [noteError, setNoteError] = useState<string | null>(null);
 
   const reviewers = useQuery({
-    ...queries.formulaTemplate.reviewers(templateId),
+    ...formulaTemplate.reviewers(templateId),
     enabled: open && templateId !== "",
   });
   const impact = useQuery({
-    ...queries.formulaTemplate.approvalImpact(templateId),
+    ...formulaTemplate.approvalImpact(templateId),
     enabled: open && templateId !== "",
     staleTime: 30_000,
   });
@@ -186,7 +186,7 @@ export function SubmitReviewDialog({
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm font-medium">{person.name}</span>
                           <span className="text-foreground-subtle truncate text-xs font-normal">
-                            {person.emailAddress ?? person.username}
+                            {person.username}
                           </span>
                         </span>
                         {selected && <CheckIcon className="size-3.5" />}

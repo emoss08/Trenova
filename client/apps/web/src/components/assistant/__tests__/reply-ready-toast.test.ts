@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient } from "@tanstack/react-query";
@@ -92,7 +92,7 @@ async function announce(overrides: Partial<AnnounceReplyReadyOptions> = {}) {
 
 describe("announceReplyReady", () => {
   it("names the conversation from the list and offers a way to open it", async () => {
-    queryClient.setQueryData(queries.assistant.threads().queryKey, {
+    queryClient.setQueryData(assistant.threads().queryKey, {
       pages: [{ items: [thread()], nextCursor: "" }],
       pageParams: [""],
     });
@@ -114,7 +114,7 @@ describe("announceReplyReady", () => {
   // A palette question nobody kept is not in the list; the live replies were
   // the one place holding its title, and they are read before being refreshed.
   it("names an unlisted conversation from the reply that was writing in it", async () => {
-    queryClient.setQueryData(queries.assistant.activeTurns().queryKey, {
+    queryClient.setQueryData(assistant.activeTurns().queryKey, {
       items: [
         {
           turnId: "atrn_1",
@@ -230,8 +230,8 @@ describe("announceReplyReady", () => {
     });
 
     const keys = invalidate.mock.calls.map(([filters]) => JSON.stringify(filters?.queryKey));
-    expect(keys).toContain(JSON.stringify(queries.assistant.activeTurns().queryKey));
-    expect(keys).toContain(JSON.stringify(queries.assistant.messages("athr_1").queryKey));
+    expect(keys).toContain(JSON.stringify(assistant.activeTurns().queryKey));
+    expect(keys).toContain(JSON.stringify(assistant.messages("athr_1").queryKey));
   });
 
   it("opens without marking anything when the notice has no id", async () => {
@@ -307,10 +307,10 @@ describe("cachedConversationTitle", () => {
   });
 
   it("prefers the list, then the conversation read on its own", () => {
-    queryClient.setQueryData(queries.assistant.thread("athr_1").queryKey, thread({ title: "B" }));
+    queryClient.setQueryData(assistant.thread("athr_1").queryKey, thread({ title: "B" }));
     expect(cachedConversationTitle(queryClient, "athr_1")).toBe("B");
 
-    queryClient.setQueryData(queries.assistant.threads().queryKey, {
+    queryClient.setQueryData(assistant.threads().queryKey, {
       pages: [
         { items: [], nextCursor: "c1" },
         { items: [thread({ title: "A" })], nextCursor: "" },

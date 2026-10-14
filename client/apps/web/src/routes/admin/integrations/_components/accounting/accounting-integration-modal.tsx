@@ -10,7 +10,7 @@ import {
   needsAccountingStartDate,
 } from "@/lib/accounting-sync";
 import type { IntegrationSetupStep } from "@/lib/integration-setup";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -108,7 +108,7 @@ function AccountingIntegrationBody({
   const { allowed: canManage } = usePermission(Resource.AccountingIntegration, Operation.Manage);
 
   const statusQuery = useQuery({
-    ...queries.accountingSync.status(vendor.system),
+    ...accountingSync.status(vendor.system),
     enabled: open && canRead,
   });
   const tenantSystem = useConnectedAccountingSystem("status", open && canRead);

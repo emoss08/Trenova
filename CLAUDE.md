@@ -310,7 +310,9 @@ bundles without typechecking, and CI fails a build whose first-visit download pa
 `client/apps/web/bundle-budget.json` (`pnpm --filter @trenova/web bundle:check`). Chunking lives in
 `client/apps/web/vite/chunk-groups.ts`, and a group with a `maxSize`, a pattern that is not anchored
 to `node_modules/<name>/`, or a feature imported statically from the shell has each already broken
-the app or put a whole feature on every page. A service worker (`/sw.js`) serves the app shell
+the app or put a whole feature on every page. Query key factories are imported from their own
+module (`import { shipment } from "@/lib/queries/shipment"`); there is no merged `queries`
+object, and lint rejects an import of `@/lib/queries`. A service worker (`/sw.js`) serves the app shell
 and hashed assets from cache, and the shell's queries persist to IndexedDB from an allow-list
 (`SHELL_QUERIES` in `lib/session-cache.ts`) that must never hold business records or personal
 details; every session end goes through `clearSessionCache()`. Open tabs reload onto a new

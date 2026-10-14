@@ -8,7 +8,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { allocateBudget, openItemToApplicationRow, toMinor } from "@/lib/cash-application";
 import { paymentMethodChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import type { RecordPaymentFormValues } from "@trenova/shared/types/customer-payment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -25,7 +25,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
   const budgetMinor = toMinor(amount ?? 0);
 
   const { data: openItems, isLoading: itemsLoading } = useQuery({
-    ...queries.ar.openItems({ customerId }),
+    ...ar.openItems({ customerId }),
     enabled: Boolean(customerId),
   });
 

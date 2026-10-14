@@ -1,6 +1,6 @@
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { TriageRule, TriageRuleInput, TriageRulePreview } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import type { RuleMatchesTarget } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckIcon } from "@trenova/shared/components/icons";
@@ -77,11 +77,11 @@ export function RuleMatchesDialog({
   const mailboxes = useTriageMailboxes().data;
   const drafted = "input" in target;
   const previewQuery = useQuery({
-    ...queries.inbox.rulePreview(drafted ? target.input : idleRuleInput()),
+    ...inbox.rulePreview(drafted ? target.input : idleRuleInput()),
     enabled: drafted,
   });
   const matchesQuery = useQuery({
-    ...queries.inbox.ruleMatches(drafted ? "" : target.ruleId),
+    ...inbox.ruleMatches(drafted ? "" : target.ruleId),
     enabled: !drafted,
   });
   const preview = drafted ? previewQuery : matchesQuery;

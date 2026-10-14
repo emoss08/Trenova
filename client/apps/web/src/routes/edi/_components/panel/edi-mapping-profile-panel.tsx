@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { EDIMappingProfileRow } from "@/lib/graphql/edi-table";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -49,7 +49,7 @@ export function MappingProfilePanel({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const { data } = useQuery(queries.edi.mappingProfile(partnerId));
+  const { data } = useQuery(edi.mappingProfile(partnerId));
   const [draft, setDraft] = useState<EDIMappingProfileItem>(emptyDraft);
   const saveMutation = useApiMutation({
     mutationFn: (item: EDIMappingProfileItem) =>
@@ -61,7 +61,7 @@ export function MappingProfilePanel({
       setDraft((current) => ({ ...emptyDraft, entityType: current.entityType }));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.edi.mappingProfile(partnerId).queryKey,
+          queryKey: edi.mappingProfile(partnerId).queryKey,
         }),
         queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
       ]);
@@ -77,7 +77,7 @@ export function MappingProfilePanel({
       toast.success(t("Mapping deleted"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.edi.mappingProfile(partnerId).queryKey,
+          queryKey: edi.mappingProfile(partnerId).queryKey,
         }),
         queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
       ]);

@@ -7,7 +7,7 @@ import {
   deleteTelematicsFormMappingGraphQL,
   saveTelematicsFormMappingGraphQL,
 } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -250,7 +250,7 @@ function MappingEditor({
         initial.id ? translate("Form mapping updated") : translate("Form mapping created"),
       );
       await queryClient.invalidateQueries({
-        queryKey: queries.telematics.formMappings().queryKey,
+        queryKey: telematics.formMappings().queryKey,
       });
       onSaved();
     },
@@ -412,12 +412,12 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
   const [pendingDelete, setPendingDelete] = useState<TelematicsFormMapping | null>(null);
 
   const mappingsQuery = useQuery({
-    ...queries.telematics.formMappings(),
+    ...telematics.formMappings(),
     enabled: open,
   });
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: queries.telematics.formMappings().queryKey });
+    queryClient.invalidateQueries({ queryKey: telematics.formMappings().queryKey });
 
   const toggleMutation = useMutation({
     mutationFn: (mapping: TelematicsFormMapping) =>

@@ -19,7 +19,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
   const t = useT();
 
   const queryClient = useQueryClient();
-  const configQuery = useQuery({ ...queries.integration.config(INTEGRATION_TYPE), enabled: open });
+  const configQuery = useQuery({ ...integration.config(INTEGRATION_TYPE), enabled: open });
   const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: defaultValues(),
   });
@@ -66,9 +66,9 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
       toast.success(t("PC*Miler integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config(INTEGRATION_TYPE).queryKey,
+          queryKey: integration.config(INTEGRATION_TYPE).queryKey,
         }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]);
     },
   });
@@ -77,7 +77,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
     mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
     onSuccess: async () => {
       toast.success(t("PC*Miler connection successful"));
-      await queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey });
+      await queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey });
     },
     onError: () => toast.error(t("PC*Miler connection test failed")),
   });

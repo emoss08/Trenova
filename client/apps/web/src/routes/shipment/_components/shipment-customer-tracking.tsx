@@ -17,7 +17,7 @@ import {
   type CustomerTrackingLinkRow,
   type IssuedCustomerTrackingLink,
 } from "@/lib/graphql/customer-tracking";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { issueTrackingLinkFormSchema, type IssueTrackingLinkFormValues } from "@/types/check-call";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy01Icon, Link01Icon, Mail01Icon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -62,14 +62,14 @@ function TrackingLinks({ shipmentId, canceled }: { shipmentId: string; canceled:
   const { allowed: canShare } = usePermission(Resource.Shipment, Operation.Update);
   const [now] = useState(nowInSeconds);
   const [issued, setIssued] = useState<IssuedCustomerTrackingLink | null>(null);
-  const linksQuery = useQuery(queries.shipment.customerTrackingLinks(shipmentId));
+  const linksQuery = useQuery(shipmentQueries.customerTrackingLinks(shipmentId));
   const links = linksQuery.data ?? [];
   const live = liveLinkCount(links, now);
 
   const refresh = useCallback(
     () =>
       queryClient.invalidateQueries({
-        queryKey: queries.shipment.customerTrackingLinks(shipmentId).queryKey,
+        queryKey: shipmentQueries.customerTrackingLinks(shipmentId).queryKey,
       }),
     [queryClient, shipmentId],
   );
@@ -318,7 +318,7 @@ function IssuedLink({
 
 function StatusEmails({ shipmentId }: { shipmentId: string }) {
   const t = useT();
-  const notificationsQuery = useQuery(queries.shipment.customerStatusNotifications(shipmentId));
+  const notificationsQuery = useQuery(shipmentQueries.customerStatusNotifications(shipmentId));
   const rows = notificationsQuery.data ?? [];
   const statusAttrs = notificationStatusAttrs(t);
 

@@ -15,7 +15,8 @@ import {
 } from "@trenova/shared/components/ui/select";
 
 import { resolutionTypeChoices, workItemStatusChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { bankReceipt } from "@/lib/queries/bank-receipt";
+import { bankReceiptWorkItem } from "@/lib/queries/bank-receipt-work-item";
 import { apiService } from "@/services/api";
 import type {
   BankReceiptWorkItem,
@@ -127,12 +128,12 @@ export function BankReceiptQueuePage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const detailQuery = useQuery({
-    ...queries.bankReceiptWorkItem.get(selectedRow?.id ?? ""),
+    ...bankReceiptWorkItem.get(selectedRow?.id ?? ""),
     enabled: Boolean(selectedRow?.id),
   });
 
   const summaryQuery = useQuery({
-    ...queries.bankReceipt.summary(),
+    ...bankReceipt.summary(),
   });
 
   const invalidateAll = () => {
@@ -368,7 +369,7 @@ function WorkItemDetail({
   const [showDismissForm, setShowDismissForm] = useState(false);
 
   const bankReceiptQuery = useQuery({
-    ...queries.bankReceipt.get(workItem.bankReceiptId),
+    ...bankReceipt.get(workItem.bankReceiptId),
     enabled: Boolean(workItem.bankReceiptId),
   });
 

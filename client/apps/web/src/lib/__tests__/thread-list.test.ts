@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
 import { InfiniteQueryObserver, QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -136,32 +136,29 @@ describe("threadListQuery", () => {
 
 describe("updateCachedThread", () => {
   it("rewrites the conversation on whichever page holds it", () => {
-    queryClient.setQueryData(
-      queries.assistant.threads().queryKey,
-      pages([thread("a")], [thread("b")]),
-    );
-    const before = queryClient.getQueryData<ThreadPages>(queries.assistant.threads().queryKey);
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("a")], [thread("b")]));
+    const before = queryClient.getQueryData<ThreadPages>(assistant.threads().queryKey);
 
     updateCachedThread(queryClient, "b", (item) => ({ ...item, title: "renamed" }));
 
-    const after = queryClient.getQueryData<ThreadPages>(queries.assistant.threads().queryKey);
+    const after = queryClient.getQueryData<ThreadPages>(assistant.threads().queryKey);
     expect(after?.pages[1].items[0].title).toBe("renamed");
     expect(after?.pages[0]).toBe(before?.pages[0]);
   });
 
   it("leaves the cache as it was when no page holds the conversation", () => {
     const data = pages([thread("a")]);
-    queryClient.setQueryData(queries.assistant.threads().queryKey, data);
+    queryClient.setQueryData(assistant.threads().queryKey, data);
 
     updateCachedThread(queryClient, "missing", (item) => ({ ...item, title: "x" }));
 
-    expect(queryClient.getQueryData(queries.assistant.threads().queryKey)).toBe(data);
+    expect(queryClient.getQueryData(assistant.threads().queryKey)).toBe(data);
   });
 
   it("does nothing before the list has been read", () => {
     updateCachedThread(queryClient, "a", (item) => ({ ...item, title: "x" }));
 
-    expect(queryClient.getQueryData(queries.assistant.threads().queryKey)).toBeUndefined();
+    expect(queryClient.getQueryData(assistant.threads().queryKey)).toBeUndefined();
   });
 });
 
@@ -172,7 +169,7 @@ describe("updateCachedThread", () => {
  */
 describe("refreshing a long list", () => {
   let server: AssistantThread[] = [];
-  const key = queries.assistant.threads().queryKey;
+  const key = assistant.threads().queryKey;
   const id = (index: number) => `t${String(index).padStart(3, "0")}`;
 
   beforeEach(() => {
@@ -287,8 +284,7 @@ describe("refreshing a long list", () => {
 describe("shelves", () => {
   const today: ThreadListFilter = { pinned: false, touchedFrom: 1_000 };
   const older: ThreadListFilter = { pinned: false, touchedBefore: 500 };
-  const shelfKey = (filter: ThreadListFilter) =>
-    queries.assistant.threads()._ctx.shelf(filter).queryKey;
+  const shelfKey = (filter: ThreadListFilter) => assistant.threads()._ctx.shelf(filter).queryKey;
 
   it("reads a shelf's pages with its range, under the list's key", async () => {
     listThreads
@@ -305,7 +301,7 @@ describe("shelves", () => {
       2,
       expect.objectContaining({ cursor: "c1", filter: today }),
     );
-    expect(shelfKey(today).slice(0, 3)).toEqual(queries.assistant.threads().queryKey);
+    expect(shelfKey(today).slice(0, 3)).toEqual(assistant.threads().queryKey);
   });
 
   it("keeps each shelf apart from the others and from the whole list", async () => {
@@ -336,8 +332,8 @@ describe("shelves", () => {
 
     expect(countThreadShelves).toHaveBeenCalledWith([4, 3, 2, 1], expect.anything());
     expect(counts).toEqual({ pinned: 2, bands: [1, 0, 3, 4, 5] });
-    expect(queries.assistant.threads()._ctx.shelfCounts([4, 3, 2, 1]).queryKey.slice(0, 3)).toEqual(
-      queries.assistant.threads().queryKey,
+    expect(assistant.threads()._ctx.shelfCounts([4, 3, 2, 1]).queryKey.slice(0, 3)).toEqual(
+      assistant.threads().queryKey,
     );
   });
 
@@ -345,7 +341,7 @@ describe("shelves", () => {
     const counts = { pinned: 0, bands: [1, 0, 0, 0, 1] };
     queryClient.setQueryData(shelfKey(today), pages([thread("a"), thread("b")]));
     queryClient.setQueryData(shelfKey(older), pages([thread("b")]));
-    queryClient.setQueryData(queries.assistant.threads()._ctx.shelfCounts([2, 1]).queryKey, counts);
+    queryClient.setQueryData(assistant.threads()._ctx.shelfCounts([2, 1]).queryKey, counts);
 
     updateCachedThread(queryClient, "b", (item) => ({ ...item, title: "renamed" }));
 
@@ -358,13 +354,13 @@ describe("shelves", () => {
       "a",
     ]);
     expect(threadsOf(queryClient.getQueryData(shelfKey(older)))).toEqual([]);
-    expect(
-      queryClient.getQueryData(queries.assistant.threads()._ctx.shelfCounts([2, 1]).queryKey),
-    ).toBe(counts);
+    expect(queryClient.getQueryData(assistant.threads()._ctx.shelfCounts([2, 1]).queryKey)).toBe(
+      counts,
+    );
   });
 
   it("knows every conversation any list holds, each once", () => {
-    queryClient.setQueryData(queries.assistant.threads().queryKey, pages([thread("a")]));
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("a")]));
     queryClient.setQueryData(shelfKey(today), pages([thread("a"), thread("b")]));
     queryClient.setQueryData(shelfKey(older), pages([thread("c", { title: "far back" })]));
 

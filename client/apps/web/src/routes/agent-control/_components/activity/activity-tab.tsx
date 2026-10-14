@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -34,7 +34,7 @@ export default function ActivityTab({ view }: { view: ActivityView }) {
   const navigate = useAIControlNavigation();
   const since = useMemo(() => getStartOfDay(), []);
   const summary = useQuery({
-    ...queries.aiControl.activity(since),
+    ...aiControl.activity(since),
     staleTime: ACTIVITY_STALE_MS,
     refetchInterval: 60_000,
   });

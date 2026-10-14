@@ -4,7 +4,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { assignBillingQueueBillerGraphQL } from "@/lib/graphql/billing-queue";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
 import {
   keepPreviousData,
@@ -289,7 +289,7 @@ function LedgerRow({
 function ActivityLog({ itemId, meId }: { itemId: string; meId: string | undefined }) {
   const t = useT();
   const query = useInfiniteQuery({
-    queryKey: queries.billingQueue.activity(itemId).queryKey,
+    queryKey: billingQueue.activity(itemId).queryKey,
     queryFn: ({ pageParam }) =>
       apiService.billingQueueService.getActivity(itemId, pageParam ?? undefined),
     initialPageParam: null as { at: number; id: string } | null,
@@ -419,13 +419,13 @@ export function DeskBillingItem({
   const [posted, setPosted] = useState<BillingQueuePostResult | null>(null);
 
   const itemQuery = useQuery({
-    ...queries.billingQueue.get(itemId),
+    ...billingQueue.get(itemId),
     retry: false,
     placeholderData: keepPreviousData,
   });
   const item = itemQuery.data;
   const { data: neighbors } = useQuery({
-    ...queries.billingQueue.neighbors(itemId),
+    ...billingQueue.neighbors(itemId),
     enabled: onSelect !== undefined,
   });
 
@@ -434,7 +434,7 @@ export function DeskBillingItem({
   const settle = useCallback(
     (next?: BillingQueueItem) => {
       if (next?.review) {
-        queryClient.setQueryData(queries.billingQueue.get(itemId).queryKey, next);
+        queryClient.setQueryData(billingQueue.get(itemId).queryKey, next);
       }
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });

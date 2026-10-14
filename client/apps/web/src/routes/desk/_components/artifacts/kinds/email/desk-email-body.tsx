@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { markProposalEdits } from "@/lib/proposal-cache";
 import { apiService } from "@/services/api";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -28,7 +28,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
   const queryClient = useQueryClient();
   const draft = useMemo(() => emailDraftFrom(artifact), [artifact]);
   const proposalsQuery = useQuery({
-    ...queries.assistant.proposals(artifact.threadId),
+    ...assistant.proposals(artifact.threadId),
     enabled: artifact.proposalId !== "",
   });
   const proposal = proposalsQuery.data?.results.find(
@@ -73,7 +73,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
       setTyped({});
       setHandedOver(true);
       void queryClient.invalidateQueries({
-        queryKey: queries.assistant.proposals(artifact.threadId).queryKey,
+        queryKey: assistant.proposals(artifact.threadId).queryKey,
       });
     },
     resourceName: "Draft",

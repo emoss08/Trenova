@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import type { DeskServiceFailure as DeskServiceFailureRecord } from "@/lib/graphql/service-failure-card";
 import { choiceLabel, serviceFailureSourceChoices, serviceFailureTypeChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { serviceFailure } from "@/lib/queries/service-failure";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -89,7 +89,7 @@ export function DeskServiceFailure({
 }: ServiceFailureCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.serviceFailure.card(recordId),
+    ...serviceFailure.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });

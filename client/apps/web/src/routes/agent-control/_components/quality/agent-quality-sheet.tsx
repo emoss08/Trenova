@@ -6,7 +6,7 @@ import {
   type AgentQualityRow,
   type AgentSuiteRun,
 } from "@/lib/graphql/agent-quality";
-import { queries } from "@/lib/queries";
+import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -43,7 +43,7 @@ type AgentQualitySheetProps = {
 export function AgentQualitySheet({ agentId, agentName, onClose }: AgentQualitySheetProps) {
   const t = useT();
   const detail = useQuery({
-    ...queries.agentQuality.agent(agentId ?? ""),
+    ...agentQuality.agent(agentId ?? ""),
     enabled: agentId !== null,
     staleTime: QUALITY_STALE_MS,
   });
@@ -98,7 +98,7 @@ function AgentQualityBody({
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useAIControlNavigation();
-  const control = useQuery({ ...queries.agentQuality.control(), staleTime: QUALITY_STALE_MS });
+  const control = useQuery({ ...agentQuality.control(), staleTime: QUALITY_STALE_MS });
   const { allowed: canRun } = usePermission(Resource.AgentEvalSuite, Operation.Create);
   const last = detail.lastSuiteRun;
   const values = sparklineValues(detail.qualityPoints);
@@ -110,7 +110,7 @@ function AgentQualityBody({
       toast.success(t("Running {0}'s suite", detail.agentName), {
         description: t("The agent answers its cases with every write simulated."),
       });
-      await queryClient.invalidateQueries({ queryKey: queries.agentQuality._def });
+      await queryClient.invalidateQueries({ queryKey: agentQuality._def });
     },
     resourceName: t("Suite run"),
   });

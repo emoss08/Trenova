@@ -17,10 +17,23 @@ type SchemaFunctionInfo struct {
 	Example     string `json:"example"`
 	Category    string `json:"category"`
 	Operator    bool   `json:"operator"`
+	MinArgs     int    `json:"minArgs"`
+	MaxArgs     int    `json:"maxArgs"`
+	Returns     string `json:"returns"`
+	NumericArgs bool   `json:"numericArgs"`
+	Predicate   bool   `json:"predicate"`
+}
+
+type SchemaDisabledFunction struct {
+	Name        string `json:"name"`
+	Reason      string `json:"reason"`
+	Replacement string `json:"replacement,omitempty"`
 }
 
 type SchemaDescription struct {
-	SchemaID  string               `json:"schemaId"`
-	Variables []SchemaVariableInfo `json:"variables"`
-	Functions []SchemaFunctionInfo `json:"functions"`
+	SchemaID  string                   `json:"schemaId"`
+	Variables []SchemaVariableInfo     `json:"variables"`
+	Functions []SchemaFunctionInfo     `json:"functions"`
+	Builtins  []SchemaFunctionInfo     `json:"builtins"`
+	Disabled  []SchemaDisabledFunction `json:"disabled"`
 }

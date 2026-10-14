@@ -25,6 +25,12 @@ type GetVersionRequest struct {
 	VersionNumber int64
 }
 
+type ListVersionAuthorsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	TemplateID   pulid.ID
+	AfterVersion int64
+}
+
 type GetVersionRangeRequest struct {
 	TenantInfo  pagination.TenantInfo
 	TemplateID  pulid.ID
@@ -151,14 +157,25 @@ type FormulaTemplateVersionRepository interface {
 		req *ListScheduledVersionsRequest,
 	) ([]*formulatemplate.FormulaTemplateVersion, error)
 
+	ListApproved(
+		ctx context.Context,
+		req *ListScheduledVersionsRequest,
+	) ([]*formulatemplate.FormulaTemplateVersion, error)
+
+	ListAuthorIDsSince(
+		ctx context.Context,
+		req *ListVersionAuthorsRequest,
+	) ([]pulid.ID, error)
+
 	// GetLatestByStatus returns nil, nil when the template never held that status.
 	GetLatestByStatus(
 		ctx context.Context,
 		req *GetLatestVersionByStatusRequest,
 	) (*formulatemplate.FormulaTemplateVersion, error)
 
-	// ClearScheduled removes every pending effective date on the template's
-	// snapshots and reports how many it cleared.
+	// ClearScheduled cancels every approved snapshot whose window has not
+	// started yet, so it never bills, and reports how many it cancelled.
+	// Windows already in force keep the shipments they priced.
 	ClearScheduled(
 		ctx context.Context,
 		req *ListScheduledVersionsRequest,

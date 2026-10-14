@@ -1,5 +1,5 @@
 import { DESK_MEMORIES_KEY } from "@/lib/graphql/desk-memories";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import {
   AgentMemoryTableDocument,
   AgentReflectionsDocument,
@@ -92,7 +92,7 @@ the reply and the Desk's memory list both have to move with it.
 */
 describe("agent_memory realtime", () => {
   it("reads the conversation's replies again, so the note appears under one", () => {
-    expect(reaches("agent_memory", queries.assistant.messages("athr_1").queryKey)).toBe(true);
+    expect(reaches("agent_memory", assistant.messages("athr_1").queryKey)).toBe(true);
   });
 
   it("reads every Desk memory list and card again", () => {

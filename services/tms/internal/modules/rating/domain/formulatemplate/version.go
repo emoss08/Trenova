@@ -61,6 +61,7 @@ type FormulaTemplateVersion struct {
 	Expression           string                              `json:"expression"           bun:"expression,type:TEXT,notnull"`
 	Status               Status                              `json:"status"               bun:"status,type:formula_template_status_enum,notnull"`
 	SchemaID             string                              `json:"schemaId"             bun:"schema_id,type:VARCHAR(100),notnull"`
+	LanguageVersion      formulatypes.LanguageVersion        `json:"languageVersion"      bun:"language_version,type:SMALLINT,notnull,default:1"`
 	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"  bun:"variable_definitions,type:JSONB,notnull"`
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
@@ -123,6 +124,7 @@ func NewVersionFromTemplate(
 		Expression:           ft.Expression,
 		Status:               ft.Status,
 		SchemaID:             ft.SchemaID,
+		LanguageVersion:      ft.LanguageVersion.OrCurrent(),
 		VariableDefinitions:  ft.VariableDefinitions,
 		BreakdownDefinitions: ft.BreakdownDefinitions,
 		MinCharge:            ft.MinCharge,
@@ -214,3 +216,10 @@ const (
 	maxVersionNameLength   = 100
 	maxVersionSchemaLength = 100
 )
+
+func (v *FormulaTemplateVersion) EffectiveStart() int64 {
+	if v.EffectiveFrom != nil {
+		return *v.EffectiveFrom
+	}
+	return v.CreatedAt
+}

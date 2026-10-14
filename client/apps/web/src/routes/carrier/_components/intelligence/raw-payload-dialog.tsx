@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
+import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
@@ -94,7 +94,7 @@ export function RawPayloadDialog({
           </p>
         ) : (
           <ScrollArea className="h-[60vh] rounded-md border">
-            <ShikiCodeBlock code={pretty} lang="json" className="text-xs" />
+            <HighlightedCode code={pretty} language="json" className="p-3" />
           </ScrollArea>
         )}
         <DialogFooter>

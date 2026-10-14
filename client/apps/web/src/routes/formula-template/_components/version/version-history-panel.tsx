@@ -39,8 +39,9 @@ import {
   downloadJson,
   getVersionExportFilename,
 } from "@/lib/formula-template-export";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
+import { describeApiError } from "@/lib/api-error-message";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import {
@@ -53,6 +54,7 @@ import {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { scheduleState } from "./schedule-state";
 import {
   AlertCircleIcon,
   CalendarClockIcon,
@@ -105,12 +107,12 @@ export function VersionHistoryPanel({
   const [selectedForCompare, setSelectedForCompare] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    ...queries.formulaTemplate.versions(template?.id),
+    ...formulaTemplate.versions(template?.id),
     enabled: open && !!template?.id,
   });
 
   const { data: usageData, isLoading: isLoadingUsage } = useQuery({
-    ...queries.formulaTemplate.usage(template?.id ?? ""),
+    ...formulaTemplate.usage(template?.id ?? ""),
     enabled: rollbackDialogOpen && !!template?.id,
   });
 
@@ -424,6 +426,8 @@ function VersionItem({
   const [selectedTags, setSelectedTags] = useState<VersionTag[]>(version.tags ?? []);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
+  const [openedAt] = useState(() => Math.floor(Date.now() / 1000));
+  const billingWindow = scheduleState(version, openedAt);
 
   const updateEffectiveDateMutation = useMutation({
     mutationFn: (effectiveFrom: number | null) =>
@@ -437,13 +441,15 @@ function VersionItem({
       toast.success(effectiveFrom === null ? t("Schedule cleared") : t("Activation scheduled"), {
         description:
           effectiveFrom === null
-            ? t("v{0} will no longer activate automatically", version.versionNumber)
+            ? t("v{0} bills from now", version.versionNumber)
             : t("v{0} activates {1}", version.versionNumber, formatToUserTimezone(effectiveFrom)),
       });
       setScheduleDialogOpen(false);
     },
-    onError: () => {
-      toast.error(t("Failed to update activation schedule"));
+    onError: (error) => {
+      toast.error(t("Failed to update activation schedule"), {
+        description: describeApiError(error, t("The schedule was not changed.")),
+      });
     },
   });
 
@@ -671,7 +677,7 @@ function VersionItem({
                       />
                     )}
                   </DropdownMenuGroup>
-                  {canSchedule && (
+                  {canSchedule && billingWindow !== "unapproved" && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
@@ -681,11 +687,11 @@ function VersionItem({
                           description={t("Set the date this version takes effect")}
                           onClick={handleOpenScheduleDialog}
                         />
-                        {version.effectiveFrom != null && (
+                        {billingWindow === "pending" && (
                           <DropdownMenuItem
                             startContent={<CalendarMinus01Icon className="size-4" />}
                             title={t("Clear schedule")}
-                            description={t("Remove the scheduled activation")}
+                            description={t("Start billing with this version now")}
                             onClick={() => updateEffectiveDateMutation.mutate(null)}
                             disabled={updateEffectiveDateMutation.isPending}
                           />
@@ -747,6 +753,14 @@ function VersionItem({
               placeholder={t("Select date and time")}
               clearable
             />
+            {billingWindow === "started" && (
+              <p className="text-2xs text-muted-foreground">
+                {t(
+                  "v{0} has already billed shipments, so its window stays as it was: a new date approves the same content again as a new version that starts then.",
+                  version.versionNumber,
+                )}
+              </p>
+            )}
             {version.effectiveFrom != null && (
               <p className="text-2xs text-muted-foreground">
                 {t(

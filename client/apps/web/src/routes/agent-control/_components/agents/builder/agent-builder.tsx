@@ -3,7 +3,11 @@ import { agentAccessPreviewRequest } from "@/lib/graphql/agent-access";
 import { fetchAgentDefinition, fetchAgentVersionDraft } from "@/lib/graphql/agent-builder";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { agentBuilder } from "@/lib/queries/agent-builder";
+import { agentSafety } from "@/lib/queries/agent-safety";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { AutonomyTier, SaveAgentDefinitionRequest } from "@/types/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -124,22 +128,22 @@ export function AgentBuilder({
   const t = useT();
   const queryClient = useQueryClient();
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
-  const catalogQuery = useQuery(queries.assistant.toolCatalog());
-  const rulesQuery = useQuery(queries.agentSafety.toolRules());
-  const eventsQuery = useQuery(queries.assistant.eventKinds());
-  const agentsQuery = useQuery(queries.assistant.agents(false));
-  const providersQuery = useQuery(queries.aiProvider.list());
+  const catalogQuery = useQuery(assistant.toolCatalog());
+  const rulesQuery = useQuery(agentSafety.toolRules());
+  const eventsQuery = useQuery(assistant.eventKinds());
+  const agentsQuery = useQuery(assistant.agents(false));
+  const providersQuery = useQuery(aiProvider.list());
   const controlQuery = useQuery(agentControlQueryOptions());
   const budgetQuery = useQuery({
-    ...queries.assistant.agentBudget(agent?.id ?? ""),
+    ...assistant.agentBudget(agent?.id ?? ""),
     enabled: agent !== null,
   });
   const versionsQuery = useQuery({
-    ...queries.agentBuilder.versions(agent?.id ?? ""),
+    ...agentBuilder.versions(agent?.id ?? ""),
     enabled: agent !== null,
   });
   const drafting = useAgentDrafting();
-  const rosterQuery = useQuery({ ...queries.aiControl.roster(), enabled: agent !== null });
+  const rosterQuery = useQuery({ ...aiControl.roster(), enabled: agent !== null });
   const stat = agent ? rosterQuery.data?.get(agent.id) : undefined;
 
   const catalog = useMemo(() => catalogQuery.data?.tools ?? [], [catalogQuery.data?.tools]);
@@ -177,7 +181,7 @@ export function AgentBuilder({
     LINT_DEBOUNCE_MS,
   );
   const lintQuery = useQuery({
-    ...queries.agentBuilder.lint(lintRequest),
+    ...agentBuilder.lint(lintRequest),
     enabled: !intro && lintRequest.instructions.trim() !== "",
     staleTime: 60_000,
   });
@@ -192,14 +196,14 @@ export function AgentBuilder({
     LINT_DEBOUNCE_MS,
   );
   const accessQuery = useQuery({
-    ...queries.assistant.agentAccessPreview(accessRequest),
+    ...assistant.agentAccessPreview(accessRequest),
     enabled: !intro,
   });
   const sensitiveTools = accessQuery.data?.sensitiveTools ?? [];
   const roles = accessQuery.data?.roles ?? [];
 
   const shadowQuery = useQuery({
-    ...queries.agentBuilder.shadow(agent?.id ?? "", SHADOW_REPORT_DAYS),
+    ...agentBuilder.shadow(agent?.id ?? "", SHADOW_REPORT_DAYS),
     enabled:
       agent !== null &&
       Boolean(form.formState.defaultValues?.shadowMode) &&
@@ -235,9 +239,9 @@ export function AgentBuilder({
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.assistant._def }),
-      queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
-      queryClient.invalidateQueries({ queryKey: queries.agentBuilder._def }),
+      queryClient.invalidateQueries({ queryKey: assistant._def }),
+      queryClient.invalidateQueries({ queryKey: aiControl._def }),
+      queryClient.invalidateQueries({ queryKey: agentBuilder._def }),
     ]);
   }, [queryClient]);
 
@@ -853,7 +857,12 @@ export function AgentBuilder({
                             </span>
                           </div>
                           {onOpenActivity && (
-                            <Button type="button" variant="outline" size="sm" onClick={onOpenActivity}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={onOpenActivity}
+                            >
                               {t("Read them")}
                             </Button>
                           )}

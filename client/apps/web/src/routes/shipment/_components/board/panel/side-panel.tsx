@@ -3,7 +3,7 @@ import { PlugIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
@@ -25,7 +25,10 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
   const { ai } = useShipmentCapabilities();
   const timezone = useUserTimezone();
   const [{ tab }, setUrl] = useShipmentBoardUrl();
-  const { data: suggestions } = useQuery({ ...queries.shipmentBoard.suggestions(timezone), staleTime: 15_000 });
+  const { data: suggestions } = useQuery({
+    ...shipmentBoard.suggestions(timezone),
+    staleTime: 15_000,
+  });
   const openCount = suggestions?.items.length ?? 0;
 
   return (
@@ -63,7 +66,9 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
                 className="ui-focus-ring border-border text-muted-foreground hover:text-foreground flex items-center gap-2 rounded-md border border-dashed p-2.5 text-left text-xs"
               >
                 <PlugIcon className="size-3.5 shrink-0" />
-                {t("Connect an AI provider to get a written brief, drafted messages and fit scores.")}
+                {t(
+                  "Connect an AI provider to get a written brief, drafted messages and fit scores.",
+                )}
               </button>
             ) : null}
             <ActionQueue />

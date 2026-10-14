@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { journalEntry } from "@/lib/queries/journal-entry";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
@@ -30,7 +30,7 @@ export function JournalEntryDetailPage() {
   const navigate = useNavigate();
 
   const { data: entry, isLoading } = useQuery({
-    ...queries.journalEntry.get(id!),
+    ...journalEntry.get(id!),
     enabled: !!id,
   });
   useBreadcrumbLabel(entry?.entryNumber);

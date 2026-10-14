@@ -10,7 +10,7 @@ import type {
   CarrierSettlementsPage,
   DeskCarrier as DeskCarrierRecord,
 } from "@/lib/graphql/carrier-card";
-import { queries } from "@/lib/queries";
+import { carrier as carrierQueries } from "@/lib/queries/carrier";
 import { carrierSettlementsQuery } from "@/lib/queries/carrier";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -107,7 +107,7 @@ export function DeskCarrier({
 }: CarrierCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.carrier.card(recordId),
+    ...carrierQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -161,12 +161,12 @@ function CarrierCard({
   const id = carrier.id;
 
   const eligibility = useQuery({
-    ...queries.carrier.eligibility(id),
+    ...carrierQueries.eligibility(id),
     retry: false,
     enabled: access.eligibility,
   });
   const intel = useQuery({
-    ...queries.carrier.intel(id),
+    ...carrierQueries.intel(id),
     retry: false,
     enabled: access.intelligence,
   });
