@@ -5,7 +5,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiMessage, DeskEdiMessageArtifact } from "../desk-edi-message";
-import { HOUR, NOW, RAW_214, wireInspection, wireMessage } from "./fixtures";
+import { HOUR, NOW, RAW_214, wireDocumentProfile, wireInspection, wireMessage } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -187,6 +187,19 @@ describe("DeskEdiMessage", () => {
       "href",
       "/edi/messages?panelType=edit&panelEntityId=edimsg_1",
     );
+  });
+
+  it("reads a message whose document profile never set what a missing acknowledgment means", async () => {
+    route({
+      "/edi/messages/edimsg_1/": () =>
+        wireMessage({ partnerDocumentProfile: wireDocumentProfile() }),
+    });
+    draw();
+
+    expect(
+      await screen.findByRole("heading", { name: "Shipment status", level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("This EDI message could not be read")).toBeNull();
   });
 
   it("stops the envelope where delivery gave up, says why, and pins each finding to its segment", async () => {
