@@ -103,6 +103,9 @@ func ediDecisionToolProviders() []any {
 		provideListEDITenderChangesTool,
 		provideListEDITransferChangesTool,
 		provideListEDIPartnersTool,
+		provideGetEDIAckHealthTool,
+		provideInspectX12Tool,
+		providePreviewEDIDocumentTool,
 	}
 }
 
@@ -469,6 +472,10 @@ func newListEDIMessagesTool(messages ediMessageLister) agentports.AgentQueryTool
 }
 
 func (t *listEDIMessagesTool) Name() string { return "list_edi_messages" }
+
+func (t *listEDIMessagesTool) SearchTerms() []string {
+	return []string{"accepted with errors", "messages for this invoice"}
+}
 
 func (t *listEDIMessagesTool) Description() string {
 	return "List EDI documents sent to or received from trading partners, newest first, " +
