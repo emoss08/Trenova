@@ -308,8 +308,25 @@ func TestGetEDITransfer_IsTitledByItsBillOfLadingOrItsSender(t *testing.T) {
 	withBOL := receivedTender(params.OrganizationID)
 	assert.Equal(t, "BOL-5", title(withBOL))
 
-	withoutBOL := receivedTender(params.OrganizationID)
-	withoutBOL.TenderPayload.BOL = ""
-	withoutBOL.SourcePartner = &edi.EDIPartner{Name: "Acme Foods"}
-	assert.Equal(t, "from Acme Foods", title(withoutBOL))
+	fromFile := receivedTender(params.OrganizationID)
+	fromFile.TenderPayload.BOL = ""
+	fromFile.SourcePartner = &edi.EDIPartner{Name: "Acme Foods"}
+	fromFile.TargetPartner = fromFile.SourcePartner
+	assert.Equal(t, "from Acme Foods", title(fromFile))
+
+	fromTrenova := receivedTender(params.OrganizationID)
+	fromTrenova.TenderPayload.BOL = ""
+	fromTrenova.SourceOrganizationID = pulid.MustNew("org_")
+	fromTrenova.TargetPartner = &edi.EDIPartner{Name: "Lone Star Logistics"}
+	assert.Equal(t, "from Lone Star Logistics", title(fromTrenova))
+
+	sent := receivedTender(pulid.MustNew("org_"))
+	sent.SourceOrganizationID = params.OrganizationID
+	sent.TenderPayload.BOL = ""
+	sent.SourcePartner = &edi.EDIPartner{Name: "Lone Star Logistics"}
+	assert.Equal(t, "to Lone Star Logistics", title(sent))
+
+	unnamed := receivedTender(params.OrganizationID)
+	unnamed.TenderPayload.BOL = ""
+	assert.Empty(t, title(unnamed))
 }

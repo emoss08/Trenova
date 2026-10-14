@@ -181,10 +181,14 @@ func TestListEDITransfers_FiltersAndHandsBackACursor(t *testing.T) {
 	tool := newListEDITransfersTool(fake)
 
 	fileID := pulid.MustNew("ediinf_")
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+	params := agentParams(map[string]any{
 		"status":        "PendingApproval",
 		"inboundFileId": fileID.String(),
-	}, ""))
+	}, "")
+	transfer.SourceOrganizationID = pulid.MustNew("org_")
+	transfer.TargetOrganizationID = params.OrganizationID
+	transfer.TargetPartner = &edi.EDIPartner{Name: "Lone Star Logistics"}
+	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Equal(t, transferInbound, fake.direction)
@@ -194,6 +198,7 @@ func TestListEDITransfers_FiltersAndHandsBackACursor(t *testing.T) {
 	rows := outcome.Items.([]ediTransferRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, 2, rows[0].StopCount)
+	assert.Equal(t, "Lone Star Logistics", rows[0].Partner, "the sender, as we keep them")
 	assert.True(t, outcome.HasMore)
 	assert.NotEmpty(t, outcome.NextCursor)
 	assert.Len(t, outcome.TaintedRecords(), 1)

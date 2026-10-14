@@ -1,4 +1,5 @@
 import { recordPath } from "@/config/record-links";
+import { counterparty, type TransferDirection, transferDirection } from "@/lib/edi/transfer-sides";
 import { edi } from "@/lib/queries/edi";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { formatNumber } from "@trenova/shared/i18n/format";
@@ -24,7 +25,6 @@ import {
 import { cardMoment, neighborsIn } from "../../record-card/record-card-values";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
-  counterparty,
   decisionGates,
   mappingLedger,
   reasonNote,
@@ -32,8 +32,6 @@ import {
   tenderFreight,
   tenderRoute,
   tenderSlip,
-  type TransferDirection,
-  transferDirection,
   type TransferLink,
   transferLinks,
 } from "./edi-transfer-card";

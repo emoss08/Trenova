@@ -4,39 +4,12 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   EDIMappingPreview,
   EDIMappingResolution,
-  EDIPartner,
   EDITransfer,
 } from "@trenova/shared/types/edi";
-import { superseded, type TransferDirection } from "../../record-card/edi-transfer-standing";
+import type { TransferDirection } from "@/lib/edi/transfer-sides";
+import { superseded } from "../../record-card/edi-transfer-standing";
 import type { CardFact } from "../../record-card/record-card";
 import { cardMoment, cardMomentAfter, money } from "../../record-card/record-card-values";
-
-export type { TransferDirection };
-
-/**
- * Which side of the tender an organization is on: the one it was tendered to
- * receives it, even when it also sent it, as a partner's 204 read into the
- * same organization is.
- */
-export function transferDirection(
-  transfer: EDITransfer,
-  organizationId: string | null | undefined,
-): TransferDirection {
-  return transfer.targetOrganizationId === organizationId ? "inbound" : "outbound";
-}
-
-/**
- * The other party, as the reader's own organization knows them. Each side of a
- * Trenova connection keeps a partner record for the other: the sender's lives
- * on the source side, the receiver's on the target side. A partner's 204 is
- * one record on both.
- */
-export function counterparty(
-  transfer: EDITransfer,
-  direction: TransferDirection,
-): EDIPartner | null {
-  return (direction === "inbound" ? transfer.targetPartner : transfer.sourcePartner) ?? null;
-}
 
 /** The tender's slip: what it is called, and whether it changes or cancels an earlier one. */
 export function tenderSlip(

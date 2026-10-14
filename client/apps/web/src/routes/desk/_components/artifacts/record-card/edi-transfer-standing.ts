@@ -1,9 +1,7 @@
+import type { TransferDirection } from "@/lib/edi/transfer-sides";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { EDITransfer } from "@trenova/shared/types/edi";
 import type { CardStatusMark, CardTone } from "./record-card";
-
-/** Which side of the tender the reader's organization is on. */
-export type TransferDirection = "inbound" | "outbound";
 
 /** Where the tender stands, as the pill at the card's head says it. */
 export type TransferStanding = {

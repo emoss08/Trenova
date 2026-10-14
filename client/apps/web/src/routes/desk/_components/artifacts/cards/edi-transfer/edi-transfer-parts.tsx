@@ -1,6 +1,7 @@
 import { ArrowDownLeftIcon, ArrowUpRightIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import type { TransferDirection } from "@/lib/edi/transfer-sides";
 import { CardIcon, type CardFact } from "../../record-card/record-card";
 import { cardMoment } from "../../record-card/record-card-values";
 import type {
@@ -10,7 +11,6 @@ import type {
   MappingLedger,
   ReasonNote,
   RouteStop,
-  TransferDirection,
 } from "./edi-transfer-card";
 
 /**

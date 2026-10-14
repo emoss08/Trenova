@@ -1,9 +1,9 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
+import { counterparty, transferDirection } from "@/lib/edi/transfer-sides";
 import { cardMoment, cardMomentAfter, money } from "../../../record-card/record-card-values";
 import {
-  counterparty,
   decisionGates,
   mappingLedger,
   reasonNote,
@@ -11,7 +11,6 @@ import {
   tenderFreight,
   tenderRoute,
   tenderSlip,
-  transferDirection,
   transferLinks,
 } from "../edi-transfer-card";
 import { transferStanding } from "../../../record-card/edi-transfer-standing";

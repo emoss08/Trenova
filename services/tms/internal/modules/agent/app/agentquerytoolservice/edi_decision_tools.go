@@ -326,8 +326,8 @@ func (t *getEDITransferTool) Query(
 
 	payload := &transfer.TenderPayload
 	view := &ediTransferView{
-		ediTransferRow:   ediTransferRowFrom(transfer),
-		Title:            transferTitle(transfer),
+		ediTransferRow:   ediTransferRowFrom(transfer, params.OrganizationID),
+		Title:            transferTitle(transfer, params.OrganizationID),
 		Direction:        transferOutbound,
 		InboundMessageID: pulidString(transfer.InboundMessageID),
 		ShipmentType:     payload.ShipmentTypeLabel,
@@ -349,7 +349,7 @@ func (t *getEDITransferTool) Query(
 	}
 	view.Withheld = gate.Withheld()
 
-	if transfer.TargetOrganizationID != params.OrganizationID {
+	if !transfer.ReceivedBy(params.OrganizationID) {
 		return view, nil
 	}
 	view.Direction = transferInbound
@@ -1007,12 +1007,16 @@ func (t *listEDIPartnersTool) Query(
 	return cursorOutcome(&found, nil, result)
 }
 
-func transferTitle(transfer *edi.EDITransfer) string {
+func transferTitle(transfer *edi.EDITransfer, orgID pulid.ID) string {
 	if bol := strings.TrimSpace(transfer.TenderPayload.BOL); bol != "" {
 		return bol
 	}
-	if transfer.SourcePartner != nil && strings.TrimSpace(transfer.SourcePartner.Name) != "" {
-		return "from " + strings.TrimSpace(transfer.SourcePartner.Name)
+	partner := transfer.Counterparty(orgID)
+	if partner == nil || strings.TrimSpace(partner.Name) == "" {
+		return ""
 	}
-	return ""
+	if transfer.ReceivedBy(orgID) {
+		return "from " + strings.TrimSpace(partner.Name)
+	}
+	return "to " + strings.TrimSpace(partner.Name)
 }
