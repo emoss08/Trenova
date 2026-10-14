@@ -327,13 +327,7 @@ func (v *Validator) validateProfileConfig(
 		requireConfigString(multiErr, entity.Config, "port", "Port is required")
 		requireConfigString(multiErr, entity.Config, "username", "Username is required")
 		requireConfigString(multiErr, entity.Config, "authMode", "Authentication mode is required")
-		requireConfigString(multiErr, entity.Config, "knownHostKey", "Known host key is required")
-		requireAnySecret(
-			multiErr,
-			entity.EncryptedSecrets,
-			[]string{"password", "privateKey"},
-			"SFTP password or private key secret is required",
-		)
+		requireCredentials(multiErr, entity)
 	case edi.ConnectionMethodVAN:
 		requireConfigString(multiErr, entity.Config, "providerName", "Provider name is required")
 		requireConfigString(multiErr, entity.Config, "mailboxId", "Mailbox ID is required")
@@ -341,13 +335,7 @@ func (v *Validator) validateProfileConfig(
 		requireConfigString(multiErr, entity.Config, "port", "Port is required")
 		requireConfigString(multiErr, entity.Config, "username", "Username is required")
 		requireConfigString(multiErr, entity.Config, "authMode", "Authentication mode is required")
-		requireConfigString(multiErr, entity.Config, "knownHostKey", "Known host key is required")
-		requireAnySecret(
-			multiErr,
-			entity.EncryptedSecrets,
-			[]string{"password", "privateKey"},
-			"VAN password or private key secret is required",
-		)
+		requireCredentials(multiErr, entity)
 	}
 	if entity.Method != edi.ConnectionMethodInternal {
 		requireConfigString(
@@ -599,14 +587,7 @@ func (v *Validator) validateAS2ProfileConfig(
 		editransport.ConfigKeyPartnerEncryptionCertificate,
 		"config.partnerEncryptionCertificate",
 	)
-	if maputils.StringValue(entity.Config, editransport.ConfigKeyLocalCertificate) != "" {
-		requireAnySecret(
-			multiErr,
-			entity.EncryptedSecrets,
-			[]string{editransport.SecretKeyAS2PrivateKey},
-			"AS2 private key secret is required when a local certificate is configured",
-		)
-	}
+	requireCredentials(multiErr, entity)
 }
 
 func validateAS2Algorithm(
