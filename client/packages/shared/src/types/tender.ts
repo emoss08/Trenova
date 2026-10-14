@@ -36,6 +36,9 @@ export const tenderOfferStatusSchema = z.enum([
   "Superseded",
   "Skipped",
   "DeliveryFailed",
+  "Countered",
+  "CounterRejected",
+  "Revoked",
 ]);
 export type TenderOfferStatus = z.infer<typeof tenderOfferStatusSchema>;
 
@@ -87,6 +90,17 @@ export const tenderOfferSchema = z.object({
   deliveryError: nullableStringSchema,
   lateResponseAction: nullableStringSchema,
   lateResponseAt: z.number().nullish(),
+  counterRate: decimalStringSchema,
+  counterNote: nullableStringSchema,
+  counteredAt: z.number().nullish(),
+  counterMarginPercent: decimalStringSchema,
+  counterNeedsApproval: z.boolean().default(false),
+  counterDecidedAt: z.number().nullish(),
+  counterDecidedById: nullableStringSchema,
+  revokedAt: z.number().nullish(),
+  revokeReason: nullableStringSchema,
+  revokedById: nullableStringSchema,
+  reofferedFromId: nullableStringSchema,
   carrier: tenderCarrierSummarySchema.nullish(),
 });
 export type TenderOffer = z.infer<typeof tenderOfferSchema>;
@@ -104,6 +118,10 @@ export const tenderSchema = z.object({
   acceptedAt: z.number().nullish(),
   exhaustedAt: z.number().nullish(),
   canceledAt: z.number().nullish(),
+  bounceCount: z.number().int().default(0),
+  lastBouncedAt: z.number().nullish(),
+  escalatedFromId: nullableStringSchema,
+  escalationRound: z.number().int().default(0),
   offers: z.array(tenderOfferSchema).nullish(),
 });
 export type Tender = z.infer<typeof tenderSchema>;
@@ -229,16 +247,57 @@ export const cancelTenderPayloadSchema = z.object({
 });
 export type CancelTenderPayload = z.infer<typeof cancelTenderPayloadSchema>;
 
-export const tenderResponseActionSchema = z.enum(["Accept", "Decline"]);
+export const MAX_COUNTER_NOTE_LENGTH = 500;
+export const MAX_COUNTER_RATE = 10_000_000;
+const MAX_REASON_LENGTH = 500;
+
+const reasonSchema = z
+  .string()
+  .max(MAX_REASON_LENGTH, { error: () => translate("Reason must be at most 500 characters") });
+
+const counterNoteSchema = z
+  .string()
+  .max(MAX_COUNTER_NOTE_LENGTH, {
+    error: () => translate("Note must be at most 500 characters"),
+  })
+  .default("");
+
+/**
+ * The counter rate is entered as text so the field can be empty while the
+ * dispatcher types; the server takes the same bounds (positive, below ten
+ * million).
+ */
+const counterRateSchema = z
+  .string()
+  .trim()
+  .default("")
+  .superRefine((value, ctx) => {
+    if (value === "") {
+      ctx.addIssue({ code: "custom", message: translate("Counter rate is required") });
+      return;
+    }
+    const rate = Number(value);
+    if (!Number.isFinite(rate) || rate <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: translate("Counter rate must be a positive amount"),
+      });
+      return;
+    }
+    if (rate >= MAX_COUNTER_RATE) {
+      ctx.addIssue({ code: "custom", message: translate("Counter rate is too large") });
+    }
+  });
+
+export const tenderResponseActionSchema = z.enum(["Accept", "Decline", "Counter"]);
 export type TenderResponseAction = z.infer<typeof tenderResponseActionSchema>;
 
 export const recordTenderResponsePayloadSchema = z
   .object({
     action: tenderResponseActionSchema,
-    declineReason: z
-      .string()
-      .max(500, { error: () => translate("Reason must be at most 500 characters") })
-      .default(""),
+    declineReason: reasonSchema.default(""),
+    counterRate: z.string().default(""),
+    counterNote: counterNoteSchema,
   })
   .superRefine((payload, ctx) => {
     if (payload.action === "Decline" && !payload.declineReason.trim()) {
@@ -248,8 +307,27 @@ export const recordTenderResponsePayloadSchema = z
         message: translate("A decline reason is required"),
       });
     }
+    if (payload.action !== "Counter") return;
+    const rate = counterRateSchema.safeParse(payload.counterRate);
+    if (!rate.success) {
+      rate.error.issues.forEach((issue) =>
+        ctx.addIssue({ code: "custom", path: ["counterRate"], message: issue.message }),
+      );
+    }
   });
 export type RecordTenderResponsePayload = z.infer<typeof recordTenderResponsePayloadSchema>;
+export type RecordTenderResponsePayloadInput = z.input<typeof recordTenderResponsePayloadSchema>;
+
+export const bounceTenderPayloadSchema = z.object({
+  reason: reasonSchema.trim().min(1, { error: () => translate("Say why the carrier backed out") }),
+});
+export type BounceTenderPayload = z.infer<typeof bounceTenderPayloadSchema>;
+
+export const publicTenderCounterPayloadSchema = z.object({
+  rate: counterRateSchema,
+  note: counterNoteSchema,
+});
+export type PublicTenderCounterPayload = z.infer<typeof publicTenderCounterPayloadSchema>;
 
 export const publicTenderOfferSchema = z.object({
   carrierName: z.string(),
@@ -262,7 +340,9 @@ export const publicTenderOfferSchema = z.object({
   weightSummary: z.string(),
   rateAmount: z.string(),
   rateMethodLabel: z.string(),
+  rateValue: z.string().default(""),
   expiresAt: z.number(),
   responded: z.boolean(),
+  counterAllowed: z.boolean().default(false),
 });
 export type PublicTenderOffer = z.infer<typeof publicTenderOfferSchema>;

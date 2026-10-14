@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { spotTenderPayloadSchema, type SpotTenderPayload } from "@trenova/shared/types/tender";
-import { isOverridableInsuranceWarningError, toSpotTenderRequestBody } from "./tender";
+import {
+  isOverridableInsuranceWarningError,
+  toRecordTenderResponseRequestBody,
+  toSpotTenderRequestBody,
+} from "./tender";
 
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
@@ -68,5 +72,56 @@ describe("isOverridableInsuranceWarningError", () => {
   it("rejects plain errors", () => {
     expect(isOverridableInsuranceWarningError(new Error("boom"))).toBe(false);
     expect(isOverridableInsuranceWarningError(undefined)).toBe(false);
+  });
+});
+
+describe("toRecordTenderResponseRequestBody", () => {
+  it("sends an acceptance without the reason or counter left in the form", () => {
+    expect(
+      toRecordTenderResponseRequestBody({
+        action: "Accept",
+        declineReason: "No truck",
+        counterRate: "2100",
+        counterNote: "Fuel is up",
+      }),
+    ).toEqual({ action: "Accept", declineReason: "" });
+  });
+
+  it("sends a decline with its trimmed reason and no counter", () => {
+    expect(
+      toRecordTenderResponseRequestBody({
+        action: "Decline",
+        declineReason: "  No truck in the area ",
+        counterRate: "2100",
+      }),
+    ).toEqual({ action: "Decline", declineReason: "No truck in the area" });
+  });
+
+  it("sends a counter with its rate and note, and no decline reason", () => {
+    expect(
+      toRecordTenderResponseRequestBody({
+        action: "Counter",
+        declineReason: "left over",
+        counterRate: " 2100.50 ",
+        counterNote: " Fuel is up ",
+      }),
+    ).toEqual({
+      action: "Counter",
+      declineReason: "",
+      counterRate: "2100.50",
+      counterNote: "Fuel is up",
+    });
+  });
+
+  it("refuses a counter without a positive rate", () => {
+    expect(() => toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "" })).toThrow(
+      "Counter rate is required",
+    );
+    expect(() =>
+      toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "0" }),
+    ).toThrow("Counter rate must be a positive amount");
+    expect(() =>
+      toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "10000000" }),
+    ).toThrow("Counter rate is too large");
   });
 });

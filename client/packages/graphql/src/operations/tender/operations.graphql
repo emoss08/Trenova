@@ -12,6 +12,10 @@ query TendersByShipment($shipmentId: ID!) {
     acceptedAt
     exhaustedAt
     canceledAt
+    bounceCount
+    lastBouncedAt
+    escalatedFromId
+    escalationRound
     createdAt
     updatedAt
     routingGuide {
@@ -36,6 +40,16 @@ query TendersByShipment($shipmentId: ID!) {
       responseSource
       declineReason
       deliveryError
+      counterRate
+      counterNote
+      counteredAt
+      counterMarginPercent
+      counterNeedsApproval
+      counterDecidedAt
+      agreedRate
+      revokedAt
+      revokeReason
+      reofferedFromId
       createdAt
       updatedAt
       carrier {
@@ -61,6 +75,10 @@ query LiveTenderByMove($moveId: ID!) {
     acceptedAt
     exhaustedAt
     canceledAt
+    bounceCount
+    lastBouncedAt
+    escalatedFromId
+    escalationRound
     createdAt
     updatedAt
     routingGuide {
@@ -85,6 +103,16 @@ query LiveTenderByMove($moveId: ID!) {
       responseSource
       declineReason
       deliveryError
+      counterRate
+      counterNote
+      counteredAt
+      counterMarginPercent
+      counterNeedsApproval
+      counterDecidedAt
+      agreedRate
+      revokedAt
+      revokeReason
+      reofferedFromId
       createdAt
       updatedAt
       carrier {

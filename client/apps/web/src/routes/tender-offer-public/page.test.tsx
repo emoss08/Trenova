@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getPublicOffer: vi.fn(),
   acceptPublicOffer: vi.fn(),
   declinePublicOffer: vi.fn(),
+  counterPublicOffer: vi.fn(),
 }));
 
 vi.mock("@/services/tender", () => ({
@@ -19,6 +20,7 @@ vi.mock("@/services/tender", () => ({
     getPublicOffer = mocks.getPublicOffer;
     acceptPublicOffer = mocks.acceptPublicOffer;
     declinePublicOffer = mocks.declinePublicOffer;
+    counterPublicOffer = mocks.counterPublicOffer;
   },
 }));
 
@@ -36,8 +38,10 @@ function publicOffer(overrides: Partial<PublicTenderOffer> = {}): PublicTenderOf
     weightSummary: "38,400 lbs",
     rateAmount: "$1,850.00",
     rateMethodLabel: "Flat Rate",
+    rateValue: "1850.00",
     expiresAt: 1_760_000_000,
     responded: false,
+    counterAllowed: false,
     ...overrides,
   };
 }
@@ -71,6 +75,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.getPublicOffer.mockReset();
     mocks.acceptPublicOffer.mockReset();
     mocks.declinePublicOffer.mockReset();
+    mocks.counterPublicOffer.mockReset();
   });
 
   it("renders the lane, rate and expiry preview with both response buttons", async () => {
@@ -248,5 +253,72 @@ describe("TenderOfferPublicPage", () => {
     expect(await screen.findByText("Response recorded")).toBeInTheDocument();
     expect(mocks.declinePublicOffer).toHaveBeenCalledTimes(2);
     expect(mocks.declinePublicOffer).toHaveBeenLastCalledWith("tok_123", "Rate too low");
+  });
+
+  it("does not offer a counter when the broker takes none", async () => {
+    mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: false }));
+
+    renderPage();
+
+    expect(await screen.findByRole("button", { name: "Accept load" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Propose a different rate" })).toBeNull();
+  });
+
+  it("sends a counter-offer with the rate and note and says it awaits the broker", async () => {
+    mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: true }));
+    mocks.counterPublicOffer.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
+    expect(screen.getByLabelText("Your rate (Flat Rate)")).toHaveAttribute(
+      "placeholder",
+      "1850.00",
+    );
+    await user.type(screen.getByLabelText("Your rate (Flat Rate)"), "2100.50");
+    await user.type(screen.getByLabelText(/Note to the broker/), "  Fuel is up on this lane ");
+    await user.click(screen.getByRole("button", { name: "Send counter-offer" }));
+
+    await waitFor(() => {
+      expect(mocks.counterPublicOffer).toHaveBeenCalledWith("tok_123", {
+        rate: "2100.50",
+        note: "  Fuel is up on this lane ",
+      });
+    });
+    expect(await screen.findByText("Counter-offer sent")).toBeInTheDocument();
+    expect(mocks.acceptPublicOffer).not.toHaveBeenCalled();
+    expect(mocks.declinePublicOffer).not.toHaveBeenCalled();
+  });
+
+  it("refuses to send a counter without a positive rate", async () => {
+    mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: true }));
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
+    await user.click(screen.getByRole("button", { name: "Send counter-offer" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Counter rate is required");
+
+    await user.type(screen.getByLabelText("Your rate (Flat Rate)"), "-5");
+    await user.click(screen.getByRole("button", { name: "Send counter-offer" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Counter rate must be a positive amount");
+    expect(mocks.counterPublicOffer).not.toHaveBeenCalled();
+  });
+
+  it("shows the no-longer-valid state when the counter arrives after the offer closed", async () => {
+    mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: true }));
+    mocks.counterPublicOffer.mockRejectedValue(apiError(409));
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
+    await user.type(screen.getByLabelText("Your rate (Flat Rate)"), "2100");
+    await user.click(screen.getByRole("button", { name: "Send counter-offer" }));
+
+    expect(await screen.findByText(NO_LONGER_VALID)).toBeInTheDocument();
+    expect(screen.queryByText("Counter-offer sent")).toBeNull();
   });
 });

@@ -6851,10 +6851,14 @@ export type ShipmentEventType =
   | 'StatusChanged'
   | 'StopCompleted'
   | 'TenderAccepted'
+  | 'TenderBounced'
+  | 'TenderCounterDecided'
+  | 'TenderCountered'
   | 'TenderDeclined'
   | 'TenderDeliveryFailed'
   | 'TenderEntrySkipped'
   | 'TenderEntryWarned'
+  | 'TenderEscalated'
   | 'TenderExpired'
   | 'TenderLateResponse'
   | 'TenderNeedsReview'
@@ -7265,10 +7269,16 @@ export type TenderMode =
 
 export type TenderOfferStatus =
   | 'Accepted'
+  /** A counter-offer somebody refused. */
+  | 'CounterRejected'
+  /** A carrier's answer with a rate of its own, waiting on a decision. */
+  | 'Countered'
   | 'Declined'
   | 'DeliveryFailed'
   | 'Expired'
   | 'Pending'
+  /** An acceptance the carrier walked back. */
+  | 'Revoked'
   | 'Sent'
   | 'Skipped'
   | 'Superseded'
@@ -16396,14 +16406,14 @@ export type TendersByShipmentQueryVariables = Exact<{
 }>;
 
 
-export type TendersByShipmentQuery = { tendersByShipment: Array<{ id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null }> };
+export type TendersByShipmentQuery = { tendersByShipment: Array<{ id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, bounceCount: number, lastBouncedAt: number | null, escalatedFromId: string | null, escalationRound: number, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, counterRate: string | null, counterNote: string, counteredAt: number | null, counterMarginPercent: string | null, counterNeedsApproval: boolean, counterDecidedAt: number | null, agreedRate: string, revokedAt: number | null, revokeReason: string, reofferedFromId: string | null, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null }> };
 
 export type LiveTenderByMoveQueryVariables = Exact<{
   moveId: string | number;
 }>;
 
 
-export type LiveTenderByMoveQuery = { liveTenderByMove: { id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
+export type LiveTenderByMoveQuery = { liveTenderByMove: { id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, bounceCount: number, lastBouncedAt: number | null, escalatedFromId: string | null, escalationRound: number, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, counterRate: string | null, counterNote: string, counteredAt: number | null, counterMarginPercent: string | null, counterNeedsApproval: boolean, counterDecidedAt: number | null, agreedRate: string, revokedAt: number | null, revokeReason: string, reofferedFromId: string | null, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
 
 export type TimesheetsQueryVariables = Exact<{
   filter?: TimesheetFilterInput | null | undefined;

@@ -24,7 +24,8 @@ import type {
   DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
 import type {
-  RecordTenderResponsePayload,
+  BounceTenderPayload,
+  RecordTenderResponsePayloadInput,
   SpotTenderPayload,
   WaterfallTenderPayload,
 } from "@trenova/shared/types/tender";
@@ -64,6 +65,29 @@ function describeResult(result: DispatchBulkAssignResult, action: "assigned" | "
       : translate("Unassigned {0}, {1} failed", result.succeeded, result.failed),
     firstFailure?.error ? { description: firstFailure.error } : undefined,
   );
+}
+
+export type RecordOfferResponseParams = {
+  offerId: string;
+  payload: RecordTenderResponsePayloadInput;
+  /** The offer is a carrier's counter, so Accept takes it and Decline refuses it. */
+  counterDecision?: boolean;
+};
+
+export function describeRecordedResponse(params: RecordOfferResponseParams): string {
+  if (params.counterDecision) {
+    return params.payload.action === "Accept"
+      ? translate("Counter-offer taken")
+      : translate("Counter-offer refused");
+  }
+  switch (params.payload.action) {
+    case "Accept":
+      return translate("Acceptance recorded");
+    case "Decline":
+      return translate("Decline recorded");
+    case "Counter":
+      return translate("Counter-offer recorded");
+  }
 }
 
 const MAX_TENDER_ERROR_MESSAGES = 3;
@@ -246,17 +270,27 @@ export function useDispatchActions() {
   });
 
   const recordOfferResponseMutation = useMutation({
-    mutationFn: (params: { offerId: string; payload: RecordTenderResponsePayload }) =>
+    mutationFn: (params: RecordOfferResponseParams) =>
       apiService.tenderService.recordResponse(params.offerId, params.payload),
     onSuccess: (_data, params) => {
-      toast.success(
-        params.payload.action === "Accept"
-          ? translate("Acceptance recorded")
-          : translate("Decline recorded"),
-      );
+      toast.success(describeRecordedResponse(params));
       invalidateTenders();
     },
     onError: (error: unknown) => describeTenderError("Could not record the response", error),
+  });
+
+  const bounceTenderMutation = useMutation({
+    mutationFn: (params: { tenderId: string; payload: BounceTenderPayload }) =>
+      apiService.tenderService.bounce(params.tenderId, params.payload),
+    onSuccess: () => {
+      toast.success(t("Carrier backout recorded"), {
+        description: t(
+          "The carrier assignment was canceled and the tender went on to the next carrier.",
+        ),
+      });
+      invalidateTenders();
+    },
+    onError: (error: unknown) => describeTenderError("Could not record the backout", error),
   });
 
   const planMutation = useMutation({
@@ -314,6 +348,7 @@ export function useDispatchActions() {
     sendSpotTender: spotTenderMutation.mutateAsync,
     cancelTender: cancelTenderMutation.mutateAsync,
     recordOfferResponse: recordOfferResponseMutation.mutateAsync,
+    bounceTender: bounceTenderMutation.mutateAsync,
     planAutoAssign: planMutation.mutate,
     plan: planMutation.data ?? null,
     clearPlan: planMutation.reset,
@@ -328,7 +363,8 @@ export function useDispatchActions() {
       waterfallMutation.isPending ||
       spotTenderMutation.isPending ||
       cancelTenderMutation.isPending ||
-      recordOfferResponseMutation.isPending,
+      recordOfferResponseMutation.isPending ||
+      bounceTenderMutation.isPending,
     isPlanning: planMutation.isPending,
   };
 }

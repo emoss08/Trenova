@@ -544,6 +544,19 @@ and a ten-minute sweep catches PODs and retries. **Read
 `customertracking`, `customertrackingservice`, `customerstatustrigger`, `customertrackingjobs`, the
 public tracking endpoints or page, or the customer tracking email templates.**
 
+## Tender Negotiation
+
+A tender runs one workflow per round (`tendercontract.WorkflowID(id, bounceCount)`). A carrier
+backing out after accepting (`Bounce`, or an EDI 990 declining the accepted offer) cancels the
+carrier assignment, revokes the offer and inserts **new** offer rows for the carriers the acceptance
+cut short, because delivery is idempotent per offer. A counter-offer is judged against the
+organization's counter floor in dispatch controls; one below it needs `tender:approve`, and
+dispatch takes or refuses it with Accept or Decline on the respond route. The carrier is paid
+`AgreedRate()`, never `rate`. An exhausted tender escalates in the service, not the workflow, per
+`tender_exhausted_action`. **Read [docs/engineering/tender-negotiation.md](docs/engineering/tender-negotiation.md)
+before changing `tender` (`retender.go`, `counter.go`, `escalation.go`), `tenderservice`,
+`tenderjobs`, the tender routes, or the tender settings on dispatch controls.**
+
 ## Exception Queue
 
 Every watchtower item is an owned exception: a status (Open, Acknowledged, InProgress, Snoozed,

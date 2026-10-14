@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  bounceTenderPayloadSchema,
   emptySpotTenderLine,
+  publicTenderCounterPayloadSchema,
+  publicTenderOfferSchema,
+  recordTenderResponsePayloadSchema,
   spotTenderPayloadSchema,
   tenderSchema,
   waterfallTenderResultSchema,
@@ -186,5 +190,138 @@ describe("waterfallTenderResultSchema", () => {
     expect(parsed.screening?.skipped).toHaveLength(1);
     expect(parsed.screening?.skipped[0].reasons).toEqual(["Blocked", "Expired policy"]);
     expect(parsed.screening?.warned[0].carrierName).toBe("Expiring Express");
+  });
+});
+
+const offerResponse = (overrides: Record<string, unknown> = {}) => ({
+  id: "tof_01",
+  tenderId: "ten_01",
+  carrierId: "car_01",
+  rank: 1,
+  rateMethod: "Flat",
+  rate: "1500",
+  offerTtlSeconds: 7200,
+  channel: "Email",
+  status: "Sent",
+  ...overrides,
+});
+
+describe("tenderSchema bounce and counter fields", () => {
+  it("defaults the bounce count, escalation round and approval flag on a tender that predates them", () => {
+    const parsed = tenderSchema.parse(makeWaterfallResponse({ offers: [offerResponse()] }));
+
+    expect(parsed.bounceCount).toBe(0);
+    expect(parsed.escalationRound).toBe(0);
+    expect(parsed.offers?.[0]?.counterNeedsApproval).toBe(false);
+    expect(parsed.offers?.[0]?.counterRate ?? null).toBeNull();
+  });
+
+  it("reads a countered offer, a revoked one and an escalated tender as the server writes them", () => {
+    const parsed = tenderSchema.parse(
+      makeWaterfallResponse({
+        bounceCount: 1,
+        escalatedFromId: "ten_00",
+        escalationRound: 2,
+        offers: [
+          offerResponse({
+            status: "Countered",
+            counterRate: "1850.5",
+            counterNote: "Fuel is up",
+            counterMarginPercent: "7.5",
+            counterNeedsApproval: true,
+          }),
+          offerResponse({
+            id: "tof_02",
+            status: "Revoked",
+            revokedAt: 1_720_000_000,
+            revokeReason: "Truck broke down",
+          }),
+          offerResponse({ id: "tof_03", status: "CounterRejected", counterRate: "2000" }),
+        ],
+      }),
+    );
+
+    expect(parsed.escalationRound).toBe(2);
+    expect(parsed.escalatedFromId).toBe("ten_00");
+    expect(parsed.offers?.[0]).toMatchObject({
+      status: "Countered",
+      counterRate: 1850.5,
+      counterMarginPercent: 7.5,
+      counterNeedsApproval: true,
+    });
+    expect(parsed.offers?.[1]).toMatchObject({
+      status: "Revoked",
+      revokeReason: "Truck broke down",
+    });
+    expect(parsed.offers?.[2]?.status).toBe("CounterRejected");
+  });
+});
+
+describe("recordTenderResponsePayloadSchema", () => {
+  it("requires a positive counter rate below ten million only when the answer is a counter", () => {
+    expect(recordTenderResponsePayloadSchema.safeParse({ action: "Accept" }).success).toBe(true);
+
+    const missing = recordTenderResponsePayloadSchema.safeParse({ action: "Counter" });
+    expect(missing.success).toBe(false);
+    expect(missing.error?.issues.map((issue) => [issue.path.join("."), issue.message])).toEqual([
+      ["counterRate", "Counter rate is required"],
+    ]);
+
+    expect(
+      recordTenderResponsePayloadSchema.safeParse({ action: "Counter", counterRate: "9999999.99" })
+        .success,
+    ).toBe(true);
+  });
+
+  it("caps the counter note at 500 characters", () => {
+    const result = recordTenderResponsePayloadSchema.safeParse({
+      action: "Counter",
+      counterRate: "1850",
+      counterNote: "x".repeat(501),
+    });
+    expect(result.error?.issues[0]?.path).toEqual(["counterNote"]);
+  });
+});
+
+describe("bounceTenderPayloadSchema", () => {
+  it("requires a reason that is more than whitespace and trims it", () => {
+    expect(bounceTenderPayloadSchema.safeParse({ reason: "   " }).success).toBe(false);
+    expect(bounceTenderPayloadSchema.parse({ reason: "  Truck broke down " })).toEqual({
+      reason: "Truck broke down",
+    });
+  });
+
+  it("caps the reason at 500 characters", () => {
+    expect(bounceTenderPayloadSchema.safeParse({ reason: "x".repeat(501) }).success).toBe(false);
+  });
+});
+
+describe("public tender offer counter", () => {
+  it("reads an offer page from a server that predates counters as not taking them", () => {
+    const parsed = publicTenderOfferSchema.parse({
+      carrierName: "Blue Ridge Freight",
+      shipmentProNumber: "PRO-1",
+      originSummary: "Dallas, TX",
+      destinationSummary: "Tulsa, OK",
+      pickupWindow: "",
+      deliveryWindow: "",
+      equipmentSummary: "",
+      weightSummary: "",
+      rateAmount: "$1,850.00",
+      rateMethodLabel: "Flat Rate",
+      expiresAt: 0,
+      responded: false,
+    });
+
+    expect(parsed.counterAllowed).toBe(false);
+    expect(parsed.rateValue).toBe("");
+  });
+
+  it("trims the rate and keeps the note for the counter request", () => {
+    expect(publicTenderCounterPayloadSchema.parse({ rate: " 2100 ", note: "Fuel" })).toEqual({
+      rate: "2100",
+      note: "Fuel",
+    });
+    expect(publicTenderCounterPayloadSchema.safeParse({ rate: "abc" }).success).toBe(false);
   });
 });

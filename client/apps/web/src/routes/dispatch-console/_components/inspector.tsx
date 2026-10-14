@@ -227,6 +227,7 @@ function TenderCoverageCard({
           isTendering={actions.isTendering}
           onCancelTender={actions.cancelTender}
           onRecordResponse={actions.recordOfferResponse}
+          onBounceTender={actions.bounceTender}
           onAssignManually={() => openCarrierAssign(move)}
         />
       ) : null}
@@ -399,7 +400,12 @@ function MoveInspector({
           )}
 
           <CapabilityGate capability={OrganizationCapability.Brokerage}>
-            <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
+            <TenderHistory
+              shipmentId={move.shipmentId}
+              className="mt-2"
+              isTendering={actions.isTendering}
+              onBounceTender={actions.bounceTender}
+            />
           </CapabilityGate>
         </div>
       </ScrollArea>
