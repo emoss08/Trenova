@@ -267,5 +267,11 @@ type RefreshResult struct {
 type AnalyticsService interface {
 	Analytics(ctx context.Context, req *AnalyticsRequest) (*Analytics, error)
 	ToolFailures(ctx context.Context, req *ToolFailureDetailRequest) (*ToolFailureDetail, error)
-	Refresh(ctx context.Context, tenant pagination.TenantInfo) (*RefreshResult, error)
+	Refresh(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		progress RefreshProgress,
+	) (*RefreshResult, error)
 }
+
+type RefreshProgress func(refreshedThrough int64)

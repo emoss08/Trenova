@@ -2,7 +2,6 @@ import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
 import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
 import { memo, useMemo, useState, type CSSProperties } from "react";
 import {
@@ -18,7 +17,7 @@ import {
   type SeriesColors,
 } from "./analytics-model";
 import { AnalyticsCard, Swatch, Tip } from "./card";
-import { highlightClass, useHighlight } from "./highlight";
+import { useSetHot } from "./highlight";
 import { LabeledSelect } from "./labeled-select";
 
 const HEIGHT = 354;
@@ -46,7 +45,7 @@ export const TradeoffsCard = memo(function TradeoffsCard({
   const [across, setAcross] = useState<MetricKey>("runTime");
   const [tip, setTip] = useState<{ point: Point; x: number; y: number } | null>(null);
   const [ref, width] = useElementWidth<HTMLDivElement>();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const Y = METRICS[up];
   const X = METRICS[across];
 
@@ -211,7 +210,8 @@ export const TradeoffsCard = memo(function TradeoffsCard({
                       t(X.label),
                       display(t, X, point.x),
                     )}
-                    className={cn("an-pt", highlightClass(hot, label.key))}
+                    className="an-pt"
+                    data-series={label.key}
                     style={{ "--col": colors.get(label.key) } as CSSProperties}
                     onMouseEnter={() => {
                       setHot(label.key);

@@ -95,7 +95,7 @@ func ReadSignals(window *Window) agent.ReflectionSignals {
 	add(agent.ReflectionSignalProposalRejected, len(rejected), strings.Join(rejected, ", "))
 	add(agent.ReflectionSignalNegativeFeedback, window.NegativeRatings, "")
 
-	if succeeded >= LongTaskToolCalls {
+	if window.HasPerson && succeeded >= LongTaskToolCalls {
 		add(agent.ReflectionSignalLongTask, succeeded, "")
 	}
 

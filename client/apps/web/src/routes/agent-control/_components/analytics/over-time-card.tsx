@@ -2,7 +2,6 @@ import type { AgentAnalytics, AIAnalyticsSeries } from "@/lib/graphql/ai-analyti
 import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo, useState, type CSSProperties, type MouseEvent } from "react";
 import { Seg } from "../kit/layout";
 import {
@@ -17,7 +16,7 @@ import {
   type TrendMetric,
 } from "./analytics-model";
 import { AnalyticsCard, Swatch, Tip } from "./card";
-import { highlightClass, hoverProps, useHighlight } from "./highlight";
+import { hoverProps, useSetHot } from "./highlight";
 
 const BASE_HEIGHT = 260;
 const EVENT_ROW = 14;
@@ -70,7 +69,7 @@ export const OverTimeCard = memo(function OverTimeCard({
   const [metricKey, setMetricKey] = useState<TrendMetric>("completed");
   const [hover, setHover] = useState<number | null>(null);
   const [ref, width] = useElementWidth<HTMLDivElement>();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const choice = TREND_METRICS.find((item) => item.value === metricKey) ?? TREND_METRICS[0];
   const metric = METRICS[choice?.metric ?? "completed"];
 
@@ -209,7 +208,8 @@ export const OverTimeCard = memo(function OverTimeCard({
                 key={`${item.key}-${metricKey}`}
                 d={linePath(lines.get(item.key) ?? [], sx, sy)}
                 pathLength={1}
-                className={cn("an-ln", highlightClass(hot, item.key))}
+                className="an-ln"
+                data-series={item.key}
                 style={{ "--col": colors.get(item.key) } as CSSProperties}
                 {...hoverProps(setHot, item.key)}
               />
@@ -243,7 +243,7 @@ export const OverTimeCard = memo(function OverTimeCard({
               <b>{bucketLabel(t, analytics, buckets[hover] ?? 0, last)}</b>
             </div>
             {ranked.map(({ item, value }) => (
-              <span key={item.key} className={cn("an-ttr", highlightClass(hot, item.key))}>
+              <span key={item.key} className="an-ttr" data-series={item.key}>
                 <em>
                   <Swatch color={colors.get(item.key)} />
                   {item.label}

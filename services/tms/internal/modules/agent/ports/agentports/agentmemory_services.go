@@ -121,6 +121,10 @@ type MemoryContextRequest struct {
 	// Text is what the turn asked, read for the words a memory shares with
 	// it when its meaning cannot be compared.
 	Text string
+	// Focus is the turn's own message without the one before it, read first
+	// for the words it shares; Text is read too only when Focus is too short
+	// to say what it is about.
+	Focus string
 }
 
 // MemoryContext is what a prompt may carry, best first, and the records whose

@@ -3,9 +3,9 @@ package agentreflectionservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -163,6 +163,7 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 			{ToolName: "update_stop", Outcome: agent.TrustOutcomeApproved},
 		},
 		NegativeRatings: 2,
+		HasPerson:       true,
 	})
 
 	assert.Equal(t, []agent.ReflectionSignalKind{
@@ -174,4 +175,16 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 	assert.Equal(t, 1, signals[0].Count)
 	assert.Equal(t, "assign_move", signals[0].Detail)
 	assert.Equal(t, 2, signals[2].Count)
+}
+
+func TestReadSignals_ALongRunWithNobodyInItIsNoSignal(t *testing.T) {
+	t.Parallel()
+
+	messages := make([]conversation.Message, 0, LongTaskToolCalls)
+	for range LongTaskToolCalls {
+		messages = append(messages, toolResult("get_shipment", false, aitrace.OutcomeRan))
+	}
+
+	assert.Empty(t, ReadSignals(&Window{Messages: messages}),
+		"a run that only worked has nothing a person showed it to learn from")
 }

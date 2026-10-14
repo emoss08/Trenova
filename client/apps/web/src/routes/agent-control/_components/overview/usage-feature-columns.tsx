@@ -18,12 +18,19 @@ const FEATURES: AiUsageFeature[] = [
   "ShipmentImportChat",
   "DocumentIntelligenceRoute",
   "DocumentIntelligenceExtract",
+  "AccountingMapping",
+  "AgentReflection",
+  "AgentDrafting",
+  "AgentProfile",
 ];
 
 /** The share of the busiest feature's calls a bar may never fall below, so a failure shows. */
 const MIN_FAILED_BAR_PERCENT = 3;
 
-export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnDef<AIUsageFeatureRow>[] {
+export function getUsageFeatureColumns(
+  t: TranslateFn,
+  busiest: number,
+): ColumnDef<AIUsageFeatureRow>[] {
   const scale = Math.max(busiest, 1);
 
   return [
@@ -70,7 +77,13 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
         );
       },
       size: 190,
-      meta: { label: t("Calls"), apiField: "calls", filterable: true, sortable: true, filterType: "number" },
+      meta: {
+        label: t("Calls"),
+        apiField: "calls",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
       id: "failed",
@@ -83,7 +96,13 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
           <span className="dim">—</span>
         ),
       size: 80,
-      meta: { label: t("Failed"), apiField: "failed", filterable: true, sortable: true, filterType: "number" },
+      meta: {
+        label: t("Failed"),
+        apiField: "failed",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
       id: "tokens",
@@ -95,7 +114,13 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
         </span>
       ),
       size: 90,
-      meta: { label: t("Tokens"), apiField: "tokens", filterable: false, sortable: true, filterType: "number" },
+      meta: {
+        label: t("Tokens"),
+        apiField: "tokens",
+        filterable: false,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
       id: "costUsd",
@@ -108,7 +133,13 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
           <span className="dim">—</span>
         ),
       size: 80,
-      meta: { label: t("Spend"), apiField: "costUsd", filterable: false, sortable: true, filterType: "number" },
+      meta: {
+        label: t("Spend"),
+        apiField: "costUsd",
+        filterable: false,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
       id: "latencyP50Ms",

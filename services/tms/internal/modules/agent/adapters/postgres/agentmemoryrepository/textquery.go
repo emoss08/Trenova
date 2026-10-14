@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	maxQueryWords   = 16
-	minPrefixRunes  = 2
-	websearchConfig = "websearch_to_tsquery('simple', ?)"
-	tsqueryConfig   = "to_tsquery('simple', ?)"
+	maxQueryWords    = 16
+	minPrefixRunes   = 2
+	minTermRunes     = 3
+	maxFallbackTerms = 8
+	websearchConfig  = "websearch_to_tsquery('simple', ?)"
+	tsqueryConfig    = "to_tsquery('simple', ?)"
 )
 
 type textMatch struct {
@@ -24,10 +26,14 @@ type textQuery struct {
 	raw       string
 	words     []string
 	prefixes  []string
+	terms     []string
 	operators bool
 }
 
-func newTextQuery(query string) textQuery {
+// newTextQuery reads a recall query. terms are its meaningful words, the
+// question's own words left out; the looser pass needs a memory to share two
+// of them, so "the" and "for" never match a memory on their own.
+func newTextQuery(query string, terms []string) textQuery {
 	raw := strings.TrimSpace(query)
 	words := sliceutils.Dedupe(stringutils.SearchWords(raw))
 	if len(words) > maxQueryWords {
@@ -45,8 +51,25 @@ func newTextQuery(query string) textQuery {
 		raw:       raw,
 		words:     words,
 		prefixes:  prefixes,
+		terms:     fallbackTerms(terms),
 		operators: hasWebsearchOperators(raw),
 	}
+}
+
+func fallbackTerms(terms []string) []string {
+	kept := make([]string, 0, min(len(terms), maxFallbackTerms))
+	for _, term := range sliceutils.Dedupe(terms) {
+		words := stringutils.SearchWords(term)
+		if len(words) != 1 || words[0] != term || utf8.RuneCountInString(term) < minTermRunes {
+			continue
+		}
+		kept = append(kept, term+":*")
+		if len(kept) == maxFallbackTerms {
+			break
+		}
+	}
+
+	return kept
 }
 
 func (q textQuery) empty() bool { return q.raw == "" }
@@ -64,12 +87,22 @@ func (q textQuery) primary() *textMatch {
 	}
 }
 
+// fallback is the pass tried when no memory matches every word: any memory
+// sharing two of the query's meaningful words, so a question still finds the
+// memories that share most of it without one common word matching them all.
 func (q textQuery) fallback() *textMatch {
-	if q.operators || len(q.prefixes) < 2 {
+	if q.operators || len(q.terms) < 2 {
 		return nil
 	}
 
-	return &textMatch{tsquery: tsqueryConfig, args: []any{strings.Join(q.prefixes, " | ")}}
+	pairs := make([]string, 0, len(q.terms)*(len(q.terms)-1)/2)
+	for i := range q.terms {
+		for j := i + 1; j < len(q.terms); j++ {
+			pairs = append(pairs, "("+q.terms[i]+" & "+q.terms[j]+")")
+		}
+	}
+
+	return &textMatch{tsquery: tsqueryConfig, args: []any{strings.Join(pairs, " | ")}}
 }
 
 func hasWebsearchOperators(query string) bool {

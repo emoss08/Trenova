@@ -1681,7 +1681,11 @@ type AIUsageFailure {
 
 """The product feature that made a model call."""
 enum AIUsageFeature {
+  AccountingMapping
+  AgentDrafting
   AgentEvaluation
+  AgentProfile
+  AgentReflection
   AgentTurn
   DocumentIntelligenceExtract
   DocumentIntelligenceRoute
@@ -4817,6 +4821,109 @@ type AgentPreviewWarning {
   What a would_fail warning is made of: one reason per rule the write breaks. Empty for every other code.
   """
   reasons: [AgentPreviewReason!]!
+}
+
+"""A profile as AI Control and the Desk show it."""
+type AgentProfile {
+  """The version agents are told, or null before the first is written."""
+  current: AgentProfileVersion
+  """The active guidance, newest first."""
+  guidance: [AgentProfileGuidance!]!
+  """
+  The newest attempt, when it failed after the current version was written.
+  """
+  latestFailure: AgentProfileVersion
+  subject: AgentProfileSubject!
+}
+
+"""
+One thing a query worked out from the records. Facts are never written by a model.
+"""
+type AgentProfileFact {
+  key: String!
+  text: String!
+}
+
+"""
+A line people gave about how to read a profile. The next version honours every active line.
+"""
+type AgentProfileGuidance {
+  content: String!
+  createdAt: Timestamp!
+  createdById: ID!
+  """Who gave it, by name."""
+  createdByName: String
+  id: ID!
+  retiredAt: Timestamp
+  source: AgentProfileGuidanceSource!
+  status: AgentProfileGuidanceStatus!
+  subject: AgentProfileSubject!
+  """The conversation it was given in, when an agent wrote it down."""
+  threadId: ID
+}
+
+input AgentProfileGuidanceInput {
+  """One plain sentence, at most 500 characters."""
+  content: String!
+}
+
+"""
+Who worded a line of guidance: a person typing it, or an agent writing down what a person said.
+"""
+enum AgentProfileGuidanceSource {
+  Agent
+  Person
+}
+
+enum AgentProfileGuidanceStatus {
+  Active
+  Retired
+}
+
+"""
+Where a version of a profile stands. Only the current version is told to agents.
+"""
+enum AgentProfileStatus {
+  Current
+  Failed
+  Superseded
+}
+
+"""
+Whom an agent profile describes: the organization's business, or one person's work in it.
+"""
+enum AgentProfileSubject {
+  Organization
+  User
+}
+
+"""What made a version get written."""
+enum AgentProfileTrigger {
+  Guidance
+  Requested
+  Scheduled
+}
+
+"""
+One version of a profile: a model's write-up of the facts and the guidance in
+force when it was written. A failed version says why and was never told to
+agents.
+"""
+type AgentProfileVersion {
+  """When the facts were last worked out and found to give this version."""
+  checkedAt: Timestamp!
+  """The write-up agents are told; empty for a failed version."""
+  content: String
+  createdAt: Timestamp!
+  errorMessage: String
+  facts: [AgentProfileFact!]!
+  """The guidance in force when it was written."""
+  guidanceIds: [ID!]!
+  id: ID!
+  model: String
+  status: AgentProfileStatus!
+  subject: AgentProfileSubject!
+  trigger: AgentProfileTrigger!
 }
 
 type AgentProposal {
@@ -18534,9 +18641,15 @@ type Mutation {
   Says someone has seen an open exception; an unowned one becomes the reader's.
   """
   acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
+  """
+  Add a line of guidance to the organization's profile; it is written again with it.
+  """
+  addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
   addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
+  """Add a line of guidance to the signed-in person's own profile."""
+  addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
   addOrderCharge(allocations: [ChargeAllocationInput!], amount: Decimal!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
@@ -19167,10 +19280,14 @@ type Mutation {
   Reads the accounting system's records again and refreshes the proposals.
   """
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
+  """Write the organization's profile again now."""
+  regenerateAgentOrganizationProfile: Boolean!
   """
   Writes today's page again from current figures, replacing what was there.
   """
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+  """Write the signed-in person's own profile again now."""
+  regenerateMyAgentProfile: Boolean!
   """
   Marks every source of one type stale; only chunks whose text changed are embedded again.
   """
@@ -19287,6 +19404,12 @@ type Mutation {
   restoreWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
   resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
   resumeCarrierIntelMonitoring: Boolean!
+  """
+  Retire a line of guidance from the organization's profile; it is written again without it.
+  """
+  retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  """Retire a line of guidance from the signed-in person's own profile."""
+  retireMyAgentProfileGuidance(id: ID!): AgentProfileGuidance!
   """Queues failed records to be tried again."""
   retryAccountingSync(input: RetryAccountingSyncInput!): AccountingSyncActionResult!
   """
@@ -21483,6 +21606,10 @@ type Query {
   agentMemory(id: ID!): AgentMemory
   """How many active memories the organization keeps, against its soft cap."""
   agentMemoryUsage: AgentMemoryUsage!
+  """What agents are told about the organization's business."""
+  agentOrganizationProfile: AgentProfile!
+  """The organization profile's versions, newest first."""
+  agentOrganizationProfileHistory(limit: Int): [AgentProfileVersion!]!
   agentPlan(id: ID!): AgentPlan
   """What every pending step of a plan would do, in order."""
   agentPlanPreview(id: ID!): AgentPlanPreview!
@@ -21997,6 +22124,8 @@ type Query {
   """
   myActiveBillingTransferRun: BillingTransferRun
   myAdvances: [PayAdvance!]!
+  """What agents are told about the signed-in person's own work."""
+  myAgentProfile: AgentProfile!
   """The chat agents the caller may use, enabled and by name."""
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""

@@ -25,6 +25,7 @@ var listOptions = workflow.ActivityOptions{
 
 var organizationOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 10 * time.Minute,
+	HeartbeatTimeout:    2 * time.Minute,
 	RetryPolicy:         refreshRetryPolicy,
 }
 

@@ -159,6 +159,7 @@ func ToolProviders() []any {
 		dispatchtools.ProvideVoidRateConfirmationTool,
 		dispatchtools.ProvideRecordRateConfirmationConfirmedTool,
 		masterdatatools.NewRememberTool,
+		masterdatatools.NewGuideProfileTool,
 		masterdatatools.NewForgetMemoryTool,
 		provideDismissInsightTool,
 		accountingtools.ProvideCheckAccountingConnectionTool,

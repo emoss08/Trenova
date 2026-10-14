@@ -5,7 +5,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
 import type { CSSProperties } from "react";
 import type { SeriesColors } from "./analytics-model";
-import { highlightClass, useHighlight } from "./highlight";
+import { useSetHot } from "./highlight";
 
 type ComparingChipsProps = {
   series: readonly AIAnalyticsSeries[];
@@ -29,7 +29,7 @@ export function ComparingChips({
   onShowAll,
 }: ComparingChipsProps) {
   const t = useT();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const shown = series.length - hidden.length;
 
   return (
@@ -45,11 +45,8 @@ export function ComparingChips({
           <button
             key={item.key}
             type="button"
-            className={cn(
-              "an-fc ui-focus-ring",
-              off && "off",
-              !off && highlightClass(hot, item.key),
-            )}
+            data-series={off ? undefined : item.key}
+            className={cn("an-fc ui-focus-ring", off && "off")}
             style={{ "--col": colors.get(item.key) } as CSSProperties}
             aria-pressed={!off}
             title={off ? t("Show in charts") : t("Hide from charts")}
