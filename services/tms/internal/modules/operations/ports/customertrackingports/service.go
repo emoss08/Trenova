@@ -172,6 +172,11 @@ type CustomerTrackingService interface {
 		shipmentID pulid.ID,
 	) ([]*customertracking.Notification, error)
 	PreviewByToken(ctx context.Context, token string) (*PublicTrackingView, error)
+	PreviewForShipment(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentID pulid.ID,
+	) (*PublicTrackingView, error)
 	DownloadPodByToken(ctx context.Context, token string) (*DownloadResult, error)
 }
 

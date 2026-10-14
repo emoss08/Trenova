@@ -10,10 +10,12 @@ import { SETTINGS_ROUTES } from "./settings.mjs";
 import { PALETTE_ROUTES } from "./palette.mjs";
 import { FORMULA_ROUTES } from "./formula.mjs";
 import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
+import { CUSTOMER_TRACKING_ROUTES } from "./customertracking.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...CUSTOMER_TRACKING_ROUTES,
   ...FORMULA_NOVA_ROUTES,
   ...FORMULA_ROUTES,
   ...DESK_CASE_ROUTES,

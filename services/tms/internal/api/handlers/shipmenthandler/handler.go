@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
@@ -36,6 +37,7 @@ type Params struct {
 	ImportAssistant      shipmentports.ShipmentImportAssistantService
 	PermitService        permitports.PermitService
 	Etas                 shipmenttrackingports.ShipmentEtaReader
+	CustomerTracking     customertrackingports.CustomerTrackingService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -48,6 +50,7 @@ type Handler struct {
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
+	tracking        customertrackingports.CustomerTrackingService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	formulas        formulavisibility.Gate
@@ -62,6 +65,7 @@ func New(p Params) *Handler {
 		importAssistant: p.ImportAssistant,
 		permitService:   p.PermitService,
 		etas:            p.Etas,
+		tracking:        p.CustomerTracking,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
 		formulas:        formulavisibility.NewGate(p.PermissionMiddleware, p.Logger),
@@ -90,6 +94,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		"/:shipmentID/eta/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getEta,
+	)
+	api.GET(
+		"/:shipmentID/customer-tracking/preview/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.previewCustomerTracking,
 	)
 	api.GET(
 		"/:shipmentID/permit-assessment/",
@@ -457,6 +466,45 @@ func (h *Handler) getEta(c *gin.Context) {
 		eta = shipmenttrackingports.UnknownShipmentEta(shipmentID)
 	}
 	c.JSON(http.StatusOK, eta)
+}
+
+// @Summary Preview a shipment's customer tracking page
+// @Description Returns what the shipment's customer would see through a tracking link opened now, built from the customer's tracking settings. No link is created and no view is recorded.
+// @ID previewShipmentCustomerTracking
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} customertrackingports.PublicTrackingView
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/customer-tracking/preview/ [get]
+func (h *Handler) previewCustomerTracking(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	view, err := h.tracking.PreviewForShipment(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+		shipmentID,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, view)
 }
 
 // @Summary Get shipment permit assessment

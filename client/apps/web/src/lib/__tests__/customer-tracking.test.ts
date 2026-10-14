@@ -1,4 +1,7 @@
-import type { CustomerTrackingLinkRow } from "@/lib/graphql/customer-tracking";
+import type {
+  CustomerStatusNotificationRow,
+  CustomerTrackingLinkRow,
+} from "@/lib/graphql/customer-tracking";
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
@@ -6,8 +9,8 @@ import {
   TRACKING_FIELDS,
   linkState,
   liveLinkCount,
-  notificationStatusAttrs,
   skipReasonLabel,
+  statusEmailSteps,
   statusEventLabel,
   trackingFieldLabel,
 } from "../customer-tracking";
@@ -52,8 +55,6 @@ describe("linkState", () => {
 describe("labels", () => {
   it("names every event, status and skip reason", () => {
     expect(statusEventLabel(t, "PodReady")).toBe("Proof of delivery ready");
-    expect(notificationStatusAttrs(t).Failed.phase).toBe("failed");
-    expect(notificationStatusAttrs(t).Sent.phase).toBe("complete");
     expect(skipReasonLabel(t, "NoRecipients")).toBe("Nobody to send it to");
     expect(skipReasonLabel(t, null)).toBeNull();
   });
@@ -62,5 +63,61 @@ describe("labels", () => {
     const labels = TRACKING_FIELDS.map((field) => trackingFieldLabel(t, field));
     expect(new Set(labels).size).toBe(TRACKING_FIELDS.length);
     expect(TRACKING_FIELDS).toHaveLength(13);
+  });
+});
+
+function notification(
+  overrides: Partial<CustomerStatusNotificationRow> = {},
+): CustomerStatusNotificationRow {
+  return {
+    id: "csn_1",
+    shipmentId: "shp_1",
+    event: "PickedUp",
+    stopId: "stp_1",
+    occurredAt: NOW,
+    estimatedAt: null,
+    status: "Sent",
+    skipReason: null,
+    recipients: ["shipping@customer.com"],
+    attempts: 1,
+    lastError: null,
+    sentAt: NOW + 30,
+    createdAt: NOW,
+    ...overrides,
+  } as CustomerStatusNotificationRow;
+}
+
+describe("statusEmailSteps", () => {
+  const rules = { PickedUp: true, Delayed: true, Delivered: true, PodReady: false };
+
+  it("lists the four emails in the order a shipment earns them", () => {
+    expect(statusEmailSteps(rules, []).map((step) => step.event)).toEqual([
+      "PickedUp",
+      "Delayed",
+      "Delivered",
+      "PodReady",
+    ]);
+  });
+
+  it("pairs each email with whether the rules send it and the latest one owed", () => {
+    const steps = statusEmailSteps(rules, [
+      notification({ id: "a", event: "Delayed", occurredAt: NOW, status: "Sent" }),
+      notification({ id: "b", event: "Delayed", occurredAt: NOW + 600, status: "Pending" }),
+    ]);
+    const delayed = steps.find((step) => step.event === "Delayed");
+    expect(delayed?.enabled).toBe(true);
+    expect(delayed?.count).toBe(2);
+    expect(delayed?.latest?.id).toBe("b");
+    expect(steps.find((step) => step.event === "PodReady")).toMatchObject({
+      enabled: false,
+      latest: null,
+      count: 0,
+    });
+  });
+
+  it("still shows an email sent before its rule was turned off", () => {
+    const steps = statusEmailSteps({ ...rules, PickedUp: false }, [notification()]);
+    expect(steps[0]).toMatchObject({ enabled: false, count: 1 });
+    expect(steps[0].latest?.status).toBe("Sent");
   });
 });
