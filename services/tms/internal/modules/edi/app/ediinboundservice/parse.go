@@ -743,13 +743,16 @@ func TenderReferences(
 	return TenderReference{ShipmentID: shipmentID, PaymentMethod: paymentMethod}, true
 }
 
+const trenovaShipmentIDPrefix = "shp_"
+
 func readB2(b2 *edix12inspect.X12Segment) (shipmentID, paymentMethod string) {
 	element := func(position int) string {
 		return strings.TrimSpace(elementValue(b2, position))
 	}
-	b201, b202, b204, b206 := element(1), element(2), element(4), element(6)
+	b202, b204, b206 := element(2), element(4), element(6)
 	legacy := b206 == "" &&
-		(isShipmentPaymentMethod(b204) || (b204 == "" && b201 != "" && b202 != ""))
+		(isShipmentPaymentMethod(b204) ||
+			(b204 == "" && strings.HasPrefix(b202, trenovaShipmentIDPrefix)))
 	if legacy {
 		return b202, b204
 	}

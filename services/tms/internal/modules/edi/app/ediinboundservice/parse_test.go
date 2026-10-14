@@ -686,6 +686,11 @@ func TestParseLoadTenderReadsB2AsX12LaysItOut(t *testing.T) {
 			b2:   "B2****LT-88240**TP",
 			want: map[string]any{"externalShipmentId": "LT-88240", "paymentMethod": "TP"},
 		},
+		{
+			name: "a tariff code and SCAC with nothing after",
+			b2:   "B2*TL*ACME",
+			want: map[string]any{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -716,6 +721,11 @@ func TestParseLoadTenderStillReadsB2AsTrenovaOnceWroteIt(t *testing.T) {
 		{
 			name: "no method of payment",
 			b2:   "B2*ABCD*shp_01JABCDEF",
+			want: map[string]any{"externalShipmentId": "shp_01JABCDEF"},
+		},
+		{
+			name: "neither SCAC nor method of payment",
+			b2:   "B2**shp_01JABCDEF",
 			want: map[string]any{"externalShipmentId": "shp_01JABCDEF"},
 		},
 	}
