@@ -113,7 +113,13 @@ group and per deployment, and the trend is read per group.
 | A connection gap is named | 3 points |
 
 **Narrative.** `summarize` and `runTimeNote` build the Nova sentences as segments the client
-renders. Segments that name a series or a provider link to it.
+renders. Segments that name a series or a provider link to it. Each sentence is one catalog
+message in the viewer's language, with tags marking the linked and bold parts
+(`"Failed runs on <p>{0}</p> take <b>{1}</b> as long as its completed ones."`).
+`i18n.TranslateRich` splits the translated message at its tags, and each tag becomes a segment, so
+a translator can move a name without breaking its link. Event labels and the fallback names
+("Unknown model", "Removed provider") are translated the same way. Never build a sentence by
+joining fragments.
 
 **Events** come from two places: provider settings history (turned off or on, model switched) and
 hourly health transitions (stopped answering, lost access, recovered).
@@ -136,6 +142,7 @@ newest failed tool steps with their messages and agents.
 - organization and business unit
 - the tenant's epoch
 - window, comparison, agent, task and time zone
+- the viewer's language, because the sentences are translated on the server
 
 Entries live for two minutes. The refresh bumps the epoch (`INCR`, kept seven days) whenever it
 writes, so a new run is visible after the next refresh and never later. The cache fails open: a
