@@ -696,12 +696,16 @@ func (r *runner) runSFTP(suffix, shipmentID string) bool {
 			return err
 		}
 		for _, file := range outbound.Files {
-			if strings.Contains(file.Contents, "ST*204") {
-				fmt.Printf("      · outbound file %s (%d bytes)\n", file.Name, len(file.Contents))
-				return nil
+			if !strings.Contains(file.Name, message.ID) {
+				continue
 			}
+			if !strings.Contains(file.Contents, "ST*204") {
+				return fmt.Errorf("outbound file %s does not hold a 204", file.Name)
+			}
+			fmt.Printf("      · outbound file %s (%d bytes)\n", file.Name, len(file.Contents))
+			return nil
 		}
-		return fmt.Errorf("no 204 file landed in the SFTP outbound directory")
+		return fmt.Errorf("no file for message %s landed in the SFTP outbound directory", message.ID)
 	})
 
 	tenderRef := "SFTP" + suffix
