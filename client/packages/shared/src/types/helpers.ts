@@ -62,6 +62,19 @@ export const nullableEnumSchema = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === "" ? null : value), schema.nullish());
 
 /**
+ * An enum Go leaves at its zero value when nothing set it, read as the default the
+ * client draws for it.
+ *
+ * A JSONB settings column that defaults to '{}' decodes to the Go zero value and marshals
+ * every field, so an enum no one chose arrives as `""`, not absent. `.default()` fires only
+ * for `undefined`, so without this the empty value fails the enum check and the parse
+ * discards the whole response, the record that embeds it included. An absent or null value
+ * reads as the fallback too.
+ */
+export const defaultedEnumSchema = <T extends z.ZodEnum>(schema: T, fallback: z.output<T>) =>
+  z.preprocess((value) => (value === "" || value == null ? fallback : value), schema);
+
+/**
  * A PULID the server leaves unset.
  *
  * `pulid.ID.MarshalJSON` (shared/pulid/pulid.go) returns the literal `null` for
