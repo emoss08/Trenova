@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageBarControls } from "@/components/navigation/rail-page-bar";
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -163,9 +164,12 @@ export function BriefingBar({
     <div className="border-border relative isolate overflow-hidden border-b">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <h1 className="truncate text-lg font-semibold">
-            {greeting(clock.hour)}, {firstName}
-          </h1>
+          <div className="flex min-w-0 items-center">
+            <PageBarControls />
+            <h1 className="truncate text-lg font-semibold">
+              {greeting(clock.hour)}, {firstName}
+            </h1>
+          </div>
 
           <div className="flex min-h-5.5 flex-wrap items-center gap-x-2 gap-y-1">
             {loading ? (
