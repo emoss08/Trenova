@@ -110,7 +110,6 @@ func mayBeString(node ast.Node) bool {
 
 func meteredBuiltin(name string) expr.Option {
 	original := builtinNamed(name)
-	contextType := reflect.TypeFor[context.Context]()
 
 	types := make([]any, 0, len(original.Types))
 	for _, signature := range original.Types {

@@ -128,8 +128,8 @@ func IsReservedName(name string) bool {
 	if isReservedName(name) {
 		return true
 	}
-	for _, spec := range functionSpecs {
-		if spec.Name == name {
+	for i := range functionSpecs {
+		if functionSpecs[i].Name == name {
 			return true
 		}
 	}
