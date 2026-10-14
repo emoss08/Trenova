@@ -9,9 +9,11 @@ import (
 
 type Deps struct {
 	*base.Core
-	FactoringAgreementService factoringports.AgreementService
-	FactoringNoaService       factoringports.NoaService
-	FactoringReadinessService factoringports.ReadinessService
+	FactoringAgreementService  factoringports.AgreementService
+	FactoringNoaService        factoringports.NoaService
+	FactoringReadinessService  factoringports.ReadinessService
+	FactoringSubmissionService factoringports.SubmissionService
+	FactoringTransportService  factoringports.TransportService
 }
 
 type CustomerBillingProfileResolver struct{ *Deps }
@@ -25,6 +27,14 @@ type FactoringCompanyResolver struct{ *Deps }
 type FactoringInvoiceStateResolver struct{ *Deps }
 
 type FactoringNoaResolver struct{ *Deps }
+
+type FactoringSubmissionItemResolver struct{ *Deps }
+
+type FactoringSubmissionPlanResolver struct{ *Deps }
+
+type FactoringSubmissionResolver struct{ *Deps }
+
+type FactoringTransportResolver struct{ *Deps }
 
 type InvoiceResolver struct{ *Deps }
 

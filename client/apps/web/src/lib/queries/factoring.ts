@@ -1,9 +1,13 @@
 import {
   FACTORING_INVOICE_STATE_KEY,
+  FACTORING_SUBMISSION_KEY,
   fetchFactoringAgreementOwner,
   fetchFactoringCompany,
   fetchFactoringNoaOwner,
+  fetchFactoringSubmission,
+  fetchFactoringSubmissionPlan,
   fetchFactoringSummary,
+  fetchFactoringTransport,
   fetchInvoiceFactoring,
   listFactoringAgreements,
   listFactoringNoas,
@@ -41,6 +45,20 @@ export const factoring = createQueryKeys("factoring", {
     queryKey: ["noa-owner", noaId],
     queryFn: async ({ signal }: QueryContext) => fetchFactoringNoaOwner(noaId, { signal }),
   }),
+  submission: (submissionId: string) => ({
+    queryKey: ["submission", submissionId],
+    queryFn: async ({ signal }: QueryContext) => fetchFactoringSubmission(submissionId, { signal }),
+  }),
+  plan: (factoringCompanyId: string, invoiceIds: readonly string[]) => ({
+    queryKey: ["plan", factoringCompanyId, [...invoiceIds].sort()],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringSubmissionPlan({ factoringCompanyId, invoiceIds: [...invoiceIds] }, { signal }),
+  }),
+  transport: (factoringCompanyId: string) => ({
+    queryKey: ["transport", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringTransport(factoringCompanyId, { signal }),
+  }),
   company: (factoringCompanyId: string) => ({
     queryKey: ["company", factoringCompanyId],
     queryFn: async ({ signal }: QueryContext) =>
@@ -50,10 +68,12 @@ export const factoring = createQueryKeys("factoring", {
 
 /**
  * Every cache a factoring change can stale: the readiness queue and its
- * summary, an invoice's factoring section, a factor's agreements and the
- * notices listed on a factor or a customer.
+ * summary, an invoice's factoring section, a factor's agreements, its
+ * delivery settings, the notices listed on a factor or a customer, and the
+ * schedules sent to factors.
  */
 export function invalidateFactoringQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: factoring._def });
   void queryClient.invalidateQueries({ queryKey: [FACTORING_INVOICE_STATE_KEY] });
+  void queryClient.invalidateQueries({ queryKey: [FACTORING_SUBMISSION_KEY] });
 }

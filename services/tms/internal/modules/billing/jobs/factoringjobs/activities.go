@@ -34,22 +34,25 @@ func (t *TenantRef) TenantInfo() pagination.TenantInfo {
 type ActivitiesParams struct {
 	fx.In
 
-	Readiness factoringports.ReadinessService
-	States    factoringports.InvoiceStateRepository
-	Logger    *zap.Logger
+	Readiness   factoringports.ReadinessService
+	Submissions factoringports.SubmissionService
+	States      factoringports.InvoiceStateRepository
+	Logger      *zap.Logger
 }
 
 type Activities struct {
-	readiness factoringports.ReadinessService
-	states    factoringports.InvoiceStateRepository
-	l         *zap.Logger
+	readiness   factoringports.ReadinessService
+	submissions factoringports.SubmissionService
+	states      factoringports.InvoiceStateRepository
+	l           *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		readiness: p.Readiness,
-		states:    p.States,
-		l:         p.Logger.Named("temporal.factoring-activities"),
+		readiness:   p.Readiness,
+		submissions: p.Submissions,
+		states:      p.States,
+		l:           p.Logger.Named("temporal.factoring-activities"),
 	}
 }
 

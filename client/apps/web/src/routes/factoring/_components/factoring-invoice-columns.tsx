@@ -1,3 +1,4 @@
+import { FactoringSubmissionStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import type { FactoringInvoiceStateRow } from "@/lib/graphql/factoring";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -5,11 +6,11 @@ import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
-import type { FactoringTab } from "../use-factoring-state";
+import type { FactoringQueueTab } from "../use-factoring-state";
 
 export function getFactoringInvoiceColumns(
   t: TranslateFn,
-  tab: FactoringTab,
+  tab: FactoringQueueTab,
 ): ColumnDef<FactoringInvoiceStateRow>[] {
   const columns: ColumnDef<FactoringInvoiceStateRow>[] = [
     {
@@ -89,6 +90,41 @@ export function getFactoringInvoiceColumns(
         filterType: "date",
       },
     });
+  } else if (tab === "submitted") {
+    columns.push(
+      {
+        id: "submission",
+        header: t("Schedule"),
+        cell: ({ row }) =>
+          row.original.submission ? (
+            <Link
+              to={recordPath("factoring_submission", row.original.submission.submissionId)}
+              className="font-mono font-medium hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {row.original.submission.submissionNumber}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground">{t("Unavailable")}</span>
+          ),
+        size: 160,
+        minSize: 130,
+        maxSize: 220,
+        meta: { label: t("Schedule") },
+      },
+      {
+        id: "submissionStatus",
+        header: t("Delivery"),
+        cell: ({ row }) =>
+          row.original.submission ? (
+            <FactoringSubmissionStatusBadge status={row.original.submission.submissionStatus} />
+          ) : null,
+        size: 150,
+        minSize: 120,
+        maxSize: 200,
+        meta: { label: t("Delivery") },
+      },
+    );
   } else {
     columns.push({
       accessorKey: "failedChecks",

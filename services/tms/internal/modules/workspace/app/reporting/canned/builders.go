@@ -24,6 +24,7 @@ const (
 	entityOrder             = "order"
 	entityInvoice           = "invoice"
 	entityFactoringState    = "factoring_invoice_state"
+	entityFactoringSchedule = "factoring_submission"
 	entityWorker            = "worker"
 	entityTractor           = "tractor"
 	entityTrailer           = "trailer"

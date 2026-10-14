@@ -1,5 +1,5 @@
 {
-  "version": "sha256:50411b7a09df477e6b356c21e29c4742c2e4364a5bccc8760a766eec10368f8d",
+  "version": "sha256:700eebaf0d0e9371a2141789d812afe38a42fd980bb4c94e5774a0c182c34d31",
   "modules": [
     {
       "id": "home",
@@ -7162,9 +7162,26 @@
             "Under **Notices of assignment**, select **Release** on the notice.",
             "Enter the **Reason**, then select **Release notice**."
           ]
+        },
+        {
+          "title": "Set up where schedules are sent",
+          "keywords": [
+            "factor email",
+            "factor SFTP",
+            "schedule delivery",
+            "factoring upload",
+            "factor inbox",
+            "host key"
+          ],
+          "steps": [
+            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Under **Schedule delivery**, select **Set up** (or **Edit**).",
+            "Choose **Send by**: - **Email**: add the **Recipients** and choose whether to **Attach invoice packets**. - **SFTP**: fill in **Host**, **Port**, **User name** and **Folder**, choose **Sign in with**, enter the **Password** or **Private key**, and paste the server's **Host key** from the factor.",
+            "Select **Save**, then select **Test** to connect with the saved settings without sending anything."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.\n\nSchedule delivery needs update access to factoring companies. A stored password or key is never shown again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused if it presents another, and only public addresses are reached.",
       "related": [
         "/billing/configuration-files/customers",
         "/billing/invoices",
@@ -7539,8 +7556,8 @@
         "Billing management",
         "Factoring"
       ],
-      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.",
-      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, and **Ready over a day** (ready for more than a day without being submitted). The **Ready** and **Not ready** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.",
+      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.",
+      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, **Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.\n\nReady invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each opens on its own page with its delivery, documents and invoices.",
       "requires": [
         {
           "resource": "invoice",
@@ -7557,7 +7574,10 @@
         "factored invoices",
         "NOA",
         "notice of assignment",
-        "missing POD for factoring"
+        "missing POD for factoring",
+        "submit to factor",
+        "factoring schedule",
+        "failed schedule"
       ],
       "tasks": [
         {
@@ -7584,6 +7604,36 @@
             "Open [Factoring](/billing/factoring) and select the **Not ready** tab.",
             "Select the invoice's row. Its **Checks** list the failed checks first, each with what clears it.",
             "Follow the check's link: **Open the factor's agreements** or **Open the factor's notices** for a missing agreement or notice, **Open the disputes** for an open dispute, and **Open the shipment** for a shipment that fails billing readiness."
+          ]
+        },
+        {
+          "title": "Send ready invoices to the factor",
+          "keywords": [
+            "submit to factor",
+            "sell invoices",
+            "send schedule of accounts",
+            "factor invoices",
+            "schedule of accounts"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring) and select the **Ready** tab.",
+            "Select the invoices to send, then select **Submit to factor**.",
+            "Check the schedule: the **Face value**, **Advance**, **Fee** and **Reserve** expected, where it is sent, and each invoice. A schedule goes to one factor; when the selection spans several, pick the **Factor** to send to now.",
+            "Select **Send**. The schedule opens on its own page while it is built and delivered, and its invoices move to the **Submitted** tab."
+          ]
+        },
+        {
+          "title": "Retry or cancel a schedule that failed to send",
+          "keywords": [
+            "factoring schedule failed",
+            "resend schedule",
+            "factor delivery failed",
+            "release invoices from schedule"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring), select the **Schedules** tab and open the schedule marked **Failed to send**.",
+            "Read why delivery failed at the top of the page. Fix the factor's delivery settings first if they are wrong; see [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Select **Retry** to send it again with the factor's current settings, or **Cancel schedule**, enter the **Reason** and confirm to put its invoices back on the **Ready** tab."
           ]
         },
         {
@@ -7615,13 +7665,15 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
+      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices. Sending invoices to a factor needs permission to submit factoring schedules; retrying a failed schedule needs update access to them, and cancelling one needs permission to cancel them. Opening a schedule needs read access to factoring schedules.\n\nA schedule carries at most 200 invoices, all for one factor, and the factor needs schedule delivery set up first. A failed delivery is retried on its own before the schedule is marked **Failed to send**, and Watchtower raises it as an exception. An invoice on a schedule stays off the other tabs until the schedule is cancelled.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
       "related": [
         "/billing/configuration-files/factoring-companies",
         "/billing/configuration-files/customers",
         "/billing/invoices"
       ],
-      "covers": [],
+      "covers": [
+        "/billing/factoring/submissions/:id"
+      ],
       "createAction": null,
       "inNavigation": true
     },
@@ -17776,6 +17828,12 @@
         "section": "notices",
         "noa": "{id}"
       }
+    },
+    {
+      "entity": "factoring_submission",
+      "label": "Factoring schedule",
+      "path": "/billing/factoring/submissions/{id}",
+      "params": {}
     },
     {
       "entity": "formula_template",

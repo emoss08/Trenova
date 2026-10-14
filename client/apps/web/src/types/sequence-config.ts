@@ -19,6 +19,7 @@ export const sequenceTypes = [
   "driver_settlement",
   "carrier_settlement",
   "invoice_run",
+  "factoring_submission",
 ] as const;
 
 export const sequenceTypeSchema = z.enum(sequenceTypes);

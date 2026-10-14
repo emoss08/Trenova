@@ -17,12 +17,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
 var (
 	ErrNoPages      = errors.New("there are no pages to assemble")
 	ErrUnreadable   = errors.New("the file is not a readable PDF")
 	ErrTooManyPages = errors.New("the PDF has more pages than a capture may hold")
+	ErrNoImage      = errors.New("there is no image to convert")
+	ErrImageTooBig  = errors.New("the image is too large to convert")
+)
+
+const (
+	MaxImageBytes = 25 << 20
+	imagePageSpec = "form:Letter, pos:full, sc:0.95"
 )
 
 func init() {
@@ -32,6 +40,10 @@ func init() {
 type Assembler struct{}
 
 func New() captureports.CapturePDFAssembler {
+	return &Assembler{}
+}
+
+func NewImageConverter() captureports.ImagePDFConverter {
 	return &Assembler{}
 }
 
@@ -144,4 +156,34 @@ func (a *Assembler) Split(ctx context.Context, pdf []byte) ([][]byte, error) {
 	}
 
 	return pages, nil
+}
+
+func (a *Assembler) ImageToPDF(ctx context.Context, image []byte) ([]byte, error) {
+	if len(image) == 0 {
+		return nil, ErrNoImage
+	}
+	if len(image) > MaxImageBytes {
+		return nil, ErrImageTooBig
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	imp, err := api.Import(imagePageSpec, types.POINTS)
+	if err != nil {
+		return nil, fmt.Errorf("configure image import: %w", err)
+	}
+	out := new(bytes.Buffer)
+	if err = api.ImportImages(
+		ctx,
+		nil,
+		out,
+		[]io.Reader{bytes.NewReader(image)},
+		imp,
+		configuration(),
+	); err != nil {
+		return nil, fmt.Errorf("convert image to PDF: %w", err)
+	}
+
+	return out.Bytes(), nil
 }

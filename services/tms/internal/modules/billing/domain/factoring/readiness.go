@@ -78,6 +78,7 @@ type ReadinessInputs struct {
 	Shipments              []ShipmentFacts
 	InvoiceAcceptedTypeIDs map[pulid.ID]struct{}
 	AgreementDocuments     []DocumentNeed
+	SubmissionNumber       string
 }
 
 func EvaluateReadiness(in *ReadinessInputs) Readiness {
@@ -97,7 +98,10 @@ func EvaluateReadiness(in *ReadinessInputs) Readiness {
 	checks = append(checks, agreementDocumentChecks(in)...)
 
 	readiness := Readiness{Verdict: VerdictReady, Checks: checks}
-	if readiness.FailedCount() > 0 {
+	switch {
+	case in.SubmissionNumber != "":
+		readiness.Verdict = VerdictSubmitted
+	case readiness.FailedCount() > 0:
 		readiness.Verdict = VerdictNotReady
 	}
 	return readiness

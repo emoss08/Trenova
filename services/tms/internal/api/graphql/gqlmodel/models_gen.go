@@ -1803,6 +1803,12 @@ type BulkWorkerPTOActionInput struct {
 	Reason *string                       `json:"reason,omitempty"`
 }
 
+type CancelFactoringSubmissionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Reason  string `json:"reason"`
+}
+
 type CancelFuelCardInput struct {
 	ID      string `json:"id"`
 	Version int    `json:"version"`
@@ -4492,6 +4498,28 @@ type FactoringNoaListInput struct {
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
 }
 
+type FactoringSubmissionConnection struct {
+	Edges      []*FactoringSubmissionEdge `json:"edges"`
+	PageInfo   *PageInfo                  `json:"pageInfo"`
+	TotalCount *int                       `json:"totalCount,omitempty"`
+}
+
+type FactoringSubmissionEdge struct {
+	Node   *factoring.Submission `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type FactoringSubmissionListInput struct {
+	Table              *DataTableConnectionInput    `json:"table"`
+	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
+	Statuses           []factoring.SubmissionStatus `json:"statuses,omitempty"`
+}
+
+type FactoringSubmissionPlanInput struct {
+	FactoringCompanyID string   `json:"factoringCompanyId"`
+	InvoiceIds         []string `json:"invoiceIds"`
+}
+
 type FieldFilterInput struct {
 	Field    string `json:"field"`
 	Operator string `json:"operator"`
@@ -7172,6 +7200,11 @@ type RetryAccountingSyncInput struct {
 	ErrorCategories []accountingsync.SyncErrorCategory `json:"errorCategories,omitempty"`
 }
 
+type RetryFactoringSubmissionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+}
+
 type ReverseCustomerPaymentInput struct {
 	PaymentID      string  `json:"paymentId"`
 	AccountingDate int     `json:"accountingDate"`
@@ -7347,6 +7380,23 @@ type SaveAccountingAppInput struct {
 	WebhookVerifierToken *string `json:"webhookVerifierToken,omitempty"`
 	// Removes the saved webhook verifier token.
 	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
+}
+
+type SaveFactoringTransportInput struct {
+	FactoringCompanyID string `json:"factoringCompanyId"`
+	// Required when the factor already has delivery settings.
+	Version         *int                      `json:"version,omitempty"`
+	Method          factoring.TransportMethod `json:"method"`
+	EmailRecipients []string                  `json:"emailRecipients,omitempty"`
+	AttachPackets   *bool                     `json:"attachPackets,omitempty"`
+	SftpHost        *string                   `json:"sftpHost,omitempty"`
+	SftpPort        *int                      `json:"sftpPort,omitempty"`
+	SftpUsername    *string                   `json:"sftpUsername,omitempty"`
+	SftpAuthMethod  *factoring.SftpAuthMethod `json:"sftpAuthMethod,omitempty"`
+	// Leave empty to keep the stored password or key.
+	SftpSecret       *string `json:"sftpSecret,omitempty"`
+	SftpKnownHostKey *string `json:"sftpKnownHostKey,omitempty"`
+	SftpDirectory    *string `json:"sftpDirectory,omitempty"`
 }
 
 type SaveHomeLayoutPresetInput struct {

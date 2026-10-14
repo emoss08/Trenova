@@ -17,6 +17,7 @@ const (
 	SequenceTypeDriverSettlement     = SequenceType("driver_settlement")
 	SequenceTypeCarrierSettlement    = SequenceType("carrier_settlement")
 	SequenceTypeInvoiceRun           = SequenceType("invoice_run")
+	SequenceTypeFactoringSubmission  = SequenceType("factoring_submission")
 )
 
 type AccountingBasisType string
@@ -554,7 +555,8 @@ func (v SequenceType) IsValid() bool {
 		SequenceTypeManualJournalRequest,
 		SequenceTypeLocationCode,
 		SequenceTypeDriverSettlement,
-		SequenceTypeCarrierSettlement:
+		SequenceTypeCarrierSettlement,
+		SequenceTypeFactoringSubmission:
 		return true
 	default:
 		return false

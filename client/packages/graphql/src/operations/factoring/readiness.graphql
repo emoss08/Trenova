@@ -7,6 +7,11 @@ fragment FactoringInvoiceStateFields on FactoringInvoiceState {
   openBalanceMinor
   readySince
   evaluatedAt
+  submission {
+    submissionId
+    submissionNumber
+    submissionStatus
+  }
   checks {
     code
     passed
@@ -62,6 +67,11 @@ query FactoringInvoiceStateTable(
         openBalanceMinor
         readySince
         evaluatedAt
+        submission {
+          submissionId
+          submissionNumber
+          submissionStatus
+        }
         checks {
           code
           passed
@@ -106,6 +116,10 @@ query FactoringSummary {
       amountMinor
     }
     notReady {
+      count
+      amountMinor
+    }
+    submitted {
       count
       amountMinor
     }

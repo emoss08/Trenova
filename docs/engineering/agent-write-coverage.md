@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 275 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 277 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 99 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1133 writes: 620 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1138 writes: 625 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 406 |
-| Exempt | 693 |
+| Covered by a tool | 409 |
+| Exempt | 695 |
 | — Security | 83 |
-| — Configuration | 275 |
+| — Configuration | 277 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 99 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1133 |
+| Total | 1138 |
 
-Of the 440 writes an agent should be able to make, 406 have a tool (92%).
+Of the 443 writes an agent should be able to make, 409 have a tool (92%).
 
 ## Pending
 
@@ -236,7 +236,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 10 | 6 | 4 | 0 |
+| factoring | 15 | 9 | 6 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
@@ -1238,13 +1238,18 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeFactoringNoa` | Tool: `record_factoring_noa_acknowledgement` |
 | `mutation activateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation cancelFactoringSubmission` | Tool: `cancel_factoring_submission` |
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
 | `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
+| `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
+| `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
 | `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
 | `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
+| `mutation submitInvoicesToFactor` | Tool: `submit_invoices_to_factor` |
+| `mutation testFactoringTransport` | Exempt, configuration: Testing a factor's delivery settings connects with the administrator's stored credential and changes nothing but the recorded test result. |
 | `mutation updateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 
 ### factoringcompany

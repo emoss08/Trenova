@@ -652,4 +652,35 @@ func (r *Registry) registerBillingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringSubmission.String(),
+		DisplayName: "Factoring Schedule",
+		Description: "Schedules of accounts sent to a factor, with each invoice's expected funding",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View factoring schedules"},
+			{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Send invoices to a factor on a schedule",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Retry a schedule that failed to send",
+			},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Cancel",
+				Description: "Cancel a schedule that failed to send and release its invoices",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export factoring schedules",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }

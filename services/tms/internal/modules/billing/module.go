@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransport"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -55,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
@@ -110,11 +112,24 @@ func SharedOptions() fx.Option {
 			factoringrepository.NewAgreementRepository,
 			factoringrepository.NewNoaRepository,
 			factoringrepository.NewInvoiceStateRepository,
+			factoringrepository.NewSubmissionRepository,
+			factoringrepository.NewTransportRepository,
 			factoringrepository.NewWatchtowerReader,
 			factoringcontract.NewRequester,
 			factoringservice.NewAgreementService,
 			factoringservice.NewNoaService,
 			factoringservice.NewReadinessService,
+			factoringservice.NewSubmissionService,
+			factoringservice.NewTransportService,
+			factoringcontract.NewSendStarter,
+			fx.Annotate(
+				factoringtransport.NewEmail,
+				fx.ResultTags(factoringports.TransportGroup),
+			),
+			fx.Annotate(
+				factoringtransport.NewSftp,
+				fx.ResultTags(factoringports.TransportGroup),
+			),
 			fx.Annotate(
 				factoringservice.NewDocumentObserver,
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),

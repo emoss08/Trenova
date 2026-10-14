@@ -106,12 +106,13 @@ func TestEvaluateFirstTimeWithoutAgreementOrNotice(t *testing.T) {
 	}
 	states := &stubStates{saved: map[pulid.ID]*factoring.InvoiceState{}}
 	svc := NewReadinessService(ReadinessParams{
-		States:     states,
-		Agreements: stubAgreements{},
-		Noas:       stubNoas{},
-		Invoices:   &stubInvoices{inv: inv},
-		Documents:  stubDocuments{},
-		Logger:     zap.NewNop(),
+		States:      states,
+		Agreements:  stubAgreements{},
+		Noas:        stubNoas{},
+		Submissions: newFakeSubmissions(),
+		Invoices:    &stubInvoices{inv: inv},
+		Documents:   stubDocuments{},
+		Logger:      zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: inv.OrganizationID, BuID: inv.BusinessUnitID}
 

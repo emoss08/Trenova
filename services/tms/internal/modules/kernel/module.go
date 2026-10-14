@@ -22,6 +22,7 @@ func SharedOptions() fx.Option {
 			realtimeservice.New,
 			versionservice.New,
 			encryptionservice.New,
+			encryptionservice.NewSecretCipher,
 			usstaterepository.New,
 			settingversionrepository.New,
 			fx.Annotate(

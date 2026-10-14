@@ -61,6 +61,8 @@ type fakeFactoringReader struct {
 	labelErr    error
 	missingErr  error
 	expiringErr error
+	failed      []*factoringports.FailedSubmission
+	failedErr   error
 	labelReq    *factoringports.ListInvoiceLabelsRequest
 	missingReq  *factoringports.ListCustomersMissingNoaRequest
 	expiringReq *factoringports.ListNoasExpiringSoonRequest
@@ -88,6 +90,13 @@ func (f *fakeFactoringReader) ListNoasExpiringSoon(
 ) ([]*factoringports.ExpiringNoa, error) {
 	f.expiringReq = req
 	return f.expiring, f.expiringErr
+}
+
+func (f *fakeFactoringReader) ListFailedSubmissions(
+	context.Context,
+	*factoringports.ListFailedSubmissionsRequest,
+) ([]*factoringports.FailedSubmission, error) {
+	return f.failed, f.failedErr
 }
 
 func newTestFactoringSource(
@@ -414,6 +423,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 		},
 		missing:  []*factoringports.CustomerMissingNoa{missingNoa(), nil},
 		expiring: []*factoringports.ExpiringNoa{expiringNoa(10 * timeutils.SecondsPerDay), nil},
+		failed:   []*factoringports.FailedSubmission{failedSubmission(), nil},
 	}
 	source := newTestFactoringSource(states, reader)
 
@@ -421,7 +431,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 
 	items, err := source.Snapshot(t.Context(), tenant)
 	require.NoError(t, err)
-	require.Len(t, items, 3)
+	require.Len(t, items, 4)
 
 	assert.Equal(t, tenant, states.req.TenantInfo)
 	assert.Equal(t, factoringNow-factoring.ReadyUnsubmittedSeconds, states.req.ReadyBefore)
@@ -437,7 +447,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 		assert.Equal(t, tenant, item.TenantInfo)
 		ids[item.SourceID] = struct{}{}
 	}
-	assert.Len(t, ids, 3, "each item has its own source id")
+	assert.Len(t, ids, 4, "each item has its own source id")
 	assert.Contains(t, ids, FactoringReadySourceID(late.InvoiceID))
 	assert.Equal(t, "Invoice INV-7 has been ready to factor for 2 days", items[0].Title)
 }
@@ -470,4 +480,49 @@ func TestFactoringSourceSnapshotFailsWhenAReadFails(t *testing.T) {
 		&fakeFactoringReader{expiringErr: assert.AnError},
 	).Snapshot(t.Context(), tenant)
 	require.ErrorIs(t, err, assert.AnError, "a partial snapshot would resolve live items")
+}
+
+func failedSubmission() *factoringports.FailedSubmission {
+	return &factoringports.FailedSubmission{
+		SubmissionID:    pulid.MustNew("facsub_"),
+		Number:          "FS2610000004",
+		FactorName:      "Lone Star Funding",
+		CurrencyCode:    "USD",
+		InvoiceCount:    3,
+		FaceMinor:       450000,
+		TransportTarget: "schedules@lonestar.test",
+		LastError:       "550 mailbox unavailable",
+		FailedAt:        factoringNow - 3600,
+	}
+}
+
+func TestDescribeFactoringSendFailed(t *testing.T) {
+	t.Parallel()
+
+	tenant := factoringTenant()
+	row := failedSubmission()
+	item, open := DescribeFactoringSendFailed(tenant, row)
+	require.True(t, open)
+	assert.Equal(t, FactoringSendFailedSourceID(row.SubmissionID), item.SourceID)
+	assert.Equal(t, watchtower.SeverityCritical, item.Severity)
+	assert.Equal(t, agent.SubjectFactoringSubmission, item.SubjectType)
+	assert.Equal(t, row.SubmissionID, item.SubjectID)
+	assert.Equal(t, agent.EventFactoringSubmissionFailed, item.EventKind)
+	assert.Equal(t, "Schedule FS2610000004 could not be sent to Lone Star Funding", item.Title)
+	assert.Contains(t, item.Summary, "550 mailbox unavailable")
+	assert.Contains(t, item.Summary, "4500.00 USD")
+	assert.Equal(t, row.FailedAt, item.OccurredAt)
+
+	_, open = DescribeFactoringSendFailed(tenant, &factoringports.FailedSubmission{})
+	assert.False(t, open)
+}
+
+func TestFactoringSourceSnapshotFailsWhenFailedSendsCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	_, err := newTestFactoringSource(
+		&fakeFactoringStates{},
+		&fakeFactoringReader{failedErr: assert.AnError},
+	).Snapshot(t.Context(), factoringTenant())
+	require.ErrorIs(t, err, assert.AnError)
 }

@@ -202,3 +202,49 @@ func (r *watchtowerReader) ListNoasExpiringSoon(
 		return rows, nil
 	})
 }
+
+func (r *watchtowerReader) ListFailedSubmissions(
+	ctx context.Context,
+	req *factoringports.ListFailedSubmissionsRequest,
+) ([]*factoringports.FailedSubmission, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringports.FailedSubmission, error) {
+			sub := factoringcol.SubmissionColumns
+			fac := factoringcompanycol.FactoringCompanyColumns
+			facTable := factoringcompanycol.FactoringCompanyTable
+
+			limit := boundedLimit(req.Limit, maxAttentionRows)
+			rows := make([]*factoringports.FailedSubmission, 0, min(limit, 16))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*factoring.Submission)(nil)).
+				ColumnExpr(sub.ID.As("submission_id")).
+				ColumnExpr(sub.Number.As("number")).
+				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
+				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
+				ColumnExpr(sub.CurrencyCode.As("currency_code")).
+				ColumnExpr(sub.InvoiceCount.As("invoice_count")).
+				ColumnExpr(sub.FaceMinor.As("face_minor")).
+				ColumnExpr(sub.TransportTarget.As("transport_target")).
+				ColumnExpr(sub.LastError.Expr(coalesceBlank)+" AS last_error").
+				ColumnExpr(sub.FailedAt.As("failed_at")).
+				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
+				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
+				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
+						Where(sub.Status.Eq(), factoring.SubmissionStatusFailed).
+						Where(sub.FailedAt.IsNotNull())
+				}).
+				Order(sub.FailedAt.OrderAsc(), sub.ID.OrderAsc()).
+				Limit(int64(limit)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list failed factoring schedules: %w", err)
+			}
+
+			return rows, nil
+		},
+	)
+}

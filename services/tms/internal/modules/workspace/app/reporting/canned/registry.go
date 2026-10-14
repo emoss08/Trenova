@@ -57,6 +57,7 @@ func Default() *Registry {
 		invoiceRevenueTrend(),
 		orderRevenueSummary(),
 		invoicesReadyToFactor(),
+		factoringSchedules(),
 
 		shipmentVolumeByStatus(),
 		facilityActivity(),

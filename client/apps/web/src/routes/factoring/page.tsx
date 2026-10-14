@@ -9,6 +9,7 @@ import { FactoringSummaryStrip } from "./_components/factoring-summary";
 import { factoringSearchParamsParser, type FactoringTab } from "./use-factoring-state";
 
 const Table = lazy(() => import("./_components/factoring-invoice-table"));
+const SubmissionTable = lazy(() => import("./_components/factoring-submission-table"));
 
 export function FactoringPage() {
   const t = useT();
@@ -26,7 +27,7 @@ export function FactoringPage() {
       pageHeaderProps={{
         title: t("Factoring"),
         description: t(
-          "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.",
+          "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.",
         ),
       }}
     >
@@ -36,11 +37,17 @@ export function FactoringPage() {
           <TabsList variant="underline">
             <TabsTab value="ready">{t("Ready")}</TabsTab>
             <TabsTab value="not-ready">{t("Not ready")}</TabsTab>
+            <TabsTab value="submitted">{t("Submitted")}</TabsTab>
+            <TabsTab value="schedules">{t("Schedules")}</TabsTab>
           </TabsList>
         </div>
       </Tabs>
       <DataTableLazyComponent>
-        <Table key={state.view} tab={state.view} />
+        {state.view === "schedules" ? (
+          <SubmissionTable />
+        ) : (
+          <Table key={state.view} tab={state.view} />
+        )}
       </DataTableLazyComponent>
     </PageLayout>
   );
