@@ -1,5 +1,9 @@
-import { FactoringVerdictBadge } from "@/components/factoring/factoring-badges";
+import {
+  FactoringSubmissionItemStatusBadge,
+  FactoringVerdictBadge,
+} from "@/components/factoring/factoring-badges";
 import { FactoringChecksList } from "@/components/factoring/factoring-checks-list";
+import { FactoringReserveEntryList } from "@/components/factoring/factoring-reserve-entry-list";
 import { FactoringSubmissionLink } from "@/components/factoring/factoring-submission-link";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -146,15 +150,46 @@ function FactoringPanel({ factoring }: { factoring: InvoiceFactoring }) {
             {state ? formatUnixDateTimeShort(state.evaluatedAt) : t("Not yet")}
           </DescriptionItem>
           {state?.submission ? (
-            <DescriptionItem label={t("Schedule")} span="full">
-              <FactoringSubmissionLink submission={state.submission} />
-            </DescriptionItem>
+            <>
+              <DescriptionItem label={t("Schedule")}>
+                <FactoringSubmissionLink submission={state.submission} />
+              </DescriptionItem>
+              <DescriptionItem label={t("With the factor")}>
+                <FactoringSubmissionItemStatusBadge status={state.submission.itemStatus} />
+              </DescriptionItem>
+            </>
           ) : null}
         </DescriptionList>
       </div>
+      <InvoiceReserveEntries invoiceId={factoring.id} />
       {state ? <FailedChecks state={state} invoiceNumber={factoring.number} /> : null}
       <OverrideForm factoring={factoring} />
     </SectionPanel>
+  );
+}
+
+/** The factoring movements booked against this invoice, oldest first; nothing when none are. */
+function InvoiceReserveEntries({ invoiceId }: { invoiceId: string }) {
+  const t = useT();
+  const { allowed: canRead } = usePermission(Resource.FactoringReserve, Operation.Read);
+  const { data, isError } = useQuery({
+    ...factoringQueries.reserveEntries({ invoiceId }),
+    enabled: canRead,
+  });
+
+  if (!canRead || !data || data.entries.length === 0) {
+    return isError ? (
+      <p className="text-muted-foreground border-t px-3 py-2 text-xs">
+        {t("This invoice's factoring entries could not be loaded.")}
+      </p>
+    ) : null;
+  }
+
+  return (
+    <div className="flex flex-col border-t">
+      <h4 className="px-3 pt-2 text-sm font-medium">{t("Booked with the factor")}</h4>
+      <FactoringReserveEntryList entries={data.entries} show="schedule" />
+    </div>
   );
 }
 

@@ -19,7 +19,7 @@ export function FactoringSummaryStrip({
   const { data, isLoading, isError, refetch } = useQuery(factoringQueries.summary());
 
   if (isLoading) {
-    return <KpiStripSkeleton count={4} />;
+    return <KpiStripSkeleton count={7} />;
   }
 
   if (isError || !data) {
@@ -59,6 +59,30 @@ export function FactoringSummaryStrip({
         sub={t("{0, plural, one {# invoice} other {# invoices}}", data.submitted.count)}
         active={active === "submitted"}
         onClick={() => onSelect("submitted")}
+      />
+      <KpiStripItem
+        label={t("Funded")}
+        value={formatCurrency(data.funded.amountMinor / 100)}
+        sub={t("{0, plural, one {# invoice} other {# invoices}}", data.funded.count)}
+        active={active === "funded"}
+        onClick={() => onSelect("funded")}
+      />
+      <KpiStripItem
+        label={t("Reserve held")}
+        value={formatCurrency(data.reserveHeld.amountMinor / 100)}
+        sub={t(
+          "{0, plural, one {# invoice} other {# invoices}} awaiting release",
+          data.reserveHeld.count,
+        )}
+      />
+      <KpiStripItem
+        label={t("Chargebacks due")}
+        value={formatCurrency(data.chargebacksDue.amountMinor / 100)}
+        sub={t(
+          "{0, plural, one {# invoice} other {# invoices}} within a week",
+          data.chargebacksDue.count,
+        )}
+        tone={data.chargebacksDue.count > 0 ? "danger" : undefined}
       />
       <KpiStripItem
         label={t("Ready over a day")}

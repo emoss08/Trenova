@@ -1,7 +1,9 @@
 import type {
+  FactoringAccountRole,
   FactoringAccountingTreatment,
   FactoringAgreementStatus,
   FactoringFixAction,
+  FactoringInvoiceEffect,
   FactoringNoaStatus,
   FactoringRecourse,
   FactoringSftpAuthMethod,
@@ -29,6 +31,7 @@ export const FACTORING_VERDICT_LABELS = defineLabels({
   Ready: "Ready",
   NotReady: "Not ready",
   Submitted: "Submitted",
+  Funded: "Funded",
   Excluded: "Not factored",
 });
 
@@ -36,6 +39,7 @@ const VERDICT_PHASES: Record<FactoringVerdict, StatusPhase> = {
   Ready: "complete",
   NotReady: "attention",
   Submitted: "active",
+  Funded: "awaiting",
   Excluded: "closed",
 };
 
@@ -80,17 +84,28 @@ export function factoringNoaPhase(status: FactoringNoaStatus | "Expired"): Statu
 
 export const FACTORING_SUBMISSION_STATUS_LABELS = defineLabels({
   Sending: "Sending",
-  Sent: "Sent",
+  Sent: "Awaiting funding",
+  PartiallyFunded: "Partly funded",
+  Funded: "Funded",
+  Rejected: "Rejected",
   Failed: "Failed to send",
   Cancelled: "Cancelled",
 });
 
 const SUBMISSION_PHASES: Record<FactoringSubmissionStatus, StatusPhase> = {
   Sending: "queued",
-  Sent: "complete",
+  Sent: "awaiting",
+  PartiallyFunded: "awaiting",
+  Funded: "complete",
+  Rejected: "failed",
   Failed: "failed",
   Cancelled: "closed",
 };
+
+/** A schedule the factor has received and not decided in full, so funding can be recorded on it. */
+export function factoringSubmissionAwaitsFunding(status: FactoringSubmissionStatus): boolean {
+  return status === "Sent" || status === "PartiallyFunded";
+}
 
 export function factoringSubmissionPhase(status: FactoringSubmissionStatus): StatusPhase {
   return SUBMISSION_PHASES[status];
@@ -99,15 +114,75 @@ export function factoringSubmissionPhase(status: FactoringSubmissionStatus): Sta
 export const FACTORING_SUBMISSION_ITEM_STATUS_LABELS = defineLabels({
   Pending: "On schedule",
   Released: "Released",
+  Funded: "Funded",
+  Rejected: "Rejected",
+  Settled: "Settled",
+  ChargedBack: "Charged back",
 });
 
 const SUBMISSION_ITEM_PHASES: Record<FactoringSubmissionItemStatus, StatusPhase> = {
   Pending: "active",
   Released: "closed",
+  Funded: "awaiting",
+  Rejected: "failed",
+  Settled: "complete",
+  ChargedBack: "attention",
 };
 
 export function factoringSubmissionItemPhase(status: FactoringSubmissionItemStatus): StatusPhase {
   return SUBMISSION_ITEM_PHASES[status];
+}
+
+export const FACTORING_RESERVE_ENTRY_KIND_LABELS = defineLabels({
+  Funding: "Funding",
+  ReserveRelease: "Reserve release",
+  Chargeback: "Chargeback",
+  ChargebackReversal: "Chargeback reversed",
+});
+
+export const FACTORING_ACCOUNT_ROLE_LABELS = defineLabels({
+  AccountsReceivable: "Accounts receivable",
+  Cash: "Cash",
+  DueFromFactor: "Due from factor",
+  FeeExpense: "Factoring fees",
+  Liability: "Owed to factor",
+});
+
+export const FACTORING_INVOICE_EFFECT_LABELS = defineLabels({
+  None: "Leaves the invoice's balance as it is.",
+  Settle: "Settles the invoice's open balance.",
+  Reopen: "Puts the invoice's balance back open to collect.",
+});
+
+export function factoringInvoiceEffectLabel(effect: FactoringInvoiceEffect): string {
+  return FACTORING_INVOICE_EFFECT_LABELS[effect];
+}
+
+export function factoringAccountRoleLabel(role: FactoringAccountRole): string {
+  return FACTORING_ACCOUNT_ROLE_LABELS[role];
+}
+
+/**
+ * The movements a person can book on one invoice of a schedule, from where
+ * the invoice stands: a funded invoice's reserve is released or charged back
+ * (a chargeback only under recourse), and a charged-back invoice's last
+ * chargeback can be reversed.
+ */
+export function factoringItemActions(
+  status: FactoringSubmissionItemStatus,
+  recourse: boolean,
+): ("release" | "chargeback" | "reverse")[] {
+  switch (status) {
+    case "Funded":
+      return recourse ? ["release", "chargeback"] : ["release"];
+    case "ChargedBack":
+      return ["reverse"];
+    case "Pending":
+    case "Released":
+    case "Rejected":
+    case "Settled":
+      return [];
+  }
 }
 
 export const FACTORING_TRANSPORT_METHOD_LABELS = defineLabels({

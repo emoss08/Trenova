@@ -3862,9 +3862,25 @@ button.dk-dx-c:hover {
   font: 500 11px var(--dk-plex);
   letter-spacing: 0.02em;
   color: var(--dsk-subtle);
+  min-width: 0;
+}
+.dk-rec-kick > span:not(.dk-rec-nav) {
+  flex: 0 3 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .dk-rec-kick > span:first-of-type {
+  flex-shrink: 0;
   color: var(--dsk-fg2);
+}
+.dk-rec-kick > span:nth-of-type(2):not(.dk-rec-nav) {
+  flex-shrink: 1;
+}
+.dk-rec-kick > i,
+.dk-rec-kick > button {
+  flex: none;
 }
 .dk-rec-kick > i {
   width: 3px;
@@ -3873,10 +3889,12 @@ button.dk-dx-c:hover {
   background: var(--dsk-b-strong);
 }
 .dk-rec-nav {
+  flex: none;
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 2px;
+  white-space: nowrap;
 }
 .dk-rec-hrow {
   display: flex;

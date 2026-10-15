@@ -1,17 +1,40 @@
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { Button, type ButtonProps } from "@trenova/shared/components/ui/button";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  holdButtonVariants,
+  holdFillVariants,
+  type HoldTone,
+} from "@trenova/shared/lib/variants/hold-button";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 export type HoldButtonProps = Omit<ButtonProps, "onClick" | "onPointerDown" | "onKeyDown"> & {
   /** Runs once the button has been held down until it fills. */
   onDone: () => void;
   /** How long the hold takes, in milliseconds. */
   ms?: number;
+  /** What the fill warns of: warning for a stop, success for something finished. */
+  tone?: HoldTone;
+  /** The action has happened: the fill stays full, the button no longer holds, and it shows `doneLabel`. */
+  done?: boolean;
+  /** What a done button reads, after a check. Falls back to its children. */
+  doneLabel?: ReactNode;
+  /** Says "hold" beside the label, and "keep holding" once the press has started. */
+  hint?: boolean;
 };
 
 /**
  * A button that acts only once held down until it fills, for an action worth a
- * moment's pause. Releasing, leaving or Escape before it fills cancels it.
+ * moment's pause. Releasing, leaving or Escape before it fills cancels it. Enter
+ * or Space held on the focused button works the same way.
  *
  * The fill is a CSS transition over the hold's length, not a per-frame state, so
  * a hold renders the button twice — at its start and its end — however long it is.
@@ -19,16 +42,21 @@ export type HoldButtonProps = Omit<ButtonProps, "onClick" | "onPointerDown" | "o
 export function HoldButton({
   onDone,
   ms = 900,
+  tone,
+  done = false,
+  doneLabel,
+  hint = false,
   disabled,
   className,
   children,
   ...props
 }: HoldButtonProps) {
+  const t = useT();
   const [holding, setHolding] = useState(false);
   const timer = useRef<number | null>(null);
-  const done = useRef(onDone);
+  const doneRef = useRef(onDone);
   useEffect(() => {
-    done.current = onDone;
+    doneRef.current = onDone;
   });
 
   const stop = useCallback(() => {
@@ -40,15 +68,15 @@ export function HoldButton({
   }, []);
 
   const start = useCallback(() => {
-    if (disabled) return;
+    if (disabled || done) return;
     stop();
     setHolding(true);
     timer.current = window.setTimeout(() => {
       timer.current = null;
       setHolding(false);
-      done.current();
+      doneRef.current();
     }, ms);
-  }, [disabled, ms, stop]);
+  }, [disabled, done, ms, stop]);
 
   useEffect(() => stop, [stop]);
 
@@ -67,11 +95,10 @@ export function HoldButton({
       variant="outline"
       {...props}
       disabled={disabled}
+      aria-disabled={done || undefined}
       data-holding={holding || undefined}
-      className={cn(
-        "hover:border-warning relative touch-none overflow-hidden transition-[border-color,scale] select-none data-holding:scale-[0.985]",
-        className,
-      )}
+      data-done={done || undefined}
+      className={cn(holdButtonVariants({ tone }), className)}
       onPointerDown={start}
       onPointerUp={stop}
       onPointerLeave={stop}
@@ -82,12 +109,28 @@ export function HoldButton({
       <span
         aria-hidden
         className={cn(
-          "bg-warning/28 pointer-events-none absolute inset-0 origin-left transition-transform ease-linear",
-          holding ? "scale-x-100" : "scale-x-0 duration-0",
+          holdFillVariants({ tone }),
+          holding || done ? "scale-x-100" : "scale-x-0 duration-0",
         )}
         style={holding ? { transitionDuration: `${ms}ms` } : undefined}
       />
-      <span className="relative flex items-center justify-center gap-2">{children}</span>
+      <span className="relative flex items-center justify-center gap-2">
+        {done ? (
+          <>
+            <CheckIcon className="size-3.5" />
+            {doneLabel ?? children}
+          </>
+        ) : (
+          <>
+            {children}
+            {hint && (
+              <em className="text-muted-foreground text-xs not-italic">
+                {holding ? t("keep holding") : t("hold")}
+              </em>
+            )}
+          </>
+        )}
+      </span>
     </Button>
   );
 }

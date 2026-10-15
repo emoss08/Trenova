@@ -50,49 +50,57 @@ var AgreementTable = buncolgen.TableInfo{
 //	q.Where(AgreementColumns.ID.Eq(), id)           // WHERE facagr.id = ?
 //	q.Order(AgreementColumns.CreatedAt.OrderDesc())  // ORDER BY facagr.created_at DESC
 var AgreementColumns = struct {
-	ID                   buncolgen.Column // "id" → qualified: "facagr.id"
-	OrganizationID       buncolgen.Column // "organization_id" → qualified: "facagr.organization_id"
-	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "facagr.business_unit_id"
-	FactoringCompanyID   buncolgen.Column // "factoring_company_id" → qualified: "facagr.factoring_company_id"
-	Status               buncolgen.Column // "status" → qualified: "facagr.status"
-	EffectiveFrom        buncolgen.Column // "effective_from" → qualified: "facagr.effective_from"
-	EffectiveTo          buncolgen.Column // "effective_to" → qualified: "facagr.effective_to"
-	AdvanceRateBP        buncolgen.Column // "advance_rate_bp" → qualified: "facagr.advance_rate_bp"
-	ReserveRateBP        buncolgen.Column // "reserve_rate_bp" → qualified: "facagr.reserve_rate_bp"
-	MinimumFeeMinor      buncolgen.Column // "minimum_fee_minor" → qualified: "facagr.minimum_fee_minor"
-	ChargebackWindowDays buncolgen.Column // "chargeback_window_days" → qualified: "facagr.chargeback_window_days"
-	Recourse             buncolgen.Column // "recourse" → qualified: "facagr.recourse"
-	AccountingTreatment  buncolgen.Column // "accounting_treatment" → qualified: "facagr.accounting_treatment"
-	FundingDays          buncolgen.Column // "funding_days" → qualified: "facagr.funding_days"
-	SubmissionTime       buncolgen.Column // "submission_time" → qualified: "facagr.submission_time"
-	Notes                buncolgen.Column // "notes" → qualified: "facagr.notes"
-	ActivatedAt          buncolgen.Column // "activated_at" → qualified: "facagr.activated_at"
-	EndedAt              buncolgen.Column // "ended_at" → qualified: "facagr.ended_at"
-	Version              buncolgen.Column // "version" → qualified: "facagr.version"
-	CreatedAt            buncolgen.Column // "created_at" → qualified: "facagr.created_at"
-	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "facagr.updated_at"
+	ID                     buncolgen.Column // "id" → qualified: "facagr.id"
+	OrganizationID         buncolgen.Column // "organization_id" → qualified: "facagr.organization_id"
+	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "facagr.business_unit_id"
+	FactoringCompanyID     buncolgen.Column // "factoring_company_id" → qualified: "facagr.factoring_company_id"
+	Status                 buncolgen.Column // "status" → qualified: "facagr.status"
+	EffectiveFrom          buncolgen.Column // "effective_from" → qualified: "facagr.effective_from"
+	EffectiveTo            buncolgen.Column // "effective_to" → qualified: "facagr.effective_to"
+	AdvanceRateBP          buncolgen.Column // "advance_rate_bp" → qualified: "facagr.advance_rate_bp"
+	ReserveRateBP          buncolgen.Column // "reserve_rate_bp" → qualified: "facagr.reserve_rate_bp"
+	MinimumFeeMinor        buncolgen.Column // "minimum_fee_minor" → qualified: "facagr.minimum_fee_minor"
+	ChargebackWindowDays   buncolgen.Column // "chargeback_window_days" → qualified: "facagr.chargeback_window_days"
+	Recourse               buncolgen.Column // "recourse" → qualified: "facagr.recourse"
+	AccountingTreatment    buncolgen.Column // "accounting_treatment" → qualified: "facagr.accounting_treatment"
+	FundingDays            buncolgen.Column // "funding_days" → qualified: "facagr.funding_days"
+	SubmissionTime         buncolgen.Column // "submission_time" → qualified: "facagr.submission_time"
+	Notes                  buncolgen.Column // "notes" → qualified: "facagr.notes"
+	DueFromFactorAccountID buncolgen.Column // "due_from_factor_account_id" → qualified: "facagr.due_from_factor_account_id"
+	FeeExpenseAccountID    buncolgen.Column // "fee_expense_account_id" → qualified: "facagr.fee_expense_account_id"
+	LiabilityAccountID     buncolgen.Column // "factoring_liability_account_id" → qualified: "facagr.factoring_liability_account_id"
+	CashAccountID          buncolgen.Column // "cash_account_id" → qualified: "facagr.cash_account_id"
+	ActivatedAt            buncolgen.Column // "activated_at" → qualified: "facagr.activated_at"
+	EndedAt                buncolgen.Column // "ended_at" → qualified: "facagr.ended_at"
+	Version                buncolgen.Column // "version" → qualified: "facagr.version"
+	CreatedAt              buncolgen.Column // "created_at" → qualified: "facagr.created_at"
+	UpdatedAt              buncolgen.Column // "updated_at" → qualified: "facagr.updated_at"
 }{
-	ID:                   buncolgen.NewColumn("id", "facagr"),
-	OrganizationID:       buncolgen.NewColumn("organization_id", "facagr"),
-	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "facagr"),
-	FactoringCompanyID:   buncolgen.NewColumn("factoring_company_id", "facagr"),
-	Status:               buncolgen.NewColumn("status", "facagr"),
-	EffectiveFrom:        buncolgen.NewColumn("effective_from", "facagr"),
-	EffectiveTo:          buncolgen.NewColumn("effective_to", "facagr"),
-	AdvanceRateBP:        buncolgen.NewColumn("advance_rate_bp", "facagr"),
-	ReserveRateBP:        buncolgen.NewColumn("reserve_rate_bp", "facagr"),
-	MinimumFeeMinor:      buncolgen.NewColumn("minimum_fee_minor", "facagr"),
-	ChargebackWindowDays: buncolgen.NewColumn("chargeback_window_days", "facagr"),
-	Recourse:             buncolgen.NewColumn("recourse", "facagr"),
-	AccountingTreatment:  buncolgen.NewColumn("accounting_treatment", "facagr"),
-	FundingDays:          buncolgen.NewColumn("funding_days", "facagr"),
-	SubmissionTime:       buncolgen.NewColumn("submission_time", "facagr"),
-	Notes:                buncolgen.NewColumn("notes", "facagr"),
-	ActivatedAt:          buncolgen.NewColumn("activated_at", "facagr"),
-	EndedAt:              buncolgen.NewColumn("ended_at", "facagr"),
-	Version:              buncolgen.NewColumn("version", "facagr"),
-	CreatedAt:            buncolgen.NewColumn("created_at", "facagr"),
-	UpdatedAt:            buncolgen.NewColumn("updated_at", "facagr"),
+	ID:                     buncolgen.NewColumn("id", "facagr"),
+	OrganizationID:         buncolgen.NewColumn("organization_id", "facagr"),
+	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "facagr"),
+	FactoringCompanyID:     buncolgen.NewColumn("factoring_company_id", "facagr"),
+	Status:                 buncolgen.NewColumn("status", "facagr"),
+	EffectiveFrom:          buncolgen.NewColumn("effective_from", "facagr"),
+	EffectiveTo:            buncolgen.NewColumn("effective_to", "facagr"),
+	AdvanceRateBP:          buncolgen.NewColumn("advance_rate_bp", "facagr"),
+	ReserveRateBP:          buncolgen.NewColumn("reserve_rate_bp", "facagr"),
+	MinimumFeeMinor:        buncolgen.NewColumn("minimum_fee_minor", "facagr"),
+	ChargebackWindowDays:   buncolgen.NewColumn("chargeback_window_days", "facagr"),
+	Recourse:               buncolgen.NewColumn("recourse", "facagr"),
+	AccountingTreatment:    buncolgen.NewColumn("accounting_treatment", "facagr"),
+	FundingDays:            buncolgen.NewColumn("funding_days", "facagr"),
+	SubmissionTime:         buncolgen.NewColumn("submission_time", "facagr"),
+	Notes:                  buncolgen.NewColumn("notes", "facagr"),
+	DueFromFactorAccountID: buncolgen.NewColumn("due_from_factor_account_id", "facagr"),
+	FeeExpenseAccountID:    buncolgen.NewColumn("fee_expense_account_id", "facagr"),
+	LiabilityAccountID:     buncolgen.NewColumn("factoring_liability_account_id", "facagr"),
+	CashAccountID:          buncolgen.NewColumn("cash_account_id", "facagr"),
+	ActivatedAt:            buncolgen.NewColumn("activated_at", "facagr"),
+	EndedAt:                buncolgen.NewColumn("ended_at", "facagr"),
+	Version:                buncolgen.NewColumn("version", "facagr"),
+	CreatedAt:              buncolgen.NewColumn("created_at", "facagr"),
+	UpdatedAt:              buncolgen.NewColumn("updated_at", "facagr"),
 }
 
 // AgreementFieldMap maps JSON API field names to database column names.
@@ -100,27 +108,31 @@ var AgreementColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Agreement.GetStaticFieldMap().
 var AgreementFieldMap = map[string]string{
-	"id":                   "id",
-	"organizationId":       "organization_id",
-	"businessUnitId":       "business_unit_id",
-	"factoringCompanyId":   "factoring_company_id",
-	"status":               "status",
-	"effectiveFrom":        "effective_from",
-	"effectiveTo":          "effective_to",
-	"advanceRateBp":        "advance_rate_bp",
-	"reserveRateBp":        "reserve_rate_bp",
-	"minimumFeeMinor":      "minimum_fee_minor",
-	"chargebackWindowDays": "chargeback_window_days",
-	"recourse":             "recourse",
-	"accountingTreatment":  "accounting_treatment",
-	"fundingDays":          "funding_days",
-	"submissionTime":       "submission_time",
-	"notes":                "notes",
-	"activatedAt":          "activated_at",
-	"endedAt":              "ended_at",
-	"version":              "version",
-	"createdAt":            "created_at",
-	"updatedAt":            "updated_at",
+	"id":                     "id",
+	"organizationId":         "organization_id",
+	"businessUnitId":         "business_unit_id",
+	"factoringCompanyId":     "factoring_company_id",
+	"status":                 "status",
+	"effectiveFrom":          "effective_from",
+	"effectiveTo":            "effective_to",
+	"advanceRateBp":          "advance_rate_bp",
+	"reserveRateBp":          "reserve_rate_bp",
+	"minimumFeeMinor":        "minimum_fee_minor",
+	"chargebackWindowDays":   "chargeback_window_days",
+	"recourse":               "recourse",
+	"accountingTreatment":    "accounting_treatment",
+	"fundingDays":            "funding_days",
+	"submissionTime":         "submission_time",
+	"notes":                  "notes",
+	"dueFromFactorAccountId": "due_from_factor_account_id",
+	"feeExpenseAccountId":    "fee_expense_account_id",
+	"liabilityAccountId":     "factoring_liability_account_id",
+	"cashAccountId":          "cash_account_id",
+	"activatedAt":            "activated_at",
+	"endedAt":                "ended_at",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // AgreementInsertableColumns lists column names suitable for INSERT statements on the "factoring_agreements" table.
@@ -142,6 +154,10 @@ var AgreementInsertableColumns = []string{
 	"funding_days",
 	"submission_time",
 	"notes",
+	"due_from_factor_account_id",
+	"fee_expense_account_id",
+	"factoring_liability_account_id",
+	"cash_account_id",
 	"activated_at",
 	"ended_at",
 	"version",
@@ -212,27 +228,31 @@ func AgreementApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.
 //	AgreementFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgreementFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	FactoringCompanyID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
-	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	EffectiveTo          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
-	AdvanceRateBP        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advanceRateBp" → DB: "advance_rate_bp"
-	ReserveRateBP        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reserveRateBp" → DB: "reserve_rate_bp"
-	MinimumFeeMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minimumFeeMinor" → DB: "minimum_fee_minor"
-	ChargebackWindowDays func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargebackWindowDays" → DB: "chargeback_window_days"
-	Recourse             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recourse" → DB: "recourse"
-	AccountingTreatment  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingTreatment" → DB: "accounting_treatment"
-	FundingDays          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fundingDays" → DB: "funding_days"
-	SubmissionTime       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submissionTime" → DB: "submission_time"
-	Notes                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
-	ActivatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activatedAt" → DB: "activated_at"
-	EndedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "endedAt" → DB: "ended_at"
-	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	FactoringCompanyID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	EffectiveFrom          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	EffectiveTo            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
+	AdvanceRateBP          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advanceRateBp" → DB: "advance_rate_bp"
+	ReserveRateBP          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reserveRateBp" → DB: "reserve_rate_bp"
+	MinimumFeeMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minimumFeeMinor" → DB: "minimum_fee_minor"
+	ChargebackWindowDays   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargebackWindowDays" → DB: "chargeback_window_days"
+	Recourse               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recourse" → DB: "recourse"
+	AccountingTreatment    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingTreatment" → DB: "accounting_treatment"
+	FundingDays            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fundingDays" → DB: "funding_days"
+	SubmissionTime         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submissionTime" → DB: "submission_time"
+	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	DueFromFactorAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueFromFactorAccountId" → DB: "due_from_factor_account_id"
+	FeeExpenseAccountID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feeExpenseAccountId" → DB: "fee_expense_account_id"
+	LiabilityAccountID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "liabilityAccountId" → DB: "factoring_liability_account_id"
+	CashAccountID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cashAccountId" → DB: "cash_account_id"
+	ActivatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activatedAt" → DB: "activated_at"
+	EndedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "endedAt" → DB: "ended_at"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -281,6 +301,18 @@ var AgreementFilter = struct {
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("notes", op, value)
+	},
+	DueFromFactorAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("dueFromFactorAccountId", op, value)
+	},
+	FeeExpenseAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("feeExpenseAccountId", op, value)
+	},
+	LiabilityAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("liabilityAccountId", op, value)
+	},
+	CashAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cashAccountId", op, value)
 	},
 	ActivatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("activatedAt", op, value)
@@ -1061,6 +1093,317 @@ var NoaFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// ReserveEntry — table "factoring_reserve_entries", alias "facres"
+// ---------------------------------------------------------------------------
+
+// ReserveEntryTable holds the table name, alias, and primary key columns
+// for the "factoring_reserve_entries" table. The alias "facres" is used in all generated
+// SQL fragments (e.g. "facres.id = ?").
+var ReserveEntryTable = buncolgen.TableInfo{
+	Name:       "factoring_reserve_entries",
+	Alias:      "facres",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// ReserveEntryColumns provides type-safe column references for the "factoring_reserve_entries" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ReserveEntryColumns.ID.String())
+//	// SELECT facres.id FROM factoring_reserve_entries AS facres
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ReserveEntryColumns.ID.Eq(), id)           // WHERE facres.id = ?
+//	q.Order(ReserveEntryColumns.CreatedAt.OrderDesc())  // ORDER BY facres.created_at DESC
+var ReserveEntryColumns = struct {
+	ID                 buncolgen.Column // "id" → qualified: "facres.id"
+	OrganizationID     buncolgen.Column // "organization_id" → qualified: "facres.organization_id"
+	BusinessUnitID     buncolgen.Column // "business_unit_id" → qualified: "facres.business_unit_id"
+	FactoringCompanyID buncolgen.Column // "factoring_company_id" → qualified: "facres.factoring_company_id"
+	AgreementID        buncolgen.Column // "agreement_id" → qualified: "facres.agreement_id"
+	SubmissionID       buncolgen.Column // "submission_id" → qualified: "facres.submission_id"
+	SubmissionItemID   buncolgen.Column // "submission_item_id" → qualified: "facres.submission_item_id"
+	InvoiceID          buncolgen.Column // "invoice_id" → qualified: "facres.invoice_id"
+	CustomerID         buncolgen.Column // "customer_id" → qualified: "facres.customer_id"
+	Kind               buncolgen.Column // "kind" → qualified: "facres.kind"
+	Treatment          buncolgen.Column // "treatment" → qualified: "facres.treatment"
+	CurrencyCode       buncolgen.Column // "currency_code" → qualified: "facres.currency_code"
+	CashMinor          buncolgen.Column // "cash_minor" → qualified: "facres.cash_minor"
+	FeeMinor           buncolgen.Column // "fee_minor" → qualified: "facres.fee_minor"
+	ReserveMinor       buncolgen.Column // "reserve_minor" → qualified: "facres.reserve_minor"
+	LiabilityMinor     buncolgen.Column // "liability_minor" → qualified: "facres.liability_minor"
+	ARMinor            buncolgen.Column // "ar_minor" → qualified: "facres.ar_minor"
+	JournalEntryID     buncolgen.Column // "journal_entry_id" → qualified: "facres.journal_entry_id"
+	JournalBatchID     buncolgen.Column // "journal_batch_id" → qualified: "facres.journal_batch_id"
+	AccountingDate     buncolgen.Column // "accounting_date" → qualified: "facres.accounting_date"
+	OccurredOn         buncolgen.Column // "occurred_on" → qualified: "facres.occurred_on"
+	ReversesEntryID    buncolgen.Column // "reverses_entry_id" → qualified: "facres.reverses_entry_id"
+	Memo               buncolgen.Column // "memo" → qualified: "facres.memo"
+	CreatedByID        buncolgen.Column // "created_by_id" → qualified: "facres.created_by_id"
+	CreatedAt          buncolgen.Column // "created_at" → qualified: "facres.created_at"
+}{
+	ID:                 buncolgen.NewColumn("id", "facres"),
+	OrganizationID:     buncolgen.NewColumn("organization_id", "facres"),
+	BusinessUnitID:     buncolgen.NewColumn("business_unit_id", "facres"),
+	FactoringCompanyID: buncolgen.NewColumn("factoring_company_id", "facres"),
+	AgreementID:        buncolgen.NewColumn("agreement_id", "facres"),
+	SubmissionID:       buncolgen.NewColumn("submission_id", "facres"),
+	SubmissionItemID:   buncolgen.NewColumn("submission_item_id", "facres"),
+	InvoiceID:          buncolgen.NewColumn("invoice_id", "facres"),
+	CustomerID:         buncolgen.NewColumn("customer_id", "facres"),
+	Kind:               buncolgen.NewColumn("kind", "facres"),
+	Treatment:          buncolgen.NewColumn("treatment", "facres"),
+	CurrencyCode:       buncolgen.NewColumn("currency_code", "facres"),
+	CashMinor:          buncolgen.NewColumn("cash_minor", "facres"),
+	FeeMinor:           buncolgen.NewColumn("fee_minor", "facres"),
+	ReserveMinor:       buncolgen.NewColumn("reserve_minor", "facres"),
+	LiabilityMinor:     buncolgen.NewColumn("liability_minor", "facres"),
+	ARMinor:            buncolgen.NewColumn("ar_minor", "facres"),
+	JournalEntryID:     buncolgen.NewColumn("journal_entry_id", "facres"),
+	JournalBatchID:     buncolgen.NewColumn("journal_batch_id", "facres"),
+	AccountingDate:     buncolgen.NewColumn("accounting_date", "facres"),
+	OccurredOn:         buncolgen.NewColumn("occurred_on", "facres"),
+	ReversesEntryID:    buncolgen.NewColumn("reverses_entry_id", "facres"),
+	Memo:               buncolgen.NewColumn("memo", "facres"),
+	CreatedByID:        buncolgen.NewColumn("created_by_id", "facres"),
+	CreatedAt:          buncolgen.NewColumn("created_at", "facres"),
+}
+
+// ReserveEntryFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ReserveEntry.GetStaticFieldMap().
+var ReserveEntryFieldMap = map[string]string{
+	"id":                 "id",
+	"organizationId":     "organization_id",
+	"businessUnitId":     "business_unit_id",
+	"factoringCompanyId": "factoring_company_id",
+	"agreementId":        "agreement_id",
+	"submissionId":       "submission_id",
+	"submissionItemId":   "submission_item_id",
+	"invoiceId":          "invoice_id",
+	"customerId":         "customer_id",
+	"kind":               "kind",
+	"treatment":          "treatment",
+	"currencyCode":       "currency_code",
+	"cashMinor":          "cash_minor",
+	"feeMinor":           "fee_minor",
+	"reserveMinor":       "reserve_minor",
+	"liabilityMinor":     "liability_minor",
+	"arMinor":            "ar_minor",
+	"journalEntryId":     "journal_entry_id",
+	"journalBatchId":     "journal_batch_id",
+	"accountingDate":     "accounting_date",
+	"occurredOn":         "occurred_on",
+	"reversesEntryId":    "reverses_entry_id",
+	"memo":               "memo",
+	"createdById":        "created_by_id",
+	"createdAt":          "created_at",
+}
+
+// ReserveEntryInsertableColumns lists column names suitable for INSERT statements on the "factoring_reserve_entries" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ReserveEntryInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"factoring_company_id",
+	"agreement_id",
+	"submission_id",
+	"submission_item_id",
+	"invoice_id",
+	"customer_id",
+	"kind",
+	"treatment",
+	"currency_code",
+	"cash_minor",
+	"fee_minor",
+	"reserve_minor",
+	"liability_minor",
+	"ar_minor",
+	"journal_entry_id",
+	"journal_batch_id",
+	"accounting_date",
+	"occurred_on",
+	"reverses_entry_id",
+	"memo",
+	"created_by_id",
+	"created_at",
+}
+
+// ReserveEntryRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ReserveEntryRelations.FactoringCompany)
+//	// Bun eager-loads the FactoringCompany association via a separate query
+var ReserveEntryRelations = struct {
+	FactoringCompany string
+	Invoice          string
+	Customer         string
+	Submission       string
+}{
+	FactoringCompany: "FactoringCompany",
+	Invoice:          "Invoice",
+	Customer:         "Customer",
+	Submission:       "Submission",
+}
+
+// ReserveEntryScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE facres.organization_id = ? AND facres.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	factoringcol.ReserveEntryScopeTenant(sq, ti).
+//		Where(factoringcol.ReserveEntryColumns.ID.Eq(), id)
+func ReserveEntryScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, ReserveEntryColumns.OrganizationID, ReserveEntryColumns.BusinessUnitID, ti)
+}
+
+// ReserveEntryScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return factoringcol.ReserveEntryScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(factoringcol.ReserveEntryColumns.ID.In(), bun.List(ids))
+//	})
+func ReserveEntryScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, ReserveEntryColumns.OrganizationID, ReserveEntryColumns.BusinessUnitID, ti)
+}
+
+// ReserveEntryScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return factoringcol.ReserveEntryScopeTenantDelete(dq, req.TenantInfo).
+//			Where(factoringcol.ReserveEntryColumns.ID.Eq(), id)
+//	})
+func ReserveEntryScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, ReserveEntryColumns.OrganizationID, ReserveEntryColumns.BusinessUnitID, ti)
+}
+
+// ReserveEntryApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(factoringcol.ReserveEntryApplyTenant(tenantInfo))
+func ReserveEntryApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(ReserveEntryColumns.OrganizationID, ReserveEntryColumns.BusinessUnitID, ti)
+}
+
+// ReserveEntryFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "factoring_reserve_entries" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ReserveEntryFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ReserveEntryFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	FactoringCompanyID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
+	AgreementID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementId" → DB: "agreement_id"
+	SubmissionID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submissionId" → DB: "submission_id"
+	SubmissionItemID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submissionItemId" → DB: "submission_item_id"
+	InvoiceID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	CustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Kind               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	Treatment          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "treatment" → DB: "treatment"
+	CurrencyCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	CashMinor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cashMinor" → DB: "cash_minor"
+	FeeMinor           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feeMinor" → DB: "fee_minor"
+	ReserveMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reserveMinor" → DB: "reserve_minor"
+	LiabilityMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "liabilityMinor" → DB: "liability_minor"
+	ARMinor            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "arMinor" → DB: "ar_minor"
+	JournalEntryID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalEntryId" → DB: "journal_entry_id"
+	JournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalBatchId" → DB: "journal_batch_id"
+	AccountingDate     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingDate" → DB: "accounting_date"
+	OccurredOn         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredOn" → DB: "occurred_on"
+	ReversesEntryID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reversesEntryId" → DB: "reverses_entry_id"
+	Memo               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memo" → DB: "memo"
+	CreatedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
+	},
+	AgreementID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agreementId", op, value)
+	},
+	SubmissionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submissionId", op, value)
+	},
+	SubmissionItemID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submissionItemId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("invoiceId", op, value)
+	},
+	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("customerId", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("kind", op, value)
+	},
+	Treatment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("treatment", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("currencyCode", op, value)
+	},
+	CashMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cashMinor", op, value)
+	},
+	FeeMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("feeMinor", op, value)
+	},
+	ReserveMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reserveMinor", op, value)
+	},
+	LiabilityMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("liabilityMinor", op, value)
+	},
+	ARMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("arMinor", op, value)
+	},
+	JournalEntryID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("journalEntryId", op, value)
+	},
+	JournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("journalBatchId", op, value)
+	},
+	AccountingDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("accountingDate", op, value)
+	},
+	OccurredOn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("occurredOn", op, value)
+	},
+	ReversesEntryID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reversesEntryId", op, value)
+	},
+	Memo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("memo", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Submission — table "factoring_submissions", alias "facsub"
 // ---------------------------------------------------------------------------
 
@@ -1112,6 +1455,7 @@ var SubmissionColumns = struct {
 	FailedAt              buncolgen.Column // "failed_at" → qualified: "facsub.failed_at"
 	CancelledAt           buncolgen.Column // "cancelled_at" → qualified: "facsub.cancelled_at"
 	CancelReason          buncolgen.Column // "cancel_reason" → qualified: "facsub.cancel_reason"
+	FundedAt              buncolgen.Column // "funded_at" → qualified: "facsub.funded_at"
 	SubmittedByID         buncolgen.Column // "submitted_by_id" → qualified: "facsub.submitted_by_id"
 	AgentRunID            buncolgen.Column // "agent_run_id" → qualified: "facsub.agent_run_id"
 	Version               buncolgen.Column // "version" → qualified: "facsub.version"
@@ -1144,6 +1488,7 @@ var SubmissionColumns = struct {
 	FailedAt:              buncolgen.NewColumn("failed_at", "facsub"),
 	CancelledAt:           buncolgen.NewColumn("cancelled_at", "facsub"),
 	CancelReason:          buncolgen.NewColumn("cancel_reason", "facsub"),
+	FundedAt:              buncolgen.NewColumn("funded_at", "facsub"),
 	SubmittedByID:         buncolgen.NewColumn("submitted_by_id", "facsub"),
 	AgentRunID:            buncolgen.NewColumn("agent_run_id", "facsub"),
 	Version:               buncolgen.NewColumn("version", "facsub"),
@@ -1181,6 +1526,7 @@ var SubmissionFieldMap = map[string]string{
 	"failedAt":              "failed_at",
 	"cancelledAt":           "cancelled_at",
 	"cancelReason":          "cancel_reason",
+	"fundedAt":              "funded_at",
 	"submittedById":         "submitted_by_id",
 	"agentRunId":            "agent_run_id",
 	"version":               "version",
@@ -1217,6 +1563,7 @@ var SubmissionInsertableColumns = []string{
 	"failed_at",
 	"cancelled_at",
 	"cancel_reason",
+	"funded_at",
 	"submitted_by_id",
 	"agent_run_id",
 	"version",
@@ -1314,6 +1661,7 @@ var SubmissionFilter = struct {
 	FailedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedAt" → DB: "failed_at"
 	CancelledAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelledAt" → DB: "cancelled_at"
 	CancelReason          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	FundedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fundedAt" → DB: "funded_at"
 	SubmittedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
 	AgentRunID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -1395,6 +1743,9 @@ var SubmissionFilter = struct {
 	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("cancelReason", op, value)
 	},
+	FundedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("fundedAt", op, value)
+	},
 	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("submittedById", op, value)
 	},
@@ -1454,6 +1805,15 @@ var SubmissionItemColumns = struct {
 	PacketDocumentID     buncolgen.Column // "packet_document_id" → qualified: "facsit.packet_document_id"
 	Status               buncolgen.Column // "status" → qualified: "facsit.status"
 	ReleasedAt           buncolgen.Column // "released_at" → qualified: "facsit.released_at"
+	FundedOn             buncolgen.Column // "funded_on" → qualified: "facsit.funded_on"
+	AdvanceMinor         buncolgen.Column // "advance_minor" → qualified: "facsit.advance_minor"
+	FeeMinor             buncolgen.Column // "fee_minor" → qualified: "facsit.fee_minor"
+	ReserveMinor         buncolgen.Column // "reserve_minor" → qualified: "facsit.reserve_minor"
+	RejectionReason      buncolgen.Column // "rejection_reason" → qualified: "facsit.rejection_reason"
+	SettledOn            buncolgen.Column // "settled_on" → qualified: "facsit.settled_on"
+	ChargedBackOn        buncolgen.Column // "charged_back_on" → qualified: "facsit.charged_back_on"
+	ChargebackReason     buncolgen.Column // "chargeback_reason" → qualified: "facsit.chargeback_reason"
+	ChargebackWarnedAt   buncolgen.Column // "chargeback_warned_at" → qualified: "facsit.chargeback_warned_at"
 	CreatedAt            buncolgen.Column // "created_at" → qualified: "facsit.created_at"
 	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "facsit.updated_at"
 }{
@@ -1473,6 +1833,15 @@ var SubmissionItemColumns = struct {
 	PacketDocumentID:     buncolgen.NewColumn("packet_document_id", "facsit"),
 	Status:               buncolgen.NewColumn("status", "facsit"),
 	ReleasedAt:           buncolgen.NewColumn("released_at", "facsit"),
+	FundedOn:             buncolgen.NewColumn("funded_on", "facsit"),
+	AdvanceMinor:         buncolgen.NewColumn("advance_minor", "facsit"),
+	FeeMinor:             buncolgen.NewColumn("fee_minor", "facsit"),
+	ReserveMinor:         buncolgen.NewColumn("reserve_minor", "facsit"),
+	RejectionReason:      buncolgen.NewColumn("rejection_reason", "facsit"),
+	SettledOn:            buncolgen.NewColumn("settled_on", "facsit"),
+	ChargedBackOn:        buncolgen.NewColumn("charged_back_on", "facsit"),
+	ChargebackReason:     buncolgen.NewColumn("chargeback_reason", "facsit"),
+	ChargebackWarnedAt:   buncolgen.NewColumn("chargeback_warned_at", "facsit"),
 	CreatedAt:            buncolgen.NewColumn("created_at", "facsit"),
 	UpdatedAt:            buncolgen.NewColumn("updated_at", "facsit"),
 }
@@ -1498,6 +1867,15 @@ var SubmissionItemFieldMap = map[string]string{
 	"packetDocumentId":     "packet_document_id",
 	"status":               "status",
 	"releasedAt":           "released_at",
+	"fundedOn":             "funded_on",
+	"advanceMinor":         "advance_minor",
+	"feeMinor":             "fee_minor",
+	"reserveMinor":         "reserve_minor",
+	"rejectionReason":      "rejection_reason",
+	"settledOn":            "settled_on",
+	"chargedBackOn":        "charged_back_on",
+	"chargebackReason":     "chargeback_reason",
+	"chargebackWarnedAt":   "chargeback_warned_at",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
 }
@@ -1521,6 +1899,15 @@ var SubmissionItemInsertableColumns = []string{
 	"packet_document_id",
 	"status",
 	"released_at",
+	"funded_on",
+	"advance_minor",
+	"fee_minor",
+	"reserve_minor",
+	"rejection_reason",
+	"settled_on",
+	"charged_back_on",
+	"chargeback_reason",
+	"chargeback_warned_at",
 	"created_at",
 	"updated_at",
 }
@@ -1604,6 +1991,15 @@ var SubmissionItemFilter = struct {
 	PacketDocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "packetDocumentId" → DB: "packet_document_id"
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	ReleasedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "releasedAt" → DB: "released_at"
+	FundedOn             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fundedOn" → DB: "funded_on"
+	AdvanceMinor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advanceMinor" → DB: "advance_minor"
+	FeeMinor             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feeMinor" → DB: "fee_minor"
+	ReserveMinor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reserveMinor" → DB: "reserve_minor"
+	RejectionReason      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectionReason" → DB: "rejection_reason"
+	SettledOn            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settledOn" → DB: "settled_on"
+	ChargedBackOn        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargedBackOn" → DB: "charged_back_on"
+	ChargebackReason     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargebackReason" → DB: "chargeback_reason"
+	ChargebackWarnedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargebackWarnedAt" → DB: "chargeback_warned_at"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
@@ -1654,6 +2050,33 @@ var SubmissionItemFilter = struct {
 	},
 	ReleasedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("releasedAt", op, value)
+	},
+	FundedOn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("fundedOn", op, value)
+	},
+	AdvanceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advanceMinor", op, value)
+	},
+	FeeMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("feeMinor", op, value)
+	},
+	ReserveMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reserveMinor", op, value)
+	},
+	RejectionReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rejectionReason", op, value)
+	},
+	SettledOn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("settledOn", op, value)
+	},
+	ChargedBackOn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("chargedBackOn", op, value)
+	},
+	ChargebackReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("chargebackReason", op, value)
+	},
+	ChargebackWarnedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("chargebackWarnedAt", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)

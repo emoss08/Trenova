@@ -99,6 +99,7 @@ export const userSchema = z.object({
   awayDelegateUserId: z.string().nullish(),
   awayNote: z.string().catch("").default(""),
   passwordChangedAt: nullableTimestampSchema,
+  assistantHidden: z.boolean().catch(false).default(false),
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),
   memberships: z.array(userOrganizationMembershipSchema).nullish(),
@@ -210,6 +211,12 @@ export const updateMyProfileSchema = z.object({
 });
 
 export type UpdateMyProfile = z.infer<typeof updateMyProfileSchema>;
+
+export const updateMyAssistantVisibilitySchema = z.object({
+  assistantHidden: z.boolean(),
+});
+
+export type UpdateMyAssistantVisibility = z.infer<typeof updateMyAssistantVisibilitySchema>;
 
 export const updateMyAvailabilitySchema = z.object({
   status: availabilityStatusSchema,

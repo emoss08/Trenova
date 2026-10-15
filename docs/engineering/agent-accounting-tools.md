@@ -106,12 +106,38 @@ under review (inside, Ask first → Automatic). It matches and closes nothing;
 or a batch records what the bank reported and is infrastructure: an agent matches receipts,
 it never writes one.
 
+## Factoring
+
+`factoringservice.LedgerService` books what a factor does with each invoice on a schedule:
+`PlanFunding`/`RecordFunding`, `PlanRelease`/`ReleaseReserve`, `PlanChargeback`/
+`RecordChargeback` and `PlanChargebackReversal`/`ReverseChargeback`. Each plan returns the
+journal's lines by account role and account, the period it books in (the first open day when
+the asked day falls in a closed period) and whether it waits for journal approval; the tools
+preview that plan and validate with it.
+
+| Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
+| --- | --- | --- | --- | --- |
+| `get_factoring_reserve_balance` | factoring reserve / read | reads only | automatic | — |
+| `record_factoring_funding` | factoring reserve / create | money | Propose → Propose | yes |
+| `release_factoring_reserve` | factoring reserve / create | money | Propose → Propose | yes |
+| `record_factoring_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
+| `reverse_factoring_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
+
+Amounts are decimal strings and dates `YYYY-MM-DD`. A funding item takes the advance and fee
+the factor actually paid, defaulting to the expected ones; the fee is the figure that
+balances a release or a chargeback, so whatever the factor kept beyond the expected reserve or
+repurchase price is booked as its fee. The ledger service refuses an actor with no person
+behind it (an API key), because the journal and customer ledger rows name who booked them.
+The factoring clerk holds the balance read, funding and release; chargebacks and their
+reversals are a person's and sit on no template.
+
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
 | Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
 | Cash application agent | unattended, on bank receipt exceptions | `triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
+| Factoring clerk | unattended, on factoring readiness, schedule and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve` |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and

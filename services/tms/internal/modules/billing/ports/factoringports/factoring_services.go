@@ -11,20 +11,24 @@ import (
 )
 
 type AgreementInput struct {
-	FactoringCompanyID   pulid.ID                      `json:"factoringCompanyId"`
-	EffectiveFrom        int64                         `json:"effectiveFrom"`
-	EffectiveTo          *int64                        `json:"effectiveTo"`
-	AdvanceRateBP        int                           `json:"advanceRateBp"`
-	ReserveRateBP        int                           `json:"reserveRateBp"`
-	MinimumFeeMinor      int64                         `json:"minimumFeeMinor"`
-	ChargebackWindowDays int                           `json:"chargebackWindowDays"`
-	Recourse             factoring.Recourse            `json:"recourse"`
-	AccountingTreatment  factoring.AccountingTreatment `json:"accountingTreatment"`
-	FundingDays          int                           `json:"fundingDays"`
-	SubmissionTime       int                           `json:"submissionTime"`
-	Notes                string                        `json:"notes"`
-	FeeTiers             []*factoring.FeeTier          `json:"feeTiers"`
-	DocumentTypeIDs      []pulid.ID                    `json:"documentTypeIds"`
+	FactoringCompanyID     pulid.ID                      `json:"factoringCompanyId"`
+	EffectiveFrom          int64                         `json:"effectiveFrom"`
+	EffectiveTo            *int64                        `json:"effectiveTo"`
+	AdvanceRateBP          int                           `json:"advanceRateBp"`
+	ReserveRateBP          int                           `json:"reserveRateBp"`
+	MinimumFeeMinor        int64                         `json:"minimumFeeMinor"`
+	ChargebackWindowDays   int                           `json:"chargebackWindowDays"`
+	Recourse               factoring.Recourse            `json:"recourse"`
+	AccountingTreatment    factoring.AccountingTreatment `json:"accountingTreatment"`
+	FundingDays            int                           `json:"fundingDays"`
+	SubmissionTime         int                           `json:"submissionTime"`
+	Notes                  string                        `json:"notes"`
+	FeeTiers               []*factoring.FeeTier          `json:"feeTiers"`
+	DocumentTypeIDs        []pulid.ID                    `json:"documentTypeIds"`
+	DueFromFactorAccountID pulid.ID                      `json:"dueFromFactorAccountId"`
+	FeeExpenseAccountID    pulid.ID                      `json:"feeExpenseAccountId"`
+	LiabilityAccountID     pulid.ID                      `json:"liabilityAccountId"`
+	CashAccountID          pulid.ID                      `json:"cashAccountId"`
 }
 
 type CreateAgreementRequest struct {
@@ -197,7 +201,8 @@ func (r *EvaluateResult) Add(other *EvaluateResult) {
 
 type SweepResult struct {
 	EvaluateResult
-	NoasWarned int `json:"noasWarned"`
+	NoasWarned        int `json:"noasWarned"`
+	ChargebacksWarned int `json:"chargebacksWarned"`
 }
 
 type SetOverrideRequest struct {

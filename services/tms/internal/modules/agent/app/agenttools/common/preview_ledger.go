@@ -46,7 +46,7 @@ func JournalLinesOf(entity *manualjournal.Request) []kernelports.JournalLinePrev
 	return lines
 }
 
-func accountLabels(
+func AccountLabels(
 	ctx context.Context,
 	accounts LedgerAccounts,
 	tenant pagination.TenantInfo,
@@ -94,7 +94,7 @@ func PlanManualJournalDraft(
 	tenant pagination.TenantInfo,
 	planned *manualjournal.Request,
 ) (*ManualJournalPlan, error) {
-	labels, err := accountLabels(ctx, accounts, tenant, JournalLinesOf(planned))
+	labels, err := AccountLabels(ctx, accounts, tenant, JournalLinesOf(planned))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func PlanManualJournalChange(
 	if change.Journal != nil {
 		sets = append(sets, change.Journal.Lines)
 	}
-	labels, err := accountLabels(ctx, accounts, tenant, sets...)
+	labels, err := AccountLabels(ctx, accounts, tenant, sets...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func PlanReversal(
 	if change.Journal == nil {
 		return plan, nil
 	}
-	labels, err := accountLabels(ctx, accounts, tenant, change.Journal.Lines)
+	labels, err := AccountLabels(ctx, accounts, tenant, change.Journal.Lines)
 	if err != nil {
 		return nil, err
 	}

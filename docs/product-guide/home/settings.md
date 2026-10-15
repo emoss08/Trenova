@@ -1,6 +1,6 @@
 ---
 path: /settings
-aliases: [user settings, my settings, my account, my profile, account settings, preferences, notification settings, change password, two-factor, 2FA, MFA, dark mode, time zone, language, out of office, away, signed-in devices, sign out other devices]
+aliases: [user settings, my settings, my account, my profile, account settings, preferences, notification settings, change password, two-factor, 2FA, MFA, dark mode, time zone, language, out of office, away, signed-in devices, sign out other devices, hide the assistant, turn off the assistant, hide Nova]
 related:
   - /
 ---
@@ -23,6 +23,11 @@ Keywords: out of office, vacation, focus mode, do not disturb, availability, han
 Keywords: dark mode, light mode, 24-hour clock, timezone, language, reduce motion
 1. Open [Settings](/settings) and go to **Preferences**.
 2. Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement.
+
+### Hide the assistant
+Keywords: turn off the assistant, hide Nova, remove the AI button, disable AI chat, Ctrl+J
+1. Open [Settings](/settings) and go to **Preferences**.
+2. Turn off **Show the assistant**. Its button, the panel and the Ctrl+J shortcut leave every page, on every device you sign in from, until you turn it back on. The Desk and asking about a record from the command palette still work.
 
 ### Choose which notifications reach you
 Keywords: email notifications, desktop notifications, digest, quiet hours, mute, pause notifications

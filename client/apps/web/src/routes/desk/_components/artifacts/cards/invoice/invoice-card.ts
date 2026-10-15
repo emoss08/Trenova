@@ -70,7 +70,7 @@ function openDispute(record: DeskInvoice): DeskInvoiceDispute | undefined {
   return record.disputes.find((dispute) => dispute.status === "Open");
 }
 
-/** The kicker over the title: the number, the terms, and what the invoice bills or corrects. */
+/** The kicker over the title: the number, and what the invoice bills or corrects. */
 export function invoiceKicker(record: DeskInvoice, t: TranslateFn): string[] {
   if (invoiceKind(record).kind === "credit") {
     return [
@@ -84,8 +84,6 @@ export function invoiceKicker(record: DeskInvoice, t: TranslateFn): string[] {
       : "";
   return [
     record.number,
-    termLabel(record),
-    record.shipmentProNumber ? t("PRO {0}", record.shipmentProNumber) : "",
     record.shipmentBol ? t("BOL {0}", record.shipmentBol) : "",
     period,
   ].filter(Boolean);

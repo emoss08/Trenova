@@ -108,6 +108,7 @@ type FactoryParams struct {
 	FactoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	FactoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	FactoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	FactoringSubmissionByID                   *FactoringSubmissionByIDLoaderFactory
 	FactoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
@@ -188,6 +189,7 @@ type Factory struct {
 	factoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	factoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	factoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	factoringSubmissionByID                   *FactoringSubmissionByIDLoaderFactory
 	factoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
@@ -268,6 +270,7 @@ type set struct {
 	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoring.InvoiceState]
 	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
 	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoring.SubmissionItem]
+	factoringSubmissionByID                   *dataloadgen.Loader[string, *factoring.Submission]
 	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
@@ -355,6 +358,7 @@ func NewFactory(p FactoryParams) *Factory {
 		factoringStateByInvoiceID:                 p.FactoringStateByInvoiceID,
 		factoringAgreementsByCompanyID:            p.FactoringAgreementsByCompanyID,
 		factoringSubmissionItems:                  p.FactoringSubmissionItems,
+		factoringSubmissionByID:                   p.FactoringSubmissionByID,
 		factoringLiveItemByInvoiceID:              p.FactoringLiveItemByInvoiceID,
 		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
 		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
@@ -516,6 +520,10 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		factoringSubmissionItems: newFactoringSubmissionItemsLoader(
 			f.factoringSubmissionItems,
+			tenantInfo,
+		),
+		factoringSubmissionByID: newFactoringSubmissionByIDLoader(
+			f.factoringSubmissionByID,
 			tenantInfo,
 		),
 		factoringLiveItemByInvoiceID: newFactoringLiveItemByInvoiceIDLoader(

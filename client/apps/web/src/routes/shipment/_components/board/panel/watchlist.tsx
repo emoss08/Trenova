@@ -1,19 +1,19 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { formatMinutesSpan, userWallClockNow } from "@trenova/shared/lib/date";
-import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
-import type { UncoveredPickupWindow } from "@trenova/graphql/generated/graphql";
-import { HoldButton } from "@/components/hold-button";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { ShipmentWatchlist } from "@/lib/graphql/shipment-board";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import type { QuickFilterToken } from "@/lib/shipment-board/quick-filters";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, type ReactNode } from "react";
-import { useBoardActions } from "../use-board-actions";
-import { useShipmentBoardUrl } from "../url-state";
-import { WatchlistSkeleton } from "./side-panel-skeleton";
+import type { UncoveredPickupWindow } from "@trenova/graphql/generated/graphql";
+import { Button } from "@trenova/shared/components/ui/button";
+import { HoldButton } from "@trenova/shared/components/ui/hold-button";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatMinutesSpan, userWallClockNow } from "@trenova/shared/lib/date";
+import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
+import { useEffect, useState, type ReactNode } from "react";
+import { useShipmentBoardUrl } from "../url-state";
+import { useBoardActions } from "../use-board-actions";
+import { WatchlistSkeleton } from "./side-panel-skeleton";
 
 const WATCHLIST_STALE_MS = 30_000;
 const TICK_MS = 1_000;
@@ -403,18 +403,22 @@ function Billing({ data }: { data: ShipmentWatchlist["billing"] }) {
       <div className="flex items-center gap-2">
         <div className="flex-1">
           <HoldButton
-            label={t("Transfer {0} to billing", data.count)}
+            tone="success"
+            hint
+            className="w-full"
             doneLabel={t("Transferred to billing")}
             done={transferred}
             disabled={data.count === 0 || actions.transferReadyToBill.isPending}
-            onConfirm={() =>
+            onDone={() =>
               actions.transferReadyToBill.mutate(undefined, {
                 onSuccess: () => setTransferred(true),
               })
             }
-          />
+          >
+            {t("Transfer {0} to billing", data.count)}
+          </HoldButton>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => filter([{ filter: "ReadyToBill" }])}>
+        <Button variant="ghost" onClick={() => filter([{ filter: "ReadyToBill" }])}>
           {t("Review first")}
         </Button>
       </div>
@@ -422,11 +426,6 @@ function Billing({ data }: { data: ShipmentWatchlist["billing"] }) {
   );
 }
 
-/**
- * The day at a glance, counted on the server: deliveries by hour, uncovered
- * pickups by window, detention as it accrues, and what is ready to bill. Each
- * figure filters the table to the loads behind it.
- */
 export function Watchlist() {
   const timezone = useUserTimezone();
   const { data, isLoading } = useQuery({

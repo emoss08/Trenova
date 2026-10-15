@@ -13,6 +13,7 @@ type Deps struct {
 	FactoringNoaService        factoringports.NoaService
 	FactoringReadinessService  factoringports.ReadinessService
 	FactoringSubmissionService factoringports.SubmissionService
+	FactoringLedgerService     factoringports.LedgerService
 	FactoringTransportService  factoringports.TransportService
 }
 
@@ -24,9 +25,21 @@ type FactoringCheckResolver struct{ *Deps }
 
 type FactoringCompanyResolver struct{ *Deps }
 
+type FactoringFundingPlanResolver struct{ *Deps }
+
 type FactoringInvoiceStateResolver struct{ *Deps }
 
+type FactoringMovementResolver struct{ *Deps }
+
 type FactoringNoaResolver struct{ *Deps }
+
+type FactoringPlannedLineResolver struct{ *Deps }
+
+type FactoringPlannedMovementResolver struct{ *Deps }
+
+type FactoringReserveEntryResolver struct{ *Deps }
+
+type FactoringReserveMovementPlanResolver struct{ *Deps }
 
 type FactoringSubmissionItemResolver struct{ *Deps }
 

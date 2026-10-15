@@ -504,6 +504,9 @@ func (t Template) StarterTools() []string {
 			"submit_invoices_to_factor",
 			"retry_factoring_submission",
 			"cancel_factoring_submission",
+			"get_factoring_reserve_balance",
+			"record_factoring_funding",
+			"release_factoring_reserve",
 			"list_invoices",
 			"get_invoice",
 		}

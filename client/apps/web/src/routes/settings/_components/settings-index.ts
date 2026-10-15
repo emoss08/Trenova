@@ -69,6 +69,7 @@ const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
   { label: "Time format · 24-hour", section: "preferences", row: "time-format" },
   { label: "Sidebar", section: "preferences", row: "sidebar" },
   { label: "Reduce motion", section: "preferences", row: "motion" },
+  { label: "Assistant · Nova · AI", section: "preferences", row: "assistant" },
   { label: "Desktop notifications", section: "notifications", row: "desktop" },
   { label: "Email notifications · digest", section: "notifications", row: "email" },
   { label: "Sound", section: "notifications", row: "sound" },

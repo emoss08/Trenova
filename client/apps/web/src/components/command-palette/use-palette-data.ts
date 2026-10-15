@@ -1,4 +1,5 @@
 import { ATTENTION_ROWS, type AttentionRowConfig } from "@/config/attention-rows";
+import { useAssistantHidden } from "@/components/assistant/use-assistant-enabled";
 import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useAttentionSummary } from "@/hooks/use-attention";
@@ -20,7 +21,11 @@ import { Pin01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useLocation } from "react-router";
 import type { ActionContext } from "./palette-actions";
-import { buildAppCommands, buildQuickActionCommands } from "./palette-commands";
+import {
+  buildAppCommands,
+  buildQuickActionCommands,
+  withoutAssistantCommands,
+} from "./palette-commands";
 import type {
   PaletteAttention,
   PaletteAttentionTone,
@@ -117,6 +122,7 @@ export function usePaletteCatalog(unreadNotifications: number): PaletteCatalog {
   const { theme } = useTheme();
   const mac = isMacPlatform();
   const canUseAssistant = hasPermission(Resource.Assistant, Operation.Read);
+  const assistantHidden = useAssistantHidden();
   const canCreateShipment = hasPermission(Resource.Shipment, Operation.Create);
   const currentHref = `${pathname}${search}${hash}`;
 
@@ -159,7 +165,12 @@ export function usePaletteCatalog(unreadNotifications: number): PaletteCatalog {
     [canUseAssistant, currentHref, mac, t, theme, unreadNotifications],
   );
 
-  const commands = useMemo(() => [...quickCommands, ...appCommands], [appCommands, quickCommands]);
+  // With the assistant turned off in Settings there is no panel to open, so
+  // nothing offers to open it; asking about a record still answers here.
+  const commands = useMemo(
+    () => withoutAssistantCommands([...quickCommands, ...appCommands], assistantHidden),
+    [appCommands, assistantHidden, quickCommands],
+  );
 
   const quickActions = useMemo(() => {
     const byId = new Map(commands.map((command) => [command.id, command]));

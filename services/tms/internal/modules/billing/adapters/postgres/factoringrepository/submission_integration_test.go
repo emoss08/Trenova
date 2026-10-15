@@ -239,3 +239,91 @@ func TestTransportKeepsPacketsOffWhenCreatedWithout(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, got.AttachPackets)
 }
+
+func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
+	e := setupFactoringEnv(t)
+	submissions, _ := newSubmissionRepos(e)
+	factor := e.createFactor(t, "FFUN")
+	agreement, err := e.agreements.Create(e.ctx, e.agreement(factor.ID, time.Now().Add(-time.Hour).Unix(), nil))
+	require.NoError(t, err)
+
+	first := e.postInvoice(t, 100000, &factor.ID)
+	second := e.postInvoice(t, 50000, &factor.ID)
+	created, err := submissions.Create(e.ctx, e.submission(agreement, "FS-F1", "key-f1", first, second))
+	require.NoError(t, err)
+	require.NoError(t, created.MarkSent(time.Now().Unix(), "", 1))
+	created, err = submissions.Update(e.ctx, created)
+	require.NoError(t, err)
+
+	fundedOn := time.Now().Unix()
+	byInvoice := make(map[pulid.ID]*factoring.SubmissionItem, len(created.Items))
+	for _, item := range created.Items {
+		byInvoice[item.InvoiceID] = item
+	}
+	require.NoError(t, byInvoice[first.ID].Fund(fundedOn, factoring.ItemFunding{AdvanceMinor: 90000, FeeMinor: 2500}))
+	require.NoError(t, byInvoice[second.ID].Reject("Debtor over its credit limit"))
+	created.Resolve(fundedOn)
+	assert.Equal(t, factoring.SubmissionStatusFunded, created.Status)
+	_, err = submissions.Update(e.ctx, created)
+	require.NoError(t, err)
+
+	loaded, err := submissions.GetByID(e.ctx, factoringports.GetSubmissionRequest{
+		ID: created.ID, TenantInfo: e.tenantInfo, IncludeItems: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, factoring.SubmissionStatusFunded, loaded.Status)
+	require.NotNil(t, loaded.FundedAt)
+	funded := loaded.Item(byInvoice[first.ID].ID)
+	require.NotNil(t, funded)
+	assert.Equal(t, factoring.SubmissionItemStatusFunded, funded.Status)
+	advance, fee, reserve := funded.Actuals()
+	assert.Equal(t, int64(90000), advance)
+	assert.Equal(t, int64(2500), fee)
+	assert.Equal(t, int64(7500), reserve)
+	require.NotNil(t, funded.FundedOn)
+	assert.Equal(t, fundedOn, *funded.FundedOn)
+	rejected := loaded.Item(byInvoice[second.ID].ID)
+	require.NotNil(t, rejected)
+	assert.Equal(t, factoring.SubmissionItemStatusRejected, rejected.Status)
+	assert.Equal(t, "Debtor over its credit limit", rejected.RejectionReason)
+
+	live, err := submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo: e.tenantInfo,
+		InvoiceIDs: []pulid.ID{first.ID, second.ID},
+	})
+	require.NoError(t, err)
+	require.Len(t, live, 1)
+	assert.Equal(t, factoring.SubmissionItemStatusFunded, live[first.ID].ItemStatus)
+
+	require.NoError(t, funded.ChargeBack(fundedOn+86_400, "Customer never paid"))
+	_, err = submissions.Update(e.ctx, loaded)
+	require.NoError(t, err)
+
+	live, err = submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo: e.tenantInfo,
+		InvoiceIDs: []pulid.ID{first.ID},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, live)
+
+	withChargebacks, err := submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo:         e.tenantInfo,
+		InvoiceIDs:         []pulid.ID{first.ID},
+		IncludeChargedBack: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, withChargebacks, 1)
+	assert.Equal(t, factoring.SubmissionItemStatusChargedBack, withChargebacks[first.ID].ItemStatus)
+	assert.False(t, withChargebacks[first.ID].IsLive())
+
+	again, err := submissions.Create(e.ctx, e.submission(agreement, "FS-F2", "key-f2", first))
+	require.NoError(t, err)
+	withChargebacks, err = submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo:         e.tenantInfo,
+		InvoiceIDs:         []pulid.ID{first.ID},
+		IncludeChargedBack: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, again.ID, withChargebacks[first.ID].SubmissionID)
+	assert.True(t, withChargebacks[first.ID].IsLive())
+}

@@ -30,6 +30,10 @@ export function useJournalReviewLabels(): JournalReviewLabels {
       CarrierSettlementVoided: t("Carrier settlement voided"),
       CarrierSettlementPaid: t("Carrier settlement paid"),
       EscrowInterestAccrued: t("Escrow interest accrued"),
+      FactoringFunded: t("Factor funding recorded"),
+      FactoringReserveReleased: t("Factoring reserve released"),
+      FactoringChargedBack: t("Factoring chargeback recorded"),
+      FactoringChargebackReversed: t("Factoring chargeback reversed"),
     };
 
     return {

@@ -426,3 +426,29 @@ func TestMatchesStrongly(t *testing.T) {
 	assert.False(t, catalog.MatchesStrongly("list_shipments", "commodity"))
 	assert.False(t, catalog.MatchesStrongly("no_such_tool", "commodity"))
 }
+
+// Match is what a search found and nothing more: an agent recommendation
+// scores agents on it, and a family member brought along would count as a
+// match the question never made.
+func TestMatch_IsWhatTheSearchFoundWithoutItsFamily(t *testing.T) {
+	t.Parallel()
+
+	catalog := reportFamilyCatalog()
+	allowed := []string{"run_report", "list_reports", "list_workers"}
+
+	assert.Equal(t,
+		[]string{"run_report"},
+		catalog.Match(Query{Allowed: allowed, Text: "start", Limit: 6}),
+	)
+	assert.Equal(t,
+		[]string{"run_report", "list_reports"},
+		names(catalog.FindHybrid(Query{Allowed: allowed, Text: "start", Limit: 6})),
+		"the search itself still brings the family along",
+	)
+}
+
+func TestMatch_FindsNothingForWordsNoToolCarries(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, reportFamilyCatalog().Match(Query{Text: "zzzz no such thing zzzz", Limit: 6}))
+}

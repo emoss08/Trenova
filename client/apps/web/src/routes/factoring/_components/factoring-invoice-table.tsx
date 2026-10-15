@@ -20,6 +20,7 @@ const EMPTY_TITLES = defineLabels({
   ready: "No invoices are ready to factor",
   "not-ready": "No invoices are waiting on a fix",
   submitted: "No invoices are with a factor",
+  funded: "No funded invoices are waiting on their reserve",
 });
 
 export default function FactoringInvoiceTable({ tab }: { tab: FactoringQueueTab }) {

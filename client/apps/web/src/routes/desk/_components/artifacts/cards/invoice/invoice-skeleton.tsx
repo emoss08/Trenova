@@ -141,7 +141,7 @@ export function DeskInvoiceSkeleton({ stepper = false }: { stepper?: boolean }) 
   return (
     <RecordCardSkeleton label={t("Loading the invoice…")}>
       <CardHeadSkeleton
-        kicker={[84, 40, 64]}
+        kicker={[84, 64]}
         stepper={stepper}
         lead={<i className="dk-sk dk-inv-slip" />}
         title={40}

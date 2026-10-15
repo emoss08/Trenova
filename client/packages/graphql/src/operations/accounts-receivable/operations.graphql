@@ -171,6 +171,8 @@ query ArCashFlowForecast($pastWeeks: Int, $futureWeeks: Int) {
     expectedMinor
     openDueMinor
     actualMinor
+    factorAdvancesMinor
+    reserveReleasesMinor
     isForecast
   }
 }

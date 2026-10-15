@@ -410,8 +410,14 @@ type ResolverRoot interface {
 	FactoringAgreement() FactoringAgreementResolver
 	FactoringCheck() FactoringCheckResolver
 	FactoringCompany() FactoringCompanyResolver
+	FactoringFundingPlan() FactoringFundingPlanResolver
 	FactoringInvoiceState() FactoringInvoiceStateResolver
+	FactoringMovement() FactoringMovementResolver
 	FactoringNoa() FactoringNoaResolver
+	FactoringPlannedLine() FactoringPlannedLineResolver
+	FactoringPlannedMovement() FactoringPlannedMovementResolver
+	FactoringReserveEntry() FactoringReserveEntryResolver
+	FactoringReserveMovementPlan() FactoringReserveMovementPlanResolver
 	FactoringSubmission() FactoringSubmissionResolver
 	FactoringSubmissionItem() FactoringSubmissionItemResolver
 	FactoringSubmissionPlan() FactoringSubmissionPlanResolver
@@ -1264,6 +1270,10 @@ type ExtractionSnapshotResolver interface {
 }
 
 type FactoringAgreementResolver interface {
+	DueFromFactorAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	FeeExpenseAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	LiabilityAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	CashAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Agreement) (*factoringcompany.FactoringCompany, error)
 }
 
@@ -1277,6 +1287,11 @@ type FactoringCompanyResolver interface {
 	Agreements(ctx context.Context, obj *factoringcompany.FactoringCompany) ([]*factoring.Agreement, error)
 }
 
+type FactoringFundingPlanResolver interface {
+	SubmissionID(ctx context.Context, obj *factoringports.FundingPlan) (string, error)
+	Status(ctx context.Context, obj *factoringports.FundingPlan) (factoring.SubmissionStatus, error)
+}
+
 type FactoringInvoiceStateResolver interface {
 	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
 	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
@@ -1284,10 +1299,37 @@ type FactoringInvoiceStateResolver interface {
 	Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error)
 }
 
+type FactoringMovementResolver interface {
+	InvoiceEffect(ctx context.Context, obj *factoring.Movement) (gqlmodel.FactoringInvoiceEffect, error)
+}
+
 type FactoringNoaResolver interface {
 	SignedDocumentID(ctx context.Context, obj *factoring.Noa) (*string, error)
 	Customer(ctx context.Context, obj *factoring.Noa) (*customer.Customer, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Noa) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringPlannedLineResolver interface {
+	Account(ctx context.Context, obj *factoringports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error)
+}
+
+type FactoringPlannedMovementResolver interface {
+	FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error)
+}
+
+type FactoringReserveEntryResolver interface {
+	ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoring.ReserveEntry) (*factoringcompany.FactoringCompany, error)
+	Invoice(ctx context.Context, obj *factoring.ReserveEntry) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoring.ReserveEntry) (*customer.Customer, error)
+	Submission(ctx context.Context, obj *factoring.ReserveEntry) (*factoring.Submission, error)
+}
+
+type FactoringReserveMovementPlanResolver interface {
+	SubmissionID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
+	ItemID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
+	ItemStatus(ctx context.Context, obj *factoringports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error)
 }
 
 type FactoringSubmissionResolver interface {
@@ -1986,6 +2028,10 @@ type MutationResolver interface {
 	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error)
 	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error)
 	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error)
+	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoring.Submission, error)
+	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
+	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
+	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
@@ -2813,6 +2859,12 @@ type QueryResolver interface {
 	FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error)
 	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error)
 	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error)
+	FactoringReserveEntries(ctx context.Context, input gqlmodel.FactoringReserveEntryListInput) (*gqlmodel.FactoringReserveEntryConnection, error)
+	FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringports.ReserveBalance, error)
+	FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringports.FundingPlan, error)
+	FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -3825,8 +3877,14 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FactoringAgreement":                 func() any { return r.FactoringAgreement() },
 			"FactoringCheck":                     func() any { return r.FactoringCheck() },
 			"FactoringCompany":                   func() any { return r.FactoringCompany() },
+			"FactoringFundingPlan":               func() any { return r.FactoringFundingPlan() },
 			"FactoringInvoiceState":              func() any { return r.FactoringInvoiceState() },
+			"FactoringMovement":                  func() any { return r.FactoringMovement() },
 			"FactoringNoa":                       func() any { return r.FactoringNoa() },
+			"FactoringPlannedLine":               func() any { return r.FactoringPlannedLine() },
+			"FactoringPlannedMovement":           func() any { return r.FactoringPlannedMovement() },
+			"FactoringReserveEntry":              func() any { return r.FactoringReserveEntry() },
+			"FactoringReserveMovementPlan":       func() any { return r.FactoringReserveMovementPlan() },
 			"FactoringSubmission":                func() any { return r.FactoringSubmission() },
 			"FactoringSubmissionItem":            func() any { return r.FactoringSubmissionItem() },
 			"FactoringSubmissionPlan":            func() any { return r.FactoringSubmissionPlan() },
@@ -5552,6 +5610,10 @@ type ARCashFlowPoint {
   expectedMinor: Int!
   openDueMinor: Int!
   actualMinor: Int!
+  "Advances expected from factors on schedules not yet funded, in the week they are due."
+  factorAdvancesMinor: Int!
+  "Reserves factors hold, expected back in the week the customer's invoice falls due."
+  reserveReleasesMinor: Int!
   isForecast: Boolean!
 }
 
@@ -20251,8 +20313,10 @@ enum FactoringVerdict {
   NotReady
   "On a schedule sent, being sent, or that failed to send to the factor."
   Submitted
-  "Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored."
+  "Not something to factor: unposted, voided, paid, a credit memo, kept out, charged back, or not factored."
   Excluded
+  "Funded by the factor; its reserve comes back when the customer pays the factor."
+  Funded
 }
 
 enum FactoringCheckCode {
@@ -20265,6 +20329,8 @@ enum FactoringCheckCode {
   BillingValidation
   AgreementDocument
   ShipmentUnavailable
+  "The factor charged the invoice back, so it is collected as the organization's own."
+  ChargedBack
 }
 
 enum FactoringFixAction {
@@ -20284,12 +20350,58 @@ enum FactoringSubmissionStatus {
   Failed
   "Cancelled after a failed send; its invoices were released."
   Cancelled
+  "Some invoices are funded or rejected and some still wait on the factor."
+  PartiallyFunded
+  "Every invoice is decided and at least one was funded."
+  Funded
+  "The factor rejected every invoice on it."
+  Rejected
 }
 
 enum FactoringSubmissionItemStatus {
   Pending
   "Released when its schedule was cancelled."
   Released
+  "The factor advanced it; its reserve is held until the customer pays the factor."
+  Funded
+  "The factor would not buy it; it goes back to the queue."
+  Rejected
+  "The factor released its reserve; the factor's part is done."
+  Settled
+  "The factor charged it back; the organization collects it again."
+  ChargedBack
+}
+
+enum FactoringFundingOutcome {
+  Funded
+  Rejected
+}
+
+"What a factoring reserve entry records."
+enum FactoringReserveEntryKind {
+  Funding
+  ReserveRelease
+  Chargeback
+  ChargebackReversal
+}
+
+"The account a factoring journal line books to."
+enum FactoringAccountRole {
+  AccountsReceivable
+  Cash
+  DueFromFactor
+  FeeExpense
+  Liability
+}
+
+"What a factoring entry does to the invoice."
+enum FactoringInvoiceEffect {
+  "Leaves the invoice as it is."
+  None
+  "Settles the invoice's open balance."
+  Settle
+  "Puts the invoice's balance back open."
+  Reopen
 }
 
 "How schedules reach a factor."
@@ -20348,6 +20460,14 @@ type FactoringAgreement {
   notes: String
   activatedAt: Timestamp
   endedAt: Timestamp
+  "Where the reserve the factor holds is booked, for a sale."
+  dueFromFactorAccountId: ID
+  "Where the factor's fee is expensed."
+  feeExpenseAccountId: ID
+  "What is owed the factor, for secured borrowing."
+  liabilityAccountId: ID
+  "Where the factor's payments land; the organization's cash account when empty."
+  cashAccountId: ID
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -20446,6 +20566,12 @@ type FactoringSummary {
   submitted: FactoringVerdictTotals!
   "Ready for more than a day without being submitted."
   readyUnsubmitted: FactoringVerdictTotals!
+  "Funded by the factor, by face value, until the reserve is released or charged back."
+  funded: FactoringVerdictTotals!
+  "Funded invoices whose reserve the factor still holds, by the reserve held."
+  reserveHeld: FactoringVerdictTotals!
+  "Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay."
+  chargebacksDue: FactoringVerdictTotals!
 }
 
 type FactoringDocumentRequestResult {
@@ -20487,6 +20613,19 @@ type FactoringSubmissionItem {
   packetDocumentId: ID
   status: FactoringSubmissionItemStatus!
   releasedAt: Timestamp
+  fundedOn: Timestamp
+  "What the factor advanced; null until funded."
+  advanceMinor: Int
+  "What the factor kept as its fee; null until funded."
+  feeMinor: Int
+  "What the factor holds back until the customer pays it; null until funded."
+  reserveMinor: Int
+  rejectionReason: String
+  settledOn: Timestamp
+  chargedBackOn: Timestamp
+  chargebackReason: String
+  "When the organization was warned that the chargeback window was closing."
+  chargebackWarnedAt: Timestamp
   invoice: Invoice
   customer: Customer
 }
@@ -20521,6 +20660,8 @@ type FactoringSubmission {
   failedAt: Timestamp
   cancelledAt: Timestamp
   cancelReason: String
+  "When the factor's funding was first recorded."
+  fundedAt: Timestamp
   submittedById: ID
   version: Int!
   createdAt: Timestamp!
@@ -20573,6 +20714,145 @@ type FactoringLiveSubmission {
   submissionId: ID!
   submissionNumber: String!
   submissionStatus: FactoringSubmissionStatus!
+  itemId: ID!
+  itemStatus: FactoringSubmissionItemStatus!
+}
+
+"One movement between the organization and a factor, booked to the ledger. Entries are never edited; a chargeback is undone by a reversal entry."
+type FactoringReserveEntry {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  factoringCompanyId: ID!
+  agreementId: ID!
+  submissionId: ID!
+  submissionItemId: ID!
+  invoiceId: ID!
+  customerId: ID!
+  kind: FactoringReserveEntryKind!
+  treatment: FactoringAccountingTreatment!
+  currencyCode: String!
+  "Cash in from the factor (positive) or paid back to it (negative)."
+  cashMinor: Int!
+  "Fee expense booked (positive) or rebated (negative)."
+  feeMinor: Int!
+  "Change in the reserve the factor holds."
+  reserveMinor: Int!
+  "Change in what is owed the factor, for secured borrowing."
+  liabilityMinor: Int!
+  "Change in receivables: negative settles the invoice, positive reopens it."
+  arMinor: Int!
+  journalEntryId: ID!
+  journalBatchId: ID!
+  accountingDate: Timestamp!
+  occurredOn: Timestamp!
+  reversesEntryId: ID
+  memo: String
+  createdById: ID
+  createdAt: Timestamp!
+  factoringCompany: FactoringCompany
+  invoice: Invoice
+  customer: Customer
+  submission: FactoringSubmission
+}
+
+type FactoringReserveEntryEdge {
+  node: FactoringReserveEntry!
+  cursor: String!
+}
+
+type FactoringReserveEntryConnection {
+  edges: [FactoringReserveEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"What a factor holds and has paid, from its reserve entries."
+type FactoringReserveBalance {
+  factoringCompanyId: ID!
+  "Reserve the factor holds and has not released or charged back."
+  reserveMinor: Int!
+  "What is owed the factor under secured borrowing."
+  liabilityMinor: Int!
+  "Cash advanced at funding."
+  advancedMinor: Int!
+  "Cash released from the reserve."
+  releasedMinor: Int!
+  "Cash paid back for chargebacks, net of reversals."
+  chargedBackMinor: Int!
+  "Fees booked to date."
+  feeMinor: Int!
+  entryCount: Int!
+  lastOccurredOn: Timestamp
+}
+
+"One line of the journal a factoring action would book."
+type FactoringPlannedLine {
+  role: FactoringAccountRole!
+  accountId: ID!
+  account: JournalEntryLineAccount
+  debit: Int!
+  credit: Int!
+}
+
+"The amounts one factoring movement moves, by what they touch."
+type FactoringMovement {
+  kind: FactoringReserveEntryKind!
+  treatment: FactoringAccountingTreatment!
+  "Cash in from the factor (positive) or paid back to it (negative)."
+  cashMinor: Int!
+  "Fee expense booked (positive) or rebated (negative); it balances the entry."
+  feeMinor: Int!
+  reserveMinor: Int!
+  liabilityMinor: Int!
+  arMinor: Int!
+  invoiceEffect: FactoringInvoiceEffect!
+  "What is settled on or reopened on the invoice."
+  invoiceMinor: Int!
+}
+
+"What one factoring action books, before anything is booked."
+type FactoringPlannedMovement {
+  itemId: ID!
+  invoiceId: ID!
+  invoiceNumber: String!
+  customerId: ID!
+  movement: FactoringMovement!
+  "Empty when nothing is booked, such as releasing an empty reserve."
+  lines: [FactoringPlannedLine!]!
+  "The day asked for."
+  requestedDate: Timestamp!
+  "The day it books on: the first open day when the asked day falls in a closed period."
+  accountingDate: Timestamp!
+  fiscalPeriodId: ID
+  fiscalPeriodName: String
+  "Whether the entry waits for approval before it posts."
+  requiresApproval: Boolean!
+}
+
+"What recording a factor's funding would do."
+type FactoringFundingPlan {
+  submissionId: ID!
+  "The schedule's status once the funding is recorded."
+  status: FactoringSubmissionStatus!
+  movements: [FactoringPlannedMovement!]!
+  fundedCount: Int!
+  rejectCount: Int!
+  advanceMinor: Int!
+  feeMinor: Int!
+  reserveMinor: Int!
+}
+
+"What releasing a reserve, or recording or reversing a chargeback, would do."
+type FactoringReserveMovementPlan {
+  submissionId: ID!
+  itemId: ID!
+  "The invoice's status on the schedule afterwards."
+  itemStatus: FactoringSubmissionItemStatus!
+  "Null when nothing is booked."
+  movement: FactoringPlannedMovement
+  "The chargeback a reversal undoes."
+  reverses: FactoringReserveEntry
 }
 
 "How schedules reach a factor. The SFTP secret is never returned."
@@ -20599,6 +20879,47 @@ type FactoringTransportTestResult {
   transport: FactoringTransport!
   passed: Boolean!
   message: String!
+}
+
+input FactoringReserveEntryListInput {
+  table: DataTableConnectionInput!
+  factoringCompanyId: ID
+  submissionId: ID
+  invoiceId: ID
+  kinds: [FactoringReserveEntryKind!]
+}
+
+input FactoringFundingItemInput {
+  itemId: ID!
+  outcome: FactoringFundingOutcome!
+  "What the factor advanced. Defaults to the expected advance."
+  advanceMinor: Int
+  "What the factor kept as its fee. Defaults to the expected fee."
+  feeMinor: Int
+  "Why the factor rejected the invoice."
+  reason: String
+}
+
+input RecordFactoringFundingInput {
+  submissionId: ID!
+  version: Int!
+  "The day the factor funded."
+  fundedOn: Timestamp!
+  items: [FactoringFundingItemInput!]!
+  memo: String
+}
+
+input FactoringReserveMovementInput {
+  submissionId: ID!
+  itemId: ID!
+  "The schedule's version."
+  version: Int!
+  "The day it happened."
+  occurredOn: Timestamp!
+  "The cash that moved. A release defaults to the reserve held; a chargeback to the advance and fee. A reversal takes none."
+  cashMinor: Int
+  "A memo for a release; why for a chargeback or its reversal."
+  reason: String
 }
 
 input FactoringSubmissionListInput {
@@ -20662,6 +20983,10 @@ input FactoringAgreementInput {
   notes: String
   feeTiers: [FactoringFeeTierInput!]!
   documentTypeIds: [ID!]
+  dueFromFactorAccountId: ID
+  feeExpenseAccountId: ID
+  liabilityAccountId: ID
+  cashAccountId: ID
 }
 
 input UpdateFactoringAgreementInput {
@@ -20775,6 +21100,16 @@ extend type Query {
   factoringSubmissionPlan(input: FactoringSubmissionPlanInput!): FactoringSubmissionPlan!
   "Null until the factor's delivery is set up."
   factoringTransport(factoringCompanyId: ID!): FactoringTransport
+  factoringReserveEntries(input: FactoringReserveEntryListInput!): FactoringReserveEntryConnection!
+  factoringReserveBalance(factoringCompanyId: ID!): FactoringReserveBalance!
+  "What recording this funding would book, without booking it."
+  factoringFundingPlan(input: RecordFactoringFundingInput!): FactoringFundingPlan!
+  "What releasing this reserve would book, without booking it."
+  factoringReleasePlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  "What recording this chargeback would book, without booking it."
+  factoringChargebackPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  "What reversing the invoice's chargeback would book, without booking it."
+  factoringChargebackReversalPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
 }
 
 extend type Mutation {
@@ -20798,6 +21133,14 @@ extend type Mutation {
   saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
   "Connects with the saved settings without sending anything, and records the result."
   testFactoringTransport(factoringCompanyId: ID!): FactoringTransportTestResult!
+  "Records what the factor funded or rejected on a schedule and books each funded invoice."
+  recordFactoringFunding(input: RecordFactoringFundingInput!): FactoringSubmission!
+  "Books the factor's release of an invoice's reserve; the factor's part is then done."
+  releaseFactoringReserve(input: FactoringReserveMovementInput!): FactoringSubmission!
+  "Books a recourse factor's chargeback; the invoice is the organization's to collect again."
+  recordFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
+  "Undoes the invoice's last chargeback with the opposite entry."
+  reverseFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
 }
 `, BuiltIn: false},
 	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."

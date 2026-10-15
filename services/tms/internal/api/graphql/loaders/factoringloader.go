@@ -110,6 +110,37 @@ func newFactoringAgreementsByCompanyIDLoader(
 	))
 }
 
+type FactoringSubmissionByIDLoaderFactoryParams struct {
+	fx.In
+
+	Submissions factoringports.SubmissionRepository
+}
+
+type FactoringSubmissionByIDLoaderFactory struct {
+	submissions factoringports.SubmissionRepository
+}
+
+func NewFactoringSubmissionByIDLoaderFactory(
+	p FactoringSubmissionByIDLoaderFactoryParams,
+) *FactoringSubmissionByIDLoaderFactory {
+	return &FactoringSubmissionByIDLoaderFactory{submissions: p.Submissions}
+}
+
+func newFactoringSubmissionByIDLoader(
+	f *FactoringSubmissionByIDLoaderFactory,
+	tenantInfo pagination.TenantInfo,
+) *dataloadgen.Loader[string, *factoring.Submission] {
+	return newLoader(batchByIDFunc(
+		func(ctx context.Context, ids []pulid.ID) ([]*factoring.Submission, error) {
+			return f.submissions.GetByIDs(ctx, factoringports.GetSubmissionsByIDsRequest{
+				IDs:        ids,
+				TenantInfo: tenantInfo,
+			})
+		},
+		"Factoring schedule not found",
+	))
+}
+
 type FactoringSubmissionItemsLoaderFactoryParams struct {
 	fx.In
 

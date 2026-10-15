@@ -30,6 +30,10 @@ type UpdateMyAvailabilityRequest struct {
 	AwayNote       string                    `json:"awayNote"`
 }
 
+type UpdateMyAssistantVisibilityRequest struct {
+	AssistantHidden *bool `json:"assistantHidden"`
+}
+
 type RevokeSessionsResponse struct {
 	Revoked int `json:"revoked"`
 }
@@ -74,6 +78,47 @@ func (h *Handler) updateMyProfile(c *gin.Context) {
 		PhoneNumber: req.PhoneNumber,
 		AvatarStyle: req.AvatarStyle,
 	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Show or hide the assistant for the current user
+// @ID updateCurrentUserAssistantVisibility
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body UpdateMyAssistantVisibilityRequest true "Whether the assistant is hidden"
+// @Success 200 {object} tenant.User
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /users/me/assistant-visibility/ [put]
+func (h *Handler) updateMyAssistantVisibility(c *gin.Context) {
+	var req UpdateMyAssistantVisibilityRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if req.AssistantHidden == nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"assistantHidden",
+			errortypes.ErrRequired,
+			"Whether the assistant is hidden is required",
+		))
+		return
+	}
+
+	updated, err := h.service.SetMyAssistantHidden(
+		c.Request.Context(),
+		selfTenant(c),
+		*req.AssistantHidden,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

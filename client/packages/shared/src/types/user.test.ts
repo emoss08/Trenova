@@ -219,4 +219,12 @@ describe("userSchema", () => {
 
     expect(parsed.success).toBe(true);
   });
+
+  it("shows the assistant for an account that has never chosen", () => {
+    expect(userSchema.parse(account).assistantHidden).toBe(false);
+  });
+
+  it("keeps an assistant the person turned off hidden", () => {
+    expect(userSchema.parse({ ...account, assistantHidden: true }).assistantHidden).toBe(true);
+  });
 });

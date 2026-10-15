@@ -105,12 +105,23 @@ function RoomCompactBar() {
  * global header; what applies everywhere lives on the rail, and where you
  * are is the page's title. The panel folds with ⌘B and the rail stays.
  *
- * A room (Triage, the Formula Studio) draws its own rail where the panel
- * would be and folds it with the same ⌘B and the rail's fold tile; the
- * module rail stays beside it, so the rest of the product is one click away
- * from inside the room.
+ * A room (Triage, Settings) draws its own rail where the panel would be and
+ * folds it with the same ⌘B and the rail's fold tile; the module rail stays
+ * beside it, so the rest of the product is one click away from inside the
+ * room. A room whose rail stands (the Formula Studio, where the rate trace is
+ * the room's working column) never folds it: the panel stays folded in its
+ * favour, so the tiles open their module's pages on hover, and the rail
+ * draws no fold tile.
  */
-export function RailShell({ children, room = false }: { children: ReactNode; room?: boolean }) {
+export function RailShell({
+  children,
+  room = false,
+  railStands = false,
+}: {
+  children: ReactNode;
+  room?: boolean;
+  railStands?: boolean;
+}) {
   const { compact, shown } = useSidebarFold();
   useGoToChords(useModuleChordTargets());
 
@@ -123,7 +134,11 @@ export function RailShell({ children, room = false }: { children: ReactNode; roo
           <RailSheet shown={shown} room={room} />
         ) : (
           <>
-            <ModuleRail panelFolded={!shown} search={room || !shown} fold={room} />
+            <ModuleRail
+              panelFolded={!shown || railStands}
+              search={room || !shown}
+              fold={room && !railStands}
+            />
             {!room && <RailPanel shown={shown} />}
           </>
         )}
