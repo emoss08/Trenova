@@ -70,7 +70,7 @@ export function useAgentRecommendation({
   );
 
   return {
-    recommendation: text === null ? null : (query.data ?? null),
+    recommendation: text === null || draft.trim() === "" ? null : (query.data ?? null),
     resolve,
   };
 }

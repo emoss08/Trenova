@@ -192,6 +192,18 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
   });
 
+  it("takes the suggestion away with the question once it is sent", async () => {
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await findNote();
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(queryNote()).toBeNull();
+  });
+
   it("keeps the person's agent once they say so, and stops offering the other", async () => {
     const onStart = vi.fn();
     renderHome(onStart);

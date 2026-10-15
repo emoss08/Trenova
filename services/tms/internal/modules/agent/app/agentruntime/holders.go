@@ -15,10 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// otherAgentsPage is how many agents one read takes, the most a list page
+// otherAgentsPage is how many agents one read asks for, the most a list page
 // reads; maxOtherAgents bounds how many are read in all.
 const (
-	otherAgentsPage = 100
+	otherAgentsPage = pagination.MaxLimit
 	maxOtherAgents  = 1000
 )
 
@@ -52,7 +52,7 @@ func OtherUsableAgents(
 
 	out := make([]*agentdefinition.Definition, 0, otherAgentsPage)
 	seen := make(map[pulid.ID]struct{}, otherAgentsPage)
-	for offset := 0; offset < maxOtherAgents; offset += otherAgentsPage {
+	for offset := 0; offset < maxOtherAgents; {
 		result, listErr := req.Definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: req.Actor.TenantInfo(),
@@ -75,7 +75,8 @@ func OtherUsableAgents(
 			seen[definition.ID] = struct{}{}
 			out = append(out, definition)
 		}
-		if len(result.Items) < otherAgentsPage || offset+len(result.Items) >= result.Total {
+		offset += len(result.Items)
+		if len(result.Items) == 0 || offset >= result.Total {
 			break
 		}
 	}

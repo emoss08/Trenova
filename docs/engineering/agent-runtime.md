@@ -1069,12 +1069,13 @@ same parts:
   `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
   appends, so only tools that matched are scored, each with its fused score. Its query
   vector is the one the turn embeds for the same words: `retrievalquery` keeps it in
-  its in-process cache and in Redis (`QueryVectorCache`, an hour, keyed by tenant,
+  its in-process cache and in Redis (`QueryVectorCache`, fifteen minutes, keyed by tenant,
   embedding model and a hash of the words), so a question sent after its match reuses
   the vector even when the API asked and the worker runs the turn. Only an agent
   holding a best match is ever suggested, and every tool whose score equals the top
   score is a best match, so two tools the question matches equally well are treated
-  alike. A suggestion therefore manages the question better than the agent it would
+  alike; tools tied on keyword score or on similarity share a rank in the fusion
+  (`rankfusion.ReciprocalTiers`), so catalog order never breaks the tie. A suggestion therefore manages the question better than the agent it would
   replace: the agent the question would go to now is kept whenever it holds any best
   match, however many lesser matches another holds. Among the holders an agent scores
   1/(rank+1) for each matched tool it holds, ranks dense so tied tools weigh the same,
@@ -1096,7 +1097,8 @@ seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
 `agent-recommendation-state.ts`). While it waits the match stays keyed to the words
 sent, not the emptied box, so the request it waits on keeps an observer and is not
 cancelled under it; Switch and the cross are disabled meanwhile, and both return focus
-to the box. The suggestion is announced through a status region that is always
+to the box. Once the question is sent the note leaves with it, so it never sits over
+an empty box. The suggestion is announced through a status region that is always
 mounted, so a screen reader hears it when it appears. The browser keeps asking as the question changes,
 so a new question the agent switched to cannot manage is offered again; the server
 rule above keeps a switch from drawing a second suggestion for the words it was

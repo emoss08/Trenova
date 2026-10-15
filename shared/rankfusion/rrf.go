@@ -28,3 +28,35 @@ func Reciprocal[K comparable](k int, lists ...[]K) map[K]float64 {
 
 	return scores
 }
+
+func ReciprocalTiers[K comparable](k int, lists ...[][]K) map[K]float64 {
+	if k <= 0 {
+		k = DefaultK
+	}
+
+	size := 0
+	for _, list := range lists {
+		for _, tier := range list {
+			size += len(tier)
+		}
+	}
+
+	scores := make(map[K]float64, size)
+	for _, list := range lists {
+		seen := make(map[K]struct{}, size)
+		position := 0
+		for _, tier := range list {
+			weight := 1 / float64(k+position+1)
+			for _, key := range tier {
+				if _, dup := seen[key]; dup {
+					continue
+				}
+				seen[key] = struct{}{}
+				position++
+				scores[key] += weight
+			}
+		}
+	}
+
+	return scores
+}

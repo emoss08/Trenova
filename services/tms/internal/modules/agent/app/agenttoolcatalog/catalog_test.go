@@ -467,3 +467,31 @@ func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
 	assert.Equal(t, matches[0].Score, matches[1].Score,
 		"a tie stays a tie for the caller to break, not one decided by catalog order")
 }
+
+func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "create_shipment", Description: "Create a shipment."},
+		{Name: "get_shipment", Description: "Retrieve one shipment."},
+		{Name: "list_invoices", Description: "List invoices."},
+	})
+
+	matches := catalog.Match(Query{
+		Text:  "shipment",
+		Limit: 6,
+		Semantic: NewSemantic(map[string]float64{
+			"create_shipment": 0.62,
+			"get_shipment":    0.62,
+			"list_invoices":   0.11,
+		}),
+	})
+
+	require.GreaterOrEqual(t, len(matches), 2)
+	assert.ElementsMatch(t,
+		[]string{"create_shipment", "get_shipment"},
+		[]string{matches[0].Name, matches[1].Name},
+	)
+	assert.Equal(t, matches[0].Score, matches[1].Score,
+		"tools tied on keywords and on meaning tie in the fused ranking too")
+}

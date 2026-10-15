@@ -73,8 +73,10 @@ func (c *queryVectorCache) Get(
 		return agentports.QueryVector{}, false, nil
 	}
 	vector, err := vectorutils.Unpack(cached.Vector)
-	if err != nil || cached.ModelKey != key.ModelKey ||
-		!airetrieval.IsAllowedDimension(cached.Dimensions) || len(vector) != cached.Dimensions {
+	if err == nil {
+		err = cachedVectorMismatch(key, cached, len(vector))
+	}
+	if err != nil {
 		c.drop(ctx, key, err)
 
 		return agentports.QueryVector{}, false, nil
@@ -110,6 +112,23 @@ func (c *queryVectorCache) Set(
 	}
 
 	return nil
+}
+
+func cachedVectorMismatch(
+	key agentports.QueryVectorCacheKey,
+	cached cachedQueryVector,
+	length int,
+) error {
+	switch {
+	case cached.ModelKey != key.ModelKey:
+		return fmt.Errorf("cached for model %q, wanted %q", cached.ModelKey, key.ModelKey)
+	case !airetrieval.IsAllowedDimension(cached.Dimensions):
+		return fmt.Errorf("cached with %d dimensions, not an allowed size", cached.Dimensions)
+	case length != cached.Dimensions:
+		return fmt.Errorf("cached with %d values for %d dimensions", length, cached.Dimensions)
+	default:
+		return nil
+	}
 }
 
 func (c *queryVectorCache) drop(ctx context.Context, key agentports.QueryVectorCacheKey, cause error) {

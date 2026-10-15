@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/rankfusion"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
@@ -177,20 +178,24 @@ func (c *Catalog) fuse(
 	keyword []scored,
 	q Query,
 ) ([]*indexed, map[string]float64) {
-	keywordNames := make([]string, 0, len(keyword))
 	matched := make(map[string]struct{}, len(keyword))
 	for _, candidate := range keyword {
-		keywordNames = append(keywordNames, candidate.entry.descriptor.Name)
 		matched[candidate.entry.descriptor.Name] = struct{}{}
 	}
+	keywordTiers := sliceutils.Runs(
+		keyword,
+		func(candidate scored) int { return candidate.score },
+		func(candidate scored) string { return candidate.entry.descriptor.Name },
+	)
 
 	vector := c.vectorRanked(wanted, q)
-	vectorNames := make([]string, 0, len(vector))
-	for _, entry := range vector {
-		vectorNames = append(vectorNames, entry.descriptor.Name)
-	}
+	vectorTiers := sliceutils.Runs(
+		vector,
+		func(entry *indexed) float64 { return q.Semantic.Similarity[entry.descriptor.Name] },
+		func(entry *indexed) string { return entry.descriptor.Name },
+	)
 
-	scores := rankfusion.Reciprocal(RRFK, keywordNames, vectorNames)
+	scores := rankfusion.ReciprocalTiers(RRFK, keywordTiers, vectorTiers)
 	fused := make([]*indexed, 0, len(scores))
 	for name := range scores {
 		if _, ok := matched[name]; !ok && q.Semantic.Similarity[name] < q.Semantic.Floor {
