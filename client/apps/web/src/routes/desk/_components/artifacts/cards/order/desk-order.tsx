@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import type { DeskOrder as DeskOrderRecord } from "@/lib/graphql/order-card";
 import { order } from "@/lib/queries/order";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
@@ -61,6 +61,7 @@ const NO_ROWS: readonly string[] = [];
  * changing, splitting and billing the order stay on its page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next order's skeleton until it is read, never the one it left.
  */
 export function DeskOrder({
   recordId,
@@ -70,11 +71,7 @@ export function DeskOrder({
   backLabel,
 }: OrderCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...order.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...order.card(recordId), retry: false });
   const record = query.data;
 
   if (!record) {

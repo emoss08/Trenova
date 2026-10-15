@@ -172,14 +172,25 @@ function page(rows: RecordShipment[], total: number) {
 function draw(props: Partial<Parameters<typeof DeskWorker>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <DeskWorker recordId="wrk_1" order={["wrk_0", "wrk_1"]} {...handlers} {...props} />
+        <DeskWorker
+          recordId="wrk_1"
+          order={["wrk_0", "wrk_1"]}
+          {...handlers}
+          {...props}
+          {...more}
+        />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -207,6 +218,17 @@ afterEach(() => {
 });
 
 describe("DeskWorker", () => {
+  it("draws the next worker's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Ana Ruiz", level: 2 });
+
+    fetchers.worker.mockReturnValue(new Promise(() => {}));
+    step("wrk_0");
+
+    expect(screen.queryByRole("heading", { name: "Ana Ruiz", level: 2 })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the worker is read, then draws who they are and their day", async () => {
     const { container } = draw();
 

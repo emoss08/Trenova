@@ -64,7 +64,7 @@ function route(overrides: Routes = {}) {
 function draw(props: Partial<Parameters<typeof DeskEdiTransfer>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <DeskEdiTransfer
@@ -72,11 +72,18 @@ function draw(props: Partial<Parameters<typeof DeskEdiTransfer>[0]> = {}) {
           order={["edilt_acme_88199", "edilt_acme_88241", "edilt_acme_88240"]}
           {...handlers}
           {...props}
+          {...more}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers, queryClient };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+    queryClient,
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -108,6 +115,17 @@ afterEach(() => {
 });
 
 describe("DeskEdiTransfer", () => {
+  it("draws the next tender's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "LT-88241", level: 2 });
+
+    server.get.mockReturnValue(new Promise(() => {}));
+    step("edilt_acme_88240");
+
+    expect(screen.queryByRole("heading", { name: "LT-88241", level: 2 })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the tender is read, then draws who tendered it and what it holds", async () => {
     const { container } = draw();
 

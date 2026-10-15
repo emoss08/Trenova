@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import { counterparty, type TransferDirection, transferDirection } from "@/lib/edi/transfer-sides";
 import { edi } from "@/lib/queries/edi";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -80,6 +80,7 @@ const OPEN_TO_DECISION: ReadonlySet<EDITransferStatus> = new Set([
  * transfers page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next transfer's skeleton until it is read, never the one it left.
  */
 export function DeskEdiTransfer({
   recordId,
@@ -89,11 +90,7 @@ export function DeskEdiTransfer({
   backLabel,
 }: EdiTransferCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...edi.transfer(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...edi.transfer(recordId), retry: false });
   const transfer = query.data;
   // A tender reads one way or the other only from the reader's organization.
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
