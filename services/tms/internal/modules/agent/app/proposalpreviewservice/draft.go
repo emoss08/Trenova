@@ -170,9 +170,14 @@ func (s *Service) executionParams(
 	params map[string]any,
 	actor *permissionports.RequestActor,
 ) (agentports.ToolExecuteParams, error) {
-	return proposalexecutor.WithTimezone(
+	execParams, err := proposalexecutor.WithTimezone(
 		ctx, s.zones, proposalexecutor.ExecutionParams(proposal, policy, params, actor),
 	)
+	if err != nil {
+		return execParams, err
+	}
+
+	return proposalexecutor.WithConversation(ctx, s.runs, execParams)
 }
 
 // assertOwner keeps a self-scoped proposal's preview to the person it is
