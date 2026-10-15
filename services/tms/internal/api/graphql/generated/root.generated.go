@@ -1832,6 +1832,7 @@ type MutationResolver interface {
 	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
+	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
 	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
@@ -7055,6 +7056,12 @@ type AgentDefinition {
   "Who may use the agent. A system agent is always Everyone."
   accessMode: AgentAccessMode!
   """
+  The role the agent runs as when no person is present, on a schedule or an
+  event: its unattended work is held to both the fixed agent ceiling and this
+  role. Null means the ceiling alone.
+  """
+  unattendedRoleId: ID
+  """
   The roles granted the agent, whatever its access mode. They decide who may use
   it only while accessMode is Roles. Empty for a reader who may not read roles.
   """
@@ -7341,6 +7348,12 @@ extend type Mutation {
 extend type Mutation {
   "Sets who may use an agent. Needs permission to update agents and roles."
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  """
+  Sets the role an agent runs as when no person is present, or clears it with a
+  null roleId. Needs permission to update agents and roles, and the person
+  setting it must hold everything the role grants.
+  """
+  setAgentUnattendedRole(agentId: ID!, roleId: ID): AgentDefinition!
   "Replaces the agents a role is granted."
   setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
 }

@@ -22,6 +22,7 @@ type CachedPermissions struct {
 	Checksum       string                               `json:"checksum"`
 	ExpiresAt      int64                                `json:"expiresAt"`
 	Epoch          int64                                `json:"epoch"`
+	AgentRoleID    string                               `json:"agentRoleId,omitempty"`
 }
 
 type PermissionCacheKey struct {

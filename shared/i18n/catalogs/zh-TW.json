@@ -1042,6 +1042,7 @@
   "An agent cannot have more than 20 guardrails": "一個代理最多只能有 20 條護欄規則",
   "An agent cannot have more than 64 tools switched off": "代理關閉的工具不得超過 64 個",
   "An agent cannot make more than 64 tool calls per run": "一個代理每次執行最多只能呼叫 64 次工具",
+  "An agent cannot run as a role that sees more sensitive fields than you can": "代理不能以比您可見欄位更敏感的角色執行",
   "An agent definition id or system key is required": "需要提供代理定義 ID 或系統金鑰",
   "An agent keeps at most 20 prompts. Remove one before keeping another.": "每個代理最多保留 20 個提示。請先移除一個再保留新的。",
   "An agent may dismiss only an amount difference within the reconciliation tolerance of {0}. A person needs to decide this one": "代理只能關閉在 {0} 對帳容差內的金額差異。此項須由人員決定",

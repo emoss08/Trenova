@@ -1042,6 +1042,7 @@
   "An agent cannot have more than 20 guardrails": "Un agente no puede tener más de 20 barreras de seguridad",
   "An agent cannot have more than 64 tools switched off": "Un agente no puede tener más de 64 herramientas desactivadas",
   "An agent cannot make more than 64 tool calls per run": "Un agente no puede hacer más de 64 llamadas a herramientas por ejecución",
+  "An agent cannot run as a role that sees more sensitive fields than you can": "Un agente no puede ejecutarse con un rol que vea campos más sensibles que los que usted puede ver",
   "An agent definition id or system key is required": "Se requiere un id de definición de agente o una clave de sistema",
   "An agent keeps at most 20 prompts. Remove one before keeping another.": "Un agente guarda como máximo 20 mensajes de prueba. Quite uno antes de guardar otro.",
   "An agent may dismiss only an amount difference within the reconciliation tolerance of {0}. A person needs to decide this one": "Un agente solo puede descartar una diferencia de importe dentro de la tolerancia de conciliación de {0}. Esta debe decidirla una persona",

@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 84 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1148 writes: 631 GraphQL mutations and 517 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1149 writes: 632 GraphQL mutations and 517 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 421 |
-| Exempt | 693 |
-| — Security | 84 |
+| Exempt | 694 |
+| — Security | 85 |
 | — Configuration | 270 |
 | — User preference | 39 |
 | — Infrastructure | 52 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1148 |
+| Total | 1149 |
 
 Of the 455 writes an agent should be able to make, 421 have a tool (92%).
 
@@ -168,7 +168,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
-| agentdefinition | 12 | 0 | 12 | 0 |
+| agentdefinition | 13 | 0 | 13 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
@@ -451,6 +451,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation draftAgentFromDescription` | Exempt, read-only: Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create. |
 | `mutation keepAgentTestPrompt` | Exempt, agent-administration: Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself. |
 | `mutation setAgentAccess` | Exempt, security: Decides which people may use which agents. |
+| `mutation setAgentUnattendedRole` | Exempt, security: Decides what an agent may do when no person is present; an agent must not widen its own reach. |
 | `mutation setRoleAgentAccess` | Exempt, security: Decides which roles may use which agents. |
 | `mutation tightenAgentInstructions` | Exempt, read-only: Asks a model to shorten an agent's instructions and returns the text; it saves nothing. |
 | `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |

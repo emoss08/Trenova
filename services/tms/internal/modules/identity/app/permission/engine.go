@@ -63,6 +63,7 @@ type Params struct {
 	AccessPolicyCacheRepo iamports.AccessPolicyCacheRepository
 	UserRepository        tenantports.UserRepository
 	AgentGrants           permissionports.RoleAgentGrantRepository  `optional:"true"`
+	AgentRoles            permissionports.AgentRoleSource           `optional:"true"`
 	Delegated             permissionports.DelegatedPermissionSource `optional:"true"`
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
@@ -79,6 +80,7 @@ type engine struct {
 	policyCache   iamports.AccessPolicyCacheRepository
 	userRepo      tenantports.UserRepository
 	agentGrants   permissionports.RoleAgentGrantRepository
+	agentRoles    permissionports.AgentRoleSource
 	delegated     permissionports.DelegatedPermissionSource
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
@@ -97,6 +99,7 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
 		agentGrants:   p.AgentGrants,
+		agentRoles:    p.AgentRoles,
 		delegated:     p.Delegated,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
@@ -117,7 +120,12 @@ func (e *engine) Check(
 	}
 
 	if req.PrincipalType == permissionports.PrincipalTypeAgent {
-		return e.checkAgentPermission(req, start), nil
+		return e.checkAgentPermission(
+			ctx,
+			req,
+			start,
+			e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID),
+		)
 	}
 
 	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
@@ -141,25 +149,6 @@ func (e *engine) checkLogger(
 		zap.String("resource", req.Resource),
 		zap.String("op", string(req.Operation)),
 	)
-}
-
-func (e *engine) checkAgentPermission(
-	req *permissionports.PermissionCheckRequest,
-	start time.Time,
-) *permissionports.PermissionCheckResult {
-	allowed := permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
-
-	reason := "agent_denied"
-	if allowed {
-		reason = "agent_allowed"
-	}
-
-	return &permissionports.PermissionCheckResult{
-		Allowed:       allowed,
-		Reason:        reason,
-		DataScope:     permission.DataScopeOrganization,
-		CheckDuration: time.Since(start).Milliseconds(),
-	}
 }
 
 func (e *engine) checkUserPermission(
@@ -397,6 +386,8 @@ func accessPolicyConditionMatches(
 	switch normalizedKey {
 	case "principalType":
 		return string(req.PrincipalType) == normalizedExpected
+	case "principalId":
+		return req.PrincipalID.String() == normalizedExpected
 	case "userId":
 		return req.UserID.String() == normalizedExpected
 	case "businessUnitId":
@@ -492,7 +483,7 @@ func (e *engine) CheckBatch(
 	case permissionports.PrincipalTypeAPIKey:
 		err = e.checkAPIKeyBatch(ctx, req, results)
 	case permissionports.PrincipalTypeAgent:
-		e.checkAgentBatch(req, results)
+		err = e.checkAgentBatch(ctx, req, results)
 	default:
 		err = e.checkUserBatch(ctx, req, results)
 	}
@@ -579,15 +570,6 @@ func (e *engine) checkAPIKeyBatch(
 		results[i] = *e.resolveAPIKeyPermission(perms, batchCheckRequest(req, check), time.Now())
 	}
 	return nil
-}
-
-func (e *engine) checkAgentBatch(
-	req *permissionports.BatchPermissionCheckRequest,
-	results []permissionports.PermissionCheckResult,
-) {
-	for i, check := range req.Checks {
-		results[i] = *e.checkAgentPermission(batchCheckRequest(req, check), time.Now())
-	}
 }
 
 func enforceResourceAttributes(

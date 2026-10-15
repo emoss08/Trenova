@@ -142,6 +142,25 @@ The client's operation and data scope lists (`PERMISSION_OPERATIONS`, `DATA_SCOP
 constants with the resource enum; a hand-kept list once kept the role form from saving any
 role holding manage, delete or close.
 
+## Agents
+
+In a conversation an agent acts as the person: every tool call is checked against the
+person's grants. When an agent runs on its own (a schedule, an event, a loop) its principal
+is `PrincipalTypeAgent` with the agent definition's id, and a check passes only where:
+
+1. the fixed agent ceiling allows it (`permission.IsAgentAllowed`), which no organization
+   can widen;
+2. the role the organization chose for the agent, if any, grants it, through the role's
+   parents too (`agent_definitions.unattended_role_id`, read through
+   `permissionports.AgentRoleSource` and cached per agent under the organization epoch);
+3. no access policy denies it. Policies bind agent principals as they bind people; match
+   them with the `principalType` condition `agent` or `principalId` the agent's id.
+
+`setAgentUnattendedRole` needs `agent_definition:update` and `role:update`, and runs the
+delegation check over the role's whole closure: the person setting it must hold every grant
+and the sensitivity ceiling the role carries. The change advances the organization epoch,
+so the next unattended call reads the new role, and is recorded as a critical audit entry.
+
 ## Organization security settings
 
 Single sign-on, SCIM, access policies and the sign-in activity views each have their own

@@ -1042,6 +1042,7 @@
   "An agent cannot have more than 20 guardrails": "一个代理最多只能有 20 条护栏规则",
   "An agent cannot have more than 64 tools switched off": "一个智能体关闭的工具不能超过 64 个",
   "An agent cannot make more than 64 tool calls per run": "一个代理每次运行最多只能调用 64 次工具",
+  "An agent cannot run as a role that sees more sensitive fields than you can": "智能体不能以比您可见字段更敏感的角色运行",
   "An agent definition id or system key is required": "需要提供智能体定义 ID 或系统密钥",
   "An agent keeps at most 20 prompts. Remove one before keeping another.": "每个代理最多保留 20 个提示。请先移除一个再保留新的。",
   "An agent may dismiss only an amount difference within the reconciliation tolerance of {0}. A person needs to decide this one": "代理只能忽略在 {0} 对账容差内的金额差异。此项须由人员决定",

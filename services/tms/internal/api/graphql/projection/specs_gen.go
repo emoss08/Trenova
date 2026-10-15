@@ -3127,6 +3127,10 @@ func init() {
 				FieldMapKey: "accessMode",
 			},
 			{
+				Name:        "unattendedRoleId",
+				FieldMapKey: "unattendedRoleId",
+			},
+			{
 				Name:    "accessRoles",
 				Special: "accessRoles",
 			},

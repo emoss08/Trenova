@@ -3862,6 +3862,12 @@ type AgentDefinition {
   """
   toolTiers: JSON!
   triggerMode: AgentTriggerMode!
+  """
+  The role the agent runs as when no person is present, on a schedule or an
+  event: its unattended work is held to both the fixed agent ceiling and this
+  role. Null means the ceiling alone.
+  """
+  unattendedRoleId: ID
   updatedAt: Timestamp!
   version: Int!
 }
@@ -20554,6 +20560,12 @@ type Mutation {
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
   """
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
+  """
+  Sets the role an agent runs as when no person is present, or clears it with a
+  null roleId. Needs permission to update agents and roles, and the person
+  setting it must hold everything the role grants.
+  """
+  setAgentUnattendedRole(agentId: ID!, roleId: ID): AgentDefinition!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """

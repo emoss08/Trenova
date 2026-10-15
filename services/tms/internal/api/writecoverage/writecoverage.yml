@@ -248,6 +248,9 @@ writes:
   "mutation setAgentAccess":
     exempt: security
     reason: "Decides which people may use which agents."
+  "mutation setAgentUnattendedRole":
+    exempt: security
+    reason: "Decides what an agent may do when no person is present; an agent must not widen its own reach."
   "mutation setRoleAgentAccess":
     exempt: security
     reason: "Decides which roles may use which agents."

@@ -92,6 +92,12 @@ type AgentAudienceSuggestion struct {
 
 // AgentAccessService is the one writer of who may use which agent, behind
 // both the agent form and the role editor.
+type SetAgentUnattendedRoleRequest struct {
+	TenantInfo pagination.TenantInfo
+	AgentID    pulid.ID
+	RoleID     pulid.ID
+}
+
 type AgentAccessService interface {
 	SetAgentAccess(
 		ctx context.Context,
@@ -121,6 +127,11 @@ type AgentAccessService interface {
 	SaveWithAccess(
 		ctx context.Context,
 		req *SaveAgentWithAccessRequest,
+		actor *permissionports.RequestActor,
+	) (*agentdefinition.Definition, error)
+	SetUnattendedRole(
+		ctx context.Context,
+		req *SetAgentUnattendedRoleRequest,
 		actor *permissionports.RequestActor,
 	) (*agentdefinition.Definition, error)
 }

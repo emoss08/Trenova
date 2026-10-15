@@ -8902,6 +8902,15 @@
       "routes/scheduling"
     ]
   },
+  "A role": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A role cannot inherit from itself": {
     "sites": 1,
     "scope": [
@@ -19640,7 +19649,7 @@
     ]
   },
   "Agent": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -23501,6 +23510,15 @@
     ]
   },
   "An agent cannot make more than 64 tool calls per run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agent cannot run as a role that sees more sensitive fields than you can": {
     "sites": 1,
     "scope": [
       "go"
@@ -163309,7 +163327,7 @@
     ]
   },
   "Nothing was given to save": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -215801,6 +215819,15 @@
       "routes/agent-control"
     ]
   },
+  "Runs on its own as": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Runs on its own · it can't be handed work": {
     "sites": 1,
     "scope": [
@@ -248383,6 +248410,15 @@
       "apps/web/components"
     ]
   },
+  "The agent ceiling alone": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The agent could not settle this on its own. Add a note about what you did so the outcome is on record.": {
     "sites": 1,
     "scope": [
@@ -267675,7 +267711,7 @@
     ]
   },
   "This role does not exist in this organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -291225,6 +291261,15 @@
     ]
   },
   "When marked, from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "When no person is present, the agent may do only what both the agent ceiling and this role allow. You can choose only a role whose access you hold yourself.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -319977,6 +320022,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} now runs on its own under the role you chose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} now uses your organization's checklist": {
