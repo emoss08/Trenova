@@ -4747,3 +4747,69 @@ func (_c *MockEDIDocumentRepository_EnsureStarterTemplate_Call) RunAndReturn(run
 	_c.Call.Return(run)
 	return _c
 }
+
+// StartControlNumber provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) StartControlNumber(ctx context.Context, req *ediports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartControlNumber")
+	}
+
+	var r0 *edi.EDIControlNumberSequence
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ResetEDIControlNumberRequest) *edi.EDIControlNumberSequence); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIControlNumberSequence)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.ResetEDIControlNumberRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_StartControlNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartControlNumber'
+type MockEDIDocumentRepository_StartControlNumber_Call struct {
+	*mock.Call
+}
+
+// StartControlNumber is a helper method to define mock.On call
+func (_e *MockEDIDocumentRepository_Expecter) StartControlNumber(ctx any, req any) *MockEDIDocumentRepository_StartControlNumber_Call {
+	return &MockEDIDocumentRepository_StartControlNumber_Call{Call: _e.mock.On("StartControlNumber", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_StartControlNumber_Call) Run(run func(ctx context.Context, req *ediports.ResetEDIControlNumberRequest)) *MockEDIDocumentRepository_StartControlNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ediports.ResetEDIControlNumberRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ediports.ResetEDIControlNumberRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_StartControlNumber_Call) Return(ret0 *edi.EDIControlNumberSequence, ret1 error) *MockEDIDocumentRepository_StartControlNumber_Call {
+	_c.Call.Return(ret0, ret1)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_StartControlNumber_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ResetEDIControlNumberRequest) (*edi.EDIControlNumberSequence, error)) *MockEDIDocumentRepository_StartControlNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}

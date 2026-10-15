@@ -32,4 +32,8 @@ type EDIControlNumberRepository interface {
 		ctx context.Context,
 		req *ResetEDIControlNumberRequest,
 	) (*edi.EDIControlNumberSequence, error)
+	StartControlNumber(
+		ctx context.Context,
+		req *ResetEDIControlNumberRequest,
+	) (*edi.EDIControlNumberSequence, error)
 }

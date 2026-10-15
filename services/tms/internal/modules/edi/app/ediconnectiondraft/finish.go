@@ -22,7 +22,7 @@ type mappingKey struct {
 }
 
 type mappingCandidate struct {
-	input  ediports.DraftMappingInput
+	input  *ediports.DraftMappingInput
 	source ediports.DraftSource
 	status ediports.ValueStatus
 	reason string
@@ -31,7 +31,8 @@ type mappingCandidate struct {
 func (p *planner) buildMappings(ctx context.Context) error {
 	targets := make(map[edi.MappingEntityType][]pulid.ID)
 	for _, input := range p.req.Mappings {
-		if input.TargetID.IsNotNil() && !slices.Contains(targets[input.EntityType], input.TargetID) {
+		if input.TargetID.IsNotNil() &&
+			!slices.Contains(targets[input.EntityType], input.TargetID) {
 			targets[input.EntityType] = append(targets[input.EntityType], input.TargetID)
 		}
 	}
@@ -49,8 +50,12 @@ func (p *planner) buildMappings(ctx context.Context) error {
 
 	grouped := make(map[mappingKey][]mappingCandidate)
 	order := make([]mappingKey, 0, len(p.req.Mappings))
-	for _, input := range p.req.Mappings {
-		key := mappingKey{entityType: input.EntityType, sourceID: edi.MappingSourceID(input.SourceValue)}
+	for inputIndex := range p.req.Mappings {
+		input := &p.req.Mappings[inputIndex]
+		key := mappingKey{
+			entityType: input.EntityType,
+			sourceID:   edi.MappingSourceID(input.SourceValue),
+		}
 		if _, seen := grouped[key]; !seen {
 			order = append(order, key)
 		}
@@ -81,7 +86,7 @@ func (p *planner) buildMappings(ctx context.Context) error {
 }
 
 func (p *planner) readMapping(
-	input ediports.DraftMappingInput,
+	input *ediports.DraftMappingInput,
 	labels map[edi.MappingEntityType]map[pulid.ID]string,
 ) mappingCandidate {
 	check := p.pages.locate(input.Citation)
@@ -110,10 +115,17 @@ func (p *planner) readMapping(
 		candidate.reason = "Name the Trenova record this code maps to"
 	case !targetFound:
 		candidate.status = ediports.ValueStatusInvalid
-		candidate.reason = fmt.Sprintf("No %s with that ID exists in this organization", input.EntityType)
+		candidate.reason = fmt.Sprintf(
+			"No %s with that ID exists in this organization",
+			input.EntityType,
+		)
 	case input.Confidence < confidenceFloor:
 		candidate.status = ediports.ValueStatusHeld
-		candidate.reason = fmt.Sprintf("Confidence %.2f is below %.2f", input.Confidence, confidenceFloor)
+		candidate.reason = fmt.Sprintf(
+			"Confidence %.2f is below %.2f",
+			input.Confidence,
+			confidenceFloor,
+		)
 	}
 	return candidate
 }
@@ -135,12 +147,14 @@ func (p *planner) settleMapping(
 		Change:      ediports.ChangeKindNone,
 	}
 	targetsSeen := make([]pulid.ID, 0, len(candidates))
-	for _, candidate := range candidates {
+	for candidateIndex := range candidates {
+		candidate := &candidates[candidateIndex]
 		if candidate.status == ediports.ValueStatusAccepted &&
 			!slices.Contains(targetsSeen, candidate.input.TargetID) {
 			targetsSeen = append(targetsSeen, candidate.input.TargetID)
 		}
-		if candidate.status == ediports.ValueStatusAccepted && out.Status != ediports.ValueStatusAccepted {
+		if candidate.status == ediports.ValueStatusAccepted &&
+			out.Status != ediports.ValueStatusAccepted {
 			out.Status = candidate.status
 			out.Source = candidate.source
 			out.Confidence = candidate.input.Confidence
@@ -231,20 +245,7 @@ func (p *planner) buildSamples() {
 }
 
 func (p *planner) sampleChecks(sample *specSample) []ediports.DraftSampleCheck {
-	partnerQualifier, partnerID, ourQualifier, ourID, partnerGS, ourGS := sample.parties()
-	found := map[string]string{
-		fieldPartnerQualifier: partnerQualifier,
-		fieldPartnerID:        partnerID,
-		fieldOurQualifier:     ourQualifier,
-		fieldOurID:            ourID,
-		fieldPartnerGSID:      partnerGS,
-		fieldOurGSID:          ourGS,
-		fieldUsageIndicator:   sample.parsed.UsageIndicator,
-		fieldX12Version:       sample.parsed.GroupVersion,
-		fieldElementSep:       sample.parsed.Separators.Element,
-		fieldSegmentSep:       sample.parsed.Separators.Segment,
-		fieldComponentSep:     sample.parsed.Separators.Component,
-	}
+	found := sample.envelopeValues()
 	checks := make([]ediports.DraftSampleCheck, 0, len(found))
 	for _, key := range sampleFieldOrder {
 		value, ok := found[key]
@@ -286,7 +287,8 @@ func (p *planner) draftedMappings() map[mappingKey]bool {
 			mapped[mappingKey{entityType: item.EntityType, sourceID: item.SourceID}] = true
 		}
 	}
-	for _, mapping := range p.draft.Mappings {
+	for mappingIndex := range p.draft.Mappings {
+		mapping := &p.draft.Mappings[mappingIndex]
 		if mapping.Status == ediports.ValueStatusAccepted && mapping.TargetID.IsNotNil() {
 			mapped[mappingKey{entityType: mapping.EntityType, sourceID: mapping.SourceID}] = true
 		}
@@ -296,7 +298,8 @@ func (p *planner) draftedMappings() map[mappingKey]bool {
 
 func unmappedCodes(sample *specSample, mapped map[mappingKey]bool) []ediports.DraftUnmappedCode {
 	out := make([]ediports.DraftUnmappedCode, 0)
-	for _, transaction := range sample.parsed.Transactions {
+	for transactionIndex := range sample.parsed.Transactions {
+		transaction := &sample.parsed.Transactions[transactionIndex]
 		tender := transaction.Payload.LoadTender
 		if tender == nil {
 			continue
@@ -311,9 +314,10 @@ func unmappedCodes(sample *specSample, mapped map[mappingKey]bool) []ediports.Dr
 			slices.Sort(ids)
 			for _, id := range ids {
 				key := mappingKey{entityType: entityType, sourceID: id}
-				if mapped[key] || slices.ContainsFunc(out, func(code ediports.DraftUnmappedCode) bool {
-					return code.EntityType == entityType && code.SourceID == id
-				}) {
+				if mapped[key] ||
+					slices.ContainsFunc(out, func(code ediports.DraftUnmappedCode) bool {
+						return code.EntityType == entityType && code.SourceID == id
+					}) {
 					continue
 				}
 				code := ediports.DraftUnmappedCode{EntityType: entityType, SourceID: id}
@@ -329,49 +333,71 @@ func unmappedCodes(sample *specSample, mapped map[mappingKey]bool) []ediports.Dr
 
 func (p *planner) settle() {
 	draft := p.draft
+	draft.Decisions = p.decisions()
+	draft.Blockers = blockers(draft)
+	draft.Changes = countChanges(draft)
+	if draft.Changes == 0 && len(draft.Blockers) == 0 {
+		draft.Blockers = append(
+			draft.Blockers,
+			"Nothing would change: the partner already matches this spec",
+		)
+	}
+	draft.Ready = len(draft.Blockers) == 0
+	fillEmpty(draft)
+}
+
+func (p *planner) decisionSections() [][]ediports.DraftValue {
+	draft := p.draft
 	sections := [][]ediports.DraftValue{draft.Partner.Fields, draft.Interchange}
 	if draft.Transport != nil {
 		sections = append(sections, draft.Transport.Fields)
 	}
-	for _, profile := range draft.DocumentProfiles {
-		sections = append(sections, profile.Fields)
+	for index := range draft.DocumentProfiles {
+		sections = append(sections, draft.DocumentProfiles[index].Fields)
 	}
-	for _, key := range sortedSetSupportKeys() {
+	loose := sortedSetSupportKeys()
+	for _, kind := range controlNumberKinds {
+		loose = append(loose, controlNumberField(kind))
+	}
+	if draft.Transport == nil {
+		loose = append(loose, fieldTransportMethod)
+	}
+	for _, key := range loose {
 		if value, ok := p.values[key]; ok && !value.Status.Usable() {
 			sections = append(sections, []ediports.DraftValue{value})
 		}
 	}
-	for _, kind := range controlNumberKinds {
-		if value, ok := p.values[controlNumberField(kind)]; ok && !value.Status.Usable() {
-			sections = append(sections, []ediports.DraftValue{value})
-		}
-	}
-	if value, ok := p.values[fieldTransportMethod]; ok && draft.Transport == nil {
-		sections = append(sections, []ediports.DraftValue{value})
-	}
+	return sections
+}
 
+func (p *planner) decisions() []ediports.DraftValue {
 	seen := make(map[string]bool)
-	draft.Decisions = make([]ediports.DraftValue, 0)
-	for _, section := range sections {
-		for _, value := range section {
+	decisions := make([]ediports.DraftValue, 0)
+	for _, section := range p.decisionSections() {
+		for index := range section {
+			value := &section[index]
 			if seen[value.Field] || !needsDecision(value) {
 				continue
 			}
 			seen[value.Field] = true
-			draft.Decisions = append(draft.Decisions, value)
+			decisions = append(decisions, *value)
 		}
 	}
+	return decisions
+}
 
-	draft.Blockers = make([]string, 0)
+func blockers(draft *ediports.ConnectionDraft) []string {
+	out := make([]string, 0)
 	if draft.Partner.Match == ediports.PartnerMatchAmbiguous {
-		draft.Blockers = append(draft.Blockers, "Name which existing partner this spec is for")
+		out = append(out, "Name which existing partner this spec is for")
 	}
-	for _, decision := range draft.Decisions {
-		draft.Blockers = append(draft.Blockers, "Decide "+lowerFirst(decision.Label))
+	for index := range draft.Decisions {
+		out = append(out, "Decide "+lowerFirst(draft.Decisions[index].Label))
 	}
-	for _, mapping := range draft.Mappings {
+	for index := range draft.Mappings {
+		mapping := &draft.Mappings[index]
 		if mapping.Status != ediports.ValueStatusAccepted {
-			draft.Blockers = append(draft.Blockers, fmt.Sprintf(
+			out = append(out, fmt.Sprintf(
 				"Settle the %s mapping for %s",
 				mapping.EntityType,
 				mapping.SourceID,
@@ -379,46 +405,43 @@ func (p *planner) settle() {
 		}
 	}
 	if len(draft.Failures) > 0 {
-		draft.Blockers = append(draft.Blockers, fmt.Sprintf(
+		out = append(out, fmt.Sprintf(
 			"Fix the %d validation %s",
 			len(draft.Failures),
 			plural(len(draft.Failures), "failure", "failures"),
 		))
 	}
 	if len(draft.DocumentProfiles) == 0 {
-		draft.Blockers = append(
-			draft.Blockers,
-			"The document names no 204, 210, 214 or 990 that Trenova would exchange",
-		)
+		out = append(out, "The document names no 204, 210, 214 or 990 that Trenova would exchange")
 	}
+	return out
+}
 
+func countChanges(draft *ediports.ConnectionDraft) int {
 	changes := 0
-	if draft.Partner.Change.Writes() {
-		changes++
-	}
-	if draft.Transport != nil && draft.Transport.Change.Writes() {
-		changes++
-	}
-	for _, profile := range draft.DocumentProfiles {
-		if profile.Change.Writes() {
-			changes++
-		}
-		for _, control := range profile.ControlNumbers {
-			if control.Change.Writes() {
-				changes++
-			}
-		}
-	}
-	for _, mapping := range draft.Mappings {
-		if mapping.Change.Writes() {
+	count := func(change ediports.ChangeKind) {
+		if change.Writes() {
 			changes++
 		}
 	}
-	draft.Changes = changes
-	if changes == 0 && len(draft.Blockers) == 0 {
-		draft.Blockers = append(draft.Blockers, "Nothing would change: the partner already matches this spec")
+	count(draft.Partner.Change)
+	if draft.Transport != nil {
+		count(draft.Transport.Change)
 	}
-	draft.Ready = len(draft.Blockers) == 0
+	for index := range draft.DocumentProfiles {
+		profile := &draft.DocumentProfiles[index]
+		count(profile.Change)
+		for controlIndex := range profile.ControlNumbers {
+			count(profile.ControlNumbers[controlIndex].Change)
+		}
+	}
+	for index := range draft.Mappings {
+		count(draft.Mappings[index].Change)
+	}
+	return changes
+}
+
+func fillEmpty(draft *ediports.ConnectionDraft) {
 	if draft.Samples == nil {
 		draft.Samples = []ediports.DraftSample{}
 	}
@@ -436,12 +459,14 @@ func (p *planner) settle() {
 	}
 }
 
-func needsDecision(value ediports.DraftValue) bool {
+func needsDecision(value *ediports.DraftValue) bool {
 	switch value.Status {
 	case ediports.ValueStatusHeld, ediports.ValueStatusUnverified, ediports.ValueStatusInvalid:
 		return true
 	case ediports.ValueStatusMissing:
 		return value.Required
+	case ediports.ValueStatusAccepted, ediports.ValueStatusDefaulted, ediports.ValueStatusKept:
+		return false
 	default:
 		return false
 	}

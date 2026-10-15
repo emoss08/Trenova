@@ -65,6 +65,8 @@ func (s ValueStatus) Usable() bool {
 	switch s {
 	case ValueStatusAccepted, ValueStatusDefaulted, ValueStatusKept:
 		return true
+	case ValueStatusHeld, ValueStatusUnverified, ValueStatusInvalid, ValueStatusMissing:
+		return false
 	default:
 		return false
 	}
@@ -269,6 +271,7 @@ type DraftTemplateChoice struct {
 	Unmet      []DraftRequirementCheck  `json:"unmet"`
 	Considered []DraftTemplateCandidate `json:"considered"`
 	Unverified []DraftRequirementCheck  `json:"unverified,omitempty"`
+	Note       string                   `json:"note,omitempty"`
 }
 
 type DraftControlNumber struct {

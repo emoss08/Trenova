@@ -13,7 +13,27 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const keptProfileLabel = "The document says this set is not exchanged; the profile is kept as it is"
+const (
+	keptProfileLabel = "The document says this set is not exchanged; the profile is kept as it is"
+	keptTemplateNote = "Kept: the profile's template has no active or certified version to check " +
+		"against the spec's requirements"
+)
+
+func hasTemplate(options []templateOption, templateID pulid.ID) bool {
+	for _, option := range options {
+		if option.templateID == templateID {
+			return true
+		}
+	}
+	return false
+}
+
+func metCount(requirements []requirement, unmet []ediports.DraftRequirementCheck, note string) int {
+	if note != "" {
+		return 0
+	}
+	return len(requirements) - len(unmet)
+}
 
 func (p *planner) documentTypeID(
 	ctx context.Context,
@@ -45,7 +65,8 @@ func (p *planner) requirementsFor(
 ) ([]requirement, []ediports.DraftRequirementCheck) {
 	accepted := make([]requirement, 0)
 	unverified := make([]ediports.DraftRequirementCheck, 0)
-	for _, input := range p.req.Requirements {
+	for inputIndex := range p.req.Requirements {
+		input := &p.req.Requirements[inputIndex]
 		if input.TransactionSet != set || input.Direction != direction {
 			continue
 		}
@@ -105,6 +126,14 @@ func (p *planner) buildProfiles(ctx context.Context) error {
 	return nil
 }
 
+type profileFields struct {
+	version ediports.DraftValue
+	group   ediports.DraftValue
+	ack     ediports.DraftValue
+	window  ediports.DraftValue
+	all     []ediports.DraftValue
+}
+
 func (p *planner) buildProfile(
 	ctx context.Context,
 	set edi.TransactionSet,
@@ -116,107 +145,13 @@ func (p *planner) buildProfile(
 		return err
 	}
 
-	interchangeVersion, _ := p.usable(fieldX12Version)
-	versionFallback := &fallback{
-		value:  interchangeVersion,
-		status: ediports.ValueStatusDefaulted,
-		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: versionFromISA},
-	}
-	if source, ok := p.values[fieldX12Version]; ok && source.Status.Usable() {
-		versionFallback.source = source.Source
-		versionFallback.source.Note = joinNotes(source.Source.Note, versionFromISA)
-	}
-	version := p.resolve(setField(set, direction, setAttrVersion), versionFallback, true)
-	group := p.resolve(setField(set, direction, setAttrFunctionalGroupID), &fallback{
-		value:  edi.FunctionalGroupDefault(set),
-		status: ediports.ValueStatusDefaulted,
-		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: groupDefaultNote},
-	}, true)
-	ack := p.resolve(setField(set, direction, setAttrAck), nil, false)
-	window := p.resolve(setField(set, direction, setAttrAckWindowMinutes), nil, false)
-	fields := []ediports.DraftValue{p.values[setField(set, direction, setAttrSupported)], version, group, ack, window}
+	fields := p.resolveProfileFields(set, direction)
+	request := p.profileRequest(set, direction, existing)
+	p.applyProfileFields(request, &fields, existing, direction)
 
-	request := &ediservice.UpsertEDIPartnerDocumentProfileRequest{
-		TenantInfo:     p.req.TenantInfo,
-		EDIPartnerID:   p.match.partnerID(),
-		Name:           profileName(p.partnerName(), set, direction),
-		Status:         edi.DocumentStatusInactive,
-		ValidationMode: edi.ValidationModeStrict,
-		Envelope:       p.envelope(direction),
-	}
-	if existing != nil {
-		request.ProfileID = existing.ID
-		request.Name = existing.Name
-		request.Status = existing.Status
-		request.ValidationMode = existing.ValidationMode
-		request.PartnerSettings = maps.Clone(existing.PartnerSettings)
-		request.PartnerSettingsSchemaID = existing.PartnerSettingsSchemaID
-		request.PartnerSettingsSchemaVersion = existing.PartnerSettingsSchemaVersion
-		request.Version = existing.Version
-		request.Acknowledgment = existing.Acknowledgment
-	}
-	if value, ok := p.usable(version.Field); ok {
-		request.X12VersionOverride = value
-	}
-	if value, ok := p.usable(group.Field); ok {
-		request.FunctionalGroupID = value
-	}
-	if value, ok := p.usable(ack.Field); ok {
-		request.Acknowledgment.Expected = value != ackNone
-		request.Acknowledgment.Type = edi.AcknowledgmentType(value)
-		if value == ackNone {
-			request.Acknowledgment.Type = edi.AcknowledgmentTypeNone
-		}
-		if request.Acknowledgment.Expected && request.Acknowledgment.MissingAckSeverity == "" {
-			request.Acknowledgment.MissingAckSeverity = edi.ValidationSeverityWarning
-		}
-	}
-	if value, ok := p.usable(window.Field); ok {
-		minutes, _ := strconv.ParseInt(value, 10, 64)
-		request.Acknowledgment.SLAInMinutes = minutes
-	}
-	if direction == edi.DocumentDirectionOutbound {
-		if scac, ok := p.usable(fieldCarrierSCAC); ok {
-			request.PartnerSettings = withCarrierSCAC(request.PartnerSettings, scac)
-		}
-	}
-
-	requirements, unverified := p.requirementsFor(set, direction)
-	versions, err := p.s.repo.ListTemplateCandidates(ctx, &ediports.ListEDITemplateCandidatesRequest{
-		TenantInfo:     p.req.TenantInfo,
-		TransactionSet: set,
-		Direction:      direction,
-	})
+	template, chosen, err := p.chooseProfileTemplate(ctx, set, direction, existing)
 	if err != nil {
 		return err
-	}
-	var currentTemplateID pulid.ID
-	var currentTemplateName string
-	if existing != nil {
-		currentTemplateID = existing.TemplateID
-		if existing.Template != nil {
-			currentTemplateName = existing.Template.Name
-		}
-	}
-	options := templateOptions(p.req.TenantInfo, set, direction, versions)
-	chosen, unmet, considered := chooseTemplate(options, requirements, currentTemplateID)
-	template := ediports.DraftTemplateChoice{
-		TemplateID: chosen.templateID,
-		VersionID:  chosen.versionID,
-		Name:       chosen.name,
-		Starter:    chosen.starter,
-		Current:    currentTemplateName,
-		Met:        len(requirements) - len(unmet),
-		Unmet:      unmet,
-		Considered: considered,
-		Unverified: unverified,
-		Change:     ediports.ChangeKindAdd,
-	}
-	if existing != nil {
-		template.Change = ediports.ChangeKindSame
-		if chosen.templateID != existing.TemplateID {
-			template.Change = ediports.ChangeKindChange
-		}
 	}
 	request.TemplateID = chosen.templateID
 	request.TemplateVersionID = chosen.versionID
@@ -232,7 +167,7 @@ func (p *planner) buildProfile(
 		Version:        request.Version,
 		Name:           request.Name,
 		Status:         request.Status,
-		Fields:         fields,
+		Fields:         fields.all,
 		Template:       template,
 		Change:         profileChange(existing, request, template.Change),
 	}
@@ -252,7 +187,188 @@ func (p *planner) buildProfile(
 	return nil
 }
 
-func profileName(partnerName string, set edi.TransactionSet, direction edi.DocumentDirection) string {
+func (p *planner) resolveProfileFields(
+	set edi.TransactionSet,
+	direction edi.DocumentDirection,
+) profileFields {
+	interchangeVersion, _ := p.usable(fieldX12Version)
+	versionFallback := &fallback{
+		value:  interchangeVersion,
+		status: ediports.ValueStatusDefaulted,
+		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: versionFromISA},
+	}
+	if source, ok := p.values[fieldX12Version]; ok && source.Status.Usable() {
+		versionFallback.source = source.Source
+		versionFallback.source.Note = joinNotes(source.Source.Note, versionFromISA)
+	}
+
+	fields := profileFields{
+		version: p.resolve(setField(set, direction, setAttrVersion), versionFallback, true),
+		group: p.resolve(setField(set, direction, setAttrFunctionalGroupID), &fallback{
+			value:  edi.FunctionalGroupDefault(set),
+			status: ediports.ValueStatusDefaulted,
+			source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: groupDefaultNote},
+		}, true),
+		ack:    p.resolve(setField(set, direction, setAttrAck), nil, false),
+		window: p.resolve(setField(set, direction, setAttrAckWindowMinutes), nil, false),
+	}
+	fields.all = []ediports.DraftValue{
+		p.values[setField(set, direction, setAttrSupported)],
+		fields.version,
+		fields.group,
+		fields.ack,
+		fields.window,
+	}
+	return fields
+}
+
+func (p *planner) profileRequest(
+	set edi.TransactionSet,
+	direction edi.DocumentDirection,
+	existing *edi.EDIPartnerDocumentProfile,
+) *ediservice.UpsertEDIPartnerDocumentProfileRequest {
+	request := &ediservice.UpsertEDIPartnerDocumentProfileRequest{
+		TenantInfo:     p.req.TenantInfo,
+		EDIPartnerID:   p.match.partnerID(),
+		Name:           profileName(p.partnerName(), set, direction),
+		Status:         edi.DocumentStatusInactive,
+		ValidationMode: edi.ValidationModeStrict,
+		Envelope:       p.envelope(direction),
+	}
+	if existing == nil {
+		return request
+	}
+	request.ProfileID = existing.ID
+	request.Name = existing.Name
+	request.Status = existing.Status
+	request.ValidationMode = existing.ValidationMode
+	request.PartnerSettings = maps.Clone(existing.PartnerSettings)
+	request.PartnerSettingsSchemaID = existing.PartnerSettingsSchemaID
+	request.PartnerSettingsSchemaVersion = existing.PartnerSettingsSchemaVersion
+	request.Version = existing.Version
+	request.Acknowledgment = existing.Acknowledgment
+	request.X12VersionOverride = existing.X12VersionOverride
+	request.FunctionalGroupID = existing.FunctionalGroupID
+	return request
+}
+
+func writableValue(value *ediports.DraftValue, existing bool) (string, bool) {
+	if existing && !value.Change.Writes() {
+		return "", false
+	}
+	if !value.Status.Usable() || value.Value == "" {
+		return "", false
+	}
+	return value.Value, true
+}
+
+func (p *planner) applyProfileFields(
+	request *ediservice.UpsertEDIPartnerDocumentProfileRequest,
+	fields *profileFields,
+	existing *edi.EDIPartnerDocumentProfile,
+	direction edi.DocumentDirection,
+) {
+	isExisting := existing != nil
+	if value, ok := writableValue(&fields.version, isExisting); ok {
+		request.X12VersionOverride = value
+	}
+	if value, ok := writableValue(&fields.group, isExisting); ok {
+		request.FunctionalGroupID = value
+	}
+	if value, ok := writableValue(&fields.ack, isExisting); ok {
+		applyAcknowledgment(&request.Acknowledgment, value)
+	}
+	if value, ok := writableValue(&fields.window, isExisting); ok {
+		minutes, _ := strconv.ParseInt(value, 10, 64)
+		request.Acknowledgment.SLAInMinutes = minutes
+	}
+	if direction != edi.DocumentDirectionOutbound {
+		return
+	}
+	scac := p.values[fieldCarrierSCAC]
+	if value, ok := writableValue(&scac, isExisting); ok {
+		request.PartnerSettings = withCarrierSCAC(request.PartnerSettings, value)
+	}
+}
+
+func applyAcknowledgment(config *edi.AcknowledgmentConfig, value string) {
+	config.Expected = value != ackNone
+	config.Type = edi.AcknowledgmentType(value)
+	if value == ackNone {
+		config.Type = edi.AcknowledgmentTypeNone
+	}
+	if config.Expected && config.MissingAckSeverity == "" {
+		config.MissingAckSeverity = edi.ValidationSeverityWarning
+	}
+}
+
+func (p *planner) chooseProfileTemplate(
+	ctx context.Context,
+	set edi.TransactionSet,
+	direction edi.DocumentDirection,
+	existing *edi.EDIPartnerDocumentProfile,
+) (ediports.DraftTemplateChoice, templateOption, error) {
+	requirements, unverified := p.requirementsFor(set, direction)
+	versions, err := p.s.repo.ListTemplateCandidates(
+		ctx,
+		&ediports.ListEDITemplateCandidatesRequest{
+			TenantInfo:     p.req.TenantInfo,
+			TransactionSet: set,
+			Direction:      direction,
+		},
+	)
+	if err != nil {
+		return ediports.DraftTemplateChoice{}, templateOption{}, err
+	}
+
+	var currentTemplateID pulid.ID
+	var currentTemplateName string
+	if existing != nil {
+		currentTemplateID = existing.TemplateID
+		if existing.Template != nil {
+			currentTemplateName = existing.Template.Name
+		}
+	}
+	options := templateOptions(p.req.TenantInfo, set, direction, versions)
+	chosen, unmet, considered := chooseTemplate(options, requirements, currentTemplateID)
+	note := ""
+	if existing != nil && !hasTemplate(options, existing.TemplateID) {
+		chosen = templateOption{
+			templateID: existing.TemplateID,
+			versionID:  existing.TemplateVersionID,
+			name:       firstNonEmpty(currentTemplateName, "Current template"),
+		}
+		unmet = nil
+		note = keptTemplateNote
+	}
+
+	template := ediports.DraftTemplateChoice{
+		TemplateID: chosen.templateID,
+		VersionID:  chosen.versionID,
+		Name:       chosen.name,
+		Starter:    chosen.starter,
+		Current:    currentTemplateName,
+		Met:        metCount(requirements, unmet, note),
+		Unmet:      unmet,
+		Considered: considered,
+		Unverified: unverified,
+		Note:       note,
+		Change:     ediports.ChangeKindAdd,
+	}
+	if existing != nil {
+		template.Change = ediports.ChangeKindSame
+		if chosen.templateID != existing.TemplateID {
+			template.Change = ediports.ChangeKindChange
+		}
+	}
+	return template, chosen, nil
+}
+
+func profileName(
+	partnerName string,
+	set edi.TransactionSet,
+	direction edi.DocumentDirection,
+) string {
 	name := fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
 	if partnerName == "" {
 		return name
@@ -352,25 +468,30 @@ func (p *planner) validateProfile(
 	if validation.EDIPartnerID.IsNil() {
 		validation.EDIPartnerID = p.validateID
 	}
-	if multiErr := p.s.validator.ValidatePartnerDocumentProfileRequest(&validation); multiErr != nil {
+	if multiErr := p.s.validator.ValidatePartnerDocumentProfileRequest(
+		&validation,
+	); multiErr != nil {
 		p.addFailures(record, multiErr.Errors)
 	}
 	if len(request.PartnerSettings) == 0 {
 		return
 	}
 	version := request.X12VersionOverride
-	diagnostics, err := p.s.setup.ValidatePartnerSettings(ctx, &ediservice.ValidatePartnerSettingsRequest{
-		TenantInfo:                   p.req.TenantInfo,
-		PartnerDocumentProfileID:     request.ProfileID,
-		PartnerSettingsSchemaID:      request.PartnerSettingsSchemaID,
-		PartnerSettingsSchemaVersion: request.PartnerSettingsSchemaVersion,
-		DocumentTypeID:               draft.DocumentTypeID,
-		Standard:                     edi.EDIStandardX12,
-		TransactionSet:               draft.TransactionSet,
-		Direction:                    draft.Direction,
-		X12Version:                   version,
-		Settings:                     request.PartnerSettings,
-	})
+	diagnostics, err := p.s.setup.ValidatePartnerSettings(
+		ctx,
+		&ediservice.ValidatePartnerSettingsRequest{
+			TenantInfo:                   p.req.TenantInfo,
+			PartnerDocumentProfileID:     request.ProfileID,
+			PartnerSettingsSchemaID:      request.PartnerSettingsSchemaID,
+			PartnerSettingsSchemaVersion: request.PartnerSettingsSchemaVersion,
+			DocumentTypeID:               draft.DocumentTypeID,
+			Standard:                     edi.EDIStandardX12,
+			TransactionSet:               draft.TransactionSet,
+			Direction:                    draft.Direction,
+			X12Version:                   version,
+			Settings:                     request.PartnerSettings,
+		},
+	)
 	if err != nil {
 		p.draft.Failures = append(p.draft.Failures, ediports.DraftFailure{
 			Record:  record,

@@ -67,7 +67,8 @@ func validateRequest(req *ediports.ConnectionDraftRequest) error {
 	for index, resolution := range req.Resolutions {
 		checkFieldKey(multiErr.WithIndex("resolutions", index), resolution.Field)
 	}
-	for index, requirement := range req.Requirements {
+	for index := range req.Requirements {
+		requirement := &req.Requirements[index]
 		checkSetDirection(
 			multiErr.WithIndex("requirements", index),
 			requirement.TransactionSet,

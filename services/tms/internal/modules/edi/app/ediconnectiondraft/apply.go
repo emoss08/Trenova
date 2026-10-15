@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
@@ -71,69 +74,113 @@ func (s *Service) ApplyConnectionDraft(
 	return applied, nil
 }
 
+type writer struct {
+	s       *Service
+	p       *planner
+	actor   *permissionports.RequestActor
+	tenant  pagination.TenantInfo
+	applied *ediports.AppliedConnectionDraft
+	partner *edi.EDIPartner
+}
+
 func (s *Service) write(
 	ctx context.Context,
 	p *planner,
 	req *ediports.ApplyConnectionDraftRequest,
 	applied *ediports.AppliedConnectionDraft,
 ) error {
-	writes := p.writes
-	actor := req.Actor
-	tenant := req.Draft.TenantInfo
+	w := &writer{
+		s:       s,
+		p:       p,
+		actor:   req.Actor,
+		tenant:  req.Draft.TenantInfo,
+		applied: applied,
+		partner: p.writes.partner,
+	}
+	steps := []func(context.Context) error{
+		w.writePartner,
+		w.writeTransport,
+		w.writeProfiles,
+		w.writeControlNumbers,
+		w.writeMappings,
+	}
+	for _, step := range steps {
+		if err := step(ctx); err != nil {
+			return err
+		}
+	}
+	if applied.Writes == nil {
+		applied.Writes = []ediports.DraftWrite{}
+	}
+	return nil
+}
 
-	partner := writes.partner
-	switch p.draft.Partner.Change {
+func (w *writer) note(kind string, id pulid.ID, action, label string) {
+	w.applied.Writes = append(w.applied.Writes, record(kind, id, action, label))
+}
+
+func (w *writer) writePartner(ctx context.Context) error {
+	switch w.p.draft.Partner.Change {
 	case ediports.ChangeKindAdd:
-		created, err := s.setup.CreatePartner(ctx, partner, actor)
+		created, err := w.s.setup.CreatePartner(ctx, w.partner, w.actor)
 		if err != nil {
 			return err
 		}
-		partner = created
-		applied.Created = true
-		applied.Writes = append(applied.Writes, record(draftPartnerLabel, created.ID, writeCreated, created.Name))
+		w.partner = created
+		w.applied.Created = true
+		w.note(draftPartnerLabel, created.ID, writeCreated, created.Name)
 	case ediports.ChangeKindChange:
-		updated, err := s.setup.UpdatePartner(ctx, partner, actor)
+		updated, err := w.s.setup.UpdatePartner(ctx, w.partner, w.actor)
 		if err != nil {
 			return err
 		}
-		partner = updated
-		applied.Writes = append(applied.Writes, record(draftPartnerLabel, updated.ID, writeUpdated, updated.Name))
+		w.partner = updated
+		w.note(draftPartnerLabel, updated.ID, writeUpdated, updated.Name)
+	case ediports.ChangeKindSame, ediports.ChangeKindNone:
 	}
-	applied.PartnerID = partner.ID
+	w.applied.PartnerID = w.partner.ID
+	return nil
+}
 
-	if transport := writes.transport; transport != nil && writes.transportChange.Writes() {
-		transport.EDIPartnerID = partner.ID
-		if transport.ProfileID.IsNil() {
-			transport.Name = transportName(partner.Name, transport.Method)
-			created, err := s.setup.CreateCommunicationProfile(ctx, transport, actor)
-			if err != nil {
-				return err
-			}
-			applied.Writes = append(applied.Writes, record(transportLabel, created.ID, writeCreated, created.Name))
-		} else {
-			updated, err := s.setup.UpdateCommunicationProfile(ctx, transport, actor)
-			if err != nil {
-				return err
-			}
-			applied.Writes = append(applied.Writes, record(transportLabel, updated.ID, writeUpdated, updated.Name))
+func (w *writer) writeTransport(ctx context.Context) error {
+	transport := w.p.writes.transport
+	if transport == nil || !w.p.writes.transportChange.Writes() {
+		return nil
+	}
+	transport.EDIPartnerID = w.partner.ID
+	if transport.ProfileID.IsNotNil() {
+		updated, err := w.s.setup.UpdateCommunicationProfile(ctx, transport, w.actor)
+		if err != nil {
+			return err
 		}
+		w.note(transportLabel, updated.ID, writeUpdated, updated.Name)
+		return nil
 	}
+	transport.Name = transportName(w.partner.Name, transport.Method)
+	created, err := w.s.setup.CreateCommunicationProfile(ctx, transport, w.actor)
+	if err != nil {
+		return err
+	}
+	w.note(transportLabel, created.ID, writeCreated, created.Name)
+	return nil
+}
 
-	documentTypes := make(map[string]pulid.ID, len(writes.profiles))
-	for _, profile := range writes.profiles {
-		documentTypes[profileKey(profile.set, profile.direction)] = p.docTypes[profileKey(profile.set, profile.direction)]
+func (w *writer) writeProfiles(ctx context.Context) error {
+	for _, profile := range w.p.writes.profiles {
 		if !profile.change.Writes() {
 			continue
 		}
 		request := profile.request
-		request.EDIPartnerID = partner.ID
+		request.EDIPartnerID = w.partner.ID
+		action := writeUpdated
 		if request.ProfileID.IsNil() {
-			request.Name = profileName(partner.Name, profile.set, profile.direction)
+			action = writeCreated
+			request.Name = profileName(w.partner.Name, profile.set, profile.direction)
 		}
 		if profile.starter {
-			template, version, err := s.templates.EnsureStarterTemplate(
+			template, version, err := w.s.templates.EnsureStarterTemplate(
 				ctx,
-				tenant,
+				w.tenant,
 				profile.set,
 				profile.direction,
 			)
@@ -143,58 +190,58 @@ func (s *Service) write(
 			request.TemplateID = template.ID
 			request.TemplateVersionID = version.ID
 		}
-		saved, err := s.setup.UpsertPartnerDocumentProfile(ctx, request, actor)
+		saved, err := w.s.setup.UpsertPartnerDocumentProfile(ctx, request, w.actor)
 		if err != nil {
 			return err
 		}
-		action := writeUpdated
-		if request.ProfileID.IsNil() {
-			action = writeCreated
-		}
-		applied.Writes = append(applied.Writes, record("Document profile", saved.ID, action, saved.Name))
+		w.note("Document profile", saved.ID, action, saved.Name)
 	}
+	return nil
+}
 
-	for _, control := range writes.controls {
-		documentTypeID := documentTypes[profileKey(control.set, control.direction)]
-		sequence, err := s.setup.ResetControlNumber(ctx, &ediports.ResetEDIControlNumberRequest{
-			TenantInfo:     tenant,
-			PartnerID:      partner.ID,
-			DocumentTypeID: documentTypeID,
+func (w *writer) writeControlNumbers(ctx context.Context) error {
+	for _, control := range w.p.writes.controls {
+		sequence, err := w.s.setup.StartControlNumber(ctx, &ediports.ResetEDIControlNumberRequest{
+			TenantInfo:     w.tenant,
+			PartnerID:      w.partner.ID,
+			DocumentTypeID: w.p.docTypes[profileKey(control.set, control.direction)],
 			Kind:           control.kind,
 			NextValue:      control.next,
-		}, actor)
+		}, w.actor)
 		if err != nil {
 			return err
 		}
-		applied.Writes = append(applied.Writes, record(
-			"Control number",
-			sequence.ID,
-			writeUpdated,
-			fmt.Sprintf("%s %s %s starts at %d", control.set, strings.ToLower(string(control.direction)), strings.ToLower(string(control.kind)), control.next),
+		w.note("Control number", sequence.ID, writeUpdated, fmt.Sprintf(
+			"%s %s %s starts at %d",
+			control.set,
+			strings.ToLower(string(control.direction)),
+			strings.ToLower(string(control.kind)),
+			control.next,
 		))
 	}
+	return nil
+}
 
-	if len(writes.mappings) > 0 {
-		items, err := s.setup.SaveMappingProfile(ctx, &ediports.SaveMappingItemsRequest{
-			PartnerID:  partner.ID,
-			TenantInfo: tenant,
-			ActorID:    actor.UserID,
-			Items:      writes.mappings,
-		})
-		if err != nil {
-			return err
-		}
-		for _, item := range items {
-			applied.Writes = append(applied.Writes, record(
-				mappingRecordLabel,
-				item.ID,
-				writeUpdated,
-				fmt.Sprintf("%s %s → %s", item.EntityType, item.SourceID, firstNonEmpty(item.TargetLabel, item.TargetID.String())),
-			))
-		}
+func (w *writer) writeMappings(ctx context.Context) error {
+	if len(w.p.writes.mappings) == 0 {
+		return nil
 	}
-	if applied.Writes == nil {
-		applied.Writes = []ediports.DraftWrite{}
+	items, err := w.s.setup.SaveMappingProfile(ctx, &ediports.SaveMappingItemsRequest{
+		PartnerID:  w.partner.ID,
+		TenantInfo: w.tenant,
+		ActorID:    w.actor.UserID,
+		Items:      w.p.writes.mappings,
+	})
+	if err != nil {
+		return err
+	}
+	for _, item := range items {
+		w.note(mappingRecordLabel, item.ID, writeUpdated, fmt.Sprintf(
+			"%s %s → %s",
+			item.EntityType,
+			item.SourceID,
+			firstNonEmpty(item.TargetLabel, item.TargetID.String()),
+		))
 	}
 	return nil
 }

@@ -47,7 +47,10 @@ func readCurrent(setup *ediports.EDIPartnerSetup, method edi.ConnectionMethod) *
 				current.values[key] = maputils.StringValue(current.transport.Config, spec.configKey)
 			}
 		}
-		current.values[fieldX12Version] = maputils.StringValue(current.transport.Config, "x12Version")
+		current.values[fieldX12Version] = maputils.StringValue(
+			current.transport.Config,
+			"x12Version",
+		)
 	}
 
 	for _, profile := range setup.DocumentProfiles {

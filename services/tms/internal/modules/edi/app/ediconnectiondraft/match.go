@@ -33,8 +33,8 @@ func (e *evidence) hint(field string) string {
 	return ""
 }
 
-func (e *evidence) hints() identityHints {
-	return identityHints{
+func (e *evidence) hints() *identityHints {
+	return &identityHints{
 		code:         e.hint(fieldPartnerCode),
 		name:         e.hint(fieldPartnerName),
 		isaQualifier: e.hint(fieldPartnerQualifier),
@@ -51,40 +51,10 @@ type partnerMatch struct {
 func (s *Service) matchPartner(
 	ctx context.Context,
 	req *ediports.ConnectionDraftRequest,
-	hints identityHints,
+	hints *identityHints,
 ) (*partnerMatch, error) {
 	if req.PartnerID.IsNotNil() {
-		setup, err := s.repo.GetPartnerSetup(ctx, &ediports.GetEDIPartnerSetupRequest{
-			TenantInfo: req.TenantInfo,
-			PartnerID:  req.PartnerID,
-		})
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, errortypes.NewValidationError(
-					"partnerId",
-					errortypes.ErrNotFound,
-					"No EDI partner with that ID exists in this organization",
-				)
-			}
-			return nil, err
-		}
-		if setup.Partner.Kind != edi.PartnerKindExternal {
-			return nil, errortypes.NewValidationError(
-				"partnerId",
-				errortypes.ErrInvalidOperation,
-				"Only an outside trading partner is set up from a spec",
-			)
-		}
-		return &partnerMatch{
-			setup: setup,
-			draft: ediports.DraftPartner{
-				Match:     ediports.PartnerMatchExisting,
-				PartnerID: setup.Partner.ID,
-				Version:   setup.Partner.Version,
-				Status:    setup.Partner.Status,
-				Reasons:   []string{"Named for this draft"},
-			},
-		}, nil
+		return s.namedPartner(ctx, req)
 	}
 
 	matches, err := s.repo.FindPartnerMatches(ctx, &ediports.FindEDIPartnerMatchesRequest{
@@ -100,32 +70,7 @@ func (s *Service) matchPartner(
 		return nil, err
 	}
 
-	strong := make([]*ediports.EDIPartnerMatch, 0, len(matches))
-	byName := make([]*ediports.EDIPartnerMatch, 0, 1)
-	candidates := make([]ediports.PartnerCandidate, 0, len(matches))
-	for _, match := range matches {
-		if match.Partner.Kind != edi.PartnerKindExternal {
-			continue
-		}
-		reasons := matchReasons(match)
-		candidates = append(candidates, ediports.PartnerCandidate{
-			PartnerID: match.Partner.ID,
-			Code:      match.Partner.Code,
-			Name:      match.Partner.Name,
-			Reasons:   reasons,
-		})
-		switch {
-		case match.ByCode || match.ByInterchange || match.ByAS2:
-			strong = append(strong, match)
-		case match.ByName:
-			byName = append(byName, match)
-		}
-	}
-
-	chosen := strong
-	if len(chosen) == 0 {
-		chosen = byName
-	}
+	chosen, candidates := classifyMatches(matches)
 	switch len(chosen) {
 	case 0:
 		return &partnerMatch{draft: ediports.DraftPartner{
@@ -134,23 +79,12 @@ func (s *Service) matchPartner(
 			Reasons:    newPartnerReasons(candidates),
 		}}, nil
 	case 1:
-		setup, setupErr := s.repo.GetPartnerSetup(ctx, &ediports.GetEDIPartnerSetupRequest{
-			TenantInfo: req.TenantInfo,
-			PartnerID:  chosen[0].Partner.ID,
-		})
-		if setupErr != nil {
-			return nil, setupErr
+		match, matchErr := s.existingPartner(ctx, req, chosen[0].Partner.ID)
+		if matchErr != nil {
+			return nil, matchErr
 		}
-		return &partnerMatch{
-			setup: setup,
-			draft: ediports.DraftPartner{
-				Match:     ediports.PartnerMatchExisting,
-				PartnerID: setup.Partner.ID,
-				Version:   setup.Partner.Version,
-				Status:    setup.Partner.Status,
-				Reasons:   matchReasons(chosen[0]),
-			},
-		}, nil
+		match.draft.Reasons = matchReasons(chosen[0])
+		return match, nil
 	default:
 		return &partnerMatch{draft: ediports.DraftPartner{
 			Match:      ediports.PartnerMatchAmbiguous,
@@ -161,6 +95,84 @@ func (s *Service) matchPartner(
 			)},
 		}}, nil
 	}
+}
+
+func (s *Service) namedPartner(
+	ctx context.Context,
+	req *ediports.ConnectionDraftRequest,
+) (*partnerMatch, error) {
+	match, err := s.existingPartner(ctx, req, req.PartnerID)
+	if err != nil {
+		if dberror.IsNotFoundError(err) || errortypes.IsNotFoundError(err) {
+			return nil, errortypes.NewValidationError(
+				"partnerId",
+				errortypes.ErrNotFound,
+				"No EDI partner with that ID exists in this organization",
+			)
+		}
+		return nil, err
+	}
+	if match.setup.Partner.Kind != edi.PartnerKindExternal {
+		return nil, errortypes.NewValidationError(
+			"partnerId",
+			errortypes.ErrInvalidOperation,
+			"Only an outside trading partner is set up from a spec",
+		)
+	}
+	match.draft.Reasons = []string{"Named for this draft"}
+	return match, nil
+}
+
+func (s *Service) existingPartner(
+	ctx context.Context,
+	req *ediports.ConnectionDraftRequest,
+	partnerID pulid.ID,
+) (*partnerMatch, error) {
+	setup, err := s.repo.GetPartnerSetup(ctx, &ediports.GetEDIPartnerSetupRequest{
+		TenantInfo: req.TenantInfo,
+		PartnerID:  partnerID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &partnerMatch{
+		setup: setup,
+		draft: ediports.DraftPartner{
+			Match:     ediports.PartnerMatchExisting,
+			PartnerID: setup.Partner.ID,
+			Version:   setup.Partner.Version,
+			Status:    setup.Partner.Status,
+		},
+	}, nil
+}
+
+func classifyMatches(
+	matches []*ediports.EDIPartnerMatch,
+) (chosen []*ediports.EDIPartnerMatch, candidates []ediports.PartnerCandidate) {
+	strong := make([]*ediports.EDIPartnerMatch, 0, len(matches))
+	byName := make([]*ediports.EDIPartnerMatch, 0, 1)
+	candidates = make([]ediports.PartnerCandidate, 0, len(matches))
+	for _, match := range matches {
+		if match.Partner.Kind != edi.PartnerKindExternal {
+			continue
+		}
+		candidates = append(candidates, ediports.PartnerCandidate{
+			PartnerID: match.Partner.ID,
+			Code:      match.Partner.Code,
+			Name:      match.Partner.Name,
+			Reasons:   matchReasons(match),
+		})
+		switch {
+		case match.ByCode || match.ByInterchange || match.ByAS2:
+			strong = append(strong, match)
+		case match.ByName:
+			byName = append(byName, match)
+		}
+	}
+	if len(strong) > 0 {
+		return strong, candidates
+	}
+	return byName, candidates
 }
 
 func matchReasons(match *ediports.EDIPartnerMatch) []string {

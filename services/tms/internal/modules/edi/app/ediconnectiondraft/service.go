@@ -43,7 +43,7 @@ type setupService interface {
 		ctx context.Context,
 		req *ediports.SaveMappingItemsRequest,
 	) ([]*edi.EDIMappingProfileItem, error)
-	ResetControlNumber(
+	StartControlNumber(
 		ctx context.Context,
 		req *ediports.ResetEDIControlNumberRequest,
 		actor *permissionports.RequestActor,
@@ -78,7 +78,7 @@ type Service struct {
 
 var _ ediports.EDIConnectionDraftService = (*Service)(nil)
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		repo:          p.Repo,
 		templates:     p.Templates,

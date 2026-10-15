@@ -131,3 +131,45 @@ func (r *repository) ResetControlNumber(
 		return sequence, nil
 	})
 }
+
+func (r *repository) StartControlNumber(
+	ctx context.Context,
+	req *ediports.ResetEDIControlNumberRequest,
+) (*edi.EDIControlNumberSequence, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
+		cols := edicol.EDIControlNumberSequenceColumns
+		sequence := &edi.EDIControlNumberSequence{
+			BusinessUnitID: req.TenantInfo.BuID,
+			OrganizationID: req.TenantInfo.OrgID,
+			EDIPartnerID:   req.PartnerID,
+			DocumentTypeID: req.DocumentTypeID,
+			Kind:           req.Kind,
+			NextValue:      req.NextValue,
+		}
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(sequence).
+			On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "document_type_id", "kind") DO UPDATE`).
+			Set(cols.NextValue.SetExcluded()).
+			Set(cols.Version.IncConflict(1)).
+			Set(cols.UpdatedAt.SetExcluded()).
+			Where(cols.NextValue.Expr("{} < EXCLUDED.next_value")).
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		current := new(edi.EDIControlNumberSequence)
+		if err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(current).
+			Apply(edicol.EDIControlNumberSequenceApplyTenant(req.TenantInfo)).
+			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+			Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
+			Where(cols.Kind.Eq(), req.Kind).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
+		}
+		return current, nil
+	})
+}

@@ -41,7 +41,7 @@ func (e *evidence) add(field string, c *candidate) {
 	e.byField[field] = append(e.byField[field], c)
 }
 
-func readValue(pages *pageIndex, spec fieldSpec, input ediports.DraftValueInput) *candidate {
+func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInput) *candidate {
 	raw := input.Value
 	c := &candidate{value: strings.TrimSpace(raw), confidence: input.Confidence}
 
@@ -91,13 +91,13 @@ type fallback struct {
 }
 
 func resolveField(
-	spec fieldSpec,
+	spec *fieldSpec,
 	e *evidence,
 	current string,
 	alternative *fallback,
 	required bool,
 ) ediports.DraftValue {
-	out := ediports.DraftValue{
+	out := &ediports.DraftValue{
 		Field:    spec.key,
 		Label:    spec.label,
 		Current:  current,
@@ -108,10 +108,18 @@ func resolveField(
 		out.Candidates = append(out.Candidates, c.public())
 	}
 
-	if resolution, ok := e.resolutions[spec.key]; ok {
-		return applyResolution(spec, out, candidates, resolution)
+	switch resolution, resolved := e.resolutions[spec.key]; {
+	case resolved:
+		applyResolution(spec, out, candidates, &resolution)
+	case len(candidates) > 0:
+		resolveCandidates(out, candidates)
+	default:
+		resolveAbsent(out, alternative, required)
 	}
+	return *out
+}
 
+func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
 	verified := make([]*candidate, 0, len(candidates))
 	for _, c := range candidates {
 		if c.status == ediports.ValueStatusAccepted || c.status == ediports.ValueStatusHeld {
@@ -128,14 +136,15 @@ func resolveField(
 			len(values),
 			quoteValues(values),
 		)
-		return keepCurrent(out)
+		keepCurrent(out)
 	case len(values) == 1:
 		best := strongest(verified)
 		if best.status != ediports.ValueStatusAccepted {
 			out.Status = ediports.ValueStatusHeld
 			out.Confidence = best.confidence
 			out.Reason = best.problem
-			return keepCurrent(out)
+			keepCurrent(out)
+			return
 		}
 		out.Value = best.value
 		out.Status = ediports.ValueStatusAccepted
@@ -144,18 +153,20 @@ func resolveField(
 		if len(candidates) == 1 {
 			out.Candidates = nil
 		}
-		return withChange(out)
-	case len(candidates) > 0:
+		withChange(out)
+	default:
 		first := candidates[0]
 		out.Status = first.status
 		out.Reason = first.problem
-		return keepCurrent(out)
+		keepCurrent(out)
 	}
+}
 
+func resolveAbsent(out *ediports.DraftValue, alternative *fallback, required bool) {
 	out.Candidates = nil
 	switch {
-	case current != "":
-		out.Value = current
+	case out.Current != "":
+		out.Value = out.Current
 		out.Status = ediports.ValueStatusKept
 		out.Source = ediports.DraftSource{
 			Kind: ediports.SourceKindConfiguration,
@@ -175,34 +186,36 @@ func resolveField(
 		out.Status = ediports.ValueStatusMissing
 		out.Change = ediports.ChangeKindNone
 	}
-	return out
 }
 
 func applyResolution(
-	spec fieldSpec,
-	out ediports.DraftValue,
+	spec *fieldSpec,
+	out *ediports.DraftValue,
 	candidates []*candidate,
-	resolution ediports.DraftResolutionInput,
-) ediports.DraftValue {
+	resolution *ediports.DraftResolutionInput,
+) {
 	normalized, err := spec.normalize(resolution.Value)
 	if err != nil {
 		out.Status = ediports.ValueStatusInvalid
 		out.Reason = fmt.Sprintf("The chosen value is not valid: %s %s", spec.label, err)
-		return keepCurrent(out)
+		keepCurrent(out)
+		return
 	}
 
 	switch resolution.Source {
 	case ediports.ResolutionSourceCandidate:
 		for _, c := range candidates {
-			if c.value == normalized &&
-				(c.status == ediports.ValueStatusAccepted || c.status == ediports.ValueStatusHeld) {
-				out.Value = normalized
-				out.Status = ediports.ValueStatusAccepted
-				out.Confidence = c.confidence
-				out.Source = c.source
-				out.Source.Note = joinNotes(c.source.Note, "Chosen by the person")
-				return withChange(out)
+			if c.value != normalized ||
+				(c.status != ediports.ValueStatusAccepted && c.status != ediports.ValueStatusHeld) {
+				continue
 			}
+			out.Value = normalized
+			out.Status = ediports.ValueStatusAccepted
+			out.Confidence = c.confidence
+			out.Source = c.source
+			out.Source.Note = joinNotes(c.source.Note, "Chosen by the person")
+			withChange(out)
+			return
 		}
 		out.Status = ediports.ValueStatusInvalid
 		out.Reason = fmt.Sprintf(
@@ -210,43 +223,44 @@ func applyResolution(
 			normalized,
 			spec.label,
 		)
-		return keepCurrent(out)
+		keepCurrent(out)
 	case ediports.ResolutionSourcePerson:
 		out.Value = normalized
 		out.Status = ediports.ValueStatusAccepted
 		out.Source = ediports.DraftSource{
 			Kind: ediports.SourceKindPerson,
-			Note: joinNotes("Given by the person in this conversation", strings.TrimSpace(resolution.Note)),
+			Note: joinNotes(
+				"Given by the person in this conversation",
+				strings.TrimSpace(resolution.Note),
+			),
 		}
-		return withChange(out)
+		withChange(out)
 	default:
 		out.Status = ediports.ValueStatusInvalid
 		out.Reason = "A resolution must say whether it picks a cited value or one the person gave"
-		return keepCurrent(out)
+		keepCurrent(out)
 	}
 }
 
-func keepCurrent(out ediports.DraftValue) ediports.DraftValue {
+func keepCurrent(out *ediports.DraftValue) {
 	if out.Current != "" {
 		out.Value = out.Current
 		out.Change = ediports.ChangeKindSame
-		return out
+		return
 	}
 	out.Value = ""
 	out.Change = ediports.ChangeKindNone
-	return out
 }
 
-func withChange(out ediports.DraftValue) ediports.DraftValue {
-	switch {
-	case out.Current == "":
+func withChange(out *ediports.DraftValue) {
+	switch out.Current {
+	case "":
 		out.Change = ediports.ChangeKindAdd
-	case out.Current == out.Value:
+	case out.Value:
 		out.Change = ediports.ChangeKindSame
 	default:
 		out.Change = ediports.ChangeKindChange
 	}
-	return out
 }
 
 func distinctValues(candidates []*candidate) []string {

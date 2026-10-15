@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -17,14 +16,15 @@ import (
 )
 
 const (
-	defaultNote       = "Trenova's default; the document does not say"
-	configurationNote = "Used on %d of your partners' outbound profiles; the document does not say"
-	gsFromISANote     = "The GS ID defaults to the ISA ID; the document does not give a separate one"
-	groupDefaultNote  = "The standard functional group for this transaction set"
-	versionFromISA    = "The interchange's X12 version; the document gives none for this set"
-	agentCustomerNote = "Chosen by the agent from your customers; the document does not name it"
-	draftPartnerLabel = "Partner"
-	transportLabel    = "Communication profile"
+	defaultNote          = "Trenova's default; the document does not say"
+	configurationNote    = "Used on %d of your partners' outbound profiles; the document does not say"
+	gsFromISANote        = "The GS ID defaults to the ISA ID; the document does not give a separate one"
+	groupDefaultNote     = "The standard functional group for this transaction set"
+	versionFromISA       = "The interchange's X12 version; the document gives none for this set"
+	agentCustomerNote    = "Chosen by the agent from your customers; the document does not name it"
+	draftPartnerLabel    = "Partner"
+	fieldPartnerCustomer = "partner.customer"
+	transportLabel       = "Communication profile"
 )
 
 type profileWrite struct {
@@ -44,7 +44,6 @@ type controlWrite struct {
 
 type writePlan struct {
 	partner         *edi.EDIPartner
-	partnerChange   ediports.ChangeKind
 	transport       *ediservice.UpsertEDICommunicationProfileRequest
 	transportChange ediports.ChangeKind
 	profiles        []*profileWrite
@@ -120,6 +119,9 @@ func (s *Service) plan(
 	if p.identity, err = s.repo.GetInterchangeIdentity(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
+	if p.identity == nil {
+		p.identity = &ediports.InterchangeIdentity{}
+	}
 
 	p.resolveValues()
 	if err = p.buildPartner(ctx); err != nil {
@@ -142,7 +144,8 @@ func (s *Service) plan(
 }
 
 func (p *planner) gatherEvidence() {
-	for _, input := range p.req.Values {
+	for inputIndex := range p.req.Values {
+		input := &p.req.Values[inputIndex]
 		spec := fieldCatalog[input.Field]
 		p.evidence.add(input.Field, readValue(p.pages, spec, input))
 	}
@@ -238,35 +241,41 @@ func (p *planner) interchangeFallback(key string) *fallback {
 	identity := p.identity
 	switch key {
 	case fieldOurQualifier:
-		if identity != nil && identity.Profiles > 0 && identity.Qualifier != "" {
-			return configurationFallback(identity.Qualifier, identity.Profiles)
-		}
+		return identityFallback(identity, identity.Qualifier)
 	case fieldOurID:
-		if identity != nil && identity.Profiles > 0 && identity.ID != "" {
-			return configurationFallback(identity.ID, identity.Profiles)
-		}
+		return identityFallback(identity, identity.ID)
 	case fieldOurGSID:
-		if value, ok := p.values[fieldOurID]; ok && value.Status.Usable() && value.Value != "" {
-			if identity != nil && identity.Profiles > 0 && identity.ApplicationID != "" &&
-				value.Source.Kind == ediports.SourceKindConfiguration {
-				return configurationFallback(identity.ApplicationID, identity.Profiles)
-			}
-			return &fallback{
-				value:  value.Value,
-				status: ediports.ValueStatusDefaulted,
-				source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: gsFromISANote},
+		ours, ok := p.values[fieldOurID]
+		if ok && ours.Source.Kind == ediports.SourceKindConfiguration {
+			if configured := identityFallback(identity, identity.ApplicationID); configured != nil {
+				return configured
 			}
 		}
+		return p.gsFallback(fieldOurID)
 	case fieldPartnerGSID:
-		if value, ok := p.values[fieldPartnerID]; ok && value.Status.Usable() && value.Value != "" {
-			return &fallback{
-				value:  value.Value,
-				status: ediports.ValueStatusDefaulted,
-				source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: gsFromISANote},
-			}
-		}
+		return p.gsFallback(fieldPartnerID)
+	default:
+		return nil
 	}
-	return nil
+}
+
+func identityFallback(identity *ediports.InterchangeIdentity, value string) *fallback {
+	if identity == nil || identity.Profiles == 0 || value == "" {
+		return nil
+	}
+	return configurationFallback(value, identity.Profiles)
+}
+
+func (p *planner) gsFallback(isaKey string) *fallback {
+	value, ok := p.usable(isaKey)
+	if !ok {
+		return nil
+	}
+	return &fallback{
+		value:  value,
+		status: ediports.ValueStatusDefaulted,
+		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: gsFromISANote},
+	}
 }
 
 func configurationFallback(value string, profiles int) *fallback {
@@ -334,91 +343,35 @@ func (p *planner) fields(keys ...string) []ediports.DraftValue {
 
 func (p *planner) buildPartner(ctx context.Context) error {
 	draft := p.match.draft
-	keys := sortedKeys(scopePartner)
-	draft.Fields = p.fields(keys...)
+	draft.Fields = p.fields(sortedKeys(scopePartner)...)
 
 	if p.req.CustomerID.IsNotNil() {
-		labels, err := p.s.repo.ResolveMappingTargets(ctx, &ediports.ResolveEDIMappingTargetsRequest{
-			TenantInfo: p.req.TenantInfo,
-			Targets: map[edi.MappingEntityType][]pulid.ID{
-				edi.MappingEntityTypeCustomer: {p.req.CustomerID},
-			},
-		})
+		customer, err := p.customerValue(ctx)
 		if err != nil {
 			return err
 		}
-		customer := ediports.DraftValue{
-			Field:  "partner.customer",
-			Label:  "Customer",
-			Status: ediports.ValueStatusAccepted,
-			Source: ediports.DraftSource{Kind: ediports.SourceKindAgent, Note: agentCustomerNote},
-		}
-		name, found := labels[edi.MappingEntityTypeCustomer][p.req.CustomerID]
-		switch {
-		case !found:
-			customer.Status = ediports.ValueStatusInvalid
-			customer.Reason = "No customer with that ID exists in this organization"
-		default:
-			customer.Value = name
+		if customer.Status == ediports.ValueStatusAccepted {
 			draft.CustomerID = p.req.CustomerID
 		}
-		if p.match.setup != nil && p.match.setup.Partner.CustomerID.IsNotNil() {
-			customer.Current = p.match.setup.Partner.CustomerID.String()
-			if p.match.setup.Partner.CustomerID == p.req.CustomerID {
-				customer.Current = customer.Value
-			}
-		}
-		customer = withChange(customer)
-		if customer.Status != ediports.ValueStatusAccepted {
-			customer.Change = ediports.ChangeKindNone
-		}
-		p.values[customer.Field] = customer
-		draft.Fields = append(draft.Fields, customer)
+		p.values[customer.Field] = *customer
+		draft.Fields = append(draft.Fields, *customer)
 	}
 
-	partner := &edi.EDIPartner{
-		BusinessUnitID: p.req.TenantInfo.BuID,
-		OrganizationID: p.req.TenantInfo.OrgID,
-		Kind:           edi.PartnerKindExternal,
-		Status:         domaintypes.StatusInactive,
-		Settings:       map[string]any{},
-	}
-	if p.match.setup != nil {
-		existing := *p.match.setup.Partner
-		partner = &existing
-		partner.Settings = maps.Clone(existing.Settings)
-	}
-	for _, value := range draft.Fields {
-		if !value.Change.Writes() {
-			continue
-		}
-		switch value.Field {
-		case fieldPartnerCode:
-			partner.Code = value.Value
-		case fieldPartnerName:
-			partner.Name = value.Value
-		case fieldPartnerContactName:
-			partner.ContactName = value.Value
-		case fieldPartnerContactEmail:
-			partner.ContactEmail = value.Value
-		case fieldPartnerContactPhone:
-			partner.ContactPhone = value.Value
-		case fieldPartnerTimezone:
-			partner.Timezone = value.Value
-		case fieldPartnerCountry:
-			partner.Country = value.Value
-		case "partner.customer":
-			partner.CustomerID = draft.CustomerID
+	partner := p.partnerEntity()
+	for valueIndex := range draft.Fields {
+		value := &draft.Fields[valueIndex]
+		if value.Change.Writes() {
+			applyPartnerField(partner, value, draft.CustomerID)
 		}
 	}
 
 	draft.Change = ediports.ChangeKindAdd
 	if p.match.setup != nil {
 		draft.Change = ediports.ChangeKindSame
-		for _, value := range draft.Fields {
-			if value.Change.Writes() {
-				draft.Change = ediports.ChangeKindChange
-			}
+		if slices.ContainsFunc(draft.Fields, func(value ediports.DraftValue) bool {
+			return value.Change.Writes()
+		}) {
+			draft.Change = ediports.ChangeKindChange
 		}
 	}
 	if multiErr := p.s.validator.ValidatePartner(partner); multiErr != nil {
@@ -428,6 +381,74 @@ func (p *planner) buildPartner(ctx context.Context) error {
 	p.draft.Partner = draft
 	p.writes.partner = partner
 	return nil
+}
+
+func (p *planner) customerValue(ctx context.Context) (*ediports.DraftValue, error) {
+	labels, err := p.s.repo.ResolveMappingTargets(ctx, &ediports.ResolveEDIMappingTargetsRequest{
+		TenantInfo: p.req.TenantInfo,
+		Targets:    customerTarget(p.req.CustomerID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	customer := &ediports.DraftValue{
+		Field:  fieldPartnerCustomer,
+		Label:  "Customer",
+		Status: ediports.ValueStatusAccepted,
+		Source: ediports.DraftSource{Kind: ediports.SourceKindAgent, Note: agentCustomerNote},
+	}
+	name, found := labels[edi.MappingEntityTypeCustomer][p.req.CustomerID]
+	if !found {
+		customer.Status = ediports.ValueStatusInvalid
+		customer.Reason = "No customer with that ID exists in this organization"
+		customer.Change = ediports.ChangeKindNone
+		return customer, nil
+	}
+	customer.Value = name
+	if p.match.setup != nil && p.match.setup.Partner.CustomerID.IsNotNil() {
+		customer.Current = p.match.setup.Partner.CustomerID.String()
+		if p.match.setup.Partner.CustomerID == p.req.CustomerID {
+			customer.Current = name
+		}
+	}
+	withChange(customer)
+	return customer, nil
+}
+
+func (p *planner) partnerEntity() *edi.EDIPartner {
+	if p.match.setup == nil {
+		return &edi.EDIPartner{
+			BusinessUnitID: p.req.TenantInfo.BuID,
+			OrganizationID: p.req.TenantInfo.OrgID,
+			Kind:           edi.PartnerKindExternal,
+			Status:         domaintypes.StatusInactive,
+			Settings:       map[string]any{},
+		}
+	}
+	existing := *p.match.setup.Partner
+	existing.Settings = maps.Clone(existing.Settings)
+	return &existing
+}
+
+func applyPartnerField(partner *edi.EDIPartner, value *ediports.DraftValue, customerID pulid.ID) {
+	switch value.Field {
+	case fieldPartnerCode:
+		partner.Code = value.Value
+	case fieldPartnerName:
+		partner.Name = value.Value
+	case fieldPartnerContactName:
+		partner.ContactName = value.Value
+	case fieldPartnerContactEmail:
+		partner.ContactEmail = value.Value
+	case fieldPartnerContactPhone:
+		partner.ContactPhone = value.Value
+	case fieldPartnerTimezone:
+		partner.Timezone = value.Value
+	case fieldPartnerCountry:
+		partner.Country = value.Value
+	case fieldPartnerCustomer:
+		partner.CustomerID = customerID
+	}
 }
 
 func (p *planner) buildInterchange() {
@@ -467,6 +488,16 @@ func (p *planner) envelope(direction edi.DocumentDirection) edi.X12EnvelopeSetti
 	return envelope
 }
 
+var interchangeConfigKeys = map[string]string{
+	"isaSenderQualifier":   fieldOurQualifier,
+	"isaSenderId":          fieldOurID,
+	"isaReceiverQualifier": fieldPartnerQualifier,
+	"isaReceiverId":        fieldPartnerID,
+	"gsSenderId":           fieldOurGSID,
+	"gsReceiverId":         fieldPartnerGSID,
+	"x12Version":           fieldX12Version,
+}
+
 func (p *planner) buildTransport() {
 	if p.method == "" {
 		return
@@ -476,74 +507,9 @@ func (p *planner) buildTransport() {
 		existing = nil
 	}
 
-	keys := []string{fieldTransportMethod}
-	for _, key := range sortedKeys(scopeTransport) {
-		if key != fieldTransportMethod && fieldCatalog[key].usedBy(p.method) {
-			keys = append(keys, key)
-		}
-	}
-	fields := p.fields(keys...)
-	if existing == nil {
-		for index := range fields {
-			fields[index].Current = ""
-			if fields[index].Value != "" && fields[index].Status.Usable() {
-				fields[index].Change = ediports.ChangeKindAdd
-			}
-		}
-	}
-
-	config := map[string]any{}
-	secrets := map[string]string{}
-	request := &ediservice.UpsertEDICommunicationProfileRequest{
-		TenantInfo:   p.req.TenantInfo,
-		EDIPartnerID: p.match.partnerID(),
-		Method:       p.method,
-		Status:       string(domaintypes.StatusInactive),
-		Name:         transportName(p.partnerName(), p.method),
-		Description:  "Drafted from the partner's implementation guide " + p.req.Document.FileName,
-	}
-	if existing != nil {
-		config = maps.Clone(existing.Config)
-		secrets = existing.EncryptedSecrets
-		request.ProfileID = existing.ID
-		request.Status = string(existing.Status)
-		request.Name = existing.Name
-		request.Description = existing.Description
-		request.Version = existing.Version
-	}
-
-	changed := false
-	setConfig := func(key, value string) {
-		if value == "" {
-			return
-		}
-		if current, _ := config[key].(string); current != value {
-			changed = true
-		}
-		config[key] = value
-	}
-	for _, field := range fields {
-		spec := fieldCatalog[field.Field]
-		if spec.configKey == "" || !field.Status.Usable() {
-			continue
-		}
-		setConfig(spec.configKey, field.Value)
-	}
-	interchange := map[string]string{
-		"isaSenderQualifier":   fieldOurQualifier,
-		"isaSenderId":          fieldOurID,
-		"isaReceiverQualifier": fieldPartnerQualifier,
-		"isaReceiverId":        fieldPartnerID,
-		"gsSenderId":           fieldOurGSID,
-		"gsReceiverId":         fieldPartnerGSID,
-		"x12Version":           fieldX12Version,
-	}
-	for _, configKey := range slices.Sorted(maps.Keys(interchange)) {
-		if value, ok := p.usable(interchange[configKey]); ok {
-			setConfig(configKey, value)
-		}
-	}
-	request.Config = config
+	fields := p.transportFields(existing == nil)
+	request, secrets := p.transportRequest(existing)
+	changed := p.fillTransportConfig(request.Config, fields)
 
 	entity := &edi.EDICommunicationProfile{
 		BusinessUnitID:   p.req.TenantInfo.BuID,
@@ -552,7 +518,7 @@ func (p *planner) buildTransport() {
 		Method:           p.method,
 		Status:           domaintypes.Status(request.Status),
 		Name:             request.Name,
-		Config:           config,
+		Config:           request.Config,
 		EncryptedSecrets: secrets,
 	}
 
@@ -580,6 +546,79 @@ func (p *planner) buildTransport() {
 	p.writes.transportChange = change
 }
 
+func (p *planner) transportFields(isNew bool) []ediports.DraftValue {
+	keys := []string{fieldTransportMethod}
+	for _, key := range sortedKeys(scopeTransport) {
+		if key != fieldTransportMethod && fieldCatalog[key].usedBy(p.method) {
+			keys = append(keys, key)
+		}
+	}
+	fields := p.fields(keys...)
+	if !isNew {
+		return fields
+	}
+	for index := range fields {
+		fields[index].Current = ""
+		if fields[index].Value != "" && fields[index].Status.Usable() {
+			fields[index].Change = ediports.ChangeKindAdd
+		}
+	}
+	return fields
+}
+
+func (p *planner) transportRequest(
+	existing *edi.EDICommunicationProfile,
+) (request *ediservice.UpsertEDICommunicationProfileRequest, secrets map[string]string) {
+	request = &ediservice.UpsertEDICommunicationProfileRequest{
+		TenantInfo:   p.req.TenantInfo,
+		EDIPartnerID: p.match.partnerID(),
+		Method:       p.method,
+		Status:       string(domaintypes.StatusInactive),
+		Name:         transportName(p.partnerName(), p.method),
+		Description:  "Drafted from the partner's implementation guide " + p.req.Document.FileName,
+		Config:       map[string]any{},
+	}
+	if existing == nil {
+		return request, map[string]string{}
+	}
+	request.Config = maps.Clone(existing.Config)
+	if request.Config == nil {
+		request.Config = map[string]any{}
+	}
+	request.ProfileID = existing.ID
+	request.Status = string(existing.Status)
+	request.Name = existing.Name
+	request.Description = existing.Description
+	request.Version = existing.Version
+	return request, existing.EncryptedSecrets
+}
+
+func (p *planner) fillTransportConfig(config map[string]any, fields []ediports.DraftValue) bool {
+	changed := false
+	set := func(key, value string) {
+		if value == "" {
+			return
+		}
+		if current, _ := config[key].(string); current != value {
+			changed = true
+		}
+		config[key] = value
+	}
+	for index := range fields {
+		field := &fields[index]
+		spec := fieldCatalog[field.Field]
+		if spec.configKey != "" && field.Status.Usable() {
+			set(spec.configKey, field.Value)
+		}
+	}
+	for _, configKey := range slices.Sorted(maps.Keys(interchangeConfigKeys)) {
+		if value, ok := p.usable(interchangeConfigKeys[configKey]); ok {
+			set(configKey, value)
+		}
+	}
+	return changed
+}
+
 func transportName(partnerName string, method edi.ConnectionMethod) string {
 	if partnerName == "" {
 		return string(method)
@@ -597,7 +636,8 @@ func (p *planner) partnerName() string {
 
 func (p *planner) buildConnection() {
 	connection := ediports.DraftConnection{Method: p.method}
-	for _, profile := range p.draft.DocumentProfiles {
+	for profileIndex := range p.draft.DocumentProfiles {
+		profile := &p.draft.DocumentProfiles[profileIndex]
 		connection.Sets = append(connection.Sets, ediports.DraftSetDirection{
 			TransactionSet: profile.TransactionSet,
 			Direction:      profile.Direction,
@@ -639,10 +679,12 @@ func (p *planner) addFailures(record string, errs []*errortypes.Error) {
 	}
 }
 
-func formatMinutes(minutes int64) string {
-	return strconv.FormatInt(minutes, 10)
-}
-
 func titleSet(set edi.TransactionSet, direction edi.DocumentDirection) string {
 	return fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
+}
+
+func customerTarget(customerID pulid.ID) map[edi.MappingEntityType][]pulid.ID {
+	targets := make(map[edi.MappingEntityType][]pulid.ID, 1)
+	targets[edi.MappingEntityTypeCustomer] = []pulid.ID{customerID}
+	return targets
 }

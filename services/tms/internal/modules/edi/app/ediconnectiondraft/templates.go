@@ -13,7 +13,7 @@ import (
 )
 
 type requirement struct {
-	input  ediports.DraftRequirementInput
+	input  *ediports.DraftRequirementInput
 	source ediports.DraftSource
 }
 
@@ -76,7 +76,8 @@ func unmetRequirements(
 	}
 
 	unmet := make([]ediports.DraftRequirementCheck, 0)
-	for _, req := range requirements {
+	for reqIndex := range requirements {
+		req := &requirements[reqIndex]
 		if problem := checkRequirement(bySegment, req.input); problem != "" {
 			unmet = append(unmet, ediports.DraftRequirementCheck{
 				SegmentID:       strings.ToUpper(req.input.SegmentID),
@@ -93,7 +94,7 @@ func unmetRequirements(
 
 func checkRequirement(
 	bySegment map[string][]*edi.EDITemplateSegment,
-	req ediports.DraftRequirementInput,
+	req *ediports.DraftRequirementInput,
 ) string {
 	segmentID := strings.ToUpper(strings.TrimSpace(req.SegmentID))
 	found := bySegment[segmentID]

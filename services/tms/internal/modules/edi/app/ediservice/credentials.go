@@ -94,6 +94,8 @@ func credentialSpecs(method edi.ConnectionMethod) []credentialSpec {
 		return fileTransferCredentials("VAN")
 	case edi.ConnectionMethodAS2:
 		return as2Credentials
+	case edi.ConnectionMethodInternal:
+		return nil
 	default:
 		return nil
 	}
@@ -116,7 +118,8 @@ func CredentialRequirements(
 ) []ediports.CredentialRequirement {
 	specs := credentialSpecs(profile.Method)
 	requirements := make([]ediports.CredentialRequirement, 0, len(specs))
-	for _, spec := range specs {
+	for specIndex := range specs {
+		spec := &specs[specIndex]
 		requirements = append(requirements, ediports.CredentialRequirement{
 			Keys:     spec.keys,
 			Label:    spec.label,
@@ -129,7 +132,7 @@ func CredentialRequirements(
 	return requirements
 }
 
-func credentialPresent(profile *edi.EDICommunicationProfile, spec credentialSpec) bool {
+func credentialPresent(profile *edi.EDICommunicationProfile, spec *credentialSpec) bool {
 	for _, key := range spec.keys {
 		if spec.kind == ediports.CredentialKindSecret {
 			if profile.EncryptedSecrets[key] != "" {
@@ -149,7 +152,9 @@ func requireCredentials(multiErr *errortypes.MultiError, profile *edi.EDICommuni
 	if profile.Status == domaintypes.StatusInactive {
 		return
 	}
-	for _, spec := range credentialSpecs(profile.Method) {
+	specs := credentialSpecs(profile.Method)
+	for specIndex := range specs {
+		spec := &specs[specIndex]
 		if !spec.required(profile) || credentialPresent(profile, spec) {
 			continue
 		}

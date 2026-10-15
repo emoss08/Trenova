@@ -2,6 +2,7 @@ package ediconnectiondraftrepository
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -54,35 +55,73 @@ func New(p Params) ediports.EDIConnectionDraftRepository {
 	}
 }
 
+type matchSet struct {
+	matches map[pulid.ID]*ediports.EDIPartnerMatch
+	order   []pulid.ID
+}
+
+func newMatchSet() *matchSet {
+	return &matchSet{
+		matches: make(map[pulid.ID]*ediports.EDIPartnerMatch),
+		order:   make([]pulid.ID, 0, 4),
+	}
+}
+
+func (m *matchSet) add(partner *edi.EDIPartner) *ediports.EDIPartnerMatch {
+	match, ok := m.matches[partner.ID]
+	if !ok {
+		match = &ediports.EDIPartnerMatch{Partner: partner}
+		m.matches[partner.ID] = match
+		m.order = append(m.order, partner.ID)
+	}
+	return match
+}
+
+func (m *matchSet) missing(ids ...[]pulid.ID) []pulid.ID {
+	out := make([]pulid.ID, 0)
+	for _, group := range ids {
+		for _, id := range group {
+			if _, ok := m.matches[id]; !ok && !slices.Contains(out, id) {
+				out = append(out, id)
+			}
+		}
+	}
+	return out
+}
+
+func (m *matchSet) mark(ids []pulid.ID, apply func(*ediports.EDIPartnerMatch)) {
+	for _, id := range ids {
+		if match, ok := m.matches[id]; ok {
+			apply(match)
+		}
+	}
+}
+
+func (m *matchSet) list() []*ediports.EDIPartnerMatch {
+	out := make([]*ediports.EDIPartnerMatch, 0, len(m.order))
+	for _, id := range m.order {
+		out = append(out, m.matches[id])
+	}
+	return out
+}
+
 func (r *repository) FindPartnerMatches(
 	ctx context.Context,
 	req *ediports.FindEDIPartnerMatchesRequest,
 ) ([]*ediports.EDIPartnerMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIPartnerMatch, error) {
-		matches := make(map[pulid.ID]*ediports.EDIPartnerMatch)
-		order := make([]pulid.ID, 0, 4)
-		mark := func(partner *edi.EDIPartner, apply func(*ediports.EDIPartnerMatch)) {
-			match, ok := matches[partner.ID]
-			if !ok {
-				match = &ediports.EDIPartnerMatch{Partner: partner}
-				matches[partner.ID] = match
-				order = append(order, partner.ID)
-			}
-			apply(match)
-		}
-
+		set := newMatchSet()
 		direct, err := r.partnersByIdentity(ctx, req)
 		if err != nil {
 			return nil, err
 		}
-		code := strings.ToLower(strings.TrimSpace(req.Code))
-		name := strings.ToLower(strings.TrimSpace(req.Name))
+		code := strings.TrimSpace(req.Code)
+		name := strings.TrimSpace(req.Name)
 		for _, partner := range direct {
-			mark(partner, func(match *ediports.EDIPartnerMatch) {
-				match.ByCode = code != "" && strings.ToLower(partner.Code) == code
-				match.ByName = name != "" && strings.ToLower(partner.Name) == name
-				match.ByCustomer = req.CustomerID.IsNotNil() && partner.CustomerID == req.CustomerID
-			})
+			match := set.add(partner)
+			match.ByCode = code != "" && strings.EqualFold(partner.Code, code)
+			match.ByName = name != "" && strings.EqualFold(partner.Name, name)
+			match.ByCustomer = req.CustomerID.IsNotNil() && partner.CustomerID == req.CustomerID
 		}
 
 		byInterchange, err := r.partnerIDsByInterchange(ctx, req)
@@ -93,37 +132,21 @@ func (r *repository) FindPartnerMatches(
 		if err != nil {
 			return nil, err
 		}
-		extra := make([]pulid.ID, 0, len(byInterchange)+len(byAS2))
-		for _, id := range append(append([]pulid.ID{}, byInterchange...), byAS2...) {
-			if _, ok := matches[id]; !ok {
-				extra = append(extra, id)
-			}
-		}
-		if len(extra) > 0 {
+		if extra := set.missing(byInterchange, byAS2); len(extra) > 0 {
 			partners, loadErr := r.partnersByIDs(ctx, req.TenantInfo, extra)
 			if loadErr != nil {
 				return nil, loadErr
 			}
 			for _, partner := range partners {
-				mark(partner, func(*ediports.EDIPartnerMatch) {})
+				set.add(partner)
 			}
 		}
-		for _, id := range byInterchange {
-			if match, ok := matches[id]; ok {
-				match.ByInterchange = true
-			}
-		}
-		for _, id := range byAS2 {
-			if match, ok := matches[id]; ok {
-				match.ByAS2 = true
-			}
-		}
-
-		out := make([]*ediports.EDIPartnerMatch, 0, len(order))
-		for _, id := range order {
-			out = append(out, matches[id])
-		}
-		return out, nil
+		set.mark(
+			byInterchange,
+			func(match *ediports.EDIPartnerMatch) { match.ByInterchange = true },
+		)
+		set.mark(byAS2, func(match *ediports.EDIPartnerMatch) { match.ByAS2 = true })
+		return set.list(), nil
 	})
 }
 

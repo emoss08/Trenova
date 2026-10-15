@@ -11,9 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/shared/as2"
 )
 
 type fieldScope int
@@ -80,23 +78,50 @@ const (
 	controlNumberAttrStart = "start"
 
 	ackNone = "None"
+
+	valueTrue       = "true"
+	valueFalse      = "false"
+	valueTest       = "test"
+	valueProduction = "production"
+	valueSync       = "sync"
+	valueAsync      = "async"
+	valueNone       = "none"
+	valuePassword   = "password"
+	valuePrivateKey = "privateKey"
+	valueAS2        = string(edi.ConnectionMethodAS2)
+	valueSFTP       = string(edi.ConnectionMethodSFTP)
+	valueVAN        = string(edi.ConnectionMethodVAN)
 )
 
 var (
-	errBlank           = errors.New("the value is blank")
-	isaQualifierRe     = regexp.MustCompile(`^[A-Z0-9]{2}$`)
-	versionDigitsRe    = regexp.MustCompile(`^\d{4,6}$`)
-	scacRe             = regexp.MustCompile(`^[A-Z0-9]{2,4}$`)
-	functionalIDRe     = regexp.MustCompile(`^[A-Z]{2}$`)
-	numberRe           = regexp.MustCompile(`\d+`)
-	durationRe         = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s*(minutes?|mins?|hours?|hrs?|days?|business days?)`)
-	countryRe          = regexp.MustCompile(`^[A-Z]{2}$`)
-	externalMethods    = []edi.ConnectionMethod{edi.ConnectionMethodAS2, edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
-	fileMethods        = []edi.ConnectionMethod{edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
-	as2Only            = []edi.ConnectionMethod{edi.ConnectionMethodAS2}
-	vanOnly            = []edi.ConnectionMethod{edi.ConnectionMethodVAN}
-	supportedSets      = []edi.TransactionSet{edi.TransactionSet204, edi.TransactionSet210, edi.TransactionSet214, edi.TransactionSet990}
-	directions         = []edi.DocumentDirection{edi.DocumentDirectionInbound, edi.DocumentDirectionOutbound}
+	errBlank        = errors.New("the value is blank")
+	isaQualifierRe  = regexp.MustCompile(`^[A-Z0-9]{2}$`)
+	versionDigitsRe = regexp.MustCompile(`^\d{4,6}$`)
+	scacRe          = regexp.MustCompile(`^[A-Z0-9]{2,4}$`)
+	functionalIDRe  = regexp.MustCompile(`^[A-Z]{2}$`)
+	numberRe        = regexp.MustCompile(`\d+`)
+	durationRe      = regexp.MustCompile(
+		`(?i)(\d+(?:\.\d+)?)\s*(minutes?|mins?|hours?|hrs?|days?|business days?)`,
+	)
+	countryRe       = regexp.MustCompile(`^[A-Z]{2}$`)
+	externalMethods = []edi.ConnectionMethod{
+		edi.ConnectionMethodAS2,
+		edi.ConnectionMethodSFTP,
+		edi.ConnectionMethodVAN,
+	}
+	fileMethods   = []edi.ConnectionMethod{edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
+	as2Only       = []edi.ConnectionMethod{edi.ConnectionMethodAS2}
+	vanOnly       = []edi.ConnectionMethod{edi.ConnectionMethodVAN}
+	supportedSets = []edi.TransactionSet{
+		edi.TransactionSet204,
+		edi.TransactionSet210,
+		edi.TransactionSet214,
+		edi.TransactionSet990,
+	}
+	directions = []edi.DocumentDirection{
+		edi.DocumentDirectionInbound,
+		edi.DocumentDirectionOutbound,
+	}
 	controlNumberKinds = []edi.ControlNumberKind{
 		edi.ControlNumberKindInterchange,
 		edi.ControlNumberKindGroup,
@@ -105,7 +130,7 @@ var (
 )
 
 var secretWords = []string{
-	"password", "passphrase", "privatekey", "private_key", "secret", "token",
+	valuePassword, "passphrase", "privatekey", "private_key", "secret", "token",
 	"credential", "certificate", "knownhostkey", "hostkey", "apikey", "authorization",
 	"security",
 }
@@ -300,7 +325,9 @@ func normalizePath(value string) (string, error) {
 		return "", errBlank
 	}
 	if len(value) > 255 || strings.Contains(value, "..") {
-		return "", errors.New("must be a directory path of at most 255 characters without ..")
+		return "", errors.New(
+			"must be a directory path of at most 255 characters, without a parent reference",
+		)
 	}
 	return value, nil
 }
@@ -401,202 +428,4 @@ func as2Algorithms(values ...string) normalizer {
 		allowed[value] = value
 	}
 	return choice(allowed)
-}
-
-var qualifierNames = map[string][]string{
-	"01": {"duns", "d-u-n-s", "dun & bradstreet", "dun and bradstreet"},
-	"02": {"scac", "standard carrier alpha code"},
-	"08": {"ucc", "ean", "gs1"},
-	"12": {"phone", "telephone"},
-	"14": {"duns plus suffix", "duns+suffix"},
-	"16": {"duns plus 4", "duns+4"},
-	"20": {"hin", "health industry number"},
-	"30": {"federal tax", "tax id", "tin"},
-	"32": {"federal employer", "fein", "employer identification"},
-	"ZZ": {"mutually defined", "mutually-defined"},
-}
-
-var fieldCatalog = buildCatalog()
-
-func buildCatalog() map[string]fieldSpec {
-	specs := []fieldSpec{
-		{key: fieldPartnerCode, label: "Partner code", scope: scopePartner, required: true, normalize: text(100)},
-		{key: fieldPartnerName, label: "Partner name", scope: scopePartner, required: true, normalize: text(200)},
-		{key: fieldPartnerContactName, label: "Contact name", scope: scopePartner, normalize: text(150)},
-		{key: fieldPartnerContactEmail, label: "Contact email", scope: scopePartner, normalize: normalizeEmail},
-		{key: fieldPartnerContactPhone, label: "Contact phone", scope: scopePartner, normalize: text(30)},
-		{key: fieldPartnerTimezone, label: "Time zone", scope: scopePartner, normalize: normalizeTimezone},
-		{
-			key: fieldPartnerCountry, label: "Country", scope: scopePartner,
-			normalize: normalizeCountry, fallback: "US",
-		},
-		{
-			key: fieldTransportMethod, label: "Connection method", scope: scopeTransport, required: true,
-			normalize: choice(map[string]string{
-				"as2": "AS2", "applicability statement 2": "AS2", "sftp": "SFTP",
-				"secure ftp": "SFTP", "ssh file transfer": "SFTP", "van": "VAN",
-				"value added network": "VAN", "value-added network": "VAN",
-			}),
-			spelled: map[string][]string{
-				"AS2":  {"as2", "applicability statement 2"},
-				"SFTP": {"sftp", "secure ftp", "ssh file transfer"},
-				"VAN":  {"van", "value added network", "value-added network"},
-			},
-		},
-		{
-			key: fieldTransportEnvironment, label: "Environment", scope: scopeTransport,
-			configKey: "environment", methods: externalMethods, required: true, fallback: "test",
-			normalize: choice(map[string]string{
-				"test": "test", "testing": "test", "production": "production", "prod": "production",
-				"live": "production",
-			}),
-			spelled: map[string][]string{"test": {"test"}, "production": {"production", "prod", "live"}},
-		},
-		{key: "as2.localAs2Id", label: "Your AS2 ID", scope: scopeTransport, configKey: editransport.ConfigKeyLocalAS2ID, methods: as2Only, required: true, normalize: text(128)},
-		{key: "as2.partnerAs2Id", label: "Partner AS2 ID", scope: scopeTransport, configKey: editransport.ConfigKeyPartnerAS2ID, methods: as2Only, required: true, normalize: text(128)},
-		{key: "as2.endpointUrl", label: "AS2 endpoint URL", scope: scopeTransport, configKey: editransport.ConfigKeyEndpointURL, methods: as2Only, required: true, normalize: normalizeURL},
-		{
-			key: "as2.mdnMode", label: "MDN mode", scope: scopeTransport,
-			configKey: editransport.ConfigKeyMDNMode, methods: as2Only, required: true,
-			normalize: choice(map[string]string{
-				"sync": "sync", "synchronous": "sync", "async": "async", "asynchronous": "async",
-			}),
-			spelled: map[string][]string{"sync": {"synchronous", "sync"}, "async": {"asynchronous", "async"}},
-		},
-		{key: "as2.mdnUrl", label: "Async MDN return URL", scope: scopeTransport, configKey: editransport.ConfigKeyMDNURL, methods: as2Only, normalize: normalizeURL},
-		{
-			key: "as2.signingAlgorithm", label: "Signing algorithm", scope: scopeTransport,
-			configKey: editransport.ConfigKeySigningAlgorithm, methods: as2Only,
-			normalize: as2Algorithms(as2.SigningAlgorithmSHA1, as2.SigningAlgorithmSHA256, as2.SigningAlgorithmSHA384, as2.SigningAlgorithmSHA512),
-			spelled: map[string][]string{
-				as2.SigningAlgorithmSHA1: {"sha-1"}, as2.SigningAlgorithmSHA256: {"sha-256", "sha 256"},
-				as2.SigningAlgorithmSHA384: {"sha-384"}, as2.SigningAlgorithmSHA512: {"sha-512"},
-			},
-		},
-		{
-			key: "as2.encryptionAlgorithm", label: "Encryption algorithm", scope: scopeTransport,
-			configKey: editransport.ConfigKeyEncryptionAlgorithm, methods: as2Only,
-			normalize: as2Algorithms(as2.EncryptionAlgorithmTripleDES, as2.EncryptionAlgorithmAES128CBC, as2.EncryptionAlgorithmAES256CBC, as2.EncryptionAlgorithmAES128GCM, as2.EncryptionAlgorithmAES256GCM),
-			spelled: map[string][]string{
-				as2.EncryptionAlgorithmTripleDES: {"triple des", "3des", "des3"},
-				as2.EncryptionAlgorithmAES128CBC: {"aes 128", "aes-128", "aes128"},
-				as2.EncryptionAlgorithmAES256CBC: {"aes 256", "aes-256", "aes256"},
-				as2.EncryptionAlgorithmAES128GCM: {"aes-128-gcm", "aes 128 gcm"},
-				as2.EncryptionAlgorithmAES256GCM: {"aes-256-gcm", "aes 256 gcm"},
-			},
-		},
-		{
-			key: "as2.compressionAlgorithm", label: "Compression", scope: scopeTransport,
-			configKey: editransport.ConfigKeyCompressionAlgorithm, methods: as2Only,
-			normalize: choice(map[string]string{"none": "none", "zlib": editransport.CompressionZlib}),
-			spelled:   map[string][]string{"none": {"no compression", "uncompressed"}},
-		},
-		{key: "as2.basicAuthUsername", label: "Basic auth username", scope: scopeTransport, configKey: editransport.ConfigKeyBasicAuthUsername, methods: as2Only, normalize: text(128)},
-		{key: "transport.host", label: "Host", scope: scopeTransport, configKey: "host", methods: fileMethods, required: true, normalize: text(255)},
-		{key: "transport.port", label: "Port", scope: scopeTransport, configKey: "port", methods: fileMethods, required: true, normalize: normalizePort, fallback: "22", matches: matchesNumber},
-		{key: "transport.username", label: "Username", scope: scopeTransport, configKey: "username", methods: fileMethods, required: true, normalize: text(128)},
-		{
-			key: "transport.authMode", label: "Authentication", scope: scopeTransport,
-			configKey: "authMode", methods: fileMethods, required: true,
-			normalize: choice(map[string]string{
-				"password": "password", "privatekey": "privateKey", "private key": "privateKey",
-				"ssh key": "privateKey", "public key": "privateKey", "key": "privateKey",
-			}),
-			spelled: map[string][]string{
-				"password":   {"password"},
-				"privateKey": {"private key", "ssh key", "public key", "key-based", "key based"},
-			},
-		},
-		{key: "transport.inboundDirectory", label: "Inbound directory", scope: scopeTransport, configKey: "inboundDirectory", methods: fileMethods, normalize: normalizePath},
-		{key: "transport.outboundDirectory", label: "Outbound directory", scope: scopeTransport, configKey: "outboundDirectory", methods: fileMethods, normalize: normalizePath},
-		{key: "transport.archiveDirectory", label: "Archive directory", scope: scopeTransport, configKey: "archiveDirectory", methods: fileMethods, normalize: normalizePath},
-		{key: "transport.fileNamingPattern", label: "File naming pattern", scope: scopeTransport, configKey: "fileNamingPattern", methods: fileMethods, normalize: text(255)},
-		{key: "van.providerName", label: "VAN provider", scope: scopeTransport, configKey: "providerName", methods: vanOnly, required: true, normalize: text(128)},
-		{key: "van.mailboxId", label: "VAN mailbox ID", scope: scopeTransport, configKey: "mailboxId", methods: vanOnly, required: true, normalize: text(128)},
-		{key: fieldPartnerQualifier, label: "Partner ISA qualifier", scope: scopeInterchange, required: true, normalize: normalizeQualifier, spelled: qualifierNames},
-		{key: fieldPartnerID, label: "Partner ISA ID", scope: scopeInterchange, required: true, normalize: normalizeISAID},
-		{key: fieldOurQualifier, label: "Your ISA qualifier", scope: scopeInterchange, required: true, normalize: normalizeQualifier, spelled: qualifierNames},
-		{key: fieldOurID, label: "Your ISA ID", scope: scopeInterchange, required: true, normalize: normalizeISAID},
-		{key: fieldPartnerGSID, label: "Partner GS ID", scope: scopeInterchange, normalize: normalizeGSID},
-		{key: fieldOurGSID, label: "Your GS ID", scope: scopeInterchange, normalize: normalizeGSID},
-		{
-			key: fieldUsageIndicator, label: "Usage indicator", scope: scopeInterchange, required: true,
-			fallback:  "T",
-			normalize: choice(map[string]string{"t": "T", "test": "T", "p": "P", "production": "P"}),
-			spelled:   map[string][]string{"T": {"test"}, "P": {"production"}},
-		},
-		{key: fieldX12Version, label: "X12 version", scope: scopeInterchange, required: true, normalize: normalizeVersion, matches: matchesVersion},
-		{key: fieldElementSep, label: "Element separator", scope: scopeInterchange, required: true, normalize: normalizeSeparator, spelled: spelledSeparators(), fallback: "*"},
-		{key: fieldSegmentSep, label: "Segment terminator", scope: scopeInterchange, required: true, normalize: normalizeSeparator, spelled: spelledSeparators(), fallback: "~"},
-		{key: fieldComponentSep, label: "Component separator", scope: scopeInterchange, required: true, normalize: normalizeSeparator, spelled: spelledSeparators(), fallback: ">"},
-		{key: fieldRepetitionSep, label: "Repetition separator", scope: scopeInterchange, required: true, normalize: normalizeSeparator, spelled: spelledSeparators(), fallback: "^"},
-		{key: fieldCarrierSCAC, label: "Your SCAC", scope: scopeCarrier, normalize: normalizeSCAC},
-	}
-	for _, set := range supportedSets {
-		for _, direction := range directions {
-			prefix := setFieldPrefix(set, direction)
-			name := fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
-			specs = append(specs,
-				fieldSpec{
-					key: prefix + setAttrSupported, label: name + " exchanged", scope: scopeSet,
-					normalize: choice(map[string]string{"true": "true", "yes": "true", "false": "false", "no": "false"}),
-					matches:   anyQuote,
-				},
-				fieldSpec{key: prefix + setAttrVersion, label: name + " version", scope: scopeSet, normalize: normalizeVersion, matches: matchesVersion},
-				fieldSpec{
-					key: prefix + setAttrAck, label: name + " functional acknowledgment", scope: scopeSet,
-					normalize: choice(map[string]string{
-						"997": "997", "999": "999", "none": ackNone, "no": ackNone, "not required": ackNone,
-					}),
-					spelled: map[string][]string{
-						"997":   {"functional acknowledgment", "functional acknowledgement"},
-						"999":   {"implementation acknowledgment", "implementation acknowledgement"},
-						ackNone: {"not required", "no acknowledgment", "no acknowledgement", "not expected", "do not send"},
-					},
-				},
-				fieldSpec{key: prefix + setAttrAckWindowMinutes, label: name + " acknowledgment window", scope: scopeSet, normalize: normalizeMinutes, matches: matchesMinutes},
-				fieldSpec{key: prefix + setAttrFunctionalGroupID, label: name + " functional group", scope: scopeSet, normalize: normalizeFunctionalGroup},
-			)
-		}
-	}
-	for _, kind := range controlNumberKinds {
-		specs = append(specs, fieldSpec{
-			key:       controlNumberField(kind),
-			label:     fmt.Sprintf("First %s control number", strings.ToLower(string(kind))),
-			scope:     scopeControlNumber,
-			normalize: normalizeControlNumber,
-			matches:   matchesNumber,
-		})
-	}
-
-	catalog := make(map[string]fieldSpec, len(specs))
-	for _, spec := range specs {
-		catalog[spec.key] = spec
-	}
-	return catalog
-}
-
-func setFieldPrefix(set edi.TransactionSet, direction edi.DocumentDirection) string {
-	return fmt.Sprintf("sets.%s.%s.", set, strings.ToLower(string(direction)))
-}
-
-func setField(set edi.TransactionSet, direction edi.DocumentDirection, attr string) string {
-	return setFieldPrefix(set, direction) + attr
-}
-
-func controlNumberField(kind edi.ControlNumberKind) string {
-	return fmt.Sprintf("controlNumbers.%s.%s", strings.ToLower(string(kind)), controlNumberAttrStart)
-}
-
-func FieldKeys() []string {
-	keys := make([]string, 0, len(fieldCatalog))
-	for key := range fieldCatalog {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	return keys
-}
-
-func (s fieldSpec) usedBy(method edi.ConnectionMethod) bool {
-	return len(s.methods) == 0 || slices.Contains(s.methods, method)
 }

@@ -24,9 +24,9 @@ type specSample struct {
 	identifying bool
 }
 
-func (p *pageIndex) joined() (string, []int, []int) {
+func (p *pageIndex) joined() (text string, starts, numbers []int) {
 	var builder strings.Builder
-	starts := make([]int, 0, len(p.order))
+	starts = make([]int, 0, len(p.order))
 	for _, number := range p.order {
 		if builder.Len() > 0 {
 			builder.WriteByte('\n')
@@ -74,7 +74,7 @@ func findSamples(pages *pageIndex) []*specSample {
 	return samples
 }
 
-func interchangeAt(text string, start int) (string, int, bool) {
+func interchangeAt(text string, start int) (raw string, end int, found bool) {
 	if start+4 > len(text) || (start > 0 && isWordByte(text[start-1])) {
 		return "", 0, false
 	}
@@ -107,7 +107,7 @@ func interchangeAt(text string, start int) (string, int, bool) {
 	}
 	tail += start
 	stop := strings.IndexByte(text[tail:limit], terminator)
-	end := limit
+	end = limit
 	if stop >= 0 {
 		end = tail + stop + 1
 	}
@@ -188,17 +188,56 @@ func (s *specSample) orient(partnerIDs []string) {
 	case edi.TransactionSet210, edi.TransactionSet214, edi.TransactionSet990:
 		s.direction = edi.DocumentDirectionOutbound
 		s.identifying = true
+	case edi.TransactionSet997, edi.TransactionSet999:
 	}
 }
 
-func (s *specSample) parties() (partnerQualifier, partnerID, ourQualifier, ourID, partnerGS, ourGS string) {
+type sampleParties struct {
+	partnerQualifier string
+	partnerID        string
+	ourQualifier     string
+	ourID            string
+	partnerGS        string
+	ourGS            string
+}
+
+func (s *specSample) parties() sampleParties {
 	p := s.parsed
 	if s.direction == edi.DocumentDirectionOutbound {
-		return p.ReceiverQualifier, p.ReceiverID, p.SenderQualifier, p.SenderID,
-			p.ApplicationReceiver, p.ApplicationSender
+		return sampleParties{
+			partnerQualifier: p.ReceiverQualifier,
+			partnerID:        p.ReceiverID,
+			ourQualifier:     p.SenderQualifier,
+			ourID:            p.SenderID,
+			partnerGS:        p.ApplicationReceiver,
+			ourGS:            p.ApplicationSender,
+		}
 	}
-	return p.SenderQualifier, p.SenderID, p.ReceiverQualifier, p.ReceiverID,
-		p.ApplicationSender, p.ApplicationReceiver
+	return sampleParties{
+		partnerQualifier: p.SenderQualifier,
+		partnerID:        p.SenderID,
+		ourQualifier:     p.ReceiverQualifier,
+		ourID:            p.ReceiverID,
+		partnerGS:        p.ApplicationSender,
+		ourGS:            p.ApplicationReceiver,
+	}
+}
+
+func (s *specSample) envelopeValues() map[string]string {
+	parties := s.parties()
+	return map[string]string{
+		fieldPartnerQualifier: parties.partnerQualifier,
+		fieldPartnerID:        parties.partnerID,
+		fieldOurQualifier:     parties.ourQualifier,
+		fieldOurID:            parties.ourID,
+		fieldPartnerGSID:      parties.partnerGS,
+		fieldOurGSID:          parties.ourGS,
+		fieldUsageIndicator:   s.parsed.UsageIndicator,
+		fieldX12Version:       s.parsed.GroupVersion,
+		fieldElementSep:       s.parsed.Separators.Element,
+		fieldSegmentSep:       s.parsed.Separators.Segment,
+		fieldComponentSep:     s.parsed.Separators.Component,
+	}
 }
 
 func (s *specSample) contribute(e *evidence) {
@@ -206,20 +245,7 @@ func (s *specSample) contribute(e *evidence) {
 		return
 	}
 	note := "Read from the sample " + string(s.transactionSet()) + " in the document"
-	partnerQualifier, partnerID, ourQualifier, ourID, partnerGS, ourGS := s.parties()
-	values := map[string]string{
-		fieldPartnerQualifier: partnerQualifier,
-		fieldPartnerID:        partnerID,
-		fieldOurQualifier:     ourQualifier,
-		fieldOurID:            ourID,
-		fieldPartnerGSID:      partnerGS,
-		fieldOurGSID:          ourGS,
-		fieldUsageIndicator:   s.parsed.UsageIndicator,
-		fieldX12Version:       s.parsed.GroupVersion,
-		fieldElementSep:       s.parsed.Separators.Element,
-		fieldSegmentSep:       s.parsed.Separators.Segment,
-		fieldComponentSep:     s.parsed.Separators.Component,
-	}
+	values := s.envelopeValues()
 	if repetition := s.parsed.Separators.Repetition; repetition != "" &&
 		!strings.EqualFold(repetition, "U") {
 		values[fieldRepetitionSep] = repetition

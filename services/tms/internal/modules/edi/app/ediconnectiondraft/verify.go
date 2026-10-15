@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	pemBlockRe  = regexp.MustCompile(`(?s)-----BEGIN [A-Z0-9 ]+-----.*?-----END [A-Z0-9 ]+-----`)
+	pemBlockRe  = regexp.MustCompile(`(?s)-{5}BEGIN [A-Z0-9 ]+-{5}.*?-{5}END [A-Z0-9 ]+-{5}`)
 	secretLabel = regexp.MustCompile(
 		`(?i)\b(password|passphrase|pass\s*word|pwd|passcode|secret|private\s+key|api\s+key|access\s+key|token|shared\s+key)(s?)(\s*(?:is|:|=|-)?\s*)([^\s,;]+)`,
 	)
@@ -115,7 +115,7 @@ func (p *pageIndex) locate(citation ediports.DraftCitation) citationCheck {
 	}
 }
 
-func valueInQuote(spec fieldSpec, value, quote string) bool {
+func valueInQuote(spec *fieldSpec, value, quote string) bool {
 	if spec.matches != nil && spec.matches(value, quote) {
 		return true
 	}
@@ -171,8 +171,8 @@ func boundary(value string, index int) bool {
 
 func redact(value string) string {
 	value = pemBlockRe.ReplaceAllString(value, redactedPEMMarker)
-	value = secretLabel.ReplaceAllString(value, "$1$2$3"+redactedMarker)
-	return redactInterchangeSecurity(value)
+	value = redactInterchangeSecurity(value)
+	return secretLabel.ReplaceAllString(value, "$1$2$3"+redactedMarker)
 }
 
 func redactInterchangeSecurity(value string) string {
@@ -209,7 +209,7 @@ func maskElement(qualifier, element string) string {
 	if strings.TrimSpace(qualifier) == "00" || strings.TrimSpace(element) == "" {
 		return element
 	}
-	return strings.Repeat("*", max(len(element), isaSecurityPadding))
+	return strings.Repeat("X", max(len(element), isaSecurityPadding))
 }
 
 func clampQuote(value string) string {

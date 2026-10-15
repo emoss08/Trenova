@@ -130,7 +130,7 @@ func (s *Service) validateProfilePartnerSettings(
 	diagnostics := validateServiceFailure214PartnerSettings(profile, settings)
 	schema, err := s.ResolvePartnerSettingSchema(ctx, profile, tenantInfo)
 	if err != nil {
-		if dberror.IsNotFoundError(err) {
+		if dberror.IsNotFoundError(err) || errortypes.IsNotFoundError(err) {
 			return diagnostics, nil
 		}
 		return nil, err
