@@ -4,6 +4,8 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TimezoneField } from "@/components/fields/timezone-field";
 import { applyLocale } from "@/components/navigation/language-submenu";
+import { usePermission } from "@/hooks/use-permission";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { apiService } from "@/services/api";
@@ -21,6 +23,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { TimeFormatType, User } from "@trenova/shared/types/user";
 import { useForm, useWatch } from "react-hook-form";
 import { SettingsCard, SettingsRow } from "./settings-layout";
@@ -37,6 +40,10 @@ type DisplayValues = {
   theme: ThemeChoice;
   sidebar: "open" | "folded";
   reduceMotion: boolean;
+};
+
+type AssistantValues = {
+  showAssistant: boolean;
 };
 
 const SAMPLE_PICKUP = Date.UTC(2026, 0, 6, 14, 30) / 1000;
@@ -244,15 +251,52 @@ function useDisplayRows() {
   };
 }
 
+function AssistantRow({ user }: { user: User | null }) {
+  const t = useT();
+  const form = useForm<AssistantValues>({
+    defaultValues: { showAssistant: user?.assistantHidden !== true },
+  });
+
+  useAutosaveForm({
+    form,
+    resourceName: "Assistant",
+    save: async (next) => {
+      const updated = await apiService.userService.updateMyAssistantVisibility({
+        assistantHidden: !next.showAssistant,
+      });
+      if (updated.assistantHidden) {
+        useAssistantStore.getState().closeWidget();
+      }
+      useAuthStore.getState().setUser(updated);
+    },
+  });
+
+  return (
+    <SettingsRow id="assistant">
+      <SwitchField
+        control={form.control}
+        name="showAssistant"
+        label={t("Show the assistant")}
+        description={t(
+          "The assistant on every page and its shortcut. Turned off, it stays off on every device you sign in from; the Desk is still there.",
+        )}
+        className="p-0"
+      />
+    </SettingsRow>
+  );
+}
+
 export function PreferencesSection() {
   const user = useAuthStore((state) => state.user);
   const display = useDisplayRows();
+  const { allowed: canUseAssistant } = usePermission(Resource.Assistant, Operation.Read);
 
   return (
     <SettingsCard>
       {display.theme}
       <RegionalRows user={user} />
       {display.rest}
+      {canUseAssistant ? <AssistantRow user={user} /> : null}
     </SettingsCard>
   );
 }

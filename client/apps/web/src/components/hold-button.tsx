@@ -1,5 +1,5 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon, type IconComponent } from "@trenova/shared/components/icons";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -62,9 +62,12 @@ export function HoldButton({
     frame.current = requestAnimationFrame(tick);
   };
 
-  useEffect(() => () => {
-    if (frame.current != null) cancelAnimationFrame(frame.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (frame.current != null) cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
 
   return (
     <button
@@ -84,7 +87,7 @@ export function HoldButton({
         if (event.key === "Enter" || event.key === " ") stop();
       }}
       className={cn(
-        "ui-focus-ring border-input bg-card relative flex h-8 w-full items-center justify-center overflow-hidden rounded-md border text-sm font-medium select-none disabled:opacity-50",
+        "ui-focus-ring border-input bg-card relative flex h-8 w-full items-center justify-center overflow-hidden rounded-md border text-sm font-medium select-none disabled:opacity-50 cursor-pointer",
         done && "border-success-border text-success",
       )}
     >

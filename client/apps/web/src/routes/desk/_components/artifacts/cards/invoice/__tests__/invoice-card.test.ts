@@ -49,16 +49,10 @@ describe("invoiceKind", () => {
 });
 
 describe("invoiceKicker", () => {
-  it("leads with the number, then the terms and what the invoice bills", () => {
-    expect(invoiceKicker(postedInvoice(), t)).toEqual([
-      "INV-2610-0412",
-      "Net 30",
-      "PRO S-240193",
-      "BOL BOL-55120",
-    ]);
+  it("leads with the number, then what the invoice bills, leaving the terms and PRO to the card", () => {
+    expect(invoiceKicker(postedInvoice(), t)).toEqual(["INV-2610-0412", "BOL BOL-55120"]);
     expect(invoiceKicker(consolidatedDraft(), t)).toEqual([
       "INV-2610-0457",
-      "Net 45",
       `${cardDay(DAY.oct1)} – ${cardDay(DAY.oct14)}`,
     ]);
     expect(invoiceKicker(creditMemo(), t)).toEqual(["CM-2610-0031", "Corrects INV-2610-0412"]);

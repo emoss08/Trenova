@@ -1,7 +1,9 @@
 import { useAssistantStore } from "@/stores/assistant-store";
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { userSchema, type User } from "@trenova/shared/types/user";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { assistantView, useAssistantSideInset } from "../assistant-widget";
+import { AssistantWidget, assistantView, useAssistantSideInset } from "../assistant-widget";
 
 const permission = vi.hoisted(() => ({ allowed: true }));
 
@@ -9,8 +11,27 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: permission.allowed, isLoading: false }),
 }));
 
+function userWith(assistantHidden: boolean): User {
+  return userSchema.parse({
+    id: "usr_1",
+    status: "Active",
+    name: "Dana Reyes",
+    username: "dreyes",
+    emailAddress: "dana@example.com",
+    timezone: "America/Chicago",
+    assistantHidden,
+  });
+}
+
+function signIn(user: User | null) {
+  act(() => {
+    useAuthStore.setState({ user });
+  });
+}
+
 afterEach(() => {
   permission.allowed = true;
+  signIn(null);
   act(() => {
     useAssistantStore.setState({ open: false, layout: "compact", dock: "bottom-right" });
   });
@@ -80,5 +101,41 @@ describe("useAssistantSideInset", () => {
     });
 
     expect(renderHook(() => useAssistantSideInset()).result.current).toBeNull();
+  });
+});
+
+/*
+Someone who turns the assistant off in Settings gets none of it on any page:
+the shell mounts nothing, and the page keeps its full width even though the
+store still remembers the panel docked open down the side.
+*/
+describe("an assistant turned off in Settings", () => {
+  it("mounts nothing, even with the panel left open", () => {
+    signIn(userWith(true));
+    act(() => {
+      useAssistantStore.setState({ open: true, layout: "side", dock: "top-right" });
+    });
+
+    const { container } = render(<AssistantWidget />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("makes no room for a panel that is not there", () => {
+    signIn(userWith(true));
+    act(() => {
+      useAssistantStore.setState({ open: true, layout: "side", dock: "top-right" });
+    });
+
+    expect(renderHook(() => useAssistantSideInset()).result.current).toBeNull();
+  });
+
+  it("makes room again once it is turned back on", () => {
+    signIn(userWith(false));
+    act(() => {
+      useAssistantStore.setState({ open: true, layout: "side", dock: "top-right" });
+    });
+
+    expect(renderHook(() => useAssistantSideInset()).result.current).toBe("right");
   });
 });

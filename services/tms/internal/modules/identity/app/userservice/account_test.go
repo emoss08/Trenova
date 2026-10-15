@@ -91,6 +91,56 @@ func TestUpdateMyProfileRefusesAnAvatarStyleTrenovaDoesNotOffer(t *testing.T) {
 	deps.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
 }
 
+func TestSetMyAssistantHiddenWritesOnlyTheAssistantColumn(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	user := newTestUser()
+	expectSelfLoad(deps, user)
+	deps.expectAuditLog()
+	columns := capturedColumns(deps)
+
+	updated, err := deps.svc.SetMyAssistantHidden(t.Context(), tenantOf(user), true)
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{tenantcol.UserColumns.AssistantHidden.String()}, *columns)
+	assert.True(t, updated.AssistantHidden)
+}
+
+func TestSetMyAssistantHiddenBringsTheAssistantBack(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	user := newTestUser()
+	user.AssistantHidden = true
+	expectSelfLoad(deps, user)
+	deps.expectAuditLog()
+	columns := capturedColumns(deps)
+
+	updated, err := deps.svc.SetMyAssistantHidden(t.Context(), tenantOf(user), false)
+
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		[]string{tenantcol.UserColumns.AssistantHidden.String()},
+		*columns,
+		"showing the assistant again must write false, not skip it as a zero value",
+	)
+	assert.False(t, updated.AssistantHidden)
+}
+
+func TestSetMyAssistantHiddenWritesNothingWhenTheChoiceIsUnchanged(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	user := newTestUser()
+	user.AssistantHidden = true
+	expectSelfLoad(deps, user)
+
+	updated, err := deps.svc.SetMyAssistantHidden(t.Context(), tenantOf(user), true)
+
+	require.NoError(t, err)
+	assert.True(t, updated.AssistantHidden)
+	deps.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
+}
+
 func TestUpdateMyAvailabilityRefusesAHandOffOutsideTheOrganization(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)

@@ -10,9 +10,13 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { keybindGroups } from "@/config/keybinds.config";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
+import { useAssistantEnabled } from "./assistant/use-assistant-enabled";
+
+const ASSISTANT_KEYBIND_ID = "assistant";
 
 export function KeyboardShortcutsDialog() {
   const t = useT();
+  const assistantEnabled = useAssistantEnabled();
 
   const open = useAppDialogOpen("shortcuts");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
@@ -44,24 +48,26 @@ export function KeyboardShortcutsDialog() {
               <div key={group.id} className="flex flex-col gap-2">
                 <h3 className="text-muted-foreground text-xs font-medium">{t(group.label)}</h3>
                 <div className="flex flex-col">
-                  {group.keybinds.map((keybind) => (
-                    <div
-                      key={keybind.id}
-                      className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">{t(keybind.label)}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {t(keybind.description)}
-                        </span>
+                  {group.keybinds
+                    .filter((keybind) => assistantEnabled || keybind.id !== ASSISTANT_KEYBIND_ID)
+                    .map((keybind) => (
+                      <div
+                        key={keybind.id}
+                        className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium">{t(keybind.label)}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {t(keybind.description)}
+                          </span>
+                        </div>
+                        <KbdGroup>
+                          {keybind.keys.map((key) => (
+                            <Kbd key={key}>{key}</Kbd>
+                          ))}
+                        </KbdGroup>
                       </div>
-                      <KbdGroup>
-                        {keybind.keys.map((key) => (
-                          <Kbd key={key}>{key}</Kbd>
-                        ))}
-                      </KbdGroup>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             ))}

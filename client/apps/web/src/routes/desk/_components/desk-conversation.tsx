@@ -8,6 +8,7 @@ import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { whenIdle } from "@/lib/when-idle";
+import { useAssistantEnabled } from "@/components/assistant/use-assistant-enabled";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
@@ -64,13 +65,18 @@ export function DeskConversation({
   const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
 
   // A page the agent opens takes the person out of the Desk; the conversation
-  // goes with them, open in the corner panel.
+  // goes with them, open in the corner panel, unless they have turned the
+  // corner panel off.
+  const assistantEnabled = useAssistantEnabled();
   const setActiveThreadId = useAssistantStore((state) => state.setActiveThreadId);
   const openWidget = useAssistantStore((state) => state.openWidget);
   const carryConversation = useCallback(() => {
+    if (!assistantEnabled) {
+      return;
+    }
     setActiveThreadId(thread.id);
     openWidget();
-  }, [openWidget, setActiveThreadId, thread.id]);
+  }, [assistantEnabled, openWidget, setActiveThreadId, thread.id]);
 
   // The running turn's lookups are not counted until the reply keeps them.
   const artifactsQuery = useQuery(assistant.artifacts(thread.id)._ctx.summary);

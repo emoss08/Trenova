@@ -98,6 +98,20 @@ export function buildQuickActionCommands(
     });
 }
 
+/**
+ * The commands left once the assistant is turned off: none of them opens the
+ * assistant's panel, since it is not there to open.
+ */
+export function withoutAssistantCommands(
+  commands: PaletteCommand[],
+  assistantHidden: boolean,
+): PaletteCommand[] {
+  if (!assistantHidden) {
+    return commands;
+  }
+  return commands.filter((command) => command.intent.type !== "assistant");
+}
+
 export interface AppCommandContext {
   theme: PaletteTheme;
   unreadNotifications: number;

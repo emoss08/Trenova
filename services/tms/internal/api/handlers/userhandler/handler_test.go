@@ -1001,6 +1001,56 @@ func TestUserHandler_UpdateMySettings_RejectsAdminManagedFields(t *testing.T) {
 	assert.True(t, ginCtx.ResponseCode() >= 400)
 }
 
+func TestUserHandler_UpdateMyAssistantVisibility_HidesTheAssistant(t *testing.T) {
+	t.Parallel()
+
+	hidden := newTestUserForHandler()
+	hidden.AssistantHidden = true
+
+	repo := tenantportsmock.NewMockUserRepository(t)
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(newTestUserForHandler(), nil).Once()
+	repo.On("UpdateColumns", mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
+		return assert.ObjectsAreEqual([]string{"assistant_hidden"}, req.Columns) &&
+			req.Entity.AssistantHidden
+	})).Return(hidden, nil).Once()
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(hidden, nil).Once()
+
+	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPut).
+		WithPath("/api/v1/users/me/assistant-visibility/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"assistantHidden": true})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, true, resp["assistantHidden"])
+}
+
+func TestUserHandler_UpdateMyAssistantVisibility_RequiresTheChoice(t *testing.T) {
+	t.Parallel()
+
+	repo := tenantportsmock.NewMockUserRepository(t)
+	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPut).
+		WithPath("/api/v1/users/me/assistant-visibility/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, ginCtx.ResponseCode())
+	repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
+}
+
 func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 	t.Parallel()
 
