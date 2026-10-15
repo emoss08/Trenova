@@ -38,31 +38,41 @@ export function recommendationQueryText(draft: string): string | null {
 
 /**
  * Whether a match is worth offering beside the composer: it names an agent
- * other than the one the question would go to now.
+ * other than the one the question would go to now, and not one the person
+ * already turned down with the cross while writing this question.
  */
 export function offersRecommendation(
   recommendation: AgentRecommendation | null,
   agentId: string | null,
+  keptOver: readonly string[] = [],
 ): recommendation is AgentRecommendation {
-  return recommendation !== null && !recommendation.current && recommendation.agent.id !== agentId;
+  return (
+    recommendation !== null &&
+    !recommendation.current &&
+    recommendation.agent.id !== agentId &&
+    !keptOver.includes(recommendation.agent.id)
+  );
 }
 
 /**
- * The agent a question goes to when it is sent. Once the person has chosen,
- * from the picker or from the suggestion, it goes where they chose. Until
- * then it goes to the agent that holds the tools it needs, when there is one,
- * and otherwise to the agent already chosen.
+ * The agent a question goes to when it is sent. An agent the person picked
+ * from the picker is where it goes. Otherwise it goes to the agent that
+ * holds the tools it needs, when there is one they have not turned down, and
+ * to the agent already chosen when there is none.
  */
 export function agentToAsk({
   agent,
   recommendation,
-  chosen,
+  pinned,
+  keptOver,
 }: {
   agent: AgentChoice;
   recommendation: AgentRecommendation | null;
-  chosen: boolean;
+  /** The person picked the agent themselves from the picker. */
+  pinned: boolean;
+  keptOver: readonly string[];
 }): AgentChoice {
-  if (chosen || !offersRecommendation(recommendation, agent.id)) {
+  if (pinned || !offersRecommendation(recommendation, agent.id, keptOver)) {
     return agent;
   }
 
