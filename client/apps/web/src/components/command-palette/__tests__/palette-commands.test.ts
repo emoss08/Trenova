@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAppCommands,
   buildQuickActionCommands,
+  withoutAssistantCommands,
   type AppCommandContext,
 } from "../palette-commands";
 import { t } from "./palette-test-fixtures";
@@ -122,5 +123,42 @@ describe("buildAppCommands", () => {
     const destructive = buildAppCommands(appContext(), t).filter((entry) => entry.destructive);
 
     expect(destructive.map((entry) => entry.id)).toEqual(["app:sign-out"]);
+  });
+});
+
+/*
+Someone who has turned the assistant off in Settings has no panel on the page,
+so the palette must not offer to open one; every other command stays.
+*/
+describe("withoutAssistantCommands", () => {
+  const everything = () => [
+    ...buildQuickActionCommands(
+      QUICK_ACTIONS,
+      () => undefined,
+      { hasPermission: () => true, capabilities },
+      t,
+    ),
+    ...buildAppCommands(appContext(), t),
+  ];
+
+  it("drops every command that opens the assistant once it is turned off", () => {
+    const all = everything();
+    const kept = withoutAssistantCommands(all, true);
+    const ids = kept.map((entry) => entry.id);
+
+    expect(ids).not.toContain("quick:open-assistant");
+    expect(ids).not.toContain("app:assistant-new");
+    expect(kept.some((entry) => entry.intent.type === "assistant")).toBe(false);
+    expect(ids).toEqual(
+      all
+        .filter((entry) => entry.id !== "quick:open-assistant" && entry.id !== "app:assistant-new")
+        .map((entry) => entry.id),
+    );
+  });
+
+  it("keeps the assistant's commands while it is on", () => {
+    const all = everything();
+
+    expect(withoutAssistantCommands(all, false)).toEqual(all);
   });
 });

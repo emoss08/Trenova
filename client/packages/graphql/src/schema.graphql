@@ -18028,6 +18028,12 @@ type Invoice {
   billType: BillType!
   billingQueueItemId: ID!
   businessUnitId: ID!
+  """
+  The lines summed by how each was billed: one entry per freight rating,
+  accessorial charge or memo line, however many shipments share it. Freight
+  comes first, then accessorials, then memo lines.
+  """
+  chargeSummary: [InvoiceChargeGroup!]!
   createdAt: Timestamp!
   """
   Credit memo applications touching this invoice: the credits that settled it,
@@ -18152,6 +18158,8 @@ type Invoice {
   voidDisposition: InvoiceVoidDisposition
   voidReason: String!
   voidedAt: Timestamp
+  """Who voided the invoice; null while it stands."""
+  voidedBy: User
   """The full-reversal adjustment that voided a posted invoice."""
   voidedByAdjustmentId: ID
   voidedById: ID
@@ -18354,6 +18362,38 @@ type InvoiceAdjustmentSummaryCount {
   label: String!
 }
 
+"""
+Every line of an invoice billed the same way, summed across the shipments it ran on.
+"""
+type InvoiceChargeGroup {
+  amount: Decimal!
+  chargeCode: String
+  """How an accessorial was charged; null on freight and memo lines."""
+  chargeMethod: AccessorialMethod
+  """What the first line in the group says."""
+  description: String!
+  """The formula template that rated the freight, when the line kept it."""
+  formulaTemplateId: ID
+  """The template's name as it stood when the freight was billed."""
+  formulaTemplateName: String
+  lineCount: Int!
+  """Units billed across the group."""
+  quantity: Decimal!
+  """
+  The rate every line in the group was billed at: a freight load's base rate,
+  an accessorial's amount per unit or its percentage. Null when the lines
+  differ.
+  """
+  rate: Decimal
+  """The amount a percentage was taken of, when the group is one line."""
+  rateBasisAmount: Decimal
+  """What a per-unit charge was counted in."""
+  rateUnit: RateUnit
+  """Distinct shipments the group bills; zero for memo lines."""
+  shipmentCount: Int!
+  type: InvoiceLineType!
+}
+
 type InvoiceConnection {
   edges: [InvoiceEdge!]!
   pageInfo: PageInfo!
@@ -18379,6 +18419,7 @@ type InvoiceDispute {
   invoiceId: ID!
   notes: String!
   openedAt: Timestamp!
+  openedBy: User
   openedById: ID!
   organizationId: ID!
   reasonCode: InvoiceDisputeReasonCode!
@@ -18386,6 +18427,7 @@ type InvoiceDispute {
   resolutionAdjustmentId: ID
   resolutionNotes: String!
   resolvedAt: Timestamp
+  resolvedBy: User
   resolvedById: ID
   status: InvoiceDisputeCaseStatus!
   updatedAt: Timestamp!
@@ -18498,6 +18540,10 @@ type InvoiceLine {
   chargeMethod: String
   createdAt: Timestamp!
   description: String!
+  """The formula template that rated a freight line, when the line kept it."""
+  formulaTemplateId: ID
+  """The template's name as it stood when the line was billed."""
+  formulaTemplateName: String
   id: ID!
   invoiceId: ID!
   lineNumber: Int!
@@ -27846,6 +27892,11 @@ input ShipmentsInput {
   Load each shipment's customer without expanding the rest of its details.
   """
   includeCustomer: Boolean = false
+  """
+  Only shipments one of these invoices bills, as its shipment or on one of its
+  lines. Needs permission to read invoices.
+  """
+  invoiceIds: [ID!]
   query: String
   quickFilters: [ShipmentQuickFilterInput!]
   sort: [SortFieldInput!]

@@ -10389,6 +10389,7 @@
   "Whether a driver can be given new freight. Held apart from the worker record on purpose: taking somebody off the board until a paper is renewed is a dispatch decision, and it is not the same permission as editing their employment, their pay or their profile.": "Si a un conductor se le puede asignar carga nueva. Se mantiene separado del registro del trabajador a propósito: retirar a alguien del tablero hasta que se renueve un documento es una decisión de despacho, y no es el mismo permiso que editar su empleo, su pago o su perfil.",
   "Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when": "Si cada factura cedida está lista para enviarse a su empresa de factoraje, qué la retiene y desde cuándo",
   "Whether the agreement is with or without recourse.": "Si el acuerdo es con recurso o sin recurso.",
+  "Whether the assistant is hidden is required": "Es obligatorio indicar si el asistente está oculto",
   "Whether the expense or dispute was approved. Branch on this or a denial will read as an approval.": "Si el gasto o la disputa se aprobó. Ramifique sobre esto o una denegación se leerá como una aprobación.",
   "Whether the request was approved. Branch on this or a denial will read as an approval.": "Si la solicitud se aprobó. Ramifique sobre esto o una denegación se leerá como una aprobación.",
   "Whether the schedule was turned off rather than merely skipped this once.": "Si la programación se desactivó en lugar de simplemente omitirse esta vez.",

@@ -192,6 +192,44 @@ type Invoice {
   customer: Customer
   order: Order
   lines: [InvoiceLine!]
+  """
+  The lines summed by how each was billed: one entry per freight rating,
+  accessorial charge or memo line, however many shipments share it. Freight
+  comes first, then accessorials, then memo lines.
+  """
+  chargeSummary: [InvoiceChargeGroup!]!
+  "Who voided the invoice; null while it stands."
+  voidedBy: User
+}
+
+"Every line of an invoice billed the same way, summed across the shipments it ran on."
+type InvoiceChargeGroup {
+  type: InvoiceLineType!
+  "What the first line in the group says."
+  description: String!
+  chargeCode: String
+  "How an accessorial was charged; null on freight and memo lines."
+  chargeMethod: AccessorialMethod
+  "What a per-unit charge was counted in."
+  rateUnit: RateUnit
+  """
+  The rate every line in the group was billed at: a freight load's base rate,
+  an accessorial's amount per unit or its percentage. Null when the lines
+  differ.
+  """
+  rate: Decimal
+  "The amount a percentage was taken of, when the group is one line."
+  rateBasisAmount: Decimal
+  "Units billed across the group."
+  quantity: Decimal!
+  "The formula template that rated the freight, when the line kept it."
+  formulaTemplateId: ID
+  "The template's name as it stood when the freight was billed."
+  formulaTemplateName: String
+  lineCount: Int!
+  "Distinct shipments the group bills; zero for memo lines."
+  shipmentCount: Int!
+  amount: Decimal!
 }
 
 enum InvoiceLineType {
@@ -221,6 +259,10 @@ type InvoiceLine {
   rate: Decimal
   "The share of the charge this line bills, when it is less than all of it."
   allocationPercent: Decimal
+  "The formula template that rated a freight line, when the line kept it."
+  formulaTemplateId: ID
+  "The template's name as it stood when the line was billed."
+  formulaTemplateName: String
   chargeAllocationId: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!

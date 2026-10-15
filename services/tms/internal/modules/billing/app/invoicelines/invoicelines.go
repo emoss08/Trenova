@@ -135,17 +135,17 @@ func freightLine(
 	freightAmount := SignedAmount(billType, charge.Amount)
 
 	line := &invoice.InvoiceLine{
-		ShipmentID:          shp.ID,
-		ShipmentProNumber:   shp.ProNumber,
-		ShipmentBOL:         shp.BOL,
-		LineNumber:          lineNumber,
-		Type:                invoice.InvoiceLineTypeFreight,
-		Description:         ShareDescription(FreightDescription, charge),
-		Quantity:            decimal.NewFromInt(1),
-		UnitPrice:           freightAmount,
-		Amount:              freightAmount,
-		FormulaTemplateName: formulaTemplateName(shp),
+		ShipmentID:        shp.ID,
+		ShipmentProNumber: shp.ProNumber,
+		ShipmentBOL:       shp.BOL,
+		LineNumber:        lineNumber,
+		Type:              invoice.InvoiceLineTypeFreight,
+		Description:       ShareDescription(FreightDescription, charge),
+		Quantity:          decimal.NewFromInt(1),
+		UnitPrice:         freightAmount,
+		Amount:            freightAmount,
 	}
+	line.FormulaTemplateID, line.FormulaTemplateName = ratedWith(shp)
 	if shp.BaseRate.Valid && !shp.BaseRate.Decimal.IsZero() {
 		line.Rate = decimal.NewNullDecimal(shp.BaseRate.Decimal)
 	}
@@ -217,17 +217,35 @@ func matchingAccessorial(charge *shipment.AdditionalCharge) *accessorialcharge.A
 	return charge.AccessorialCharge
 }
 
-func formulaTemplateName(shp *shipment.Shipment) string {
-	if shp.RatingDetail != nil {
-		if name := strings.TrimSpace(shp.RatingDetail.FormulaTemplateName); name != "" {
-			return name
-		}
-	}
-	if shp.FormulaTemplate != nil && shp.FormulaTemplate.ID == shp.FormulaTemplateID {
-		return strings.TrimSpace(shp.FormulaTemplate.Name)
+func ratedWith(shp *shipment.Shipment) (id pulid.ID, name string) {
+	assignedID, assignedName, assigned := assignedTemplate(shp)
+	if shp.RatingDetail == nil {
+		return assignedID, assignedName
 	}
 
-	return ""
+	name = strings.TrimSpace(shp.RatingDetail.FormulaTemplateName)
+	if rated := strings.TrimSpace(shp.RatingDetail.FormulaTemplateID); rated != "" {
+		if !pulid.LooksLike(rated) {
+			return "", name
+		}
+		return pulid.ID(rated), name
+	}
+	if name == "" {
+		return assignedID, assignedName
+	}
+	if assigned && assignedName == name {
+		return assignedID, name
+	}
+
+	return "", name
+}
+
+func assignedTemplate(shp *shipment.Shipment) (id pulid.ID, name string, ok bool) {
+	if shp.FormulaTemplate == nil || shp.FormulaTemplate.ID != shp.FormulaTemplateID {
+		return "", "", false
+	}
+
+	return shp.FormulaTemplate.ID, strings.TrimSpace(shp.FormulaTemplate.Name), true
 }
 
 func HydrateAccessorials(

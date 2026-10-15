@@ -1,4 +1,5 @@
 import { fetchInvoiceArContext, fetchInvoicesByShipment } from "@/lib/graphql/invoice";
+import { fetchDeskInvoice } from "@/lib/graphql/invoice-card";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
@@ -26,6 +27,18 @@ export const invoice = createQueryKeys("invoice", {
   emailAttempts: (invoiceId: string) => ({
     queryKey: ["email-attempts", invoiceId],
     queryFn: async () => apiService.invoiceService.listEmailAttempts(invoiceId),
+  }),
+  card: (invoiceId: string) => ({
+    queryKey: ["card", invoiceId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      fetchDeskInvoice(invoiceId, { signal }),
+  }),
+  lastEmailAttempt: (invoiceId: string) => ({
+    queryKey: ["last-email-attempt", invoiceId],
+    queryFn: async () => {
+      const page = await apiService.invoiceService.listEmailAttempts(invoiceId, { limit: 1 });
+      return page.results[0] ?? null;
+    },
   }),
 });
 

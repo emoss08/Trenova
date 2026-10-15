@@ -3029,6 +3029,9 @@ writes:
   "PATCH /api/v1/users/me/profile/":
     exempt: user-preference
     reason: "A person's own job title, phone and avatar; they describe themselves and no agent speaks for them."
+  "PUT /api/v1/users/me/assistant-visibility/":
+    exempt: user-preference
+    reason: "Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone."
   "PUT /api/v1/users/me/availability/":
     exempt: user-preference
     reason: "Whether a person is available, focusing or away, and who covers for them, is theirs alone to say."

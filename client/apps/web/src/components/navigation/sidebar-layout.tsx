@@ -18,7 +18,7 @@ import { PageHeader, type PageHeaderProps } from "../page-header";
 import { ShellFrameContext, usePageBarSlots, useRouteFrame, useShellFrame } from "./shell-frame";
 import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
-import { UserSettingsHost } from "./user-settings-host";
+import { useSettingsShortcut } from "./use-settings-shortcut";
 import { RailShell } from "./rail-shell";
 
 interface SidebarLayoutProps {
@@ -98,6 +98,7 @@ function useLayoutEffects() {
 
   useRecordRecentPages();
   useTouchRecentRecords();
+  useSettingsShortcut();
 }
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
@@ -109,7 +110,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     <>
       <CommandPaletteMount />
       <KeyboardShortcutsDialog />
-      <UserSettingsHost />
       <AssistantWidget />
       {/* With the assistant docked down one side, the page moves over for it
           rather than sitting under it. */}

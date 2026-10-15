@@ -5022,6 +5022,12 @@ export type InvoiceFactoringOverride =
   /** The invoice stays on the organization's own receivables. */
   | 'Exclude';
 
+export type InvoiceLineType =
+  | 'Accessorial'
+  | 'Freight'
+  /** A memo line; counts toward the total and nothing else. */
+  | 'Memo';
+
 export type InvoiceMemoKind =
   | 'LateCharge'
   | 'Manual';
@@ -7461,6 +7467,11 @@ export type ShipmentsInput = {
   first?: number | null | undefined;
   /** Load each shipment's customer without expanding the rest of its details. */
   includeCustomer?: boolean | null | undefined;
+  /**
+   * Only shipments one of these invoices bills, as its shipment or on one of its
+   * lines. Needs permission to read invoices.
+   */
+  invoiceIds?: Array<string | number> | null | undefined;
   query?: string | null | undefined;
   quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
@@ -14967,6 +14978,15 @@ export type RejectInvoiceAdjustmentMutationVariables = Exact<{
 
 export type RejectInvoiceAdjustmentMutation = { rejectInvoiceAdjustment: { id: string, status: InvoiceAdjustmentStatus, approvalStatus: InvoiceAdjustmentApprovalStatus, rejectionReason: string } };
 
+export type DeskInvoiceCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskInvoiceCardQuery = { invoice: { id: string, number: string, billType: BillType, status: InvoiceStatus, scope: InvoiceScope, currencyCode: string, paymentTerm: InvoicePaymentTerm, invoiceDate: number, dueDate: number | null, postedAt: number | null, periodStart: number | null, periodEnd: number | null, shipmentCount: number, shipmentProNumber: string, shipmentBol: string, orderId: string | null, orderNumber: string | null, billToName: string, isSplitBill: boolean, factoringCompanyId: string | null, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, openBalance: string, creditRemaining: string, daysPastDue: number | null, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, sentAt: number | null, voidedAt: number | null, voidReason: string, voidDisposition: InvoiceVoidDisposition | null, memoReason: string, memoKind: InvoiceMemoKind | null, ediSendStatus: InvoiceEdiSendStatus, ediSentAt: number | null, lastEdiError: string, lastEdiMessageId: string | null, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, voidedBy: { id: string, name: string } | null, referenceInvoice: { ' $fragmentRefs'?: { 'DeskInvoiceNeighborFragment': DeskInvoiceNeighborFragment } } | null, relatedInvoices: Array<{ ' $fragmentRefs'?: { 'DeskInvoiceNeighborFragment': DeskInvoiceNeighborFragment } }>, chargeSummary: Array<{ type: InvoiceLineType, description: string, chargeCode: string | null, chargeMethod: AccessorialMethod | null, rateUnit: RateUnit | null, rate: string | null, rateBasisAmount: string | null, quantity: string, formulaTemplateId: string | null, formulaTemplateName: string | null, lineCount: number, shipmentCount: number, amount: string }>, paymentApplications: Array<{ id: string, appliedAmountMinor: number, shortPayAmountMinor: number, createdAt: number, payment: { id: string, paymentDate: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string } | null }>, creditApplications: Array<{ id: string, appliedAmountMinor: number, accountingDate: number, status: CreditMemoApplicationStatus, unappliedAt: number | null, unappliedReason: string, creditMemo: { id: string, number: string } | null, invoice: { id: string, number: string } | null }>, disputes: Array<{ id: string, status: InvoiceDisputeCaseStatus, reasonCode: InvoiceDisputeReasonCode, disputedAmount: string, notes: string, openedAt: number, resolvedAt: number | null, resolution: InvoiceDisputeResolution | null, resolutionNotes: string, openedBy: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null }>, ediSendPlan: { enabled: boolean, partnerName: string, communicationMethod: string, status: InvoiceEdiSendStatus, lastMessageId: string | null, lastError: string, sentAt: number | null, blockers: Array<string> } } | null };
+
+export type DeskInvoiceNeighborFragment = { id: string, number: string, billType: BillType, status: InvoiceStatus, totalAmount: string, openBalance: string, currencyCode: string, settlementStatus: InvoiceSettlementStatus, daysPastDue: number | null, postedAt: number | null, billToName: string } & { ' $fragmentName'?: 'DeskInvoiceNeighborFragment' };
+
 export type InvoiceRelatedFieldsFragment = { id: string, number: string, billType: BillType, status: InvoiceStatus, scope: InvoiceScope, currencyCode: string, totalAmount: string, settlementStatus: InvoiceSettlementStatus, billToName: string, customerId: string, isSplitBill: boolean } & { ' $fragmentName'?: 'InvoiceRelatedFieldsFragment' };
 
 export type InvoiceArContextQueryVariables = Exact<{
@@ -18503,6 +18523,7 @@ export { IftaTaxRateFieldsFragmentDoc, IftaTaxRateTableDocument, UpsertIftaTaxRa
 export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmentDoc, InboundShipmentRefFieldsFragmentDoc, TriageUserFieldsFragmentDoc, InboundMessageListFieldsFragmentDoc, InboundAttachmentFieldsFragmentDoc, InboundMessageDetailFieldsFragmentDoc, InboundMessagesDocument, InboundMessageDocument, InboundMessageCountsDocument, InboundMailboxesDocument, ReviewInboundMessageDocument, LinkInboundMessageDocument, CreateInboundMailboxDocument, UpdateInboundMailboxDocument, RotateInboundMailboxTokenDocument, SetInboundMailboxSigningSecretDocument, SetInboundMailboxApiKeyDocument } from "./documents/inbox/inbox";
 export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundAttachmentDetailFieldsFragmentDoc, TriageFactFieldsFragmentDoc, TriageConflictFieldsFragmentDoc, InboundActivityFieldsFragmentDoc, InboundReplyAttachmentFieldsFragmentDoc, InboundReplyFieldsFragmentDoc, TriageLoadDraftFieldsFragmentDoc, InboundReplyAttachableFieldsFragmentDoc, TriageSampleFieldsFragmentDoc, TriageRuleFieldsFragmentDoc, TriageRulePreviewFieldsFragmentDoc, TriageDeckItemFieldsFragmentDoc, TriageRiverPointFieldsFragmentDoc, TriageViewFieldsFragmentDoc, TriageReplyTemplateFieldsFragmentDoc, TriageShipmentPeekFieldsFragmentDoc, TriageBulkResultFieldsFragmentDoc, InboundThreadDocument, TriageBriefingDocument, MyTriageViewsDocument, TriageResponseTargetsDocument, TriageSettingsDocument, TriageAssigneesDocument, TriageRulesDocument, TriageRulePreviewDocument, TriageRuleMatchesDocument, TriageSenderDomainsDocument, InboundSenderProfileDocument, TriageReplyTemplatesDocument, InboundReplyAttachablesDocument, RenderTriageReplyTemplateDocument, TriageStopTimesDocument, TriageShipmentPeekDocument, TriageCustomerPeekDocument, ReviewInboundMessagesDocument, ReopenInboundMessagesDocument, AssignInboundMessagesDocument, SnoozeInboundMessagesDocument, WakeInboundMessageDocument, WaitForInboundReplyDocument, StopWaitingForInboundReplyDocument, UnlinkInboundMessageDocument, SendInboundMailboxTestDocument, HandOffTriageDocument, ReadUnreadInboundMessagesDocument, CreateMyTriageViewDocument, RenameMyTriageViewDocument, DeleteMyTriageViewDocument, UpdateTriageResponseTargetsDocument, UpdateTriageSettingsDocument, CreateTriageRuleDocument, UpdateTriageRuleDocument, SetTriageRuleEnabledDocument, DeleteTriageRuleDocument, CorrectInboundClassificationDocument, FlagInboundFactDocument, ResolveInboundConflictDocument, ReopenInboundConflictDocument, DraftInboundReplyDocument, SaveInboundReplyDraftDocument, DiscardInboundReplyDraftDocument, SendInboundReplyDocument, DraftInboundManyDocument, CreateTriageReplyTemplateDocument, UpdateTriageReplyTemplateDocument, DeleteTriageReplyTemplateDocument, DraftInboundLoadDocument, DiscardInboundLoadDocument, CreateInboundLoadDocument, FileInboundAttachmentDocument, FileInboundManyDocument, UnfileInboundAttachmentDocument, LogInboundExceptionDocument, BlockInboundSenderDocument, UnblockInboundSenderDocument, DecideInboundStopsDocument } from "./documents/inbox/triage";
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
+export { DeskInvoiceNeighborFragmentDoc, DeskInvoiceCardDocument } from "./documents/invoice/desk";
 export { InvoiceRelatedFieldsFragmentDoc, CreditMemoApplicationFieldsFragmentDoc, InvoiceDisputeFieldsFragmentDoc, InvoiceEdiSendPlanFieldsFragmentDoc, InvoiceArFieldsFragmentDoc, InvoiceArContextDocument, ShipmentInvoicesDocument } from "./documents/invoice/detail";
 export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, CreateInvoicesFromOrderDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
 export { InvoiceRegisterRowFieldsFragmentDoc, InvoiceRegisterDocument } from "./documents/invoice/register";

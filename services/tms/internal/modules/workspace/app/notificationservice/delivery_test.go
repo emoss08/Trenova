@@ -185,6 +185,12 @@ func TestCreateEmailsAnUrgentNotificationRightAway(t *testing.T) {
 		assert.Equal(t, "notification-email-"+created.ID.String(), sent.IdempotencyKey)
 		assert.Contains(t, sent.HTML, "https://tms.example.com/dispatch/console?move=smv_1")
 		assert.Contains(t, sent.Text, "S-48219 needs review")
+		assert.Contains(
+			t,
+			sent.Text,
+			"Change what reaches you: https://tms.example.com/settings?section=notifications\n",
+			"the email links to the notifications section of Settings",
+		)
 	case <-time.After(2 * time.Second):
 		t.Fatal("the urgent notification was not emailed")
 	}

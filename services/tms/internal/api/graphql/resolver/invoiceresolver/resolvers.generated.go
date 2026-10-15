@@ -14,6 +14,8 @@ type Deps struct {
 	InvoiceService  invoiceports.InvoiceService
 }
 
+type InvoiceChargeGroupResolver struct{ *Deps }
+
 type InvoiceLineResolver struct{ *Deps }
 
 type InvoiceResolver struct{ *Deps }

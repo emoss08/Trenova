@@ -9521,6 +9521,9 @@ type ShipmentsInput struct {
 	StopLocationIds []string `json:"stopLocationIds,omitempty"`
 	// Only shipments with a live move tendered to one of these carriers.
 	CarrierIds []string `json:"carrierIds,omitempty"`
+	// Only shipments one of these invoices bills, as its shipment or on one of its
+	// lines. Needs permission to read invoices.
+	InvoiceIds []string `json:"invoiceIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

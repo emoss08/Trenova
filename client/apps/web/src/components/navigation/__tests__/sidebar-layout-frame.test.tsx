@@ -17,7 +17,6 @@ vi.mock("../rail-panel", () => ({
   ),
   RailPanelBody: () => null,
 }));
-vi.mock("../user-settings-host", () => ({ UserSettingsHost: () => null }));
 vi.mock("../../assistant/assistant-widget", () => ({
   AssistantWidget: () => null,
   useAssistantSideInset: () => null,

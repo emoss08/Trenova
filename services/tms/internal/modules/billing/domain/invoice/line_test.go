@@ -20,6 +20,7 @@ func TestInvoiceLineCopyChargeDetail(t *testing.T) {
 		RateUnit:            accessorialcharge.RateUnitHour,
 		Rate:                decimal.NewNullDecimal(decimal.RequireFromString("75")),
 		RateBasisAmount:     decimal.NewNullDecimal(decimal.RequireFromString("2450")),
+		FormulaTemplateID:   pulid.MustNew("ft_"),
 		FormulaTemplateName: "Per Mile",
 		Description:         "Detention",
 		Amount:              decimal.RequireFromString("150"),
@@ -35,6 +36,7 @@ func TestInvoiceLineCopyChargeDetail(t *testing.T) {
 	assert.Equal(t, accessorialcharge.RateUnitHour, target.RateUnit)
 	assert.True(t, target.Rate.Decimal.Equal(source.Rate.Decimal))
 	assert.True(t, target.RateBasisAmount.Decimal.Equal(source.RateBasisAmount.Decimal))
+	assert.Equal(t, source.FormulaTemplateID, target.FormulaTemplateID)
 	assert.Equal(t, "Per Mile", target.FormulaTemplateName)
 	assert.Equal(t, "Credit", target.Description)
 	assert.True(t, target.Amount.Equal(decimal.RequireFromString("-150")))

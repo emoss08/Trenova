@@ -15,6 +15,7 @@ import {
   type AvatarSummary,
   type SessionSummary,
   type SignInSummary,
+  type UpdateMyAssistantVisibility,
   type UpdateMyAvailability,
   type UpdateMyProfile,
   bulkUpdateUserStatusResponseSchema,
@@ -129,6 +130,11 @@ export class UserService {
   public async updateMyAvailability(data: UpdateMyAvailability) {
     const response = await api.put<User>(`${this.base_url}/me/availability/`, data);
     return safeParse(userSchema, response, "User Availability");
+  }
+
+  public async updateMyAssistantVisibility(data: UpdateMyAssistantVisibility) {
+    const response = await api.put<User>(`${this.base_url}/me/assistant-visibility/`, data);
+    return safeParse(userSchema, response, "Assistant Visibility");
   }
 
   public async listMySessions() {

@@ -297,7 +297,6 @@
   "{0} for {1}": "{0}，适用 {1}",
   "{0} of": "{0} 之",
   "{0}% of target": "达成目标的 {0}%",
-  "{0}% of {1}": "{1} 的 {0}%",
   "· {0, plural, one {# filter} other {# filters}}": "· {0, plural, other {# 个筛选器}}",
   "— file attached": "— 已附文件"
 }

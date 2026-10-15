@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -175,4 +176,12 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID string) (
 	}
 
 	return disputes, nil
+}
+
+func (r *InvoiceDisputeResolver) OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.OpenedByID)
+}
+
+func (r *InvoiceDisputeResolver) ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.ResolvedByID)
 }

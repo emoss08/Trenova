@@ -1930,6 +1930,10 @@ models:
         resolver: true
       resolution:
         resolver: true
+      openedBy:
+        resolver: true
+      resolvedBy:
+        resolver: true
   InvoiceAdjustmentKind:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.Kind
@@ -2072,6 +2076,32 @@ models:
       lateChargeAssessments:
         resolver: true
       ediSendPlan:
+        resolver: true
+      chargeSummary:
+        resolver: true
+      voidedBy:
+        resolver: true
+  InvoiceChargeGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.ChargeGroup
+    fields:
+      chargeCode:
+        resolver: true
+      chargeMethod:
+        resolver: true
+      rateUnit:
+        resolver: true
+      rate:
+        resolver: true
+      rateBasisAmount:
+        resolver: true
+      quantity:
+        resolver: true
+      formulaTemplateId:
+        resolver: true
+      formulaTemplateName:
+        resolver: true
+      amount:
         resolver: true
   InvoiceLine:
     model:

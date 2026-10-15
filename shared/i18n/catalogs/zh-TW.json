@@ -10389,6 +10389,7 @@
   "Whether a driver can be given new freight. Held apart from the worker record on purpose: taking somebody off the board until a paper is renewed is a dispatch decision, and it is not the same permission as editing their employment, their pay or their profile.": "駕駛員是否可以被指派新的貨物。此權限刻意與員工記錄分開：在文件更新前將人員暫停派遣屬於調度決策，與編輯其僱用資料、薪資或個人資料的權限不同。",
   "Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when": "每張承購發票是否可提交給承購公司、受阻原因及起始時間",
   "Whether the agreement is with or without recourse.": "協議為有追索權或無追索權。",
+  "Whether the assistant is hidden is required": "必須指定是否隱藏助理",
   "Whether the expense or dispute was approved. Branch on this or a denial will read as an approval.": "該費用或爭議是否獲核准。請依此分支，否則駁回會被讀成核准。",
   "Whether the request was approved. Branch on this or a denial will read as an approval.": "該申請是否獲核准。請依此分支，否則駁回會被讀成核准。",
   "Whether the schedule was turned off rather than merely skipped this once.": "此排程是遭停用，而非僅此一次略過。",

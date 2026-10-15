@@ -10,7 +10,7 @@ manager or a biller keeps, the tractor and trailer a fleet manager runs, the dri
 dispatcher puts on loads, the dock a planner sends trucks to, the carrier a carrier manager
 qualifies and pays, the order a customer service rep follows to billing, the service failure
 a customer service rep explains and settles, the rate agreement a pricing analyst holds
-freight to.
+freight to, the invoice a biller sends and a collector follows to paid.
 
 ## Naming and linking artifacts
 
@@ -81,7 +81,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice).
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
@@ -107,6 +107,7 @@ ask what the record looks like to the person who reads it, and draw that:
 | EDI message | its transaction set as a stamp, its way as a relay edge to edge (generated, delivered, acknowledged; or received, read, tendered) with the envelope resting at the furthest stop and, where it stopped, a slip pointing at that stop with why, the attempt and the words sent back, what it says read in plain words over a stub of its fields, the ISA/GS/ST envelope nested with each trailer's check, the X12 as a tape with every finding pinned to its segment and element |
 | EDI inbound file | the file as a sheet with its corner folded and the way it came in tabbed to its foot, its intake as chevrons (received, envelope read, sets handled) with each processing note the service wrote kept as written, a routing label from the ISA (sender and receiver with their qualifiers, the interchange number, the channel, the AS2 message or mailbox path, the checksum drawn as bars), what it carried as a folder per functional group with each transaction set opening in place as the message it was kept as and its own notes, SE01 miscount and findings pinned under it, a ruler of the whole interchange shaded by group, and the envelope's ISA/IEA and group counts checked; a file that is not X12 shows how it begins; each 204 names the tender it opened, which opens in place |
 | EDI transfer | the tender as a ticket torn from a book (its 204 over the tear, the way it travels under it), titled by its bill of lading and named for the partner as the reading organization keeps them (the other side's partner row is hidden by row-level security), its decision as four gates in one meter (received or sent, mapped, decided, shipment) with a mapping hold in amber, a failure in red and a close struck through, why it closed kept as written, its stops down one rail with each window, load and whether the partner's location is mapped yet, its freight beside the rate run down to the total, and the partner's codes against our records with those still unmapped first; mappings are read live while an inbound tender waits on a decision, from the snapshot once it is decided |
+| Invoice | a receipt slip of its bill type (INV, CR, DR) beside who it bills; the figure is what is still owed (amber once late), a credit memo's credit left, a draft's total or a voided total struck through; what is owed as one strip (paid, credited hatched, in dispute amber, still open) keyed underneath, and the terms as a ruler from the invoice date to the due date with today on it, past it in amber once late; a draft instead shows how many of the customer's days have already run while it waits to be posted, since its terms count from the invoice date; the charges as the bill reads them, one row per way a charge was billed (`Invoice.chargeSummary`, summed on the server so a consolidated invoice of hundreds of lines is a handful of rows), the freight rated by the formula template named on the line and opening that template's card, its name cut to fit with the whole of it on hover; the foot from the total down to the balance due over a double rule; payments and credits as remittance stubs (a reversed payment or a credit taken back struck through, a short pay tagged); the open dispute as an amber slip over the closed ones; and where it went as one slip each for email, the EDI 210 (opening its message) and the accounting system it is in, each line cut to one row and told in full on hover only when cut. A voided invoice says why and what became of its freight; a credit memo, what it corrects and the invoices it settled |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. `CardStatus` takes `danger` with an `x` mark only for a state that is final and failed
@@ -169,7 +170,10 @@ and, where the server cannot yet filter by it, a `ShipmentsInput` field
 (`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
 unit or the driver; `stopLocationIds` matches loads with a live stop at the location;
 `carrierIds` matches loads with a move tendered to the carrier and not canceled; an order's
-legs filter on `orderId`).
+legs filter on `orderId`; `invoiceIds` matches the shipments an invoice bills, as its shipment or
+on a line, and needs permission to read invoices: the resolver reads the invoices through the
+billing module and hands the shipment list their ids, so the operations module never reads a
+billing table).
 
 A record's service failures are `CardFailures` over `useRecordFailures({ scope, pageSize,
 enabled })` (`record-card/record-failures.ts`), one operation, `DeskRecordFailures`, for every

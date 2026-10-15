@@ -207,7 +207,100 @@ func TestForShipmentNamesTheFormulaFromTheLoadedTemplate(t *testing.T) {
 	lines := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)
 
 	assert.Equal(t, "Flat Rate", lines[0].FormulaTemplateName)
+	assert.Equal(t, templateID, lines[0].FormulaTemplateID)
 	assert.False(t, lines[0].Rate.Valid)
+}
+
+func TestForShipmentKeepsTheTemplateTheRatingUsed(t *testing.T) {
+	t.Parallel()
+
+	ratedWith := pulid.MustNew("ft_")
+	assignedSince := pulid.MustNew("ft_")
+	shp := testShipment()
+	shp.RatingDetail = &shipment.RatingDetail{
+		FormulaTemplateID:   ratedWith.String(),
+		FormulaTemplateName: "Per Mile",
+	}
+	shp.FormulaTemplateID = assignedSince
+	shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: assignedSince, Name: "Per CWT"}
+
+	freight := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)[0]
+
+	assert.Equal(t, ratedWith, freight.FormulaTemplateID)
+	assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
+}
+
+func TestForShipmentNamesTheTemplateOfALegacyRatingByItsName(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("ft_")
+	tests := []struct {
+		name     string
+		assigned string
+		wantID   pulid.ID
+	}{
+		{name: "the assigned template has the rating's name", assigned: "Per Mile", wantID: templateID},
+		{name: "the assigned template was renamed or replaced", assigned: "Per CWT", wantID: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			shp := testShipment()
+			shp.RatingDetail = &shipment.RatingDetail{FormulaTemplateName: "Per Mile"}
+			shp.FormulaTemplateID = templateID
+			shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: templateID, Name: tt.assigned}
+
+			freight := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)[0]
+
+			assert.Equal(t, tt.wantID, freight.FormulaTemplateID)
+			assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
+		})
+	}
+}
+
+func TestForShipmentLeavesOutATemplateIDThatIsNotOne(t *testing.T) {
+	t.Parallel()
+
+	shp := testShipment()
+	shp.RatingDetail = &shipment.RatingDetail{
+		FormulaTemplateID:   "per-mile",
+		FormulaTemplateName: "Per Mile",
+	}
+
+	freight := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)[0]
+
+	assert.True(t, freight.FormulaTemplateID.IsNil())
+	assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
+}
+
+func TestForShipmentNamesNoTemplateForAccessorialLines(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("ft_")
+	fuel := &accessorialcharge.AccessorialCharge{
+		ID:     pulid.MustNew("acc_"),
+		Code:   "FSC",
+		Method: accessorialcharge.MethodPercentage,
+	}
+	shp := testShipment(&shipment.AdditionalCharge{
+		AccessorialChargeID: fuel.ID,
+		AccessorialCharge:   fuel,
+		Method:              accessorialcharge.MethodPercentage,
+		Amount:              dec("10"),
+		Unit:                1,
+	})
+	shp.RatingDetail = &shipment.RatingDetail{
+		FormulaTemplateID:   templateID.String(),
+		FormulaTemplateName: "Per Mile",
+	}
+
+	lines := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)
+	require.Len(t, lines, 2)
+
+	assert.Equal(t, templateID, lines[0].FormulaTemplateID)
+	assert.True(t, lines[1].FormulaTemplateID.IsNil())
+	assert.Empty(t, lines[1].FormulaTemplateName)
 }
 
 func TestHydrateAccessorialsLoadsMissingAndStaleDefinitionsOnce(t *testing.T) {

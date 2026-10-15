@@ -162,3 +162,19 @@ func TestApplyShipmentOptionFilters_CarrierIDsMatchLiveCarrierAssignments(t *tes
 	)
 	assert.NotContains(t, sql, `"assignments" AS "a_wrk"`)
 }
+
+func TestApplyShipmentOptionFilters_IDsMatchThoseShipments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	first := pulid.MustNew("shp_")
+	second := pulid.MustNew("shp_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		IDs: []pulid.ID{first, second},
+	})
+
+	assert.Contains(t, q.String(), "(sp.id IN ('"+first.String()+"', '"+second.String()+"'))")
+}
