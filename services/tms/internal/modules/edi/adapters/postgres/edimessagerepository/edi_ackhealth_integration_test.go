@@ -206,6 +206,49 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		require.Equal(t, []pulid.ID{ids["boltDead"]}, messageIDs(dead))
 	})
 
+	t.Run("counts by partner", func(t *testing.T) {
+		rows, err := repo.GetAckStatusCountsByPartner(ctx, ediports.GetEDIMessageStatusCountsRequest{
+			TenantInfo: tenant,
+			Since:      now - 35*60*60,
+		})
+		require.NoError(t, err)
+		require.Equal(t, []*ediports.EDIPartnerAckStatusCount{
+			{
+				PartnerID: partners[0].ID, PartnerName: "Acme Retail", PartnerCode: "ACK-HEALTH-0",
+				AckStatus: edi.MessageAcknowledgmentStatusNotExpected, Count: 1,
+			},
+			{
+				PartnerID: partners[0].ID, PartnerName: "Acme Retail", PartnerCode: "ACK-HEALTH-0",
+				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 3,
+			},
+			{
+				PartnerID: partners[1].ID, PartnerName: "Bolt Logistics", PartnerCode: "ACK-HEALTH-1",
+				AckStatus: edi.MessageAcknowledgmentStatusNotExpected, Count: 1,
+			},
+			{
+				PartnerID: partners[1].ID, PartnerName: "Bolt Logistics", PartnerCode: "ACK-HEALTH-1",
+				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 1,
+			},
+		}, rows, "by partner name, then status, and only what was sent in the window")
+
+		one, err := repo.GetAckStatusCountsByPartner(ctx, ediports.GetEDIMessageStatusCountsRequest{
+			TenantInfo: tenant,
+			PartnerID:  partners[1].ID,
+		})
+		require.NoError(t, err)
+		counts := make(map[edi.MessageAcknowledgmentStatus]int, len(one))
+		for _, row := range one {
+			require.Equal(t, partners[1].ID, row.PartnerID)
+			counts[row.AckStatus] = row.Count
+		}
+		require.Equal(t, map[edi.MessageAcknowledgmentStatus]int{
+			edi.MessageAcknowledgmentStatusPending:            1,
+			edi.MessageAcknowledgmentStatusAccepted:           1,
+			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
+			edi.MessageAcknowledgmentStatusNotExpected:        1,
+		}, counts, "the same counts GetAckStatusCounts gives for one partner")
+	})
+
 	t.Run("nothing overdue", func(t *testing.T) {
 		overdue, err := repo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
 			TenantInfo:   tenant,

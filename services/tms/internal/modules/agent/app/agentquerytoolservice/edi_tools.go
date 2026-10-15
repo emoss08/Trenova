@@ -839,14 +839,17 @@ func (t *getEDIPartnerTool) SearchTerms() []string {
 func (t *getEDIPartnerTool) Description() string {
 	return "Retrieve one EDI trading partner's setup and readiness checklist by id. It " +
 		"gives the code, kind, whether inbound and outbound are on and the customer it " +
-		"stands for, never transport credentials. Take the id from list_edi_inbound_files."
+		"stands for, never transport credentials. Take the id from list_edi_partners, a " +
+		"partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are on."
 }
 
 func (t *getEDIPartnerTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramPartnerID,
-		agenttoolschema.KindID("The trading partner's id, from a partnerId in "+
-			"list_edi_inbound_files or the page you are on.", permission.KindEDIPartner),
+		agenttoolschema.KindID("The trading partner's id, from list_edi_partners, a "+
+			"partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are "+
+			"on. A shipment's or customer's id is not a partner's: find the partner with "+
+			"list_edi_partners first.", permission.KindEDIPartner),
 	)
 }
 

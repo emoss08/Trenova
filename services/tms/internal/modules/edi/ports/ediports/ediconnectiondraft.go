@@ -375,6 +375,19 @@ type ConnectionDraft struct {
 	Ready            bool                   `json:"ready"`
 }
 
+func (d *ConnectionDraft) CredentialsToEnter() []string {
+	if d == nil || d.Transport == nil {
+		return nil
+	}
+	labels := make([]string, 0, len(d.Transport.Credentials))
+	for _, credential := range d.Transport.Credentials {
+		if credential.Required && credential.Missing {
+			labels = append(labels, credential.Label)
+		}
+	}
+	return labels
+}
+
 type ApplyConnectionDraftRequest struct {
 	Draft                  *ConnectionDraftRequest       `json:"draft"`
 	ExpectedDocumentDigest string                        `json:"expectedDocumentDigest"`

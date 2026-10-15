@@ -34,6 +34,17 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 			edi.MessageAcknowledgmentStatusPending:  4,
 			edi.MessageAcknowledgmentStatusAccepted: 9,
 		}, nil)
+	var byPartnerReq ediports.GetEDIMessageStatusCountsRequest
+	repo.EXPECT().GetAckStatusCountsByPartner(mock.Anything, mock.Anything).
+		Run(func(_ context.Context, req ediports.GetEDIMessageStatusCountsRequest) { byPartnerReq = req }).
+		Return([]*ediports.EDIPartnerAckStatusCount{
+			{PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
+				AckStatus: edi.MessageAcknowledgmentStatusAccepted, Count: 7},
+			{PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
+				AckStatus: edi.MessageAcknowledgmentStatusPending, Count: 3},
+			{PartnerID: bolt, PartnerName: "Bolt", PartnerCode: "BOLT",
+				AckStatus: edi.MessageAcknowledgmentStatusRejected, Count: 1},
+		}, nil)
 	var countReq ediports.GetEDIOverdueAckCountRequest
 	repo.EXPECT().GetOverdueAckCount(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req ediports.GetEDIOverdueAckCountRequest) { countReq = req }).
@@ -71,6 +82,23 @@ func TestGetEDIAckHealth_GroupsOverdueMessagesByPartnerOldestFirst(t *testing.T)
 	assert.GreaterOrEqual(t, countsReq.Since, before-defaultAckHealthWindowSeconds)
 	assert.Equal(t, defaultSummaryFeedLimit, deadReq.Limit)
 
+	assert.Equal(t, countsReq, byPartnerReq, "each partner's counts cover the same window")
+	assert.Equal(t, []*EDIPartnerAckCounts{
+		{
+			PartnerID: acme, PartnerName: "Acme", PartnerCode: "ACME",
+			Counts: map[edi.MessageAcknowledgmentStatus]int{
+				edi.MessageAcknowledgmentStatusAccepted: 7,
+				edi.MessageAcknowledgmentStatusPending:  3,
+			},
+		},
+		{
+			PartnerID: bolt, PartnerName: "Bolt", PartnerCode: "BOLT",
+			Counts: map[edi.MessageAcknowledgmentStatus]int{
+				edi.MessageAcknowledgmentStatusRejected: 1,
+			},
+		},
+	}, health.AckCountsByPartner)
+
 	assert.Equal(t, 4, health.OverdueAckCount)
 	assert.Equal(t, 9, health.AckStatusCounts[edi.MessageAcknowledgmentStatusAccepted])
 	require.Len(t, health.OverdueByPartner, 3)
@@ -94,6 +122,9 @@ func TestGetEDIAckHealth_KeepsToOnePartnerAndTheAgeAsked(t *testing.T) {
 	repo.EXPECT().GetAckStatusCounts(mock.Anything, mock.MatchedBy(
 		func(req ediports.GetEDIMessageStatusCountsRequest) bool { return req.PartnerID == partner },
 	)).Return(map[edi.MessageAcknowledgmentStatus]int{}, nil)
+	repo.EXPECT().GetAckStatusCountsByPartner(mock.Anything, mock.MatchedBy(
+		func(req ediports.GetEDIMessageStatusCountsRequest) bool { return req.PartnerID == partner },
+	)).Return(nil, nil)
 	repo.EXPECT().GetOverdueAckCount(mock.Anything, mock.MatchedBy(
 		func(req ediports.GetEDIOverdueAckCountRequest) bool { return req.PartnerID == partner },
 	)).Return(0, nil)
@@ -116,5 +147,7 @@ func TestGetEDIAckHealth_KeepsToOnePartnerAndTheAgeAsked(t *testing.T) {
 	assert.EqualValues(t, 3600, health.OverdueAckAge)
 	assert.EqualValues(t, 42, health.Since)
 	assert.Empty(t, health.OverdueByPartner)
+	assert.NotNil(t, health.AckCountsByPartner)
+	assert.Empty(t, health.AckCountsByPartner)
 	assert.Zero(t, health.OverdueOmitted)
 }
