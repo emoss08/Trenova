@@ -5356,6 +5356,13 @@ export type MyAgentOrigin =
   /** Made from one of the platform's templates. */
   | 'Template';
 
+export type MyAgentRecommendationInput = {
+  /** The agent the question would go to now, kept when it fits as well as any. */
+  currentAgentId?: string | number | null | undefined;
+  /** What the caller is about to ask. At most 4000 characters. */
+  text: string;
+};
+
 export type MyAgentsInput = {
   after?: string | null | undefined;
   /** Agents already shown, so a page never repeats them. At most 100. */
@@ -9533,6 +9540,13 @@ export type MyAgentsQueryVariables = Exact<{
 
 
 export type MyAgentsQuery = { myAgents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type MyAgentRecommendationQueryVariables = Exact<{
+  input: MyAgentRecommendationInput;
+}>;
+
+
+export type MyAgentRecommendationQuery = { myAgentRecommendation: { current: boolean, tools: Array<string>, agent: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } } | null };
 
 export type DecideMyPlanMutationVariables = Exact<{
   id: string | number;
@@ -18426,7 +18440,7 @@ export { AccountingSyncRecordTableDocument } from "./documents/accounting-sync/t
 export { LateChargeAssessmentResultFieldsFragmentDoc, LateChargePreviewDocument, AssessLateChargesDocument } from "./documents/accounts-receivable/late-charges";
 export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArCollectionPerformanceDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
-export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
+export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentRecommendationDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
 export { AiAnalyticsSegmentFieldsFragmentDoc, AiAnalyticsProviderFieldsFragmentDoc, AiAnalyticsSeriesFieldsFragmentDoc, AgentAnalyticsDocument, AgentAnalyticsToolFailuresDocument, RouteAiTaskDocument } from "./documents/agent/analytics";
 export { AiAuditEventRowFieldsFragmentDoc, AiAuditEventDetailFieldsFragmentDoc, AiAuditChainStatusFieldsFragmentDoc, AiAuditExportFieldsFragmentDoc, AiAuditEventTableDocument, AiAuditEventDetailDocument, AiAuditChainStatusDocument, AiAuditExportTableDocument, AiAuditExportDetailDocument, RequestAiAuditExportDocument, AiAuditExportDownloadDocument, VerifyAiAuditChainDocument } from "./documents/agent/audit";

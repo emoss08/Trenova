@@ -458,6 +458,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                   s.Core,
 		AgentDefinitionService: s.AgentDefinitionService,
 		AgentCapabilityService: s.AgentCapabilityService,
+		AgentRecommender:       s.AgentRecommender,
 		AgentShadowService:     s.AgentShadowService,
 		AgentTestPromptService: s.AgentTestPromptService,
 		AgentDraftingService:   s.AgentDraftingService,

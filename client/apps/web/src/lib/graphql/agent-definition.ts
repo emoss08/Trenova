@@ -5,6 +5,7 @@ import {
   AgentDefinitionCardsDocument,
   DataTablePageInfoFieldsFragmentDoc,
   MyAgentFieldsFragmentDoc,
+  MyAgentRecommendationDocument,
   MyAgentsDocument,
   type AgentDefinitionCardFieldsFragment,
   type FieldFilterInput,
@@ -310,4 +311,51 @@ export async function fetchMyAgents(options?: RequestOptions): Promise<AgentChoi
   const page = await requestMyAgents(myAgentsInput({}, { first: MY_AGENTS_LIMIT }), false, options);
 
   return page.items;
+}
+
+/**
+ * The agent a question is best put to before it is asked, among the agents
+ * the person may start a conversation with, judged by the tools it holds that
+ * the person may use. `current` is true when the agent the question would go
+ * to now is already the best fit, and `tools` names, best first, at most three
+ * of the tools that matched.
+ */
+export type AgentRecommendation = {
+  agent: AgentChoice;
+  current: boolean;
+  tools: string[];
+};
+
+/** The most characters of a question the server matches to an agent. */
+export const AGENT_RECOMMENDATION_MAX_LENGTH = 4000;
+
+/**
+ * Asks the server which agent the question is best put to. Null when no agent
+ * the person may use holds a tool that matches it.
+ */
+export async function fetchAgentRecommendation(
+  input: { text: string; currentAgentId?: string | null },
+  options?: RequestOptions,
+): Promise<AgentRecommendation | null> {
+  const data = await requestGraphQL({
+    document: MyAgentRecommendationDocument,
+    operationName: "MyAgentRecommendation",
+    variables: {
+      input: {
+        text: input.text,
+        ...(input.currentAgentId ? { currentAgentId: input.currentAgentId } : {}),
+      },
+    },
+    signal: options?.signal,
+  });
+  const recommendation = data.myAgentRecommendation;
+  if (!recommendation) {
+    return null;
+  }
+
+  return {
+    agent: getFragmentData(MyAgentFieldsFragmentDoc, recommendation.agent),
+    current: recommendation.current,
+    tools: [...recommendation.tools],
+  };
 }

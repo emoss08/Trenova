@@ -20755,6 +20755,31 @@ enum MyAgentOrigin {
   Template
 }
 
+"""
+The agent a question is best put to, among the chat agents the caller may start
+a conversation with, judged by the tools it holds that the caller may use.
+"""
+type MyAgentRecommendation {
+  agent: MyAgent!
+  """
+  True when the agent the question would go to now is already the best fit.
+  """
+  current: Boolean!
+  """
+  The tools the agent holds that matched the question, best first. At most three.
+  """
+  tools: [String!]!
+}
+
+input MyAgentRecommendationInput {
+  """
+  The agent the question would go to now, kept when it fits as well as any.
+  """
+  currentAgentId: ID
+  """What the caller is about to ask. At most 4000 characters."""
+  text: String!
+}
+
 input MyAgentsInput {
   after: String
   """Agents already shown, so a page never repeats them. At most 100."""
@@ -23081,6 +23106,11 @@ type Query {
   myAdvances: [PayAdvance!]!
   """What agents are told about the signed-in person's own work."""
   myAgentProfile: AgentProfile!
+  """
+  The chat agent the caller may use that holds the tools a question needs. Null
+  when no such agent holds a tool that matches it.
+  """
+  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
   """The chat agents the caller may use, enabled and by name."""
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""

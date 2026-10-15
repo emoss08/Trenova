@@ -1,6 +1,6 @@
 ---
 path: /desk
-aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
+aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, suggested agent, best agent, which agent, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
 related:
   - /desk/decisions
   - /desk/watchtower
@@ -23,11 +23,12 @@ While an agent replies you can steer it with a correction or queue the next ques
 ## Tasks
 
 ### Ask an agent a question
-Keywords: chat with AI, ask the assistant, start a conversation
+Keywords: chat with AI, ask the assistant, start a conversation, which agent should I ask, suggested agent, wrong agent
 1. Open [Desk](/desk).
 2. The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.
 3. Type your question and send it, or press Tab to use the starter question on screen.
-4. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
+4. When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.
+5. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
 
 ### Approve a change on the Desk
 Keywords: approve in desk, agent wants to change, review agent change, not now, redraft, out of date

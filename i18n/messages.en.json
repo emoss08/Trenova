@@ -2687,6 +2687,15 @@
       "routes/agent-control"
     ]
   },
+  "<b>{0}</b> has the tools for this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "<b>{0}</b> is better on {1} of {2}": {
     "sites": 1,
     "scope": [
@@ -7911,6 +7920,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "A question can be matched to an agent when it is at most {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A radius belongs on a rate rule rather than in a zone": {
@@ -102587,6 +102605,15 @@
       "routes/billing-queue"
     ]
   },
+  "Finding the agent with the tools for this…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Finding the right tools…": {
     "sites": 1,
     "scope": [
@@ -126043,6 +126070,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Keep {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep {0} in step with what Trenova posts.": {
@@ -240159,6 +240195,15 @@
       "routes/agent-control"
     ]
   },
+  "Switch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Switch artifact": {
     "sites": 1,
     "scope": [
@@ -300860,7 +300905,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "packages/shared/components"
     ]
   },
   "keeps assignment": {

@@ -2,6 +2,7 @@ import { fetchAgentCapabilities } from "@/lib/graphql/agent-capabilities";
 import {
   fetchAgentChoicesByIds,
   fetchAgentDefinitions,
+  fetchAgentRecommendation,
   fetchMyAgents,
   type AgentChoiceQuery,
   type AgentChoiceSource,
@@ -166,6 +167,13 @@ export const assistant = createQueryKeys("assistant", {
   myAgents: () => ({
     queryKey: ["my-agents"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
+  }),
+  // The agent a question is best put to before it is asked. Never persisted:
+  // the key holds the person's own words.
+  agentRecommendation: (text: string, currentAgentId: string | null) => ({
+    queryKey: ["agent-recommendation", text, currentAgentId ?? ""],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchAgentRecommendation({ text, currentAgentId }, { signal }),
   }),
   // What an agent can do, for its capabilities page.
   agentCapabilities: (agentId: string) => ({

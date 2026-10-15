@@ -98,11 +98,22 @@ func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
 }
 
 func (c *Catalog) FindHybrid(q Query) []agentports.AgentToolDescriptor {
+	return c.withFamilies(c.allowedSet(q.Allowed), c.matched(q))
+}
+
+func (c *Catalog) Match(q Query) []string {
+	matched := c.matched(q)
+	names := make([]string, 0, len(matched))
+	for idx := range matched {
+		names = append(names, matched[idx].Name)
+	}
+
+	return names
+}
+
+func (c *Catalog) matched(q Query) []agentports.AgentToolDescriptor {
 	if !q.Semantic.usable() {
-		return c.withFamilies(
-			c.allowedSet(q.Allowed),
-			c.rank(q.Allowed, q.Text, q.Limit, 1, q.StrongOnly),
-		)
+		return c.rank(q.Allowed, q.Text, q.Limit, 1, q.StrongOnly)
 	}
 	if q.Limit <= 0 {
 		return nil
@@ -123,7 +134,7 @@ func (c *Catalog) FindHybrid(q Query) []agentports.AgentToolDescriptor {
 		found = append(found, entry.descriptor)
 	}
 
-	return c.withFamilies(wanted, found)
+	return found
 }
 
 func (c *Catalog) fuse(wanted map[string]struct{}, keyword []scored, q Query) []*indexed {
