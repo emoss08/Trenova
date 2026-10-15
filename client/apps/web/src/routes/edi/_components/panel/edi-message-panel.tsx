@@ -8,6 +8,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import type { EDIMessageRow } from "@/lib/graphql/edi-table";
 import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
@@ -168,7 +169,16 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
           </DetailField>
           {detail.ackLastError && (
             <DetailField label={t("Details")} fullWidth>
-              <span className="text-destructive text-xs">{detail.ackLastError}</span>
+              <span
+                className={cn(
+                  "text-xs",
+                  detail.ackStatus === "AcceptedWithErrors"
+                    ? "text-warning-foreground"
+                    : "text-destructive",
+                )}
+              >
+                {detail.ackLastError}
+              </span>
             </DetailField>
           )}
         </DetailSection>

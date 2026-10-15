@@ -360,6 +360,22 @@ cases:
     expect: [get_edi_message]
   - request: what validation findings does this outbound 210 EDI message have
     expect: [get_edi_message]
+  - request: which EDI messages haven't been acknowledged yet
+    expect: [get_edi_ack_health]
+  - request: is the partner keeping up with acks, anything overdue
+    expect: [get_edi_ack_health]
+  - request: which 214s did the partner accept with errors
+    expect: [list_edi_messages]
+  - request: list the EDI messages sent for this invoice
+    expect: [list_edi_messages]
+  - request: what is wrong with this X12 I pasted
+    expect: [inspect_x12]
+  - request: parse this EDI snippet and check the segment counts
+    expect: [inspect_x12]
+  - request: show the 214 we would send for this load before it goes
+    expect: [preview_edi_document]
+  - request: show me the 990 we would send back on this tender
+    expect: [preview_edi_document]
   - request: which EDI load tenders are pending approval
     expect: [list_edi_transfers]
   - request: why was the EDI tender transfer rejected

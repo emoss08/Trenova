@@ -1,5 +1,5 @@
 import { useAssistantStore } from "@/stores/assistant-store";
-import { act, render, renderHook } from "@testing-library/react";
+import { act, cleanup, render, renderHook } from "@testing-library/react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { userSchema, type User } from "@trenova/shared/types/user";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +30,7 @@ function signIn(user: User | null) {
 }
 
 afterEach(() => {
+  cleanup();
   permission.allowed = true;
   signIn(null);
   act(() => {

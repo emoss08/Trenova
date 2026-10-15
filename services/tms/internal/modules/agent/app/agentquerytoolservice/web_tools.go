@@ -76,9 +76,10 @@ func (t *webSearchTool) ParamSchema() map[string]any {
 
 func (t *webSearchTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceWebResearch,
-		reads:    agent.ExternalReadAlways,
-		source:   agent.TaintSourceWeb,
+		resource:        permission.ResourceWebResearch,
+		reads:           agent.ExternalReadAlways,
+		source:          agent.TaintSourceWeb,
+		capsLaterWrites: true,
 		rationale: "Searches the public web through the organization's extension; it changes " +
 			"nothing in Trenova, sends only the query, and returns text written outside it.",
 	})
@@ -208,9 +209,10 @@ func (t *webReadTool) ParamSchema() map[string]any {
 
 func (t *webReadTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceWebResearch,
-		reads:    agent.ExternalReadAlways,
-		source:   agent.TaintSourceWeb,
+		resource:        permission.ResourceWebResearch,
+		reads:           agent.ExternalReadAlways,
+		source:          agent.TaintSourceWeb,
+		capsLaterWrites: true,
 		rationale: "Reads a page a web search returned; it changes nothing in Trenova and " +
 			"returns text written outside it.",
 	})

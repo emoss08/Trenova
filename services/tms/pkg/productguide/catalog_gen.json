@@ -1,5 +1,5 @@
 {
-  "version": "sha256:7ab1cb441574684813004f3fee0367563568c414665143cb5c3a35527e02c3f1",
+  "version": "sha256:f3b9a84e7dc66002590e19115236626144c1b38f6b475e8cc12090453569c9d1",
   "modules": [
     {
       "id": "home",
@@ -11633,6 +11633,21 @@
             "Open [Messages](/edi/messages).",
             "Search or filter by **Partner**, **Transaction** or **Control number**, and read the **Delivery** and **Acknowledgment** columns.",
             "Select the row to see **Delivery** (status, **Attempts**, **Remote path**, **Last error**), **Acknowledgment** and the **Raw X12**."
+          ]
+        },
+        {
+          "title": "Find what a partner accepted with errors or rejected",
+          "keywords": [
+            "accepted with errors",
+            "997 errors",
+            "AK5 E",
+            "rejected 214",
+            "acknowledgment errors"
+          ],
+          "steps": [
+            "Open [Messages](/edi/messages).",
+            "Filter the **Acknowledgment** column to **Accepted with errors** or **Rejected**.",
+            "Select a row. **Acknowledgment** shows what the partner's 997 or 999 reported against the document: the segment and element it noted and why. A document accepted with errors reached the partner's system, but the partner flagged something in it to fix before the next one."
           ]
         },
         {

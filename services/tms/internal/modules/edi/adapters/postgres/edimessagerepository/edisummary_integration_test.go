@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -15,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,6 +54,7 @@ func TestEDISummaryCounts(t *testing.T) {
 		db.NewSelect().
 			Table("organizations").
 			Column("id", "business_unit_id").
+			Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
 			Limit(1).
 			Scan(ctx, &org),
 	)
