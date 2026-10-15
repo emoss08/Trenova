@@ -15,7 +15,13 @@ import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-w
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
-import { ShellFrameContext, usePageBarSlots, useRouteFrame, useShellFrame } from "./shell-frame";
+import {
+  ShellFrameContext,
+  usePageBarSlots,
+  useRouteFrame,
+  useRouteRoomRail,
+  useShellFrame,
+} from "./shell-frame";
 import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { useSettingsShortcut } from "./use-settings-shortcut";
@@ -62,13 +68,18 @@ function useTouchRecentRecords() {
   }, [organizationId, pathname, search, touch]);
 }
 
-function useLayoutEffects() {
+/**
+ * `railStands` is a room whose own rail never folds: beside the page ⌘B has
+ * nothing to fold there, so it leaves the kept fold alone; a phone's sheet
+ * still answers it.
+ */
+function useLayoutEffects(railStands: boolean) {
   const location = useLocation();
   const filteredModules = useFilteredNavigation();
   const fetchStatus = useUpdateStore((state) => state.fetchStatus);
   const setActiveModuleId = useNavigationStore((state) => state.setActiveModuleId);
   const setCompactSidebarOpen = useNavigationStore((state) => state.setCompactSidebarOpen);
-  const { toggle: toggleSidebar } = useSidebarFold();
+  const { compact, toggle: toggleSidebar } = useSidebarFold();
 
   useEffect(() => {
     void fetchStatus();
@@ -89,12 +100,14 @@ function useLayoutEffects() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "b") {
         e.preventDefault();
-        toggleSidebar();
+        if (compact || !railStands) {
+          toggleSidebar();
+        }
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  }, [toggleSidebar, compact, railStands]);
 
   useRecordRecentPages();
   useTouchRecentRecords();
@@ -104,7 +117,9 @@ function useLayoutEffects() {
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const assistantSide = useAssistantSideInset();
   const frame = useRouteFrame();
-  useLayoutEffects();
+  const roomRail = useRouteRoomRail();
+  const railStands = frame === "room" && roomRail === "stands";
+  useLayoutEffects(railStands);
 
   return (
     <>
@@ -115,7 +130,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           rather than sitting under it. */}
       <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
         <ShellFrameContext.Provider value={frame}>
-          <RailShell room={frame === "room"}>{children}</RailShell>
+          <RailShell room={frame === "room"} railStands={railStands}>
+            {children}
+          </RailShell>
         </ShellFrameContext.Provider>
       </div>
     </>

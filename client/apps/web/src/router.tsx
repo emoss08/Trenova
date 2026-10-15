@@ -1128,8 +1128,8 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           {
             path: "/billing/configuration-files/formula-templates/new",
             // The studio is a room: the module rail stays, and its rate trace takes
-            // the panel's place and its fold.
-            handle: { frame: "room" } satisfies RouteHandle,
+            // the panel's place and always stands, the panel folded in its favour.
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate, Operation.Create),
@@ -1145,7 +1145,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/billing/configuration-files/formula-templates/:id/edit",
-            handle: { frame: "room" } satisfies RouteHandle,
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate),
