@@ -202,6 +202,31 @@ describe("DeskDriverSettlement", () => {
     );
   });
 
+  it("offers nothing on the settlement it stepped away from while the next one is read", async () => {
+    grant(Operation.Approve | Operation.Reject | Operation.Cancel);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const card = (recordId: string) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DeskDriverSettlement
+            recordId={recordId}
+            order={["dstl_142", "dstl_147"]}
+            onSelect={vi.fn()}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { container, rerender } = render(card("dstl_142"));
+    await screen.findByRole("heading", { name: "Rosa Martinez", level: 2 });
+
+    fetchers.settlement.mockReturnValue(new Promise(() => {}));
+    rerender(card("dstl_147"));
+
+    expect(screen.queryByRole("heading", { name: "Rosa Martinez", level: 2 })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve $1,684.20" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("approves a settlement waiting on approval and reads it again", async () => {
     grant(Operation.Approve | Operation.Reject | Operation.Cancel);
     const { container } = draw();

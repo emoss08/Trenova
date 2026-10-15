@@ -10,7 +10,7 @@ import { invalidateInvoiceQueries, invoice as invoiceQueries } from "@/lib/queri
 import { InvoicePostDialog } from "@/routes/invoice/_components/invoice-post-dialog";
 import { InvoiceVoidDialog } from "@/routes/invoice/_components/invoice-void-dialog";
 import { apiService } from "@/services/api";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -115,7 +115,9 @@ const NO_ROWS: readonly string[] = [];
  * taken now stays in place and says why. Applying cash, adjusting and
  * disputing stay on the invoice's page, one click away.
  *
- * The card steps through the rows it was opened from in the order shown.
+ * The card steps through the rows it was opened from in the order shown. A
+ * step draws the next invoice's skeleton until it is read, never the invoice
+ * it left with its buttons still live.
  */
 export function DeskInvoice({
   recordId,
@@ -125,11 +127,7 @@ export function DeskInvoice({
   backLabel,
 }: InvoiceCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...invoiceQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...invoiceQueries.card(recordId), retry: false });
   const record = query.data;
 
   if (!record) {
