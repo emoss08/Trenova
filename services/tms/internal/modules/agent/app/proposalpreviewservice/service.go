@@ -89,6 +89,7 @@ type Params struct {
 	Permissions permissionports.PermissionEngine
 	Metrics     *metrics.Registry               `optional:"true"`
 	Zones       agentports.TenantTimezoneReader `optional:"true"`
+	Runs        agentports.AgentRunRepository
 }
 
 type Service struct {
@@ -104,6 +105,7 @@ type Service struct {
 	permissions permissionports.PermissionEngine
 	metrics     *metrics.ProposalPreview
 	zones       agentports.TenantTimezoneReader
+	runs        proposalexecutor.RunReader
 	now         func() int64
 	readTimeout time.Duration
 	fileTimeout time.Duration
@@ -137,6 +139,9 @@ func New(p Params) agentports.ProposalPreviewService {
 	}
 	if p.Metrics != nil {
 		svc.metrics = p.Metrics.ProposalPreview
+	}
+	if p.Runs != nil {
+		svc.runs = p.Runs
 	}
 
 	return svc
