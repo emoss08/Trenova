@@ -5,9 +5,9 @@ func (r *Registry) registerLocationResources() {
 		Resource:    ResourceLocation.String(),
 		DisplayName: "Location",
 		Description: "Location management",
-		Category:    "Locations",
+		Category:    "Dispatch",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View locations"},
+			{Operation: OpRead, DisplayName: "View", Description: "View locations"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create locations"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify locations"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export location data"},
@@ -26,7 +26,7 @@ func (r *Registry) registerLocationResources() {
 		Resource:           ResourceLocationCategory.String(),
 		DisplayName:        "Location Category",
 		Description:        "Location category definitions",
-		Category:           "Locations",
+		Category:           "Dispatch",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

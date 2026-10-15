@@ -43,7 +43,7 @@ func TestEscalateDetention_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.Len(t, preview.Changes, 2)
 	update := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationUpdate, update.Operation)
-	assert.Equal(t, permission.ResourceDetentionPolicy, update.Resource)
+	assert.Equal(t, permission.ResourceDetention, update.Resource)
 	assert.Equal(t, false, agenttoolstest.FieldByPath(t, update, "requiresApproval").Before)
 	assert.Equal(t, true, agenttoolstest.FieldByPath(t, update, "requiresApproval").After)
 	assert.Equal(t, "Missed", agenttoolstest.FieldByPath(t, update, "notificationStatus").After)

@@ -5,9 +5,9 @@ func (r *Registry) registerCommunicationResources() {
 		Resource:    ResourceDriverMessage.String(),
 		DisplayName: "Driver Message",
 		Description: "Messages sent to drivers on their phone through the Dash app",
-		Category:    "Communications",
+		Category:    "Dispatch",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View messages sent to drivers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View messages sent to drivers"},
 			{Operation: OpCreate, DisplayName: "Send", Description: "Send a message to a driver"},
 		},
 		DefaultSensitivity: SensitivityInternal,
@@ -17,11 +17,11 @@ func (r *Registry) registerCommunicationResources() {
 		Resource:    ResourceCustomerCommunication.String(),
 		DisplayName: "Customer Communication",
 		Description: "Emails and notices sent to customers and other outside parties",
-		Category:    "Communications",
+		Category:    "Triage",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View what was sent to customers",
 			},
 			{
@@ -35,13 +35,13 @@ func (r *Registry) registerCommunicationResources() {
 
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceInboundMessage.String(),
-		DisplayName: "Inbound Message",
+		DisplayName: "Triage",
 		Description: "Email that arrived on a monitored address, and what was made of it",
-		Category:    "Communications",
+		Category:    "Triage",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View inbound messages and their attachments",
 			},
 			{
@@ -71,7 +71,7 @@ func (r *Registry) registerCommunicationResources() {
 		Resource:    ResourceInboundMailbox.String(),
 		DisplayName: "Inbound Mailbox",
 		Description: "Addresses the system listens on, and how much they are trusted to act alone",
-		Category:    "Communications",
+		Category:    "Triage",
 		Operations: relabel(
 			standardOpsWithDelete,
 			OpUpdate,

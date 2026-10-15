@@ -945,7 +945,7 @@ func (t *WaiveDetentionTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceDetentionPolicy,
+		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,

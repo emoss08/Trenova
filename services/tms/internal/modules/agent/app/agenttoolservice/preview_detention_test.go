@@ -65,7 +65,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	assert.Contains(t, preview.Summary, "at Memphis DC on SHP-1001")
 
 	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
-	assert.Equal(t, permission.ResourceDetentionPolicy, change.Resource)
+	assert.Equal(t, permission.ResourceDetention, change.Resource)
 	assert.Equal(t, before.ID, change.EntityID)
 	assert.Equal(t, int64(4), *change.Version)
 	status := agenttoolstest.FindField(t, change, "status")

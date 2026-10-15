@@ -639,13 +639,13 @@ const detentionModule: NavModule = {
       id: "detention-desk",
       label: "Desk",
       path: "/detention/desk",
-      resource: Resource.DetentionPolicy,
+      resource: Resource.Detention,
     },
     {
       id: "detention-intelligence",
       label: "Intelligence",
       path: "/detention/intelligence",
-      resource: Resource.DetentionPolicy,
+      resource: Resource.Detention,
     },
     {
       id: "detention-config-group",

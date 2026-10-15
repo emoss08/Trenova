@@ -172,7 +172,7 @@ function DetentionOccurrenceCard({
   const t = useT();
   const now = useNowSeconds();
   const access = useCardAccess(DETENTION_OCCURRENCE_SECTIONS);
-  const { allowed: mayAct } = usePermission(Resource.DetentionPolicy, Operation.Update);
+  const { allowed: mayAct } = usePermission(Resource.Detention, Operation.Update);
   const invalidate = useInvalidateDetention();
   const { occurrence } = detail;
   const id = occurrence.id;

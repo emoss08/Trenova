@@ -115,7 +115,7 @@ func (r *MutationResolver) DetentionBacktest(ctx context.Context, input gqlmodel
 }
 
 func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input gqlmodel.DetentionWaiveInput) (*gqlmodel.DetentionOccurrence, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input g
 }
 
 func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionOccurrence, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occur
 }
 
 func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input gqlmodel.DetentionDisputeInput) (*gqlmodel.DetentionOccurrence, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input
 }
 
 func (r *MutationResolver) SendDetentionNotice(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionOccurrence, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmod
 }
 
 func (r *QueryResolver) DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func (r *QueryResolver) DetentionDesk(ctx context.Context) ([]*gqlmodel.Detentio
 }
 
 func (r *QueryResolver) DetentionOccurrence(ctx context.Context, id string) (*gqlmodel.DetentionOccurrenceDetail, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func (r *QueryResolver) DetentionOccurrence(ctx context.Context, id string) (*gq
 }
 
 func (r *QueryResolver) ShipmentDetention(ctx context.Context, shipmentID string) ([]*gqlmodel.DetentionOccurrence, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (r *QueryResolver) ShipmentDetention(ctx context.Context, shipmentID string
 }
 
 func (r *QueryResolver) DetentionDisputePacket(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionDisputePacket, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func (r *QueryResolver) DetentionDisputePacket(ctx context.Context, occurrenceID
 }
 
 func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.FacilityDetentionStat, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +379,7 @@ func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmod
 }
 
 func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.CustomerDetentionStat, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmod
 }
 
 func (r *QueryResolver) DetentionWaiverStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.DetentionWaiverLeakageStat, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}

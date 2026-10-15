@@ -83,7 +83,7 @@ func containsOccurrence(occurrences []*detention.DetentionOccurrence, id pulid.I
 
 func DetentionRecord(occurrence *detention.DetentionOccurrence) toolpreview.Record {
 	return toolpreview.Record{
-		Resource: permission.ResourceDetentionPolicy,
+		Resource: permission.ResourceDetention,
 		ID:       occurrence.ID,
 		Label:    "Detention " + DetentionPlace(occurrence),
 		Version:  PinnedVersion(occurrence.Version),

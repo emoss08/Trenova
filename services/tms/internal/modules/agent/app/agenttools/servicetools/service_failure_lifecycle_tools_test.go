@@ -317,7 +317,7 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	assert.Equal(t, params.Actor.UserID, detentions.Disputed.UserID)
 
 	policy := tool.Policy()
-	assert.Equal(t, permission.ResourceDetentionPolicy, policy.Resource)
+	assert.Equal(t, permission.ResourceDetention, policy.Resource)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 
 	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),

@@ -25,7 +25,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 			"until a person settles the dispute by approving or waiving it. Use it " +
 			"when a customer's message rejects the charge; do not raise a dispute " +
 			"on your own reading of the clock.",
-		Resource:    permission.ResourceDetentionPolicy,
+		Resource:    permission.ResourceDetention,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressMoney,
 		DefaultTier: agent.TierPropose,
@@ -46,7 +46,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 		},
 		Required: []string{ParamOccurrenceID, common.ParamNote},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
-			return common.TargetOf(params, ParamOccurrenceID, permission.ResourceDetentionPolicy)
+			return common.TargetOf(params, ParamOccurrenceID, permission.ResourceDetention)
 		},
 	}, common.ReceivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
 		Request: func(params *agentports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {

@@ -686,7 +686,7 @@ func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
 	assert.True(t, rows[0].NoticeWindowOpen)
 	assert.True(t, rows[0].RequiresApproval)
 	assert.NotEmpty(t, rows[0].ArrivedAt)
-	assert.Equal(t, permission.ResourceDetentionPolicy, tool.Policy().Resource)
+	assert.Equal(t, permission.ResourceDetention, tool.Policy().Resource)
 }
 
 type fakeWeather struct {

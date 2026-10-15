@@ -5,9 +5,9 @@ func (r *Registry) registerCustomerResources() {
 		Resource:    ResourceCustomer.String(),
 		DisplayName: "Customer",
 		Description: "Customer management",
-		Category:    "Customers",
+		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View customers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View customers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create customers"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify customers"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export customer data"},
@@ -26,9 +26,9 @@ func (r *Registry) registerCustomerResources() {
 		Resource:    ResourceFactoringCompany.String(),
 		DisplayName: "Factoring Company",
 		Description: "Factors that customers' invoices are assigned to",
-		Category:    "Customers",
+		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View factoring companies"},
+			{Operation: OpRead, DisplayName: "View", Description: "View factoring companies"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add factoring companies"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify factoring companies"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export factoring companies"},

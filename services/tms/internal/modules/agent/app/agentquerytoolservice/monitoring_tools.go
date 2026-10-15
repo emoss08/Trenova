@@ -328,7 +328,7 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 
 func (t *listDetentionDeskTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceDetentionPolicy,
+		resource: permission.ResourceDetention,
 	})
 }
 

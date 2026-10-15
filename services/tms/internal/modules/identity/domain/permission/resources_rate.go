@@ -221,7 +221,7 @@ func (r *Registry) registerRateResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View simulations and their results",
 			},
 			{
@@ -248,7 +248,7 @@ func (r *Registry) registerRateResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View rate quotes and their explanations",
 			},
 			{

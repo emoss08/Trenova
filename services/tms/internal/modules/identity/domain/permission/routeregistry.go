@@ -852,7 +852,7 @@ func (rr *RouteRegistry) registerDetentionRoutes() {
 		Path:      "/detention/desk",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
-			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+			{Resource: ResourceDetention, Operation: OpRead},
 		},
 		DisplayName: "Detention Desk",
 		Category:    "Detention",
@@ -862,7 +862,7 @@ func (rr *RouteRegistry) registerDetentionRoutes() {
 		Path:      "/detention/intelligence",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
-			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+			{Resource: ResourceDetention, Operation: OpRead},
 		},
 		DisplayName: "Detention Intelligence",
 		Category:    "Detention",

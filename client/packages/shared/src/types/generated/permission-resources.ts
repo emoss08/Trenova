@@ -122,6 +122,7 @@ export const Resource = {
   FormulaTemplate: "formula_template",
   FuelSurchargeProgram: "fuel_surcharge_program",
   DetentionPolicy: "detention_policy",
+  Detention: "detention",
   RateAgreement: "rate_agreement",
   RateZone: "rate_zone",
   RateMatrix: "rate_matrix",

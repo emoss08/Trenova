@@ -118,6 +118,7 @@ const (
 	ResourceFormulaTemplate      Resource = "formula_template"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 	ResourceDetentionPolicy      Resource = "detention_policy"
+	ResourceDetention            Resource = "detention"
 	ResourceRateAgreement        Resource = "rate_agreement"
 	ResourceRateZone             Resource = "rate_zone"
 	ResourceRateMatrix           Resource = "rate_matrix"

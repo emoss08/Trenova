@@ -204,7 +204,7 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     ),
   },
   detention_occurrence: {
-    resource: Resource.DetentionPolicy,
+    resource: Resource.Detention,
     Skeleton: DeskDetentionOccurrenceSkeleton,
     inPlace: lazyComponent(loadDetentionOccurrence, (module) => module.DeskDetentionOccurrence),
     artifact: lazyComponent(
