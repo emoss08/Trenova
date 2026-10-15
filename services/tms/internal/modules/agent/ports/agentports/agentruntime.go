@@ -300,8 +300,9 @@ type ShownArtifact struct {
 	// Ranked is a table whose order is the answer, such as drivers ranked
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
-	Ranked  bool   `json:"ranked,omitempty"`
-	Written string `json:"written,omitempty"`
+	Ranked  bool     `json:"ranked,omitempty"`
+	Written string   `json:"written,omitempty"`
+	Lineage pulid.ID `json:"lineage,omitempty"`
 }
 
 const InlineTableRows = 12
@@ -309,6 +310,10 @@ const InlineTableRows = 12
 func (a *ShownArtifact) Tabular() bool {
 	return a.Kind == string(assistantartifact.KindTableView) ||
 		a.Kind == string(assistantartifact.KindReportPreview)
+}
+
+func (a *ShownArtifact) Supersedes(earlier *ShownArtifact) bool {
+	return a.ID == earlier.ID || (!a.Lineage.IsNil() && a.Lineage == earlier.Lineage)
 }
 
 func (a *ShownArtifact) MustBeLinked() bool {

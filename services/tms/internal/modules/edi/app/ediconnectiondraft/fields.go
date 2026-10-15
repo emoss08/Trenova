@@ -178,6 +178,78 @@ func choice(allowed map[string]string) normalizer {
 	}
 }
 
+type spelledMatch struct {
+	value string
+	start int
+	end   int
+}
+
+func spelledOut(normalize normalizer, spelled map[string][]string) normalizer {
+	return func(value string) (string, error) {
+		normalized, err := normalize(value)
+		if err == nil || errors.Is(err, errBlank) {
+			return normalized, err
+		}
+		target, ok := spelledValue(value, spelled)
+		if !ok {
+			return "", err
+		}
+		return normalize(target)
+	}
+}
+
+func spelledValue(value string, spelled map[string][]string) (string, bool) {
+	haystack := normalizeForMatch(value)
+	matches := make([]spelledMatch, 0, 4)
+	for target, phrases := range spelled {
+		matches = appendSpelled(matches, haystack, target, target)
+		for _, phrase := range phrases {
+			matches = appendSpelled(matches, haystack, target, phrase)
+		}
+	}
+
+	found := ""
+	for idx := range matches {
+		if insideLonger(matches[idx], matches) {
+			continue
+		}
+		if found != "" && found != matches[idx].value {
+			return "", false
+		}
+		found = matches[idx].value
+	}
+	return found, found != ""
+}
+
+func appendSpelled(matches []spelledMatch, haystack, target, phrase string) []spelledMatch {
+	needle := normalizeForMatch(phrase)
+	if needle == "" {
+		return matches
+	}
+	for start := 0; ; {
+		index := tokenIndex(haystack, needle, start)
+		if index < 0 {
+			return matches
+		}
+		matches = append(matches, spelledMatch{
+			value: target,
+			start: index,
+			end:   index + len(needle),
+		})
+		start = index + 1
+	}
+}
+
+func insideLonger(match spelledMatch, matches []spelledMatch) bool {
+	for _, other := range matches {
+		if other.start <= match.start && other.end >= match.end &&
+			other.end-other.start > match.end-match.start {
+			return true
+		}
+	}
+	return false
+}
+
 func normalizeEmail(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {

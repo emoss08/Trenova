@@ -2043,7 +2043,7 @@
                   "type": "number"
                 },
                 "field": {
-                  "description": "The setting the value fills.",
+                  "description": "The setting the value fills. The our, local and carrier settings are this company's, the carrier the guide is written for; the partner settings are the trading partner's.",
                   "enum": [
                     "as2.basicAuthUsername",
                     "as2.compressionAlgorithm",
@@ -10447,7 +10447,7 @@
     },
     {
       "name": "draft_edi_connection",
-      "description": "Draft a whole EDI connection from the implementation guide the person attached, and check it. Read the guide with read_attachment first, then pass every setting it states with the exact quote and page, plus the segment rules, code mappings and gaps you find. It checks each quote against its page, holds back what is uncertain or conflicting, matches an existing EDI partner rather than adding one, picks templates, runs the guide's sample X12, validates every record and lists the credentials the person must enter. A re-run on a revised guide shows only what changes. It writes nothing.",
+      "description": "Draft a whole EDI connection from the implementation guide the person attached, and check it. Read the whole guide first, from the file attached to the message or with read_attachment, then pass every setting it states with the exact quote and page, plus the segment rules, code mappings and gaps you find. It checks each quote against its page, holds back what is uncertain or conflicting, matches an existing EDI partner rather than adding one, picks templates, runs the guide's sample X12, validates every record and lists the credentials the person must enter. A re-run on a revised guide shows only what changes. It writes nothing.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10861,7 +10861,7 @@
                   "type": "number"
                 },
                 "field": {
-                  "description": "The setting the value fills.",
+                  "description": "The setting the value fills. The our, local and carrier settings are this company's, the carrier the guide is written for; the partner settings are the trading partner's.",
                   "enum": [
                     "as2.basicAuthUsername",
                     "as2.compressionAlgorithm",
@@ -13974,7 +13974,7 @@
     },
     {
       "name": "get_edi_ack_health",
-      "description": "How partners are acknowledging what was sent: ack status counts overall and per partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner rather than listing its messages. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
+      "description": "How partners are acknowledging what was sent: ack status counts overall and per partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner rather than listing its messages. acknowledged counts every 997 or 999 that came back, a rejection included, and awaiting those still pending, both since countsSince. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

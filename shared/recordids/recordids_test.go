@@ -56,3 +56,27 @@ func TestStrip_LeavesSpacingAloneWhenNothingWasTakenOut(t *testing.T) {
 		"[Table](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ)"
 	assert.Equal(t, text, Strip(text))
 }
+
+func TestStrip_DropsASentenceThatOnlyNamesAnID(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t,
+		"The partner was saved, as recorded in "+
+			"[EDI partner Acme Retail Group](artifact:art_01M504P2QDKXPBM3QCTD7C0HWR). "+
+			"Nothing is live yet.",
+		Strip("The partner was saved, as recorded in "+
+			"[EDI partner Acme Retail Group](artifact:art_01M504P2QDKXPBM3QCTD7C0HWR). "+
+			"Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA. Nothing is live yet."))
+	assert.Equal(t, "Nothing is live yet.",
+		Strip("Acme Retail Group's ID: `edip_01M504P2M5BKZJ2EK36C1T4XKA`.\nNothing is live yet."))
+	assert.Equal(t, "The partner is saved.",
+		Strip("The partner is saved, and its ID is **edip_01M504P2M5BKZJ2EK36C1T4XKA**."))
+	assert.Equal(t, "Saved.", Strip("Saved. The partner ID was edip_01M504P2M5BKZJ2EK36C1T4XKA"))
+}
+
+func TestStrip_KeepsASentenceThatSaysMoreThanTheID(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Its ID is the one Acme sent.",
+		Strip("Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA the one Acme sent."))
+}

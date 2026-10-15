@@ -100,7 +100,7 @@ func (t *Turn) keepShown(outcome *toolOutcome) {
 		return
 	}
 	for idx := range t.artifacts {
-		if t.artifacts[idx].ID == outcome.shown.ID {
+		if outcome.shown.Supersedes(&t.artifacts[idx]) {
 			t.artifacts[idx] = *outcome.shown
 
 			return

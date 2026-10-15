@@ -126,9 +126,13 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{Status: "NotExpected", Count: 30},
 	}, view.AckCounts)
 
+	assert.Equal(t, 15, view.Acknowledged, "accepted, accepted with errors and rejected")
+	assert.Equal(t, 4, view.Awaiting)
+
 	assert.Equal(t, []partnerAckCountsRow{
 		{
 			PartnerID: acme.ID.String(), Partner: "Acme Retail", PartnerCode: "ACME",
+			Acknowledged: 10, Awaiting: 3,
 			AckCounts: []ackCountRow{
 				{Status: "Pending", Count: 3},
 				{Status: "Accepted", Count: 9},
@@ -137,6 +141,7 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		},
 		{
 			PartnerID: bolt.ID.String(), Partner: "Bolt", PartnerCode: "BOLT",
+			Awaiting:  1,
 			AckCounts: []ackCountRow{{Status: "Pending", Count: 1}},
 		},
 	}, view.AckCountsByPartner, "each partner's own counts, so one call answers for one partner")

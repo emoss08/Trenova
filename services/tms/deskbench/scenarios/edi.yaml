@@ -142,7 +142,7 @@ scenarios:
       - say: "acme retail sent over their edi guide, can you get them set up? we're carrier TRNV"
         attach: [../fixtures/attachments/edi-guide-acme-retail-v3.pdf]
         expect:
-          calls: [read_attachment, draft_edi_connection]
+          calls: [draft_edi_connection]
           proposals: [{ tool: apply_edi_connection_draft }]
           maxCalls: 8
           maxFailedCalls: 2
@@ -150,9 +150,10 @@ scenarios:
           replyExcludes: ["Acme#Test2026"]
           noRecordIds: true
           rubric: >
-            Reads the guide with read_attachment, drafts it with draft_edi_connection citing
-            each value's page (partner on page 1, AS2 on page 2, envelope on page 3, sets and
-            997s on page 4, 204/214 rules on page 5, the gap on page 6), and points to the draft.
+            Reads the guide (the attached file, or read_attachment), drafts it once with
+            draft_edi_connection citing each value's page (partner on page 1, AS2 on page 2,
+            envelope on page 3, sets and 997s on page 4, 204/214 rules on page 5, the gap on
+            page 6), and points to the draft.
             It takes the test AS2 URL and ISA15 T because the guide says to begin in test, and
             starts ISA13 at 1000. It says which credentials to enter after approval and never
             repeats or stores the keystore password. It names the MS1 rule the base 214 template

@@ -120,7 +120,9 @@ func ParamSchema(withDigest bool) map[string]any {
 		ParamValues: jsonschemautils.DescribedArray(
 			"Every setting the guide states, each with the quote that states it.",
 			jsonschemautils.Object(map[string]any{
-				"field": agenttoolschema.Enum("The setting the value fills.", fieldSource),
+				"field": agenttoolschema.Enum("The setting the value fills. The our, local "+
+					"and carrier settings are this company's, the carrier the guide is written "+
+					"for; the partner settings are the trading partner's.", fieldSource),
 				"value": described(jsonschemautils.String(maxValueRunes),
 					"The value as the guide gives it."),
 				keyConfidence: confidenceSchema(),
