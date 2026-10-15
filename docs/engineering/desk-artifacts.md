@@ -26,7 +26,7 @@ the sentence that says what it shows. The Desk draws it there as a link in the b
 | The words of a link | The artifact's title, always. `FinishTurn` rewrites every link in the turn's replies with `agentruntime.NameArtifactLinks` before saving, so the transcript, search, exports and the next turn's context read the same name. A link to an id the thread does not hold is saved as its words. |
 | The link | `DeskInlineArtifact` draws `artifact.title`, never the reply's words, so a reply still streaming already shows the right name. |
 | Where a link may stand | Inside a sentence (`agentruntime/placement.go`); see "Reply passes" in [agent-runtime.md](agent-runtime.md). |
-| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, and a table that is long, ranked, worked from or opens the live view. |
+| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, an EDI connection draft, a written record, and a table that is long, ranked, worked from or opens the live view. The note the model reads with the result (`shownNote`) says so for each of them: one that must be named is never told that pointing to it is optional, or the reply leaves it out and is written again. |
 
 The client never moves, adds or renames a link: what the server saved is what is drawn.
 Approval drafts and plans are made after the reply and open from their approval cards, not
