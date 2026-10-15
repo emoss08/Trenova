@@ -114,7 +114,9 @@ again instead.
 
 - **Matching.** The planner looks for an existing partner by the `ediPartnerId` given, else by
   code, name, the ISA id on its document profiles, the AS2 id on its communication profiles and
-  the customer (`FindPartnerMatches`).
+  the customer (`FindPartnerMatches`). It matches only on a field's settled value, the one the plan
+  would write or the person picked: a code, name or id the plan holds back is not evidence of who
+  the partner is.
   - Exactly one match: the plan updates that partner.
   - More than one: the plan stops with the candidates under *Which partner is this?* and creates
     nothing.
@@ -182,8 +184,10 @@ Every planned record goes through the validators the setup screens use:
   (`ValidatePartnerSettings`).
 
 The review shows each failure under *Would not save*. The draft is not ready, and
-`apply_edi_connection_draft` refuses to run, while any of these hold: a validation failure, a held
-or unverified value in a field the write needs, an ambiguous partner match, or nothing to change.
+`apply_edi_connection_draft` refuses to run, while any of these hold: a validation failure, a held,
+unverified or invalid value in a required field, an ambiguous partner match, or nothing to change.
+A held value in an optional field (a contact phone, a time zone, an acknowledgment window) is still
+listed under *To decide* and left unset, or at its current value on a re-run; it does not block.
 
 ## Secrets
 
@@ -203,7 +207,10 @@ credentials.
 Running the tool on a revised spec for a partner that already exists produces a diff against what
 is configured now: each field and record is `Add`, `Change` (current → proposed), `Same` or `None`.
 The diff deletes nothing (a record the revised spec no longer mentions is listed under *Left as
-they are*), changes no status and touches no secret. The preview pins the version of every record
+they are*), changes no status and touches no secret. Each existing document profile keeps its own
+envelope: an interchange value is written to it only when the guide or the person gives it, so a
+setting the guide never names (a repetition separator, an inbound profile's usage indicator) stays
+as each profile has it. The preview pins the version of every record
 it changes, and its digest is what the person approves, so a record that moved after the review
 refuses the approval.
 

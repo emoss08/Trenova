@@ -394,7 +394,9 @@ func blockers(draft *ediports.ConnectionDraft) []string {
 		out = append(out, "Name which existing partner this spec is for")
 	}
 	for index := range draft.Decisions {
-		out = append(out, "Decide "+lowerFirst(draft.Decisions[index].Label))
+		if draft.Decisions[index].Required {
+			out = append(out, "Decide "+lowerFirst(draft.Decisions[index].Label))
+		}
 	}
 	for index := range draft.Mappings {
 		mapping := &draft.Mappings[index]
