@@ -49,3 +49,18 @@ func TestRedactSecrets_LeavesWordsThatOnlyStartWithALabel(t *testing.T) {
 	}
 	assert.Equal(t, "Tokens: [redacted]", RedactSecrets("Tokens: t-1"))
 }
+
+func TestRedactSecrets_FindsTheInterchangeAfterTextThatOnlyLooksLikeOne(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t,
+		"The ISA/GS envelope: ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
+		RedactSecrets("The ISA/GS envelope: ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME"),
+	)
+	assert.Equal(t,
+		"ISA-level rules a/b/c/d/e/f, then ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
+		RedactSecrets("ISA-level rules a/b/c/d/e/f, then ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME"),
+	)
+	assert.Equal(t, "ISA/a/b/c/d/e/f", RedactSecrets("ISA/a/b/c/d/e/f"),
+		"text whose qualifiers are not two characters is not an interchange")
+}

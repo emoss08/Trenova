@@ -43,9 +43,10 @@ func redactInterchangeSecurity(value string) string {
 			continue
 		}
 		parts := strings.SplitN(value[index:], string(separator), 6)
-		if len(parts) < 6 {
-			builder.WriteString(value[index:])
-			return builder.String()
+		if len(parts) < 6 || !isQualifier(parts[1]) || !isQualifier(parts[3]) {
+			builder.WriteString(value[index : index+3])
+			value = value[index+3:]
+			continue
 		}
 		parts[2] = maskElement(parts[1], parts[2])
 		parts[4] = maskElement(parts[3], parts[4])
@@ -53,6 +54,10 @@ func redactInterchangeSecurity(value string) string {
 		builder.WriteByte(separator)
 		value = parts[5]
 	}
+}
+
+func isQualifier(element string) bool {
+	return len(strings.TrimSpace(element)) == 2
 }
 
 func maskElement(qualifier, element string) string {
