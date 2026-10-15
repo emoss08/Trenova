@@ -10,7 +10,12 @@ import (
 // can rebuild a turn from data; everything else only ever needs the port.
 var Module = fx.Module("agentruntime",
 	fx.Provide(
-		fx.Annotate(New, fx.As(fx.Self()), fx.As(new(agentports.AgentRuntime))),
+		fx.Annotate(
+			New,
+			fx.As(fx.Self()),
+			fx.As(new(agentports.AgentRuntime)),
+			fx.As(new(agentports.AgentRecommender)),
+		),
 		NewContextBuilder,
 		RuntimePolicies,
 	),

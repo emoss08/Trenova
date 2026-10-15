@@ -34,6 +34,16 @@ query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
   }
 }
 
+query MyAgentRecommendation($input: MyAgentRecommendationInput!) {
+  myAgentRecommendation(input: $input) {
+    agent {
+      ...MyAgentFields
+    }
+    current
+    tools
+  }
+}
+
 mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {
   decideMyPlan(id: $id, input: $input) {
     id

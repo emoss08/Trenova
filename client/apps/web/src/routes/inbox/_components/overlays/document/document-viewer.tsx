@@ -2,7 +2,8 @@ import "../../../_styles/triage-overlays.css";
 import type { InboundAttachment, InboundMessageDetail } from "@/lib/graphql/inbox";
 import { inbox } from "@/lib/queries/inbox";
 import { senderName } from "@/lib/triage/message-state";
-import { documentContentUrl } from "@/services/document";
+import { PdfFrame } from "@/components/elements/pdf-frame";
+import { documentContentEndpoint, documentContentUrl } from "@/services/document";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, Download01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -10,11 +11,9 @@ import { Dialog, DialogContent, DialogTitle } from "@trenova/shared/components/u
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { inlineErrorText } from "../../inline-error";
 import { useTriageActions } from "../../use-triage-actions";
-
-const PdfPage = lazy(() => import("./pdf-page").then((module) => ({ default: module.PdfPage })));
 
 type Preview = "pdf" | "image" | "none";
 
@@ -37,20 +36,19 @@ function extensionOf(fileName: string): string {
 
 type PageRow = { number: number; label: string };
 
-function pagesOf(attachment: InboundAttachment, rendered: number | null): PageRow[] {
+function pagesOf(attachment: InboundAttachment): PageRow[] {
   if (attachment.pages.length > 0) {
     return attachment.pages.map((page) => ({ number: page.number, label: page.label }));
   }
-  const count = Math.max(1, rendered ?? attachment.pageCount ?? attachment.reading?.pageCount ?? 1);
+  const count = Math.max(1, attachment.pageCount ?? attachment.reading?.pageCount ?? 1);
 
   return Array.from({ length: count }, (_, index) => ({ number: index + 1, label: "" }));
 }
 
 /**
- * One file of a message, opened: its pages down the side, the page itself,
- * and what Nova read from it. Hovering a field marks where its value sits
- * on the page when the file has text to search. The file can be filed on
- * the matched shipment from here, or says where it already was.
+ * One file of a message, opened: its pages down the side, the page itself in
+ * the browser's own PDF viewer, and what Nova read from it. The file can be
+ * filed on the matched shipment from here, or says where it already was.
  */
 export function DocumentViewer({
   messageId,
@@ -100,20 +98,18 @@ function ViewerBody({
   const t = useT();
   const actions = useTriageActions();
   const [page, setPage] = useState(1);
-  const [rendered, setRendered] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
   const [filing, setFiling] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
 
   const kind = failed ? "none" : previewOf(attachment);
-  const pages = pagesOf(attachment, rendered);
+  const pages = pagesOf(attachment);
   const reading = attachment.reading;
   const fields = reading?.fields ?? [];
   const extension = extensionOf(attachment.fileName);
   const shipment = message.matchedShipment;
   const filedOn = attachment.filedShipment ?? null;
-  const highlight = hovered === null ? "" : (fields[hovered]?.value ?? "");
   const current = pages.find((row) => row.number === page) ?? pages[0];
 
   const file = () => {
@@ -216,15 +212,12 @@ function ViewerBody({
 
         <div className="bg-sunken grid min-h-0 place-items-center overflow-auto p-5">
           {kind === "pdf" && attachment.documentId !== null ? (
-            <Suspense fallback={<Skeleton className="aspect-[8.5/11] w-full max-w-105" />}>
-              <PdfPage
-                url={documentContentUrl(attachment.documentId, "view")}
-                page={page}
-                highlight={highlight}
-                onPageCount={setRendered}
-                onFailed={() => setFailed(true)}
-              />
-            </Suspense>
+            <PdfFrame
+              endpoint={documentContentEndpoint(attachment.documentId, "view")}
+              title={attachment.fileName}
+              page={page}
+              className="ring-border aspect-[8.5/11] w-full max-w-160 rounded-xs ring-1"
+            />
           ) : kind === "image" && attachment.documentId !== null ? (
             <img
               src={documentContentUrl(attachment.documentId, "view")}

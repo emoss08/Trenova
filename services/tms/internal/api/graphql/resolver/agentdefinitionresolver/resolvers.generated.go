@@ -13,6 +13,7 @@ type Deps struct {
 	*base.Core
 	AgentDefinitionService agentdefinitionports.AgentDefinitionService
 	AgentCapabilityService agentports.AgentCapabilityService
+	AgentRecommender       agentports.AgentRecommender
 	AgentShadowService     agentshadowports.AgentShadowService
 	AgentTestPromptService agentdefinitionports.AgentTestPromptService
 	AgentDraftingService   agentports.AgentDraftingService

@@ -23,6 +23,7 @@ import { DeskThread, type DeskThreadProps } from "@/components/desk-chat/desk-th
 import type { PageBinding, PageRequest } from "./use-thread-model";
 import { OutsideContentBadge } from "./outside-content-badge";
 import { pageAssistantAvailability } from "./page-assistant-availability";
+import { pageAssistantThreadKey } from "./page-assistant-thread-key";
 
 export type PageAssistantProps = {
   /**
@@ -59,11 +60,6 @@ export type PageAssistantProps = {
   >;
   className?: string;
 };
-
-/** The cache key of a page's opened conversation, for a page that must start it afresh. */
-export function pageAssistantThreadKey(conversationKey: readonly unknown[]): readonly unknown[] {
-  return ["page-assistant-thread", ...conversationKey];
-}
 
 function pageAgentChoice(agent: PageAgent): AgentChoice {
   return {
