@@ -2037,6 +2037,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.Invoice
     fields:
+      pdfDocumentId:
+        fieldName: PDFDocumentID
       factoringCompany:
         resolver: true
       factoringState:
@@ -4903,6 +4905,17 @@ models:
   DriverSettlement:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Settlement
+  DriverSettlementLineGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.LineGroup
+    fields:
+      advance:
+        resolver: true
+      escrowAccount:
+        resolver: true
+  SettlementLoadShare:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload.Share
   SettlementBatch:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.SettlementBatch
@@ -4969,6 +4982,12 @@ models:
   CarrierSettlementLine:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.CarrierSettlementLine
+  CarrierSettlementLineGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.CostGroup
+  CarrierSettlementMoveInvoice:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.MoveInvoice
   CarrierSettlementBatch:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.CarrierSettlementBatch

@@ -4348,6 +4348,106 @@ button.dk-dx-c:hover {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--dsk-subtle);
 }
+/* a record's way as one track of segments: behind it ticked, where it stands in ink, ahead open */
+.dk-rec-track {
+  container: dkrectrack / inline-size;
+}
+.dk-rec-track > ol {
+  display: flex;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-rec-track > ol > li {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-rec-track > ol > li:first-child {
+  border-radius: 8px 3px 3px 8px;
+}
+.dk-rec-track > ol > li:last-child {
+  border-radius: 3px 8px 8px 3px;
+}
+.dk-rec-track > ol > li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-rec-track > ol > li.dk-done {
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: none;
+}
+.dk-rec-track > ol > li.dk-done > svg {
+  flex: none;
+  color: var(--dsk-success);
+}
+.dk-rec-track > ol > li.dk-now {
+  flex-grow: 1.6;
+  font-weight: 500;
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+  box-shadow: none;
+}
+.dk-rec-track > p {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-track.dk-off > ol > li {
+  color: var(--dsk-faint);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  text-decoration: line-through;
+}
+.dk-rec-track.dk-off > ol > li > svg {
+  color: var(--dsk-faint);
+}
+.dk-rec-track-sk {
+  display: block;
+  height: 30px;
+  border-radius: 8px;
+}
+@container dkrectrack (max-width: 648px) {
+  .dk-rec-track > ol > li.dk-done {
+    flex-grow: 0.45;
+    position: relative;
+  }
+  .dk-rec-track > ol > li.dk-done > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+@container dkrectrack (max-width: 488px) {
+  .dk-rec-track > ol > li:not(.dk-now) > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .dk-rec-track > ol > li {
+    position: relative;
+    padding: 0 4px;
+  }
+  .dk-rec-track > ol > li.dk-now {
+    flex-grow: 4;
+  }
+}
 /* A record card's outline while its code or its record is read */
 .dk-rec-skel .dk-sk {
   flex: none;
@@ -8729,75 +8829,8 @@ a.dk-wk-way:focus-visible {
   color: var(--dsk-faint);
 }
 /* the order's way from draft to closed as one track of named segments */
-.dk-or-track > ol {
-  display: flex;
-  gap: 3px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.dk-or-track > ol > li {
-  flex: 1 1 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-width: 0;
-  height: 30px;
-  padding: 0 8px;
-  font-size: 11.5px;
-  color: var(--dsk-subtle);
-  background: var(--dsk-card);
-  box-shadow: inset 0 0 0 1px var(--dsk-b);
-}
-.dk-or-track > ol > li:first-child {
-  border-radius: 8px 3px 3px 8px;
-}
-.dk-or-track > ol > li:last-child {
-  border-radius: 3px 8px 8px 3px;
-}
-.dk-or-track > ol > li > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dk-or-track > ol > li.dk-done {
-  color: var(--dsk-fg2);
-  background: var(--dsk-sunken);
-  box-shadow: none;
-}
-.dk-or-track > ol > li.dk-done > svg {
-  flex: none;
-  color: var(--dsk-success);
-}
-.dk-or-track > ol > li.dk-now {
-  flex-grow: 1.6;
-  font-weight: 500;
-  color: var(--dsk-ink-fg);
-  background: var(--dsk-ink);
-  box-shadow: none;
-}
-.dk-or-track > p {
-  margin: 8px 0 0;
-  font-size: 11.5px;
-  color: var(--dsk-subtle);
-}
-.dk-or-track.dk-off > ol > li {
-  color: var(--dsk-faint);
-  background: var(--dsk-card);
-  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
-  text-decoration: line-through;
-}
-.dk-or-track.dk-off > ol > li > svg {
-  color: var(--dsk-faint);
-}
 .dk-or-canceled {
   margin-bottom: 12px;
-}
-.dk-or-track-sk {
-  display: block;
-  height: 30px;
-  border-radius: 8px;
 }
 /* the charges as a ledger: invoiced against still to invoice, each line on a leader, the total */
 .dk-or-ledger {
@@ -8925,35 +8958,6 @@ a.dk-wk-way:focus-visible {
   font: 500 12.5px var(--dk-plex);
   font-feature-settings: "tnum";
   color: var(--dsk-fg);
-}
-@container dkor (max-width: 680px) {
-  .dk-or-track > ol > li.dk-done {
-    flex-grow: 0.45;
-    position: relative;
-  }
-  .dk-or-track > ol > li.dk-done > span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-}
-@container dkor (max-width: 520px) {
-  .dk-or-track > ol > li:not(.dk-now) > span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  .dk-or-track > ol > li {
-    position: relative;
-    padding: 0 4px;
-  }
-  .dk-or-track > ol > li.dk-now {
-    flex-grow: 4;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .dk-or-billbar > i {
@@ -12061,6 +12065,18 @@ button.dk-inv-stub:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* a slip's ways on: a step to take on the channel beside the record it leads to */
+.dk-inv-chan-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: auto;
+  padding-top: 2px;
+}
+.dk-inv-chan-acts > .dk-inv-chan-a {
+  margin-top: 0;
+}
 @container dkinv (max-width: 560px) {
   .dk-inv-keys {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -12077,5 +12093,650 @@ button.dk-inv-stub:hover {
   .dk-inv-bill th:nth-child(3),
   .dk-inv-bill td:nth-child(3) {
     width: 88px;
+  }
+}
+/* The settlement cards' shared parts */
+/* the settlement as a pay stub: what it pays over a perforated tear-off */
+.dk-rec-stub {
+  position: relative;
+  flex: none;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  width: 52px;
+  height: 40px;
+  padding-left: 15px;
+  border-radius: 5px;
+  color: var(--dsk-fg);
+  background: color-mix(in oklch, var(--dsk-fg) 8%, var(--dsk-card));
+}
+.dk-rec-stub::before {
+  content: "";
+  position: absolute;
+  inset: 4px auto 4px 9px;
+  border-left: 1.5px dashed var(--dsk-b-strong);
+}
+.dk-rec-stub > b {
+  font: 600 11.5px var(--dk-plex);
+  letter-spacing: -0.02em;
+}
+.dk-rec-stub > i {
+  width: 24px;
+  height: 0;
+  border-top: 1.5px solid var(--dsk-b-strong);
+}
+.dk-rec-stub > i + i {
+  width: 16px;
+}
+.dk-sk.dk-rec-stub::before {
+  content: none;
+}
+/* who moved a settlement through each step, under its track */
+.dk-rec-signs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-signs dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-signs dd {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  margin: 2px 0 0;
+}
+.dk-rec-signs dd > b {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-rec-signs dd > span {
+  overflow: hidden;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+/* a settlement's statement: one row per way of paying, grouped by what each does to the total */
+.dk-rec-stmt {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.dk-rec-stmt thead th {
+  padding: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--dsk-subtle);
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-rec-stmt th:nth-child(2),
+.dk-rec-stmt td:nth-child(2) {
+  width: 34%;
+}
+.dk-rec-stmt th:nth-child(3),
+.dk-rec-stmt td:nth-child(3) {
+  width: 104px;
+}
+.dk-rec-stmt th:not(:first-child),
+.dk-rec-stmt td:not(:first-child) {
+  padding-left: 16px;
+  text-align: right;
+}
+.dk-rec-stmt tr.dk-grp > th {
+  padding: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--dsk-fg);
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-rec-stmt tbody:first-of-type tr.dk-grp > th {
+  padding-top: 8px;
+}
+.dk-rec-stmt tr.dk-grp > th.dk-amt {
+  text-align: right;
+}
+.dk-rec-stmt td {
+  padding: 9px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-stmt .dk-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-rec-stmt .dk-desc > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-stmt .dk-desc > em {
+  font-style: normal;
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+  color: var(--dsk-subtle);
+}
+.dk-rec-stmt .dk-qty {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-stmt .dk-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-rec-stmt-code {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font: 500 11px var(--dk-plex);
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-rec-stmt-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-rec-stmt-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(100%, 300px);
+  margin: 12px 0 0 auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsk-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-rec-stmt-foot > dd {
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+/* why a settlement was voided, as written, with who and how far it had got */
+.dk-rec-voidslip {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-rec-voidslip > blockquote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--dsk-b-strong);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-rec-voidslip > dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.dk-rec-voidslip dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-voidslip dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+/* a statement with nothing on it */
+.dk-rec-empty-slip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 16px;
+  border: 1px dashed var(--dsk-b);
+  border-radius: 8px;
+  text-align: center;
+}
+.dk-rec-empty-slip > b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-empty-slip > span {
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+@container dkrecsettle (max-width: 560px) {
+  .dk-rec-signs,
+  .dk-rec-voidslip > dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-rec-stmt th:nth-child(2),
+  .dk-rec-stmt td:nth-child(2) {
+    width: 38%;
+  }
+  .dk-rec-stmt th:nth-child(3),
+  .dk-rec-stmt td:nth-child(3) {
+    width: 88px;
+  }
+}
+/* a pane too narrow for the hint beside the settlement's other steps keeps the steps */
+@container dkrecsettle (max-width: 640px) {
+  .dk-rec-bar:has(.dk-rec-step) .dk-rec-bh {
+    visibility: hidden;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+/* The worker settlement card */
+.dk-pay {
+  container: dkrecsettle / inline-size;
+}
+.dk-rec-amt .dk-pay-zero {
+  color: var(--dsk-subtle);
+}
+/* how the statement adds up: a waterfall from earnings to net pay */
+.dk-pay-fall {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-pay-fall > li {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 12px;
+}
+.dk-pay-fall .dk-what {
+  display: flex;
+  flex-direction: column;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+.dk-pay-fall .dk-what > em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-pay-fall .dk-lane {
+  position: relative;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-pay-fall .dk-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--dsk-fg2);
+}
+.dk-pay-fall .dk-zero {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1px solid var(--dsk-b-strong);
+}
+.dk-pay-fall .dk-out .dk-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-b-strong) 0 1.5px,
+    color-mix(in oklch, var(--dsk-b-strong) 35%, var(--dsk-card)) 1.5px 4px
+  );
+}
+.dk-pay-fall .dk-total .dk-bar {
+  background: var(--dsk-fg);
+}
+.dk-pay-fall .dk-carry .dk-bar {
+  background: var(--dsk-warn);
+}
+.dk-pay-fall .dk-amt {
+  text-align: right;
+  font: 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-pay-fall .dk-out .dk-amt {
+  color: var(--dsk-fg2);
+}
+.dk-pay-fall > li.dk-total {
+  padding-top: 8px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-pay-fall > li.dk-total .dk-what,
+.dk-pay-fall > li.dk-total .dk-amt {
+  font-weight: 600;
+}
+.dk-pay-fall > li.dk-carry .dk-amt {
+  color: var(--dsk-warn-fg);
+}
+/* the flags the run raised, each a reason to look before approving */
+.dk-pay-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-pay-flags > li {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-pay-flags > li.dk-critical {
+  color: var(--danger-subtle-foreground);
+  background: var(--danger-subtle);
+}
+.dk-pay-flags > li > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.dk-pay-flags > li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-pay-flags > li > span > b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+/* the worker's disputes: an open one in their words, a closed one as how it ended */
+.dk-pay-disputes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-pay-disputes > li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-pay-disputes > li.dk-open {
+  background: var(--dsk-warn-sub);
+}
+.dk-pay-dispute-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dk-pay-dispute-h > b {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-pay-disputes > li.dk-open .dk-pay-dispute-h > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-pay-dispute-h > span {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-pay-disputes > li.dk-open .dk-pay-dispute-h > span {
+  color: var(--dsk-warn-fg);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dsk-warn) 45%, transparent);
+}
+.dk-pay-disputes blockquote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in oklch, var(--dsk-warn) 60%, transparent);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-pay-disputes > li:not(.dk-open) blockquote {
+  border-left-color: var(--dsk-b-strong);
+}
+.dk-pay-disputes em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-pay-disputes > li.dk-open em {
+  color: var(--dsk-warn-fg);
+}
+@container dkrecsettle (max-width: 520px) {
+  .dk-pay-fall > li {
+    grid-template-columns: 96px minmax(0, 1fr) 84px;
+    gap: 8px;
+  }
+}
+/* The carrier settlement card */
+.dk-cset {
+  container: dkrecsettle / inline-size;
+}
+/* the carrier's invoices against the statement: a cell a move, keyed beneath */
+.dk-cset-recon {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dk-cset-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.dk-cset-strip > i {
+  flex: 1 1 10px;
+  max-width: 28px;
+  min-width: 8px;
+  height: 18px;
+  border-radius: 3px;
+}
+.dk-cset-strip > i.dk-sk {
+  max-width: none;
+}
+.dk-cset-strip > .dk-matched,
+.dk-cset-keys > .dk-matched > dt::before {
+  background: var(--dsk-success);
+}
+.dk-cset-strip > .dk-off,
+.dk-cset-keys > .dk-off > dt::before {
+  background: var(--dsk-warn);
+}
+.dk-cset-strip > .dk-waiting,
+.dk-cset-keys > .dk-waiting > dt::before {
+  background: var(--dsk-warn-sub);
+  outline: 1.5px solid var(--dsk-warn);
+  outline-offset: -1.5px;
+}
+.dk-cset-strip > .dk-none,
+.dk-cset-keys > .dk-none > dt::before {
+  background: transparent;
+  outline: 1px dashed var(--dsk-b-strong);
+  outline-offset: -1px;
+}
+.dk-cset-keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.dk-cset-keys > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-cset-keys dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-cset-keys dt::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.dk-cset-keys dd {
+  margin: 0 0 0 14px;
+  font-size: 12.5px;
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-cset-moves {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-cset-moves > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-cset-moves .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-cset-moves .dk-what > b {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-cset-moves .dk-what > b > span {
+  font-weight: 400;
+  color: var(--dsk-fg2);
+}
+.dk-cset-moves .dk-what > span {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-cset-var {
+  font: 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-warn-fg);
+}
+.dk-cset-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-cset-moves > li.dk-off .dk-cset-tag {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-cset-moves > li.dk-waiting .dk-cset-tag {
+  color: var(--dsk-warn-fg);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dsk-warn) 45%, transparent);
+}
+/* where the money goes: the remit-to address, the method and the terms */
+.dk-cset-remit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 16px;
+  margin: 0;
+}
+.dk-cset-remit > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dk-cset-remit dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-cset-remit dd {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+@container dkrecsettle (max-width: 520px) {
+  .dk-cset-remit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-cset-moves > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dk-cset-tag {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }

@@ -254,6 +254,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
@@ -392,6 +393,7 @@ type ResolverRoot interface {
 	DriverPayEventComponent() DriverPayEventComponentResolver
 	DriverSettlement() DriverSettlementResolver
 	DriverSettlementLine() DriverSettlementLineResolver
+	DriverSettlementLineGroup() DriverSettlementLineGroupResolver
 	DrugAlcoholStanding() DrugAlcoholStandingResolver
 	EdiCarrierInvoice() EdiCarrierInvoiceResolver
 	EdiMessage() EdiMessageResolver
@@ -1076,6 +1078,14 @@ type CarrierMonitoringEnrollmentResolver interface {
 type CarrierSettlementResolver interface {
 	ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
+	CostSummary(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.CostGroup, error)
+	LoadShares(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*settlementload.Share, error)
+	MoveInvoices(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.MoveInvoice, error)
+	SubmittedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	ApprovedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	PostedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	PaidBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
 }
 
 type CarrierSourcingResultResolver interface {
@@ -1190,11 +1200,26 @@ type DriverSettlementResolver interface {
 	TotalMiles(ctx context.Context, obj *driversettlement.Settlement) (string, error)
 	ExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
+	LineSummary(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.LineGroup, error)
+	LoadShares(ctx context.Context, obj *driversettlement.Settlement) ([]*settlementload.Share, error)
+	Disputes(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.Dispute, error)
+	SubmittedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	ApprovedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	PostedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	PaidBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
 }
 
 type DriverSettlementLineResolver interface {
 	Quantity(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
 	Rate(ctx context.Context, obj *driversettlement.SettlementLine) (string, error)
+}
+
+type DriverSettlementLineGroupResolver interface {
+	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
+	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
+	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error)
+	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error)
 }
 
 type DrugAlcoholStandingResolver interface {
@@ -3858,6 +3883,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DriverPayEventComponent":            func() any { return r.DriverPayEventComponent() },
 			"DriverSettlement":                   func() any { return r.DriverSettlement() },
 			"DriverSettlementLine":               func() any { return r.DriverSettlementLine() },
+			"DriverSettlementLineGroup":          func() any { return r.DriverSettlementLineGroup() },
 			"DrugAlcoholStanding":                func() any { return r.DrugAlcoholStanding() },
 			"EdiCarrierInvoice":                  func() any { return r.EdiCarrierInvoice() },
 			"EdiMessage":                         func() any { return r.EdiMessage() },
@@ -13360,6 +13386,41 @@ type CarrierSettlement {
   updatedAt: Timestamp!
   carrier: Carrier
   lines: [CarrierSettlementLine!]
+  "The lines summed by cost: one row per kind of cost and description, and each adjustment added by hand on its own. Null when the lines were not read."
+  costSummary: [CarrierSettlementLineGroup!]
+  "What each load came to on the statement, every line tied to it summed. Null when the lines were not read."
+  loadShares: [SettlementLoadShare!]
+  "Each move the statement pays and the carrier's invoice for it, if one came in. Null when the lines were not read."
+  moveInvoices: [CarrierSettlementMoveInvoice!]
+  submittedBy: User
+  approvedBy: User
+  postedBy: User
+  paidBy: User
+  voidedBy: User
+}
+
+"Carrier settlement lines of the same kind of cost and description, summed."
+type CarrierSettlementLineGroup {
+  eventType: CarrierCostEventType!
+  description: String!
+  amountMinor: Int!
+  lineCount: Int!
+  shipmentCount: Int!
+  "An adjustment added by a person rather than accrued or accepted from an invoice variance."
+  manual: Boolean!
+}
+
+"""
+One move a carrier settlement pays and the carrier's invoice for it: what the
+move costs on the statement, and the newest live invoice match on its carrier
+assignment, when one came in.
+"""
+type CarrierSettlementMoveInvoice {
+  moveId: ID!
+  shipmentId: ID
+  proNumber: String!
+  costMinor: Int!
+  match: CarrierInvoiceMatch
 }
 
 type CarrierSettlementEdge {
@@ -18260,6 +18321,55 @@ type DriverSettlement {
   updatedAt: Timestamp!
   worker: Worker
   lines: [DriverSettlementLine!]
+  "The lines summed by how each was paid: one row per pay component, deduction, advance, escrow account or line added by hand. Null when the lines were not read."
+  lineSummary: [DriverSettlementLineGroup!]
+  "What each load came to on the statement, every line tied to it summed, in the order the loads first appear. Null when the lines were not read."
+  loadShares: [SettlementLoadShare!]
+  "The worker's disputes against this settlement, newest first; empty for someone who may not read settlement disputes."
+  disputes: [SettlementDispute!]!
+  submittedBy: User
+  approvedBy: User
+  postedBy: User
+  paidBy: User
+  voidedBy: User
+}
+
+"""
+Settlement lines paid the same way, summed: the same category, pay component,
+calculation method and pay code, and for a deduction the same recurring
+deduction, advance or escrow account. A line added by hand stands alone.
+"""
+type DriverSettlementLineGroup {
+  category: SettlementLineCategory!
+  componentKind: PayComponentKind
+  method: PayCalcMethod
+  payCodeId: ID
+  "The lines' description when every line shares it, else empty."
+  description: String!
+  "The rate when every line shares it."
+  rate: Decimal
+  quantity: Decimal!
+  amountMinor: Int!
+  lineCount: Int!
+  shipmentCount: Int!
+  advanceId: ID
+  escrowAccountId: ID
+  recurringDeductionId: ID
+  recurringEarningId: ID
+  "Added by a person rather than from a load, a recurring earning or a recurring deduction."
+  manual: Boolean!
+  "The advance these lines recover, as it stands now; null for someone who may not read pay advances."
+  advance: PayAdvance
+  "The escrow account these lines pay into, as it stands now; null for someone who may not read escrow accounts."
+  escrowAccount: EscrowAccount
+}
+
+"What one load came to on a settlement: every line tied to it, summed."
+type SettlementLoadShare {
+  shipmentId: ID!
+  proNumber: String!
+  amountMinor: Int!
+  lineCount: Int!
 }
 
 type DriverSettlementEdge {
@@ -24488,6 +24598,8 @@ type Invoice {
   disputeStatus: InvoiceDisputeStatus!
   sendStatus: InvoiceSendStatus!
   sentAt: Timestamp
+  "The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one."
+  pdfDocumentId: ID
   isAdjustmentArtifact: Boolean!
   voidedAt: Timestamp
   voidedById: ID
@@ -30389,6 +30501,16 @@ input ShipmentsInput {
   lines. Needs permission to read invoices.
   """
   invoiceIds: [ID!]
+  """
+  Only shipments one of these worker settlements pays, on one of its lines.
+  Needs permission to read worker settlements.
+  """
+  driverSettlementIds: [ID!]
+  """
+  Only shipments one of these carrier settlements pays, on one of its lines.
+  Needs permission to read carrier settlements.
+  """
+  carrierSettlementIds: [ID!]
 }
 
 input ShipmentEventsInput {

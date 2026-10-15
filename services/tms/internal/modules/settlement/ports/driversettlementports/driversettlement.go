@@ -122,6 +122,11 @@ type ListSettlementDisputeConnectionRequest struct {
 	Cursor pagination.CursorInfo    `json:"cursor"`
 }
 
+type ListSettlementDisputesBySettlementIDsRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
+	SettlementIDs []pulid.ID            `json:"settlementIds"`
+}
+
 type ListSettlementDisputesForWorkerRequest struct {
 	TenantInfo pagination.TenantInfo            `json:"tenantInfo"`
 	WorkerID   pulid.ID                         `json:"workerId"`
@@ -150,6 +155,10 @@ type SettlementDisputeRepository interface {
 		ctx context.Context,
 		req *ListSettlementDisputesForWorkerRequest,
 	) ([]*driversettlement.Dispute, error)
+	ListBySettlementIDs(
+		ctx context.Context,
+		req *ListSettlementDisputesBySettlementIDsRequest,
+	) (map[pulid.ID][]*driversettlement.Dispute, error)
 	CountOpen(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

@@ -248,6 +248,7 @@ type Resolver struct {
 	driverPayEventComponent            *driversettlementresolver.DriverPayEventComponentResolver
 	driverSettlement                   *driversettlementresolver.DriverSettlementResolver
 	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
+	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
@@ -972,6 +973,8 @@ func FromServices(s *Services) *Resolver {
 		TrackingEventService:    s.TrackingEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 		InvoiceService:          s.InvoiceService,
+		DriverSettlementRepo:    s.DriverSettlementRepo,
+		CarrierSettlementRepo:   s.CarrierSettlementRepo,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
 		Core:                   s.Core,
@@ -1224,6 +1227,7 @@ func FromServices(s *Services) *Resolver {
 		driverPayEventComponent:      &driversettlementresolver.DriverPayEventComponentResolver{Deps: driversettlementDeps},
 		driverSettlement:             &driversettlementresolver.DriverSettlementResolver{Deps: driversettlementDeps},
 		driverSettlementLine:         &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps},
+		driverSettlementLineGroup:    &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps},
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
@@ -2068,6 +2072,10 @@ func (r *Resolver) DriverSettlement() generated.DriverSettlementResolver {
 
 func (r *Resolver) DriverSettlementLine() generated.DriverSettlementLineResolver {
 	return r.driverSettlementLine
+}
+
+func (r *Resolver) DriverSettlementLineGroup() generated.DriverSettlementLineGroupResolver {
+	return r.driverSettlementLineGroup
 }
 
 func (r *Resolver) DrugAlcoholStanding() generated.DrugAlcoholStandingResolver {

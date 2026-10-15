@@ -8079,6 +8079,38 @@ func init() {
 					Target: &CarrierSettlementLineSpec,
 				},
 			},
+			{
+				Name:    "costSummary",
+				Special: "costSummary",
+			},
+			{
+				Name:    "loadShares",
+				Special: "loadShares",
+			},
+			{
+				Name:    "moveInvoices",
+				Special: "moveInvoices",
+			},
+			{
+				Name:        "submittedBy",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "postedBy",
+				FieldMapKey: "postedById",
+			},
+			{
+				Name:        "paidBy",
+				FieldMapKey: "paidById",
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
+			},
 		},
 	}
 
@@ -11770,6 +11802,38 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &DriverSettlementLineSpec,
 				},
+			},
+			{
+				Name:    "lineSummary",
+				Special: "lineSummary",
+			},
+			{
+				Name:    "loadShares",
+				Special: "loadShares",
+			},
+			{
+				Name:    "disputes",
+				Special: "disputes",
+			},
+			{
+				Name:        "submittedBy",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "postedBy",
+				FieldMapKey: "postedById",
+			},
+			{
+				Name:        "paidBy",
+				FieldMapKey: "paidById",
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
 			},
 		},
 	}
@@ -17803,6 +17867,10 @@ func init() {
 			{
 				Name:        "sentAt",
 				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "pdfDocumentId",
+				FieldMapKey: "pdfDocumentId",
 			},
 			{
 				Name:        "isAdjustmentArtifact",

@@ -149,7 +149,7 @@ describe("DeskOrder", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the order…");
-    expect(container.querySelector(".dk-rec-skel .dk-or-track")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-track")).not.toBeNull();
     expect(container.querySelector(".dk-rec-skel .dk-rec-route")).not.toBeNull();
 
     expect(
@@ -232,7 +232,7 @@ describe("DeskOrder", () => {
 
     expect(await screen.findByText("This order was canceled.")).toBeInTheDocument();
     expect(section("Where it stands").querySelector('[aria-current="step"]')).toBeNull();
-    expect(section("Where it stands").querySelector(".dk-or-track")).toHaveClass("dk-off");
+    expect(section("Where it stands").querySelector(".dk-rec-track")).toHaveClass("dk-off");
     expect(screen.getByText(/^Canceled · last changed /u)).toBeInTheDocument();
     expect(document.querySelector(".dk-rec-st")).toHaveTextContent("Canceled");
   });

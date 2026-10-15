@@ -1,5 +1,5 @@
 {
-  "version": "sha256:33d642f0789ac02404972617540be8ac9f969af7c1e7c4fd647ea77819df6ff6",
+  "version": "sha256:1c6e06a75f58e1c2b447473709974adc4888641cdcbbb4606ecfc76c642ef9aa",
   "modules": [
     {
       "id": "home",
@@ -17888,7 +17888,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "commodity",
@@ -17925,12 +17926,13 @@
     },
     {
       "entity": "driver_settlement",
-      "label": "Driver settlement",
+      "label": "Worker settlement",
       "path": "/payroll/settlements",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "edi_inbound_file",

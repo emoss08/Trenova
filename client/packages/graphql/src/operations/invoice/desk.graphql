@@ -42,6 +42,7 @@ query DeskInvoiceCard($id: ID!) {
     memoKind
     ediSendStatus
     ediSentAt
+    pdfDocumentId
     lastEdiError
     lastEdiMessageId
     createdAt

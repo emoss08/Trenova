@@ -1,49 +1,9 @@
 import type { DeskOrderCharge } from "@/lib/graphql/order-card";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CardIcon, type CardFact } from "../../record-card/record-card";
-import { cardMoment, money } from "../../record-card/record-card-values";
-import { chargeLine, chargeTotals, type LifecycleStep } from "./order-card";
-
-/**
- * The order's way from draft to closed as one track of segments, each naming
- * its step: the steps behind it ticked, the one it stands at filled, the ones
- * ahead left open, with which step of how many it is and when it last
- * changed. A canceled order leaves the whole track off.
- */
-export function LifecycleTrack({
-  steps,
-  canceled,
-  changedAt,
-}: {
-  steps: readonly LifecycleStep[];
-  canceled: boolean;
-  changedAt: number;
-}) {
-  const t = useT();
-  const at = steps.findIndex((step) => step.state === "now");
-  return (
-    <div className={cn("dk-or-track", canceled && "dk-off")}>
-      <ol aria-label={t("Order lifecycle")}>
-        {steps.map((step) => (
-          <li
-            key={step.key}
-            className={`dk-${step.state}`}
-            aria-current={step.state === "now" ? "step" : undefined}
-          >
-            {step.state === "done" && <CardIcon name="check" size={11} stroke={2.8} />}
-            <span>{step.label}</span>
-          </li>
-        ))}
-      </ol>
-      <p>
-        {canceled
-          ? t("Canceled · last changed {0}", cardMoment(changedAt))
-          : t("Step {0} of {1} · last changed {2}", at + 1, steps.length, cardMoment(changedAt))}
-      </p>
-    </div>
-  );
-}
+import type { CardFact } from "../../record-card/record-card";
+import { money } from "../../record-card/record-card-values";
+import { chargeLine, chargeTotals } from "./order-card";
 
 /**
  * The order's charges as a ledger: a bar of how much has been invoiced against

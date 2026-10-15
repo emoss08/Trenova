@@ -726,11 +726,11 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 	if err != nil {
 		return nil, err
 	}
-	shipmentIDs, err := r.shipmentsInvoicesBill(ctx, input.InvoiceIds)
+	shipmentIDs, scoped, err := r.shipmentsScope(ctx, &input)
 	if err != nil {
 		return nil, err
 	}
-	if input.InvoiceIds != nil && len(shipmentIDs) == 0 {
+	if scoped && len(shipmentIDs) == 0 {
 		return emptyShipmentConnection(), nil
 	}
 

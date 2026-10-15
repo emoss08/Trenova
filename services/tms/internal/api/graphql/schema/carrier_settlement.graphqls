@@ -167,6 +167,41 @@ type CarrierSettlement {
   updatedAt: Timestamp!
   carrier: Carrier
   lines: [CarrierSettlementLine!]
+  "The lines summed by cost: one row per kind of cost and description, and each adjustment added by hand on its own. Null when the lines were not read."
+  costSummary: [CarrierSettlementLineGroup!]
+  "What each load came to on the statement, every line tied to it summed. Null when the lines were not read."
+  loadShares: [SettlementLoadShare!]
+  "Each move the statement pays and the carrier's invoice for it, if one came in. Null when the lines were not read."
+  moveInvoices: [CarrierSettlementMoveInvoice!]
+  submittedBy: User
+  approvedBy: User
+  postedBy: User
+  paidBy: User
+  voidedBy: User
+}
+
+"Carrier settlement lines of the same kind of cost and description, summed."
+type CarrierSettlementLineGroup {
+  eventType: CarrierCostEventType!
+  description: String!
+  amountMinor: Int!
+  lineCount: Int!
+  shipmentCount: Int!
+  "An adjustment added by a person rather than accrued or accepted from an invoice variance."
+  manual: Boolean!
+}
+
+"""
+One move a carrier settlement pays and the carrier's invoice for it: what the
+move costs on the statement, and the newest live invoice match on its carrier
+assignment, when one came in.
+"""
+type CarrierSettlementMoveInvoice {
+  moveId: ID!
+  shipmentId: ID
+  proNumber: String!
+  costMinor: Int!
+  match: CarrierInvoiceMatch
 }
 
 type CarrierSettlementEdge {

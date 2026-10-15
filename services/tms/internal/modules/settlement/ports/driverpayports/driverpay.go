@@ -262,6 +262,16 @@ type GetPayAdvanceByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetPayAdvancesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	IDs        []pulid.ID            `json:"ids"`
+}
+
+type GetEscrowAccountsByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	IDs        []pulid.ID            `json:"ids"`
+}
+
 type ListPayAdvancesRequest struct {
 	Filter   *pagination.QueryOptions `json:"filter"`
 	WorkerID pulid.ID                 `json:"workerId"`
@@ -288,6 +298,10 @@ type PayAdvanceRepository interface {
 		req *ListPayAdvanceConnectionRequest,
 	) (*pagination.CursorListResult[*driverpay.PayAdvance], error)
 	GetByID(ctx context.Context, req GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetPayAdvancesByIDsRequest,
+	) ([]*driverpay.PayAdvance, error)
 	ListOutstandingForWorker(
 		ctx context.Context,
 		req ListOutstandingAdvancesForWorkerRequest,
@@ -333,6 +347,10 @@ type EscrowAccountRepository interface {
 		req *ListEscrowAccountConnectionRequest,
 	) (*pagination.CursorListResult[*driverpay.EscrowAccount], error)
 	GetByID(ctx context.Context, req GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetEscrowAccountsByIDsRequest,
+	) ([]*driverpay.EscrowAccount, error)
 	GetActiveForWorker(
 		ctx context.Context,
 		req GetActiveEscrowAccountForWorkerRequest,

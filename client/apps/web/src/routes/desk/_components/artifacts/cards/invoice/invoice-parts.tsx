@@ -15,6 +15,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { CardActionButton } from "../../record-card/card-action";
 import { CardIcon } from "../../record-card/record-card";
 import type {
   ChannelReading,
@@ -412,18 +413,36 @@ const CHANNEL_ICON = {
   books: BookOpen01Icon,
 } as const satisfies Record<string, IconComponent>;
 
+/**
+ * What a slip leads to: a record opened in the card's place, a page here, the
+ * system outside, or a step the person takes on the channel from the card.
+ */
+export type ChannelAct =
+  | { kind: "open"; label: string; onClick: () => void }
+  | { kind: "page"; label: string; to: string }
+  | { kind: "outside"; label: string; href: string }
+  | { kind: "do"; label: string; onClick: () => void; blocker: string | null; busy: boolean };
+
 export type ChannelSlip = ChannelReading & {
   key: keyof typeof CHANNEL_ICON;
   label: string;
-  action?:
-    | { kind: "open"; label: string; onClick: () => void }
-    | { kind: "page"; label: string; to: string }
-    | { kind: "outside"; label: string; href: string };
+  actions?: readonly ChannelAct[];
 };
 
-/** What a slip leads to: a record opened in the card's place, a page here, or the system outside. */
-function ChannelAction({ action }: { action: NonNullable<ChannelSlip["action"]> }) {
+function ChannelAction({ action }: { action: ChannelAct }) {
   switch (action.kind) {
+    case "do":
+      return (
+        <CardActionButton
+          variant="outline"
+          size="xxs"
+          blocker={action.blocker}
+          busy={action.busy}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </CardActionButton>
+      );
     case "open":
       return (
         <Button variant="bare" size="bare" className="dk-inv-chan-a" onClick={action.onClick}>
@@ -475,7 +494,13 @@ export function ChannelSlips({ slips }: { slips: readonly ChannelSlip[] }) {
             {slip.detail && (
               <ClippedText text={slip.detail} className={cn(slip.why && "dk-inv-why")} />
             )}
-            {slip.action && <ChannelAction action={slip.action} />}
+            {slip.actions && slip.actions.length > 0 && (
+              <span className="dk-inv-chan-acts">
+                {slip.actions.map((action) => (
+                  <ChannelAction key={action.label} action={action} />
+                ))}
+              </span>
+            )}
           </div>
         );
       })}

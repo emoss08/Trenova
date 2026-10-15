@@ -59,7 +59,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { translate } from "@trenova/shared/i18n/runtime";
 
-type ReasonAction = "reject" | "void";
+export type ReasonAction = "reject" | "void";
 
 const lineCategoryLabels: Record<string, string> = defineLabels({
   Earning: "Earnings",
@@ -439,7 +439,7 @@ function SettlementActions({
   );
 }
 
-function ReasonDialog({
+export function ReasonDialog({
   action,
   settlementId,
   onOpenChange,
@@ -508,7 +508,7 @@ function ReasonDialog({
   );
 }
 
-function MarkPaidDialog({
+export function MarkPaidDialog({
   open,
   settlementId,
   onOpenChange,
@@ -541,7 +541,7 @@ function MarkPaidDialog({
         <DialogHeader>
           <DialogTitle>{t("Mark settlement paid")}</DialogTitle>
           <DialogDescription>
-            {t("Record how the net pay was disbursed to the driver.")}
+            {t("Record how the net pay was disbursed to the worker.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">

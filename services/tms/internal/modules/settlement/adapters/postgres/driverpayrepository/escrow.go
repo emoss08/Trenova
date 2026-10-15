@@ -162,6 +162,31 @@ func (r *escrowAccountRepository) GetByID(
 	})
 }
 
+func (r *escrowAccountRepository) GetByIDs(
+	ctx context.Context,
+	req driverpayports.GetEscrowAccountsByIDsRequest,
+) ([]*driverpay.EscrowAccount, error) {
+	if len(req.IDs) == 0 {
+		return []*driverpay.EscrowAccount{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
+		cols := driverpaycol.EscrowAccountColumns
+		items := make([]*driverpay.EscrowAccount, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return driverpaycol.EscrowAccountScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get escrow accounts by ids: %w", err)
+		}
+		return items, nil
+	})
+}
+
 func (r *escrowAccountRepository) GetActiveForWorker(
 	ctx context.Context,
 	req driverpayports.GetActiveEscrowAccountForWorkerRequest,

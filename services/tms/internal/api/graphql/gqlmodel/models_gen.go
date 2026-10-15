@@ -9524,6 +9524,12 @@ type ShipmentsInput struct {
 	// Only shipments one of these invoices bills, as its shipment or on one of its
 	// lines. Needs permission to read invoices.
 	InvoiceIds []string `json:"invoiceIds,omitempty"`
+	// Only shipments one of these worker settlements pays, on one of its lines.
+	// Needs permission to read worker settlements.
+	DriverSettlementIds []string `json:"driverSettlementIds,omitempty"`
+	// Only shipments one of these carrier settlements pays, on one of its lines.
+	// Needs permission to read carrier settlements.
+	CarrierSettlementIds []string `json:"carrierSettlementIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {
