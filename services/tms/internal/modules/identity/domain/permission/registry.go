@@ -3,6 +3,7 @@ package permission
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 )
 
@@ -156,6 +157,21 @@ func (r *Registry) ExpandCompositeOperation(resource, compositeName string) []Op
 		return ops
 	}
 	return nil
+}
+
+func (r *Registry) Declares(resource string, operation Operation) bool {
+	if r.declaresOn(resource, operation) {
+		return true
+	}
+	parent := r.GetEffectiveResource(resource)
+	return parent != resource && r.declaresOn(parent, operation)
+}
+
+func (r *Registry) declaresOn(resource string, operation Operation) bool {
+	if slices.Contains(r.GetOperationsForResource(resource), operation) {
+		return true
+	}
+	return len(r.ExpandCompositeOperation(resource, string(operation))) > 0
 }
 
 func (r *Registry) HasResource(resource string) bool {

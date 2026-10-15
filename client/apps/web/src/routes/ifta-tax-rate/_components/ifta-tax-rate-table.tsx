@@ -75,8 +75,8 @@ export default function IftaTaxRateTable() {
     () => getColumns(jurisdictionFilterOptions(jurisdictions), t),
     [jurisdictions, t],
   );
-  const { allowed: canImport } = usePermission(Resource.IFTATaxRate, Operation.Create);
-  const { allowed: canDelete } = usePermission(Resource.IFTATaxRate, Operation.Delete);
+  const { allowed: canImport } = usePermission(Resource.IFTATaxRate, Operation.Manage);
+  const { allowed: canDelete } = usePermission(Resource.IFTATaxRate, Operation.Manage);
   const [importOpen, setImportOpen] = useState(false);
   const [deleting, setDeleting] = useState<IftaTaxRateRow | null>(null);
 

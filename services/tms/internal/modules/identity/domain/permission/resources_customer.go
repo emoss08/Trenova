@@ -23,20 +23,6 @@ func (r *Registry) registerCustomerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceCustomerContact.String(),
-		DisplayName:    "Customer Contact",
-		Description:    "Customer contact management",
-		Category:       "Customers",
-		ParentResource: ResourceCustomer.String(),
-		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View contacts"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Add contacts"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify contacts"},
-		},
-		DefaultSensitivity: SensitivityInternal,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceFactoringCompany.String(),
 		DisplayName: "Factoring Company",
 		Description: "Factors that customers' invoices are assigned to",

@@ -11,15 +11,6 @@ func (r *Registry) registerComplianceResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceDocumentClassification.String(),
-		DisplayName:        "Document Classification",
-		Description:        "Document classification definitions",
-		Category:           "Compliance",
-		Operations:         standardOps,
-		DefaultSensitivity: SensitivityInternal,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceDocument.String(),
 		DisplayName: "Document",
 		Description: "Uploaded document records and intelligence output",

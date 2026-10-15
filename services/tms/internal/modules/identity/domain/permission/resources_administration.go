@@ -193,7 +193,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Identity Provider",
 		Description:        "OIDC identity provider configuration",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -202,7 +202,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "SCIM Directory",
 		Description:        "SCIM directory, token, and group mapping administration",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -220,7 +220,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Access Policy",
 		Description:        "Organization access policy decisions",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 

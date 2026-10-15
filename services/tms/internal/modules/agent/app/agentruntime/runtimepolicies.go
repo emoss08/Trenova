@@ -54,7 +54,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 	},
 	{
 		name:      withdrawProposalName,
-		operation: permission.OpUpdate,
+		operation: permission.OpRead,
 		scope:     agent.ToolScopeRun,
 		egress:    agent.EgressNone,
 		effect:    agent.ToolEffectAsk,

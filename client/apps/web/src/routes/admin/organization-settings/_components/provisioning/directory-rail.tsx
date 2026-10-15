@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useSecurityAccess } from "../security-access/use-security-access";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -26,6 +27,7 @@ type DirectoryRailProps = {
 
 export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: DirectoryRailProps) {
   const t = useT();
+  const access = useSecurityAccess();
 
   const [selectedDirectoryId, setSelectedDirectoryId] = useQueryState(
     "directoryId",
@@ -92,10 +94,12 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
           <div className="text-sm font-medium">{t("SCIM directories")}</div>
           <div className="text-muted-foreground text-xs">{t("Directory sync tenants")}</div>
         </div>
-        <Button size="sm" onClick={onAdd}>
-          <PlusIcon />
-          {t("Add")}
-        </Button>
+        {access.scimDirectories.create ? (
+          <Button size="sm" onClick={onAdd}>
+            <PlusIcon />
+            {t("Add")}
+          </Button>
+        ) : null}
       </div>
       {directoriesQuery.isLoading ? (
         <div className="space-y-2 p-3">

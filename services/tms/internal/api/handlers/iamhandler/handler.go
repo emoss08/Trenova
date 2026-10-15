@@ -42,70 +42,119 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/organizations/:id/iam/")
-	readOrg := h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead)
-	updateOrg := h.pm.RequirePermission(
-		permission.ResourceOrganization.String(),
-		permission.OpUpdate,
+	h.registerIdentityProviderRoutes(api)
+	h.registerSCIMRoutes(api)
+	h.registerAccessPolicyRoutes(api)
+
+	api.GET(
+		"provisioning-audit",
+		h.pm.RequirePermission(permission.ResourceProvisioningAudit.String(), permission.OpRead),
+		h.listProvisioningAuditRecords,
 	)
 	api.GET(
+		"auth-events",
+		h.pm.RequirePermission(permission.ResourceAuthEvent.String(), permission.OpRead),
+		h.listAuthEvents,
+	)
+	api.GET(
+		"risk-decisions",
+		h.pm.RequirePermission(permission.ResourceRiskDecision.String(), permission.OpRead),
+		h.listRiskDecisions,
+	)
+	api.GET(
+		"external-identities",
+		h.pm.RequirePermission(permission.ResourceExternalIdentity.String(), permission.OpRead),
+		h.listExternalIdentities,
+	)
+	api.GET(
+		"mfa-authenticators",
+		h.pm.RequirePermission(permission.ResourceMFAAuthenticator.String(), permission.OpRead),
+		h.listMFAAuthenticators,
+	)
+}
+
+func (h *Handler) registerIdentityProviderRoutes(api *gin.RouterGroup) {
+	resource := permission.ResourceIdentityProvider.String()
+	api.GET(
 		"identity-providers",
-		readOrg,
+		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listIdentityProviders,
 	)
 	api.POST(
 		"identity-providers",
-		updateOrg,
+		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.createIdentityProvider,
 	)
 	api.PUT(
 		"identity-providers/:providerId",
-		updateOrg,
+		h.pm.RequirePermission(resource, permission.OpUpdate),
 		h.updateIdentityProvider,
 	)
 	api.DELETE(
 		"identity-providers/:providerId",
-		updateOrg,
+		h.pm.RequirePermission(resource, permission.OpDelete),
 		h.deleteIdentityProvider,
 	)
+}
 
-	api.GET("scim/directories", readOrg, h.listSCIMDirectories)
-	api.POST("scim/directories", updateOrg, h.createSCIMDirectory)
-	api.PUT("scim/directories/:directoryId", updateOrg, h.updateSCIMDirectory)
-	api.DELETE("scim/directories/:directoryId", updateOrg, h.deleteSCIMDirectory)
-	api.GET("scim/directories/:directoryId/tokens", readOrg, h.listSCIMTokens)
-	api.POST("scim/directories/:directoryId/tokens", updateOrg, h.createSCIMToken)
-	api.POST("scim/tokens/:tokenId/revoke", updateOrg, h.revokeSCIMToken)
+func (h *Handler) registerSCIMRoutes(api *gin.RouterGroup) {
+	resource := permission.ResourceSCIMDirectory.String()
+	read := h.pm.RequirePermission(resource, permission.OpRead)
+	create := h.pm.RequirePermission(resource, permission.OpCreate)
+	update := h.pm.RequirePermission(resource, permission.OpUpdate)
+	remove := h.pm.RequirePermission(resource, permission.OpDelete)
+
+	api.GET("scim/directories", read, h.listSCIMDirectories)
+	api.POST("scim/directories", create, h.createSCIMDirectory)
+	api.PUT("scim/directories/:directoryId", update, h.updateSCIMDirectory)
+	api.DELETE("scim/directories/:directoryId", remove, h.deleteSCIMDirectory)
+	api.GET("scim/directories/:directoryId/tokens", read, h.listSCIMTokens)
+	api.POST("scim/directories/:directoryId/tokens", update, h.createSCIMToken)
+	api.POST("scim/tokens/:tokenId/revoke", update, h.revokeSCIMToken)
 	api.GET(
 		"scim/directories/:directoryId/group-role-mappings",
-		readOrg,
+		read,
 		h.listSCIMGroupRoleMappings,
 	)
 	api.POST(
 		"scim/directories/:directoryId/group-role-mappings",
-		updateOrg,
+		update,
 		h.createSCIMGroupRoleMapping,
 	)
 	api.PUT(
 		"scim/directories/:directoryId/group-role-mappings/:mappingId",
-		updateOrg,
+		update,
 		h.updateSCIMGroupRoleMapping,
 	)
 	api.DELETE(
 		"scim/directories/:directoryId/group-role-mappings/:mappingId",
-		updateOrg,
+		update,
 		h.deleteSCIMGroupRoleMapping,
 	)
-	api.GET("provisioning-audit", readOrg, h.listProvisioningAuditRecords)
+}
 
-	api.GET("access-policies", readOrg, h.listAccessPolicies)
-	api.POST("access-policies", updateOrg, h.createAccessPolicy)
-	api.PUT("access-policies/:policyId", updateOrg, h.updateAccessPolicy)
-	api.DELETE("access-policies/:policyId", updateOrg, h.deleteAccessPolicy)
-
-	api.GET("auth-events", readOrg, h.listAuthEvents)
-	api.GET("risk-decisions", readOrg, h.listRiskDecisions)
-	api.GET("external-identities", readOrg, h.listExternalIdentities)
-	api.GET("mfa-authenticators", readOrg, h.listMFAAuthenticators)
+func (h *Handler) registerAccessPolicyRoutes(api *gin.RouterGroup) {
+	resource := permission.ResourceAccessPolicy.String()
+	api.GET(
+		"access-policies",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listAccessPolicies,
+	)
+	api.POST(
+		"access-policies",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.createAccessPolicy,
+	)
+	api.PUT(
+		"access-policies/:policyId",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.updateAccessPolicy,
+	)
+	api.DELETE(
+		"access-policies/:policyId",
+		h.pm.RequirePermission(resource, permission.OpDelete),
+		h.deleteAccessPolicy,
+	)
 }
 
 func (h *Handler) tenantInfo(c *gin.Context) (pagination.TenantInfo, bool) {

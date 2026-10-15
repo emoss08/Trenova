@@ -25,11 +25,13 @@ import { toast } from "sonner";
 import { effectFilterOptions } from "./policies/constants";
 import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy-panel";
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
+import { useSecurityAccess } from "./use-security-access";
 
 export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const t = useT();
 
   const queryClient = useQueryClient();
+  const access = useSecurityAccess().accessPolicies;
   const policiesQuery = useQuery(organization.accessPolicies(organizationId));
   const resourcesQuery = useQuery({
     queryKey: ["permissions", "resources"],
@@ -150,10 +152,12 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={createPolicy}>
-              <PlusIcon />
-              {t("Add policy")}
-            </Button>
+            {access.create ? (
+              <Button size="sm" onClick={createPolicy}>
+                <PlusIcon />
+                {t("Add policy")}
+              </Button>
+            ) : null}
           </div>
         }
       />
@@ -177,11 +181,13 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
       ) : (
         <EmptyState
           icon={<ShieldTickIcon />}
-          label={policies.length === 0 ? "No access policies configured" : "No policies found"}
+          label={
+            policies.length === 0 ? t("No access policies configured") : t("No policies found")
+          }
           description={
             policies.length === 0
-              ? "Create allow and deny policies to control sensitive operations."
-              : "Adjust filters to find a policy."
+              ? t("Create allow and deny policies to control sensitive operations.")
+              : t("Adjust filters to find a policy.")
           }
         />
       )}
@@ -214,6 +220,7 @@ const PolicyRow = memo(function PolicyRow({
   onDeletePolicy: (policyId: string) => void;
 }) {
   const t = useT();
+  const access = useSecurityAccess().accessPolicies;
 
   const conditionCount = Object.keys(policy.conditions).length;
   const isAllow = policy.effect === "allow";
@@ -282,19 +289,23 @@ const PolicyRow = memo(function PolicyRow({
         </div>
       </div>
       <div className="flex items-center justify-end gap-1">
-        <Button size="sm" variant="ghost" onClick={() => onEditPolicy(policy)}>
-          <Edit02Icon />
-          {t("Edit")}
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive"
-          aria-label={t("Delete {0}", policy.name)}
-          onClick={() => onDeletePolicy(policy.id)}
-        >
-          <Trash01Icon />
-        </Button>
+        {access.update ? (
+          <Button size="sm" variant="ghost" onClick={() => onEditPolicy(policy)}>
+            <Edit02Icon />
+            {t("Edit")}
+          </Button>
+        ) : null}
+        {access.remove ? (
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            aria-label={t("Delete {0}", policy.name)}
+            onClick={() => onDeletePolicy(policy.id)}
+          >
+            <Trash01Icon />
+          </Button>
+        ) : null}
       </div>
     </div>
   );

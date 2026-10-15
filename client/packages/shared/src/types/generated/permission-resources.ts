@@ -146,7 +146,6 @@ export const Resource = {
 
   // Customers
   Customer: "customer",
-  CustomerContact: "customer_contact",
   FactoringCompany: "factoring_company",
 
   // Carriers
@@ -207,7 +206,6 @@ export const Resource = {
 
   // Compliance
   Qualification: "qualification",
-  DocumentClassification: "document_classification",
   Document: "document",
   DocumentType: "document_type",
   DocumentControl: "document_control",
@@ -219,10 +217,6 @@ export const Resource = {
   // Reference Data
   ShipmentType: "shipment_type",
   ServiceType: "service_type",
-  DelayCode: "delay_code",
-  ReasonCode: "reason_code",
-  CommentType: "comment_type",
-  Tag: "tag",
 
   // Reporting
   Report: "report",

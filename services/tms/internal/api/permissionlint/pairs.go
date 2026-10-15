@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -96,13 +97,20 @@ type wrapper struct {
 }
 
 type analyzer struct {
-	fset     *token.FileSet
-	consts   *Constants
-	wrappers map[string]wrapper
-	pairs    []Pair
+	fset       *token.FileSet
+	consts     *Constants
+	wrappers   map[string]wrapper
+	locals     map[string]string
+	pairs      []Pair
+	unresolved []string
 }
 
-func Analyze(consts *Constants, dirs ...string) ([]Pair, error) {
+type Result struct {
+	Pairs      []Pair
+	Unresolved []string
+}
+
+func Analyze(consts *Constants, dirs ...string) (*Result, error) {
 	fset := token.NewFileSet()
 	a := &analyzer{fset: fset, consts: consts, wrappers: make(map[string]wrapper)}
 
@@ -130,7 +138,7 @@ func Analyze(consts *Constants, dirs ...string) ([]Pair, error) {
 		a.collectPairs(files[path])
 	}
 
-	return a.pairs, nil
+	return &Result{Pairs: a.pairs, Unresolved: a.unresolved}, nil
 }
 
 func (a *analyzer) indexWrappers(file *ast.File) {
@@ -140,6 +148,7 @@ func (a *analyzer) indexWrappers(file *ast.File) {
 			continue
 		}
 		params := paramIndexes(fn.Type.Params)
+		a.locals = a.localResources(fn.Body)
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, isCall := node.(*ast.CallExpr)
 			if !isCall || !isCheckCall(call) {
@@ -178,13 +187,18 @@ func (a *analyzer) collectPairs(file *ast.File) {
 			continue
 		}
 		aliases := a.wrapperAliases(fn.Body)
+		a.locals = a.localResources(fn.Body)
+		params := paramIndexes(fn.Type.Params)
+		_, isWrapperDecl := a.wrappers[fn.Name.Name]
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, isCall := node.(*ast.CallExpr)
 			if !isCall {
 				return true
 			}
 			if isCheckCall(call) {
-				a.directPair(call)
+				if !a.directPair(call) && !(isWrapperDecl && a.forwardsParams(call, params)) {
+					a.markUnresolved(call, fn.Name.Name)
+				}
 				return true
 			}
 			if w, isWrapper := a.wrapperFor(call.Fun, aliases); isWrapper {
@@ -192,6 +206,49 @@ func (a *analyzer) collectPairs(file *ast.File) {
 			}
 			return true
 		})
+	}
+}
+
+func (a *analyzer) localResources(body *ast.BlockStmt) map[string]string {
+	locals := make(map[string]string)
+	ast.Inspect(body, func(node ast.Node) bool {
+		assign, ok := node.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != len(assign.Rhs) {
+			return true
+		}
+		for i, rhs := range assign.Rhs {
+			ident, isIdent := assign.Lhs[i].(*ast.Ident)
+			if !isIdent {
+				continue
+			}
+			if name, isResource := a.constantResource(rhs); isResource {
+				locals[ident.Name] = name
+			}
+		}
+		return true
+	})
+	return locals
+}
+
+func (a *analyzer) forwardsParams(call *ast.CallExpr, params map[string]int) bool {
+	for _, arg := range call.Args {
+		if ident, ok := arg.(*ast.Ident); ok {
+			if _, isParam := params[ident.Name]; isParam {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (a *analyzer) markUnresolved(call *ast.CallExpr, function string) {
+	path := filepath.ToSlash(a.fset.Position(call.Pos()).Filename)
+	for strings.HasPrefix(path, "../") {
+		path = strings.TrimPrefix(path, "../")
+	}
+	site := path + ":" + function
+	if !slices.Contains(a.unresolved, site) {
+		a.unresolved = append(a.unresolved, site)
 	}
 }
 
@@ -232,7 +289,7 @@ func (a *analyzer) wrapperFor(expr ast.Expr, aliases map[string]wrapper) (wrappe
 	}
 }
 
-func (a *analyzer) directPair(call *ast.CallExpr) {
+func (a *analyzer) directPair(call *ast.CallExpr) bool {
 	resource := ""
 	operation := ""
 	for _, arg := range call.Args {
@@ -245,9 +302,10 @@ func (a *analyzer) directPair(call *ast.CallExpr) {
 		}
 	}
 	if resource == "" || operation == "" {
-		return
+		return false
 	}
 	a.record(call, resource, operation)
+	return true
 }
 
 func (a *analyzer) wrappedPair(call *ast.CallExpr, w wrapper) {
@@ -271,6 +329,14 @@ func (a *analyzer) record(call *ast.CallExpr, resource, operation string) {
 }
 
 func (a *analyzer) resourceOf(expr ast.Expr) (string, bool) {
+	if ident, ok := expr.(*ast.Ident); ok {
+		name, known := a.locals[ident.Name]
+		return name, known
+	}
+	return a.constantResource(expr)
+}
+
+func (a *analyzer) constantResource(expr ast.Expr) (string, bool) {
 	if call, ok := expr.(*ast.CallExpr); ok && len(call.Args) == 0 {
 		if sel, isSel := call.Fun.(*ast.SelectorExpr); isSel && sel.Sel.Name == "String" {
 			expr = sel.X

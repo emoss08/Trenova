@@ -1,7 +1,11 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { AuthEvent, RiskDecision } from "@trenova/shared/types/iam";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { securityTabParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
+import {
+  securityTabParser,
+  securityTabValues,
+  type SecurityTabValue,
+} from "@/hooks/use-organization-setting-state";
 import { organization } from "@/lib/queries/organization";
 import { formatIdentityProviderName } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -21,6 +25,7 @@ import { OuterSection } from "./security-access/layout";
 import { SecurityOverview } from "./security-access/overview";
 import { PoliciesTab } from "./security-access/policies-tab";
 import { SignInTab } from "./security-access/sign-in-tab";
+import { firstAllowed, useSecurityAccess } from "./security-access/use-security-access";
 import { identityProviderQueryKey } from "./security-access/utils";
 
 const securityTabs: Array<{
@@ -70,14 +75,28 @@ function riskDecisionLabel(t: TranslateFn, outcome: RiskDecision["outcome"]): st
 
 function SecurityOverviewSection({ organizationId }: { organizationId: string }) {
   const t = useT();
+  const access = useSecurityAccess();
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
+    enabled: access.identityProviders.read,
   });
-  const directoriesQuery = useQuery(organization.scimDirectories(organizationId));
-  const policiesQuery = useQuery(organization.accessPolicies(organizationId));
-  const authEventsQuery = useQuery(organization.authEvents(organizationId));
-  const riskQuery = useQuery(organization.riskDecisions(organizationId));
+  const directoriesQuery = useQuery({
+    ...organization.scimDirectories(organizationId),
+    enabled: access.scimDirectories.read,
+  });
+  const policiesQuery = useQuery({
+    ...organization.accessPolicies(organizationId),
+    enabled: access.accessPolicies.read,
+  });
+  const authEventsQuery = useQuery({
+    ...organization.authEvents(organizationId),
+    enabled: access.activity.auth,
+  });
+  const riskQuery = useQuery({
+    ...organization.riskDecisions(organizationId),
+    enabled: access.activity.risk,
+  });
 
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
   const directories = useMemo(
@@ -136,7 +155,14 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
 }
 
 function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
-  const [securityTab, setSecurityTab] = useQueryState("securityTab", securityTabParser);
+  const t = useT();
+  const access = useSecurityAccess();
+  const [requestedTab, setSecurityTab] = useQueryState("securityTab", securityTabParser);
+  const securityTab = firstAllowed(requestedTab, securityTabValues, access.tabs);
+  const visibleTabs = useMemo(
+    () => securityTabs.filter(({ value }) => access.tabs[value]),
+    [access.tabs],
+  );
   const handleTabChange = useCallback(
     (value: string) => {
       void setSecurityTab(value as SecurityTabValue);
@@ -144,39 +170,51 @@ function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
     [setSecurityTab],
   );
 
+  if (!securityTab) {
+    return null;
+  }
+
   return (
     <Tabs value={securityTab} onValueChange={handleTabChange}>
       <TabsList variant="underline">
-        {securityTabs.map(({ value, label, Icon }) => (
+        {visibleTabs.map(({ value, label, Icon }) => (
           <TabsTab key={value} value={value}>
             <Icon size={16} />
-            {label}
+            {t(label)}
           </TabsTab>
         ))}
       </TabsList>
-      <TabsContent value="sign-in" keepMounted>
-        <Activity mode={securityTab === "sign-in" ? "visible" : "hidden"}>
-          <SignInTab organizationId={organizationId} />
-        </Activity>
-      </TabsContent>
-      <TabsContent value="provisioning" keepMounted>
-        <Activity mode={securityTab === "provisioning" ? "visible" : "hidden"}>
-          <ProvisioningTab
-            organizationId={organizationId}
-            isActive={securityTab === "provisioning"}
-          />
-        </Activity>
-      </TabsContent>
-      <TabsContent value="policies" keepMounted>
-        <Activity mode={securityTab === "policies" ? "visible" : "hidden"}>
-          <PoliciesTab organizationId={organizationId} />
-        </Activity>
-      </TabsContent>
-      <TabsContent value="activity" keepMounted>
-        <Activity mode={securityTab === "activity" ? "visible" : "hidden"}>
-          <ActivityTab organizationId={organizationId} />
-        </Activity>
-      </TabsContent>
+      {access.tabs["sign-in"] ? (
+        <TabsContent value="sign-in" keepMounted>
+          <Activity mode={securityTab === "sign-in" ? "visible" : "hidden"}>
+            <SignInTab organizationId={organizationId} />
+          </Activity>
+        </TabsContent>
+      ) : null}
+      {access.tabs.provisioning ? (
+        <TabsContent value="provisioning" keepMounted>
+          <Activity mode={securityTab === "provisioning" ? "visible" : "hidden"}>
+            <ProvisioningTab
+              organizationId={organizationId}
+              isActive={securityTab === "provisioning"}
+            />
+          </Activity>
+        </TabsContent>
+      ) : null}
+      {access.tabs.policies ? (
+        <TabsContent value="policies" keepMounted>
+          <Activity mode={securityTab === "policies" ? "visible" : "hidden"}>
+            <PoliciesTab organizationId={organizationId} />
+          </Activity>
+        </TabsContent>
+      ) : null}
+      {access.tabs.activity ? (
+        <TabsContent value="activity" keepMounted>
+          <Activity mode={securityTab === "activity" ? "visible" : "hidden"}>
+            <ActivityTab organizationId={organizationId} />
+          </Activity>
+        </TabsContent>
+      ) : null}
     </Tabs>
   );
 }

@@ -25,13 +25,27 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 | Delegation check ("cannot grant what you do not hold") | `permissionports.EffectivePermissions.DelegationViolation` |
 | Change notifier (cache epoch + realtime) | `internal/modules/identity/app/permissionchange` |
 | Administrator role reconcile | `internal/infrastructure/postgres/tenantbootstrap/adminreconcile.go` |
-| REST/GraphQL check lint | `internal/api/permissionlint`, `internal/api/graphql/authzlint` |
+| Declared-permission lints (REST, GraphQL, web client, route registry, agent tools) | `internal/api/permissionlint`, `internal/api/graphql/authzlint`, `permission/routeregistry_test.go`, `agenttoolpolicy/validate.go` |
 
 ## Adding a resource or an operation
 
 1. Declare it in the registry (`resources_*.go`). A check that names an operation the
-   registry does not declare can never pass, because no role can be granted it;
-   `permissionlint.TestEveryCheckedPermissionIsDeclared` fails on one.
+   registry does not declare can never pass, because no role can be granted it, so
+   every place that names a permission is held to `Registry.Declares`:
+   - REST handlers, GraphQL resolvers and middleware
+     (`permissionlint.TestEveryCheckedPermissionIsDeclared`). A check whose resource is
+     chosen at run time (a bulk edit, a table export) cannot be read statically and must
+     be listed, with its reason, in `dynamicChecks`
+     (`TestEveryPermissionCheckNamesItsPermission`); a resource held in a local variable
+     assigned from a `permission.Resource…` constant is read.
+   - The web and driver-portal clients: every `Resource.X, Operation.Y` gate
+     (`TestEveryClientPermissionGateIsDeclared`).
+   - Page access in the route registry (`TestRouteRegistry_EveryRequirementIsDeclared`).
+   - Agent tool policies (`agenttoolpolicy.Validate`), for every registered tool.
+
+   A resource nothing checks is not declared: it only makes the role editor longer and a
+   grant of it allows nothing. Retire one with a migration that deletes its
+   `resource_permissions` and `api_key_permissions` rows.
 2. Do not write a migration to grant it to administrators. `trenova db migrate` runs
    `ReconcileAdminRoles` after the migrations: every system role named
    "Organization Administrator" is given every registry resource and operation it lacks.
@@ -39,6 +53,16 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    roles (the driver portal role) are never touched.
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
    A new write route also needs an entry in `writecoverage.yml`.
+
+## Organization security settings
+
+Single sign-on, SCIM, access policies and the sign-in activity views each have their own
+resource rather than riding on `organization`: `identity_provider`, `scim_directory`
+(directories, tokens and group mappings) and `access_policy` take read, create, update
+and delete; `provisioning_audit`, `auth_event`, `risk_decision`, `external_identity` and
+`mfa_authenticator` are read-only. The organization settings page shows each tab and
+control only to someone who holds its permission
+(`organization-settings/_components/security-access/use-security-access.ts`).
 
 ## Granting access
 

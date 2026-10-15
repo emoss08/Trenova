@@ -15693,6 +15693,15 @@
       "apps/web/components"
     ]
   },
+  "Add Entra ID or Okta to enable federated sign-in for users.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Add Filter to group": {
     "sites": 1,
     "scope": [
@@ -16650,15 +16659,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Add contacts": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Add credential": {
@@ -18711,6 +18711,15 @@
       "routes/billing-queue"
     ]
   },
+  "Adjust filters to find a policy.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Adjust invoice": {
     "sites": 1,
     "scope": [
@@ -18736,6 +18745,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Adjust the search filter to find a configured provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Adjust the visible bounds before uploading your organization logo.": {
@@ -25750,6 +25768,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Any domain": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Any driver credential — CDL, medical card, hazmat, or TWIC — expiring inside the horizon, with fleet and contact routing": {
@@ -54633,15 +54660,6 @@
       "go/other"
     ]
   },
-  "Comment type definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Commented": {
     "sites": 1,
     "scope": [
@@ -63539,6 +63557,15 @@
       "apps/web/components"
     ]
   },
+  "Create allow and deny policies to control sensitive operations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Create an API key and webhook in": {
     "sites": 1,
     "scope": [
@@ -66773,15 +66800,6 @@
     ],
     "areas": [
       "routes/detention-desk"
-    ]
-  },
-  "Customer contact management": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Customer copy lists every charge": {
@@ -70780,6 +70798,15 @@
       "go/other"
     ]
   },
+  "Default OIDC scopes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Default PC*Miler": {
     "sites": 1,
     "scope": [
@@ -72041,15 +72068,6 @@
     ],
     "areas": [
       "template/customertracking.status.email"
-    ]
-  },
-  "Delay code definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Delay notice": {
@@ -78702,15 +78720,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Document classification definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document classification is required": {
@@ -144254,15 +144263,6 @@
       "go/other"
     ]
   },
-  "Modify contacts": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Modify credential types": {
     "sites": 1,
     "scope": [
@@ -150750,6 +150750,15 @@
       "routes/desk"
     ]
   },
+  "No access policies configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No accessorial charges": {
     "sites": 2,
     "scope": [
@@ -153871,6 +153880,15 @@
       "routes/dispatch-console"
     ]
   },
+  "No identity providers configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No income-statement activity to close.": {
     "sites": 1,
     "scope": [
@@ -155499,6 +155517,15 @@
       "routes/worker"
     ]
   },
+  "No policies found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No policy is written for this location; the customer's or the organization's applies.": {
     "sites": 1,
     "scope": [
@@ -155763,6 +155790,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No providers found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No providers yet": {
@@ -197543,15 +197579,6 @@
     ]
   },
   "Reason code cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Reason code definitions": {
     "sites": 1,
     "scope": [
       "go"
@@ -242960,15 +242987,6 @@
       "routes/agent-control"
     ]
   },
-  "Tag management": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tags": {
     "sites": 2,
     "scope": [
@@ -283118,15 +283136,6 @@
     ]
   },
   "View configured agents": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "View contacts": {
     "sites": 1,
     "scope": [
       "go"
