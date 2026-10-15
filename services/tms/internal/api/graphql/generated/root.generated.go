@@ -2514,6 +2514,7 @@ type QueryResolver interface {
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
+	MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
@@ -7047,6 +7048,25 @@ input MyAgentsInput {
   ids: [ID!]
 }
 
+input MyAgentRecommendationInput {
+  "What the caller is about to ask. At most 4000 characters."
+  text: String!
+  "The agent the question would go to now, kept when it fits as well as any."
+  currentAgentId: ID
+}
+
+"""
+The agent a question is best put to, among the chat agents the caller may start
+a conversation with, judged by the tools it holds that the caller may use.
+"""
+type MyAgentRecommendation {
+  agent: MyAgent!
+  "True when the agent the question would go to now is already the best fit."
+  current: Boolean!
+  "The tools the agent holds that matched the question, best first. At most three."
+  tools: [String!]!
+}
+
 input SetAgentAccessInput {
   accessMode: AgentAccessMode!
   """
@@ -7185,6 +7205,11 @@ extend type Query {
   agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
+  """
+  The chat agent the caller may use that holds the tools a question needs. Null
+  when no such agent holds a tool that matches it.
+  """
+  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
   "Each role's coverage of an agent's tools, for choosing who may use it."
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
   """

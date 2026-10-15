@@ -1,5 +1,5 @@
 {
-  "version": "sha256:487f3b24ee082ef7dc9e21323094c11c620634e5df47d8dab871b21fad2494f7",
+  "version": "sha256:eed79cdc11763779c679550cf907a7027d704f7b04564feda4385b3af560bdb6",
   "modules": [
     {
       "id": "home",
@@ -8766,6 +8766,9 @@
         "ask AI",
         "copilot",
         "AI desk",
+        "suggested agent",
+        "best agent",
+        "which agent",
         "conversations",
         "steer the agent",
         "steering",
@@ -8790,12 +8793,16 @@
           "keywords": [
             "chat with AI",
             "ask the assistant",
-            "start a conversation"
+            "start a conversation",
+            "which agent should I ask",
+            "suggested agent",
+            "wrong agent"
           ],
           "steps": [
             "Open [Desk](/desk).",
             "The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.",
             "Type your question and send it, or press Tab to use the starter question on screen.",
+            "When another of your agents has the tools your question needs, a line under the box names that agent and the tools of its that match. Select the button that asks it to switch, or the one that keeps your agent to stay. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.",
             "Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it."
           ]
         },

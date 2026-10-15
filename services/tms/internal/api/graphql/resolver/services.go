@@ -301,6 +301,7 @@ type Params struct {
 	AgentRunService              agentports.AgentRunService
 	AgentDefinitionService       agentdefinitionports.AgentDefinitionService
 	AgentCapabilityService       agentports.AgentCapabilityService
+	AgentRecommender             agentports.AgentRecommender
 	AgentShadowService           agentshadowports.AgentShadowService
 	AgentTrustService            agentports.AgentTrustService
 	AgentTestPromptService       agentdefinitionports.AgentTestPromptService
@@ -525,6 +526,7 @@ type Services struct {
 	AgentRunService              agentports.AgentRunService
 	AgentDefinitionService       agentdefinitionports.AgentDefinitionService
 	AgentCapabilityService       agentports.AgentCapabilityService
+	AgentRecommender             agentports.AgentRecommender
 	AgentShadowService           agentshadowports.AgentShadowService
 	AgentTrustService            agentports.AgentTrustService
 	AgentTestPromptService       agentdefinitionports.AgentTestPromptService
@@ -755,6 +757,7 @@ func newServices(p *Params) *Services {
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,
 		AgentCapabilityService:       p.AgentCapabilityService,
+		AgentRecommender:             p.AgentRecommender,
 		AgentShadowService:           p.AgentShadowService,
 		AgentTrustService:            p.AgentTrustService,
 		AgentTestPromptService:       p.AgentTestPromptService,

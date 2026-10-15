@@ -5745,6 +5745,23 @@ type MyAgentEdge struct {
 	Cursor string                      `json:"cursor"`
 }
 
+// The agent a question is best put to, among the chat agents the caller may start
+// a conversation with, judged by the tools it holds that the caller may use.
+type MyAgentRecommendation struct {
+	Agent *agentdefinition.Definition `json:"agent"`
+	// True when the agent the question would go to now is already the best fit.
+	Current bool `json:"current"`
+	// The tools the agent holds that matched the question, best first. At most three.
+	Tools []string `json:"tools"`
+}
+
+type MyAgentRecommendationInput struct {
+	// What the caller is about to ask. At most 4000 characters.
+	Text string `json:"text"`
+	// The agent the question would go to now, kept when it fits as well as any.
+	CurrentAgentID *string `json:"currentAgentId,omitempty"`
+}
+
 type MyAgentsInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`

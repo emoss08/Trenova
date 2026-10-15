@@ -357,6 +357,7 @@
   "A purchase with this transaction reference already exists": "Ya existe una compra con esta referencia de transacción",
   "A purchased transportation expense account must be configured before posting carrier settlements": "Debe configurarse una cuenta de gastos de transporte contratado antes de contabilizar liquidaciones de transportistas",
   "A quarantined file must record why": "Un archivo en cuarentena debe registrar el motivo",
+  "A question can be matched to an agent when it is at most {0} characters.": "Una pregunta se puede asignar a un agente cuando tiene como máximo {0} caracteres.",
   "A radius belongs on a rate rule rather than in a zone": "Un radio corresponde a una regla de tarifa, no a una zona",
   "A radius needs an origin location to measure from": "Un radio necesita una ubicación de origen desde la cual medir",
   "A ranged column cannot also carry a transform; the range already reshapes the value": "Una columna con rango no puede llevar además una transformación; el rango ya reformula el valor",

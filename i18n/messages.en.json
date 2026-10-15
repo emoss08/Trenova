@@ -2687,6 +2687,24 @@
       "routes/agent-control"
     ]
   },
+  "<b>{0}</b> has the tools for this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "<b>{0}</b> has the tools for this, so sending asks it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "<b>{0}</b> is better on {1} of {2}": {
     "sites": 1,
     "scope": [
@@ -7893,6 +7911,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "A question can be matched to an agent when it is at most {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A radius belongs on a rate rule rather than in a zone": {
@@ -29458,7 +29485,7 @@
     ]
   },
   "Ask {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -101961,6 +101988,15 @@
       "routes/billing-queue"
     ]
   },
+  "Finding the agent with the tools for this…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Finding the right tools…": {
     "sites": 1,
     "scope": [
@@ -125255,6 +125291,15 @@
       "apps/dash/_components"
     ]
   },
+  "Keep {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Keep {0} in step with what Trenova posts.": {
     "sites": 1,
     "scope": [
@@ -138246,6 +138291,15 @@
     ]
   },
   "Matches the table layout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Matching tools": {
     "sites": 1,
     "scope": [
       "ts"

@@ -357,6 +357,7 @@
   "A purchase with this transaction reference already exists": "已存在使用此交易參照編號的採購記錄",
   "A purchased transportation expense account must be configured before posting carrier settlements": "過帳承運業者結算前，須先設定外購運力費用科目",
   "A quarantined file must record why": "隔離的檔案必須記錄原因",
+  "A question can be matched to an agent when it is at most {0} characters.": "問題不超過 {0} 個字元時才能比對到代理。",
   "A radius belongs on a rate rule rather than in a zone": "半徑應設於費率規則上，而非區域中",
   "A radius needs an origin location to measure from": "半徑需要起點地點作為量測基準",
   "A ranged column cannot also carry a transform; the range already reshapes the value": "帶區間的欄位不得再帶轉換；區間本身已重塑該值",
