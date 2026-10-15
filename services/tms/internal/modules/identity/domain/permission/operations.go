@@ -30,6 +30,7 @@ const (
 	OpUnpin     Operation = "unpin"
 	OpResolve   Operation = "resolve"
 	OpManage    Operation = "manage"
+	OpPost      Operation = "post"
 )
 
 var Dependencies = map[Operation][]Operation{
@@ -57,6 +58,7 @@ var Dependencies = map[Operation][]Operation{
 	OpUnpin:     {OpRead},
 	OpResolve:   {OpRead},
 	OpManage:    {OpRead, OpUpdate, OpDelete},
+	OpPost:      {OpRead},
 }
 
 var Dependents = computeDependents()
@@ -165,6 +167,7 @@ const (
 	ClientOpUnpin     uint32 = 1 << 23
 	ClientOpResolve   uint32 = 1 << 24
 	ClientOpManage    uint32 = 1 << 25
+	ClientOpPost      uint32 = 1 << 26
 )
 
 var OperationToBit = map[Operation]uint32{
@@ -192,6 +195,7 @@ var OperationToBit = map[Operation]uint32{
 	OpUnpin:     ClientOpUnpin,
 	OpResolve:   ClientOpResolve,
 	OpManage:    ClientOpManage,
+	OpPost:      ClientOpPost,
 }
 
 func OperationsToBitmask(ops []Operation) uint32 {
@@ -250,6 +254,7 @@ var operationDefinitions = map[Operation]OperationDefinition{
 	OpUnpin:    {Operation: OpUnpin, DisplayName: "Unpin", Description: "Unpin records"},
 	OpResolve:  {Operation: OpResolve, DisplayName: "Resolve", Description: "Resolve records"},
 	OpManage:   {Operation: OpManage, DisplayName: "Manage", Description: "Manage records"},
+	OpPost:     {Operation: OpPost, DisplayName: "Post", Description: "Post records to the ledger"},
 }
 
 // operations builds a definition slice in the order asked for. It allocates a

@@ -22796,7 +22796,7 @@
     ]
   },
   "Amount": {
-    "sites": 52,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -84314,6 +84314,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "EDI partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "EDI partner does not have an active internal EDI connection": {
@@ -187334,11 +187343,12 @@
     ]
   },
   "Post": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/journal-reversal"
     ]
   },
@@ -187504,6 +187514,15 @@
       "apps/web/components"
     ]
   },
+  "Post invoices to the ledger, by hand or from the billing queue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Post it where employees can see it, from February 1 to April 30.": {
     "sites": 1,
     "scope": [
@@ -187520,6 +187539,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "Post records to the ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Post scheduled PTO accruals, carryover caps, and expiries for every assigned worker": {
@@ -198809,7 +198837,7 @@
     ]
   },
   "Reason": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -236925,6 +236953,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Someone who can post invoices posts this one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Someone with manage access to the accounting integration has to enter the {0} keys.": {
@@ -301091,6 +301128,15 @@
     ]
   },
   "Your review is requested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your role cannot post invoices. Ask someone who can post invoices to post this one.": {
     "sites": 1,
     "scope": [
       "go"

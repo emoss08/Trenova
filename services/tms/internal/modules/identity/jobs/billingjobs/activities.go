@@ -114,6 +114,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		InvoiceID:   payload.InvoiceID,
 		TenantInfo:  tenantInfo,
 		TriggeredBy: "auto-post-workflow",
+		Automatic:   true,
 	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,

@@ -1,5 +1,7 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -59,6 +61,7 @@ export function InvoiceSidebar({
   onSelectInvoice: (id: string) => void;
 }) {
   const t = useT();
+  const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
 
   const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
   const { status, query, billType, scope, dispute } = searchParams;
@@ -185,7 +188,7 @@ export function InvoiceSidebar({
   );
 
   const dockActions: DockAction<InvoiceRow>[] = [];
-  if (eligible.postable.length > 0) {
+  if (canPost && eligible.postable.length > 0) {
     dockActions.push({
       id: "post",
       label: t("Post {0}", eligible.postable.length),

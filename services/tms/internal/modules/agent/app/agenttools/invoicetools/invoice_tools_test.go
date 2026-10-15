@@ -195,7 +195,7 @@ func TestPostInvoice_PostsOnlyFromAPersonsApproval(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.Equal(t, permission.ResourceInvoice, policy.Resource)
-	assert.Equal(t, permission.OpUpdate, policy.Operation)
+	assert.Equal(t, permission.OpPost, policy.Operation)
 	assert.False(t, policy.Reversible)
 }
 
