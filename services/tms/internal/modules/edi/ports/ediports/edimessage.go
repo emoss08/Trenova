@@ -94,9 +94,10 @@ type UpdateEDIMessageDeliveryRequest struct {
 }
 
 type GetEDIMessageStatusCountsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	Since      int64                 `json:"since"`
-	PartnerID  pulid.ID              `json:"partnerId"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	Since          int64                 `json:"since"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
 }
 
 type GetEDIPartnerScorecardsRequest struct {
@@ -139,16 +140,18 @@ type EDIVolumePoint struct {
 }
 
 type GetEDIOverdueAckCountRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	PendingSince int64                 `json:"pendingSince"`
-	PartnerID    pulid.ID              `json:"partnerId"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	PendingSince   int64                 `json:"pendingSince"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
 }
 
 type ListOverdueEDIAcksRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	PendingSince int64                 `json:"pendingSince"`
-	PartnerID    pulid.ID              `json:"partnerId"`
-	Limit        int                   `json:"limit"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	PendingSince   int64                 `json:"pendingSince"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
+	Limit          int                   `json:"limit"`
 }
 
 type OverdueEDIAckPartner struct {
@@ -173,9 +176,10 @@ type OverdueEDIAcks struct {
 }
 
 type ListRecentEDIMessageFailuresRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	PartnerID  pulid.ID              `json:"partnerId"`
-	Limit      int                   `json:"limit"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
+	Limit          int                   `json:"limit"`
 }
 
 type EDIMessageRepository interface {

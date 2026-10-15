@@ -630,3 +630,33 @@ func TestAddRequiredIDDeduplicatesAndSkipsNil(t *testing.T) {
 func int64Ptr(v int64) *int64 {
 	return new(v)
 }
+
+func TestShipmentStatusPayloads_CarryTheShippersReferenceAndTheWeight(t *testing.T) {
+	t.Parallel()
+
+	weight, pieces := int64(40000), int64(24)
+	tendered := &shipment.Shipment{
+		ID:                pulid.MustNew("shp_"),
+		ProNumber:         "PRO-1042",
+		BOL:               "BOL-7781",
+		ExternalReference: " ACME-SHP-55 ",
+		Weight:            &weight,
+		Pieces:            &pieces,
+	}
+
+	status := buildShipmentStatusPayload(tendered).ShipmentStatus
+	require.Equal(t, "ACME-SHP-55", status.ShipperReference)
+	require.Equal(t, "PRO-1042", status.ProNumber)
+	require.Equal(t, "BOL-7781", status.BOL)
+	require.Equal(t, &weight, status.Weight)
+	require.Equal(t, &pieces, status.Pieces)
+
+	event := &shipmentevent.Event{ID: pulid.MustNew("sev_"), ShipmentID: tendered.ID}
+	require.Equal(t, "ACME-SHP-55",
+		buildShipmentEventStatusPayload(event, tendered).ShipmentStatus.ShipperReference)
+
+	untendered := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1043", BOL: "BOL-1"}
+	require.Equal(t, "BOL-1", buildShipmentStatusPayload(untendered).ShipmentStatus.ShipperReference,
+		"without the shipper's own reference the bill of lading stands for it")
+	require.Nil(t, buildShipmentStatusPayload(untendered).ShipmentStatus.Weight)
+}

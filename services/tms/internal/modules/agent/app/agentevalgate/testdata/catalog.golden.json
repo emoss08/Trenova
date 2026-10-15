@@ -1629,7 +1629,7 @@
         "additionalProperties": false,
         "properties": {
           "customerId": {
-            "description": "The customer this partner's documents are for, from list_customers, when the person says which.",
+            "description": "The customer this partner's documents are for, by id from list_customers, only when the person names which customer. Leave it out otherwise, and never pass a name or guess one from the partner's.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -10447,12 +10447,12 @@
     },
     {
       "name": "draft_edi_connection",
-      "description": "Draft a whole EDI connection from the implementation guide the person attached, and check it. Read the whole guide first, from the file attached to the message or with read_attachment, then pass every setting it states with the exact quote and page, plus the segment rules, code mappings and gaps you find. It checks each quote against its page, holds back what is uncertain or conflicting, matches an existing EDI partner rather than adding one, picks templates, runs the guide's sample X12, validates every record and lists the credentials the person must enter. A re-run on a revised guide shows only what changes. It writes nothing.",
+      "description": "Draft a whole EDI connection from the implementation guide the person attached, and check it. Read the whole guide once, from the file attached to the message or with read_attachment, whose text marks where each page begins; never page by page. Then pass every setting it states with the exact quote and page, plus the segment rules, code mappings and gaps you find. It checks each quote against its page, holds back what is uncertain or conflicting, matches an existing EDI partner rather than adding one, picks templates, runs the guide's sample X12, validates every record and lists the credentials the person must enter. A re-run on a revised guide shows only what changes. It writes nothing, and it takes no documentDigest: it returns the one apply_edi_connection_draft needs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "customerId": {
-            "description": "The customer this partner's documents are for, from list_customers, when the person says which.",
+            "description": "The customer this partner's documents are for, by id from list_customers, only when the person names which customer. Leave it out otherwise, and never pass a name or guess one from the partner's.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -13988,6 +13988,19 @@
             "x-recordKinds": [
               "edi_partner"
             ]
+          },
+          "transactionSet": {
+            "description": "Only messages of this transaction set that were sent, such as 214 for \"has acme acked our 214s\". 997 or 999 asks about the acknowledgments themselves, so it counts every set they answer.",
+            "enum": [
+              "204",
+              "210",
+              "214",
+              "990",
+              "997",
+              "999"
+            ],
+            "type": "string",
+            "x-enumOf": "edi.ackedTransactionSet"
           },
           "windowHours": {
             "description": "How many hours back the counts by status reach: 24 unless you ask, at most 720. Overdue messages are counted whenever they were sent.",
@@ -28225,7 +28238,7 @@
     },
     {
       "name": "read_attachment",
-      "description": "Read a file the person attached to this conversation: its text in reading order and what was read from it. It says how many pages it has, what kind of document it looks like and the fields found. Leave documentId out to list every file attached to this conversation, newest first. Read one page, or the part past where a long text stops with offset. A file still being read is waited for.",
+      "description": "Read a file the person attached to this conversation: its text in reading order and what was read from it. It says how many pages it has, what kind of document it looks like and the fields found. Leave documentId out to list every file attached to this conversation, newest first. The text of a file of more than one page marks where each page begins (--- page 2 ---). Read one page, or the part past where a long text stops with offset. A file still being read is waited for.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

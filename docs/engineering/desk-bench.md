@@ -261,7 +261,10 @@ once and ages; the bench approves real writes. A load whose windows have passed,
 seed put on the day a scenario asks for, or a lane that has come to match several loads turns a
 correct refusal or question into a failed case, so a write scenario rolls its load's windows
 forward from `now()` rather than trusting the seed's dates. Pair `setup` with `exclusive` when
-two scenarios touch the same rows.
+two scenarios touch the same rows. The scenarios of one `exclusive` group run as one chain, never
+beside each other: for each provider and repeat in turn, each scenario of the group in file order.
+A scenario may therefore build on the one before it (`edi-guide-revised` updates the partner
+`edi-guide-new-partner` saved), whatever `--provider`, `--repeat` or `--parallel` asked for.
 
 ### Writing them
 

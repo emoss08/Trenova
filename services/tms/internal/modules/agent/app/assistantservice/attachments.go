@@ -205,7 +205,7 @@ func (s *Service) describeAttachment(
 	attachment.PageCount = content.PageCount
 	attachment.Kind = content.DetectedDocumentKind
 	attachment.PoorlyRead = content.PoorlyRead()
-	attachment.Text = strings.TrimSpace(content.ContentText)
+	attachment.Text = content.PagedText()
 
 	return attachment
 }

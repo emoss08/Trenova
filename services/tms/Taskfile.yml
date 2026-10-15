@@ -57,7 +57,7 @@ vars:
 # takes precedence over these. They also reach the API process that `run` and
 # `run-watch` start, which keeps a local server from competing with the build.
 env:
-  GOFLAGS: '{{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
+  GOFLAGS: '-trimpath {{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
   GOMAXPROCS: '{{.GO_JOBS}}'
   GOGC: '{{if .GO_JOBS}}50{{end}}'
 

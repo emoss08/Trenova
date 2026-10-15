@@ -206,6 +206,57 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		require.Equal(t, []pulid.ID{ids["boltDead"]}, messageIDs(dead))
 	})
 
+	t.Run("one transaction set", func(t *testing.T) {
+		count, err := repo.GetOverdueAckCount(ctx, ediports.GetEDIOverdueAckCountRequest{
+			TenantInfo:     tenant,
+			PendingSince:   pendingSince,
+			TransactionSet: edi.TransactionSet214,
+		})
+		require.NoError(t, err)
+		require.Equal(t, 3, count)
+
+		none, err := repo.GetOverdueAckCount(ctx, ediports.GetEDIOverdueAckCountRequest{
+			TenantInfo:     tenant,
+			PendingSince:   pendingSince,
+			TransactionSet: edi.TransactionSet210,
+		})
+		require.NoError(t, err)
+		require.Zero(t, none, "every fixture is a 214")
+
+		overdue, err := repo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
+			TenantInfo:     tenant,
+			PendingSince:   pendingSince,
+			TransactionSet: edi.TransactionSet210,
+			Limit:          10,
+		})
+		require.NoError(t, err)
+		require.Empty(t, overdue.Messages)
+		require.Empty(t, overdue.Partners)
+
+		counts, err := repo.GetAckStatusCounts(ctx, ediports.GetEDIMessageStatusCountsRequest{
+			TenantInfo:     tenant,
+			TransactionSet: edi.TransactionSet210,
+		})
+		require.NoError(t, err)
+		require.Empty(t, counts)
+
+		rows, err := repo.GetAckStatusCountsByPartner(ctx, ediports.GetEDIMessageStatusCountsRequest{
+			TenantInfo:     tenant,
+			TransactionSet: edi.TransactionSet214,
+			PartnerID:      partners[1].ID,
+		})
+		require.NoError(t, err)
+		require.Len(t, rows, 4, "Bolt's pending, accepted, accepted with errors and dead letter")
+
+		dead, err := repo.ListRecentDeadLettered(ctx, &ediports.ListRecentEDIMessageFailuresRequest{
+			TenantInfo:     tenant,
+			TransactionSet: edi.TransactionSet210,
+			Limit:          5,
+		})
+		require.NoError(t, err)
+		require.Empty(t, dead)
+	})
+
 	t.Run("counts by partner", func(t *testing.T) {
 		rows, err := repo.GetAckStatusCountsByPartner(ctx, ediports.GetEDIMessageStatusCountsRequest{
 			TenantInfo: tenant,

@@ -300,8 +300,6 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 	}
 	payload := edi.ShipmentStatusPayload{
 		ShipmentID: source.ID,
-		BOL:        source.BOL,
-		ProNumber:  source.ProNumber,
 		StatusCode: "X3",
 		References: map[string]string{
 			"shipmentId": source.ID.String(),
@@ -309,6 +307,7 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 			"pro":        source.ProNumber,
 		},
 	}
+	applyShipmentStatusShipment(&payload, source)
 	if len(source.Moves) > 0 &&
 		source.Moves[0] != nil &&
 		len(source.Moves[0].Stops) > 0 &&
@@ -330,8 +329,6 @@ func buildShipmentEventStatusPayload(
 ) edi.DocumentPayload {
 	payload := edi.ShipmentStatusPayload{
 		ShipmentID: event.ShipmentID,
-		BOL:        shipmentBOL(source),
-		ProNumber:  shipmentProNumber(source),
 		StatusCode: shipmentEventStatusCode(event),
 		EventDate:  event.OccurredAt,
 		EventTime:  event.OccurredAt,
@@ -343,6 +340,7 @@ func buildShipmentEventStatusPayload(
 			"pro":        shipmentProNumber(source),
 		},
 	}
+	applyShipmentStatusShipment(&payload, source)
 	if event.Summary != "" {
 		payload.References["summary"] = event.Summary
 	}
@@ -417,8 +415,6 @@ func buildServiceFailureShipmentStatusPayload(
 	eventTimestamp := serviceFailureEventTimestamp(failure)
 	status := edi.ShipmentStatusPayload{
 		ShipmentID:           failure.ShipmentID,
-		BOL:                  shipmentBOL(source),
-		ProNumber:            shipmentProNumber(source),
 		StatusCode:           serviceFailureStatusCode(failure),
 		StatusReasonCode:     serviceFailureReasonCode(failure),
 		EventDate:            eventTimestamp,
@@ -439,6 +435,7 @@ func buildServiceFailureShipmentStatusPayload(
 			"status":           string(failure.Status),
 		},
 	}
+	applyShipmentStatusShipment(&status, source)
 	if failure.ReasonCodeID != nil {
 		status.ServiceFailureReasonCodeID = failure.ReasonCodeID
 	}
@@ -633,6 +630,20 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 		}
 	}
 	return "X3"
+}
+
+func applyShipmentStatusShipment(payload *edi.ShipmentStatusPayload, source *shipment.Shipment) {
+	if source == nil {
+		return
+	}
+	payload.BOL = source.BOL
+	payload.ProNumber = source.ProNumber
+	payload.ShipperReference = stringutils.FirstNonEmpty(
+		strings.TrimSpace(source.ExternalReference),
+		source.BOL,
+	)
+	payload.Weight = source.Weight
+	payload.Pieces = source.Pieces
 }
 
 func applyShipmentStatusStop(payload *edi.ShipmentStatusPayload, stop *shipment.Stop) {
