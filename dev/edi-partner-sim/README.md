@@ -48,6 +48,18 @@ go run ./cmd/edi-e2e
 The runner generates fresh AS2 certificates and a unique AS2 identifier per run, so it
 can be run repeatedly without colliding with earlier partners.
 
+## Setting the simulator up from its guide
+
+`specs/simpartner-implementation-guide.txt` is the simulator written up as a trading
+partner's implementation guide: its AS2 and SFTP endpoints, ISA/GS identifiers, separators,
+the documents it exchanges, its 997s, its 204 rules and stop codes, and a sample 204 that is
+exactly what `/control/send-tender` sends (`internal/sim/spec_test.go` holds the two together).
+With the simulator running, attach it to a Desk conversation with an agent that handles EDI and
+ask for the connection to be set up from it. The draft should be ready with no decisions; after
+approving it, enter your AS2 private key and certificate and the simulator's certificate (from
+`/control/identity`) on the communication profile, then turn the profile on. The guide names no
+password or key, so none is drafted.
+
 ## Simulator control API
 
 | Method | Path | Purpose |

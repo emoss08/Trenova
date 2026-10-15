@@ -159,4 +159,10 @@ type EDITemplateRepository interface {
 		tenantInfo pagination.TenantInfo,
 		transactionSet edi.TransactionSet,
 	) (*edi.EDITemplate, *edi.EDITemplateVersion, error)
+	EnsureStarterTemplate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		transactionSet edi.TransactionSet,
+		direction edi.DocumentDirection,
+	) (*edi.EDITemplate, *edi.EDITemplateVersion, error)
 }

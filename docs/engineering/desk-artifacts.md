@@ -47,8 +47,9 @@ artifacts/
   kinds/
     artifact-body-parts.tsx  what several kinds' bodies share
     <kind>/               one kind's body and everything only it uses: table,
-                          report, document, extraction, record, rate, diff, plan,
-                          email, view, decision, each with its __tests__/
+                          report, document, extraction, edi-connection-draft,
+                          record, rate, diff, plan, email, view, decision, each
+                          with its __tests__/
   record-card/            the parts every card is built from: head, stepper, status,
                           sections, checks, timeline, a list's next page, the
                           "could not be read" head, bottom bar (record-card.tsx),
@@ -83,11 +84,29 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement; the parts the two settlement cards share are `dk-rec-*` in `record-card/`).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement; the parts the two settlement cards share are `dk-rec-*` in `record-card/`). An artifact kind drawn on the card frame takes one too:
+`dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
 button, which stretched every warn pill to the button's width.
+
+## The EDI connection draft
+
+`edi_connection_draft` is what `draft_edi_connection` drafted from a trading partner's
+implementation guide (see [edi-spec-onboarding.md](edi-spec-onboarding.md)), drawn by
+`kinds/edi-connection-draft/` on the record card's frame with its own skeleton
+(`ConnectionDraftSkeleton`, which `ArtifactBodySkeleton` draws while its contents are read).
+Every value carries a page tab, `SourceTab`, that opens the guide's quoted words in a hover
+card; a held value lists each reading with its page, and picking one has the agent draft
+again with it (`resolutionQuestion`), never a value chosen in the browser. The credentials
+are listed for the person to enter and never shown with a value. Saving is the
+`apply_edi_connection_draft` proposal, matched to the card by the document digest the person
+reviewed; the card asks for it (`proposeQuestion`) only once the draft is ready. The recorder
+drops the note meant for the model, cuts each sample's parse to its version and counts, and
+trims mappings, samples and gaps to the payload limit with the full mapping count kept
+(`assistantservice/edi_connection_draft.go`). A redraft of the same guide is a new version,
+and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
 ## Giving a card its own shape
 

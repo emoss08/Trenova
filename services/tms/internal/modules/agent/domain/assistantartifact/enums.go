@@ -40,6 +40,10 @@ const (
 	// a person can check the reading against the page before a shipment is
 	// made from it.
 	KindExtraction Kind = "extraction"
+	// KindEDIConnectionDraft is an EDI connection drafted from a trading
+	// partner's implementation guide: every value with the page it came from,
+	// what was held for a person, and what the guide asks that nothing meets.
+	KindEDIConnectionDraft Kind = "edi_connection_draft"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -65,6 +69,7 @@ func AllKinds() []Kind {
 		KindDraftEdit,
 		KindDecisionRequest,
 		KindExtraction,
+		KindEDIConnectionDraft,
 	}
 }
 

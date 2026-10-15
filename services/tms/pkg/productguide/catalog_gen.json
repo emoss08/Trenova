@@ -1,5 +1,5 @@
 {
-  "version": "sha256:31faa1ba43a814e1a85ff3b6c113998e547965e17ebcf88388627e53896ab5b6",
+  "version": "sha256:44198f29e374ef9f630297eccb21c3f8058acd0148817ff09a841ce6ce1b841c",
   "modules": [
     {
       "id": "home",
@@ -9512,6 +9512,25 @@
           ]
         },
         {
+          "title": "Set up an EDI partner from its implementation guide",
+          "keywords": [
+            "EDI spec",
+            "implementation guide",
+            "companion guide",
+            "onboard trading partner",
+            "EDI setup from PDF",
+            "revised guide"
+          ],
+          "steps": [
+            "In a conversation with an agent that handles EDI, select **Attach files** and upload the partner's implementation guide (a PDF, a Word document or its sample X12 as text), then ask the agent to set up the connection from it.",
+            "The workspace shows the drafted connection: the trading partner, the interchange identifiers, the communication profile, each document type with its template, the code mappings, the guide's samples and the gaps in the guide. Every value names the page it was read from; point at the page to read the guide's own words. For a partner you already have, only what the guide changes is marked.",
+            "Under **To decide**, pick one of the guide's readings for each value the agent held back, or tell the agent the answer. The agent drafts the connection again with it.",
+            "Check **Would not save**, the rules each template does not meet and the **Gaps in the guide**.",
+            "Once it shows **Ready to approve**, select **Propose saving it**. Saving waits for your approval like any other change, and the item shows **Waiting on your approval**, then **Saved**.",
+            "Enter the passwords, keys and certificates listed under **Credentials you enter** on the partner's communication profile, then turn the profile on. They are never taken from the guide."
+          ]
+        },
+        {
           "title": "Approve billing items from a Desk table",
           "keywords": [
             "billing queue",
@@ -11815,6 +11834,21 @@
             "Under **Contact**, add the **Contact name**, **Contact email** and **Contact phone**.",
             "Under **Defaults**, turn **Inbound enabled** and **Outbound enabled** on or off and pick a **Default transport profile** and **Default mapping profile** if they already exist.",
             "Select **Create partner**."
+          ]
+        },
+        {
+          "title": "Set up a partner from its implementation guide",
+          "keywords": [
+            "EDI spec",
+            "implementation guide",
+            "companion guide",
+            "onboard from PDF"
+          ],
+          "steps": [
+            "Open the [Desk](/desk) and start a conversation with an agent that handles EDI.",
+            "Select **Attach files**, upload the partner's implementation guide and ask the agent to set up the connection from it.",
+            "Review the drafted connection beside the conversation, settle what it lists **To decide**, then select **Propose saving it** and approve the proposal. The partner, its communication profile and document profiles are saved inactive.",
+            "Enter the credentials it lists on the partner's [communication profile](/edi/communication-profiles), then turn the profile on. A revised guide for the same partner drafts only the changes."
           ]
         },
         {

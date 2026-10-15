@@ -313,7 +313,9 @@ func (a *ShownArtifact) Tabular() bool {
 
 func (a *ShownArtifact) MustBeLinked() bool {
 	switch {
-	case a.Kind == string(assistantartifact.KindDocument), a.Written != "":
+	case a.Kind == string(assistantartifact.KindDocument),
+		a.Kind == string(assistantartifact.KindEDIConnectionDraft),
+		a.Written != "":
 		return true
 	case a.Tabular():
 		return a.Opens || a.Actionable || a.OpensRecords || a.Ranked || a.Rows > InlineTableRows

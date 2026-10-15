@@ -396,6 +396,7 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
     case "decision_request":
       return "decision";
     case "extraction":
+    case "edi_connection_draft":
       return "extract";
     case "document":
     case "briefing":

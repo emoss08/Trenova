@@ -24,6 +24,13 @@ Keywords: new EDI partner, onboard partner, set up EDI customer
 5. Under **Defaults**, turn **Inbound enabled** and **Outbound enabled** on or off and pick a **Default transport profile** and **Default mapping profile** if they already exist.
 6. Select **Create partner**.
 
+### Set up a partner from its implementation guide
+Keywords: EDI spec, implementation guide, companion guide, onboard from PDF
+1. Open the [Desk](/desk) and start a conversation with an agent that handles EDI.
+2. Select **Attach files**, upload the partner's implementation guide and ask the agent to set up the connection from it.
+3. Review the drafted connection beside the conversation, settle what it lists **To decide**, then select **Propose saving it** and approve the proposal. The partner, its communication profile and document profiles are saved inactive.
+4. Enter the credentials it lists on the partner's [communication profile](/edi/communication-profiles), then turn the profile on. A revised guide for the same partner drafts only the changes.
+
 ### Request a connection with another Trenova organization
 Keywords: internal EDI, connect organizations, partner pairing
 1. Open [Partners](/edi/partners) and select New EDI connection.
