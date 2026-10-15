@@ -38,6 +38,9 @@ func buildCatalog() map[string]*fieldSpec {
 	catalog := make(map[string]*fieldSpec)
 	for _, group := range groups {
 		for _, spec := range group {
+			if len(spec.spelled) > 0 {
+				spec.normalize = spelledOut(spec.normalize, spec.spelled)
+			}
 			catalog[spec.key] = spec
 		}
 	}

@@ -629,7 +629,16 @@ func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifa
 		OpensRecords: opensRecords(artifact),
 		Ranked:       rankedTable(artifact),
 		Written:      writtenPhrase(artifact),
+		Lineage:      lineageRoot(artifact),
 	}
+}
+
+func lineageRoot(artifact *assistantartifact.Artifact) pulid.ID {
+	if artifact.LineageID.IsNil() {
+		return artifact.ID
+	}
+
+	return artifact.LineageID
 }
 
 // mustBePointedTo is a lookup the model was told to point to rather than

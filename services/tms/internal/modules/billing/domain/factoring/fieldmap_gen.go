@@ -39,6 +39,27 @@ func (e *Noa) GetStaticFieldMap() map[string]string {
 	return factoringcol.NoaFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Remittance].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.RemittanceFieldMap] instead of parsing struct tags via reflection.
+func (e *Remittance) GetStaticFieldMap() map[string]string {
+	return factoringcol.RemittanceFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RemittanceLine].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.RemittanceLineFieldMap] instead of parsing struct tags via reflection.
+func (e *RemittanceLine) GetStaticFieldMap() map[string]string {
+	return factoringcol.RemittanceLineFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RemittanceProfile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.RemittanceProfileFieldMap] instead of parsing struct tags via reflection.
+func (e *RemittanceProfile) GetStaticFieldMap() map[string]string {
+	return factoringcol.RemittanceProfileFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReserveEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [factoringcol.ReserveEntryFieldMap] instead of parsing struct tags via reflection.

@@ -519,6 +519,10 @@ var TenderColumns = struct {
 	AcceptedAt         buncolgen.Column // "accepted_at" → qualified: "tnd.accepted_at"
 	ExhaustedAt        buncolgen.Column // "exhausted_at" → qualified: "tnd.exhausted_at"
 	CanceledAt         buncolgen.Column // "canceled_at" → qualified: "tnd.canceled_at"
+	BounceCount        buncolgen.Column // "bounce_count" → qualified: "tnd.bounce_count"
+	LastBouncedAt      buncolgen.Column // "last_bounced_at" → qualified: "tnd.last_bounced_at"
+	EscalatedFromID    buncolgen.Column // "escalated_from_tender_id" → qualified: "tnd.escalated_from_tender_id"
+	EscalationRound    buncolgen.Column // "escalation_round" → qualified: "tnd.escalation_round"
 	Version            buncolgen.Column // "version" → qualified: "tnd.version"
 	CreatedAt          buncolgen.Column // "created_at" → qualified: "tnd.created_at"
 	UpdatedAt          buncolgen.Column // "updated_at" → qualified: "tnd.updated_at"
@@ -540,6 +544,10 @@ var TenderColumns = struct {
 	AcceptedAt:         buncolgen.NewColumn("accepted_at", "tnd"),
 	ExhaustedAt:        buncolgen.NewColumn("exhausted_at", "tnd"),
 	CanceledAt:         buncolgen.NewColumn("canceled_at", "tnd"),
+	BounceCount:        buncolgen.NewColumn("bounce_count", "tnd"),
+	LastBouncedAt:      buncolgen.NewColumn("last_bounced_at", "tnd"),
+	EscalatedFromID:    buncolgen.NewColumn("escalated_from_tender_id", "tnd"),
+	EscalationRound:    buncolgen.NewColumn("escalation_round", "tnd"),
 	Version:            buncolgen.NewColumn("version", "tnd"),
 	CreatedAt:          buncolgen.NewColumn("created_at", "tnd"),
 	UpdatedAt:          buncolgen.NewColumn("updated_at", "tnd"),
@@ -567,6 +575,10 @@ var TenderFieldMap = map[string]string{
 	"acceptedAt":         "accepted_at",
 	"exhaustedAt":        "exhausted_at",
 	"canceledAt":         "canceled_at",
+	"bounceCount":        "bounce_count",
+	"lastBouncedAt":      "last_bounced_at",
+	"escalatedFromId":    "escalated_from_tender_id",
+	"escalationRound":    "escalation_round",
 	"version":            "version",
 	"createdAt":          "created_at",
 	"updatedAt":          "updated_at",
@@ -592,6 +604,10 @@ var TenderInsertableColumns = []string{
 	"accepted_at",
 	"exhausted_at",
 	"canceled_at",
+	"bounce_count",
+	"last_bounced_at",
+	"escalated_from_tender_id",
+	"escalation_round",
 	"version",
 	"created_at",
 	"updated_at",
@@ -681,6 +697,10 @@ var TenderFilter = struct {
 	AcceptedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acceptedAt" → DB: "accepted_at"
 	ExhaustedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exhaustedAt" → DB: "exhausted_at"
 	CanceledAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
+	BounceCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bounceCount" → DB: "bounce_count"
+	LastBouncedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastBouncedAt" → DB: "last_bounced_at"
+	EscalatedFromID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escalatedFromId" → DB: "escalated_from_tender_id"
+	EscalationRound    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escalationRound" → DB: "escalation_round"
 	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -736,6 +756,18 @@ var TenderFilter = struct {
 	CanceledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("canceledAt", op, value)
 	},
+	BounceCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("bounceCount", op, value)
+	},
+	LastBouncedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastBouncedAt", op, value)
+	},
+	EscalatedFromID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("escalatedFromId", op, value)
+	},
+	EscalationRound: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("escalationRound", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
 	},
@@ -773,57 +805,79 @@ var TenderOfferTable = buncolgen.TableInfo{
 //	q.Where(TenderOfferColumns.ID.Eq(), id)           // WHERE tof.id = ?
 //	q.Order(TenderOfferColumns.CreatedAt.OrderDesc())  // ORDER BY tof.created_at DESC
 var TenderOfferColumns = struct {
-	ID                 buncolgen.Column // "id" → qualified: "tof.id"
-	BusinessUnitID     buncolgen.Column // "business_unit_id" → qualified: "tof.business_unit_id"
-	OrganizationID     buncolgen.Column // "organization_id" → qualified: "tof.organization_id"
-	TenderID           buncolgen.Column // "tender_id" → qualified: "tof.tender_id"
-	CarrierID          buncolgen.Column // "carrier_id" → qualified: "tof.carrier_id"
-	Rank               buncolgen.Column // "rank" → qualified: "tof.rank"
-	RateMethod         buncolgen.Column // "rate_method" → qualified: "tof.rate_method"
-	Rate               buncolgen.Column // "rate" → qualified: "tof.rate"
-	OfferTTLSeconds    buncolgen.Column // "offer_ttl_seconds" → qualified: "tof.offer_ttl_seconds"
-	Channel            buncolgen.Column // "channel" → qualified: "tof.channel"
-	Status             buncolgen.Column // "status" → qualified: "tof.status"
-	RecipientEmail     buncolgen.Column // "recipient_email" → qualified: "tof.recipient_email"
-	SentAt             buncolgen.Column // "sent_at" → qualified: "tof.sent_at"
-	ExpiresAt          buncolgen.Column // "expires_at" → qualified: "tof.expires_at"
-	RespondedAt        buncolgen.Column // "responded_at" → qualified: "tof.responded_at"
-	ResponseSource     buncolgen.Column // "response_source" → qualified: "tof.response_source"
-	DeclineReason      buncolgen.Column // "decline_reason" → qualified: "tof.decline_reason"
-	DeliveryError      buncolgen.Column // "delivery_error" → qualified: "tof.delivery_error"
-	EDIPartnerID       buncolgen.Column // "edi_partner_id" → qualified: "tof.edi_partner_id"
-	EDIMessageID       buncolgen.Column // "edi_message_id" → qualified: "tof.edi_message_id"
-	LateResponseAction buncolgen.Column // "late_response_action" → qualified: "tof.late_response_action"
-	LateResponseAt     buncolgen.Column // "late_response_at" → qualified: "tof.late_response_at"
-	Version            buncolgen.Column // "version" → qualified: "tof.version"
-	CreatedAt          buncolgen.Column // "created_at" → qualified: "tof.created_at"
-	UpdatedAt          buncolgen.Column // "updated_at" → qualified: "tof.updated_at"
+	ID                   buncolgen.Column // "id" → qualified: "tof.id"
+	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "tof.business_unit_id"
+	OrganizationID       buncolgen.Column // "organization_id" → qualified: "tof.organization_id"
+	TenderID             buncolgen.Column // "tender_id" → qualified: "tof.tender_id"
+	CarrierID            buncolgen.Column // "carrier_id" → qualified: "tof.carrier_id"
+	Rank                 buncolgen.Column // "rank" → qualified: "tof.rank"
+	RateMethod           buncolgen.Column // "rate_method" → qualified: "tof.rate_method"
+	Rate                 buncolgen.Column // "rate" → qualified: "tof.rate"
+	OfferTTLSeconds      buncolgen.Column // "offer_ttl_seconds" → qualified: "tof.offer_ttl_seconds"
+	Channel              buncolgen.Column // "channel" → qualified: "tof.channel"
+	Status               buncolgen.Column // "status" → qualified: "tof.status"
+	RecipientEmail       buncolgen.Column // "recipient_email" → qualified: "tof.recipient_email"
+	SentAt               buncolgen.Column // "sent_at" → qualified: "tof.sent_at"
+	ExpiresAt            buncolgen.Column // "expires_at" → qualified: "tof.expires_at"
+	RespondedAt          buncolgen.Column // "responded_at" → qualified: "tof.responded_at"
+	ResponseSource       buncolgen.Column // "response_source" → qualified: "tof.response_source"
+	DeclineReason        buncolgen.Column // "decline_reason" → qualified: "tof.decline_reason"
+	DeliveryError        buncolgen.Column // "delivery_error" → qualified: "tof.delivery_error"
+	EDIPartnerID         buncolgen.Column // "edi_partner_id" → qualified: "tof.edi_partner_id"
+	EDIMessageID         buncolgen.Column // "edi_message_id" → qualified: "tof.edi_message_id"
+	LateResponseAction   buncolgen.Column // "late_response_action" → qualified: "tof.late_response_action"
+	LateResponseAt       buncolgen.Column // "late_response_at" → qualified: "tof.late_response_at"
+	CounterRate          buncolgen.Column // "counter_rate" → qualified: "tof.counter_rate"
+	CounterNote          buncolgen.Column // "counter_note" → qualified: "tof.counter_note"
+	CounteredAt          buncolgen.Column // "countered_at" → qualified: "tof.countered_at"
+	CounterMargin        buncolgen.Column // "counter_margin_percent" → qualified: "tof.counter_margin_percent"
+	CounterNeedsApproval buncolgen.Column // "counter_needs_approval" → qualified: "tof.counter_needs_approval"
+	CounterDecidedAt     buncolgen.Column // "counter_decided_at" → qualified: "tof.counter_decided_at"
+	CounterDecidedByID   buncolgen.Column // "counter_decided_by_id" → qualified: "tof.counter_decided_by_id"
+	RevokedAt            buncolgen.Column // "revoked_at" → qualified: "tof.revoked_at"
+	RevokeReason         buncolgen.Column // "revoke_reason" → qualified: "tof.revoke_reason"
+	RevokedByID          buncolgen.Column // "revoked_by_id" → qualified: "tof.revoked_by_id"
+	ReofferedFromID      buncolgen.Column // "reoffered_from_id" → qualified: "tof.reoffered_from_id"
+	Version              buncolgen.Column // "version" → qualified: "tof.version"
+	CreatedAt            buncolgen.Column // "created_at" → qualified: "tof.created_at"
+	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "tof.updated_at"
 }{
-	ID:                 buncolgen.NewColumn("id", "tof"),
-	BusinessUnitID:     buncolgen.NewColumn("business_unit_id", "tof"),
-	OrganizationID:     buncolgen.NewColumn("organization_id", "tof"),
-	TenderID:           buncolgen.NewColumn("tender_id", "tof"),
-	CarrierID:          buncolgen.NewColumn("carrier_id", "tof"),
-	Rank:               buncolgen.NewColumn("rank", "tof"),
-	RateMethod:         buncolgen.NewColumn("rate_method", "tof"),
-	Rate:               buncolgen.NewColumn("rate", "tof"),
-	OfferTTLSeconds:    buncolgen.NewColumn("offer_ttl_seconds", "tof"),
-	Channel:            buncolgen.NewColumn("channel", "tof"),
-	Status:             buncolgen.NewColumn("status", "tof"),
-	RecipientEmail:     buncolgen.NewColumn("recipient_email", "tof"),
-	SentAt:             buncolgen.NewColumn("sent_at", "tof"),
-	ExpiresAt:          buncolgen.NewColumn("expires_at", "tof"),
-	RespondedAt:        buncolgen.NewColumn("responded_at", "tof"),
-	ResponseSource:     buncolgen.NewColumn("response_source", "tof"),
-	DeclineReason:      buncolgen.NewColumn("decline_reason", "tof"),
-	DeliveryError:      buncolgen.NewColumn("delivery_error", "tof"),
-	EDIPartnerID:       buncolgen.NewColumn("edi_partner_id", "tof"),
-	EDIMessageID:       buncolgen.NewColumn("edi_message_id", "tof"),
-	LateResponseAction: buncolgen.NewColumn("late_response_action", "tof"),
-	LateResponseAt:     buncolgen.NewColumn("late_response_at", "tof"),
-	Version:            buncolgen.NewColumn("version", "tof"),
-	CreatedAt:          buncolgen.NewColumn("created_at", "tof"),
-	UpdatedAt:          buncolgen.NewColumn("updated_at", "tof"),
+	ID:                   buncolgen.NewColumn("id", "tof"),
+	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "tof"),
+	OrganizationID:       buncolgen.NewColumn("organization_id", "tof"),
+	TenderID:             buncolgen.NewColumn("tender_id", "tof"),
+	CarrierID:            buncolgen.NewColumn("carrier_id", "tof"),
+	Rank:                 buncolgen.NewColumn("rank", "tof"),
+	RateMethod:           buncolgen.NewColumn("rate_method", "tof"),
+	Rate:                 buncolgen.NewColumn("rate", "tof"),
+	OfferTTLSeconds:      buncolgen.NewColumn("offer_ttl_seconds", "tof"),
+	Channel:              buncolgen.NewColumn("channel", "tof"),
+	Status:               buncolgen.NewColumn("status", "tof"),
+	RecipientEmail:       buncolgen.NewColumn("recipient_email", "tof"),
+	SentAt:               buncolgen.NewColumn("sent_at", "tof"),
+	ExpiresAt:            buncolgen.NewColumn("expires_at", "tof"),
+	RespondedAt:          buncolgen.NewColumn("responded_at", "tof"),
+	ResponseSource:       buncolgen.NewColumn("response_source", "tof"),
+	DeclineReason:        buncolgen.NewColumn("decline_reason", "tof"),
+	DeliveryError:        buncolgen.NewColumn("delivery_error", "tof"),
+	EDIPartnerID:         buncolgen.NewColumn("edi_partner_id", "tof"),
+	EDIMessageID:         buncolgen.NewColumn("edi_message_id", "tof"),
+	LateResponseAction:   buncolgen.NewColumn("late_response_action", "tof"),
+	LateResponseAt:       buncolgen.NewColumn("late_response_at", "tof"),
+	CounterRate:          buncolgen.NewColumn("counter_rate", "tof"),
+	CounterNote:          buncolgen.NewColumn("counter_note", "tof"),
+	CounteredAt:          buncolgen.NewColumn("countered_at", "tof"),
+	CounterMargin:        buncolgen.NewColumn("counter_margin_percent", "tof"),
+	CounterNeedsApproval: buncolgen.NewColumn("counter_needs_approval", "tof"),
+	CounterDecidedAt:     buncolgen.NewColumn("counter_decided_at", "tof"),
+	CounterDecidedByID:   buncolgen.NewColumn("counter_decided_by_id", "tof"),
+	RevokedAt:            buncolgen.NewColumn("revoked_at", "tof"),
+	RevokeReason:         buncolgen.NewColumn("revoke_reason", "tof"),
+	RevokedByID:          buncolgen.NewColumn("revoked_by_id", "tof"),
+	ReofferedFromID:      buncolgen.NewColumn("reoffered_from_id", "tof"),
+	Version:              buncolgen.NewColumn("version", "tof"),
+	CreatedAt:            buncolgen.NewColumn("created_at", "tof"),
+	UpdatedAt:            buncolgen.NewColumn("updated_at", "tof"),
 }
 
 // TenderOfferFieldMap maps JSON API field names to database column names.
@@ -831,31 +885,42 @@ var TenderOfferColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by TenderOffer.GetStaticFieldMap().
 var TenderOfferFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"tenderId":           "tender_id",
-	"carrierId":          "carrier_id",
-	"rank":               "rank",
-	"rateMethod":         "rate_method",
-	"rate":               "rate",
-	"offerTtlSeconds":    "offer_ttl_seconds",
-	"channel":            "channel",
-	"status":             "status",
-	"recipientEmail":     "recipient_email",
-	"sentAt":             "sent_at",
-	"expiresAt":          "expires_at",
-	"respondedAt":        "responded_at",
-	"responseSource":     "response_source",
-	"declineReason":      "decline_reason",
-	"deliveryError":      "delivery_error",
-	"ediPartnerId":       "edi_partner_id",
-	"ediMessageId":       "edi_message_id",
-	"lateResponseAction": "late_response_action",
-	"lateResponseAt":     "late_response_at",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"tenderId":             "tender_id",
+	"carrierId":            "carrier_id",
+	"rank":                 "rank",
+	"rateMethod":           "rate_method",
+	"rate":                 "rate",
+	"offerTtlSeconds":      "offer_ttl_seconds",
+	"channel":              "channel",
+	"status":               "status",
+	"recipientEmail":       "recipient_email",
+	"sentAt":               "sent_at",
+	"expiresAt":            "expires_at",
+	"respondedAt":          "responded_at",
+	"responseSource":       "response_source",
+	"declineReason":        "decline_reason",
+	"deliveryError":        "delivery_error",
+	"ediPartnerId":         "edi_partner_id",
+	"ediMessageId":         "edi_message_id",
+	"lateResponseAction":   "late_response_action",
+	"lateResponseAt":       "late_response_at",
+	"counterRate":          "counter_rate",
+	"counterNote":          "counter_note",
+	"counteredAt":          "countered_at",
+	"counterMargin":        "counter_margin_percent",
+	"counterNeedsApproval": "counter_needs_approval",
+	"counterDecidedAt":     "counter_decided_at",
+	"counterDecidedById":   "counter_decided_by_id",
+	"revokedAt":            "revoked_at",
+	"revokeReason":         "revoke_reason",
+	"revokedById":          "revoked_by_id",
+	"reofferedFromId":      "reoffered_from_id",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
 }
 
 // TenderOfferInsertableColumns lists column names suitable for INSERT statements on the "tender_offers" table.
@@ -883,6 +948,17 @@ var TenderOfferInsertableColumns = []string{
 	"edi_message_id",
 	"late_response_action",
 	"late_response_at",
+	"counter_rate",
+	"counter_note",
+	"countered_at",
+	"counter_margin_percent",
+	"counter_needs_approval",
+	"counter_decided_at",
+	"counter_decided_by_id",
+	"revoked_at",
+	"revoke_reason",
+	"revoked_by_id",
+	"reoffered_from_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -951,31 +1027,42 @@ func TenderOfferApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bu
 //	TenderOfferFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var TenderOfferFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	TenderID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderId" → DB: "tender_id"
-	CarrierID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
-	Rank               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rank" → DB: "rank"
-	RateMethod         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMethod" → DB: "rate_method"
-	Rate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
-	OfferTTLSeconds    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offerTtlSeconds" → DB: "offer_ttl_seconds"
-	Channel            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "channel" → DB: "channel"
-	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	RecipientEmail     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recipientEmail" → DB: "recipient_email"
-	SentAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
-	ExpiresAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
-	RespondedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "respondedAt" → DB: "responded_at"
-	ResponseSource     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "responseSource" → DB: "response_source"
-	DeclineReason      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "declineReason" → DB: "decline_reason"
-	DeliveryError      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryError" → DB: "delivery_error"
-	EDIPartnerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
-	EDIMessageID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediMessageId" → DB: "edi_message_id"
-	LateResponseAction func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateResponseAction" → DB: "late_response_action"
-	LateResponseAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateResponseAt" → DB: "late_response_at"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	TenderID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderId" → DB: "tender_id"
+	CarrierID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
+	Rank                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rank" → DB: "rank"
+	RateMethod           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMethod" → DB: "rate_method"
+	Rate                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
+	OfferTTLSeconds      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offerTtlSeconds" → DB: "offer_ttl_seconds"
+	Channel              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "channel" → DB: "channel"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	RecipientEmail       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recipientEmail" → DB: "recipient_email"
+	SentAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
+	ExpiresAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	RespondedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "respondedAt" → DB: "responded_at"
+	ResponseSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "responseSource" → DB: "response_source"
+	DeclineReason        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "declineReason" → DB: "decline_reason"
+	DeliveryError        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryError" → DB: "delivery_error"
+	EDIPartnerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	EDIMessageID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediMessageId" → DB: "edi_message_id"
+	LateResponseAction   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateResponseAction" → DB: "late_response_action"
+	LateResponseAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateResponseAt" → DB: "late_response_at"
+	CounterRate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterRate" → DB: "counter_rate"
+	CounterNote          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterNote" → DB: "counter_note"
+	CounteredAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counteredAt" → DB: "countered_at"
+	CounterMargin        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterMargin" → DB: "counter_margin_percent"
+	CounterNeedsApproval func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterNeedsApproval" → DB: "counter_needs_approval"
+	CounterDecidedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterDecidedAt" → DB: "counter_decided_at"
+	CounterDecidedByID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "counterDecidedById" → DB: "counter_decided_by_id"
+	RevokedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedAt" → DB: "revoked_at"
+	RevokeReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokeReason" → DB: "revoke_reason"
+	RevokedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedById" → DB: "revoked_by_id"
+	ReofferedFromID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reofferedFromId" → DB: "reoffered_from_id"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -1042,6 +1129,39 @@ var TenderOfferFilter = struct {
 	},
 	LateResponseAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lateResponseAt", op, value)
+	},
+	CounterRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterRate", op, value)
+	},
+	CounterNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterNote", op, value)
+	},
+	CounteredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counteredAt", op, value)
+	},
+	CounterMargin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterMargin", op, value)
+	},
+	CounterNeedsApproval: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterNeedsApproval", op, value)
+	},
+	CounterDecidedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterDecidedAt", op, value)
+	},
+	CounterDecidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("counterDecidedById", op, value)
+	},
+	RevokedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("revokedAt", op, value)
+	},
+	RevokeReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("revokeReason", op, value)
+	},
+	RevokedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("revokedById", op, value)
+	},
+	ReofferedFromID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reofferedFromId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

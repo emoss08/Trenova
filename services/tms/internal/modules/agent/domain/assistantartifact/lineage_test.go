@@ -31,6 +31,20 @@ func TestLineageKeyFor(t *testing.T) {
 		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a"}),
 	)
 	assert.NotEqual(t, first, LineageKeyFor(KindTableView, "list_shipments", map[string]any{"status": "Ready", "limit": 50}))
+	assert.Equal(t,
+		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+			map[string]any{"documentId": "doc_v4"}),
+		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+			map[string]any{"documentId": "doc_v4", "ediPartnerId": "edip_a", "customerId": "cus_a"}),
+		"a second draft of the same guide is its next version, however the partner was named",
+	)
+	assert.NotEqual(t,
+		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+			map[string]any{"documentId": "doc_v3"}),
+		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+			map[string]any{"documentId": "doc_v4"}),
+		"two guides are two drafts",
+	)
 	assert.Empty(t, LineageKeyFor(KindDocument, "publish_document", nil))
 	assert.Empty(t, LineageKeyFor(KindTableView, "", nil))
 }

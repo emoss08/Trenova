@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
-const ApplyConnectionDraftToolName = "apply_edi_connection_draft"
+const (
+	ApplyConnectionDraftToolName = "apply_edi_connection_draft"
+	ediPartnerRecordEntity       = "edi_partner"
+)
 
 var (
 	errDraftDigest = errors.New(
@@ -97,6 +100,7 @@ func (t *ApplyConnectionDraftTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadAlways,
 		Source:        agent.TaintSourceAttachment,
+		Artifact:      ediPartnerRecordEntity,
 		Rationale: "Sets up a trading partner from a guide the partner wrote, so a person " +
 			"checks every value against its page before anything is saved" +
 			ediDecisionRationaleEnd,
@@ -151,6 +155,13 @@ func readiness(input *edispec.Input, draft *ediports.ConnectionDraft) error {
 	return nil
 }
 
+func (t *ApplyConnectionDraftTool) ResolveSelection(
+	_ context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	return edispec.RedactQuotes(params.Params), nil
+}
+
 func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
@@ -169,23 +180,83 @@ func (t *ApplyConnectionDraftTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
+	_, err := t.ExecuteWithResult(ctx, params)
+	return err
+}
+
+func (t *ApplyConnectionDraftTool) ExecuteWithResult(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+) (*agent.ToolExecutionResult, error) {
 	if err := common.GuardExecute(t, params); err != nil {
-		return err
+		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
-		return ErrEDIDecisionNeedsAPerson
+		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
 	input, err := t.input(ctx, &params)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if _, err = t.drafts.ApplyConnectionDraft(ctx, &ediports.ApplyConnectionDraftRequest{
+	applied, err := t.drafts.ApplyConnectionDraft(ctx, &ediports.ApplyConnectionDraftRequest{
 		Draft:                  input.Draft,
 		ExpectedDocumentDigest: input.Digest,
 		Actor:                  params.Actor,
-	}); err != nil {
-		return fmt.Errorf("write the EDI connection: %w", err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("write the EDI connection: %w", err)
 	}
-	return nil
+	return appliedResult(applied), nil
+}
+
+func appliedResult(applied *ediports.AppliedConnectionDraft) *agent.ToolExecutionResult {
+	action := "updated"
+	if applied.Created {
+		action = "created"
+	}
+	name := ""
+	if applied.Draft != nil {
+		name = draftPartnerName(applied.Draft)
+	}
+	return &agent.ToolExecutionResult{
+		Action: action,
+		Kind:   "EDI connection",
+		Name:   name,
+		IDs:    map[string]string{"ediPartnerId": applied.PartnerID.String()},
+		Record: &agent.RecordRef{
+			EntityType: ediPartnerRecordEntity,
+			ID:         applied.PartnerID.String(),
+		},
+		State: appliedState(applied),
+	}
+}
+
+func appliedState(applied *ediports.AppliedConnectionDraft) string {
+	order := make([]string, 0, len(applied.Writes))
+	counts := make(map[string]int, len(applied.Writes))
+	for _, write := range applied.Writes {
+		label := strings.ToLower(write.Record)
+		if counts[label] == 0 {
+			order = append(order, label)
+		}
+		counts[label]++
+	}
+	parts := make([]string, 0, len(order))
+	for _, label := range order {
+		parts = append(
+			parts,
+			fmt.Sprintf("%d %s", counts[label], plural(counts[label], label, label+"s")),
+		)
+	}
+
+	state := "Saved: " + strings.Join(parts, ", ") +
+		". Anything new is inactive and what existed keeps its status."
+	if applied.Created {
+		state = "Saved inactive: " + strings.Join(parts, ", ") + "."
+	}
+	if missing := applied.Draft.CredentialsToEnter(); len(missing) > 0 {
+		state += " Before turning it on, enter: " + strings.Join(missing, ", ") + "."
+	}
+	return state
 }

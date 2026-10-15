@@ -82,7 +82,7 @@ func classifierSchema() map[string]any {
 	}, "classification", "confidence", "reasoning", "facts")
 }
 
-const classifierSystemPrompt = `You sort mail arriving at a freight carrier's monitored address into one of seven kinds.
+const classifierSystemPrompt = `You sort mail arriving at a freight carrier's monitored address into one of eight kinds.
 
 Answer with the kind, how confident you are from 0 to 1, one sentence saying why, and
 the facts a dispatcher would want at a glance.
@@ -94,6 +94,7 @@ The kinds:
 - Invoice: a bill, from a carrier or a vendor.
 - StatusRequest: asking where a load is or when it will arrive.
 - DetentionDispute: arguing about detention time or the charge for it.
+- FactorRemittance: a factoring company's funding, purchase, reserve release or chargeback report on invoices it bought from us, usually a spreadsheet or PDF.
 - Other: anything else, including mail you are not sure about.
 
 Choose Other when the message does not clearly fit, and say so in the confidence.

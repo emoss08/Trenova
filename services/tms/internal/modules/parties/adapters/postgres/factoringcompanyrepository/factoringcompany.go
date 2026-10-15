@@ -3,6 +3,7 @@ package factoringcompanyrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -371,4 +373,50 @@ func (r *repository) CountAssignedCustomers(
 		}
 		return int(count), nil
 	})
+}
+
+const maxFactorsByEmail = 20
+
+func (r *repository) FindByEmail(
+	ctx context.Context,
+	req factoringcompanyports.FindFactoringCompaniesByEmailRequest,
+) (*factoringcompanyports.FactoringCompaniesByEmail, error) {
+	found := &factoringcompanyports.FactoringCompaniesByEmail{
+		Exact:    []*factoringcompany.FactoringCompany{},
+		ByDomain: []*factoringcompany.FactoringCompany{},
+	}
+	address := strings.ToLower(strings.TrimSpace(req.Address))
+	domain := emailutils.Domain(address)
+	if address == "" || domain == "" {
+		return found, nil
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringcompanyports.FactoringCompaniesByEmail, error) {
+			cols := factoringcompanycol.FactoringCompanyColumns
+			entities := make([]*factoringcompany.FactoringCompany, 0, maxFactorsByEmail)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
+						Where(cols.Status.Eq(), domaintypes.StatusActive).
+						Where("split_part(lower("+cols.Email.Qualified()+"), '@', 2) = ?", domain)
+				}).
+				OrderExpr(cols.ID.Qualified()).
+				Limit(maxFactorsByEmail).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("find factoring companies by email: %w", err)
+			}
+			for _, entity := range entities {
+				if strings.EqualFold(strings.TrimSpace(entity.Email), address) {
+					found.Exact = append(found.Exact, entity)
+					continue
+				}
+				found.ByDomain = append(found.ByDomain, entity)
+			}
+			return found, nil
+		},
+	)
 }

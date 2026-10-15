@@ -1764,6 +1764,23 @@ export function TenderOfferStatusBadge({
       text: t("Delivery failed"),
       description: t("The offer could not be delivered on its channel."),
     },
+    Countered: {
+      phase: "awaiting",
+      text: t("Countered"),
+      description: t("The carrier asked for a different rate; dispatch has to take or refuse it."),
+    },
+    CounterRejected: {
+      phase: "failed",
+      text: t("Counter refused"),
+      description: t("Dispatch refused the carrier's counter-offer."),
+    },
+    Revoked: {
+      phase: "failed",
+      text: t("Backed out"),
+      description: t(
+        "The carrier accepted, then backed out; the tender went on to the next carrier.",
+      ),
+    },
   };
 
   return (

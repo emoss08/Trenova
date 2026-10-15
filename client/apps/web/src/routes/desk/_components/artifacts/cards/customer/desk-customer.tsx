@@ -11,7 +11,7 @@ import type {
 import { ar } from "@/lib/queries/ar";
 import { customer as customerQueries } from "@/lib/queries/customer";
 import { agreementTypeLabel, agreementWindow, orderedAgreements } from "@/lib/rate-agreement";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatPercent } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -93,6 +93,7 @@ const NO_ROWS: readonly string[] = [];
  * Editing stays on the customer's page, one click away.
  *
  * The card steps through the table's rows in the order the table shows them.
+ * A step draws the next customer's skeleton until it is read, never the one it left.
  */
 export function DeskCustomer({
   recordId,
@@ -102,11 +103,7 @@ export function DeskCustomer({
   backLabel,
 }: CustomerCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...customerQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...customerQueries.card(recordId), retry: false });
   const customer = query.data;
 
   if (!customer) {

@@ -337,6 +337,10 @@ fixture holds its skeleton with `{ __hold: true }` as a GraphQL one does.
 The worker and carrier settlement cards read `fixtures/desk-settlements.mjs`; the loads a
 settlement pays come from the board, and each one's share is filled in from them so the card's
 loads carry what the settlement pays.
+The detention card reads `fixtures/desk-detention.mjs` (a charge waiting on approval, a running
+clock with its notice overdue, a stop that left inside its free time, a disputed and a waived
+charge), each stop given a load from the board so the card's shipment and its pro number agree;
+a charge the fixture does not hold answers not found.
 
 The Desk home suggesting the agent with the tools for a question has its own walkthrough:
 

@@ -222,14 +222,25 @@ const EVERYTHING = {
 function draw(props: Partial<Parameters<typeof DeskRateAgreement>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <DeskRateAgreement recordId="ra_1" order={["ra_0", "ra_1"]} {...handlers} {...props} />
+        <DeskRateAgreement
+          recordId="ra_1"
+          order={["ra_0", "ra_1"]}
+          {...handlers}
+          {...props}
+          {...more}
+        />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 async function section(title: string): Promise<HTMLElement> {
@@ -285,6 +296,17 @@ afterEach(() => {
 });
 
 describe("DeskRateAgreement", () => {
+  it("draws the next agreement's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Acme dry van contract", level: 2 });
+
+    service.getWithoutLanes.mockReturnValue(new Promise(() => {}));
+    step("ra_0");
+
+    expect(screen.queryByRole("heading", { name: "Acme dry van contract", level: 2 })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the agreement is read, then draws what it is", async () => {
     const { container } = draw();
 

@@ -24,6 +24,7 @@ type fakeConnectionDrafts struct {
 	guard    *agenttoolstest.WriteGuard
 	planned  *ediports.ConnectionDraftRequest
 	applied  *ediports.ApplyConnectionDraftRequest
+	result   *ediports.AppliedConnectionDraft
 	previews int
 }
 
@@ -44,6 +45,9 @@ func (f *fakeConnectionDrafts) ApplyConnectionDraft(
 		return nil, err
 	}
 	f.applied = req
+	if f.result != nil {
+		return f.result, nil
+	}
 	return &ediports.AppliedConnectionDraft{}, nil
 }
 

@@ -24,19 +24,34 @@ const complianceSections: readonly SettingsSectionSpec[] = [
   { title: "lg", fields: [{ kind: "switch", count: 5 }] },
 ];
 
-const fleetSections: readonly SettingsSectionSpec[] = [
-  ...assignmentSections,
-  ...monitoringSections,
-  ...complianceSections,
+const tenderSections: readonly SettingsSectionSpec[] = [
+  {
+    title: "lg",
+    description: 2,
+    fields: ["switch", { kind: "input", narrow: true }, "switch", { kind: "input", count: 5, narrow: true }],
+  },
 ];
 
-/** The form's cards; assignment and DOT compliance only for an organization running a fleet. */
+/**
+ * The form's cards; assignment and DOT compliance only for an organization running a fleet,
+ * carrier tenders only for a brokerage.
+ */
 export function DispatchControlSkeleton() {
   const capabilities = useOrgCapabilities();
   const runsAssets = hasOrganizationCapability(
     capabilities,
     OrganizationCapability.AssetOperations,
   );
+  const brokers = hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage);
 
-  return <SettingsFormSkeleton sections={runsAssets ? fleetSections : monitoringSections} />;
+  return (
+    <SettingsFormSkeleton
+      sections={[
+        ...(runsAssets ? assignmentSections : []),
+        ...monitoringSections,
+        ...(brokers ? tenderSections : []),
+        ...(runsAssets ? complianceSections : []),
+      ]}
+    />
+  );
 }

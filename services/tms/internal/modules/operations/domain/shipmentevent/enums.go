@@ -34,6 +34,10 @@ const (
 	TypeTenderDeliveryFailed  = Type("TenderDeliveryFailed")
 	TypeTenderEntrySkipped    = Type("TenderEntrySkipped")
 	TypeTenderEntryWarned     = Type("TenderEntryWarned")
+	TypeTenderBounced         = Type("TenderBounced")
+	TypeTenderCountered       = Type("TenderCountered")
+	TypeTenderCounterDecided  = Type("TenderCounterDecided")
+	TypeTenderEscalated       = Type("TenderEscalated")
 
 	TypeHoldPlaced   = Type("HoldPlaced")
 	TypeHoldUpdated  = Type("HoldUpdated")
@@ -88,6 +92,10 @@ var AllTypes = []Type{
 	TypeTenderDeliveryFailed,
 	TypeTenderEntrySkipped,
 	TypeTenderEntryWarned,
+	TypeTenderBounced,
+	TypeTenderCountered,
+	TypeTenderCounterDecided,
+	TypeTenderEscalated,
 	TypeHoldPlaced,
 	TypeHoldUpdated,
 	TypeHoldReleased,

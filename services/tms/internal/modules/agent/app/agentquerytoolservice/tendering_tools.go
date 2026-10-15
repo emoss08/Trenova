@@ -65,9 +65,10 @@ func (t *listShipmentTendersTool) Name() string { return "list_shipment_tenders"
 func (t *listShipmentTendersTool) Description() string {
 	return "List a shipment's tenders, newest first, with every offer in rank order. Each " +
 		"tender shows its mode and status; each offer the carrier, the rate, how it was sent, " +
-		"its status and when it lapses or was answered. Use it to see who holds an offer before recording a " +
-		"carrier's answer with record_tender_response, or to find a live tender to " +
-		"withdraw with cancel_tender. Narrow to one move with shipmentMoveId."
+		"its status, any counter the carrier made and when it lapses or was answered. Use " +
+		"it to see who holds an offer before recording a carrier's answer, a decision on its " +
+		"counter or the carrier backing out with record_tender_response, or to find a live " +
+		"tender to withdraw with cancel_tender. Narrow to one move with shipmentMoveId."
 }
 
 func (t *listShipmentTendersTool) ParamSchema() map[string]any {
@@ -104,8 +105,16 @@ type tenderOfferRow struct {
 	RespondedAt    *int64 `json:"respondedAt,omitempty"`
 	ResponseSource string `json:"responseSource,omitempty"`
 	// Answerable is whether record_tender_response can still record an
-	// answer on this offer.
+	// answer on this offer: the carrier's own, or a decision on its counter.
 	Answerable bool `json:"answerable"`
+	// CounterRate is the rate the carrier countered with, when it made one.
+	CounterRate string `json:"counterRate,omitempty"`
+	// CounterNeedsApproval is whether taking the counter needs the tender
+	// approve permission, because it is below the margin floor.
+	CounterNeedsApproval bool `json:"counterNeedsApproval,omitempty"`
+	// BackOutAllowed is whether record_tender_response can record the
+	// carrier backing out of this offer, which it accepted.
+	BackOutAllowed bool `json:"backOutAllowed,omitempty"`
 }
 
 type tenderRow struct {
@@ -115,6 +124,8 @@ type tenderRow struct {
 	Status         string           `json:"status"`
 	Live           bool             `json:"live"`
 	AcceptedOffer  string           `json:"acceptedOfferId,omitempty"`
+	Bounces        int16            `json:"bounces,omitempty"`
+	Escalation     int16            `json:"escalationRound,omitempty"`
 	CreatedAt      int64            `json:"createdAt"`
 	Offers         []tenderOfferRow `json:"offers"`
 }
@@ -172,6 +183,8 @@ func tenderRowFrom(entity *tender.Tender, gate *fieldGate) tenderRow {
 		Status:         entity.Status.String(),
 		Live:           entity.IsLive(),
 		AcceptedOffer:  idString(entity.AcceptedOfferID),
+		Bounces:        entity.BounceCount,
+		Escalation:     entity.EscalationRound,
 		CreatedAt:      entity.CreatedAt,
 		Offers:         make([]tenderOfferRow, 0, len(entity.Offers)),
 	}
@@ -191,13 +204,21 @@ func tenderRowFrom(entity *tender.Tender, gate *fieldGate) tenderRow {
 			RespondedAt:    offer.RespondedAt,
 			ResponseSource: string(offer.ResponseSource),
 			Answerable: entity.Status == tender.StatusActive &&
-				offer.Status == tender.OfferStatusSent,
+				offer.Status.IsAwaitingAnswer(),
+			CounterNeedsApproval: offer.Status == tender.OfferStatusCountered &&
+				offer.CounterNeedsApproval,
+		}
+		if accepted, ok := entity.CanBounce(); ok && accepted.ID == offer.ID {
+			offerRow.BackOutAllowed = true
 		}
 		if offer.Carrier != nil {
 			offerRow.CarrierName = strings.TrimSpace(offer.Carrier.Name)
 		}
 		if gate.show("rate", "offer rate") {
 			offerRow.Rate = decimalPointerText(&offer.Rate)
+			if offer.CounterRate.Valid {
+				offerRow.CounterRate = decimalPointerText(&offer.CounterRate.Decimal)
+			}
 		}
 		row.Offers = append(row.Offers, offerRow)
 	}

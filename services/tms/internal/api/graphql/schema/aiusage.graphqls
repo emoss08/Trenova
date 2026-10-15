@@ -30,6 +30,7 @@ enum AIUsageFeature {
   DocumentIntelligenceRoute
   DocumentIntelligenceExtract
   AccountingMapping
+  FactoringRemittanceExtract
   AgentReflection
   AgentDrafting
   AgentProfile

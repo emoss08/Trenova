@@ -3488,3 +3488,348 @@ findings:
       Open. The palette sends the records its search finds that a question names, which covers
       shipments, customers, workers and documents asked about from the palette. The Desk and the
       kinds outside the global index need a lookup by identifier across kinds.
+
+  - id: DB-158
+    title: A connection draft the agent replaced is still required in the reply, so the reply links the stale draft
+    status: fixed
+    severity: medium
+    area: agent runtime / reply pass (artifact placement)
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      When a turn drafts twice (the first draft held a value, the second fixed it), both
+      edi_connection_draft artifacts carry the same title and both must be linked. The model's
+      first-written reply links the current draft inside a sentence, which is what #771 asked
+      for, and the guard then demands the superseded one: relink_artifacts, then place_artifacts
+      appends "The details are in [EDI connection for Acme Retail Group](artifact:<first draft>)".
+      In edi-guide-new-partner #3 the rewrite moved the in-sentence link to the superseded draft
+      and place_artifacts appended the current one at the end. The person is pointed at a draft
+      the proposal is not built from, under the same title as the one it is.
+    evidence: >
+      4 of 4 corrected cases (edi-guide-new-partner #2 and #3, edi-guide-revised #1 and #2), each
+      with two drafts in the turn. new-partner #2 first wrote "Review it in [EDI connection for
+      Acme Retail Group](artifact:art_01M504J8ZAQE1NKXYY19781CAG)." and was told
+      "art_01M504HQ2RSBNW4YG0BG9EWPTE is not named" (the blocked first draft). revised #1's rewrite
+      said "so I've linked that version rather than the earlier draft", and place_artifacts
+      appended the earlier draft anyway.
+    cause: >
+      Turn.placementProblems (agentruntime/placement.go) counts every shown artifact whose
+      MustBeLinked() is true as missing when unlinked. MustBeLinked is true for every
+      KindEDIConnectionDraft, and nothing marks an earlier draft of the same connection as
+      replaced by a later one in the same turn.
+    fix: >
+      A shown artifact carries its lineage (ShownArtifact.Lineage, the first version's id), and
+      Turn.keepShown puts a new version in place of the one before it, so placement, the table
+      reprint check and everything else read only the current version. A draft's lineage key is
+      its guide alone (assistantartifact.LineageKeyFor, namedBy): the first fix keyed it on every
+      id argument, and a redraft that named ediPartnerId after the first let the planner match
+      it landed in a lineage of its own (20261015-125246-run, edi-guide-revised #3).
+    files:
+      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
+      - services/tms/internal/modules/agent/app/agentruntime/replypass.go
+      - services/tms/internal/modules/agent/domain/assistantartifact/lineage.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-132109-run (edi-guide-new-partner #1 and
+      #3 each drafted twice in one turn and neither reply was corrected)
+
+  - id: DB-159
+    title: The connection draft refuses a guide's own spelling of MDN mode and signing algorithm
+    status: fixed
+    severity: medium
+    area: agent tools / EDI connection draft
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      Every first draft_edi_connection call (6 of 6) passed the guide's wording: as2.mdnMode
+      "Synchronous, signed" (or "Synchronous") and as2.signingAlgorithm "SHA-256". "Synchronous,
+      signed" is held as an Invalid decision ("MDN mode must be one of async, sync"), which blocks
+      the draft; "SHA-256" is held as Invalid too, on a draft otherwise ready. Four cases redrafted
+      with "sync"/"sha256" on their own (each second draft then led to DB-158); two asked the
+      person which MDN mode to use when the guide states it, and failed. In edi-guide-revised #3
+      the held decision showed current "sync" and change "Same", and still blocked with "Decide
+      MDN mode".
+    evidence: >
+      edi-guide-new-partner #1 asked "Acme's guide says MDN is \"synchronous, signed\" (page 2).
+      Which MDN mode should the Acme AS2 connection use?"; edi-guide-revised #3 asked "The Acme
+      guide says MDN is \"synchronous, signed\", but the draft is blocked until you pick the MDN
+      mode Trenova accepts. Which should it use?". Both turns ended on the question with no reply,
+      so no proposal was filed.
+    cause: >
+      In ediconnectiondraft/catalog.go the normalizer and the spelled list disagree. as2.mdnMode's
+      choice() accepts "sync" and "synchronous" but not "synchronous, signed"; as2.signingAlgorithm
+      uses as2Algorithms(), which accepts only "sha256", while its spelled list already names
+      "sha-256" and "sha 256". The values schema gives no hint of the accepted forms.
+    fix: >
+      Every field with a spelled list reads a value it does not accept through those spellings
+      (spelledOut): the longest phrase wins, so "AES-256-GCM" is aes256-gcm, and a value that
+      spells two codes stays invalid. "Synchronous, signed", "SHA-256", "AES-256 (CBC)",
+      "qualifier 01 (DUNS)" and "* (asterisk)" now normalize; the plan test passes them as the
+      guide writes them.
+    files:
+      - services/tms/internal/modules/edi/app/ediconnectiondraft/catalog.go
+      - services/tms/internal/modules/edi/app/ediconnectiondraft/fields.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-123455-run, 20261015-125246-run,
+      20261015-130724-run and 20261015-132109-run (no MDN mode, signing or encryption value held
+      in any guide case)
+
+  - id: DB-160
+    title: A blocked connection draft that ends on a question never tells the person its unmet rules
+    status: fixed
+    severity: low
+    area: agent runtime / ask ends the turn
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      The blocked draft's note says "In your reply, tell the person: the 204 inbound template does
+      not meet L11 (page 5); the 214 outbound template does not meet MS1 (page 5); ... Appendix B
+      ... Certificates ...", and also "Ask the person about each decision". Since #769 the turn
+      ends the moment ask_user is shown, so the reply is empty and only the question reaches the
+      person; the template rules, gaps and credentials wait for a later turn.
+    evidence: >
+      edi-guide-new-partner #1 and edi-guide-revised #3: last tool ask_user, Reply "(none)".
+      The ask itself ended the turn as intended (no no_model_answered, no further model call).
+    cause: >
+      The draft tool's blocked note asks for both a reply and a question, and the runner now ends
+      the turn on the question. Seen only because of DB-159; a draft that is genuinely blocked
+      would show the same.
+    fix: >
+      A draft that is not ready asks only about its open decisions and says the draft that
+      follows the answer will say what to tell the person; the findings go only in a ready
+      draft's note.
+    files:
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_connection_draft_tool.go
+      - services/tms/internal/modules/agent/app/agentruntime/runner.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-130724-run and 20261015-132109-run (each
+      blocked draft ended on one question, with no unmet findings asked for)
+
+  - id: DB-161
+    title: A fact check fails a reply that states the count in words
+    status: fixed
+    severity: low
+    area: desk bench / checks
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner]
+    problem: >
+      Both approved cases said what was saved correctly, and both failed "states the document
+      profiles saved, all inactive — truth 4; missing from reply: 4": "saved as inactive, with one
+      communication profile, four document profiles and three control numbers".
+    cause: >
+      replyStates (internal/deskbench/checks.go) reads a numeric truth only through
+      numberguard.Cites, and numberguard.extractNumbers reads digits only.
+    fix: >
+      replyStates also accepts a whole count up to twelve written as its word
+      (intutils.SmallNumberWord, word-bounded); numberguard is left alone because the grounding
+      guard reads it.
+    files:
+      - services/tms/internal/deskbench/checks.go
+      - shared/numberguard/numberguard.go
+      - services/tms/deskbench/scenarios/edi.yaml
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-123455-run (all three approvals said "four
+      document profiles" and passed)
+
+  - id: DB-162
+    title: Taking an id out of a reply leaves "Its ID is." behind
+    status: open
+    severity: low
+    area: agent runtime / reply pass (strip_ids)
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner]
+    problem: >
+      The approval follow-up wrote "Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA." strip_ids removed
+      the id and left "Its ID is." in the reply the person read.
+    evidence: >
+      edi-guide-new-partner #3 step 2, turn atrn_01M504P2PE24D6K42EYCGBRMZ9, reply_regrounded
+      strip_ids then reply_replaced.
+    cause: >
+      The id is removed in place; a sentence whose only content was the id is not removed with it.
+      The decision note also handed the model the id ("It produced ediPartnerId edip_...; use that
+      id ... when you refer to what it made").
+    fix: >
+      recordids.Strip, and the client's withoutRecordIds with it, drop a sentence that only says
+      what an id is ("Its ID is edip_….", "Acme Retail Group's ID: edip_…") whole, and a clause
+      joined on with "and" without its sentence's stop. Covered by unit tests on both sides; not
+      seen again on the bench, so left open until a run shows it.
+    files:
+      - shared/recordids/recordids.go
+      - client/apps/web/src/lib/record-ids.ts
+
+  - id: DB-163
+    title: The EDI desk cannot show a 214 preview at its default data access
+    status: open
+    severity: medium
+    area: agent tools / data access
+    found: 2026-10-15, .deskbench/runs/20261015-092056-run and 20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-preview-214]
+    problem: >
+      Asked "show me the 214 it would get", every case (6 of 6 over two runs) answered "I can't
+      show you the 214 itself. The rendered X12 is withheld at my data access". The case passes
+      its checks but not its purpose: the rubric expects the 214 segment by segment (B10, AT7).
+    evidence: >
+      preview_edi_document returned "segments": [], "withheldByAccess": ["rawX12"], "note": "The
+      rendered X12 is withheld at your data access". Bench · EDI desk and EDI Exchange Manager
+      both have data_access_ceiling Internal.
+    cause: >
+      Raw EDI sits above Internal, an agent's ceiling defaults to Internal, and the segment list
+      is withheld with the raw text. deskbench/agents.yaml has no field for a bench agent's data
+      access, so the scenario cannot run at a ceiling that reaches it.
+    fix: >
+      Open. Decide whether a preview of a document not yet sent (no partner payload, built from
+      the organization's own shipment) belongs under the raw EDI tier, and let agents.yaml set a
+      bench agent's data access.
+    files:
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_document_preview_tool.go
+      - services/tms/internal/deskbench/agents.go
+      - services/tms/deskbench/agents.yaml
+
+  - id: DB-164
+    title: An empty list of inbound files is widened again and again
+    status: open
+    severity: low
+    area: agent tools / EDI inbound files
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-pasted-x12-then-a-write]
+    problem: >
+      Asked to rerun quarantined Acme files, one case called list_edi_inbound_files five times
+      ({"query":"Acme"}, partnerId + Quarantined, partnerId alone, the inactive Acme Retail
+      partner, status Quarantined alone) and went over the scenario's six calls with eight. The
+      answer was right: nothing Acme is quarantined, nothing rerun, nothing proposed.
+    cause: >
+      An empty filtered list ends with filtercatalog.Criteria.EmptyNote, "Other inbound EDI files
+      may exist; only these filters were applied", which every list tool shares and which reads
+      as an invitation to drop a filter and look again.
+    fix: >
+      Open. The note exists to stop "there are none" being claimed from a filtered list, and every
+      list tool shares it, so a change needs the whole bench, not the EDI tag.
+  - id: DB-165
+    title: A partner that rejected a 214 is said to have acknowledged none
+    status: open
+    severity: low
+    area: agent tools / EDI acknowledgment health
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-acks-overdue]
+    problem: >
+      get_edi_ack_health's ackCountsByPartner for Acme was Pending 3, Rejected 1, NotExpected 1
+      in the window. Replies opened "**No.** Acme Manufacturing EDI (ACMEMFG) has not acknowledged
+      any of our 214s in the last 24 hours" (#1) and "**No, Acme has not acknowledged our 214s.**"
+      (#2), then mentioned the rejection separately. A rejection is a 997 coming back; Acme's two
+      Accepted 997s fall just before the window.
+    cause: >
+      The counts did not say that Rejected and AcceptedWithErrors are acknowledgments received.
+    fix: >
+      Partly. Each partner row and the totals now carry acknowledged (every 997 or 999 that came
+      back, a rejection included) and awaiting, and the description says so
+      (MessageAcknowledgmentStatus.IsReceived). Six of nine replies over three later runs name
+      the one acknowledgment that came back; three still open "No, Acme has not acknowledged our
+      214s". Left open.
+
+  - id: DB-166
+    title: The draft tool said to read the guide with read_attachment when the file was already attached
+    status: fixed
+    severity: low
+    area: agent tools / EDI connection draft
+    found: 2026-10-15, .deskbench/runs/20261015-123455-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      Three cases drafted straight from the attached file and failed "called read_attachment";
+      the drafts were verified and proposed all the same.
+    cause: >
+      draft_edi_connection's description said "Read the guide with read_attachment first" while
+      the attachment block says the file itself is attached and to read it directly. The planner
+      checks every quote against the stored pages whichever the agent read.
+    fix: >
+      The description says to read the whole guide from the attached file or with
+      read_attachment, and the scenario asks for draft_edi_connection only.
+    files:
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_connection_draft_tool.go
+      - services/tms/deskbench/scenarios/edi.yaml
+    fixedIn: uncommitted; verified by .deskbench/runs/20261015-125246-run and 20261015-132109-run
+
+  - id: DB-167
+    title: A revised guide's changes were cut from the draft the model read
+    status: fixed
+    severity: high
+    area: agent tools / EDI connection draft
+    found: 2026-10-15, .deskbench/runs/20261015-115248-run and 20261015-123455-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-revised]
+    problem: >
+      Replies on a revised guide said "I couldn't confirm the value currently on file because the
+      draft's list was cut short" and "I can only see the three contact changes clearly", and
+      left out ISA13 from 5000.
+    evidence: >
+      The draft result reached the model as "lists were shortened: interchange shows 3 of 13;
+      documentProfiles shows 0 of 4", and the ISA13 change lives on the document profiles'
+      control numbers.
+    cause: >
+      A long result is shortened to fit, list by list; only the notes are kept whole, and the
+      note did not say what changes.
+    fix: >
+      On a ready draft of a partner that exists, the note lists each write value by value, with
+      control number changes grouped across profiles ("interchange control numbers on the 990
+      outbound, 214 outbound start at 5000 instead of 1000 (page 3)").
+    files:
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_connection_draft_tool.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-125246-run (edi-guide-revised #3 listed
+      the four changes with 5000) and 20261015-132109-run
+
+  - id: DB-168
+    title: The agent gives the partner's ISA qualifier as its own
+    status: open
+    severity: medium
+    area: agent tools / EDI connection draft
+    found: 2026-10-15, .deskbench/runs/20261015-130724-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      Three of nine guide cases over the last two runs passed isa.ourQualifier "01", citing "ISA05/
+      ISA06 Acme interchange sender: qualifier 01 (DUNS)". The sample 204 says 02, so the planner
+      held it and the agent asked the person, and the case filed no proposal.
+    cause: >
+      The values schema listed field keys with no word on whose they are. The field description
+      now says the our, local and carrier settings are this company's; seen once more after it
+      (20261015-132109-run, edi-guide-revised #2).
+    fix: Open.
+    files:
+      - services/tms/internal/modules/agent/app/agenttools/edispec/schema.go
+
+  - id: DB-169
+    title: A grounding rewrite of a draft reply drops what the draft's note asked it to say
+    status: open
+    severity: low
+    area: agent runtime / grounding guard
+    found: 2026-10-15, .deskbench/runs/20261015-125246-run and 20261015-132109-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-new-partner, edi-guide-revised]
+    problem: >
+      A reply that said the proposal mapped charge or stop codes it does not hold was rewritten
+      (reply_regrounded rewrite, then note), and the rewrite spent itself correcting the claim:
+      "I was wrong to list codes as part of it." It left out MS1 and ended on "Check the card
+      before relying on this reply".
+    fix: Open.
+
+  - id: DB-170
+    title: Pasted X12 is sometimes compared with stored messages nobody asked about
+    status: open
+    severity: low
+    area: agent tools / EDI inspection
+    found: 2026-10-15, .deskbench/runs/20261015-123455-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-pasted-x12]
+    problem: >
+      One of twelve cases after #770 called list_edi_messages after inspect_x12 to match the
+      pasted control numbers to what was sent ("our recent outbound 214s run 5001 to 5009").
+    fix: Open.

@@ -1,8 +1,9 @@
 ---
 path: /billing/factoring
-aliases: [factoring queue, ready to factor, factoring readiness, sell invoices, schedule of accounts, factored invoices, NOA, notice of assignment, missing POD for factoring, submit to factor, factoring schedule, failed schedule]
+aliases: [factoring queue, ready to factor, factoring readiness, sell invoices, schedule of accounts, factored invoices, NOA, notice of assignment, missing POD for factoring, submit to factor, factoring schedule, failed schedule, factor remittance, funding report, reserve report, remittance import, remittance exceptions, apply remittance]
 covers:
   - /billing/factoring/submissions/:id
+  - /billing/factoring/remittances/:id
 related:
   - /billing/configuration-files/factoring-companies
   - /billing/configuration-files/customers
@@ -25,6 +26,13 @@ Ready invoices are sold by sending them to their factor on a schedule of account
 each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet
 per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each
 opens on its own page with its delivery, documents and invoices.
+
+What the factor pays back arrives as a remittance: its funding, rejection, reserve release or
+chargeback report as a CSV, an Excel workbook or a PDF. The **Remittances** tab lists every one,
+whether it was imported by hand or read from an email the factor sent to your inbox. Each line is
+matched to an invoice on one of the factor's schedules; a line that matched on its own waits to be
+booked, and the rest wait for someone to resolve them. Nothing reaches the ledger until the
+remittance is applied.
 
 ## Tasks
 
@@ -61,6 +69,42 @@ Keywords: factoring schedule failed, resend schedule, factor delivery failed, re
 3. Select **Retry** to send it again with the factor's current settings, or **Cancel schedule**,
    enter the **Reason** and confirm to put its invoices back on the **Ready** tab.
 
+### Import a factor's remittance
+Keywords: upload remittance, funding report, reserve report, factor statement, import factor file
+1. Open [Factoring](/billing/factoring), select the **Remittances** tab and select
+   **Import remittance**.
+2. Choose the **Factor**, what the file is a **Report of** when it has no column saying so, and
+   optionally the date it was **Remitted on**.
+3. Drop the file or select it. The remittance opens on its own page once it is read; a PDF is read
+   in the background and its lines appear when it is done.
+4. If the page asks you to **Map the columns**, choose the column that holds the invoice number or
+   the factor's reference and the one that holds the amount, then select
+   **Read with this mapping**. The factor's next file with the same columns is read on its own.
+
+### Resolve remittance lines that did not match
+Keywords: remittance exceptions, unmatched remittance lines, match remittance line, ignore remittance line
+1. Open the remittance from the **Remittances** tab.
+2. Under **To resolve**, select **Use** beside a suggested invoice, or **Pick invoice** to choose
+   another open invoice on the factor's schedules.
+3. Change what a line records when the factor's file got it wrong, or select **Ignore**, enter the
+   **Reason** and confirm for a fee or adjustment you book by hand. **Restore** brings an ignored
+   line back, and **Unmatch** under **Matched** undoes a match.
+4. Select **Match again** to rematch every open line against the schedules as they are now.
+
+### Book a remittance to the ledger
+Keywords: apply remittance, book factor funding, post remittance, record reserve release from remittance
+1. Open the remittance and select **Apply**.
+2. Check what is booked: the invoices funded, rejected, released and charged back, the advance,
+   fee and reserve, and each line's journal. Lines still to resolve stay open.
+3. Select **Apply**. The remittance is marked **Applied**, or **Partly applied** while lines are
+   left; resolve them and apply again to book the rest.
+
+### Discard a remittance
+Keywords: delete remittance, duplicate remittance, wrong remittance file
+1. Open the remittance and select **Discard**.
+2. Enter the **Reason** and confirm. A discarded remittance can no longer be booked; lines already
+   booked stay in the ledger.
+
 ### Ask for a missing document
 Keywords: request POD, missing proof of delivery, missing BOL for factoring, request paperwork
 1. Open [Factoring](/billing/factoring), select the **Not ready** tab and select the invoice's row.
@@ -91,6 +135,12 @@ schedule is cancelled.
 Readiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice
 changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept
 out of factoring, are not listed.
+
+Opening a remittance needs read access to factor remittances; importing one needs permission to
+create them, resolving lines and matching again need update access, applying needs permission to
+import them, and discarding needs permission to cancel them. A remittance holds at most 2,000 lines
+and a file at most 32 MiB. An email the inbox classifies as a factor remittance is read into a
+remittance for the factor whose address or domain sent it, and the message links to it.
 
 Agreements and notices of assignment are kept on each factor; see
 [Factoring companies](/billing/configuration-files/factoring-companies).

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { User } from "@trenova/shared/types/user";
@@ -26,11 +27,22 @@ const control: DispatchControl = {
   enforceDrugAndAlcoholCompliance: true,
   complianceEnforcementLevel: "Warning",
   recordServiceFailures: "Never",
+  tenderCounterOffersEnabled: true,
+  tenderCounterMarginFloorPercent: "10",
+  tenderAutoAcceptCounters: false,
+  tenderCounterDecisionMinutes: 60,
+  tenderExhaustedAction: "Notify",
+  tenderEscalationRateIncreasePercent: "0",
+  tenderEscalationOfferTtlMinutes: 60,
+  tenderMaxEscalations: 1,
 } as unknown as DispatchControl;
+
+const served = vi.hoisted(() => ({ control: null as unknown }));
+served.control = control;
 
 vi.mock("@/lib/queries/dispatch-control", () => ({
   dispatchControl: {
-    get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => control }),
+    get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => served.control }),
   },
 }));
 
@@ -63,6 +75,10 @@ const hybrid: OrganizationCapabilities = {
 const brokerageOnly: OrganizationCapabilities = {
   brokerageEnabled: true,
   assetOperationsEnabled: false,
+};
+const assetOnly: OrganizationCapabilities = {
+  brokerageEnabled: false,
+  assetOperationsEnabled: true,
 };
 
 function signIn(capabilities: OrganizationCapabilities) {
@@ -129,5 +145,66 @@ describe("dispatch control field visibility", () => {
       expect(await screen.findByText(label), label).toBeInTheDocument();
     }
     expect(screen.getByText("Service failure monitoring")).toBeInTheDocument();
+  });
+});
+
+describe("dispatch control carrier tender settings", () => {
+  afterEach(() => {
+    served.control = control;
+    cleanup();
+    useAuthStore.setState({ user: null, isAuthenticated: false });
+  });
+
+  it("shows the counter-offer settings to a brokerage", async () => {
+    signIn(brokerageOnly);
+
+    renderForm();
+
+    expect(await screen.findByText("Carrier tenders")).toBeInTheDocument();
+    expect(screen.getByText("Take counter-offers")).toBeInTheDocument();
+    expect(screen.getByText("Margin floor")).toBeInTheDocument();
+    expect(screen.getByText("Dispatch has to answer a counter within")).toBeInTheDocument();
+  });
+
+  it("withholds tender settings from an organization that does not broker freight", async () => {
+    signIn(assetOnly);
+
+    renderForm();
+
+    await screen.findByText("Record Service failures");
+    expect(screen.queryByText("Carrier tenders")).toBeNull();
+  });
+
+  it("hides the counter settings once counter-offers are turned off", async () => {
+    signIn(brokerageOnly);
+    const user = userEvent.setup();
+
+    renderForm();
+
+    await user.click(await screen.findByRole("switch", { name: /Take counter-offers/ }));
+
+    expect(screen.queryByText("Margin floor")).toBeNull();
+    expect(screen.queryByText("Dispatch has to answer a counter within")).toBeNull();
+  });
+
+  it("asks for escalation terms only when an exhausted tender escalates", async () => {
+    signIn(brokerageOnly);
+
+    renderForm();
+
+    await screen.findByText("When every carrier passes");
+    expect(screen.queryByText("Raise the rates by up to")).toBeNull();
+    expect(screen.queryByText("Escalated offers stay open for")).toBeNull();
+  });
+
+  it("asks how much to raise rates, for how long and how often when the tender escalates", async () => {
+    served.control = { ...control, tenderExhaustedAction: "Rewaterfall" };
+    signIn(brokerageOnly);
+
+    renderForm();
+
+    expect(await screen.findByText("Raise the rates by up to")).toBeInTheDocument();
+    expect(screen.getByText("Escalated offers stay open for")).toBeInTheDocument();
+    expect(screen.getAllByText("Escalate at most").length).toBeGreaterThan(0);
   });
 });

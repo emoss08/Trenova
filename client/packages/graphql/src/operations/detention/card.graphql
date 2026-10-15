@@ -1,0 +1,112 @@
+# The Desk's detention card: one stop's detention charge with who signed it
+# off, its location's place, a running clock priced as of now, and the
+# evidence, notices and collectability the claim rests on.
+query DeskDetentionCard($id: ID!) {
+  detentionOccurrence(id: $id) {
+    occurrence {
+      id
+      shipmentId
+      stopId
+      customerId
+      locationId
+      policySnapshot
+      calculationTrace
+      stopType
+      scheduleType
+      appointmentStart
+      appointmentEnd
+      arrivedAt
+      departedAt
+      clockStartAt
+      clockStopAt
+      freeTimeExpiresAt
+      noticeDueAt
+      noticeDeadlineAt
+      isOpen
+      arrivedLate
+      lateByMinutes
+      freeMinutesGranted
+      rawDwellMinutes
+      billableMinutes
+      roundedMinutes
+      billableAmount
+      driverPayMinutes
+      driverPayAmount
+      netMargin
+      capApplied
+      convertedToLayover
+      currency
+      status
+      notificationStatus
+      noticeSentAt
+      suppressedByGate
+      requiresApproval
+      approvedAt
+      waiverReason
+      waiverNote
+      waivedAt
+      waivedAmount
+      disputeNote
+      disputedAt
+      locationName
+      customerName
+      shipmentProNumber
+      createdAt
+      updatedAt
+      approvedBy {
+        id
+        name
+      }
+      waivedBy {
+        id
+        name
+      }
+      location {
+        id
+        city
+        state {
+          id
+          abbreviation
+        }
+      }
+    }
+    evidence {
+      id
+      kind
+      source
+      summary
+      observedAt
+    }
+    notices {
+      id
+      kind
+      channel
+      deliveryStatus
+      recipients
+      sentAt
+      scheduledFor
+      failureReason
+      satisfiesRequirement
+      wasAutomatic
+    }
+    collectability {
+      score
+      band
+      chainValid
+      summary
+      factors {
+        key
+        label
+        earned
+        possible
+        detail
+        remedy
+      }
+    }
+    currentlyBillable {
+      billableMinutes
+      billableAmount
+      asOf
+    }
+  }
+}

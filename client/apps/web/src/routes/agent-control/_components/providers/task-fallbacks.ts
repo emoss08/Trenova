@@ -14,6 +14,7 @@ export const TASK_FALLBACKS: Record<AITask, string> = defineLabels({
   QueryCompose: "Tables are filtered by hand",
   InboundClassification: "Inbound mail is sorted by hand",
   AccountingMapping: "Accounts are mapped by hand",
+  RemittanceExtraction: "PDF remittances are refused; upload the CSV",
   EvaluationJudge: "Evaluations go unscored",
   Embedding: "Search uses words only",
   General: "Unrouted work is refused",

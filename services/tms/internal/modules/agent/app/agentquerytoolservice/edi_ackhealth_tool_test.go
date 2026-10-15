@@ -73,6 +73,22 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 2,
 			edi.MessageAcknowledgmentStatusNotExpected:        30,
 		},
+		AckCountsByPartner: []*ediservice.EDIPartnerAckCounts{
+			{
+				PartnerID: acme.ID, PartnerName: acme.Name, PartnerCode: acme.Code,
+				Counts: map[edi.MessageAcknowledgmentStatus]int{
+					edi.MessageAcknowledgmentStatusRejected: 1,
+					edi.MessageAcknowledgmentStatusPending:  3,
+					edi.MessageAcknowledgmentStatusAccepted: 9,
+				},
+			},
+			{
+				PartnerID: bolt.ID, PartnerName: bolt.Name, PartnerCode: bolt.Code,
+				Counts: map[edi.MessageAcknowledgmentStatus]int{
+					edi.MessageAcknowledgmentStatusPending: 1,
+				},
+			},
+		},
 		OverdueAckCount: 4,
 		OverdueByPartner: []*ediservice.EDIOverduePartner{
 			{
@@ -109,6 +125,26 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{Status: "Failed", Count: 0},
 		{Status: "NotExpected", Count: 30},
 	}, view.AckCounts)
+
+	assert.Equal(t, 15, view.Acknowledged, "accepted, accepted with errors and rejected")
+	assert.Equal(t, 4, view.Awaiting)
+
+	assert.Equal(t, []partnerAckCountsRow{
+		{
+			PartnerID: acme.ID.String(), Partner: "Acme Retail", PartnerCode: "ACME",
+			Acknowledged: 10, Awaiting: 3,
+			AckCounts: []ackCountRow{
+				{Status: "Pending", Count: 3},
+				{Status: "Accepted", Count: 9},
+				{Status: "Rejected", Count: 1},
+			},
+		},
+		{
+			PartnerID: bolt.ID.String(), Partner: "Bolt", PartnerCode: "BOLT",
+			Awaiting:  1,
+			AckCounts: []ackCountRow{{Status: "Pending", Count: 1}},
+		},
+	}, view.AckCountsByPartner, "each partner's own counts, so one call answers for one partner")
 
 	require.Len(t, view.OverdueByPartner, 2)
 	group := view.OverdueByPartner[0]

@@ -8,7 +8,7 @@ import type {
 import { choiceLabel, driverTypeChoices, workerTypeChoices } from "@/lib/choices";
 import { dutyStatusLabel } from "@/lib/hos";
 import { worker as workerQueries } from "@/lib/queries/worker";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   formatClockDurationMs,
   formatDurationMs,
@@ -93,6 +93,7 @@ const NO_ROWS: readonly string[] = [];
  * status stays on the worker's page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next worker's skeleton until it is read, never the one it left.
  */
 export function DeskWorker({
   recordId,
@@ -102,11 +103,7 @@ export function DeskWorker({
   backLabel,
 }: WorkerCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...workerQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...workerQueries.card(recordId), retry: false });
   const worker = query.data;
 
   if (!worker) {

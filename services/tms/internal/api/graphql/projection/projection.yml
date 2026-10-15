@@ -1,4 +1,6 @@
 aliases:
+  TenderOffer:
+    counterMarginPercent: counterMargin
   WatchtowerItem:
     assignee: assigneeId
     resolvedBy: resolvedById
@@ -16,6 +18,10 @@ aliases:
     postedBy: postedById
     paidBy: paidById
     voidedBy: voidedById
+  DetentionOccurrence:
+    approvedBy: approvedById
+    location: locationId
+    waivedBy: waivedById
   CarrierSettlement:
     submittedBy: submittedById
     approvedBy: approvedById
@@ -137,6 +143,11 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  FactoringRemittanceLine:
+    - matchedInvoiceNumber
+    - matchedSubmissionId
+  DetentionClockPrice:
+    - asOf
   DriverSettlement:
     - lineSummary
     - loadShares
@@ -147,6 +158,8 @@ virtuals:
     - moveInvoices
   AgentProfileGuidance:
     - createdByName
+  TenderOffer:
+    - agreedRate
   CustomerEmailProfile:
     - fromEmail
   ShipmentEta:

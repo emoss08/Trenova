@@ -2,7 +2,7 @@ import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { describeApiError } from "@/lib/api-error-message";
 import { edi } from "@/lib/queries/edi";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@trenova/shared/lib/utils";
@@ -87,6 +87,7 @@ const GLIMPSE_LINES = 6;
  * page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next file's skeleton until it is read, never the one it left.
  */
 export function DeskEdiInboundFile({
   recordId,
@@ -96,11 +97,7 @@ export function DeskEdiInboundFile({
   backLabel,
 }: EdiInboundFileCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...edi.inboundFile(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...edi.inboundFile(recordId), retry: false });
   const file = query.data;
 
   if (!file) {

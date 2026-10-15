@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -80,6 +80,7 @@ const UNDER_WAY: ReadonlySet<ShipmentStage> = new Set<ShipmentStage>([
  * shipment board, one click away.
  *
  * The card steps through the table's rows in the order the table shows them.
+ * A step draws the next shipment's skeleton until it is read, never the one it left.
  */
 export type ShipmentCardProps = {
   recordId: string;
@@ -100,11 +101,7 @@ export function DeskShipment({
   backLabel,
 }: ShipmentCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...shipmentQueries.get(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...shipmentQueries.get(recordId), retry: false });
   const shipment = query.data;
 
   if (!shipment) {

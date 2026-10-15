@@ -78,7 +78,6 @@
   "Up to four decimals. Leave empty when only the total is known.": "Hasta cuatro decimales. Déjelo vacío cuando solo se conozca el total.",
   "Upload a Comdata, EFS or WEX statement and review it before it is recorded.": "Suba un extracto de Comdata, EFS o WEX y revíselo antes de registrarlo.",
   "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.": "Suba un extracto del proveedor, revise lo que registraría y después confirme. Nada se convierte en compra hasta que lo haga.",
-  "Upload progress": "Progreso de la subida",
   "Use computed ({0})": "Usar el valor calculado ({0})",
   "Used for rows the statement cannot match to a card of their own.": "Se utiliza para las filas que el extracto no puede asociar a una tarjeta propia.",
   "What was bought and what it cost. The total follows quantity × price until you change it.": "Qué se compró y cuánto costó. El total sigue la cantidad × precio hasta que lo cambie.",

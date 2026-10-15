@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
@@ -41,6 +43,7 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api.GET("/:token/", h.preview)
 	api.POST("/:token/accept/", h.accept)
 	api.POST("/:token/decline/", h.decline)
+	api.POST("/:token/counter/", h.counter)
 }
 
 func (h *Handler) preview(c *gin.Context) {
@@ -59,7 +62,8 @@ type declineRequest struct {
 
 func (h *Handler) accept(c *gin.Context) {
 	if err := h.service.RespondByToken(
-		c.Request.Context(), c.Param(tokenParam), tender.ResponseActionAccept, "",
+		c.Request.Context(), c.Param(tokenParam),
+		tenderservice.PublicResponse{Action: tender.ResponseActionAccept},
 	); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -75,7 +79,41 @@ func (h *Handler) decline(c *gin.Context) {
 	}
 
 	if err := h.service.RespondByToken(
-		c.Request.Context(), c.Param(tokenParam), tender.ResponseActionDecline, req.Reason,
+		c.Request.Context(),
+		c.Param(tokenParam),
+		tenderservice.PublicResponse{
+			Action:        tender.ResponseActionDecline,
+			DeclineReason: req.Reason,
+		},
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "recorded"})
+}
+
+type counterRequest struct {
+	Rate decimal.Decimal `json:"rate"`
+	Note string          `json:"note"`
+}
+
+func (h *Handler) counter(c *gin.Context) {
+	var req counterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"rate", errortypes.ErrInvalid, "Enter the rate you would run the load for",
+		))
+		return
+	}
+
+	if err := h.service.RespondByToken(
+		c.Request.Context(), c.Param(tokenParam),
+		tenderservice.PublicResponse{
+			Action:      tender.ResponseActionCounter,
+			CounterRate: req.Rate,
+			CounterNote: req.Note,
+		},
 	); err != nil {
 		h.eh.HandleError(c, err)
 		return

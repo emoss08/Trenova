@@ -46,6 +46,8 @@ const (
 // records no change marker.
 const changeUnshownAsk = "agent-loop-unshown-ask"
 
+const changeEndOnAsk = "agent-loop-end-on-ask"
+
 // The names of the properties an option, a typed value and a field carry, as
 // the schema declares them and the arguments are read back by.
 const (

@@ -75,6 +75,10 @@ func (s *Service) ExpireOffer(
 		return err
 	}
 
+	if offer.Status == tender.OfferStatusCountered {
+		return s.lapseCounter(ctx, tenantInfo, offer)
+	}
+
 	now := timeutils.NowUnix()
 	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo: tenantInfo,
@@ -121,6 +125,10 @@ func (s *Service) DeclineOffer(
 	})
 	if err != nil {
 		return err
+	}
+
+	if offer.Status == tender.OfferStatusCountered {
+		return s.refuseCounter(ctx, tenantInfo, offer, reason)
 	}
 
 	now := timeutils.NowUnix()
@@ -205,6 +213,7 @@ func (s *Service) AcceptOffer(
 	}
 
 	now := timeutils.NowUnix()
+	countered := offer.Status == tender.OfferStatusCountered
 
 	resuming := offer.Tender.Status == tender.StatusAccepted &&
 		offer.Tender.AcceptedOfferID != nil &&
@@ -233,17 +242,21 @@ func (s *Service) AcceptOffer(
 					return nil
 				}
 
-				offerMoved, txErr := s.repo.UpdateOfferStatus(
-					txCtx,
-					&tenderports.UpdateOfferStatusRequest{
-						TenantInfo:     tenantInfo,
-						OfferID:        offerID,
-						FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
-						ToStatus:       tender.OfferStatusAccepted,
-						RespondedAt:    &now,
-						ResponseSource: source,
-					},
-				)
+				acceptReq := &tenderports.UpdateOfferStatusRequest{
+					TenantInfo:     tenantInfo,
+					OfferID:        offerID,
+					FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
+					ToStatus:       tender.OfferStatusAccepted,
+					RespondedAt:    &now,
+					ResponseSource: source,
+				}
+				if countered {
+					acceptReq.FromStatus = []tender.OfferStatus{tender.OfferStatusCountered}
+					acceptReq.RespondedAt = nil
+					acceptReq.ResponseSource = ""
+					acceptReq.CounterDecided = decisionStamp(tenantInfo, now)
+				}
+				offerMoved, txErr := s.repo.UpdateOfferStatus(txCtx, acceptReq)
 				if txErr != nil {
 					return txErr
 				}
@@ -288,6 +301,17 @@ func (s *Service) AcceptOffer(
 		return result, err
 	}
 
+	if countered || offer.CounterRate.Valid {
+		s.recordEvent(ctx, shipmenteventservice.BuildTenderCounterDecided(
+			shipmenteventservice.TenantRefFor(tenantInfo),
+			tenderRefForOffer(offer),
+			carrierNameOf(offer),
+			offer.AgreedRate().StringFixed(2),
+			"",
+			true,
+			shipmenteventservice.ActorFor(tenantInfo),
+		))
+	}
 	s.recordEvent(ctx, shipmenteventservice.BuildTenderAccepted(
 		shipmenteventservice.TenantRefFor(tenantInfo),
 		tenderRefForOffer(offer),
@@ -378,7 +402,7 @@ func (s *Service) assignAcceptedOffer(
 		ShipmentMoveID: offer.Tender.ShipmentMoveID,
 		CarrierID:      offer.CarrierID,
 		RateMethod:     offer.RateMethod,
-		BaseRate:       offer.Rate,
+		BaseRate:       offer.AgreedRate(),
 	})
 	if assignErr != nil {
 		if !isAssignBusinessFailure(assignErr) {
@@ -570,8 +594,9 @@ func (s *Service) MarkExhausted(
 	}
 
 	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   tenderID,
+		TenantInfo:    tenantInfo,
+		TenderID:      tenderID,
+		IncludeOffers: true,
 	})
 	if err != nil {
 		return err
@@ -610,6 +635,7 @@ func (s *Service) MarkExhausted(
 		s.invalidator,
 		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_exhausted"),
 	)
+	s.escalateExhausted(ctx, tenantInfo, entity)
 
 	return nil
 }

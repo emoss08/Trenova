@@ -17,7 +17,8 @@ const (
 	readVersion   = "the tool sends the version of the record it reads, which the approved " +
 		"preview pins"
 	watchtowerItemID     = "watchtowerItemId"
-	reserveMovementInput = "FactoringReserveMovementInput"
+	reserveMovementInput   = "FactoringReserveMovementInput"
+	remittanceVersionInput = "FactoringRemittanceVersionInput"
 	exceptionItemArg     = "the mutation takes the exception as its id argument, beside the input"
 	resolutionCode       = "one value under two names: the input's code, and resolutionCode, " +
 		"the name the read tools hand it out under and the tool takes"
@@ -95,6 +96,10 @@ var Bindings = []Binding{
 		Extra: map[string]string{"cash": decimalOf("cashMinor")},
 	},
 	{Tool: "reverse_factoring_chargeback", Input: reserveMovementInput},
+	{Tool: "resolve_factoring_remittance_line", Input: "UpdateFactoringRemittanceLineInput"},
+	{Tool: "rematch_factoring_remittance", Input: remittanceVersionInput},
+	{Tool: "apply_factoring_remittance", Input: remittanceVersionInput},
+	{Tool: "discard_factoring_remittance", Input: "DiscardFactoringRemittanceInput"},
 	{
 		Tool:  "assign_exception",
 		Input: "AssignWatchtowerItemInput",

@@ -109,3 +109,15 @@ func (r *TenderOfferResolver) ResponseSource(ctx context.Context, obj *tender.Te
 	responseSource := obj.ResponseSource
 	return &responseSource, nil
 }
+
+func (r *TenderOfferResolver) CounterRate(ctx context.Context, obj *tender.TenderOffer) (*string, error) {
+	return base.NullDecimalStringPtr(obj.CounterRate), nil
+}
+
+func (r *TenderOfferResolver) CounterMarginPercent(ctx context.Context, obj *tender.TenderOffer) (*string, error) {
+	return base.NullDecimalStringPtr(obj.CounterMargin), nil
+}
+
+func (r *TenderOfferResolver) AgreedRate(ctx context.Context, obj *tender.TenderOffer) (string, error) {
+	return obj.AgreedRate().String(), nil
+}

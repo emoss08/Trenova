@@ -1379,8 +1379,12 @@ turns is refused as repeated, and a run nobody watches or a delegate's task is t
 there is no one to ask.
 
 The note on a shown question tells the model to end its turn and write nothing
-more: the question is on screen, and the loop accepts an empty reply after one
-(`TestRun_AcceptsSilenceAfterAQuestion`). A refused ask is a failed result with
+more, because the question is on screen. The loop ends the turn itself once every
+call of the reply that asked has its result (`TestRun_EndsTheTurnOnceAQuestionIsShown`),
+with an empty reply, and does not ask the model again: a model that obeyed the note
+answered with nothing, the completion router counts an empty answer as a provider
+failure and tries every provider, and the turn failed as though no provider could
+be reached. A refused ask is a failed result with
 verdict `invalid` and does not count as asked, so an empty reply after it is asked
 for again, and the same question may be asked again properly; a refused ask also
 does not count towards the repeated-question check of later turns
@@ -1473,6 +1477,14 @@ sent. The preview a person approves from reads them the same way
 (`proposalpreviewservice.settleParams`), so what is shown is what runs.
 Nothing is told back there; what runs is what was read. The id checks
 below stay in the runtime.
+
+A proposal's tool runs for its approver with the conversation its run answered,
+as the turn that filed it would have: the executor and the preview both read the
+run and, when its subject is an assistant thread, set `ThreadID`
+(`proposalexecutor.WithConversation`). A tool that reads what was attached to the
+conversation, such as `apply_edi_connection_draft`, reads it for the approver
+too; a run about anything else leaves it unset, and a run that cannot be read
+refuses the approval rather than running without it.
 
 Dates and times come in three shapes, each from one helper in
 `agenttoolschema` that sets the `format`, an example and the same sentence on
@@ -1656,14 +1668,18 @@ judgement: a link stands outside a sentence when the sentence around it, split a
 before a space, holds no word once the links are taken out, or when it sits in a table row, a
 heading or a fenced block. A reply that names an artifact outside a sentence, leaves out a table
 or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps the artifact
-when the reply forgets it), or names an id the conversation never held is discarded once, the way
+when the reply forgets it; only the newest version of each lineage the turn showed, since a
+later version takes the earlier one's place in `Turn.keepShown`), or names an id the
+conversation never held is discarded once, the way
 the grounding guard does it: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
 correction naming each link as it should be written. A rewrite that still breaks the contract, or
 a reply written after the tool budget was spent, is not asked again: each stray link is cut from
 where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
 names what was cut or left out (`The full table is in …`, `The full record is in …`), sent as a
 `reply_replaced` after a `reply_regrounded` `place_artifacts`. A clean reply costs one pass over
-its text; only a broken one costs a model call, and never more than one.
+its text; only a broken one costs a model call, and never more than one. A version
+replaces the one before it only when the activity's result carries its lineage, which a result
+recorded before the field existed does not, so no `GetVersion` gate.
 
 The output guard (`agentguard.EvaluateOutput`) runs last, on every final
 reply. A reply with code in it is no longer refused whole: a fenced block with
@@ -2272,6 +2288,7 @@ before the change:
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
+| `agent-loop-end-on-ask` | a turn that showed a question asks the model once more, and the empty answer the note asks for fails over every provider and ends the turn as unreachable | nothing; the check itself is the only cost, and it is asked only of a reply that showed a question |
 | `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
 | `agent-loop-concurrent-reads` | each read is dispatched and settled before the next call of the reply starts | nothing; the check itself is the only cost, and it is asked only when a second read would join a batch |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |

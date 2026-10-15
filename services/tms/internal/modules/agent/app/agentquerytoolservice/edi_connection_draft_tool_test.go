@@ -154,3 +154,160 @@ func TestDraftEDIConnection_CapsEveryLaterWriteInTheTurn(t *testing.T) {
 	assert.Equal(t, agent.TaintSourceAttachment, policy.Source)
 	assert.True(t, policy.CapsLaterWrites)
 }
+
+func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
+	t.Parallel()
+
+	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+		FileName: "acme-guide.pdf",
+		Ready:    true,
+		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
+		DocumentProfiles: []ediports.DraftDocumentProfile{{
+			TransactionSet: edi.TransactionSet214,
+			Direction:      edi.DocumentDirectionOutbound,
+			Template: ediports.DraftTemplateChoice{Unmet: []ediports.DraftRequirementCheck{{
+				SegmentID: "MS1", ElementPosition: 1, Usage: ediports.RequirementUsageMandatory,
+				Source: ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 5},
+			}}},
+		}},
+		Gaps: []ediports.DraftGap{{
+			Kind:    ediports.GapKindAmbiguous,
+			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
+			Source:  ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 6},
+		}},
+		Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
+			{Label: "AS2 private key", Required: true, Missing: true},
+			{Label: "Partner signing certificate", Missing: true},
+		}},
+	}}
+	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
+	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
+	params.ThreadID = pulid.MustNew("ath_")
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	note := result.(*connectionDraftView).Note
+
+	assert.Contains(t, note, "In your reply, tell the person:")
+	assert.Contains(t, note, "the 214 outbound template does not meet MS1-01 (page 5)")
+	assert.Contains(t, note,
+		"the guide leaves this open: Accessorial charge codes are in Appendix B, which is not "+
+			"in this document (page 6)")
+	assert.Contains(t, note, "the credentials to enter before it is turned on: AS2 private key")
+	assert.NotContains(t, note, "Partner signing certificate", "only what the connection needs")
+	assert.NotContains(t, note, "show the person the draft",
+		"the draft is pointed to inside a sentence, never set out on its own")
+	assert.Contains(t, note, "point the person to the draft in the sentence that says what it sets up")
+}
+
+func TestDraftEDIConnection_AsksOnlyTheQuestionWhileTheDraftIsBlocked(t *testing.T) {
+	t.Parallel()
+
+	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+		FileName: "acme-guide.pdf",
+		Blockers: []string{"Decide MDN mode"},
+		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
+		Gaps: []ediports.DraftGap{{
+			Kind:    ediports.GapKindAmbiguous,
+			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
+			Source:  ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 6},
+		}},
+		Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
+			{Label: "AS2 private key", Required: true, Missing: true},
+		}},
+	}}
+	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
+	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
+	params.ThreadID = pulid.MustNew("ath_")
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	note := result.(*connectionDraftView).Note
+
+	assert.Contains(t, note, "Open: Decide MDN mode.")
+	assert.Contains(t, note, "Asking ends your turn, so ask only that now")
+	assert.NotContains(t, note, "In your reply",
+		"a question ends the turn, so nothing else would reach the person")
+	assert.NotContains(t, note, "Appendix B")
+}
+
+func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
+	t.Parallel()
+
+	page := func(n int) ediports.DraftSource {
+		return ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: n}
+	}
+	interchange := func(set edi.TransactionSet) ediports.DraftDocumentProfile {
+		return ediports.DraftDocumentProfile{
+			TransactionSet: set,
+			Direction:      edi.DocumentDirectionOutbound,
+			Change:         ediports.ChangeKindChange,
+			ControlNumbers: []ediports.DraftControlNumber{{
+				Kind: edi.ControlNumberKindInterchange, Start: 5000, Current: 1000,
+				Change: ediports.ChangeKindChange, Source: page(3),
+			}},
+		}
+	}
+	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+		FileName: "acme-guide-v4.pdf",
+		Ready:    true,
+		Changes:  4,
+		Partner: ediports.DraftPartner{
+			Match:  ediports.PartnerMatchExisting,
+			Change: ediports.ChangeKindChange,
+			Fields: []ediports.DraftValue{
+				{Label: "Partner name", Value: "Acme Retail Group", Current: "Acme Retail Group",
+					Change: ediports.ChangeKindSame, Source: page(1)},
+				{Label: "Contact name", Value: "Priya Raman", Current: "Dana Whitfield",
+					Change: ediports.ChangeKindChange, Source: page(1)},
+			},
+		},
+		Transport: &ediports.DraftTransport{Change: ediports.ChangeKindSame},
+		DocumentProfiles: []ediports.DraftDocumentProfile{
+			{
+				TransactionSet: edi.TransactionSet204,
+				Direction:      edi.DocumentDirectionInbound,
+				Change:         ediports.ChangeKindSame,
+			},
+			interchange(edi.TransactionSet990),
+			interchange(edi.TransactionSet214),
+		},
+	}}
+	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
+	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
+	params.ThreadID = pulid.MustNew("ath_")
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	note := result.(*connectionDraftView).Note
+
+	assert.Contains(t, note, "It changes what is saved for this partner: "+
+		"Contact name from Dana Whitfield to Priya Raman (page 1); "+
+		"interchange control numbers on the 990 outbound, 214 outbound start at 5000 "+
+		"instead of 1000 (page 3). Name each of these; nothing else changes.")
+	assert.NotContains(t, note, "Partner name", "an unchanged value is not a change")
+}
+
+func TestDraftEDIConnection_ListsNoChangesForANewPartner(t *testing.T) {
+	t.Parallel()
+
+	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+		FileName: "acme-guide.pdf",
+		Ready:    true,
+		Partner: ediports.DraftPartner{
+			Match:  ediports.PartnerMatchNew,
+			Change: ediports.ChangeKindAdd,
+			Fields: []ediports.DraftValue{
+				{Label: "Partner name", Value: "Acme Retail Group", Change: ediports.ChangeKindAdd},
+			},
+		},
+	}}
+	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
+	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
+	params.ThreadID = pulid.MustNew("ath_")
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	assert.NotContains(t, result.(*connectionDraftView).Note, "It changes what is saved")
+}

@@ -32,6 +32,7 @@ type movementInput struct {
 	dateField string
 	memo      string
 	reverses  pulid.ID
+	remitLine pulid.ID
 	actor     *permissionports.RequestActor
 }
 
@@ -150,6 +151,7 @@ func (s *LedgerService) postMovement(
 	entry.JournalBatchID = result.BatchID
 	entry.AccountingDate = result.AccountingDate
 	entry.ReversesEntryID = in.reverses
+	entry.RemittanceLineID = in.remitLine
 	entry.Memo = stringutils.TruncateRunes(in.memo, factoring.MaxReserveMemoLength)
 	entry.CreatedByID = in.actor.ExecutorUserID()
 	created, err := s.entries.Create(ctx, entry)

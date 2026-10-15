@@ -168,3 +168,37 @@ func (c ComplianceEnforcementLevel) ShouldWarn() bool {
 func (c ComplianceEnforcementLevel) IsAuditOnly() bool {
 	return c == ComplianceEnforcementLevelAudit
 }
+
+// TenderExhaustedAction is what happens to a move once every carrier on its
+// tender has declined, let the offer lapse or failed to receive it.
+type TenderExhaustedAction string
+
+const (
+	// TenderExhaustedActionNotify tells dispatch and stops there.
+	TenderExhaustedActionNotify = TenderExhaustedAction("Notify")
+	// TenderExhaustedActionRebroadcast offers the move to every carrier on the
+	// exhausted tender at once, at the escalation rate.
+	TenderExhaustedActionRebroadcast = TenderExhaustedAction("Rebroadcast")
+	// TenderExhaustedActionRewaterfall walks the same carriers again in rank
+	// order, at the escalation rate.
+	TenderExhaustedActionRewaterfall = TenderExhaustedAction("Rewaterfall")
+)
+
+func (a TenderExhaustedAction) String() string {
+	return string(a)
+}
+
+func (a TenderExhaustedAction) IsValid() bool {
+	switch a {
+	case TenderExhaustedActionNotify,
+		TenderExhaustedActionRebroadcast,
+		TenderExhaustedActionRewaterfall:
+		return true
+	default:
+		return false
+	}
+}
+
+func (a TenderExhaustedAction) Escalates() bool {
+	return a == TenderExhaustedActionRebroadcast || a == TenderExhaustedActionRewaterfall
+}

@@ -484,8 +484,9 @@ func (t *listEDIMessagesTool) Description() string {
 		"Filter to Failed or DeadLettered to find what did not reach a partner, by ackStatus " +
 		"to find what a partner rejected or accepted with errors, or to one shipment or " +
 		"invoice. For how acknowledgments stand overall and what is overdue, use " +
-		"get_edi_ack_health. Never returns a document's content. Errors can repeat the " +
-		"partner's own text."
+		"get_edi_ack_health, which also counts each partner's acknowledgments. For X12 a " +
+		"person pasted, use inspect_x12 alone; stored messages are not needed to read it. " +
+		"Never returns a document's content. Errors can repeat the partner's own text."
 }
 
 func (t *listEDIMessagesTool) ParamSchema() map[string]any {
@@ -1012,10 +1013,12 @@ func (t *listEDIPartnersTool) Description() string {
 
 func (t *listEDIPartnersTool) ParamSchema() map[string]any {
 	return objectSchema(cursorSchema(map[string]any{
-		paramQuery: stringParam("Words to look for in the partner's code or name."),
+		paramQuery: stringParam("Words to look for in the partner's code or name, such as " +
+			"Acme. This is how to find a partner by name."),
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only the partner that stands for this customer, by id "+
-				"from list_customers or get_shipment."),
+			"Only the partner that stands for this customer, by the customer's id from "+
+				"list_customers or a shipment's customerId. Never a name, and never a "+
+				"shipment's id: to find a partner by name, use query."),
 		paramStatus: enumParam("Only partners in this status.", partnerStatuses),
 	}))
 }

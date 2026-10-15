@@ -1,13 +1,18 @@
 import { api, ApiRequestError } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
+  bounceTenderPayloadSchema,
+  publicTenderCounterPayloadSchema,
   publicTenderOfferSchema,
+  recordTenderResponsePayloadSchema,
   spotTenderPayloadSchema,
   tenderSchema,
   waterfallTenderPayloadSchema,
   waterfallTenderResultSchema,
+  type BounceTenderPayload,
+  type PublicTenderCounterPayload,
   type PublicTenderOffer,
-  type RecordTenderResponsePayload,
+  type RecordTenderResponsePayloadInput,
   type SpotTenderPayload,
   type Tender,
   type WaterfallTenderPayload,
@@ -58,6 +63,37 @@ export function isOverridableInsuranceWarningError(error: unknown): error is Api
   );
 }
 
+type RecordTenderResponseRequestBody = {
+  action: RecordTenderResponsePayloadInput["action"];
+  declineReason: string;
+  counterRate?: string;
+  counterNote?: string;
+};
+
+/**
+ * Only the fields the chosen action reads are sent: a decline reason left in the
+ * form after switching to Accept, or a counter rate after switching to Decline,
+ * must not reach the server as part of a different answer.
+ */
+export function toRecordTenderResponseRequestBody(
+  payload: RecordTenderResponsePayloadInput,
+): RecordTenderResponseRequestBody {
+  const parsed = recordTenderResponsePayloadSchema.parse(payload);
+  switch (parsed.action) {
+    case "Decline":
+      return { action: parsed.action, declineReason: parsed.declineReason.trim() };
+    case "Counter":
+      return {
+        action: parsed.action,
+        declineReason: "",
+        counterRate: parsed.counterRate.trim(),
+        counterNote: parsed.counterNote.trim(),
+      };
+    case "Accept":
+      return { action: parsed.action, declineReason: "" };
+  }
+}
+
 export class TenderService {
   public async createWaterfall(payload: WaterfallTenderPayload): Promise<WaterfallTenderResult> {
     const parsed = waterfallTenderPayloadSchema.parse(payload);
@@ -82,12 +118,17 @@ export class TenderService {
 
   public async recordResponse(
     offerId: string,
-    payload: RecordTenderResponsePayload,
+    payload: RecordTenderResponsePayloadInput,
   ): Promise<void> {
-    await api.post(`/tenders/offers/${offerId}/respond/`, {
-      action: payload.action,
-      declineReason: payload.action === "Decline" ? payload.declineReason : "",
-    });
+    await api.post(
+      `/tenders/offers/${offerId}/respond/`,
+      toRecordTenderResponseRequestBody(payload),
+    );
+  }
+
+  public async bounce(tenderId: string, payload: BounceTenderPayload): Promise<void> {
+    const parsed = bounceTenderPayloadSchema.parse(payload);
+    await api.post(`/tenders/${tenderId}/bounce/`, { reason: parsed.reason });
   }
 
   public async getPublicOffer(token: string): Promise<PublicTenderOffer> {
@@ -104,6 +145,17 @@ export class TenderService {
   public async declinePublicOffer(token: string, reason: string): Promise<void> {
     await api.post(`/tender-offers/${encodeURIComponent(token)}/decline/`, {
       reason,
+    });
+  }
+
+  public async counterPublicOffer(
+    token: string,
+    payload: PublicTenderCounterPayload,
+  ): Promise<void> {
+    const parsed = publicTenderCounterPayloadSchema.parse(payload);
+    await api.post(`/tender-offers/${encodeURIComponent(token)}/counter/`, {
+      rate: parsed.rate,
+      note: parsed.note.trim(),
     });
   }
 }

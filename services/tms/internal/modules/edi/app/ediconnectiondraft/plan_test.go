@@ -247,6 +247,81 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	assert.NotContains(t, string(encoded), "Acme#Test2026")
 }
 
+func TestPlan_TakesSettingsAsTheGuideWritesThem(t *testing.T) {
+	t.Parallel()
+
+	written := map[string]string{
+		"as2.mdnMode":             "Synchronous, signed",
+		"as2.signingAlgorithm":    "SHA-256",
+		"as2.encryptionAlgorithm": "AES-256 (CBC)",
+		fieldPartnerQualifier:     "qualifier 01 (DUNS)",
+		fieldOurQualifier:         "SCAC",
+		fieldElementSep:           "* (asterisk)",
+		fieldSegmentSep:           "tilde",
+	}
+	req := acmeRequest(t)
+	for idx := range req.Values {
+		if v, ok := written[req.Values[idx].Field]; ok {
+			req.Values[idx].Value = v
+		}
+	}
+
+	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	require.NoError(t, err)
+
+	assert.Empty(t, draft.Decisions)
+	assert.Empty(t, draft.Failures)
+	assert.True(t, draft.Ready, draft.Blockers)
+	require.NotNil(t, draft.Transport)
+	assert.Equal(t, "sync", valueOf(t, draft.Transport.Fields, "as2.mdnMode").Value)
+	assert.Equal(t, "sha256", valueOf(t, draft.Transport.Fields, "as2.signingAlgorithm").Value)
+	assert.Equal(t, "aes256-cbc", valueOf(t, draft.Transport.Fields, "as2.encryptionAlgorithm").Value)
+	assert.Equal(t, "01", valueOf(t, draft.Interchange, fieldPartnerQualifier).Value)
+	assert.Equal(t, "02", valueOf(t, draft.Interchange, fieldOurQualifier).Value)
+	assert.Equal(t, "*", valueOf(t, draft.Interchange, fieldElementSep).Value)
+	assert.Equal(t, "~", valueOf(t, draft.Interchange, fieldSegmentSep).Value)
+}
+
+func TestCatalog_ReadsAValueThroughItsSpellings(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		field string
+		value string
+		want  string
+		fails bool
+	}{
+		{field: "as2.mdnMode", value: "synchronous, signed", want: "sync"},
+		{field: "as2.mdnMode", value: "Asynchronous MDN to the return URL", want: "async"},
+		{field: "as2.mdnMode", value: "synchronous or asynchronous", fails: true},
+		{field: "as2.signingAlgorithm", value: "SHA 256", want: "sha256"},
+		{field: "as2.signingAlgorithm", value: "SHA-512 with RSA", want: "sha512"},
+		{field: "as2.signingAlgorithm", value: "MD5", fails: true},
+		{field: "as2.encryptionAlgorithm", value: "AES-256-GCM", want: "aes256-gcm"},
+		{field: "as2.encryptionAlgorithm", value: "AES-128 (CBC)", want: "aes128-cbc"},
+		{field: "as2.encryptionAlgorithm", value: "3DES", want: "3des"},
+		{field: fieldPartnerQualifier, value: "DUNS plus 4", want: "16"},
+		{field: fieldPartnerQualifier, value: "DUNS or SCAC", fails: true},
+		{field: fieldTransportMethod, value: "AS2 over HTTPS", want: "AS2"},
+		{field: fieldTransportEnvironment, value: "test or production", fails: true},
+		{field: fieldElementSep, value: "| (pipe)", want: "|"},
+		{field: "as2.mdnMode", value: "   ", fails: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.field+"/"+tt.value, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := fieldCatalog[tt.field].normalize(tt.value)
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestPlan_HoldsAValueWhoseQuoteIsNotOnThePage(t *testing.T) {
 	t.Parallel()
 
@@ -297,17 +372,18 @@ func TestPlan_HoldsALowConfidenceValue(t *testing.T) {
 	t.Parallel()
 
 	req := acmeRequest(t)
-	req.Values[5].Confidence = 0.55
+	req.Values[1].Confidence = 0.55
 
 	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	timezone := valueOf(t, draft.Partner.Fields, fieldPartnerTimezone)
-	assert.Equal(t, ediports.ValueStatusHeld, timezone.Status)
-	assert.Empty(t, timezone.Value, "a held value is never written")
-	assert.Contains(t, timezone.Reason, "Confidence 0.55")
+	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
+	assert.Equal(t, ediports.ValueStatusHeld, name.Status)
+	assert.Empty(t, name.Value, "a held value is never written")
+	assert.Contains(t, name.Reason, "Confidence 0.55")
 	require.Len(t, draft.Decisions, 1)
-	assert.Equal(t, fieldPartnerTimezone, draft.Decisions[0].Field)
+	assert.Equal(t, fieldPartnerName, draft.Decisions[0].Field)
+	assert.Contains(t, draft.Blockers, "Decide partner name")
 	assert.False(t, draft.Ready)
 }
 
@@ -417,6 +493,39 @@ func TestPlan_RefusesSecretsAndUnknownFields(t *testing.T) {
 	_, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `Unknown field "partner.favoriteColor"`)
+}
+
+func TestPlan_DraftsTheSameFromAQuoteWhoseSecretWasRedacted(t *testing.T) {
+	t.Parallel()
+
+	const raw = "For the test environment, the keystore password: Acme#Test2026 is sent separately."
+	const redacted = "For the test environment, the keystore password: [redacted] is sent separately."
+
+	planWith := func(quote string) *ediports.ConnectionDraft {
+		req := acmeRequest(t)
+		for index := range req.Values {
+			if req.Values[index].Field == fieldTransportEnvironment {
+				req.Values[index].Citation = cite(2, quote)
+			}
+		}
+		draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+		require.NoError(t, err)
+		return draft
+	}
+
+	fromRaw := planWith(raw)
+	fromRedacted := planWith(redacted)
+
+	require.NotNil(t, fromRaw.Transport)
+	require.NotNil(t, fromRedacted.Transport)
+	environment := valueOf(t, fromRedacted.Transport.Fields, fieldTransportEnvironment)
+	assert.Equal(t, ediports.ValueStatusAccepted, environment.Status)
+	assert.Equal(t, "test", environment.Value)
+	assert.Equal(t, 2, environment.Source.Page)
+	assert.Equal(t, redacted, environment.Source.Quote)
+	assert.Equal(t, valueOf(t, fromRaw.Transport.Fields, fieldTransportEnvironment), environment)
+	assert.Equal(t, fromRaw.Ready, fromRedacted.Ready)
+	assert.Equal(t, fromRaw.Blockers, fromRedacted.Blockers)
 }
 
 func TestPlan_NeedsReadableText(t *testing.T) {
@@ -614,20 +723,4 @@ func TestDocumentDigest_IsTheTextInPageOrder(t *testing.T) {
 	reordered := []ediports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "b"}}
 	assert.Equal(t, DocumentDigest(pages), DocumentDigest(reordered))
 	assert.NotEqual(t, DocumentDigest(pages), DocumentDigest([]ediports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "c"}}))
-}
-
-func TestRedact_KeepsSecretsOutOfQuotes(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "the keystore password: [redacted] is sent separately",
-		redact("the keystore password: Acme#Test2026 is sent separately"))
-	assert.Equal(t, "Shared key = [redacted]", redact("Shared key = s3cr3t"))
-	assert.Equal(t, "cert: [redacted key or certificate]",
-		redact("cert: -----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"))
-	assert.Equal(t,
-		"ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
-		redact("ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME"),
-	)
-	assert.Equal(t, "ISA*00*          *00*          *ZZ*ACME",
-		redact("ISA*00*          *00*          *ZZ*ACME"), "empty authorization is kept")
 }

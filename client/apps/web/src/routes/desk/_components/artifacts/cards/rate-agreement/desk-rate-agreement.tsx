@@ -6,7 +6,7 @@ import { choiceLabel, ratePartyTypeChoices } from "@/lib/choices";
 import { rateAgreement } from "@/lib/queries/rate-agreement";
 import { rateAgreementLanesQuery } from "@/lib/queries/rate-agreement";
 import { agreementTypeLabel, agreementWindow } from "@/lib/rate-agreement";
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -98,6 +98,7 @@ const NO_LANES: readonly RateAgreementRule[] = [];
  * on the agreement's page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next agreement's skeleton until it is read, never the one it left.
  */
 export function DeskRateAgreement({
   recordId,
@@ -107,11 +108,7 @@ export function DeskRateAgreement({
   backLabel,
 }: RateAgreementCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...rateAgreement.get(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...rateAgreement.get(recordId), retry: false });
   const agreement = query.data;
 
   if (!agreement) {

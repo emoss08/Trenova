@@ -8,5 +8,6 @@ export const KIND_PLURAL = defineLabels({
   Invoice: "invoices",
   StatusRequest: "status requests",
   DetentionDispute: "detention disputes",
+  FactorRemittance: "factor remittances",
   Other: "other messages",
 });

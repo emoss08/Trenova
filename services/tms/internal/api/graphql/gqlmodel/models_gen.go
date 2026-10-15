@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -2543,6 +2544,14 @@ type CreateDocumentTemplateVersionInput struct {
 	Content         *DocumentTemplateVersionInput `json:"content,omitempty"`
 }
 
+type CreateFactoringRemittanceInput struct {
+	FactoringCompanyID string `json:"factoringCompanyId"`
+	// Funding unless the report is of reserve releases, rejections or chargebacks.
+	DefaultKind *factoring.RemittanceLineKind `json:"defaultKind,omitempty"`
+	// The day the factor sent the report.
+	RemittedOn *int `json:"remittedOn,omitempty"`
+}
+
 type CreateFuelPurchaseImportInput struct {
 	Provider          fuelpurchase.CardProvider `json:"provider"`
 	DefaultFuelType   *domaintypes.IFTAFuelType `json:"defaultFuelType,omitempty"`
@@ -3075,6 +3084,13 @@ type DetentionBacktestResult struct {
 	Truncated           bool                       `json:"truncated"`
 }
 
+// A clock still running, priced as of now; the occurrence's own amounts date from its last recalculation.
+type DetentionClockPrice struct {
+	BillableMinutes int    `json:"billableMinutes"`
+	BillableAmount  string `json:"billableAmount"`
+	AsOf            int    `json:"asOf"`
+}
+
 type DetentionCollectability struct {
 	Score      int                     `json:"score"`
 	Band       detention.ScoreBand     `json:"band"`
@@ -3151,64 +3167,73 @@ type DetentionNotice struct {
 }
 
 type DetentionOccurrence struct {
-	ID                  string                       `json:"id"`
-	BusinessUnitID      string                       `json:"businessUnitId"`
-	OrganizationID      string                       `json:"organizationId"`
-	ShipmentID          string                       `json:"shipmentId"`
-	ShipmentMoveID      string                       `json:"shipmentMoveId"`
-	StopID              string                       `json:"stopId"`
-	CustomerID          string                       `json:"customerId"`
-	LocationID          string                       `json:"locationId"`
-	DetentionPolicyID   *string                      `json:"detentionPolicyId,omitempty"`
-	PolicySnapshot      map[string]any               `json:"policySnapshot,omitempty"`
-	CalculationTrace    map[string]any               `json:"calculationTrace,omitempty"`
-	StopType            string                       `json:"stopType"`
-	ScheduleType        string                       `json:"scheduleType"`
-	AppointmentStart    *int                         `json:"appointmentStart,omitempty"`
-	AppointmentEnd      *int                         `json:"appointmentEnd,omitempty"`
-	ArrivedAt           *int                         `json:"arrivedAt,omitempty"`
-	DepartedAt          *int                         `json:"departedAt,omitempty"`
-	ClockStartAt        int                          `json:"clockStartAt"`
-	ClockStopAt         *int                         `json:"clockStopAt,omitempty"`
-	FreeTimeExpiresAt   int                          `json:"freeTimeExpiresAt"`
-	NoticeDueAt         *int                         `json:"noticeDueAt,omitempty"`
-	NoticeDeadlineAt    *int                         `json:"noticeDeadlineAt,omitempty"`
-	IsOpen              bool                         `json:"isOpen"`
-	ArrivedLate         bool                         `json:"arrivedLate"`
-	LateByMinutes       int                          `json:"lateByMinutes"`
-	FreeMinutesGranted  int                          `json:"freeMinutesGranted"`
-	RawDwellMinutes     int                          `json:"rawDwellMinutes"`
-	BillableMinutes     int                          `json:"billableMinutes"`
-	RoundedMinutes      int                          `json:"roundedMinutes"`
-	BillableUnits       string                       `json:"billableUnits"`
-	GrossAmount         string                       `json:"grossAmount"`
-	BillableAmount      string                       `json:"billableAmount"`
-	DriverPayMinutes    int                          `json:"driverPayMinutes"`
-	DriverPayAmount     string                       `json:"driverPayAmount"`
-	NetMargin           string                       `json:"netMargin"`
-	CapApplied          detention.CapKind            `json:"capApplied"`
-	ConvertedToLayover  bool                         `json:"convertedToLayover"`
-	Currency            string                       `json:"currency"`
-	Status              detention.OccurrenceStatus   `json:"status"`
-	NotificationStatus  detention.NotificationStatus `json:"notificationStatus"`
-	NoticeSentAt        *int                         `json:"noticeSentAt,omitempty"`
-	SuppressedByGate    bool                         `json:"suppressedByGate"`
-	RequiresApproval    bool                         `json:"requiresApproval"`
-	WaiverReason        *detention.WaiverReason      `json:"waiverReason,omitempty"`
-	WaiverNote          string                       `json:"waiverNote"`
-	WaivedAt            *int                         `json:"waivedAt,omitempty"`
-	WaivedAmount        string                       `json:"waivedAmount"`
-	DisputeNote         string                       `json:"disputeNote"`
-	DisputedAt          *int                         `json:"disputedAt,omitempty"`
-	CollectabilityScore int                          `json:"collectabilityScore"`
-	EvidenceHead        string                       `json:"evidenceHead"`
-	AdditionalChargeID  *string                      `json:"additionalChargeId,omitempty"`
-	LocationName        string                       `json:"locationName"`
-	CustomerName        string                       `json:"customerName"`
-	ShipmentProNumber   string                       `json:"shipmentProNumber"`
-	Version             int                          `json:"version"`
-	CreatedAt           int                          `json:"createdAt"`
-	UpdatedAt           int                          `json:"updatedAt"`
+	ID             string `json:"id"`
+	BusinessUnitID string `json:"businessUnitId"`
+	OrganizationID string `json:"organizationId"`
+	ShipmentID     string `json:"shipmentId"`
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	StopID         string `json:"stopId"`
+	CustomerID     string `json:"customerId"`
+	LocationID     string `json:"locationId"`
+	// The stop's location, null to someone who may not read locations or when it has been removed.
+	Location           *location.Location           `json:"location,omitempty"`
+	DetentionPolicyID  *string                      `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot     map[string]any               `json:"policySnapshot,omitempty"`
+	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
+	StopType           string                       `json:"stopType"`
+	ScheduleType       string                       `json:"scheduleType"`
+	AppointmentStart   *int                         `json:"appointmentStart,omitempty"`
+	AppointmentEnd     *int                         `json:"appointmentEnd,omitempty"`
+	ArrivedAt          *int                         `json:"arrivedAt,omitempty"`
+	DepartedAt         *int                         `json:"departedAt,omitempty"`
+	ClockStartAt       int                          `json:"clockStartAt"`
+	ClockStopAt        *int                         `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt  int                          `json:"freeTimeExpiresAt"`
+	NoticeDueAt        *int                         `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt   *int                         `json:"noticeDeadlineAt,omitempty"`
+	IsOpen             bool                         `json:"isOpen"`
+	ArrivedLate        bool                         `json:"arrivedLate"`
+	LateByMinutes      int                          `json:"lateByMinutes"`
+	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
+	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
+	BillableMinutes    int                          `json:"billableMinutes"`
+	RoundedMinutes     int                          `json:"roundedMinutes"`
+	BillableUnits      string                       `json:"billableUnits"`
+	GrossAmount        string                       `json:"grossAmount"`
+	BillableAmount     string                       `json:"billableAmount"`
+	DriverPayMinutes   int                          `json:"driverPayMinutes"`
+	DriverPayAmount    string                       `json:"driverPayAmount"`
+	NetMargin          string                       `json:"netMargin"`
+	CapApplied         detention.CapKind            `json:"capApplied"`
+	ConvertedToLayover bool                         `json:"convertedToLayover"`
+	Currency           string                       `json:"currency"`
+	Status             detention.OccurrenceStatus   `json:"status"`
+	NotificationStatus detention.NotificationStatus `json:"notificationStatus"`
+	NoticeSentAt       *int                         `json:"noticeSentAt,omitempty"`
+	SuppressedByGate   bool                         `json:"suppressedByGate"`
+	RequiresApproval   bool                         `json:"requiresApproval"`
+	ApprovedByID       *string                      `json:"approvedById,omitempty"`
+	ApprovedAt         *int                         `json:"approvedAt,omitempty"`
+	// Who approved the charge to bill, null until it is approved or when it was approved automatically.
+	ApprovedBy   *tenant.User            `json:"approvedBy,omitempty"`
+	WaiverReason *detention.WaiverReason `json:"waiverReason,omitempty"`
+	WaiverNote   string                  `json:"waiverNote"`
+	WaivedAt     *int                    `json:"waivedAt,omitempty"`
+	WaivedByID   *string                 `json:"waivedById,omitempty"`
+	// Who waived the charge, null unless it was waived.
+	WaivedBy            *tenant.User `json:"waivedBy,omitempty"`
+	WaivedAmount        string       `json:"waivedAmount"`
+	DisputeNote         string       `json:"disputeNote"`
+	DisputedAt          *int         `json:"disputedAt,omitempty"`
+	CollectabilityScore int          `json:"collectabilityScore"`
+	EvidenceHead        string       `json:"evidenceHead"`
+	AdditionalChargeID  *string      `json:"additionalChargeId,omitempty"`
+	LocationName        string       `json:"locationName"`
+	CustomerName        string       `json:"customerName"`
+	ShipmentProNumber   string       `json:"shipmentProNumber"`
+	Version             int          `json:"version"`
+	CreatedAt           int          `json:"createdAt"`
+	UpdatedAt           int          `json:"updatedAt"`
 }
 
 type DetentionOccurrenceDetail struct {
@@ -3217,6 +3242,8 @@ type DetentionOccurrenceDetail struct {
 	Notices        []*DetentionNotice       `json:"notices,omitempty"`
 	Collectability *DetentionCollectability `json:"collectability"`
 	Receipt        string                   `json:"receipt"`
+	// Null once the clock has stopped.
+	CurrentlyBillable *DetentionClockPrice `json:"currentlyBillable,omitempty"`
 }
 
 type DetentionPolicy struct {
@@ -3413,6 +3440,12 @@ type DetentionWaiverLeakageStat struct {
 	WaiverCount   int    `json:"waiverCount"`
 	ApproverCount int    `json:"approverCount"`
 	WaivedAmount  string `json:"waivedAmount"`
+}
+
+type DiscardFactoringRemittanceInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Reason  string `json:"reason"`
 }
 
 type DismissAccountingDriftInput struct {
@@ -4551,6 +4584,58 @@ type FactoringNoaListInput struct {
 	CustomerID         *string                   `json:"customerId,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
+}
+
+// Which column of the file holds a field.
+type FactoringRemittanceColumn struct {
+	Field FactoringRemittanceField `json:"field"`
+	// The column's position, counting from zero.
+	Column int `json:"column"`
+}
+
+type FactoringRemittanceColumnInput struct {
+	Field  FactoringRemittanceField `json:"field"`
+	Column int                      `json:"column"`
+}
+
+type FactoringRemittanceConnection struct {
+	Edges      []*FactoringRemittanceEdge `json:"edges"`
+	PageInfo   *PageInfo                  `json:"pageInfo"`
+	TotalCount *int                       `json:"totalCount,omitempty"`
+}
+
+type FactoringRemittanceEdge struct {
+	Node   *factoring.Remittance `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type FactoringRemittanceLineConnection struct {
+	Edges      []*FactoringRemittanceLineEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+}
+
+type FactoringRemittanceLineEdge struct {
+	Node   *factoring.RemittanceLine `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
+type FactoringRemittanceLineListInput struct {
+	Table         *DataTableConnectionInput         `json:"table"`
+	RemittanceID  string                            `json:"remittanceId"`
+	MatchStatuses []factoring.RemittanceMatchStatus `json:"matchStatuses,omitempty"`
+}
+
+type FactoringRemittanceListInput struct {
+	Table              *DataTableConnectionInput    `json:"table"`
+	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
+	InboundMessageID   *string                      `json:"inboundMessageId,omitempty"`
+	Statuses           []factoring.RemittanceStatus `json:"statuses,omitempty"`
+}
+
+type FactoringRemittanceVersionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
 }
 
 type FactoringReserveEntryConnection struct {
@@ -5846,7 +5931,7 @@ type MyAgentMatchInput struct {
 	CurrentAgentID *string `json:"currentAgentId,omitempty"`
 	// The kinds of record the question is about: the records it mentions and the
 	// record or list page it is asked from. At most 11. Tools that work on them
-	// rank higher.
+	// rank higher; a kind the server does not know is ignored.
 	ContextKinds []string `json:"contextKinds,omitempty"`
 }
 
@@ -9429,8 +9514,9 @@ type ShipmentSuggestionQueue struct {
 
 // Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 // TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-// TenderEntryWarned.
+// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+// TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+// TenderEscalated.
 type ShipmentTenderEvent struct {
 	ID             string                          `json:"id"`
 	OrganizationID string                          `json:"organizationId"`
@@ -9706,6 +9792,17 @@ type SnoozeWatchtowerItemInput struct {
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
+}
+
+type StageFactoringRemittanceInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// The file, uploaded with resource type factoring_remittance and this remittance's id.
+	DocumentID string `json:"documentId"`
+	// Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor.
+	Mapping     []*FactoringRemittanceColumnInput `json:"mapping,omitempty"`
+	DefaultKind *factoring.RemittanceLineKind     `json:"defaultKind,omitempty"`
+	RemittedOn  *int                              `json:"remittedOn,omitempty"`
 }
 
 type StageFuelPurchaseImportInput struct {
@@ -10457,6 +10554,20 @@ type UpdateFactoringCompanyInput struct {
 	ID               string                 `json:"id"`
 	Version          int                    `json:"version"`
 	FactoringCompany *FactoringCompanyInput `json:"factoringCompany"`
+}
+
+type UpdateFactoringRemittanceLineInput struct {
+	RemittanceID string `json:"remittanceId"`
+	// The remittance's version.
+	Version int                                 `json:"version"`
+	LineID  string                              `json:"lineId"`
+	Action  factoringports.RemittanceLineAction `json:"action"`
+	// The schedule item, for Match.
+	ItemID *string `json:"itemId,omitempty"`
+	// What the line records, for SetKind.
+	Kind *factoring.RemittanceLineKind `json:"kind,omitempty"`
+	// Why the line is not booked, for Ignore.
+	Reason *string `json:"reason,omitempty"`
 }
 
 type UpdateFuelIndexPriceInput struct {
@@ -12428,6 +12539,78 @@ func (e FactoringInvoiceEffect) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// What a remittance file's column holds.
+type FactoringRemittanceField string
+
+const (
+	FactoringRemittanceFieldInvoiceNumber   FactoringRemittanceField = "InvoiceNumber"
+	FactoringRemittanceFieldFactorReference FactoringRemittanceField = "FactorReference"
+	FactoringRemittanceFieldDebtor          FactoringRemittanceField = "Debtor"
+	FactoringRemittanceFieldKind            FactoringRemittanceField = "Kind"
+	FactoringRemittanceFieldFace            FactoringRemittanceField = "Face"
+	FactoringRemittanceFieldAdvance         FactoringRemittanceField = "Advance"
+	FactoringRemittanceFieldFee             FactoringRemittanceField = "Fee"
+	FactoringRemittanceFieldReserve         FactoringRemittanceField = "Reserve"
+	FactoringRemittanceFieldCash            FactoringRemittanceField = "Cash"
+	FactoringRemittanceFieldDate            FactoringRemittanceField = "Date"
+)
+
+var AllFactoringRemittanceField = []FactoringRemittanceField{
+	FactoringRemittanceFieldInvoiceNumber,
+	FactoringRemittanceFieldFactorReference,
+	FactoringRemittanceFieldDebtor,
+	FactoringRemittanceFieldKind,
+	FactoringRemittanceFieldFace,
+	FactoringRemittanceFieldAdvance,
+	FactoringRemittanceFieldFee,
+	FactoringRemittanceFieldReserve,
+	FactoringRemittanceFieldCash,
+	FactoringRemittanceFieldDate,
+}
+
+func (e FactoringRemittanceField) IsValid() bool {
+	switch e {
+	case FactoringRemittanceFieldInvoiceNumber, FactoringRemittanceFieldFactorReference, FactoringRemittanceFieldDebtor, FactoringRemittanceFieldKind, FactoringRemittanceFieldFace, FactoringRemittanceFieldAdvance, FactoringRemittanceFieldFee, FactoringRemittanceFieldReserve, FactoringRemittanceFieldCash, FactoringRemittanceFieldDate:
+		return true
+	}
+	return false
+}
+
+func (e FactoringRemittanceField) String() string {
+	return string(e)
+}
+
+func (e *FactoringRemittanceField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FactoringRemittanceField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FactoringRemittanceField", str)
+	}
+	return nil
+}
+
+func (e FactoringRemittanceField) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FactoringRemittanceField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FactoringRemittanceField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Which tier of the resolution chain produced the home screen on display.
 type HomeLayoutSource string
 
@@ -13771,6 +13954,10 @@ const (
 	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
 	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
 	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeTenderBounced         ShipmentEventType = "TenderBounced"
+	ShipmentEventTypeTenderCountered       ShipmentEventType = "TenderCountered"
+	ShipmentEventTypeTenderCounterDecided  ShipmentEventType = "TenderCounterDecided"
+	ShipmentEventTypeTenderEscalated       ShipmentEventType = "TenderEscalated"
 	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
 	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
 	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
@@ -13804,6 +13991,10 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeTenderDeliveryFailed,
 	ShipmentEventTypeTenderEntrySkipped,
 	ShipmentEventTypeTenderEntryWarned,
+	ShipmentEventTypeTenderBounced,
+	ShipmentEventTypeTenderCountered,
+	ShipmentEventTypeTenderCounterDecided,
+	ShipmentEventTypeTenderEscalated,
 	ShipmentEventTypeHoldPlaced,
 	ShipmentEventTypeHoldUpdated,
 	ShipmentEventTypeHoldReleased,
@@ -13812,7 +14003,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeTenderBounced, ShipmentEventTypeTenderCountered, ShipmentEventTypeTenderCounterDecided, ShipmentEventTypeTenderEscalated, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

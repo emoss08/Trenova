@@ -24,6 +24,7 @@ import { DeskEdiTransferSkeleton } from "./edi-transfer/edi-transfer-skeleton";
 import { DeskInvoiceSkeleton } from "./invoice/invoice-skeleton";
 import { DeskDriverSettlementSkeleton } from "./driver-settlement/driver-settlement-skeleton";
 import { DeskCarrierSettlementSkeleton } from "./carrier-settlement/carrier-settlement-skeleton";
+import { DeskDetentionOccurrenceSkeleton } from "./detention-occurrence/detention-occurrence-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -85,6 +86,9 @@ const loadDriverSettlement = preloadable(
 );
 const loadCarrierSettlement = preloadable(
   () => import("./carrier-settlement/desk-carrier-settlement"),
+);
+const loadDetentionOccurrence = preloadable(
+  () => import("./detention-occurrence/desk-detention-occurrence"),
 );
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
@@ -197,6 +201,15 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     artifact: lazyComponent(
       loadCarrierSettlement,
       (module) => module.DeskCarrierSettlementArtifact,
+    ),
+  },
+  detention_occurrence: {
+    resource: Resource.DetentionPolicy,
+    Skeleton: DeskDetentionOccurrenceSkeleton,
+    inPlace: lazyComponent(loadDetentionOccurrence, (module) => module.DeskDetentionOccurrence),
+    artifact: lazyComponent(
+      loadDetentionOccurrence,
+      (module) => module.DeskDetentionOccurrenceArtifact,
     ),
   },
 };

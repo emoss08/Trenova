@@ -170,14 +170,25 @@ const shipment = {
 function draw(props: Partial<Parameters<typeof DeskCarrier>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <DeskCarrier recordId="car_1" order={["car_0", "car_1"]} {...handlers} {...props} />
+        <DeskCarrier
+          recordId="car_1"
+          order={["car_0", "car_1"]}
+          {...handlers}
+          {...props}
+          {...more}
+        />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -217,6 +228,17 @@ afterEach(() => {
 });
 
 describe("DeskCarrier", () => {
+  it("draws the next carrier's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Red River Freight", level: 2 });
+
+    fetchers.carrier.mockReturnValue(new Promise(() => {}));
+    step("car_0");
+
+    expect(screen.queryByRole("heading", { name: "Red River Freight", level: 2 })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the carrier is read, then draws whether it can be tendered", async () => {
     const { container } = draw();
 

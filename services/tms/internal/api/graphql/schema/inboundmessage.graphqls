@@ -6,6 +6,7 @@ enum InboundClassification {
   Invoice
   StatusRequest
   DetentionDispute
+  FactorRemittance
   Other
 }
 

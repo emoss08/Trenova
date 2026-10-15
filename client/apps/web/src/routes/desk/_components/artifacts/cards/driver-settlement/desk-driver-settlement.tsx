@@ -15,7 +15,7 @@ import {
   ReasonDialog,
   type ReasonAction,
 } from "@/routes/driver-settlement/_components/settlement-detail";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Resource } from "@trenova/shared/types/permission";
@@ -111,7 +111,9 @@ const NO_ROWS: readonly string[] = [];
  * paid. Adding pay by hand and the line-by-line statement stay on the
  * settlement's page.
  *
- * The card steps through the rows it was opened from in the order shown.
+ * The card steps through the rows it was opened from in the order shown. A
+ * step draws the next settlement's skeleton until it is read, never the
+ * settlement it left with its buttons still live.
  */
 export function DeskDriverSettlement({
   recordId,
@@ -121,11 +123,7 @@ export function DeskDriverSettlement({
   backLabel,
 }: DriverSettlementCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...settlement.driverCard(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...settlement.driverCard(recordId), retry: false });
   const record = query.data;
 
   if (!record) {

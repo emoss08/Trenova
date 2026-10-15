@@ -8,12 +8,14 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 export type RecordShipment = DeskRecordShipmentsQuery["shipments"]["edges"][number]["node"];
 
 /**
- * The record a card lists shipments for: a customer's freight, the loads a
+ * The record a card lists shipments for: one shipment by its id (the load a
+ * detention charge sits on), a customer's freight, the loads a
  * tractor pulled, a trailer carried or a worker drove on any of their moves,
  * the loads with a stop at a location, the loads tendered to a carrier, the
  * legs of an order, or the shipments an invoice bills.
  */
 export type ShipmentScope =
+  | { kind: "shipment"; id: string }
   | { kind: "customer"; id: string }
   | { kind: "tractor"; id: string }
   | { kind: "trailer"; id: string }
@@ -48,6 +50,8 @@ function scopeInput(
   | "carrierSettlementIds"
 > {
   switch (scope.kind) {
+    case "shipment":
+      return { fieldFilters: [{ field: "id", operator: "eq", value: scope.id }] };
     case "customer":
       return { fieldFilters: [{ field: "customerId", operator: "eq", value: scope.id }] };
     case "tractor":

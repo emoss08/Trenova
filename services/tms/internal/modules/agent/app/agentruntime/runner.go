@@ -289,6 +289,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 		})
 
 		batch := &readBatch{}
+		shownNow := false
 		for _, call := range completion.ToolCalls {
 			check := &joinCheck{
 				call:   call,
@@ -400,6 +401,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 						"the question could not be shown as asked", "%s", content)
 				default:
 					asked = true
+					shownNow = true
 					if question != "" {
 						t.questions[question] = struct{}{}
 					}
@@ -506,6 +508,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			s.settleDispatched(t, fx, &dispatch, &outcome)
 		}
 		s.settleReads(t, fx, batch)
+		if shownNow && fx.Supports(changeEndOnAsk) {
+			return s.finish(result, askedEnding(completion), fx), nil
+		}
 
 		s.logger.Debug("agent tool iteration",
 			zap.String("agent", definition.Name),
@@ -851,6 +856,15 @@ func fallbackOf(completion *agentports.ChatCompletionResult) *conversation.Provi
 
 // cannedCompletion stands a fixed line in for a reply the model could not
 // give, keeping the provider and usage the attempt was charged under.
+func askedEnding(asking *agentports.ChatCompletionResult) *agentports.ChatCompletionResult {
+	return &agentports.ChatCompletionResult{
+		ModelIdentifier: asking.ModelIdentifier,
+		ProviderID:      asking.ProviderID,
+		ProviderKind:    asking.ProviderKind,
+		ContextWindow:   asking.ContextWindow,
+	}
+}
+
 func cannedCompletion(
 	attempt *agentports.ChatCompletionResult,
 	text string,

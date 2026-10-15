@@ -411,7 +411,7 @@ func TestCompanyGateBoundsConcurrentCallsPerCompany(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	client := &http.Client{Transport: newCompanyGate().transport(http.DefaultTransport)}
+	client := &http.Client{Transport: newCompanyGate().transport(server.Client().Transport)}
 	target := server.URL + "/v2.0/t/Production/api/v2.0/companies(" + testCompany + ")/items"
 	var wg sync.WaitGroup
 	for range 8 {

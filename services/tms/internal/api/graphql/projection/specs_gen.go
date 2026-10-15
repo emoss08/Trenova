@@ -307,6 +307,8 @@ var DOTRandomPoolSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
+var DetentionClockPriceSpec TypeSpec
+
 var DetentionEvidenceSpec TypeSpec
 
 var DetentionNoticeSpec TypeSpec
@@ -404,6 +406,10 @@ var FactoringFeeTierSpec TypeSpec
 var FactoringInvoiceStateSpec TypeSpec
 
 var FactoringNoaSpec TypeSpec
+
+var FactoringRemittanceSpec TypeSpec
+
+var FactoringRemittanceLineSpec TypeSpec
 
 var FactoringReserveEntrySpec TypeSpec
 
@@ -10308,6 +10314,29 @@ func init() {
 		},
 	}
 
+	DetentionClockPriceSpec = TypeSpec{
+		TypeName: "DetentionClockPrice",
+		FieldMap: detentioncol.DetentionOccurrenceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "billableMinutes",
+				FieldMapKey: "billableMinutes",
+			},
+			{
+				Name:        "billableAmount",
+				FieldMapKey: "billableAmount",
+			},
+			{
+				Name:    "asOf",
+				Special: "asOf",
+			},
+		},
+	}
+
 	DetentionEvidenceSpec = TypeSpec{
 		TypeName: "DetentionEvidence",
 		FieldMap: detentioncol.DetentionEvidenceFieldMap,
@@ -10515,6 +10544,10 @@ func init() {
 				FieldMapKey: "locationId",
 			},
 			{
+				Name:        "location",
+				FieldMapKey: "locationId",
+			},
+			{
 				Name:        "detentionPolicyId",
 				FieldMapKey: "detentionPolicyId",
 			},
@@ -10655,6 +10688,18 @@ func init() {
 				FieldMapKey: "requiresApproval",
 			},
 			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
 				Name:        "waiverReason",
 				FieldMapKey: "waiverReason",
 			},
@@ -10665,6 +10710,14 @@ func init() {
 			{
 				Name:        "waivedAt",
 				FieldMapKey: "waivedAt",
+			},
+			{
+				Name:        "waivedById",
+				FieldMapKey: "waivedById",
+			},
+			{
+				Name:        "waivedBy",
+				FieldMapKey: "waivedById",
 			},
 			{
 				Name:        "waivedAmount",
@@ -14576,6 +14629,267 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
+			},
+		},
+	}
+
+	FactoringRemittanceSpec = TypeSpec{
+		TypeName: "FactoringRemittance",
+		FieldMap: factoringcol.RemittanceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "inboundMessageId",
+				FieldMapKey: "inboundMessageId",
+			},
+			{
+				Name:        "sourceFormat",
+				FieldMapKey: "sourceFormat",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "defaultKind",
+				FieldMapKey: "defaultKind",
+			},
+			{
+				Name:        "remittedOn",
+				FieldMapKey: "remittedOn",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "mapping",
+				FieldMapKey: "mapping",
+			},
+			{
+				Name:        "headers",
+				FieldMapKey: "headers",
+			},
+			{
+				Name:        "unmappedHeaders",
+				FieldMapKey: "unmappedHeaders",
+			},
+			{
+				Name:        "lineCount",
+				FieldMapKey: "lineCount",
+			},
+			{
+				Name:        "matchedCount",
+				FieldMapKey: "matchedCount",
+			},
+			{
+				Name:        "exceptionCount",
+				FieldMapKey: "exceptionCount",
+			},
+			{
+				Name:        "appliedCount",
+				FieldMapKey: "appliedCount",
+			},
+			{
+				Name:        "totalCashMinor",
+				FieldMapKey: "totalCashMinor",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "stagedAt",
+				FieldMapKey: "stagedAt",
+			},
+			{
+				Name:        "appliedAt",
+				FieldMapKey: "appliedAt",
+			},
+			{
+				Name:        "appliedById",
+				FieldMapKey: "appliedById",
+			},
+			{
+				Name:        "discardedAt",
+				FieldMapKey: "discardedAt",
+			},
+			{
+				Name:        "discardReason",
+				FieldMapKey: "discardReason",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
+	FactoringRemittanceLineSpec = TypeSpec{
+		TypeName: "FactoringRemittanceLine",
+		FieldMap: factoringcol.RemittanceLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "remittanceId",
+				FieldMapKey: "remittanceId",
+			},
+			{
+				Name:        "rowNumber",
+				FieldMapKey: "rowNumber",
+			},
+			{
+				Name:        "cells",
+				FieldMapKey: "cells",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "invoiceNumber",
+				FieldMapKey: "invoiceNumber",
+			},
+			{
+				Name:        "factorReference",
+				FieldMapKey: "factorReference",
+			},
+			{
+				Name:        "debtorName",
+				FieldMapKey: "debtorName",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "advanceMinor",
+				FieldMapKey: "advanceMinor",
+			},
+			{
+				Name:        "feeMinor",
+				FieldMapKey: "feeMinor",
+			},
+			{
+				Name:        "reserveMinor",
+				FieldMapKey: "reserveMinor",
+			},
+			{
+				Name:        "cashMinor",
+				FieldMapKey: "cashMinor",
+			},
+			{
+				Name:        "occurredOn",
+				FieldMapKey: "occurredOn",
+			},
+			{
+				Name:        "matchStatus",
+				FieldMapKey: "matchStatus",
+			},
+			{
+				Name:        "matchedBy",
+				FieldMapKey: "matchedBy",
+			},
+			{
+				Name:        "submissionItemId",
+				FieldMapKey: "submissionItemId",
+			},
+			{
+				Name:    "matchedInvoiceNumber",
+				Special: "matchedInvoiceNumber",
+			},
+			{
+				Name:    "matchedSubmissionId",
+				Special: "matchedSubmissionId",
+			},
+			{
+				Name:        "score",
+				FieldMapKey: "score",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "suggestions",
+				FieldMapKey: "suggestions",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "ignoredReason",
+				FieldMapKey: "ignoredReason",
+			},
+			{
+				Name:        "reserveEntryId",
+				FieldMapKey: "reserveEntryId",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -26043,6 +26357,22 @@ func init() {
 				FieldMapKey: "canceledAt",
 			},
 			{
+				Name:        "bounceCount",
+				FieldMapKey: "bounceCount",
+			},
+			{
+				Name:        "lastBouncedAt",
+				FieldMapKey: "lastBouncedAt",
+			},
+			{
+				Name:        "escalatedFromId",
+				FieldMapKey: "escalatedFromId",
+			},
+			{
+				Name:        "escalationRound",
+				FieldMapKey: "escalationRound",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -26165,6 +26495,54 @@ func init() {
 			{
 				Name:        "lateResponseAt",
 				FieldMapKey: "lateResponseAt",
+			},
+			{
+				Name:        "counterRate",
+				FieldMapKey: "counterRate",
+			},
+			{
+				Name:        "counterNote",
+				FieldMapKey: "counterNote",
+			},
+			{
+				Name:        "counteredAt",
+				FieldMapKey: "counteredAt",
+			},
+			{
+				Name:        "counterMarginPercent",
+				FieldMapKey: "counterMargin",
+			},
+			{
+				Name:        "counterNeedsApproval",
+				FieldMapKey: "counterNeedsApproval",
+			},
+			{
+				Name:        "counterDecidedAt",
+				FieldMapKey: "counterDecidedAt",
+			},
+			{
+				Name:        "counterDecidedById",
+				FieldMapKey: "counterDecidedById",
+			},
+			{
+				Name:    "agreedRate",
+				Special: "agreedRate",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokeReason",
+				FieldMapKey: "revokeReason",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "reofferedFromId",
+				FieldMapKey: "reofferedFromId",
 			},
 			{
 				Name:        "version",

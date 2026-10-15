@@ -41,6 +41,7 @@ export const documentProcessingProfileSchema = z.enum([
   "assistant_attachment",
   "inbound_attachment",
   "capture",
+  "factoring_remittance",
 ]);
 
 export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;

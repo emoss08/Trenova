@@ -191,12 +191,17 @@ func (r *Registry) registerCarrierResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Record manual carrier responses",
+				Description: "Record carrier responses, bounces and counter-offer decisions",
 			},
 			{
 				Operation:   OpCancel,
 				DisplayName: "Cancel",
 				Description: "Withdraw outstanding tenders",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Take carrier counter-offers that fall below the margin floor",
 			},
 		},
 		ParentResource:     ResourceCarrier.String(),

@@ -100,7 +100,7 @@ function priced(request: TestExpressionRequest) {
 function draw(props: Partial<Parameters<typeof DeskFormulaTemplate>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <DeskFormulaTemplate
@@ -108,11 +108,17 @@ function draw(props: Partial<Parameters<typeof DeskFormulaTemplate>[0]> = {}) {
           order={["ft_0", "ft_1", "ft_2"]}
           {...handlers}
           {...props}
+          {...more}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 beforeEach(() => {
@@ -165,6 +171,17 @@ beforeEach(() => {
 });
 
 describe("DeskFormulaTemplate", () => {
+  it("draws the next template's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Reefer per mile" });
+
+    service.get.mockReturnValue(new Promise(() => {}));
+    step("ft_0");
+
+    expect(screen.queryByRole("heading", { name: "Reefer per mile" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the template is read, then draws the template", async () => {
     const { container } = draw();
 
