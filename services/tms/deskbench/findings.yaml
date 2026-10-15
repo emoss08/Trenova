@@ -3637,7 +3637,7 @@ findings:
 
   - id: DB-162
     title: Taking an id out of a reply leaves "Its ID is." behind
-    status: open
+    status: fixed
     severity: low
     area: agent runtime / reply pass (strip_ids)
     found: 2026-10-15, .deskbench/runs/20261015-115248-run
@@ -3656,15 +3656,18 @@ findings:
     fix: >
       recordids.Strip, and the client's withoutRecordIds with it, drop a sentence that only says
       what an id is ("Its ID is edip_….", "Acme Retail Group's ID: edip_…") whole, and a clause
-      joined on with "and" without its sentence's stop. Covered by unit tests on both sides; not
-      seen again on the bench, so left open until a run shows it.
+      joined on with "and" without its sentence's stop.
     files:
       - shared/recordids/recordids.go
       - client/apps/web/src/lib/record-ids.ts
+    fixedIn: >
+      uncommitted; verified by the regression tests on both sides, which strip the reply recorded
+      in .deskbench/runs/20261015-115248-run word for word. A bench run cannot make a model write
+      the sentence again; none of the later runs left an id sentence behind.
 
   - id: DB-163
     title: The EDI desk cannot show a 214 preview at its default data access
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / data access
     found: 2026-10-15, .deskbench/runs/20261015-092056-run and 20261015-115248-run
@@ -3683,17 +3686,22 @@ findings:
       is withheld with the raw text. deskbench/agents.yaml has no field for a bench agent's data
       access, so the scenario cannot run at a ceiling that reaches it.
     fix: >
-      Open. Decide whether a preview of a document not yet sent (no partner payload, built from
-      the organization's own shipment) belongs under the raw EDI tier, and let agents.yaml set a
-      bench agent's data access.
+      The tier stays: raw EDI is Restricted. A withheld preview, and every withheld raw X12, now
+      says whose access held it back (fieldGate.heldByAgent): the agent's own Data access, which
+      someone whose role reaches Restricted can raise in AI control, or the person's role. Bench
+      agents take dataAccess in agents.yaml, saved through the agent service so a role that does
+      not reach Restricted cannot grant it, and the bench EDI desk runs at Restricted.
     files:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_document_preview_tool.go
       - services/tms/internal/deskbench/agents.go
       - services/tms/deskbench/agents.yaml
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-143405-run and 20261015-145941-run (the
+      preview is described segment by segment in every case)
 
   - id: DB-164
     title: An empty list of inbound files is widened again and again
-    status: open
+    status: fixed
     severity: low
     area: agent tools / EDI inbound files
     found: 2026-10-15, .deskbench/runs/20261015-115248-run
@@ -3705,12 +3713,19 @@ findings:
       partner, status Quarantined alone) and went over the scenario's six calls with eight. The
       answer was right: nothing Acme is quarantined, nothing rerun, nothing proposed.
     cause: >
-      An empty filtered list ends with filtercatalog.Criteria.EmptyNote, "Other inbound EDI files
-      may exist; only these filters were applied", which every list tool shares and which reads
-      as an invitation to drop a filter and look again.
+      An empty filtered list ended with filtercatalog.Criteria.EmptyNote, "Other inbound EDI files
+      may exist; only these filters were applied", which every list tool shares and which reads as
+      an invitation to drop a filter and look again.
     fix: >
-      Open. The note exists to stop "there are none" being claimed from a filtered list, and every
-      list tool shares it, so a change needs the whole bench, not the EDI tag.
+      The shared note says the empty list is the answer for its filters, never a claim that none
+      exist, and to search again only when the question is about more than they cover. An empty
+      status-filtered list_edi_inbound_files says what the same search holds in any status, or
+      that it holds nothing at all, as list_pay_advances already did.
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-143405-run (all 107 scenarios, against 20261015-baseline-full on 2b2c936e9: 83/107 against 79/107), no case that failed only there turned on an empty
+      list) and 20261015-145941-run (edi-pasted-x12-then-a-write 3/3, two or three inbound file
+      calls each)
+
   - id: DB-165
     title: A partner that rejected a 214 is said to have acknowledged none
     status: open
@@ -3728,12 +3743,10 @@ findings:
     cause: >
       The counts did not say that Rejected and AcceptedWithErrors are acknowledgments received.
     fix: >
-      Partly. Each partner row and the totals now carry acknowledged (every 997 or 999 that came
-      back, a rejection included) and awaiting, and the description says so
-      (MessageAcknowledgmentStatus.IsReceived). Six of nine replies over three later runs name
-      the one acknowledgment that came back; three still open "No, Acme has not acknowledged our
-      214s". Left open.
-
+      Partly. Each partner row carries acknowledged, awaiting and a one-line answer ("1 of 4
+      acknowledged (1 rejected); 3 awaiting"), and the description says to lead with it. Two of
+      three replies in 20261015-145941-run lead with it; one still opens "No, Acme has not
+      acknowledged our 214s". Left open.
   - id: DB-166
     title: The draft tool said to read the guide with read_attachment when the file was already attached
     status: fixed
@@ -3788,7 +3801,7 @@ findings:
 
   - id: DB-168
     title: The agent gives the partner's ISA qualifier as its own
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / EDI connection draft
     found: 2026-10-15, .deskbench/runs/20261015-130724-run
@@ -3802,28 +3815,43 @@ findings:
       The values schema listed field keys with no word on whose they are. The field description
       now says the our, local and carrier settings are this company's; seen once more after it
       (20261015-132109-run, edi-guide-revised #2).
-    fix: Open.
+    fix: >
+      The values schema says whose the our, local and carrier settings are, and a blocked draft
+      tells the agent that a candidate the planner found invalid, or a quote that states the value
+      for another field, is its own misreading to correct and draft again; it asks the person only
+      about what the guide itself leaves open.
     files:
       - services/tms/internal/modules/agent/app/agenttools/edispec/schema.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-143405-run and 20261015-145941-run (no
+      ISA qualifier held in any guide case; edi-guide-new-partner 3/3)
 
   - id: DB-169
-    title: A grounding rewrite of a draft reply drops what the draft's note asked it to say
-    status: open
+    title: The grounding guard took a guide's charge codes for codes the proposal claims
+    status: fixed
     severity: low
     area: agent runtime / grounding guard
     found: 2026-10-15, .deskbench/runs/20261015-125246-run and 20261015-132109-run
     models: [claude-haiku-5-5]
     scenarios: [edi-guide-new-partner, edi-guide-revised]
     problem: >
-      A reply that said the proposal mapped charge or stop codes it does not hold was rewritten
-      (reply_regrounded rewrite, then note), and the rewrite spent itself correcting the claim:
-      "I was wrong to list codes as part of it." It left out MS1 and ended on "Check the card
-      before relying on this reply".
-    fix: Open.
+      A reply that said Acme's charge codes are in Appendix B and the stop reason codes have no
+      mapping yet was rewritten as if it claimed the proposal carried codes; the rewrite spent
+      itself apologising and ended on "Check the card before relying on this reply".
+    fix: >
+      A one-word name counts as a claim only at the top of a call; a one-word collection nested in
+      a call's items is dropped from the findings, behind agent-loop-grounding-top-level-words.
+    cause: >
+      The guard holds every collection named in a filed tool's schema to the filed call, and
+      apply_edi_connection_draft's requirements[].codes made "codes" a claim in any reply that
+      mentioned codes at all. The reply's missing MS1 was the model's own, in the first reply.
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-143405-run and 20261015-145941-run (no
+      field rewrite in any case)
 
   - id: DB-170
     title: Pasted X12 is sometimes compared with stored messages nobody asked about
-    status: open
+    status: fixed
     severity: low
     area: agent tools / EDI inspection
     found: 2026-10-15, .deskbench/runs/20261015-123455-run
@@ -3832,4 +3860,63 @@ findings:
     problem: >
       One of twelve cases after #770 called list_edi_messages after inspect_x12 to match the
       pasted control numbers to what was sent ("our recent outbound 214s run 5001 to 5009").
+    fix: >
+      inspect_x12's note repeats at the point of decision what its description says: answer from
+      this result alone, and look among stored messages only when the person asked.
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261015-143405-run and 20261015-145941-run
+      (edi-pasted-x12 called inspect_x12 alone in all four cases)
+
+  - id: DB-171
+    title: The base 214 sends our internal shipment id in L11 and an AT8 with no weight
+    status: open
+    severity: high
+    area: EDI / starter templates
+    found: 2026-10-15, .deskbench/runs/20261015-143405-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-preview-214]
+    problem: >
+      Once the EDI desk could read the preview, it described what Acme would get: "L11: the
+      shipment's internal Trenova id, tagged as the shipper's identifying number. Acme would see
+      our internal id here, not their own reference number" and "AT8 G: a weight qualifier with no
+      weight value after it."
+    evidence: >
+      templates.Base214Segments fills L11-01 from shipmentStatus.shipmentId (the record's pulid)
+      with qualifier SI, and gives AT8 only its weight qualifier, a constant G. Every organization's
+      base 214 starter is built from it.
+    fix: >
+      Open. L11 should carry a reference the partner knows (their own shipment or BOL number, or
+      our PRO) and AT8 its unit and weight, or be left out when the weight is unknown.
+    files:
+      - services/tms/internal/modules/edi/domain/edi/templates/starters.go
+
+  - id: DB-172
+    title: A revised guide's value the agent gave at low confidence holds the draft though it is what is saved
+    status: open
+    severity: low
+    area: EDI connection draft / planner
+    found: 2026-10-15, .deskbench/runs/20261015-130724-run and 20261015-145941-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-revised]
+    problem: >
+      The agent passed the test AS2 URL at confidence 0.7. It is what the guide says to use and
+      what the partner already has (change Same), yet the draft held it, blocked on "Decide AS2
+      endpoint URL", and the agent asked the person which URL to use.
+    fix: >
+      Open. A held value whose only candidate is the value already saved changes nothing, so it
+      might be listed without blocking the draft.
+
+  - id: DB-173
+    title: Arguments are borrowed from a neighbouring tool
+    status: open
+    severity: low
+    area: agent tools / schemas
+    found: 2026-10-15, .deskbench/runs/20261015-145941-run
+    models: [claude-haiku-5-5]
+    scenarios: [edi-guide-revised, edi-acks-overdue]
+    problem: >
+      Every edi-guide-revised case first called draft_edi_connection with documentDigest, which
+      only apply_edi_connection_draft takes, and one edi-acks-overdue case passed transactionSet to
+      get_edi_ack_health. The harness refused each and the agent called again correctly, a model
+      call each time.
     fix: Open.

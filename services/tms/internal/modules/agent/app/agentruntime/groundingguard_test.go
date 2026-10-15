@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -257,6 +257,56 @@ func TestFiledLabels_ComeFromTheToolsSchema(t *testing.T) {
 		assert.NotEqual(t, "commodities[].pieces", label.path,
 			"a single word scalar is too common to hold a reply to")
 	}
+}
+
+func TestFiledLabels_MarkANestedOneWordCollection(t *testing.T) {
+	t.Parallel()
+
+	labels := schemaLabels(map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"requirements": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"codes": map[string]any{
+							"type":  "array",
+							"items": map[string]any{"type": "string"},
+						},
+						"allowedCodeLists": map[string]any{
+							"type":  "array",
+							"items": map[string]any{"type": "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	assert.Contains(t, labels, schemaLabel{path: "requirements", words: "requirements"})
+	assert.Contains(t, labels,
+		schemaLabel{path: "requirements[].allowedCodeLists", words: "allowed code lists"})
+	assert.Contains(t, labels,
+		schemaLabel{path: "requirements[].codes", words: "codes", nestedWord: true})
+}
+
+func TestGroundingFinding_DropsOnlyWordsNoTopLevelLabelClaims(t *testing.T) {
+	t.Parallel()
+
+	finding := groundingFinding{
+		fields: []string{"codes", "commodities"},
+		tools: map[string][]string{
+			"codes":       {"apply_edi_connection_draft"},
+			"commodities": {"create_shipment"},
+		},
+		nested: []string{"codes"},
+	}
+	finding.dropNestedWords()
+
+	assert.Equal(t, []string{"commodities"}, finding.fields)
+	assert.NotContains(t, finding.tools, "codes")
+	assert.False(t, finding.empty())
 }
 
 func eventNames(events []kernelports.StreamEvent) []string {

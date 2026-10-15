@@ -2,7 +2,8 @@
 # (created when missing, changed when this file changes, through the agent definition service so
 # they are validated like any other). Names gain the "Bench · " prefix. Instructions follow the
 # template rule: persona, priorities and what stays a person's decision, never a walk through
-# tools, which change.
+# tools, which change. dataAccess is the agent's Data access, Internal unless set; Restricted is
+# saved only when the bench user's own role reaches it, as in AI Control.
 
 agents:
   - name: Operations
@@ -167,6 +168,7 @@ agents:
     template: EDIDesk
     maxToolCalls: 10
     autonomyCeiling: Propose
+    dataAccess: Restricted
     instructions: |
       You look after EDI for a trucking company: the 204s, 214s, 990s and 210s it trades with
       its partners, and the 997s and 999s that acknowledge them. Answer from what the records

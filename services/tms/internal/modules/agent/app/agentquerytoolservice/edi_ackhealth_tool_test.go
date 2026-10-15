@@ -133,6 +133,7 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{
 			PartnerID: acme.ID.String(), Partner: "Acme Retail", PartnerCode: "ACME",
 			Acknowledged: 10, Awaiting: 3,
+			Answer: "10 of 13 acknowledged (9 accepted, 1 rejected); 3 awaiting",
 			AckCounts: []ackCountRow{
 				{Status: "Pending", Count: 3},
 				{Status: "Accepted", Count: 9},
@@ -142,6 +143,7 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{
 			PartnerID: bolt.ID.String(), Partner: "Bolt", PartnerCode: "BOLT",
 			Awaiting:  1,
+			Answer:    "0 of 1 acknowledged; 1 awaiting",
 			AckCounts: []ackCountRow{{Status: "Pending", Count: 1}},
 		},
 	}, view.AckCountsByPartner, "each partner's own counts, so one call answers for one partner")
@@ -225,4 +227,22 @@ func TestGetEDIAckHealth_RefusesAnAgeOrWindowOutOfBounds(t *testing.T) {
 			assert.Nil(t, fake.request)
 		})
 	}
+}
+
+func TestAckAnswer_SaysWhatCameBackOutOfWhatWasSent(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "1 of 4 acknowledged (1 rejected); 3 awaiting", ackAnswer(
+		map[edi.MessageAcknowledgmentStatus]int{
+			edi.MessageAcknowledgmentStatusRejected:    1,
+			edi.MessageAcknowledgmentStatusPending:     3,
+			edi.MessageAcknowledgmentStatusNotExpected: 1,
+		}))
+	assert.Equal(t, "2 of 2 acknowledged (1 accepted, 1 accepted with errors)", ackAnswer(
+		map[edi.MessageAcknowledgmentStatus]int{
+			edi.MessageAcknowledgmentStatusAccepted:           1,
+			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
+		}))
+	assert.Equal(t, "nothing sent in this window expects an acknowledgment", ackAnswer(
+		map[edi.MessageAcknowledgmentStatus]int{edi.MessageAcknowledgmentStatusNotExpected: 2}))
 }

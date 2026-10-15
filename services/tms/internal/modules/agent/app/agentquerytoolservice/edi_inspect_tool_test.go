@@ -62,6 +62,8 @@ func TestInspectX12_ReadsPastedX12WithTheInboundFileCardsOverview(t *testing.T) 
 	assert.Equal(t, "214", view.Transactions[0].TransactionSet)
 	assert.Equal(t, 8, view.Summary.SegmentCount, "ISA through IEA")
 	assert.True(t, view.Interchange)
+	assert.Contains(t, view.Note, "find it among stored messages only when the person asked "+
+		"you to", "a pasted file is answered from what was pasted")
 
 	var seCount *edix12inspect.NormalizedDiagnostic
 	for idx := range view.Diagnostics {
