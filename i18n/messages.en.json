@@ -5452,6 +5452,15 @@
       "packages/shared/types"
     ]
   },
+  "A discarded remittance is set aside for good; nothing on it can be booked afterwards.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "A disciplinary action has been added to your record.": {
     "sites": 1,
     "scope": [
@@ -5723,6 +5732,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A factor's funding or reserve report was read and matched to schedule items; its matched lines wait to be applied to the ledger and its exceptions wait to be resolved.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A factor's funding or reserve report, matched to schedule items before it is booked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A factor's remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "A failed attempt must record why it failed": {
@@ -8493,6 +8529,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A remittance can hold at most {0} lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A remittance must be a CSV, an Excel workbook (.xlsx) or a PDF": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A renewal will be assigned to you — open Training in Dash to take it.": {
@@ -14901,7 +14955,7 @@
     ]
   },
   "Actions": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -14910,6 +14964,7 @@
       "routes/admin",
       "routes/bank-receipt-queue",
       "routes/edi",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/inbox",
       "routes/journal-reversal",
@@ -18786,7 +18841,7 @@
     ]
   },
   "Adjustment": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -19220,12 +19275,13 @@
     ]
   },
   "Advance": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "routes/factoring",
       "routes/factoring-submission",
@@ -19234,7 +19290,7 @@
     ]
   },
   "Advance (Minor)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -22761,6 +22817,7 @@
       "routes/driver-expense",
       "routes/driver-pay-event",
       "routes/escrow-account",
+      "routes/factoring-remittance",
       "routes/fuel-purchase",
       "routes/invoice",
       "routes/invoice-reconciliation",
@@ -22841,6 +22898,15 @@
     ]
   },
   "Amount Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Amount Only": {
     "sites": 1,
     "scope": [
       "go"
@@ -22944,6 +23010,17 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Amount paid": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Amount per application": {
@@ -23370,6 +23447,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An adjustment; book it by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "An admin can connect one in Agent Control.": {
@@ -24535,6 +24621,15 @@
       "go/other"
     ]
   },
+  "An ignored line is not booked from the remittance. Book a fee or adjustment by hand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
     "sites": 1,
     "scope": [
@@ -25358,6 +25453,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Another line already matched it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Another live match already holds invoice {0} from this carrier. Reject one of them; this match cannot be accepted while the other stands.": {
@@ -26376,13 +26480,14 @@
     ]
   },
   "Applied": {
-    "sites": 17,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "apps/web/lib",
       "go/other",
       "routes/accounting-inbound",
       "routes/admin",
@@ -26412,6 +26517,24 @@
     ]
   },
   "Applied Amount Minor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Applied At": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Applied By ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -26686,7 +26809,7 @@
     ]
   },
   "Apply": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -26694,6 +26817,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/factoring-remittance",
       "routes/invoice",
       "routes/reports",
       "routes/worker"
@@ -26886,6 +27010,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Apply remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Apply safety rating": {
@@ -29118,6 +29251,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Arrived by email.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Arrived late": {
@@ -33132,7 +33274,7 @@
     ]
   },
   "Auto": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -34921,7 +35063,7 @@
     ]
   },
   "Back": {
-    "sites": 23,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -34931,6 +35073,7 @@
       "routes/auth",
       "routes/billing-queue",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/inbox",
       "routes/journal-entry",
       "routes/onboarding",
@@ -39300,6 +39443,15 @@
       "go/other"
     ]
   },
+  "Book a remittance's matched lines to the ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": {
     "sites": 1,
     "scope": [
@@ -39319,15 +39471,26 @@
     ]
   },
   "Booked": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/components"
+      "apps/web/lib",
+      "packages/shared/components",
+      "routes/factoring-remittance"
     ]
   },
   "Booked By ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Booked Lines": {
     "sites": 1,
     "scope": [
       "go"
@@ -40512,7 +40675,7 @@
     ]
   },
   "Business Unit ID": {
-    "sites": 80,
+    "sites": 82,
     "scope": [
       "go"
     ],
@@ -41115,7 +41278,7 @@
     ]
   },
   "CSV": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -45553,7 +45716,7 @@
     ]
   },
   "Cash": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -45562,11 +45725,13 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
+      "routes/factoring",
+      "routes/factoring-remittance",
       "routes/insights"
     ]
   },
   "Cash (Minor)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -45867,6 +46032,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Cells": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Cells in header order.": {
@@ -47628,7 +47802,7 @@
     ]
   },
   "Chargeback": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -49130,6 +49304,15 @@
       "routes/balance-sheet"
     ]
   },
+  "Choose a funding, rejection, reserve release or chargeback report": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a kind": {
     "sites": 1,
     "scope": [
@@ -49983,6 +50166,42 @@
       "go/other"
     ]
   },
+  "Choose the column that holds the amount paid, the advance, the reserve or the invoice amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose the column that holds the amount paid, the advance, the reserve or the invoice amount.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Choose the column that holds the invoice number or the factor's reference": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose the column that holds the invoice number or the factor's reference.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Choose the completion date": {
     "sites": 1,
     "scope": [
@@ -50093,6 +50312,15 @@
       "routes/admin"
     ]
   },
+  "Choose the factor that sent the report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
   "Choose the factor whose reserve to read": {
     "sites": 1,
     "scope": [
@@ -50158,6 +50386,15 @@
       "go/other"
     ]
   },
+  "Choose the invoice the line pays": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose the jurisdiction the fuel was bought in": {
     "sites": 1,
     "scope": [
@@ -50205,6 +50442,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Choose the line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose the measure this KPI shows": {
     "sites": 1,
     "scope": [
@@ -50221,6 +50467,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Choose the message": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose the metric this tile shows.": {
@@ -50329,6 +50584,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Choose the remittance": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose the report this tile shows": {
@@ -50523,6 +50787,15 @@
       "routes/settings"
     ]
   },
+  "Choose what the line records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.": {
     "sites": 1,
     "scope": [
@@ -50534,6 +50807,15 @@
   },
   "Choose what this filter applies to": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose what to do with the line": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -50788,6 +51070,15 @@
       "routes/agent-control"
     ]
   },
+  "Chosen By Person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Chosen by": {
     "sites": 1,
     "scope": [
@@ -50798,12 +51089,13 @@
     ]
   },
   "Chosen by a person": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "apps/web/lib"
     ]
   },
   "Chosen by an agent": {
@@ -51249,6 +51541,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Claimed By Another Line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Clamp the formula's result to a range, then round it to what gets billed. Preview, scenarios and production all apply it the same way.": {
@@ -54431,6 +54732,15 @@
       "routes/reports"
     ]
   },
+  "Column {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Columns": {
     "sites": 5,
     "scope": [
@@ -54448,6 +54758,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Columns mapped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Combined weight of all freight being loaded or unloaded at this stop": {
@@ -61855,6 +62174,15 @@
       "go/other"
     ]
   },
+  "Could not read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Could not record the certification": {
     "sites": 1,
     "scope": [
@@ -64418,7 +64746,7 @@
     ]
   },
   "Created At": {
-    "sites": 121,
+    "sites": 123,
     "scope": [
       "go",
       "ts"
@@ -64457,7 +64785,7 @@
     ]
   },
   "Created By ID": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -65651,7 +65979,7 @@
     ]
   },
   "Currency": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -68567,7 +68895,7 @@
     ]
   },
   "Date": {
-    "sites": 34,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -68586,6 +68914,7 @@
       "routes/desk",
       "routes/edi",
       "routes/escrow-account",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/holiday",
       "routes/inbox",
@@ -69856,11 +70185,14 @@
     ]
   },
   "Debtor": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "go/other",
       "template/factoring.schedule.pdf"
     ]
   },
@@ -76494,7 +76826,7 @@
     ]
   },
   "Discard": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -76503,6 +76835,7 @@
       "routes/agent-control",
       "routes/customer",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/fuel-purchase",
       "routes/home",
       "routes/inbox",
@@ -76521,6 +76854,15 @@
       "routes/agent-control"
     ]
   },
+  "Discard Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice. Nothing it holds becomes a purchase, and it can be staged again later.": {
     "sites": 1,
     "scope": [
@@ -76531,6 +76873,15 @@
     ]
   },
   "Discard a rate sheet that was read and should not be applied, such as last month's file uploaded again. Its agreement is not changed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Discard a remittance that will not be booked": {
     "sites": 1,
     "scope": [
       "go"
@@ -76639,6 +76990,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Discard remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Discard stack": {
     "sites": 1,
     "scope": [
@@ -76695,7 +77055,7 @@
     ]
   },
   "Discarded": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -76704,7 +77064,17 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/factoring-remittance"
+    ]
+  },
+  "Discarded At": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Discarded and expired": {
@@ -78713,7 +79083,7 @@
     ]
   },
   "Document ID": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -84769,6 +85139,15 @@
       "routes/admin"
     ]
   },
+  "Each field is mapped to one column": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Each funded invoice leaves receivables, with the fee as an expense.": {
     "sites": 1,
     "scope": [
@@ -85011,6 +85390,15 @@
     ],
     "areas": [
       "apps/web/types",
+      "go/other"
+    ]
+  },
+  "Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -86432,7 +86820,7 @@
     ]
   },
   "Email": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -91059,7 +91447,7 @@
     ]
   },
   "Error": {
-    "sites": 13,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -93391,6 +93779,15 @@
       "routes/accounting-mapping"
     ]
   },
+  "Every line is matched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Every line is on the rate con": {
     "sites": 2,
     "scope": [
@@ -93436,6 +93833,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Every matched line is booked to the ledger through the factor's schedules. Only an opposite entry undoes a booking.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Every mile attributed to a jurisdiction on a completed move in the quarter, plus manual entries.": {
@@ -94672,12 +95078,14 @@
     ]
   },
   "Excel": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Excel (XLSX)": {
@@ -97202,6 +97610,15 @@
       "routes/carrier-settlement-batch"
     ]
   },
+  "Export remittances and their lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Export reports": {
     "sites": 1,
     "scope": [
@@ -98350,7 +98767,7 @@
     ]
   },
   "Factor": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -98358,6 +98775,15 @@
       "routes/factoring",
       "routes/factoring-submission",
       "routes/invoice"
+    ]
+  },
+  "Factor Reference": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Factor advances": {
@@ -98377,6 +98803,58 @@
     "areas": [
       "apps/web/hooks",
       "apps/web/lib"
+    ]
+  },
+  "Factor reference": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
+    ]
+  },
+  "Factor remittance": {
+    "sites": 8,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "go/other",
+      "routes/factoring-company",
+      "routes/factoring-remittance",
+      "routes/inbox"
+    ]
+  },
+  "Factor remittance read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factor remittance reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Factor remittances": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Factored": {
@@ -98457,7 +98935,7 @@
     ]
   },
   "Factoring Company": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -98466,7 +98944,7 @@
     ]
   },
   "Factoring Company ID": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -98502,6 +98980,42 @@
     ]
   },
   "Factoring Override Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Remittance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Remittance Line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Remittance Lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Remittances": {
     "sites": 1,
     "scope": [
       "go"
@@ -98646,7 +99160,7 @@
     ]
   },
   "Factoring company is required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -98841,7 +99355,7 @@
     ]
   },
   "Failed": {
-    "sites": 64,
+    "sites": 65,
     "scope": [
       "go",
       "ts"
@@ -101438,20 +101952,22 @@
     ]
   },
   "Fee": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
+      "go/other",
       "routes/factoring",
       "routes/factoring-submission",
       "template/factoring.schedule.pdf"
     ]
   },
   "Fee (Minor)": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -102113,6 +102629,15 @@
     ]
   },
   "File Format": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "File Name": {
     "sites": 1,
     "scope": [
       "go"
@@ -106071,7 +106596,7 @@
     ]
   },
   "Format": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -108766,7 +109291,7 @@
     ]
   },
   "Funding": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -108785,6 +109310,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Funding and reserve reports from this factor. Each is matched to its schedules and booked only when someone applies it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Funding days": {
@@ -110377,6 +110911,15 @@
     ]
   },
   "Give the date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Give the date the factor sent the report": {
     "sites": 1,
     "scope": [
       "go"
@@ -113103,6 +113646,15 @@
     ]
   },
   "Hazmat segregation violation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Headers": {
     "sites": 1,
     "scope": [
       "go"
@@ -116772,7 +117324,7 @@
     ]
   },
   "ID": {
-    "sites": 78,
+    "sites": 80,
     "scope": [
       "go"
     ],
@@ -117561,7 +118113,7 @@
     ]
   },
   "Ignore": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -117570,6 +118122,7 @@
       "apps/web/lib",
       "routes/accounting-inbound",
       "routes/agent-control",
+      "routes/factoring-remittance",
       "routes/inbox"
     ]
   },
@@ -117580,6 +118133,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Ignore line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Ignore payment": {
@@ -117601,16 +118163,26 @@
     ]
   },
   "Ignored": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "apps/web/lib",
       "go/other",
       "routes/accounting-inbound",
       "routes/inbox"
+    ]
+  },
+  "Ignored Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Ignored by": {
@@ -118072,6 +118644,16 @@
       "go/other"
     ]
   },
+  "Import remittance": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-company"
+    ]
+  },
   "Import shipments": {
     "sites": 1,
     "scope": [
@@ -118145,7 +118727,7 @@
     ]
   },
   "Imported": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -118156,6 +118738,7 @@
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/desk",
+      "routes/factoring",
       "routes/reconciliation-summary"
     ]
   },
@@ -118871,6 +119454,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Inbound Message ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Inbound and outbound EDI messages that failed or are held": {
@@ -121994,6 +122586,15 @@
       "api/graphql"
     ]
   },
+  "Invalid line kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invalid lineage ID": {
     "sites": 2,
     "scope": [
@@ -122182,6 +122783,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Invalid remittance file format": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invalid report identifier": {
@@ -122520,7 +123130,7 @@
     ]
   },
   "Invoice": {
-    "sites": 50,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -122536,6 +123146,7 @@
       "routes/customer-payments",
       "routes/customer-statement",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/inbox",
       "routes/invoice",
       "routes/invoice-adjustment-batch",
@@ -122589,6 +123200,33 @@
     ]
   },
   "Invoice Adjustments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice Amount (Minor)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice Amount Date": {
     "sites": 1,
     "scope": [
       "go"
@@ -122680,8 +123318,17 @@
       "go/other"
     ]
   },
+  "Invoice Near Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice Number": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -122689,6 +123336,15 @@
     "areas": [
       "go/other",
       "routes/admin"
+    ]
+  },
+  "Invoice Only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invoice PDF generation requires workflow processing to be enabled": {
@@ -122817,6 +123473,44 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Invoice agrees, amount differs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Invoice agrees, amount is close": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Invoice amount": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
+    ]
+  },
+  "Invoice and amount agree": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Invoice anyway": {
@@ -123242,11 +123936,14 @@
     ]
   },
   "Invoice number": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "go/other",
       "routes/carrier-invoice-matching"
     ]
   },
@@ -123311,6 +124008,24 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Invoice partly agrees, amount agrees": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Invoice partly agrees, amount is close": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Invoice posted": {
@@ -123906,6 +124621,15 @@
       "template/notification.invoice_shared"
     ]
   },
+  "Invoice {0} is {1}; it cannot take {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} no longer has the open balance the factor bought; record the payment it received first": {
     "sites": 1,
     "scope": [
@@ -123940,6 +124664,15 @@
     ],
     "areas": [
       "template/invoice.reminder.email"
+    ]
+  },
+  "Invoice, amount and date agree": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Invoiced": {
@@ -125644,6 +126377,15 @@
       "routes/desk"
     ]
   },
+  "Its text is being read; the lines appear here once it is matched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.": {
     "sites": 1,
     "scope": [
@@ -127269,7 +128011,7 @@
     ]
   },
   "Keep the reason under 500 characters": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -127279,6 +128021,7 @@
       "go/other",
       "packages/shared/types",
       "routes/accounting-sync",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/invoice"
     ]
@@ -127968,7 +128711,7 @@
     ]
   },
   "Kind": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -132258,7 +133001,7 @@
     ]
   },
   "Line": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -132268,6 +133011,7 @@
       "apps/web/types",
       "go/other",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/fuel-purchase",
       "routes/ifta-tax-rate",
       "routes/invoice-approval",
@@ -132628,7 +133372,7 @@
     ]
   },
   "Lines": {
-    "sites": 3,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -132636,7 +133380,9 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "routes/desk"
+      "routes/desk",
+      "routes/factoring",
+      "routes/factoring-remittance"
     ]
   },
   "Lines add up to the formula's {0}, but the maximum bills {1}. An invoice built from these lines won't match the charge.": {
@@ -132739,6 +133485,24 @@
     ]
   },
   "Lines must not contain null values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Lines that did not match one open invoice on their own. Nothing here is booked until it is matched and the remittance applied.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Lines to Resolve": {
     "sites": 1,
     "scope": [
       "go"
@@ -135029,6 +135793,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Loading remittance...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Loading retrieval": {
@@ -139043,6 +139825,15 @@
       "routes/shipment"
     ]
   },
+  "Map the columns": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Mapped": {
     "sites": 1,
     "scope": [
@@ -139071,7 +139862,7 @@
     ]
   },
   "Mapping": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -140052,13 +140843,14 @@
     ]
   },
   "Match": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/bank-receipt"
+      "routes/bank-receipt",
+      "routes/factoring-remittance"
     ]
   },
   "Match ALL conditions": {
@@ -140077,6 +140869,33 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Match Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Score": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Match a stop to a location": {
@@ -140104,6 +140923,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Match again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Match all": {
@@ -140313,6 +141141,15 @@
       "apps/web/components"
     ]
   },
+  "Match to an invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Match to location...": {
     "sites": 1,
     "scope": [
@@ -140349,8 +141186,17 @@
       "routes/desk"
     ]
   },
+  "Match, ignore or restore a remittance line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Matched": {
-    "sites": 13,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -140363,6 +141209,7 @@
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/inbox",
       "routes/reconciliation-summary"
     ]
@@ -140376,6 +141223,15 @@
     "areas": [
       "go/other",
       "routes/bank-receipt"
+    ]
+  },
+  "Matched By": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Matched By ID": {
@@ -140396,6 +141252,15 @@
       "go/other"
     ]
   },
+  "Matched Lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Matched Payment": {
     "sites": 1,
     "scope": [
@@ -140403,6 +141268,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Matched automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Matched band": {
@@ -147696,6 +148570,15 @@
       "apps/web/components"
     ]
   },
+  "Near Amount Only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Near limit": {
     "sites": 1,
     "scope": [
@@ -147870,6 +148753,15 @@
       "go/other"
     ]
   },
+  "Needs Mapping": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Needs Reconciliation Exception": {
     "sites": 1,
     "scope": [
@@ -148008,11 +148900,12 @@
     ]
   },
   "Needs mapping": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -150793,6 +151686,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No Open Item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No PRO": {
@@ -154490,6 +155392,15 @@
       "apps/web/components"
     ]
   },
+  "No line is matched yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "No line items available.": {
     "sites": 1,
     "scope": [
@@ -154704,6 +155615,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "No match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No match (strict)": {
@@ -155219,6 +156139,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No open invoice on the factor's schedules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No open moves suit this driver right now.": {
@@ -156352,6 +157281,15 @@
       "routes/recurring-shipment"
     ]
   },
+  "No reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "No remit-to address on file — set it on the carrier record.": {
     "sites": 2,
     "scope": [
@@ -156360,6 +157298,33 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/desk"
+    ]
+  },
+  "No remittance from this factor yet. Import one, or forward the factor's emails to your inbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
+  "No remittance has this id, or it belongs to another organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "No remittances have been imported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "No reply from {0} — back in the queue": {
@@ -158990,6 +159955,15 @@
       "api/helpers"
     ]
   },
+  "Not Booked From Remittance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Not Configured": {
     "sites": 1,
     "scope": [
@@ -159712,6 +160686,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Not in the file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Not in the guide": {
@@ -161766,6 +162749,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing is booked until you review the matches and apply them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
   "Nothing is booked: no money moves.": {
     "sites": 1,
     "scope": [
@@ -162141,6 +163133,15 @@
       "routes/worker"
     ]
   },
+  "Nothing on remittance {0} is matched yet; match a line or ignore the rest": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Nothing on the board fits the search. Clear it to see the whole week again.": {
     "sites": 1,
     "scope": [
@@ -162193,6 +163194,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing on this schedule can take this line.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Nothing on this selection could be billed": {
@@ -163976,6 +164986,15 @@
       "routes/inbox"
     ]
   },
+  "Nova read it as a factor's remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nova read it as a proof of delivery": {
     "sites": 1,
     "scope": [
@@ -164740,7 +165759,7 @@
     ]
   },
   "Occurred On": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -167306,6 +168325,15 @@
       "go/other"
     ]
   },
+  "Only a close amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Only a committed import carries a commit stamp": {
     "sites": 1,
     "scope": [
@@ -169248,6 +170276,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Only the amount agrees": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Only the current version of a document can be reviewed. Review the latest version instead.": {
@@ -171265,6 +172302,15 @@
     ],
     "areas": [
       "template/carriertracking.link.email"
+    ]
+  },
+  "Open the message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Open the next message; the down arrow does the same": {
@@ -173393,7 +174439,7 @@
     ]
   },
   "Organization ID": {
-    "sites": 80,
+    "sites": 82,
     "scope": [
       "go"
     ],
@@ -174194,7 +175240,7 @@
     ]
   },
   "Other": {
-    "sites": 56,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -176178,7 +177224,7 @@
     ]
   },
   "PDF": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -176224,6 +177270,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "PDF remittances are refused; upload the CSV": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "PDF, Images, Documents up to 50MB": {
@@ -177793,12 +178848,14 @@
     ]
   },
   "Parsed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "packages/shared/components",
       "packages/shared/types"
     ]
@@ -177866,6 +178923,15 @@
       "go/other"
     ]
   },
+  "Part of remittance {0} is booked; ignore the lines that are left instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Part of this change is hidden by your data access.": {
     "sites": 1,
     "scope": [
@@ -177873,6 +178939,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Part of this remittance is booked. Resolve or ignore the lines that are left, then apply again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Part of this step was too large to keep, so only what was called is shown.": {
@@ -177939,6 +179014,24 @@
       "go/other"
     ]
   },
+  "Partial Invoice Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Partial Invoice Near Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Partial settlement payment": {
     "sites": 1,
     "scope": [
@@ -177946,6 +179039,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Partially Applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Partially Assigned": {
@@ -178095,11 +179197,12 @@
     ]
   },
   "Partly applied": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -181058,7 +182161,7 @@
     ]
   },
   "Pending": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -182824,11 +183927,13 @@
     ]
   },
   "Person": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/agent-control"
     ]
   },
@@ -183645,6 +184750,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Pick invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Pick one on the left to see what Trenova proposed, the records it considered, and to choose another.": {
@@ -196344,7 +197458,7 @@
     ]
   },
   "Read At": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -196715,6 +197829,15 @@
       "apps/web/components"
     ]
   },
+  "Read the lines of a factor's PDF funding or reserve report.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Read the question": {
     "sites": 2,
     "scope": [
@@ -196776,6 +197899,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Read with this mapping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Read wrong? Correct it": {
@@ -196944,7 +198076,7 @@
     ]
   },
   "Reading": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -197042,6 +198174,15 @@
       "routes/intake"
     ]
   },
+  "Reading the PDF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Reading the conversation…": {
     "sites": 1,
     "scope": [
@@ -197103,6 +198244,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Reading the remittance…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "Reading the sheet…": {
@@ -197433,6 +198583,15 @@
       "routes/edi"
     ]
   },
+  "Ready to apply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Ready to approve": {
     "sites": 5,
     "scope": [
@@ -197666,6 +198825,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/dispatch-console",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/fiscal-year",
       "routes/fuel-card",
@@ -197721,7 +198881,7 @@
     ]
   },
   "Reason cannot be longer than 500 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -200959,14 +202119,15 @@
     ]
   },
   "Records": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/factoring-remittance"
     ]
   },
   "Records a cash or money-code advance recovered from the driver's future settlements.": {
@@ -203120,6 +204281,17 @@
       "routes/worker"
     ]
   },
+  "Rejection": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
+    ]
+  },
   "Rejection Reason": {
     "sites": 4,
     "scope": [
@@ -203661,14 +204833,16 @@
     ]
   },
   "Remittance": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/carrier",
       "routes/carrier-settlement",
+      "routes/factoring",
       "template/customer.statement.email",
       "template/invoice.email",
       "template/invoice.reminder.email"
@@ -203684,7 +204858,25 @@
       "routes/carrier-settlement-batch"
     ]
   },
+  "Remittance ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remittance Instructions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -203700,6 +204892,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Remittance applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Remittance discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Remittance instructions": {
@@ -203720,6 +204930,134 @@
     "areas": [
       "apps/web/types",
       "go/other"
+    ]
+  },
+  "Remittance matched again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Remittance report": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance totals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Remittance {0} changed since you opened it; reload and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance {0} is {1}; it cannot be discarded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance {0} is {1}; it cannot be read again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance {0} is {1}; its lines cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance {0} is {1}; only a read remittance can be applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Remittances": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-company",
+      "routes/factoring-remittance"
+    ]
+  },
+  "Remitted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
+  "Remitted On": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remitted on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
+  "Remitted {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Remote Directory": {
@@ -206032,6 +207370,15 @@
       "template/report.delivery.email"
     ]
   },
+  "Report Of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Report Run": {
     "sites": 1,
     "scope": [
@@ -206174,6 +207521,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Report of": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "Report ready": {
@@ -208284,12 +209640,14 @@
     ]
   },
   "Reserve": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "go/other",
       "routes/factoring",
       "routes/factoring-company",
       "routes/factoring-submission",
@@ -208297,7 +209655,16 @@
     ]
   },
   "Reserve (Minor)": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve Entry ID": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -208315,7 +209682,7 @@
     ]
   },
   "Reserve Release": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -208402,7 +209769,7 @@
     ]
   },
   "Reserve release": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -209547,7 +210914,7 @@
     ]
   },
   "Restore": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -209557,6 +210924,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
+      "routes/factoring-remittance",
       "routes/insights",
       "routes/pto-policy",
       "routes/review-template",
@@ -210246,7 +211614,7 @@
     ]
   },
   "Retry": {
-    "sites": 33,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -210261,6 +211629,7 @@
       "routes/edi",
       "routes/factoring",
       "routes/factoring-company",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/formula-template",
       "routes/fuel-purchase",
@@ -213977,11 +215346,14 @@
     ]
   },
   "Row": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
+      "routes/factoring-remittance",
       "routes/rate-agreement"
     ]
   },
@@ -214091,6 +215463,96 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Row {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Row {0} ({1}) pays which invoice on the factor's schedules?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Row {0} already matched invoice {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} could not be read; ignore it and book it by hand": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} is already booked; it cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} is not a funding, rejection, reserve release or chargeback; set what it records first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} is not ignored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} is not matched": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0} matched an invoice that can no longer take {1}; match the remittance again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Row {0}: {1} of invoice {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Rows": {
@@ -218335,6 +219797,15 @@
       "go/other"
     ]
   },
+  "Say which column of {0} holds each field. Leave a field out when the file has no such column.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Say which document to wait for": {
     "sites": 1,
     "scope": [
@@ -218486,6 +219957,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Say why": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Say why both sides stay as they are": {
@@ -218718,6 +220198,15 @@
       "go/other"
     ]
   },
+  "Say why the remittance is being discarded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say why the schedule is being cancelled": {
     "sites": 1,
     "scope": [
@@ -218814,6 +220303,15 @@
     "areas": [
       "go/other",
       "routes/worker"
+    ]
+  },
+  "Say why this line is not booked": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Say why this payment stays out of Trenova": {
@@ -219278,7 +220776,7 @@
     ]
   },
   "Schedule": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -219288,6 +220786,7 @@
       "go/other",
       "routes/agent-control",
       "routes/factoring",
+      "routes/factoring-remittance",
       "routes/formula-template",
       "routes/invoice",
       "routes/recurring-shipment",
@@ -219314,7 +220813,7 @@
     ]
   },
   "Schedule Invoice ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -222610,6 +224109,15 @@
       "routes/admin"
     ]
   },
+  "Select a schedule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Select a segment.": {
     "sites": 1,
     "scope": [
@@ -222952,6 +224460,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Select an invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Select an owner": {
@@ -224326,6 +225843,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Select the factor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "Select the fuel surcharge program to apply for this customer": {
@@ -235769,7 +237295,7 @@
     ]
   },
   "Source": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -238992,7 +240518,7 @@
     ]
   },
   "Status": {
-    "sites": 338,
+    "sites": 342,
     "scope": [
       "go",
       "ts"
@@ -239034,6 +240560,7 @@
       "routes/escrow-account",
       "routes/factoring",
       "routes/factoring-company",
+      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/fiscal-year",
       "routes/fleet-code",
@@ -241611,6 +243138,24 @@
       "routes/admin"
     ]
   },
+  "Such as: a duplicate of yesterday's report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Such as: wire fee, booked by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Suffix": {
     "sites": 1,
     "scope": [
@@ -241648,14 +243193,17 @@
     ]
   },
   "Suggested": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/factoring-remittance",
       "routes/shipment"
     ]
   },
@@ -241761,6 +243309,15 @@
     ]
   },
   "Suggestion field is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Suggestions": {
     "sites": 1,
     "scope": [
       "go"
@@ -246678,6 +248235,16 @@
       "go/other"
     ]
   },
+  "That file is too large; the limit is 32 MiB.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-remittance"
+    ]
+  },
   "That folder does not exist": {
     "sites": 1,
     "scope": [
@@ -246703,6 +248270,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "That invoice is not on an open schedule sent to this factor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "That invoice is not on this schedule": {
@@ -246796,6 +248372,15 @@
     ]
   },
   "That isn't one of this check's choices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That line is not on this remittance": {
     "sites": 1,
     "scope": [
       "go"
@@ -251015,7 +252600,7 @@
     ]
   },
   "The date cannot be in the future": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -253138,6 +254723,15 @@
       "go/other"
     ]
   },
+  "The file's headers did not say which columns hold the invoice and the amounts. Map them once and this factor's next file is read on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "The files attached to this message.": {
     "sites": 1,
     "scope": [
@@ -253634,6 +255228,15 @@
       "routes/edi"
     ]
   },
+  "The funding and reserve reports factors sent, how far each was read, matched and booked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The funding could not be planned. Try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -254001,6 +255604,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The invoice goes back to the factoring queue; nothing is booked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "The invoice has no open balance": {
@@ -254489,6 +256101,15 @@
       "api/graphql"
     ]
   },
+  "The layout is saved for this factor's next file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "The least the factor charges on one invoice.": {
     "sites": 1,
     "scope": [
@@ -254613,6 +256234,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "The line was not changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "The linear feet occupied by a single unit.": {
@@ -254947,6 +256577,15 @@
     ],
     "areas": [
       "routes/trailer"
+    ]
+  },
+  "The mapping names a column the file does not have": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The mappings could not be loaded.": {
@@ -258129,6 +259768,79 @@
       "routes/escrow-account"
     ]
   },
+  "The remittance could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittance could not be read": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittance could not be read with this mapping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittance has no lines to read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The remittance was not applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittance was not discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittance was not matched again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "The remittances could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "The repair needs a user to record as the author of the journals": {
     "sites": 1,
     "scope": [
@@ -258388,6 +260100,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The report's date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "The reported time cannot be in the future": {
@@ -261441,8 +263162,17 @@
       "apps/web/components"
     ]
   },
+  "The uploaded file could not be found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The uploaded file is empty": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -265024,6 +266754,15 @@
       "go/other"
     ]
   },
+  "This file is too large to read; the limit is 32 MiB": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This file no longer exists": {
     "sites": 1,
     "scope": [
@@ -265061,6 +266800,15 @@
     ]
   },
   "This file was not uploaded for this import": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file was not uploaded for this remittance": {
     "sites": 1,
     "scope": [
       "go"
@@ -266878,6 +268626,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "This remittance could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "This removes the selected SCIM directory and its provisioning configuration. This action cannot be undone.": {
@@ -270209,6 +271966,16 @@
       "routes/admin"
     ]
   },
+  "To resolve": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-remittance"
+    ]
+  },
   "To start, what's your company called?": {
     "sites": 1,
     "scope": [
@@ -271482,6 +273249,15 @@
   },
   "Total Cap (Minor)": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Total Cash (Minor)": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -273506,6 +275282,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Transaction type": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Transactional email delivery for invoices, authentication, reporting, and operational notifications.": {
@@ -278283,13 +280070,33 @@
       "routes/fiscal-year"
     ]
   },
-  "Unmatched": {
-    "sites": 2,
+  "Unmapped Headers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Unmatch": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Unmatched": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
       "apps/web/hooks",
+      "go/other",
       "routes/accounting-mapping"
     ]
   },
@@ -278533,11 +280340,12 @@
     ]
   },
   "Unreadable": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/intake"
     ]
   },
@@ -279510,7 +281318,7 @@
     ]
   },
   "Updated At": {
-    "sites": 73,
+    "sites": 75,
     "scope": [
       "go",
       "ts"
@@ -279677,13 +281485,15 @@
     ]
   },
   "Upload": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "go/other",
       "routes/admin",
       "routes/billing-queue",
       "routes/edi",
@@ -279752,6 +281562,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Upload a factor's funding or reserve report as a CSV, spreadsheet or PDF. Its lines are matched to the factor's schedules for you to review before anything is booked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
+  "Upload a factor's remittance and read it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Upload a new certificate to the same mapping in {0}. The current certificate keeps working until {0} accepts the new one.": {
@@ -279905,11 +281733,12 @@
     ]
   },
   "Upload progress": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/factoring",
       "routes/fuel-purchase"
     ]
   },
@@ -279965,6 +281794,33 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Upload the factor's file to read it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "Upload the factor's remittance before reading it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Upload the file again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Upload the proof of delivery, bill of lading and anything else this shipment is billed on. Pick a type first and the file is classified as it goes up.": {
@@ -280168,12 +282024,13 @@
     ]
   },
   "Uploading {0}…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/factoring",
       "routes/fuel-purchase"
     ]
   },
@@ -280438,12 +282295,13 @@
     ]
   },
   "Use": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/factoring-remittance"
     ]
   },
   "Use '='": {
@@ -282790,7 +284648,7 @@
     ]
   },
   "Version": {
-    "sites": 76,
+    "sites": 77,
     "scope": [
       "go",
       "ts"
@@ -284128,6 +285986,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "View remittances and their lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "View report": {
@@ -285537,6 +287404,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Waiting for its file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "Waiting for release": {
@@ -288114,6 +289990,15 @@
       "routes/agent-control"
     ]
   },
+  "What a line records when the file has no column saying so.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
   "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": {
     "sites": 1,
     "scope": [
@@ -288944,6 +290829,15 @@
       "go/other"
     ]
   },
+  "What it would book could not be worked out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "What it would do as proposed": {
     "sites": 1,
     "scope": [
@@ -289419,6 +291313,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "What the line records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "What the numbers in the grid mean and how a looked-up rate becomes a charge.": {
@@ -290266,6 +292169,24 @@
     ]
   },
   "When a <k>detention dispute</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>factor remittance</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>factor remittance</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -303432,6 +305353,15 @@
       "go/other"
     ]
   },
+  "factor remittances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "factoring entry": {
     "sites": 1,
     "scope": [
@@ -306468,6 +308398,15 @@
       "apps/web/components"
     ]
   },
+  "the file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "the guide": {
     "sites": 2,
     "scope": [
@@ -309125,6 +311064,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0, plural, one {# invoice funded} other {# invoices funded}} (advance {1}, fee {2}), {3, plural, one {# rejected} other {# rejected}}, {4, plural, one {# reserve released} other {# reserves released}} ({5}) and {6, plural, one {# charged back} other {# charged back}} ({7}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "{0, plural, one {# invoice is} other {# invoices are}} back in the queue.": {
     "sites": 1,
     "scope": [
@@ -309432,6 +311380,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# line booked.} other {# lines booked.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "{0, plural, one {# line fails} other {# lines fail}} on the preview load": {
     "sites": 1,
     "scope": [
@@ -309439,6 +311396,24 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {# line is} other {# lines are}} still to resolve and stay open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "{0, plural, one {# line matched} other {# lines matched}}, {1, plural, one {# to resolve} other {# to resolve}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
@@ -314149,6 +316124,15 @@
       "apps/web/components"
     ]
   },
+  "{0} and {1} use the same column.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "{0} and {1}, so this is never {2}": {
     "sites": 1,
     "scope": [
@@ -317281,6 +319265,15 @@
     ]
   },
   "{0} is inactive or cannot be used on documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is inactive; reactivate the factor before importing its remittances": {
     "sites": 1,
     "scope": [
       "go"
@@ -321149,6 +323142,15 @@
       "routes/shipment"
     ]
   },
+  "{0} report from {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "{0} required": {
     "sites": 1,
     "scope": [
@@ -323647,6 +325649,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} · {1, plural, one {# invoice} other {# invoices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
+  "{0} · {1, plural, one {# line} other {# lines}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "{0} · {1, plural, one {# load} other {# loads}}": {

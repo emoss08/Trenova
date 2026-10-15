@@ -14,6 +14,7 @@ type Deps struct {
 	FactoringReadinessService  factoringports.ReadinessService
 	FactoringSubmissionService factoringports.SubmissionService
 	FactoringLedgerService     factoringports.LedgerService
+	FactoringRemittanceService factoringports.RemittanceService
 	FactoringTransportService  factoringports.TransportService
 }
 
@@ -36,6 +37,12 @@ type FactoringNoaResolver struct{ *Deps }
 type FactoringPlannedLineResolver struct{ *Deps }
 
 type FactoringPlannedMovementResolver struct{ *Deps }
+
+type FactoringRemittanceLineResolver struct{ *Deps }
+
+type FactoringRemittancePlanResolver struct{ *Deps }
+
+type FactoringRemittanceResolver struct{ *Deps }
 
 type FactoringReserveEntryResolver struct{ *Deps }
 

@@ -189,6 +189,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		tenant: factoringcol.SubmissionApplyTenant,
 		id:     factoringcol.SubmissionColumns.ID,
 	},
+	agent.SubjectFactoringRemittance: {
+		model:  func() any { return (*factoring.Remittance)(nil) },
+		tenant: factoringcol.RemittanceApplyTenant,
+		id:     factoringcol.RemittanceColumns.ID,
+	},
 }
 
 func (r *repository) Exists(

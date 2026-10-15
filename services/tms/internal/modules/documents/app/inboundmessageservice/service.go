@@ -104,6 +104,9 @@ type Params struct {
 	// a Resend message lands with its sender, recipients and subject and is
 	// sent to review saying its content could not be read.
 	ContentFetcher inboundmessageports.InboundContentFetcher `optional:"true"`
+	// Remittances opens a factor's remittance from a FactorRemittance message.
+	// Billing provides it; without it those messages wait in the inbox.
+	Remittances inboundmessageports.RemittanceIntake `optional:"true"`
 
 	DB            kernelports.DBConnection
 	QueueRepo     inboundmessageports.TriageQueueRepository
@@ -151,6 +154,7 @@ type Service struct {
 	notifier    reviewNotifier
 	indexer     agentports.RetrievalIndexer
 	fetcher     inboundmessageports.InboundContentFetcher
+	remittances inboundmessageports.RemittanceIntake
 
 	db            kernelports.DBConnection
 	queueRepo     inboundmessageports.TriageQueueRepository
@@ -197,6 +201,7 @@ func New(p Params) *Service {
 		notifier:    notifier,
 		indexer:     p.Indexer,
 		fetcher:     p.ContentFetcher,
+		remittances: p.Remittances,
 
 		db:            p.DB,
 		queueRepo:     p.QueueRepo,

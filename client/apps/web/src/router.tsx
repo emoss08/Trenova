@@ -468,6 +468,25 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: () => redirect("/billing/factoring?view=schedules"),
           },
           {
+            path: "/billing/factoring/remittances",
+            loader: () => redirect("/billing/factoring?view=remittances"),
+          },
+          {
+            path: "/billing/factoring/remittances/:id",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringRemittance),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/factoring-remittance/page")),
+              ),
+            ),
+            async lazy() {
+              const { FactoringRemittancePage } =
+                await import("@/routes/factoring-remittance/page");
+              return { Component: FactoringRemittancePage };
+            },
+          },
+          {
             path: "/billing/factoring/submissions/:id",
             loader: combineLoaders(
               protectedLoader,

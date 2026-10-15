@@ -73,6 +73,22 @@ const changeFetchContent = "inbound-message-fetch-content"
 
 const changeCheckConflicts = "inbound-message-check-conflicts"
 
+// changeFactorRemittance hands a factor's remittance mail to billing once it is
+// settled. Executions that began before it replay without the step.
+const changeFactorRemittance = "inbound-message-factor-remittance"
+
+// remittanceOptions allow for reading a PDF remittance with a model, which is
+// the slow case; a CSV or spreadsheet is read in moments.
+var remittanceOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 10 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    10 * time.Second,
+		BackoffCoefficient: 2,
+		MaximumInterval:    2 * time.Minute,
+		MaximumAttempts:    3,
+	},
+}
+
 var conflictOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: time.Minute,
 	RetryPolicy: &temporal.RetryPolicy{
@@ -164,6 +180,10 @@ func ProcessInboundMessageWorkflow(
 	if err == nil {
 		if workflow.GetVersion(ctx, changeCheckConflicts, workflow.DefaultVersion, 1) == 1 {
 			checkConflicts(ctx, payload)
+		}
+		if workflow.GetVersion(ctx, changeFactorRemittance, workflow.DefaultVersion, 1) == 1 &&
+			result.Classification == inboundmessage.ClassificationFactorRemittance {
+			ingestRemittances(ctx, payload)
 		}
 
 		return result, nil
@@ -390,6 +410,17 @@ func checkConflicts(ctx workflow.Context, payload *ProcessInboundMessagePayload)
 	if err := workflow.ExecuteActivity(conflictCtx, a.CheckInboundConflictsActivity, payload).
 		Get(conflictCtx, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("could not check an inbound message for conflicts",
+			"messageId", payload.MessageID.String(), "error", err)
+	}
+}
+
+func ingestRemittances(ctx workflow.Context, payload *ProcessInboundMessagePayload) {
+	var a *Activities
+
+	remitCtx := workflow.WithActivityOptions(ctx, remittanceOptions)
+	if err := workflow.ExecuteActivity(remitCtx, a.IngestFactorRemittanceActivity, payload).
+		Get(remitCtx, nil); err != nil {
+		workflow.GetLogger(ctx).Error("could not open a factor remittance from a message",
 			"messageId", payload.MessageID.String(), "error", err)
 	}
 }

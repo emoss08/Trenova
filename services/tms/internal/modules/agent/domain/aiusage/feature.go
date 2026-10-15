@@ -14,6 +14,7 @@ const (
 	FeatureDocumentIntelligenceRoute   = Feature("DocumentIntelligenceRoute")
 	FeatureDocumentIntelligenceExtract = Feature("DocumentIntelligenceExtract")
 	FeatureAccountingMapping           = Feature("AccountingMapping")
+	FeatureFactoringRemittanceExtract  = Feature("FactoringRemittanceExtract")
 	FeatureAgentReflection             = Feature("AgentReflection")
 	FeatureAgentDrafting               = Feature("AgentDrafting")
 	FeatureAgentProfile                = Feature("AgentProfile")
@@ -30,6 +31,7 @@ func AllFeatures() []Feature {
 		FeatureDocumentIntelligenceRoute,
 		FeatureDocumentIntelligenceExtract,
 		FeatureAccountingMapping,
+		FeatureFactoringRemittanceExtract,
 		FeatureAgentReflection,
 		FeatureAgentDrafting,
 		FeatureAgentProfile,

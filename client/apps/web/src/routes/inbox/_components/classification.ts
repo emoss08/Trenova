@@ -3,6 +3,7 @@ import type { InboundAttachmentKind } from "@trenova/graphql/generated/graphql";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import {
   ClockAlertIcon,
+  CoinsHandIcon,
   FileCheck02Icon,
   FileEditIcon,
   HelpCircleIcon,
@@ -20,6 +21,7 @@ export const INBOUND_CLASSIFICATIONS = [
   "Invoice",
   "StatusRequest",
   "DetentionDispute",
+  "FactorRemittance",
   "Other",
 ] as const satisfies readonly InboundClassification[];
 
@@ -31,6 +33,7 @@ export const CLASSIFICATION_ICON: Record<InboundClassification, IconComponent> =
   Invoice: ReceiptTextIcon,
   StatusRequest: RadarIcon,
   DetentionDispute: ClockAlertIcon,
+  FactorRemittance: CoinsHandIcon,
   Other: HelpCircleIcon,
 };
 
@@ -46,6 +49,7 @@ export const CLASSIFICATION_VARIANT: Record<InboundClassification, BadgeVariant>
   Invoice: "accent-amber",
   StatusRequest: "accent-sky",
   DetentionDispute: "accent-rose",
+  FactorRemittance: "accent-indigo",
   Other: "accent-slate",
 };
 
@@ -60,6 +64,7 @@ export const CLASSIFICATION_DOT: Record<InboundClassification, string> = {
   Invoice: "bg-accent-amber",
   StatusRequest: "bg-accent-sky",
   DetentionDispute: "bg-accent-rose",
+  FactorRemittance: "bg-accent-indigo",
   Other: "bg-accent-slate",
 };
 
@@ -114,6 +119,8 @@ export function classificationLabel(
       return t("Status request");
     case "DetentionDispute":
       return t("Detention dispute");
+    case "FactorRemittance":
+      return t("Factor remittance");
     case "Other":
       return t("Other");
   }

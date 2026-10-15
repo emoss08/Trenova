@@ -82,6 +82,11 @@ const (
 	// read like an inbound attachment: what a scan is, and whose it is, is only
 	// known once its text has been read.
 	ProcessingProfileCapture ProcessingProfile = "capture"
+	// ProcessingProfileFactoringRemittance is a factor's PDF remittance. Its
+	// text is read and indexed so billing can read its lines, but it is never
+	// handed to the shipment extraction model: that model, its shadow runs and
+	// its training data are for freight paperwork, not a factor's statement.
+	ProcessingProfileFactoringRemittance ProcessingProfile = "factoring_remittance"
 )
 
 func (s Status) String() string {
@@ -145,6 +150,7 @@ func AllProcessingProfiles() []ProcessingProfile {
 		ProcessingProfileAssistantAttachment,
 		ProcessingProfileInboundAttachment,
 		ProcessingProfileCapture,
+		ProcessingProfileFactoringRemittance,
 	}
 }
 
@@ -168,7 +174,8 @@ func (p ProcessingProfile) IsValid() bool {
 		ProcessingProfileRateConfirmationImport,
 		ProcessingProfileAssistantAttachment,
 		ProcessingProfileInboundAttachment,
-		ProcessingProfileCapture:
+		ProcessingProfileCapture,
+		ProcessingProfileFactoringRemittance:
 		return true
 	}
 	return false
@@ -189,7 +196,14 @@ func (p ProcessingProfile) SupportsIntelligence() bool {
 	return p == ProcessingProfileRateConfirmationImport ||
 		p == ProcessingProfileAssistantAttachment ||
 		p == ProcessingProfileInboundAttachment ||
-		p == ProcessingProfileCapture
+		p == ProcessingProfileCapture ||
+		p == ProcessingProfileFactoringRemittance
+}
+
+// ExtractsWithAI reports whether a document read under this profile may be
+// handed to the shipment extraction model once its text is read.
+func (p ProcessingProfile) ExtractsWithAI() bool {
+	return p.SupportsIntelligence() && p != ProcessingProfileFactoringRemittance
 }
 
 func SupportsPreview(fileType string) bool {

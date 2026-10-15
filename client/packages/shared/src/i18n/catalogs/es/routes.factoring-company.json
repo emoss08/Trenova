@@ -61,6 +61,7 @@
   "Folder": "Carpeta",
   "For your team only. Never printed.": "Solo para su equipo. Nunca se imprime.",
   "From day": "Desde el día",
+  "Funding and reserve reports from this factor. Each is matched to its schedules and booked only when someone applies it.": "Informes de desembolso y de reserva de esta empresa de factoraje. Cada uno se empareja con sus relaciones y se registra solo cuando alguien lo aplica.",
   "Funding days": "Días de desembolso",
   "Funding days are required": "Los días de desembolso son obligatorios",
   "Funding days cannot be more than 60": "Los días de desembolso no pueden superar 60",
@@ -85,6 +86,7 @@
   "No agreements yet. Invoices assigned to this factor are not ready until one is active.": "Aún no hay acuerdos. Las facturas asignadas a esta empresa de factoraje no estarán listas hasta que uno esté activo.",
   "No factoring companies yet": "Aún no hay empresas de factoraje",
   "No notices yet. Draft one for each customer whose invoices you sell to this factor.": "Aún no hay avisos. Redacte uno para cada cliente cuyas facturas venda a esta empresa de factoraje.",
+  "No remittance from this factor yet. Import one, or forward the factor's emails to your inbox.": "Aún no hay remesas de esta empresa de factoraje. Importe una o reenvíe los correos electrónicos de la empresa de factoraje a su bandeja de entrada.",
   "Not attached": "No adjuntos",
   "Not set up. Invoices for this factor can't be submitted until it is.": "Sin configurar. Las facturas de esta empresa de factoraje no se pueden enviar hasta que se configure.",
   "Notes cannot be longer than 2000 characters": "Las notas no pueden superar los 2000 caracteres",
@@ -131,6 +133,7 @@
   "The least the factor charges on one invoice.": "Lo mínimo que cobra la empresa de factoraje por una factura.",
   "The liability for what the factor advanced, until the customer pays.": "El pasivo por lo que anticipó la empresa de factoraje, hasta que el cliente pague.",
   "The notices could not be loaded.": "No se pudieron cargar los avisos.",
+  "The remittances could not be loaded.": "No se pudieron cargar las remesas.",
   "The reserve could not be loaded.": "No se pudo cargar la reserva.",
   "The reserve the factor holds until the customer pays it.": "La reserva que retiene la empresa de factoraje hasta que el cliente la pague.",
   "The server's public key from the factor, in known_hosts form. A server presenting any other key is refused.": "La clave pública del servidor que proporciona la empresa de factoraje, en formato known_hosts. Se rechaza cualquier servidor que presente otra clave.",
@@ -159,5 +162,6 @@
   "e.g., payments@factor.com": "p. ej., payments@factor.com",
   "sftp.factor.com": "sftp.factor.com",
   "ssh-ed25519 AAAA…": "ssh-ed25519 AAAA…",
-  "{0, plural, one {# business day} other {# business days}}": "{0, plural, one {# día hábil} other {# días hábiles}}"
+  "{0, plural, one {# business day} other {# business days}}": "{0, plural, one {# día hábil} other {# días hábiles}}",
+  "{0} · {1, plural, one {# line} other {# lines}}": "{0} · {1, plural, one {# línea} other {# líneas}}"
 }

@@ -14,6 +14,7 @@ export function agentRoleFor(classification: InboundClassification | null): Agen
       return "dispatch";
     case "Invoice":
     case "DetentionDispute":
+    case "FactorRemittance":
     case "ProofOfDelivery":
       return "billing";
     default:

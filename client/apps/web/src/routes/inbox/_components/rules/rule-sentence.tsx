@@ -129,6 +129,14 @@ function kindSentence(
         source,
         action,
       );
+    case "FactorRemittance":
+      return rt(
+        "When a <k>factor remittance</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.",
+        tags,
+        sender,
+        source,
+        action,
+      );
     case "Other":
       return rt(
         "When <k>anything else</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.",
@@ -201,6 +209,14 @@ function assignSentence(
     case "DetentionDispute":
       return rt(
         "When a <k>detention dispute</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.",
+        tags,
+        sender,
+        source,
+        person,
+      );
+    case "FactorRemittance":
+      return rt(
+        "When a <k>factor remittance</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.",
         tags,
         sender,
         source,

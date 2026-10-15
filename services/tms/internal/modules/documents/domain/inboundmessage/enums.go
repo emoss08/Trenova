@@ -52,6 +52,8 @@ func (p Provider) DeliversAccountWide() bool {
 // different work, and everything else is Other, which goes to a person.
 type Classification string
 
+const AttachmentResourceType = "inbound_message"
+
 const (
 	ClassificationTender           = Classification("Tender")
 	ClassificationRateConfirmation = Classification("RateConfirmation")
@@ -59,6 +61,7 @@ const (
 	ClassificationInvoice          = Classification("Invoice")
 	ClassificationStatusRequest    = Classification("StatusRequest")
 	ClassificationDetentionDispute = Classification("DetentionDispute")
+	ClassificationFactorRemittance = Classification("FactorRemittance")
 	ClassificationOther            = Classification("Other")
 )
 
@@ -67,7 +70,7 @@ func (c Classification) IsValid() bool {
 	case ClassificationTender, ClassificationRateConfirmation,
 		ClassificationProofOfDelivery, ClassificationInvoice,
 		ClassificationStatusRequest, ClassificationDetentionDispute,
-		ClassificationOther:
+		ClassificationFactorRemittance, ClassificationOther:
 		return true
 	default:
 		return false
@@ -79,7 +82,7 @@ func AllClassifications() []Classification {
 		ClassificationTender, ClassificationRateConfirmation,
 		ClassificationProofOfDelivery, ClassificationInvoice,
 		ClassificationStatusRequest, ClassificationDetentionDispute,
-		ClassificationOther,
+		ClassificationFactorRemittance, ClassificationOther,
 	}
 }
 

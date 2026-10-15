@@ -112,6 +112,7 @@ export const Resource = {
   FactoringNoa: "factoring_noa",
   FactoringSubmission: "factoring_submission",
   FactoringReserve: "factoring_reserve",
+  FactoringRemittance: "factoring_remittance",
   BillingQueue: "billing_queue",
   InvoiceRun: "invoice_run",
   AccessorialCharge: "accessorial_charge",

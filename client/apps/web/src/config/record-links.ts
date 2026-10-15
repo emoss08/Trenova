@@ -74,6 +74,10 @@ export const RECORD_LINKS = {
     path: "/billing/configuration-files/factoring-companies",
     params: { section: "notices", noa: "{id}" },
   },
+  factoring_remittance: {
+    label: "Factor remittance",
+    path: "/billing/factoring/remittances/{id}",
+  },
   factoring_submission: {
     label: "Factoring schedule",
     path: "/billing/factoring/submissions/{id}",

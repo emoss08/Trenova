@@ -10,11 +10,12 @@ import (
 )
 
 type FundingItemInput struct {
-	ItemID       pulid.ID                 `json:"itemId"`
-	Outcome      factoring.FundingOutcome `json:"outcome"`
-	AdvanceMinor *int64                   `json:"advanceMinor"`
-	FeeMinor     *int64                   `json:"feeMinor"`
-	Reason       string                   `json:"reason"`
+	ItemID           pulid.ID                 `json:"itemId"`
+	Outcome          factoring.FundingOutcome `json:"outcome"`
+	AdvanceMinor     *int64                   `json:"advanceMinor"`
+	FeeMinor         *int64                   `json:"feeMinor"`
+	Reason           string                   `json:"reason"`
+	RemittanceLineID pulid.ID                 `json:"-"`
 }
 
 type RecordFundingRequest struct {
@@ -27,13 +28,14 @@ type RecordFundingRequest struct {
 }
 
 type ReserveMovementRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	SubmissionID pulid.ID              `json:"submissionId"`
-	ItemID       pulid.ID              `json:"itemId"`
-	Version      int64                 `json:"version"`
-	OccurredOn   int64                 `json:"occurredOn"`
-	CashMinor    *int64                `json:"cashMinor"`
-	Reason       string                `json:"reason"`
+	TenantInfo       pagination.TenantInfo `json:"-"`
+	SubmissionID     pulid.ID              `json:"submissionId"`
+	ItemID           pulid.ID              `json:"itemId"`
+	Version          int64                 `json:"version"`
+	OccurredOn       int64                 `json:"occurredOn"`
+	CashMinor        *int64                `json:"cashMinor"`
+	Reason           string                `json:"reason"`
+	RemittanceLineID pulid.ID              `json:"-"`
 }
 
 type PlannedLine struct {
