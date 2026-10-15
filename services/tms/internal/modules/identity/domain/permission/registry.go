@@ -244,4 +244,5 @@ func (r *Registry) registerAll() {
 	r.registerReferenceDataResources()
 	r.registerReportingResources()
 	r.registerCommunicationResources()
+	r.registerProtectedFieldResources()
 }

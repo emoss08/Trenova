@@ -3,6 +3,7 @@ import { WorkerCredentialTypeAutocompleteField } from "@/components/autocomplete
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
@@ -135,6 +136,8 @@ export function CredentialFormDialog({
   const today = useMemo(() => getTodayDate(), []);
   const isEdit = mode === "edit";
   const copy = COPY[mode];
+  const personalDetailsVisible = useProtectedFieldAccess("Personal");
+  const numberWithheld = isEdit && !personalDetailsVisible;
 
   const form = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialFormSchema) as Resolver<CredentialFormValues>,
@@ -169,9 +172,10 @@ export function CredentialFormDialog({
   const selectedTypeId = useWatch({ control, name: "credentialTypeId" });
   const issuedAt = useWatch({ control, name: "issuedAt" });
   const { option: selectedType } = useSelectOption("WORKER_CREDENTIAL_TYPE", selectedTypeId);
-  const requiresNumber = selectedType
-    ? selectOptionMetaBoolean(selectedType, "requiresNumber")
-    : false;
+  const requiresNumber =
+    !numberWithheld && selectedType
+      ? selectOptionMetaBoolean(selectedType, "requiresNumber")
+      : false;
   const requiresDocument = selectedType
     ? selectOptionMetaBoolean(selectedType, "requiresDocument")
     : false;
@@ -311,9 +315,14 @@ export function CredentialFormDialog({
                   control={control}
                   name="number"
                   label={t("Number")}
-                  placeholder={t("e.g. 12345678")}
-                  description={t("The number printed on the card or certificate.")}
+                  placeholder={numberWithheld ? t("Hidden") : t("e.g. 12345678")}
+                  description={
+                    numberWithheld
+                      ? t("Your role does not include personal details.")
+                      : t("The number printed on the card or certificate.")
+                  }
                   rules={{ required: requiresNumber }}
+                  disabled={numberWithheld}
                 />
               </FormControl>
               <FormControl>

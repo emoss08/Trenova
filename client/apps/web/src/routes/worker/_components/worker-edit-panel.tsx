@@ -9,6 +9,7 @@ import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-li
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
@@ -136,6 +137,7 @@ interface WorkerEditPanelProps {
 
 export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPanelProps) {
   const t = useT();
+  const personalDetailsVisible = useProtectedFieldAccess("Personal");
 
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -391,7 +393,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         }
                       >
                         {employmentView === "details" ? (
-                          <EmploymentTab />
+                          <EmploymentTab personalWithheld={!personalDetailsVisible} />
                         ) : (
                           <Suspense
                             fallback={
@@ -414,7 +416,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                       </FormSection>
                     </TabsContent>
                     <TabsContent value="compliance" className="p-4">
-                      <ComplianceTab />
+                      <ComplianceTab personalWithheld={!personalDetailsVisible} />
                     </TabsContent>
                     <TabsContent value="credentials" className="p-4">
                       <Suspense

@@ -6,6 +6,7 @@ import {
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -33,6 +34,9 @@ export function RateAgreementForm() {
 
   const { control } = useFormContext<RateAgreement>();
   const partyType = useWatch({ control, name: "partyType" });
+  const agreementId = useWatch({ control, name: "id" });
+  const marginsVisible = useProtectedFieldAccess("Margins");
+  const marginsWithheld = !marginsVisible && Boolean(agreementId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -289,10 +293,15 @@ export function RateAgreementForm() {
                 control={control}
                 name="marginFloorPercent"
                 label={t("Margin floor")}
-                placeholder="12"
+                placeholder={marginsWithheld ? t("Hidden") : "12"}
                 sideText="%"
                 decimalScale={2}
-                description={t("The thinnest margin this carrier may be paid down to")}
+                disabled={marginsWithheld}
+                description={
+                  marginsWithheld
+                    ? t("Your role does not include margins.")
+                    : t("The thinnest margin this carrier may be paid down to")
+                }
               />
             </FormControl>
             <FormControl>
@@ -300,10 +309,15 @@ export function RateAgreementForm() {
                 control={control}
                 name="maxPayPercentOfSell"
                 label={t("Maximum pay")}
-                placeholder="85"
+                placeholder={marginsWithheld ? t("Hidden") : "85"}
                 sideText="%"
                 decimalScale={2}
-                description={t("A ceiling on the pay as a share of what the customer is billed")}
+                disabled={marginsWithheld}
+                description={
+                  marginsWithheld
+                    ? t("Your role does not include margins.")
+                    : t("A ceiling on the pay as a share of what the customer is billed")
+                }
               />
             </FormControl>
           </FormGroup>

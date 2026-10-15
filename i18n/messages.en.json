@@ -11289,6 +11289,15 @@
       "apps/web/components"
     ]
   },
+  "A worker's date of birth, licence, TWIC and credential numbers, and drug test dates": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A worker’s credential is about to expire": {
     "sites": 1,
     "scope": [
@@ -113931,13 +113940,16 @@
     ]
   },
   "Hidden": {
-    "sites": 3,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/shipment"
+      "routes/desk",
+      "routes/rate-agreement",
+      "routes/shipment",
+      "routes/worker"
     ]
   },
   "Hidden by your data access": {
@@ -139725,7 +139737,7 @@
     ]
   },
   "Margin floor": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -159287,7 +159299,7 @@
     ]
   },
   "None on file": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -181392,7 +181404,7 @@
     ]
   },
   "Pays at most": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -222508,6 +222520,24 @@
       "apps/web/components"
     ]
   },
+  "See margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "See personal details": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "See sustained wind speed (wind gusts not indicated)": {
     "sites": 1,
     "scope": [
@@ -255579,6 +255609,15 @@
     "areas": [
       "routes/accounting-mapping",
       "routes/admin"
+    ]
+  },
+  "The margin floor and pay ceiling a rate agreement sets against the sell price": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The market area this end covers": {
@@ -299901,6 +299940,24 @@
       "routes/carrier",
       "routes/customer",
       "routes/fleet-safety"
+    ]
+  },
+  "Your role does not include margins.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "Your role does not include personal details.": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Your roles don't include permission to view this. Ask an administrator if you need it.": {

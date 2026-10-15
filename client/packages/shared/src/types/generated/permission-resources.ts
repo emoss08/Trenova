@@ -228,6 +228,10 @@ export const Resource = {
   CustomerCommunication: "customer_communication",
   InboundMessage: "inbound_message",
   InboundMailbox: "inbound_mailbox",
+
+  // Protected fields
+  ProtectedPersonal: "protected_personal",
+  ProtectedMargins: "protected_margins",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

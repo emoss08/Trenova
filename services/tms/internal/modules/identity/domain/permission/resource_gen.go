@@ -224,6 +224,10 @@ const (
 	ResourceCustomerCommunication Resource = "customer_communication"
 	ResourceInboundMessage        Resource = "inbound_message"
 	ResourceInboundMailbox        Resource = "inbound_mailbox"
+
+	// Protected fields
+	ResourceProtectedPersonal Resource = "protected_personal"
+	ResourceProtectedMargins  Resource = "protected_margins"
 )
 
 func (r Resource) String() string {

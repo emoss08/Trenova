@@ -51,11 +51,18 @@ omit_gqlgen_version_in_file_notice: true
 skip_mod_tidy: true
 use_buffer_pooling: true
 
+directives:
+  protected:
+    skip_runtime: true
+
 models:
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/emoss08/trenova/shared/pulid.ID
+  ProtectedFieldGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.FieldGroup
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int

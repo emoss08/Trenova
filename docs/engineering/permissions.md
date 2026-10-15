@@ -163,6 +163,49 @@ middleware installs the session's activation into the request context only when 
 required. A change advances the permission epoch and is recorded in the security audit
 trail.
 
+## Protected fields
+
+A few fields stay hidden from people who can read the record they sit on. Each belongs to a
+group, and a group is granted like any other permission, as `read` on its own resource in
+the **Protected fields** category of the role editor:
+
+| Group | Resource | Fields |
+|---|---|---|
+| Personal details | `protected_personal` | `WorkerProfile.dob`, `licenseNumber`, `twicCardNumber`, `lastDrugTest`; `WorkerCredential.number` |
+| Margins | `protected_margins` | `RateAgreement.marginFloorPercent`, `maxPayPercentOfSell` (and the same values on a version) |
+
+The schema marks each field `@protected(group: …)` (`shared.graphqls`; the directive is
+`skip_runtime`). `FieldGuardExtension` (`internal/api/graphql/fieldguard.go`) reads the
+directives once when the server starts, refuses one on a non-null field, and returns null
+for a protected field to a reader without the group, without resolving it. It asks the
+engine at most once per group per operation, through the same per-request memo as the
+resolvers. A protected field is therefore nullable, and on the client null means hidden:
+the worker form, credential form, rate agreement form and Desk cards show "Hidden" and
+disable the input.
+
+The REST routes that return these records (`/workers`, `/rate-agreements`, a rate quote's
+agreement) withhold the same fields through the entity's `WithholdFields`
+(`internal/api/fieldguard`), and an update keeps the stored value of any group the writer
+cannot see (`KeepFields` in the worker, credential and rate agreement services), so a form
+that never received a field cannot clear it. Creating a record takes the values as sent.
+Workers are published to the realtime stream without their entity, so a subscriber refetches
+through the guarded paths.
+
+Every protected field is also classified confidential in the registry, which keeps it out
+of agent tools, reports and proposal previews by tier. `fieldguard_test.go` fails if a field
+is protected without that classification, without an entity that withholds it, or if the
+set changes without the table being updated.
+
+The migration that added the groups granted them to every role and API key that could read
+workers (personal details) or rate agreements (margins), so nothing disappeared on upgrade.
+New roles get them from bundles: `safety.drivers` and `hr.workers` carry personal details,
+`billing.rates` carries margins.
+
+To protect another field: add the directive to a nullable field, classify it confidential on
+its resource, give the entity `WithholdFields`/`KeepFields` and call them from its REST routes
+and update path, show "Hidden" where the client reads it, and add it to the tables in
+`fieldguard_test.go`.
+
 ## Agents
 
 In a conversation an agent acts as the person: every tool call is checked against the

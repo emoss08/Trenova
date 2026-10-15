@@ -26908,8 +26908,8 @@ type RateAgreement {
   currency: String!
   defaultMinCharge: Decimal
   defaultMaxCharge: Decimal
-  marginFloorPercent: Decimal
-  maxPayPercentOfSell: Decimal
+  marginFloorPercent: Decimal @protected(group: Margins)
+  maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID
@@ -28659,6 +28659,23 @@ directive @goField(
   forceGenerate: Boolean
   batch: Boolean
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+"""
+A set of fields a role must be granted to see, wherever they appear. A reader
+without the grant receives null for every field in the set.
+"""
+enum ProtectedFieldGroup {
+  "A worker's date of birth, licence, TWIC and credential numbers, and drug test dates."
+  Personal
+  "The margin floor and pay ceiling a rate agreement sets against the sell price."
+  Margins
+}
+
+"""
+Withholds the field from a reader whose role does not grant its group. A
+protected field is always nullable, and null is what such a reader receives.
+"""
+directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
 
 enum EntityStatus {
   Active
@@ -33385,8 +33402,8 @@ type WorkerProfile {
   businessUnitId: ID!
   organizationId: ID!
   licenseStateId: ID
-  dob: Timestamp!
-  licenseNumber: String!
+  dob: Timestamp @protected(group: Personal)
+  licenseNumber: String @protected(group: Personal)
   cdlClass: CDLClass!
   cdlRestrictions: String!
   endorsement: EndorsementType!
@@ -33395,7 +33412,7 @@ type WorkerProfile {
   medicalCardExpiry: Timestamp
   medicalExaminerName: String!
   medicalExaminerNpi: String!
-  twicCardNumber: String!
+  twicCardNumber: String @protected(group: Personal)
   twicExpiry: Timestamp
   hireDate: Timestamp!
   terminationDate: Timestamp
@@ -33428,7 +33445,7 @@ type WorkerProfile {
   disqualificationReason: String!
   lastComplianceCheck: Timestamp!
   lastMvrCheck: Timestamp!
-  lastDrugTest: Timestamp!
+  lastDrugTest: Timestamp @protected(group: Personal)
   eldExempt: Boolean!
   shortHaulExempt: Boolean!
   version: Int!
@@ -33955,7 +33972,7 @@ type WorkerCredential {
   credentialTypeId: ID!
   credentialType: WorkerCredentialType
   status: WorkerCredentialStatus!
-  number: String
+  number: String @protected(group: Personal)
   issuingAuthority: String
   issuedAt: Timestamp
   expiresAt: Timestamp

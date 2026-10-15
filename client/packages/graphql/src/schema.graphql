@@ -6,6 +6,12 @@ schema {
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 """
+Withholds the field from a reader whose role does not grant its group. A
+protected field is always nullable, and null is what such a reader receives.
+"""
+directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
+
+"""
 What one agent has done lately, for its row on the Agents tab: runs on each of
 the last 14 days and the decisions people made on its proposals over 30.
 """
@@ -22589,6 +22595,21 @@ input ProposeShiftSwapInput {
   shiftDate: Timestamp!
 }
 
+"""
+A set of fields a role must be granted to see, wherever they appear. A reader
+without the grant receives null for every field in the set.
+"""
+enum ProtectedFieldGroup {
+  """
+  The margin floor and pay ceiling a rate agreement sets against the sell price.
+  """
+  Margins
+  """
+  A worker's date of birth, licence, TWIC and credential numbers, and drug test dates.
+  """
+  Personal
+}
+
 type Query {
   accessorialCharge(id: ID!): AccessorialCharge
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
@@ -23736,8 +23757,8 @@ type RateAgreement {
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
   id: ID!
-  marginFloorPercent: Decimal
-  maxPayPercentOfSell: Decimal
+  marginFloorPercent: Decimal @protected(group: Margins)
+  maxPayPercentOfSell: Decimal @protected(group: Margins)
   name: String!
   organizationId: ID!
   partyType: RateAgreementPartyType!
@@ -31225,7 +31246,7 @@ type WorkerCredential {
   issuedAt: Timestamp
   issuingAuthority: String
   notes: String
-  number: String
+  number: String @protected(group: Personal)
   organizationId: ID!
   status: WorkerCredentialStatus!
   updatedAt: Timestamp!
@@ -32116,7 +32137,7 @@ type WorkerProfile {
   complianceStatus: ComplianceStatus!
   createdAt: Timestamp!
   disqualificationReason: String!
-  dob: Timestamp!
+  dob: Timestamp @protected(group: Personal)
   """
   The worker's drug and alcohol testing standing, denormalised from the testing
   ledgers so the roster can filter and sort on it. Only Prohibited blocks
@@ -32130,10 +32151,10 @@ type WorkerProfile {
   id: ID!
   isQualified: Boolean!
   lastComplianceCheck: Timestamp!
-  lastDrugTest: Timestamp!
+  lastDrugTest: Timestamp @protected(group: Personal)
   lastMvrCheck: Timestamp!
   licenseExpiry: Timestamp!
-  licenseNumber: String!
+  licenseNumber: String @protected(group: Personal)
   licenseState: UsState
   licenseStateId: ID
   medicalCardExpiry: Timestamp
@@ -32160,7 +32181,7 @@ type WorkerProfile {
   per-area summaries for the live answer.
   """
   trainingHealth: WorkerTrainingHealth!
-  twicCardNumber: String!
+  twicCardNumber: String @protected(group: Personal)
   twicExpiry: Timestamp
   updatedAt: Timestamp!
   version: Int!

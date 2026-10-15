@@ -3,9 +3,11 @@ package ratequotehandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -29,12 +31,14 @@ type Params struct {
 	Service              *ratequoteservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     permissionports.PermissionEngine
 }
 
 type Handler struct {
 	service *ratequoteservice.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+	engine  permissionports.PermissionEngine
 }
 
 func New(p Params) *Handler {
@@ -42,6 +46,7 @@ func New(p Params) *Handler {
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
+		engine:  p.PermissionEngine,
 	}
 }
 
@@ -139,6 +144,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
+	fieldguard.Withhold(fieldguard.Visible(c, h.engine), entity)
 	c.JSON(http.StatusOK, entity)
 }
 

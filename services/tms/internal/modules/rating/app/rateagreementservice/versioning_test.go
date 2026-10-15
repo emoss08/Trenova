@@ -1,10 +1,11 @@
 package rateagreementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -94,7 +95,7 @@ func TestUpdate_ChangedHeaderTermsWriteTheNextVersion(t *testing.T) {
 		AuditService: audit,
 	})
 
-	updated, err := svc.Update(t.Context(), &edited, pulid.MustNew("usr_"))
+	updated, err := svc.Update(t.Context(), &edited, testActor())
 
 	require.NoError(t, err)
 	assert.EqualValues(t, 4, updated.CurrentVersionNumber)
@@ -122,7 +123,7 @@ func TestUpdate_UnchangedHeaderTermsWriteNoVersion(t *testing.T) {
 		AuditService: audit,
 	})
 
-	updated, err := svc.Update(t.Context(), &restated, pulid.MustNew("usr_"))
+	updated, err := svc.Update(t.Context(), &restated, testActor())
 
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, updated.CurrentVersionNumber)

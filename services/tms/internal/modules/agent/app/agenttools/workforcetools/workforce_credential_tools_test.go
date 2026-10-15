@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -89,6 +90,7 @@ func (f *fakeCredentials) Create(
 func (f *fakeCredentials) PlanUpdate(
 	_ context.Context,
 	entity *worker.WorkerCredential,
+	_ *permissionports.RequestActor,
 ) (*workercredentialservice.CredentialChange, error) {
 	after := *entity
 	if after.Number != f.credential.Number {
@@ -100,7 +102,7 @@ func (f *fakeCredentials) PlanUpdate(
 func (f *fakeCredentials) Update(
 	_ context.Context,
 	entity *worker.WorkerCredential,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) (*worker.WorkerCredential, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err

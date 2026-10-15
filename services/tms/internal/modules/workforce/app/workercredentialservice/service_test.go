@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -239,7 +241,31 @@ type harness struct {
 	userID     pulid.ID
 }
 
+func (h *harness) actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		PrincipalID:    h.userID,
+		UserID:         h.userID,
+		OrganizationID: h.tenant.OrgID,
+		BusinessUnitID: h.tenant.BuID,
+	}
+}
+
+type fixedFieldAccess permission.FieldGroupSet
+
+func (f fixedFieldAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
+	return permission.FieldGroupSet(f)
+}
+
 func newHarness(t *testing.T) *harness {
+	t.Helper()
+	return newHarnessSeeing(t, nil)
+}
+
+func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness {
 	t.Helper()
 	repo := newFakeRepo()
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
@@ -289,6 +315,7 @@ func newHarness(t *testing.T) *harness {
 		WorkerRepo:   workerRepo,
 		DocumentRepo: docRepo,
 		AuditService: audit,
+		Fields:       fields,
 	})
 
 	return &harness{
@@ -532,14 +559,14 @@ func TestUpdate_ClearsVerificationWhenFactsChange(t *testing.T) {
 
 	notesOnly := *verified
 	notesOnly.Notes = "renewed at the depot"
-	updated, err := h.svc.Update(t.Context(), &notesOnly, h.userID)
+	updated, err := h.svc.Update(t.Context(), &notesOnly, h.actor())
 	require.NoError(t, err)
 	assert.True(t, updated.IsVerified(), "notes do not invalidate a verification")
 
 	newExpiry := int64(1_960_000_000)
 	moved := *updated
 	moved.ExpiresAt = &newExpiry
-	updated, err = h.svc.Update(t.Context(), &moved, h.userID)
+	updated, err = h.svc.Update(t.Context(), &moved, h.actor())
 	require.NoError(t, err)
 	assert.False(t, updated.IsVerified(), "a new expiry needs a fresh verification")
 }

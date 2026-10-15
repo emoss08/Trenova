@@ -139,6 +139,9 @@ func (r *Registry) registerWorkerResources() {
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"number": SensitivityConfidential,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/dataretentionservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/documentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/app/iamservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/journalreviewservice"
@@ -124,6 +125,8 @@ func SharedOptions() fx.Option {
 			tableinsightservice.New,
 			autheventservice.New,
 			permission.NewEngine,
+			fieldsensitivity.NewFieldAccess,
+			func(a *fieldsensitivity.FieldAccess) permissionports.FieldAccess { return a },
 			permissionchange.New,
 			readscopeservice.New,
 			accesssettingsservice.New,

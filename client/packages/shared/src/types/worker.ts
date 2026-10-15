@@ -104,15 +104,8 @@ export const workerProfileSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
   licenseStateId: nullableStringSchema,
-  dob: z
-    .number()
-    .int()
-    .positive({
-      error: () => translate("Date of birth is required"),
-    }),
-  licenseNumber: z.string().min(1, {
-    error: () => translate("License number is required"),
-  }),
+  dob: z.number().int().nullish(),
+  licenseNumber: z.string().nullish(),
   cdlClass: cdlClassSchema,
   cdlRestrictions: nullableStringSchema,
   endorsement: endorsementTypeSchema,
@@ -156,7 +149,7 @@ export const workerProfileSchema = z.object({
   disqualificationReason: nullableStringSchema,
   lastComplianceCheck: z.number().int().default(0),
   lastMvrCheck: z.number().int().default(0),
-  lastDrugTest: z.number().int().default(0),
+  lastDrugTest: z.number().int().nullish(),
   eldExempt: z.boolean().default(false),
   shortHaulExempt: z.boolean().default(false),
   version: z.number().int().optional(),
@@ -167,6 +160,28 @@ export const workerProfileSchema = z.object({
 });
 
 export type WorkerProfile = z.infer<typeof workerProfileSchema>;
+
+/**
+ * Date of birth and license number are required of whoever can see them. A
+ * reader whose role withholds personal details receives them as null and
+ * cannot change them, so the server keeps what is stored.
+ */
+const workerProfileWithPersonalDetailsSchema = workerProfileSchema.superRefine((profile, ctx) => {
+  if (!profile.dob || profile.dob <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["dob"],
+      message: translate("Date of birth is required"),
+    });
+  }
+  if (!profile.licenseNumber?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["licenseNumber"],
+      message: translate("License number is required"),
+    });
+  }
+});
 
 export const ptoActorSchema = z.object({
   id: z.string(),
@@ -267,12 +282,20 @@ export const workerSchema = z.object({
 
   state: usStateRelationSchema,
   fleetCode: fleetCodeRelationSchema,
-  profile: workerProfileSchema.nullish(),
+  profile: workerProfileWithPersonalDetailsSchema.nullish(),
   pto: z.array(workerPtoSchema).nullish(),
   customFields: customFieldsSchema,
 });
 
 export type Worker = z.infer<typeof workerSchema>;
+
+export const workerWithoutPersonalDetailsSchema = workerSchema.extend({
+  profile: workerProfileSchema.nullish(),
+});
+
+export function workerFormSchema(personalDetailsVisible: boolean) {
+  return personalDetailsVisible ? workerSchema : workerWithoutPersonalDetailsSchema;
+}
 
 export const ptoChartDataRequestSchema = z.object({
   startDateFrom: z.number().int().positive(),

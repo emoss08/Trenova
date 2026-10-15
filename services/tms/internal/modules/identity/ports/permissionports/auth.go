@@ -1,6 +1,8 @@
 package permissionports
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -213,4 +215,19 @@ func (a *RequestActor) PersonUserID() pulid.ID {
 	}
 
 	return pulid.Nil
+}
+
+type FieldAccess interface {
+	Visible(ctx context.Context, actor *RequestActor) permission.FieldGroupSet
+}
+
+func VisibleFieldGroups(
+	ctx context.Context,
+	access FieldAccess,
+	actor *RequestActor,
+) permission.FieldGroupSet {
+	if access == nil {
+		return permission.AllFieldGroups()
+	}
+	return access.Visible(ctx, actor)
 }

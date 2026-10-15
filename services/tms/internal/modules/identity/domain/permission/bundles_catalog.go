@@ -107,6 +107,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceFuelSurchargeProgram, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceRateSimulation, Operations: []Operation{OpRead, OpCreate}},
 			{Resource: ResourceDetentionPolicy, Operations: []Operation{OpRead}},
+			{Resource: ResourceProtectedMargins, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -202,6 +203,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceWorkerInjury, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceDOTRandomPool, Operations: []Operation{OpRead, OpManage}},
 			{Resource: ResourceDocument, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpReject}},
+			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -242,6 +244,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceBenefitPlan, Operations: []Operation{OpRead, OpAssign}},
 			{Resource: ResourceWorkerChecklist, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
+			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
 		},
 	},
 	{
