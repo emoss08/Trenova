@@ -53,10 +53,10 @@ Loaded now:
 - find_in_trenova
 - wait_until
 - cancel_wait
-- get_edi_inbound_file
 - list_edi_messages
 - get_edi_ack_health
 - preview_edi_document
+- get_edi_partner
 - list_edi_partners
 - reprocess_edi_inbound_files
 - draft_edi_connection
@@ -65,10 +65,10 @@ Loaded now:
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - list_edi_inbound_files — List the inbound EDI files trading partners sent, newest first.
+- get_edi_inbound_file — Retrieve one inbound EDI file by id: its partner, status and failure reason, and each transaction set parsed from it with its control numbers.
 - get_edi_message — Retrieve one EDI message by id: what the document says, its delivery, its acknowledgment and every validation finding.
 - inspect_x12 — Parse X12 a person pasted and say what it holds and what is wrong with it.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
-- get_edi_partner — Retrieve one EDI trading partner's setup and readiness checklist by id.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, reprocess_edi_inbound_files, apply_edi_connection_draft

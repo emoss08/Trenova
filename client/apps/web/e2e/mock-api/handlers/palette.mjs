@@ -640,7 +640,8 @@ export function paletteHandlers(base) {
     DeskRecordShipments: (state, v) =>
       v.input?.invoiceIds?.length ||
       v.input?.driverSettlementIds?.length ||
-      v.input?.carrierSettlementIds?.length
+      v.input?.carrierSettlementIds?.length ||
+      v.input?.fieldFilters?.some((filter) => filter.field === "id")
         ? base.DeskRecordShipments(state, v)
         : recordShipments(state, v.input ?? {}, v.includeTotalCount),
     DeskWorkerCard: (state, v) => deskWorker(state, v.id),

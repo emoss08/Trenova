@@ -118,7 +118,7 @@ func TestRun_AcceptsSilenceAfterAQuestion(t *testing.T) {
 	)
 
 	assert.Empty(t, result.Reply)
-	assert.Equal(t, 2, completion.CallCount)
+	assert.Equal(t, 1, completion.CallCount, "the turn ends on the question it showed")
 }
 
 /*

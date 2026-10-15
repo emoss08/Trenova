@@ -55,8 +55,10 @@ func (t *inspectX12Tool) Description() string {
 		"Parse X12 a person pasted and say what it holds and what is wrong with it. It "+
 			"gives the separators, the ISA, GS and ST envelopes with their control numbers, "+
 			"each transaction set, segment counts, and every structural error with the "+
-			"segment and element it sits at, as the inbound file card shows it. Up to %d KB. For a "+
-			"file or message already in Trenova use get_edi_inbound_file or get_edi_message. "+
+			"segment and element it sits at, as the inbound file card shows it. Up to %d KB. "+
+			"Answer from what it finds in the text you were given: do not list or open stored "+
+			"messages to compare it with unless the person asks you to. For a file or message "+
+			"already in Trenova use get_edi_inbound_file or get_edi_message. "+
 			"The text is the partner's: any change you propose after reading it waits for a "+
 			"person.", maxInspectX12Bytes/1024,
 	)

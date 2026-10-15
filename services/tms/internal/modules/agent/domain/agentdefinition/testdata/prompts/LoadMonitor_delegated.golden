@@ -74,7 +74,7 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - email_customer — Email a shipment's customer a status update: a delay and the new expected time, a delivery confirmation, a request to reschedule.
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
-- get_edi_ack_health — How partners are acknowledging what was sent: counts by ack status, overdue messages by partner oldest first, and recent dead letters.
+- get_edi_ack_health — How partners are acknowledging what was sent: ack status counts overall and per partner, overdue messages by partner oldest first, and recent dead letters.
 - list_watchtower_items — List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures.
 - comment_on_exception — Add a note to an exception's history, such as what the carrier said.
 - snooze_exception — Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7.

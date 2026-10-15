@@ -16,8 +16,8 @@ import (
 const (
 	DraftEDIConnectionToolName = "draft_edi_connection"
 
-	draftReadyNote = "Ready: show the person the draft, then propose apply_edi_connection_draft " +
-		"with the same input and documentDigest. Nothing is written until they approve it. Tell " +
+	draftReadyNote = "Ready: point the person to the draft in the sentence that says what it " +
+		"sets up, then propose apply_edi_connection_draft with the same input and documentDigest. Nothing is written until they approve it. Tell " +
 		"them which credentials to enter before the connection is turned on."
 	draftBlockedNote = "Not ready. Ask the person about each decision with its candidates and " +
 		"pages, add their answers as resolutions, and draft again. Never fill a held value " +
@@ -160,5 +160,45 @@ func draftNote(draft *ediports.ConnectionDraft) string {
 		notes = append(notes, draftBlockedNote,
 			fmt.Sprintf("Open: %s.", strings.Join(draft.Blockers, "; ")))
 	}
+	if findings := draftFindings(draft); len(findings) > 0 {
+		notes = append(notes, "In your reply, tell the person: "+strings.Join(findings, "; ")+".")
+	}
 	return strings.Join(notes, " ")
+}
+
+func draftFindings(draft *ediports.ConnectionDraft) []string {
+	findings := make([]string, 0, len(draft.Gaps)+len(draft.DocumentProfiles)+1)
+	for index := range draft.DocumentProfiles {
+		profile := &draft.DocumentProfiles[index]
+		for ruleIndex := range profile.Template.Unmet {
+			rule := &profile.Template.Unmet[ruleIndex]
+			findings = append(findings, fmt.Sprintf("the %s %s template does not meet %s%s",
+				profile.TransactionSet, strings.ToLower(string(profile.Direction)),
+				segmentRule(rule.SegmentID, rule.ElementPosition), onPage(rule.Source.Page)))
+		}
+	}
+	for index := range draft.Gaps {
+		gap := &draft.Gaps[index]
+		findings = append(findings,
+			"the guide leaves this open: "+strings.TrimSpace(gap.Summary)+onPage(gap.Source.Page))
+	}
+	if required := draft.CredentialsToEnter(); len(required) > 0 {
+		findings = append(findings, "the credentials to enter before it is turned on: "+
+			strings.Join(required, ", "))
+	}
+	return findings
+}
+
+func segmentRule(segment string, element int) string {
+	if element <= 0 {
+		return segment
+	}
+	return fmt.Sprintf("%s-%02d", segment, element)
+}
+
+func onPage(page int) string {
+	if page <= 0 {
+		return ""
+	}
+	return fmt.Sprintf(" (page %d)", page)
 }

@@ -11,8 +11,9 @@ dispatcher puts on loads, the dock a planner sends trucks to, the carrier a carr
 qualifies and pays, the order a customer service rep follows to billing, the service failure
 a customer service rep explains and settles, the rate agreement a pricing analyst holds
 freight to, the invoice a biller sends and a collector follows to paid, the worker
-settlement a payroll clerk approves and pays, and the carrier settlement accounts payable
-reconciles against the carrier's invoices and pays.
+settlement a payroll clerk approves and pays, the carrier settlement accounts payable
+reconciles against the carrier's invoices and pays, and the detention charge a biller
+approves for a stop that ran past its free time.
 
 ## Naming and linking artifacts
 
@@ -25,7 +26,7 @@ the sentence that says what it shows. The Desk draws it there as a link in the b
 | The words of a link | The artifact's title, always. `FinishTurn` rewrites every link in the turn's replies with `agentruntime.NameArtifactLinks` before saving, so the transcript, search, exports and the next turn's context read the same name. A link to an id the thread does not hold is saved as its words. |
 | The link | `DeskInlineArtifact` draws `artifact.title`, never the reply's words, so a reply still streaming already shows the right name. |
 | Where a link may stand | Inside a sentence (`agentruntime/placement.go`); see "Reply passes" in [agent-runtime.md](agent-runtime.md). |
-| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, and a table that is long, ranked, worked from or opens the live view. |
+| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, an EDI connection draft, a written record, and a table that is long, ranked, worked from or opens the live view. The note the model reads with the result (`shownNote`) says so for each of them: one that must be named is never told that pointing to it is optional, or the reply leaves it out and is written again. |
 
 The client never moves, adds or renames a link: what the server saved is what is drawn.
 Approval drafts and plans are made after the reply and open from their approval cards, not
@@ -84,7 +85,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement; the parts the two settlement cards share are `dk-rec-*` in `record-card/`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge; the parts the two settlement cards share are `dk-rec-*` in `record-card/`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -131,6 +132,7 @@ ask what the record looks like to the person who reads it, and draw that:
 | Invoice | a receipt slip of its bill type (INV, CR, DR) beside who it bills; the figure is what is still owed (amber once late), a credit memo's credit left, a draft's total or a voided total struck through; what is owed as one strip (paid, credited hatched, in dispute amber, still open) keyed underneath, and the terms as a ruler from the invoice date to the due date with today on it, past it in amber once late; a draft instead shows how many of the customer's days have already run while it waits to be posted, since its terms count from the invoice date; the charges as the bill reads them, one row per way a charge was billed (`Invoice.chargeSummary`, summed on the server so a consolidated invoice of hundreds of lines is a handful of rows), the freight rated by the formula template named on the line and opening that template's card, its name cut to fit with the whole of it on hover; the foot from the total down to the balance due over a double rule; payments and credits as remittance stubs (a reversed payment or a credit taken back struck through, a short pay tagged); the open dispute as an amber slip over the closed ones; and where it went as one slip each for email, the EDI 210 (opening its message) and the accounting system it is in, each line cut to one row and told in full on hover only when cut. A voided invoice says why and what became of its freight; a credit memo, what it corrects and the invoices it settled |
 | Worker settlement | a pay stub marked PAY beside the worker; the figure is the net pay, struck through once voided and quiet at zero, with what carries forward under it; the flags the run raised to look at before approving; how earnings, reimbursements and deductions add up to the net pay as a waterfall, a shortfall carried to the next settlement hanging below zero; the statement summed by how each line was paid (`DriverSettlement.lineSummary`, one row per pay component, method, recurring item, advance or escrow account, so a week of loads is a handful of rows), the advance still owed and the escrow held beside their rows, pay added by hand marked; the worker's disputes, an open one in their words; and each load with the share the settlement pays for it (`loadShares`) in place of its charge |
 | Carrier settlement | an AP stub beside the carrier and its MC number; the figure is the net payable with its terms; the carrier's invoices reconciled move by move (`CarrierSettlement.moveInvoices`, each move's standing invoice read through its carrier assignment, since a match names a settlement only once its variance is accepted) as a strip of cells (matched, off the buy rate, waiting to be accepted, not invoiced yet) keyed underneath, with only the moves that need someone listed, each invoice against the buy rate; the costs summed by kind over the adjustments (`costSummary`) down to the net payable; where the money goes (the remit-to address, the method, and the terms); and each load with its share |
+| Detention charge | a DET stub beside the facility, the customer and the appointment; the figure is the charge to bill with its rounded time and rate, a running clock priced as of now (`DetentionOccurrenceDetail.currentlyBillable`, the engine's price for an open clock, since the stored amount is zero until the truck leaves), struck through once waived; the charge's way from the dock to the invoice, struck off when waived, disputed or not billable, with who approved it (`approvedBy`); the stop's clock as one ruler from the appointment or the arrival to the departure or now (before the clock hatched, free time, billable time, the notice flagged above it, every other crowded moment a row lower); the calculation trace as a receipt in the engine's own words, the worker's detention pay left to the split beside it; what the customer is billed against the worker's pay and what is kept; the notice the policy asks for, warned when overdue with when it must go; the collectability score with what each short factor needs, and the evidence chain; the load (`{ kind: "shipment", id }`) and the facility (`location`, read only under permission to read locations) and customer, each opened in place; and why a waived or disputed charge stands as it does (`waivedBy`) |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. `CardStatus` takes `danger` with an `x` mark only for a state that is final and failed
@@ -185,7 +187,8 @@ read draws `CardUnreadable` with the way back.
 A card that lists the shipments of its record (a customer's freight, the loads a tractor
 pulled) reads them with `useRecordShipments({ scope, pageSize, enabled })` and draws them
 with `CardShipments`. The scope says how the record owns them (`{ kind: "customer", id }`
-filters on the customer; `{ kind: "tractor", id }` asks `shipments(input: { tractorIds })`
+filters on the customer; `{ kind: "shipment", id }` filters on the shipment's own id, for a
+card about one stop of a load; `{ kind: "tractor", id }` asks `shipments(input: { tractorIds })`
 for loads with a live move assigned to it). One operation, `DeskRecordShipments`, reads
 every scope a page at a time with the count on the first page only, and the next page is
 read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
@@ -217,7 +220,8 @@ A record's lifecycle in a fixed order of steps, drawn across the card as segment
 `CardTrack` (`record-card/card-track.tsx`, with `CardTrackSkeleton`): the steps behind it
 ticked, the one it stands at in ink, those ahead open, and the whole track struck off
 (`off`) once the record is voided or canceled, with a note under it saying who moved it last
-and what comes next. The order and both settlement cards draw their lifecycles with it.
+and what comes next. The order, both settlement cards and the detention card draw their
+lifecycles with it.
 
 The two settlement cards share their frame in `record-card/card-settlement.tsx` and
 `record-card/settlement-values.ts`: the stub, the track's steps and note (`settlementTrack`,
@@ -231,15 +235,20 @@ folder.
 
 A card's buttons are the record's own steps, taken by the person and never by the agent,
 each shown only to someone holding the permission the server checks for it
-(`useSettlementSteps` reads them once for a settlement card; the invoice card reads its own).
+(`useSettlementSteps` reads them once for a settlement card; the invoice card reads its own;
+the detention card reads detention policy update once, the permission the server checks for
+approving, sending the notice, recording a dispute and waiving).
 `CardActionButton` (`record-card/card-action.tsx`) draws each: when something stands in the
 way (an invoice that has not been posted cannot be sent by EDI) it stays where it is,
 disabled, and says why on hover and to a screen reader, rather than vanishing. A step that
 needs more from the person (a reason to send back or void, how a settlement was paid) opens
 the dialog its page already uses, imported from the page, so the card and the page cannot ask
-for different things. After a step the card reads its record again through the module's own
+for different things; when that dialog lives in a larger component, it moves to a module of its
+own first (the detention desk's waive and dispute dialogs are `occurrence-action-dialogs.tsx`), so
+the card does not bring the page's sheet with it. After a step the card reads its record again through the module's own
 invalidation (`invalidateDriverWorkspace`, `invalidateCarrierWorkspace`), whose prefixes
-include the card's query keys. What takes a form of its own (adding pay by hand, accepting an
+include the card's query keys (`useInvalidateDetention` invalidates every detention query,
+the card's among them). What takes a form of its own (adding pay by hand, accepting an
 invoice's variance) stays on the record's page, and the bar's hint says so.
 
 Any other list a card reads a page at a time (a carrier's

@@ -239,6 +239,7 @@ type Resolver struct {
 	dOTRandomPool                      *workerdrugalcoholresolver.DOTRandomPoolResolver
 	dQFFile                            *workerdqfresolver.DQFFileResolver
 	dQFItem                            *workerdqfresolver.DQFItemResolver
+	detentionOccurrence                *detentionresolver.DetentionOccurrenceResolver
 	disciplinaryLadder                 *workersafetyresolver.DisciplinaryLadderResolver
 	distanceProfile                    *distanceprofileresolver.DistanceProfileResolver
 	documentTemplate                   *documenttemplateresolver.DocumentTemplateResolver
@@ -1219,6 +1220,7 @@ func FromServices(s *Services) *Resolver {
 		dOTRandomPool:                &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps},
 		dQFFile:                      &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps},
 		dQFItem:                      &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps},
+		detentionOccurrence:          &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps},
 		disciplinaryLadder:           &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps},
 		distanceProfile:              &distanceprofileresolver.DistanceProfileResolver{Deps: distanceprofileDeps},
 		documentTemplate:             &documenttemplateresolver.DocumentTemplateResolver{Deps: documenttemplateDeps},
@@ -2037,6 +2039,10 @@ func (r *Resolver) DQFFile() generated.DQFFileResolver {
 
 func (r *Resolver) DQFItem() generated.DQFItemResolver {
 	return r.dQFItem
+}
+
+func (r *Resolver) DetentionOccurrence() generated.DetentionOccurrenceResolver {
+	return r.detentionOccurrence
 }
 
 func (r *Resolver) DisciplinaryLadder() generated.DisciplinaryLadderResolver {
