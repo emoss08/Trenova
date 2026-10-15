@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -26,6 +27,7 @@ func newTestService(t *testing.T) (*Service, *apikeyportsmock.MockAPIKeyReposito
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	svc := &Service{
 		repo:     repo,
+		engine:   &mocks.AllowAllPermissionEngine{},
 		registry: permissiondomain.NewRegistry(),
 		cfg: &config.Config{
 			Security: config.SecurityConfig{

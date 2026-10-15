@@ -1508,18 +1508,23 @@ func TestCheck_UsesTenantPolicyLookup(t *testing.T) {
 func TestCheckBatch_APIKeyLoadsKeyOnce(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, _ := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	apiKeyRepo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	eng.apiKeyRepo = apiKeyRepo
 	ctx := t.Context()
 	apiKeyID := pulid.MustNew("ak_")
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
+	creatorID := expectAPIKeyCreator(userRepo, cacheRepo, creatorHolds(map[string][]string{
+		"shipment": {"read", "create"},
+		"customer": {"read"},
+	}))
 
 	apiKeyRepo.EXPECT().
 		GetByID(ctx, pagination.TenantInfo{OrgID: orgID, BuID: buID}, apiKeyID).
 		Return(&apikey.Key{
-			ID: apiKeyID,
+			ID:          apiKeyID,
+			CreatedByID: creatorID,
 			Permissions: []*apikey.Permission{
 				{
 					Resource:   "shipment",

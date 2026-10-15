@@ -828,45 +828,13 @@ func (s *Service) validateNoEscalation(
 		if rp == nil {
 			continue
 		}
-		actorResourcePerm, ok := actorPerms.Resources[rp.Resource]
-		if !ok {
-			me := errortypes.NewMultiError()
-			me.Add(
-				"permissions",
-				errortypes.ErrForbidden,
-				"cannot grant permissions for resource '{0}' that you don't have access to",
-				rp.Resource,
-			)
-			return me
-		}
-
-		actorOps := permission.NewOperationSet(actorResourcePerm.Operations...)
-		for _, op := range rp.Operations {
-			if !actorOps.Has(op) {
-				me := errortypes.NewMultiError()
-				me.Add(
-					"permissions",
-					errortypes.ErrForbidden,
-					"cannot grant '{0}' operation on '{1}' that you don't have", string(
-						op,
-					), rp.Resource,
-				)
-				return me
-			}
-		}
-
-		if rp.DataScope.IsMorePermissive(actorResourcePerm.DataScope) {
-			me := errortypes.NewMultiError()
-			me.Add(
-				"permissions",
-				errortypes.ErrForbidden,
-				"cannot grant data scope '{0}' on '{1}' that is more permissive than your own",
-				string(
-					rp.DataScope,
-				),
-				rp.Resource,
-			)
-			return me
+		violation, violated := actorPerms.DelegationViolation(
+			rp.Resource,
+			rp.Operations,
+			rp.DataScope,
+		)
+		if violated {
+			return violation.FieldError("permissions")
 		}
 	}
 

@@ -28,6 +28,7 @@ type Params struct {
 	Repo     apikeyports.APIKeyRepository
 	Registry *permission.Registry
 	Auditor  permissionports.SecurityAuditor
+	Engine   permissionports.PermissionEngine
 
 	Config *config.Config
 	Plans  platformplanports.PlanService `optional:"true"`
@@ -38,6 +39,7 @@ type Service struct {
 	repo     apikeyports.APIKeyRepository
 	registry *permission.Registry
 	auditor  permissionports.SecurityAuditor
+	engine   permissionports.PermissionEngine
 	cfg      *config.Config
 	plans    platformplanports.PlanService
 }
@@ -48,6 +50,7 @@ func New(p Params) *Service {
 		repo:     p.Repo,
 		registry: p.Registry,
 		auditor:  p.Auditor,
+		engine:   p.Engine,
 		cfg:      p.Config,
 		plans:    p.Plans,
 	}
@@ -124,6 +127,10 @@ func (s *Service) CreateAPIKey(
 		return nil, err
 	}
 
+	if err = s.validateWithinActor(ctx, userID, tenantInfo.OrgID, normalizedPermissions); err != nil {
+		return nil, err
+	}
+
 	generated, err := apikey.GenerateAPIKeySecret()
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to generate api key").WithInternal(err)
@@ -190,6 +197,15 @@ func (s *Service) UpdateAPIKey(
 
 	normalizedPermissions, err := s.normalizePermissions(req.Permissions)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = s.validateWithinActor(
+		ctx,
+		tenantInfo.UserID,
+		tenantInfo.OrgID,
+		normalizedPermissions,
+	); err != nil {
 		return nil, err
 	}
 
@@ -530,6 +546,30 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 
 	if me.HasErrors() {
 		return me
+	}
+
+	return nil
+}
+
+func (s *Service) validateWithinActor(
+	ctx context.Context,
+	actorID, orgID pulid.ID,
+	inputs []apikeyports.APIKeyPermissionInput,
+) error {
+	held, err := s.engine.GetEffectivePermissions(ctx, actorID, orgID)
+	if err != nil {
+		return err
+	}
+
+	for _, input := range inputs {
+		violation, violated := held.DelegationViolation(
+			input.Resource,
+			input.Operations,
+			input.DataScope,
+		)
+		if violated {
+			return violation.FieldError("permissions")
+		}
 	}
 
 	return nil

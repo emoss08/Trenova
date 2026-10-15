@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -1034,11 +1035,79 @@ func (e *engine) computeAPIKeyPermissions(
 		e.mergeAPIKeyPermissionIntoCache(resources, rp)
 	}
 
+	creator, err := e.apiKeyCreatorPermissions(ctx, key.CreatedByID, buID, orgID)
+	if err != nil {
+		return nil, err
+	}
+	e.restrictToCreator(resources, creator)
+
 	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityRestricted),
 		Resources:      resources,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, nil
+}
+
+func (e *engine) apiKeyCreatorPermissions(
+	ctx context.Context,
+	creatorID, buID, orgID pulid.ID,
+) (*permissionports.CachedPermissions, error) {
+	empty := &permissionports.CachedPermissions{
+		Resources: make(map[string]*permissionports.CachedResourcePermission),
+	}
+
+	creator, err := e.userRepo.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
+		UserID:     creatorID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Now:        timeutils.NowUnix(),
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return empty, nil
+		}
+		return nil, err
+	}
+	if creator.ValidateStatus() != nil {
+		return empty, nil
+	}
+
+	load, err := e.getOrComputePermissions(
+		authctx.WithoutSessionRoleActivation(ctx),
+		creator.ID,
+		orgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return load.perms, nil
+}
+
+func (e *engine) restrictToCreator(
+	resources map[string]*permissionports.CachedResourcePermission,
+	creator *permissionports.CachedPermissions,
+) {
+	for resource, rp := range resources {
+		kept := make([]string, 0, len(rp.Operations))
+		for _, op := range rp.Operations {
+			held, ok := e.resolveResourcePermission(creator, resource, permission.Operation(op))
+			if !ok {
+				continue
+			}
+			kept = append(kept, op)
+			if permission.DataScope(rp.DataScope).IsMorePermissive(
+				permission.DataScope(held.DataScope),
+			) {
+				rp.DataScope = held.DataScope
+			}
+		}
+
+		if len(kept) == 0 {
+			delete(resources, resource)
+			continue
+		}
+		rp.Operations = kept
+	}
 }
 
 func (e *engine) getOrComputePermissions(

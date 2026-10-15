@@ -134,6 +134,11 @@ Losing access ends it everywhere it is held, and each step is recorded:
   have open. Saving the same deactivation again ends any session a failed first
   attempt left behind.
 - Revoking a driver's portal access ends the portal user's sessions.
+- An API key never grants more than its creator holds. Creating or editing a key with a
+  resource, operation or scope the person saving it does not hold is refused, and at
+  request time the key's grants are intersected with what its creator holds now: a
+  creator who is demoted narrows their keys, and one who is deactivated, locked or no
+  longer a member of the organization leaves their keys granting nothing.
 - Removing a user from an organization deletes their role assignments there, one
   critical `Role unassigned` entry each, and ends their sessions bound to it. The
   user's current organization moves to their default one, and a user cannot be left
