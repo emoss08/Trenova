@@ -1,22 +1,10 @@
-import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
-import type { NoticeDeliveryStatus, NoticeKind } from "@trenova/shared/types/detention";
-import { SelectField } from "@/components/fields/select-field";
-import { TextareaField } from "@/components/fields/textarea-field";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { detentionWaiverReasonChoices } from "@/lib/choices";
+import { deliveryStatusLabel, noticeKindLabel } from "@/lib/detention-labels";
 import { detention } from "@/lib/queries/detention";
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Sheet,
@@ -35,41 +23,26 @@ import {
 } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency, toTitleCase } from "@trenova/shared/lib/utils";
 import {
-  waiverReasonSchema,
   type CollectabilityAssessment,
   type DetentionEvidence,
   type DetentionNotice,
   type DetentionOccurrence,
   type OccurrenceDetail,
 } from "@trenova/shared/types/detention";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { CalculationReceipt } from "./calculation-receipt";
+import { DisputeDialog, WaiveDialog } from "./occurrence-action-dialogs";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const METER_TRANSITION = { type: "spring", stiffness: 160, damping: 28, mass: 0.7 } as const;
 
 /** Below this the claim needs work before anyone leans on it in a dispute. */
 const WEAK_SCORE = 65;
-
-const waiveFormSchema = z.object({
-  reason: waiverReasonSchema,
-  note: z.string().min(1, { error: () => translate("Explain why this charge is being forgiven") }),
-});
-type WaiveFormValues = z.infer<typeof waiveFormSchema>;
-
-const disputeFormSchema = z.object({
-  note: z.string().min(1, { error: () => translate("Record what the customer is disputing") }),
-});
-type DisputeFormValues = z.infer<typeof disputeFormSchema>;
 
 type OccurrenceDetailSheetProps = {
   occurrenceId: string | null;
@@ -278,172 +251,6 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-type ActionDialogProps = {
-  occurrenceId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDone: () => void;
-};
-
-function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogProps) {
-  const t = useT();
-
-  const form = useForm<WaiveFormValues>({
-    resolver: zodResolver(waiveFormSchema),
-    defaultValues: { reason: "CustomerGoodwill", note: "" },
-  });
-  const { control, handleSubmit, reset } = form;
-
-  const { mutateAsync, isPending } = useApiMutation<
-    DetentionOccurrence,
-    WaiveFormValues,
-    unknown,
-    WaiveFormValues
-  >({
-    mutationFn: (values) => apiService.detentionService.waive(occurrenceId, values),
-    onSuccess: () => {
-      toast.success(t("Detention waived"), {
-        description: t("The charge was forgiven and the reason recorded as evidence."),
-      });
-      reset();
-      onOpenChange(false);
-      onDone();
-    },
-    form,
-    resourceName: "Detention Occurrence",
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("Waive this charge")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <Form
-            className="flex flex-col gap-4"
-            onSubmit={handleSubmit((values) => mutateAsync(values))}
-          >
-            <FormGroup cols={1}>
-              <FormControl>
-                <SelectField
-                  control={control}
-                  name="reason"
-                  label={t("Reason")}
-                  placeholder={t("Select a coded reason")}
-                  rules={{ required: true }}
-                  options={detentionWaiverReasonChoices}
-                  description={t("The coded reason waiver leakage is reported against.")}
-                />
-              </FormControl>
-              <FormControl>
-                <TextareaField
-                  control={control}
-                  name="note"
-                  label={t("Note")}
-                  placeholder={t(
-                    "Dock crew was short-staffed; customer asked for a one-time concession",
-                  )}
-                  rules={{ required: true }}
-                  description={t("Context the next person reviewing this waiver will need.")}
-                />
-              </FormControl>
-            </FormGroup>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" isLoading={isPending} loadingText={t("Waiving")}>
-                {t("Waive charge")}
-              </Button>
-            </DialogFooter>
-          </Form>
-        </FormProvider>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogProps) {
-  const t = useT();
-
-  const form = useForm<DisputeFormValues>({
-    resolver: zodResolver(disputeFormSchema),
-    defaultValues: { note: "" },
-  });
-  const { control, handleSubmit, reset } = form;
-
-  const { mutateAsync, isPending } = useApiMutation<
-    DetentionOccurrence,
-    DisputeFormValues,
-    unknown,
-    DisputeFormValues
-  >({
-    mutationFn: (values) => apiService.detentionService.dispute(occurrenceId, values),
-    onSuccess: () => {
-      toast.success(t("Dispute recorded"), {
-        description: t("The original computation is preserved for the claim file."),
-      });
-      reset();
-      onOpenChange(false);
-      onDone();
-    },
-    form,
-    resourceName: "Detention Occurrence",
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("Record a dispute")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "Recording the customer's rejection keeps the original computation intact — exactly what working the claim requires.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <Form
-            className="flex flex-col gap-4"
-            onSubmit={handleSubmit((values) => mutateAsync(values))}
-          >
-            <FormGroup cols={1}>
-              <FormControl>
-                <TextareaField
-                  control={control}
-                  name="note"
-                  label={t("What is the customer disputing?")}
-                  placeholder={t(
-                    "Customer claims the driver arrived 40 minutes later than our records show",
-                  )}
-                  rules={{ required: true }}
-                  description={t(
-                    "Their claim, verbatim where possible — it decides which evidence matters.",
-                  )}
-                />
-              </FormControl>
-            </FormGroup>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" isLoading={isPending} loadingText={t("Recording")}>
-                {t("Record dispute")}
-              </Button>
-            </DialogFooter>
-          </Form>
-        </FormProvider>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -681,34 +488,4 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
       </SheetContent>
     </Sheet>
   );
-}
-
-function noticeKindLabel(kind: NoticeKind, t: TranslateFn): string {
-  switch (kind) {
-    case "Warning":
-      return t("Warning notice");
-    case "Started":
-      return t("Started notice");
-    case "Update":
-      return t("Update notice");
-    case "Final":
-      return t("Final notice");
-  }
-}
-
-function deliveryStatusLabel(status: NoticeDeliveryStatus, t: TranslateFn): string {
-  switch (status) {
-    case "Queued":
-      return t("Queued");
-    case "Sent":
-      return t("Sent");
-    case "Delivered":
-      return t("Delivered");
-    case "Opened":
-      return t("Opened");
-    case "Bounced":
-      return t("Bounced");
-    case "Failed":
-      return t("Failed");
-  }
 }

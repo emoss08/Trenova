@@ -65,6 +65,30 @@ describe("fetchRecordShipments", () => {
     });
   });
 
+  it("reads the one shipment a detention charge sits on by its id", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: {
+        edges: [{ node: node("shp_9") }],
+        pageInfo: { hasNextPage: false, endCursor: null },
+        totalCount: 1,
+      },
+    } as never);
+
+    const page = await fetchRecordShipments(
+      { kind: "shipment", id: "shp_9" },
+      { first: 1, after: null },
+    );
+
+    expect(lastCall().variables.input).toEqual({
+      first: 1,
+      after: null,
+      expandShipmentDetails: true,
+      sort: [{ field: "createdAt", direction: "desc" }],
+      fieldFilters: [{ field: "id", operator: "eq", value: "shp_9" }],
+    });
+    expect(page.rows).toEqual([node("shp_9")]);
+  });
+
   it("reads a tractor's loads by its assignments, and leaves the count off later pages", async () => {
     requestGraphQLMock.mockResolvedValue({
       shipments: {

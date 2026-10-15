@@ -1,3 +1,4 @@
+import { fetchDeskDetention } from "@/lib/graphql/detention-card";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -15,6 +16,10 @@ export const detention = createQueryKeys("detention", {
   byShipment: (shipmentId: string) => ({
     queryKey: ["byShipment", shipmentId],
     queryFn: async ({ signal }) => apiService.detentionService.byShipment(shipmentId, { signal }),
+  }),
+  card: (id: string) => ({
+    queryKey: ["card", id],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => fetchDeskDetention(id, { signal }),
   }),
   occurrence: (id: string) => ({
     queryKey: ["occurrence", id],

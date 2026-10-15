@@ -160,6 +160,20 @@ const CARDS = [
     empty: "payable-mesa",
     gone: "payable-gone",
   },
+  {
+    card: "detention",
+    loaded: "detention-kroger",
+    attention: "detention-lineage",
+    empty: "detention-quick",
+    gone: "detention-gone",
+  },
+  {
+    card: "detention-closed",
+    loaded: "detention-disputed",
+    attention: "detention-hd",
+    empty: "detention-quick",
+    gone: "detention-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

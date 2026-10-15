@@ -138,7 +138,6 @@
   "The billing code detention posts against. Its rate applies when the source is Flat.": "滞留费所过账的计费代码。当来源为“固定”时，适用其费率。",
   "The billing code the stay converts to once the layover boundary is crossed.": "跨越过夜停留界线后，此次停留所转换成的计费代码。",
   "The billing unit minutes are rounded onto. Typically 15, 30, or 60.": "分钟数取整所依据的计费单位。通常为 15、30 或 60。",
-  "The clock": "计时",
   "The clock starts the moment the driver arrives, even if early.": "司机一到达即开始计时，即使提前到达也是如此。",
   "The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.": "当没有更明确的策略匹配时所使用的回退。默认策略不得针对特定客户、场所或类型。",
   "The minutes of lateness are subtracted from the allowance.": "迟到的分钟数将从免费时间中扣除。",

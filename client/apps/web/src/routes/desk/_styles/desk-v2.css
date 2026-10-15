@@ -4886,7 +4886,8 @@ a.dk-rec-doc:focus-visible {
 .dk-rec-hrow > .dk-rec-av {
   align-self: center;
 }
-.dk-rec-hrow > .dk-rec-av + .dk-rec-who {
+.dk-rec-hrow > .dk-rec-av + .dk-rec-who,
+.dk-rec-hrow > .dk-rec-stub + .dk-rec-who {
   flex: 1;
 }
 /* what one change changed, from what to what, under its sentence in a timeline */
@@ -12738,6 +12739,568 @@ button.dk-inv-stub:hover {
   .dk-cset-tag {
     grid-column: 1 / -1;
     justify-self: start;
+  }
+}
+
+/* The detention card */
+.dk-dtn {
+  container: dkdtn / inline-size;
+}
+.dk-dtn-quiet {
+  color: var(--dsk-subtle);
+}
+/* the stop's clock: one ruler, the notice flagged above it, each moment named beneath */
+.dk-dtn-clock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-dtn-rule {
+  position: relative;
+  display: block;
+  height: 14px;
+  margin-top: 22px;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-dtn-rule > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.dk-dtn-rule > i.dk-pre {
+  border-radius: 3px 0 0 3px;
+  background: repeating-linear-gradient(-45deg, var(--dsk-b) 0 1.5px, transparent 1.5px 4px);
+}
+.dk-dtn-rule > i.dk-free {
+  background: color-mix(in oklch, var(--dsk-fg2) 22%, var(--dsk-sunken));
+}
+.dk-dtn-rule > i.dk-bill {
+  border-radius: 0 3px 3px 0;
+  background: var(--dsk-warn);
+}
+.dk-dtn-rule > b.dk-flag {
+  position: absolute;
+  top: -22px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1.5px solid var(--dsk-fg2);
+}
+.dk-dtn-rule > b.dk-flag.dk-ok {
+  border-left-color: var(--dsk-success);
+}
+.dk-dtn-rule > b.dk-flag.dk-warn {
+  border-left-style: dashed;
+  border-left-color: var(--dsk-warn);
+}
+.dk-dtn-rule > b.dk-flag > span {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-rule > b.dk-flag.dk-ok > span {
+  color: var(--dsk-success-fg);
+}
+.dk-dtn-rule > b.dk-flag.dk-warn > span {
+  color: var(--dsk-warn-fg);
+}
+.dk-dtn-rule > em.dk-now {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -2px;
+  border-radius: 1px;
+  background: var(--dsk-fg);
+}
+.dk-dtn-ticks {
+  position: relative;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-dtn-ticks.dk-two {
+  height: 66px;
+}
+.dk-dtn-ticks > li {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.dk-dtn-ticks > li::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  height: 6px;
+  border-left: 1px solid var(--dsk-b-strong);
+}
+.dk-dtn-ticks > li.dk-start {
+  transform: none;
+}
+.dk-dtn-ticks > li.dk-start::before {
+  left: 0;
+}
+.dk-dtn-ticks > li.dk-end {
+  transform: translateX(-100%);
+  text-align: right;
+}
+.dk-dtn-ticks > li.dk-end::before {
+  right: 0;
+  left: auto;
+}
+.dk-dtn-ticks > li.dk-low {
+  top: 32px;
+}
+.dk-dtn-ticks > li.dk-low::before {
+  top: -41px;
+  height: 38px;
+}
+.dk-dtn-ticks b {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-dtn-ticks span {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-dtn-sum {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 4px 0 0;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-dtn-sum > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px 0 0;
+}
+.dk-dtn-sum > div + div {
+  padding-left: 12px;
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-dtn-sum dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-sum dd {
+  margin: 0;
+  font: 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-dtn-sum .dk-bill dd {
+  color: var(--dsk-warn-fg);
+}
+/* the receipt: each step of the calculation, in the engine's words */
+.dk-dtn-rcpt {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-dtn-rcpt > li {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--dsk-b-sub);
+}
+.dk-dtn-rcpt .dk-step {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-dtn-rcpt .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-dtn-rcpt .dk-what > span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-rcpt .dk-what > em {
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-rcpt .dk-val {
+  font: 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: right;
+  color: var(--dsk-fg);
+}
+.dk-dtn-rcpt > li.dk-cut .dk-val {
+  color: var(--dsk-fg2);
+}
+/* what the customer is billed against what the worker is paid */
+.dk-dtn-split {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-dtn-splitbar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-dtn-splitbar > .dk-pay {
+  background: var(--dsk-fg2);
+}
+.dk-dtn-splitbar > .dk-margin {
+  background: var(--dsk-success);
+}
+.dk-dtn-split dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.dk-dtn-split dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-dtn-split dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-split .dk-pay dt::before,
+.dk-dtn-split .dk-margin dt::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--dsk-fg2);
+}
+.dk-dtn-split .dk-margin dt::before {
+  background: var(--dsk-success);
+}
+.dk-dtn-split dd {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font: 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-dtn-split .dk-loss dd {
+  color: var(--dsk-error);
+}
+.dk-dtn-split dd > span {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-feature-settings: normal;
+  color: var(--dsk-fg2);
+}
+/* the notice the policy asks for */
+.dk-dtn-slip {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-dtn-slip > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.dk-dtn-slip > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-slip > span > b {
+  font-weight: 500;
+  color: var(--dsk-warn-fg);
+}
+.dk-dtn-rule-line,
+.dk-dtn-none {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-none {
+  margin: 0;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-notices {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-dtn-notices > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  color: var(--dsk-fg2);
+}
+.dk-dtn-notices > li.dk-ok > svg {
+  color: var(--dsk-success-fg);
+}
+.dk-dtn-notices > li.dk-warn > svg,
+.dk-dtn-notices > li.dk-warn .dk-what > span {
+  color: var(--dsk-warn-fg);
+}
+.dk-dtn-notices .dk-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-dtn-notices .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-dtn-notices .dk-what > span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-notices .dk-when {
+  font-size: 12px;
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+/* whether the charge would hold up to a dispute */
+.dk-dtn-proof {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+}
+.dk-dtn-score {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dk-dtn-score > b {
+  font: 600 28px var(--dk-plex);
+  font-feature-settings: "tnum";
+  line-height: 1;
+  color: var(--dsk-fg);
+}
+.dk-dtn-score > span {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-score > i {
+  display: block;
+  height: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--dsk-sunken);
+}
+.dk-dtn-score > i > em {
+  display: block;
+  height: 100%;
+  background: var(--dsk-success);
+}
+.dk-dtn-score.dk-warn > i > em {
+  background: var(--dsk-warn);
+}
+.dk-dtn-score.dk-warn > span {
+  color: var(--dsk-warn-fg);
+}
+.dk-dtn-factors {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-dtn-factors > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 5px 0;
+}
+.dk-dtn-factors .dk-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-dtn-factors .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--dsk-fg);
+}
+.dk-dtn-factors .dk-what > span {
+  font-size: 12px;
+  color: var(--dsk-warn-fg);
+}
+.dk-dtn-factors .dk-pts {
+  font: 12px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-dtn-factors > li.dk-short .dk-pts {
+  color: var(--dsk-fg);
+}
+.dk-dtn-chain {
+  display: flex;
+  flex-direction: column;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-dtn-chain > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px 0;
+}
+.dk-dtn-chain > li > i {
+  width: 7px;
+  height: 7px;
+  margin: 5px 0 0 3px;
+  border-radius: 999px;
+  background: var(--dsk-b-strong);
+}
+.dk-dtn-chain > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: -13px;
+  left: 6.5px;
+  border-left: 1px solid var(--dsk-b);
+}
+.dk-dtn-chain .dk-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-dtn-chain .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-dtn-chain .dk-what > span,
+.dk-dtn-chain .dk-when {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-chain .dk-when {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+.dk-dtn-chainok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-chainok.dk-bad {
+  color: var(--dsk-error);
+}
+/* the facility and the customer the stop belongs to */
+.dk-dtn-where {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.dk-dtn-ref {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  height: auto;
+  padding: 10px 26px 10px 12px;
+  border-radius: 8px;
+  text-align: left;
+  white-space: normal;
+  background: var(--dsk-sunken);
+}
+a.dk-dtn-ref:hover,
+button.dk-dtn-ref:hover {
+  background: var(--dsk-hover);
+}
+.dk-dtn-ref > .dk-k {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-dtn-ref > b {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-dtn-ref > span:not(.dk-k) {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-dtn-ref > svg {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  color: var(--dsk-subtle);
+}
+.dk-dtn .dk-rec-voidslip > dl {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+/* a pane too narrow for the hint beside the charge's other steps keeps the steps */
+@container dkdtn (max-width: 640px) {
+  .dk-rec-bar:has(.dk-rec-step) .dk-rec-bh {
+    visibility: hidden;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+@container dkdtn (max-width: 560px) {
+  .dk-dtn-proof,
+  .dk-dtn-where,
+  .dk-dtn-split dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-dtn .dk-rec-voidslip > dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-dtn-rcpt > li {
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+    gap: 8px;
   }
 }
 

@@ -299,6 +299,8 @@ type DetentionOccurrence {
   stopId: ID!
   customerId: ID!
   locationId: ID!
+  "The stop's location, null to someone who may not read locations or when it has been removed."
+  location: Location
   detentionPolicyId: ID
   policySnapshot: JSON
   calculationTrace: JSON
@@ -334,9 +336,16 @@ type DetentionOccurrence {
   noticeSentAt: Timestamp
   suppressedByGate: Boolean!
   requiresApproval: Boolean!
+  approvedById: ID
+  approvedAt: Timestamp
+  "Who approved the charge to bill, null until it is approved or when it was approved automatically."
+  approvedBy: User
   waiverReason: DetentionWaiverReason
   waiverNote: String!
   waivedAt: Timestamp
+  waivedById: ID
+  "Who waived the charge, null unless it was waived."
+  waivedBy: User
   waivedAmount: Decimal!
   disputeNote: String!
   disputedAt: Timestamp
@@ -410,12 +419,21 @@ type DetentionCollectability {
   summary: String!
 }
 
+"A clock still running, priced as of now; the occurrence's own amounts date from its last recalculation."
+type DetentionClockPrice {
+  billableMinutes: Int!
+  billableAmount: Decimal!
+  asOf: Timestamp!
+}
+
 type DetentionOccurrenceDetail {
   occurrence: DetentionOccurrence!
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
   collectability: DetentionCollectability!
   receipt: String!
+  "Null once the clock has stopped."
+  currentlyBillable: DetentionClockPrice
 }
 
 type DetentionDeskEntry {

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:dc0e1b096017cf8e49de14d4caf65b502fa328e51bac0cc1a7b01dab6fcfd386",
+  "version": "sha256:be805ac0e03f6cdc276ec78299347a568d5eff32a74a15096c2c7d4d064cc6c9",
   "modules": [
     {
       "id": "home",
@@ -17978,7 +17978,8 @@
       "path": "/detention/desk",
       "params": {
         "stop": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "driver_settlement",
