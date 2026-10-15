@@ -2,6 +2,7 @@ package tenderservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -27,6 +28,16 @@ func (s *Service) RecordResponse(
 	ctx context.Context,
 	req *tenderports.TenderResponseRequest,
 ) error {
+	if bounced, err := s.bounceOnCarrierDecline(ctx, req); bounced || err != nil {
+		return err
+	}
+	if decision, err := s.counterDecisionFor(ctx, req); decision != nil || err != nil {
+		if err != nil {
+			return err
+		}
+		return s.DecideCounter(ctx, decision)
+	}
+
 	offer, err := s.planResponse(ctx, req)
 	if isNoLongerAvailable(err) {
 		s.recordLateResponse(ctx, req, offer)
@@ -36,9 +47,10 @@ func (s *Service) RecordResponse(
 		return err
 	}
 
+	workflowID := tendercontract.WorkflowID(offer.TenderID, offer.Tender.BounceCount)
 	err = s.workflows.SignalWorkflow(
 		ctx,
-		tendercontract.WorkflowID(offer.TenderID),
+		workflowID,
 		"",
 		tendercontract.TenderSignalName,
 		tendercontract.Signal{
@@ -47,6 +59,8 @@ func (s *Service) RecordResponse(
 			Action:        req.Action,
 			Source:        req.Source,
 			DeclineReason: req.DeclineReason,
+			CounterRate:   req.CounterRate,
+			CounterNote:   strings.TrimSpace(req.CounterNote),
 			ActorUserID:   req.TenantInfo.UserID,
 		},
 	)
@@ -54,7 +68,7 @@ func (s *Service) RecordResponse(
 		s.l.Error("failed to signal tender workflow with response",
 			zap.Error(err),
 			zap.String("offerId", offer.ID.String()),
-			zap.String("workflowId", tendercontract.WorkflowID(offer.TenderID)))
+			zap.String("workflowId", workflowID))
 		return errortypes.NewBusinessError(
 			"The response could not be recorded right now. Retry in a moment",
 		)

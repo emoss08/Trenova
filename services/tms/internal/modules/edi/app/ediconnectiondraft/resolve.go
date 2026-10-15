@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 )
 
@@ -78,7 +79,7 @@ func readValue(pages *pageIndex, spec *fieldSpec, input *ediports.DraftValueInpu
 		c.status = ediports.ValueStatusAccepted
 	}
 	if c.status == ediports.ValueStatusInvalid || c.status == ediports.ValueStatusUnverified {
-		c.value = redact(c.value)
+		c.value = edi.RedactSecrets(c.value)
 	}
 
 	return c

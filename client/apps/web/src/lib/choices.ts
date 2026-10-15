@@ -38,6 +38,7 @@ import type {
   AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
+  TenderExhaustedAction,
 } from "@/types/dispatch-control";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { ResourceType } from "@/types/document-packet-rule";
@@ -1510,6 +1511,24 @@ export const complianceEnforcementLevelChoices = [
   { value: "Block", label: "Block", color: "var(--danger)" },
   { value: "Audit", label: "Audit", color: "var(--accent-violet)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ComplianceEnforcementLevel>>;
+
+export const tenderExhaustedActionChoices = [
+  {
+    value: "Notify",
+    label: "Tell dispatch",
+    description: "Raise the exhausted tender for a person to cover.",
+  },
+  {
+    value: "Rebroadcast",
+    label: "Offer to everyone at once",
+    description: "Send every carrier a fresh offer at the same time; the first to accept wins.",
+  },
+  {
+    value: "Rewaterfall",
+    label: "Offer again in rank order",
+    description: "Walk the carriers again one at a time, in their original order.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<TenderExhaustedAction>>;
 
 export const invoiceDeliveryChoices = [
   { value: "PerShipment", label: "Per shipment" },

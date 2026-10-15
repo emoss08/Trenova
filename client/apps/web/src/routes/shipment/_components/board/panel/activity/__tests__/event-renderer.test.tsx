@@ -606,6 +606,135 @@ describe("renderEvent", () => {
     );
   });
 
+  it("renders a carrier backing out with the reason and how many carriers are asked again", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderBounced",
+        severity: "danger",
+        tenderId: "tdr_01",
+        carrierName: "Blue Ridge Freight",
+        reason: "Truck broke down",
+        metadata: { reoffers: 2, round: 1 },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "Blue Ridge Freight backed out of the accepted tender for #PRO-2026-1042",
+    );
+    expect(screen.getByTestId("detail").textContent).toBe(
+      "Reason: Truck broke down · Offered again to 2 carriers",
+    );
+  });
+
+  it("says when a backout leaves nobody to ask again", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderBounced",
+        carrierName: "Blue Ridge Freight",
+        metadata: { reoffers: 0 },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("detail").textContent).toBe("No carrier was left to ask again");
+  });
+
+  it("renders a counter-offer below the floor with the offered rate and margin", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderCountered",
+        severity: "brand",
+        tenderId: "tdr_01",
+        carrierName: "Sunset Logistics",
+        metadata: {
+          offeredRate: "1500.00",
+          counterRate: "1850.00",
+          marginPercent: "7.50",
+          needsApproval: true,
+          autoAccepted: false,
+        },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "Sunset Logistics countered the tender for #PRO-2026-1042 at $1,850.00",
+    );
+    expect(screen.getByTestId("detail").textContent).toBe(
+      "Offered $1,500.00 · margin 7.50% · below the margin floor, needs approval",
+    );
+  });
+
+  it("renders a counter-offer with no metadata without inventing a rate", () => {
+    const result = renderEvent(
+      tenderEvent({ type: "TenderCountered", carrierName: "Sunset Logistics" }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "Sunset Logistics countered the tender for #PRO-2026-1042",
+    );
+    expect(screen.queryByTestId("detail")).toBeNull();
+  });
+
+  it("renders a taken counter-offer with the agreed rate", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderCounterDecided",
+        severity: "success",
+        carrierName: "Sunset Logistics",
+        metadata: { counterRate: "1850.00", approved: true, reason: "" },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "System Administrator took Sunset Logistics's counter-offer on #PRO-2026-1042",
+    );
+    expect(screen.getByTestId("detail").textContent).toBe("Agreed at $1,850.00");
+  });
+
+  it("renders a refused counter-offer with the reason", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderCounterDecided",
+        carrierName: "Sunset Logistics",
+        reason: "Above the customer rate",
+        metadata: { counterRate: "1850.00", approved: false },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "System Administrator refused Sunset Logistics's counter-offer on #PRO-2026-1042",
+    );
+    expect(screen.getByTestId("detail").textContent).toBe("Reason: Above the customer rate");
+  });
+
+  it("renders an escalation with its round, carriers and rate raise", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderEscalated",
+        severity: "brand",
+        mode: "SpotBroadcast",
+        metadata: { round: 2, carriers: 3, rateIncreasePercent: "10" },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("headline").textContent).toBe(
+      "System Administrator escalated the exhausted tender on #PRO-2026-1042 (round 2)",
+    );
+    expect(screen.getByTestId("detail").textContent).toBe(
+      "Offered to 3 carriers · rates raised up to 10%",
+    );
+  });
+
+  it("leaves the rate raise out of an escalation at the same rates", () => {
+    const result = renderEvent(
+      tenderEvent({
+        type: "TenderEscalated",
+        metadata: { round: 1, carriers: 1, rateIncreasePercent: "0" },
+      }),
+    );
+    render(harness(result));
+    expect(screen.getByTestId("detail").textContent).toBe("Offered to 1 carrier");
+  });
+
   it("omits the rank suffix when a guide-entry event carries no rank", () => {
     const result = renderEvent(
       tenderEvent({

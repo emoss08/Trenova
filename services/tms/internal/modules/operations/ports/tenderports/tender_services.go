@@ -3,11 +3,13 @@ package tenderports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 // TenderGuard is the narrow hook coverage mutations use to withdraw a live
@@ -36,6 +38,28 @@ type TenderResponseRequest struct {
 	Action        tender.ResponseAction `json:"action"`
 	Source        tender.ResponseSource `json:"source"`
 	DeclineReason string                `json:"declineReason"`
+	CounterRate   decimal.Decimal       `json:"counterRate"`
+	CounterNote   string                `json:"counterNote"`
+	// Actor is who records the answer, for the permission a decision on a
+	// counter below the margin floor needs. Absent, the TenantInfo user.
+	Actor *permissionports.RequestActor `json:"-"`
+}
+
+// RecordCounterRequest is a carrier's counter-offer as the workflow lands it.
+type RecordCounterRequest struct {
+	OfferID pulid.ID              `json:"offerId"`
+	Rate    decimal.Decimal       `json:"rate"`
+	Note    string                `json:"note"`
+	Source  tender.ResponseSource `json:"source"`
+}
+
+// TenderCounterResult reports what a counter-offer produced. Ignored means
+// the offer had already moved on; AutoAccept means the policy takes it with
+// nobody deciding; otherwise it waits for a person until DecisionDeadline.
+type TenderCounterResult struct {
+	Ignored          bool  `json:"ignored"`
+	AutoAccept       bool  `json:"autoAccept"`
+	DecisionDeadline int64 `json:"decisionDeadline"`
 }
 
 // TenderResponseRecorder is the single funnel every response channel (email
@@ -115,6 +139,11 @@ type TenderLifecycle interface {
 		offerID pulid.ID,
 		source tender.ResponseSource,
 	) (*TenderAcceptResult, error)
+	RecordCounter(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		req *RecordCounterRequest,
+	) (*TenderCounterResult, error)
 	FinalizeAccepted(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -186,5 +215,9 @@ type CarrierMoveAssigner interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
+	) error
+	Cancel(
+		ctx context.Context,
+		req *shipmentports.CancelCarrierAssignmentRequest,
 	) error
 }

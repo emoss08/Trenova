@@ -92,7 +92,7 @@ Callable after find_tools:
 - cancel_carrier_assignment — Take the outside carrier off a move that has not started, leaving it uncovered, and void the carrier's rate confirmation.
 - list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
 - cancel_tender — Withdraw a live tender: every offer a carrier still holds is withdrawn and its answer link stops working, and the carriers not yet asked are skipped.
-- record_tender_response — Record a carrier's answer to a tender offer that reached you by phone or email instead of through the offer's link.
+- record_tender_response — Record a carrier's answer to an offer that reached you by phone or email outside the offer's link.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - generate_rate_confirmation — Generate the rate confirmation for a move covered by an outside carrier.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.

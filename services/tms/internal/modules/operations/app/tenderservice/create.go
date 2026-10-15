@@ -773,29 +773,9 @@ func (s *Service) persistAndStart(
 		return nil, err
 	}
 
-	workflowID := tendercontract.WorkflowID(entity.ID)
-	_, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID:        workflowID,
-		TaskQueue: temporaltype.TaskQueueDispatch.String(),
-	}, tendercontract.CarrierTenderWorkflowName, tendercontract.WorkflowInput{
-		TenderID:       entity.ID,
-		OrganizationID: entity.OrganizationID,
-		BusinessUnitID: entity.BusinessUnitID,
-		Mode:           entity.Mode,
-	})
-	if err != nil {
-		s.l.Error("failed to start tender workflow", zap.Error(err),
-			zap.String("tenderId", entity.ID.String()))
-		s.cancelAfterStartFailure(ctx, tenantInfo, entity)
-		return nil, errortypes.NewBusinessError(
-			"Tendering is unavailable right now. Retry the request",
-		)
-	}
-
-	if err = s.repo.SetWorkflowID(ctx, tenantInfo, entity.ID, workflowID); err != nil {
+	if err = s.startRound(ctx, tenantInfo, entity); err != nil {
 		return nil, err
 	}
-	entity.WorkflowID = workflowID
 
 	shipmentports.InvalidateShipments(
 		ctx,
@@ -805,6 +785,41 @@ func (s *Service) persistAndStart(
 	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
 
 	return entity, nil
+}
+
+// startRound starts the workflow that drives the tender's current round and
+// records its identifier. A tender whose workflow cannot be started is
+// canceled, so it never occupies the move's live-tender slot with nobody
+// driving it.
+func (s *Service) startRound(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *tender.Tender,
+) error {
+	workflowID := tendercontract.WorkflowID(entity.ID, entity.BounceCount)
+	if _, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+		ID:        workflowID,
+		TaskQueue: temporaltype.TaskQueueDispatch.String(),
+	}, tendercontract.CarrierTenderWorkflowName, tendercontract.WorkflowInput{
+		TenderID:       entity.ID,
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		Mode:           entity.Mode,
+	}); err != nil {
+		s.l.Error("failed to start tender workflow", zap.Error(err),
+			zap.String("tenderId", entity.ID.String()),
+			zap.String("workflowId", workflowID))
+		s.cancelAfterStartFailure(ctx, tenantInfo, entity)
+		return errortypes.NewBusinessError(
+			"Tendering is unavailable right now. Retry the request",
+		)
+	}
+
+	if err := s.repo.SetWorkflowID(ctx, tenantInfo, entity.ID, workflowID); err != nil {
+		return err
+	}
+	entity.WorkflowID = workflowID
+	return nil
 }
 
 func (s *Service) cancelAfterStartFailure(

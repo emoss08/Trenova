@@ -2183,6 +2183,15 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> backed out of the accepted tender for <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> canceled <target/>": {
     "sites": 1,
     "scope": [
@@ -2219,6 +2228,24 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> countered the tender for <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> countered the tender for <target/> at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> created <target/>": {
     "sites": 1,
     "scope": [
@@ -2238,6 +2265,24 @@
     ]
   },
   "<actor>{0}</actor> dispatched a move on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> escalated the exhausted tender on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> escalated the exhausted tender on <target/> (round {1})": {
     "sites": 1,
     "scope": [
       "ts"
@@ -2354,6 +2399,15 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> refused {1}'s counter-offer on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> released a hold on <target/>": {
     "sites": 1,
     "scope": [
@@ -2409,6 +2463,15 @@
     ]
   },
   "<actor>{0}</actor> tendered {1} with warnings on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> took {1}'s counter-offer on <target/>": {
     "sites": 1,
     "scope": [
       "ts"
@@ -4695,6 +4758,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A counter nobody answers in time lapses and the tender moves on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "A counter that leaves less margin than this on the shipment's charges needs someone who can approve tenders.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "A counter-offer needs a rate above zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A course with this code already exists": {
@@ -20375,6 +20465,24 @@
       "go/other"
     ]
   },
+  "Agreed at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Agreed at {0} after a counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Agreed with the customer; the books keep their figure": {
     "sites": 1,
     "scope": [
@@ -35205,6 +35313,33 @@
       "routes/inbox"
     ]
   },
+  "Backed out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Backed out after accepting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Backed out: “{0}”": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Backend validation rule": {
     "sites": 1,
     "scope": [
@@ -36688,6 +36823,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Below the margin floor; someone who can approve tenders has to take it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Below the pass mark": {
@@ -39481,6 +39625,15 @@
       "apps/web/components"
     ]
   },
+  "Bounce source is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bounced": {
     "sites": 2,
     "scope": [
@@ -41664,7 +41817,7 @@
     ]
   },
   "Cancel": {
-    "sites": 306,
+    "sites": 307,
     "scope": [
       "ts"
     ],
@@ -43876,6 +44029,15 @@
       "go/other"
     ]
   },
+  "Carrier assignment is unavailable right now. Retry the request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier assignment not found within your organization": {
     "sites": 1,
     "scope": [
@@ -43892,6 +44054,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Carrier backed out": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Carrier backed out of a tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Carrier backout recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Carrier blocked": {
@@ -43994,6 +44183,15 @@
     ],
     "areas": [
       "routes/carrier-cost-event"
+    ]
+  },
+  "Carrier counter-offer to decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carrier delay": {
@@ -44705,6 +44903,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Carrier tenders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Carrier tracking links need a public base URL; set app.webBaseUrl": {
     "sites": 1,
     "scope": [
@@ -44788,6 +44995,15 @@
       "apps/web/hooks"
     ]
   },
+  "Carrier's note": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Carrier-defined component — describe it so drivers recognize it.": {
     "sites": 1,
     "scope": [
@@ -44856,6 +45072,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Carriers can answer an offer with a rate of their own instead of only accepting or declining.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Carriers join the watchlist through the enrollment policy in Integrations, when they are created, or by hand from a carrier's Intelligence tab.": {
@@ -62589,6 +62814,151 @@
       "routes/shipment"
     ]
   },
+  "Counter decision time cannot exceed 1440 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Counter decision time must be at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Counter of {0} refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter rate is required": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter rate is too large": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter rate must be a positive amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Counter-offer rate is too large": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Counter-offer recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offer refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offer sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
+  "Counter-offer taken": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offers are turned off; accept or decline the offer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Countered": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components",
+      "routes/dispatch-console"
+    ]
+  },
+  "Countered at {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Counterparty": {
     "sites": 1,
     "scope": [
@@ -77061,6 +77431,15 @@
       "apps/dash/_components"
     ]
   },
+  "Dispatch has to answer a counter within": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Dispatch home": {
     "sites": 1,
     "scope": [
@@ -77070,6 +77449,15 @@
       "routes/admin"
     ]
   },
+  "Dispatch is always told. An escalation offers the move again to the carriers on the tender, leaving out any that backed out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Dispatch management": {
     "sites": 1,
     "scope": [
@@ -77077,6 +77465,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Dispatch refused the carrier's counter-offer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "Dispatch report runs for due user schedules": {
@@ -84428,6 +84825,15 @@
       "routes/agent-control"
     ]
   },
+  "Each carrier's rate goes up by this much, but never past the margin floor. With no charges on the shipment, rates stay as they were.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Each code signs you in once if you lose your authenticator. They are shown only this time.": {
     "sites": 1,
     "scope": [
@@ -89312,6 +89718,15 @@
       "packages/shared/types"
     ]
   },
+  "Enter a valid rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Enter a valid usage window.": {
     "sites": 1,
     "scope": [
@@ -89465,6 +89880,24 @@
       "apps/web/types"
     ]
   },
+  "Enter how long an escalated offer stays open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how long dispatch has to answer a counter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter how many days a link lasts": {
     "sites": 1,
     "scope": [
@@ -89511,6 +89944,15 @@
     ]
   },
   "Enter how many times an exception may escalate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how many times an exhausted tender may escalate": {
     "sites": 1,
     "scope": [
       "ts"
@@ -89885,6 +90327,15 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "Enter the rate you would run the load for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Enter the redirect URI below exactly as written. NetSuite only accepts https addresses.": {
@@ -91000,7 +91451,7 @@
     ]
   },
   "Escalate at most": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -91024,6 +91475,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Escalated offers cannot stay open beyond 10080 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalated offers must stay open at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalated offers stay open for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Escalation contact": {
@@ -91053,6 +91531,24 @@
       "apps/web/types"
     ]
   },
+  "Escalation round {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Escalation rounds must be between 0 and 5": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Escalations": {
     "sites": 1,
     "scope": [
@@ -91063,7 +91559,7 @@
     ]
   },
   "Escalations cannot be negative": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -91072,6 +91568,15 @@
     ]
   },
   "Escalations cannot exceed 10": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalations cannot exceed 5": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95039,6 +95544,33 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Exhausted tender action is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Exhausted tender escalated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Exhausted tender was not escalated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Existing scenarios": {
@@ -115062,6 +115594,15 @@
       "routes/rate-matrix"
     ]
   },
+  "How a tender handles a carrier asking for a different rate, and what happens when every carrier has passed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "How a worker takes the course and what it takes to pass.": {
     "sites": 1,
     "scope": [
@@ -127062,6 +127603,15 @@
     ]
   },
   "Keep tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Keep the carrier": {
     "sites": 1,
     "scope": [
       "ts"
@@ -139314,13 +139864,15 @@
     ]
   },
   "Margin floor": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "apps/web/types",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/rate-agreement"
     ]
   },
@@ -148067,12 +148619,13 @@
     ]
   },
   "Needs approval": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -152061,6 +152614,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "No carrier was left to ask again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "No carriers are on the watchlist": {
@@ -160958,6 +161520,17 @@
       "packages/shared/types"
     ]
   },
+  "Note must be at most 500 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
   "Note must be {0} characters or fewer": {
     "sites": 2,
     "scope": [
@@ -160974,6 +161547,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Note to the broker (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
     ]
   },
   "Note to the customer": {
@@ -165143,6 +165725,15 @@
       "routes/desk"
     ]
   },
+  "Offer again in rank order": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Offer expires {0}": {
     "sites": 1,
     "scope": [
@@ -165212,7 +165803,7 @@
     ]
   },
   "Offer is not attached to a tender": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -165221,7 +165812,7 @@
     ]
   },
   "Offer is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -165281,6 +165872,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Offer to everyone at once": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.": {
@@ -165373,6 +165973,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Offered {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Offered {0} to an administrator, who decides whether to keep it for {1}": {
@@ -168369,6 +168978,15 @@
     ]
   },
   "Only an inactive worker can be rehired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an offer a carrier accepted can be backed out of": {
     "sites": 1,
     "scope": [
       "go"
@@ -190540,6 +191158,15 @@
       "routes/agent-control"
     ]
   },
+  "Propose a different rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until post_invoice posts it; apply a posted credit with apply_credit_memo. A person always decides.": {
     "sites": 1,
     "scope": [
@@ -193790,6 +194417,24 @@
       "routes/agent-control"
     ]
   },
+  "Raise the exhausted tender for a person to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Raise the rates by up to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Raise the weekly books reconciliation for every syncing accounting connection": {
     "sites": 2,
     "scope": [
@@ -194862,6 +195507,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Rate increase": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Rate is required": {
@@ -197796,7 +198450,7 @@
     ]
   },
   "Reason": {
-    "sites": 66,
+    "sites": 68,
     "scope": [
       "go",
       "ts"
@@ -198169,11 +198823,13 @@
     ]
   },
   "Reason must be at most 500 characters": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "packages/shared/types"
     ]
   },
@@ -199964,6 +200620,15 @@
       "routes/shipment"
     ]
   },
+  "Record backout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Record carrier response": {
     "sites": 1,
     "scope": [
@@ -199971,6 +200636,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Record carrier responses, bounces and counter-offer decisions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Record chargeback": {
@@ -200268,15 +200942,6 @@
     ]
   },
   "Record kind is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Record manual carrier responses": {
     "sites": 1,
     "scope": [
       "go"
@@ -201045,7 +201710,7 @@
       "routes/detention-desk"
     ]
   },
-  "Recording an acceptance commits the load to the carrier at the offered rate, so it is a proposal a person decides; a decline runs once a person approves it.": {
+  "Recording an acceptance, a counter or a carrier backing out moves money or the carrier off the move, so it is a proposal a person decides; a decline runs once a person approves it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -201073,7 +201738,7 @@
     ]
   },
   "Recording...": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -202277,6 +202942,24 @@
     "areas": [
       "go/other",
       "packages/shared/lib"
+    ]
+  },
+  "Refuse counter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Refuse counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Refused": {
@@ -213896,6 +214579,15 @@
       "go/other"
     ]
   },
+  "Rounds after the first tender; at most 5.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Rounds in {0}": {
     "sites": 2,
     "scope": [
@@ -218958,6 +219650,17 @@
   },
   "Say why the action is rescinded": {
     "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
+  "Say why the carrier backed out": {
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -225592,6 +226295,15 @@
       "apps/web/config"
     ]
   },
+  "Send counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Send detention notice": {
     "sites": 1,
     "scope": [
@@ -225644,6 +226356,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send every carrier a fresh offer at the same time; the first to accept wins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Send for approval": {
@@ -226605,7 +227326,7 @@
     ]
   },
   "Sending...": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -226621,6 +227342,7 @@
       "routes/invoice",
       "routes/organization",
       "routes/shipment",
+      "routes/tender-offer-public",
       "routes/worker"
     ]
   },
@@ -243769,6 +244491,51 @@
       "routes/desk"
     ]
   },
+  "Take carrier counter-offers that fall below the margin floor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Take counter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Take counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Take counter-offers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Take counters at or above the floor automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Take it": {
     "sites": 1,
     "scope": [
@@ -244894,6 +245661,15 @@
       "routes/agent-control"
     ]
   },
+  "Tell dispatch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Tell dispatch why so they can replan — hours, home time, equipment, anything.": {
     "sites": 1,
     "scope": [
@@ -245757,7 +246533,7 @@
     ]
   },
   "Tender is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -249343,6 +250119,15 @@
       "go/other"
     ]
   },
+  "The broker has your rate and will take or refuse it. You will hear back by email; the load is not yours until they confirm.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "The broker surety bond or trust fund on file is below the requirement.": {
     "sites": 1,
     "scope": [
@@ -249515,7 +250300,7 @@
     ]
   },
   "The carrier": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -249530,6 +250315,33 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The carrier accepted, then backed out; the tender went on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "The carrier asked for a different rate; dispatch has to take or refuse it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "The carrier assignment was canceled and the tender went on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The carrier assignment was canceled or replaced.": {
@@ -249620,6 +250432,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The carrier is assigned at its rate without waiting for dispatch. Counters below the floor always wait for approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "The carrier issuing the invoice.": {
@@ -251628,6 +252449,15 @@
     ],
     "areas": [
       "routes/fleet-code"
+    ]
+  },
+  "The decision could not be recorded right now. Retry in a moment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The decision could not be recorded.": {
@@ -255956,6 +256786,24 @@
       "routes/customer"
     ]
   },
+  "The move already has another tender in progress": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The move is covered by a different carrier than the one that accepted the tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The move is uncovered again.": {
     "sites": 1,
     "scope": [
@@ -258104,6 +258952,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The rate the carrier asked for, in the offer's terms ({0}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.": {
@@ -261093,6 +261950,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The tender has already moved on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The tender names no stops.": {
@@ -264477,6 +265343,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "This counter-offer is below the margin floor; taking it needs the approve permission on tenders": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This counter-offer is no longer waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This course is no longer open": {
@@ -268319,6 +269203,15 @@
       "go/other"
     ]
   },
+  "This tender has been bounced too many times; start a new tender for the move": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This tender is not answered yet; say whether to preview the 990 that accepts it or the one that declines it": {
     "sites": 1,
     "scope": [
@@ -269754,6 +270647,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Time left to decide the counter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Time of day": {
@@ -286877,6 +287779,15 @@
       "routes/agent-control"
     ]
   },
+  "Walk the carriers again one at a time, in their original order.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Want me to load sample data? Every screen will have something to show, and you can delete any of it at any time.": {
     "sites": 1,
     "scope": [
@@ -291068,6 +291979,15 @@
     ],
     "areas": [
       "routes/shipment-control"
+    ]
+  },
+  "When every carrier passes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "When hired": {
@@ -299506,6 +300426,15 @@
       "template/customertracking.status.email"
     ]
   },
+  "Your rate ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Your rating could not be saved": {
     "sites": 1,
     "scope": [
@@ -300603,6 +301532,15 @@
       "routes/home"
     ]
   },
+  "at {0} after a counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "auto": {
     "sites": 1,
     "scope": [
@@ -300730,6 +301668,15 @@
     ]
   },
   "being confirmed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "below the margin floor, needs approval": {
     "sites": 1,
     "scope": [
       "ts"
@@ -303004,6 +303951,15 @@
       "routes/customer"
     ]
   },
+  "e.g., 1850.00": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "e.g., 654321": {
     "sites": 1,
     "scope": [
@@ -303103,6 +304059,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "e.g., Above what the customer pays on this lane": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "e.g., Acme Freight Agreement": {
@@ -303220,6 +304185,16 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "e.g., Fuel is up on this lane": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console",
+      "routes/tender-offer-public"
     ]
   },
   "e.g., Here is the statement you asked for": {
@@ -303438,6 +304413,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "e.g., Truck broke down before pickup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "e.g., Unit is leased on to the carrier; lease agreement on file": {
@@ -304634,12 +305618,13 @@
     ]
   },
   "margin {0}%": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/shipment"
     ]
   },
   "market data": {
@@ -306012,6 +306997,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "rates raised up to {0}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "read content written outside the organization": {
@@ -312569,6 +313563,24 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {Offered again to # carrier} other {Offered again to # carriers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "{0, plural, one {Offered to # carrier} other {Offered to # carriers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {On the first attempt} other {After # attempts}}": {
     "sites": 1,
     "scope": [
@@ -313327,6 +314339,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {a carrier backed out once} other {carriers backed out # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {and # more step} other {and # more steps}}": {
     "sites": 1,
     "scope": [
@@ -313496,6 +314517,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {· a carrier backed out once} other {· carriers backed out # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} (Day)": {
@@ -314046,6 +315076,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} accepted this tender and has now backed out. Their carrier assignment and rate confirmation are canceled, and the tender goes on to the next carrier in line.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} accidents · {1} preventable · {2} out of service · {3} points": {
@@ -314925,6 +315964,15 @@
       "go/other"
     ]
   },
+  "{0} cannot be below {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "{0} cannot be cleared": {
     "sites": 4,
     "scope": [
@@ -315014,6 +316062,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} cannot exceed {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "{0} cannot run document extraction: {1}": {
@@ -317335,6 +318392,15 @@
       "go/other"
     ]
   },
+  "{0} is assigned to the move at {1} instead of the offered {2}, and the rest of the tender is closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.": {
     "sites": 1,
     "scope": [
@@ -318167,6 +319233,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} is told the counter of {1} was refused, and the tender goes on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} is too large to email ({1} bytes); send this factor's schedules by SFTP or without packets": {
@@ -319216,6 +320291,15 @@
     "areas": [
       "go/other",
       "routes/admin"
+    ]
+  },
+  "{0} must be a number with at most 4 decimals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "{0} must be a string": {
@@ -325584,6 +326668,15 @@
       "routes/worker"
     ]
   },
+  "· asked again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "· awaiting decision": {
     "sites": 1,
     "scope": [
@@ -325709,6 +326802,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "· margin {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· open": {

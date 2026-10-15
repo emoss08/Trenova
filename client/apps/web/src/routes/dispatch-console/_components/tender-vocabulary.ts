@@ -80,3 +80,15 @@ export function formatOfferCountdown(
   }
   return `${formatDurationFromSeconds(remaining)} left`;
 }
+
+/**
+ * The margin a carrier's counter leaves, as the server worked it out, to one
+ * decimal place. A counter on a shipment with no sell price has no margin and
+ * renders as nothing rather than 0%.
+ */
+export function formatCounterMargin(marginPercent: string | null | undefined): string {
+  if (marginPercent == null || marginPercent.trim() === "") return "";
+  const margin = Number(marginPercent);
+  if (!Number.isFinite(margin)) return "";
+  return `${margin.toFixed(1)}%`;
+}

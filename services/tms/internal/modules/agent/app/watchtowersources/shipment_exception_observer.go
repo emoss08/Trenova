@@ -63,6 +63,8 @@ func ShipmentExceptionKindsFor(eventType shipmentevent.Type) []watchtower.Source
 			watchtower.SourcePodMissing,
 		}
 	case shipmentevent.TypeRoutingGuideExhausted,
+		shipmentevent.TypeTenderBounced,
+		shipmentevent.TypeTenderEscalated,
 		shipmentevent.TypeTenderOffered,
 		shipmentevent.TypeTenderAccepted,
 		shipmentevent.TypeTenderWithdrawn,
@@ -80,6 +82,8 @@ func ShipmentExceptionKindsFor(eventType shipmentevent.Type) []watchtower.Source
 		shipmentevent.TypeTenderDeliveryFailed,
 		shipmentevent.TypeTenderEntrySkipped,
 		shipmentevent.TypeTenderEntryWarned,
+		shipmentevent.TypeTenderCountered,
+		shipmentevent.TypeTenderCounterDecided,
 		shipmentevent.TypeHoldPlaced,
 		shipmentevent.TypeHoldUpdated,
 		shipmentevent.TypeHoldReleased,

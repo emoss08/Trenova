@@ -57,6 +57,21 @@ const (
 	DefaultExceptionPODGraceHours          = int16(24)
 	MinExceptionPODGraceHours              = int16(1)
 	MaxExceptionPODGraceHours              = int16(720)
+
+	DefaultTenderCounterDecisionMinutes = int32(60)
+	MinTenderCounterDecisionMinutes     = int32(5)
+	MaxTenderCounterDecisionMinutes     = int32(1440)
+	DefaultTenderEscalationTTLMinutes   = int32(60)
+	MinTenderEscalationTTLMinutes       = int32(5)
+	MaxTenderEscalationTTLMinutes       = int32(10080)
+	DefaultTenderMaxEscalations         = int16(1)
+	MaxTenderEscalations                = int16(5)
+)
+
+var (
+	DefaultTenderCounterMarginFloor = decimal.NewFromInt(10)
+	minTenderMarginFloor            = decimal.NewFromInt(-100)
+	maxPercent                      = decimal.NewFromInt(100)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -108,6 +123,14 @@ type DispatchControl struct {
 	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId"         bun:"exception_escalation_contact_id,type:VARCHAR(100),nullzero"`
 	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes"      bun:"exception_missed_stop_grace_minutes,type:SMALLINT,notnull,default:30"`
 	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours"               bun:"exception_pod_grace_hours,type:SMALLINT,notnull,default:24"`
+	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled"           bun:"tender_counter_offers_enabled,type:BOOLEAN,notnull"`
+	TenderCounterMarginFloorPercent      decimal.Decimal            `json:"tenderCounterMarginFloorPercent"      bun:"tender_counter_margin_floor_percent,type:NUMERIC(7,4),notnull"`
+	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters"             bun:"tender_auto_accept_counters,type:BOOLEAN,notnull"`
+	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes"         bun:"tender_counter_decision_minutes,type:INTEGER,notnull,default:60"`
+	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction"                bun:"tender_exhausted_action,type:VARCHAR(50),notnull,default:'Notify'"`
+	TenderEscalationRateIncreasePercent  decimal.Decimal            `json:"tenderEscalationRateIncreasePercent"  bun:"tender_escalation_rate_increase_percent,type:NUMERIC(7,4),notnull"`
+	TenderEscalationOfferTTLMinutes      int32                      `json:"tenderEscalationOfferTtlMinutes"      bun:"tender_escalation_offer_ttl_minutes,type:INTEGER,notnull,default:60"`
+	TenderMaxEscalations                 int16                      `json:"tenderMaxEscalations"                 bun:"tender_max_escalations,type:SMALLINT,notnull"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -250,6 +273,90 @@ func (dc *DispatchControl) NormalizeExceptionSettings() {
 	}
 }
 
+// TenderPolicy is how an organization's tenders treat a counter-offer and an
+// exhausted waterfall.
+type TenderPolicy struct {
+	CountersEnabled        bool
+	CounterMarginFloor     decimal.Decimal
+	AutoAcceptCounters     bool
+	CounterDecisionSeconds int64
+	ExhaustedAction        TenderExhaustedAction
+	EscalationRateIncrease decimal.Decimal
+	EscalationOfferTTLSecs int32
+	MaxEscalations         int16
+}
+
+// DefaultTenderPolicy is the policy of an organization that has never set one:
+// counters are taken for a person to decide against a 10% floor, and an
+// exhausted tender only tells dispatch.
+func DefaultTenderPolicy() TenderPolicy {
+	return TenderPolicy{
+		CountersEnabled:        true,
+		CounterMarginFloor:     DefaultTenderCounterMarginFloor,
+		CounterDecisionSeconds: int64(DefaultTenderCounterDecisionMinutes) * 60,
+		ExhaustedAction:        TenderExhaustedActionNotify,
+		EscalationRateIncrease: decimal.Zero,
+		EscalationOfferTTLSecs: DefaultTenderEscalationTTLMinutes * 60,
+		MaxEscalations:         DefaultTenderMaxEscalations,
+	}
+}
+
+func (dc *DispatchControl) TenderPolicy() TenderPolicy {
+	policy := DefaultTenderPolicy()
+	if dc == nil {
+		return policy
+	}
+	policy.CountersEnabled = dc.TenderCounterOffersEnabled
+	policy.AutoAcceptCounters = dc.TenderAutoAcceptCounters
+	if validTenderMarginFloor(dc.TenderCounterMarginFloorPercent) {
+		policy.CounterMarginFloor = dc.TenderCounterMarginFloorPercent
+	}
+	if validTenderCounterDecision(dc.TenderCounterDecisionMinutes) {
+		policy.CounterDecisionSeconds = int64(dc.TenderCounterDecisionMinutes) * 60
+	}
+	if dc.TenderExhaustedAction.IsValid() {
+		policy.ExhaustedAction = dc.TenderExhaustedAction
+	}
+	if validPercent(dc.TenderEscalationRateIncreasePercent) {
+		policy.EscalationRateIncrease = dc.TenderEscalationRateIncreasePercent
+	}
+	if validTenderEscalationTTL(dc.TenderEscalationOfferTTLMinutes) {
+		policy.EscalationOfferTTLSecs = dc.TenderEscalationOfferTTLMinutes * 60
+	}
+	if dc.TenderMaxEscalations >= 0 && dc.TenderMaxEscalations <= MaxTenderEscalations {
+		policy.MaxEscalations = dc.TenderMaxEscalations
+	}
+	return policy
+}
+
+func (dc *DispatchControl) NormalizeTenderSettings() {
+	if dc.TenderCounterDecisionMinutes == 0 {
+		dc.TenderCounterDecisionMinutes = DefaultTenderCounterDecisionMinutes
+	}
+	if dc.TenderEscalationOfferTTLMinutes == 0 {
+		dc.TenderEscalationOfferTTLMinutes = DefaultTenderEscalationTTLMinutes
+	}
+	if dc.TenderExhaustedAction == "" {
+		dc.TenderExhaustedAction = TenderExhaustedActionNotify
+	}
+}
+
+func validTenderMarginFloor(floor decimal.Decimal) bool {
+	return !floor.LessThan(minTenderMarginFloor) && !floor.GreaterThan(maxPercent)
+}
+
+func validPercent(value decimal.Decimal) bool {
+	return !value.IsNegative() && !value.GreaterThan(maxPercent)
+}
+
+func validTenderCounterDecision(minutes int32) bool {
+	return minutes >= MinTenderCounterDecisionMinutes && minutes <= MaxTenderCounterDecisionMinutes
+}
+
+func validTenderEscalationTTL(minutes int32) bool {
+	return minutes >= MinTenderEscalationTTLMinutes && minutes <= MaxTenderEscalationTTLMinutes
+}
+
 func validExceptionPODGrace(hours int16) bool {
 	return hours >= MinExceptionPODGraceHours && hours <= MaxExceptionPODGraceHours
 }
@@ -360,6 +467,7 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	dc.NormalizeServiceFailureSettings()
 	dc.NormalizeAutoAssignmentSettings()
 	dc.NormalizeExceptionSettings()
+	dc.NormalizeTenderSettings()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(dc,
 		validation.Field(
@@ -504,6 +612,50 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				}
 				return nil
 			}),
+		),
+		validation.Field(&dc.TenderCounterMarginFloorPercent,
+			validation.By(func(_ any) error {
+				if !validTenderMarginFloor(dc.TenderCounterMarginFloorPercent) {
+					return errors.New("Counter-offer margin floor must be between -100% and 100%")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.TenderCounterDecisionMinutes,
+			validation.By(func(_ any) error {
+				if !validTenderCounterDecision(dc.TenderCounterDecisionMinutes) {
+					return errors.New(
+						"Counter-offer decision time must be between 5 and 1440 minutes",
+					)
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.TenderExhaustedAction,
+			validation.Required.Error("Exhausted tender action is required"),
+			domainvalidation.ValidEnum[TenderExhaustedAction](
+				"Exhausted tender action must be one of: Notify, Rebroadcast, Rewaterfall",
+			),
+		),
+		validation.Field(&dc.TenderEscalationRateIncreasePercent,
+			validation.By(func(_ any) error {
+				if !validPercent(dc.TenderEscalationRateIncreasePercent) {
+					return errors.New("Escalation rate increase must be between 0% and 100%")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.TenderEscalationOfferTTLMinutes,
+			validation.By(func(_ any) error {
+				if !validTenderEscalationTTL(dc.TenderEscalationOfferTTLMinutes) {
+					return errors.New("Escalation offer expiry must be between 5 and 10080 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.TenderMaxEscalations,
+			validation.Min(int16(0)).Error("Escalation rounds must be between 0 and 5"),
+			validation.Max(MaxTenderEscalations).Error("Escalation rounds must be between 0 and 5"),
 		),
 		validation.Field(&dc.EtaRiskThresholdMinutes,
 			validation.By(func(_ any) error {

@@ -96,11 +96,11 @@ Loaded now:
 - cancel_wait
 - list_shipments
 - search_worker
-- list_workers
 - list_tractors
 - list_trailers
 - assign_move
 - cancel_tender
+- record_tender_response
 - list_recurring_shipments
 - get_shipment
 - rank_move_candidates
@@ -109,6 +109,7 @@ Loaded now:
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
+- list_workers — List workers (drivers) by employment or qualification.
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.
 - list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
@@ -125,7 +126,6 @@ Callable after find_tools:
 - assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
 - cancel_carrier_assignment — Take the outside carrier off a move that has not started, leaving it uncovered, and void the carrier's rate confirmation.
 - list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
-- record_tender_response — Record a carrier's answer to a tender offer that reached you by phone or email instead of through the offer's link.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - generate_rate_confirmation — Generate the rate confirmation for a move covered by an outside carrier.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.

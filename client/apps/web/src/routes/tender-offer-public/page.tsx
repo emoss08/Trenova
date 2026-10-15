@@ -9,10 +9,16 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Input } from "@trenova/shared/components/ui/input";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { PublicTenderOffer } from "@trenova/shared/types/tender";
+import {
+  MAX_COUNTER_NOTE_LENGTH,
+  publicTenderCounterPayloadSchema,
+  type PublicTenderCounterPayload,
+  type PublicTenderOffer,
+} from "@trenova/shared/types/tender";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
@@ -27,23 +33,102 @@ const tenderService = new TenderService();
 
 type OfferIntent = "accept" | "decline" | null;
 
+type OfferPanel = "decline" | "counter" | null;
+
+type OfferResponse =
+  | { action: "accept" }
+  | { action: "decline"; reason: string }
+  | { action: "counter"; counter: PublicTenderCounterPayload };
+
+function CounterForm({
+  offer,
+  isSubmitting,
+  onCounter,
+}: {
+  offer: PublicTenderOffer;
+  isSubmitting: boolean;
+  onCounter: (counter: PublicTenderCounterPayload) => void;
+}) {
+  const t = useT();
+
+  const [rate, setRate] = useState("");
+  const [note, setNote] = useState("");
+  const [rateError, setRateError] = useState<string | null>(null);
+
+  const submit = () => {
+    const parsed = publicTenderCounterPayloadSchema.safeParse({ rate, note });
+    if (!parsed.success) {
+      setRateError(parsed.error.issues[0]?.message ?? t("Enter a valid rate"));
+      return;
+    }
+    setRateError(null);
+    onCounter(parsed.data);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="counter-rate" className="text-muted-foreground text-xs">
+          {t("Your rate ({0})", offer.rateMethodLabel)}
+        </label>
+        <Input
+          id="counter-rate"
+          inputMode="decimal"
+          autoComplete="off"
+          value={rate}
+          onChange={(event) => setRate(event.target.value)}
+          placeholder={offer.rateValue || undefined}
+          aria-invalid={rateError !== null}
+          aria-describedby={rateError ? "counter-rate-error" : undefined}
+        />
+        {rateError && (
+          <span id="counter-rate-error" role="alert" className="text-2xs text-danger-foreground">
+            {rateError}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="counter-note" className="text-muted-foreground text-xs">
+          {t("Note to the broker (optional)")}
+        </label>
+        <Textarea
+          id="counter-note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          placeholder={t("e.g., Fuel is up on this lane")}
+          rows={2}
+          maxLength={MAX_COUNTER_NOTE_LENGTH}
+        />
+      </div>
+      <Button
+        type="button"
+        isLoading={isSubmitting}
+        loadingText={t("Sending...")}
+        disabled={isSubmitting}
+        onClick={submit}
+      >
+        {t("Send counter-offer")}
+      </Button>
+    </div>
+  );
+}
+
 function OfferSummary({
   offer,
   intent,
   isSubmitting,
-  onAccept,
-  onDecline,
+  onRespond,
 }: {
   offer: PublicTenderOffer;
   intent: OfferIntent;
   isSubmitting: boolean;
-  onAccept: () => void;
-  onDecline: (reason: string) => void;
+  onRespond: (response: OfferResponse) => void;
 }) {
   const t = useT();
 
-  const [declineOpen, setDeclineOpen] = useState(intent === "decline");
+  const [panel, setPanel] = useState<OfferPanel>(intent === "decline" ? "decline" : null);
   const [reason, setReason] = useState("");
+  const declineOpen = panel === "decline";
 
   return (
     <Card className="w-full max-w-md">
@@ -89,10 +174,10 @@ function OfferSummary({
             <Button
               type="button"
               className={cn("flex-1", intent === "accept" && "ring-ring ring-2 ring-offset-2")}
-              isLoading={isSubmitting && !declineOpen}
+              isLoading={isSubmitting && panel === null}
               loadingText={t("Accepting...")}
               disabled={isSubmitting}
-              onClick={onAccept}
+              onClick={() => onRespond({ action: "accept" })}
             >
               {t("Accept load")}
             </Button>
@@ -108,15 +193,27 @@ function OfferSummary({
               loadingText={t("Declining...")}
               onClick={() => {
                 if (!declineOpen) {
-                  setDeclineOpen(true);
+                  setPanel("decline");
                   return;
                 }
-                onDecline(reason);
+                onRespond({ action: "decline", reason });
               }}
             >
               {declineOpen ? t("Confirm decline") : t("Decline")}
             </Button>
           </div>
+
+          {offer.counterAllowed && panel !== "counter" && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={() => setPanel("counter")}
+            >
+              {t("Propose a different rate")}
+            </Button>
+          )}
 
           {declineOpen && (
             <div className="flex flex-col gap-1">
@@ -133,15 +230,35 @@ function OfferSummary({
               />
             </div>
           )}
+
+          {offer.counterAllowed && panel === "counter" && (
+            <CounterForm
+              offer={offer}
+              isSubmitting={isSubmitting}
+              onCounter={(counter) => onRespond({ action: "counter", counter })}
+            />
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
+function sendResponse(token: string, response: OfferResponse): Promise<void> {
+  switch (response.action) {
+    case "accept":
+      return tenderService.acceptPublicOffer(token);
+    case "decline":
+      return tenderService.declinePublicOffer(token, response.reason);
+    case "counter":
+      return tenderService.counterPublicOffer(token, response.counter);
+  }
+}
+
 /**
  * The public accept/decline page an external carrier lands on from an emailed
- * offer link. It never auto-submits — the /accept and /decline variants only
+ * offer link. When the broker takes counter-offers the carrier can also
+ * propose a rate of its own. It never auto-submits — the /accept and /decline variants only
  * pre-highlight the matching button — and it leaks nothing about why a link is
  * unusable.
  */
@@ -167,10 +284,7 @@ export function TenderOfferPublicPage() {
   });
 
   const respondMutation = useMutation({
-    mutationFn: (params: { action: "accept" | "decline"; reason: string }) =>
-      params.action === "accept"
-        ? tenderService.acceptPublicOffer(token)
-        : tenderService.declinePublicOffer(token, params.reason),
+    mutationFn: (response: OfferResponse) => sendResponse(token, response),
     onSuccess: () => {
       setSubmitError(null);
       setSubmitted(true);
@@ -181,7 +295,17 @@ export function TenderOfferPublicPage() {
   });
 
   let content: React.ReactNode;
-  if (submitted) {
+  if (submitted && respondMutation.variables?.action === "counter") {
+    content = (
+      <StatusCard
+        icon={<CheckCircleIcon className="size-8 text-success-foreground" aria-hidden />}
+        title={t("Counter-offer sent")}
+        body={t(
+          "The broker has your rate and will take or refuse it. You will hear back by email; the load is not yours until they confirm.",
+        )}
+      />
+    );
+  } else if (submitted) {
     content = (
       <StatusCard
         icon={<CheckCircleIcon className="size-8 text-success-foreground" aria-hidden />}
@@ -299,8 +423,7 @@ export function TenderOfferPublicPage() {
         offer={previewQuery.data}
         intent={intent}
         isSubmitting={respondMutation.isPending}
-        onAccept={() => respondMutation.mutate({ action: "accept", reason: "" })}
-        onDecline={(reason) => respondMutation.mutate({ action: "decline", reason })}
+        onRespond={(response) => respondMutation.mutate(response)}
       />
     );
   } else {

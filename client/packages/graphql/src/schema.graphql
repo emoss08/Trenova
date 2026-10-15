@@ -27395,10 +27395,14 @@ enum ShipmentEventType {
   StatusChanged
   StopCompleted
   TenderAccepted
+  TenderBounced
+  TenderCounterDecided
+  TenderCountered
   TenderDeclined
   TenderDeliveryFailed
   TenderEntrySkipped
   TenderEntryWarned
+  TenderEscalated
   TenderExpired
   TenderLateResponse
   TenderNeedsReview
@@ -28152,8 +28156,9 @@ enum ShipmentSuggestionTone {
 """
 Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-TenderEntryWarned.
+TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+TenderEscalated.
 """
 type ShipmentTenderEvent implements ShipmentEvent {
   """Response action recorded after the offer had already closed."""
@@ -28873,6 +28878,10 @@ type TelematicsStatus {
 type Tender {
   acceptedAt: Timestamp
   acceptedOfferId: ID
+  """
+  How many times a carrier has backed out of an acceptance on this tender.
+  """
+  bounceCount: Int!
   businessUnitId: ID!
   canceledAt: Timestamp
   canceledById: ID
@@ -28880,8 +28889,15 @@ type Tender {
   createdAt: Timestamp!
   createdById: ID
   currentRank: Int!
+  """The exhausted tender this one escalated from."""
+  escalatedFromId: ID
+  """
+  Zero for a tender a person or the routing guide started; the escalation round otherwise.
+  """
+  escalationRound: Int!
   exhaustedAt: Timestamp
   id: ID!
+  lastBouncedAt: Timestamp
   mode: TenderMode!
   offers: [TenderOffer!]
   organizationId: ID!
@@ -28906,10 +28922,28 @@ enum TenderMode {
 }
 
 type TenderOffer {
+  """
+  The rate the carrier is held to: its counter when one stands or was taken, the offered rate otherwise.
+  """
+  agreedRate: Decimal!
   businessUnitId: ID!
   carrier: Carrier
   carrierId: ID!
   channel: TenderChannel!
+  counterDecidedAt: Timestamp
+  counterDecidedById: ID
+  """
+  The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price.
+  """
+  counterMarginPercent: Decimal
+  """
+  True when the counter is below the margin floor, so taking it needs the tender approve permission.
+  """
+  counterNeedsApproval: Boolean!
+  counterNote: String!
+  """The rate the carrier countered with, when it made one."""
+  counterRate: Decimal
+  counteredAt: Timestamp
   createdAt: Timestamp!
   declineReason: String!
   deliveryError: String!
@@ -28925,8 +28959,13 @@ type TenderOffer {
   rate: Decimal!
   rateMethod: CarrierRateMethod!
   recipientEmail: String!
+  """The offer this one asks again after a carrier backed out."""
+  reofferedFromId: ID
   respondedAt: Timestamp
   responseSource: TenderResponseSource
+  revokeReason: String!
+  revokedAt: Timestamp
+  revokedById: ID
   sentAt: Timestamp
   status: TenderOfferStatus!
   tenderId: ID!
@@ -28936,10 +28975,16 @@ type TenderOffer {
 
 enum TenderOfferStatus {
   Accepted
+  """A counter-offer somebody refused."""
+  CounterRejected
+  """A carrier's answer with a rate of its own, waiting on a decision."""
+  Countered
   Declined
   DeliveryFailed
   Expired
   Pending
+  """An acceptance the carrier walked back."""
+  Revoked
   Sent
   Skipped
   Superseded

@@ -2931,6 +2931,8 @@ writes:
     reason: "The organization's own profile and settings."
 
   # tender
+  "POST /api/v1/tenders/:tenderID/bounce/":
+    tools: [record_tender_response]
   "POST /api/v1/tenders/:tenderID/cancel/":
     tools: [cancel_tender]
   "POST /api/v1/tenders/offers/:offerID/respond/":
@@ -2942,6 +2944,9 @@ writes:
 
   # tenderpublic
   "POST /api/v1/tender-offers/:token/accept/":
+    exempt: counterparty
+    reason: "The outside party answering through a public link; an agent acting for the organization must not answer for them."
+  "POST /api/v1/tender-offers/:token/counter/":
     exempt: counterparty
     reason: "The outside party answering through a public link; an agent acting for the organization must not answer for them."
   "POST /api/v1/tender-offers/:token/decline/":

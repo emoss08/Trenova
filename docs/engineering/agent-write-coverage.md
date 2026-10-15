@@ -90,32 +90,32 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 54 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
-| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
+| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1151 writes: 637 GraphQL mutations and 514 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1153 writes: 637 GraphQL mutations and 516 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 424 |
-| Exempt | 693 |
+| Covered by a tool | 425 |
+| Exempt | 694 |
 | — Security | 83 |
 | — Configuration | 270 |
 | — User preference | 39 |
 | — Infrastructure | 54 |
 | — Agent administration | 101 |
-| — Counterparty | 34 |
+| — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1151 |
+| Total | 1153 |
 
-Of the 458 writes an agent should be able to make, 424 have a tool (92%).
+Of the 459 writes an agent should be able to make, 425 have a tool (92%).
 
 ## Pending
 
@@ -318,8 +318,8 @@ The writes no tool performs yet, and what the tool would do.
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
-| tender | 4 | 4 | 0 | 0 |
-| tenderpublic | 2 | 0 | 2 | 0 |
+| tender | 5 | 5 | 0 | 0 |
+| tenderpublic | 3 | 0 | 3 | 0 |
 | timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
@@ -2138,6 +2138,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `POST /api/v1/tenders/:tenderID/bounce/`<br>tenderhandler.bounce | Tool: `record_tender_response` |
 | `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `cancel_tender` |
 | `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `record_tender_response` |
 | `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `tender_move_to_carriers` |
@@ -2148,6 +2149,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/tender-offers/:token/accept/`<br>tenderpublichandler.accept | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
+| `POST /api/v1/tender-offers/:token/counter/`<br>tenderpublichandler.counter | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
 | `POST /api/v1/tender-offers/:token/decline/`<br>tenderpublichandler.decline | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
 
 ### timesheet

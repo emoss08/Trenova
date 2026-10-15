@@ -87,6 +87,14 @@ var DispatchControlColumns = struct {
 	ExceptionEscalationContactID         buncolgen.Column // "exception_escalation_contact_id" → qualified: "dc.exception_escalation_contact_id"
 	ExceptionMissedStopGraceMinutes      buncolgen.Column // "exception_missed_stop_grace_minutes" → qualified: "dc.exception_missed_stop_grace_minutes"
 	ExceptionPODGraceHours               buncolgen.Column // "exception_pod_grace_hours" → qualified: "dc.exception_pod_grace_hours"
+	TenderCounterOffersEnabled           buncolgen.Column // "tender_counter_offers_enabled" → qualified: "dc.tender_counter_offers_enabled"
+	TenderCounterMarginFloorPercent      buncolgen.Column // "tender_counter_margin_floor_percent" → qualified: "dc.tender_counter_margin_floor_percent"
+	TenderAutoAcceptCounters             buncolgen.Column // "tender_auto_accept_counters" → qualified: "dc.tender_auto_accept_counters"
+	TenderCounterDecisionMinutes         buncolgen.Column // "tender_counter_decision_minutes" → qualified: "dc.tender_counter_decision_minutes"
+	TenderExhaustedAction                buncolgen.Column // "tender_exhausted_action" → qualified: "dc.tender_exhausted_action"
+	TenderEscalationRateIncreasePercent  buncolgen.Column // "tender_escalation_rate_increase_percent" → qualified: "dc.tender_escalation_rate_increase_percent"
+	TenderEscalationOfferTTLMinutes      buncolgen.Column // "tender_escalation_offer_ttl_minutes" → qualified: "dc.tender_escalation_offer_ttl_minutes"
+	TenderMaxEscalations                 buncolgen.Column // "tender_max_escalations" → qualified: "dc.tender_max_escalations"
 	ComplianceEnforcementLevel           buncolgen.Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                buncolgen.Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 buncolgen.Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -132,6 +140,14 @@ var DispatchControlColumns = struct {
 	ExceptionEscalationContactID:         buncolgen.NewColumn("exception_escalation_contact_id", "dc"),
 	ExceptionMissedStopGraceMinutes:      buncolgen.NewColumn("exception_missed_stop_grace_minutes", "dc"),
 	ExceptionPODGraceHours:               buncolgen.NewColumn("exception_pod_grace_hours", "dc"),
+	TenderCounterOffersEnabled:           buncolgen.NewColumn("tender_counter_offers_enabled", "dc"),
+	TenderCounterMarginFloorPercent:      buncolgen.NewColumn("tender_counter_margin_floor_percent", "dc"),
+	TenderAutoAcceptCounters:             buncolgen.NewColumn("tender_auto_accept_counters", "dc"),
+	TenderCounterDecisionMinutes:         buncolgen.NewColumn("tender_counter_decision_minutes", "dc"),
+	TenderExhaustedAction:                buncolgen.NewColumn("tender_exhausted_action", "dc"),
+	TenderEscalationRateIncreasePercent:  buncolgen.NewColumn("tender_escalation_rate_increase_percent", "dc"),
+	TenderEscalationOfferTTLMinutes:      buncolgen.NewColumn("tender_escalation_offer_ttl_minutes", "dc"),
+	TenderMaxEscalations:                 buncolgen.NewColumn("tender_max_escalations", "dc"),
 	ComplianceEnforcementLevel:           buncolgen.NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                buncolgen.NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 buncolgen.NewColumn("service_failure_target", "dc"),
@@ -183,6 +199,14 @@ var DispatchControlFieldMap = map[string]string{
 	"exceptionEscalationContactId":         "exception_escalation_contact_id",
 	"exceptionMissedStopGraceMinutes":      "exception_missed_stop_grace_minutes",
 	"exceptionPodGraceHours":               "exception_pod_grace_hours",
+	"tenderCounterOffersEnabled":           "tender_counter_offers_enabled",
+	"tenderCounterMarginFloorPercent":      "tender_counter_margin_floor_percent",
+	"tenderAutoAcceptCounters":             "tender_auto_accept_counters",
+	"tenderCounterDecisionMinutes":         "tender_counter_decision_minutes",
+	"tenderExhaustedAction":                "tender_exhausted_action",
+	"tenderEscalationRateIncreasePercent":  "tender_escalation_rate_increase_percent",
+	"tenderEscalationOfferTtlMinutes":      "tender_escalation_offer_ttl_minutes",
+	"tenderMaxEscalations":                 "tender_max_escalations",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -232,6 +256,14 @@ var DispatchControlInsertableColumns = []string{
 	"exception_escalation_contact_id",
 	"exception_missed_stop_grace_minutes",
 	"exception_pod_grace_hours",
+	"tender_counter_offers_enabled",
+	"tender_counter_margin_floor_percent",
+	"tender_auto_accept_counters",
+	"tender_counter_decision_minutes",
+	"tender_exhausted_action",
+	"tender_escalation_rate_increase_percent",
+	"tender_escalation_offer_ttl_minutes",
+	"tender_max_escalations",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -328,6 +360,14 @@ var DispatchControlFilter = struct {
 	ExceptionEscalationContactID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionEscalationContactId" → DB: "exception_escalation_contact_id"
 	ExceptionMissedStopGraceMinutes      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionMissedStopGraceMinutes" → DB: "exception_missed_stop_grace_minutes"
 	ExceptionPODGraceHours               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionPodGraceHours" → DB: "exception_pod_grace_hours"
+	TenderCounterOffersEnabled           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderCounterOffersEnabled" → DB: "tender_counter_offers_enabled"
+	TenderCounterMarginFloorPercent      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderCounterMarginFloorPercent" → DB: "tender_counter_margin_floor_percent"
+	TenderAutoAcceptCounters             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderAutoAcceptCounters" → DB: "tender_auto_accept_counters"
+	TenderCounterDecisionMinutes         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderCounterDecisionMinutes" → DB: "tender_counter_decision_minutes"
+	TenderExhaustedAction                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderExhaustedAction" → DB: "tender_exhausted_action"
+	TenderEscalationRateIncreasePercent  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderEscalationRateIncreasePercent" → DB: "tender_escalation_rate_increase_percent"
+	TenderEscalationOfferTTLMinutes      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderEscalationOfferTtlMinutes" → DB: "tender_escalation_offer_ttl_minutes"
+	TenderMaxEscalations                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderMaxEscalations" → DB: "tender_max_escalations"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -446,6 +486,30 @@ var DispatchControlFilter = struct {
 	},
 	ExceptionPODGraceHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("exceptionPodGraceHours", op, value)
+	},
+	TenderCounterOffersEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderCounterOffersEnabled", op, value)
+	},
+	TenderCounterMarginFloorPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderCounterMarginFloorPercent", op, value)
+	},
+	TenderAutoAcceptCounters: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderAutoAcceptCounters", op, value)
+	},
+	TenderCounterDecisionMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderCounterDecisionMinutes", op, value)
+	},
+	TenderExhaustedAction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderExhaustedAction", op, value)
+	},
+	TenderEscalationRateIncreasePercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderEscalationRateIncreasePercent", op, value)
+	},
+	TenderEscalationOfferTTLMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderEscalationOfferTtlMinutes", op, value)
+	},
+	TenderMaxEscalations: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tenderMaxEscalations", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("complianceEnforcementLevel", op, value)

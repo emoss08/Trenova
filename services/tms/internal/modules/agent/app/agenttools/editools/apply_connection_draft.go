@@ -151,6 +151,13 @@ func readiness(input *edispec.Input, draft *ediports.ConnectionDraft) error {
 	return nil
 }
 
+func (t *ApplyConnectionDraftTool) ResolveSelection(
+	_ context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	return edispec.RedactQuotes(params.Params), nil
+}
+
 func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
