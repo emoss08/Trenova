@@ -50,6 +50,8 @@ export function messageStanding(message: EDIMessage, t: TranslateFn): MessageSta
       return { label: t("Rejected by partner"), tone: "warn", mark: "pause" };
     case "Failed":
       return { label: t("Acknowledgment unreadable"), tone: "warn", mark: "pause" };
+    case "AcceptedWithErrors":
+      return { label: t("Accepted with errors"), tone: "warn", mark: "pause" };
     case "Accepted":
       return { label: t("Accepted"), tone: "success", mark: "check" };
     case "Pending":
@@ -170,6 +172,8 @@ function answerStation(message: EDIMessage, generated: boolean, t: TranslateFn):
   switch (message.ackStatus) {
     case "Accepted":
       return { ...station, detail: t("Accepted by the partner"), at, state: "done" };
+    case "AcceptedWithErrors":
+      return { ...station, detail: t("Accepted by the partner, with errors"), at, state: "done" };
     case "Rejected":
       return { ...station, detail: t("Rejected by the partner"), at, state: "failed" };
     case "Failed":
@@ -275,6 +279,9 @@ export function wayHalt(message: EDIMessage, t: TranslateFn): WayHalt | null {
   }
   if (answer && message.ackStatus === "Failed") {
     return answerHalt(message, t("Why its acknowledgment could not be read"), answer);
+  }
+  if (answer && message.ackStatus === "AcceptedWithErrors") {
+    return answerHalt(message, t("What the partner noted when it accepted"), answer);
   }
   return null;
 }

@@ -28,6 +28,7 @@ const (
 	SeedDotHazmatReferences             SeedID = "DotHazmatReferences"             // from 03_dot_hazmat_references.go
 	SeedDriverPay                       SeedID = "DriverPay"                       // from 11_driverpay.go
 	SeedDriverPayLedger                 SeedID = "DriverPayLedger"                 // from 12_driverpay_ledger.go
+	SeedEDITradingPartner               SeedID = "EDITradingPartner"               // from 39_edi_trading_partner.go
 	SeedFiscalYear                      SeedID = "FiscalYear"                      // from 36_fiscal_year.go
 	SeedFormulaTemplate                 SeedID = "FormulaTemplate"                 // from 01_formulatemplate.go
 	SeedFuelSpendIFTA                   SeedID = "FuelSpendIFTA"                   // from 24_fuel_spend_ifta.go
@@ -83,6 +84,7 @@ var AllSeedIDs = []SeedID{
 	SeedDotHazmatReferences,
 	SeedDriverPay,
 	SeedDriverPayLedger,
+	SeedEDITradingPartner,
 	SeedFiscalYear,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
@@ -151,6 +153,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
 	SeedDriverPayLedger,
+	SeedEDITradingPartner,
 	SeedFiscalYear,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,

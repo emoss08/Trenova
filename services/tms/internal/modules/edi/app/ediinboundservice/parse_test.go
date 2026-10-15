@@ -216,6 +216,34 @@ func TestParseAcknowledgments997(t *testing.T) {
 	require.Empty(t, ackErr)
 }
 
+func TestAcknowledgmentResolution_AcceptedWithErrorsKeepsWhatThePartnerNoted(t *testing.T) {
+	t.Parallel()
+
+	raw := "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+		"*260107*1200*^*00501*000000103*0*P*>~" +
+		"GS*FA*PARTNER*TRENOVA*20260107*1200*103*X*005010~" +
+		"ST*999*0001~" +
+		"AK1*SM*44~" +
+		"IK2*204*0044~" +
+		"IK3*N1*7**8~" +
+		"IK5*E*5~" +
+		"AK9*E*1*1*1~" +
+		"SE*7*0001~" +
+		"GE*1*103~" +
+		"IEA*1*000000103~"
+
+	interchange, err := parseInterchange(raw)
+	require.NoError(t, err)
+	entries := parseAcknowledgments(&interchange.transactions[0])
+	require.Len(t, entries, 1)
+	require.Equal(t, "E", entries[0].acknowledgmentCode)
+
+	status, ackErr := acknowledgmentResolution(&entries[0])
+	require.Equal(t, edi.MessageAcknowledgmentStatusAcceptedWithErrors, status)
+	require.Contains(t, ackErr, "acknowledgment code E")
+	require.Contains(t, ackErr, "segment N1")
+}
+
 func TestParseAcknowledgmentsRejected999(t *testing.T) {
 	t.Parallel()
 

@@ -228,7 +228,9 @@ func (t Template) Description() string {
 	case TemplateEDIDesk:
 		return "Diagnoses each EDI file that lands in quarantine: reads what the partner sent " +
 			"and why it failed, says what has to change for it to process, and proposes " +
-			"running it again once that is fixed."
+			"running it again once that is fixed. Asked, it reports which partners have not " +
+			"acknowledged what was sent, previews a 204, 214 or 990 before it goes, and reads " +
+			"pasted X12."
 	case TemplateFormulaAssistant:
 		return "Helps write and explain the rating formulas that price freight, drafts and " +
 			"revises rate agreements, and proposes rate changes, rate sheets and fuel index " +

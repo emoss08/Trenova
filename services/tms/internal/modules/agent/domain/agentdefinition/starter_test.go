@@ -256,7 +256,8 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			template: agentdefinition.TemplateEDIDesk,
 			needs: []string{
 				"list_edi_inbound_files", "get_edi_inbound_file", "list_edi_transfers",
-				"get_edi_partner", "reprocess_edi_inbound_files",
+				"get_edi_partner", "reprocess_edi_inbound_files", "list_edi_messages",
+				"get_edi_ack_health", "inspect_x12", "preview_edi_document",
 			},
 			never: []string{
 				"create_shipment", "email_customer", "reply_to_inbound_message",
@@ -274,6 +275,12 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			require.NotContainsf(t, tools, tool, "%s must not hold %s", tc.template.Label(), tool)
 		}
 	}
+}
+
+func TestTemplates_TheLoadMonitorReadsWhetherPartnersAcknowledgeWhatWasSent(t *testing.T) {
+	t.Parallel()
+
+	require.Contains(t, agentdefinition.TemplateLoadMonitor.StarterTools(), "get_edi_ack_health")
 }
 
 func TestTemplates_TheInsightAnalystIsCappedAtTwentyRunsADay(t *testing.T) {

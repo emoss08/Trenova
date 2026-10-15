@@ -984,6 +984,13 @@ export function EDIMessageAckStatusBadge({
       text: t("Accepted"),
       description: t("The trading partner acknowledged and accepted this message."),
     },
+    AcceptedWithErrors: {
+      phase: "attention",
+      text: t("Accepted with errors"),
+      description: t(
+        "The trading partner accepted this message but reported errors in it. Review the acknowledgment errors.",
+      ),
+    },
     Rejected: {
       phase: "failed",
       text: t("Rejected"),
