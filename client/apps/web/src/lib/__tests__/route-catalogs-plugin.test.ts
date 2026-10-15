@@ -178,7 +178,7 @@ describe("routeCatalogs plugin", () => {
 
   it("leaves imports of packages, externals and unresolvable specifiers alone", async () => {
     const code = [
-      'const pdf = import("pdfjs-dist");',
+      'const days = import("react-day-picker");',
       'const lib = import("cdn-lib");',
       'const gone = import("missing");',
     ].join("\n");

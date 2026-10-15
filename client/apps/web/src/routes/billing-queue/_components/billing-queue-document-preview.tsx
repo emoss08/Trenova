@@ -1,8 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PdfViewer } from "@/components/elements/pdf-viewer";
-import { apiService } from "@/services/api";
-import { useQuery } from "@tanstack/react-query";
-import { File06Icon, FileSearch02Icon } from "@trenova/shared/components/icons";
+import { PdfFrame } from "@/components/elements/pdf-frame";
+import { documentContentEndpoint, documentContentUrl } from "@/services/document";
+import { FileSearch02Icon } from "@trenova/shared/components/icons";
 import { BillingQueueDocumentPreviewSkeleton } from "./billing-queue-document-preview-skeleton";
 
 export default function BillingQueueDocumentPreview({
@@ -14,33 +13,11 @@ export default function BillingQueueDocumentPreview({
 }) {
   const t = useT();
 
-  const { data: viewUrl, isLoading } = useQuery({
-    queryKey: ["document-view-url", documentId],
-    queryFn: () => apiService.documentService.getViewUrl(documentId!),
-    enabled: !!documentId,
-    staleTime: 4 * 60 * 1000,
-  });
-
   if (!documentId) {
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4">
         <FileSearch02Icon className="size-10" />
         <p className="text-center text-sm">{t("Select a document to preview it here")}</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return <BillingQueueDocumentPreviewSkeleton />;
-  }
-
-  if (!viewUrl) {
-    return (
-      <div className="bg-muted/20 flex h-full items-center justify-center">
-        <div className="text-muted-foreground flex flex-col items-center gap-2">
-          <File06Icon className="size-6 opacity-40" />
-          <span className="text-xs">{t("Preview unavailable")}</span>
-        </div>
       </div>
     );
   }
@@ -51,13 +28,20 @@ export default function BillingQueueDocumentPreview({
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center p-4">
         <img
-          src={viewUrl}
-          alt={fileName || "Document"}
+          src={documentContentUrl(documentId, "view")}
+          alt={fileName || t("Document")}
           className="max-h-full max-w-full object-contain"
         />
       </div>
     );
   }
 
-  return <PdfViewer file={viewUrl} mode="scroll" className="h-full border-0" />;
+  return (
+    <PdfFrame
+      endpoint={documentContentEndpoint(documentId, "view")}
+      title={fileName || t("Document")}
+      loading={<BillingQueueDocumentPreviewSkeleton />}
+      className="h-full"
+    />
+  );
 }

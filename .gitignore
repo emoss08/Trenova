@@ -1,6 +1,9 @@
 .idea
 .vscode/settings.json
-.claude/
+# Claude Code: local state stays out; project skills are shared.
+/.claude/*
+!/.claude/skills/
+**/.claude/settings.local.json
 .cursor/
 .DS_Store
 vite-app

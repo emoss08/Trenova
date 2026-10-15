@@ -107,7 +107,6 @@ export const chunkGroups: Group[] = [
   group("google-maps", "@vis.gl/react-google-maps"),
   group("nivo", "@nivo/*"),
   group("recharts", "recharts"),
-  group("pdfjs", "pdfjs-dist"),
   // Must precede phone-utils: `react-phone-number-input/flags` is the barrel over the flag
   // components and is imported lazily, so it belongs with the flags rather than with the
   // phone metadata the input needs up front. Scoped to the React components on purpose —

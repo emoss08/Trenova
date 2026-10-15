@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { openCoverSheetsForPrinting } from "../capture-cover-sheet";
+import { openCoverSheetsForPrinting } from "../capture-cover-sheet-print";
 
 // window.open with the "noopener" feature returns null by spec, so a caller
 // that asks for it can never tell an opened tab from a blocked one.

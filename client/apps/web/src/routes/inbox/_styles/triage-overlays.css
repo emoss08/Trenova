@@ -1,14 +1,5 @@
 /* Triage's overlays: the few things utilities cannot reach. Tokens only. */
 
-/* Where the value Nova read appears on a PDF page, marked over the
-   transparent text layer. */
-.tb-pdf .textLayer mark {
-  color: transparent;
-  background: color-mix(in oklch, var(--accent-teal) 22%, transparent);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1.5px var(--accent-teal);
-}
-
 /* The page placeholder for a file with nothing to render. */
 .tb-paper {
   background: repeating-linear-gradient(

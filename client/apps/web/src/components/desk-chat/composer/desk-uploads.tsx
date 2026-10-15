@@ -2,10 +2,10 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import type { AssistantMessageAttachment } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useObjectUrl } from "@trenova/shared/hooks/use-object-url";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -55,23 +55,6 @@ export function formatFileSize(bytes: number): string {
     : translate("{0} MB", (bytes / 1024 / 1024).toFixed(1));
 }
 
-/** An object URL for an image file, revoked when the file goes. */
-function usePreviewUrl(file: File | undefined): string | null {
-  const url = useMemo(
-    () => (file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null),
-    [file],
-  );
-  useEffect(
-    () => () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    },
-    [url],
-  );
-  return url;
-}
-
 /** A file's kind as a small tile, or the picture itself for an image picked here. */
 export function DeskFileIcon({
   name,
@@ -87,7 +70,7 @@ export function DeskFileIcon({
     extension.toUpperCase().slice(0, 4) || "FILE",
     "bad",
   ];
-  const preview = usePreviewUrl(kind === "img" ? file : undefined);
+  const preview = useObjectUrl(kind === "img" && file?.type.startsWith("image/") ? file : null);
   if (preview) {
     return (
       <span

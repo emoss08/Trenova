@@ -1,10 +1,8 @@
 import tailwindcss from "@tailwindcss/vite";
-import { createRequire } from "node:module";
 import path from "path";
 // import { visualizer } from "rollup-plugin-visualizer";
 import react from "@vitejs/plugin-react";
-import { defineConfig, normalizePath } from "vite";
-import { viteStaticCopy } from "vite-plugin-static-copy";
+import { defineConfig } from "vite";
 import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 import { singletonPackages } from "../../singleton-packages.ts";
 import { captureDiscovery } from "./vite/capture-discovery.ts";
@@ -12,10 +10,6 @@ import { chunkGroups } from "./vite/chunk-groups.ts";
 import { routeCatalogs } from "./vite/route-catalogs.ts";
 import { serviceWorker } from "./vite/service-worker.ts";
 
-const require = createRequire(import.meta.url);
-
-const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
-const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
 const dirname = import.meta.dirname;
 
 export default defineConfig(({ command }) => ({
@@ -52,14 +46,6 @@ export default defineConfig(({ command }) => ({
     //   brotliSize: true,
     // }),
     serviceWorker({ source: path.resolve(dirname, "src/service-worker/sw.ts") }),
-    viteStaticCopy({
-      targets: [
-        {
-          src: cMapsDir,
-          dest: "",
-        },
-      ],
-    }),
   ],
   resolve: {
     alias: {

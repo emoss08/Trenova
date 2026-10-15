@@ -1,4 +1,5 @@
-import { PageAssistant, pageAssistantThreadKey } from "@/components/assistant/page-assistant";
+import { PageAssistant } from "@/components/assistant/page-assistant";
+import { pageAssistantThreadKey } from "@/components/assistant/page-assistant-thread-key";
 import type { PageBinding } from "@/components/assistant/use-thread-model";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { assistant } from "@/lib/queries/assistant";
