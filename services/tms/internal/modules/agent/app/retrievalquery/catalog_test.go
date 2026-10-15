@@ -79,6 +79,8 @@ func TestSimilarities_EmbedsWhatIsMissingOnceAndKeepsIt(t *testing.T) {
 	assert.InDelta(t, 0.8, result.ByKey["list_time_off"], 1e-6)
 	assert.InDelta(t, 0.6, result.ByKey["list_workers"], 1e-6)
 	assert.InDelta(t, 0, result.ByKey["send_reminder"], 1e-6)
+	assert.InDelta(t, airetrieval.SimilarityFloor(testModelKey), result.Floor, 1e-9,
+		"the floor is the embedding model's, not one height for every model")
 
 	calls := embeddings.calls()
 	require.Len(t, calls, 1)

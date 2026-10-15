@@ -31,6 +31,15 @@ func NewSemantic(similarity map[string]float64) *Semantic {
 	return &Semantic{Similarity: similarity, Floor: DefaultSimilarityFloor}
 }
 
+func SemanticFrom(found agentports.CatalogSimilarities) *Semantic {
+	semantic := NewSemantic(found.ByKey)
+	if semantic != nil {
+		semantic.Floor = found.FloorOrDefault()
+	}
+
+	return semantic
+}
+
 func (s *Semantic) usable() bool { return s != nil && len(s.Similarity) > 0 }
 
 func (s *Semantic) Clears(names []string) bool {

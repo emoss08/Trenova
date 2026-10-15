@@ -147,6 +147,17 @@ hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixtu
 recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
 command that re-records it from a local Ollama (see "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md)).
+Re-record it, then run the floors command it names, whenever a description, guide page or
+eval request changes; the gates skip, rather than fail, without it.
+
+The hybrid gates also check that requests nothing answers ("quantum chromodynamics lattice")
+find nothing. Similarity runs at a different height for each embedding model: nomic scores
+those requests up to 0.55 against the catalog, where OpenAI's `text-embedding-3-small`
+scores small talk near 0.23. So the floor a match by meaning alone must reach comes from the
+model that embedded the question (`airetrieval.SimilarityFloor`, 0.58 for nomic-embed-text and
+0.5 for a model not yet measured), and it reaches the tool catalog, the product guide and the
+Desk's agent matcher through `CatalogSimilarities.Floor`. When that check fails after a
+re-record, raise the model's floor rather than the eval.
 
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no

@@ -69,7 +69,6 @@ type Service struct {
 	vectorizer    agentports.QueryVectorizer
 	vectors       agentports.CatalogVectorIndex
 	items         []agentports.EmbeddingCatalogItem
-	floor         float64
 }
 
 type indexedPage struct {
@@ -104,7 +103,6 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 		vectorizer:    p.Vectorizer,
 		vectors:       p.CatalogVectors,
 		items:         CatalogItems(catalog),
-		floor:         agentports.DefaultCatalogSimilarityFloor,
 	}
 }
 
@@ -157,11 +155,11 @@ func (s *Service) Search(
 	limit = min(limit, MaxLimit)
 
 	onlyPage := strings.TrimSpace(req.Page)
-	var similarity map[string]float64
+	var similarities agentports.CatalogSimilarities
 	if onlyPage == "" {
-		similarity = s.similarities(ctx, req)
+		similarities = s.similarities(ctx, req)
 	}
-	candidates := s.ranked(req.Query, onlyPage, similarity, limit)
+	candidates := s.ranked(req.Query, onlyPage, similarities, limit)
 	if len(candidates) == 0 {
 		return []agentports.ProductGuideMatch{}, nil
 	}

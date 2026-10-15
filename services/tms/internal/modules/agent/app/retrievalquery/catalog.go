@@ -121,7 +121,11 @@ func (c *CatalogIndex) Similarities(
 		byKey[item.Key] = similarity
 	}
 
-	return agentports.CatalogSimilarities{Available: true, ByKey: byKey}, nil
+	return agentports.CatalogSimilarities{
+		Available: true,
+		ByKey:     byKey,
+		Floor:     airetrieval.SimilarityFloor(req.Query.ModelKey),
+	}, nil
 }
 
 func (c *CatalogIndex) vectorsFor(

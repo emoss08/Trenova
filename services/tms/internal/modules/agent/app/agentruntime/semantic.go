@@ -130,7 +130,7 @@ func (s *Service) toolSemantic(
 		return nil
 	}
 
-	return agenttoolcatalog.NewSemantic(similarities.ByKey)
+	return agenttoolcatalog.SemanticFrom(similarities)
 }
 
 func foundByCall(history []conversation.Message) map[string][]string {

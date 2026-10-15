@@ -18,3 +18,18 @@ func ModelKeyDimensions(modelKey string) (int, bool) {
 
 	return dimensions, true
 }
+
+func ModelKeyModel(modelKey string) string {
+	model := modelKey
+	if at := strings.LastIndexByte(model, '@'); at >= 0 {
+		model = model[:at]
+	}
+	if slash := strings.LastIndexByte(model, '/'); slash >= 0 {
+		model = model[slash+1:]
+	}
+	if colon := strings.IndexByte(model, ':'); colon >= 0 {
+		model = model[:colon]
+	}
+
+	return strings.ToLower(strings.TrimSpace(model))
+}

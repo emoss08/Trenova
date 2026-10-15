@@ -73,12 +73,15 @@ func NewOffline(catalog *productguide.Catalog) *Service {
 		index:     buildIndex(catalog),
 		resources: permission.NewRegistry(),
 		items:     CatalogItems(catalog),
-		floor:     agentports.DefaultCatalogSimilarityFloor,
 	}
 }
 
-func (s *Service) RankPaths(query string, similarity map[string]float64, limit int) []string {
-	candidates := s.ranked(query, "", similarity, limit)
+func (s *Service) RankPaths(
+	query string,
+	similarities agentports.CatalogSimilarities,
+	limit int,
+) []string {
+	candidates := s.ranked(query, "", similarities, limit)
 	out := make([]string, 0, len(candidates))
 	for _, candidate := range candidates {
 		out = append(out, candidate.entry.page.Path)
@@ -90,7 +93,7 @@ func (s *Service) RankPaths(query string, similarity map[string]float64, limit i
 func (s *Service) ranked(
 	query string,
 	onlyPage string,
-	similarity map[string]float64,
+	similarities agentports.CatalogSimilarities,
 	limit int,
 ) []scored {
 	if limit <= 0 {
@@ -101,7 +104,7 @@ func (s *Service) ranked(
 	delete(terms, productNameTerm)
 	candidates := s.rank(terms, onlyPage)
 	if onlyPage == "" {
-		candidates = s.fuse(candidates, terms, similarity, limit)
+		candidates = s.fuse(candidates, terms, similarities, limit)
 	}
 	if len(candidates) > limit {
 		candidates = candidates[:limit]
@@ -113,11 +116,11 @@ func (s *Service) ranked(
 func (s *Service) similarities(
 	ctx context.Context,
 	req *agentports.ProductGuideSearchRequest,
-) map[string]float64 {
+) agentports.CatalogSimilarities {
 	if s.vectorizer == nil || s.vectors == nil || len(s.items) == 0 ||
 		strings.TrimSpace(req.Query) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return nil
+		return agentports.CatalogSimilarities{}
 	}
 
 	query, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
@@ -128,10 +131,10 @@ func (s *Service) similarities(
 	if err != nil {
 		s.l.Warn("could not embed a product guide question; searching by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()), zap.Error(err))
-		return nil
+		return agentports.CatalogSimilarities{}
 	}
 	if !query.Usable() {
-		return nil
+		return agentports.CatalogSimilarities{}
 	}
 
 	found, err := s.vectors.Similarities(ctx, &agentports.CatalogSimilarityRequest{
@@ -143,24 +146,26 @@ func (s *Service) similarities(
 	if err != nil {
 		s.l.Warn("could not compare the product guide with a question; searching by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()), zap.Error(err))
-		return nil
+		return agentports.CatalogSimilarities{}
 	}
 	if !found.Available {
-		return nil
+		return agentports.CatalogSimilarities{}
 	}
 
-	return found.ByKey
+	return found
 }
 
 func (s *Service) fuse(
 	keyword []scored,
 	terms map[string]struct{},
-	similarity map[string]float64,
+	similarities agentports.CatalogSimilarities,
 	limit int,
 ) []scored {
+	similarity := similarities.ByKey
 	if len(similarity) == 0 {
 		return keyword
 	}
+	floor := similarities.FloorOrDefault()
 
 	byPath := make(map[string]scored, len(keyword))
 	keywordPaths := make([]string, 0, len(keyword))
@@ -184,7 +189,7 @@ func (s *Service) fuse(
 			fused = append(fused, candidate)
 			continue
 		}
-		if similarity[path] < s.floor {
+		if similarity[path] < floor {
 			continue
 		}
 		entry := entries[path]
