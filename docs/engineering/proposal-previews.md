@@ -282,6 +282,11 @@ array-of-ids parameter as a subset of one permission resource's records with
   own call stays in the thread as it sent it, and the ledger key is taken from it. A
   selection that cannot be resolved is refused to the model with the reason.
 
+  The same hook settles what a proposal may hold. `apply_edi_connection_draft` returns its
+  arguments with every citation quote and gap summary redacted (`edispec.RedactQuotes`), so a
+  credential a partner's guide prints beside a cited value never reaches the proposal, its
+  preview or the approval card.
+
   `retry_accounting_sync` takes `errorCategories` as criteria beside its `syncRecordIds`
   subset, and pins them only when the call is filed for a person: it implements
   `ToolProposalSelectionResolver`, which the dispatch activity asks once the tier is decided
