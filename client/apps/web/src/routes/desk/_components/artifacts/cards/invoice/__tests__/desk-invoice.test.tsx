@@ -455,6 +455,27 @@ describe("DeskInvoice actions", () => {
     expect(within(went).queryByRole("button", { name: "Resend 210" })).toBeNull();
   });
 
+  it("offers nothing on the invoice it stepped away from while the next one is read", async () => {
+    grantInvoice(Operation.Update);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const card = (recordId: string) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DeskInvoice recordId={recordId} order={["inv_457", "inv_412"]} onSelect={vi.fn()} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { container, rerender } = render(card("inv_457"));
+    await screen.findByRole("heading", { name: "Tyson Foods", level: 2 });
+
+    fetchers.invoice.mockReturnValue(new Promise(() => {}));
+    rerender(card("inv_412"));
+
+    expect(screen.queryByRole("heading", { name: "Tyson Foods", level: 2 })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Post $18,420.00" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("posts a draft only after showing what posting it books", async () => {
     grantInvoice(Operation.Update);
     fetchers.invoice.mockResolvedValue(consolidatedDraft());
