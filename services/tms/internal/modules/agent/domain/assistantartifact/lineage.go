@@ -27,7 +27,7 @@ func LineageKeyFor(kind Kind, toolName string, arguments map[string]any) string 
 	if !versionedKinds[kind] || toolName == "" {
 		return ""
 	}
-	identity := identityOf(arguments)
+	identity := identityOf(kind, arguments)
 	canonical, err := json.Marshal(identity)
 	if err != nil {
 		return ""
@@ -37,9 +37,17 @@ func LineageKeyFor(kind Kind, toolName string, arguments map[string]any) string 
 	return hex.EncodeToString(sum[:])
 }
 
+//nolint:exhaustive // only a kind made from one record is named by one argument
+var namedBy = map[Kind]string{
+	KindEDIConnectionDraft: "documentId",
+}
+
 // identityOf keeps the arguments that name what a call is about: the
 // entity a view is over, and every id, at the top level or one level down.
-func identityOf(arguments map[string]any) map[string]any {
+func identityOf(kind Kind, arguments map[string]any) map[string]any {
+	if key, ok := namedBy[kind]; ok {
+		return map[string]any{key: arguments[key]}
+	}
 	identity := map[string]any{}
 	for key, value := range arguments {
 		switch {

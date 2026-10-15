@@ -39,4 +39,31 @@ describe("withoutRecordIds", () => {
       "No ids here, just the BOL-2026-0109.",
     );
   });
+
+  it("drops a sentence that only names an id", () => {
+    expect(
+      withoutRecordIds(
+        "The partner was saved, as recorded in [EDI partner Acme Retail Group](artifact:art_01M504P2QDKXPBM3QCTD7C0HWR). Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA. Nothing is live yet.",
+      ),
+    ).toBe(
+      "The partner was saved, as recorded in [EDI partner Acme Retail Group](artifact:art_01M504P2QDKXPBM3QCTD7C0HWR). Nothing is live yet.",
+    );
+    expect(
+      withoutRecordIds(
+        "Acme Retail Group's ID: `edip_01M504P2M5BKZJ2EK36C1T4XKA`.\nNothing is live yet.",
+      ),
+    ).toBe("Nothing is live yet.");
+    expect(
+      withoutRecordIds("The partner is saved, and its ID is **edip_01M504P2M5BKZJ2EK36C1T4XKA**."),
+    ).toBe("The partner is saved.");
+    expect(withoutRecordIds("Saved. The partner ID was edip_01M504P2M5BKZJ2EK36C1T4XKA")).toBe(
+      "Saved.",
+    );
+  });
+
+  it("keeps a sentence that says more than the id", () => {
+    expect(withoutRecordIds("Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA the one Acme sent.")).toBe(
+      "Its ID is the one Acme sent.",
+    );
+  });
 });

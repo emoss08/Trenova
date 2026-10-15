@@ -514,6 +514,21 @@ func (s InboundFileStatus) IsValid() bool {
 	}
 }
 
+func (s MessageAcknowledgmentStatus) IsReceived() bool {
+	switch s {
+	case MessageAcknowledgmentStatusAccepted,
+		MessageAcknowledgmentStatusAcceptedWithErrors,
+		MessageAcknowledgmentStatusRejected:
+		return true
+	case MessageAcknowledgmentStatusNotExpected,
+		MessageAcknowledgmentStatusPending,
+		MessageAcknowledgmentStatusFailed:
+		return false
+	default:
+		return false
+	}
+}
+
 func (s MessageAcknowledgmentStatus) IsValid() bool {
 	switch s {
 	case MessageAcknowledgmentStatusNotExpected,

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -663,7 +664,7 @@ func sameValue(got, want string) bool {
 
 func replyStates(reply, value string) bool {
 	if number, err := decimal.NewFromString(strings.ReplaceAll(value, ",", "")); err == nil {
-		return numberguard.Cites(reply, number)
+		return numberguard.Cites(reply, number) || statesInWords(reply, number)
 	}
 
 	if strings.Contains(strings.ToLower(reply), strings.ToLower(strings.TrimSpace(value))) {
@@ -672,6 +673,19 @@ func replyStates(reply, value string) bool {
 	folded := stringutils.NormalizeIdentifier(value)
 
 	return folded != "" && strings.Contains(stringutils.NormalizeIdentifier(reply), folded)
+}
+
+func statesInWords(reply string, number decimal.Decimal) bool {
+	if !number.IsInteger() || number.IsNegative() {
+		return false
+	}
+	count := int(number.IntPart())
+	word := intutils.SmallNumberWord(count)
+	if word == strconv.Itoa(count) {
+		return false
+	}
+
+	return regexp.MustCompile(`(?i)\b` + word + `\b`).MatchString(reply)
 }
 
 func (b *Bench) FactValues(

@@ -1576,14 +1576,18 @@ judgement: a link stands outside a sentence when the sentence around it, split a
 before a space, holds no word once the links are taken out, or when it sits in a table row, a
 heading or a fenced block. A reply that names an artifact outside a sentence, leaves out a table
 or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps the artifact
-when the reply forgets it), or names an id the conversation never held is discarded once, the way
+when the reply forgets it; only the newest version of each lineage the turn showed, since a
+later version takes the earlier one's place in `Turn.keepShown`), or names an id the
+conversation never held is discarded once, the way
 the grounding guard does it: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
 correction naming each link as it should be written. A rewrite that still breaks the contract, or
 a reply written after the tool budget was spent, is not asked again: each stray link is cut from
 where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
 names what was cut or left out (`The full table is in …`, `The full record is in …`), sent as a
 `reply_replaced` after a `reply_regrounded` `place_artifacts`. A clean reply costs one pass over
-its text; only a broken one costs a model call, and never more than one.
+its text; only a broken one costs a model call, and never more than one. A version
+replaces the one before it only when the activity's result carries its lineage, which a result
+recorded before the field existed does not, so no `GetVersion` gate.
 
 The output guard (`agentguard.EvaluateOutput`) runs last, on every final
 reply. A reply with code in it is no longer refused whole: a fenced block with
