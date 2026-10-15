@@ -13,6 +13,7 @@ type RolePageLayoutProps = {
   permissionCount?: number;
   children: React.ReactNode;
   banner?: React.ReactNode;
+  secondaryAction?: React.ReactNode;
 };
 
 export function RolePageLayout({
@@ -25,6 +26,7 @@ export function RolePageLayout({
   permissionCount,
   children,
   banner,
+  secondaryAction,
 }: RolePageLayoutProps) {
   const t = useT();
 
@@ -41,6 +43,7 @@ export function RolePageLayout({
           ) : undefined,
         actions: (
           <>
+            {secondaryAction}
             <Button type="button" variant="outline" size="sm" onClick={onCancel}>
               {t("Cancel")}
             </Button>

@@ -48,6 +48,15 @@ or reset.
 - **One reader.** Set `AudienceUserID` when an event is about one person
   (notifications with a target user, assistant turns). It is then delivered only
   to that person's connections, filtered on the server.
+- **Permission changes.** Every role, grant, inheritance and constraint change goes
+  through `permissionports.PermissionChangeNotifier` (`identity/app/permissionchange`):
+  it advances the organization's permission epoch in Redis, so every cached permission
+  set computed before the change stops being served at once, and publishes
+  `permissions`/`changed` to the tenant. A role given to or taken from one person
+  drops only that person's cached set and is addressed to them alone. The browser
+  refetches the permission manifest on the event (`usePermissionPolling`), so a change
+  reaches open tabs within a second; the five-minute poll and the thirty-minute cache
+  TTL are only safety nets.
 - **Large entities.** An event whose encoded entity is larger than
   `maxEntityBytes` is sent without it; the reader refetches instead of patching.
 - **Portal readers** (drivers in Dash) receive an event not addressed to them

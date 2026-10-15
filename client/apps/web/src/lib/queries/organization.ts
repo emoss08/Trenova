@@ -23,6 +23,10 @@ export const organization = createQueryKeys("organization", {
     queryKey: ["tenant-login", organizationSlug],
     queryFn: async () => apiService.organizationService.getTenantLoginMetadata(organizationSlug),
   }),
+  accessSettings: (organizationId: string) => ({
+    queryKey: ["access-settings", organizationId],
+    queryFn: async () => apiService.organizationService.getAccessSettings(organizationId),
+  }),
   identityProviders: (organizationId: string) => ({
     queryKey: ["identity-providers", organizationId],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),

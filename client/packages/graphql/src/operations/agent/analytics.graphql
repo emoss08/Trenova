@@ -190,6 +190,26 @@ query AgentAnalytics($input: AIAnalyticsInput!) {
       betterKey
       worseKey
     }
+    suggestions {
+      suggested
+      switched
+      sentThrough
+      autoSwitched
+      kept
+      passedOver
+      takenRate
+      agents {
+        agentDefinitionId
+        name
+        suggested
+        switched
+        sentThrough
+        autoSwitched
+        kept
+        passedOver
+        takenRate
+      }
+    }
   }
 }
 

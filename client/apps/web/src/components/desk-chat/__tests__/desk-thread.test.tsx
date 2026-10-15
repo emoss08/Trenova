@@ -17,6 +17,10 @@ const conversation = vi.hoisted(() => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
+    agentMatch: (text: string) => ({
+      queryKey: ["agent-match", text],
+      queryFn: () => ({ outcome: "NoMatch", agent: null, tools: [] }),
+    }),
     artifacts: (threadId: string) => ({
       queryKey: ["artifacts", threadId],
       queryFn: () => ({ results: [] }),

@@ -530,3 +530,73 @@ func TestAllowed(t *testing.T) {
 		})
 	}
 }
+
+func TestRequireAnyPermission_ReportsEngineFailureWhenNothingAllowed(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	engine := new(mockPermissionEngine)
+	engine.On("Check", mock.Anything, mock.Anything).
+		Return(nil, errors.New("permission cache unavailable")).Once()
+	engine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil).Once()
+
+	pm := newPermissionMiddleware(engine)
+
+	handlerCalled := false
+	r := gin.New()
+	r.GET(
+		"/test",
+		setAuthMiddleware(pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_")),
+		pm.RequireAnyPermission(
+			PermissionCheck{Resource: "shipment", Operation: permission.OpRead},
+			PermissionCheck{Resource: "order", Operation: permission.OpRead},
+		),
+		func(c *gin.Context) {
+			handlerCalled = true
+			c.Status(http.StatusOK)
+		},
+	)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+	assert.False(t, handlerCalled)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	engine.AssertExpectations(t)
+}
+
+func TestRequireAnyPermission_AnotherCheckStillAllowsAfterAnEngineFailure(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	engine := new(mockPermissionEngine)
+	engine.On("Check", mock.Anything, mock.Anything).
+		Return(nil, errors.New("permission cache unavailable")).Once()
+	engine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil).Once()
+
+	pm := newPermissionMiddleware(engine)
+
+	handlerCalled := false
+	r := gin.New()
+	r.GET(
+		"/test",
+		setAuthMiddleware(pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_")),
+		pm.RequireAnyPermission(
+			PermissionCheck{Resource: "shipment", Operation: permission.OpRead},
+			PermissionCheck{Resource: "order", Operation: permission.OpRead},
+		),
+		func(c *gin.Context) {
+			handlerCalled = true
+			c.Status(http.StatusOK)
+		},
+	)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+	assert.True(t, handlerCalled)
+	assert.Equal(t, http.StatusOK, w.Code)
+	engine.AssertExpectations(t)
+}

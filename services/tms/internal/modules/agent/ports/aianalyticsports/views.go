@@ -219,6 +219,46 @@ type Analytics struct {
 	Tasks         []TaskRow
 	Providers     []ProviderHealth
 	SameModel     *SameModel
+	Suggestions   *SuggestionStats
+}
+
+type SuggestionCounts struct {
+	Switched     int
+	SentThrough  int
+	AutoSwitched int
+	Kept         int
+	PassedOver   int
+}
+
+func (c SuggestionCounts) Suggested() int {
+	return c.Switched + c.SentThrough + c.AutoSwitched + c.Kept + c.PassedOver
+}
+
+func (c SuggestionCounts) Taken() int {
+	return c.Switched + c.SentThrough + c.AutoSwitched
+}
+
+func (c *SuggestionCounts) Add(other SuggestionCounts) {
+	c.Switched += other.Switched
+	c.SentThrough += other.SentThrough
+	c.AutoSwitched += other.AutoSwitched
+	c.Kept += other.Kept
+	c.PassedOver += other.PassedOver
+}
+
+type AgentSuggestionStats struct {
+	AgentDefinitionID pulid.ID
+	Name              string
+	SuggestionCounts
+	Suggested int
+	TakenRate *float64
+}
+
+type SuggestionStats struct {
+	SuggestionCounts
+	Suggested int
+	TakenRate *float64
+	Agents    []AgentSuggestionStats
 }
 
 type SameModel struct {

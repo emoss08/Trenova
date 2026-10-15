@@ -6,6 +6,12 @@ schema {
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 """
+Withholds the field from a reader whose role does not grant its group. A
+protected field is always nullable, and null is what such a reader receives.
+"""
+directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
+
+"""
 What one agent has done lately, for its row on the Agents tab: runs on each of
 the last 14 days and the decisions people made on its proposals over 30.
 """
@@ -26,6 +32,18 @@ type AIAgentRosterStat {
   runsByDay: [Int!]!
   """Proposals it recorded in shadow, which nobody was offered."""
   shadowRecorded: Int!
+}
+
+type AIAnalyticsAgentSuggestions {
+  agentDefinitionId: ID!
+  autoSwitched: Int!
+  kept: Int!
+  name: String!
+  passedOver: Int!
+  sentThrough: Int!
+  suggested: Int!
+  switched: Int!
+  takenRate: Float
 }
 
 type AIAnalyticsCauseCount {
@@ -237,6 +255,25 @@ type AIAnalyticsSeries {
   toolFailuresByCause: [AIAnalyticsCauseCount!]!
   """Failed tool calls that were the model's mistake."""
   toolFailuresModel: Int!
+}
+
+"""
+What became of the agents the Desk named for questions. A suggestion still on
+screen for under half an hour is not counted yet; one left longer was passed over.
+"""
+type AIAnalyticsSuggestions {
+  """Most suggested first."""
+  agents: [AIAnalyticsAgentSuggestions!]!
+  autoSwitched: Int!
+  kept: Int!
+  passedOver: Int!
+  sentThrough: Int!
+  suggested: Int!
+  switched: Int!
+  """
+  Switched, sent to it or moved to without asking, as a share of every suggestion.
+  """
+  takenRate: Float
 }
 
 """What a sentence segment opens: a series' sheet or a provider."""
@@ -1686,6 +1723,7 @@ enum AIUsageFeature {
   AgentDrafting
   AgentEvaluation
   AgentProfile
+  AgentRecommendation
   AgentReflection
   AgentTurn
   DocumentIntelligenceExtract
@@ -3442,6 +3480,11 @@ type AgentAnalytics {
   """Busiest first."""
   series: [AIAnalyticsSeries!]!
   since: Timestamp!
+  """
+  What people did with the agents the Desk named for their questions, by the
+  agent named. Absent when the view is narrowed to a task or nothing was named.
+  """
+  suggestions: AIAnalyticsSuggestions
   summary: [AIAnalyticsSegment!]!
   tasks: [AIAnalyticsTask!]!
   tools: [AIAnalyticsTool!]!
@@ -3864,6 +3907,12 @@ type AgentDefinition {
   """
   toolTiers: JSON!
   triggerMode: AgentTriggerMode!
+  """
+  The role the agent runs as when no person is present, on a schedule or an
+  event: its unattended work is held to both the fixed agent ceiling and this
+  role. Null means the ceiling alone.
+  """
+  unattendedRoleId: ID
   updatedAt: Timestamp!
   version: Int!
 }
@@ -4333,6 +4382,31 @@ type AgentInstructionsTightened {
   """False when the model returned the instructions as they were."""
   changed: Boolean!
   instructions: String!
+}
+
+"""How well the chat agents a person may use fit a question."""
+enum AgentMatchOutcome {
+  """
+  Another of the person's agents holds the tools the question needs and the agent it would go to does not.
+  """
+  BetterAgent
+  """
+  The agent the question would go to holds the tools it needs, itself or through an agent it hands work to.
+  """
+  CurrentAgent
+  """
+  Tools match the question, but none of the person's agents holds one they may use.
+  """
+  NoAgent
+  """No tool matches the question."""
+  NoMatch
+}
+
+"""A tool that matched a question."""
+type AgentMatchTool {
+  name: String!
+  """The first sentence of the tool's description."""
+  summary: String!
 }
 
 """
@@ -5863,6 +5937,49 @@ enum AgentSubjectType {
   Shipment
   ShipmentMove
   Worker
+}
+
+"""
+An agent the Desk named, or moved to, for a question the caller was asking.
+"""
+type AgentSuggestion {
+  createdAt: Timestamp!
+  currentAgentId: ID
+  id: ID!
+  outcome: AgentSuggestionOutcome!
+  suggestedAgentId: ID!
+  surface: AgentSuggestionSurface!
+  updatedAt: Timestamp!
+}
+
+"""What became of an agent the Desk named for a question."""
+enum AgentSuggestionOutcome {
+  """
+  The question went to the suggested agent without asking, as the person's settings say.
+  """
+  AutoSwitched
+  """The person kept the agent they had."""
+  Kept
+  """
+  The question went to another agent, or was put away, without the suggestion being taken.
+  """
+  PassedOver
+  """The question was sent and went to the suggested agent."""
+  SentThrough
+  """The suggestion is on screen and nothing has been done with it yet."""
+  Shown
+  """The person chose the suggested agent."""
+  Switched
+}
+
+"""Where the Desk named an agent for a question."""
+enum AgentSuggestionSurface {
+  """
+  An open conversation, where the suggested agent takes it over by hand-off.
+  """
+  Conversation
+  """The Desk's front page, before a conversation starts."""
+  Home
 }
 
 """
@@ -20569,6 +20686,10 @@ type Mutation {
   recordLeaveCertification(input: RecordLeaveCertificationInput!): WorkerLeaveCase!
   recordLeaveDay(input: RecordLeaveDayInput!): WorkerLeaveEntry!
   """
+  Records an agent the Desk named, or moved to, for a question the caller is asking.
+  """
+  recordMyAgentSuggestion(input: RecordMyAgentSuggestionInput!): AgentSuggestion!
+  """
   Records the signed-in driver's arrival at or departure from a stop on their
   own load. Timestamps are server-side; stop, move, and shipment statuses
   cascade, and pay accrues when the move completes.
@@ -20838,6 +20959,12 @@ type Mutation {
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
   """
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
+  """
+  Sets the role an agent runs as when no person is present, or clears it with a
+  null roleId. Needs permission to update agents and roles, and the person
+  setting it must hold everything the role grants.
+  """
+  setAgentUnattendedRole(agentId: ID!, roleId: ID): AgentDefinition!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
@@ -20870,6 +20997,8 @@ type Mutation {
   """Moves or clears an exception's due time."""
   setWatchtowerItemDue(id: ID!, input: SetWatchtowerItemDueInput!): WatchtowerItem!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
+  """Records what the caller did with an agent the Desk named."""
+  settleMyAgentSuggestion(input: SettleMyAgentSuggestionInput!): AgentSuggestion!
   """Marks a record as not to be sent."""
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
@@ -21161,6 +21290,32 @@ type MyAgentConnection {
 type MyAgentEdge {
   cursor: String!
   node: MyAgent!
+}
+
+type MyAgentMatch {
+  """The agent, for BetterAgent and CurrentAgent; null otherwise."""
+  agent: MyAgent
+  outcome: AgentMatchOutcome!
+  """
+  For BetterAgent and CurrentAgent, the agent's tools that matched; for
+  NoAgent, the tools that would answer it. Best first, at most three.
+  """
+  tools: [AgentMatchTool!]!
+}
+
+input MyAgentMatchInput {
+  """
+  The kinds of record the question is about: the records it mentions and the
+  record or list page it is asked from. At most 11. Tools that work on them
+  rank higher; a kind the server does not know is ignored.
+  """
+  contextKinds: [String!]
+  """
+  The agent the question would go to now, kept when it fits as well as any.
+  """
+  currentAgentId: ID
+  """What the caller is about to ask. At most 4000 characters."""
+  text: String!
 }
 
 """Where an agent came from."""
@@ -22867,6 +23022,21 @@ input ProposeShiftSwapInput {
   shiftDate: Timestamp!
 }
 
+"""
+A set of fields a role must be granted to see, wherever they appear. A reader
+without the grant receives null for every field in the set.
+"""
+enum ProtectedFieldGroup {
+  """
+  The margin floor and pay ceiling a rate agreement sets against the sell price.
+  """
+  Margins
+  """
+  A worker's date of birth, licence, TWIC and credential numbers, and drug test dates.
+  """
+  Personal
+}
+
 type Query {
   accessorialCharge(id: ID!): AccessorialCharge
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
@@ -23528,13 +23698,19 @@ type Query {
   """
   myActiveBillingTransferRun: BillingTransferRun
   myAdvances: [PayAdvance!]!
+  """
+  How well the chat agents the caller may use fit a question: another agent
+  that holds the tools it needs, the agent it would go to already, none of
+  them, or no tool at all.
+  """
+  myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   """What agents are told about the signed-in person's own work."""
   myAgentProfile: AgentProfile!
   """
   The chat agent the caller may use that holds the tools a question needs. Null
   when no such agent holds a tool that matches it.
   """
-  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
+  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
   """The chat agents the caller may use, enabled and by name."""
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
@@ -24021,8 +24197,8 @@ type RateAgreement {
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
   id: ID!
-  marginFloorPercent: Decimal
-  maxPayPercentOfSell: Decimal
+  marginFloorPercent: Decimal @protected(group: Margins)
+  maxPayPercentOfSell: Decimal @protected(group: Margins)
   name: String!
   organizationId: ID!
   partyType: RateAgreementPartyType!
@@ -24348,6 +24524,17 @@ input RecordLeaveDayInput {
   ptoId: ID
   """The day the leave was taken."""
   usedOn: Timestamp!
+}
+
+input RecordMyAgentSuggestionInput {
+  """The agent the question would have gone to."""
+  currentAgentId: ID
+  """
+  Shown when the suggestion appears, or AutoSwitched when the Desk moved the question without asking.
+  """
+  outcome: AgentSuggestionOutcome!
+  suggestedAgentId: ID!
+  surface: AgentSuggestionSurface!
 }
 
 input RecordMyStopActionInput {
@@ -26045,6 +26232,14 @@ input SetWatchtowerItemDueInput {
   dueAt: Timestamp
   expectedVersion: Int
   note: String
+}
+
+input SettleMyAgentSuggestionInput {
+  id: ID!
+  """
+  Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome.
+  """
+  outcome: AgentSuggestionOutcome!
 }
 
 """
@@ -31539,7 +31734,7 @@ type WorkerCredential {
   issuedAt: Timestamp
   issuingAuthority: String
   notes: String
-  number: String
+  number: String @protected(group: Personal)
   organizationId: ID!
   status: WorkerCredentialStatus!
   updatedAt: Timestamp!
@@ -32430,7 +32625,7 @@ type WorkerProfile {
   complianceStatus: ComplianceStatus!
   createdAt: Timestamp!
   disqualificationReason: String!
-  dob: Timestamp!
+  dob: Timestamp @protected(group: Personal)
   """
   The worker's drug and alcohol testing standing, denormalised from the testing
   ledgers so the roster can filter and sort on it. Only Prohibited blocks
@@ -32444,10 +32639,10 @@ type WorkerProfile {
   id: ID!
   isQualified: Boolean!
   lastComplianceCheck: Timestamp!
-  lastDrugTest: Timestamp!
+  lastDrugTest: Timestamp @protected(group: Personal)
   lastMvrCheck: Timestamp!
   licenseExpiry: Timestamp!
-  licenseNumber: String!
+  licenseNumber: String @protected(group: Personal)
   licenseState: UsState
   licenseStateId: ID
   medicalCardExpiry: Timestamp
@@ -32474,7 +32669,7 @@ type WorkerProfile {
   per-area summaries for the live answer.
   """
   trainingHealth: WorkerTrainingHealth!
-  twicCardNumber: String!
+  twicCardNumber: String @protected(group: Personal)
   twicExpiry: Timestamp
   updatedAt: Timestamp!
   version: Int!

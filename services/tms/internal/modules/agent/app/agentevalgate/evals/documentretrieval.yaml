@@ -157,3 +157,7 @@ cases:
     relevant: [reefer-download-5520]
   - query: what does the carrier charge when the truck waits at the dock
     relevant: [ratecon-acme-4471, invoice-7781]
+nothing:
+  - xyzzy plugh
+  - quantum chromodynamics lattice
+  - penguin sonnet

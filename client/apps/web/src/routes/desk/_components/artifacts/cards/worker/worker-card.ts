@@ -353,6 +353,16 @@ export function concernState(
 }
 
 /** The facts the card lists about the worker, in the order the office reads them. */
+/**
+ * The license number on file. The server sends null where the viewer's role
+ * withholds personal details, which is not the same as having none.
+ */
+export function licenseNumberValue(profile: DeskWorker["profile"], t: TranslateFn): string {
+  if (!profile) return t("None on file");
+  if (profile.licenseNumber === null || profile.licenseNumber === undefined) return t("Hidden");
+  return profile.licenseNumber.trim() || t("None on file");
+}
+
 export function workerFacts(worker: DeskWorker, t: TranslateFn): CardFact[] {
   const home = [worker.city.trim(), worker.state?.abbreviation ?? ""].filter(Boolean).join(", ");
   return [
@@ -369,7 +379,7 @@ export function workerFacts(worker: DeskWorker, t: TranslateFn): CardFact[] {
     {
       key: "license",
       label: t("License number"),
-      value: worker.profile?.licenseNumber.trim() || t("None on file"),
+      value: licenseNumberValue(worker.profile, t),
     },
     { key: "external", label: t("External ID"), value: worker.externalId.trim() || t("None") },
   ];

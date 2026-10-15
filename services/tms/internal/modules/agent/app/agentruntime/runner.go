@@ -68,6 +68,7 @@ type Params struct {
 	// Definitions is optional. With it a search for a tool the agent does not
 	// hold names the person's other agents that hold it.
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
+	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
 }
 
 type Service struct {
@@ -91,7 +92,10 @@ type Service struct {
 	metrics     *metrics.Assistant
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
-	arguments *toolschema.Validator
+	arguments  *toolschema.Validator
+	rateLimits kernelports.RateLimitStore
+	pools      matchPools
+	matchable  func() []string
 }
 
 func New(p Params) *Service {
@@ -115,6 +119,9 @@ func New(p Params) *Service {
 		rules:       p.Rules,
 		changes:     p.Changes,
 		metrics:     metrics.AssistantFrom(p.Metrics),
+		rateLimits:  p.RateLimits,
+		pools:       newMatchPools(),
+		matchable:   matchableTools(p.Catalog),
 	}
 }
 

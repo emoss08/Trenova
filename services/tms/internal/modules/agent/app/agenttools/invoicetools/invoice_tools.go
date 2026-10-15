@@ -127,7 +127,7 @@ func (t *PostInvoiceTool) Policy() agentports.ToolPolicy {
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInvoice,
-		Operation:     permission.OpUpdate,
+		Operation:     permission.OpPost,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,

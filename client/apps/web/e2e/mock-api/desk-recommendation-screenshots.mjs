@@ -1,5 +1,7 @@
-// Screenshots of the Desk home suggesting the agent with the tools for a
-// question. Run with the mock API and the web app up (see README.md):
+// Screenshots of the Desk suggesting the agent with the tools for a question:
+// on the front page (with why, and when no agent can help), in a conversation
+// (Hand off), the settings that govern it and the AI analytics card. Run with
+// the mock API and the web app up (see README.md):
 //
 //   node e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
 //
@@ -18,6 +20,20 @@ const SETTLE_MS = Number(process.env.SETTLE_MS ?? 6000);
 const QUESTION = "When will the Acme load arrive? Send the customer an ETA reply.";
 
 const composer = (page) => page.getByRole("textbox", { name: /^Message/ }).first();
+
+// A conversation with Billing, where the ETA question is Customer service's.
+const THREAD = "/desk/t/athr_desk_case";
+
+async function closeWorkspaceOnPhone(page) {
+  if (page.viewportSize().width < 700) {
+    await page.getByRole("button", { name: /^Close/ }).first().click();
+    await page.waitForTimeout(600);
+  }
+}
+
+async function showSuggestionSettings(page) {
+  await page.getByText("Auto switch agent for tasks").first().scrollIntoViewIfNeeded();
+}
 
 async function typeQuestion(page) {
   await composer(page).fill(QUESTION);
@@ -54,6 +70,35 @@ function shotsFor(colorScheme, viewport = { width: 1440, height: 900 }, suffix =
       shootNow: true,
     },
     { name: "no-match", scenario: { agentMatch: "none" }, act: typeQuestion },
+    {
+      name: "why",
+      act: async (page) => {
+        await typeQuestion(page);
+        await page.getByRole("button", { name: /^Why / }).click();
+      },
+    },
+    { name: "no-agent", scenario: { agentMatch: "nobody" }, act: typeQuestion },
+    {
+      name: "thread-handoff",
+      path: THREAD,
+      scenario: { deskReply: "idle" },
+      act: async (page) => {
+        await closeWorkspaceOnPhone(page);
+        await typeQuestion(page);
+      },
+    },
+    { name: "settings", path: "/desk?settings=composer", act: showSuggestionSettings },
+    {
+      name: "analytics",
+      path: "/admin/agent-control?tab=analytics",
+      scenario: { aiProviders: "all" },
+      element: 'section[aria-label="Agent suggestions"]',
+      act: async (page) => {
+        await page
+          .locator('section[aria-label="Agent suggestions"]')
+          .scrollIntoViewIfNeeded({ timeout: 60000 });
+      },
+    },
   ].map((shot) => ({
     ...shot,
     name: `${shot.name}-${colorScheme}${suffix}`,
@@ -71,6 +116,8 @@ async function setScenario(patch) {
   return response.json();
 }
 
+const PHONE_SHOTS = ["suggested", "why", "thread-handoff", "settings", "analytics"];
+
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -81,7 +128,7 @@ const shots = [
   ...shotsFor("light"),
   ...shotsFor("dark"),
   ...shotsFor("light", { width: 390, height: 844 }, "-phone").filter((shot) =>
-    shot.name.startsWith("suggested"),
+    PHONE_SHOTS.some((name) => shot.name.startsWith(name)),
   ),
   ...shotsFor("dark", { width: 390, height: 844 }, "-phone").filter((shot) =>
     shot.name.startsWith("suggested"),
@@ -108,7 +155,7 @@ for (const shot of shots) {
       errors.push(message.text());
     }
   });
-  await page.goto(`${APP}/desk`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${APP}${shot.path ?? "/desk"}`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(SETTLE_MS);
   try {
     await shot.act(page);
@@ -117,7 +164,11 @@ for (const shot of shots) {
     errors.push(`step: ${error.message.split("\n")[0]}`);
   }
   const file = `${OUT}/${shot.name}.png`;
-  await page.screenshot({ path: file });
+  if (shot.element && (await page.locator(shot.element).count()) > 0) {
+    await page.locator(shot.element).screenshot({ path: file });
+  } else {
+    await page.screenshot({ path: file });
+  }
   console.log(`${errors.length ? "!" : "✓"} ${shot.name} → ${file}`);
   for (const error of errors) console.log(`    ${error.slice(0, 300)}`);
   if (errors.length) failures.push(shot.name);

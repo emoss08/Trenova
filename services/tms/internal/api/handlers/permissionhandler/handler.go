@@ -18,12 +18,14 @@ type Params struct {
 
 	PermissionEngine permissionports.PermissionEngine
 	Registry         *permission.Registry
+	Scopes           permissionports.ScopePolicy
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
 	permEngine permissionports.PermissionEngine
 	registry   *permission.Registry
+	scopes     permissionports.ScopePolicy
 	eh         *helpers.ErrorHandler
 }
 
@@ -31,6 +33,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		permEngine: p.PermissionEngine,
 		registry:   p.Registry,
+		scopes:     p.Scopes,
 		eh:         p.ErrorHandler,
 	}
 }
@@ -45,6 +48,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	resources := rg.Group("/permissions")
 	resources.GET("/resources", h.getAvailableResources)
 	resources.GET("/operations", h.getAvailableOperations)
+	resources.GET("/bundles", h.getBundles)
 }
 
 // @Summary Get permission manifest
@@ -195,8 +199,13 @@ func (h *Handler) checkBatch(c *gin.Context) {
 }
 
 type resourceCategoryResponse struct {
-	Category  string                           `json:"category"`
-	Resources []*permission.ResourceDefinition `json:"resources"`
+	Category  string             `json:"category"`
+	Resources []resourceResponse `json:"resources"`
+}
+
+type resourceResponse struct {
+	*permission.ResourceDefinition
+	EnforceableScopes []permission.DataScope `json:"enforceableScopes"`
 }
 
 // @Summary List available permission resources
@@ -219,9 +228,16 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 		sort.Slice(resources, func(i, j int) bool {
 			return resources[i].DisplayName < resources[j].DisplayName
 		})
+		entries := make([]resourceResponse, 0, len(resources))
+		for _, def := range resources {
+			entries = append(entries, resourceResponse{
+				ResourceDefinition: def,
+				EnforceableScopes:  h.scopes.EnforceableScopes(def.Resource),
+			})
+		}
 		response = append(response, resourceCategoryResponse{
 			Category:  cat,
-			Resources: resources,
+			Resources: entries,
 		})
 	}
 
@@ -240,4 +256,107 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 // @Router /permissions/operations [get]
 func (h *Handler) getAvailableOperations(c *gin.Context) {
 	c.JSON(http.StatusOK, permission.GetAllOperations())
+}
+
+type bundleGrantResponse struct {
+	Resource    string                 `json:"resource"`
+	DisplayName string                 `json:"displayName"`
+	Operations  []permission.Operation `json:"operations"`
+	DataScope   permission.DataScope   `json:"dataScope"`
+}
+
+type bundleResponse struct {
+	ID          string                `json:"id"`
+	Module      string                `json:"module"`
+	Label       string                `json:"label"`
+	Description string                `json:"description"`
+	Grants      []bundleGrantResponse `json:"grants"`
+}
+
+type jobTemplateResponse struct {
+	ID             string                      `json:"id"`
+	Label          string                      `json:"label"`
+	Description    string                      `json:"description"`
+	Bundles        []string                    `json:"bundles"`
+	MaxSensitivity permission.FieldSensitivity `json:"maxSensitivity"`
+	Grants         []bundleGrantResponse       `json:"grants"`
+}
+
+type bundlesResponse struct {
+	Bundles   []bundleResponse      `json:"bundles"`
+	Templates []jobTemplateResponse `json:"templates"`
+}
+
+// @Summary List capability bundles and job templates
+// @Description Returns the capability bundles roles are composed from and the job templates
+// @Description built from them, each with the grants it applies in this deployment.
+// @ID getPermissionBundles
+// @Tags Permissions
+// @Produce json
+// @Success 200 {object} bundlesResponse
+// @Failure 401 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /permissions/bundles [get]
+func (h *Handler) getBundles(c *gin.Context) {
+	bundles := permission.Bundles()
+	templates := permission.JobTemplates()
+
+	resp := bundlesResponse{
+		Bundles:   make([]bundleResponse, 0, len(bundles)),
+		Templates: make([]jobTemplateResponse, 0, len(templates)),
+	}
+	for _, bundle := range bundles {
+		grants := make([]bundleGrantResponse, 0, len(bundle.Grants))
+		for _, grant := range bundle.Grants {
+			grants = append(grants, h.bundleGrant(
+				grant.Resource.String(),
+				grant.Operations,
+				grant.Scope,
+			))
+		}
+		resp.Bundles = append(resp.Bundles, bundleResponse{
+			ID:          bundle.ID,
+			Module:      bundle.Module,
+			Label:       bundle.Label,
+			Description: bundle.Description,
+			Grants:      grants,
+		})
+	}
+	for _, template := range templates {
+		composed := h.registry.TemplateGrants(template)
+		grants := make([]bundleGrantResponse, 0, len(composed))
+		for _, rp := range composed {
+			grants = append(grants, h.bundleGrant(rp.Resource, rp.Operations, rp.DataScope))
+		}
+		resp.Templates = append(resp.Templates, jobTemplateResponse{
+			ID:             template.ID,
+			Label:          template.Label,
+			Description:    template.Description,
+			Bundles:        template.Bundles,
+			MaxSensitivity: template.MaxSensitivity,
+			Grants:         grants,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) bundleGrant(
+	resource string,
+	operations []permission.Operation,
+	scope permission.DataScope,
+) bundleGrantResponse {
+	if scope == "" || !h.scopes.Enforced(resource, scope) {
+		scope = permission.DataScopeOrganization
+	}
+	name := resource
+	if def, ok := h.registry.Get(resource); ok {
+		name = def.DisplayName
+	}
+	return bundleGrantResponse{
+		Resource:    resource,
+		DisplayName: name,
+		Operations:  operations,
+		DataScope:   scope,
+	}
 }

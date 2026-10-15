@@ -51,11 +51,18 @@ omit_gqlgen_version_in_file_notice: true
 skip_mod_tidy: true
 use_buffer_pooling: true
 
+directives:
+  protected:
+    skip_runtime: true
+
 models:
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/emoss08/trenova/shared/pulid.ID
+  ProtectedFieldGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.FieldGroup
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -5207,6 +5214,18 @@ models:
   AIUsageFeatureSlice:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageFeatureSlice
+  AgentSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Suggestion
+  AgentSuggestionSurface:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Surface
+  AgentSuggestionOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Outcome
+  AgentMatchOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.MatchOutcome
   AIUsageFeature:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiusage.Feature

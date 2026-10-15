@@ -538,3 +538,46 @@ func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
 
 	return ranked.Memories
 }
+
+func nomicVector() agentports.QueryVector {
+	vector := usableVector()
+	vector.ModelKey = "localhost:11434/nomic-embed-text@768"
+
+	return vector
+}
+
+func TestSearchDocumentsHoldsAMeaningMatchToTheEmbeddingModelsFloor(t *testing.T) {
+	t.Parallel()
+
+	meaning := documentSource("Unloading service paid in cash.")
+	search := func(vector agentports.QueryVector) []agentports.DocumentSearchHit {
+		repo := newFakeRetrievalRepo(activeSettings())
+		repo.search = []agentports.VectorSearchHit{
+			{SourceID: meaning.Document.ID, ChunkIndex: 0, Similarity: 0.55},
+		}
+		sources := &fakeSources{documents: []*agentports.RetrievalDocumentSource{meaning}}
+		searcher := newTestSearcher(repo, sources, &fakeVectorizer{vector: vector})
+		result, err := searcher.SearchDocuments(t.Context(), searchRequest("cash", &fakeAccess{}))
+		require.NoError(t, err)
+
+		return result.Hits
+	}
+
+	assert.Len(t, search(usableVector()), 1, "0.55 clears the floor of a model not yet measured")
+	assert.Empty(t, search(nomicVector()),
+		"nomic scores unrelated text up to 0.55, so a match by meaning alone must reach its floor")
+}
+
+func TestSimilarMemoriesReportsTheEmbeddingModelsFloor(t *testing.T) {
+	t.Parallel()
+
+	repo := newFakeRetrievalRepo(activeSettings())
+	searcher := newTestSearcher(repo, &fakeSources{}, &fakeVectorizer{vector: nomicVector()})
+
+	similar, err := searcher.SimilarMemories(t.Context(), &agentports.SimilarMemoriesRequest{
+		TenantInfo: testTenant,
+		Text:       "free time at Globex",
+	})
+	require.NoError(t, err)
+	assert.InDelta(t, airetrieval.SimilarityFloor(nomicVector().ModelKey), similar.Floor, 1e-9)
+}

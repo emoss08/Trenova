@@ -109,6 +109,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Agent drafting");
     case "AgentProfile":
       return t("Agent profiles");
+    case "AgentRecommendation":
+      return t("Agent suggestions");
     case null:
       return t("Other");
   }

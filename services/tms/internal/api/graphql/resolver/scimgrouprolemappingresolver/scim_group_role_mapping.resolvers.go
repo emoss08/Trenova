@@ -16,7 +16,7 @@ import (
 )
 
 func (r *QueryResolver) ScimGroupRoleMappings(ctx context.Context, input gqlmodel.DataTableConnectionInput, directoryID string) (*gqlmodel.SCIMGroupRoleMappingConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceOrganization, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSCIMDirectory, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}

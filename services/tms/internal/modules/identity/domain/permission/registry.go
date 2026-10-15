@@ -3,6 +3,7 @@ package permission
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 )
 
@@ -13,9 +14,10 @@ const (
 )
 
 type OperationDefinition struct {
-	Operation   Operation `json:"operation"`
-	DisplayName string    `json:"displayName"`
-	Description string    `json:"description"`
+	Operation   Operation   `json:"operation"`
+	DisplayName string      `json:"displayName"`
+	Description string      `json:"description"`
+	Implies     []Operation `json:"implies"`
 }
 
 type ResourceDefinition struct {
@@ -28,6 +30,7 @@ type ResourceDefinition struct {
 	ParentResource     string                      `json:"parentResource,omitempty"`
 	FieldSensitivities map[string]FieldSensitivity `json:"fieldSensitivities,omitempty"`
 	DefaultSensitivity FieldSensitivity            `json:"defaultSensitivity"`
+	Scopes             []ScopeSupport              `json:"scopes,omitempty"`
 }
 
 type Registry struct {
@@ -67,6 +70,7 @@ func (r *Registry) Register(def *ResourceDefinition) error {
 	if def.DefaultSensitivity == "" {
 		def.DefaultSensitivity = SensitivityInternal
 	}
+	def.Operations = withImplications(def.Operations)
 
 	r.resources[def.Resource] = def
 
@@ -158,6 +162,21 @@ func (r *Registry) ExpandCompositeOperation(resource, compositeName string) []Op
 	return nil
 }
 
+func (r *Registry) Declares(resource string, operation Operation) bool {
+	if r.declaresOn(resource, operation) {
+		return true
+	}
+	parent := r.GetEffectiveResource(resource)
+	return parent != resource && r.declaresOn(parent, operation)
+}
+
+func (r *Registry) declaresOn(resource string, operation Operation) bool {
+	if slices.Contains(r.GetOperationsForResource(resource), operation) {
+		return true
+	}
+	return len(r.ExpandCompositeOperation(resource, string(operation))) > 0
+}
+
 func (r *Registry) HasResource(resource string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -225,4 +244,5 @@ func (r *Registry) registerAll() {
 	r.registerReferenceDataResources()
 	r.registerReportingResources()
 	r.registerCommunicationResources()
+	r.registerProtectedFieldResources()
 }

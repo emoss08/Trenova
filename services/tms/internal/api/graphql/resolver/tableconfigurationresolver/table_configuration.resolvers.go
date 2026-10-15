@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -29,7 +30,7 @@ func (r *MutationResolver) CreateTableConfiguration(ctx context.Context, input g
 		return nil, err
 	}
 
-	return r.TableConfigurationService.Create(ctx, entity)
+	return r.TableConfigurationService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error) {
@@ -48,7 +49,7 @@ func (r *MutationResolver) UpdateTableConfiguration(ctx context.Context, id stri
 		return nil, err
 	}
 
-	return r.TableConfigurationService.Update(ctx, entity, base.TenantInfo(authCtx))
+	return r.TableConfigurationService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) PatchTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationPatchInput) (*tableconfiguration.TableConfiguration, error) {
@@ -77,7 +78,7 @@ func (r *MutationResolver) PatchTableConfiguration(ctx context.Context, id strin
 		return nil, err
 	}
 
-	return r.TableConfigurationService.Update(ctx, existing, base.TenantInfo(authCtx))
+	return r.TableConfigurationService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) DeleteTableConfiguration(ctx context.Context, id string) (bool, error) {
@@ -142,13 +143,20 @@ func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.
 		visibilityValue = visibility.String()
 	}
 
+	readable, err := r.readableTableResources(ctx, authCtx, base.StringValue(resource))
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := r.TableConfigurationService.ListConnection(
 		ctx,
 		&tableconfigurationports.ListTableConfigurationConnectionRequest{
-			Filter:     tableInput.Filter,
-			Cursor:     tableInput.Cursor,
-			Resource:   base.StringValue(resource),
-			Visibility: visibilityValue,
+			Filter:            tableInput.Filter,
+			Cursor:            tableInput.Cursor,
+			Resource:          base.StringValue(resource),
+			Visibility:        visibilityValue,
+			LimitToResources:  true,
+			ReadableResources: readable,
 		},
 	)
 	if err != nil {
@@ -169,19 +177,30 @@ func (r *QueryResolver) TableConfiguration(ctx context.Context, id string) (*tab
 		return nil, err
 	}
 
-	return r.TableConfigurationService.GetByID(
+	entity, err := r.TableConfigurationService.GetByID(
 		ctx,
 		tableconfigurationports.GetTableConfigurationByIDRequest{
 			ConfigurationID: configurationID,
 			TenantInfo:      base.TenantInfo(authCtx),
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	if !r.mayReadTable(ctx, authCtx, entity.Resource) {
+		return nil, errortypes.NewNotFoundError("Table configuration not found")
+	}
+
+	return entity, nil
 }
 
 func (r *QueryResolver) DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if !r.mayReadTable(ctx, authCtx, resource) {
+		return nil, nil
 	}
 
 	entity, err := r.TableConfigurationService.GetDefaultForResource(

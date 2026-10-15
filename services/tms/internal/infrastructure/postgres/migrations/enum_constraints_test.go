@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -376,6 +377,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_feedback_target_type",
 			values: stringsOf(aifeedback.AllTargetTypes()),
+		},
+		{
+			name:   "ck_agent_suggestions_surface",
+			values: stringsOf(agentsuggestion.AllSurfaces()),
+		},
+		{
+			name:   "ck_agent_suggestions_outcome",
+			values: stringsOf(agentsuggestion.AllOutcomes()),
 		},
 		{
 			name:   "ck_ai_feedback_fingerprint_source",

@@ -34,13 +34,30 @@ query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
   }
 }
 
-query MyAgentRecommendation($input: MyAgentRecommendationInput!) {
-  myAgentRecommendation(input: $input) {
+query MyAgentMatch($input: MyAgentMatchInput!) {
+  myAgentMatch(input: $input) {
+    outcome
     agent {
       ...MyAgentFields
     }
-    current
-    tools
+    tools {
+      name
+      summary
+    }
+  }
+}
+
+mutation RecordMyAgentSuggestion($input: RecordMyAgentSuggestionInput!) {
+  recordMyAgentSuggestion(input: $input) {
+    id
+    outcome
+  }
+}
+
+mutation SettleMyAgentSuggestion($input: SettleMyAgentSuggestionInput!) {
+  settleMyAgentSuggestion(input: $input) {
+    id
+    outcome
   }
 }
 
@@ -101,6 +118,13 @@ query AgentAccess($id: ID!) {
 mutation SetAgentAccess($agentId: ID!, $input: SetAgentAccessInput!) {
   setAgentAccess(agentId: $agentId, input: $input) {
     ...AgentAccessFields
+  }
+}
+
+mutation SetAgentUnattendedRole($agentId: ID!, $roleId: ID) {
+  setAgentUnattendedRole(agentId: $agentId, roleId: $roleId) {
+    id
+    unattendedRoleId
   }
 }
 

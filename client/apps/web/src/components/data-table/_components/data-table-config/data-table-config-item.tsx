@@ -34,6 +34,7 @@ export function DataTableConfigItem({
   isActive,
   isViewDirty,
   canManageOrgDefaults,
+  canEditSharedViews = false,
   currentConfig,
   onApplyConfig,
   onViewPersisted,
@@ -45,6 +46,7 @@ export function DataTableConfigItem({
   isActive?: boolean;
   isViewDirty?: boolean;
   canManageOrgDefaults?: boolean;
+  canEditSharedViews?: boolean;
   currentConfig?: TableConfig;
   onApplyConfig: (config: TableConfig, source?: TableViewSource) => void;
   onViewPersisted?: (config: TableConfiguration) => void;
@@ -227,17 +229,19 @@ export function DataTableConfigItem({
                 description={t("Apply this view to the table")}
                 startContent={<CheckIcon className="size-4" />}
               />
-              {isOwn && currentConfig && (
-                <DropdownMenuItem
-                  title={t("Save current state to view")}
-                  disabled={isUpdatingConfig}
-                  onClick={withStopPropagation(() => updateConfig(currentConfig))}
-                  description={t(
-                    "Overwrite this view with the current filters, sorting, and columns",
-                  )}
-                  startContent={<Save01Icon className="size-4" />}
-                />
-              )}
+              {isOwn &&
+                currentConfig &&
+                (config.visibility === "Private" || canEditSharedViews) && (
+                  <DropdownMenuItem
+                    title={t("Save current state to view")}
+                    disabled={isUpdatingConfig}
+                    onClick={withStopPropagation(() => updateConfig(currentConfig))}
+                    description={t(
+                      "Overwrite this view with the current filters, sorting, and columns",
+                    )}
+                    startContent={<Save01Icon className="size-4" />}
+                  />
+                )}
               <DropdownMenuItem
                 title={t("Duplicate")}
                 disabled={isDuplicating}
@@ -259,7 +263,7 @@ export function DataTableConfigItem({
               )}
               {canManageOrgDefaults && config.visibility === "Public" && (
                 <DropdownMenuItem
-                  title={config.isOrgDefault ? "Remove org default" : "Set as org default"}
+                  title={config.isOrgDefault ? t("Remove org default") : t("Set as org default")}
                   disabled={isSettingOrgDefault}
                   onClick={withStopPropagation(() => setOrgDefaultConfig(!config.isOrgDefault))}
                   description={t("The org default applies for everyone without a personal default")}

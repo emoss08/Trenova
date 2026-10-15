@@ -15,7 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { activityViewParser, type ActivityViewValue } from "@/hooks/use-organization-setting-state";
+import {
+  activityViewParser,
+  activityViewValues,
+  type ActivityViewValue,
+} from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { organization } from "@/lib/queries/organization";
 import { cn, formatIdentityProviderName, toTitleCase } from "@trenova/shared/lib/utils";
@@ -38,6 +42,7 @@ import type { ReactNode } from "react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { OuterContent } from "./layout";
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
+import { firstAllowed, useSecurityAccess } from "./use-security-access";
 import { outcomeVariant, riskVariant } from "./utils";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -71,7 +76,10 @@ function getActivityViewIcon(view: ActivityViewValue) {
 export function ActivityTab({ organizationId }: { organizationId: string }) {
   const t = useT();
 
-  const [activityView, setActivityView] = useQueryState("activityView", activityViewParser);
+  const access = useSecurityAccess();
+  const [requestedView, setActivityView] = useQueryState("activityView", activityViewParser);
+  const activityView =
+    firstAllowed(requestedView, activityViewValues, access.activity) ?? requestedView;
   const [search, setSearch] = useState("");
   const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
   const handleActivityViewChange = useCallback(
@@ -117,18 +125,23 @@ const ActivityViewSelect = memo(function ActivityViewSelect({
   onValueChange: (value: ActivityViewValue) => void;
 }) {
   const t = useT();
+  const access = useSecurityAccess();
+  const options = useMemo(
+    () => activityViewOptions.filter((option) => access.activity[option.value]),
+    [access.activity],
+  );
 
   return (
     <Select
       value={value}
-      items={activityViewOptions}
+      items={options}
       onValueChange={(nextValue) => onValueChange(nextValue as ActivityViewValue)}
     >
       <SelectTrigger className="h-7 w-44 text-xs">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {activityViewOptions.map((option) => (
+        {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {t(option.label)}
           </SelectItem>
@@ -147,37 +160,43 @@ const ActivityViewControls = memo(function ActivityViewControls({
   activeView: ActivityViewValue;
   onViewChange: (value: ActivityViewValue) => void;
 }) {
-  const authEventsQuery = useQuery(organization.authEvents(organizationId));
-  const riskQuery = useQuery(organization.riskDecisions(organizationId));
-  const externalIdentityQuery = useQuery(organization.externalIdentities(organizationId));
-  const mfaQuery = useQuery(organization.mfaAuthenticators(organizationId));
+  const access = useSecurityAccess();
+  const authEventsQuery = useQuery({
+    ...organization.authEvents(organizationId),
+    enabled: access.activity.auth,
+  });
+  const riskQuery = useQuery({
+    ...organization.riskDecisions(organizationId),
+    enabled: access.activity.risk,
+  });
+  const externalIdentityQuery = useQuery({
+    ...organization.externalIdentities(organizationId),
+    enabled: access.activity.identities,
+  });
+  const mfaQuery = useQuery({
+    ...organization.mfaAuthenticators(organizationId),
+    enabled: access.activity.mfa,
+  });
+  const counts: Record<ActivityViewValue, number> = {
+    auth: authEventsQuery.data?.length ?? 0,
+    risk: riskQuery.data?.length ?? 0,
+    identities: externalIdentityQuery.data?.length ?? 0,
+    mfa: mfaQuery.data?.length ?? 0,
+  };
 
   return (
     <div className="grid gap-3 md:grid-cols-4">
-      <ActivityViewButton
-        view="auth"
-        active={activeView === "auth"}
-        count={authEventsQuery.data?.length ?? 0}
-        onViewChange={onViewChange}
-      />
-      <ActivityViewButton
-        view="risk"
-        active={activeView === "risk"}
-        count={riskQuery.data?.length ?? 0}
-        onViewChange={onViewChange}
-      />
-      <ActivityViewButton
-        view="identities"
-        active={activeView === "identities"}
-        count={externalIdentityQuery.data?.length ?? 0}
-        onViewChange={onViewChange}
-      />
-      <ActivityViewButton
-        view="mfa"
-        active={activeView === "mfa"}
-        count={mfaQuery.data?.length ?? 0}
-        onViewChange={onViewChange}
-      />
+      {activityViewValues
+        .filter((view) => access.activity[view])
+        .map((view) => (
+          <ActivityViewButton
+            key={view}
+            view={view}
+            active={activeView === view}
+            count={counts[view]}
+            onViewChange={onViewChange}
+          />
+        ))}
     </div>
   );
 });

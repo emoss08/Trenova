@@ -30,7 +30,7 @@ func (s *Searcher) SimilarMemories(
 ) (agentports.SimilarMemories, error) {
 	result := agentports.SimilarMemories{
 		Memories: []agentports.MemorySimilarity{},
-		Floor:    s.tuning.SimilarityFloor,
+		Floor:    s.tuning.FloorFor(""),
 	}
 	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return result, errors.New("similar memories need an organization and a business unit")
@@ -54,6 +54,7 @@ func (s *Searcher) SimilarMemories(
 		result.Semantics.Reason = reason
 		return result, nil
 	}
+	result.Floor = s.tuning.FloorFor(query.ModelKey)
 
 	limit := req.Limit
 	if limit <= 0 {
@@ -177,7 +178,7 @@ func (r *MemoryRanker) RankMemories(
 	}
 
 	ranked.Semantic = true
-	ranked.Similar = similarCandidates(recency, similar.Memories, r.tuning)
+	ranked.Similar = similarCandidates(recency, similar.Memories, similar.Floor)
 	ranked.Memories = fuseBySimilarity(recency, ranked.Similar, r.tuning.normalized().RRFK)
 
 	return ranked, nil
@@ -186,9 +187,8 @@ func (r *MemoryRanker) RankMemories(
 func similarCandidates(
 	candidates []*agent.Memory,
 	similar []agentports.MemorySimilarity,
-	tuning SearchTuning,
+	floor float64,
 ) []pulid.ID {
-	tuning = tuning.normalized()
 
 	known := make(map[pulid.ID]struct{}, len(candidates))
 	for _, memory := range candidates {
@@ -197,7 +197,7 @@ func similarCandidates(
 
 	ids := make([]pulid.ID, 0, min(len(similar), len(candidates)))
 	for _, hit := range similar {
-		if _, ok := known[hit.MemoryID]; ok && hit.Similarity >= tuning.SimilarityFloor {
+		if _, ok := known[hit.MemoryID]; ok && hit.Similarity >= floor {
 			ids = append(ids, hit.MemoryID)
 		}
 	}
@@ -212,7 +212,11 @@ func FuseMemoryRanking(
 ) []*agent.Memory {
 	tuning = tuning.normalized()
 
-	return fuseBySimilarity(recency, similarCandidates(recency, similar, tuning), tuning.RRFK)
+	return fuseBySimilarity(
+		recency,
+		similarCandidates(recency, similar, tuning.FloorFor("")),
+		tuning.RRFK,
+	)
 }
 
 func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int) []*agent.Memory {

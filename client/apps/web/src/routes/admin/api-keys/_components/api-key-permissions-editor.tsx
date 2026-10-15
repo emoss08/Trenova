@@ -11,16 +11,9 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { dataScopeChoices } from "@/lib/choices";
+import { DataScopeSelect } from "@/components/permissions/data-scope-select";
 import type { ResourceCategory, ResourceDefinition } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -542,21 +535,12 @@ function ResourceRow({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground text-xs">{t("Scope:")}</span>
-            <Select
-              value={permission.dataScope}
-              onValueChange={(value) => onDataScopeChange(value as DataScope)}
-            >
-              <SelectTrigger className="h-7 w-32 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {dataScopeChoices.map((choice) => (
-                  <SelectItem key={choice.value} value={choice.value}>
-                    {t(choice.label)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <DataScopeSelect
+              resource={resource}
+              value={permission.dataScope as DataScope}
+              onValueChange={onDataScopeChange}
+              className="w-32"
+            />
           </div>
         </div>
       )}

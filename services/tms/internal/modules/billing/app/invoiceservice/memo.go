@@ -102,6 +102,7 @@ func (s *Service) CreateMemo(
 			InvoiceID:   created.ID,
 			TenantInfo:  req.TenantInfo,
 			TriggeredBy: "memo-auto-post",
+			Automatic:   req.AutoPostByPolicy,
 		}, actor)
 		if postErr != nil {
 			return postErr

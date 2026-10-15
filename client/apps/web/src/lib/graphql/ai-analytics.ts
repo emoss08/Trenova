@@ -47,6 +47,8 @@ export type AIAnalyticsProviderHealth = Omit<RawProviderHealth, "provider"> & {
   provider: AIAnalyticsProvider;
 };
 export type AIAnalyticsTotals = RawAnalytics["totals"];
+export type AIAnalyticsSuggestions = NonNullable<RawAnalytics["suggestions"]>;
+export type AIAnalyticsAgentSuggestions = AIAnalyticsSuggestions["agents"][number];
 export type AgentAnalytics = Omit<
   RawAnalytics,
   "summary" | "runTimeNote" | "series" | "deployments" | "events" | "tasks" | "providers"

@@ -141,6 +141,7 @@ type SessionAuthContextParams struct {
 	IsPortalUser           bool
 	MustChangePassword     bool
 	Locale                 string
+	RoleActivation         bool
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -160,6 +161,9 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(IsPortalUserKey), p.IsPortalUser)
 	c.Set(string(MustChangePasswordKey), p.MustChangePassword)
 	c.Set(string(LocaleKey), p.Locale)
+	if !p.RoleActivation {
+		return
+	}
 	c.Request = c.Request.WithContext(WithSessionRoleActivation(
 		c.Request.Context(),
 		p.ActiveRoleIDs,

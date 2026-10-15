@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentruneventresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentsafetyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentscorecardresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentsuggestionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aianalyticsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiauditresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aicontrolresolver"
@@ -498,6 +499,10 @@ func FromServices(s *Services) *Resolver {
 	agentscorecardDeps := &agentscorecardresolver.Deps{
 		Core:                  s.Core,
 		AgentScorecardService: s.AgentScorecardService,
+	}
+	agentsuggestionDeps := &agentsuggestionresolver.Deps{
+		Core:                   s.Core,
+		AgentSuggestionService: s.AgentSuggestionService,
 	}
 	aianalyticsDeps := &aianalyticsresolver.Deps{
 		Core:               s.Core,
@@ -1329,6 +1334,7 @@ func FromServices(s *Services) *Resolver {
 			agentprofileMutation:          &agentprofileMutation{Deps: agentprofileDeps},
 			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
 			agentsafetyMutation:           &agentsafetyMutation{Deps: agentsafetyDeps},
+			agentsuggestionMutation:       &agentsuggestionMutation{Deps: agentsuggestionDeps},
 			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
 			aicontrolMutation:             &aicontrolMutation{Deps: aicontrolDeps},
 			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
@@ -2421,6 +2427,7 @@ type mutationResolver struct {
 	*agentprofileMutation
 	*agentqualityMutation
 	*agentsafetyMutation
+	*agentsuggestionMutation
 	*aiauditMutation
 	*aicontrolMutation
 	*aifeedbackMutation
@@ -3011,6 +3018,7 @@ type (
 	agentprofileMutation            = agentprofileresolver.MutationResolver
 	agentqualityMutation            = agentqualityresolver.MutationResolver
 	agentsafetyMutation             = agentsafetyresolver.MutationResolver
+	agentsuggestionMutation         = agentsuggestionresolver.MutationResolver
 	aiauditMutation                 = aiauditresolver.MutationResolver
 	aicontrolMutation               = aicontrolresolver.MutationResolver
 	aifeedbackMutation              = aifeedbackresolver.MutationResolver

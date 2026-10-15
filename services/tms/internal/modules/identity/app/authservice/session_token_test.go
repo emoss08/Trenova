@@ -89,6 +89,7 @@ func TestLogin_IssuesASessionTokenWhoseSecretIsStoredOnlyAsAHash(t *testing.T) {
 	assert.NotContains(t, resp.SessionID, secret)
 	assert.True(t, sessiontoken.Matches(secret, created.SecretHash))
 	assert.NotContains(t, created.SecretHash, secret)
+	assert.True(t, created.IssuedBySignIn)
 }
 
 func TestAuthenticateSession_AcceptsTheIssuedToken(t *testing.T) {

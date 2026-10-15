@@ -1,77 +1,29 @@
+import { grantsToPermissions } from "@/lib/role-bundles";
+import type { JobTemplate } from "@/lib/role-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { getAvailableResources, type ResourceDefinition } from "@/lib/role-api";
-import { cn } from "@trenova/shared/lib/utils";
-import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
+import type { AddPermission, FieldSensitivity } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { Edit02Icon, EyeIcon, Shield01Icon } from "@trenova/shared/components/icons";
-import { useMemo } from "react";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { useCallback, useMemo } from "react";
+import { permissionBundlesQuery } from "./role-bundle-picker";
 
-type RoleTemplate = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  getPermissions: (resources: ResourceDefinition[]) => AddPermission[];
+const EMPTY_TEMPLATE = "empty";
+
+export type TemplateSelection = {
+  templateId: string;
+  permissions: AddPermission[];
+  maxSensitivity?: FieldSensitivity;
 };
-
-const ROLE_TEMPLATES: RoleTemplate[] = [
-  {
-    id: "viewer",
-    name: "Viewer",
-    description: "Read-only access to all resources",
-    icon: <EyeIcon className="size-3.5" />,
-    getPermissions: (resources) =>
-      resources.map((r) => ({
-        resource: r.resource,
-        operations: ["read"] as Operation[],
-        dataScope: "organization" as DataScope,
-      })),
-  },
-  {
-    id: "editor",
-    name: "Editor",
-    description: "Read and update access",
-    icon: <Edit02Icon className="size-3.5" />,
-    getPermissions: (resources) =>
-      resources
-        .filter((r) => r.operations.some((op) => op.operation === "update"))
-        .map((r) => ({
-          resource: r.resource,
-          operations: ["read", "update"].filter((op) =>
-            r.operations.some((o) => o.operation === op),
-          ) as Operation[],
-          dataScope: "organization" as DataScope,
-        })),
-  },
-  {
-    id: "manager",
-    name: "Manager",
-    description: "Full CRUD access to all resources",
-    icon: <Shield01Icon className="size-3.5" />,
-    getPermissions: (resources) =>
-      resources.map((r) => ({
-        resource: r.resource,
-        operations: ["read", "create", "update"].filter((op) =>
-          r.operations.some((o) => o.operation === op),
-        ) as Operation[],
-        dataScope: "organization" as DataScope,
-      })),
-  },
-  {
-    id: "custom",
-    name: "Custom",
-    description: "Build your own permission set",
-    icon: <AssistMark className="size-3.5" />,
-    getPermissions: () => [],
-  },
-];
 
 type RoleTemplateSelectorProps = {
   selectedTemplate: string | null;
-  onSelectTemplate: (templateId: string, permissions: AddPermission[]) => void;
+  onSelectTemplate: (selection: TemplateSelection) => void;
 };
 
 export function RoleTemplateSelector({
@@ -79,52 +31,57 @@ export function RoleTemplateSelector({
   onSelectTemplate,
 }: RoleTemplateSelectorProps) {
   const t = useT();
+  const { data, isLoading } = useQuery(permissionBundlesQuery);
+  const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
 
-  const { data: resourceCategories = [] } = useQuery({
-    queryKey: ["permission-resources"],
-    queryFn: getAvailableResources,
-    staleTime: 1000 * 60 * 30,
-  });
+  const items = useMemo(
+    () => [
+      { value: EMPTY_TEMPLATE, label: t("Start empty") },
+      ...templates.map((template) => ({ value: template.id, label: t(template.label) })),
+    ],
+    [templates, t],
+  );
 
-  const allResources = useMemo(() => {
-    return resourceCategories.flatMap((cat) => cat.resources);
-  }, [resourceCategories]);
-
-  const handleSelect = (template: RoleTemplate) => {
-    const permissions = template.getPermissions(allResources);
-    onSelectTemplate(template.id, permissions);
-  };
+  const handleChange = useCallback(
+    (value: string | null) => {
+      if (!value || value === EMPTY_TEMPLATE) {
+        onSelectTemplate({ templateId: EMPTY_TEMPLATE, permissions: [] });
+        return;
+      }
+      const template = templates.find((candidate: JobTemplate) => candidate.id === value);
+      if (!template) {
+        return;
+      }
+      onSelectTemplate({
+        templateId: template.id,
+        permissions: grantsToPermissions(template.grants),
+        maxSensitivity: template.maxSensitivity,
+      });
+    },
+    [onSelectTemplate, templates],
+  );
 
   return (
-    <div className="flex items-center gap-2">
-      {ROLE_TEMPLATES.map((template) => {
-        const isSelected = selectedTemplate === template.id;
-        return (
-          <Tooltip key={template.id}>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleSelect(template)}
-                  className={cn(
-                    "h-8 gap-1.5 rounded-md px-3 text-sm font-medium",
-                    isSelected
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground border",
-                  )}
-                >
-                  {template.icon}
-                  {template.name}
-                </Button>
-              }
-            />
-            <TooltipContent className="text-xs">{t(template.description)}</TooltipContent>
-          </Tooltip>
-        );
-      })}
-    </div>
+    <Select
+      value={selectedTemplate ?? null}
+      onValueChange={handleChange}
+      items={items}
+      disabled={isLoading}
+    >
+      <SelectTrigger className="h-8 w-56 text-sm" aria-label={t("Start from a job")}>
+        <SelectValue placeholder={t("Start from a job")} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={EMPTY_TEMPLATE}>{t("Start empty")}</SelectItem>
+        {templates.map((template) => (
+          <SelectItem key={template.id} value={template.id}>
+            <span className="flex flex-col">
+              <span>{t(template.label)}</span>
+              <span className="text-muted-foreground text-xs">{t(template.description)}</span>
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
-
-export { ROLE_TEMPLATES, type RoleTemplate };

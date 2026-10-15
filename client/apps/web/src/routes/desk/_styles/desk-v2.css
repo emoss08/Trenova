@@ -585,6 +585,13 @@
   align-items: stretch;
   gap: 14px;
 }
+@media (max-width: 640px) {
+  .dk-sx-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
 .dk-sx-seg {
   display: inline-grid;
   grid-auto-flow: column;

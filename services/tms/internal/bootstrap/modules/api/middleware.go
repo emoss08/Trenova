@@ -8,6 +8,7 @@ import (
 
 var MiddlewareModule = fx.Module("api-middleware", fx.Provide(
 	middleware.NewAuthMiddleware,
+	middleware.NewReadScopeMiddleware,
 	middleware.NewPermissionMiddleware,
 	middleware.NewEntitlementMiddleware,
 	middleware.NewReadOnlyGuard,

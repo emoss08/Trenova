@@ -76,3 +76,7 @@ cases:
     relevant: [freshmart-pod]
   - query: morning cutoff for city center drops
     relevant: [chicago-traffic]
+nothing:
+  - xyzzy plugh
+  - quantum chromodynamics lattice
+  - penguin sonnet

@@ -413,6 +413,7 @@ export function DeskBillingItem({
   const me: Biller | null = user?.id ? { id: user.id, name: user.name ?? "" } : null;
   const { allowed: canUpdate } = usePermission(Resource.BillingQueue, Operation.Update);
   const { allowed: canAssign } = usePermission(Resource.BillingQueue, Operation.Assign);
+  const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
   const [posted, setPosted] = useState<BillingQueuePostResult | null>(null);
 
   const itemQuery = useQuery({ ...billingQueue.get(itemId), retry: false });
@@ -714,7 +715,7 @@ export function DeskBillingItem({
                   >
                     {t("Approve")}
                   </Button>
-                ) : (
+                ) : canPost ? (
                   <Button
                     className="disabled:opacity-35"
                     disabled={busy}
@@ -722,6 +723,8 @@ export function DeskBillingItem({
                   >
                     {t("Post {0}", money(total))}
                   </Button>
+                ) : (
+                  <CardBarHint>{t("Someone who can post invoices posts this one.")}</CardBarHint>
                 )}
               </>
             )}

@@ -36,14 +36,10 @@ func (p *Permission) BeforeAppendModel(_ context.Context, query bun.Query) error
 		}
 		p.CreatedAt = now
 		p.UpdatedAt = now
-		p.Operations = permission.ExpandWithDependencies(
-			permission.NewOperationSet(p.Operations...),
-		).ToSlice()
+		p.Operations = permission.Normalize(p.Operations)
 	case *bun.UpdateQuery:
 		p.UpdatedAt = now
-		p.Operations = permission.ExpandWithDependencies(
-			permission.NewOperationSet(p.Operations...),
-		).ToSlice()
+		p.Operations = permission.Normalize(p.Operations)
 	}
 
 	return nil

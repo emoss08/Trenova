@@ -335,6 +335,40 @@ type AgentAnalytics {
   providers: [AIAnalyticsProviderHealth!]!
   "The model that ran on two providers to compare, when one did."
   sameModel: AIAnalyticsSameModel
+  """
+  What people did with the agents the Desk named for their questions, by the
+  agent named. Absent when the view is narrowed to a task or nothing was named.
+  """
+  suggestions: AIAnalyticsSuggestions
+}
+
+"""
+What became of the agents the Desk named for questions. A suggestion still on
+screen for under half an hour is not counted yet; one left longer was passed over.
+"""
+type AIAnalyticsSuggestions {
+  suggested: Int!
+  switched: Int!
+  sentThrough: Int!
+  autoSwitched: Int!
+  kept: Int!
+  passedOver: Int!
+  "Switched, sent to it or moved to without asking, as a share of every suggestion."
+  takenRate: Float
+  "Most suggested first."
+  agents: [AIAnalyticsAgentSuggestions!]!
+}
+
+type AIAnalyticsAgentSuggestions {
+  agentDefinitionId: ID!
+  name: String!
+  suggested: Int!
+  switched: Int!
+  sentThrough: Int!
+  autoSwitched: Int!
+  kept: Int!
+  passedOver: Int!
+  takenRate: Float
 }
 
 "One model on two providers: the deployment that completed more, and the one that completed less."

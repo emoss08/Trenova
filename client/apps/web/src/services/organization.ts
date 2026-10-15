@@ -3,6 +3,7 @@ import { safeParse } from "@trenova/shared/lib/parse";
 import {
   accessPoliciesSchema,
   accessPolicySchema,
+  accessSettingsSchema,
   authEventsSchema,
   externalIdentitiesSchema,
   identityProviderSchema,
@@ -281,6 +282,22 @@ export class OrganizationService {
 
   public async deleteAccessPolicy(organizationId: string, policyId: string) {
     await api.delete(`${this.base_url}/${organizationId}/iam/access-policies/${policyId}`);
+  }
+
+  public async getAccessSettings(organizationId: string) {
+    const response = await api.get(`${this.base_url}/${organizationId}/iam/access-settings`);
+    return safeParse(accessSettingsSchema, response, "AccessSettings");
+  }
+
+  public async updateAccessSettings(
+    organizationId: string,
+    data: { requireRoleActivation: boolean; version: number },
+  ) {
+    const response = await api.put(
+      `${this.base_url}/${organizationId}/iam/access-settings`,
+      data,
+    );
+    return safeParse(accessSettingsSchema, response, "AccessSettings");
   }
 
   public async listAuthEvents(organizationId: string) {

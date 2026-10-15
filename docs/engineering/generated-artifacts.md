@@ -147,6 +147,39 @@ hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixtu
 recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
 command that re-records it from a local Ollama (see "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md)).
+Re-record it, then run the floors command it names, whenever a description, guide page or
+eval request changes; the gates skip, rather than fail, without it.
+
+The hybrid gates also check that requests nothing answers ("quantum chromodynamics lattice")
+find nothing. Similarity runs at a different height for each embedding model: nomic scores
+those requests up to 0.55 against the catalog, where OpenAI's `text-embedding-3-small`
+scores small talk near 0.23. So the floor a match by meaning alone must reach comes from the
+model that embedded the question (`airetrieval.SimilarityFloor`, 0.58 for nomic-embed-text and
+0.5 for a model not yet measured). It reaches the tool catalog, the product guide and the
+Desk's agent matcher through `CatalogSimilarities.Floor`, and document, inbound message and
+memory search through `retrievalservice.SearchTuning.FloorFor`, which a floor set on the
+tuning still overrides. When that check fails after a re-record, raise the model's floor
+rather than the eval.
+
+Retrieval has its own fixture, `agentevalgate/evals/embeddings/retrieval-nomic-embed-text.json`,
+recorded with `TestRecordRetrievalEmbeddingFixture` in `retrievalservice`. It holds every
+chunk of the three retrieval suites (`documentretrieval.yaml`, `inboxretrieval.yaml`,
+`memoryretrieval.yaml`), each document both as filed and as attached to a conversation (the
+retrieval leak test seeds both), and every query, including each suite's `nothing` list.
+`TestRetrievalAgainstFloors` is an integration test that needs pgvector, so run it against
+the image `task test-db-image` builds:
+
+```bash
+cd services/tms
+task test-db-image
+TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local task test-db-up
+TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags integration -count=1 \
+  -run 'TestRetrievalAgainstFloors' ./internal/modules/agent/app/retrievalservice/
+```
+
+Add `-update` to pin its floors (`*retrieval.floors.json`). With
+`TRENOVA_EVAL_REQUIRE_FLOORS=true` and `TRENOVA_EVAL_REQUIRE_HYBRID=true` it fails rather than
+skips when floors, pgvector or the fixture are missing.
 
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
@@ -191,8 +224,11 @@ constant is not breaking — just remember the `virtuals` entry above.
 
 Every root resolver must reach a permission check. This is enforced by a **Go test**
 (`TestEveryRootResolverIsAuthorized` in `internal/api/graphql/authzlint`), not by a lint
-step, so it surfaces under `task test` rather than `task lint`. Self-scoped operations are
-named `My<Thing>`.
+step, so it surfaces under `task test` rather than `task lint`. A resolver that checks only
+authentication is refused unless it is listed: in `authOnlyAllowlist` with a reason every
+signed-in user may call it, or in `selfScoped` under the reason it touches only the caller's
+own records. Self-scoped operations are named `My<Thing>`, but the name earns nothing; a new
+one fails until it is listed.
 
 ## Columns
 

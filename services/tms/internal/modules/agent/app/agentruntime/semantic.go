@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
@@ -84,6 +85,9 @@ func (s *Service) vectorize(
 
 	query, err := s.vectorizer.Vectorize(ctx, req)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return agentports.QueryVector{}
+		}
 		s.logger.Warn("could not embed the turn's request; ranking tools by keyword",
 			zap.String("organization", req.TenantInfo.OrgID.String()),
 			zap.Error(err),
@@ -112,6 +116,9 @@ func (s *Service) toolSemantic(
 		Query:      query,
 	})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		s.logger.Warn("could not compare the tool catalog with the request; ranking by keyword",
 			zap.String("organization", tenant.OrgID.String()),
 			zap.Error(err),
@@ -123,7 +130,7 @@ func (s *Service) toolSemantic(
 		return nil
 	}
 
-	return agenttoolcatalog.NewSemantic(similarities.ByKey)
+	return agenttoolcatalog.SemanticFrom(similarities)
 }
 
 func foundByCall(history []conversation.Message) map[string][]string {

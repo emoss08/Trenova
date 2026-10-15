@@ -1,7 +1,6 @@
 package authzlint
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 
@@ -38,14 +37,16 @@ var authOnlyAllowlist = map[string]string{
 	"MutationResolver.UpdateHomeLayout": "acts only on the calling user's own home layout",
 	"MutationResolver.ResetHomeLayout":  "acts only on the calling user's own home layout",
 
-	"QueryResolver.TableConfiguration":              "table layouts are UI preferences, not resource data",
-	"QueryResolver.TableConfigurations":             "table layouts are UI preferences, not resource data",
-	"QueryResolver.DefaultTableConfiguration":       "table layouts are UI preferences, not resource data",
-	"MutationResolver.CreateTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.UpdateTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.PatchTableConfiguration":      "table layouts are UI preferences, not resource data",
-	"MutationResolver.DeleteTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.SetDefaultTableConfiguration": "table layouts are UI preferences, not resource data",
+	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
+		"refuses to publish one to the organization without table_configuration:create",
+	"MutationResolver.UpdateTableConfiguration": "only the owner may change a view, and the " +
+		"service refuses to leave it published without table_configuration:update",
+	"MutationResolver.PatchTableConfiguration": "only the owner may change a view, and the " +
+		"service refuses to leave it published without table_configuration:update",
+	"MutationResolver.DeleteTableConfiguration": "the service lets only the owner delete a view, " +
+		"which withdraws it from everyone it was shared with",
+	"MutationResolver.SetDefaultTableConfiguration": "sets the caller's own default; the service " +
+		"refuses a view the caller does not own",
 
 	"QueryResolver.CaptureAgentRelease": "public release metadata, served unauthenticated at " +
 		"/api/v1/capture/releases/latest; carries no tenant data",
@@ -65,14 +66,97 @@ var authOnlyAllowlist = map[string]string{
 	"MutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }
 
-var selfScopedName = regexp.MustCompile(`(^|[a-z])My[A-Z]`)
+// selfScoped lists, by the reason each holds, the resolvers that act only on the
+// caller's own records and so need no permission beyond being signed in. Every
+// name is listed: a resolver called My<Thing> earns no exemption by its name.
+var selfScoped = map[string][]string{
+	"the driver portal resolves the worker linked to the calling user " +
+		"(driverportalservice.ResolveWorker) and reads or acts only on that worker": {
+		"MutationResolver.AcknowledgeMyDisciplinaryAction",
+		"MutationResolver.AcknowledgeMyPolicy",
+		"MutationResolver.AcknowledgeMyReview",
+		"MutationResolver.AcknowledgeMyTraining",
+		"MutationResolver.CancelMyExpense",
+		"MutationResolver.CancelMyPTO",
+		"MutationResolver.CreateMyLoadComment",
+		"MutationResolver.DismissMyNotifications",
+		"MutationResolver.MarkAllMyNotificationsRead",
+		"MutationResolver.MarkMyNotificationsRead",
+		"MutationResolver.MarkMyNotificationsUnread",
+		"MutationResolver.ProposeMyShiftSwap",
+		"MutationResolver.RecordMyStopAction",
+		"MutationResolver.RequestMyPTO",
+		"MutationResolver.RespondToMyAssignment",
+		"MutationResolver.RespondToMyShiftSwap",
+		"MutationResolver.RestoreMyNotifications",
+		"MutationResolver.SetMyAvailability",
+		"MutationResolver.StartMyTraining",
+		"MutationResolver.SubmitMyExpense",
+		"MutationResolver.UpdateMyContactInfo",
+		"MutationResolver.WithdrawMyProfileChange",
+		"QueryResolver.MyAdvances",
+		"QueryResolver.MyAvailability",
+		"QueryResolver.MyComplianceProfile",
+		"QueryResolver.MyCredentials",
+		"QueryResolver.MyDisciplinaryActions",
+		"QueryResolver.MyDisputes",
+		"QueryResolver.MyEscrow",
+		"QueryResolver.MyExpenses",
+		"QueryResolver.MyHosDailyLogs",
+		"QueryResolver.MyHosState",
+		"QueryResolver.MyHosViolations",
+		"QueryResolver.MyLeave",
+		"QueryResolver.MyLoadComments",
+		"QueryResolver.MyLoadPayEstimate",
+		"QueryResolver.MyLoads",
+		"QueryResolver.MyNotificationUnreadCount",
+		"QueryResolver.MyNotifications",
+		"QueryResolver.MyPTO",
+		"QueryResolver.MyPTOBalances",
+		"QueryResolver.MyPeriodSummary",
+		"QueryResolver.MyPolicies",
+		"QueryResolver.MyPolicyDocumentURL",
+		"QueryResolver.MyPortalFeatures",
+		"QueryResolver.MyPortalProfile",
+		"QueryResolver.MyProfileChangeRequests",
+		"QueryResolver.MyRecentPayEvents",
+		"QueryResolver.MyRecognitions",
+		"QueryResolver.MyReviews",
+		"QueryResolver.MySafetyScorecard",
+		"QueryResolver.MySchedule",
+		"QueryResolver.MySettlement",
+		"QueryResolver.MySettlements",
+		"QueryResolver.MyShiftSwaps",
+		"QueryResolver.MyTotalCompensation",
+		"QueryResolver.MyTraining",
+		"QueryResolver.MyYtdPay",
+	},
+	"capture devices are listed and revoked as the caller's own: the service is " +
+		"asked with Mine set and refuses a device another user registered": {
+		"MutationResolver.RevokeMyCaptureDevice",
+		"QueryResolver.MyCaptureDevices",
+	},
+	"reports what capture the calling user may use, from their own session": {
+		"QueryResolver.MyCaptureAccess",
+	},
+}
 
 func isAllowedAuthOnly(root RootResolver) bool {
-	if _, ok := authOnlyAllowlist[root.Key()]; ok {
-		return true
-	}
+	_, ok := allowedAuthOnly()[root.Key()]
+	return ok
+}
 
-	return selfScopedName.MatchString(root.Name)
+func allowedAuthOnly() map[string]string {
+	allowed := make(map[string]string, len(authOnlyAllowlist)+64)
+	for key, reason := range authOnlyAllowlist {
+		allowed[key] = reason
+	}
+	for reason, keys := range selfScoped {
+		for _, key := range keys {
+			allowed[key] = reason
+		}
+	}
+	return allowed
 }
 
 func TestEveryRootResolverIsAuthorized(t *testing.T) {
@@ -96,7 +180,7 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 				unlistedAuthOnly = append(unlistedAuthOnly, root.File+": "+root.Key())
 			}
 		case VerdictPermission:
-			if _, listed := authOnlyAllowlist[root.Key()]; listed {
+			if _, listed := allowedAuthOnly()[root.Key()]; listed {
 				overListed = append(overListed, root.Key())
 			}
 		}
@@ -108,8 +192,8 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 
 	assert.Empty(t, unlistedAuthOnly,
 		"root resolvers that authenticate but never reach a permission check. "+
-			"Either add one, name the resolver My<Thing> if it only ever touches the "+
-			"caller's own data, or add it to authOnlyAllowlist with a reason explaining "+
+			"Either add one, list it in selfScoped under the reason it only ever touches "+
+			"the caller's own data, or add it to authOnlyAllowlist with a reason explaining "+
 			"why every authenticated user may call it:\n  %s",
 		strings.Join(unlistedAuthOnly, "\n  "))
 
@@ -119,12 +203,12 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 		strings.Join(overListed, "\n  "))
 
 	var stale []string
-	for key := range authOnlyAllowlist {
+	for key := range allowedAuthOnly() {
 		if _, ok := seen[key]; !ok {
 			stale = append(stale, key)
 		}
 	}
-	assert.Empty(t, stale, "authOnlyAllowlist names resolvers that no longer exist:\n  %s",
+	assert.Empty(t, stale, "authOnlyAllowlist or selfScoped names resolvers that no longer exist:\n  %s",
 		strings.Join(stale, "\n  "))
 }
 
@@ -147,14 +231,26 @@ func TestAnalyzeReportsCoverage(t *testing.T) {
 		"the overwhelming majority of root resolvers must be permission-checked")
 }
 
-func TestSelfScopedNameRule(t *testing.T) {
+func TestASelfScopedNameEarnsNoExemption(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{"MyLoads", "CancelMyExpense", "MarkAllMyNotificationsRead"} {
-		assert.True(t, selfScopedName.MatchString(name), name)
-	}
-	for _, name := range []string{"Myths", "Shipments", "DummyData", "ApproveWorkerPto"} {
-		assert.False(t, selfScopedName.MatchString(name), name)
+	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyUnlistedThing"}))
+	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "MutationResolver", Name: "CancelMyThing"}))
+	assert.True(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyLoads"}))
+}
+
+func TestSelfScopedResolversAreListedOnce(t *testing.T) {
+	t.Parallel()
+
+	seen := make(map[string]string)
+	for reason, keys := range selfScoped {
+		for _, key := range keys {
+			previous, dup := seen[key]
+			assert.Falsef(t, dup, "%s is listed under %q and %q", key, previous, reason)
+			_, alsoListed := authOnlyAllowlist[key]
+			assert.Falsef(t, alsoListed, "%s is in both selfScoped and authOnlyAllowlist", key)
+			seen[key] = reason
+		}
 	}
 }
 
@@ -183,14 +279,14 @@ func TestAgentSafetyResolversAreAuthorized(t *testing.T) {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)
 		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
-		_, listed := authOnlyAllowlist[key]
+		_, listed := allowedAuthOnly()[key]
 		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
 	}
 }
 
 // Who may use which agent is decided by these operations. The self-scoped
-// ones are named My<Thing>, which would let them pass on authentication
-// alone, so each is held to a permission check of its own.
+// ones are named My<Thing> yet still reach the writes deciding does, so each
+// is held to a permission check of its own.
 func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 	t.Parallel()
 
@@ -209,9 +305,9 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 		"MutationResolver.SetRoleAgentAccess",
 		"MutationResolver.DecideMyProposal",
 		"MutationResolver.DecideMyProposals",
-		// Self-scoped by name, so it would pass on authentication alone. It
-		// runs the plan's writes, so it must hold assistant:update before the
-		// service checks the thread is the caller's and the agent is theirs.
+		// Self-scoped, yet it runs the plan's writes, so it must hold
+		// assistant:update before the service checks the thread is the
+		// caller's and the agent is theirs.
 		"MutationResolver.DecideMyPlan",
 		// Undoing or hurrying an approval reaches the same writes deciding
 		// does, so it is held to the same check.
@@ -224,7 +320,7 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)
 		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
-		_, listed := authOnlyAllowlist[key]
+		_, listed := allowedAuthOnly()[key]
 		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
 	}
 }
@@ -255,7 +351,7 @@ func TestAgentQualityResolversAreAuthorized(t *testing.T) {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)
 		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
-		_, listed := authOnlyAllowlist[key]
+		_, listed := allowedAuthOnly()[key]
 		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
 	}
 }

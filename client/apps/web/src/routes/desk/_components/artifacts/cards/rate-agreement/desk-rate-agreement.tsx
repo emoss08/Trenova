@@ -1,5 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { useLaneScopeLabels } from "@/hooks/use-lane-scope-labels";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useRecordNames } from "@/hooks/use-record-names";
 import { describeApiError } from "@/lib/api-error-message";
 import { choiceLabel, ratePartyTypeChoices } from "@/lib/choices";
@@ -157,6 +158,7 @@ function AgreementCard({
   Omit<RateAgreementCardProps, "order" | "recordId"> & { agreement: RateAgreement }) {
   const t = useT();
   const access = useCardAccess(RATE_AGREEMENT_SECTIONS);
+  const marginsVisible = useProtectedFieldAccess("Margins");
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const currency = agreement.currency;
 
@@ -460,7 +462,7 @@ function AgreementCard({
 
       <CardSection title={t("Limits")}>
         <dl className="dk-ra-limits">
-          {guardrails(agreement, t).map((row) => (
+          {guardrails(agreement, t, marginsVisible).map((row) => (
             <div key={row.key}>
               <dt>{row.label}</dt>
               <dd>{row.value}</dd>

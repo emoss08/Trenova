@@ -65,9 +65,11 @@ func (c *recordingTx) WithTx(
 }
 
 type fakeRoles struct {
-	log      *eventLog
-	requests []roleservice.AssignRoleRequest
-	refuse   map[pulid.ID]error
+	log       *eventLog
+	requests  []roleservice.AssignRoleRequest
+	refuse    map[pulid.ID]error
+	revoked   []roleservice.RevokeOrganizationRolesRequest
+	revokeErr error
 }
 
 func (f *fakeRoles) AssignRole(_ context.Context, req roleservice.AssignRoleRequest) error {
@@ -77,6 +79,14 @@ func (f *fakeRoles) AssignRole(_ context.Context, req roleservice.AssignRoleRequ
 	}
 	f.log.add("assign:" + req.Assignment.RoleID.String())
 	return nil
+}
+
+func (f *fakeRoles) RevokeOrganizationRoles(
+	_ context.Context,
+	req roleservice.RevokeOrganizationRolesRequest,
+) error {
+	f.revoked = append(f.revoked, req)
+	return f.revokeErr
 }
 
 type fakeInviter struct {

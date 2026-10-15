@@ -12,6 +12,8 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { apiService } from "@/services/api";
 import {
   tableConfigurationFormSchema,
@@ -36,23 +38,26 @@ type DataTableSaveConfigDialogProps = {
   onSaved?: (config: TableConfiguration) => void;
 };
 
-export function useVisibilityOptions() {
+export function useVisibilityOptions(canShare: boolean) {
   const t = useT();
 
-  return [
+  const options = [
     {
       value: "Private",
       label: t("Private"),
       description: t("Only you can see this view"),
       icon: <Lock01Icon />,
     },
-    {
+  ];
+  if (canShare) {
+    options.push({
       value: "Public",
       label: t("Public"),
       description: t("Anyone in your organization can use this view"),
       icon: <Globe02Icon />,
-    },
-  ];
+    });
+  }
+  return options;
 }
 
 export function DataTableSaveConfigDialog({
@@ -65,7 +70,8 @@ export function DataTableSaveConfigDialog({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const visibilityOptions = useVisibilityOptions();
+  const { allowed: canShare } = usePermission(Resource.TableConfiguration, Operation.Create);
+  const visibilityOptions = useVisibilityOptions(canShare);
 
   const form = useForm<TableConfigurationFormValues>({
     resolver: zodResolver(tableConfigurationFormSchema),
@@ -174,7 +180,13 @@ export function DataTableSaveConfigDialog({
                 control={control}
                 label={t("Visibility")}
                 placeholder={t("Select visibility")}
-                description={t("The visibility of the table configuration.")}
+                description={
+                  canShare
+                    ? t("The visibility of the table configuration.")
+                    : t(
+                        "Your role keeps views private. An administrator can share one with your organization.",
+                      )
+                }
                 options={visibilityOptions}
                 rules={{ required: true }}
               />

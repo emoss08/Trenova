@@ -1164,23 +1164,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "dob",
-				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.DOB, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "licenseNumber",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LicenseNumber, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "cdlClass",
@@ -1262,13 +1260,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "twicCardNumber",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.TWICCardNumber, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "twicExpiry",
@@ -1426,13 +1423,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastDrugTest",
-				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastDrugTest, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "eldExempt",
@@ -2785,11 +2781,21 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "Organization", v)
 }
 
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
+}
+
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	return res
 }
 

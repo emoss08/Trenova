@@ -29,6 +29,9 @@ type Session struct {
 	RiskDecision          string     `json:"riskDecision,omitempty"`
 	RiskDecisionID        pulid.ID   `json:"riskDecisionId,omitempty"`
 	IsPortalUser          bool       `json:"isPortalUser"`
+	IssuedBySignIn        bool       `json:"issuedBySignIn,omitempty"`
+
+	RoleActivationRequired bool `json:"-"`
 	// MustChangePassword is copied off the user at login so every later request can be
 	// gated without another user lookup. It is refreshed on the next sign-in, which is
 	// the only moment it can change for a session that already exists.

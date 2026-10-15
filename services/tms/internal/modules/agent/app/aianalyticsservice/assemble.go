@@ -171,8 +171,9 @@ func assemble(a *assembly) *aianalyticsports.Analytics {
 			compareBy:   compareBy,
 			agentScoped: !a.request.AgentDefinitionID.IsNil(),
 		}),
-		Providers: buildProviderHealth(a.data, providers, a.until),
-		Events:    buildEvents(a.data, providers, a.since),
+		Providers:   buildProviderHealth(a.data, providers, a.until),
+		Events:      buildEvents(a.data, providers, a.since),
+		Suggestions: buildSuggestions(a.data),
 	}
 	pair := sharedModelPair(deployments)
 	out.Summary = summarize(&narration{

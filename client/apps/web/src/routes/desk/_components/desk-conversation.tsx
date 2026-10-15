@@ -11,11 +11,14 @@ import { whenIdle } from "@/lib/when-idle";
 import { useAssistantEnabled } from "@/components/assistant/use-assistant-enabled";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
-import type { AssistantMessage, AssistantThread } from "@/types/assistant";
+import { conversationPath } from "@/lib/conversation-path";
+import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
+import type { AssistantEntityRef, AssistantMessage, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
 import { DeskCaseCard } from "./case/desk-case-card";
 import { useDeskCase } from "./case/use-desk-case";
@@ -30,6 +33,7 @@ import {
 } from "./conversation/desk-schedules";
 import { useDesk } from "./desk-layout";
 import { DeskHandoffCard } from "./handoff/desk-handoff-card";
+import { useHandOffThread } from "./handoff/use-hand-off-thread";
 
 export type DeskConversationProps = {
   thread: AssistantThread;
@@ -63,6 +67,29 @@ export function DeskConversation({
     [setLiveHandoff, thread.id],
   );
   const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
+
+  // A reply another agent holds the tools for is handed to it: the new
+  // conversation opens with this one's summary and pinned facts, and the
+  // reply, with the records it names, is asked there as its first question.
+  const handOffThread = useHandOffThread(thread.id);
+  const navigate = useNavigate();
+  const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
+  const setStartExtras = useDeskHandoffStore((state) => state.setHandoff);
+  const handOff = async (
+    agentId: string,
+    question: string,
+    mentions: readonly AssistantEntityRef[],
+  ) => {
+    const result = await handOffThread.mutateAsync(agentId);
+    const next = result.thread.id;
+    if (mentions.length > 0) {
+      setStartExtras({ threadId: next, files: [], mentions: [...mentions], providerId: "" });
+    }
+    if (question !== "") {
+      setOpeningQuestion({ threadId: next, text: question });
+    }
+    void navigate(conversationPath(next));
+  };
 
   // A page the agent opens takes the person out of the Desk; the conversation
   // goes with them, open in the corner panel, unless they have turned the
@@ -175,6 +202,7 @@ export function DeskConversation({
       agentsUnavailable={agentsUnavailable}
       threads={desk.threads}
       onSwitchAgent={desk.start}
+      onHandOff={handOff}
       onStartNew={onStartNew}
       onWorkingChange={desk.setWorking}
       onLiveHandoff={noteLiveHandoff}

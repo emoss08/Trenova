@@ -1,0 +1,14 @@
+{
+  "keyword": {
+    "cases": 14,
+    "recallAt5": 0.92,
+    "mrr": 0.92,
+    "ndcgAt10": 0.91
+  },
+  "hybrid": {
+    "cases": 14,
+    "recallAt5": 1,
+    "mrr": 0.96,
+    "ndcgAt10": 0.96
+  }
+}

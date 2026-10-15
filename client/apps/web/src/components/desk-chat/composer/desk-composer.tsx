@@ -86,6 +86,8 @@ export type DeskComposerProps = {
   agentPickerSignal?: number;
   /** Opens the file picker each time it changes. */
   filePickerSignal?: number;
+  /** Puts the cursor back in the box each time it changes. */
+  focusSignal?: number;
   /** Controls after the agent: the page Desk can see, for one. */
   extras?: ReactNode;
   /** The model picker, on the right before dictation and send. */
@@ -151,6 +153,7 @@ export function DeskComposer({
   wait = 0,
   agentPickerSignal = 0,
   filePickerSignal = 0,
+  focusSignal = 0,
   extras,
   model,
   attachments,
@@ -259,6 +262,12 @@ export function DeskComposer({
       fileInputRef.current?.click();
     }
   }, [filePickerSignal]);
+
+  useEffect(() => {
+    if (focusSignal > 0) {
+      textareaRef.current?.focus();
+    }
+  }, [focusSignal]);
 
   useEffect(() => {
     if (!attachments || lock) {

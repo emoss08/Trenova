@@ -41,6 +41,10 @@ export default function DataTableConfigManager({
   const [open, setOpen] = useState(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const { allowed: canManageOrgDefaults } = usePermission(Resource.Organization, Operation.Update);
+  const { allowed: canEditSharedViews } = usePermission(
+    Resource.TableConfiguration,
+    Operation.Update,
+  );
   const { data } = useSuspenseQuery(tableConfiguration.all({ resource, limit: 50 }));
 
   const { myViews, teamViews } = useMemo(() => {
@@ -67,6 +71,7 @@ export default function DataTableConfigManager({
       isActive={config.id === activeViewId}
       isViewDirty={config.id === activeViewId && isViewDirty}
       canManageOrgDefaults={canManageOrgDefaults}
+      canEditSharedViews={canEditSharedViews}
       currentConfig={currentConfig}
       onApplyConfig={onApplyConfig}
       onViewPersisted={onViewPersisted}

@@ -74,8 +74,16 @@ func specProblems(spec *Spec) []string {
 	if !policy.Operation.IsValid() {
 		add("operation %q is not valid", policy.Operation)
 	}
-	if !permissionRegistry().HasResource(policy.Resource.String()) {
+	switch {
+	case !permissionRegistry().HasResource(policy.Resource.String()):
 		add("resource %q is not a registered permission resource", policy.Resource)
+	case policy.Operation.IsValid() &&
+		!permissionRegistry().Declares(policy.Resource.String(), policy.Operation):
+		add(
+			"operation %q is not declared for resource %q, so no role can grant it",
+			policy.Operation,
+			policy.Resource,
+		)
 	}
 	if strings.TrimSpace(policy.Rationale) == "" {
 		add("has no rationale")

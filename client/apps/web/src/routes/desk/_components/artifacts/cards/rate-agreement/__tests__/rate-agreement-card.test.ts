@@ -361,6 +361,25 @@ describe("guardrails", () => {
       ).map((row) => row.value),
     ).toEqual(["$250.00", "None", "12.5%", "85% of sell", "Half up · 2 places"]);
   });
+
+  it("says a carrier agreement keeps margins without showing them to a role that withholds them", () => {
+    expect(
+      guardrails(
+        agreement({ partyType: "Carrier", marginFloorPercent: null, maxPayPercentOfSell: null }),
+        t,
+        false,
+      ).map((row) => [row.label, row.value]),
+    ).toEqual([
+      ["Minimum charge", "None"],
+      ["Maximum charge", "None"],
+      ["Margin floor", "Hidden"],
+      ["Pays at most", "Hidden"],
+      ["Rounding", "Half up · 2 places"],
+    ]);
+    expect(
+      guardrails(agreement({ partyType: "Customer" }), t, false).map((row) => row.label),
+    ).toEqual(["Minimum charge", "Maximum charge", "Rounding"]);
+  });
 });
 
 describe("agreementReferences", () => {

@@ -1,24 +1,35 @@
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { usePermission } from "@/hooks/use-permission";
-import type { AgentChoice, AgentRecommendation } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useState, type ReactNode } from "react";
+import { useDeskSetting } from "@/stores/desk-settings-store";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { agentToAsk, offersRecommendation } from "./agent-recommendation-state";
-import { DeskAgentRecommendation } from "./composer/desk-agent-recommendation";
+import {
+  agentToAsk,
+  matchContextKinds,
+  noAgentFits,
+  offersAgent,
+  routesOnSend,
+  showsSuggestion,
+  suggestionMode,
+  type OfferedMatch,
+} from "./agent-recommendation-state";
+import { DeskAgentRecommendation, DeskNoAgentFits } from "./composer/desk-agent-recommendation";
 import { useDeskAttachments, useHeldAttachments } from "./composer/desk-attachments";
 import { DeskComposer } from "./composer/desk-composer";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { useDeskDrop } from "./composer/desk-uploads";
 import { DeskTermsNote } from "./desk-terms-note";
-import { useAgentRecommendation } from "./use-agent-recommendation";
+import { useAgentMatch } from "./use-agent-match";
+import { useSuggestionRecord } from "./use-suggestion-record";
 import "./desk-frame.css";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
@@ -49,10 +60,13 @@ export type DeskHomeAskOptions = {
  * dragged over either surface land in the same list.
  *
  * As the question is typed it is matched to the person's agents by the tools
- * each holds that the person may use, and an agent that fits better than the
- * one chosen is offered just above the box. Unless the person picked an agent
- * from the picker, a question sent goes to the agent that fits it, waiting a
- * moment for the match when it was sent before one came back. One of the
+ * each holds that the person may use, with tools for the records it mentions
+ * and the page it is asked from ranked first. What happens then follows the
+ * person's settings: an agent that fits better is offered just above the box
+ * and, unless the person picked an agent, a question sent goes to it, waiting
+ * a moment for the match when it was sent before one came back; or it is only
+ * offered; or the question simply goes to it without asking. When tools match
+ * but none of the person's agents holds them, the box says so. One of the
  * chosen agent's own starter questions always goes to that agent.
  */
 export function useDeskHomeAsk({
@@ -74,51 +88,82 @@ export function useDeskHomeAsk({
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
   const drag = useDeskDrop(noAgents ? null : attachments.add);
   const agentId = askable.agent?.id ?? null;
-  // A pick from the picker pins the agent: Enter goes to it, though a better
-  // fit is still named. Switch only changes the agent, so a later question
-  // that needs another agent is offered and followed again; the server keeps
-  // the agent switched to for the words it was suggested for, so a switch
-  // never draws a second suggestion by itself. The cross turns down that one
-  // agent. Clearing the box starts the next question afresh.
-  const [pinned, setPinned] = useState(false);
-  const [keptOver, setKeptOver] = useState<readonly string[]>([]);
-  const [routing, setRouting] = useState(false);
-  const advice = useAgentRecommendation({
-    draft,
-    agentId,
-    enabled: !noAgents && agentId !== null,
+  const mode = suggestionMode({
+    autoSwitchAgent: useDeskSetting("autoSwitchAgent"),
+    suggestAgent: useDeskSetting("suggestAgent"),
   });
-  const offered: AgentRecommendation | null = offersRecommendation(
-    advice.recommendation,
+  const record = useSuggestionRecord("Home");
+  // A pick from the picker pins the agent: Enter goes to it, though a better
+  // fit is still named. So does the agent the person set to start with, unless
+  // they let the Desk move questions without asking. Switch only changes the
+  // agent, so a later question that needs another agent is offered and
+  // followed again; the server keeps the agent switched to for the words it
+  // was suggested for, so a switch never draws a second suggestion by itself.
+  // The cross turns down that one agent. Clearing the box starts the next
+  // question afresh.
+  const [picked, setPicked] = useState(false);
+  const pinned =
+    picked || (mode !== "auto" && Boolean(preferId) && agentId !== null && agentId === preferId);
+  const [keptOver, setKeptOver] = useState<readonly string[]>([]);
+  const [nobodyDismissed, setNobodyDismissed] = useState(false);
+  const [routing, setRouting] = useState(false);
+  // The words being sent stay what the match is asked for until it answers:
+  // the box empties on send, and letting the match follow it would cancel the
+  // very request the send is waiting on.
+  const [sending, setSending] = useState<string | null>(null);
+  const [focusSignal, setFocusSignal] = useState(0);
+  const contextKinds = matchContextKinds(mentions, deskPage.context());
+  const advice = useAgentMatch({
+    draft: sending ?? draft,
     agentId,
-    keptOver,
-  )
-    ? advice.recommendation
-    : null;
+    contextKinds,
+    enabled: !noAgents && agentId !== null && mode !== "off",
+  });
+  const offered: OfferedMatch | null =
+    showsSuggestion(mode) && offersAgent(advice.match, agentId, keptOver) ? advice.match : null;
+  const nobody = noAgentFits(advice.match) && !nobodyDismissed;
+  const offeredId = offered?.agent.id ?? null;
+
+  useEffect(() => {
+    if (offeredId !== null) {
+      record.shown(offeredId, agentId);
+    }
+  }, [offeredId, agentId, record]);
 
   const changeDraft = (value: string) => {
     setDraft(value);
     if (value.trim() === "") {
-      setPinned(false);
+      setPicked(false);
       setKeptOver([]);
+      setNobodyDismissed(false);
+      record.forget();
     }
   };
 
   const choose = (agent: AgentChoice) => {
     askable.choose(agent);
-    setPinned(true);
+    setPicked(true);
   };
 
   const acceptRecommendation = () => {
-    if (offered) {
+    if (offered && !routing) {
       askable.choose(offered.agent);
+      record.settle("Switched");
+      setFocusSignal((signal) => signal + 1);
     }
   };
 
   const keepAgent = () => {
-    if (offered) {
+    if (offered && !routing) {
       setKeptOver((previous) => [...previous, offered.agent.id]);
+      record.settle("Kept");
+      setFocusSignal((signal) => signal + 1);
     }
+  };
+
+  const dismissNobody = () => {
+    setNobodyDismissed(true);
+    setFocusSignal((signal) => signal + 1);
   };
 
   const send = async (content: string, payloadMentions: AssistantEntityRef[]) => {
@@ -128,12 +173,25 @@ export function useDeskHomeAsk({
     }
     const files = held.files();
     const starter = agent.starters?.some((item) => item.prompt === content.trim()) ?? false;
+    const shown = record.take();
     let target = agent;
-    if (!pinned && !starter) {
+    if (!pinned && !starter && routesOnSend(mode)) {
+      setSending(content);
       setRouting(true);
-      const recommendation = await advice.resolve(content);
+      const match = await advice.resolve(content);
       setRouting(false);
-      target = agentToAsk({ agent, recommendation, pinned, keptOver });
+      setSending(null);
+      target = agentToAsk({ agent, match, pinned, keptOver, mode });
+    }
+    if (target.id !== agent.id && target.id === offeredId) {
+      shown.settle("SentThrough");
+    } else {
+      shown.settle("PassedOver");
+      if (target.id !== agent.id && mode === "auto") {
+        record.autoSwitched(target.id, agent.id);
+      } else if (target.id !== agent.id) {
+        record.sentThrough(target.id, agent.id);
+      }
     }
     onStart(target.id, content, {
       files,
@@ -149,7 +207,10 @@ export function useDeskHomeAsk({
     noAgents,
     choose,
     offered,
+    nobody,
+    dismissNobody,
     routing,
+    focusSignal,
     acceptRecommendation,
     keepAgent,
     draft,
@@ -177,6 +238,7 @@ export type DeskHomeAsk = ReturnType<typeof useDeskHomeAsk>;
 export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStarting: boolean }) {
   const t = useT();
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
+  const { allowed: canAddTools } = usePermission(Resource.AgentDefinition, Operation.Update);
   const explain = SLASH_COMMANDS.find((command) => command.name === "explain");
   const { askable, deskPage } = ask;
 
@@ -201,13 +263,24 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
   return (
     <>
       <DeskTermsNote />
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+        {ask.offered
+          ? t("{0} has the tools for this", ask.offered.agent.name)
+          : ask.nobody
+            ? t("None of your agents has the tools for this.")
+            : ""}
+      </span>
       {ask.offered && askable.agent && (
         <DeskAgentRecommendation
-          recommendation={ask.offered}
+          match={ask.offered}
           agent={askable.agent}
+          disabled={ask.routing}
           onUse={ask.acceptRecommendation}
           onKeep={ask.keepAgent}
         />
+      )}
+      {!ask.offered && ask.nobody && (
+        <DeskNoAgentFits canManage={canAddTools} onDismiss={ask.dismissNobody} />
       )}
       <DeskComposer
         home
@@ -219,6 +292,7 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
         agentLastUsedAt={askable.recency.lastUsedAt}
         busy={false}
         disabled={isStarting || ask.routing || askable.agent === null}
+        focusSignal={ask.focusSignal}
         placeholder={ask.routing ? t("Finding the agent with the tools for this…") : undefined}
         presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
         suggestions={askable.agent?.starters?.map((starter) => ({

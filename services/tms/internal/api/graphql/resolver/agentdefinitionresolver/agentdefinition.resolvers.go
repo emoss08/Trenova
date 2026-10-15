@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
@@ -551,26 +552,67 @@ func (r *QueryResolver) MyAgentRecommendation(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	currentAgentID := pulid.Nil
-	if input.CurrentAgentID != nil && *input.CurrentAgentID != "" {
-		currentAgentID, err = pulid.MustParse(*input.CurrentAgentID)
-		if err != nil {
+	found, err := matchAgent(ctx, r.AgentRecommender, actorutil.FromAuthContext(authCtx), agentMatchInput{
+		text:           input.Text,
+		currentAgentID: input.CurrentAgentID,
+	})
+	if err != nil || found == nil || found.Agent == nil {
+		return nil, err
+	}
+
+	tools := make([]string, 0, len(found.Tools))
+	for _, tool := range found.Tools {
+		tools = append(tools, tool.Name)
+	}
+
+	return &gqlmodel.MyAgentRecommendation{
+		Agent:   found.Agent,
+		Current: found.Outcome == agentsuggestion.MatchCurrentAgent,
+		Tools:   tools,
+	}, nil
+}
+
+func (r *QueryResolver) MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	found, err := matchAgent(ctx, r.AgentRecommender, actorutil.FromAuthContext(authCtx), agentMatchInput{
+		text:           input.Text,
+		currentAgentID: input.CurrentAgentID,
+		contextKinds:   input.ContextKinds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return toMyAgentMatch(found), nil
+}
+
+func (r *MutationResolver) SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRole, permission.OpUpdate); err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+	role := pulid.Nil
+	if roleID != nil && *roleID != "" {
+		if role, err = pulid.MustParse(*roleID); err != nil {
 			return nil, err
 		}
 	}
 
-	recommendation, err := r.AgentRecommender.RecommendAgent(ctx, &agentports.AgentRecommendationRequest{
-		Actor:          actorutil.FromAuthContext(authCtx),
-		Text:           input.Text,
-		CurrentAgentID: currentAgentID,
-	})
-	if err != nil || recommendation == nil {
-		return nil, err
-	}
-
-	return &gqlmodel.MyAgentRecommendation{
-		Agent:   recommendation.Agent,
-		Current: recommendation.Current,
-		Tools:   recommendation.Tools,
-	}, nil
+	return r.AgentAccessService.SetUnattendedRole(ctx, &agentdefinitionports.SetAgentUnattendedRoleRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		AgentID:    definitionID,
+		RoleID:     role,
+	}, actorutil.FromAuthContext(authCtx))
 }

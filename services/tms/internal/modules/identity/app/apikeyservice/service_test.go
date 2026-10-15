@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,7 +28,9 @@ func newTestService(t *testing.T) (*Service, *apikeyportsmock.MockAPIKeyReposito
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	svc := &Service{
 		repo:     repo,
+		engine:   &mocks.AllowAllPermissionEngine{},
 		registry: permissiondomain.NewRegistry(),
+		scopes:   scopepolicytest.Enforcing(),
 		cfg: &config.Config{
 			Security: config.SecurityConfig{
 				APIToken: config.APITokenConfig{

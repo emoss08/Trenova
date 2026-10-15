@@ -32,12 +32,14 @@ type Params struct {
 	Logger     *zap.Logger
 	Repository agentports.AIRetrievalRepository
 	Embeddings aiusageports.EmbeddingService `optional:"true"`
+	Shared     agentports.QueryVectorCache   `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
 	repo       agentports.AIRetrievalRepository
 	embeddings aiusageports.EmbeddingService
+	shared     agentports.QueryVectorCache
 	vectors    *expirable.LRU[queryKey, agentports.QueryVector]
 }
 
@@ -53,6 +55,7 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.retrievalquery"),
 		repo:       p.Repository,
 		embeddings: p.Embeddings,
+		shared:     p.Shared,
 		vectors: expirable.NewLRU[queryKey, agentports.QueryVector](
 			queryCacheSize,
 			nil,
@@ -94,6 +97,11 @@ func (s *Service) Vectorize(
 	if cached, ok := s.vectors.Get(key); ok {
 		return cached, nil
 	}
+	if shared, ok := s.sharedVector(ctx, req.TenantInfo, key, settings.Dimensions); ok {
+		s.vectors.Add(key, shared)
+
+		return shared, nil
+	}
 
 	result, err := s.embeddings.Embed(ctx, &aiusageports.EmbedRequest{
 		TenantInfo:  req.TenantInfo,
@@ -119,8 +127,64 @@ func (s *Service) Vectorize(
 	}
 
 	s.vectors.Add(key, vector)
+	s.storeShared(ctx, req.TenantInfo, key, vector)
 
 	return vector, nil
+}
+
+func (s *Service) sharedVector(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	key queryKey,
+	dimensions int,
+) (agentports.QueryVector, bool) {
+	if s.shared == nil {
+		return agentports.QueryVector{}, false
+	}
+
+	vector, ok, err := s.shared.Get(ctx, sharedKey(tenant, key))
+	if err != nil {
+		if !errors.Is(err, context.Canceled) {
+			s.l.Warn("could not read the shared query vector cache; embedding the query",
+				zap.String("organization", tenant.OrgID.String()),
+				zap.Error(err),
+			)
+		}
+
+		return agentports.QueryVector{}, false
+	}
+	if !ok || vector.Dimensions != dimensions || !vector.Usable() {
+		return agentports.QueryVector{}, false
+	}
+
+	return vector, true
+}
+
+func (s *Service) storeShared(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	key queryKey,
+	vector agentports.QueryVector,
+) {
+	if s.shared == nil {
+		return
+	}
+
+	if err := s.shared.Set(ctx, sharedKey(tenant, key), vector, queryCacheTTL); err != nil &&
+		!errors.Is(err, context.Canceled) {
+		s.l.Warn("could not share the query vector with the other processes",
+			zap.String("organization", tenant.OrgID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func sharedKey(tenant pagination.TenantInfo, key queryKey) *agentports.QueryVectorCacheKey {
+	return &agentports.QueryVectorCacheKey{
+		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
+		ModelKey:   key.modelKey,
+		TextHash:   key.textHash,
+	}
 }
 
 func (s *Service) Availability(

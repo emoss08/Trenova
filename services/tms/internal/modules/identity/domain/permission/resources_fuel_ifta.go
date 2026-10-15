@@ -68,7 +68,7 @@ func (r *Registry) registerFuelAndIFTAResources() {
 			{
 				Operation:   OpImport,
 				DisplayName: "Import",
-				Description: "Parse a statement and commit its rows as purchases",
+				Description: "Parse a statement, resolve rows that need review and commit them as purchases",
 			},
 			{
 				Operation:   OpCancel,

@@ -217,6 +217,7 @@ const EVERYTHING = {
   [Resource.RateQuote]: Operation.Read,
   [Resource.Customer]: Operation.Read,
   [Resource.FormulaTemplate]: Operation.Read,
+  [Resource.ProtectedMargins]: Operation.Read,
 };
 
 function draw(props: Partial<Parameters<typeof DeskRateAgreement>[0]> = {}) {
@@ -552,6 +553,16 @@ describe("DeskRateAgreement", () => {
     const limits = await section("Limits");
     expect(within(limits).getByText("$200.00")).toBeInTheDocument();
     expect(within(limits).getByText("12%")).toBeInTheDocument();
+  });
+
+  it("keeps the margin floor off the card for a role that withholds margins", async () => {
+    const { [Resource.ProtectedMargins]: _margins, ...withoutMargins } = EVERYTHING;
+    seedPermissions(withoutMargins);
+    draw();
+
+    const limits = await section("Limits");
+    expect(within(limits).getByText("$200.00")).toBeInTheDocument();
+    expect(within(limits).queryByText("12%")).not.toBeInTheDocument();
   });
 
   it("lists its versions, oldest first, with who cut each", async () => {

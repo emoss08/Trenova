@@ -62,8 +62,8 @@ type RateAgreement {
   currency: String!
   defaultMinCharge: Decimal
   defaultMaxCharge: Decimal
-  marginFloorPercent: Decimal
-  maxPayPercentOfSell: Decimal
+  marginFloorPercent: Decimal @protected(group: Margins)
+  maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID

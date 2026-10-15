@@ -1,0 +1,56 @@
+"Where the Desk named an agent for a question."
+enum AgentSuggestionSurface {
+  "The Desk's front page, before a conversation starts."
+  Home
+  "An open conversation, where the suggested agent takes it over by hand-off."
+  Conversation
+}
+
+"What became of an agent the Desk named for a question."
+enum AgentSuggestionOutcome {
+  "The suggestion is on screen and nothing has been done with it yet."
+  Shown
+  "The person chose the suggested agent."
+  Switched
+  "The question was sent and went to the suggested agent."
+  SentThrough
+  "The question went to the suggested agent without asking, as the person's settings say."
+  AutoSwitched
+  "The person kept the agent they had."
+  Kept
+  "The question went to another agent, or was put away, without the suggestion being taken."
+  PassedOver
+}
+
+"An agent the Desk named, or moved to, for a question the caller was asking."
+type AgentSuggestion {
+  id: ID!
+  suggestedAgentId: ID!
+  currentAgentId: ID
+  surface: AgentSuggestionSurface!
+  outcome: AgentSuggestionOutcome!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input RecordMyAgentSuggestionInput {
+  suggestedAgentId: ID!
+  "The agent the question would have gone to."
+  currentAgentId: ID
+  surface: AgentSuggestionSurface!
+  "Shown when the suggestion appears, or AutoSwitched when the Desk moved the question without asking."
+  outcome: AgentSuggestionOutcome!
+}
+
+input SettleMyAgentSuggestionInput {
+  id: ID!
+  "Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome."
+  outcome: AgentSuggestionOutcome!
+}
+
+extend type Mutation {
+  "Records an agent the Desk named, or moved to, for a question the caller is asking."
+  recordMyAgentSuggestion(input: RecordMyAgentSuggestionInput!): AgentSuggestion!
+  "Records what the caller did with an agent the Desk named."
+  settleMyAgentSuggestion(input: SettleMyAgentSuggestionInput!): AgentSuggestion!
+}

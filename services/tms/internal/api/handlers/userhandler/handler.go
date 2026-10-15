@@ -107,7 +107,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
 		h.resetUserMFA,
 	)
-	api.POST("/:userID/permissions/simulate/", h.simulatePermissions)
+	api.POST(
+		"/:userID/permissions/simulate/",
+		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
+		h.simulatePermissions,
+	)
 
 	meAPI := api.Group("/me")
 	meAPI.GET("/", h.me)

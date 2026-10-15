@@ -389,9 +389,19 @@ export function DeskSettingsDialog({
               <>
                 <Row
                   title={t("Start new conversations with")}
-                  detail={t(
-                    "The agent the composer picks when you start fresh. You can still switch per message.",
-                  )}
+                  detail={
+                    settings.agent === ""
+                      ? t(
+                          "The agent the composer picks when you start fresh. You can still switch per message.",
+                        )
+                      : settings.autoSwitchAgent === "on"
+                        ? t(
+                            "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.",
+                          )
+                        : t(
+                            "Questions go to this agent even when another has the tools; Desk still says which. You can switch per message.",
+                          )
+                  }
                 >
                   <select
                     className="dk-sx-select"
@@ -407,6 +417,41 @@ export function DeskSettingsDialog({
                     ))}
                   </select>
                 </Row>
+                <Row
+                  title={t("Auto switch agent for tasks")}
+                  detail={t(
+                    "Move a question to the agent with the tools for it without asking. A new question starts with that agent; a conversation is handed off to it with its summary and pinned facts.",
+                  )}
+                >
+                  <Seg
+                    label={t("Auto switch agent for tasks")}
+                    value={settings.autoSwitchAgent}
+                    onChange={(value) => set("autoSwitchAgent", value)}
+                    options={[
+                      ["on", t("On")],
+                      ["off", t("Off")],
+                    ]}
+                  />
+                </Row>
+                {settings.autoSwitchAgent === "off" && (
+                  <Row
+                    title={t("When another agent fits better")}
+                    detail={t(
+                      "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it a new question when you send, unless you picked an agent; in a conversation, Desk offers to hand off.",
+                    )}
+                  >
+                    <Seg
+                      label={t("When another agent fits better")}
+                      value={settings.suggestAgent}
+                      onChange={(value) => set("suggestAgent", value)}
+                      options={[
+                        ["switch", t("Switch on send")],
+                        ["suggest", t("Only suggest")],
+                        ["off", t("Off")],
+                      ]}
+                    />
+                  </Row>
+                )}
                 <Row
                   title={t("Share the page you came from")}
                   detail={t(

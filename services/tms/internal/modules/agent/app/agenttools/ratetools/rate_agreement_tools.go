@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -190,11 +191,12 @@ type RateAgreementKeeper interface {
 	PlanUpdate(
 		ctx context.Context,
 		entity *rateagreement.RateAgreement,
+		actor *permissionports.RequestActor,
 	) (*rateagreementservice.UpdatePlan, error)
 	Update(
 		ctx context.Context,
 		entity *rateagreement.RateAgreement,
-		userID pulid.ID,
+		actor *permissionports.RequestActor,
 	) (*rateagreement.RateAgreement, error)
 	PlanDuplicate(
 		ctx context.Context,
@@ -1115,7 +1117,7 @@ func NewReviseRateAgreementDraftTool(
 				return nil, err
 			}
 
-			return agreements.PlanUpdate(ctx, revised)
+			return agreements.PlanUpdate(ctx, revised, params.Actor)
 		},
 		Refused: func(agreementRevision) string {
 			return "Would revise a draft rate agreement."
@@ -1151,7 +1153,7 @@ func NewReviseRateAgreementDraftTool(
 			if err != nil {
 				return nil, err
 			}
-			updated, err := agreements.Update(ctx, revised, params.Actor.UserID)
+			updated, err := agreements.Update(ctx, revised, params.Actor)
 			if err != nil {
 				return nil, err
 			}

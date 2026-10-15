@@ -308,9 +308,15 @@ export type Guardrail = { key: string; label: string; value: string };
 
 /**
  * The agreement's default charge limits and rounding, and the margin it keeps:
- * a floor on margin for what it sells, a cap on pay for what it buys.
+ * a floor on margin for what it sells, a cap on pay for what it buys. A reader
+ * whose role withholds margins sees that a carrier agreement keeps them, not
+ * what they are.
  */
-export function guardrails(agreement: RateAgreement, t: TranslateFn): Guardrail[] {
+export function guardrails(
+  agreement: RateAgreement,
+  t: TranslateFn,
+  marginsVisible = true,
+): Guardrail[] {
   const minCharge = decimal(agreement.defaultMinCharge);
   const maxCharge = decimal(agreement.defaultMaxCharge);
   const marginFloor = decimal(agreement.marginFloorPercent);
@@ -327,14 +333,20 @@ export function guardrails(agreement: RateAgreement, t: TranslateFn): Guardrail[
       value: maxCharge === null ? t("None") : money(maxCharge, agreement.currency),
     },
   ];
-  if (marginFloor !== null) {
+  if (!marginsVisible && agreement.partyType === "Carrier") {
+    rows.push(
+      { key: "margin", label: t("Margin floor"), value: t("Hidden") },
+      { key: "pay", label: t("Pays at most"), value: t("Hidden") },
+    );
+  }
+  if (marginsVisible && marginFloor !== null) {
     rows.push({
       key: "margin",
       label: t("Margin floor"),
       value: percent(marginFloor),
     });
   }
-  if (payCap !== null) {
+  if (marginsVisible && payCap !== null) {
     rows.push({
       key: "pay",
       label: t("Pays at most"),

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:dbd53dcd3dcc29d0c5763bec686fe97f7335698dae45ac0d059c62abb2231860",
+  "version": "sha256:44bd89c6b966011e2b6360286c75a33608710b981f971125cd925f84d03f69c8",
   "modules": [
     {
       "id": "home",
@@ -8866,8 +8866,26 @@
             "Open [Desk](/desk).",
             "The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.",
             "Type your question and send it, or press Tab to use the starter question on screen.",
-            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list is always the one asked.",
+            "When another of your agents has the tools your question needs, a note just above the box names it. Select the agent's name to see why: the tools that matched your question, none of which your agent holds. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, itself or through an agent it hands work to, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. Records you name with @ and the page you came from count: tools for them rank first. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list, or the one you set to start with in Desk settings, is always the one asked. To change any of this, see \"Choose how the Desk suggests agents\".",
+            "When none of your agents has the tools a question needs, the note says so. If you manage agents, **Add tools** opens AI Control; otherwise an administrator can add them.",
             "Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it."
+          ]
+        },
+        {
+          "title": "Choose how the Desk suggests agents",
+          "keywords": [
+            "auto switch agent",
+            "switch agents automatically",
+            "stop suggesting agents",
+            "suggested agent setting",
+            "turn off agent suggestions",
+            "only suggest"
+          ],
+          "steps": [
+            "On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Composer**.",
+            "Turn **Auto switch agent for tasks** on to let the Desk move a question to the agent with the tools for it without asking: a new question starts with that agent, and in a conversation the conversation is handed off to it, with its summary and pinned facts, and your message is asked there.",
+            "With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send a new question, unless you picked an agent (in a conversation it offers **Hand off**); **Only suggest** names it and asks the agent you chose; **Off** names nothing.",
+            "**Start new conversations with** sets the agent a fresh conversation starts with. Questions go to it even when another agent has the tools, unless auto switch is on."
           ]
         },
         {
@@ -9407,6 +9425,7 @@
             "Open the conversation from [Desk](/desk) and select the hand-off button in the bar at the top (its tip reads **Hand off to another agent**).",
             "Under **Hand off to**, pick the agent. When your current agent has just said it cannot do what you asked because the tool belongs to another of your agents, those agents are listed first and marked **Holds what this conversation needs**. The agents your current agent already works with come next.",
             "This starts a new conversation with that agent. It carries over a summary of this conversation, its pinned facts and its pinned artifacts.",
+            "While you write a message, the Desk may name another agent that has the tools for it, just above the box. Select **Hand off** there to hand the conversation to that agent and ask your message in the new conversation. With **Auto switch agent for tasks** on, this happens when you send. Files you attached keep the message in this conversation.",
             "A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open."
           ]
         },

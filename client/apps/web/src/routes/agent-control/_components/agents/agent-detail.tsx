@@ -10,6 +10,7 @@ import { useMemo } from "react";
 import { TierBar } from "../kit/controls";
 import { Ic } from "../kit/ic";
 import { Seg } from "../kit/layout";
+import { AgentUnattendedRole } from "./agent-unattended-role";
 import { agentMode, leadingStreak, type AgentMode } from "./roster-model";
 
 /** The streak strip shows no more dots than this, however high the threshold. */
@@ -97,6 +98,9 @@ export function AgentDetail({
                 : t("Nobody yet: no role is granted it")
               : t("Everyone who can use the assistant")}
           </p>
+          {agent.triggerMode !== "Chat" && (
+            <AgentUnattendedRole agent={agent} canUpdate={canUpdate} />
+          )}
           {agent.triggerMode === "Scheduled" && (
             <>
               <h4>{t("Schedule")}</h4>

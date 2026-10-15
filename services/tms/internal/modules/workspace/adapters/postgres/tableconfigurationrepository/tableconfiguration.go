@@ -159,6 +159,17 @@ func (r *repository) scopeQuery(
 		q = q.Where("tc.resource = ?", req.Resource)
 	}
 
+	if req.LimitToResources {
+		if len(req.ReadableResources) == 0 {
+			q = q.Where("FALSE")
+		} else {
+			q = q.Where(
+				tableconfigurationcol.TableConfigurationColumns.Resource.In(),
+				bun.In(req.ReadableResources),
+			)
+		}
+	}
+
 	if req.Visibility != "" {
 		v, err := tableconfiguration.VisibilityFromString(req.Visibility)
 		if err != nil {

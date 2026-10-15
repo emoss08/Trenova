@@ -54,24 +54,29 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/constraints", require(permission.OpRead), h.listConstraints)
 	api.POST("/constraints", require(permission.OpUpdate), h.saveConstraint)
 	api.PUT("/constraints/:constraintID", require(permission.OpUpdate), h.saveConstraint)
-	api.DELETE("/constraints/:constraintID", require(permission.OpDelete), h.deleteConstraint)
+	api.DELETE("/constraints/:constraintID", require(permission.OpUpdate), h.deleteConstraint)
 	api.GET("/preflight", require(permission.OpRead), h.preflight)
 
 	selectOptions := api.Group("/select-options")
 	selectOptions.GET("/", require(permission.OpRead), h.selectOptions)
 	selectOptions.GET("/:roleID", require(permission.OpRead), h.getOption)
 
-	api.DELETE("/assignments/:assignmentID", require(permission.OpUnassign), h.unassignRole)
+	api.DELETE(
+		"/assignments/:assignmentID",
+		h.requireUserPermission(permission.OpUnassign),
+		h.unassignRole,
+	)
 
 	api.GET("/:roleID", require(permission.OpRead), h.get)
 	api.PUT("/:roleID", require(permission.OpUpdate), h.update)
+	api.DELETE("/:roleID", require(permission.OpDelete), h.delete)
 	api.GET("/:roleID/impact", require(permission.OpRead), h.getImpact)
 
 	api.POST("/:roleID/permissions", require(permission.OpUpdate), h.addPermission)
 	api.PUT("/:roleID/permissions/:permID", require(permission.OpUpdate), h.updatePermission)
 	api.DELETE("/:roleID/permissions/:permID", require(permission.OpUpdate), h.deletePermission)
 
-	api.POST("/:roleID/assignments", require(permission.OpAssign), h.assignRole)
+	api.POST("/:roleID/assignments", h.requireUserPermission(permission.OpAssign), h.assignRole)
 }
 
 func (h *Handler) requireRolePermission(operation permission.Operation) gin.HandlerFunc {
@@ -79,6 +84,13 @@ func (h *Handler) requireRolePermission(operation permission.Operation) gin.Hand
 		return func(c *gin.Context) { c.Next() }
 	}
 	return h.perm.RequirePermission(permission.ResourceRole.String(), operation)
+}
+
+func (h *Handler) requireUserPermission(operation permission.Operation) gin.HandlerFunc {
+	if h.perm == nil {
+		return func(c *gin.Context) { c.Next() }
+	}
+	return h.perm.RequirePermission(permission.ResourceUser.String(), operation)
 }
 
 // @Summary List roles
@@ -267,6 +279,43 @@ func (h *Handler) update(c *gin.Context) {
 	c.JSON(http.StatusOK, role)
 }
 
+// @Summary Delete a role
+// @ID deleteRole
+// @Tags Roles
+// @Param roleID path string true "Role ID"
+// @Param force query bool false "Take the role from everyone who holds it"
+// @Success 204
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /roles/{roleID} [delete]
+func (h *Handler) delete(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	roleID, err := pulid.MustParse(c.Param("roleID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.DeleteRole(c.Request.Context(), roleservice.DeleteRoleRequest{
+		Tenant: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		RoleID: roleID,
+		Force:  c.Query("force") == "true",
+	}); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 // @Summary Get role impact
 // @ID getRoleImpact
 // @Tags Roles
@@ -339,7 +388,11 @@ func (h *Handler) deleteHierarchy(c *gin.Context) {
 
 	if err = h.service.DeleteRoleHierarchyEdge(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		edgeID,
 	); err != nil {
 		h.eh.HandleError(c, err)
@@ -425,7 +478,11 @@ func (h *Handler) deleteConstraint(c *gin.Context) {
 
 	if err = h.service.DeleteRoleConstraint(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		constraintID,
 	); err != nil {
 		h.eh.HandleError(c, err)
@@ -580,7 +637,11 @@ func (h *Handler) deletePermission(c *gin.Context) {
 
 	err = h.service.DeleteResourcePermission(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		permID,
 		roleID,
 	)
@@ -661,6 +722,7 @@ func (h *Handler) unassignRole(c *gin.Context) {
 	err = h.service.UnassignRole(c.Request.Context(), roleservice.UnassignRoleRequest{
 		ActorID:        authCtx.UserID,
 		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
 		AssignmentID:   assignmentID,
 	})
 	if err != nil {

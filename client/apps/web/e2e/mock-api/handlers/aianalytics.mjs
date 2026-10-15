@@ -853,6 +853,81 @@ function agentAnalytics(state, input) {
     sameModel: pair
       ? { modelKey: pair.model, betterKey: pair.better.key, worseKey: pair.worse.key }
       : null,
+    suggestions: suggestionsOf(state, input, since, now),
+  };
+}
+
+// The Desk's agent suggestions over the window, by the agent named, as
+// `aianalyticsservice.buildSuggestions` assembles them: a month of seeded ones
+// plus whatever the page has recorded. A suggestion still on screen for under
+// half an hour is not counted; one left longer was passed over. A view
+// narrowed to a task has none.
+const SUGGESTION_SETTLE_SECONDS = 30 * 60;
+
+const SEEDED_SUGGESTIONS = [
+  { agentDefinitionId: "agdef_cs", name: "Customer service", counts: [71, 52, 14, 9, 32] },
+  { agentDefinitionId: "agdef_billing", name: "Billing", counts: [42, 38, 6, 11, 27] },
+  { agentDefinitionId: "agdef_dispatch", name: "Dispatch", counts: [25, 18, 3, 12, 24] },
+];
+
+const SUGGESTION_OUTCOMES = ["Switched", "SentThrough", "AutoSwitched", "Kept", "PassedOver"];
+
+function suggestionsOf(state, input, since, now) {
+  if (input.task) return null;
+  const byAgent = new Map();
+  const add = (agentDefinitionId, name, outcome, count) => {
+    if (input.agentDefinitionId && input.agentDefinitionId !== agentDefinitionId) return;
+    const row = byAgent.get(agentDefinitionId) ?? {
+      agentDefinitionId,
+      name,
+      switched: 0,
+      sentThrough: 0,
+      autoSwitched: 0,
+      kept: 0,
+      passedOver: 0,
+    };
+    const key = outcome[0].toLowerCase() + outcome.slice(1);
+    row[key] += count;
+    byAgent.set(agentDefinitionId, row);
+  };
+  const scale = input.window === "Day" ? 1 / 30 : input.window === "Week" ? 7 / 30 : 1;
+  for (const seeded of SEEDED_SUGGESTIONS) {
+    seeded.counts.forEach((count, index) =>
+      add(seeded.agentDefinitionId, seeded.name, SUGGESTION_OUTCOMES[index], Math.round(count * scale)),
+    );
+  }
+  const names = new Map(
+    (state.ai?.agents ?? []).map((edge) => [edge.node.id, edge.node.name]),
+  );
+  for (const row of state.agentSuggestions ?? []) {
+    if (row.createdAt < since) continue;
+    if (row.outcome === "Shown" && now - row.createdAt < SUGGESTION_SETTLE_SECONDS) continue;
+    const outcome = row.outcome === "Shown" ? "PassedOver" : row.outcome;
+    add(row.suggestedAgentId, names.get(row.suggestedAgentId) ?? "", outcome, 1);
+  }
+
+  const agents = [...byAgent.values()]
+    .map((row) => {
+      const suggested = row.switched + row.sentThrough + row.autoSwitched + row.kept + row.passedOver;
+      const taken = row.switched + row.sentThrough + row.autoSwitched;
+      return { ...row, suggested, takenRate: suggested === 0 ? null : taken / suggested };
+    })
+    .filter((row) => row.suggested > 0)
+    .sort((a, b) => b.suggested - a.suggested || a.name.localeCompare(b.name));
+  if (agents.length === 0) return null;
+  const total = (key) => agents.reduce((sum, row) => sum + row[key], 0);
+  const suggested = total("suggested");
+  const taken = total("switched") + total("sentThrough") + total("autoSwitched");
+
+  return {
+    suggested,
+    switched: total("switched"),
+    sentThrough: total("sentThrough"),
+    autoSwitched: total("autoSwitched"),
+    kept: total("kept"),
+    passedOver: total("passedOver"),
+    takenRate: taken / suggested,
+    agents,
   };
 }
 

@@ -1,17 +1,18 @@
 package rolehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
@@ -28,8 +29,7 @@ import (
 var errNotFound = errors.New("role not found")
 
 type roleDeps struct {
-	handler       *rolehandler.Handler
-	permCacheRepo *permissionportsmock.MockPermissionCacheRepository
+	handler *rolehandler.Handler
 }
 
 func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository) *roleDeps {
@@ -38,13 +38,11 @@ func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository
 	logger := zap.NewNop()
 	permEngine := &mocks.AllowAllPermissionEngine{}
 
-	permCacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
-
 	service := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         repo,
 		RBACRepo:         &rbactest.Repository{},
-		PermissionCache:  permCacheRepo,
+		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: permEngine,
 		Validator:        roleservice.NewTestValidator(),
 		Registry:         permission.NewEmptyRegistry(),
@@ -67,7 +65,6 @@ func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository
 			PermissionEngine: permEngine,
 			ErrorHandler:     errorHandler,
 		}),
-		permCacheRepo: permCacheRepo,
 	}
 }
 
@@ -334,8 +331,6 @@ func TestRoleHandler_Update_Success(t *testing.T) {
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
 	deps := setupRoleHandler(t, repo)
-	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -540,8 +535,6 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 	repo.On("CreateResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
 	deps := setupRoleHandler(t, repo)
-	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -650,8 +643,6 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 	repo.On("UpdateResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
 	deps := setupRoleHandler(t, repo)
-	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -787,8 +778,6 @@ func TestRoleHandler_DeletePermission_Success(t *testing.T) {
 	repo.On("DeleteResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
 	deps := setupRoleHandler(t, repo)
-	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).

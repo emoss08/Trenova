@@ -18,6 +18,7 @@ const (
 	FeatureAgentReflection             = Feature("AgentReflection")
 	FeatureAgentDrafting               = Feature("AgentDrafting")
 	FeatureAgentProfile                = Feature("AgentProfile")
+	FeatureAgentRecommendation         = Feature("AgentRecommendation")
 )
 
 func AllFeatures() []Feature {
@@ -35,6 +36,7 @@ func AllFeatures() []Feature {
 		FeatureAgentReflection,
 		FeatureAgentDrafting,
 		FeatureAgentProfile,
+		FeatureAgentRecommendation,
 	}
 }
 

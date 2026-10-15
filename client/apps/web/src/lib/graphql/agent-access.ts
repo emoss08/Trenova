@@ -5,6 +5,7 @@ import {
   RoleAgentAccessDocument,
   RoleAgentAccessFieldsFragmentDoc,
   SetAgentAccessDocument,
+  SetAgentUnattendedRoleDocument,
   SetRoleAgentAccessDocument,
   SuggestedAgentAudienceDocument,
   type AgentAccessMode,
@@ -176,6 +177,20 @@ export async function setAgentAccess(
     mode: saved.accessMode,
     roles: saved.accessRoles.map((role) => getFragmentData(AgentAccessRoleFieldsFragmentDoc, role)),
   };
+}
+
+/** Sets the role an agent runs as when no person is present; null clears it. */
+export async function setAgentUnattendedRole(
+  agentId: string,
+  roleId: string | null,
+): Promise<string | null> {
+  const data = await requestGraphQL({
+    document: SetAgentUnattendedRoleDocument,
+    operationName: "SetAgentUnattendedRole",
+    variables: { agentId, roleId },
+  });
+
+  return data.setAgentUnattendedRole.unattendedRoleId || null;
 }
 
 function toRoleAgents(fields: RoleAgentAccessFieldsFragment): RoleAgents {

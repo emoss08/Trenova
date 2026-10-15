@@ -213,7 +213,7 @@ func init() {
 	findingsCmd.Flags().StringVar(&flags.area, "area", "", "only findings whose area contains this")
 	findingsCmd.Flags().StringVar(&flags.format, "format", formatMarkdown, "md, csv or json")
 
-	DeskCmd.AddCommand(askCmd, runCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd)
+	DeskCmd.AddCommand(askCmd, runCmd, routeCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd)
 }
 
 func runAsk(cmd *cobra.Command, args []string) error {
@@ -491,6 +491,10 @@ func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
 }
 
 func openBench(ctx context.Context, outDir string, livePaths ...string) (*deskbench.Bench, error) {
+	return openBenchWith(ctx, deskbench.OpenOptions{OutDir: outDir, LivePaths: livePaths})
+}
+
+func openBenchWith(ctx context.Context, opts deskbench.OpenOptions) (*deskbench.Bench, error) {
 	if cfg == nil {
 		return nil, errors.New("configuration was not loaded")
 	}
@@ -501,12 +505,10 @@ func openBench(ctx context.Context, outDir string, livePaths ...string) (*deskbe
 		return nil, err
 	}
 
-	return deskbench.Open(ctx, deskbench.OpenOptions{
-		Namespace: flags.namespace,
-		OutDir:    outDir,
-		LivePaths: livePaths,
-		LockDir:   benchRoot,
-	})
+	opts.Namespace = flags.namespace
+	opts.LockDir = benchRoot
+
+	return deskbench.Open(ctx, opts)
 }
 
 func runDirectory(kind string) (string, error) {

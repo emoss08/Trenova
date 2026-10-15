@@ -3,6 +3,7 @@ package userservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -19,10 +20,15 @@ func TestReplaceOrganizationMembershipsRecordsWhatChanged(t *testing.T) {
 	deps := setupTest(t)
 	recorder := &securityaudittest.Recorder{}
 	deps.svc.auditor = recorder
+	roles := &fakeRoles{log: &eventLog{}}
+	deps.svc.roles = roles
 
 	actorID, userID := pulid.MustNew("usr_"), pulid.MustNew("usr_")
 	buID := pulid.MustNew("bu_")
 	kept, removed, added := pulid.MustNew("org_"), pulid.MustNew("org_"), pulid.MustNew("org_")
+	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, userID).Return(nil, nil).Once()
+	deps.expectUserManagement(actorID, removed, true)
+	deps.expectUserManagement(actorID, added, true)
 
 	deps.repo.EXPECT().ListOrganizationMemberships(mock.Anything, userID, buID).
 		Return([]*tenant.OrganizationMembership{{OrganizationID: kept}, {OrganizationID: removed}}, nil).Once()
@@ -43,4 +49,10 @@ func TestReplaceOrganizationMembershipsRecordsWhatChanged(t *testing.T) {
 	assert.Equal(t, kept, change.OrganizationID)
 	assert.Equal(t, []string{added.String()}, change.Metadata["addedOrganizationIds"])
 	assert.Equal(t, []string{removed.String()}, change.Metadata["removedOrganizationIds"])
+	assert.Equal(t, []roleservice.RevokeOrganizationRolesRequest{{
+		ActorID:        actorID,
+		UserID:         userID,
+		OrganizationID: removed,
+		BusinessUnitID: buID,
+	}}, roles.revoked)
 }

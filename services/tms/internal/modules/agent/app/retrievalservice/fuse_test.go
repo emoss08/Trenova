@@ -1,6 +1,7 @@
 package retrievalservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -59,4 +60,14 @@ func TestFuseHonoursATunedFloor(t *testing.T) {
 	vector := []agentports.VectorSearchHit{{SourceID: "doc_a", Similarity: 0.31}}
 	assert.Empty(t, Fuse(nil, vector, SearchTuning{SimilarityFloor: 0.4}))
 	assert.Len(t, Fuse(nil, vector, SearchTuning{SimilarityFloor: 0.3}), 1)
+}
+
+func TestSearchTuningFloorFollowsTheModelUnlessSet(t *testing.T) {
+	t.Parallel()
+
+	nomic := "localhost:11434/nomic-embed-text@768"
+	assert.InDelta(t, airetrieval.SimilarityFloor(nomic), DefaultSearchTuning().FloorFor(nomic), 1e-9)
+	assert.InDelta(t, DefaultSimilarityFloor, DefaultSearchTuning().FloorFor(""), 1e-9)
+	assert.InDelta(t, 0.3, SearchTuning{SimilarityFloor: 0.3}.FloorFor(nomic), 1e-9,
+		"a floor set on the tuning overrides the model's")
 }

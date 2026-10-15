@@ -82,7 +82,7 @@ func (r *repository) List(
 					return sq.
 						Limit(int64(req.Filter.Pagination.SafeLimit())).
 						Offset(int64(req.Filter.Pagination.SafeOffset())).
-						Order(cols.Name.OrderAsc())
+						Order(cols.Name.OrderAsc(), cols.ID.OrderAsc())
 				}).ScanAndCount(ctx)
 			if err != nil {
 				r.l.Error("failed to list agent definitions", zap.Error(err))
@@ -618,6 +618,61 @@ func (r *repository) SetAccessMode(
 		}
 
 		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+	})
+}
+
+func (r *repository) SetUnattendedRole(
+	ctx context.Context,
+	req agentdefinitionports.SetAgentDefinitionUnattendedRoleRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := agentdefinitioncol.DefinitionColumns
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*agentdefinition.Definition)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Set(cols.UnattendedRoleID.Set(), stringutils.NilIfEmpty(req.RoleID.String())).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("set agent definition unattended role: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+	})
+}
+
+func (r *repository) UnattendedRoleID(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+) (pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
+		cols := agentdefinitioncol.DefinitionColumns
+
+		var roleID *string
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agentdefinition.Definition)(nil)).
+			ColumnExpr(cols.UnattendedRoleID.Qualified()).
+			Apply(agentdefinitioncol.DefinitionApplyTenant(tenant)).
+			Where(cols.ID.Eq(), id).
+			Scan(ctx, &roleID)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return pulid.Nil, nil
+			}
+			return pulid.Nil, fmt.Errorf("read agent definition unattended role: %w", err)
+		}
+		if roleID == nil {
+			return pulid.Nil, nil
+		}
+
+		return pulid.ID(*roleID), nil
 	})
 }
 

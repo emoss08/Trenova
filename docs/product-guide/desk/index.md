@@ -27,8 +27,16 @@ Keywords: chat with AI, ask the assistant, start a conversation, which agent sho
 1. Open [Desk](/desk).
 2. The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.
 3. Type your question and send it, or press Tab to use the starter question on screen.
-4. When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list is always the one asked.
-5. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
+4. When another of your agents has the tools your question needs, a note just above the box names it. Select the agent's name to see why: the tools that matched your question, none of which your agent holds. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, itself or through an agent it hands work to, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. Records you name with @ and the page you came from count: tools for them rank first. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list, or the one you set to start with in Desk settings, is always the one asked. To change any of this, see "Choose how the Desk suggests agents".
+5. When none of your agents has the tools a question needs, the note says so. If you manage agents, **Add tools** opens AI Control; otherwise an administrator can add them.
+6. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
+
+### Choose how the Desk suggests agents
+Keywords: auto switch agent, switch agents automatically, stop suggesting agents, suggested agent setting, turn off agent suggestions, only suggest
+1. On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Composer**.
+2. Turn **Auto switch agent for tasks** on to let the Desk move a question to the agent with the tools for it without asking: a new question starts with that agent, and in a conversation the conversation is handed off to it, with its summary and pinned facts, and your message is asked there.
+3. With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send a new question, unless you picked an agent (in a conversation it offers **Hand off**); **Only suggest** names it and asks the agent you chose; **Off** names nothing.
+4. **Start new conversations with** sets the agent a fresh conversation starts with. Questions go to it even when another agent has the tools, unless auto switch is on.
 
 ### Approve a change on the Desk
 Keywords: approve in desk, agent wants to change, review agent change, not now, redraft, out of date
@@ -251,7 +259,8 @@ Keywords: hand off, handoff, transfer, pass to another agent, switch agent keep 
 1. Open the conversation from [Desk](/desk) and select the hand-off button in the bar at the top (its tip reads **Hand off to another agent**).
 2. Under **Hand off to**, pick the agent. When your current agent has just said it cannot do what you asked because the tool belongs to another of your agents, those agents are listed first and marked **Holds what this conversation needs**. The agents your current agent already works with come next.
 3. This starts a new conversation with that agent. It carries over a summary of this conversation, its pinned facts and its pinned artifacts.
-4. A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open.
+4. While you write a message, the Desk may name another agent that has the tools for it, just above the box. Select **Hand off** there to hand the conversation to that agent and ask your message in the new conversation. With **Auto switch agent for tasks** on, this happens when you send. Files you attached keep the message in this conversation.
+5. A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open.
 
 ### Have an agent run a request on a schedule
 Keywords: schedule, recurring, every morning, every weekday, every Monday, daily report, run automatically

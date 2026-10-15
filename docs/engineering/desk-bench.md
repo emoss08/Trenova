@@ -85,6 +85,7 @@ trenova desk run --tag dispatch --name late --parallel 2
 trenova desk agents                                             # names --agent takes
 trenova desk providers                                          # names --provider takes
 trenova desk findings --status all --format csv                 # export what runs have found
+trenova desk route                                              # score where questions would go
 task desk-ask -- "how many loads did we deliver this week"
 task desk-bench -- --repeat 3
 ```
@@ -291,6 +292,65 @@ A scenario may therefore build on the one before it (`edi-guide-revised` updates
    files: what the model was offered is what it chose from.
 4. Fix it, then run the scenario again with `--repeat`, and the whole set before keeping the
    change: a prompt edit that fixes one question can break another, and the comparison says so.
+
+## Routing
+
+`trenova desk route` (`task desk-route`) scores where questions would go before they are
+asked: it asks the Desk's agent matcher (`MatchAgent`, the `myAgentMatch` query) each
+labelled question in `deskbench/routing/*.yaml`, from the agent it names, as the bench user.
+No turn runs and nothing is written, so it is quick to run after changing a tool's
+description, search terms or an agent's tools.
+
+```yaml
+cases:
+  - name: billing-ar-aging-from-dispatch
+    from: DispatchAssistant              # the agent the question would go to now
+    ask: "whats the ar aging look like for acme rn"
+    expect: Receivables                  # an agent, by template, name or id; | for alternatives
+  - name: billing-send-it-about-an-invoice
+    from: DispatchAssistant
+    ask: "send it to them again please"
+    about: [invoice]                     # the kinds of record it names or is asked from
+    expect: BillingAssistant|Receivables
+  - name: dispatch-hold-stays
+    from: DispatchAssistant
+    ask: "put the walmart load on hold"
+    expect: current                      # the agent asked from holds the tools
+```
+
+`expect` also takes `none` (tools match but none of the person's agents holds the best of them) and
+`nothing` (no tool matches). A case expecting an agent passes when that agent is suggested,
+when it is the agent asked from and is kept, or when the agent asked from keeps the question
+because it would hand it to that agent through `delegate_task` (the report reads
+`current (Billing exceptions, handing it to Compliance desk)`). Name agents by template, as
+the cases do, so a reseed keeps them; `TestShippedRoutingCases_NameAgentsByTheirTemplates`
+refuses one that is not. When the label itself was wrong, change `expect` and say why in the
+case's `note`.
+
+The bench's own agents (`Bench · …`, from `deskbench/agents.yaml`) are left out of a routing
+run, as the agent asked from and as suggestions, and `route` does not sync them: several of
+them share a shipped template (two are `DispatchAssistant`s), so a case asked from
+`DispatchAssistant` would otherwise be asked from whichever sorts first by name and the
+scores would measure the bench's agents, not the organization's. A case that fails while
+none of the agents it expects is an enabled chat agent says so (`no enabled chat agent is
+CustomerAssistant`), for an agent that is turned off or one, like an `IntakeDesk` agent, that
+is started by inbound messages and never by the Desk. The seeded Customer service agent is
+off until someone reviews it, so the cases that need it accept `none` too: with it off, no
+agent the person may use holds the best tool for them.
+
+Each run writes `routing.md` (the score, the cases that changed since the previous routing
+run, and every case's expected and actual answer with the tools that matched) and
+`routing.json` to `.deskbench/runs/<time>-route/`, and exits non-zero when a question goes
+the wrong way. `--compare` takes a run directory or a `routing.json`, `''` for none. The bench
+lifts the per-person limit on matching embeddings for its own matches only, so a long run is
+ranked as a person's first question is, by keyword and embedding together.
+
+Embeddings are used only when the organization has an embedding provider and its retrieval
+settings (AI Control → Retrieval) name an active embedding model; otherwise every case is
+ranked by keyword alone, which `ai_usage_records` shows as no `AgentRecommendation`
+embedding rows. The first match after a reseed, or after a tool's description or search
+terms change, embeds the catalog in the background and may be ranked by keyword while it
+does, so run one case (`--name`) before a run you mean to compare.
 
 ## Findings
 

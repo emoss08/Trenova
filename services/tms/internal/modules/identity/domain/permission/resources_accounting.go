@@ -61,7 +61,7 @@ func (r *Registry) registerAccountingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Retry, skip and resolve sync records and differences",
+				Description: "Retry, skip and resolve sync records and differences, apply inbound changes and release held syncs",
 			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export sync records"},
 		},
@@ -260,7 +260,11 @@ func (r *Registry) registerAccountingResources() {
 				Description: "Create manual journal drafts",
 			},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Edit manual journal drafts"},
-			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve manual journals"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve and post",
+				Description: "Approve and post manual journals",
+			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject manual journals"},
 			{
 				Operation:   OpSubmit,
@@ -312,8 +316,8 @@ func (r *Registry) registerAccountingResources() {
 			},
 			{
 				Operation:   OpApprove,
-				DisplayName: "Approve",
-				Description: "Approve journal reversals",
+				DisplayName: "Approve and post",
+				Description: "Approve and post journal reversals",
 			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject journal reversals"},
 			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel journal reversals"},
@@ -445,7 +449,11 @@ func (r *Registry) registerAccountingResources() {
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View customer payments"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Post customer payments"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Post customer payments and apply credit memos",
+			},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",

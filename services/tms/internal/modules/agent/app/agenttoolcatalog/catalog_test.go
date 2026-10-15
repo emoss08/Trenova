@@ -436,10 +436,10 @@ func TestMatch_IsWhatTheSearchFoundWithoutItsFamily(t *testing.T) {
 	catalog := reportFamilyCatalog()
 	allowed := []string{"run_report", "list_reports", "list_workers"}
 
-	assert.Equal(t,
-		[]string{"run_report"},
-		catalog.Match(Query{Allowed: allowed, Text: "start", Limit: 6}),
-	)
+	matches := catalog.Match(Query{Allowed: allowed, Text: "start", Limit: 6})
+	require.Len(t, matches, 1)
+	assert.Equal(t, "run_report", matches[0].Name)
+	assert.Positive(t, matches[0].Score)
 	assert.Equal(t,
 		[]string{"run_report", "list_reports"},
 		names(catalog.FindHybrid(Query{Allowed: allowed, Text: "start", Limit: 6})),
@@ -451,4 +451,73 @@ func TestMatch_FindsNothingForWordsNoToolCarries(t *testing.T) {
 	t.Parallel()
 
 	assert.Empty(t, reportFamilyCatalog().Match(Query{Text: "zzzz no such thing zzzz", Limit: 6}))
+}
+
+func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "create_shipment", Description: "Create a shipment."},
+		{Name: "get_shipment", Description: "Retrieve one shipment."},
+	})
+
+	matches := catalog.Match(Query{Text: "shipment", Limit: 6})
+
+	require.Len(t, matches, 2)
+	assert.Equal(t, matches[0].Score, matches[1].Score,
+		"a tie stays a tie for the caller to break, not one decided by catalog order")
+}
+
+func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "create_shipment", Description: "Create a shipment."},
+		{Name: "get_shipment", Description: "Retrieve one shipment."},
+		{Name: "list_invoices", Description: "List invoices."},
+	})
+
+	matches := catalog.Match(Query{
+		Text:  "shipment",
+		Limit: 6,
+		Semantic: NewSemantic(map[string]float64{
+			"create_shipment": 0.62,
+			"get_shipment":    0.62,
+			"list_invoices":   0.11,
+		}),
+	})
+
+	require.GreaterOrEqual(t, len(matches), 2)
+	assert.ElementsMatch(t,
+		[]string{"create_shipment", "get_shipment"},
+		[]string{matches[0].Name, matches[1].Name},
+	)
+	assert.Equal(t, matches[0].Score, matches[1].Score,
+		"tools tied on keywords and on meaning tie in the fused ranking too")
+}
+
+func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "list_invoices", Description: "List invoices by status."},
+	})
+
+	assert.True(t, catalog.MentionsAny(nil, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny(nil, "good morning, how are you"))
+	assert.False(t, catalog.MentionsAny(nil, ""))
+}
+
+func TestMentionsAny_LooksOnlyAtTheToolsAllowed(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "list_invoices", Description: "List invoices by status."},
+		{Name: "get_shipment", Description: "Get a shipment by its number."},
+	})
+
+	assert.True(t, catalog.MentionsAny([]string{"list_invoices"}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{"get_shipment"}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{"unknown_tool"}, "which invoices are past due"))
 }

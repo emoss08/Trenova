@@ -14,6 +14,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
+import { useSecurityAccess } from "../security-access/use-security-access";
 
 type DirectoryDetailHeaderProps = {
   directory?: SCIMDirectory;
@@ -29,6 +30,7 @@ export function DirectoryDetailHeader({
   onDelete,
 }: DirectoryDetailHeaderProps) {
   const t = useT();
+  const access = useSecurityAccess();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -51,23 +53,27 @@ export function DirectoryDetailHeader({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!directory}
-            onClick={() => directory && onEdit(directory)}
-          >
-            {t("Edit directory")}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={!directory || isDeleting}
-            onClick={() => setConfirmOpen(true)}
-          >
-            <Trash01Icon />
-            {t("Delete directory")}
-          </Button>
+          {access.scimDirectories.update ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!directory}
+              onClick={() => directory && onEdit(directory)}
+            >
+              {t("Edit directory")}
+            </Button>
+          ) : null}
+          {access.scimDirectories.remove ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={!directory || isDeleting}
+              onClick={() => setConfirmOpen(true)}
+            >
+              <Trash01Icon />
+              {t("Delete directory")}
+            </Button>
+          ) : null}
         </div>
       </div>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

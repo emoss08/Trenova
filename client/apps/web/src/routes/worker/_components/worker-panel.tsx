@@ -1,14 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { WorkerRow } from "@/lib/graphql/worker-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { workerSchema, type Worker } from "@trenova/shared/types/worker";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
+import { workerFormSchema, type Worker } from "@trenova/shared/types/worker";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { WorkerCreatePanel } from "./worker-create-panel";
 import { WorkerEditPanel } from "./worker-edit-panel";
 
 export function WorkerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<WorkerRow>) {
+  const personalDetailsVisible = useProtectedFieldAccess("Personal");
   const form = useForm({
-    resolver: zodResolver(workerSchema),
+    resolver: zodResolver(workerFormSchema(mode !== "edit" || personalDetailsVisible)),
     defaultValues: {
       status: "Active",
       type: "Employee",

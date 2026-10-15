@@ -14,7 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const permissionCachePrefix = "perms:v3"
+const (
+	permissionCachePrefix = "perms:v5"
+	permissionEpochPrefix = "perms:epoch"
+)
 
 type PermissionCacheRepositoryParams struct {
 	fx.In
@@ -48,13 +51,29 @@ func (r *permissionCacheRepository) Get(
 		zap.String("variant", key.Variant),
 	)
 
-	raw, err := r.client.HGet(ctx, r.getPermissionKey(key.UserID, key.OrgID), key.Variant).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, nil //nolint:nilnil // nil is valid for redis.Nil
-		}
-
+	pipe := r.client.Pipeline()
+	entryCmd := pipe.HGet(ctx, r.getPermissionKey(key.UserID, key.OrgID), key.Variant)
+	epochCmd := pipe.Get(ctx, r.getEpochKey(key.OrgID))
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		log.Error("failed to get permissions from cache", zap.Error(err))
+		return nil, err
+	}
+
+	raw, err := entryCmd.Bytes()
+	if errors.Is(err, redis.Nil) {
+		return nil, nil //nolint:nilnil // nil is valid for redis.Nil
+	}
+	if err != nil {
+		log.Error("failed to read cached permissions", zap.Error(err))
+		return nil, err
+	}
+
+	epoch, err := epochCmd.Int64()
+	if errors.Is(err, redis.Nil) {
+		return nil, nil //nolint:nilnil // an organization without an epoch has no trusted entries
+	}
+	if err != nil {
+		log.Error("failed to read the organization's permission epoch", zap.Error(err))
 		return nil, err
 	}
 
@@ -62,6 +81,10 @@ func (r *permissionCacheRepository) Get(
 	if err = sonic.Unmarshal(raw, perms); err != nil {
 		log.Error("failed to decode cached permissions", zap.Error(err))
 		return nil, err
+	}
+
+	if perms.Epoch != epoch {
+		return nil, nil //nolint:nilnil // an entry from an earlier epoch is stale
 	}
 
 	return perms, nil
@@ -113,89 +136,47 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 	return nil
 }
 
-func (r *permissionCacheRepository) InvalidateByRole(
-	ctx context.Context,
-	roleID pulid.ID,
-	roleRepo permissionports.RoleRepository,
-) error {
-	log := r.l.With(
-		zap.String("operation", "InvalidateByRole"),
-		zap.String("roleID", roleID.String()),
-	)
+func (r *permissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+	key := r.getEpochKey(orgID)
 
-	impactedUsers, err := roleRepo.GetUsersWithRole(ctx, roleID)
-	if err != nil {
-		log.Error("failed to get users with role", zap.Error(err))
-		return err
+	epoch, err := r.client.Get(ctx, key).Int64()
+	if err == nil {
+		return epoch, nil
+	}
+	if !errors.Is(err, redis.Nil) {
+		r.l.Error("failed to read permission epoch", zap.String("orgID", orgID.String()), zap.Error(err))
+		return 0, err
 	}
 
-	if len(impactedUsers) == 0 {
-		return nil
+	seed := time.Now().UnixNano()
+	if err = r.client.SetNX(ctx, key, seed, 0).Err(); err != nil {
+		r.l.Error("failed to seed permission epoch", zap.String("orgID", orgID.String()), zap.Error(err))
+		return 0, err
 	}
 
-	keys := make([]string, len(impactedUsers))
-	for i, user := range impactedUsers {
-		keys[i] = r.getPermissionKey(user.UserID, user.OrganizationID)
-	}
-
-	if err = r.client.Del(ctx, keys...).Err(); err != nil {
-		log.Error(
-			"failed to invalidate permission cache for users",
-			zap.Error(err),
-			zap.Int("userCount", len(keys)),
-		)
-		return err
-	}
-
-	log.Debug("invalidated permission cache for users", zap.Int("userCount", len(keys)))
-	return nil
+	return r.client.Get(ctx, key).Int64()
 }
 
 func (r *permissionCacheRepository) InvalidateOrganization(
 	ctx context.Context,
 	orgID pulid.ID,
 ) error {
-	log := r.l.With(
-		zap.String("operation", "InvalidateOrganization"),
-		zap.String("orgID", orgID.String()),
-	)
-
-	pattern := fmt.Sprintf("%s:*:%s", permissionCachePrefix, orgID.String())
-
-	var cursor uint64
-	var keysToDelete []string
-
-	for {
-		keys, nextCursor, err := r.client.Scan(ctx, cursor, pattern, 100).Result()
-		if err != nil {
-			log.Error("failed to scan for organization permission keys", zap.Error(err))
-			return err
-		}
-
-		keysToDelete = append(keysToDelete, keys...)
-		cursor = nextCursor
-
-		if cursor == 0 {
-			break
-		}
-	}
-
-	if len(keysToDelete) == 0 {
-		return nil
-	}
-
-	if err := r.client.Del(ctx, keysToDelete...).Err(); err != nil {
-		log.Error("failed to delete organization permission keys", zap.Error(err))
+	if err := r.client.Incr(ctx, r.getEpochKey(orgID)).Err(); err != nil {
+		r.l.Error(
+			"failed to advance the organization's permission epoch",
+			zap.String("orgID", orgID.String()),
+			zap.Error(err),
+		)
 		return err
 	}
 
-	log.Debug(
-		"invalidated permission cache for organization",
-		zap.Int("keyCount", len(keysToDelete)),
-	)
 	return nil
 }
 
 func (r *permissionCacheRepository) getPermissionKey(userID, orgID pulid.ID) string {
 	return fmt.Sprintf("%s:%s:%s", permissionCachePrefix, userID.String(), orgID.String())
+}
+
+func (r *permissionCacheRepository) getEpochKey(orgID pulid.ID) string {
+	return fmt.Sprintf("%s:%s", permissionEpochPrefix, orgID.String())
 }

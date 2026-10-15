@@ -126,6 +126,41 @@ commits: `roleservice.AssignRole` does this, which is what lets user creation gr
 its roles in the same transaction as the user and leave no "Role assigned" entry when
 a later grant is refused and the whole creation rolls back.
 
+### When access ends
+
+Losing access ends it everywhere it is held, and each step is recorded:
+
+- Deactivating or locking a user, one at a time or in bulk, ends every session they
+  have open. Saving the same deactivation again ends any session a failed first
+  attempt left behind.
+- Revoking a driver's portal access ends the portal user's sessions.
+- An API key never grants more than its creator holds. Creating or editing a key with a
+  resource, operation or scope the person saving it does not hold is refused, and at
+  request time the key's grants are intersected with what its creator holds now: a
+  creator who is demoted narrows their keys, and one who is deactivated, locked or no
+  longer a member of the organization leaves their keys granting nothing.
+- Removing a user from an organization deletes their role assignments there, one
+  critical `Role unassigned` entry each, and ends their sessions bound to it. The
+  user's current organization moves to their default one, and a user cannot be left
+  with no organization at all (deactivate them instead).
+- The `orphaned-organization-access-sweep` schedule (`identity/jobs/accessjobs`, hourly)
+  finds role assignments whose holder has no live membership in that organization (and
+  it is not their current one), revokes them in that organization's own scope with the
+  same entries, attributed to the system actor, and ends the matching sessions. It
+  catches a removal whose revocation failed partway, and grants left behind by an
+  expired membership.
+
+- A session issued by sign-in (`Session.IssuedBySignIn`, set only by
+  `authservice.createSession`) is checked again each time it is touched, at most every
+  five minutes: if the user is no longer a member of the session's organization (and it
+  is not their current one) or can no longer sign in, the session is deleted and the
+  request is refused. This catches whatever a failed revocation above left open. A
+  database error leaves the session alone and checks again on its next request.
+
+Support sessions draw their permissions from the support access grant, not from role
+assignments, and are not issued by sign-in, so none of this touches them; their own
+lifecycle (grant revoked or expired, staff removed) ends them.
+
 ## Trenova support sessions
 
 Trenova Cloud staff enter a customer organization only through a grant its own

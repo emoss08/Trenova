@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentprofilecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentsuggestioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aianalyticscol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
@@ -80,6 +81,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratesimulationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
@@ -157,6 +159,8 @@ var AgentEvaluationSpec TypeSpec
 
 var AgentExceptionSpec TypeSpec
 
+var AgentMatchToolSpec TypeSpec
+
 var AgentMemorySpec TypeSpec
 
 var AgentPlanSpec TypeSpec
@@ -174,6 +178,8 @@ var AgentReflectionSpec TypeSpec
 var AgentRunSpec TypeSpec
 
 var AgentRunEventSpec TypeSpec
+
+var AgentSuggestionSpec TypeSpec
 
 var AgentSuiteRunSpec TypeSpec
 
@@ -3131,6 +3137,10 @@ func init() {
 				FieldMapKey: "accessMode",
 			},
 			{
+				Name:        "unattendedRoleId",
+				FieldMapKey: "unattendedRoleId",
+			},
+			{
 				Name:    "accessRoles",
 				Special: "accessRoles",
 			},
@@ -3561,6 +3571,25 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentMatchToolSpec = TypeSpec{
+		TypeName: "AgentMatchTool",
+		FieldMap: ratesimulationcol.RateSimulationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
 			},
 		},
 	}
@@ -4409,6 +4438,45 @@ func init() {
 			{
 				Name:        "occurredAt",
 				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentSuggestionSpec = TypeSpec{
+		TypeName: "AgentSuggestion",
+		FieldMap: agentsuggestioncol.SuggestionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "suggestedAgentId",
+				FieldMapKey: "suggestedAgentId",
+			},
+			{
+				Name:        "currentAgentId",
+				FieldMapKey: "currentAgentId",
+			},
+			{
+				Name:        "surface",
+				FieldMapKey: "surface",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
 			},
 			{
 				Name:        "createdAt",

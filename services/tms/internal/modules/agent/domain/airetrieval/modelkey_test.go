@@ -34,3 +34,30 @@ func TestModelKeyDimensions(t *testing.T) {
 		})
 	}
 }
+
+func TestModelKeyModel(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]string{
+		"localhost:11434/nomic-embed-text@768":         "nomic-embed-text",
+		"localhost:11434/nomic-embed-text:latest@768":  "nomic-embed-text",
+		"eval.local/nomic-embed-text@768":              "nomic-embed-text",
+		"api.openai.com/text-embedding-3-small@1536":   "text-embedding-3-small",
+		"nomic-embed-text":                             "nomic-embed-text",
+		"api.together.xyz/BAAI/bge-large-en-v1.5@1024": "bge-large-en-v1.5",
+		"": "",
+	}
+	for key, want := range tests {
+		assert.Equal(t, want, ModelKeyModel(key), key)
+	}
+}
+
+func TestSimilarityFloorFollowsTheEmbeddingModel(t *testing.T) {
+	t.Parallel()
+
+	assert.InDelta(t, 0.58, SimilarityFloor("localhost:11434/nomic-embed-text:latest@768"), 1e-9,
+		"nomic scores unrelated text up to about 0.55, so its floor sits above that")
+	assert.InDelta(t, DefaultSimilarityFloor,
+		SimilarityFloor("api.openai.com/text-embedding-3-small@1536"), 1e-9)
+	assert.InDelta(t, DefaultSimilarityFloor, SimilarityFloor(""), 1e-9)
+}

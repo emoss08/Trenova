@@ -111,6 +111,39 @@ func TestEvaluateRetrievalAveragesEveryCase(t *testing.T) {
 	)
 }
 
+func TestEvaluateRetrievalReportsWhatAQueryNothingAnswersFound(t *testing.T) {
+	t.Parallel()
+
+	suite := &agentevalgate.RetrievalSuite{
+		Corpus:  []agentevalgate.RetrievalItem{{Key: "a"}},
+		Cases:   []agentevalgate.RetrievalCase{{Query: "first", Relevant: []string{"a"}}},
+		Nothing: []string{"xyzzy plugh", "penguin sonnet"},
+	}
+	require.NoError(t, suite.Validate())
+	assert.Equal(t, []string{"first", "xyzzy plugh", "penguin sonnet"}, suite.Queries(),
+		"the queries that should find nothing are recorded with the rest")
+
+	report, err := agentevalgate.EvaluateRetrieval(suite, func(query string) ([]string, error) {
+		if query == "penguin sonnet" {
+			return nil, nil
+		}
+		return []string{"a"}, nil
+	})
+	require.NoError(t, err)
+	require.Len(t, report.Spurious, 1)
+	assert.Equal(t, "xyzzy plugh", report.Spurious[0].Case.Query)
+	assert.Equal(t, "- \"xyzzy plugh\" should find nothing, found a\n", report.SpuriousMatches())
+	assert.Len(t, report.Outcomes, 1, "a query that should find nothing is not scored for recall")
+	assert.InDelta(t, 1.0, report.RecallAt5, 1e-9)
+}
+
+func TestRetrievalSuiteRefusesAnEmptyQueryThatShouldFindNothing(t *testing.T) {
+	t.Parallel()
+
+	suite := &agentevalgate.RetrievalSuite{Nothing: []string{"  "}}
+	require.Error(t, suite.Validate())
+}
+
 func TestEvaluateRetrievalReportsARetrieverError(t *testing.T) {
 	t.Parallel()
 

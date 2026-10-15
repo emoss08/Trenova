@@ -107,14 +107,14 @@ func (k *Kit) HybridFinder(fixture *EmbeddingFixture) Finder {
 		return descriptorNames(k.Catalog.FindHybrid(agenttoolcatalog.Query{
 			Text:     request,
 			Limit:    SelectionDepth,
-			Semantic: agenttoolcatalog.NewSemantic(similarity),
+			Semantic: agenttoolcatalog.SemanticFrom(fixture.CatalogSimilarities(similarity)),
 		})), nil
 	}
 }
 
 func GuideKeywordFinder(guide *productguideservice.Service) Finder {
 	return func(request string) ([]string, error) {
-		return guide.RankPaths(request, nil, SelectionDepth), nil
+		return guide.RankPaths(request, agentports.CatalogSimilarities{}, SelectionDepth), nil
 	}
 }
 
@@ -127,7 +127,11 @@ func GuideHybridFinder(guide *productguideservice.Service, fixture *EmbeddingFix
 			return nil, err
 		}
 
-		return guide.RankPaths(request, similarity, SelectionDepth), nil
+		return guide.RankPaths(
+			request,
+			fixture.CatalogSimilarities(similarity),
+			SelectionDepth,
+		), nil
 	}
 }
 

@@ -19,6 +19,7 @@ import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState, PanelHeader, RowSkeleton } from "../security-access/shared";
+import { useSecurityAccess } from "../security-access/use-security-access";
 
 type SCIMTokenPanelProps = {
   organizationId: string;
@@ -32,6 +33,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   onProvisioningChange,
 }: SCIMTokenPanelProps) {
   const t = useT();
+  const canManage = useSecurityAccess().scimDirectories.update;
 
   const [tokenName, setTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState("");
@@ -75,23 +77,25 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
         description={t("Issue bearer tokens for directory synchronization.")}
       />
       <div className="space-y-3">
-        <div className="flex w-full flex-col gap-2 sm:flex-row">
-          <div className="flex w-full flex-row justify-between gap-1 px-2 pt-2">
-            <Input
-              value={tokenName}
-              placeholder={t("Token name")}
-              onChange={(event) => setTokenName(event.target.value)}
-            />
-            <Button
-              size="sm"
-              onClick={() => createToken()}
-              disabled={createDisabled || tokenName.trim() === ""}
-            >
-              <PlusIcon />
-              {t("Create token")}
-            </Button>
+        {canManage ? (
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <div className="flex w-full flex-row justify-between gap-1 px-2 pt-2">
+              <Input
+                value={tokenName}
+                placeholder={t("Token name")}
+                onChange={(event) => setTokenName(event.target.value)}
+              />
+              <Button
+                size="sm"
+                onClick={() => createToken()}
+                disabled={createDisabled || tokenName.trim() === ""}
+              >
+                <PlusIcon />
+                {t("Create token")}
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
         {createdToken && (
           <CopyableSecret
             key={createdToken}
@@ -112,7 +116,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                   <TableHead>{t("Prefix")}</TableHead>
                   <TableHead>{t("Status")}</TableHead>
                   <TableHead>{t("Last used")}</TableHead>
-                  <TableHead className="w-28">{t("Actions")}</TableHead>
+                  {canManage ? <TableHead className="w-28">{t("Actions")}</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,16 +136,18 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                     <TableCell className="text-muted-foreground">
                       {token.lastUsedAt ? formatUnixDateTimeOrDash(token.lastUsedAt) : t("Never")}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={token.status !== "active"}
-                        onClick={() => revokeToken(token.id)}
-                      >
-                        {t("Revoke")}
-                      </Button>
-                    </TableCell>
+                    {canManage ? (
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={token.status !== "active"}
+                          onClick={() => revokeToken(token.id)}
+                        >
+                          {t("Revoke")}
+                        </Button>
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>

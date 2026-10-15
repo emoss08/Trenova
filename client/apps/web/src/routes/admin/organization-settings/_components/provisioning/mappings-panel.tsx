@@ -4,6 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { lazy, memo, useCallback, useState } from "react";
 import { EmptyState, PanelHeader } from "../security-access/shared";
+import { useSecurityAccess } from "../security-access/use-security-access";
 import { SCIMGroupMappingCreatePanel } from "./mapping-panel";
 
 type MappingsPanelControllerProps = {
@@ -57,6 +58,7 @@ const MappingsPanel = memo(function MappingsPanel({
   disabled: boolean;
 }) {
   const t = useT();
+  const canManage = useSecurityAccess().scimDirectories.update;
 
   return (
     <div className="bg-background rounded-lg border">
@@ -65,10 +67,12 @@ const MappingsPanel = memo(function MappingsPanel({
         title={t("Group role mappings")}
         description={t("Resolve external directory groups into application roles.")}
         action={
-          <Button size="sm" onClick={onAdd} disabled={disabled}>
-            <PlusIcon />
-            {t("Add mapping")}
-          </Button>
+          canManage ? (
+            <Button size="sm" onClick={onAdd} disabled={disabled}>
+              <PlusIcon />
+              {t("Add mapping")}
+            </Button>
+          ) : undefined
         }
       />
       <div className="px-2 pb-2">

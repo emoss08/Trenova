@@ -181,6 +181,16 @@ func (f *EmbeddingFixture) Similarities(
 	return similarity, nil
 }
 
+func (f *EmbeddingFixture) CatalogSimilarities(
+	similarity map[string]float64,
+) agentports.CatalogSimilarities {
+	return agentports.CatalogSimilarities{
+		Available: true,
+		ByKey:     similarity,
+		Floor:     airetrieval.SimilarityFloor(f.Model),
+	}
+}
+
 func RecordEmbeddingFixture(
 	ctx context.Context,
 	embed Embed,

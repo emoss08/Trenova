@@ -248,6 +248,9 @@ writes:
   "mutation setAgentAccess":
     exempt: security
     reason: "Decides which people may use which agents."
+  "mutation setAgentUnattendedRole":
+    exempt: security
+    reason: "Decides what an agent may do when no person is present; an agent must not widen its own reach."
   "mutation setRoleAgentAccess":
     exempt: security
     reason: "Decides which roles may use which agents."
@@ -303,6 +306,14 @@ writes:
   "mutation verifyAIAuditChain":
     exempt: agent-administration
     reason: "The AI audit trail is how people check what agents did; an agent must not drive its own audit."
+
+  # agentsuggestion
+  "mutation recordMyAgentSuggestion":
+    exempt: agent-administration
+    reason: "Records an agent the Desk named for a person's question, for AI analytics; an agent recording its own suggestions would be meaningless."
+  "mutation settleMyAgentSuggestion":
+    exempt: agent-administration
+    reason: "Records what a person did with an agent the Desk named, for AI analytics; only the person's own choice means anything."
 
   # aifeedback
   "mutation clearMyAIFeedback":
@@ -1893,6 +1904,9 @@ writes:
   "POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/access-settings":
+    exempt: security
+    reason: "Decides whether people choose the roles they work under; it changes what everyone may do."
   "PUT /api/v1/organizations/:id/iam/access-policies/:policyId":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
@@ -2586,6 +2600,9 @@ writes:
     reason: "A saved view is one person's own columns and filters on a report page."
 
   # role
+  "DELETE /api/v1/roles/:roleID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
   "DELETE /api/v1/roles/:roleID/permissions/:permID":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."

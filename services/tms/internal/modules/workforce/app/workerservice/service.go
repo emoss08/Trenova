@@ -47,6 +47,7 @@ type Params struct {
 	CredentialService         *workercredentialservice.Service           `optional:"true"`
 	DB                        kernelports.DBConnection                   `optional:"true"`
 	Sync                      accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	Fields                    permissionports.FieldAccess                `optional:"true"`
 }
 
 type Service struct {
@@ -64,6 +65,7 @@ type Service struct {
 	employmentRecorder        workerports.EmploymentEventRecorder
 	db                        kernelports.DBConnection
 	sync                      accountingsyncports.AccountingSyncEnqueuer
+	fields                    permissionports.FieldAccess
 }
 
 //nolint:gocritic // dependency injection
@@ -82,6 +84,7 @@ func New(p Params) *Service {
 		validator:                 p.Validator,
 		db:                        p.DB,
 		sync:                      p.Sync,
+		fields:                    p.Fields,
 	}
 }
 
@@ -309,7 +312,6 @@ func (s *Service) Create(
 		Resource:       "workers",
 		Action:         "created",
 		RecordID:       createdEntity.GetID(),
-		Entity:         createdEntity,
 	}); err != nil {
 		log.Warn("failed to publish worker invalidation", zap.Error(err))
 	}
@@ -351,20 +353,23 @@ func (s *Service) update(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
 			BuID:  entity.GetBusinessUnitID(),
 		},
+		IncludeProfile: true,
 	})
 	if err != nil {
 		log.Error("failed to get original worker", zap.Error(err))
 		return nil, err
+	}
+
+	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	if guardEmployment {
@@ -431,7 +436,6 @@ func (s *Service) update(
 		Resource:       permission.ResourceWorker.String(),
 		Action:         "updated",
 		RecordID:       updatedEntity.GetID(),
-		Entity:         updatedEntity,
 	}); err != nil {
 		log.Warn("failed to publish worker invalidation", zap.Error(err))
 	}

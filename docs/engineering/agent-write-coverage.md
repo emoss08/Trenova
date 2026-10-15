@@ -85,11 +85,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 86 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 54 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1153 writes: 637 GraphQL mutations and 516 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1158 writes: 640 GraphQL mutations and 518 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 425 |
-| Exempt | 694 |
-| — Security | 83 |
+| Exempt | 699 |
+| — Security | 86 |
 | — Configuration | 270 |
 | — User preference | 39 |
 | — Infrastructure | 54 |
-| — Agent administration | 101 |
+| — Agent administration | 103 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1153 |
+| Total | 1158 |
 
 Of the 459 writes an agent should be able to make, 425 have a tool (92%).
 
@@ -168,12 +168,13 @@ The writes no tool performs yet, and what the tool would do.
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
-| agentdefinition | 12 | 0 | 12 | 0 |
+| agentdefinition | 13 | 0 | 13 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
 | agentsafety | 1 | 0 | 1 | 0 |
+| agentsuggestion | 2 | 0 | 2 | 0 |
 | aiaudit | 3 | 0 | 3 | 0 |
 | aicontrol | 5 | 0 | 5 | 0 |
 | aifeedback | 2 | 0 | 2 | 0 |
@@ -252,7 +253,7 @@ The writes no tool performs yet, and what the tool would do.
 | hazmatsegregationrule | 3 | 0 | 3 | 0 |
 | holdreason | 3 | 0 | 3 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
-| iam | 14 | 0 | 14 | 0 |
+| iam | 15 | 0 | 15 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 23 | 2 | 13 | 8 |
@@ -297,7 +298,7 @@ The writes no tool performs yet, and what the tool would do.
 | realtime | 7 | 0 | 7 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
-| role | 11 | 0 | 11 | 0 |
+| role | 12 | 0 | 12 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
 | selfservice | 3 | 0 | 3 | 0 |
@@ -451,6 +452,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation draftAgentFromDescription` | Exempt, read-only: Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create. |
 | `mutation keepAgentTestPrompt` | Exempt, agent-administration: Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself. |
 | `mutation setAgentAccess` | Exempt, security: Decides which people may use which agents. |
+| `mutation setAgentUnattendedRole` | Exempt, security: Decides what an agent may do when no person is present; an agent must not widen its own reach. |
 | `mutation setRoleAgentAccess` | Exempt, security: Decides which roles may use which agents. |
 | `mutation tightenAgentInstructions` | Exempt, read-only: Asks a model to shorten an agent's instructions and returns the text; it saves nothing. |
 | `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
@@ -502,6 +504,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation saveAgentToolRule` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+
+### agentsuggestion
+
+| Write | Decision |
+| --- | --- |
+| `mutation recordMyAgentSuggestion` | Exempt, agent-administration: Records an agent the Desk named for a person's question, for AI analytics; an agent recording its own suggestions would be meaningless. |
+| `mutation settleMyAgentSuggestion` | Exempt, agent-administration: Records what a person did with an agent the Desk named, for AI analytics; only the person's own choice means anything. |
 
 ### aiaudit
 
@@ -1451,6 +1460,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/tokens`<br>iamhandler.createSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke`<br>iamhandler.revokeSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/access-policies/:policyId`<br>iamhandler.updateAccessPolicy | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `PUT /api/v1/organizations/:id/iam/access-settings`<br>iamhandler.updateAccessSettings | Exempt, security: Decides whether people choose the roles they work under; it changes what everyone may do. |
 | `PUT /api/v1/organizations/:id/iam/identity-providers/:providerId`<br>iamhandler.updateIdentityProvider | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId`<br>iamhandler.updateSCIMDirectory | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId`<br>iamhandler.updateSCIMGroupRoleMapping | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
@@ -1922,6 +1932,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/roles/:roleID`<br>rolehandler.delete | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `DELETE /api/v1/roles/:roleID/permissions/:permID`<br>rolehandler.deletePermission | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `DELETE /api/v1/roles/assignments/:assignmentID`<br>rolehandler.unassignRole | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `DELETE /api/v1/roles/constraints/:constraintID`<br>rolehandler.deleteConstraint | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |

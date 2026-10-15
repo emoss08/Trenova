@@ -13,7 +13,7 @@ import (
 
 const MaxQueryTextRunes = 2000
 
-const DefaultCatalogSimilarityFloor = 0.5
+const DefaultCatalogSimilarityFloor = airetrieval.DefaultSimilarityFloor
 
 var ErrQueryTextRequired = errors.New("a query vector needs text to embed")
 
@@ -119,6 +119,15 @@ type CatalogSimilarities struct {
 	Available bool
 	Reason    airetrieval.UnavailableReason
 	ByKey     map[string]float64
+	Floor     float64
+}
+
+func (c CatalogSimilarities) FloorOrDefault() float64 {
+	if c.Floor > 0 {
+		return c.Floor
+	}
+
+	return DefaultCatalogSimilarityFloor
 }
 
 type CatalogVectorIndex interface {
