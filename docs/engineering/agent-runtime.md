@@ -1074,8 +1074,9 @@ same parts:
 
 No model is asked: the match costs one embedding at most and works the same on a
 self-hosted install with a small model. The browser asks once typing pauses
-(`use-agent-recommendation.ts`) and names a better fit in one line at the top of the
-box (the composer's `notice`), with Switch and a cross that keeps the agent chosen. Until the
+(`use-agent-recommendation.ts`) and names a better fit in a small note floating just
+above the box, where the terms reminder sits, with Switch and a cross that keeps the
+agent chosen. Until the
 person chooses, from the picker or from that offer, a question sent goes to the
 better fit; one sent before its match came back waits at most 1.5 seconds for it
 and otherwise goes to the agent already chosen (`agentToAsk` in

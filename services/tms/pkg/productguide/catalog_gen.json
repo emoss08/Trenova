@@ -1,5 +1,5 @@
 {
-  "version": "sha256:3481b37611cbcae60b7e3721f4eac4f7134691cd63233adf19cab0cbfae6eacf",
+  "version": "sha256:01681548d3086b55dda52f0325546a1cfc54a04c8f0c3facd3e715cc61373ebb",
   "modules": [
     {
       "id": "home",
@@ -8802,7 +8802,7 @@
             "Open [Desk](/desk).",
             "The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.",
             "Type your question and send it, or press Tab to use the starter question on screen.",
-            "When another of your agents has the tools your question needs, a line at the top of the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.",
+            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.",
             "Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it."
           ]
         },

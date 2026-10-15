@@ -4729,7 +4729,27 @@
   font: 11px var(--dk-plex);
   color: var(--dsk-subtle);
 }
-/* the agent that holds the tools a question needs, at the top of the composer */
+/* the agent that holds the tools a question needs, floating just above the composer */
+.dk-arec-w {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.dk-arec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 5px 5px 5px 7px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  animation: dk-rise 360ms var(--dk-spring) both;
+}
 .dk-arec .dk-at {
   flex: none;
 }
@@ -4743,11 +4763,16 @@
   font-weight: 600;
   color: var(--dsk-fg);
 }
-.dk-arec .dk-ec-sp {
-  flex: 1;
-}
 .dk-arec > button {
   flex: none;
+}
+.dk-arec > button:first-of-type {
+  margin-left: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-arec {
+    animation: none;
+  }
 }
 /* cards */
 .dk-ec-card {

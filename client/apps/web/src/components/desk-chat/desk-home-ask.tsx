@@ -50,7 +50,7 @@ export type DeskHomeAskOptions = {
  *
  * As the question is typed it is matched to the person's agents by the tools
  * each holds that the person may use, and an agent that fits better than the
- * one chosen is offered at the top of the box. Until the person chooses, from the
+ * one chosen is offered just above the box. Until the person chooses, from the
  * picker or from that offer, a question sent goes to the agent that fits it,
  * waiting a moment for the match when it was sent before one came back. One
  * of the chosen agent's own starter questions always goes to that agent.
@@ -190,6 +190,14 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
   return (
     <>
       <DeskTermsNote />
+      {ask.offered && askable.agent && (
+        <DeskAgentRecommendation
+          recommendation={ask.offered}
+          agent={askable.agent}
+          onUse={ask.acceptRecommendation}
+          onKeep={ask.keepAgent}
+        />
+      )}
       <DeskComposer
         home
         value={ask.draft}
@@ -230,16 +238,6 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
         onSend={(content, payload) => {
           void ask.send(content, payload.mentions);
         }}
-        notice={
-          ask.offered && askable.agent ? (
-            <DeskAgentRecommendation
-              recommendation={ask.offered}
-              agent={askable.agent}
-              onUse={ask.acceptRecommendation}
-              onKeep={ask.keepAgent}
-            />
-          ) : undefined
-        }
       />
     </>
   );
