@@ -12079,3 +12079,416 @@ button.dk-inv-stub:hover {
     width: 88px;
   }
 }
+
+/* an EDI connection drafted from a partner's guide: each setting with the page it came from */
+.dk-ecd {
+  container: dkecd / inline-size;
+}
+.dk-ecd-aside {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-aside.dk-warn {
+  color: var(--dsk-warn-fg);
+  font-weight: 500;
+}
+.dk-ecd-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-vs {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ecd-v,
+.dk-ecd-map {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto 34px 64px;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  font-size: 12.5px;
+}
+.dk-ecd-map {
+  grid-template-columns: 88px 72px minmax(0, 1fr) auto 34px 64px;
+}
+.dk-ecd-map > code {
+  overflow: hidden;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ecd-vl {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ecd-vv {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+.dk-ecd-vv > b {
+  overflow: hidden;
+  max-width: 100%;
+  font-weight: 400;
+  color: var(--dsk-fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ecd-vv > em {
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-ecd-vv > s,
+.dk-ecd-prof-n s {
+  overflow: hidden;
+  max-width: 40%;
+  color: var(--dsk-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ecd-vn {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-v.dk-warn .dk-ecd-vn,
+.dk-ecd-v.dk-warn .dk-ecd-vl {
+  color: var(--dsk-warn-fg);
+}
+.dk-ecd-v.dk-bad .dk-ecd-vn,
+.dk-ecd-v.dk-bad .dk-ecd-vl {
+  color: var(--dsk-fg);
+  font-weight: 500;
+}
+.dk-ecd-chg {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  white-space: nowrap;
+}
+.dk-ecd-chg.dk-change {
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+}
+.dk-ecd-sure {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--dsk-sunken);
+  overflow: hidden;
+}
+.dk-ecd-sure > i {
+  display: block;
+  height: 100%;
+  background: var(--dsk-fg2);
+}
+.dk-ecd-v.dk-warn .dk-ecd-sure > i,
+.dk-ecd-opt .dk-ecd-sure > i {
+  background: var(--dsk-warn);
+}
+.dk-ecd-sure.dk-none {
+  background: none;
+}
+/* the page a value came from, as a tab in the margin */
+.dk-ecd-src {
+  justify-self: end;
+  min-width: 48px;
+  padding: 2px 7px;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  text-align: center;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+  white-space: nowrap;
+}
+.dk-ecd-src.dk-quoted {
+  cursor: help;
+  color: var(--dsk-fg);
+}
+.dk-ecd-src.dk-quoted:hover {
+  background: var(--dsk-hover);
+}
+.dk-ecd-src.dk-person {
+  color: var(--dsk-fg);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-ecd-src.dk-default,
+.dk-ecd-src.dk-agent {
+  background: none;
+  color: var(--dsk-faint);
+}
+i.dk-ecd-src {
+  height: 18px;
+}
+/* a value held back for the person: why, then each reading with its page */
+.dk-ecd-ask {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dsk-warn-sub);
+}
+.dk-ecd-ask-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: 12.5px;
+  color: var(--dsk-warn-fg);
+}
+.dk-ecd-ask-h > b {
+  font-weight: 500;
+}
+.dk-ecd-ask-h > span {
+  font-size: 12px;
+}
+.dk-ecd-ask > .dk-ecd-vn {
+  display: block;
+  margin-top: 6px;
+}
+.dk-ecd-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.dk-ecd-opt {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 34px 64px;
+  align-items: center;
+  gap: 10px;
+}
+.dk-ecd-opt > .dk-ecd-vn {
+  flex-basis: auto;
+}
+/* the credentials a person enters; none read from the guide */
+.dk-ecd-keys {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ecd-keys > li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-ecd-keys > li.dk-req {
+  color: var(--dsk-fg);
+}
+.dk-ecd-keys em {
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-keys > li.dk-req em {
+  color: var(--dsk-warn-fg);
+}
+/* a document type: its set as a stamp, its template and what the guide asks of it */
+.dk-ecd-prof {
+  margin-bottom: 12px;
+  padding: 10px 12px 2px;
+  border-radius: 8px;
+  border: 1px solid var(--dsk-b-sub);
+}
+.dk-ecd-prof-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dk-ecd-set {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  color: var(--dsk-fg);
+  background: color-mix(in oklch, var(--dsk-fg) 8%, var(--dsk-card));
+}
+.dk-ecd-set > b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dk-ecd-set > i {
+  font-size: 10.5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-prof-n {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-ecd-prof-n > b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ecd-prof-n > span {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-prof-m {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 8px 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-prof-m > .dk-warn {
+  color: var(--dsk-warn-fg);
+  font-weight: 500;
+}
+.dk-ecd-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.dk-ecd-reqs > li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 64px;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-ecd-reqs code {
+  font-family: var(--dk-plex);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.dk-ecd-reqs em {
+  display: block;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.dk-ecd-ctl > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--dsk-sunken);
+}
+.dk-ecd-ctl em,
+.dk-ecd-ctl i {
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-ecd-ctl b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-weight: 400;
+}
+.dk-ecd-ctl > span.dk-warn {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-ecd-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.dk-ecd-codes > code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  background: var(--dsk-card);
+}
+.dk-ecd-kept {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.dk-ecd-kept > li {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12px;
+}
+.dk-ecd-kept span {
+  color: var(--dsk-subtle);
+}
+.dk-ecd-kept b {
+  font-weight: 400;
+}
+@container dkecd (max-width: 520px) {
+  .dk-ecd-v {
+    grid-template-columns: 88px minmax(0, 1fr) 56px;
+  }
+  .dk-ecd-v > .dk-ecd-chg,
+  .dk-ecd-v > .dk-ecd-sure,
+  .dk-ecd-map > .dk-ecd-sure,
+  .dk-ecd-map > .dk-ecd-chg {
+    display: none;
+  }
+  .dk-ecd-map {
+    grid-template-columns: 72px minmax(0, 1fr) 56px;
+  }
+  .dk-ecd-map > .dk-ecd-vl {
+    display: none;
+  }
+  .dk-ecd-opt {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) 56px;
+  }
+  .dk-ecd-opt > .dk-ecd-sure {
+    display: none;
+  }
+}

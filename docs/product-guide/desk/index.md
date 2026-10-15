@@ -318,6 +318,15 @@ Keywords: rate confirmation, extract document, scanned load, read fields, create
 3. Select **Fix fields** to ask the agent to check the doubtful fields against the document again.
 4. Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead.
 
+### Set up an EDI partner from its implementation guide
+Keywords: EDI spec, implementation guide, companion guide, onboard trading partner, EDI setup from PDF, revised guide
+1. In a conversation with an agent that handles EDI, select **Attach files** and upload the partner's implementation guide (a PDF, a Word document or its sample X12 as text), then ask the agent to set up the connection from it.
+2. The workspace shows the drafted connection: the trading partner, the interchange identifiers, the communication profile, each document type with its template, the code mappings, the guide's samples and the gaps in the guide. Every value names the page it was read from; point at the page to read the guide's own words. For a partner you already have, only what the guide changes is marked.
+3. Under **To decide**, pick one of the guide's readings for each value the agent held back, or tell the agent the answer. The agent drafts the connection again with it.
+4. Check **Would not save**, the rules each template does not meet and the **Gaps in the guide**.
+5. Once it shows **Ready to approve**, select **Propose saving it**. Saving waits for your approval like any other change, and the item shows **Waiting on your approval**, then **Saved**.
+6. Enter the passwords, keys and certificates listed under **Credentials you enter** on the partner's communication profile, then turn the profile on. They are never taken from the guide.
+
 ### Approve billing items from a Desk table
 Keywords: billing queue, approve invoices, bulk approve, ready to bill, invoice review, assign biller
 1. Ask an agent for your billing queue. The table shows each item's current status, and it stays up to date as the queue changes.
