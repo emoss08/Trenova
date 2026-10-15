@@ -84212,6 +84212,15 @@
       "routes/service-failure"
     ]
   },
+  "EDI partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "EDI partner does not have an active internal EDI connection": {
     "sites": 1,
     "scope": [

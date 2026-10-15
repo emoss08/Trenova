@@ -9044,6 +9044,7 @@
   "EDI monitoring is not configured": "La supervisión de EDI no está configurada",
   "EDI needs attention": "EDI requiere atención",
   "EDI overrides": "Anulaciones de EDI",
+  "EDI partner": "Socio EDI",
   "EDI partner does not have an active internal EDI connection": "El socio EDI no tiene una conexión EDI interna activa",
   "EDI partner does not have an active internal communication profile": "El socio EDI no tiene un perfil de comunicación interno activo",
   "EDI partner has no active SFTP or VAN communication profile for delivery": "El socio EDI no tiene ningún perfil de comunicación SFTP o VAN activo para la entrega",

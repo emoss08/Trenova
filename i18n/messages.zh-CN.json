@@ -9044,6 +9044,7 @@
   "EDI monitoring is not configured": "尚未配置 EDI 监控",
   "EDI needs attention": "EDI 待处理",
   "EDI overrides": "EDI 覆盖",
+  "EDI partner": "EDI 合作伙伴",
   "EDI partner does not have an active internal EDI connection": "此 EDI 合作伙伴没有有效的内部 EDI 连接",
   "EDI partner does not have an active internal communication profile": "此 EDI 合作伙伴没有有效的内部通信配置文件",
   "EDI partner has no active SFTP or VAN communication profile for delivery": "此 EDI 合作伙伴没有可供发送的有效 SFTP 或 VAN 通信配置文件",
