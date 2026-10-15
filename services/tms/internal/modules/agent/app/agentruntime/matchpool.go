@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -185,7 +186,8 @@ func (s *Service) mayEmbedMatch(ctx context.Context, actor *permissionports.Requ
 	}
 
 	decisions, err := s.rateLimits.Check(ctx, []kernelports.RateLimitRequest{{
-		Key: "{" + actor.OrganizationID.String() + "}:agent-match:" + actor.UserID.String(),
+		Key: "{" + actor.OrganizationID.String() + "}:" + agentports.AgentMatchRateScope + ":" +
+			actor.UserID.String(),
 		Policy: kernelports.RateLimitPolicy{
 			Rate:   matchEmbedRate,
 			Period: matchEmbedPeriod,

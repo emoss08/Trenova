@@ -45,14 +45,9 @@ export const SuggestionsCard = memo(function SuggestionsCard({
       right={
         <span className="an-sgf">
           {rt(
-            "<b>{0}</b> suggested",
+            "<b>{0}</b> suggested · <b>{1}</b> taken",
             { b: (chunk) => <b className="mono">{chunk}</b> },
             formatNumber(suggestions.suggested),
-          )}
-          <span aria-hidden> · </span>
-          {rt(
-            "<b>{0}</b> taken",
-            { b: (chunk) => <b className="mono">{chunk}</b> },
             percent(suggestions.takenRate),
           )}
         </span>

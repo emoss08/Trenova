@@ -2597,6 +2597,15 @@
       "routes/inbox"
     ]
   },
+  "<b>{0}</b> <u>has the tools for this</u>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": {
     "sites": 1,
     "scope": [
@@ -2687,15 +2696,6 @@
       "routes/agent-control"
     ]
   },
-  "<b>{0}</b> has the tools for this": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "<b>{0}</b> is better on {1} of {2}": {
     "sites": 1,
     "scope": [
@@ -2760,6 +2760,15 @@
     ]
   },
   "<b>{0}</b> starts answering in {1}; <b>{2}</b> in {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> suggested · <b>{1}</b> taken": {
     "sites": 1,
     "scope": [
       "ts"
@@ -7985,6 +7994,15 @@
       "go/other"
     ]
   },
+  "A question can name at most {0} kinds of record.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A radius belongs on a rate rule rather than in a zone": {
     "sites": 1,
     "scope": [
@@ -10087,6 +10105,24 @@
     ]
   },
   "A suggested memory is approved or dismissed, not retired or restored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A suggestion is settled by switching, sending to it, keeping your agent or passing it over": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A suggestion starts out shown, or moved to without asking": {
     "sites": 1,
     "scope": [
       "go"
@@ -17662,11 +17698,12 @@
     ]
   },
   "Add tools": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -19878,12 +19915,13 @@
     ]
   },
   "Agent suggestions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/agent-control"
     ]
   },
   "Agent trust loader is not configured": {
@@ -23382,6 +23420,15 @@
     ]
   },
   "An agent definition id or system key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agent is suggested in place of another one": {
     "sites": 1,
     "scope": [
       "go"
@@ -33220,6 +33267,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Auto switch agent for tasks": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Auto, from your username": {
     "sites": 1,
     "scope": [
@@ -40419,7 +40475,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 140,
+    "sites": 141,
     "scope": [
       "go"
     ],
@@ -76431,7 +76487,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -103022,7 +103078,7 @@
     ]
   },
   "Finding the agent with the tools for this…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -111249,11 +111305,12 @@
     ]
   },
   "Hand off": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -111530,11 +111587,12 @@
     ]
   },
   "Handing off…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -115321,6 +115379,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How often people took the agent Desk named for a question, by the agent named.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How often the driver has run freight for this customer in the last year.": {
@@ -121201,7 +121268,7 @@
     ]
   },
   "Invalid identifier": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -126976,6 +127043,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Kept their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Kept with the delegation so an approval made under it can be explained.": {
@@ -144904,6 +144980,15 @@
       "go/other"
     ]
   },
+  "Move a question to the agent with the tools for it without asking. A new question starts with that agent; a conversation is handed off to it with its summary and pinned facts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Move a run's shipments into the billing queue, batch by batch": {
     "sites": 1,
     "scope": [
@@ -145366,6 +145451,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Moved without asking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Movement": {
@@ -146667,6 +146761,15 @@
     ]
   },
   "Name the step and say what ticks it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Name the suggestion to settle": {
     "sites": 1,
     "scope": [
       "go"
@@ -158008,6 +158111,24 @@
       "routes/carrier-monitoring"
     ]
   },
+  "None of your agents has the tools for this.": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "None of your agents has the tools for this. An administrator can add them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "None on": {
     "sites": 1,
     "scope": [
@@ -164002,7 +164123,7 @@
     ]
   },
   "Off": {
-    "sites": 31,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -164757,7 +164878,7 @@
     ]
   },
   "On": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -166715,6 +166836,15 @@
       "go/other"
     ]
   },
+  "Only a person's own suggestions are recorded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a person's profile names the person": {
     "sites": 1,
     "scope": [
@@ -168286,6 +168416,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Only suggest": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Only suggested or matched invoices can be accepted without a variance; use accept-with-variance instead": {
@@ -172575,7 +172714,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 139,
+    "sites": 140,
     "scope": [
       "go"
     ],
@@ -173872,7 +174011,7 @@
     ]
   },
   "Outcome is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -177547,6 +177686,15 @@
     ],
     "areas": [
       "packages/shared/types",
+      "routes/agent-control"
+    ]
+  },
+  "Passed over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -191927,6 +192075,15 @@
       "apps/dash/routes"
     ]
   },
+  "Questions go to this agent even when another has the tools; Desk still says which. You can switch per message.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Questions outside its work go to these agents": {
     "sites": 1,
     "scope": [
@@ -203532,6 +203689,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Removed agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Removed from favorites": {
@@ -225479,6 +225645,15 @@
       "go/other"
     ]
   },
+  "Sent to it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Sent to some recipients": {
     "sites": 1,
     "scope": [
@@ -241201,6 +241376,15 @@
       "go/other"
     ]
   },
+  "Surface is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Surface must be Desk, Assistant or Palette": {
     "sites": 1,
     "scope": [
@@ -241396,6 +241580,15 @@
       "apps/web/components"
     ]
   },
+  "Switch on send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Switch organization": {
     "sites": 2,
     "scope": [
@@ -241412,6 +241605,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Switched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Switched to monitoring the existing workflow run.": {
@@ -246739,6 +246941,24 @@
       "routes/agent-control"
     ]
   },
+  "The agent suggested is not one of this organization's agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The agent suggested is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The agent that raised this plan no longer exists, so the plan cannot be decided": {
     "sites": 1,
     "scope": [
@@ -246764,6 +246984,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "The agent the question would have gone to is not one of this organization's agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The agent was told, and reads them again before relying on them.": {
@@ -279985,7 +280214,7 @@
     ]
   },
   "User is required": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -288996,6 +289225,24 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "When another agent fits better": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it when you send, unless you picked an agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.": {
     "sites": 1,
     "scope": [
@@ -289765,6 +290012,15 @@
       "routes/fuel-purchase",
       "routes/osha",
       "routes/worker"
+    ]
+  },
+  "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Where a shipment is and what is holding it up": {
@@ -292439,6 +292695,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Why {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Why?": {
@@ -314853,7 +315118,7 @@
     ]
   },
   "{0} has the tools for this": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -314949,6 +315214,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} holds none of these.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} hours": {
@@ -320196,6 +320470,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} switched, {1} sent to it, {2} moved without asking, {3} kept their own agent, {4} passed it over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} tabs": {

@@ -59,6 +59,7 @@ type deps struct {
 	Committer        agentports.ApprovalCommitter
 	Documents        *documentservice.Service
 	Contents         documentports.DocumentContentService
+	Recommender      agentports.AgentRecommender
 }
 
 type Bench struct {
@@ -133,6 +134,9 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		}),
 		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
 			return untrusted{AgentTrustService: inner}
+		}),
+		fx.Decorate(func(inner kernelports.RateLimitStore) kernelports.RateLimitStore {
+			return unthrottledMatches{RateLimitStore: inner}
 		}),
 		fx.Decorate(func(inner kernelports.WorkflowStarter) kernelports.WorkflowStarter {
 			bench.watcher = NewTurnWatcher(inner)

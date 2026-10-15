@@ -165,7 +165,6 @@
   "Hand this message to one of your agents in Desk": "将此邮件交给您在 Desk 中的某个智能体",
   "Handed over": "已移交",
   "Handed to {0} · {1, plural, one {they'll see it first thing} other {they'll see them first thing}}": "已移交给 {0} · {1, plural, other {对方一上班就会看到}}",
-  "Handing off…": "正在移交…",
   "Handled by {0}": "由 {0} 处理",
   "Handled, with a note": "已处理，附有备注",
   "Has it now": "已接手",

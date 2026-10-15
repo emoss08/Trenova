@@ -213,7 +213,7 @@ func init() {
 	findingsCmd.Flags().StringVar(&flags.area, "area", "", "only findings whose area contains this")
 	findingsCmd.Flags().StringVar(&flags.format, "format", formatMarkdown, "md, csv or json")
 
-	DeskCmd.AddCommand(askCmd, runCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd)
+	DeskCmd.AddCommand(askCmd, runCmd, routeCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd)
 }
 
 func runAsk(cmd *cobra.Command, args []string) error {

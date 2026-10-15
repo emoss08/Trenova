@@ -28,7 +28,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
                              fell-to-next, 64-bucket first-token histogram
  ai_analytics_refresh_state ── how far each tenant is folded in
                                      │
-                    AnalyticsService.Analytics (16 reads, heaviest first, 4 at a time)
+                    AnalyticsService.Analytics (17 reads, heaviest first, 4 at a time)
                                      ▼
           Redis (tenant epoch + scope, 2 min) ─▶ agentAnalytics GraphQL ─▶ Analytics tab
 ```
@@ -95,7 +95,8 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 5. Gives every new model name its canonical key (`aianalytics.CanonicalModel`), so
    `meta-llama/Llama-3.3-70B-Instruct` and `llama-3.3-70b-versatile` are one model. The key is
    applied to units, hours and tool rows.
-6. Prunes everything older than 90 days, at most once an hour (the first refresh of each hour).
+6. Prunes everything older than 90 days, at most once an hour (the first refresh of each hour),
+   the Desk's agent suggestions (`agent_suggestions`) with it.
 7. Bumps the tenant's cache epoch when it wrote anything, including when a later step of the
    same cycle failed, so rows already saved never hide behind a cached answer.
 
@@ -189,6 +190,18 @@ from the same tool rows, so the sheet reads two queries and the provider list, n
 deployment table. The examples query picks the newest candidate units from the tool rollup first
 and reads their steps only, rather than scanning every step in the window.
 
+**Agent suggestions.** `suggestions` counts what became of the agents the Desk named for
+people's questions (see "Matching a question to an agent" in
+[agent-runtime.md](agent-runtime.md)), by the agent named, read straight from
+`agent_suggestions` as the ratings are read from `ai_feedback`: switched to, sent to,
+moved to without asking, kept the person's own agent, and passed over. A suggestion still
+on screen for under half an hour (`aianalytics.SuggestionSettleSeconds`) is not counted
+yet; one left longer counts as passed over. The taken rate is switched, sent to and moved
+to over all of them. The section is absent when the view is narrowed to a task, since a
+suggestion has none, or when nothing was suggested; narrowed to an agent it counts that
+agent's. A new suggestion is visible once the two-minute cache entry lapses: recording one
+does not bump the epoch.
+
 ## Cache
 
 `AnalyticsCache` keys an answer by:
@@ -244,8 +257,8 @@ up to two minutes old.
 ## Testing it
 
 - `aianalyticsservice` tests build `readings` by hand and assert the assembled view: grouping,
-  "few", the narrative, task fit, provider health, the cache epoch, alarms, short names and the
-  same-model pair.
+  "few", the narrative, task fit, provider health, the cache epoch, alarms, short names, the
+  same-model pair and the agent suggestions.
 - `aianalytics` tests cover bucket starts across a clock change and in a half-hour zone.
 - `aianalyticsrepository/refresh_integration_test.go` (`-tags integration`) refreshes real rows into
   a container database.

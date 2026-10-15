@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const AgentMatchRateScope = "agent-match"
+
 const (
 	MaxAgentRecommendationTextRunes = 4000
 	MaxAgentRecommendationTools     = 3

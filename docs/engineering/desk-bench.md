@@ -85,6 +85,7 @@ trenova desk run --tag dispatch --name late --parallel 2
 trenova desk agents                                             # names --agent takes
 trenova desk providers                                          # names --provider takes
 trenova desk findings --status all --format csv                 # export what runs have found
+trenova desk route                                              # score where questions would go
 task desk-ask -- "how many loads did we deliver this week"
 task desk-bench -- --repeat 3
 ```
@@ -278,6 +279,44 @@ two scenarios touch the same rows.
    files: what the model was offered is what it chose from.
 4. Fix it, then run the scenario again with `--repeat`, and the whole set before keeping the
    change: a prompt edit that fixes one question can break another, and the comparison says so.
+
+## Routing
+
+`trenova desk route` (`task desk-route`) scores where questions would go before they are
+asked: it asks the Desk's agent matcher (`MatchAgent`, the `myAgentMatch` query) each
+labelled question in `deskbench/routing/*.yaml`, from the agent it names, as the bench user.
+No turn runs and nothing is written, so it is quick to run after changing a tool's
+description, search terms or an agent's tools.
+
+```yaml
+cases:
+  - name: billing-ar-aging-from-dispatch
+    from: DispatchAssistant              # the agent the question would go to now
+    ask: "whats the ar aging look like for acme rn"
+    expect: Receivables                  # an agent, by template, name or id; | for alternatives
+  - name: billing-send-it-about-an-invoice
+    from: DispatchAssistant
+    ask: "send it to them again please"
+    about: [invoice]                     # the kinds of record it names or is asked from
+    expect: BillingAssistant|Receivables
+  - name: dispatch-hold-stays
+    from: DispatchAssistant
+    ask: "put the walmart load on hold"
+    expect: current                      # the agent asked from holds the tools
+```
+
+`expect` also takes `none` (tools match but none of the person's agents holds them) and
+`nothing` (no tool matches). A case expecting an agent passes when that agent is suggested,
+or when it is the agent asked from and is kept. Name agents by template, as the cases do,
+so a reseed keeps them; `TestShippedRoutingCases_NameAgentsByTheirTemplates` refuses one
+that is not.
+
+Each run writes `routing.md` (the score, the cases that changed since the previous routing
+run, and every case's expected and actual answer with the tools that matched) and
+`routing.json` to `.deskbench/runs/<time>-route/`, and exits non-zero when a question goes
+the wrong way. `--compare` takes a run directory or a `routing.json`, `''` for none. The bench
+lifts the per-person limit on matching embeddings for its own matches only, so a long run is
+ranked as a person's first question is, by keyword and embedding together.
 
 ## Findings
 

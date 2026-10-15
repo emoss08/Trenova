@@ -123,6 +123,12 @@ tasks:
     cmds:
       - "{{.CLI_PATH}} desk run {{.CLI_ARGS}}"
 
+  desk-route:
+    desc: Score how well the questions under deskbench/routing are matched to their agent
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk route {{.CLI_ARGS}}"
+
   clean:
     desc: Remove build artifacts
     cmds:

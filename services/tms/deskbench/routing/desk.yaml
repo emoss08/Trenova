@@ -1,0 +1,123 @@
+# Where a question should go, asked from the agent it would go to now. Agents are named by
+# template, so a reseed keeps them. `expect` is an agent (alternatives with |), `current`
+# (the agent asked from holds the tools), `none` (tools match but no agent the person may use
+# holds them) or `nothing` (no tool matches). `about` lists the kinds of record the question
+# names or is asked from. Written the way people ask; see docs/engineering/desk-bench.md.
+cases:
+  - name: billing-ar-aging-from-dispatch
+    from: DispatchAssistant
+    ask: "whats the ar aging look like for acme rn"
+    expect: Receivables
+  - name: billing-apply-payment-from-dispatch
+    from: DispatchAssistant
+    ask: "apply the 12k check from walmart to their open invoices"
+    expect: Receivables
+  - name: billing-invoice-run-from-dispatch
+    from: DispatchAssistant
+    ask: "build an invoice run for everything that delivered yesterday"
+    expect: BillingAssistant
+  - name: billing-detention-from-dispatch
+    from: DispatchAssistant
+    ask: "approve the detention on S-1042, they sat 4 hrs at the dock"
+    expect: BillingAssistant
+  - name: billing-send-it-about-an-invoice
+    from: DispatchAssistant
+    ask: "send it to them again please"
+    about: [invoice]
+    expect: BillingAssistant|Receivables
+  - name: compliance-medical-card-from-billing
+    from: BillingAssistant
+    ask: "when does tony's medical card expire"
+    expect: ComplianceAssistant|DispatchAssistant
+  - name: compliance-random-drug-test-from-dispatch
+    from: DispatchAssistant
+    ask: "schedule a random dot drug test for driver 104"
+    expect: ComplianceAssistant
+  - name: compliance-vet-carrier-from-billing
+    from: BillingAssistant
+    ask: "vet this new carrier before we give them the load, mc 123456"
+    expect: ComplianceAssistant
+  - name: fuel-purchase-from-dispatch
+    from: DispatchAssistant
+    ask: "record the fuel purchase off the pilot receipt for truck 210"
+    expect: FuelTaxClerk
+  - name: fuel-ifta-return-from-billing
+    from: BillingAssistant
+    ask: "generate the q3 ifta return"
+    expect: FuelTaxClerk
+  - name: report-dashboard-from-dispatch
+    from: DispatchAssistant
+    ask: "build me a dashboard of on time delivery by customer"
+    expect: ReportAnalyst
+  - name: report-schedule-from-billing
+    from: BillingAssistant
+    ask: "schedule the weekly revenue report to go out every monday"
+    expect: ReportAnalyst
+  - name: settlements-approve-from-billing
+    from: BillingAssistant
+    ask: "approve this weeks driver settlements"
+    expect: SettlementsClerk
+  - name: settlements-pay-advance-from-dispatch
+    from: DispatchAssistant
+    ask: "issue a 200 dollar pay advance to mike"
+    expect: SettlementsClerk
+  - name: workforce-pto-from-dispatch
+    from: DispatchAssistant
+    ask: "approve marias pto request for next friday"
+    expect: WorkforceCoordinator
+  - name: workforce-injury-from-compliance
+    from: ComplianceAssistant
+    ask: "log the injury luis reported at the yard this morning"
+    expect: WorkforceCoordinator
+  - name: master-data-new-trailer-from-dispatch
+    from: DispatchAssistant
+    ask: "add trailer 5310, its a 53ft dry van"
+    expect: MasterDataSteward
+  - name: master-data-new-customer-from-dispatch
+    from: DispatchAssistant
+    ask: "set up acme foods as a new customer with their billing address"
+    expect: MasterDataSteward|CustomerAssistant
+  - name: intake-reply-from-billing
+    from: BillingAssistant
+    ask: "reply to the inbound email from red river about the pod"
+    expect: IntakeDesk
+  - name: customer-eta-email-from-billing
+    from: BillingAssistant
+    ask: "email the customer an eta update on the dallas load"
+    expect: CustomerAssistant
+  - name: customer-order-from-dispatch
+    from: DispatchAssistant
+    ask: "create an order for acme that covers the three dallas loads"
+    expect: CustomerAssistant
+  - name: dispatch-tender-from-billing
+    from: BillingAssistant
+    ask: "tender the houston load to a carrier"
+    expect: DispatchAssistant
+  - name: dispatch-assign-driver-from-billing
+    from: BillingAssistant
+    ask: "put driver 104 on the dallas load"
+    expect: DispatchAssistant
+  - name: dispatch-hold-stays
+    from: DispatchAssistant
+    ask: "put the walmart load on hold, receiver closed"
+    expect: current
+  - name: billing-send-invoice-stays
+    from: BillingAssistant
+    ask: "send invoice 1042 to the customer"
+    expect: current
+  - name: receivables-worklist-stays
+    from: Receivables
+    ask: "show me the collections worklist"
+    expect: current
+  - name: fuel-cards-stay
+    from: FuelTaxClerk
+    ask: "which fuel cards are assigned to truck 210"
+    expect: current
+  - name: small-talk-matches-nothing
+    from: DispatchAssistant
+    ask: "good morning team, hope the weekend went well"
+    expect: nothing
+  - name: outside-every-agent
+    from: DispatchAssistant
+    ask: "search the web for diesel prices in texas this week"
+    expect: none|nothing

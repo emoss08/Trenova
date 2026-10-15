@@ -1049,11 +1049,23 @@ before changing it.**
 
 ### Matching a question to an agent
 
-Before a conversation exists, the Desk's front page and the assistant's home ask
-`myAgentRecommendation` which of the person's agents a question is best put to
-(`agentruntime.RecommendAgent`, the `AgentRecommender` port). It is the find_tools
-hand-off asked before the first turn instead of during it, and it is built from the
-same parts:
+Before a question is asked, the Desk asks `myAgentMatch` how well the person's agents fit
+it (`agentruntime.MatchAgent`, the `AgentRecommender` port): the front page and the
+assistant's home for a new question, and an open conversation for the reply being
+written. It is the find_tools hand-off asked before the turn instead of during it, and it
+is built from the same parts. The answer is one of four outcomes:
+
+| Outcome | When |
+|---|---|
+| `BetterAgent` | Another agent the person may use holds a best match and the agent the question would go to does not |
+| `CurrentAgent` | The agent the question would go to holds a best match, itself or through an agent on its delegate allowlist |
+| `NoAgent` | Tools match the question, but none of the eight best is one the person's agents hold and may use |
+| `NoMatch` | No tool matches, or the person is not one who can be matched |
+
+Each but `NoMatch` names, best first, at most three tools: the agent's matched tools, or
+for `NoAgent` the tools that would answer it, with the first sentence of each description.
+`myAgentRecommendation`, the query this replaced, is deprecated and answered from the
+match, so a tab still on the previous release keeps working.
 
 - **Who is eligible.** `OtherUsableAgents`, the list the hand-off note reads: enabled
   chat agents in the person's audience that `AgentsUsable` allows at `assistant:create`,
@@ -1064,47 +1076,96 @@ same parts:
   validation error on that field. An API key or system actor is matched to nobody.
 - **What counts.** Each agent's `heldTools` without the core tools every agent holds,
   narrowed once, for every agent together, by `permittedWith` for the person. A tool
-  the person may not use through any agent never makes an agent the better fit.
-- **The ranking.** The question is ranked against the catalog with `Catalog.Match`:
-  `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
-  appends, so only tools that matched are scored, each with its fused score. Its query
-  vector is the one the turn embeds for the same words: `retrievalquery` keeps it in
-  its in-process cache and in Redis (`QueryVectorCache`, fifteen minutes, keyed by tenant,
-  embedding model and a hash of the words), so a question sent after its match reuses
-  the vector even when the API asked and the worker runs the turn. Only an agent
-  holding a best match is ever suggested, and every tool whose score equals the top
-  score is a best match, so two tools the question matches equally well are treated
-  alike; tools tied on keyword score or on similarity share a rank in the fusion
-  (`rankfusion.ReciprocalTiers`), so catalog order never breaks the tie. A suggestion therefore manages the question better than the agent it would
-  replace: the agent the question would go to now is kept whenever it holds any best
-  match, however many lesser matches another holds. Among the holders an agent scores
-  1/(rank+1) for each matched tool it holds, ranks dense so tied tools weigh the same,
-  then the one holding fewer usable tools (the focused one) wins, then by name, then by
-  ID. Because the suggested agent holds a best match, switching to it can never draw a
-  second suggestion for the same words. Nothing matched recommends nobody, and the
-  reply names at most three of the winning agent's matched tools. A cancelled request
-  (the person typed on) stops quietly, without logging a failed embedding.
-- **What it costs.** The embedding is metered as the `AgentRecommendation` usage
+  the person may not use through any agent never makes an agent the better fit. The
+  agents, what each holds and what the person may use are kept per person for thirty
+  seconds (`matchPool`), so a person typing does not read every agent and check every
+  permission on each pause; an agent or permission change reaches suggestions within
+  that time, and starting the conversation checks again regardless.
+- **The ranking.** The question is ranked twice with `Catalog.Match` (`FindHybrid`'s
+  keyword and embedding fusion and its cutoff, without the families it appends): once
+  against every tool but the core ones, to tell `NoAgent` apart, and once against what
+  the person's agents hold and they may use. Its query vector is the one the turn embeds
+  for the same words: `retrievalquery` keeps it in its in-process cache and in Redis
+  (`QueryVectorCache`, fifteen minutes, keyed by tenant, embedding model and a hash of the
+  words), so a question sent after its match reuses the vector even when the API asked
+  and the worker runs the turn. Only an agent holding a best match is ever suggested, and
+  every tool whose score equals the top score is a best match, so two tools the question
+  matches equally well are treated alike; tools tied on keyword score or on similarity
+  share a rank in the fusion (`rankfusion.ReciprocalTiers`), so catalog order never
+  breaks the tie. A suggestion therefore manages the question better than the agent it
+  would replace: the agent the question would go to now is kept whenever it holds any
+  best match, however many lesser matches another holds. Among the holders an agent
+  scores 1/(rank+1) for each matched tool it holds, ranks dense so tied tools weigh the
+  same, then the one holding fewer usable tools (the focused one) wins, then by name,
+  then by ID. Because the suggested agent holds a best match, switching to it can never
+  draw a second suggestion for the same words. A cancelled request (the person typed on)
+  stops quietly, without logging a failed embedding.
+- **Delegates.** When the agent the question would go to can hand work to an agent that
+  holds a best match (`DelegateIDs`, the delegate usable by the person and passing
+  `DelegateRefusal`), it manages the question through `delegate_task`, so the answer is
+  `CurrentAgent` and nothing is suggested.
+- **What it is about.** `contextKinds` names the kinds of record the question is about:
+  the records it mentions and the record or list the page it is asked from shows. A
+  matched tool whose permission resource is one of them scores a quarter more, which
+  breaks a tie or a near tie toward it without adding tools that did not match. A kind
+  the server does not know is ignored; more than eleven is refused.
+- **What it costs.** No model is asked. A question that names nothing any tool's name,
+  description or parameters do is answered `NoMatch` without an embedding, so small talk
+  costs nothing. A person's questions are embedded at most thirty a minute, ten at once
+  (`RateLimitStore`, key scope `agent-match`); past that they are matched by keyword
+  alone rather than refused. The embedding is metered as the `AgentRecommendation` usage
   feature, so AI Control shows suggestions apart from the turns they precede.
 
-No model is asked: the match costs one embedding at most and works the same on a
-self-hosted install with a small model. The browser asks once typing pauses
-(`use-agent-recommendation.ts`) and names a better fit in a small note floating just
-above the box, where the terms reminder sits, with Switch and a cross that keeps the
-agent chosen. Unless the person picked an agent from the picker, a question sent
-goes to the better fit; one sent before its match came back waits at most 1.5
-seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
-`agent-recommendation-state.ts`). While it waits the match stays keyed to the words
-sent, not the emptied box, so the request it waits on keeps an observer and is not
-cancelled under it; Switch and the cross are disabled meanwhile, and both return focus
-to the box. Once the question is sent the note leaves with it, so it never sits over
-an empty box. The suggestion is announced through a status region that is always
-mounted, so a screen reader hears it when it appears. The browser keeps asking as the question changes,
-so a new question the agent switched to cannot manage is offered again; the server
-rule above keeps a switch from drawing a second suggestion for the words it was
-made for. The cross turns down only the agent it was used on, and clearing the box
-forgets the pick and the agents turned down. The query key holds the person's words, so it is
-never added to `SHELL_QUERIES`.
+**On the page.** The browser asks once typing pauses (`use-agent-match.ts`). What it does
+with the answer follows the person's Desk settings (`suggestionMode` in
+`agent-recommendation-state.ts`), kept in their browser like the rest:
+
+| Setting | Note above the box | A question sent |
+|---|---|---|
+| Auto switch agent for tasks: On | None | Goes to the better agent; in a conversation, the conversation is handed off |
+| When another agent fits better: Switch on send (default) | Names the agent | Goes to the better agent unless the person picked one |
+| Only suggest | Names the agent | Goes to the agent chosen |
+| Off | None, and nothing is matched | Goes to the agent chosen |
+
+The note floats just above the box, where the terms reminder sits. Its name and sentence
+open why: the matched tools, titled as the tool calls are, and that the agent chosen holds
+none of them. Switch takes the agent and the cross keeps the one chosen, turning down only
+the agent it was used on; clearing the box forgets the pick and the agents turned down. A
+picker pick pins the agent, and so does the agent the person set to start with, unless
+auto switch is on. When the answer is `NoAgent` the note says none of the person's agents
+has the tools, with Add tools for someone who may update agents and that an administrator
+can add them for anyone else.
+
+A question sent before its match came back waits at most 1.5 seconds for it and otherwise
+goes to the agent already chosen (`agentToAsk`). While it waits the match stays keyed to
+the words sent, not the emptied box, so the request it waits on keeps an observer and is
+not cancelled under it; the note's controls are disabled meanwhile, and both return focus
+to the box. Once the question is sent the note leaves with it. The suggestion is announced
+through a status region that is always mounted, so a screen reader hears it when it
+appears. The browser keeps asking as the question changes, so a new question the agent
+switched to cannot manage is offered again.
+
+**In a conversation** (`use-conversation-suggestion.ts`) the note offers Hand off instead
+of Switch: `useHandOffThread`, the hand-off the top bar's menu makes, starts a conversation
+with the agent opened with this one's summary, pinned facts and pinned artifacts, and the
+reply is asked there as its first question, with the records it names. The opening brief
+the hand-off leaves is not counted as a question (`askedMessageCount`), so the reply is
+sent. Nothing is matched while the agent is working, while files are attached (they belong
+to this conversation) or where the conversation cannot be continued. With auto switch on a
+reply is handed off on send without a note; otherwise a reply sent stays here.
+
+**What people do with it.** Each suggestion is recorded in `agent_suggestions`
+(`recordMyAgentSuggestion` when it is shown, or `AutoSwitched` when the Desk moved the
+question without asking, then `settleMyAgentSuggestion`: Switched, SentThrough, Kept or
+PassedOver), once while the same agent stays named. Recording never holds anything up and
+a failure is not shown. A suggestion left on screen is counted as passed over after half an
+hour. AI Control's analytics reads them as the Agent suggestions card (see
+[ai-analytics.md](ai-analytics.md)). Only the agents, the surface and the outcome are kept,
+never the words. The match query's key holds the person's words, so it is never added to
+`SHELL_QUERIES`.
+
+The bench scores the matching against labelled questions with `trenova desk route` (see
+[desk-bench.md](desk-bench.md)).
 
 ### Steering and the queue
 
