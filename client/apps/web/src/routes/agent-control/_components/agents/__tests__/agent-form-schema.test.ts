@@ -364,6 +364,7 @@ function agentRow(): AgentDefinitionRow {
     delegateIds: [],
     delegates: [],
     accessMode: "Everyone",
+    unattendedRoleId: null,
     accessRoles: [],
     starters: [],
     lastRunAt: null,

@@ -112,9 +112,11 @@ type Params struct {
 	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
 	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
 	Config                      *config.Config                               `optional:"true"`
+	Permissions                 permissionports.PermissionEngine
 }
 
 type Service struct {
+	permissions          permissionports.PermissionEngine
 	l                    *zap.Logger
 	db                   kernelports.DBConnection
 	repo                 invoiceports.InvoiceRepository
@@ -241,6 +243,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		emailSenders:                p.EmailSenders,
 		glAccounts:                  p.GLAccounts,
 		webBaseURL:                  webBaseURL(p.Config),
+		permissions:                 p.Permissions,
 	}
 }
 
@@ -544,6 +547,9 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return planErr
 		}
 		if !alreadyPosted {
+			if guardErr := s.guardPoster(txCtx, req, actor); guardErr != nil {
+				return guardErr
+			}
 			if guardErr := s.guardMemoPoster(
 				txCtx,
 				entity,

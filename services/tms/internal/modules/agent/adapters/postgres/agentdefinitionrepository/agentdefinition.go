@@ -621,6 +621,61 @@ func (r *repository) SetAccessMode(
 	})
 }
 
+func (r *repository) SetUnattendedRole(
+	ctx context.Context,
+	req agentdefinitionports.SetAgentDefinitionUnattendedRoleRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := agentdefinitioncol.DefinitionColumns
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*agentdefinition.Definition)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Set(cols.UnattendedRoleID.Set(), stringutils.NilIfEmpty(req.RoleID.String())).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("set agent definition unattended role: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+	})
+}
+
+func (r *repository) UnattendedRoleID(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+) (pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
+		cols := agentdefinitioncol.DefinitionColumns
+
+		var roleID *string
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agentdefinition.Definition)(nil)).
+			ColumnExpr(cols.UnattendedRoleID.Qualified()).
+			Apply(agentdefinitioncol.DefinitionApplyTenant(tenant)).
+			Where(cols.ID.Eq(), id).
+			Scan(ctx, &roleID)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return pulid.Nil, nil
+			}
+			return pulid.Nil, fmt.Errorf("read agent definition unattended role: %w", err)
+		}
+		if roleID == nil {
+			return pulid.Nil, nil
+		}
+
+		return pulid.ID(*roleID), nil
+	})
+}
+
 // Delete removes an agent and, in the same transaction, takes it off every
 // allowlist in its tenant that names it. An array column cannot carry a
 // foreign key, so this is the cascade: no agent is left able to ask one that

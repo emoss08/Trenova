@@ -28,6 +28,8 @@ type Params struct {
 	Repo     apikeyports.APIKeyRepository
 	Registry *permission.Registry
 	Auditor  permissionports.SecurityAuditor
+	Engine   permissionports.PermissionEngine
+	Scopes   permissionports.ScopePolicy
 
 	Config *config.Config
 	Plans  platformplanports.PlanService `optional:"true"`
@@ -38,6 +40,8 @@ type Service struct {
 	repo     apikeyports.APIKeyRepository
 	registry *permission.Registry
 	auditor  permissionports.SecurityAuditor
+	engine   permissionports.PermissionEngine
+	scopes   permissionports.ScopePolicy
 	cfg      *config.Config
 	plans    platformplanports.PlanService
 }
@@ -48,6 +52,8 @@ func New(p Params) *Service {
 		repo:     p.Repo,
 		registry: p.Registry,
 		auditor:  p.Auditor,
+		engine:   p.Engine,
+		scopes:   p.Scopes,
 		cfg:      p.Config,
 		plans:    p.Plans,
 	}
@@ -124,6 +130,10 @@ func (s *Service) CreateAPIKey(
 		return nil, err
 	}
 
+	if err = s.validateWithinActor(ctx, userID, tenantInfo.OrgID, normalizedPermissions); err != nil {
+		return nil, err
+	}
+
 	generated, err := apikey.GenerateAPIKeySecret()
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to generate api key").WithInternal(err)
@@ -190,6 +200,15 @@ func (s *Service) UpdateAPIKey(
 
 	normalizedPermissions, err := s.normalizePermissions(req.Permissions)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = s.validateWithinActor(
+		ctx,
+		tenantInfo.UserID,
+		tenantInfo.OrgID,
+		normalizedPermissions,
+	); err != nil {
 		return nil, err
 	}
 
@@ -445,12 +464,6 @@ func normalizeDataScope(scope permission.DataScope) permission.DataScope {
 	return scope
 }
 
-func normalizeOperations(ops []permission.Operation) []permission.Operation {
-	expanded := permission.ExpandWithDependencies(permission.NewOperationSet(ops...)).ToSlice()
-	slices.Sort(expanded)
-	return expanded
-}
-
 func (s *Service) normalizePermissions(
 	inputs []apikeyports.APIKeyPermissionInput,
 ) ([]apikeyports.APIKeyPermissionInput, error) {
@@ -458,7 +471,7 @@ func (s *Service) normalizePermissions(
 	for _, input := range inputs {
 		normalized = append(normalized, apikeyports.APIKeyPermissionInput{
 			Resource:   strings.TrimSpace(input.Resource),
-			Operations: normalizeOperations(input.Operations),
+			Operations: permission.Normalize(input.Operations),
 			DataScope:  normalizeDataScope(input.DataScope),
 		})
 	}
@@ -506,6 +519,13 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 				errortypes.ErrInvalid,
 				"Resource \"{0}\" has an invalid data scope", resource,
 			)
+		} else if input.DataScope.IsNarrow() && !s.scopes.Enforced(resource, input.DataScope) {
+			me.Add(
+				"permissions",
+				errortypes.ErrInvalid,
+				"Resource \"{0}\" cannot be limited to a narrower data scope here; choose Organization",
+				resource,
+			)
 		}
 
 		for _, operation := range input.Operations {
@@ -530,6 +550,30 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 
 	if me.HasErrors() {
 		return me
+	}
+
+	return nil
+}
+
+func (s *Service) validateWithinActor(
+	ctx context.Context,
+	actorID, orgID pulid.ID,
+	inputs []apikeyports.APIKeyPermissionInput,
+) error {
+	held, err := s.engine.GetEffectivePermissions(ctx, actorID, orgID)
+	if err != nil {
+		return err
+	}
+
+	for _, input := range inputs {
+		violation, violated := held.DelegationViolation(
+			input.Resource,
+			input.Operations,
+			input.DataScope,
+		)
+		if violated {
+			return violation.FieldError("permissions")
+		}
 	}
 
 	return nil

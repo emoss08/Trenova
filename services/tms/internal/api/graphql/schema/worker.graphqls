@@ -68,8 +68,8 @@ type WorkerProfile {
   businessUnitId: ID!
   organizationId: ID!
   licenseStateId: ID
-  dob: Timestamp!
-  licenseNumber: String!
+  dob: Timestamp @protected(group: Personal)
+  licenseNumber: String @protected(group: Personal)
   cdlClass: CDLClass!
   cdlRestrictions: String!
   endorsement: EndorsementType!
@@ -78,7 +78,7 @@ type WorkerProfile {
   medicalCardExpiry: Timestamp
   medicalExaminerName: String!
   medicalExaminerNpi: String!
-  twicCardNumber: String!
+  twicCardNumber: String @protected(group: Personal)
   twicExpiry: Timestamp
   hireDate: Timestamp!
   terminationDate: Timestamp
@@ -111,7 +111,7 @@ type WorkerProfile {
   disqualificationReason: String!
   lastComplianceCheck: Timestamp!
   lastMvrCheck: Timestamp!
-  lastDrugTest: Timestamp!
+  lastDrugTest: Timestamp @protected(group: Personal)
   eldExempt: Boolean!
   shortHaulExempt: Boolean!
   version: Int!

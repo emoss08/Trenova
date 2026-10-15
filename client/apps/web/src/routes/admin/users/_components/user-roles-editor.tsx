@@ -12,6 +12,7 @@ import {
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { describeApiError } from "@/lib/api-error-message";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { assignRole, unassignRole } from "@/lib/role-api";
@@ -63,8 +64,10 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
           queryKey: ["user-role-assignments", userId],
         });
         toast.success(t("Role unassigned"));
-      } catch {
-        toast.error(t("Failed to unassign role"));
+      } catch (error) {
+        toast.error(t("Failed to unassign role"), {
+          description: describeApiError(error),
+        });
       }
     },
     [userId, queryClient, t],

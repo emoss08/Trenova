@@ -83,7 +83,9 @@ func (c *Criteria) EmptyNote() string {
 	}
 
 	return fmt.Sprintf(
-		"No %s matched %s. Other %s may exist; only these filters were applied.",
+		"No %s matched %s. That is the answer for these filters: report it as what they "+
+			"found, never as there being no %s at all, and search again with fewer filters "+
+			"only when the question is about more than they cover.",
 		c.Entity, strings.Join(c.terms, " and "), c.Entity,
 	)
 }

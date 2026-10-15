@@ -376,4 +376,14 @@ describe("workerFacts", () => {
       external: "None",
     });
   });
+
+  it("says a license number is hidden when the role withholds personal details", () => {
+    const licenseOf = (overrides: Partial<Profile>) =>
+      workerFacts(worker({ profile: profile(overrides) }), t).find((fact) => fact.key === "license")
+        ?.value;
+
+    expect(licenseOf({ licenseNumber: null })).toBe("Hidden");
+    expect(licenseOf({ licenseNumber: "  " })).toBe("None on file");
+    expect(licenseOf({ licenseNumber: " D1234567 " })).toBe("D1234567");
+  });
 });

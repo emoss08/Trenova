@@ -456,7 +456,7 @@ describe("DeskInvoice actions", () => {
   });
 
   it("offers nothing on the invoice it stepped away from while the next one is read", async () => {
-    grantInvoice(Operation.Update);
+    grantInvoice(Operation.Update | Operation.Post);
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const card = (recordId: string) => (
       <QueryClientProvider client={queryClient}>
@@ -477,7 +477,7 @@ describe("DeskInvoice actions", () => {
   });
 
   it("posts a draft only after showing what posting it books", async () => {
-    grantInvoice(Operation.Update);
+    grantInvoice(Operation.Update | Operation.Post);
     fetchers.invoice.mockResolvedValue(consolidatedDraft());
     fetchers.postPreview.mockResolvedValue({
       invoiceId: "inv_457",
@@ -504,6 +504,16 @@ describe("DeskInvoice actions", () => {
 
     fireEvent.click(await within(dialog).findByRole("button", { name: "Post invoice" }));
     await vi.waitFor(() => expect(fetchers.post).toHaveBeenCalledWith("inv_457"));
+  });
+
+  it("does not offer posting to someone who may edit the invoice but not post it", async () => {
+    grantInvoice(Operation.Update);
+    fetchers.invoice.mockResolvedValue(consolidatedDraft());
+    const { container } = draw({ recordId: "inv_457" });
+    await screen.findByRole("heading", { name: "Tyson Foods", level: 2 });
+
+    expect(within(bar(container)).queryByRole("button", { name: "Post $18,420.00" })).toBeNull();
+    expect(fetchers.postPreview).not.toHaveBeenCalled();
   });
 
   it("emails a posted invoice again and sends its 210 again for someone who may", async () => {

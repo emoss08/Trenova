@@ -200,7 +200,10 @@ that behaves differently:
 
 - subscriptions
 - runtime directives: any directive on a field, argument or input that is not
-  `skip_runtime`, and any `QUERY`, `MUTATION` or `FIELD` location directive
+  `skip_runtime`, and any `QUERY`, `MUTATION` or `FIELD` location directive. A
+  `skip_runtime` directive stays in the parsed schema, which is how `@protected` works: a
+  handler extension reads it from the schema (see "Protected fields" in
+  [permissions.md](permissions.md))
 - batch resolvers (`batch: true`)
 - complexity functions (`omit_complexity` must stay `true`; the cost budget uses
   `querycost`, not gqlgen's complexity root)

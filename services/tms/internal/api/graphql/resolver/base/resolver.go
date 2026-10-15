@@ -69,6 +69,16 @@ func (r *Core) checkPermission(
 	resource permission.Resource,
 	operation permission.Operation,
 ) (bool, error) {
+	return CheckPermission(ctx, r.PermissionEngine, authCtx, resource, operation)
+}
+
+func CheckPermission(
+	ctx context.Context,
+	engine permissionports.PermissionEngine,
+	authCtx *authctx.AuthContext,
+	resource permission.Resource,
+	operation permission.Operation,
+) (bool, error) {
 	memo, memoised := gqlctx.PermissionMemoFrom(ctx)
 	key := resource.String() + "|" + string(operation)
 	if memoised {
@@ -77,7 +87,7 @@ func (r *Core) checkPermission(
 		}
 	}
 
-	result, err := r.PermissionEngine.Check(
+	result, err := engine.Check(
 		ctx,
 		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
 	)

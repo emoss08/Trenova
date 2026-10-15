@@ -68,6 +68,17 @@ type GetUserRoleAssignmentsByIDRequest struct {
 	ExpandRoles      bool                  `json:"expandRoles"`
 }
 
+type DeleteRoleRequest struct {
+	RoleID         pulid.ID
+	OrganizationID pulid.ID
+}
+
+type OrphanedAssignment struct {
+	UserID         pulid.ID `bun:"user_id"`
+	OrganizationID pulid.ID `bun:"organization_id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+}
+
 type RoleRepository interface {
 	List(
 		ctx context.Context,
@@ -83,6 +94,7 @@ type RoleRepository interface {
 	) (*pagination.ListResult[*permission.Role], error)
 	Create(ctx context.Context, role *permission.Role) error
 	Update(ctx context.Context, role *permission.Role) error
+	Delete(ctx context.Context, req DeleteRoleRequest) error
 	GetByID(ctx context.Context, req GetRoleByIDRequest) (*permission.Role, error)
 	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
 	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)
@@ -99,6 +111,15 @@ type RoleRepository interface {
 		ctx context.Context,
 		req DeleteRoleAssignmentRequest,
 	) (*permission.UserRoleAssignment, error)
+	DeleteUserAssignments(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+	) ([]*permission.UserRoleAssignment, error)
+	ListOrphanedAssignments(
+		ctx context.Context,
+		now int64,
+		limit int,
+	) ([]OrphanedAssignment, error)
 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error

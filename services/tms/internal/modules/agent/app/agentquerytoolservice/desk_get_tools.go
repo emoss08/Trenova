@@ -163,9 +163,9 @@ func newGetServiceFailureTool(
 }
 
 // getWorkerCredentialTool reads one credential under the person's field
-// access. A credential number is a licence or medical card number, which the
-// resource keeps at the Restricted tier: it reaches a model only for a person
-// whose role reaches it, and an agent principal never sees it.
+// access. A credential number is a licence, TWIC or medical card number, the
+// same personal detail the worker's profile keeps Confidential and the app
+// shows only to a role holding personal details, so it never reaches a model.
 type getWorkerCredentialTool struct {
 	repo   workerports.WorkerCredentialRepository
 	access fieldAccess
@@ -240,9 +240,9 @@ func (t *getWorkerCredentialTool) Query(
 	return workerCredentialDetailFrom(entity, t.access, ceiling), nil
 }
 
-// workerCredentialDetail is one credential as a model may see it. The number
-// is present only under a ceiling that reaches it and is named as withheld
-// otherwise, so its absence reads as withheld rather than as not on file.
+// workerCredentialDetail is one credential as a model may see it. A number on
+// file is named as withheld, so its absence reads as withheld rather than as
+// not on file.
 type workerCredentialDetail struct {
 	ID               string       `json:"id"`
 	WorkerID         string       `json:"workerId"`

@@ -990,6 +990,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐAccessMode),
 			},
 			{
+				Name:     "unattendedRoleId",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Definition)
+					return obj.UnattendedRoleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
 				Name:       "accessRoles",
 				NonNull:    true,
 				IsResolver: true,
@@ -1750,6 +1759,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
 			{
+				Name:       "setAgentUnattendedRole",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentDefinition",
+				Args:       field_Mutation_setAgentUnattendedRole_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentUnattendedRole(ctx, fc.Args["agentId"].(string), fc.Args["roleId"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
+			},
+			{
 				Name:       "setRoleAgentAccess",
 				NonNull:    true,
 				IsResolver: true,
@@ -2273,6 +2295,7 @@ type resolverMutation interface {
 	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
+	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
 	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
@@ -2382,6 +2405,27 @@ func field_Mutation_setAgentAccess_args(ctx context.Context, ec *gqlexec.Exec, r
 		return nil, err
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_setAgentUnattendedRole_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "roleId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["roleId"] = arg1
 	return args, nil
 }
 
@@ -3773,6 +3817,11 @@ func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	}
 	res := graphql.MarshalFloatContext(*v)
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

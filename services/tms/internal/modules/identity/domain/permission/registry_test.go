@@ -568,9 +568,6 @@ func TestRegistry_ParentChildRelationships(t *testing.T) {
 	children := reg.GetChildren(ResourceShipment.String())
 	assert.Contains(t, children, ResourceShipmentMove.String())
 	assert.Contains(t, children, ResourceShipmentStop.String())
-
-	children = reg.GetChildren(ResourceCustomer.String())
-	assert.Contains(t, children, ResourceCustomerContact.String())
 }
 
 func TestRegistry_Get_EmptyString(t *testing.T) {

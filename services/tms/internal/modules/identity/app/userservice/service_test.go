@@ -38,6 +38,7 @@ type testDeps struct {
 	repo        *tenantportsmock.MockUserRepository
 	roleRepo    *permissionportsmock.MockRoleRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
+	permissions *permissionportsmock.MockPermissionEngine
 	storage     *kernelportsmock.MockClient
 	audit       *auditportsmock.MockAuditService
 	svc         *Service
@@ -48,9 +49,11 @@ func setupTest(t *testing.T) *testDeps {
 	repo := tenantportsmock.NewMockUserRepository(t)
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
+	permissions := permissionportsmock.NewMockPermissionEngine(t)
 	storageClient := kernelportsmock.NewMockClient(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := &Service{
+		permissions:  permissions,
 		l:            zap.NewNop(),
 		repo:         repo,
 		roleRepo:     roleRepo,
@@ -69,6 +72,7 @@ func setupTest(t *testing.T) *testDeps {
 		repo:        repo,
 		roleRepo:    roleRepo,
 		sessionRepo: sessionRepo,
+		permissions: permissions,
 		storage:     storageClient,
 		audit:       auditSvc,
 		svc:         svc,
@@ -214,6 +218,8 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		UserIDs:    userIDs,
 	}).Return(originals, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return(updated, nil)
+	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user1.ID).Return(nil).Once()
+	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user2.ID).Return(nil).Once()
 	deps.audit.On("LogActions", mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)

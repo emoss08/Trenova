@@ -13979,7 +13979,7 @@
     },
     {
       "name": "get_edi_ack_health",
-      "description": "How partners are acknowledging what was sent: ack status counts overall and per partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner rather than listing its messages. acknowledged counts every 997 or 999 that came back, a rejection included, and awaiting those still pending, both since countsSince. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
+      "description": "How partners are acknowledging what was sent: ack status counts overall and per partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner rather than listing its messages, and lead with its answer: acknowledged counts every 997 or 999 that came back, a rejection included, and awaiting those still pending, both since countsSince. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

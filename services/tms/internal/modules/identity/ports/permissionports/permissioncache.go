@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -20,6 +21,8 @@ type CachedPermissions struct {
 	AgentIDs       []string                             `json:"agentIds"`
 	Checksum       string                               `json:"checksum"`
 	ExpiresAt      int64                                `json:"expiresAt"`
+	Epoch          int64                                `json:"epoch"`
+	AgentRoleID    string                               `json:"agentRoleId,omitempty"`
 }
 
 type PermissionCacheKey struct {
@@ -37,6 +40,11 @@ type PermissionCacheRepository interface {
 		ttl time.Duration,
 	) error
 	Delete(ctx context.Context, userID, orgID pulid.ID) error
-	InvalidateByRole(ctx context.Context, roleID pulid.ID, roleRepo RoleRepository) error
+	Epoch(ctx context.Context, orgID pulid.ID) (int64, error)
 	InvalidateOrganization(ctx context.Context, orgID pulid.ID) error
+}
+
+type PermissionChangeNotifier interface {
+	OrganizationChanged(ctx context.Context, tenant pagination.TenantInfo)
+	UserChanged(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID)
 }

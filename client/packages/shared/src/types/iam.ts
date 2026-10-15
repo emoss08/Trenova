@@ -199,6 +199,14 @@ export type AccessPolicy = z.infer<typeof accessPolicySchema>;
 
 export const accessPoliciesSchema = z.array(accessPolicySchema);
 
+export const accessSettingsSchema = z.object({
+  organizationId: z.string(),
+  businessUnitId: z.string(),
+  requireRoleActivation: z.boolean(),
+  version: z.number(),
+});
+export type AccessSettings = z.infer<typeof accessSettingsSchema>;
+
 export const accessPolicyConditionRowSchema = z.object({
   id: z.string(),
   key: z.string().default(""),

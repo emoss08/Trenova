@@ -110,6 +110,69 @@ func (_c *MockTableConfigurationRepository_ClearDefaultForResource_Call) RunAndR
 	return _c
 }
 
+// ClearOrgDefaultForResource provides a mock function for the type MockTableConfigurationRepository
+func (_mock *MockTableConfigurationRepository) ClearOrgDefaultForResource(ctx context.Context, resource string, tenantInfo pagination.TenantInfo) error {
+	ret := _mock.Called(ctx, resource, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearOrgDefaultForResource")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, pagination.TenantInfo) error); ok {
+		r0 = returnFunc(ctx, resource, tenantInfo)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockTableConfigurationRepository_ClearOrgDefaultForResource_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearOrgDefaultForResource'
+type MockTableConfigurationRepository_ClearOrgDefaultForResource_Call struct {
+	*mock.Call
+}
+
+// ClearOrgDefaultForResource is a helper method to define mock.On call
+//   - ctx context.Context
+//   - resource string
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockTableConfigurationRepository_Expecter) ClearOrgDefaultForResource(ctx any, resource any, tenantInfo any) *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call {
+	return &MockTableConfigurationRepository_ClearOrgDefaultForResource_Call{Call: _e.mock.On("ClearOrgDefaultForResource", ctx, resource, tenantInfo)}
+}
+
+func (_c *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call) Run(run func(ctx context.Context, resource string, tenantInfo pagination.TenantInfo)) *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call) Return(err error) *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call) RunAndReturn(run func(ctx context.Context, resource string, tenantInfo pagination.TenantInfo) error) *MockTableConfigurationRepository_ClearOrgDefaultForResource_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockTableConfigurationRepository
 func (_mock *MockTableConfigurationRepository) Create(ctx context.Context, entity *tableconfiguration.TableConfiguration) (*tableconfiguration.TableConfiguration, error) {
 	ret := _mock.Called(ctx, entity)

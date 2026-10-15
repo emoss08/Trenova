@@ -204,6 +204,62 @@ func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t 
 	assert.Equal(t, []string{"rawX12"}, view.Withheld)
 	require.Len(t, view.Findings, 1)
 	assert.True(t, view.WouldSend)
+	assert.Equal(t, "Raw EDI is Restricted and this agent reads at Internal, so the X12 is held "+
+		"back. Tell the person that someone whose role reaches Restricted can set this agent's "+
+		"Data access to Restricted in AI control. The findings and whether it would go stand. "+
+		"Nothing was sent or saved.", view.Note)
+}
+
+func TestPreviewEDIDocument_SaysWhoseAccessHeldTheX12Back(t *testing.T) {
+	t.Parallel()
+
+	preview := func(
+		t *testing.T,
+		permissions *fakePermissions,
+		agentAccess permission.FieldSensitivity,
+	) *ediDocumentPreviewView {
+		t.Helper()
+
+		permissions.readable[permission.ResourceShipment.String()] = &permissionports.ResourcePermissionDetail{
+			Resource:       permission.ResourceShipment.String(),
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityRestricted,
+		}
+
+		fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
+			Document: &ediservice.EDIDocumentPreview{
+				RawX12:  rendered214,
+				Profile: partnerProfile("Acme Retail"),
+			},
+		}}
+		result, err := newPreviewEDIDocumentTool(fake, permissions).Query(t.Context(), chatParams(map[string]any{
+			paramTransactionSet: "214",
+			paramPartnerID:      pulid.MustNew("edip_").String(),
+			paramShipmentID:     pulid.MustNew("shp_").String(),
+		}, agentAccess))
+		require.NoError(t, err)
+
+		return result.(*ediDocumentPreviewView)
+	}
+
+	byAgent := preview(t,
+		personReaching(permission.ResourceEDI, permission.SensitivityRestricted),
+		permission.SensitivityInternal)
+	assert.Empty(t, byAgent.Segments)
+	assert.Contains(t, byAgent.Note, "this agent reads at Internal")
+
+	byRole := preview(t,
+		personReaching(permission.ResourceEDI, permission.SensitivityInternal),
+		permission.SensitivityRestricted)
+	assert.Empty(t, byRole.Segments)
+	assert.Contains(t, byRole.Note, "the person's role does not reach it")
+	assert.NotContains(t, byRole.Note, "AI control", "raising the agent would not help")
+
+	shown := preview(t,
+		personReaching(permission.ResourceEDI, permission.SensitivityRestricted),
+		permission.SensitivityRestricted)
+	assert.NotEmpty(t, shown.Segments)
+	assert.Empty(t, shown.Withheld)
 }
 
 func TestPreviewEDIDocument_RefusesWhatItCannotPreview(t *testing.T) {

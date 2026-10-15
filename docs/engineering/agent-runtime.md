@@ -1640,7 +1640,11 @@ against the filed tools' own schemas: each collection property and each
 multi-word field (derived with `toolschema.Walk`, ids left out) must carry a
 value in some filed call, or be named in its filing result, before the reply
 may say it is part of the change. A sentence that says the thing was left out
-is not a claim. A hit discards the reply once, the way a looping reply is (a
+is not a claim. A one-word name counts only at the top of a call: the `codes` of
+each requirement in `apply_edi_connection_draft` is a word an EDI reply spends
+on a guide's charge codes and status codes, and holding it to the filed
+requirements rewrote replies that never said the change carried any
+(`agent-loop-grounding-top-level-words`). A hit discards the reply once, the way a looping reply is (a
 `retrying` event, then the draft and a correction to the model); a reply that
 still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
@@ -1856,7 +1860,12 @@ A run nobody is in has two identities, kept apart on purpose.
 
 - **Authorization is the agent's.** The actor `runRequest` builds is
   `PrincipalTypeAgent`, so the permission engine judges every call against the
-  fixed agent table (`permission.IsAgentAllowed`), never against a role. Approving
+  fixed agent table (`permission.IsAgentAllowed`). An organization may also name the
+  role the agent runs as (`agent_definitions.unattended_role_id`,
+  `setAgentUnattendedRole`); a call then passes only where both the table and that
+  role (with its parents) allow it, and the organization's access policies apply to
+  agent principals as to people (match them with `principalType` `agent` or
+  `principalId` the agent's id). See [permissions.md](permissions.md#agents). Approving
   is refused outright (`guardExecute`), a self-scoped tool is refused because
   nobody is in the run, and nothing that reads a person's access (field
   sensitivity ceilings, report authorization, the user context provider, usage
@@ -2286,6 +2295,7 @@ before the change:
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
+| `agent-loop-grounding-top-level-words` | a one-word collection nested in a filed call's items (`requirements[].codes`) is held to the filed call like a top-level one, and a reply naming a guide's codes is rewritten | nothing; the check itself is the only cost, and it is asked only of a reply the guard found naming such a word |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-reply-passes` | a final reply is recorded as the model wrote it, internal ids and reprinted tables included | nothing; the check itself is the only cost, and it is asked only of a reply the passes would change |
 | `agent-loop-artifact-placement` | a final reply is recorded with its artifact links wherever the model put them, including outside any sentence, and a table it was told to point to may go unnamed | nothing; the check itself is the only cost, and it is asked only of a reply that names an artifact outside a sentence, leaves out one it must name, or names one the conversation never held |

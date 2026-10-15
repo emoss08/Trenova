@@ -589,3 +589,30 @@ func (r *QueryResolver) MyAgentMatch(ctx context.Context, input gqlmodel.MyAgent
 
 	return toMyAgentMatch(found), nil
 }
+
+func (r *MutationResolver) SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRole, permission.OpUpdate); err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+	role := pulid.Nil
+	if roleID != nil && *roleID != "" {
+		if role, err = pulid.MustParse(*roleID); err != nil {
+			return nil, err
+		}
+	}
+
+	return r.AgentAccessService.SetUnattendedRole(ctx, &agentdefinitionports.SetAgentUnattendedRoleRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		AgentID:    definitionID,
+		RoleID:     role,
+	}, actorutil.FromAuthContext(authCtx))
+}

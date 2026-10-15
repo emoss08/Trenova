@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/readscope"
 )
 
 type scopePool string
@@ -207,8 +208,17 @@ func (cn *scopedConn) scopeBegin(ctx context.Context, command string) (string, e
 			c.report(ctx, scopeEventUnscopedTx, scopeOutcomeRefused, "")
 			return "", err
 		}
+		readScope, err := readscope.Encode(ctx)
+		if err != nil {
+			c.report(ctx, scopeEventUnscopedTx, scopeOutcomeRefused, "")
+			return "", err
+		}
 		c.report(ctx, scopeEventTenantTx, scopeOutcomeAllowed, "")
-		return command + "; SET LOCAL trenova.scope = '" + token + "'", nil
+		command += "; SET LOCAL trenova.scope = '" + token + "'"
+		if readScope != "" {
+			command += "; SET LOCAL trenova.read_scope = '" + readScope + "'"
+		}
+		return command, nil
 	}
 
 	event := scopeEventUnscopedTx

@@ -79,6 +79,12 @@ type SetAgentDefinitionAccessModeRequest struct {
 	Mode       agentdefinition.AccessMode
 }
 
+type SetAgentDefinitionUnattendedRoleRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	RoleID     pulid.ID
+}
+
 type DeleteAgentDefinitionRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -141,6 +147,8 @@ type AgentDefinitionRepository interface {
 	MarkRun(ctx context.Context, req MarkAgentDefinitionRunRequest) (bool, error)
 	SetToolTier(ctx context.Context, req SetAgentDefinitionToolTierRequest) error
 	SetAccessMode(ctx context.Context, req SetAgentDefinitionAccessModeRequest) error
+	SetUnattendedRole(ctx context.Context, req SetAgentDefinitionUnattendedRoleRequest) error
+	UnattendedRoleID(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (pulid.ID, error)
 	Delete(ctx context.Context, req DeleteAgentDefinitionRequest) error
 	StatsByIDs(
 		ctx context.Context,

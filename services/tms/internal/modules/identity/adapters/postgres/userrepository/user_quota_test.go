@@ -28,6 +28,8 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	orgID := pulid.MustNew("org_")
 
+	sqlMock.ExpectQuery(`SELECT EXISTS \(SELECT .* FROM "users"`).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "organizations"`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 	sqlMock.ExpectQuery(`FROM "user_organization_memberships"`).

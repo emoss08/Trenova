@@ -121,6 +121,13 @@ mutation SetAgentAccess($agentId: ID!, $input: SetAgentAccessInput!) {
   }
 }
 
+mutation SetAgentUnattendedRole($agentId: ID!, $roleId: ID) {
+  setAgentUnattendedRole(agentId: $agentId, roleId: $roleId) {
+    id
+    unattendedRoleId
+  }
+}
+
 fragment RoleAgentAccessFields on Role {
   id
   name

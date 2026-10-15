@@ -45,7 +45,7 @@ type Params struct {
 	Definitions     agentdefinitionports.AgentDefinitionRepository
 	Grants          permissionports.RoleAgentGrantRepository
 	Roles           permissionports.RoleRepository
-	PermissionCache permissionports.PermissionCacheRepository
+	Notifier        permissionports.PermissionChangeNotifier `optional:"true"`
 	Permissions     permissionports.PermissionEngine
 	AuditService    auditports.AuditService
 	Runtime         agentports.AgentRuntime
@@ -59,7 +59,7 @@ type Service struct {
 	definitions agentdefinitionports.AgentDefinitionRepository
 	grants      permissionports.RoleAgentGrantRepository
 	roles       permissionports.RoleRepository
-	cache       permissionports.PermissionCacheRepository
+	notifier    permissionports.PermissionChangeNotifier
 	permissions permissionports.PermissionEngine
 	audit       auditports.AuditService
 	runtime     agentports.AgentRuntime
@@ -75,7 +75,7 @@ func New(p Params) agentdefinitionports.AgentAccessService {
 		definitions: p.Definitions,
 		grants:      p.Grants,
 		roles:       p.Roles,
-		cache:       p.PermissionCache,
+		notifier:    p.Notifier,
 		permissions: p.Permissions,
 		audit:       p.AuditService,
 		runtime:     p.Runtime,
@@ -282,7 +282,7 @@ func (s *Service) settleAccess(
 	written *accessWrite,
 	actor *permissionports.RequestActor,
 ) {
-	s.invalidate(ctx, written.change.Added, written.change.Removed)
+	s.invalidate(ctx, tenant, written.change.Added, written.change.Removed)
 	if written.changed() {
 		s.logAgentAudit(agentAuditEntry{
 			definition:   written.definition,
@@ -380,7 +380,7 @@ func (s *Service) SetRoleAgents(
 	}
 
 	if change.Changed() {
-		s.invalidate(ctx, []pulid.ID{role.ID})
+		s.invalidate(ctx, req.TenantInfo, []pulid.ID{role.ID})
 		s.logRoleAudit(role, change, agentIDs, actor)
 		s.logAgentGrantAudits(req.TenantInfo, role, change, actor)
 	}
@@ -577,24 +577,19 @@ func (s *Service) tenantAgents(
 	return ordered, nil
 }
 
-func (s *Service) invalidate(ctx context.Context, groups ...[]pulid.ID) {
-	if s.cache == nil {
+func (s *Service) invalidate(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	groups ...[]pulid.ID,
+) {
+	if s.notifier == nil {
 		return
 	}
 
-	seen := make(map[pulid.ID]struct{})
 	for _, roleIDs := range groups {
-		for _, roleID := range roleIDs {
-			if _, done := seen[roleID]; done {
-				continue
-			}
-			seen[roleID] = struct{}{}
-			if err := s.cache.InvalidateByRole(ctx, roleID, s.roles); err != nil {
-				s.l.Warn("failed to invalidate permission cache after an agent grant change",
-					zap.String("roleID", roleID.String()),
-					zap.Error(err),
-				)
-			}
+		if len(roleIDs) > 0 {
+			s.notifier.OrganizationChanged(ctx, tenant)
+			return
 		}
 	}
 }

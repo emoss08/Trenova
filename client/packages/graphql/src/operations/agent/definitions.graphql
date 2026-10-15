@@ -49,6 +49,7 @@ fragment AgentDefinitionCardFields on AgentDefinition {
     triggerMode
   }
   accessMode
+  unattendedRoleId
   accessRoles {
     id
     name

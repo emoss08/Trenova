@@ -11,7 +11,12 @@ func (r *Registry) registerRateResources() {
 		Description: "Customer and carrier rate agreements, their lane rules, accessorial schedules, and versions",
 		Category:    "Billing",
 		Operations: append(
-			slices.Clone(standardOpsWithDelete),
+			slices.Clone(relabel(
+				standardOpsWithDelete,
+				OpUpdate,
+				"Update",
+				"Modify rate agreements and apply rate increases",
+			)),
 			OperationDefinition{
 				Operation:   OpSubmit,
 				DisplayName: "Submit",

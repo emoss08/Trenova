@@ -243,8 +243,13 @@ export function GeneralTab() {
   );
 }
 
-export function EmploymentTab() {
+interface PersonalDetailsProps {
+  personalWithheld?: boolean;
+}
+
+export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps) {
   const t = useT();
+  const withheldDescription = t("Your role does not include personal details.");
 
   const { control } = useFormContext<Worker>();
   const endorsement = useWatch({ control, name: "profile.endorsement" });
@@ -262,9 +267,12 @@ export function EmploymentTab() {
               control={control}
               name="profile.dob"
               label={t("Date of birth")}
-              rules={{ required: true }}
-              description={t("Date of birth as shown on the license.")}
-              placeholder={t("MM/DD/YYYY")}
+              rules={{ required: !personalWithheld }}
+              description={
+                personalWithheld ? withheldDescription : t("Date of birth as shown on the license.")
+              }
+              placeholder={personalWithheld ? t("Hidden") : t("MM/DD/YYYY")}
+              disabled={personalWithheld}
             />
           </FormControl>
           <FormControl>
@@ -298,12 +306,15 @@ export function EmploymentTab() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              rules={{ required: !personalWithheld }}
               name="profile.licenseNumber"
               label={t("License number")}
-              placeholder={t("e.g. A123-4567-8901")}
-              description={t("CDL number as printed on the license.")}
+              placeholder={personalWithheld ? t("Hidden") : t("e.g. A123-4567-8901")}
+              description={
+                personalWithheld ? withheldDescription : t("CDL number as printed on the license.")
+              }
               maxLength={50}
+              disabled={personalWithheld}
             />
           </FormControl>
           <FormControl>
@@ -421,7 +432,7 @@ export function EmploymentTab() {
   );
 }
 
-export function ComplianceTab() {
+export function ComplianceTab({ personalWithheld = false }: PersonalDetailsProps) {
   const t = useT();
 
   const { control } = useFormContext<Worker>();
@@ -484,9 +495,14 @@ export function ComplianceTab() {
               control={control}
               name="profile.twicCardNumber"
               label={t("TWIC card number")}
-              placeholder={t("e.g. 1234567890")}
-              description={t("Transportation Worker Identification Credential number.")}
+              placeholder={personalWithheld ? t("Hidden") : t("e.g. 1234567890")}
+              description={
+                personalWithheld
+                  ? t("Your role does not include personal details.")
+                  : t("Transportation Worker Identification Credential number.")
+              }
               maxLength={50}
+              disabled={personalWithheld}
             />
           </FormControl>
           <FormControl>

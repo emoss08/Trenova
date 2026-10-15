@@ -1,18 +1,22 @@
 package workerservice
 
 import (
+	"context"
+	"errors"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-	"errors"
-	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -639,8 +643,84 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+type fixedFieldAccess permission.FieldGroupSet
+
+func (f fixedFieldAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
+	return permission.FieldGroupSet(f)
+}
+
 func TestUpdate(t *testing.T) {
 	t.Parallel()
+
+	t.Run("keeps stored personal details for an editor without the group", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTest(t)
+		deps.svc.fields = fixedFieldAccess(0)
+		userID := pulid.MustNew("usr_")
+		entity := newTestWorker()
+		entity.FirstName = "Jonathan"
+		entity.Profile.DOB = 0
+		entity.Profile.LicenseNumber = ""
+		entity.Profile.TWICCardNumber = ""
+
+		original := newTestWorker()
+		original.ID = entity.ID
+		original.OrganizationID = entity.OrganizationID
+		original.BusinessUnitID = entity.BusinessUnitID
+		original.Profile.TWICCardNumber = "TWIC-1"
+
+		deps.repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req workerports.GetWorkerByIDRequest) bool {
+			return req.IncludeProfile
+		})).Return(original, nil)
+		deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+			return w.FirstName == "Jonathan" &&
+				w.Profile.DOB == 946684800 &&
+				w.Profile.LicenseNumber == "DL123456" &&
+				w.Profile.TWICCardNumber == "TWIC-1"
+		})).Return(entity, nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := deps.svc.Update(
+			t.Context(),
+			entity,
+			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+		)
+
+		require.NoError(t, err)
+		deps.repo.AssertExpectations(t)
+	})
+
+	t.Run("takes personal details from an editor with the group", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTest(t)
+		deps.svc.fields = fixedFieldAccess(permission.AllFieldGroups())
+		userID := pulid.MustNew("usr_")
+		entity := newTestWorker()
+		entity.Profile.LicenseNumber = "DL999999"
+
+		original := newTestWorker()
+		original.ID = entity.ID
+		original.OrganizationID = entity.OrganizationID
+		original.BusinessUnitID = entity.BusinessUnitID
+
+		deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+		deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+			return w.Profile.LicenseNumber == "DL999999"
+		})).Return(entity, nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := deps.svc.Update(
+			t.Context(),
+			entity,
+			internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+		)
+
+		require.NoError(t, err)
+		deps.repo.AssertExpectations(t)
+	})
 
 	t.Run("keeps the stored portal user link on the edit path", func(t *testing.T) {
 		t.Parallel()

@@ -5,9 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tc "github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -158,7 +161,7 @@ func TestCreate_Success(t *testing.T) {
 	entity := createValidEntity()
 	repo.On("Create", ctx, entity).Return(entity, nil)
 
-	result, err := service.Create(ctx, entity)
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	require.NoError(t, err)
 	assert.Equal(t, entity.Name, result.Name)
@@ -173,7 +176,7 @@ func TestCreate_ValidationError(t *testing.T) {
 	entity := createValidEntity()
 	entity.Name = ""
 
-	result, err := service.Create(ctx, entity)
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -200,7 +203,7 @@ func TestCreate_WithIsDefault_ClearsExisting(t *testing.T) {
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).Return(nil)
 	repo.On("Create", ctx, entity).Return(entity, nil)
 
-	result, err := service.Create(ctx, entity)
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	require.NoError(t, err)
 	assert.True(t, result.IsDefault)
@@ -216,12 +219,22 @@ func TestCreate_RepositoryError(t *testing.T) {
 	expectedErr := errors.New("database error")
 	repo.On("Create", ctx, entity).Return(nil, expectedErr)
 
-	result, err := service.Create(ctx, entity)
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
 	assert.Equal(t, expectedErr, err)
 	repo.AssertExpectations(t)
+}
+
+func actorFor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		PrincipalID:    tenantInfo.UserID,
+		UserID:         tenantInfo.UserID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
 }
 
 func tenantInfoFor(entity *tableconfiguration.TableConfiguration) pagination.TenantInfo {
@@ -256,7 +269,7 @@ func TestUpdate_Success(t *testing.T) {
 	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Update", ctx, entity).Return(entity, nil)
 
-	result, err := service.Update(ctx, entity, tenantInfo)
+	result, err := service.Update(ctx, entity, actorFor(tenantInfo))
 
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Config", result.Name)
@@ -276,7 +289,7 @@ func TestUpdate_WithIsDefault_ClearsExisting(t *testing.T) {
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).Return(nil)
 	repo.On("Update", ctx, entity).Return(entity, nil)
 
-	result, err := service.Update(ctx, entity, tenantInfo)
+	result, err := service.Update(ctx, entity, actorFor(tenantInfo))
 
 	require.NoError(t, err)
 	assert.True(t, result.IsDefault)
@@ -304,7 +317,7 @@ func TestUpdate_NotOwned(t *testing.T) {
 		TenantInfo:      tenantInfo,
 	}).Return(owner, nil)
 
-	result, err := service.Update(ctx, &incoming, tenantInfo)
+	result, err := service.Update(ctx, &incoming, actorFor(tenantInfo))
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -660,7 +673,7 @@ func TestUpdate_ValidationError(t *testing.T) {
 	entity := createValidEntity()
 	entity.Name = ""
 
-	result, err := service.Update(ctx, entity, tenantInfoFor(entity))
+	result, err := service.Update(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -685,7 +698,7 @@ func TestUpdate_RepositoryError(t *testing.T) {
 	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Update", ctx, entity).Return(nil, expectedErr)
 
-	result, err := service.Update(ctx, entity, tenantInfo)
+	result, err := service.Update(ctx, entity, actorFor(tenantInfo))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -712,7 +725,7 @@ func TestCreate_ClearDefaultError(t *testing.T) {
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).
 		Return(clearErr)
 
-	result, err := service.Create(ctx, entity)
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -737,7 +750,7 @@ func TestUpdate_ClearDefaultError(t *testing.T) {
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).
 		Return(clearErr)
 
-	result, err := service.Update(ctx, entity, tenantInfo)
+	result, err := service.Update(ctx, entity, actorFor(tenantInfo))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -894,4 +907,112 @@ func TestNew(t *testing.T) {
 	})
 
 	require.NotNil(t, svc)
+}
+
+func serviceWithEngine(
+	repo tableconfigurationports.TableConfigurationRepository,
+	engine permissionports.PermissionEngine,
+) *tc.Service {
+	return tc.New(tc.Params{Logger: zap.NewNop(), Repo: repo, Permissions: engine})
+}
+
+func TestCreate_PublishingAViewNeedsTheCreateGrant(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := serviceWithEngine(repo, &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceTableConfiguration.String()},
+	})
+
+	entity := createValidEntity()
+	entity.Visibility = tableconfiguration.VisibilityPublic
+
+	result, err := service.Create(t.Context(), entity, actorFor(tenantInfoFor(entity)))
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestCreate_KeepingAViewPrivateNeedsNoGrant(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := serviceWithEngine(repo, &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceTableConfiguration.String()},
+	})
+	ctx := t.Context()
+
+	entity := createValidEntity()
+	repo.On("Create", ctx, entity).Return(entity, nil)
+
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
+
+	require.NoError(t, err)
+	assert.Equal(t, entity.Name, result.Name)
+}
+
+func TestCreate_PublishesAViewForAHolderOfTheGrant(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := serviceWithEngine(repo, &mocks.AllowAllPermissionEngine{})
+	ctx := t.Context()
+
+	entity := createValidEntity()
+	entity.Visibility = tableconfiguration.VisibilityPublic
+	repo.On("Create", ctx, entity).Return(entity, nil)
+
+	result, err := service.Create(ctx, entity, actorFor(tenantInfoFor(entity)))
+
+	require.NoError(t, err)
+	assert.Equal(t, tableconfiguration.VisibilityPublic, result.Visibility)
+}
+
+func TestUpdate_ChangingAPublishedViewNeedsTheUpdateGrant(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := serviceWithEngine(repo, &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceTableConfiguration.String()},
+	})
+	ctx := t.Context()
+
+	stored := createValidEntity()
+	stored.Visibility = tableconfiguration.VisibilityPublic
+	tenantInfo := tenantInfoFor(stored)
+	expectGetByID(repo, ctx, stored, tenantInfo)
+
+	incoming := *stored
+	incoming.Name = "Renamed"
+
+	result, err := service.Update(ctx, &incoming, actorFor(tenantInfo))
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestUpdate_TheOwnerMayWithdrawAPublishedView(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := serviceWithEngine(repo, &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceTableConfiguration.String()},
+	})
+	ctx := t.Context()
+
+	stored := createValidEntity()
+	stored.Visibility = tableconfiguration.VisibilityPublic
+	stored.IsOrgDefault = true
+	tenantInfo := tenantInfoFor(stored)
+	expectGetByID(repo, ctx, stored, tenantInfo)
+
+	incoming := *stored
+	incoming.Visibility = tableconfiguration.VisibilityPrivate
+	repo.On("Update", ctx, mock.MatchedBy(func(entity *tableconfiguration.TableConfiguration) bool {
+		return entity.Visibility == tableconfiguration.VisibilityPrivate && !entity.IsOrgDefault
+	})).Return(&incoming, nil)
+
+	_, err := service.Update(ctx, &incoming, actorFor(tenantInfo))
+
+	require.NoError(t, err)
+	repo.AssertExpectations(t)
 }

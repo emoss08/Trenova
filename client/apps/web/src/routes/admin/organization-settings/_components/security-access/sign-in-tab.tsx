@@ -37,6 +37,7 @@ import {
   ProviderLogo,
   RowSkeleton,
 } from "./shared";
+import { useSecurityAccess } from "./use-security-access";
 import {
   emptyProvider,
   identityProviderEndpoint,
@@ -122,6 +123,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
   onEditProvider: (provider: IdentityProvider) => void;
 }) {
   const t = useT();
+  const canCreate = useSecurityAccess().identityProviders.create;
 
   const queryClient = useQueryClient();
   const [search, setSearch] = useQueryState("search", identityProviderSearchParser);
@@ -174,10 +176,12 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
         onSearchChange={handleSearchChange}
         searchPlaceholder={t("Search providers, domains, or issuer")}
         action={
-          <Button size="sm" onClick={onCreateProvider}>
-            <PlusIcon />
-            {t("Add provider")}
-          </Button>
+          canCreate ? (
+            <Button size="sm" onClick={onCreateProvider}>
+              <PlusIcon />
+              {t("Add provider")}
+            </Button>
+          ) : undefined
         }
       />
       {isLoading ? (
@@ -199,11 +203,13 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
       ) : (
         <EmptyState
           icon={<Key01Icon />}
-          label={providers.length === 0 ? "No identity providers configured" : "No providers found"}
+          label={
+            providers.length === 0 ? t("No identity providers configured") : t("No providers found")
+          }
           description={
             providers.length === 0
-              ? "Add Entra ID or Okta to enable federated sign-in for users."
-              : "Adjust the search filter to find a configured provider."
+              ? t("Add Entra ID or Okta to enable federated sign-in for users.")
+              : t("Adjust the search filter to find a configured provider.")
           }
         />
       )}
@@ -331,6 +337,7 @@ const ProviderRow = memo(function ProviderRow({
   isDeleting: boolean;
 }) {
   const t = useT();
+  const access = useSecurityAccess().identityProviders;
 
   return (
     <div className="grid gap-3 border-b p-3 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
@@ -360,27 +367,31 @@ const ProviderRow = memo(function ProviderRow({
           <MetaLine label={t("Redirect URI")} value={provider.oidcRedirectUrl || "-"} />
           <MetaLine
             label={t("Domains")}
-            value={provider.allowedDomains.join(", ") || "Any domain"}
+            value={provider.allowedDomains.join(", ") || t("Any domain")}
           />
           <MetaLine
             label={t("Scopes")}
-            value={provider.oidcScopes.join(" ") || "Default OIDC scopes"}
+            value={provider.oidcScopes.join(" ") || t("Default OIDC scopes")}
           />
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button size="sm" variant="outline" onClick={() => onEditProvider(provider)}>
-          {t("Edit")}
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => onDeleteProvider(provider.id)}
-          disabled={isDeleting}
-        >
-          <Trash01Icon />
-          {t("Delete")}
-        </Button>
+        {access.update ? (
+          <Button size="sm" variant="outline" onClick={() => onEditProvider(provider)}>
+            {t("Edit")}
+          </Button>
+        ) : null}
+        {access.remove ? (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => onDeleteProvider(provider.id)}
+            disabled={isDeleting}
+          >
+            <Trash01Icon />
+            {t("Delete")}
+          </Button>
+        ) : null}
       </div>
     </div>
   );

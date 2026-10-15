@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/migrator"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
@@ -157,7 +159,33 @@ func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) err
 		return err
 	}
 
+	if err = m.reconcileAdminRoles(ctx, opts); err != nil {
+		return err
+	}
+
 	return m.reconcileSeeds(ctx, opts)
+}
+
+func (m *Manager) reconcileAdminRoles(ctx context.Context, opts common.OperationOptions) error {
+	if opts.DryRun || m.db == nil {
+		return nil
+	}
+
+	result, err := tenantbootstrap.ReconcileAdminRoles(ctx, m.db, permission.NewRegistry())
+	if err != nil {
+		return fmt.Errorf("grant new permissions to administrator roles after migrating: %w", err)
+	}
+
+	if result.GrantsAdded > 0 || result.GrantsExtended > 0 {
+		color.Yellow(
+			"🔑 Granted %d new resource(s) and %d new operation set(s) to %d administrator role(s)",
+			result.GrantsAdded,
+			result.GrantsExtended,
+			result.RolesChecked,
+		)
+	}
+
+	return nil
 }
 
 func (m *Manager) provisionRLS(ctx context.Context, opts common.OperationOptions) error {

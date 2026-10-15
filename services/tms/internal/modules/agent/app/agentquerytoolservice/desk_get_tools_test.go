@@ -93,10 +93,10 @@ func sampleCredential() *worker.WorkerCredential {
 	}
 }
 
-// A licence number is Restricted. A person whose role reaches it sees it; an
-// agent principal, which reads at Internal, is told it was withheld rather
-// than shown a credential with no number on file.
-func TestGetWorkerCredential_ShowsTheNumberOnlyUnderAReachingCeiling(t *testing.T) {
+// A licence number is Confidential. Neither a person nor an agent principal is
+// shown it; both are told it was withheld rather than shown a credential with
+// no number on file.
+func TestGetWorkerCredential_WithholdsTheNumberFromEveryone(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubWorkerCredentials{credential: sampleCredential()}
@@ -107,8 +107,8 @@ func TestGetWorkerCredential_ShowsTheNumberOnlyUnderAReachingCeiling(t *testing.
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
 	detail := result.(workerCredentialDetail)
-	assert.Equal(t, "D1234567", detail.Number)
-	assert.Empty(t, detail.Withheld)
+	assert.Empty(t, detail.Number)
+	assert.Equal(t, []string{"number"}, detail.Withheld)
 	assert.Equal(t, "Maria Ortiz", detail.WorkerName)
 	assert.Equal(t, "CDL", detail.CredentialType)
 	assert.True(t, repo.last.IncludeType)

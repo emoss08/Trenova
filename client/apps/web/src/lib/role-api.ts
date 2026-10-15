@@ -1,7 +1,8 @@
 import type {
-  AddPermission,
   AssignRole,
-  ResourcePermission,
+  DataScope,
+  FieldSensitivity,
+  Operation,
   Role,
   RoleConstraint,
   RoleConstraintType,
@@ -17,6 +18,7 @@ export type OperationDefinition = {
   operation: string;
   displayName: string;
   description: string;
+  implies?: string[] | null;
 };
 
 export type ResourceDefinition = {
@@ -27,6 +29,7 @@ export type ResourceDefinition = {
   operations: OperationDefinition[];
   parentResource?: string;
   defaultSensitivity: string;
+  enforceableScopes?: DataScope[] | null;
 };
 
 export type ResourceCategory = {
@@ -36,6 +39,39 @@ export type ResourceCategory = {
 
 export async function getAvailableResources(): Promise<ResourceCategory[]> {
   return api.get<ResourceCategory[]>("/permissions/resources");
+}
+
+export type BundleGrant = {
+  resource: string;
+  displayName: string;
+  operations: Operation[];
+  dataScope: DataScope;
+};
+
+export type CapabilityBundle = {
+  id: string;
+  module: string;
+  label: string;
+  description: string;
+  grants: BundleGrant[];
+};
+
+export type JobTemplate = {
+  id: string;
+  label: string;
+  description: string;
+  bundles: string[] | null;
+  maxSensitivity: FieldSensitivity;
+  grants: BundleGrant[];
+};
+
+export type BundleCatalog = {
+  bundles: CapabilityBundle[];
+  templates: JobTemplate[];
+};
+
+export async function getPermissionBundles(): Promise<BundleCatalog> {
+  return api.get<BundleCatalog>("/permissions/bundles");
 }
 
 export async function getAvailableOperations(): Promise<OperationDefinition[]> {
@@ -82,31 +118,13 @@ export async function updateRole(id: string, data: Partial<Role>): Promise<Role>
   return api.put<Role>(`/roles/${id}`, data);
 }
 
-export async function deleteRole(id: string): Promise<void> {
-  return api.delete(`/roles/${id}`);
+export async function deleteRole(id: string, options?: { force?: boolean }): Promise<void> {
+  const query = options?.force ? "?force=true" : "";
+  return api.delete(`/roles/${id}${query}`);
 }
 
 export async function getRoleImpact(id: string): Promise<RoleImpact[]> {
   return api.get<RoleImpact[]>(`/roles/${id}/impact`);
-}
-
-export async function addPermission(
-  roleId: string,
-  data: AddPermission,
-): Promise<ResourcePermission> {
-  return api.post<ResourcePermission>(`/roles/${roleId}/permissions`, data);
-}
-
-export async function updatePermission(
-  roleId: string,
-  permissionId: string,
-  data: Partial<AddPermission>,
-): Promise<ResourcePermission> {
-  return api.put<ResourcePermission>(`/roles/${roleId}/permissions/${permissionId}`, data);
-}
-
-export async function removePermission(roleId: string, permissionId: string): Promise<void> {
-  return api.delete(`/roles/${roleId}/permissions/${permissionId}`);
 }
 
 export async function assignRole(roleId: string, data: AssignRole): Promise<UserRoleAssignment> {
@@ -115,10 +133,6 @@ export async function assignRole(roleId: string, data: AssignRole): Promise<User
 
 export async function unassignRole(assignmentId: string): Promise<void> {
   return api.delete(`/roles/assignments/${assignmentId}`);
-}
-
-export async function getRoleAssignments(roleId: string): Promise<UserRoleAssignment[]> {
-  return api.get<UserRoleAssignment[]>(`/roles/${roleId}/assignments`);
 }
 
 export async function listRoleHierarchy(): Promise<RoleHierarchyEdge[]> {

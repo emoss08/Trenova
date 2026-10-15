@@ -83,7 +83,11 @@ func fixPermissions(
 			requiredPermission{permission.ResourceCustomerPayment, permission.OpUpdate},
 		)
 	}
-	return append(needed, requiredPermission{permission.ResourceInvoice, permission.OpUpdate})
+	return append(
+		needed,
+		requiredPermission{permission.ResourceInvoice, permission.OpUpdate},
+		requiredPermission{permission.ResourceInvoice, permission.OpPost},
+	)
 }
 
 func fixError(err error) error {

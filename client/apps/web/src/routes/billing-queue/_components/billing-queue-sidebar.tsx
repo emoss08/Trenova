@@ -1,5 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -114,6 +116,7 @@ export function BillingQueueSidebar({
   onSelectItem: (id: string) => void;
 }) {
   const t = useT();
+  const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
 
   const [searchParams, setSearchParams] = useQueryStates(queueSidebarSearchParamsParser);
   const {
@@ -258,7 +261,7 @@ export function BillingQueueSidebar({
       },
     });
   }
-  if (eligible.postable.length > 0) {
+  if (canPost && eligible.postable.length > 0) {
     dockActions.push({
       id: "post",
       label: t("Post {0}", eligible.postable.length),

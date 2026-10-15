@@ -155,6 +155,14 @@ not listed, with a justification, in its `allowlist_test.go`. Prefer resolving
 the tenant first (a share token, a webhook's account) and continuing under
 `WithTenant`, so the system scope covers one lookup, not the request.
 
+**A role's data scope** rides beside the tenant scope. A request or agent tool call
+that holds a `pkg/readscope` holder sends `SET LOCAL trenova.read_scope` with its
+tenant scope, and restrictive `read_scope` policies on `shipments`, `orders`,
+`invoices` and `workers` read it through `trenova_rls.read_scope(kind)` and
+`trenova_rls.read_scope_ids(kind)`. It is unsigned because it can only narrow a read
+below what the signed scope allows; `apply_policy` and `reconcile()` leave the
+`read_scope` policies alone. See [permissions.md](permissions.md#data-scopes).
+
 ## Getting the scope right
 
 A missing scope fails closed: the statement is refused. A scope that is present
@@ -181,7 +189,13 @@ deny, make sure the scope is the tenant the question is about.
 - **Two organizations, one transaction.** An internal EDI approval or transfer
   change writes both organizations atomically. Those transactions run under the
   system scope, with the tenant filters still written in Go; a read of the other
-  organization alone binds that organization's tenant instead.
+  organization alone binds that organization's tenant instead. Replacing a user's
+  organization memberships is the same shape: the user repository lists and rewrites
+  them under the system scope, filtered to that user and business unit, and the user
+  service first checks the caller holds `user:update` in every organization it adds or
+  removes, judged by that organization's own roles (`dbscope.WithTenant` for it, and
+  `authctx.WithoutSessionRoleActivation`, since the session's activated roles belong to
+  the caller's current organization).
 - **Business-unit-wide reads.** Organization pickers, the organization loader and
   organization uniqueness checks span the business unit; they run under the system
   scope and filter by business unit themselves. The `organizations` policy only

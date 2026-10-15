@@ -58,16 +58,29 @@ func (r *Registry) registerBillingResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View invoices"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create invoices"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify invoices"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update and post",
+				Description: "Modify invoices, submit adjustments and post invoices to the ledger",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export invoices"},
-			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve invoices"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve invoices, and approve or reject invoice adjustments",
+			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject invoices"},
 			{
 				Operation:   OpSubmit,
-				DisplayName: "Submit",
-				Description: "Submit invoices for approval",
+				DisplayName: "Submit and send",
+				Description: "Submit invoices for approval, and send or resend them by email or EDI",
 			},
 			{Operation: OpCancel, DisplayName: "Void", Description: "Void invoices"},
+			{
+				Operation:   OpPost,
+				DisplayName: "Post",
+				Description: "Post invoices to the ledger, by hand or from the billing queue",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
@@ -178,6 +191,9 @@ func (r *Registry) registerBillingResources() {
 			"remainingEligibleAmount":         SensitivityRestricted,
 			"rerateVariancePercent":           SensitivityRestricted,
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -195,7 +211,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Update billing queue item status",
+				Description: "Update billing queue items: post them, release them and resolve their issues",
 			},
 			{
 				Operation:   OpAssign,
@@ -253,7 +269,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Accept, modify, or reject agent proposals",
+				Description: "Accept, modify or reject agent proposals, and resolve proposals and plans",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -282,11 +298,15 @@ func (r *Registry) registerBillingResources() {
 		Description: "Per-organization agent autonomy configuration",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View agent control settings"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View agent control settings, and dismiss or restore provider failure notices",
+			},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Update agent control settings",
+				Description: "Update agent control settings, and apply or restore tune-ups",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -333,7 +353,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Edit what a case expects, and activate, quarantine or retire it",
+				Description: "Edit what a case expects, activate, quarantine or retire it, and cancel runs",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -408,7 +428,11 @@ func (r *Registry) registerBillingResources() {
 		Description: "Conversations with configured agents",
 		Category:    "Platform",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View own conversations"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View own conversations and pin artifacts in them",
+			},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -434,7 +458,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Dismiss an insight that is not worth acting on",
+				Description: "Dismiss an insight that is not worth acting on, or restore one",
 			},
 		},
 		DefaultSensitivity: SensitivityInternal,
@@ -602,11 +626,16 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceDetentionPolicy.String(),
-		DisplayName:        "Detention Policy",
-		Description:        "Contractual detention terms, rate tiers, notice requirements, and per-stop occurrences",
-		Category:           "Billing",
-		Operations:         standardOpsWithDelete,
+		Resource:    ResourceDetentionPolicy.String(),
+		DisplayName: "Detention Policy",
+		Description: "Contractual detention terms, rate tiers, notice requirements, and per-stop occurrences",
+		Category:    "Billing",
+		Operations: relabel(
+			standardOpsWithDelete,
+			OpUpdate,
+			"Update",
+			"Modify detention policies, and approve, dispute, waive and send notices for occurrences",
+		),
 		DefaultSensitivity: SensitivityInternal,
 	})
 

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,11 +58,12 @@ type CredentialKeeper interface {
 	PlanUpdate(
 		ctx context.Context,
 		entity *worker.WorkerCredential,
+		actor *permissionports.RequestActor,
 	) (*workercredentialservice.CredentialChange, error)
 	Update(
 		ctx context.Context,
 		entity *worker.WorkerCredential,
-		userID pulid.ID,
+		actor *permissionports.RequestActor,
 	) (*worker.WorkerCredential, error)
 	PlanArchive(
 		ctx context.Context,
@@ -319,13 +321,13 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agentports.Agen
 		Plan: func(
 			ctx context.Context,
 			edit *credentialEdit,
-			_ *agentports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*workercredentialservice.CredentialChange, error) {
 			entity, err := edit.entity(ctx, credentials)
 			if err != nil {
 				return nil, err
 			}
-			return credentials.PlanUpdate(ctx, entity)
+			return credentials.PlanUpdate(ctx, entity, params.Actor)
 		},
 		Refused: func(*credentialEdit) string { return "Would correct a credential." },
 		Render: func(
@@ -352,7 +354,7 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agentports.Agen
 			if err != nil {
 				return nil, err
 			}
-			updated, err := credentials.Update(ctx, entity, params.Actor.UserID)
+			updated, err := credentials.Update(ctx, entity, params.Actor)
 			if err != nil {
 				return nil, err
 			}

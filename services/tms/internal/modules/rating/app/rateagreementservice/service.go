@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -22,6 +23,7 @@ type Params struct {
 	Repo         rateagreementports.RateAgreementRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
+	Fields       permissionports.FieldAccess `optional:"true"`
 }
 
 type Service struct {
@@ -29,6 +31,7 @@ type Service struct {
 	repo         rateagreementports.RateAgreementRepository
 	validator    *Validator
 	auditService auditports.AuditService
+	fields       permissionports.FieldAccess
 }
 
 func New(p Params) *Service {
@@ -37,6 +40,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
+		fields:       p.Fields,
 	}
 }
 
@@ -105,14 +109,15 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) (*rateagreement.RateAgreement, error) {
+	userID := actor.UserIDOrNil()
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("userId", userID.String()),
 	)
 
-	plan, err := s.PlanUpdate(ctx, entity)
+	plan, err := s.PlanUpdate(ctx, entity, actor)
 	if err != nil {
 		return nil, err
 	}

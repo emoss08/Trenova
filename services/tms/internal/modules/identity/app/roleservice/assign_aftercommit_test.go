@@ -35,11 +35,12 @@ func TestAssignRoleInsideATransactionAuditsOnlyAfterCommit(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, deps.audit.Changes(), "nothing is audited before the transaction commits")
-	deps.permEngine.AssertNotCalled(t, "InvalidateUser", mock.Anything, mock.Anything, mock.Anything)
+	assert.Empty(t, deps.notifier.Users())
 
-	deps.permEngine.On("InvalidateUser", mock.Anything, targetUserID, orgID).Return(nil).Once()
 	hooks.Run(t.Context())
 
+	require.Len(t, deps.notifier.Users(), 1)
+	assert.Equal(t, targetUserID, deps.notifier.Users()[0].UserID)
 	change := deps.audit.Only(t)
 	assert.Equal(t, permission.OpAssign, change.Operation)
 	assert.Equal(t, roleID.String(), change.ResourceID)
@@ -67,5 +68,5 @@ func TestAssignRoleRolledBackLeavesNoAuditEntry(t *testing.T) {
 	}))
 
 	assert.Empty(t, deps.audit.Changes())
-	deps.permEngine.AssertNotCalled(t, "InvalidateUser", mock.Anything, mock.Anything, mock.Anything)
+	assert.Empty(t, deps.notifier.Users())
 }

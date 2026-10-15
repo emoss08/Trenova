@@ -36,21 +36,21 @@ func (rp *ResourcePermission) BeforeAppendModel(_ context.Context, q bun.Query) 
 		}
 		rp.CreatedAt = now
 		rp.UpdatedAt = now
-		rp.Operations = ExpandWithDependencies(NewOperationSet(rp.Operations...)).ToSlice()
+		rp.Operations = Normalize(rp.Operations)
 	case *bun.UpdateQuery:
 		rp.UpdatedAt = now
-		rp.Operations = ExpandWithDependencies(NewOperationSet(rp.Operations...)).ToSlice()
+		rp.Operations = Normalize(rp.Operations)
 	}
 
 	return nil
 }
 
 func (rp *ResourcePermission) HasOperation(op Operation) bool {
-	return slices.Contains(rp.Operations, op)
+	return slices.Contains(Implied(rp.Operations), op)
 }
 
 func (rp *ResourcePermission) GetOperationSet() OperationSet {
-	return NewOperationSet(rp.Operations...)
+	return ExpandWithDependencies(NewOperationSet(rp.Operations...))
 }
 
 func (p *ResourcePermission) Validate(multiErr *errortypes.MultiError) {

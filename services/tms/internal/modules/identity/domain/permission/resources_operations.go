@@ -9,11 +9,18 @@ func (r *Registry) registerOperationsResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View orders"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new orders"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify orders"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify, cancel and close orders",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export order data"},
 			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel orders"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -24,7 +31,11 @@ func (r *Registry) registerOperationsResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View shipments"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new shipments"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify shipments"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify shipments and cancel billing transfer runs",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export shipment data"},
 			{Operation: OpImport, DisplayName: "Import", Description: "Import shipments"},
 			{
@@ -36,6 +47,9 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpDuplicate, DisplayName: "Duplicate", Description: "Duplicate shipments"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -267,9 +281,13 @@ func (r *Registry) registerOperationsResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View service failures"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create service failures"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify service failures"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify and resolve service failures",
+			},
 			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve service failures"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Archive service failures"},
+			{Operation: OpArchive, DisplayName: "Void", Description: "Void service failures"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export service failures"},
 		},
 		DefaultSensitivity: SensitivityInternal,
@@ -304,7 +322,7 @@ func (r *Registry) registerOperationsResources() {
 			{
 				Operation:   OpArchive,
 				DisplayName: "Archive",
-				Description: "Archive service failure reason codes",
+				Description: "Archive and reactivate reason codes",
 			},
 			{
 				Operation:   OpExport,

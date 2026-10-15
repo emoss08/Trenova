@@ -8,6 +8,7 @@ package workercredentialresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -112,7 +113,7 @@ func (r *MutationResolver) UpdateWorkerCredential(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.Update(ctx, entity, authCtx.UserID)
+	return r.WorkerCredentialService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) VerifyWorkerCredential(ctx context.Context, id string, version *int) (*worker.WorkerCredential, error) {

@@ -457,6 +457,10 @@ func (ur *repository) ListOrganizationMemberships(
 	ctx context.Context,
 	userID, businessUnitID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list a user's memberships across the organizations of one business unit",
+	)
 	return dbtx.Read(
 		ctx,
 		ur.db,
@@ -486,22 +490,30 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 	ctx context.Context,
 	req tenantports.ReplaceOrganizationMembershipsRequest,
 ) ([]*tenant.OrganizationMembership, error) {
+	if len(req.OrganizationIDs) == 0 {
+		return nil, tenant.NewNoOrganizationMembershipsError()
+	}
+
+	ctx = dbscope.WithSystem(
+		ctx,
+		"replace a user's memberships across the organizations of one business unit in one transaction",
+	)
 	return dbtx.Write(
 		ctx,
 		ur.db,
 		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-			if len(req.OrganizationIDs) == 0 {
-				_, err := ur.db.DBForContext(ctx).
-					NewDelete().
-					Model((*tenant.OrganizationMembership)(nil)).
-					Where("user_id = ?", req.UserID).
-					Where("business_unit_id = ?", req.BusinessUnitID).
-					Exec(ctx)
-				if err != nil {
-					return nil, err
-				}
-
-				return []*tenant.OrganizationMembership{}, nil
+			ucols := tenantcol.UserColumns
+			inBusinessUnit, err := ur.db.DBForContext(ctx).
+				NewSelect().
+				Model((*tenant.User)(nil)).
+				Where(ucols.ID.Eq(), req.UserID).
+				Where(ucols.BusinessUnitID.Eq(), req.BusinessUnitID).
+				Exists(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if !inBusinessUnit {
+				return nil, errortypes.NewNotFoundError("User not found")
 			}
 
 			desiredOrgSet := make(map[pulid.ID]struct{}, len(req.OrganizationIDs))
@@ -628,6 +640,17 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 					Where("business_unit_id = ?", req.BusinessUnitID).
 					Exec(txCtx); updateDefaultErr != nil {
 					return updateDefaultErr
+				}
+
+				if _, currentErr := tx.NewUpdate().
+					Model((*tenant.User)(nil)).
+					Set(ucols.CurrentOrganizationID.Set(), newDefaultOrgID).
+					Set(ucols.UpdatedAt.Set(), timeutils.NowUnix()).
+					Where(ucols.ID.Eq(), req.UserID).
+					Where(ucols.BusinessUnitID.Eq(), req.BusinessUnitID).
+					Where(ucols.CurrentOrganizationID.NotIn(), bun.List(req.OrganizationIDs)).
+					Exec(txCtx); currentErr != nil {
+					return currentErr
 				}
 
 				return nil

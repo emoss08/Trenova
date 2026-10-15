@@ -3,6 +3,7 @@ package rateagreementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -126,6 +127,7 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
+	actor *permissionports.RequestActor,
 ) (*UpdatePlan, error) {
 	original, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: entity.ID,
@@ -138,6 +140,7 @@ func (s *Service) PlanUpdate(
 
 	planned := *entity
 	planned.Status = original.Status
+	planned.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 	planned.StampRules()
 
 	changeSummary, termsChanged := headerTermsChanged(original, &planned)
