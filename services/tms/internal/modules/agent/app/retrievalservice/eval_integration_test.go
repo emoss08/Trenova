@@ -352,6 +352,14 @@ func measureLeg(t *testing.T, current leg) {
 		hybrid = &report
 	}
 
+	require.Emptyf(t, keyword.Spurious, "%s by keyword found something for a query nothing answers:\n%s",
+		current.label, keyword.SpuriousMatches())
+	if hybrid != nil {
+		require.Emptyf(t, hybrid.Spurious,
+			"%s by keyword and meaning found something for a query nothing answers:\n%s",
+			current.label, hybrid.SpuriousMatches())
+	}
+
 	floors := readRetrievalFloors(t, current.floors)
 	if *update {
 		keywordFloors := keyword.Floors()

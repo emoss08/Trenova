@@ -155,9 +155,31 @@ find nothing. Similarity runs at a different height for each embedding model: no
 those requests up to 0.55 against the catalog, where OpenAI's `text-embedding-3-small`
 scores small talk near 0.23. So the floor a match by meaning alone must reach comes from the
 model that embedded the question (`airetrieval.SimilarityFloor`, 0.58 for nomic-embed-text and
-0.5 for a model not yet measured), and it reaches the tool catalog, the product guide and the
-Desk's agent matcher through `CatalogSimilarities.Floor`. When that check fails after a
-re-record, raise the model's floor rather than the eval.
+0.5 for a model not yet measured). It reaches the tool catalog, the product guide and the
+Desk's agent matcher through `CatalogSimilarities.Floor`, and document, inbound message and
+memory search through `retrievalservice.SearchTuning.FloorFor`, which a floor set on the
+tuning still overrides. When that check fails after a re-record, raise the model's floor
+rather than the eval.
+
+Retrieval has its own fixture, `agentevalgate/evals/embeddings/retrieval-nomic-embed-text.json`,
+recorded with `TestRecordRetrievalEmbeddingFixture` in `retrievalservice`. It holds every
+chunk of the three retrieval suites (`documentretrieval.yaml`, `inboxretrieval.yaml`,
+`memoryretrieval.yaml`), each document both as filed and as attached to a conversation (the
+retrieval leak test seeds both), and every query, including each suite's `nothing` list.
+`TestRetrievalAgainstFloors` is an integration test that needs pgvector, so run it against
+the image `task test-db-image` builds:
+
+```bash
+cd services/tms
+task test-db-image
+TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local task test-db-up
+TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags integration -count=1 \
+  -run 'TestRetrievalAgainstFloors' ./internal/modules/agent/app/retrievalservice/
+```
+
+Add `-update` to pin its floors (`*retrieval.floors.json`). With
+`TRENOVA_EVAL_REQUIRE_FLOORS=true` and `TRENOVA_EVAL_REQUIRE_HYBRID=true` it fails rather than
+skips when floors, pgvector or the fixture are missing.
 
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/rankfusion"
@@ -26,10 +27,23 @@ type SearchTuning struct {
 func DefaultSearchTuning() SearchTuning {
 	return SearchTuning{
 		RRFK:            DefaultRRFK,
-		SimilarityFloor: DefaultSimilarityFloor,
 		CandidateFactor: DefaultCandidateFactor,
 		MinCandidates:   DefaultMinCandidates,
 	}
+}
+
+func (t SearchTuning) FloorFor(modelKey string) float64 {
+	if t.SimilarityFloor > 0 {
+		return t.SimilarityFloor
+	}
+
+	return airetrieval.SimilarityFloor(modelKey)
+}
+
+func (t SearchTuning) forModel(modelKey string) SearchTuning {
+	t.SimilarityFloor = t.FloorFor(modelKey)
+
+	return t
 }
 
 func (t SearchTuning) normalized() SearchTuning {
@@ -77,6 +91,7 @@ func Fuse(
 	tuning SearchTuning,
 ) []FusedHit {
 	tuning = tuning.normalized()
+	floor := tuning.FloorFor("")
 
 	hits := make(map[pulid.ID]*FusedHit, len(keyword)+len(vector))
 	order := make([]pulid.ID, 0, len(keyword)+len(vector))
@@ -96,7 +111,7 @@ func Fuse(
 		switch {
 		case hit.SourceID.IsNil(), seen && fused.VectorRank > 0:
 			continue
-		case !seen && hit.Similarity < tuning.SimilarityFloor:
+		case !seen && hit.Similarity < floor:
 			continue
 		case !seen:
 			fused = &FusedHit{ID: hit.SourceID}

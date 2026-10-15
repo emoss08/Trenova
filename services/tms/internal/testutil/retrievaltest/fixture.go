@@ -34,6 +34,8 @@ const (
 		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/modules/agent/app/retrievalservice/ -update"
 )
 
+var embeddedDocumentOwners = []string{"", document.ConversationResourceType}
+
 func EmbeddingInputs(
 	documents, inbox, memories *agentevalgate.RetrievalSuite,
 ) agentevalgate.EmbeddingInputs {
@@ -52,8 +54,14 @@ func EmbeddingInputs(
 		}
 	}
 
-	for _, item := range documents.Corpus {
-		add(item.Key, retrievalservice.ChunkDocument(DocumentFor(item, "")))
+	for _, owner := range embeddedDocumentOwners {
+		for _, item := range documents.Corpus {
+			key := item.Key
+			if owner != "" {
+				key += "@" + owner
+			}
+			add(key, retrievalservice.ChunkDocument(DocumentFor(item, owner)))
+		}
 	}
 	for _, item := range inbox.Corpus {
 		add(item.Key, retrievalservice.ChunkEmail(MessageFor(item)))

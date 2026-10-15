@@ -131,6 +131,7 @@ func (s *Searcher) legs(
 		keywordHits []agentports.RetrievalKeywordHit
 		vectorHits  []agentports.VectorSearchHit
 		semantics   agentports.RetrievalSemantics
+		modelKey    string
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -147,14 +148,14 @@ func (s *Searcher) legs(
 		return nil
 	})
 	group.Go(func() error {
-		vectorHits, semantics = s.vectorLeg(groupCtx, req, plan, sourceType)
+		vectorHits, semantics, modelKey = s.vectorLeg(groupCtx, req, plan, sourceType)
 		return nil
 	})
 	if err := group.Wait(); err != nil {
 		return nil, semantics, err
 	}
 
-	return Fuse(keywordHits, vectorHits, s.tuning), semantics, nil
+	return Fuse(keywordHits, vectorHits, s.tuning.forModel(modelKey)), semantics, nil
 }
 
 func (s *Searcher) vectorLeg(
@@ -162,9 +163,11 @@ func (s *Searcher) vectorLeg(
 	req *agentports.RetrievalSearchRequest,
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
-) ([]agentports.VectorSearchHit, agentports.RetrievalSemantics) {
+) (hits []agentports.VectorSearchHit, semantics agentports.RetrievalSemantics, modelKey string) {
 	if s.vectorizer == nil {
-		return nil, agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonNoProvider}
+		return nil, agentports.RetrievalSemantics{
+			Reason: airetrieval.UnavailableReasonNoProvider,
+		}, ""
 	}
 
 	settings, err := s.repo.GetSettings(ctx, req.TenantInfo)
@@ -174,10 +177,10 @@ func (s *Searcher) vectorLeg(
 			zap.Error(err))
 		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
-		}
+		}, ""
 	}
 	if !settings.SourceEnabled(sourceType) {
-		return nil, agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonDisabled}
+		return nil, agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonDisabled}, ""
 	}
 
 	vector, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
@@ -191,17 +194,17 @@ func (s *Searcher) vectorLeg(
 			zap.Error(err))
 		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
-		}
+		}, ""
 	}
 	if !vector.Usable() {
 		reason := vector.Reason
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return nil, agentports.RetrievalSemantics{Reason: reason}
+		return nil, agentports.RetrievalSemantics{Reason: reason}, ""
 	}
 
-	hits, err := s.repo.Search(ctx, &agentports.VectorSearchRequest{
+	found, err := s.repo.Search(ctx, &agentports.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{sourceType},
 		ModelKey:    vector.ModelKey,
@@ -212,17 +215,17 @@ func (s *Searcher) vectorLeg(
 	if err != nil {
 		var unavailable *airetrieval.UnavailableError
 		if errors.As(err, &unavailable) {
-			return nil, agentports.RetrievalSemantics{Reason: unavailable.Reason}
+			return nil, agentports.RetrievalSemantics{Reason: unavailable.Reason}, ""
 		}
 		s.l.Warn("vector search failed; searching by keyword only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
 		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
-		}
+		}, ""
 	}
 
-	return hits, agentports.RetrievalSemantics{Used: true}
+	return found, agentports.RetrievalSemantics{Used: true}, vector.ModelKey
 }
 
 func fusedIDs(hits []FusedHit) []pulid.ID {

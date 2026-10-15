@@ -19,9 +19,10 @@ const (
 )
 
 type RetrievalSuite struct {
-	Source string          `yaml:"source"`
-	Corpus []RetrievalItem `yaml:"corpus"`
-	Cases  []RetrievalCase `yaml:"cases"`
+	Source  string          `yaml:"source"`
+	Corpus  []RetrievalItem `yaml:"corpus"`
+	Cases   []RetrievalCase `yaml:"cases"`
+	Nothing []string        `yaml:"nothing"`
 }
 
 type RetrievalItem struct {
@@ -66,6 +67,7 @@ type RetrievalOutcome struct {
 
 type RetrievalReport struct {
 	Outcomes  []RetrievalOutcome
+	Spurious  []RetrievalOutcome
 	RecallAt5 float64
 	MRR       float64
 	NDCGAt10  float64
@@ -116,20 +118,38 @@ func (s *RetrievalSuite) Validate() error {
 		}
 	}
 
+	for _, query := range s.Nothing {
+		if strings.TrimSpace(query) == "" {
+			return errors.New("a query that should find nothing cannot be empty")
+		}
+	}
+
 	return nil
 }
 
 func (s *RetrievalSuite) Queries() []string {
-	queries := make([]string, 0, len(s.Cases))
+	queries := make([]string, 0, len(s.Cases)+len(s.Nothing))
 	for _, retrieval := range s.Cases {
 		queries = append(queries, retrieval.Query)
 	}
 
-	return queries
+	return append(queries, s.Nothing...)
 }
 
 func EvaluateRetrieval(suite *RetrievalSuite, retrieve Retriever) (RetrievalReport, error) {
 	report := RetrievalReport{Outcomes: make([]RetrievalOutcome, 0, len(suite.Cases))}
+	for _, query := range suite.Nothing {
+		ranked, err := retrieve(query)
+		if err != nil {
+			return report, fmt.Errorf("retrieve %q: %w", query, err)
+		}
+		if len(ranked) > 0 {
+			report.Spurious = append(report.Spurious, RetrievalOutcome{
+				Case:   RetrievalCase{Query: query},
+				Ranked: ranked,
+			})
+		}
+	}
 	if len(suite.Cases) == 0 {
 		return report, nil
 	}
@@ -156,6 +176,16 @@ func EvaluateRetrieval(suite *RetrievalSuite, retrieve Retriever) (RetrievalRepo
 	report.NDCGAt10 = ndcg / total
 
 	return report, nil
+}
+
+func (r RetrievalReport) SpuriousMatches() string {
+	var builder strings.Builder
+	for _, outcome := range r.Spurious {
+		fmt.Fprintf(&builder, "- %q should find nothing, found %s\n",
+			outcome.Case.Query, strings.Join(outcome.Ranked, ", "))
+	}
+
+	return builder.String()
 }
 
 func ScoreRetrieval(retrieval RetrievalCase, ranked []string) RetrievalOutcome {

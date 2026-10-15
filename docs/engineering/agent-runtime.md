@@ -654,8 +654,8 @@ ordered by `agentports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
 recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
 memories nearest the turn's query vector, and falls back to recency and use
 alone when the organization is not indexed or the search fails. The ranker
-also returns the candidates at or above the similarity floor
-(`RankedMemories.Similar`).
+also returns the candidates at or above the embedding model's similarity floor
+(`RankedMemories.Similar`; `SimilarMemories.Floor`, from `SearchTuning.FloorFor`).
 
 **What bears on the turn.** `agentmemoryservice.Relevance` marks a candidate as
 bearing on the turn (`agent.MemoryRelevance`, carried on

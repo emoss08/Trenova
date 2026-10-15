@@ -97,3 +97,7 @@ cases:
     relevant: [detention-dispute]
   - query: messages from Dana Whitfield
     relevant: [late-pickup-complaint, thanks]
+nothing:
+  - xyzzy plugh
+  - quantum chromodynamics lattice
+  - penguin sonnet
