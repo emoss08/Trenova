@@ -1055,7 +1055,7 @@ func TestUserHandler_UpdateMyAssistantVisibility_RequiresTheChoice(t *testing.T)
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, ginCtx.ResponseCode())
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 	repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
 }
 

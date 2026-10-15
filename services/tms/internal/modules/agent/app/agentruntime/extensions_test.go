@@ -111,7 +111,7 @@ func TestRun_AWriteAfterReadingTheWebWaitsForAPerson(t *testing.T) {
 
 	contents := toolResults(result, "create_report")
 	require.Len(t, contents, 1)
-	assert.Contains(t, contents[0], "read content from the web")
+	assert.Contains(t, contents[0], "read content written outside the organization")
 }
 
 func TestRun_AWriteBeforeAnyWebContentRunsAtItsTier(t *testing.T) {
@@ -242,4 +242,54 @@ func TestAfterExternalContentOnlyLowersTheTier(t *testing.T) {
 	tier, held = afterExternalContent(agent.TierAutoExecute, false)
 	assert.Equal(t, agent.TierAutoExecute, tier)
 	assert.False(t, held)
+}
+
+func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		toolTurn("inspect_x12", map[string]any{"content": "ISA*00*~"}),
+		toolTurn("create_report", map[string]any{"name": "Partner 214 errors"}),
+		textTurn("Proposed."),
+	}}
+	rt := newRuntime(
+		completion,
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+			queryTool("inspect_x12", map[string]any{"summary": map[string]any{}}, nil),
+		}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{
+			actionTool("create_report", agent.TierAutoExecute, nil),
+		}},
+		nil,
+	)
+	rt.extensions = webGate(agentextension.AvailabilitySelectedAgents)
+	definition := testDefinition("inspect_x12", "create_report")
+	definition.AutonomyCeiling = agent.TierAutoExecute
+
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "what is wrong with this 214, then save a report of it",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	assert.Equal(t, agent.TierPropose, result.Actions[0].Tier)
+	assert.False(t, result.Actions[0].Executed)
+	assert.True(t, result.Actions[0].Tainted)
+	contents := toolResults(result, "create_report")
+	require.Len(t, contents, 1)
+	assert.Contains(t, contents[0], "a trading partner's text or guide it was given")
+}
+
+func TestReadsExternalContent_NamesTheWebAndPastedPartnerText(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, ReadsExternalContent(agentextension.ToolWebSearch))
+	assert.True(t, ReadsExternalContent(agentextension.ToolWebRead))
+	assert.True(t, ReadsExternalContent("inspect_x12"))
+	assert.True(t, ReadsExternalContent("draft_edi_connection"),
+		"a partner's implementation guide is their text too")
+	assert.False(t, ReadsExternalContent("get_edi_message"),
+		"a stored partner document taints the run; only text handed to the agent caps writes")
 }

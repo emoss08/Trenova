@@ -36,9 +36,8 @@ vi.mock("@/components/autocomplete-fields", () => ({
     <output aria-label={label} />
   ),
 }));
-vi.mock("@/components/elements/pdf-viewer", () => ({
-  PdfViewer: () => <div data-testid="pdf" />,
-  PdfPage: ({ rotate }: { rotate: number }) => <div data-testid="pdf" data-rotate={rotate} />,
+vi.mock("@/components/elements/pdf-frame", () => ({
+  PdfFrame: ({ rotate }: { rotate: number }) => <div data-testid="pdf" data-rotate={rotate} />,
 }));
 
 // Pages as CapturePageFields sends them. `sequence` is the page's place in

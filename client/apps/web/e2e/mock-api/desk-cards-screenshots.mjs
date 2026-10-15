@@ -132,6 +132,34 @@ const CARDS = [
     empty: "invoice-riverside",
     gone: "invoice-gone",
   },
+  {
+    card: "worker-settlement",
+    loaded: "pay-rosa",
+    attention: "pay-marcus",
+    empty: "pay-jordan",
+    gone: "pay-gone",
+  },
+  {
+    card: "worker-settlement-closed",
+    loaded: "pay-paid",
+    attention: "pay-voided",
+    empty: "pay-jordan",
+    gone: "pay-gone",
+  },
+  {
+    card: "carrier-settlement",
+    loaded: "payable-ridge",
+    attention: "payable-lonestar",
+    empty: "payable-mesa",
+    gone: "payable-gone",
+  },
+  {
+    card: "carrier-settlement-closed",
+    loaded: "payable-paid",
+    attention: "payable-voided",
+    empty: "payable-mesa",
+    gone: "payable-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

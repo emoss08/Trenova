@@ -41,10 +41,6 @@ var (
 	AccessorialMethods = Source("accessorialCharge.method", accessorialcharge.MethodValues())
 	TenderChannels     = Source("tender.channel", tender.ChannelValues())
 	SpotTenderModes    = Source("tender.spotMode", tender.SpotModeValues())
-	TenderResponses    = Source("tender.responseAction", []tender.ResponseAction{
-		tender.ResponseActionAccept,
-		tender.ResponseActionDecline,
-	})
 	ExceptionCategories = Source(
 		"agent.exceptionCategory",
 		agent.AllExceptionCategories(),
@@ -64,6 +60,10 @@ var (
 	FactoringSubmissionStatuses = Source(
 		"factoring.submissionStatus",
 		factoring.AllSubmissionStatuses(),
+	)
+	FactoringFundingOutcomes = Source(
+		"factoring.fundingOutcome",
+		factoring.AllFundingOutcomes(),
 	)
 	FactoringOverrides = Source(
 		"invoice.factoringOverride",

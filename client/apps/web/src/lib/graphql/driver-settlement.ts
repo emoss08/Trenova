@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import {
   AddDriverSettlementAdjustmentDocument,
   AdjustEscrowAccountDocument,
@@ -200,6 +201,32 @@ export const driverPayEventTableGraphQLConfig = defineDataTableGraphQLConfig({
   operationName: "DriverPayEventTable",
   connectionKey: "driverPayEvents",
 });
+
+/**
+ * Invalidates every query the worker settlement workspace renders: the queue
+ * and its summary, the selected statement, the history table, the batches, the
+ * Desk's card and the worker's own pay. Any surface that moves a settlement
+ * through its lifecycle calls this so every view of it reads the change.
+ */
+export function invalidateDriverWorkspace(queryClient: QueryClient) {
+  const prefixes = [
+    "settlement-workspace-summary",
+    "settlement-workspace-settlements",
+    "unsettled-worker-summaries",
+    "unsettled-pay-events",
+    "driver-settlement-detail",
+    "driver-settlement-list",
+    "settlement-batch-detail",
+    "settlement-batch-list",
+    "worker-unsettled-events",
+    "worker-earnings-summary",
+    "worker-pay-advances",
+    "settlement",
+  ];
+  for (const prefix of prefixes) {
+    void queryClient.invalidateQueries({ queryKey: [prefix] });
+  }
+}
 
 export async function fetchEffectiveWorkerPayAssignment(
   workerId: string,

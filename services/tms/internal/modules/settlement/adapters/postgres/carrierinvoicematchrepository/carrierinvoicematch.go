@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -198,6 +199,58 @@ func (r *repository) ListLiveByAssignment(
 				return nil, fmt.Errorf("list live carrier invoice matches by assignment: %w", err)
 			}
 			return entities, nil
+		},
+	)
+}
+
+type liveMatchOnMove struct {
+	carriersettlement.InvoiceMatch `bun:",extend"`
+
+	MoveID pulid.ID `bun:"move_id,scanonly"`
+}
+
+func (r *repository) ListLiveByMoveIDs(
+	ctx context.Context,
+	req carriersettlementports.ListLiveCarrierInvoiceMatchesByMoveIDsRequest,
+) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error) {
+	if len(req.MoveIDs) == 0 {
+		return map[pulid.ID][]*carriersettlement.InvoiceMatch{}, nil
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error) {
+			cols := carriersettlementcol.InvoiceMatchColumns
+			assignments := shipmentcol.CarrierAssignmentColumns
+			rows := make([]*liveMatchOnMove, 0, len(req.MoveIDs))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&rows).
+				ColumnExpr(carriersettlementcol.InvoiceMatchTable.All()).
+				ColumnExpr(assignments.ShipmentMoveID.As("move_id")).
+				Join(
+					"JOIN "+shipmentcol.CarrierAssignmentTable.As(
+						shipmentcol.CarrierAssignmentTable.Alias,
+					)+" ON "+assignments.ID.EqColumn(cols.CarrierAssignmentID)+
+						" AND "+assignments.OrganizationID.EqColumn(cols.OrganizationID)+
+						" AND "+assignments.BusinessUnitID.EqColumn(cols.BusinessUnitID),
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+						Where(assignments.ShipmentMoveID.In(), bun.List(req.MoveIDs)).
+						Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+				}).
+				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list live carrier invoice matches by move: %w", err)
+			}
+			grouped := make(map[pulid.ID][]*carriersettlement.InvoiceMatch, len(req.MoveIDs))
+			for _, row := range rows {
+				match := row.InvoiceMatch
+				grouped[row.MoveID] = append(grouped[row.MoveID], &match)
+			}
+			return grouped, nil
 		},
 	)
 }

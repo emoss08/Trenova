@@ -1194,6 +1194,10 @@ enum ShipmentEventType {
   TenderDeliveryFailed
   TenderEntrySkipped
   TenderEntryWarned
+  TenderBounced
+  TenderCountered
+  TenderCounterDecided
+  TenderEscalated
   HoldPlaced
   HoldUpdated
   HoldReleased
@@ -1405,8 +1409,9 @@ type ShipmentCarrierEvent implements ShipmentEvent {
 """
 Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-TenderEntryWarned.
+TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+TenderEscalated.
 """
 type ShipmentTenderEvent implements ShipmentEvent {
   id: ID!
@@ -1873,6 +1878,16 @@ input ShipmentsInput {
   lines. Needs permission to read invoices.
   """
   invoiceIds: [ID!]
+  """
+  Only shipments one of these worker settlements pays, on one of its lines.
+  Needs permission to read worker settlements.
+  """
+  driverSettlementIds: [ID!]
+  """
+  Only shipments one of these carrier settlements pays, on one of its lines.
+  Needs permission to read carrier settlements.
+  """
+  carrierSettlementIds: [ID!]
 }
 
 input ShipmentEventsInput {

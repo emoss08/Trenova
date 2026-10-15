@@ -505,9 +505,9 @@ opens tainted when:
 Master-data names and notes written inside the organization are not sources.
 A shipment comment written outside it is (`record_note`, below).
 
-Web content is held more strictly: once a turn has read the web through an extension, every
-later write is capped at `Propose`, whatever its class
-([agent-extensions.md](agent-extensions.md)). That rule rides its own flag
+Web content is held more strictly: once a turn has read the web through an extension, or
+X12 a person pasted for `inspect_x12` to read, every later write is capped at `Propose`,
+whatever its class ([agent-extensions.md](agent-extensions.md#pasted-partner-text)). That rule rides its own flag
 (`TurnState.ExternalContent`) beside the taint, and the web read also adds a `web` mark to the
 taint, so both record it.
 
@@ -1047,6 +1047,50 @@ its own, in one plan with the turn's when several wait on the person. One level 
 **Read [agent-delegation.md](agent-delegation.md)
 before changing it.**
 
+### Matching a question to an agent
+
+Before a conversation exists, the Desk's front page and the assistant's home ask
+`myAgentRecommendation` which of the person's agents a question is best put to
+(`agentruntime.RecommendAgent`, the `AgentRecommender` port). It is the find_tools
+hand-off asked before the first turn instead of during it, and it is built from the
+same parts:
+
+- **Who is eligible.** `OtherUsableAgents`, the list the hand-off note reads: enabled
+  chat agents in the person's audience that `AgentsUsable` allows at `assistant:create`,
+  the check that starting the conversation makes again (`assertMayUseAgent`). The
+  resolver itself requires `assistant:create`. An API key or system actor is matched
+  to nobody.
+- **What counts.** Each agent's `heldTools` without the core tools every agent holds,
+  narrowed once, for every agent together, by `permittedWith` for the person. A tool
+  the person may not use through any agent never makes an agent the better fit.
+- **The ranking.** The question is ranked against the catalog with `Catalog.Match`:
+  `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
+  appends, so only tools that matched are scored. Its query vector is the one the turn
+  embeds for the same words, so a question sent after its match reuses the cached
+  vector rather than embedding twice. Only an agent holding the best match is ever
+  suggested, so a suggestion manages the question better than the agent it would
+  replace: the agent the question would go to now is kept whenever it holds that tool,
+  however many lesser matches another holds. Among the holders an agent scores 1/rank
+  for each matched tool it holds, then the one holding fewer usable tools (the focused
+  one) wins, then by name. Because the suggested agent holds the best match, switching
+  to it can never draw a second suggestion for the same words. Nothing matched
+  recommends nobody, and the reply names at most three of the winning agent's matched
+  tools.
+
+No model is asked: the match costs one embedding at most and works the same on a
+self-hosted install with a small model. The browser asks once typing pauses
+(`use-agent-recommendation.ts`) and names a better fit in a small note floating just
+above the box, where the terms reminder sits, with Switch and a cross that keeps the
+agent chosen. Unless the person picked an agent from the picker, a question sent
+goes to the better fit; one sent before its match came back waits at most 1.5
+seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
+`agent-recommendation-state.ts`). The browser keeps asking as the question changes,
+so a new question the agent switched to cannot manage is offered again; the server
+rule above keeps a switch from drawing a second suggestion for the words it was
+made for. The cross turns down only the agent it was used on, and clearing the box
+forgets the pick and the agents turned down. The query key holds the person's words, so it is
+never added to `SHELL_QUERIES`.
+
 ### Steering and the queue
 
 A person can talk to a conversation while its agent is still working. What they
@@ -1337,6 +1381,14 @@ sent. The preview a person approves from reads them the same way
 (`proposalpreviewservice.settleParams`), so what is shown is what runs.
 Nothing is told back there; what runs is what was read. The id checks
 below stay in the runtime.
+
+A proposal's tool runs for its approver with the conversation its run answered,
+as the turn that filed it would have: the executor and the preview both read the
+run and, when its subject is an assistant thread, set `ThreadID`
+(`proposalexecutor.WithConversation`). A tool that reads what was attached to the
+conversation, such as `apply_edi_connection_draft`, reads it for the approver
+too; a run about anything else leaves it unset, and a run that cannot be read
+refuses the approval rather than running without it.
 
 Dates and times come in three shapes, each from one helper in
 `agenttoolschema` that sets the `format`, an example and the same sentence on

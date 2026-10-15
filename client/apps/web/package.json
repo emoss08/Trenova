@@ -76,7 +76,6 @@
     "nanoid": "^6.0.1",
     "nuqs": "^2.10.1",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.3.289",
     "react": "catalog:",
     "react-day-picker": "^10.0.1",
     "react-diff-viewer-continued": "^4.4.0",
@@ -87,7 +86,6 @@
     "react-lazy-load-image-component": "^1.6.3",
     "react-markdown": "^10.1.0",
     "react-number-format": "^5.4.5",
-    "react-pdf": "^10.5.0",
     "react-phone-number-input": "^3.4.18",
     "react-resizable-panels": "^4.12.4",
     "react-router": "catalog:",
@@ -161,7 +159,6 @@
     "typescript": "~7.0.2",
     "typescript-eslint": "^8.70.0",
     "vite": "^8.3.4",
-    "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^5.0.0"
   },
   "lint-staged": {

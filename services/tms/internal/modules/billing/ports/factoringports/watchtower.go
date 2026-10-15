@@ -76,7 +76,58 @@ type FailedSubmission struct {
 	FailedAt           int64    `json:"failedAt"           bun:"failed_at"`
 }
 
+type ListUnfundedSubmissionsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	At         int64                 `json:"at"`
+	Limit      int                   `json:"limit"`
+}
+
+type UnfundedSubmission struct {
+	SubmissionID         pulid.ID                   `json:"submissionId"         bun:"submission_id"`
+	Number               string                     `json:"number"               bun:"number"`
+	Status               factoring.SubmissionStatus `json:"status"               bun:"status"`
+	FactoringCompanyID   pulid.ID                   `json:"factoringCompanyId"   bun:"factoring_company_id"`
+	FactorName           string                     `json:"factorName"           bun:"factor_name"`
+	CurrencyCode         string                     `json:"currencyCode"         bun:"currency_code"`
+	PendingCount         int                        `json:"pendingCount"         bun:"pending_count"`
+	ExpectedAdvanceMinor int64                      `json:"expectedAdvanceMinor" bun:"expected_advance_minor"`
+	SentAt               int64                      `json:"sentAt"               bun:"sent_at"`
+	DueAt                int64                      `json:"dueAt"                bun:"due_at"`
+}
+
+type ListChargebacksDueRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	Before       int64                 `json:"before"`
+	UnwarnedOnly bool                  `json:"unwarnedOnly"`
+	Limit        int                   `json:"limit"`
+}
+
+type ChargebackDue struct {
+	ItemID             pulid.ID `json:"itemId"             bun:"item_id"`
+	SubmissionID       pulid.ID `json:"submissionId"       bun:"submission_id"`
+	SubmissionNumber   string   `json:"submissionNumber"   bun:"submission_number"`
+	InvoiceID          pulid.ID `json:"invoiceId"          bun:"invoice_id"`
+	InvoiceNumber      string   `json:"invoiceNumber"      bun:"invoice_number"`
+	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id"`
+	CustomerName       string   `json:"customerName"       bun:"customer_name"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
+	FactorName         string   `json:"factorName"         bun:"factor_name"`
+	CurrencyCode       string   `json:"currencyCode"       bun:"currency_code"`
+	FaceMinor          int64    `json:"faceMinor"          bun:"face_minor"`
+	RepurchaseMinor    int64    `json:"repurchaseMinor"    bun:"repurchase_minor"`
+	FundedOn           int64    `json:"fundedOn"           bun:"funded_on"`
+	DeadlineAt         int64    `json:"deadlineAt"         bun:"deadline_at"`
+}
+
 type WatchtowerReader interface {
+	ListUnfundedSubmissions(
+		ctx context.Context,
+		req *ListUnfundedSubmissionsRequest,
+	) ([]*UnfundedSubmission, error)
+	ListChargebacksDue(
+		ctx context.Context,
+		req *ListChargebacksDueRequest,
+	) ([]*ChargebackDue, error)
 	ListFailedSubmissions(
 		ctx context.Context,
 		req *ListFailedSubmissionsRequest,

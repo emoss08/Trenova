@@ -211,6 +211,10 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Never let an exported type, or the signature of an exported function or method, mention a concrete generic type that has methods (`*validationframework.TenantedValidator[*X]`, `*dataloadgen.Loader[K, V]`). Go compiles that type's methods again in every package that can see it, so hold it behind a generic interface (`validationframework.TenantedEntityValidator[*X]`) or in an unexported type reached only through package-level functions; an unexported field of an exported type still spreads it. See "Generics and build time" in [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md).
 
 ### TypeScript/React
+- **Use the `trenova-frontend` skill** (`.claude/skills/trenova-frontend/`) for any change under
+  `client/`: where code goes, page and loading anatomy, data and query keys, forms, i18n,
+  styling, bundle discipline, tests and what to verify. When one of its rules is wrong, fix the
+  rule in the same change.
 - Format with OxFmt (`client/.oxfmtrc.json`): double quotes, semicolons, trailing commas, 100 char width
 - Lint with OxLint (`client/.oxlintrc.json`): strict React hooks, TanStack Query exhaustive deps, no console.log
 - Prefer named exports over default exports
@@ -321,7 +325,9 @@ bundles without typechecking, and CI fails a build whose first-visit download pa
 to `node_modules/<name>/`, or a feature imported statically from the shell has each already broken
 the app or put a whole feature on every page. Query key factories are imported from their own
 module (`import { shipment } from "@/lib/queries/shipment"`); there is no merged `queries`
-object, and lint rejects an import of `@/lib/queries`. A service worker (`/sw.js`) serves the app shell
+object, and lint rejects an import of `@/lib/queries`. PDFs are shown by the browser's own
+viewer through `PdfFrame` (`components/elements/pdf-frame.tsx`); never add a PDF rendering
+library, and every CSP keeps `frame-src 'self' blob:`. A service worker (`/sw.js`) serves the app shell
 and hashed assets from cache, and the shell's queries persist to IndexedDB from an allow-list
 (`SHELL_QUERIES` in `lib/session-cache.ts`) that must never hold business records or personal
 details; every session end goes through `clearSessionCache()`. Open tabs reload onto a new
@@ -408,6 +414,12 @@ administration tools, and who holds them, are in
 The worker safety, compliance, HR, permit and driver pay tools, what is left to a person's
 signature, and who holds them are in
 [docs/engineering/agent-workforce-tools.md](docs/engineering/agent-workforce-tools.md).
+How an agent drafts a whole EDI connection from a trading partner's implementation guide (cited
+values checked against their pages, held values, secrets never taken, a change set on a revised
+guide, one proposal applied in one transaction) is in
+[docs/engineering/edi-spec-onboarding.md](docs/engineering/edi-spec-onboarding.md). Read it before
+changing `ediconnectiondraft`, `draft_edi_connection`, `apply_edi_connection_draft` or the
+`edi_connection_draft` Desk artifact.
 The carrier, customer, commodity, hazardous material, location and equipment tools, document,
 change alert and watchtower housekeeping, capture filing, and who holds them are in
 [docs/engineering/agent-master-data-tools.md](docs/engineering/agent-master-data-tools.md).
@@ -558,6 +570,19 @@ and a ten-minute sweep catches PODs and retries. **Read
 [docs/engineering/customer-tracking.md](docs/engineering/customer-tracking.md) before changing
 `customertracking`, `customertrackingservice`, `customerstatustrigger`, `customertrackingjobs`, the
 public tracking endpoints or page, or the customer tracking email templates.**
+
+## Tender Negotiation
+
+A tender runs one workflow per round (`tendercontract.WorkflowID(id, bounceCount)`). A carrier
+backing out after accepting (`Bounce`, or an EDI 990 declining the accepted offer) cancels the
+carrier assignment, revokes the offer and inserts **new** offer rows for the carriers the acceptance
+cut short, because delivery is idempotent per offer. A counter-offer is judged against the
+organization's counter floor in dispatch controls; one below it needs `tender:approve`, and
+dispatch takes or refuses it with Accept or Decline on the respond route. The carrier is paid
+`AgreedRate()`, never `rate`. An exhausted tender escalates in the service, not the workflow, per
+`tender_exhausted_action`. **Read [docs/engineering/tender-negotiation.md](docs/engineering/tender-negotiation.md)
+before changing `tender` (`retender.go`, `counter.go`, `escalation.go`), `tenderservice`,
+`tenderjobs`, the tender routes, or the tender settings on dispatch controls.**
 
 ## Exception Queue
 

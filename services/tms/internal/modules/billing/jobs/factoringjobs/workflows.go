@@ -131,6 +131,7 @@ func FactoringReadinessSweepWorkflow(ctx workflow.Context) (*SweepResult, error)
 		result.OrganizationsProcessed++
 		result.Totals.Add(&swept.EvaluateResult)
 		result.NoasWarned += swept.NoasWarned
+		result.ChargebacksWarned += swept.ChargebacksWarned
 	}
 	return result, nil
 }

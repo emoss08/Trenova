@@ -2,7 +2,11 @@ package factoringservice
 
 import (
 	"context"
+	"maps"
+	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -12,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,6 +34,7 @@ type AgreementParams struct {
 	DB        kernelports.DBConnection
 	Repo      factoringports.AgreementRepository
 	Factors   factoringcompanyports.FactoringCompanyRepository
+	Accounts  glaccountports.GLAccountRepository `optional:"true"`
 	Requester factoringports.EvaluationRequester `optional:"true"`
 	Audit     auditports.AuditService
 	Realtime  agentports.RealtimeService `optional:"true"`
@@ -39,6 +45,7 @@ type AgreementService struct {
 	db        kernelports.DBConnection
 	repo      factoringports.AgreementRepository
 	factors   factoringcompanyports.FactoringCompanyRepository
+	accounts  glaccountports.GLAccountRepository
 	requester factoringports.EvaluationRequester
 	rec       recorder
 	now       func() int64
@@ -53,6 +60,7 @@ func NewAgreementService(p AgreementParams) factoringports.AgreementService {
 		db:        p.DB,
 		repo:      p.Repo,
 		factors:   p.Factors,
+		accounts:  p.Accounts,
 		requester: p.Requester,
 		rec:       recorder{audit: p.Audit, realtime: p.Realtime, l: l},
 		now:       timeutils.NowUnix,
@@ -329,7 +337,59 @@ func (s *AgreementService) validate(
 			"The factoring company does not exist",
 		)
 	}
-	return nil
+	return s.validateAccounts(ctx, entity)
+}
+
+func (s *AgreementService) validateAccounts(
+	ctx context.Context,
+	entity *factoring.Agreement,
+) error {
+	fields := map[string]pulid.ID{
+		"dueFromFactorAccountId": entity.DueFromFactorAccountID,
+		"feeExpenseAccountId":    entity.FeeExpenseAccountID,
+		"liabilityAccountId":     entity.LiabilityAccountID,
+		"cashAccountId":          entity.CashAccountID,
+	}
+	ids := make([]pulid.ID, 0, len(fields))
+	for _, id := range fields {
+		if id.IsNotNil() {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 || s.accounts == nil {
+		return nil
+	}
+	found, err := s.accounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		GLAccountIDs: ids,
+	})
+	if err != nil {
+		return err
+	}
+	byID := make(map[pulid.ID]*glaccount.GLAccount, len(found))
+	for _, account := range found {
+		if account != nil {
+			byID[account.ID] = account
+		}
+	}
+	multiErr := errortypes.NewMultiError()
+	for _, field := range slices.Sorted(maps.Keys(fields)) {
+		id := fields[field]
+		if id.IsNil() {
+			continue
+		}
+		account, ok := byID[id]
+		switch {
+		case !ok:
+			multiErr.Add(field, errortypes.ErrInvalid, "That account does not exist")
+		case account.Status != domaintypes.StatusActive:
+			multiErr.Add(field, errortypes.ErrInvalid, "That account is inactive")
+		}
+	}
+	return validationOf(multiErr)
 }
 
 func (s *AgreementService) syncFactorRecourse(ctx context.Context, a *factoring.Agreement) error {
@@ -376,6 +436,10 @@ func applyAgreementInput(a *factoring.Agreement, in *factoringports.AgreementInp
 	a.FundingDays = in.FundingDays
 	a.SubmissionTime = in.SubmissionTime
 	a.Notes = in.Notes
+	a.DueFromFactorAccountID = in.DueFromFactorAccountID
+	a.FeeExpenseAccountID = in.FeeExpenseAccountID
+	a.LiabilityAccountID = in.LiabilityAccountID
+	a.CashAccountID = in.CashAccountID
 
 	a.FeeTiers = make([]*factoring.FeeTier, 0, len(in.FeeTiers))
 	for _, tier := range in.FeeTiers {

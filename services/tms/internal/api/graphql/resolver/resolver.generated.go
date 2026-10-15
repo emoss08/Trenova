@@ -248,6 +248,7 @@ type Resolver struct {
 	driverPayEventComponent            *driversettlementresolver.DriverPayEventComponentResolver
 	driverSettlement                   *driversettlementresolver.DriverSettlementResolver
 	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
+	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
@@ -266,8 +267,14 @@ type Resolver struct {
 	factoringAgreement                 *factoringresolver.FactoringAgreementResolver
 	factoringCheck                     *factoringresolver.FactoringCheckResolver
 	factoringCompany                   *factoringresolver.FactoringCompanyResolver
+	factoringFundingPlan               *factoringresolver.FactoringFundingPlanResolver
 	factoringInvoiceState              *factoringresolver.FactoringInvoiceStateResolver
+	factoringMovement                  *factoringresolver.FactoringMovementResolver
 	factoringNoa                       *factoringresolver.FactoringNoaResolver
+	factoringPlannedLine               *factoringresolver.FactoringPlannedLineResolver
+	factoringPlannedMovement           *factoringresolver.FactoringPlannedMovementResolver
+	factoringReserveEntry              *factoringresolver.FactoringReserveEntryResolver
+	factoringReserveMovementPlan       *factoringresolver.FactoringReserveMovementPlanResolver
 	factoringSubmission                *factoringresolver.FactoringSubmissionResolver
 	factoringSubmissionItem            *factoringresolver.FactoringSubmissionItemResolver
 	factoringSubmissionPlan            *factoringresolver.FactoringSubmissionPlanResolver
@@ -452,6 +459,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                   s.Core,
 		AgentDefinitionService: s.AgentDefinitionService,
 		AgentCapabilityService: s.AgentCapabilityService,
+		AgentRecommender:       s.AgentRecommender,
 		AgentShadowService:     s.AgentShadowService,
 		AgentTestPromptService: s.AgentTestPromptService,
 		AgentDraftingService:   s.AgentDraftingService,
@@ -720,6 +728,7 @@ func FromServices(s *Services) *Resolver {
 		FactoringNoaService:        s.FactoringNoaService,
 		FactoringReadinessService:  s.FactoringReadinessService,
 		FactoringSubmissionService: s.FactoringSubmissionService,
+		FactoringLedgerService:     s.FactoringLedgerService,
 		FactoringTransportService:  s.FactoringTransportService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
@@ -965,6 +974,8 @@ func FromServices(s *Services) *Resolver {
 		TrackingEventService:    s.TrackingEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 		InvoiceService:          s.InvoiceService,
+		DriverSettlementRepo:    s.DriverSettlementRepo,
+		CarrierSettlementRepo:   s.CarrierSettlementRepo,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
 		Core:                   s.Core,
@@ -1217,6 +1228,7 @@ func FromServices(s *Services) *Resolver {
 		driverPayEventComponent:      &driversettlementresolver.DriverPayEventComponentResolver{Deps: driversettlementDeps},
 		driverSettlement:             &driversettlementresolver.DriverSettlementResolver{Deps: driversettlementDeps},
 		driverSettlementLine:         &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps},
+		driverSettlementLineGroup:    &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps},
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
@@ -1235,8 +1247,14 @@ func FromServices(s *Services) *Resolver {
 		factoringAgreement:           &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps},
 		factoringCheck:               &factoringresolver.FactoringCheckResolver{Deps: factoringDeps},
 		factoringCompany:             &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps},
+		factoringFundingPlan:         &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps},
 		factoringInvoiceState:        &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps},
+		factoringMovement:            &factoringresolver.FactoringMovementResolver{Deps: factoringDeps},
 		factoringNoa:                 &factoringresolver.FactoringNoaResolver{Deps: factoringDeps},
+		factoringPlannedLine:         &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps},
+		factoringPlannedMovement:     &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps},
+		factoringReserveEntry:        &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps},
+		factoringReserveMovementPlan: &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps},
 		factoringSubmission:          &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps},
 		factoringSubmissionItem:      &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps},
 		factoringSubmissionPlan:      &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps},
@@ -2057,6 +2075,10 @@ func (r *Resolver) DriverSettlementLine() generated.DriverSettlementLineResolver
 	return r.driverSettlementLine
 }
 
+func (r *Resolver) DriverSettlementLineGroup() generated.DriverSettlementLineGroupResolver {
+	return r.driverSettlementLineGroup
+}
+
 func (r *Resolver) DrugAlcoholStanding() generated.DrugAlcoholStandingResolver {
 	return r.drugAlcoholStanding
 }
@@ -2129,12 +2151,36 @@ func (r *Resolver) FactoringCompany() generated.FactoringCompanyResolver {
 	return r.factoringCompany
 }
 
+func (r *Resolver) FactoringFundingPlan() generated.FactoringFundingPlanResolver {
+	return r.factoringFundingPlan
+}
+
 func (r *Resolver) FactoringInvoiceState() generated.FactoringInvoiceStateResolver {
 	return r.factoringInvoiceState
 }
 
+func (r *Resolver) FactoringMovement() generated.FactoringMovementResolver {
+	return r.factoringMovement
+}
+
 func (r *Resolver) FactoringNoa() generated.FactoringNoaResolver {
 	return r.factoringNoa
+}
+
+func (r *Resolver) FactoringPlannedLine() generated.FactoringPlannedLineResolver {
+	return r.factoringPlannedLine
+}
+
+func (r *Resolver) FactoringPlannedMovement() generated.FactoringPlannedMovementResolver {
+	return r.factoringPlannedMovement
+}
+
+func (r *Resolver) FactoringReserveEntry() generated.FactoringReserveEntryResolver {
+	return r.factoringReserveEntry
+}
+
+func (r *Resolver) FactoringReserveMovementPlan() generated.FactoringReserveMovementPlanResolver {
+	return r.factoringReserveMovementPlan
 }
 
 func (r *Resolver) FactoringSubmission() generated.FactoringSubmissionResolver {

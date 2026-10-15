@@ -38,6 +38,7 @@ import type {
   AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
+  TenderExhaustedAction,
 } from "@/types/dispatch-control";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { ResourceType } from "@/types/document-packet-rule";
@@ -1120,6 +1121,10 @@ export const journalSourceEventChoices = [
   { value: "CarrierSettlementPosted", label: "Carrier settlement posted" },
   { value: "CarrierSettlementVoided", label: "Carrier settlement voided" },
   { value: "CarrierSettlementPaid", label: "Carrier settlement paid" },
+  { value: "FactoringFunded", label: "Factor funding recorded" },
+  { value: "FactoringReserveReleased", label: "Factoring reserve released" },
+  { value: "FactoringChargedBack", label: "Factoring chargeback recorded" },
+  { value: "FactoringChargebackReversed", label: "Factoring chargeback reversed" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
 export const manualJournalEntryPolicyChoices = [
@@ -1507,6 +1512,24 @@ export const complianceEnforcementLevelChoices = [
   { value: "Audit", label: "Audit", color: "var(--accent-violet)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ComplianceEnforcementLevel>>;
 
+export const tenderExhaustedActionChoices = [
+  {
+    value: "Notify",
+    label: "Tell dispatch",
+    description: "Raise the exhausted tender for a person to cover.",
+  },
+  {
+    value: "Rebroadcast",
+    label: "Offer to everyone at once",
+    description: "Send every carrier a fresh offer at the same time; the first to accept wins.",
+  },
+  {
+    value: "Rewaterfall",
+    label: "Offer again in rank order",
+    description: "Walk the carriers again one at a time, in their original order.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<TenderExhaustedAction>>;
+
 export const invoiceDeliveryChoices = [
   { value: "PerShipment", label: "Per shipment" },
   { value: "PerOrder", label: "Per order" },
@@ -1760,6 +1783,7 @@ export const ediAckStatusChoices = [
   { label: "Not expected", value: "NotExpected" },
   { label: "Pending", value: "Pending" },
   { label: "Accepted", value: "Accepted" },
+  { label: "Accepted with errors", value: "AcceptedWithErrors" },
   { label: "Rejected", value: "Rejected" },
   { label: "Failed", value: "Failed" },
 ] satisfies ReadonlyArray<GenericSelectOption<EDIMessageAcknowledgmentStatus>>;

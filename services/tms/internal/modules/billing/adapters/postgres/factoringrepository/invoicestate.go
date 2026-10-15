@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
@@ -446,12 +447,86 @@ func (r *invoiceStateRepository) GetSummary(
 				summary.NotReady = totals
 			case factoring.VerdictSubmitted:
 				summary.Submitted = totals
-			case factoring.VerdictExcluded:
+			case factoring.VerdictFunded, factoring.VerdictExcluded:
 			}
 		}
 
+		if err := r.fundedTotals(ctx, req, summary); err != nil {
+			return nil, err
+		}
+		due, err := r.chargebacksDue(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		summary.ChargebacksDue = due
 		return summary, nil
 	})
+}
+
+func (r *invoiceStateRepository) fundedTotals(
+	ctx context.Context,
+	req factoringports.GetSummaryRequest,
+	summary *factoringports.Summary,
+) error {
+	item := factoringcol.SubmissionItemColumns
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*factoring.SubmissionItem)(nil)).
+		ColumnExpr("COUNT(*) AS count").
+		ColumnExpr(item.FaceMinor.Expr("COALESCE(SUM({}), 0)")+" AS amount_minor").
+		ColumnExpr(item.ReserveMinor.Expr("COUNT(*) FILTER (WHERE COALESCE({}, 0) > 0)")+
+			" AS reserve_count").
+		ColumnExpr(item.ReserveMinor.Expr("COALESCE(SUM({}), 0)")+" AS reserve_minor").
+		Apply(factoringcol.SubmissionItemApplyTenant(req.TenantInfo)).
+		Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
+		Scan(
+			ctx,
+			&summary.Funded.Count,
+			&summary.Funded.AmountMinor,
+			&summary.ReserveHeld.Count,
+			&summary.ReserveHeld.AmountMinor,
+		); err != nil {
+		return fmt.Errorf("summarize funded factoring invoices: %w", err)
+	}
+	return nil
+}
+
+func (r *invoiceStateRepository) chargebacksDue(
+	ctx context.Context,
+	req factoringports.GetSummaryRequest,
+) (factoringports.VerdictTotals, error) {
+	item := factoringcol.SubmissionItemColumns
+	sub := factoringcol.SubmissionColumns
+	subTable := factoringcol.SubmissionTable
+	agr := factoringcol.AgreementColumns
+	agrTable := factoringcol.AgreementTable
+	deadline := buncolgen.Expr("{0} + {1} * 86400", item.FundedOn, agr.ChargebackWindowDays)
+
+	var totals factoringports.VerdictTotals
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*factoring.SubmissionItem)(nil)).
+		ColumnExpr("COUNT(*) AS count").
+		ColumnExpr(buncolgen.Expr(
+			"COALESCE(SUM(COALESCE({0}, 0) + COALESCE({1}, 0)), 0)",
+			item.AdvanceMinor,
+			item.FeeMinor,
+		)+" AS amount_minor").
+		Join("JOIN "+subTable.As(subTable.Alias)).
+		JoinOn(sub.ID.EqColumn(item.SubmissionID)).
+		JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
+		JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
+		Join("JOIN "+agrTable.As(agrTable.Alias)).
+		JoinOn(agr.ID.EqColumn(sub.AgreementID)).
+		JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
+		JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+		Apply(factoringcol.SubmissionItemApplyTenant(req.TenantInfo)).
+		Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
+		Where(item.FundedOn.IsNotNull()).
+		Where(agr.Recourse.Eq(), factoring.RecourseFull).
+		Where(deadline+" <= ?", req.ChargebackBefore).
+		Scan(ctx, &totals.Count, &totals.AmountMinor); err != nil {
+		return totals, fmt.Errorf("summarize factoring chargebacks due: %w", err)
+	}
+	return totals, nil
 }
 
 func openFactoredInvoices(q *bun.SelectQuery) *bun.SelectQuery {

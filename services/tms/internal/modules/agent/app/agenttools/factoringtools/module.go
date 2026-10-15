@@ -11,5 +11,9 @@ func Providers() []any {
 		NewSubmitInvoicesToFactorTool,
 		NewRetryFactoringSubmissionTool,
 		NewCancelFactoringSubmissionTool,
+		NewRecordFactoringFundingTool,
+		NewReleaseFactoringReserveTool,
+		NewRecordFactoringChargebackTool,
+		NewReverseFactoringChargebackTool,
 	}
 }

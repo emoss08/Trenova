@@ -133,7 +133,19 @@ func (r *submissionRepository) updateItemStatuses(
 		}
 		if _, err := dba.NewUpdate().
 			Model(item).
-			Column(cols.Status.Bare(), cols.ReleasedAt.Bare(), cols.UpdatedAt.Bare()).
+			Column(
+				cols.Status.Bare(),
+				cols.ReleasedAt.Bare(),
+				cols.FundedOn.Bare(),
+				cols.AdvanceMinor.Bare(),
+				cols.FeeMinor.Bare(),
+				cols.ReserveMinor.Bare(),
+				cols.RejectionReason.Bare(),
+				cols.SettledOn.Bare(),
+				cols.ChargedBackOn.Bare(),
+				cols.ChargebackReason.Bare(),
+				cols.UpdatedAt.Bare(),
+			).
 			WherePK().
 			Where(cols.SubmissionID.Eq(), entity.ID).
 			Exec(ctx); err != nil {
@@ -382,6 +394,8 @@ func (r *submissionRepository) ListLiveItems(
 				ColumnExpr(item.SubmissionID.As("submission_id")).
 				ColumnExpr(sub.Number.As("submission_number")).
 				ColumnExpr(sub.Status.As("submission_status")).
+				ColumnExpr(item.ID.As("item_id")).
+				ColumnExpr(item.Status.As("item_status")).
 				Join("JOIN "+factoringcol.SubmissionTable.As(factoringcol.SubmissionTable.Alias)).
 				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
 				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
@@ -389,12 +403,15 @@ func (r *submissionRepository) ListLiveItems(
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
 						Where(item.InvoiceID.In(), bun.List(req.InvoiceIDs)).
-						Where(item.Status.Eq(), factoring.SubmissionItemStatusPending)
+						Where(item.Status.In(), bun.List(liveItemStatuses(req.IncludeChargedBack)))
 				}).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list live factoring submission items: %w", err)
 			}
 			for _, row := range rows {
+				if existing, ok := result[row.InvoiceID]; ok && existing.IsLive() {
+					continue
+				}
 				result[row.InvoiceID] = row
 			}
 			return result, nil
@@ -466,4 +483,68 @@ func translateSubmissionError(err error, action string) error {
 		}
 	}
 	return fmt.Errorf("%s: %w", action, err)
+}
+
+func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus {
+	statuses := factoring.LiveSubmissionItemStatuses()
+	if includeChargedBack {
+		statuses = append(statuses, factoring.SubmissionItemStatusChargedBack)
+	}
+	return statuses
+}
+
+func (r *submissionRepository) ClaimChargebackWarning(
+	ctx context.Context,
+	req factoringports.ClaimChargebackWarningRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := factoringcol.SubmissionItemColumns
+		res, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*factoring.SubmissionItem)(nil)).
+			Set(cols.ChargebackWarnedAt.Set(), req.At).
+			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return factoringcol.SubmissionItemScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ItemID).
+					Where(cols.Status.Eq(), factoring.SubmissionItemStatusFunded).
+					Where(cols.ChargebackWarnedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			return false, fmt.Errorf("claim chargeback warning: %w", err)
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return false, fmt.Errorf("claim chargeback warning: %w", err)
+		}
+		return rows > 0, nil
+	})
+}
+
+func (r *submissionRepository) GetByIDs(
+	ctx context.Context,
+	req factoringports.GetSubmissionsByIDsRequest,
+) ([]*factoring.Submission, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Submission, error) {
+		rows := make([]*factoring.Submission, 0, len(req.IDs))
+		if len(req.IDs) == 0 {
+			return rows, nil
+		}
+		if len(req.IDs) > maxSubmissionIDsPerLookup {
+			return nil, errortypes.NewValidationError(
+				"ids",
+				errortypes.ErrInvalid,
+				"Too many schedules were asked for at once",
+			)
+		}
+		cols := factoringcol.SubmissionColumns
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			Apply(factoringcol.SubmissionApplyTenant(req.TenantInfo)).
+			Where(cols.ID.In(), bun.List(req.IDs)).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("get factoring submissions by ids: %w", err)
+		}
+		return rows, nil
+	})
 }

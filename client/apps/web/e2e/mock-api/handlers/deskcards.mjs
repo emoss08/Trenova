@@ -22,6 +22,7 @@ import { deskEdiMessages } from "../fixtures/desk-edi.mjs";
 import { deskEdiInboundFiles } from "../fixtures/desk-edi-files.mjs";
 import { DESK_EDI_FILE_TENDERS, deskEdiTransfers } from "../fixtures/desk-edi-transfers.mjs";
 import { deskInvoices } from "../fixtures/desk-invoices.mjs";
+import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-settlements.mjs";
 import { hash } from "../state.mjs";
 import { userSelectOptions } from "./settings.mjs";
 
@@ -152,22 +153,69 @@ function invoiceShipments(state, invoiceId) {
     .slice(0, count);
 }
 
+/** A settlement of either kind, as its card reads it. */
+function settlementFixture(state, id) {
+  return (
+    deskDriverSettlements(state.anchor)[id] ?? deskCarrierSettlements(state.anchor)[id] ?? null
+  );
+}
+
+/** The shipments a settlement pays, as many as it counts, from the board. */
+function settlementShipments(state, settlementId) {
+  const fixture = settlementFixture(state, settlementId);
+  if (!fixture || empty(state)) return [];
+  return [...state.shipments]
+    .filter((shipment) => hash(shipment.id + settlementId) % 3 === 0)
+    .slice(0, Math.min(fixture.settlement.shipmentCount, 12));
+}
+
+/**
+ * The settlement with each load's share filled from the shipments the mock
+ * answers for it, so the card's loads carry the amount the settlement pays.
+ */
+function settlementWithShares(state, settlementId, net) {
+  const fixture = settlementFixture(state, settlementId);
+  if (!fixture) return null;
+  const record = fixture.settlement;
+  const loads = settlementShipments(state, settlementId);
+  const each = loads.length ? Math.round(record[net] / record.shipmentCount) : 0;
+  return {
+    ...record,
+    loadShares: loads.map((shipment, index) => ({
+      shipmentId: shipment.id,
+      proNumber: shipment.proNumber,
+      amountMinor: each + ((hash(shipment.id) % 9) - 4) * 1_250 * (index % 2 ? 1 : -1),
+    })),
+  };
+}
+
+function scopedShipments(state, input) {
+  if (input.invoiceIds?.length) return invoiceShipments(state, input.invoiceIds[0]);
+  if (input.driverSettlementIds?.length) {
+    return settlementShipments(state, input.driverSettlementIds[0]);
+  }
+  if (input.carrierSettlementIds?.length) {
+    return settlementShipments(state, input.carrierSettlementIds[0]);
+  }
+  return null;
+}
+
 function recordShipments(state, variables) {
   if (held(state)) return HOLD;
   const input = variables.input ?? {};
-  if (input.invoiceIds?.length) {
-    const all = invoiceShipments(state, input.invoiceIds[0]);
+  const scoped = scopedShipments(state, input);
+  if (scoped) {
     const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
-    const page = all.slice(offset, offset + (input.first ?? 20));
+    const page = scoped.slice(offset, offset + (input.first ?? 20));
     const end = offset + page.length;
     return {
       shipments: {
         edges: page.map((shipment) => ({ node: recordShipmentNode(shipment) })),
         pageInfo: {
-          hasNextPage: end < all.length,
+          hasNextPage: end < scoped.length,
           endCursor: page.length ? Buffer.from(String(end)).toString("base64url") : null,
         },
-        ...(variables.includeTotalCount ? { totalCount: all.length } : {}),
+        ...(variables.includeTotalCount ? { totalCount: scoped.length } : {}),
       },
     };
   }
@@ -389,6 +437,30 @@ export const DESK_CARD_HANDLERS = {
       },
     };
   },
+  DeskDriverSettlementCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const record = settlementWithShares(state, variables.id, "netPayMinor");
+    if (!record || !deskDriverSettlements(state.anchor)[variables.id]) {
+      return { driverSettlement: null };
+    }
+    return {
+      driverSettlement: empty(state)
+        ? { ...record, lineSummary: [], loadShares: [], disputes: [], exceptions: [] }
+        : record,
+    };
+  },
+  DeskCarrierSettlementCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const record = settlementWithShares(state, variables.id, "netPayableMinor");
+    if (!record || !deskCarrierSettlements(state.anchor)[variables.id]) {
+      return { carrierSettlement: null };
+    }
+    return {
+      carrierSettlement: empty(state)
+        ? { ...record, costSummary: [], loadShares: [], moveInvoices: [] }
+        : record,
+    };
+  },
   AccountingSyncObjectStates: (state, variables) => {
     if (held(state)) return HOLD;
     const invoices = deskInvoices(state.anchor);
@@ -437,7 +509,8 @@ export const DESK_CARD_HANDLERS = {
       orderFixture(state, variables.resourceId) ??
       agreementFixture(state, variables.resourceId) ??
       failureFixture(state, variables.resourceId) ??
-      deskInvoices(state.anchor)[variables.resourceId];
+      deskInvoices(state.anchor)[variables.resourceId] ??
+      settlementFixture(state, variables.resourceId);
     const rows = fixture && !empty(state) ? fixture.activity : [];
     return {
       auditEntriesByResourceId: connectionPage(rows, variables.input, variables.includeTotalCount),

@@ -1,5 +1,6 @@
 {
   "A schedule carries at most {0} invoices. Select fewer and send the rest on another schedule.": "一份清單最多包含 {0} 張發票。請減少所選發票，其餘的以另一份清單寄送。",
+  "Chargebacks due": "即將到期的退款追索",
   "Checks": "檢查項目",
   "Emailed to {0} at {1}, with each invoice's packet attached.": "以電子郵件寄送給 {0}（{1}），並附上每張發票的資料包。",
   "Emailed to {0} at {1}, without the invoice packets.": "以電子郵件寄送給 {0}（{1}），不附發票資料包。",
@@ -8,12 +9,13 @@
   "Factoring summary": "承購摘要",
   "Failed checks": "未通過的檢查",
   "Loading factoring readiness...": "正在載入承購就緒狀態...",
+  "No funded invoices are waiting on their reserve": "沒有等待保留款的已撥款發票",
   "No invoices are ready to factor": "沒有可承購的發票",
   "No invoices are waiting on a fix": "沒有等待修正的發票",
   "No invoices are with a factor": "沒有發票在承購公司處",
   "No schedules have been sent to a factor": "尚未寄送任何清單給承購公司",
   "None of the selected invoices is assigned to a factor.": "所選發票均未轉讓給承購公司。",
-  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.": "已過帳且已轉讓給承購公司的發票，依是否可出售分組。選擇可出售的發票，以清單形式寄送給其承購公司；或開啟某張發票，查看其未通過的檢查。",
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": "已轉讓給承購公司的已過帳發票，依是否可出售區分。選取可出售的發票以清單送交承購公司，開啟發票查看未通過的檢查，或追蹤已撥款發票直到承購公司釋出保留款。",
   "Ready over a day": "就緒超過一天",
   "Review the schedule of accounts and the funding expected under the agreement in force. The schedule, each invoice's packet and a CSV are sent to the factor once you confirm.": "請核對應收帳款轉讓清單以及依生效中協議預期的撥款金額。確認後，清單、每張發票的資料包與一份 CSV 將寄送給承購公司。",
   "Schedule {0} is on its way": "清單 {0} 正在寄送",
@@ -27,6 +29,8 @@
   "Uploaded by {0} to {1}.": "透過 {0} 上傳至 {1}。",
   "Verdict": "判定",
   "{0, plural, one {# invoice is} other {# invoices are}} being sent to {1}.": "正在將 {0, plural, one {# 張發票} other {# 張發票}}寄送給 {1}。",
+  "{0, plural, one {# invoice} other {# invoices}} awaiting release": "{0, plural, one {# 張發票} other {# 張發票}}等待釋出",
   "{0, plural, one {# invoice} other {# invoices}} not yet submitted": "{0, plural, one {# 張發票} other {# 張發票}}尚未提交",
+  "{0, plural, one {# invoice} other {# invoices}} within a week": "{0, plural, one {# 張發票} other {# 張發票}}將於一週內到期",
   "{0} ({1, plural, one {# invoice} other {# invoices}})": "{0}（{1, plural, one {# 張發票} other {# 張發票}}）"
 }

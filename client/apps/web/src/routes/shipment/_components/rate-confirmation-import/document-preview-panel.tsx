@@ -1,143 +1,45 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { apiService } from "@/services/api";
-import { useQuery } from "@tanstack/react-query";
-import { File06Icon, ZoomInIcon, ZoomOutIcon } from "@trenova/shared/components/icons";
-import { useCallback, useRef, useState } from "react";
-import { Document, Page } from "react-pdf";
-import {
-  DocumentPageSkeleton,
-  DocumentPreviewPanelSkeleton,
-} from "./document-preview-panel-skeleton";
-import "@/lib/pdf-worker";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
+import { PdfFrame } from "@/components/elements/pdf-frame";
+import { documentContentEndpoint, documentContentUrl } from "@/services/document";
+import { DocumentBodySkeleton } from "./document-preview-panel-skeleton";
 
 type DocumentPreviewPanelProps = {
   documentId: string;
   fileName?: string;
 };
 
+/**
+ * The rate confirmation beside the draft: its name over the document, shown by the browser's
+ * own PDF viewer, which brings paging, zoom and search.
+ */
 export default function DocumentPreviewPanel({ documentId, fileName }: DocumentPreviewPanelProps) {
   const t = useT();
-
-  const [numPages, setNumPages] = useState<number>(0);
-  const [scale, setScale] = useState(1.0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const { data: viewUrl, isLoading } = useQuery({
-    queryKey: ["document-view-url", documentId],
-    queryFn: () => apiService.documentService.getViewUrl(documentId),
-    enabled: !!documentId,
-    staleTime: 4 * 60 * 1000,
-  });
-
-  const onDocumentLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
-    setNumPages(n);
-  }, []);
-
+  const name = fileName || t("Document");
   const isPdf = fileName?.toLowerCase().endsWith(".pdf") ?? true;
-
-  if (isLoading) {
-    return <DocumentPreviewPanelSkeleton />;
-  }
-
-  if (!viewUrl) {
-    return (
-      <div className="bg-muted/20 flex h-full items-center justify-center">
-        <div className="text-muted-foreground flex flex-col items-center gap-2">
-          <File06Icon className="size-6 opacity-40" />
-          <span className="text-xs">{t("Preview unavailable")}</span>
-        </div>
-      </div>
-    );
-  }
 
   if (!isPdf) {
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center p-4">
         <img
-          src={viewUrl}
-          alt={fileName || "Rate Confirmation"}
+          src={documentContentUrl(documentId, "view")}
+          alt={name}
           className="max-h-full max-w-full object-contain"
         />
       </div>
     );
   }
 
-  const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
-
   return (
     <div className="bg-muted/20 flex h-full flex-col">
-      {/* Toolbar */}
-      <div className="bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-1.5">
-        <span className="text-muted-foreground truncate text-xs">
-          {fileName || t("Document")}
-          {numPages > 0 && (
-            <span className="text-muted-foreground/50 ml-1.5">{t("{0} pages", numPages)}</span>
-          )}
-        </span>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setScale((s) => Math.max(0.5, s - 0.15))}
-            disabled={scale <= 0.5}
-          >
-            <ZoomOutIcon className="size-3.5" />
-          </Button>
-          <span className="text-2xs text-muted-foreground w-10 text-center tabular-nums">
-            {Math.round(scale * 100)}%
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setScale((s) => Math.min(2.5, s + 0.15))}
-            disabled={scale >= 2.5}
-          >
-            <ZoomInIcon className="size-3.5" />
-          </Button>
-        </div>
+      <div className="bg-background/80 flex shrink-0 items-center border-b px-3 py-1.5">
+        <span className="text-muted-foreground truncate text-xs">{name}</span>
       </div>
-
-      {/* All pages stacked */}
-      <ScrollArea className="flex-1">
-        <div ref={containerRef} className="flex flex-col items-center gap-3 p-4">
-          <Document
-            file={viewUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={<DocumentPageSkeleton />}
-            error={
-              <div className="text-muted-foreground flex items-center justify-center py-20 text-xs">
-                {t("Failed to load PDF")}
-              </div>
-            }
-          >
-            {pageNumbers.map((pageNum) => (
-              <div key={pageNum} className="relative mb-2">
-                {numPages > 1 && (
-                  <div className="text-2xs text-muted-foreground/40 mb-1 text-center">
-                    {t("Page {0}", pageNum)}
-                  </div>
-                )}
-                <Page
-                  pageNumber={pageNum}
-                  scale={scale}
-                  loading={
-                    <div className="flex h-40 items-center justify-center">
-                      <TextShimmer as="span" className="text-2xs" duration={1.5}>
-                        {t("Loading page")}
-                      </TextShimmer>
-                    </div>
-                  }
-                />
-              </div>
-            ))}
-          </Document>
-        </div>
-      </ScrollArea>
+      <PdfFrame
+        endpoint={documentContentEndpoint(documentId, "view")}
+        title={name}
+        loading={<DocumentBodySkeleton />}
+        className="min-h-0 flex-1"
+      />
     </div>
   );
 }

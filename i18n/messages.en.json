@@ -2183,6 +2183,15 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> backed out of the accepted tender for <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> canceled <target/>": {
     "sites": 1,
     "scope": [
@@ -2219,6 +2228,24 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> countered the tender for <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> countered the tender for <target/> at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> created <target/>": {
     "sites": 1,
     "scope": [
@@ -2238,6 +2265,24 @@
     ]
   },
   "<actor>{0}</actor> dispatched a move on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> escalated the exhausted tender on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> escalated the exhausted tender on <target/> (round {1})": {
     "sites": 1,
     "scope": [
       "ts"
@@ -2354,6 +2399,15 @@
       "routes/shipment"
     ]
   },
+  "<actor>{0}</actor> refused {1}'s counter-offer on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "<actor>{0}</actor> released a hold on <target/>": {
     "sites": 1,
     "scope": [
@@ -2409,6 +2463,15 @@
     ]
   },
   "<actor>{0}</actor> tendered {1} with warnings on <target/>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "<actor>{0}</actor> took {1}'s counter-offer on <target/>": {
     "sites": 1,
     "scope": [
       "ts"
@@ -2685,6 +2748,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "<b>{0}</b> has the tools for this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "<b>{0}</b> is better on {1} of {2}": {
@@ -4688,6 +4760,33 @@
       "routes/agent-control"
     ]
   },
+  "A counter nobody answers in time lapses and the tender moves on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "A counter that leaves less margin than this on the shipment's charges needs someone who can approve tenders.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "A counter-offer needs a rate above zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A course with this code already exists": {
     "sites": 2,
     "scope": [
@@ -5059,6 +5158,15 @@
       "apps/web/lib"
     ]
   },
+  "A deduction was capped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A default cash account must be configured before recording carrier settlement payments": {
     "sites": 2,
     "scope": [
@@ -5315,6 +5423,15 @@
       "go/other"
     ]
   },
+  "A different amount was repaid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "A different page is already stored at sequence {0}": {
     "sites": 1,
     "scope": [
@@ -5488,6 +5605,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "A draft is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A draft request is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A driver": {
@@ -6016,6 +6151,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A funded invoice sold with recourse is still unpaid and its chargeback window closes within 7 days; unless the customer pays, the factor will charge it back and the organization will owe the advance and fee.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A gap is Unsupported or Ambiguous": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A garnishment needs the order it is taken under": {
@@ -6949,6 +7102,15 @@
       "go/other"
     ]
   },
+  "A new trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A new webhook URL is ready": {
     "sites": 1,
     "scope": [
@@ -7320,6 +7482,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "A person must approve the connection before it is written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A person on the case": {
@@ -7895,6 +8066,15 @@
       "routes/worker"
     ]
   },
+  "A question can be matched to an agent when it is at most {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A radius belongs on a rate rule rather than in a zone": {
     "sites": 1,
     "scope": [
@@ -8223,6 +8403,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A rejected invoice has no advance or fee": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A rejected reversal must record when it was rejected": {
@@ -8606,6 +8795,15 @@
     ]
   },
   "A reversal must name the entry it reverses": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A reversal undoes the chargeback exactly; it takes no amount": {
     "sites": 1,
     "scope": [
       "go"
@@ -10864,6 +11062,15 @@
       "routes/desk"
     ]
   },
+  "A voided invoice is never sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "A voided invoice must say when": {
     "sites": 1,
     "scope": [
@@ -11781,6 +11988,15 @@
       "apps/web/components"
     ]
   },
+  "AP": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "AP Contact": {
     "sites": 2,
     "scope": [
@@ -12549,6 +12765,15 @@
       "apps/web/components"
     ]
   },
+  "Accept invoice variances and add adjustments on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Accept it as proof for billing": {
     "sites": 1,
     "scope": [
@@ -12729,6 +12954,15 @@
       "routes/desk"
     ]
   },
+  "Accepted by the partner, with errors": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Accepted organization connection this profile routes through.": {
     "sites": 1,
     "scope": [
@@ -12776,11 +13010,13 @@
     ]
   },
   "Accepted with errors": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/desk"
     ]
   },
@@ -13227,7 +13463,7 @@
     ]
   },
   "Account": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -13540,7 +13776,7 @@
     ]
   },
   "Accounting Date": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -13567,7 +13803,7 @@
     ]
   },
   "Accounting Treatment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -13813,6 +14049,15 @@
       "go/other"
     ]
   },
+  "Accounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Accounts are mapped by hand": {
     "sites": 1,
     "scope": [
@@ -13832,12 +14077,13 @@
     ]
   },
   "Accounts receivable": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/lib",
       "routes/customer",
       "routes/order"
     ]
@@ -14655,7 +14901,7 @@
     ]
   },
   "Actions": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -14664,6 +14910,7 @@
       "routes/admin",
       "routes/bank-receipt-queue",
       "routes/edi",
+      "routes/factoring-submission",
       "routes/inbox",
       "routes/journal-reversal",
       "routes/manual-journal",
@@ -14697,6 +14944,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Actions for invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Actions for {0}": {
@@ -16986,6 +17242,15 @@
       "routes/admin"
     ]
   },
+  "Add pay by hand and read every line on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Add payer": {
     "sites": 1,
     "scope": [
@@ -17688,12 +17953,13 @@
     ]
   },
   "Added by hand": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Added by you": {
@@ -18520,7 +18786,7 @@
     ]
   },
   "Adjustment": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -18531,6 +18797,7 @@
       "packages/shared/components",
       "packages/shared/types",
       "routes/billing-queue",
+      "routes/desk",
       "routes/escrow-account",
       "routes/invoice",
       "routes/invoice-adjustment-batch"
@@ -18829,7 +19096,7 @@
     ]
   },
   "Adjustments": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -18837,7 +19104,8 @@
     "areas": [
       "apps/dash/lib",
       "go/other",
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "routes/desk"
     ]
   },
   "Adjustments (Minor)": {
@@ -18952,7 +19220,7 @@
     ]
   },
   "Advance": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -18963,6 +19231,15 @@
       "routes/factoring-submission",
       "routes/pay-advance",
       "template/factoring.schedule.pdf"
+    ]
+  },
+  "Advance (Minor)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Advance ID": {
@@ -19048,6 +19325,15 @@
       "go/other"
     ]
   },
+  "Advance paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Advance rate": {
     "sites": 2,
     "scope": [
@@ -19091,12 +19377,13 @@
     ]
   },
   "Advance recovery": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/lib"
+      "apps/dash/lib",
+      "routes/desk"
     ]
   },
   "Advance source is invalid": {
@@ -19135,6 +19422,15 @@
       "routes/pay-advance"
     ]
   },
+  "Advance {0} · {1} still owed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Advance, reserve, fee and recourse terms agreed with a factor": {
     "sites": 1,
     "scope": [
@@ -19145,14 +19441,15 @@
     ]
   },
   "Advanced": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/agent-control",
-      "routes/edi"
+      "routes/edi",
+      "routes/factoring-company"
     ]
   },
   "Advances": {
@@ -19323,7 +19620,7 @@
     ]
   },
   "Agent": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -20121,6 +20418,24 @@
       "go/other"
     ]
   },
+  "Agreed at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Agreed at {0} after a counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Agreed with the customer; the books keep their figure": {
     "sites": 1,
     "scope": [
@@ -20171,7 +20486,7 @@
     ]
   },
   "Agreement ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -22058,6 +22373,15 @@
       "apps/web/hooks"
     ]
   },
+  "Already set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Also enroll carriers with a tender that is still open.": {
     "sites": 1,
     "scope": [
@@ -22415,7 +22739,7 @@
     ]
   },
   "Amount": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -22640,6 +22964,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Amount repaid to the factor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Amount still owed. Blank when the billing settings hide it.": {
     "sites": 1,
     "scope": [
@@ -22656,6 +22989,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Amount the factor paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Amount threshold": {
@@ -22746,6 +23088,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An EDI send for this invoice is already in progress.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "An Error has occurred. Please try again.": {
@@ -26518,6 +26869,15 @@
       "routes/ar-open-items"
     ]
   },
+  "Apply payments and adjust on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Apply recurring deductions, escrow, and advance recovery": {
     "sites": 1,
     "scope": [
@@ -27553,7 +27913,7 @@
     ]
   },
   "Approve {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -27582,7 +27942,7 @@
     ]
   },
   "Approved": {
-    "sites": 50,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -27679,6 +28039,15 @@
     ]
   },
   "Approved by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Approved by {0} {1} · post it to send it to the ledger": {
     "sites": 1,
     "scope": [
       "ts"
@@ -27784,6 +28153,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Approved {0} · post it to send it to the ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Approved · never posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Approved, but {0} didn't go through": {
@@ -28933,6 +29320,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "As rate confirmed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "As receipted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "As step {0} leaves it": {
@@ -34107,6 +34512,15 @@
       "go/other"
     ]
   },
+  "Awaiting funding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Awaiting response": {
     "sites": 2,
     "scope": [
@@ -34703,7 +35117,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -34730,7 +35144,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -34763,6 +35177,33 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Backed out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Backed out after accepting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Backed out: “{0}”": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Backend validation rule": {
@@ -36250,6 +36691,15 @@
       "routes/agent-control"
     ]
   },
+  "Below the margin floor; someone who can approve tenders has to take it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Below the pass mark": {
     "sites": 2,
     "scope": [
@@ -37231,6 +37681,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Billed {0} · buy rate {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Billed, 91 days": {
@@ -38766,13 +39225,22 @@
       "go/other"
     ]
   },
-  "Book": {
+  "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/factoring-submission"
+    ]
+  },
+  "Book the factor's release of invoice {0}'s reserve. Whatever the factor kept beyond what it paid is booked as its fee, and the invoice's factoring is then settled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Booked": {
@@ -38782,6 +39250,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Booked By ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Booked on {0} and held for approval before it reaches the ledger.": {
@@ -38794,6 +39271,15 @@
     ]
   },
   "Booked on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Booked with the factor": {
     "sites": 1,
     "scope": [
       "ts"
@@ -38836,6 +39322,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Books on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Boolean": {
@@ -38949,7 +39444,7 @@
     ]
   },
   "Both ways": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -38974,6 +39469,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Bounce source is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Bounced": {
@@ -39933,7 +40437,7 @@
     ]
   },
   "Business Unit ID": {
-    "sites": 79,
+    "sites": 80,
     "scope": [
       "go"
     ],
@@ -40211,6 +40715,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "By hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "By model": {
@@ -41150,7 +41663,7 @@
     ]
   },
   "Cancel": {
-    "sites": 304,
+    "sites": 307,
     "scope": [
       "ts"
     ],
@@ -41186,6 +41699,7 @@
       "routes/escrow-account",
       "routes/factoring",
       "routes/factoring-company",
+      "routes/factoring-submission",
       "routes/fiscal-year",
       "routes/formula-template",
       "routes/fuel-card",
@@ -43058,14 +43572,15 @@
     ]
   },
   "Carried in": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Carried over": {
@@ -43360,6 +43875,15 @@
       "go/other"
     ]
   },
+  "Carrier assignment is unavailable right now. Retry the request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier assignment not found within your organization": {
     "sites": 1,
     "scope": [
@@ -43376,6 +43900,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Carrier backed out": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Carrier backed out of a tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Carrier backout recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Carrier blocked": {
@@ -43478,6 +44029,15 @@
     ],
     "areas": [
       "routes/carrier-cost-event"
+    ]
+  },
+  "Carrier counter-offer to decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carrier delay": {
@@ -43751,6 +44311,15 @@
       "apps/web/components"
     ]
   },
+  "Carrier invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": {
     "sites": 1,
     "scope": [
@@ -44003,13 +44572,14 @@
     ]
   },
   "Carrier settlement": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/desk"
     ]
   },
   "Carrier settlement action is invalid": {
@@ -44179,6 +44749,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Carrier tenders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Carrier tracking links need a public base URL; set app.webBaseUrl": {
     "sites": 1,
     "scope": [
@@ -44262,6 +44841,15 @@
       "apps/web/hooks"
     ]
   },
+  "Carrier's note": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Carrier-defined component — describe it so drivers recognize it.": {
     "sites": 1,
     "scope": [
@@ -44332,6 +44920,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Carriers can answer an offer with a rate of their own instead of only accepting or declining.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Carriers join the watchlist through the enrollment policy in Integrations, when they are created, or by hand from a carrier's Intelligence tab.": {
     "sites": 1,
     "scope": [
@@ -44375,6 +44972,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Carries forward": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Carries outside text forward": {
@@ -44872,15 +45478,43 @@
     ]
   },
   "Cash": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/insights"
+    ]
+  },
+  "Cash (Minor)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Cash Account ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Cash account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Cash advance drawn on the driver's fuel card.": {
@@ -45970,6 +46604,15 @@
       "routes/worker"
     ]
   },
+  "Change the lines and terms on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Change the load in Preview": {
     "sites": 1,
     "scope": [
@@ -46328,7 +46971,7 @@
     ]
   },
   "Changes": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -46336,6 +46979,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/rate-agreement"
     ]
   },
@@ -46511,6 +47155,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Changes to a trading partner you already have": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
@@ -46796,6 +47449,15 @@
       "routes/detention-desk"
     ]
   },
+  "Charge back": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Charge detail": {
     "sites": 1,
     "scope": [
@@ -46889,6 +47551,44 @@
       "apps/web/components"
     ]
   },
+  "Chargeback": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
+    ]
+  },
+  "Chargeback Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Chargeback Reversal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Chargeback Warned At": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Chargeback Window (Days)": {
     "sites": 1,
     "scope": [
@@ -46896,6 +47596,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Chargeback recorded on invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Chargeback reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Chargeback reversed on invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Chargeback window": {
@@ -46936,6 +47663,51 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Chargebacks due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
+  "Charged Back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Charged Back On": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Charged back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Charged back {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Charged in the first (lowest price) band.": {
@@ -47799,6 +48571,15 @@
       "routes/shipment"
     ]
   },
+  "Checking invoice email configuration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Checking partner readiness": {
     "sites": 1,
     "scope": [
@@ -47824,6 +48605,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Checking the customer's EDI configuration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Checking the product guide…": {
@@ -48842,6 +49632,15 @@
       "routes/formula-template"
     ]
   },
+  "Choose funded or rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose how each one counts on the case.": {
     "sites": 1,
     "scope": [
@@ -49209,6 +50008,15 @@
       "routes/admin"
     ]
   },
+  "Choose the factor whose reserve to read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose the first day documents are sent from": {
     "sites": 3,
     "scope": [
@@ -49254,6 +50062,15 @@
     ],
     "areas": [
       "routes/hold-reason"
+    ]
+  },
+  "Choose the invoice": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose the jurisdiction the fuel was bought in": {
@@ -49481,6 +50298,15 @@
     ],
     "areas": [
       "api/graphql",
+      "go/other"
+    ]
+  },
+  "Choose the schedule": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -52529,7 +53355,7 @@
     ]
   },
   "Closed {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -52837,6 +53663,15 @@
       "packages/shared/types"
     ]
   },
+  "Code mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Code must be 10 characters or less": {
     "sites": 2,
     "scope": [
@@ -53046,6 +53881,15 @@
     ],
     "areas": [
       "routes/pay-code"
+    ]
+  },
+  "Codes {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cold Storage": {
@@ -54147,6 +54991,15 @@
       "go/other"
     ]
   },
+  "Communication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Communication number": {
     "sites": 1,
     "scope": [
@@ -54257,13 +55110,14 @@
     ]
   },
   "Company": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Company Driver": {
@@ -60384,6 +61238,33 @@
       "routes/worker"
     ]
   },
+  "Costs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Costs on the loads {0} hauls land here once they are delivered and rated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Costs {0} on this statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Could not add the price": {
     "sites": 1,
     "scope": [
@@ -61612,6 +62493,151 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Counter decision time cannot exceed 1440 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Counter decision time must be at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Counter of {0} refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter rate is required": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter rate is too large": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter rate must be a positive amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Counter refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Counter-offer rate is too large": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Counter-offer recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offer refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offer sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
+  "Counter-offer taken": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Counter-offers are turned off; accept or decline the offer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Countered": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components",
+      "routes/dispatch-console"
+    ]
+  },
+  "Countered at {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Counterparty": {
@@ -63289,7 +64315,7 @@
     ]
   },
   "Created At": {
-    "sites": 120,
+    "sites": 121,
     "scope": [
       "go",
       "ts"
@@ -63799,8 +64825,17 @@
       "routes/worker"
     ]
   },
+  "Credentials you enter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Credit": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -64513,7 +65548,7 @@
     ]
   },
   "Currency": {
-    "sites": 41,
+    "sites": 42,
     "scope": [
       "go",
       "ts"
@@ -64985,6 +66020,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Current setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Current source": {
@@ -65466,7 +66510,7 @@
     ]
   },
   "Customer": {
-    "sites": 90,
+    "sites": 92,
     "scope": [
       "go",
       "ts"
@@ -65523,7 +66567,7 @@
     ]
   },
   "Customer ID": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -67411,7 +68455,7 @@
     ]
   },
   "Date": {
-    "sites": 32,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -67430,6 +68474,7 @@
       "routes/desk",
       "routes/edi",
       "routes/escrow-account",
+      "routes/factoring-submission",
       "routes/holiday",
       "routes/inbox",
       "routes/invoice",
@@ -68546,7 +69591,7 @@
     ]
   },
   "Debit": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -69386,7 +70431,7 @@
     ]
   },
   "Deduction": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -69394,7 +70439,8 @@
     "areas": [
       "apps/web/lib",
       "go/other",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Deduction amount must be greater than zero": {
@@ -69489,7 +70535,7 @@
     ]
   },
   "Deductions": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -69499,6 +70545,7 @@
       "apps/dash/lib",
       "apps/dash/routes",
       "go/other",
+      "routes/desk",
       "routes/driver-settlement"
     ]
   },
@@ -69527,6 +70574,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "Deductions ran past earnings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Dedupe key is required": {
@@ -69575,7 +70631,7 @@
     ]
   },
   "Default": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -72000,6 +73056,15 @@
       "routes/shipment"
     ]
   },
+  "Delivered {0}. Record the factor's funding once its report or remittance arrives.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Delivered.": {
     "sites": 1,
     "scope": [
@@ -72007,6 +73072,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Delivered. Record the factor's funding once its report or remittance arrives.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Delivered: load {0}": {
@@ -72439,7 +73513,7 @@
     ]
   },
   "Denied": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -72451,6 +73525,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/settlement-dispute"
     ]
   },
@@ -75075,6 +76150,15 @@
       "go/other"
     ]
   },
+  "Direction must be Inbound or Outbound": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Direction must be PushTrenovaValue or AdjustTrenova": {
     "sites": 1,
     "scope": [
@@ -75986,6 +77070,15 @@
       "apps/dash/_components"
     ]
   },
+  "Dispatch has to answer a counter within": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Dispatch home": {
     "sites": 1,
     "scope": [
@@ -75995,6 +77088,15 @@
       "routes/admin"
     ]
   },
+  "Dispatch is always told. An escalation offers the move again to the carriers on the tender, leaving out any that backed out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Dispatch management": {
     "sites": 1,
     "scope": [
@@ -76002,6 +77104,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Dispatch refused the carrier's counter-offer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "Dispatch report runs for due user schedules": {
@@ -76243,7 +77354,7 @@
     ]
   },
   "Dispute": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -76508,13 +77619,14 @@
     ]
   },
   "Disputes": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -77422,7 +78534,7 @@
     ]
   },
   "Document": {
-    "sites": 37,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -77436,6 +78548,7 @@
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/desk",
@@ -78191,12 +79304,13 @@
     ]
   },
   "Document types": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/desk",
       "routes/document-type"
     ]
   },
@@ -79025,7 +80139,7 @@
     ]
   },
   "Draft": {
-    "sites": 49,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -79376,6 +80490,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Draft · never submitted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Drafted": {
@@ -80578,15 +81701,6 @@
       "routes/accounting-control"
     ]
   },
-  "Driver settlement": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Driver settlement paid": {
     "sites": 1,
     "scope": [
@@ -81323,6 +82437,15 @@
       "go/other"
     ]
   },
+  "Due From Factor Account ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Due March 2 where the establishment is required to submit": {
     "sites": 1,
     "scope": [
@@ -81435,6 +82558,16 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Due from factor": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/factoring-company"
     ]
   },
   "Due in {0}": {
@@ -82153,11 +83286,12 @@
     ]
   },
   "EDI 210 for {0} queued": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -82287,6 +83421,15 @@
       "routes/edi"
     ]
   },
+  "EDI acknowledgment health": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "EDI approval workflow is not configured": {
     "sites": 1,
     "scope": [
@@ -82339,6 +83482,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "EDI connection draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "EDI connection is not enabled for inbound load tenders": {
@@ -82458,6 +83610,15 @@
       "apps/web/components"
     ]
   },
+  "EDI draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "EDI file held back": {
     "sites": 1,
     "scope": [
@@ -82531,6 +83692,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "EDI invoicing is not enabled for this customer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "EDI is running clean.": {
@@ -83294,6 +84464,15 @@
       "routes/agent-control"
     ]
   },
+  "Each carrier's rate goes up by this much, but never past the margin floor. With no charges on the shipment, rates stay as they were.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Each code signs you in once if you lose your authenticator. They are shown only this time.": {
     "sites": 1,
     "scope": [
@@ -83463,6 +84642,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Each invoice is emailed to the recipients on its customer's billing profile. Invoices that already went out are not sent again.": {
@@ -83692,7 +84880,25 @@
       "go/other"
     ]
   },
+  "Each row totals every cost of the same kind. The statement lists each cost by load.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Each row totals every line billed the same way. The invoice lists each line by shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Each row totals every line paid the same way. The statement lists each line by load.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -84079,7 +85285,7 @@
     ]
   },
   "Earnings": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -84087,7 +85293,17 @@
     "areas": [
       "apps/dash/lib",
       "go/other",
+      "routes/desk",
       "routes/driver-settlement"
+    ]
+  },
+  "Earnings were capped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Earnings, reimbursements, and guarantee top-ups must not be negative": {
@@ -88123,6 +89339,15 @@
       "packages/shared/types"
     ]
   },
+  "Enter a valid rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Enter a valid usage window.": {
     "sites": 1,
     "scope": [
@@ -88276,6 +89501,24 @@
       "apps/web/types"
     ]
   },
+  "Enter how long an escalated offer stays open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how long dispatch has to answer a counter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter how many days a link lasts": {
     "sites": 1,
     "scope": [
@@ -88322,6 +89565,15 @@
     ]
   },
   "Enter how many times an exception may escalate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how many times an exhausted tender may escalate": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88483,6 +89735,15 @@
       "routes/auth"
     ]
   },
+  "Enter the advance the factor paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Enter the amount the customer promised": {
     "sites": 1,
     "scope": [
@@ -88543,6 +89804,24 @@
       "go/other"
     ]
   },
+  "Enter the day it happened": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Enter the day the factor funded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Enter the day the miles were run": {
     "sites": 1,
     "scope": [
@@ -88559,6 +89838,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Enter the fee the factor kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Enter the folder schedules are uploaded to": {
@@ -88660,6 +89948,15 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "Enter the rate you would run the load for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Enter the redirect URI below exactly as written. NetSuite only accepts https addresses.": {
@@ -89775,7 +91072,7 @@
     ]
   },
   "Escalate at most": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -89799,6 +91096,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Escalated offers cannot stay open beyond 10080 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalated offers must stay open at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalated offers stay open for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Escalation contact": {
@@ -89828,6 +91152,24 @@
       "apps/web/types"
     ]
   },
+  "Escalation round {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Escalation rounds must be between 0 and 5": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Escalations": {
     "sites": 1,
     "scope": [
@@ -89838,7 +91180,7 @@
     ]
   },
   "Escalations cannot be negative": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -89847,6 +91189,15 @@
     ]
   },
   "Escalations cannot exceed 10": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalations cannot exceed 5": {
     "sites": 1,
     "scope": [
       "ts"
@@ -89910,13 +91261,14 @@
     ]
   },
   "Escrow": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/lib",
       "apps/dash/routes",
+      "routes/desk",
       "routes/settlement-workspace"
     ]
   },
@@ -91760,6 +93112,24 @@
       "routes/desk"
     ]
   },
+  "Every invoice is decided. Release each reserve as the factor remits it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Every invoice is decided; funding was first recorded {0}. Release each reserve as the factor remits it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Every invoice issued, with its bill-to, shipper, dates and settlement status.": {
     "sites": 1,
     "scope": [
@@ -91940,6 +93310,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Every movement between your organization and this factor that reached the ledger: advances, reserve releases, chargebacks and their reversals.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Every open position is filled": {
@@ -92267,12 +93646,13 @@
     ]
   },
   "Every settlement": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/desk",
       "routes/recurring-deduction",
       "routes/recurring-earning"
     ]
@@ -93767,6 +95147,33 @@
       "routes/worker"
     ]
   },
+  "Exhausted tender action is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Exhausted tender escalated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Exhausted tender was not escalated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Existing scenarios": {
     "sites": 1,
     "scope": [
@@ -94259,6 +95666,15 @@
     ],
     "areas": [
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Expected {0} advance, {1} fee": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Expects": {
@@ -95442,6 +96858,15 @@
     ]
   },
   "Export factoring companies": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Export factoring reserve entries": {
     "sites": 1,
     "scope": [
       "go"
@@ -96773,6 +98198,25 @@
       "routes/invoice"
     ]
   },
+  "Factor advances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
+    ]
+  },
+  "Factor funding recorded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "apps/web/lib"
+    ]
+  },
   "Factored": {
     "sites": 1,
     "scope": [
@@ -96780,6 +98224,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Factored invoice nearing chargeback": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Factored invoices that pass every readiness check and are waiting to be submitted, with their factor, open balance and how long they have been ready, oldest first": {
@@ -96842,7 +98295,7 @@
     ]
   },
   "Factoring Company": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -96851,7 +98304,25 @@
     ]
   },
   "Factoring Company ID": {
-    "sites": 5,
+    "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Fee Account ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Liability Account ID": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -96869,6 +98340,24 @@
     ]
   },
   "Factoring Override Reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Reserve Entries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring Reserve Entry": {
     "sites": 1,
     "scope": [
       "go"
@@ -96929,6 +98418,26 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Factoring chargeback recorded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "apps/web/lib"
+    ]
+  },
+  "Factoring chargeback reversed": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "apps/web/lib"
     ]
   },
   "Factoring clerk": {
@@ -96992,6 +98501,33 @@
       "routes/factoring-company"
     ]
   },
+  "Factoring entries are booked to the ledger, so a person has to make or approve them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring fee account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
+  "Factoring fees": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Factoring readiness": {
     "sites": 1,
     "scope": [
@@ -96999,6 +98535,16 @@
     ],
     "areas": [
       "routes/factoring"
+    ]
+  },
+  "Factoring reserve released": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "apps/web/lib"
     ]
   },
   "Factoring schedule": {
@@ -97014,6 +98560,15 @@
     ]
   },
   "Factoring schedule failed to send": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Factoring schedule funded": {
     "sites": 1,
     "scope": [
       "go"
@@ -98052,24 +99607,6 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
-    ]
-  },
-  "Failed to load PDF": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "Failed to load PDF. Please check the file or URL.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Failed to load accounting control": {
@@ -99566,6 +101103,15 @@
       "apps/dash/_components"
     ]
   },
+  "Far from this worker's usual pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Fast": {
     "sites": 1,
     "scope": [
@@ -99731,15 +101277,34 @@
     ]
   },
   "Fee": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/factoring",
       "routes/factoring-submission",
       "template/factoring.schedule.pdf"
+    ]
+  },
+  "Fee (Minor)": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fee kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Fee rate": {
@@ -99872,7 +101437,7 @@
     ]
   },
   "Fees": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -101148,6 +102713,15 @@
       "routes/fuel-management"
     ]
   },
+  "Fill in the form to see the journal it books.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Fill in the highlighted fields.": {
     "sites": 1,
     "scope": [
@@ -101979,6 +103553,15 @@
       "routes/billing-queue"
     ]
   },
+  "Finding the agent with the tools for this…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Finding the right tools…": {
     "sites": 1,
     "scope": [
@@ -102682,15 +104265,6 @@
       "routes/fiscal-year"
     ]
   },
-  "Fit": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Fit columns to content": {
     "sites": 1,
     "scope": [
@@ -103116,7 +104690,7 @@
     ]
   },
   "Flat": {
-    "sites": 11,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -103137,6 +104711,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Flat a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Flat accessorial rate": {
@@ -103944,6 +105527,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "For the EDI connection drafted from {0}, use \"{1}\" for {2} (page {3}) and draft it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "For the EDI connection drafted from {0}, use \"{1}\" for {2} and draft it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "For your team only. Never printed.": {
@@ -106944,21 +108545,66 @@
     ]
   },
   "Funded": {
+    "sites": 11,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other",
+      "routes/escrow-account",
+      "routes/factoring",
+      "routes/factoring-submission"
+    ]
+  },
+  "Funded At": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Funded On": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Funded on": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/escrow-account"
+      "routes/factoring-submission"
+    ]
+  },
+  "Funded {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Funding": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/factoring-company"
+      "apps/web/lib",
+      "go/other",
+      "routes/factoring-company",
+      "routes/factoring-submission"
     ]
   },
   "Funding Days": {
@@ -107008,6 +108654,15 @@
     "areas": [
       "go/other",
       "routes/factoring-company"
+    ]
+  },
+  "Funding recorded on schedule {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Funding target": {
@@ -107461,6 +109116,15 @@
       "go/other"
     ]
   },
+  "Gaps in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Garnishment": {
     "sites": 2,
     "scope": [
@@ -107699,6 +109363,15 @@
       "routes/fuel-management"
     ]
   },
+  "Generate PDF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Generate a carrier settlement batch automatically when each pay period closes.": {
     "sites": 1,
     "scope": [
@@ -107917,6 +109590,15 @@
       "go/other"
     ]
   },
+  "Generate the invoice PDF before sending.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Generate the return": {
     "sites": 2,
     "scope": [
@@ -108112,6 +109794,15 @@
     "areas": [
       "routes/desk",
       "template/report.pdf"
+    ]
+  },
+  "Generated {0} · not submitted yet · pays {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Generated {0}; expires {1}.": {
@@ -108505,6 +110196,15 @@
     ]
   },
   "Give the dashboard a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Give the date": {
     "sites": 1,
     "scope": [
       "go"
@@ -109717,11 +111417,12 @@
     ]
   },
   "Guaranteed minimum": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -110003,6 +111704,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Had reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Half Even": {
@@ -111444,6 +113154,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Held for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Held from {0}": {
@@ -113332,6 +115051,15 @@
       "routes/rate-matrix"
     ]
   },
+  "How a tender handles a carrier asking for a different rate, and what happens when every carrier has passed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "How a worker takes the course and what it takes to pass.": {
     "sites": 1,
     "scope": [
@@ -113548,6 +115276,15 @@
       "routes/customer"
     ]
   },
+  "How it adds up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How it appears in My scanners. Leave it blank to use the computer's own name.": {
     "sites": 1,
     "scope": [
@@ -113681,6 +115418,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How long each factor takes to fund a schedule once it is sent, averaged over the schedules it funded in the window, with how many and how much": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "How long one call may run before it's abandoned.": {
@@ -114361,6 +116107,15 @@
       "routes/pay-advance"
     ]
   },
+  "How the net pay adds up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How the net pay was sent to the driver — recorded on the statement and audit trail.": {
     "sites": 1,
     "scope": [
@@ -114836,7 +116591,7 @@
     ]
   },
   "ID": {
-    "sites": 77,
+    "sites": 78,
     "scope": [
       "go"
     ],
@@ -115550,6 +117305,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "If the partner uses it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "If this takes too long, please refresh the page.": {
@@ -116287,6 +118051,15 @@
       "routes/insights"
     ]
   },
+  "In": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "In 3 hours": {
     "sites": 1,
     "scope": [
@@ -116530,7 +118303,7 @@
     ]
   },
   "In review": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -117053,6 +118826,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Inbound only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Inbound tender": {
@@ -118933,7 +120715,7 @@
     ]
   },
   "Interchange": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -120566,7 +122348,7 @@
     ]
   },
   "Invoice": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -120596,11 +122378,12 @@
     ]
   },
   "Invoice #": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/factoring",
       "routes/factoring-submission",
       "routes/invoice-register"
@@ -120679,7 +122462,7 @@
     ]
   },
   "Invoice ID": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -121633,6 +123416,15 @@
       "routes/desk"
     ]
   },
+  "Invoice variance accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Invoice void": {
     "sites": 1,
     "scope": [
@@ -121670,11 +123462,12 @@
     ]
   },
   "Invoice {0}": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-invoice-matching",
       "routes/desk",
       "routes/factoring"
@@ -121761,8 +123554,26 @@
       "go/other"
     ]
   },
+  "Invoice {0} has had payments taken off since it was factored; reload it and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} has no PDF yet": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} has no chargeback to reverse": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -121851,6 +123662,24 @@
       "go/other"
     ]
   },
+  "Invoice {0} is not funded and open with the factor, so it cannot be charged back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} is not funded, so it has no reserve to release": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} is not missing any document the factor needs": {
     "sites": 1,
     "scope": [
@@ -121862,6 +123691,15 @@
   },
   "Invoice {0} is not posted": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} is not waiting on the factor": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -121896,6 +123734,15 @@
       "template/notification.invoice_shared"
     ]
   },
+  "Invoice {0} no longer has the open balance the factor bought; record the payment it received first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} was created from this order.": {
     "sites": 1,
     "scope": [
@@ -121903,6 +123750,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Invoice {0} was not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invoice {0}, due {1} ({2} days past due): {3}": {
@@ -122711,6 +124567,15 @@
       "routes/desk"
     ]
   },
+  "It could not be read as X12.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It could not be removed": {
     "sites": 1,
     "scope": [
@@ -122844,6 +124709,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "It is {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "It is {0}. A reply can carry {1} in all, and {2} is left.": {
@@ -123775,6 +125649,15 @@
       "routes/capture"
     ]
   },
+  "Journal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Journal Batch": {
     "sites": 3,
     "scope": [
@@ -123785,7 +125668,7 @@
     ]
   },
   "Journal Batch ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -123830,7 +125713,7 @@
     ]
   },
   "Journal Entry ID": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -124833,6 +126716,15 @@
       "routes/agent-control"
     ]
   },
+  "Keep it under 500 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Keep it under {0} characters": {
     "sites": 1,
     "scope": [
@@ -124995,6 +126887,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Keep the carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Keep the case": {
     "sites": 1,
     "scope": [
@@ -125056,6 +126957,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Keep the memo under 500 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Keep the message under 4,000 characters": {
@@ -125151,7 +127061,7 @@
     ]
   },
   "Keep the reason under 500 characters": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -125282,6 +127192,15 @@
       "apps/dash/_components"
     ]
   },
+  "Keep {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Keep {0} in step with what Trenova posts.": {
     "sites": 1,
     "scope": [
@@ -125391,13 +127310,14 @@
     ]
   },
   "Kept": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/detention-intelligence"
     ]
   },
@@ -125840,7 +127760,7 @@
     ]
   },
   "Kind": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -127069,6 +128989,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Last movement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Last name": {
@@ -128889,6 +130818,15 @@
       "go/other"
     ]
   },
+  "Leaves the invoice's balance as it is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Leaves the organization — never past approval": {
     "sites": 1,
     "scope": [
@@ -128970,6 +130908,15 @@
     "areas": [
       "routes/my-team",
       "routes/worker"
+    ]
+  },
+  "Left as they are": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Left of this month's budget": {
@@ -130103,7 +132050,7 @@
     ]
   },
   "Line": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -130112,6 +132059,7 @@
       "apps/web/components",
       "apps/web/types",
       "go/other",
+      "routes/desk",
       "routes/fuel-purchase",
       "routes/ifta-tax-rate",
       "routes/invoice-approval",
@@ -130378,7 +132326,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -131674,6 +133622,15 @@
       "apps/web/lib"
     ]
   },
+  "Load costs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Load created as a draft": {
     "sites": 1,
     "scope": [
@@ -132175,15 +134132,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Loading PDF...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Loading activity": {
@@ -132775,15 +134723,6 @@
       "routes/admin"
     ]
   },
-  "Loading page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Loading payment...": {
     "sites": 2,
     "scope": [
@@ -133056,6 +134995,15 @@
       "routes/edi"
     ]
   },
+  "Loading the EDI connection draft…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the EDI inbound file…": {
     "sites": 1,
     "scope": [
@@ -133210,11 +135158,12 @@
     ]
   },
   "Loading the document": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/shipment"
     ]
@@ -133370,6 +135319,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading the settlement…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading the shipment": {
@@ -133643,6 +135601,15 @@
       "go/other"
     ]
   },
+  "Loads it pays": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loads observed": {
     "sites": 1,
     "scope": [
@@ -133668,6 +135635,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Loads {0} drives pay here once they are completed. Recurring pay and deductions join on the next run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loan interest": {
@@ -135324,7 +137300,7 @@
     ]
   },
   "MC {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -136925,6 +138901,15 @@
       "routes/edi"
     ]
   },
+  "Mapping entity type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mapping is required for source ID {0}": {
     "sites": 1,
     "scope": [
@@ -137106,13 +139091,15 @@
     ]
   },
   "Margin floor": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "apps/web/types",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/rate-agreement"
     ]
   },
@@ -137244,6 +139231,15 @@
       "apps/web/components"
     ]
   },
+  "Mark an invoice funded or rejected to see the journal it books.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Mark as read": {
     "sites": 3,
     "scope": [
@@ -137264,6 +139260,15 @@
       "apps/web/components"
     ]
   },
+  "Mark at least one invoice funded or rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Mark changes since my last visit": {
     "sites": 1,
     "scope": [
@@ -137280,6 +139285,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Mark each invoice on schedule {0} as the factor's report shows it. Leave an invoice undecided until the factor decides it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Mark eligible shipments delayed across tenants": {
@@ -137566,6 +139580,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Mark {0} paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Mark {0} ready to invoice.": {
@@ -138110,7 +140133,7 @@
     ]
   },
   "Matched": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -138122,6 +140145,7 @@
       "routes/admin",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
+      "routes/desk",
       "routes/inbox",
       "routes/reconciliation-summary"
     ]
@@ -138252,6 +140276,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Matches more than one trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Matches one facility pair": {
@@ -139766,7 +141799,7 @@
     ]
   },
   "Memo": {
-    "sites": 15,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -139780,6 +141813,7 @@
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
       "routes/customer-payments",
+      "routes/factoring-submission",
       "routes/invoice"
     ]
   },
@@ -140473,7 +142507,7 @@
     ]
   },
   "Method": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -140486,6 +142520,7 @@
       "routes/admin",
       "routes/billing-queue",
       "routes/customer-payments",
+      "routes/desk",
       "routes/edi",
       "routes/factoring-company",
       "routes/factoring-submission",
@@ -143894,6 +145929,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Movement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Movement confined to daylight hours": {
     "sites": 1,
     "scope": [
@@ -145145,6 +147189,15 @@
       "routes/edi"
     ]
   },
+  "Name the segment the spec describes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Name the sign-in provider and configure the identifier used by hosted login flows.": {
     "sites": 1,
     "scope": [
@@ -145692,12 +147745,13 @@
     ]
   },
   "Needs approval": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -146142,11 +148196,12 @@
     ]
   },
   "Net pay": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/driver-settlement"
     ]
   },
@@ -146169,12 +148224,13 @@
     ]
   },
   "Net payable": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "routes/desk"
     ]
   },
   "Net payable minor": {
@@ -146196,7 +148252,7 @@
     ]
   },
   "Net {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -146211,6 +148267,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "Net {0} · pays {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Net10": {
@@ -146363,6 +148428,15 @@
       "routes/agent-control"
     ]
   },
+  "Never chosen for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Never connected": {
     "sites": 1,
     "scope": [
@@ -146473,7 +148547,7 @@
     ]
   },
   "New": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -147966,6 +150040,15 @@
       "routes/agent-control"
     ]
   },
+  "Next settlement": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next shipment": {
     "sites": 2,
     "scope": [
@@ -148385,6 +150468,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No EDI partner with that ID exists in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No EDI test cases yet": {
@@ -149638,6 +151730,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "No carrier was left to ask again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "No carriers are on the watchlist": {
@@ -151599,6 +153700,24 @@
       "routes/edi"
     ]
   },
+  "No funded invoices are waiting on their reserve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
+    ]
+  },
+  "No funding is recorded for invoice {0}; record the factor's funding first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No grouping": {
     "sites": 1,
     "scope": [
@@ -151859,6 +153978,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No invoice yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No invoice, payment or credit touched this account in the period.": {
@@ -152153,6 +154281,15 @@
       "routes/desk"
     ]
   },
+  "No load is paid on this settlement.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No loading plan yet": {
     "sites": 1,
     "scope": [
@@ -152160,6 +154297,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No loads this period": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No location categories yet": {
@@ -153110,6 +155256,15 @@
       "routes/driver-pay-event"
     ]
   },
+  "No pay profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No pay profile assigned": {
     "sites": 1,
     "scope": [
@@ -153135,6 +155290,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "No pay this period": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No payments applied yet": {
@@ -153935,12 +156099,13 @@
     ]
   },
   "No remit-to address on file — set it on the carrier record.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "routes/desk"
     ]
   },
   "No reply from {0} — back in the queue": {
@@ -155097,6 +157262,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No template chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No template selected": {
@@ -156425,11 +158599,12 @@
     ]
   },
   "None required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -157002,6 +159177,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Not decided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Not delivered": {
     "sites": 1,
     "scope": [
@@ -157174,6 +159358,15 @@
       "apps/web/hooks"
     ]
   },
+  "Not found on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not found with provider": {
     "sites": 1,
     "scope": [
@@ -157265,6 +159458,15 @@
       "routes/formula-template"
     ]
   },
+  "Not in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not in use": {
     "sites": 2,
     "scope": [
@@ -157291,6 +159493,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Not invoiced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Not invoiced yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not judged": {
@@ -157359,12 +159579,13 @@
     ]
   },
   "Not matched": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Not now": {
@@ -157886,12 +160107,13 @@
     ]
   },
   "Not set": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Not set (UTC)": {
@@ -157961,6 +160183,15 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/osha"
+    ]
+  },
+  "Not supported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not supported in this browser. On iPhone, add Dash to your Home Screen first.": {
@@ -158324,6 +160555,17 @@
       "packages/shared/types"
     ]
   },
+  "Note must be at most 500 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
   "Note must be {0} characters or fewer": {
     "sites": 2,
     "scope": [
@@ -158340,6 +160582,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Note to the broker (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
     ]
   },
   "Note to the customer": {
@@ -158604,6 +160855,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Nothing booked with this factor yet. Funding recorded on a schedule appears here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Nothing called “{0}”": {
@@ -158887,6 +161147,15 @@
   },
   "Nothing has been done to this order yet.": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Nothing has been done to this settlement yet.": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -159232,6 +161501,33 @@
       "routes/desk"
     ]
   },
+  "Nothing is booked for invoice {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing is booked: no money moves.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing is booked: the factor held no reserve and paid nothing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Nothing is created until you save": {
     "sites": 2,
     "scope": [
@@ -159312,6 +161608,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing is saved until you approve the proposal.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing is sent to {0} until setup is finished: confirm the mappings, then choose a start date.": {
@@ -159715,6 +162020,15 @@
       "routes/time-attendance"
     ]
   },
+  "Nothing payable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing pinned yet": {
     "sites": 1,
     "scope": [
@@ -159942,6 +162256,15 @@
       "routes/worker"
     ]
   },
+  "Nothing secret is taken from the guide. After you approve, enter these on the communication profile, then turn it on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing selected": {
     "sites": 1,
     "scope": [
@@ -160148,6 +162471,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing to pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing to plan": {
@@ -162110,6 +164442,15 @@
       "go/other"
     ]
   },
+  "Occurred On": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Occurred at cannot be in the future": {
     "sites": 2,
     "scope": [
@@ -162336,6 +164677,15 @@
       "routes/benefits"
     ]
   },
+  "Off the buy rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Off the clock": {
     "sites": 1,
     "scope": [
@@ -162372,6 +164722,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Offer again in rank order": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Offer expires {0}": {
@@ -162443,7 +164802,7 @@
     ]
   },
   "Offer is not attached to a tender": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -162452,7 +164811,7 @@
     ]
   },
   "Offer is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -162512,6 +164871,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Offer to everyone at once": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.": {
@@ -162604,6 +164972,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Offered {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Offered {0} to an administrator, who decides whether to keep it for {1}": {
@@ -165001,6 +167378,15 @@
       "go/other"
     ]
   },
+  "Only a posted invoice can be sent by EDI.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Only a print batch takes a print job": {
     "sites": 1,
     "scope": [
@@ -165590,7 +167976,25 @@
       "go/other"
     ]
   },
+  "Only an offer a carrier accepted can be backed out of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only an open exception can be acknowledged": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an outside trading partner is set up from a spec": {
     "sites": 1,
     "scope": [
       "go"
@@ -166949,7 +169353,7 @@
     ]
   },
   "Open": {
-    "sites": 65,
+    "sites": 66,
     "scope": [
       "go",
       "ts"
@@ -167477,7 +169881,7 @@
     ]
   },
   "Open carrier": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -168242,6 +170646,15 @@
       "go/other"
     ]
   },
+  "Open settlement": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open shipment": {
     "sites": 6,
     "scope": [
@@ -168320,6 +170733,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Open the PDF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Open the amendment": {
@@ -168767,7 +171189,7 @@
     ]
   },
   "Open worker": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -170656,7 +173078,7 @@
     ]
   },
   "Organization ID": {
-    "sites": 79,
+    "sites": 80,
     "scope": [
       "go"
     ],
@@ -171648,6 +174070,15 @@
       "routes/org-structure"
     ]
   },
+  "Otherwise {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Otr": {
     "sites": 1,
     "scope": [
@@ -171778,6 +174209,15 @@
     ]
   },
   "Ours: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Out": {
     "sites": 1,
     "scope": [
       "ts"
@@ -171995,6 +174435,15 @@
       "routes/edi"
     ]
   },
+  "Outbound only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Outbound tender": {
     "sites": 1,
     "scope": [
@@ -172023,7 +174472,7 @@
     ]
   },
   "Outcome": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -172033,6 +174482,7 @@
       "go/other",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/factoring-submission",
       "routes/jurisdiction-rule",
       "routes/osha",
       "routes/rate-agreement",
@@ -172254,11 +174704,12 @@
     ]
   },
   "Over": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -172900,6 +175351,25 @@
       "routes/worker"
     ]
   },
+  "Owed to Factor (Minor)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Owed to factor": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/factoring-company"
+    ]
+  },
   "Own data only": {
     "sites": 1,
     "scope": [
@@ -173098,7 +175568,7 @@
     ]
   },
   "Owner-operator": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -173282,6 +175752,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "PAY": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "PC*Miler": {
@@ -174207,7 +176686,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -174216,8 +176695,7 @@
       "routes/admin",
       "routes/desk",
       "routes/inbox",
-      "routes/intake",
-      "routes/shipment"
+      "routes/intake"
     ]
   },
   "Page {0} actions": {
@@ -174406,7 +176884,7 @@
     ]
   },
   "Paid": {
-    "sites": 20,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -174624,6 +177102,33 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/driver-settlement"
+    ]
+  },
+  "Paid {0} · after its pay date of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Paid {0} · before its pay date of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Paid {0} · on its pay date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Paid {0}{1}{2}": {
@@ -175137,6 +177642,15 @@
       "go/other"
     ]
   },
+  "Partially Funded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Partially Paid": {
     "sites": 1,
     "scope": [
@@ -175266,6 +177780,15 @@
     ]
   },
   "Partly filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Partly funded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -176524,7 +179047,7 @@
     ]
   },
   "Pay": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -176532,6 +179055,7 @@
       "apps/dash/_components",
       "apps/dash/routes",
       "routes/admin",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -176696,6 +179220,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Pay added by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Pay advance": {
@@ -178135,7 +180668,7 @@
     ]
   },
   "Pays {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -179644,6 +182177,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Period {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Permanently Closed": {
@@ -183560,6 +186102,15 @@
       "routes/desk"
     ]
   },
+  "Post the invoice before sending it. Draft invoices are never emailed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Post the memo to the ledger in the same step.": {
     "sites": 1,
     "scope": [
@@ -183599,6 +186150,15 @@
       "apps/web/lib"
     ]
   },
+  "Post to the ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Post {0, plural, one {# draft invoice} other {# draft invoices}} to the ledger and queue each for the accounting system.": {
     "sites": 1,
     "scope": [
@@ -183609,7 +186169,7 @@
     ]
   },
   "Post {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -183635,15 +186195,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "Post, send and change the invoice on its page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Post-accident": {
@@ -183767,7 +186318,7 @@
     ]
   },
   "Posted": {
-    "sites": 31,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -183914,7 +186465,7 @@
       "routes/customer"
     ]
   },
-  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.": {
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -184004,6 +186555,15 @@
       "routes/fuel-feed-run"
     ]
   },
+  "Posted {0} · pays {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Posted {0}; {1} could not be posted": {
     "sites": 2,
     "scope": [
@@ -184012,6 +186572,24 @@
     "areas": [
       "routes/billing-queue",
       "routes/invoice"
+    ]
+  },
+  "Posted · its ledger entry was reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Posted, not paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Posting accounts": {
@@ -184994,14 +187572,12 @@
     ]
   },
   "Preview unavailable": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/billing-queue",
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Preview {0}": {
@@ -185310,6 +187886,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Previous settlement": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Previous shipment": {
@@ -187477,6 +190062,15 @@
       "routes/agent-control"
     ]
   },
+  "Propose a different rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until post_invoice posts it; apply a posted credit with apply_credit_memo. A person always decides.": {
     "sites": 1,
     "scope": [
@@ -187727,6 +190321,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Propose saving it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Propose saving the EDI connection drafted from {0}, with document digest {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Propose sending a posted invoice to the customer's EDI partner as a 210. Set force only to resend one that already went, when the partner asks for it again. A person always decides.": {
@@ -189383,6 +191995,15 @@
       "routes/reports"
     ]
   },
+  "Puts the invoice's balance back open to collect.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Putting a result together…": {
     "sites": 1,
     "scope": [
@@ -190700,6 +193321,24 @@
       "routes/agent-control"
     ]
   },
+  "Raise the exhausted tender for a person to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Raise the rates by up to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Raise the weekly books reconciliation for every syncing accounting connection": {
     "sites": 2,
     "scope": [
@@ -190747,6 +193386,24 @@
     ]
   },
   "Raised to the minimum, up from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Raised {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Raised {0} · {1, plural, one {# day open} other {# days open}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -191754,6 +194411,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Rate increase": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Rate is required": {
@@ -194427,7 +197093,7 @@
     ]
   },
   "Ready to approve": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -194643,7 +197309,7 @@
     ]
   },
   "Reason": {
-    "sites": 65,
+    "sites": 67,
     "scope": [
       "go",
       "ts"
@@ -195015,11 +197681,13 @@
     ]
   },
   "Reason must be at most 500 characters": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "packages/shared/types"
     ]
   },
@@ -195366,12 +198034,13 @@
     ]
   },
   "Recalculate": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-settlement",
+      "routes/desk",
       "routes/driver-settlement",
       "routes/shipment"
     ]
@@ -195548,6 +198217,15 @@
     "areas": [
       "routes/collections",
       "routes/desk"
+    ]
+  },
+  "Receivables (Minor)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Receivables Snapshot": {
@@ -196673,6 +199351,15 @@
       "routes/detention-desk"
     ]
   },
+  "Record a factor's funding, release a reserve, and record or reverse a chargeback": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Record a fuel purchase": {
     "sites": 1,
     "scope": [
@@ -196791,6 +199478,15 @@
       "routes/shipment"
     ]
   },
+  "Record backout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Record carrier response": {
     "sites": 1,
     "scope": [
@@ -196798,6 +199494,24 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Record carrier responses, bounces and counter-offer decisions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Record chargeback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Record collection": {
@@ -196944,6 +199658,15 @@
       "apps/web/config"
     ]
   },
+  "Record funding": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Record hours": {
     "sites": 2,
     "scope": [
@@ -196995,7 +199718,7 @@
       "packages/shared/types"
     ]
   },
-  "Record how the net pay was disbursed to the driver.": {
+  "Record how the net pay was disbursed to the worker.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -197077,15 +199800,6 @@
     ]
   },
   "Record kind is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Record manual carrier responses": {
     "sites": 1,
     "scope": [
       "go"
@@ -197854,7 +200568,7 @@
       "routes/detention-desk"
     ]
   },
-  "Recording an acceptance commits the load to the carrier at the offered rate, so it is a proposal a person decides; a decline runs once a person approves it.": {
+  "Recording an acceptance, a counter or a carrier backing out moves money or the carrier off the move, so it is a proposal a person decides; a decline runs once a person approves it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -197882,7 +200596,7 @@
     ]
   },
   "Recording...": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -199087,6 +201801,24 @@
       "packages/shared/lib"
     ]
   },
+  "Refuse counter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Refuse counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Refused": {
     "sites": 2,
     "scope": [
@@ -199499,18 +202231,19 @@
     ]
   },
   "Reimbursement": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/desk",
       "routes/pay-code"
     ]
   },
   "Reimbursements": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -199519,6 +202252,7 @@
       "apps/dash/lib",
       "apps/dash/routes",
       "go/other",
+      "routes/desk",
       "routes/driver-settlement"
     ]
   },
@@ -199857,7 +202591,7 @@
     ]
   },
   "Rejected": {
-    "sites": 34,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -199873,6 +202607,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/driver-expense",
+      "routes/factoring-submission",
       "routes/formula-template",
       "routes/worker"
     ]
@@ -200035,7 +202770,7 @@
     ]
   },
   "Rejection Reason": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -200239,6 +202974,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Release reserve": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Release the hold to continue": {
@@ -200537,7 +203281,7 @@
     ]
   },
   "Remit to": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -202090,6 +204834,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Repaid for chargebacks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Repair drift": {
@@ -204469,6 +207222,15 @@
       "routes/billing-queue"
     ]
   },
+  "Required before it can be turned on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Required confirmed": {
     "sites": 1,
     "scope": [
@@ -204658,6 +207420,15 @@
     ],
     "areas": [
       "routes/driver-expense"
+    ]
+  },
+  "Required, not in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Required, not on file": {
@@ -205041,15 +207812,25 @@
     ]
   },
   "Resend": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/desk",
       "routes/invoice",
       "routes/organization"
+    ]
+  },
+  "Resend 210": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Resend EDI": {
@@ -205152,18 +207933,37 @@
     ]
   },
   "Reserve": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "routes/factoring",
+      "routes/factoring-company",
       "routes/factoring-submission",
       "template/factoring.schedule.pdf"
     ]
   },
+  "Reserve (Minor)": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reserve Rate (bp)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve Release": {
     "sites": 1,
     "scope": [
       "go"
@@ -205197,6 +207997,17 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Reserve held": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring",
+      "routes/factoring-company",
+      "routes/factoring-submission"
     ]
   },
   "Reserve rate": {
@@ -205237,6 +208048,51 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Reserve release": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Reserve released": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
+  "Reserve released on invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Reserve released {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Reserve releases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
     ]
   },
   "Reset": {
@@ -205796,7 +208652,7 @@
     ]
   },
   "Resolved": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -207039,7 +209895,7 @@
     ]
   },
   "Retry": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -208092,6 +210948,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Reverse chargeback": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Reverse payment": {
     "sites": 2,
     "scope": [
@@ -208192,6 +211057,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reverses Entry ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reverses the chargeback of {0}, {1} repaid to the factor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Reversible": {
@@ -208392,6 +211275,15 @@
     ],
     "areas": [
       "template/rateconfirmation.email"
+    ]
+  },
+  "Review before approving": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Review before invoicing": {
@@ -210352,6 +213244,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Rounds after the first tender; at most 5.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Rounds in {0}": {
@@ -213024,7 +215925,7 @@
     ]
   },
   "Sale": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -213178,6 +216079,15 @@
       "routes/agent-control"
     ]
   },
+  "Sample": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Sample 53 ft dry van": {
     "sites": 1,
     "scope": [
@@ -213312,6 +216222,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Sample {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Sample, page {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Samsara asset ID": {
@@ -214171,6 +217099,15 @@
       "routes/edi"
     ]
   },
+  "Save the EDI connection from the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": {
     "sites": 1,
     "scope": [
@@ -214389,7 +217326,7 @@
     ]
   },
   "Saved": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -214397,6 +217334,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template",
       "routes/settings"
     ]
@@ -215073,6 +218011,15 @@
       "go/other"
     ]
   },
+  "Say which invoices the factor funded or rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say which record it's about": {
     "sites": 1,
     "scope": [
@@ -215268,6 +218215,35 @@
       "packages/shared/types"
     ]
   },
+  "Say why the carrier backed out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
+  "Say why the chargeback is being reversed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Say why the chargeback is reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Say why the course is waived": {
     "sites": 3,
     "scope": [
@@ -215310,6 +218286,42 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Say why the factor charged it back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Say why the factor charged the invoice back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Say why the factor rejected invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Say why the factor rejected it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Say why the invoice is being voided": {
@@ -215933,13 +218945,14 @@
     ]
   },
   "Schedule": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/agent-control",
       "routes/factoring",
       "routes/formula-template",
@@ -215960,6 +218973,15 @@
   },
   "Schedule ID": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Schedule Invoice ID": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -216225,7 +219247,7 @@
     ]
   },
   "Schedule {0} changed since you opened it; reload and try again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -216258,6 +219280,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "Schedule {0} is not waiting on the factor's funding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Schedule {0} is on its way": {
@@ -216936,15 +219967,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Scroll": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Scroll for more": {
@@ -218342,6 +221364,15 @@
       "routes/edi"
     ]
   },
+  "Secrets, keys and certificates are never taken from a document; leave them for the person to enter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr": {
     "sites": 1,
     "scope": [
@@ -218397,12 +221428,13 @@
     ]
   },
   "Section {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Sections": {
@@ -218444,7 +221476,7 @@
     ]
   },
   "Secured Borrowing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -218594,6 +221626,15 @@
   },
   "See the run": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "See the statement and its journal on its page": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -221458,12 +224499,13 @@
     ]
   },
   "Send": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/detention-desk",
       "routes/factoring",
       "routes/factoring-company",
@@ -221471,6 +224513,15 @@
       "routes/invoice",
       "routes/onboarding",
       "routes/shipment"
+    ]
+  },
+  "Send 210": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Send EDI": {
@@ -221708,12 +224759,13 @@
     ]
   },
   "Send back": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
+      "routes/desk",
       "routes/time-attendance"
     ]
   },
@@ -221751,6 +224803,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Send counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
     ]
   },
   "Send detention notice": {
@@ -221805,6 +224866,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send every carrier a fresh offer at the same time; the first to accept wins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Send for approval": {
@@ -222044,6 +225114,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Send plan is unavailable.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Send plan unavailable.": {
@@ -222492,15 +225571,6 @@
       "routes/desk"
     ]
   },
-  "Send, apply payments and void on its page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Send, confirm, and void rate confirmations": {
     "sites": 1,
     "scope": [
@@ -222766,7 +225836,7 @@
     ]
   },
   "Sending...": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -222782,6 +225852,7 @@
       "routes/invoice",
       "routes/organization",
       "routes/shipment",
+      "routes/tender-offer-public",
       "routes/worker"
     ]
   },
@@ -222969,7 +226040,7 @@
     ]
   },
   "Sent": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -224590,6 +227661,15 @@
       "routes/formula-template"
     ]
   },
+  "Set a cash account on the agreement or in accounting settings before booking factoring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Set a field": {
     "sites": 1,
     "scope": [
@@ -224852,6 +227932,33 @@
       "routes/admin"
     ]
   },
+  "Set the agreement's due-from-factor account before booking factoring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Set the agreement's factoring fee account before booking factoring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Set the agreement's factoring liability account before booking factoring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Set the amount to 0 when the rule does not accrue": {
     "sites": 1,
     "scope": [
@@ -224871,6 +227978,15 @@
     ]
   },
   "Set the measurement method and entitlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Set the organization's accounts receivable account in accounting settings before booking factoring": {
     "sites": 1,
     "scope": [
       "go"
@@ -224935,6 +228051,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Set up a trading partner from its guide: the partner, its communication profile, a document profile per document type, control number starts and code mappings, all inactive until you enter the credentials and turn them on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Set up accounting before booking factoring to the ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Set up how schedules reach {0} on the factor's page before submitting": {
@@ -225194,7 +228328,7 @@
     ]
   },
   "Settled": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -225206,6 +228340,15 @@
       "routes/accounting-drift",
       "routes/desk",
       "routes/invoice"
+    ]
+  },
+  "Settled On": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Settled · {0}": {
@@ -225436,6 +228579,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Settlement lifecycle": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.": {
@@ -225837,6 +228989,15 @@
       "apps/dash/routes"
     ]
   },
+  "Settles the invoice's open balance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Settles today": {
     "sites": 1,
     "scope": [
@@ -226211,6 +229372,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Share of revenue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Share of shipment revenue, allocated to the move by distance.": {
@@ -229571,6 +232741,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Showing {0, plural, one {# row} other {# rows}}": {
     "sites": 1,
     "scope": [
@@ -230610,15 +233789,6 @@
     ],
     "areas": [
       "template/factoring.noa.pdf"
-    ]
-  },
-  "Single": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Single currency": {
@@ -231758,7 +234928,7 @@
     ]
   },
   "Someone": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -234826,6 +237996,15 @@
       "go/other"
     ]
   },
+  "Starter template {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Starting": {
     "sites": 1,
     "scope": [
@@ -237517,6 +240696,15 @@
       "go/other"
     ]
   },
+  "Submission ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Submission age": {
     "sites": 1,
     "scope": [
@@ -237596,13 +240784,14 @@
     ]
   },
   "Submit for approval": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/carrier-settlement",
+      "routes/desk",
       "routes/driver-settlement",
       "routes/invoice"
     ]
@@ -237735,7 +240924,7 @@
     ]
   },
   "Submitted": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -237797,6 +240986,15 @@
       "go/other"
     ]
   },
+  "Submitted by {0} {1} · approve it to pay {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Submitted electronically": {
     "sites": 1,
     "scope": [
@@ -237852,6 +241050,15 @@
       "routes/edi"
     ]
   },
+  "Submitted {0} · approve it to pay {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Submitted {0}{1}": {
     "sites": 1,
     "scope": [
@@ -237859,6 +241066,15 @@
     ],
     "areas": [
       "routes/settlement-dispute"
+    ]
+  },
+  "Submitted · never approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Submitting user is required": {
@@ -238893,6 +242109,15 @@
       "routes/agent-control"
     ]
   },
+  "Switch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Switch artifact": {
     "sites": 1,
     "scope": [
@@ -239743,6 +242968,51 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Take carrier counter-offers that fall below the margin floor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Take counter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Take counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Take counter-offers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Take counters at or above the floor automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Take it": {
@@ -240870,6 +244140,15 @@
       "routes/agent-control"
     ]
   },
+  "Tell dispatch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Tell dispatch why so they can replan — hours, home time, equipment, anything.": {
     "sites": 1,
     "scope": [
@@ -241373,6 +244652,15 @@
       "go/other"
     ]
   },
+  "Template {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Template {0} is {1}; only Active and Inactive templates can be bulk updated": {
     "sites": 1,
     "scope": [
@@ -241724,7 +245012,7 @@
     ]
   },
   "Tender is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -242273,7 +245561,7 @@
     ]
   },
   "Terms": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -242766,6 +246054,24 @@
       "go/other"
     ]
   },
+  "That account does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That account is inactive": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "That approval is already delegated to this person for the same period": {
     "sites": 1,
     "scope": [
@@ -242812,6 +246118,15 @@
     ]
   },
   "That case number is already used for this year; try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That chargeback has already been reversed; reload to see the reserve": {
     "sites": 1,
     "scope": [
       "go"
@@ -243034,6 +246349,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "That invoice is not on this schedule": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "That is not a day of the week": {
@@ -244119,6 +247443,42 @@
       "routes/invoice"
     ]
   },
+  "The advance and fee come to more than the invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "The advance and fee for invoice {0} cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The advance and fee for invoice {0} come to more than the invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The advance cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "The agent": {
     "sites": 1,
     "scope": [
@@ -244353,6 +247713,15 @@
       "go/other"
     ]
   },
+  "The agreement is non-recourse: the factor carries the credit risk and cannot charge invoices back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The agreement must end after it took effect": {
     "sites": 1,
     "scope": [
@@ -244372,6 +247741,15 @@
     ]
   },
   "The agreement terms are not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The agreement's accounting treatment is not set; choose sale or secured borrowing": {
     "sites": 1,
     "scope": [
       "go"
@@ -244423,6 +247801,33 @@
     ],
     "areas": [
       "routes/recurring-earning"
+    ]
+  },
+  "The amount cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "The amount paid back to the factor cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The amount the factor paid cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The amount withheld each time the deduction applies to a settlement.": {
@@ -244630,6 +248035,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The approver belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The argument must be this value.": {
@@ -245156,6 +248570,15 @@
       "go/other"
     ]
   },
+  "The broker has your rate and will take or refuse it. You will hear back by email; the load is not yours until they confirm.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
+    ]
+  },
   "The broker surety bond or trust fund on file is below the requirement.": {
     "sites": 1,
     "scope": [
@@ -245328,7 +248751,7 @@
     ]
   },
   "The carrier": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -245343,6 +248766,33 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The carrier accepted, then backed out; the tender went on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "The carrier asked for a different rate; dispatch has to take or refuse it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "The carrier assignment was canceled and the tender went on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The carrier assignment was canceled or replaced.": {
@@ -245433,6 +248883,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The carrier is assigned at its rate without waiting for dispatch. Counters below the floor always wait for approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "The carrier issuing the invoice.": {
@@ -247191,6 +250650,15 @@
       "routes/table-change-alert"
     ]
   },
+  "The date cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The date it falls due.": {
     "sites": 1,
     "scope": [
@@ -247432,6 +250900,15 @@
     ],
     "areas": [
       "routes/fleet-code"
+    ]
+  },
+  "The decision could not be recorded right now. Retry in a moment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The decision could not be recorded.": {
@@ -248467,6 +251944,15 @@
       "routes/admin"
     ]
   },
+  "The entry could not be planned. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "The entry is deleted outright and cannot be restored; the week's totals are worked out again from the punches that are left.": {
     "sites": 1,
     "scope": [
@@ -248474,6 +251960,24 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "The entry waits for approval before it reaches the ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The envelope matches the drafted profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The equipment could not be checked against a registration.": {
@@ -248845,7 +252349,25 @@
       "apps/web/lib"
     ]
   },
+  "The factor charged the invoice back; it is collected as the organization's own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The factor could not be reached.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "The factor has decided some invoices on this schedule. Record the rest when its next report arrives.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -248872,7 +252394,34 @@
       "go/other"
     ]
   },
+  "The factor paid a different amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "The factor rejected every invoice on this schedule. They are back in the queue to send again or keep.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "The factor's delivery settings changed since you opened them; reload and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factor's funding of a schedule was recorded: the advance, fee and reserve of each funded invoice were booked, and any invoice the factor rejected went back to the queue.": {
     "sites": 1,
     "scope": [
       "go"
@@ -248915,6 +252464,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The factor's remittance or report number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "The factoring company buying the invoices.": {
@@ -248963,6 +252521,15 @@
     ]
   },
   "The factoring company the schedule is sent to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factoring entry does not balance; check the amounts": {
     "sites": 1,
     "scope": [
       "go"
@@ -249032,6 +252599,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "The fee cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "The feeder is empty": {
@@ -249685,6 +253261,15 @@
       "routes/edi"
     ]
   },
+  "The funding could not be planned. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "The governing policy does not require a customer notice for this stop": {
     "sites": 1,
     "scope": [
@@ -249701,6 +253286,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The guaranteed minimum was paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The guidance could not be added": {
@@ -249737,6 +253331,42 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "The guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide gives no value. Tell the agent what it is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide {0} is for the existing trading partner {1} ({2}, id {3}). Draft it again for that partner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide's samples": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The hashing algorithm used to sign outbound messages and MDNs.": {
@@ -250009,6 +253639,15 @@
       "go/other"
     ]
   },
+  "The invoice has not been funded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The invoice has not been read yet, so it cannot be queued for carrier pay": {
     "sites": 1,
     "scope": [
@@ -250097,6 +253736,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "The invoice reads {0} on the schedule afterwards.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "The invoice this credit settled has been voided": {
@@ -250511,6 +254159,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The liability for what the factor advanced, until the customer pays.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "The licence or certificate this is about — a CDL, a medical card.": {
@@ -251526,6 +255183,24 @@
       "routes/customer"
     ]
   },
+  "The move already has another tender in progress": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The move is covered by a different carrier than the one that accepted the tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The move is uncovered again.": {
     "sites": 1,
     "scope": [
@@ -252296,6 +255971,15 @@
     ]
   },
   "The organization default profile cannot target a customer or type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The organization is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -253667,6 +257351,15 @@
       "go/other"
     ]
   },
+  "The rate the carrier asked for, in the offer's terms ({0}).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.": {
     "sites": 1,
     "scope": [
@@ -254414,6 +258107,24 @@
       "routes/worker"
     ]
   },
+  "The reserve could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
+  "The reserve the factor holds until the customer pays it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.": {
     "sites": 1,
     "scope": [
@@ -255083,6 +258794,15 @@
     ]
   },
   "The schedule of accounts the factor reads, the same rows as a CSV for its import, and one packet per invoice with its supporting documents.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "The schedule reads {0} afterwards.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -255884,6 +259604,33 @@
       "go/other"
     ]
   },
+  "The spec document has no readable text yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The spec document is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The spec document was read differently since this draft was approved; draft it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The specific model of the tractor.": {
     "sites": 1,
     "scope": [
@@ -256520,6 +260267,15 @@
       "routes/desk"
     ]
   },
+  "The tender has already moved on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The tender names no stops.": {
     "sites": 1,
     "scope": [
@@ -256878,6 +260634,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The trading partner accepted this message but reported errors in it. Review the acknowledgment errors.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "The trading partner acknowledged and accepted this message.": {
@@ -259237,6 +263002,15 @@
       "routes/settings"
     ]
   },
+  "This browser can't show PDFs inside the page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This browser can't show desktop notifications.": {
     "sites": 1,
     "scope": [
@@ -259877,6 +263651,24 @@
       "packages/shared/components"
     ]
   },
+  "This counter-offer is below the margin floor; taking it needs the approve permission on tenders": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This counter-offer is no longer waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This course is no longer open": {
     "sites": 1,
     "scope": [
@@ -260217,6 +264009,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This document could not be shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This document has no version {0}": {
@@ -261165,6 +264966,15 @@
       "go/other"
     ]
   },
+  "This invoice is already being sent. Wait for that send to finish.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "This invoice is already posted.": {
     "sites": 1,
     "scope": [
@@ -261181,6 +264991,24 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "This invoice is listed twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This invoice's factoring entries could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "This invoice's factoring readiness could not be loaded.": {
@@ -262125,15 +265953,6 @@
       "go/other"
     ]
   },
-  "This page could not be shown.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "This page has no assistant conversation": {
     "sites": 1,
     "scope": [
@@ -262204,6 +266023,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "This partner has no active outbound 990 profile yet. Trenova creates one from the partner's envelope and the base 990 template when the tender is decided, so its 990 cannot be previewed before then": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This partner is enabled for inbound and outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
@@ -263121,6 +266949,15 @@
       "routes/desk"
     ]
   },
+  "This settlement could not be read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This settlement does not belong to you": {
     "sites": 1,
     "scope": [
@@ -263625,6 +267462,60 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "This tender came from another Trenova organization and is answered inside Trenova, so no 990 is sent for it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender came from another trading partner; its 990 goes to the partner that sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender has been bounced too many times; start a new tender for the move": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender is not answered yet; say whether to preview the 990 that accepts it or the one that declines it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender is {0} and will not be answered with a 990": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender was already answered {0}; its 990 says so": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This test is already {0}; record a correction as a new test": {
@@ -265037,6 +268928,15 @@
       "routes/settings"
     ]
   },
+  "Time left to decide the counter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Time of day": {
     "sites": 2,
     "scope": [
@@ -265779,6 +269679,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "To decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "To file": {
@@ -266578,6 +270487,15 @@
       "go/other"
     ]
   },
+  "Too many schedules were asked for at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Too many selected identifiers": {
     "sites": 1,
     "scope": [
@@ -267051,7 +270969,7 @@
     ]
   },
   "Total": {
-    "sites": 45,
+    "sites": 46,
     "scope": [
       "go",
       "ts"
@@ -268346,6 +272264,15 @@
       "routes/agent-control"
     ]
   },
+  "Trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Trading partner this transport profile delivers documents for.": {
     "sites": 1,
     "scope": [
@@ -269093,6 +273020,15 @@
   },
   "Transaction set is required": {
     "sites": 10,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Transaction set must be 204, 210, 214 or 990": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -270655,7 +274591,7 @@
     ]
   },
   "Try again": {
-    "sites": 61,
+    "sites": 62,
     "scope": [
       "ts"
     ],
@@ -272381,6 +276317,15 @@
       "routes/desk"
     ]
   },
+  "Unclear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Uncollectable": {
     "sites": 1,
     "scope": [
@@ -272470,6 +276415,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Under": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Under 1 yr": {
@@ -272705,6 +276659,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Undo invoice {0}'s last chargeback with the opposite entry, when the factor withdrew it or it was recorded by mistake. The invoice goes back to funded with the factor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Undo the change to {0}": {
@@ -273193,12 +277156,13 @@
     ]
   },
   "Unknown carrier": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-invoice-matching",
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -273715,6 +277679,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Unknown worker": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Unknown worker type": {
@@ -274861,6 +278834,15 @@
       "routes/worker"
     ]
   },
+  "Update a trading partner you already have from its revised guide. Only what the guide changed is written, and nothing is turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Update agent control settings": {
     "sites": 1,
     "scope": [
@@ -275981,6 +279963,15 @@
       "apps/web/components"
     ]
   },
+  "Usage must be Mandatory, Optional, Conditional or NotUsed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Usage notes for this profile": {
     "sites": 1,
     "scope": [
@@ -276605,12 +280596,13 @@
     ]
   },
   "Use {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -278779,11 +282771,12 @@
     ]
   },
   "View": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/desk",
       "routes/inbox",
@@ -279213,6 +283206,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "View factor funding, reserve balances and chargebacks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "View factoring agreements": {
@@ -280412,7 +284414,7 @@
     ]
   },
   "Void": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -280422,6 +284424,7 @@
       "apps/web/hooks",
       "go/other",
       "routes/carrier-settlement",
+      "routes/desk",
       "routes/driver-settlement",
       "routes/invoice-register",
       "routes/random-testing",
@@ -280500,6 +284503,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Void memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Void of {0} requested; awaiting reversal approval": {
@@ -280621,7 +284633,7 @@
     ]
   },
   "Voided": {
-    "sites": 28,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -280672,6 +284684,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Voided after it was posted · its ledger entry was reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Voided before it was posted · nothing reached the ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Voided by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Voided in the books": {
@@ -280969,7 +285008,7 @@
     ]
   },
   "Waiting": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -281256,12 +285295,13 @@
     ]
   },
   "Waiting on approval": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Waiting on approval before it prices shipments": {
@@ -281387,12 +285427,13 @@
     ]
   },
   "Waiting on your approval": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Waiting on {0} to reply": {
@@ -281447,6 +285488,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Waiting to be accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting to be applied": {
@@ -281889,6 +285939,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Walk the carriers again one at a time, in their original order.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Want me to load sample data? Every screen will have something to show, and you can delete any of it at any time.": {
@@ -283880,6 +287939,24 @@
       "routes/home"
     ]
   },
+  "What factoring cost for each customer's invoices: the fees booked at funding and on release or chargeback, the cash the factors paid and what was paid back, by customer and factor, over the window": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "What factors funded, held in reserve, released and charged back, booked to the ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What happened": {
     "sites": 12,
     "scope": [
@@ -284199,6 +288276,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "What it books": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "What it can change, and when it asks you": {
@@ -284869,6 +288955,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What the partner noted when it accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What the person sending the notice wrote. Print it when present.": {
@@ -285594,13 +289689,14 @@
     ]
   },
   "When": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/edi",
       "routes/shipment",
       "routes/worker"
@@ -286000,6 +290096,15 @@
     ],
     "areas": [
       "routes/shipment-control"
+    ]
+  },
+  "When every carrier passes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "When hired": {
@@ -286674,6 +290779,15 @@
       "routes/desk"
     ]
   },
+  "Where funding, reserve releases and chargebacks are booked. Nothing is booked for this factor until the accounts its treatment needs are set.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Where invoices for this contract's freight are sent.": {
     "sites": 1,
     "scope": [
@@ -286783,7 +290897,16 @@
     ]
   },
   "Where it stands": {
-    "sites": 1,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Where it stood": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -286926,6 +291049,24 @@
       "routes/worker"
     ]
   },
+  "Where the factor's fees are expensed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
+  "Where the factor's payments land. Empty uses the organization's cash account.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Where the figure came from, so a reviewer can check it against the published matrix.": {
     "sites": 1,
     "scope": [
@@ -286987,6 +291128,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Where the money goes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Where the platform serves Claude for you.": {
@@ -287833,6 +291983,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Which partner is this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Which policies to show": {
@@ -288898,7 +293057,7 @@
     ]
   },
   "Why it was voided": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -288970,6 +293129,24 @@
       "routes/worker"
     ]
   },
+  "Why the chargeback is reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
+  "Why the factor charged it back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "Why the factor no longer directs this customer's payments": {
     "sites": 1,
     "scope": [
@@ -288977,6 +293154,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Why the factor rejected it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
     ]
   },
   "Why the last attempt failed": {
@@ -289314,6 +293500,15 @@
       "routes/shipment"
     ]
   },
+  "Will not save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Will pay by": {
     "sites": 1,
     "scope": [
@@ -289594,6 +293789,15 @@
       "routes/customer"
     ]
   },
+  "With the factor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "With your tools": {
     "sites": 1,
     "scope": [
@@ -289724,7 +293928,7 @@
     ]
   },
   "Withdrawn": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -290100,6 +294304,15 @@
       "routes/detention-policy"
     ]
   },
+  "Worked out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Worked out from your own records and what you've told them, so a short request means what you meant.": {
     "sites": 1,
     "scope": [
@@ -290366,6 +294579,16 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Worker settlement": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/desk"
     ]
   },
   "Worker sync": {
@@ -290976,6 +295199,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Would not save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Wrap": {
@@ -293482,6 +297714,15 @@
       "routes/agent-control"
     ]
   },
+  "Your answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Your carrier": {
     "sites": 1,
     "scope": [
@@ -294309,6 +298550,15 @@
     ],
     "areas": [
       "template/customertracking.status.email"
+    ]
+  },
+  "Your rate ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/tender-offer-public"
     ]
   },
   "Your rating could not be saved": {
@@ -295408,6 +299658,15 @@
       "routes/home"
     ]
   },
+  "at {0} after a counter-offer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "auto": {
     "sites": 1,
     "scope": [
@@ -295535,6 +299794,15 @@
     ]
   },
   "being confirmed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "below the margin floor, needs approval": {
     "sites": 1,
     "scope": [
       "ts"
@@ -297809,6 +302077,15 @@
       "routes/customer"
     ]
   },
+  "e.g., 1850.00": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "e.g., 654321": {
     "sites": 1,
     "scope": [
@@ -297908,6 +302185,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "e.g., Above what the customer pays on this lane": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "e.g., Acme Freight Agreement": {
@@ -298025,6 +302311,16 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "e.g., Fuel is up on this lane": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console",
+      "routes/tender-offer-public"
     ]
   },
   "e.g., Here is the statement you asked for": {
@@ -298243,6 +302539,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "e.g., Truck broke down before pickup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "e.g., Unit is leased on to the carrier; lease agreement on file": {
@@ -298581,6 +302886,15 @@
       "go/other"
     ]
   },
+  "factoring entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "fewer than": {
     "sites": 1,
     "scope": [
@@ -298742,6 +303056,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "from the last settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "from this conversation": {
@@ -299181,7 +303504,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "packages/shared/components"
     ]
   },
   "keeps assignment": {
@@ -299191,6 +303514,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "kept at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "key {0}": {
@@ -299403,12 +303735,13 @@
     ]
   },
   "margin {0}%": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/shipment"
     ]
   },
   "market data": {
@@ -299617,6 +303950,69 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "net pay · paid {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net pay · pays {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net pay · voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net pay · {0} carries forward": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net payable · paid {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net payable · pays {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "net payable · voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "never past approval": {
@@ -300474,6 +304870,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "page {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "paid at {0}, quoted {1}": {
     "sites": 1,
     "scope": [
@@ -300526,6 +304931,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "pays {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "people on a pattern": {
@@ -300700,6 +305114,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "rates raised up to {0}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "read content written outside the organization": {
@@ -301418,6 +305841,15 @@
       "apps/web/components"
     ]
   },
+  "the guide": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "the last 24 hours": {
     "sites": 1,
     "scope": [
@@ -301795,6 +306227,15 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "to the next settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "to use": {
@@ -303096,7 +307537,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -303197,6 +307638,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# code has no mapping} other {# codes have no mapping}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# condition} other {# conditions}}": {
@@ -303300,7 +307750,7 @@
     ]
   },
   "{0, plural, one {# day} other {# days}}": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -303358,6 +307808,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0, plural, one {# day} other {# days}} × {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": {
@@ -303884,6 +308343,24 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# flag to review} other {# flags to review}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# flag} other {# flags}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# golden case} other {# golden cases}}": {
     "sites": 1,
     "scope": [
@@ -304021,6 +308498,15 @@
       "routes/invoice"
     ]
   },
+  "{0, plural, one {# invoice off the buy rate} other {# invoices off the buy rate}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# invoice under the customer's minimum is skipped, and its shipments roll into next period.} other {# invoices under the customer's minimum are skipped, and their shipments roll into next period.}}": {
     "sites": 1,
     "scope": [
@@ -304028,6 +308514,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# invoice waiting to be accepted} other {# invoices waiting to be accepted}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# invoice wasn't approved} other {# invoices weren't approved}} — open it to see why": {
@@ -304040,7 +308535,7 @@
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -304050,6 +308545,15 @@
       "routes/factoring",
       "routes/factoring-submission",
       "routes/home"
+    ]
+  },
+  "{0, plural, one {# invoice} other {# invoices}} awaiting release": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}} could not be posted": {
@@ -304087,6 +308591,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "{0, plural, one {# invoice} other {# invoices}} within a week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring"
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}} · avg {1}d late": {
@@ -304275,12 +308788,13 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -304320,13 +308834,23 @@
       "routes/invoice"
     ]
   },
+  "{0, plural, one {# load not invoiced} other {# loads not invoiced}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# load} other {# loads}}": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -304575,13 +309099,23 @@
     ]
   },
   "{0, plural, one {# move} other {# moves}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/dispatch-console",
       "routes/ifta-return"
+    ]
+  },
+  "{0, plural, one {# move} other {# moves}} {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# move} other {# moves}} · drag onto a driver": {
@@ -304591,6 +309125,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{0, plural, one {# move} other {# moves}} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# mo} other {# mos}}": {
@@ -304701,6 +309244,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# open dispute} other {# open disputes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# open invoice} other {# open invoices}}": {
     "sites": 1,
     "scope": [
@@ -304783,7 +309335,7 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -305219,6 +309771,15 @@
       "routes/settings"
     ]
   },
+  "{0, plural, one {# rejected} other {# rejected}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-submission"
+    ]
+  },
   "{0, plural, one {# report} other {# reports}}": {
     "sites": 1,
     "scope": [
@@ -305244,6 +309805,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# required} other {# required}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# resource} other {# resources}}": {
@@ -305430,6 +310000,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# rule met} other {# rules met}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# rule not checked} other {# rules not checked}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# rule unmet} other {# rules unmet}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# run today} other {# runs today}}": {
@@ -305787,7 +310384,7 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -305826,6 +310423,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0, plural, one {# stop} other {# stops}} × {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# swap} other {# swaps}} to decide": {
     "sites": 1,
     "scope": [
@@ -305835,6 +310441,15 @@
       "routes/scheduling"
     ]
   },
+  "{0, plural, one {# template weighed} other {# templates weighed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# the same} other {# the same}}": {
     "sites": 1,
     "scope": [
@@ -305842,6 +310457,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# thing to settle} other {# things to settle}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.": {
@@ -307011,6 +311635,24 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {Offered again to # carrier} other {Offered again to # carriers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "{0, plural, one {Offered to # carrier} other {Offered to # carriers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {On the first attempt} other {After # attempts}}": {
     "sites": 1,
     "scope": [
@@ -307054,6 +311696,24 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0, plural, one {Pay for # load} other {Pay for # loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {Payable for # load} other {Payable for # loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Policy evaluating} other {Policies evaluating}}": {
@@ -307751,6 +312411,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {a carrier backed out once} other {carriers backed out # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {and # more step} other {and # more steps}}": {
     "sites": 1,
     "scope": [
@@ -307767,6 +312436,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0, plural, one {change} other {changes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {correction this week} other {corrections this week}}": {
@@ -307911,6 +312589,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {· a carrier backed out once} other {· carriers backed out # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} (Day)": {
@@ -308328,11 +313015,12 @@
     ]
   },
   "{0} PDF generation started": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -308417,6 +313105,24 @@
       "routes/admin"
     ]
   },
+  "{0} a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} a settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} accepted": {
     "sites": 1,
     "scope": [
@@ -308442,6 +313148,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} accepted this tender and has now backed out. Their carrier assignment and rate confirmation are canceled, and the tender goes on to the next carrier in line.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} accidents · {1} preventable · {2} out of service · {3} points": {
@@ -308818,13 +313533,14 @@
     ]
   },
   "{0} approved": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "{0} approved as proposed, {1} with changes, {2} rejected": {
@@ -309311,6 +314027,15 @@
       "go/other"
     ]
   },
+  "{0} cannot be below {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "{0} cannot be cleared": {
     "sites": 4,
     "scope": [
@@ -309400,6 +314125,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} cannot exceed {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "{0} cannot run document extraction: {1}": {
@@ -311304,12 +316038,13 @@
     ]
   },
   "{0} hr": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "{0} identity token did not identify the account": {
@@ -311720,6 +316455,15 @@
       "go/other"
     ]
   },
+  "{0} is assigned to the move at {1} instead of the offered {2}, and the rest of the tender is closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.": {
     "sites": 1,
     "scope": [
@@ -311799,6 +316543,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is in a closed period, so it books on {1}, the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is inactive": {
@@ -312536,6 +317289,15 @@
       "routes/admin"
     ]
   },
+  "{0} is told the counter of {1} was refused, and the tender goes on to the next carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} is too large to email ({1} bytes); send this factor's schedules by SFTP or without packets": {
     "sites": 1,
     "scope": [
@@ -313259,7 +318021,7 @@
     ]
   },
   "{0} mi": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -313583,6 +318345,15 @@
     "areas": [
       "go/other",
       "routes/admin"
+    ]
+  },
+  "{0} must be a number with at most 4 decimals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "{0} must be a string": {
@@ -314299,6 +319070,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} of {1} held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} of {1} indexed under {2}. Searches use {3} until every source is done.": {
     "sites": 1,
     "scope": [
@@ -314319,6 +319099,15 @@
   },
   "{0} of {1} mapped": {
     "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} of {1} matched": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -314455,7 +319244,7 @@
     ]
   },
   "{0} of {1} shown": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -314787,13 +319576,14 @@
     ]
   },
   "{0} open": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/collections",
+      "routes/desk",
       "routes/fleet-safety",
       "routes/shipment"
     ]
@@ -314923,15 +319713,6 @@
     ],
     "areas": [
       "routes/time-attendance"
-    ]
-  },
-  "{0} pages": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "{0} paid": {
@@ -315177,6 +319958,15 @@
       "apps/web/lib"
     ]
   },
+  "{0} posted to the ledger": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} posted, {1} capped, {2} already posted.": {
     "sites": 1,
     "scope": [
@@ -315331,6 +320121,24 @@
     "areas": [
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "{0} recalculated from its cost events": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} recalculated from its pay events": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} received and not yet applied to an invoice.": {
@@ -316039,11 +320847,12 @@
     ]
   },
   "{0} send attempted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -316338,6 +321147,15 @@
       "routes/desk"
     ]
   },
+  "{0} still owed on the advance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} still running": {
     "sites": 1,
     "scope": [
@@ -316435,6 +321253,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "{0} submitted for approval": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} submitted, {1} failed": {
@@ -318041,6 +322868,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0} · the carrier's preferred": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} · the earlier conversation stays open": {
     "sites": 1,
     "scope": [
@@ -318096,12 +322932,13 @@
     ]
   },
   "{0} · {1, plural, one {# load} other {# loads}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -318508,7 +323345,7 @@
     ]
   },
   "{0}% confident": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -318599,6 +323436,15 @@
     ]
   },
   "{0}% of linehaul": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}% of revenue": {
     "sites": 1,
     "scope": [
       "ts"
@@ -318817,7 +323663,7 @@
     ]
   },
   "{0}, element {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -319005,6 +323851,15 @@
       "apps/web/components"
     ]
   },
+  "{0}: guide {1}, sample {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}: retrying after {1, plural, one {# failure} other {# failures}}": {
     "sites": 1,
     "scope": [
@@ -319030,6 +323885,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "{0}: what the guide says": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}: {1, plural, one {# call} other {# calls}}": {
@@ -319831,6 +324695,15 @@
       "routes/worker"
     ]
   },
+  "· asked again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "· awaiting decision": {
     "sites": 1,
     "scope": [
@@ -319956,6 +324829,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "· margin {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· open": {

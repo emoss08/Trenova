@@ -266,6 +266,7 @@ func (t Template) StarterTools() []string {
 			"send_detention_notice",
 			"record_stop_actual",
 			"log_check_call",
+			"get_edi_ack_health",
 			"list_watchtower_items",
 			"comment_on_exception",
 			"snooze_exception",
@@ -483,11 +484,17 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"list_edi_inbound_files",
 			"get_edi_inbound_file",
+			"list_edi_messages",
 			"get_edi_message",
+			"get_edi_ack_health",
+			"inspect_x12",
+			"preview_edi_document",
 			"list_edi_transfers",
 			"get_edi_partner",
 			"list_edi_partners",
 			"reprocess_edi_inbound_files",
+			"draft_edi_connection",
+			"apply_edi_connection_draft",
 		}
 	case TemplateFactoringClerk:
 		return []string{
@@ -504,6 +511,9 @@ func (t Template) StarterTools() []string {
 			"submit_invoices_to_factor",
 			"retry_factoring_submission",
 			"cancel_factoring_submission",
+			"get_factoring_reserve_balance",
+			"record_factoring_funding",
+			"release_factoring_reserve",
 			"list_invoices",
 			"get_invoice",
 		}

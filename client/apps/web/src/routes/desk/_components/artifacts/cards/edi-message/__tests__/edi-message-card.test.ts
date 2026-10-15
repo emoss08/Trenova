@@ -47,6 +47,19 @@ describe("messageStanding", () => {
     expect(standing({})).toEqual({ label: "Accepted", tone: "success", mark: "check" });
   });
 
+  it("reads an acceptance with errors as one that asks for a look", () => {
+    expect(messageStanding(ediMessage({ ackStatus: "AcceptedWithErrors" }), t)).toEqual({
+      label: "Accepted with errors",
+      tone: "warn",
+      mark: "pause",
+    });
+    expect(stations({ ackStatus: "AcceptedWithErrors", ackReceivedAt: NOW })[2]).toEqual([
+      "answered",
+      "done",
+      "Accepted by the partner, with errors",
+    ]);
+  });
+
   it("reads a good outbound message by how far it has come", () => {
     const standing = (overrides: Record<string, unknown>) =>
       messageStanding(ediMessage(overrides), t).label;
@@ -251,6 +264,22 @@ describe("wayHalt", () => {
     expect(
       wayHalt(ediMessage({ ackStatus: "Failed", ackLastError: "No AK1 segment" }), t)?.label,
     ).toBe("Why its acknowledgment could not be read");
+    expect(
+      wayHalt(
+        ediMessage({
+          ackStatus: "AcceptedWithErrors",
+          ackLastError: "acknowledgment code E; Mandatory data element missing segment N1",
+          ackReceivedAt: NOW,
+        }),
+        t,
+      ),
+    ).toEqual({
+      station: "answered",
+      label: "What the partner noted when it accepted",
+      attempt: null,
+      at: NOW,
+      text: "acknowledgment code E; Mandatory data element missing segment N1",
+    });
   });
 
   it("has nothing to say of a message on its way, or of a failure that left no words", () => {

@@ -190,7 +190,7 @@ func balanceSentence(entity *manualjournal.Request) string {
 	return "Its debits and credits do not balance yet, so it cannot be submitted until they do."
 }
 
-func bookedEntryChange(
+func BookedEntryChange(
 	journal *kernelports.JournalPreview,
 	currency string,
 	label string,
@@ -331,7 +331,7 @@ func RenderManualJournalPost(
 	if err != nil {
 		return nil, err
 	}
-	entry, err := bookedEntryChange(
+	entry, err := BookedEntryChange(
 		plan.Journal,
 		plan.After.CurrencyCode,
 		"Journal entry for "+plan.Before.RequestNumber,
@@ -450,7 +450,7 @@ func RenderReversalPost(
 	if err != nil {
 		return nil, err
 	}
-	entry, err := bookedEntryChange(
+	entry, err := BookedEntryChange(
 		plan.Change.Journal,
 		plan.Change.CurrencyCode,
 		label,

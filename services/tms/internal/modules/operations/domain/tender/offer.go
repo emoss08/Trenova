@@ -26,26 +26,37 @@ type TenderOffer struct {
 	TenderID       pulid.ID `json:"tenderId"       bun:"tender_id,type:VARCHAR(100),notnull"`
 	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
 
-	Rank               int16                      `json:"rank"               bun:"rank,type:SMALLINT,notnull"`
-	RateMethod         shipment.CarrierRateMethod `json:"rateMethod"         bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
-	Rate               decimal.Decimal            `json:"rate"               bun:"rate,type:NUMERIC(19,4),notnull"`
-	OfferTTLSeconds    int32                      `json:"offerTtlSeconds"    bun:"offer_ttl_seconds,type:INTEGER,notnull"`
-	Channel            Channel                    `json:"channel"            bun:"channel,type:VARCHAR(50),notnull"`
-	Status             OfferStatus                `json:"status"             bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
-	RecipientEmail     string                     `json:"recipientEmail"     bun:"recipient_email,type:VARCHAR(255),nullzero"`
-	SentAt             *int64                     `json:"sentAt"             bun:"sent_at,type:BIGINT,nullzero"`
-	ExpiresAt          *int64                     `json:"expiresAt"          bun:"expires_at,type:BIGINT,nullzero"`
-	RespondedAt        *int64                     `json:"respondedAt"        bun:"responded_at,type:BIGINT,nullzero"`
-	ResponseSource     ResponseSource             `json:"responseSource"     bun:"response_source,type:VARCHAR(50),nullzero"`
-	DeclineReason      string                     `json:"declineReason"      bun:"decline_reason,type:TEXT,nullzero"`
-	DeliveryError      string                     `json:"deliveryError"      bun:"delivery_error,type:TEXT,nullzero"`
-	EDIPartnerID       *pulid.ID                  `json:"ediPartnerId"       bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
-	EDIMessageID       *pulid.ID                  `json:"ediMessageId"       bun:"edi_message_id,type:VARCHAR(100),nullzero"`
-	LateResponseAction string                     `json:"lateResponseAction" bun:"late_response_action,type:VARCHAR(50),nullzero"`
-	LateResponseAt     *int64                     `json:"lateResponseAt"     bun:"late_response_at,type:BIGINT,nullzero"`
-	Version            int64                      `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64                      `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64                      `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Rank                 int16                      `json:"rank"                 bun:"rank,type:SMALLINT,notnull"`
+	RateMethod           shipment.CarrierRateMethod `json:"rateMethod"           bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
+	Rate                 decimal.Decimal            `json:"rate"                 bun:"rate,type:NUMERIC(19,4),notnull"`
+	OfferTTLSeconds      int32                      `json:"offerTtlSeconds"      bun:"offer_ttl_seconds,type:INTEGER,notnull"`
+	Channel              Channel                    `json:"channel"              bun:"channel,type:VARCHAR(50),notnull"`
+	Status               OfferStatus                `json:"status"               bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
+	RecipientEmail       string                     `json:"recipientEmail"       bun:"recipient_email,type:VARCHAR(255),nullzero"`
+	SentAt               *int64                     `json:"sentAt"               bun:"sent_at,type:BIGINT,nullzero"`
+	ExpiresAt            *int64                     `json:"expiresAt"            bun:"expires_at,type:BIGINT,nullzero"`
+	RespondedAt          *int64                     `json:"respondedAt"          bun:"responded_at,type:BIGINT,nullzero"`
+	ResponseSource       ResponseSource             `json:"responseSource"       bun:"response_source,type:VARCHAR(50),nullzero"`
+	DeclineReason        string                     `json:"declineReason"        bun:"decline_reason,type:TEXT,nullzero"`
+	DeliveryError        string                     `json:"deliveryError"        bun:"delivery_error,type:TEXT,nullzero"`
+	EDIPartnerID         *pulid.ID                  `json:"ediPartnerId"         bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
+	EDIMessageID         *pulid.ID                  `json:"ediMessageId"         bun:"edi_message_id,type:VARCHAR(100),nullzero"`
+	LateResponseAction   string                     `json:"lateResponseAction"   bun:"late_response_action,type:VARCHAR(50),nullzero"`
+	LateResponseAt       *int64                     `json:"lateResponseAt"       bun:"late_response_at,type:BIGINT,nullzero"`
+	CounterRate          decimal.NullDecimal        `json:"counterRate"          bun:"counter_rate,type:NUMERIC(19,4),nullzero"`
+	CounterNote          string                     `json:"counterNote"          bun:"counter_note,type:TEXT,nullzero"`
+	CounteredAt          *int64                     `json:"counteredAt"          bun:"countered_at,type:BIGINT,nullzero"`
+	CounterMargin        decimal.NullDecimal        `json:"counterMargin"        bun:"counter_margin_percent,type:NUMERIC(9,4),nullzero"`
+	CounterNeedsApproval bool                       `json:"counterNeedsApproval" bun:"counter_needs_approval,type:BOOLEAN,notnull"`
+	CounterDecidedAt     *int64                     `json:"counterDecidedAt"     bun:"counter_decided_at,type:BIGINT,nullzero"`
+	CounterDecidedByID   *pulid.ID                  `json:"counterDecidedById"   bun:"counter_decided_by_id,type:VARCHAR(100),nullzero"`
+	RevokedAt            *int64                     `json:"revokedAt"            bun:"revoked_at,type:BIGINT,nullzero"`
+	RevokeReason         string                     `json:"revokeReason"         bun:"revoke_reason,type:TEXT,nullzero"`
+	RevokedByID          *pulid.ID                  `json:"revokedById"          bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
+	ReofferedFromID      *pulid.ID                  `json:"reofferedFromId"      bun:"reoffered_from_id,type:VARCHAR(100),nullzero"`
+	Version              int64                      `json:"version"              bun:"version,type:BIGINT"`
+	CreatedAt            int64                      `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64                      `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Tender  *Tender          `json:"tender,omitempty"  bun:"rel:belongs-to,join:tender_id=id"`
 	Carrier *carrier.Carrier `json:"carrier,omitempty" bun:"rel:belongs-to,join:carrier_id=id"`
@@ -68,6 +79,15 @@ func (to *TenderOffer) IsExpiredAt(now int64) bool {
 		to.Status == OfferStatusSent &&
 		to.ExpiresAt != nil &&
 		*to.ExpiresAt <= now
+}
+
+// AgreedRate is the rate the carrier is held to: its own counter once it has
+// made one that still stands or was taken, the offered rate otherwise.
+func (to *TenderOffer) AgreedRate() decimal.Decimal {
+	if to.CounterRate.Valid && to.Status != OfferStatusCounterRejected {
+		return to.CounterRate.Decimal
+	}
+	return to.Rate
 }
 
 func (to *TenderOffer) Validate(multiErr *errortypes.MultiError) {

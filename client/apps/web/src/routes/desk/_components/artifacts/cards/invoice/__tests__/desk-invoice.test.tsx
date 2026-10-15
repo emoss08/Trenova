@@ -25,6 +25,12 @@ const fetchers = vi.hoisted(() => ({
   syncStates: vi.fn(),
   attempts: vi.fn(),
   plan: vi.fn(),
+  send: vi.fn(),
+  generatePdf: vi.fn(),
+  postPreview: vi.fn(),
+  post: vi.fn(),
+  sendEdi: vi.fn(),
+  voidInvoice: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/invoice-card", () => ({ fetchDeskInvoice: fetchers.invoice }));
@@ -39,8 +45,21 @@ vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
 }));
 vi.mock("@/services/api", () => ({
   apiService: {
-    invoiceService: { listEmailAttempts: fetchers.attempts, getSendPlan: fetchers.plan },
+    invoiceService: {
+      listEmailAttempts: fetchers.attempts,
+      getSendPlan: fetchers.plan,
+      send: fetchers.send,
+      generatePdf: fetchers.generatePdf,
+      getPostPreview: fetchers.postPreview,
+      post: fetchers.post,
+    },
   },
+}));
+vi.mock("@/lib/graphql/invoice", () => ({
+  sendInvoiceEdi: fetchers.sendEdi,
+  voidInvoice: fetchers.voidInvoice,
+  fetchInvoiceArContext: vi.fn(),
+  fetchInvoicesByShipment: vi.fn(),
 }));
 // The formula template and EDI message cards are chunks of their own; here each
 // stands in as what it was given, with its way back.
@@ -182,7 +201,35 @@ beforeEach(() => {
     recipients: { to: ["ap@tyson.com"], cc: [], bcc: [] },
     errors: [],
   });
+  for (const action of [
+    fetchers.send,
+    fetchers.generatePdf,
+    fetchers.postPreview,
+    fetchers.post,
+    fetchers.sendEdi,
+    fetchers.voidInvoice,
+  ]) {
+    action.mockReset();
+  }
 });
+
+/** Signs the test's person in to read every section and take these invoice actions. */
+function grantInvoice(operations: number) {
+  seedPermissions({
+    [Resource.Invoice]: Operation.Read | operations,
+    [Resource.Shipment]: Operation.Read,
+    [Resource.AuditLog]: Operation.Read,
+    [Resource.AccountingSync]: Operation.Read,
+    [Resource.FormulaTemplate]: Operation.Read,
+    [Resource.EDI]: Operation.Read,
+  });
+}
+
+function bar(container: HTMLElement): HTMLElement {
+  const found = container.querySelector<HTMLElement>(".dk-rec-bar");
+  if (!found) throw new Error("No bar");
+  return found;
+}
 
 afterEach(() => {
   clearPermissions();
@@ -394,5 +441,131 @@ describe("DeskInvoice", () => {
       "href",
       expect.stringContaining("inv_412"),
     );
+  });
+});
+
+describe("DeskInvoice actions", () => {
+  it("offers no action to someone who may only read the invoice", async () => {
+    const { container } = draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    expect(within(bar(container)).queryAllByRole("button")).toHaveLength(0);
+    const went = section("Where it went");
+    expect(within(went).queryByRole("button", { name: "Resend" })).toBeNull();
+    expect(within(went).queryByRole("button", { name: "Resend 210" })).toBeNull();
+  });
+
+  it("posts a draft only after showing what posting it books", async () => {
+    grantInvoice(Operation.Update);
+    fetchers.invoice.mockResolvedValue(consolidatedDraft());
+    fetchers.postPreview.mockResolvedValue({
+      invoiceId: "inv_457",
+      number: "INV-2610-0457",
+      billToName: "Tyson Foods",
+      currencyCode: "USD",
+      totalMinor: 1_842_000,
+      refusals: [],
+      alreadyPosted: false,
+      journal: null,
+      shipmentsBilled: [],
+      queueItemPosted: false,
+      accountingSync: [],
+      edi: null,
+    });
+    fetchers.post.mockResolvedValue({ id: "inv_457", number: "INV-2610-0457" });
+    const { container } = draw({ recordId: "inv_457" });
+    await screen.findByRole("heading", { name: "Tyson Foods", level: 2 });
+
+    fireEvent.click(within(bar(container)).getByRole("button", { name: "Post $18,420.00" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(fetchers.postPreview).toHaveBeenCalledWith("inv_457");
+    expect(fetchers.post).not.toHaveBeenCalled();
+
+    fireEvent.click(await within(dialog).findByRole("button", { name: "Post invoice" }));
+    await vi.waitFor(() => expect(fetchers.post).toHaveBeenCalledWith("inv_457"));
+  });
+
+  it("emails a posted invoice again and sends its 210 again for someone who may", async () => {
+    grantInvoice(Operation.Update | Operation.Submit);
+    fetchers.send.mockResolvedValue({});
+    fetchers.sendEdi.mockResolvedValue({ status: "Queued" });
+    draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+    const went = section("Where it went");
+
+    const resend = await within(went).findByRole("button", { name: "Resend" });
+    await vi.waitFor(() => expect(resend).toBeEnabled());
+    fireEvent.click(resend);
+    await vi.waitFor(() => expect(fetchers.send).toHaveBeenCalledWith("inv_412"));
+    await vi.waitFor(() => expect(fetchers.invoice).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(within(went).getByRole("button", { name: "Resend 210" }));
+    await vi.waitFor(() => expect(fetchers.sendEdi).toHaveBeenCalledWith("inv_412", true));
+    await vi.waitFor(() => expect(fetchers.invoice).toHaveBeenCalledTimes(3));
+  });
+
+  it("holds the email back and says why while the send plan has an error", async () => {
+    grantInvoice(Operation.Submit);
+    fetchers.plan.mockResolvedValue({
+      recipients: { to: [], cc: [], bcc: [] },
+      errors: ["Acme Foods has no billing email"],
+    });
+    draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    const resend = within(section("Where it went")).getByRole("button", { name: "Resend" });
+    await vi.waitFor(() =>
+      expect(resend).toHaveAttribute("aria-description", "Acme Foods has no billing email"),
+    );
+    expect(resend).toBeDisabled();
+  });
+
+  it("makes the invoice's PDF first when it has none to send", async () => {
+    grantInvoice(Operation.Update | Operation.Submit);
+    fetchers.invoice.mockResolvedValue(postedInvoice({ pdfDocumentId: null }));
+    fetchers.generatePdf.mockResolvedValue(undefined);
+    draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+    const went = section("Where it went");
+
+    expect(within(went).queryByRole("button", { name: "Resend" })).toBeNull();
+    fireEvent.click(within(went).getByRole("button", { name: "Generate PDF" }));
+    await vi.waitFor(() => expect(fetchers.generatePdf).toHaveBeenCalledWith("inv_412"));
+  });
+
+  it("will not void an invoice while cash is applied to it, and says so", async () => {
+    grantInvoice(Operation.Cancel);
+    const { container } = draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    const voiding = within(bar(container)).getByRole("button", { name: "Void" });
+    expect(voiding).toBeDisabled();
+    expect(voiding).toHaveAttribute(
+      "aria-description",
+      "Unapply the customer payments and credit memos on this invoice before voiding it.",
+    );
+  });
+
+  it("voids an invoice with nothing applied to it through the reason it is given", async () => {
+    grantInvoice(Operation.Cancel);
+    fetchers.invoice.mockResolvedValue(consolidatedDraft());
+    const { container } = draw({ recordId: "inv_457" });
+    await screen.findByRole("heading", { name: "Tyson Foods", level: 2 });
+
+    fireEvent.click(within(bar(container)).getByRole("button", { name: "Void" }));
+    expect(
+      await screen.findByRole("heading", { name: "Void invoice INV-2610-0457" }),
+    ).toBeInTheDocument();
+    expect(fetchers.voidInvoice).not.toHaveBeenCalled();
+  });
+
+  it("offers nothing to do to a voided invoice", async () => {
+    grantInvoice(Operation.Update | Operation.Submit | Operation.Cancel);
+    fetchers.invoice.mockResolvedValue(voidedInvoice());
+    const { container } = draw({ recordId: "inv_388" });
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    expect(within(bar(container)).queryAllByRole("button")).toHaveLength(0);
+    expect(fetchers.plan).not.toHaveBeenCalled();
   });
 });

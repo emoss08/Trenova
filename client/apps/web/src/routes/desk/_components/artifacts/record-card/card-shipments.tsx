@@ -28,6 +28,7 @@ export function CardShipments({
   onOpen,
   emptyText,
   layout = "rows",
+  figureOf,
 }: {
   title: string;
   shipments: RecordShipments;
@@ -35,6 +36,12 @@ export function CardShipments({
   /** What the section says when the record has no shipments. */
   emptyText: string;
   layout?: ShipmentLayout;
+  /**
+   * On a route, what the listing record makes of each load in place of the
+   * load's own charge, such as what a settlement pays for it; null leaves the
+   * load's charge.
+   */
+  figureOf?: (shipmentId: string) => string | null;
 }) {
   const t = useT();
   return (
@@ -46,7 +53,13 @@ export function CardShipments({
         ) : undefined
       }
     >
-      <ShipmentList shipments={shipments} onOpen={onOpen} emptyText={emptyText} layout={layout} />
+      <ShipmentList
+        shipments={shipments}
+        onOpen={onOpen}
+        emptyText={emptyText}
+        layout={layout}
+        figureOf={figureOf}
+      />
     </CardSection>
   );
 }
@@ -56,11 +69,13 @@ function ShipmentList({
   onOpen,
   emptyText,
   layout,
+  figureOf,
 }: {
   shipments: RecordShipments;
   onOpen: ((shipmentId: string) => void) | undefined;
   emptyText: string;
   layout: ShipmentLayout;
+  figureOf: ((shipmentId: string) => string | null) | undefined;
 }) {
   const t = useT();
   return (
@@ -78,7 +93,7 @@ function ShipmentList({
           case "board":
             return <ShipmentBoard rows={rows} onOpen={onOpen} />;
           case "route":
-            return <ShipmentRoute rows={rows} onOpen={onOpen} />;
+            return <ShipmentRoute rows={rows} onOpen={onOpen} figureOf={figureOf} />;
           default:
             return <ShipmentRows rows={rows} onOpen={onOpen} />;
         }
@@ -199,7 +214,11 @@ function ShipmentBoard({ rows, onOpen }: ShipmentRowsProps) {
 }
 
 /** An order's legs one after another down a line, each from its pickup to its delivery. */
-function ShipmentRoute({ rows, onOpen }: ShipmentRowsProps) {
+function ShipmentRoute({
+  rows,
+  onOpen,
+  figureOf,
+}: ShipmentRowsProps & { figureOf: ((shipmentId: string) => string | null) | undefined }) {
   const t = useT();
   return (
     <ol className="dk-rec-route">
@@ -228,7 +247,10 @@ function ShipmentRoute({ rows, onOpen }: ShipmentRowsProps) {
               <span className="dk-rec-route-side">
                 <b>{shipment.proNumber}</b>
                 <span className="dk-rec-sub">
-                  {[cardDay(lane.pickupAt), money(shipment.totalChargeAmount)]
+                  {[
+                    cardDay(lane.pickupAt),
+                    figureOf?.(shipment.id) ?? money(shipment.totalChargeAmount),
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </span>

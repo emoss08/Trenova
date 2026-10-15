@@ -153,16 +153,24 @@ const (
 	JournalSourceEventCustomerShortPayRecognized = JournalSourceEventType(
 		"CustomerShortPayRecognized",
 	)
-	JournalSourceEventCustomerPaymentReversed = JournalSourceEventType("CustomerPaymentReversed")
-	JournalSourceEventVendorBillPosted        = JournalSourceEventType("VendorBillPosted")
-	JournalSourceEventVendorPaymentPosted     = JournalSourceEventType("VendorPaymentPosted")
-	JournalSourceEventDriverSettlementPosted  = JournalSourceEventType("DriverSettlementPosted")
-	JournalSourceEventDriverSettlementVoided  = JournalSourceEventType("DriverSettlementVoided")
-	JournalSourceEventEscrowInterestAccrued   = JournalSourceEventType("EscrowInterestAccrued")
-	JournalSourceEventCarrierSettlementPosted = JournalSourceEventType("CarrierSettlementPosted")
-	JournalSourceEventCarrierSettlementVoided = JournalSourceEventType("CarrierSettlementVoided")
-	JournalSourceEventCarrierSettlementPaid   = JournalSourceEventType("CarrierSettlementPaid")
-	JournalSourceEventDriverSettlementPaid    = JournalSourceEventType("DriverSettlementPaid")
+	JournalSourceEventCustomerPaymentReversed  = JournalSourceEventType("CustomerPaymentReversed")
+	JournalSourceEventVendorBillPosted         = JournalSourceEventType("VendorBillPosted")
+	JournalSourceEventVendorPaymentPosted      = JournalSourceEventType("VendorPaymentPosted")
+	JournalSourceEventDriverSettlementPosted   = JournalSourceEventType("DriverSettlementPosted")
+	JournalSourceEventDriverSettlementVoided   = JournalSourceEventType("DriverSettlementVoided")
+	JournalSourceEventEscrowInterestAccrued    = JournalSourceEventType("EscrowInterestAccrued")
+	JournalSourceEventCarrierSettlementPosted  = JournalSourceEventType("CarrierSettlementPosted")
+	JournalSourceEventCarrierSettlementVoided  = JournalSourceEventType("CarrierSettlementVoided")
+	JournalSourceEventCarrierSettlementPaid    = JournalSourceEventType("CarrierSettlementPaid")
+	JournalSourceEventDriverSettlementPaid     = JournalSourceEventType("DriverSettlementPaid")
+	JournalSourceEventFactoringFunded          = JournalSourceEventType("FactoringFunded")
+	JournalSourceEventFactoringReserveReleased = JournalSourceEventType(
+		"FactoringReserveReleased",
+	)
+	JournalSourceEventFactoringChargedBack        = JournalSourceEventType("FactoringChargedBack")
+	JournalSourceEventFactoringChargebackReversed = JournalSourceEventType(
+		"FactoringChargebackReversed",
+	)
 )
 
 func (j JournalSourceEventType) String() string {
@@ -185,47 +193,43 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventCarrierSettlementPosted,
 		JournalSourceEventCarrierSettlementVoided,
 		JournalSourceEventCarrierSettlementPaid,
-		JournalSourceEventDriverSettlementPaid:
+		JournalSourceEventDriverSettlementPaid,
+		JournalSourceEventFactoringFunded,
+		JournalSourceEventFactoringReserveReleased,
+		JournalSourceEventFactoringChargedBack,
+		JournalSourceEventFactoringChargebackReversed:
 		return true
 	}
 	return false
 }
 
+var journalSourceEventDescriptions = map[JournalSourceEventType]string{
+	JournalSourceEventInvoicePosted:               "Trigger on posted customer invoice",
+	JournalSourceEventCreditMemoPosted:            "Trigger on posted customer credit memo",
+	JournalSourceEventDebitMemoPosted:             "Trigger on posted customer debit memo",
+	JournalSourceEventCustomerPaymentPosted:       "Trigger on posted customer payment",
+	JournalSourceEventCustomerShortPayRecognized:  "Trigger on recognized customer short pay",
+	JournalSourceEventCustomerPaymentReversed:     "Trigger on reversed customer payment",
+	JournalSourceEventVendorBillPosted:            "Trigger on posted vendor bill",
+	JournalSourceEventVendorPaymentPosted:         "Trigger on posted vendor payment",
+	JournalSourceEventDriverSettlementPosted:      "Trigger on posted driver settlement",
+	JournalSourceEventDriverSettlementVoided:      "Trigger on voided driver settlement",
+	JournalSourceEventEscrowInterestAccrued:       "Trigger on accrued escrow interest",
+	JournalSourceEventCarrierSettlementPosted:     "Trigger on posted carrier settlement",
+	JournalSourceEventCarrierSettlementVoided:     "Trigger on voided carrier settlement",
+	JournalSourceEventCarrierSettlementPaid:       "Trigger on paid carrier settlement",
+	JournalSourceEventDriverSettlementPaid:        "Trigger on paid driver settlement",
+	JournalSourceEventFactoringFunded:             "Trigger on recorded factor funding",
+	JournalSourceEventFactoringReserveReleased:    "Trigger on released factoring reserve",
+	JournalSourceEventFactoringChargedBack:        "Trigger on factoring chargeback",
+	JournalSourceEventFactoringChargebackReversed: "Trigger on reversed factoring chargeback",
+}
+
 func (j JournalSourceEventType) GetDescription() string {
-	switch j {
-	case JournalSourceEventInvoicePosted:
-		return "Trigger on posted customer invoice"
-	case JournalSourceEventCreditMemoPosted:
-		return "Trigger on posted customer credit memo"
-	case JournalSourceEventDebitMemoPosted:
-		return "Trigger on posted customer debit memo"
-	case JournalSourceEventCustomerPaymentPosted:
-		return "Trigger on posted customer payment"
-	case JournalSourceEventCustomerShortPayRecognized:
-		return "Trigger on recognized customer short pay"
-	case JournalSourceEventCustomerPaymentReversed:
-		return "Trigger on reversed customer payment"
-	case JournalSourceEventVendorBillPosted:
-		return "Trigger on posted vendor bill"
-	case JournalSourceEventVendorPaymentPosted:
-		return "Trigger on posted vendor payment"
-	case JournalSourceEventDriverSettlementPosted:
-		return "Trigger on posted driver settlement"
-	case JournalSourceEventDriverSettlementVoided:
-		return "Trigger on voided driver settlement"
-	case JournalSourceEventEscrowInterestAccrued:
-		return "Trigger on accrued escrow interest"
-	case JournalSourceEventCarrierSettlementPosted:
-		return "Trigger on posted carrier settlement"
-	case JournalSourceEventCarrierSettlementVoided:
-		return "Trigger on voided carrier settlement"
-	case JournalSourceEventCarrierSettlementPaid:
-		return "Trigger on paid carrier settlement"
-	case JournalSourceEventDriverSettlementPaid:
-		return "Trigger on paid driver settlement"
-	default:
-		return "Unknown journal source event"
+	if description, ok := journalSourceEventDescriptions[j]; ok {
+		return description
 	}
+	return "Unknown journal source event"
 }
 
 type ManualJournalEntryPolicy string

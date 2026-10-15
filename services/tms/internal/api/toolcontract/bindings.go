@@ -16,9 +16,10 @@ const (
 	versionField  = "version"
 	readVersion   = "the tool sends the version of the record it reads, which the approved " +
 		"preview pins"
-	watchtowerItemID = "watchtowerItemId"
-	exceptionItemArg = "the mutation takes the exception as its id argument, beside the input"
-	resolutionCode   = "one value under two names: the input's code, and resolutionCode, " +
+	watchtowerItemID     = "watchtowerItemId"
+	reserveMovementInput = "FactoringReserveMovementInput"
+	exceptionItemArg     = "the mutation takes the exception as its id argument, beside the input"
+	resolutionCode       = "one value under two names: the input's code, and resolutionCode, " +
 		"the name the read tools hand it out under and the tool takes"
 )
 
@@ -31,6 +32,11 @@ const (
 func stateCode(field string) string {
 	return "the tool takes the two-letter state code and resolves it to the " + field +
 		" the input takes; no read tool hands out state ids"
+}
+
+func decimalOf(field string) string {
+	return "the tool takes the amount as a decimal string and converts it to the " + field +
+		" the input takes in minor units"
 }
 
 func namedID(param string) string {
@@ -69,6 +75,26 @@ var Bindings = []Binding{
 		Extra: map[string]string{"submissionId": namedID("submissionId")},
 	},
 	{Tool: "request_missing_factoring_document", Input: "RequestMissingFactoringDocumentsInput"},
+	{
+		Tool:   "record_factoring_funding",
+		Input:  "RecordFactoringFundingInput",
+		Nested: map[string]string{"items": "FactoringFundingItemInput"},
+		Extra: map[string]string{
+			"items.advance": decimalOf("advanceMinor"),
+			"items.fee":     decimalOf("feeMinor"),
+		},
+	},
+	{
+		Tool:  "release_factoring_reserve",
+		Input: reserveMovementInput,
+		Extra: map[string]string{"cash": decimalOf("cashMinor")},
+	},
+	{
+		Tool:  "record_factoring_chargeback",
+		Input: reserveMovementInput,
+		Extra: map[string]string{"cash": decimalOf("cashMinor")},
+	},
+	{Tool: "reverse_factoring_chargeback", Input: reserveMovementInput},
 	{
 		Tool:  "assign_exception",
 		Input: "AssignWatchtowerItemInput",

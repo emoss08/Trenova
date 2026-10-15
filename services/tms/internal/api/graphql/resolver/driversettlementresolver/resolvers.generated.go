@@ -30,6 +30,8 @@ type DriverPayEventComponentResolver struct{ *Deps }
 
 type DriverPayEventResolver struct{ *Deps }
 
+type DriverSettlementLineGroupResolver struct{ *Deps }
+
 type DriverSettlementLineResolver struct{ *Deps }
 
 type DriverSettlementResolver struct{ *Deps }

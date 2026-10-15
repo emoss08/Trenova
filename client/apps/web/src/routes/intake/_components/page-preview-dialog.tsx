@@ -1,4 +1,4 @@
-import { PdfPage } from "@/components/elements/pdf-viewer";
+import { PdfFrame } from "@/components/elements/pdf-frame";
 import type { CapturePage } from "@/lib/graphql/capture";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiUrl } from "@trenova/shared/lib/api-url";
+import { apiEndpoint } from "@trenova/shared/lib/api-url";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -183,12 +183,15 @@ export function PagePreviewDialog({
         </div>
 
         {page !== null && (
-          <PdfPage
+          <PdfFrame
             key={page.id}
-            file={apiUrl(page.contentPath)}
+            endpoint={apiEndpoint(page.contentPath)}
+            title={t("Page {0}", page.sequence)}
             rotate={rotation}
-            zoom={zoom}
-            className="border-border bg-muted min-h-[60vh] rounded-md border"
+            zoom={zoom === 1 ? undefined : zoom}
+            fit
+            toolbar={false}
+            className="border-border bg-muted h-[70vh] rounded-md border"
           />
         )}
       </DialogContent>

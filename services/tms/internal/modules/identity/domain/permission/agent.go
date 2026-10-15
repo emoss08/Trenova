@@ -32,6 +32,12 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpUpdate: {},
 		OpCancel: {},
 	},
+	// The clerk proposes recording a factor's funding and releasing a reserve;
+	// both book to the ledger, so each runs only from a person's approval.
+	ResourceFactoringReserve: {
+		OpRead:   {},
+		OpCreate: {},
+	},
 	// Creating a shipment from a document is the intake desk's whole job.
 	// Editing or cancelling one that already exists is a person's: those
 	// tools are offered in chat, where the actor is the person asking.

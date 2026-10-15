@@ -12,6 +12,10 @@ fragment FactoringAgreementFields on FactoringAgreement {
   accountingTreatment
   fundingDays
   submissionTime
+  dueFromFactorAccountId
+  feeExpenseAccountId
+  liabilityAccountId
+  cashAccountId
   notes
   activatedAt
   endedAt

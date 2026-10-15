@@ -1,9 +1,12 @@
 package tendercontract
 
 import (
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 const CarrierTenderWorkflowName = "CarrierTenderWorkflow"
@@ -12,9 +15,15 @@ const TenderSignalName = "tender_signal"
 
 const WorkflowIDPrefix = "carrier-tender-"
 
-// WorkflowID derives the deterministic workflow identifier for one tender.
-func WorkflowID(tenderID pulid.ID) string {
-	return WorkflowIDPrefix + tenderID.String()
+// WorkflowID derives the deterministic workflow identifier for one round of a
+// tender. A carrier walking an acceptance back starts the next round under its
+// own identifier, so it never waits on the round that took the acceptance to
+// finish closing out.
+func WorkflowID(tenderID pulid.ID, round int16) string {
+	if round <= 0 {
+		return WorkflowIDPrefix + tenderID.String()
+	}
+	return WorkflowIDPrefix + tenderID.String() + "-r" + strconv.Itoa(int(round))
 }
 
 type WorkflowInput struct {
@@ -49,6 +58,8 @@ type Signal struct {
 	Action        tender.ResponseAction `json:"action"`
 	Source        tender.ResponseSource `json:"source"`
 	DeclineReason string                `json:"declineReason"`
+	CounterRate   decimal.Decimal       `json:"counterRate"`
+	CounterNote   string                `json:"counterNote"`
 
 	Reason      string   `json:"reason"`
 	ActorUserID pulid.ID `json:"actorUserId"`

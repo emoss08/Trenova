@@ -86,36 +86,36 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 277 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
-| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
+| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1140 writes: 627 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1147 writes: 631 GraphQL mutations and 516 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 409 |
-| Exempt | 697 |
+| Covered by a tool | 421 |
+| Exempt | 692 |
 | — Security | 83 |
-| — Configuration | 277 |
-| — User preference | 38 |
+| — Configuration | 270 |
+| — User preference | 39 |
 | — Infrastructure | 52 |
 | — Agent administration | 101 |
-| — Counterparty | 34 |
+| — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1140 |
+| Total | 1147 |
 
-Of the 443 writes an agent should be able to make, 409 have a tool (92%).
+Of the 455 writes an agent should be able to make, 421 have a tool (92%).
 
 ## Pending
 
@@ -228,7 +228,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 29 | 5 | 0 |
-| edi | 56 | 15 | 41 | 0 |
+| edi | 56 | 22 | 34 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
@@ -236,7 +236,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 15 | 9 | 6 | 0 |
+| factoring | 19 | 13 | 6 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
@@ -318,13 +318,13 @@ The writes no tool performs yet, and what the tool would do.
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
-| tender | 4 | 4 | 0 | 0 |
-| tenderpublic | 2 | 0 | 2 | 0 |
+| tender | 5 | 5 | 0 | 0 |
+| tenderpublic | 3 | 0 | 3 | 0 |
 | timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 0 | 6 | 2 |
-| user | 20 | 0 | 20 | 0 |
+| user | 21 | 0 | 21 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 11 | 7 | 4 | 0 |
 | worker | 8 | 5 | 3 | 0 |
@@ -1121,7 +1121,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/edi/test-cases/:testCaseID/`<br>edihandler.deleteTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
 | `POST /api/v1/edi/catalog/partner-settings/validate/`<br>edihandler.validatePartnerSettings | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Tool: `apply_edi_connection_draft` |
 | `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edihandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
 | `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edihandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edihandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
@@ -1131,7 +1131,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edihandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Tool: `apply_edi_connection_draft` |
 | `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `send_edi_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `reprocess_edi_inbound_files` |
@@ -1140,7 +1140,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `replay_edi_message` |
 | `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `retry_edi_message_delivery` |
 | `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `retry_edi_message_delivery` |
-| `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Tool: `apply_edi_connection_draft` |
 | `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/`<br>edihandler.createTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/draft/`<br>edihandler.createDraftVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1162,11 +1162,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Tool: `apply_edi_connection_draft` |
+| `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Tool: `apply_edi_connection_draft` |
 | `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edihandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Tool: `apply_edi_connection_draft` |
+| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Tool: `apply_edi_connection_draft` |
 | `PUT /api/v1/edi/templates/:templateID/`<br>edihandler.updateTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/templates/:templateID/versions/:versionID/`<br>edihandler.updateTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/templates/:templateID/versions/:versionID/script-libraries/`<br>edihandler.replaceTemplateScriptLibraries | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1244,9 +1244,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation recordFactoringChargeback` | Tool: `record_factoring_chargeback` |
+| `mutation recordFactoringFunding` | Tool: `record_factoring_funding` |
 | `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
+| `mutation releaseFactoringReserve` | Tool: `release_factoring_reserve` |
 | `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
 | `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
+| `mutation reverseFactoringChargeback` | Tool: `reverse_factoring_chargeback` |
 | `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
 | `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
 | `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
@@ -2128,6 +2132,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `POST /api/v1/tenders/:tenderID/bounce/`<br>tenderhandler.bounce | Tool: `record_tender_response` |
 | `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `cancel_tender` |
 | `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `record_tender_response` |
 | `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `tender_move_to_carriers` |
@@ -2138,6 +2143,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/tender-offers/:token/accept/`<br>tenderpublichandler.accept | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
+| `POST /api/v1/tender-offers/:token/counter/`<br>tenderpublichandler.counter | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
 | `POST /api/v1/tender-offers/:token/decline/`<br>tenderpublichandler.decline | Exempt, counterparty: The outside party answering through a public link; an agent acting for the organization must not answer for them. |
 
 ### timesheet
@@ -2208,6 +2214,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `PUT /api/v1/users/me/assistant-visibility/`<br>userhandler.updateMyAssistantVisibility | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 
 ### version

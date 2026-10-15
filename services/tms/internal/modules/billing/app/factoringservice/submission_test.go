@@ -68,10 +68,10 @@ func newSubmissionHarness(t *testing.T) *submissionHarness {
 	customerID := pulid.MustNew("cus_")
 	store := &fakeDocumentStore{stored: map[pulid.ID]*documentports.StoreDocumentRequest{}}
 	h := &submissionHarness{
-		tenant:     tenant,
-		factor:     factor,
-		agreement:  agreement,
-		repo:       newFakeSubmissions(),
+		tenant:    tenant,
+		factor:    factor,
+		agreement: agreement,
+		repo:      newFakeSubmissions(),
 		transports: &fakeTransports{entity: &factoring.Transport{
 			ID:                 pulid.MustNew("factrn_"),
 			FactoringCompanyID: factor.ID,

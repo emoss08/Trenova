@@ -67,9 +67,31 @@ the ceiling or the private-write rule would allow, and the model is told why.
   [agent-runtime.md](agent-runtime.md#taint-runs-that-have-read-outside-content)). While a turn
   carries the flag, dispatch hands `agenttoolpolicy.Decide` the turn's taint with a `web` mark
   added (`decisionTaint`), so the decision records `tainted` for anything that leaves the
-  organization, and then caps what is left at `Propose`. The cap is deliberately limited to web
-  content: tools that read inbound mail or documents keep the policy's own, narrower rule, which
-  holds only what leaves the organization.
+  organization, and then caps what is left at `Propose`. The cap covers web content and the
+  partner text and guides named below: tools that read inbound mail, documents or partner files
+  already stored in Trenova keep the policy's own, narrower rule, which holds only what leaves the
+  organization.
+
+### Partner text and guides
+
+`inspect_x12` and `draft_edi_connection` are not extensions, but they return text written outside
+the organization the same way: X12 a person pasted, or an implementation guide a person attached,
+both written by a trading partner. A successful call sets the same turn flag, so every later write
+in the turn is capped at `Propose` and the model is told it read "content written outside the
+organization (a web page, or a trading partner's text or guide it was given)". Both declare
+`ReadsExternal: always`, `inspect_x12` with the `edi` source and `draft_edi_connection` with the
+`attachment` source, so the run is tainted too. The guide's write, `apply_edi_connection_draft`,
+has a `Propose` ceiling of its own and carries the guide's digest; see
+[edi-spec-onboarding.md](edi-spec-onboarding.md).
+
+Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
+extension whose spec returns outside content, or a name in `outsideTextTools`), because the loop
+runs in workflow code and must decide the same way on replay. Each such tool's policy declares
+`CapsLaterWrites`, which the safety table and the tool snapshot show, and
+`TestEveryToolThatCapsLaterWritesIsOneTheRuntimeCapsOn` (`agentevalgate`) fails when a policy and
+the runtime disagree. A tool that reads partner text already stored in Trenova (an inbound file,
+a message) taints the run but does not set the flag: the narrower taint rule holds only what
+leaves the organization.
 
 ## What leaves Trenova
 

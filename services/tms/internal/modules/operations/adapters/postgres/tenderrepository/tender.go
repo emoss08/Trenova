@@ -2,6 +2,8 @@ package tenderrepository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -47,6 +50,11 @@ func New(p Params) tenderports.TenderRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.tender-repository"),
 	}
+}
+
+var awaitingAnswerStatuses = []tender.OfferStatus{
+	tender.OfferStatusSent,
+	tender.OfferStatusCountered,
 }
 
 func (r *repository) offersRelation(q *bun.SelectQuery) *bun.SelectQuery {
@@ -344,15 +352,16 @@ func (r *repository) ListForSweep(
 					"EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
 						"AND tof.organization_id = tnd.organization_id "+
 						"AND tof.business_unit_id = tnd.business_unit_id "+
-						"AND tof.status = ? AND tof.expires_at <= ?)",
-					tender.OfferStatusSent,
+						"AND tof.status IN (?) AND tof.expires_at <= ?)",
+					bun.List(awaitingAnswerStatuses),
 					req.ExpiredBy,
 				).WhereOr(
 					"NOT EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
 						"AND tof.organization_id = tnd.organization_id "+
 						"AND tof.business_unit_id = tnd.business_unit_id "+
-						"AND tof.status = ?) AND tnd.created_at <= ?",
-					tender.OfferStatusSent,
+						"AND tof.status IN (?)) "+
+						"AND GREATEST(tnd.created_at, COALESCE(tnd.last_bounced_at, 0)) <= ?",
+					bun.List(awaitingAnswerStatuses),
 					req.ExpiredBy,
 				)
 			}).
@@ -499,6 +508,7 @@ func (r *repository) UpdateOfferStatus(
 		if req.EDIMessageID != nil {
 			q = q.Set("edi_message_id = ?", *req.EDIMessageID)
 		}
+		q = applyOfferCounter(q, req)
 
 		results, err := q.
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -519,6 +529,163 @@ func (r *repository) UpdateOfferStatus(
 
 		return affected > 0, nil
 	})
+}
+
+func applyOfferCounter(
+	q *bun.UpdateQuery,
+	req *tenderports.UpdateOfferStatusRequest,
+) *bun.UpdateQuery {
+	cols := tendercol.TenderOfferColumns
+	if counter := req.Counter; counter != nil {
+		q = q.Set(cols.CounterRate.Set(), counter.Rate).
+			Set(cols.CounterNote.Set(), counter.Note).
+			Set(cols.CounteredAt.Set(), counter.At).
+			Set(cols.CounterMargin.Set(), counter.MarginPercent).
+			Set(cols.CounterNeedsApproval.Set(), counter.NeedsApproval)
+	}
+	if decided := req.CounterDecided; decided != nil {
+		q = q.Set(cols.CounterDecidedAt.Set(), decided.At)
+		if decided.UserID != nil {
+			q = q.Set(cols.CounterDecidedByID.Set(), *decided.UserID)
+		}
+	}
+	return q
+}
+
+// errReopenLost unwinds a reopen whose tender moved but whose accepted offer
+// had already left Accepted, so the tender is never live without a revoked
+// acceptance behind it.
+var errReopenLost = errors.New("tender reopen rolled back: accepted offer moved")
+
+// Reopen revokes the accepted offer, puts the tender back to live on the next
+// round and inserts the re-offers, all in one transaction. It reports false
+// when the tender no longer holds that acceptance.
+func (r *repository) Reopen(
+	ctx context.Context,
+	req *tenderports.ReopenTenderRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		reopened := false
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				moved, err := r.reopenTender(txCtx, req)
+				if err != nil || !moved {
+					return err
+				}
+				if err = r.revokeAccepted(txCtx, req); err != nil {
+					return err
+				}
+				if err = r.insertReoffers(txCtx, req); err != nil {
+					return err
+				}
+				reopened = true
+				return nil
+			},
+		)
+		if errors.Is(err, errReopenLost) {
+			return false, nil
+		}
+		if err != nil {
+			return false, dberror.MapRetryableTransactionError(
+				err, "The tender is busy. Retry the request.",
+			)
+		}
+		return reopened, nil
+	})
+}
+
+func (r *repository) reopenTender(
+	ctx context.Context,
+	req *tenderports.ReopenTenderRequest,
+) (bool, error) {
+	cols := tendercol.TenderColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*tender.Tender)(nil)).
+		Set(cols.Status.Set(), tender.StatusActive).
+		Set(cols.BounceCount.Inc(1)).
+		Set(cols.LastBouncedAt.Set(), req.At).
+		Set(cols.AcceptedOfferID.SetNull()).
+		Set(cols.AcceptedAt.SetNull()).
+		Set(cols.CurrentRank.Set(), 0).
+		Set(cols.Version.Inc(1)).
+		Set(cols.UpdatedAt.Set(), req.At).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return tendercol.TenderScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.TenderID).
+				Where(cols.AcceptedOfferID.Eq(), req.RevokedOfferID).
+				Where(cols.Status.In(), bun.List([]tender.Status{
+					tender.StatusAccepted,
+					tender.StatusNeedsReview,
+				}))
+		}).
+		Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("reopen tender: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
+}
+
+func (r *repository) revokeAccepted(
+	ctx context.Context,
+	req *tenderports.ReopenTenderRequest,
+) error {
+	cols := tendercol.TenderOfferColumns
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*tender.TenderOffer)(nil)).
+		Set(cols.Status.Set(), tender.OfferStatusRevoked).
+		Set(cols.RevokedAt.Set(), req.At).
+		Set(cols.RevokeReason.Set(), req.Reason).
+		Set(cols.Version.Inc(1)).
+		Set(cols.UpdatedAt.Set(), req.At)
+	if req.RevokedByID != nil {
+		q = q.Set(cols.RevokedByID.Set(), *req.RevokedByID)
+	}
+	result, err := q.
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.RevokedOfferID).
+				Where(cols.TenderID.Eq(), req.TenderID).
+				Where(cols.Status.Eq(), tender.OfferStatusAccepted)
+		}).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("revoke accepted tender offer: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errReopenLost
+	}
+	return nil
+}
+
+func (r *repository) insertReoffers(
+	ctx context.Context,
+	req *tenderports.ReopenTenderRequest,
+) error {
+	if len(req.Reoffers) == 0 {
+		return nil
+	}
+	for _, offer := range req.Reoffers {
+		offer.TenderID = req.TenderID
+		offer.OrganizationID = req.TenantInfo.OrgID
+		offer.BusinessUnitID = req.TenantInfo.BuID
+	}
+	if _, err := r.db.DBForContext(ctx).NewInsert().
+		Model(&req.Reoffers).
+		Returning("*").
+		Exec(ctx); err != nil {
+		return fmt.Errorf("insert tender re-offers: %w", err)
+	}
+	return nil
 }
 
 func (r *repository) BulkUpdateOfferStatus(

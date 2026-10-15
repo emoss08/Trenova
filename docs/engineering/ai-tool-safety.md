@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 593.
+Tools listed: 603.
 
 ## The model
 
@@ -59,13 +59,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 203 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 208 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 239 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 240 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 39 |
-| Money | Moves or commits money. | Automatic | Yes | 98 |
+| Money | Moves or commits money. | Automatic | Yes | 102 |
 
 ## Reads only
 
@@ -82,6 +82,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Describe formula schema (`describe_formula_schema`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Describe report (`describe_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Describe report dataset (`describe_report_dataset`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Draft EDI connection (`draft_edi_connection`) | Reads only | Automatic | — | Always, from attachment | Reads a trading partner's guide the person attached and plans the connection from it; nothing is stored or sent, and every write after it waits for a person. |
 | Explain rate (`explain_rate`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Find in trenova (`find_in_trenova`) | Reads only | Automatic | — | — | Searches the product guide for the caller; nothing changes and nothing is sent. |
 | Find shipment records (`find_shipment_records`) | Reads only | Automatic | — | — | Matches the records a new shipment names against the organization's own; nothing changes and nothing is sent. |
@@ -106,12 +107,14 @@ Looks something up. Nothing changes and nothing is sent.
 | Get document summary (`get_document_summary`) | Reads only | Automatic | — | Always, from document | Reads text extracted from a document someone outside sent; nothing changes and nothing is sent. |
 | Get DOT random draw (`get_dot_random_draw`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get driver settlement (`get_driver_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get EDI ack health (`get_edi_ack_health`) | Reads only | Automatic | — | Always, from EDI | Reads how partners have acknowledged what was sent, with the delivery errors their systems returned; nothing changes and nothing is sent. |
 | Get EDI inbound file (`get_edi_inbound_file`) | Reads only | Automatic | — | Always, from EDI | Reads an EDI file a trading partner sent, raw X12 included on request; nothing changes and nothing is sent. |
 | Get EDI message (`get_edi_message`) | Reads only | Automatic | — | Always, from EDI | Reads one EDI document, the errors and acknowledgment a partner's system returned for it, and its raw X12 on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get factoring agreement (`get_factoring_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring readiness (`get_factoring_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get factoring reserve balance (`get_factoring_reserve_balance`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring submission (`get_factoring_submission`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`get_formula_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -143,6 +146,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get worker earnings summary (`get_worker_earnings_summary`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get worker HOS (`get_worker_hos`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get worker schedule (`get_worker_schedule`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Inspect x12 (`inspect_x12`) | Reads only | Automatic | — | Always, from EDI | Parses X12 a person handed the agent, which a trading partner wrote; nothing is stored, changed or sent, and every write after it waits for a person. |
 | List accessorial charges (`list_accessorial_charges`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting drift findings (`list_accounting_drift_findings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting inbound changes (`list_accounting_inbound_changes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -256,6 +260,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List workers (`list_workers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Open page (`open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Plan dispatch (`plan_dispatch`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Preview EDI document (`preview_edi_document`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with the partner profile's findings; nothing is saved and nothing is sent. |
 | Preview report (`preview_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -300,6 +305,7 @@ Changes records only people inside the organization see.
 | Adjust invoice run membership (`adjust_invoice_run_membership`) | Inside the organization | Automatic | An exclusion read from what a customer sent is proposed, since it decides what they are billed this period. | — | Edits a proposal of invoices before anything is invoiced; each change is undone by the opposite edit. |
 | Amend IFTA return (`amend_ifta_return`) | Inside the organization | Propose | — | — | Starts a correction of a return already filed with the jurisdictions; it files nothing, but a person decides to reopen a filing. |
 | Apply carrier intel suggestions (`apply_carrier_intel_suggestions`) | Inside the organization | Ask first | — | — | Edits the carrier's own profile inside Trenova from what the provider reports; nothing is sent, and the old values are set back by hand. |
+| Apply EDI connection draft (`apply_edi_connection_draft`) | Inside the organization | Propose | — | Always, from attachment | Sets up a trading partner from a guide the partner wrote, so a person checks every value against its page before anything is saved A person always decides. |
 | Approve worker PTO (`approve_worker_pto`) | Inside the organization | Automatic | — | — | Books approved time off; the worker is told it was approved but reads no text the model wrote. |
 | Archive worker credential (`archive_worker_credential`) | Inside the organization | Propose | — | — | Retires a credential inside Trenova, which can take the worker off dispatch; the archived row stays on file, and a new credential is recorded to replace it. |
 | Assign billing queue biller (`assign_billing_queue_biller`) | Inside the organization | Automatic | — | — | Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else. |
@@ -672,10 +678,13 @@ Moves or commits money.
 | Reassign billing charge (`reassign_billing_charge`) | Money | Propose | — | — | Moves what each customer is billed for a shipment and opens or cancels their queue items; only a person reassigns a charge. |
 | Record carrier settlement payment (`record_carrier_settlement_payment`) | Money | Propose | — | — | Records a payment to the carrier and queues it for the accounting system; only a person says money went out. |
 | Record driver settlement payment (`record_driver_settlement_payment`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Records a payment to the driver and queues it for the accounting system; only a person says money went out. |
+| Record factoring chargeback (`record_factoring_chargeback`) | Money | Propose | — | — | Books a repayment to the factor and reopens an invoice; only a person's approval runs it. |
+| Record factoring funding (`record_factoring_funding`) | Money | Propose | — | — | Books the factor's advances and fees to the general ledger and settles invoices; only a person's approval runs it. |
 | Record fuel index price (`record_fuel_index_price`) | Money | Propose | — | — | Moves the price every fuel surcharge on this index is computed from, which changes what customers are charged; only a person sets it. |
 | Record rate confirmation confirmed (`record_rate_confirmation_confirmed`) | Money | Ask first | — | — | Makes the revision the executed agreement to pay the carrier and confirms their assignment, on the word of someone outside the organization; voiding it afterwards withdraws the agreement rather than restoring it. |
-| Record tender response (`record_tender_response`) | Sent outside the organization, money | Ask first | Each call is classified by what it reaches. Recording an acceptance commits the load to the carrier at the offered rate, so it is a proposal a person decides; a decline runs once a person approves it. | — | An acceptance commits the organization to pay the carrier and sends them the rate confirmation; a decline sends the next carrier its offer. Neither is undone by recording another answer. |
+| Record tender response (`record_tender_response`) | Sent outside the organization, money | Ask first | Each call is classified by what it reaches. Recording an acceptance, a counter or a carrier backing out moves money or the carrier off the move, so it is a proposal a person decides; a decline runs once a person approves it. | — | An acceptance commits the organization to pay the carrier and sends them the rate confirmation; a decline sends the next carrier its offer; a carrier backing out voids its rate confirmation and offers the load to others. None is undone by recording another answer. |
 | Release accounting sync (`release_accounting_sync`) | Money | Propose | — | — | Sends documents a review policy held for a person to the organization's books; only a person releases them. |
+| Release factoring reserve (`release_factoring_reserve`) | Money | Propose | — | — | Books the factor's reserve remittance to the general ledger; only a person's approval runs it. |
 | Remove carrier settlement adjustment (`remove_carrier_settlement_adjustment`) | Money | Automatic | — | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
 | Remove driver settlement adjustment (`remove_driver_settlement_adjustment`) | Money | Automatic | — | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
 | Remove order charge (`remove_order_charge`) | Money | Ask first | — | — | Lowers what the customer is billed; nothing is invoiced or sent, and add_order_charge puts it back. |
@@ -686,6 +695,7 @@ Moves or commits money.
 | Resolve settlement dispute (`resolve_settlement_dispute`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Decides a driver's pay complaint, tells the driver, and can add pay to a settlement, so a person approves it and it runs as them; a decided dispute stays decided. |
 | Resume rate agreement (`resume_rate_agreement`) | Money | Propose | — | — | Turns an agreement back on so it prices shipments again; only a person resumes one. |
 | Reverse customer payment (`reverse_customer_payment`) | Money | Propose | — | — | Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment. |
+| Reverse factoring chargeback (`reverse_factoring_chargeback`) | Money | Propose | — | — | Books the opposite of a chargeback to the general ledger; only a person's approval runs it. |
 | Review driver expense (`review_driver_expense`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Pays or refuses a driver's out-of-pocket expense and tells the driver, so a person approves it and it runs as them; a reviewed expense stays reviewed. |
 | Set carrier monitoring (`set_carrier_monitoring`) | Money | Ask first | — | — | Monitoring is billed per carrier by the provider; turning it off again undoes it, and nothing is sent to the carriers. |
 | Set order charge allocations (`set_order_charge_allocations`) | Money | Ask first | — | — | Moves who is billed for a charge; nothing is invoiced or sent, and the split is set back the same way until it is invoiced. |

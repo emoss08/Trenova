@@ -1,0 +1,164 @@
+fragment FactoringReserveEntryFields on FactoringReserveEntry {
+  id
+  factoringCompanyId
+  agreementId
+  submissionId
+  submissionItemId
+  invoiceId
+  customerId
+  kind
+  treatment
+  currencyCode
+  cashMinor
+  feeMinor
+  reserveMinor
+  liabilityMinor
+  arMinor
+  journalEntryId
+  accountingDate
+  occurredOn
+  reversesEntryId
+  memo
+  createdAt
+  invoice {
+    id
+    number
+  }
+  customer {
+    id
+    code
+    name
+  }
+  submission {
+    id
+    number
+  }
+}
+
+fragment FactoringPlannedMovementFields on FactoringPlannedMovement {
+  itemId
+  invoiceId
+  invoiceNumber
+  customerId
+  movement {
+    kind
+    treatment
+    cashMinor
+    feeMinor
+    reserveMinor
+    liabilityMinor
+    arMinor
+    invoiceEffect
+    invoiceMinor
+  }
+  lines {
+    role
+    accountId
+    account {
+      id
+      accountCode
+      name
+    }
+    debit
+    credit
+  }
+  requestedDate
+  accountingDate
+  fiscalPeriodId
+  fiscalPeriodName
+  requiresApproval
+}
+
+fragment FactoringReserveMovementPlanFields on FactoringReserveMovementPlan {
+  submissionId
+  itemId
+  itemStatus
+  movement {
+    ...FactoringPlannedMovementFields
+  }
+  reverses {
+    ...FactoringReserveEntryFields
+  }
+}
+
+query FactoringReserveEntries($input: FactoringReserveEntryListInput!) {
+  factoringReserveEntries(input: $input) {
+    edges {
+      node {
+        ...FactoringReserveEntryFields
+      }
+    }
+    totalCount
+  }
+}
+
+query FactoringReserveBalance($factoringCompanyId: ID!) {
+  factoringReserveBalance(factoringCompanyId: $factoringCompanyId) {
+    factoringCompanyId
+    reserveMinor
+    liabilityMinor
+    advancedMinor
+    releasedMinor
+    chargedBackMinor
+    feeMinor
+    entryCount
+    lastOccurredOn
+  }
+}
+
+query FactoringFundingPlan($input: RecordFactoringFundingInput!) {
+  factoringFundingPlan(input: $input) {
+    submissionId
+    status
+    fundedCount
+    rejectCount
+    advanceMinor
+    feeMinor
+    reserveMinor
+    movements {
+      ...FactoringPlannedMovementFields
+    }
+  }
+}
+
+query FactoringReleasePlan($input: FactoringReserveMovementInput!) {
+  factoringReleasePlan(input: $input) {
+    ...FactoringReserveMovementPlanFields
+  }
+}
+
+query FactoringChargebackPlan($input: FactoringReserveMovementInput!) {
+  factoringChargebackPlan(input: $input) {
+    ...FactoringReserveMovementPlanFields
+  }
+}
+
+query FactoringChargebackReversalPlan($input: FactoringReserveMovementInput!) {
+  factoringChargebackReversalPlan(input: $input) {
+    ...FactoringReserveMovementPlanFields
+  }
+}
+
+mutation RecordFactoringFunding($input: RecordFactoringFundingInput!) {
+  recordFactoringFunding(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}
+
+mutation ReleaseFactoringReserve($input: FactoringReserveMovementInput!) {
+  releaseFactoringReserve(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}
+
+mutation RecordFactoringChargeback($input: FactoringReserveMovementInput!) {
+  recordFactoringChargeback(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}
+
+mutation ReverseFactoringChargeback($input: FactoringReserveMovementInput!) {
+  reverseFactoringChargeback(input: $input) {
+    ...FactoringSubmissionFields
+  }
+}

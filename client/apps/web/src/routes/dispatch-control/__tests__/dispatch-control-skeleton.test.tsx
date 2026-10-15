@@ -70,25 +70,36 @@ describe("DispatchControlSkeleton", () => {
   });
 
   // The fallback has to be the page the organization will see, or the layout jumps when the
-  // form lands: assignment, scoring and DOT compliance are only there for a fleet.
-  it("draws every card the form shows an organization running a fleet", async () => {
+  // form lands: assignment, scoring and DOT compliance are only there for a fleet, and carrier
+  // tenders only for a brokerage.
+  it("draws every card the form shows an organization that runs a fleet and brokers", async () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(7);
+    expect(cardCount(skeleton)).toBe(8);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(7);
+    expect(await loadedFormCardCount()).toBe(8);
   });
 
   it("leaves out the fleet's cards for a brokerage, as the form does", async () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: false });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(4);
+    expect(cardCount(skeleton)).toBe(5);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(4);
+    expect(await loadedFormCardCount()).toBe(5);
+  });
+
+  it("leaves out the carrier tenders card for a fleet that does not broker, as the form does", async () => {
+    signIn({ brokerageEnabled: false, assetOperationsEnabled: true });
+
+    const { container: skeleton } = render(<DispatchControlSkeleton />);
+    expect(cardCount(skeleton)).toBe(7);
+    cleanup();
+
+    expect(await loadedFormCardCount()).toBe(7);
   });
 
   it("is announced once as loading", () => {

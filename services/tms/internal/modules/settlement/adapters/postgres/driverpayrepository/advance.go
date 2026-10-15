@@ -165,6 +165,31 @@ func (r *payAdvanceRepository) GetByID(
 	})
 }
 
+func (r *payAdvanceRepository) GetByIDs(
+	ctx context.Context,
+	req driverpayports.GetPayAdvancesByIDsRequest,
+) ([]*driverpay.PayAdvance, error) {
+	if len(req.IDs) == 0 {
+		return []*driverpay.PayAdvance{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayAdvance, error) {
+		cols := driverpaycol.PayAdvanceColumns
+		items := make([]*driverpay.PayAdvance, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return driverpaycol.PayAdvanceScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get pay advances by ids: %w", err)
+		}
+		return items, nil
+	})
+}
+
 func (r *payAdvanceRepository) ListOutstandingForWorker(
 	ctx context.Context,
 	req driverpayports.ListOutstandingAdvancesForWorkerRequest,

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 )
@@ -31,6 +32,10 @@ const (
 	paramDeliveryStatus    = "deliveryStatus"
 	paramTransactionSet    = "transactionSet"
 	paramShipmentLinkID    = "shipmentLinkId"
+	paramAckStatus         = "ackStatus"
+	paramInvoiceID         = "invoiceId"
+	paramCreatedAfter      = "createdAfter"
+	paramCreatedBefore     = "createdBefore"
 	ediTenderChangeEntity  = "edi_tender_change"
 	ediTransferChgEntity   = "edi_transfer_change"
 	ediMessageEntity       = "edi_message"
@@ -62,6 +67,12 @@ var (
 		string(edi.TransactionSet997),
 		string(edi.TransactionSet999),
 	})
+	messageAckStatuses = agenttoolschema.Source("edi.messageAcknowledgmentStatus", []string{
+		string(edi.MessageAcknowledgmentStatusPending),
+		string(edi.MessageAcknowledgmentStatusAccepted),
+		string(edi.MessageAcknowledgmentStatusAcceptedWithErrors),
+		string(edi.MessageAcknowledgmentStatusRejected),
+	})
 	tenderChangeStatuses = agenttoolschema.Source("edi.tenderChangeStatus", []string{
 		string(edi.TenderChangeStatusPendingReview),
 		string(edi.TenderChangeStatusApplied),
@@ -92,6 +103,10 @@ func ediDecisionToolProviders() []any {
 		provideListEDITenderChangesTool,
 		provideListEDITransferChangesTool,
 		provideListEDIPartnersTool,
+		provideGetEDIAckHealthTool,
+		provideInspectX12Tool,
+		providePreviewEDIDocumentTool,
+		provideDraftEDIConnectionTool,
 	}
 }
 
@@ -459,11 +474,18 @@ func newListEDIMessagesTool(messages ediMessageLister) agentports.AgentQueryTool
 
 func (t *listEDIMessagesTool) Name() string { return "list_edi_messages" }
 
+func (t *listEDIMessagesTool) SearchTerms() []string {
+	return []string{"accepted with errors", "messages for this invoice"}
+}
+
 func (t *listEDIMessagesTool) Description() string {
 	return "List EDI documents sent to or received from trading partners, newest first, " +
 		"with delivery status, attempts, the last delivery error and acknowledgment. " +
-		"Filter to Failed or DeadLettered to find what did not reach a partner. Never " +
-		"returns a document's content. Errors can repeat the partner's own text."
+		"Filter to Failed or DeadLettered to find what did not reach a partner, by ackStatus " +
+		"to find what a partner rejected or accepted with errors, or to one shipment or " +
+		"invoice. For how acknowledgments stand overall and what is overdue, use " +
+		"get_edi_ack_health. Never returns a document's content. Errors can repeat the " +
+		"partner's own text."
 }
 
 func (t *listEDIMessagesTool) ParamSchema() map[string]any {
@@ -477,6 +499,17 @@ func (t *listEDIMessagesTool) ParamSchema() map[string]any {
 			messageTransactionSets),
 		paramPartnerID: agenttoolschema.KindID("Only this partner's messages, by id from "+
 			"list_edi_partners.", permission.KindEDIPartner),
+		paramAckStatus: enumParam("Only outbound messages whose acknowledgment stands so: "+
+			"Pending (none yet), Accepted, AcceptedWithErrors (accepted, with errors the "+
+			"partner noted) or Rejected.", messageAckStatuses),
+		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"Only messages about this shipment, by id from search_shipments or get_shipment."),
+		paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			"Only messages for this invoice, by id from list_invoices or get_invoice."),
+		paramCreatedAfter: intParam("Only messages created at or after this instant, in " +
+			"whole Unix seconds."),
+		paramCreatedBefore: intParam("Only messages created before this instant, in whole " +
+			"Unix seconds."),
 	}))
 }
 
@@ -548,6 +581,10 @@ func (t *listEDIMessagesTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	scope, err := readMessageScope(params.Params)
+	if err != nil {
+		return nil, err
+	}
 	cursor, err := cursorPage(params)
 	if err != nil {
 		return nil, err
@@ -559,16 +596,21 @@ func (t *listEDIMessagesTool) Query(
 		Direction:      edi.DocumentDirection(direction),
 		TransactionSet: edi.TransactionSet(transactionSet),
 		PartnerID:      partnerID,
+		AckStatus:      scope.ackStatus,
+		ShipmentID:     scope.shipmentID,
+		InvoiceID:      scope.invoiceID,
+		CreatedAfter:   scope.createdAfter,
+		CreatedBefore:  scope.createdBefore,
 	}
-	criteria := filtercatalog.NewCriteria("EDI messages").At(clockFor(params))
-	for name, value := range map[string]string{
-		paramDirection:      direction,
-		paramTransactionSet: transactionSet,
-		paramDeliveryStatus: delivery,
+	clk := clockFor(params)
+	criteria := filtercatalog.NewCriteria("EDI messages").At(clk)
+	for _, field := range [...]struct{ name, value string }{
+		{paramDirection, direction},
+		{paramTransactionSet, transactionSet},
+		{paramDeliveryStatus, delivery},
+		{paramAckStatus, string(scope.ackStatus)},
 	} {
-		if value != "" {
-			criteria.Field(name, value)
-		}
+		criteria.Field(field.name, field.value)
 	}
 	if delivery != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
@@ -578,6 +620,7 @@ func (t *listEDIMessagesTool) Query(
 	if partnerID.IsNotNil() {
 		criteria.Field("partner", partnerID.String())
 	}
+	scope.describe(criteria, clk)
 
 	result, err := t.messages.ListMessagesCursor(ctx, req)
 	if err != nil {
@@ -597,6 +640,62 @@ func (t *listEDIMessagesTool) Query(
 	found := searchResult(criteria, rows, len(rows))
 
 	return cursorOutcome(&found, refs, result)
+}
+
+type messageScope struct {
+	ackStatus     edi.MessageAcknowledgmentStatus
+	shipmentID    pulid.ID
+	invoiceID     pulid.ID
+	createdAfter  int64
+	createdBefore int64
+}
+
+func readMessageScope(params map[string]any) (messageScope, error) {
+	var scope messageScope
+
+	ack, err := validEnum(params, paramAckStatus, messageAckStatuses)
+	if err != nil {
+		return scope, err
+	}
+	scope.ackStatus = edi.MessageAcknowledgmentStatus(ack)
+	if scope.shipmentID, err = optionalID(params, paramShipmentID); err != nil {
+		return scope, err
+	}
+	if scope.invoiceID, err = optionalID(params, paramInvoiceID); err != nil {
+		return scope, err
+	}
+	if scope.createdAfter, err = optionalUnixSeconds(params, paramCreatedAfter); err != nil {
+		return scope, err
+	}
+	if scope.createdBefore, err = optionalUnixSeconds(params, paramCreatedBefore); err != nil {
+		return scope, err
+	}
+	if scope.createdAfter > 0 && scope.createdBefore > 0 &&
+		scope.createdBefore <= scope.createdAfter {
+		return scope, fmt.Errorf(
+			"parameter %q (%d) must be later than %q (%d); the window holds no time",
+			paramCreatedBefore, scope.createdBefore, paramCreatedAfter, scope.createdAfter,
+		)
+	}
+
+	return scope, nil
+}
+
+func (s *messageScope) describe(criteria *filtercatalog.Criteria, clk clock) {
+	if s.shipmentID.IsNotNil() {
+		criteria.Field("shipment", s.shipmentID.String())
+	}
+	if s.invoiceID.IsNotNil() {
+		criteria.Field("invoice", s.invoiceID.String())
+	}
+	if s.createdAfter > 0 {
+		criteria.Field("created at or after",
+			timeutils.FormatLocalDateTime(s.createdAfter, clk.Location()))
+	}
+	if s.createdBefore > 0 {
+		criteria.Field("created before",
+			timeutils.FormatLocalDateTime(s.createdBefore, clk.Location()))
+	}
 }
 
 type listEDITenderChangesTool struct {

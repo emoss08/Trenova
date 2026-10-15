@@ -4412,20 +4412,24 @@ type FacilityDetentionStat struct {
 }
 
 type FactoringAgreementInput struct {
-	FactoringCompanyID   string                        `json:"factoringCompanyId"`
-	EffectiveFrom        int                           `json:"effectiveFrom"`
-	EffectiveTo          *int                          `json:"effectiveTo,omitempty"`
-	AdvanceRateBp        int                           `json:"advanceRateBp"`
-	ReserveRateBp        int                           `json:"reserveRateBp"`
-	MinimumFeeMinor      *int                          `json:"minimumFeeMinor,omitempty"`
-	ChargebackWindowDays int                           `json:"chargebackWindowDays"`
-	Recourse             factoring.Recourse            `json:"recourse"`
-	AccountingTreatment  factoring.AccountingTreatment `json:"accountingTreatment"`
-	FundingDays          int                           `json:"fundingDays"`
-	SubmissionTime       int                           `json:"submissionTime"`
-	Notes                *string                       `json:"notes,omitempty"`
-	FeeTiers             []*FactoringFeeTierInput      `json:"feeTiers"`
-	DocumentTypeIds      []string                      `json:"documentTypeIds,omitempty"`
+	FactoringCompanyID     string                        `json:"factoringCompanyId"`
+	EffectiveFrom          int                           `json:"effectiveFrom"`
+	EffectiveTo            *int                          `json:"effectiveTo,omitempty"`
+	AdvanceRateBp          int                           `json:"advanceRateBp"`
+	ReserveRateBp          int                           `json:"reserveRateBp"`
+	MinimumFeeMinor        *int                          `json:"minimumFeeMinor,omitempty"`
+	ChargebackWindowDays   int                           `json:"chargebackWindowDays"`
+	Recourse               factoring.Recourse            `json:"recourse"`
+	AccountingTreatment    factoring.AccountingTreatment `json:"accountingTreatment"`
+	FundingDays            int                           `json:"fundingDays"`
+	SubmissionTime         int                           `json:"submissionTime"`
+	Notes                  *string                       `json:"notes,omitempty"`
+	FeeTiers               []*FactoringFeeTierInput      `json:"feeTiers"`
+	DocumentTypeIds        []string                      `json:"documentTypeIds,omitempty"`
+	DueFromFactorAccountID *string                       `json:"dueFromFactorAccountId,omitempty"`
+	FeeExpenseAccountID    *string                       `json:"feeExpenseAccountId,omitempty"`
+	LiabilityAccountID     *string                       `json:"liabilityAccountId,omitempty"`
+	CashAccountID          *string                       `json:"cashAccountId,omitempty"`
 }
 
 type FactoringCompanyConnection struct {
@@ -4464,6 +4468,17 @@ type FactoringFeeTierInput struct {
 	FlatMinor *int `json:"flatMinor,omitempty"`
 }
 
+type FactoringFundingItemInput struct {
+	ItemID  string                   `json:"itemId"`
+	Outcome factoring.FundingOutcome `json:"outcome"`
+	// What the factor advanced. Defaults to the expected advance.
+	AdvanceMinor *int `json:"advanceMinor,omitempty"`
+	// What the factor kept as its fee. Defaults to the expected fee.
+	FeeMinor *int `json:"feeMinor,omitempty"`
+	// Why the factor rejected the invoice.
+	Reason *string `json:"reason,omitempty"`
+}
+
 type FactoringInvoiceStateConnection struct {
 	Edges      []*FactoringInvoiceStateEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -4498,6 +4513,38 @@ type FactoringNoaListInput struct {
 	CustomerID         *string                   `json:"customerId,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
+}
+
+type FactoringReserveEntryConnection struct {
+	Edges      []*FactoringReserveEntryEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type FactoringReserveEntryEdge struct {
+	Node   *factoring.ReserveEntry `json:"node"`
+	Cursor string                  `json:"cursor"`
+}
+
+type FactoringReserveEntryListInput struct {
+	Table              *DataTableConnectionInput    `json:"table"`
+	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
+	SubmissionID       *string                      `json:"submissionId,omitempty"`
+	InvoiceID          *string                      `json:"invoiceId,omitempty"`
+	Kinds              []factoring.ReserveEntryKind `json:"kinds,omitempty"`
+}
+
+type FactoringReserveMovementInput struct {
+	SubmissionID string `json:"submissionId"`
+	ItemID       string `json:"itemId"`
+	// The schedule's version.
+	Version int `json:"version"`
+	// The day it happened.
+	OccurredOn int `json:"occurredOn"`
+	// The cash that moved. A release defaults to the reserve held; a chargeback to the advance and fee. A reversal takes none.
+	CashMinor *int `json:"cashMinor,omitempty"`
+	// A memo for a release; why for a chargeback or its reversal.
+	Reason *string `json:"reason,omitempty"`
 }
 
 type FactoringSubmissionConnection struct {
@@ -5745,6 +5792,23 @@ type MyAgentEdge struct {
 	Cursor string                      `json:"cursor"`
 }
 
+// The agent a question is best put to, among the chat agents the caller may start
+// a conversation with, judged by the tools it holds that the caller may use.
+type MyAgentRecommendation struct {
+	Agent *agentdefinition.Definition `json:"agent"`
+	// True when the agent the question would go to now is already the best fit.
+	Current bool `json:"current"`
+	// The tools the agent holds that matched the question, best first. At most three.
+	Tools []string `json:"tools"`
+}
+
+type MyAgentRecommendationInput struct {
+	// What the caller is about to ask. At most 4000 characters.
+	Text string `json:"text"`
+	// The agent the question would go to now, kept when it fits as well as any.
+	CurrentAgentID *string `json:"currentAgentId,omitempty"`
+}
+
 type MyAgentsInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
@@ -6478,6 +6542,15 @@ type RecordEmploymentVerificationInput struct {
 	Method            *worker.EmploymentVerificationMethod `json:"method,omitempty"`
 	RequestedAt       *int                                 `json:"requestedAt,omitempty"`
 	Notes             *string                              `json:"notes,omitempty"`
+}
+
+type RecordFactoringFundingInput struct {
+	SubmissionID string `json:"submissionId"`
+	Version      int    `json:"version"`
+	// The day the factor funded.
+	FundedOn int                          `json:"fundedOn"`
+	Items    []*FactoringFundingItemInput `json:"items"`
+	Memo     *string                      `json:"memo,omitempty"`
 }
 
 type RecordLeaveCertificationInput struct {
@@ -9283,8 +9356,9 @@ type ShipmentSuggestionQueue struct {
 
 // Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 // TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-// TenderEntryWarned.
+// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+// TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+// TenderEscalated.
 type ShipmentTenderEvent struct {
 	ID             string                          `json:"id"`
 	OrganizationID string                          `json:"organizationId"`
@@ -9468,6 +9542,12 @@ type ShipmentsInput struct {
 	// Only shipments one of these invoices bills, as its shipment or on one of its
 	// lines. Needs permission to read invoices.
 	InvoiceIds []string `json:"invoiceIds,omitempty"`
+	// Only shipments one of these worker settlements pays, on one of its lines.
+	// Needs permission to read worker settlements.
+	DriverSettlementIds []string `json:"driverSettlementIds,omitempty"`
+	// Only shipments one of these carrier settlements pays, on one of its lines.
+	// Needs permission to read carrier settlements.
+	CarrierSettlementIds []string `json:"carrierSettlementIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {
@@ -12215,6 +12295,67 @@ func (e EffectiveRateSource) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// What a factoring entry does to the invoice.
+type FactoringInvoiceEffect string
+
+const (
+	// Leaves the invoice as it is.
+	FactoringInvoiceEffectNone FactoringInvoiceEffect = "None"
+	// Settles the invoice's open balance.
+	FactoringInvoiceEffectSettle FactoringInvoiceEffect = "Settle"
+	// Puts the invoice's balance back open.
+	FactoringInvoiceEffectReopen FactoringInvoiceEffect = "Reopen"
+)
+
+var AllFactoringInvoiceEffect = []FactoringInvoiceEffect{
+	FactoringInvoiceEffectNone,
+	FactoringInvoiceEffectSettle,
+	FactoringInvoiceEffectReopen,
+}
+
+func (e FactoringInvoiceEffect) IsValid() bool {
+	switch e {
+	case FactoringInvoiceEffectNone, FactoringInvoiceEffectSettle, FactoringInvoiceEffectReopen:
+		return true
+	}
+	return false
+}
+
+func (e FactoringInvoiceEffect) String() string {
+	return string(e)
+}
+
+func (e *FactoringInvoiceEffect) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FactoringInvoiceEffect(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FactoringInvoiceEffect", str)
+	}
+	return nil
+}
+
+func (e FactoringInvoiceEffect) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FactoringInvoiceEffect) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FactoringInvoiceEffect) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Which tier of the resolution chain produced the home screen on display.
 type HomeLayoutSource string
 
@@ -13558,6 +13699,10 @@ const (
 	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
 	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
 	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeTenderBounced         ShipmentEventType = "TenderBounced"
+	ShipmentEventTypeTenderCountered       ShipmentEventType = "TenderCountered"
+	ShipmentEventTypeTenderCounterDecided  ShipmentEventType = "TenderCounterDecided"
+	ShipmentEventTypeTenderEscalated       ShipmentEventType = "TenderEscalated"
 	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
 	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
 	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
@@ -13591,6 +13736,10 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeTenderDeliveryFailed,
 	ShipmentEventTypeTenderEntrySkipped,
 	ShipmentEventTypeTenderEntryWarned,
+	ShipmentEventTypeTenderBounced,
+	ShipmentEventTypeTenderCountered,
+	ShipmentEventTypeTenderCounterDecided,
+	ShipmentEventTypeTenderEscalated,
 	ShipmentEventTypeHoldPlaced,
 	ShipmentEventTypeHoldUpdated,
 	ShipmentEventTypeHoldReleased,
@@ -13599,7 +13748,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeTenderBounced, ShipmentEventTypeTenderCountered, ShipmentEventTypeTenderCounterDecided, ShipmentEventTypeTenderEscalated, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

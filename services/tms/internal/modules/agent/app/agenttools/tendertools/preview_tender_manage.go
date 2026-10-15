@@ -10,16 +10,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 var tenderOfferLabels = map[string]string{
 	"responseSource":   "Answered through",
 	fieldDeclineReason: "Decline reason",
+	fieldCounterRate:   "Counter rate",
+	fieldCounterNote:   "Counter note",
+	"revokeReason":     "Backed out because",
 }
 
 func (t *CancelTenderTool) Preview(
@@ -88,6 +93,13 @@ func (t *RecordTenderResponseTool) Preview(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
+	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		return t.previewBounce(ctx, bounce)
+	}
+
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -119,23 +131,47 @@ func (t *RecordTenderResponseTool) Preview(
 	changes = append(changes, offers...)
 
 	carrier := shipmenttools.CarrierNameOfOffer(plan.Offer)
-	rate := money.FormatMinor(money.MinorUnits(plan.Offer.Rate), money.DefaultCurrencyCode) +
-		" " + common.RateMethodWords(plan.Offer.RateMethod)
+	offered := rateWords(plan.Offer.RateMethod, plan.Offer.Rate)
+	decidingCounter := plan.Offer.Status == tender.OfferStatusCountered
 
-	if request.Action == tender.ResponseActionAccept {
+	//nolint:exhaustive // a decline falls through to the shared summary below
+	switch request.Action {
+	case tender.ResponseActionCounter:
+		return toolpreview.Build(fmt.Sprintf(
+			"Would record that %s countered at %s against %s offered. The offer holds for a "+
+				"person to take or refuse the counter before its decision deadline; if the "+
+				"organization takes counters within the margin floor on its own and this one "+
+				"clears it, the carrier is assigned at the counter rate at once.",
+			carrier, rateWords(plan.Offer.RateMethod, request.CounterRate), offered,
+		), changes...), nil
+	case tender.ResponseActionAccept:
 		attachOfferPay(offers, plan.Offer, carrier)
-		preview := toolpreview.Build(fmt.Sprintf(
-			"Would record that %s accepted the offer at %s. The tender closes, the carrier is "+
-				"assigned to the move at that rate, and Trenova then issues the executed rate "+
-				"confirmation and emails it to the carrier's rate confirmation contacts.",
-			carrier, rate,
-		), changes...)
+		what := fmt.Sprintf("Would record that %s accepted the offer at %s.", carrier, offered)
+		if decidingCounter {
+			what = fmt.Sprintf(
+				"Would take %s's counter at %s instead of the %s offered.",
+				carrier, rateWords(plan.Offer.RateMethod, plan.Offer.AgreedRate()), offered,
+			)
+			if plan.Offer.CounterNeedsApproval {
+				what += " The counter is below the margin floor, so taking it needs the " +
+					"tender approve permission."
+			}
+		}
+		preview := toolpreview.Build(what+" The tender closes, the carrier is assigned to "+
+			"the move at that rate, and Trenova then issues the executed rate confirmation "+
+			"and emails it to the carrier's rate confirmation contacts.", changes...)
 		preview.Partial = true
 
 		return preview, nil
 	}
 
-	summary = fmt.Sprintf("Would record that %s declined the offer at %s.", carrier, rate)
+	summary = fmt.Sprintf("Would record that %s declined the offer at %s.", carrier, offered)
+	if decidingCounter {
+		summary = fmt.Sprintf(
+			"Would refuse %s's counter at %s.",
+			carrier, rateWords(plan.Offer.RateMethod, plan.Offer.AgreedRate()),
+		)
+	}
 	switch {
 	case plan.NextOffer != nil:
 		changes = append(changes, tenderOfferSendChange(plan.NextOffer))
@@ -148,6 +184,69 @@ func (t *RecordTenderResponseTool) Preview(
 	}
 
 	return toolpreview.Build(summary, changes...), nil
+}
+
+// previewBounce is a carrier backing out of its acceptance: the acceptance
+// revoked, the carrier off the move with its rate confirmation voided, and the
+// tender live again for the carriers it had not reached.
+func (t *RecordTenderResponseTool) previewBounce(
+	ctx context.Context,
+	request *tenderservice.BounceTenderRequest,
+) (*agent.ToolPreview, error) {
+	summary := "Would record that the carrier backed out of its acceptance. Reason: " +
+		request.Reason
+	plan, err := t.tenders.PreviewBounce(ctx, request)
+	if err != nil {
+		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		}
+
+		return nil, err
+	}
+
+	tenderChange, err := tenderStateChange(plan.Before, plan.After,
+		common.FieldStatus, "acceptedOfferId", "bounceCount")
+	if err != nil {
+		return nil, err
+	}
+	offers, err := tenderOfferChanges(plan.Before, plan.After)
+	if err != nil {
+		return nil, err
+	}
+	changes := append([]*agent.RecordChange{tenderChange}, offers...)
+
+	carrier := shipmenttools.CarrierNameOfOffer(plan.Revoked)
+	summary = fmt.Sprintf("Would record that %s backed out of the tender it accepted.", carrier)
+	if plan.Unassigns {
+		summary += " The carrier comes off the move and its rate confirmation is voided."
+	}
+	switch {
+	case plan.WillExhaust:
+		summary += " Nobody is left to ask, so the tender ends without a carrier and the " +
+			"organization's escalation policy decides what happens next."
+	case plan.Before.Mode.IsSequential():
+		changes = append(changes, tenderOfferSendChange(plan.Reoffers[0]))
+		summary += fmt.Sprintf(" The tender goes on to the %s it had not reached, starting "+
+			"with %s.", common.CountOf(len(plan.Reoffers), "carrier"),
+			shipmenttools.CarrierNameOfOffer(plan.Reoffers[0]))
+	default:
+		for _, offer := range plan.Reoffers {
+			changes = append(changes, tenderOfferSendChange(offer))
+		}
+		summary += fmt.Sprintf(" The load is offered again to the %s whose offers the "+
+			"acceptance cut short.", common.CountOf(len(plan.Reoffers), "carrier"))
+	}
+	summary += " Reason: " + request.Reason
+
+	preview := toolpreview.Build(summary, changes...)
+	preview.Partial = plan.Unassigns
+
+	return preview, nil
+}
+
+func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
+	return money.FormatMinor(money.MinorUnits(rate), money.DefaultCurrencyCode) + " " +
+		common.RateMethodWords(method)
 }
 
 // tenderStateChange is the tender before and after, limited to the fields
@@ -203,6 +302,9 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 				common.FieldStatus,
 				"responseSource",
 				fieldDeclineReason,
+				fieldCounterRate,
+				fieldCounterNote,
+				"revokeReason",
 				"respondedAt",
 			),
 			toolpreview.Volatile("respondedAt"),
@@ -254,7 +356,7 @@ func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, ca
 			money.DefaultCurrencyCode,
 			agent.MoneyLine{
 				Label: "Carrier pay to " + carrier,
-				After: common.KnownAmount(offer.Rate),
+				After: common.KnownAmount(offer.AgreedRate()),
 			},
 		), toolpreview.SensitiveAs("rate"))
 
@@ -274,9 +376,14 @@ func countOffers(entity *tender.Tender, status tender.OfferStatus) int {
 }
 
 func responseWord(action tender.ResponseAction) string {
-	if action == tender.ResponseActionAccept {
+	switch action {
+	case tender.ResponseActionAccept:
 		return "acceptance"
+	case tender.ResponseActionCounter:
+		return "counter-offer"
+	case tender.ResponseActionDecline:
+		return "decline"
+	default:
+		return "decline"
 	}
-
-	return "decline"
 }

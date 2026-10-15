@@ -168,6 +168,7 @@ export const artifactKindSchema = z.enum([
   "draft_edit",
   "decision_request",
   "extraction",
+  "edi_connection_draft",
 ]);
 
 /**
@@ -183,6 +184,7 @@ export const LOOKUP_ARTIFACT_KINDS: ReadonlySet<string> = new Set([
   "rate_explanation",
   "run_diff",
   "extraction",
+  "edi_connection_draft",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);

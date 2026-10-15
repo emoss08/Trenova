@@ -3,7 +3,10 @@ import {
   FACTORING_SUBMISSION_KEY,
   fetchFactoringAgreementOwner,
   fetchFactoringCompany,
+  fetchFactoringFundingPlan,
   fetchFactoringNoaOwner,
+  fetchFactoringReserveBalance,
+  fetchFactoringReserveMovementPlan,
   fetchFactoringSubmission,
   fetchFactoringSubmissionPlan,
   fetchFactoringSummary,
@@ -11,8 +14,15 @@ import {
   fetchInvoiceFactoring,
   listFactoringAgreements,
   listFactoringNoas,
+  listFactoringReserveEntries,
   type FactoringNoaFilter,
+  type FactoringReserveAction,
+  type FactoringReserveEntryFilter,
 } from "@/lib/graphql/factoring";
+import type {
+  FactoringReserveMovementInput,
+  RecordFactoringFundingInput,
+} from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -59,6 +69,24 @@ export const factoring = createQueryKeys("factoring", {
     queryFn: async ({ signal }: QueryContext) =>
       fetchFactoringTransport(factoringCompanyId, { signal }),
   }),
+  fundingPlan: (input: RecordFactoringFundingInput) => ({
+    queryKey: ["funding-plan", input],
+    queryFn: async ({ signal }: QueryContext) => fetchFactoringFundingPlan(input, { signal }),
+  }),
+  movementPlan: (action: FactoringReserveAction, input: FactoringReserveMovementInput) => ({
+    queryKey: ["movement-plan", action, input],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringReserveMovementPlan(action, input, { signal }),
+  }),
+  reserveBalance: (factoringCompanyId: string) => ({
+    queryKey: ["reserve-balance", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringReserveBalance(factoringCompanyId, { signal }),
+  }),
+  reserveEntries: (filter: FactoringReserveEntryFilter) => ({
+    queryKey: ["reserve-entries", filter],
+    queryFn: async ({ signal }: QueryContext) => listFactoringReserveEntries(filter, { signal }),
+  }),
   company: (factoringCompanyId: string) => ({
     queryKey: ["company", factoringCompanyId],
     queryFn: async ({ signal }: QueryContext) =>
@@ -69,8 +97,8 @@ export const factoring = createQueryKeys("factoring", {
 /**
  * Every cache a factoring change can stale: the readiness queue and its
  * summary, an invoice's factoring section, a factor's agreements, its
- * delivery settings, the notices listed on a factor or a customer, and the
- * schedules sent to factors.
+ * delivery settings, the notices listed on a factor or a customer, the
+ * schedules sent to factors, and what the factors hold and have paid.
  */
 export function invalidateFactoringQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: factoring._def });

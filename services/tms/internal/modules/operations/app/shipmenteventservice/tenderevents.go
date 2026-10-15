@@ -282,3 +282,126 @@ func BuildTenderDeliveryFailed(
 		actor,
 	)
 }
+
+// TenderBounce is a carrier walking back an acceptance, for the event that
+// records it.
+type TenderBounce struct {
+	CarrierName string
+	Reason      string
+	Source      tender.ResponseSource
+	Reoffers    int
+	Round       int16
+}
+
+// BuildTenderBounced records a carrier backing out after accepting, and how
+// many carriers the tender goes on to.
+func BuildTenderBounced(
+	tenant TenantRef,
+	ref TenderRef,
+	bounce TenderBounce,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderBounced,
+		shipmentevent.SeverityDanger,
+		bounce.CarrierName+" backed out of the accepted tender",
+		map[string]any{
+			"carrierName": bounce.CarrierName,
+			"reason":      bounce.Reason,
+			"source":      string(bounce.Source),
+			"reoffers":    bounce.Reoffers,
+			"round":       bounce.Round,
+		},
+		actor,
+	)
+}
+
+// TenderCounter is a carrier's counter-offer, for the event that records it.
+type TenderCounter struct {
+	CarrierName   string
+	OfferedRate   string
+	CounterRate   string
+	MarginPercent string
+	NeedsApproval bool
+	AutoAccepted  bool
+	Source        tender.ResponseSource
+}
+
+// BuildTenderCountered records a carrier answering an offer with a rate of
+// its own.
+func BuildTenderCountered(
+	tenant TenantRef,
+	ref TenderRef,
+	counter *TenderCounter,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderCountered,
+		shipmentevent.SeverityBrand,
+		counter.CarrierName+" countered at "+counter.CounterRate,
+		map[string]any{
+			"carrierName":   counter.CarrierName,
+			"offeredRate":   counter.OfferedRate,
+			"counterRate":   counter.CounterRate,
+			"marginPercent": counter.MarginPercent,
+			"needsApproval": counter.NeedsApproval,
+			"autoAccepted":  counter.AutoAccepted,
+			"source":        string(counter.Source),
+		},
+		actor,
+	)
+}
+
+// BuildTenderCounterDecided records somebody taking or refusing a carrier's
+// counter-offer.
+func BuildTenderCounterDecided(
+	tenant TenantRef,
+	ref TenderRef,
+	carrierName, counterRate, reason string,
+	approved bool,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	severity := shipmentevent.SeverityInfo
+	summary := "Counter-offer from " + carrierName + " refused"
+	if approved {
+		severity = shipmentevent.SeveritySuccess
+		summary = "Counter-offer from " + carrierName + " taken at " + counterRate
+	}
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderCounterDecided,
+		severity,
+		summary,
+		map[string]any{
+			"carrierName": carrierName,
+			"counterRate": counterRate,
+			"approved":    approved,
+			"reason":      reason,
+		},
+		actor,
+	)
+}
+
+// BuildTenderEscalated records an exhausted tender being followed by a new
+// one, as the organization's escalation policy asks.
+func BuildTenderEscalated(
+	tenant TenantRef,
+	ref TenderRef,
+	mode tender.Mode,
+	round int16,
+	rateIncreasePercent string,
+	carriers int,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderEscalated,
+		shipmentevent.SeverityBrand,
+		"Exhausted tender escalated and offered again",
+		map[string]any{
+			"mode":                string(mode),
+			"round":               round,
+			"rateIncreasePercent": rateIncreasePercent,
+			"carriers":            carriers,
+		},
+		actor,
+	)
+}

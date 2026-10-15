@@ -1,7 +1,7 @@
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { usePermission } from "@/hooks/use-permission";
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import type { AgentChoice, AgentRecommendation } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -10,12 +10,15 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
+import { agentToAsk, offersRecommendation } from "./agent-recommendation-state";
+import { DeskAgentRecommendation } from "./composer/desk-agent-recommendation";
 import { useDeskAttachments, useHeldAttachments } from "./composer/desk-attachments";
 import { DeskComposer } from "./composer/desk-composer";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { useDeskDrop } from "./composer/desk-uploads";
 import { DeskTermsNote } from "./desk-terms-note";
+import { useAgentRecommendation } from "./use-agent-recommendation";
 import "./desk-frame.css";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
@@ -44,6 +47,13 @@ export type DeskHomeAskOptions = {
  * conversation can take them, the page, and the model. The Desk's front page
  * and the assistant's home ask the same way, so both hold it here; the files
  * dragged over either surface land in the same list.
+ *
+ * As the question is typed it is matched to the person's agents by the tools
+ * each holds that the person may use, and an agent that fits better than the
+ * one chosen is offered just above the box. Unless the person picked an agent
+ * from the picker, a question sent goes to the agent that fits it, waiting a
+ * moment for the match when it was sent before one came back. One of the
+ * chosen agent's own starter questions always goes to that agent.
  */
 export function useDeskHomeAsk({
   agents,
@@ -63,13 +73,70 @@ export function useDeskHomeAsk({
   const attachments = useDeskAttachments(held);
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
   const drag = useDeskDrop(noAgents ? null : attachments.add);
+  const agentId = askable.agent?.id ?? null;
+  // A pick from the picker pins the agent: Enter goes to it, though a better
+  // fit is still named. Switch only changes the agent, so a later question
+  // that needs another agent is offered and followed again; the server keeps
+  // the agent switched to for the words it was suggested for, so a switch
+  // never draws a second suggestion by itself. The cross turns down that one
+  // agent. Clearing the box starts the next question afresh.
+  const [pinned, setPinned] = useState(false);
+  const [keptOver, setKeptOver] = useState<readonly string[]>([]);
+  const [routing, setRouting] = useState(false);
+  const advice = useAgentRecommendation({
+    draft,
+    agentId,
+    enabled: !noAgents && agentId !== null,
+  });
+  const offered: AgentRecommendation | null = offersRecommendation(
+    advice.recommendation,
+    agentId,
+    keptOver,
+  )
+    ? advice.recommendation
+    : null;
 
-  const send = (content: string, payloadMentions: AssistantEntityRef[]) => {
-    if (!askable.agent) {
+  const changeDraft = (value: string) => {
+    setDraft(value);
+    if (value.trim() === "") {
+      setPinned(false);
+      setKeptOver([]);
+    }
+  };
+
+  const choose = (agent: AgentChoice) => {
+    askable.choose(agent);
+    setPinned(true);
+  };
+
+  const acceptRecommendation = () => {
+    if (offered) {
+      askable.choose(offered.agent);
+    }
+  };
+
+  const keepAgent = () => {
+    if (offered) {
+      setKeptOver((previous) => [...previous, offered.agent.id]);
+    }
+  };
+
+  const send = async (content: string, payloadMentions: AssistantEntityRef[]) => {
+    const agent = askable.agent;
+    if (!agent || routing) {
       return;
     }
-    onStart(askable.agent.id, content, {
-      files: held.files(),
+    const files = held.files();
+    const starter = agent.starters?.some((item) => item.prompt === content.trim()) ?? false;
+    let target = agent;
+    if (!pinned && !starter) {
+      setRouting(true);
+      const recommendation = await advice.resolve(content);
+      setRouting(false);
+      target = agentToAsk({ agent, recommendation, pinned, keptOver });
+    }
+    onStart(target.id, content, {
+      files,
       mentions: payloadMentions,
       providerId,
     });
@@ -80,8 +147,13 @@ export function useDeskHomeAsk({
   return {
     askable,
     noAgents,
+    choose,
+    offered,
+    routing,
+    acceptRecommendation,
+    keepAgent,
     draft,
-    setDraft,
+    setDraft: changeDraft,
     mentions,
     setMentions,
     providerId,
@@ -129,16 +201,25 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
   return (
     <>
       <DeskTermsNote />
+      {ask.offered && askable.agent && (
+        <DeskAgentRecommendation
+          recommendation={ask.offered}
+          agent={askable.agent}
+          onUse={ask.acceptRecommendation}
+          onKeep={ask.keepAgent}
+        />
+      )}
       <DeskComposer
         home
         value={ask.draft}
         onChange={ask.setDraft}
         agent={askable.agent}
-        onAgentChange={askable.choose}
+        onAgentChange={ask.choose}
         recentAgentIds={askable.recency.ids}
         agentLastUsedAt={askable.recency.lastUsedAt}
         busy={false}
-        disabled={isStarting || askable.agent === null}
+        disabled={isStarting || ask.routing || askable.agent === null}
+        placeholder={ask.routing ? t("Finding the agent with the tools for this…") : undefined}
         presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
         suggestions={askable.agent?.starters?.map((starter) => ({
           label: starter.label,
@@ -165,7 +246,9 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
             hasReplies={false}
           />
         }
-        onSend={(content, payload) => ask.send(content, payload.mentions)}
+        onSend={(content, payload) => {
+          void ask.send(content, payload.mentions);
+        }}
       />
     </>
   );

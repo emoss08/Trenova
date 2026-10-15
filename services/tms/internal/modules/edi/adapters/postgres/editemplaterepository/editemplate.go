@@ -926,13 +926,22 @@ func (r *repository) EnsureBaseTemplate(
 	tenantInfo pagination.TenantInfo,
 	transactionSet edi.TransactionSet,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	return r.EnsureStarterTemplate(ctx, tenantInfo, transactionSet, edi.DocumentDirectionOutbound)
+}
+
+func (r *repository) EnsureStarterTemplate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	transactionSet edi.TransactionSet,
+	direction edi.DocumentDirection,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	return dbtx.Write2(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 			template := new(edi.EDITemplate)
 			version := new(edi.EDITemplateVersion)
-			templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
+			templateName := fmt.Sprintf("Base X12 %s %s", transactionSet, direction)
 			err := r.db.WithTx(
 				ctx,
 				kernelports.TxOptions{},
@@ -946,7 +955,7 @@ func (r *repository) EnsureBaseTemplate(
 							return edicol.EDITemplateScopeTenant(sq, tenantInfo).
 								Where(cols.Standard.Eq(), edi.EDIStandardX12).
 								Where(cols.TransactionSet.Eq(), transactionSet).
-								Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+								Where(cols.Direction.Eq(), direction).
 								Where(cols.Name.Eq(), templateName)
 						}).
 						Limit(1).
@@ -969,90 +978,17 @@ func (r *repository) EnsureBaseTemplate(
 						return nil
 					}
 
-					documentTypes, err := r.listDocumentTypes(
+					created, createdVersion, err := r.createStarterTemplate(
 						c,
-						ediports.ListEDIDocumentTypesRequest{
-							Standard:       edi.EDIStandardX12,
-							TransactionSet: transactionSet,
-							Direction:      edi.DocumentDirectionOutbound,
-						},
-					)
-					if err != nil {
-						return err
-					}
-					if len(documentTypes) == 0 {
-						return fmt.Errorf(
-							"x12 %s outbound document type is not seeded",
-							transactionSet,
-						)
-					}
-
-					template = &edi.EDITemplate{
-						BusinessUnitID: tenantInfo.BuID,
-						OrganizationID: tenantInfo.OrgID,
-						DocumentTypeID: documentTypes[0].ID,
-						Name:           templateName,
-						Description: fmt.Sprintf(
-							"Tenant-scoped base outbound X12 %s template",
-							transactionSet,
-						),
-						Direction:      edi.DocumentDirectionOutbound,
-						Standard:       edi.EDIStandardX12,
-						TransactionSet: transactionSet,
-						Status:         edi.TemplateStatusActive,
-					}
-					if _, err = r.db.DBForContext(c).
-						NewInsert().
-						Model(template).
-						Returning("*").
-						Exec(c); err != nil {
-						return err
-					}
-
-					x12Version := edi.DefaultX12204Version
-					if transactionSet == edi.TransactionSet999 {
-						x12Version = "005010"
-					}
-					activatedAt := timeutils.NowUnix()
-					version = &edi.EDITemplateVersion{
-						BusinessUnitID:    tenantInfo.BuID,
-						OrganizationID:    tenantInfo.OrgID,
-						TemplateID:        template.ID,
-						VersionNumber:     1,
-						X12Version:        x12Version,
-						FunctionalGroupID: edi.FunctionalGroupDefault(transactionSet),
-						Status:            edi.TemplateStatusActive,
-						IsActive:          true,
-						Notes: fmt.Sprintf(
-							"Seeded base %s X12 %s outbound profile",
-							x12Version,
-							transactionSet,
-						),
-						ActivatedAt: &activatedAt,
-					}
-					if _, err = r.db.DBForContext(c).
-						NewInsert().
-						Model(version).
-						Returning("*").
-						Exec(c); err != nil {
-						return err
-					}
-
-					segments, err := editemplates.StarterSegments(
 						tenantInfo,
-						version.ID,
 						transactionSet,
+						direction,
+						templateName,
 					)
 					if err != nil {
 						return err
 					}
-					if _, err = r.db.DBForContext(c).
-						NewInsert().
-						Model(&segments).
-						Exec(c); err != nil {
-						return err
-					}
-					version.Segments = segments
+					template, version = created, createdVersion
 					return nil
 				},
 			)
@@ -1062,6 +998,103 @@ func (r *repository) EnsureBaseTemplate(
 			return template, version, nil
 		},
 	)
+}
+
+func (r *repository) createStarterTemplate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	transactionSet edi.TransactionSet,
+	direction edi.DocumentDirection,
+	templateName string,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	documentTypes, err := r.listDocumentTypes(
+		ctx,
+		ediports.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: transactionSet,
+			Direction:      direction,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(documentTypes) == 0 {
+		return nil, nil, fmt.Errorf(
+			"x12 %s %s document type is not seeded",
+			transactionSet,
+			strings.ToLower(string(direction)),
+		)
+	}
+
+	template := &edi.EDITemplate{
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		DocumentTypeID: documentTypes[0].ID,
+		Name:           templateName,
+		Description: fmt.Sprintf(
+			"Tenant-scoped base %s X12 %s template",
+			strings.ToLower(string(direction)),
+			transactionSet,
+		),
+		Direction:      direction,
+		Standard:       edi.EDIStandardX12,
+		TransactionSet: transactionSet,
+		Status:         edi.TemplateStatusActive,
+	}
+	if _, err = r.db.DBForContext(ctx).
+		NewInsert().
+		Model(template).
+		Returning("*").
+		Exec(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	x12Version := edi.DefaultX12204Version
+	if transactionSet == edi.TransactionSet999 {
+		x12Version = "005010"
+	}
+	activatedAt := timeutils.NowUnix()
+	version := &edi.EDITemplateVersion{
+		BusinessUnitID:    tenantInfo.BuID,
+		OrganizationID:    tenantInfo.OrgID,
+		TemplateID:        template.ID,
+		VersionNumber:     1,
+		X12Version:        x12Version,
+		FunctionalGroupID: edi.FunctionalGroupDefault(transactionSet),
+		Status:            edi.TemplateStatusActive,
+		IsActive:          true,
+		Notes: fmt.Sprintf(
+			"Seeded base %s X12 %s %s profile",
+			x12Version,
+			transactionSet,
+			strings.ToLower(string(direction)),
+		),
+		ActivatedAt: &activatedAt,
+	}
+	if _, err = r.db.DBForContext(ctx).
+		NewInsert().
+		Model(version).
+		Returning("*").
+		Exec(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	segments, err := editemplates.StarterSegments(
+		tenantInfo,
+		version.ID,
+		transactionSet,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if _, err = r.db.DBForContext(ctx).
+		NewInsert().
+		Model(&segments).
+		Exec(ctx); err != nil {
+		return nil, nil, err
+	}
+	version.Segments = segments
+	return template, version, nil
 }
 
 func applyTemplateSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {

@@ -29,6 +29,14 @@ const cashFlowChartConfig = {
     label: "Open due (forecast)",
     color: "var(--info)",
   },
+  factorAdvances: {
+    label: "Factor advances",
+    color: "var(--accent-violet)",
+  },
+  reserveReleases: {
+    label: "Reserve releases",
+    color: "var(--accent-teal)",
+  },
 } satisfies ChartConfig;
 
 export function CashFlowForecastCard() {
@@ -36,16 +44,22 @@ export function CashFlowForecastCard() {
 
   const { data: points, isLoading } = useQuery(ar.cashFlowForecast());
 
-  const { chartData, nowLabel } = useMemo(() => {
+  const { chartData, factored, nowLabel } = useMemo(() => {
     const data = (points ?? []).map((point) => ({
       label: formatUnixMonthDay(point.weekStart),
       actual: point.isForecast ? null : point.actualMinor / 100,
       expected: point.expectedMinor / 100,
       forecast: point.isForecast ? point.openDueMinor / 100 : null,
+      factorAdvances: point.factorAdvancesMinor > 0 ? point.factorAdvancesMinor / 100 : null,
+      reserveReleases: point.reserveReleasesMinor > 0 ? point.reserveReleasesMinor / 100 : null,
     }));
+    const factored = (points ?? []).some(
+      (point) => point.factorAdvancesMinor > 0 || point.reserveReleasesMinor > 0,
+    );
     const firstForecast = (points ?? []).find((point) => point.isForecast);
     return {
       chartData: data,
+      factored,
       nowLabel: firstForecast ? formatUnixMonthDay(firstForecast.weekStart) : undefined,
     };
   }, [points]);
@@ -121,6 +135,28 @@ export function CashFlowForecastCard() {
                 fill="var(--color-forecast)"
                 fillOpacity={0.08}
               />
+              {factored ? (
+                <Area
+                  dataKey="factorAdvances"
+                  type="monotone"
+                  stroke="var(--color-factorAdvances)"
+                  strokeWidth={1.5}
+                  strokeDasharray="2 3"
+                  fill="transparent"
+                  connectNulls
+                />
+              ) : null}
+              {factored ? (
+                <Area
+                  dataKey="reserveReleases"
+                  type="monotone"
+                  stroke="var(--color-reserveReleases)"
+                  strokeWidth={1.5}
+                  strokeDasharray="2 3"
+                  fill="transparent"
+                  connectNulls
+                />
+              ) : null}
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
           </ChartContainer>

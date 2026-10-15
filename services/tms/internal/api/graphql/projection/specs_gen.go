@@ -399,6 +399,8 @@ var FactoringInvoiceStateSpec TypeSpec
 
 var FactoringNoaSpec TypeSpec
 
+var FactoringReserveEntrySpec TypeSpec
+
 var FactoringSubmissionSpec TypeSpec
 
 var FactoringSubmissionItemSpec TypeSpec
@@ -8077,6 +8079,38 @@ func init() {
 					Target: &CarrierSettlementLineSpec,
 				},
 			},
+			{
+				Name:    "costSummary",
+				Special: "costSummary",
+			},
+			{
+				Name:    "loadShares",
+				Special: "loadShares",
+			},
+			{
+				Name:    "moveInvoices",
+				Special: "moveInvoices",
+			},
+			{
+				Name:        "submittedBy",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "postedBy",
+				FieldMapKey: "postedById",
+			},
+			{
+				Name:        "paidBy",
+				FieldMapKey: "paidById",
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
+			},
 		},
 	}
 
@@ -11769,6 +11803,38 @@ func init() {
 					Target: &DriverSettlementLineSpec,
 				},
 			},
+			{
+				Name:    "lineSummary",
+				Special: "lineSummary",
+			},
+			{
+				Name:    "loadShares",
+				Special: "loadShares",
+			},
+			{
+				Name:    "disputes",
+				Special: "disputes",
+			},
+			{
+				Name:        "submittedBy",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "postedBy",
+				FieldMapKey: "postedById",
+			},
+			{
+				Name:        "paidBy",
+				FieldMapKey: "paidById",
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
+			},
 		},
 	}
 
@@ -14106,6 +14172,22 @@ func init() {
 				FieldMapKey: "endedAt",
 			},
 			{
+				Name:        "dueFromFactorAccountId",
+				FieldMapKey: "dueFromFactorAccountId",
+			},
+			{
+				Name:        "feeExpenseAccountId",
+				FieldMapKey: "feeExpenseAccountId",
+			},
+			{
+				Name:        "liabilityAccountId",
+				FieldMapKey: "liabilityAccountId",
+			},
+			{
+				Name:        "cashAccountId",
+				FieldMapKey: "cashAccountId",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -14434,6 +14516,145 @@ func init() {
 		},
 	}
 
+	FactoringReserveEntrySpec = TypeSpec{
+		TypeName: "FactoringReserveEntry",
+		FieldMap: factoringcol.ReserveEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "agreementId",
+				FieldMapKey: "agreementId",
+			},
+			{
+				Name:        "submissionId",
+				FieldMapKey: "submissionId",
+			},
+			{
+				Name:        "submissionItemId",
+				FieldMapKey: "submissionItemId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "treatment",
+				FieldMapKey: "treatment",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "cashMinor",
+				FieldMapKey: "cashMinor",
+			},
+			{
+				Name:        "feeMinor",
+				FieldMapKey: "feeMinor",
+			},
+			{
+				Name:        "reserveMinor",
+				FieldMapKey: "reserveMinor",
+			},
+			{
+				Name:        "liabilityMinor",
+				FieldMapKey: "liabilityMinor",
+			},
+			{
+				Name:        "arMinor",
+				FieldMapKey: "arMinor",
+			},
+			{
+				Name:        "journalEntryId",
+				FieldMapKey: "journalEntryId",
+			},
+			{
+				Name:        "journalBatchId",
+				FieldMapKey: "journalBatchId",
+			},
+			{
+				Name:        "accountingDate",
+				FieldMapKey: "accountingDate",
+			},
+			{
+				Name:        "occurredOn",
+				FieldMapKey: "occurredOn",
+			},
+			{
+				Name:        "reversesEntryId",
+				FieldMapKey: "reversesEntryId",
+			},
+			{
+				Name:        "memo",
+				FieldMapKey: "memo",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+			{
+				Name:        "invoice",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &InvoiceSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+			{
+				Name:        "submission",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringSubmissionSpec,
+				},
+			},
+		},
+	}
+
 	FactoringSubmissionSpec = TypeSpec{
 		TypeName: "FactoringSubmission",
 		FieldMap: factoringcol.SubmissionFieldMap,
@@ -14543,6 +14764,10 @@ func init() {
 				FieldMapKey: "cancelReason",
 			},
 			{
+				Name:        "fundedAt",
+				FieldMapKey: "fundedAt",
+			},
+			{
 				Name:        "submittedById",
 				FieldMapKey: "submittedById",
 			},
@@ -14637,6 +14862,42 @@ func init() {
 			{
 				Name:        "releasedAt",
 				FieldMapKey: "releasedAt",
+			},
+			{
+				Name:        "fundedOn",
+				FieldMapKey: "fundedOn",
+			},
+			{
+				Name:        "advanceMinor",
+				FieldMapKey: "advanceMinor",
+			},
+			{
+				Name:        "feeMinor",
+				FieldMapKey: "feeMinor",
+			},
+			{
+				Name:        "reserveMinor",
+				FieldMapKey: "reserveMinor",
+			},
+			{
+				Name:        "rejectionReason",
+				FieldMapKey: "rejectionReason",
+			},
+			{
+				Name:        "settledOn",
+				FieldMapKey: "settledOn",
+			},
+			{
+				Name:        "chargedBackOn",
+				FieldMapKey: "chargedBackOn",
+			},
+			{
+				Name:        "chargebackReason",
+				FieldMapKey: "chargebackReason",
+			},
+			{
+				Name:        "chargebackWarnedAt",
+				FieldMapKey: "chargebackWarnedAt",
 			},
 			{
 				Name:        "invoice",
@@ -17606,6 +17867,10 @@ func init() {
 			{
 				Name:        "sentAt",
 				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "pdfDocumentId",
+				FieldMapKey: "pdfDocumentId",
 			},
 			{
 				Name:        "isAdjustmentArtifact",
@@ -25714,6 +25979,22 @@ func init() {
 				FieldMapKey: "canceledAt",
 			},
 			{
+				Name:        "bounceCount",
+				FieldMapKey: "bounceCount",
+			},
+			{
+				Name:        "lastBouncedAt",
+				FieldMapKey: "lastBouncedAt",
+			},
+			{
+				Name:        "escalatedFromId",
+				FieldMapKey: "escalatedFromId",
+			},
+			{
+				Name:        "escalationRound",
+				FieldMapKey: "escalationRound",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -25836,6 +26117,54 @@ func init() {
 			{
 				Name:        "lateResponseAt",
 				FieldMapKey: "lateResponseAt",
+			},
+			{
+				Name:        "counterRate",
+				FieldMapKey: "counterRate",
+			},
+			{
+				Name:        "counterNote",
+				FieldMapKey: "counterNote",
+			},
+			{
+				Name:        "counteredAt",
+				FieldMapKey: "counteredAt",
+			},
+			{
+				Name:        "counterMarginPercent",
+				FieldMapKey: "counterMargin",
+			},
+			{
+				Name:        "counterNeedsApproval",
+				FieldMapKey: "counterNeedsApproval",
+			},
+			{
+				Name:        "counterDecidedAt",
+				FieldMapKey: "counterDecidedAt",
+			},
+			{
+				Name:        "counterDecidedById",
+				FieldMapKey: "counterDecidedById",
+			},
+			{
+				Name:    "agreedRate",
+				Special: "agreedRate",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokeReason",
+				FieldMapKey: "revokeReason",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "reofferedFromId",
+				FieldMapKey: "reofferedFromId",
 			},
 			{
 				Name:        "version",

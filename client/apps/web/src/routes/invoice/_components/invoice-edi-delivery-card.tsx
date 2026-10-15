@@ -13,7 +13,7 @@ import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertTriangleIcon, Signal01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
-import { invoiceEdiSendBlocker } from "./invoice-actions-menu";
+import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 
 /**
  * The EDI half of delivery: whether the customer takes an 210, which partner
@@ -33,7 +33,7 @@ export function InvoiceEdiDeliveryCard({
   const queryClient = useQueryClient();
   const { allowed: canSend } = usePermission(Resource.Invoice, Operation.Update);
   const plan = arContext?.ediSendPlan;
-  const blocker = invoiceEdiSendBlocker(invoice, arContext);
+  const blocker = invoiceEdiSendBlocker(invoice.status, arContext?.ediSendPlan, t);
   const sent = plan?.status === "Sent";
 
   const send = useApiMutation({

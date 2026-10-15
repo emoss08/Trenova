@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -317,11 +318,13 @@ func (r *repository) ListAgingTrend(
 }
 
 type cashFlowRecord struct {
-	WeekStart     int64 `bun:"week_start"`
-	ExpectedMinor int64 `bun:"expected_minor"`
-	OpenDueMinor  int64 `bun:"open_due_minor"`
-	ActualMinor   int64 `bun:"actual_minor"`
-	IsForecast    bool  `bun:"is_forecast"`
+	WeekStart            int64 `bun:"week_start"`
+	ExpectedMinor        int64 `bun:"expected_minor"`
+	OpenDueMinor         int64 `bun:"open_due_minor"`
+	ActualMinor          int64 `bun:"actual_minor"`
+	FactorAdvancesMinor  int64 `bun:"factor_advances_minor"`
+	ReserveReleasesMinor int64 `bun:"reserve_releases_minor"`
+	IsForecast           bool  `bun:"is_forecast"`
 }
 
 func (r *repository) ListCashFlow(
@@ -333,7 +336,38 @@ func (r *repository) ListCashFlow(
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCashFlowPoint, error) {
 			records := make([]*cashFlowRecord, 0, req.PastWeeks+req.FutureWeeks)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			err := r.db.DBForContext(ctx).NewRaw(cashFlowSQL,
+				req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, secondsPerWeek,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, secondsPerWeek,
+				req.AsOfDate,
+			).
+				Scan(ctx, &records)
+			if err != nil {
+				return nil, fmt.Errorf("list ar cash flow: %w", err)
+			}
+
+			points := make([]*customerledgerports.ARCashFlowPoint, 0, len(records))
+			for _, rec := range records {
+				points = append(points, &customerledgerports.ARCashFlowPoint{
+					WeekStart:            rec.WeekStart,
+					ExpectedMinor:        rec.ExpectedMinor,
+					OpenDueMinor:         rec.OpenDueMinor,
+					ActualMinor:          rec.ActualMinor,
+					FactorAdvancesMinor:  rec.FactorAdvancesMinor,
+					ReserveReleasesMinor: rec.ReserveReleasesMinor,
+					IsForecast:           rec.IsForecast,
+				})
+			}
+			return points, nil
+		},
+	)
+}
+
+var cashFlowSQL = `
 		WITH weeks AS (
 			SELECT (?::BIGINT + (n * ?::BIGINT))::BIGINT AS week_start
 			FROM generate_series(-?::INT, ?::INT - 1) AS n
@@ -349,6 +383,7 @@ func (r *repository) ListCashFlow(
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.due_date >= w.week_start
 				  AND inv.due_date < w.week_start + ?::BIGINT
+				  AND NOT ` + factoringsql.LiveInvoice() + `
 			), 0) AS expected_minor,
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor - inv.applied_amount_minor)
@@ -360,6 +395,7 @@ func (r *repository) ListCashFlow(
 				  AND inv.total_amount_minor > inv.applied_amount_minor
 				  AND inv.due_date >= w.week_start
 				  AND inv.due_date < w.week_start + ?::BIGINT
+				  AND NOT ` + factoringsql.LiveInvoice() + `
 			), 0) AS open_due_minor,
 			COALESCE((
 				SELECT SUM(cp.amount_minor)
@@ -370,33 +406,43 @@ func (r *repository) ListCashFlow(
 				  AND cp.payment_date >= w.week_start
 				  AND cp.payment_date < w.week_start + ?::BIGINT
 			), 0) AS actual_minor,
+			COALESCE((
+				SELECT SUM(fsi.expected_advance_minor)
+				FROM factoring_submission_items fsi
+				JOIN factoring_submissions fs
+				  ON fs.id = fsi.submission_id
+				  AND fs.organization_id = fsi.organization_id
+				  AND fs.business_unit_id = fsi.business_unit_id
+				JOIN factoring_agreements agr
+				  ON agr.id = fs.agreement_id
+				  AND agr.organization_id = fs.organization_id
+				  AND agr.business_unit_id = fs.business_unit_id
+				WHERE fsi.organization_id = ?
+				  AND fsi.business_unit_id = ?
+				  AND fsi.status = 'Pending'
+				  AND fs.status IN ('Sent', 'PartiallyFunded')
+				  AND fs.sent_at IS NOT NULL
+				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, ?::BIGINT) >= w.week_start
+				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, ?::BIGINT)
+				    < w.week_start + ?::BIGINT
+			), 0) AS factor_advances_minor,
+			COALESCE((
+				SELECT SUM(fsi.reserve_minor)
+				FROM factoring_submission_items fsi
+				JOIN invoices inv
+				  ON inv.id = fsi.invoice_id
+				  AND inv.organization_id = fsi.organization_id
+				  AND inv.business_unit_id = fsi.business_unit_id
+				WHERE fsi.organization_id = ?
+				  AND fsi.business_unit_id = ?
+				  AND fsi.status = 'Funded'
+				  AND inv.due_date IS NOT NULL
+				  AND GREATEST(inv.due_date, ?::BIGINT) >= w.week_start
+				  AND GREATEST(inv.due_date, ?::BIGINT) < w.week_start + ?::BIGINT
+			), 0) AS reserve_releases_minor,
 			(w.week_start >= ?::BIGINT) AS is_forecast
 		FROM weeks w
-		ORDER BY w.week_start ASC`,
-				req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.AsOfDate,
-			).Scan(ctx, &records)
-			if err != nil {
-				return nil, fmt.Errorf("list ar cash flow: %w", err)
-			}
-
-			points := make([]*customerledgerports.ARCashFlowPoint, 0, len(records))
-			for _, rec := range records {
-				points = append(points, &customerledgerports.ARCashFlowPoint{
-					WeekStart:     rec.WeekStart,
-					ExpectedMinor: rec.ExpectedMinor,
-					OpenDueMinor:  rec.OpenDueMinor,
-					ActualMinor:   rec.ActualMinor,
-					IsForecast:    rec.IsForecast,
-				})
-			}
-			return points, nil
-		},
-	)
-}
+		ORDER BY w.week_start ASC`
 
 type collectionTotalsRecord struct {
 	BeginningOpenMinor       int64   `bun:"beginning_open_minor"`

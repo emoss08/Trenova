@@ -295,12 +295,14 @@ type Params struct {
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
 	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringLedgerService       factoringports.LedgerService
 	FactoringTransportService    factoringports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
 	AgentDefinitionService       agentdefinitionports.AgentDefinitionService
 	AgentCapabilityService       agentports.AgentCapabilityService
+	AgentRecommender             agentports.AgentRecommender
 	AgentShadowService           agentshadowports.AgentShadowService
 	AgentTrustService            agentports.AgentTrustService
 	AgentTestPromptService       agentdefinitionports.AgentTestPromptService
@@ -519,12 +521,14 @@ type Services struct {
 	FactoringNoaService          factoringports.NoaService
 	FactoringReadinessService    factoringports.ReadinessService
 	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringLedgerService       factoringports.LedgerService
 	FactoringTransportService    factoringports.TransportService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
 	AgentDefinitionService       agentdefinitionports.AgentDefinitionService
 	AgentCapabilityService       agentports.AgentCapabilityService
+	AgentRecommender             agentports.AgentRecommender
 	AgentShadowService           agentshadowports.AgentShadowService
 	AgentTrustService            agentports.AgentTrustService
 	AgentTestPromptService       agentdefinitionports.AgentTestPromptService
@@ -750,11 +754,13 @@ func newServices(p *Params) *Services {
 		FactoringNoaService:          p.FactoringNoaService,
 		FactoringReadinessService:    p.FactoringReadinessService,
 		FactoringSubmissionService:   p.FactoringSubmissionService,
+		FactoringLedgerService:       p.FactoringLedgerService,
 		FactoringTransportService:    p.FactoringTransportService,
 		LateChargeService:            p.LateChargeService,
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,
 		AgentCapabilityService:       p.AgentCapabilityService,
+		AgentRecommender:             p.AgentRecommender,
 		AgentShadowService:           p.AgentShadowService,
 		AgentTrustService:            p.AgentTrustService,
 		AgentTestPromptService:       p.AgentTestPromptService,

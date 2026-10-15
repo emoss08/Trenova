@@ -24,6 +24,7 @@ const (
 	MaxSubmissionErrorLength       = 2000
 	MaxSubmissionCancelReason      = 500
 	MaxTransportTargetLength       = 1000
+	MaxFundingReasonLength         = 500
 )
 
 var (
@@ -61,6 +62,7 @@ type Submission struct {
 	FailedAt              *int64           `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero"`
 	CancelledAt           *int64           `json:"cancelledAt"           bun:"cancelled_at,type:BIGINT,nullzero"`
 	CancelReason          string           `json:"cancelReason"          bun:"cancel_reason,type:VARCHAR(500),nullzero"`
+	FundedAt              *int64           `json:"fundedAt"              bun:"funded_at,type:BIGINT,nullzero"`
 	SubmittedByID         pulid.ID         `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
 	AgentRunID            pulid.ID         `json:"agentRunId"            bun:"agent_run_id,type:VARCHAR(100),nullzero"`
 	Version               int64            `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
@@ -91,6 +93,15 @@ type SubmissionItem struct {
 	PacketDocumentID     pulid.ID             `json:"packetDocumentId"     bun:"packet_document_id,type:VARCHAR(100),nullzero"`
 	Status               SubmissionItemStatus `json:"status"               bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
 	ReleasedAt           *int64               `json:"releasedAt"           bun:"released_at,type:BIGINT,nullzero"`
+	FundedOn             *int64               `json:"fundedOn"             bun:"funded_on,type:BIGINT,nullzero"`
+	AdvanceMinor         *int64               `json:"advanceMinor"         bun:"advance_minor,type:BIGINT,nullzero"`
+	FeeMinor             *int64               `json:"feeMinor"             bun:"fee_minor,type:BIGINT,nullzero"`
+	ReserveMinor         *int64               `json:"reserveMinor"         bun:"reserve_minor,type:BIGINT,nullzero"`
+	RejectionReason      string               `json:"rejectionReason"      bun:"rejection_reason,type:VARCHAR(500),nullzero"`
+	SettledOn            *int64               `json:"settledOn"            bun:"settled_on,type:BIGINT,nullzero"`
+	ChargedBackOn        *int64               `json:"chargedBackOn"        bun:"charged_back_on,type:BIGINT,nullzero"`
+	ChargebackReason     string               `json:"chargebackReason"     bun:"chargeback_reason,type:VARCHAR(500),nullzero"`
+	ChargebackWarnedAt   *int64               `json:"chargebackWarnedAt"   bun:"chargeback_warned_at,type:BIGINT,nullzero"`
 	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"`
 	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull"`
 
@@ -237,6 +248,52 @@ func (s *Submission) Cancel(at int64, reason string) error {
 	return nil
 }
 
+func (s *Submission) CanFund() bool {
+	return s != nil && s.Status.AwaitsFunding()
+}
+
+func (s *Submission) Item(id pulid.ID) *SubmissionItem {
+	for _, item := range s.Items {
+		if item != nil && item.ID == id {
+			return item
+		}
+	}
+	return nil
+}
+
+func (s *Submission) Resolve(at int64) {
+	if s == nil || !s.Status.AwaitsFunding() {
+		return
+	}
+	pending, funded := 0, 0
+	for _, item := range s.Items {
+		if item == nil {
+			continue
+		}
+		switch item.Status {
+		case SubmissionItemStatusPending:
+			pending++
+		case SubmissionItemStatusFunded, SubmissionItemStatusSettled,
+			SubmissionItemStatusChargedBack:
+			funded++
+		case SubmissionItemStatusReleased, SubmissionItemStatusRejected:
+		}
+	}
+	switch {
+	case funded > 0 && pending > 0:
+		s.Status = SubmissionStatusPartially
+	case funded > 0:
+		s.Status = SubmissionStatusFunded
+	case pending == 0:
+		s.Status = SubmissionStatusRejected
+	default:
+		return
+	}
+	if funded > 0 && s.FundedAt == nil {
+		s.FundedAt = &at
+	}
+}
+
 func (s *Submission) InvoiceIDs() []pulid.ID {
 	ids := make([]pulid.ID, 0, len(s.Items))
 	for _, item := range s.Items {
@@ -284,6 +341,127 @@ func (s *Submission) GetCreatedAt() int64         { return s.CreatedAt }
 func (s *Submission) GetOrganizationID() pulid.ID { return s.OrganizationID }
 func (s *Submission) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }
 func (s *Submission) GetTableName() string        { return "factoring_submissions" }
+
+type ItemFunding struct {
+	AdvanceMinor int64
+	FeeMinor     int64
+}
+
+func (i *SubmissionItem) ExpectedFunding() ItemFunding {
+	return ItemFunding{AdvanceMinor: i.ExpectedAdvanceMinor, FeeMinor: i.ExpectedFeeMinor}
+}
+
+func (i *SubmissionItem) Fund(fundedOn int64, funding ItemFunding) error {
+	if i.Status != SubmissionItemStatusPending {
+		return errortypes.NewBusinessError(
+			"Invoice {0} is not waiting on the factor",
+			i.InvoiceNumber,
+		)
+	}
+	if funding.AdvanceMinor < 0 || funding.FeeMinor < 0 {
+		return errortypes.NewValidationError(
+			"items",
+			errortypes.ErrInvalid,
+			"The advance and fee for invoice {0} cannot be negative",
+			i.InvoiceNumber,
+		)
+	}
+	reserve := i.FaceMinor - funding.AdvanceMinor - funding.FeeMinor
+	if reserve < 0 {
+		return errortypes.NewValidationError(
+			"items",
+			errortypes.ErrInvalid,
+			"The advance and fee for invoice {0} come to more than the invoice",
+			i.InvoiceNumber,
+		)
+	}
+	i.Status = SubmissionItemStatusFunded
+	i.FundedOn = &fundedOn
+	i.AdvanceMinor = &funding.AdvanceMinor
+	i.FeeMinor = &funding.FeeMinor
+	i.ReserveMinor = &reserve
+	return nil
+}
+
+func (i *SubmissionItem) Reject(reason string) error {
+	if i.Status != SubmissionItemStatusPending {
+		return errortypes.NewBusinessError(
+			"Invoice {0} is not waiting on the factor",
+			i.InvoiceNumber,
+		)
+	}
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return errortypes.NewValidationError(
+			"items",
+			errortypes.ErrRequired,
+			"Say why the factor rejected invoice {0}",
+			i.InvoiceNumber,
+		)
+	}
+	i.Status = SubmissionItemStatusRejected
+	i.RejectionReason = stringutils.TruncateRunes(reason, MaxFundingReasonLength)
+	return nil
+}
+
+func (i *SubmissionItem) Settle(settledOn int64) error {
+	if i.Status != SubmissionItemStatusFunded {
+		return errortypes.NewBusinessError(
+			"Invoice {0} is not funded, so it has no reserve to release",
+			i.InvoiceNumber,
+		)
+	}
+	i.Status = SubmissionItemStatusSettled
+	i.SettledOn = &settledOn
+	return nil
+}
+
+func (i *SubmissionItem) ChargeBack(chargedBackOn int64, reason string) error {
+	if i.Status != SubmissionItemStatusFunded {
+		return errortypes.NewBusinessError(
+			"Invoice {0} is not funded and open with the factor, so it cannot be charged back",
+			i.InvoiceNumber,
+		)
+	}
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return errortypes.NewValidationError(
+			"reason",
+			errortypes.ErrRequired,
+			"Say why the factor charged the invoice back",
+		)
+	}
+	i.Status = SubmissionItemStatusChargedBack
+	i.ChargedBackOn = &chargedBackOn
+	i.ChargebackReason = stringutils.TruncateRunes(reason, MaxFundingReasonLength)
+	return nil
+}
+
+func (i *SubmissionItem) ReverseChargeback() error {
+	if i.Status != SubmissionItemStatusChargedBack {
+		return errortypes.NewBusinessError(
+			"Invoice {0} has no chargeback to reverse",
+			i.InvoiceNumber,
+		)
+	}
+	i.Status = SubmissionItemStatusFunded
+	i.ChargedBackOn = nil
+	i.ChargebackReason = ""
+	return nil
+}
+
+func (i *SubmissionItem) Actuals() (advance, fee, reserve int64) {
+	if i.AdvanceMinor != nil {
+		advance = *i.AdvanceMinor
+	}
+	if i.FeeMinor != nil {
+		fee = *i.FeeMinor
+	}
+	if i.ReserveMinor != nil {
+		reserve = *i.ReserveMinor
+	}
+	return advance, fee, reserve
+}
 
 func (i *SubmissionItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

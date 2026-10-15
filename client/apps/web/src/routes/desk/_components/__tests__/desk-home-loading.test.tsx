@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskHome, type DeskHomeProps } from "../desk-home";
@@ -32,6 +32,10 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   assistant: {
     myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
+    agentRecommendation: (text: string) => ({
+      queryKey: ["agent-recommendation", text],
+      queryFn: () => null,
+    }),
   },
 }));
 
@@ -170,11 +174,13 @@ describe("Desk home composer", () => {
     fireEvent.change(box, { target: { value: "Who is free near Joliet?" } });
     fireEvent.keyDown(box, { key: "Enter" });
 
-    expect(onStart).toHaveBeenCalledWith("agent-1", "Who is free near Joliet?", {
-      files: [],
-      mentions: [],
-      providerId: "",
-    });
+    await waitFor(() =>
+      expect(onStart).toHaveBeenCalledWith("agent-1", "Who is free near Joliet?", {
+        files: [],
+        mentions: [],
+        providerId: "",
+      }),
+    );
   });
 
   it("asks a starter question outright with its shortcut", async () => {

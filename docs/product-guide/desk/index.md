@@ -1,6 +1,6 @@
 ---
 path: /desk
-aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
+aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, suggested agent, best agent, which agent, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
 related:
   - /desk/decisions
   - /desk/watchtower
@@ -23,11 +23,12 @@ While an agent replies you can steer it with a correction or queue the next ques
 ## Tasks
 
 ### Ask an agent a question
-Keywords: chat with AI, ask the assistant, start a conversation
+Keywords: chat with AI, ask the assistant, start a conversation, which agent should I ask, suggested agent, wrong agent
 1. Open [Desk](/desk).
 2. The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.
 3. Type your question and send it, or press Tab to use the starter question on screen.
-4. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
+4. When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list is always the one asked.
+5. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
 
 ### Approve a change on the Desk
 Keywords: approve in desk, agent wants to change, review agent change, not now, redraft, out of date
@@ -316,6 +317,15 @@ Keywords: rate confirmation, extract document, scanned load, read fields, create
 2. Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.
 3. Select **Fix fields** to ask the agent to check the doubtful fields against the document again.
 4. Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead.
+
+### Set up an EDI partner from its implementation guide
+Keywords: EDI spec, implementation guide, companion guide, onboard trading partner, EDI setup from PDF, revised guide
+1. In a conversation with an agent that handles EDI, select **Attach files** and upload the partner's implementation guide (a PDF, a Word document or its sample X12 as text), then ask the agent to set up the connection from it.
+2. The workspace shows the drafted connection: the trading partner, the interchange identifiers, the communication profile, each document type with its template, the code mappings, the guide's samples and the gaps in the guide. Every value names the page it was read from; point at the page to read the guide's own words. For a partner you already have, only what the guide changes is marked.
+3. Under **To decide**, pick one of the guide's readings for each value the agent held back, or tell the agent the answer. The agent drafts the connection again with it.
+4. Check **Would not save**, the rules each template does not meet and the **Gaps in the guide**.
+5. Once it shows **Ready to approve**, select **Propose saving it**. Saving waits for your approval like any other change, and the item shows **Waiting on your approval**, then **Saved**.
+6. Enter the passwords, keys and certificates listed under **Credentials you enter** on the partner's communication profile, then turn the profile on. They are never taken from the guide.
 
 ### Approve billing items from a Desk table
 Keywords: billing queue, approve invoices, bulk approve, ready to bill, invoice review, assign biller

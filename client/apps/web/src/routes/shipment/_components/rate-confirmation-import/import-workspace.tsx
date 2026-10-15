@@ -4,7 +4,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
-import { pageAssistantThreadKey } from "@/components/assistant/page-assistant";
+import { pageAssistantThreadKey } from "@/components/assistant/page-assistant-thread-key";
 import { apiService } from "@/services/api";
 import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

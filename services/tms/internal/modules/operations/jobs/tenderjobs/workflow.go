@@ -72,7 +72,15 @@ const (
 	outcomeContinue responseOutcome = iota
 	outcomeFinished
 	outcomeOfferClosed
+	// outcomeCountered means the offer now holds a counter waiting on a
+	// person, until the deadline the signal result carries.
+	outcomeCountered
 )
+
+type signalResult struct {
+	outcome  responseOutcome
+	deadline int64
+}
 
 func runSequential(
 	ctx workflow.Context,
@@ -132,7 +140,7 @@ func runBroadcast(
 					ExpiresAt: deadline,
 				})
 			}
-		case tender.OfferStatusSent:
+		case tender.OfferStatusSent, tender.OfferStatusCountered:
 			deadline := int64(0)
 			if offer.ExpiresAt != nil {
 				deadline = *offer.ExpiresAt
@@ -162,21 +170,24 @@ func runBroadcast(
 			return false
 		}
 
-		finished, closedOfferID, err := awaitAny(
+		waited, err := awaitAny(
 			ctx, a, base, nextDeadline, signals, isOutstanding,
 		)
 		if err != nil {
 			return err
 		}
-		if finished {
+		if waited.finished {
 			return nil
 		}
 
 		now := workflow.Now(ctx).Unix()
 		remaining := outstanding[:0]
 		for _, o := range outstanding {
-			if o.OfferID == closedOfferID {
+			if o.OfferID == waited.closedOfferID {
 				continue
+			}
+			if o.OfferID == waited.counteredOfferID {
+				o.ExpiresAt = waited.counterDeadline
 			}
 			if o.ExpiresAt <= now {
 				expireIn := base
@@ -204,7 +215,7 @@ func ensureDispatched(
 	base TenderActivityInput,
 	offer tenderports.TenderPlanOffer,
 ) (deadline int64, live bool, err error) {
-	if offer.Status == tender.OfferStatusSent {
+	if offer.Status.IsAwaitingAnswer() {
 		if offer.ExpiresAt != nil {
 			return *offer.ExpiresAt, true, nil
 		}
@@ -246,20 +257,31 @@ func awaitOffer(
 			).Get(ctx, nil)
 		}
 
-		outcome, oerr := handleSignal(ctx, a, base, sig, func(id pulid.ID) bool {
+		res, oerr := handleSignal(ctx, a, base, sig, func(id pulid.ID) bool {
 			return id == offerID
 		})
 		if oerr != nil {
 			return false, oerr
 		}
-		switch outcome {
+		switch res.outcome {
 		case outcomeFinished:
 			return true, nil
 		case outcomeOfferClosed:
 			return false, nil
+		case outcomeCountered:
+			deadline = res.deadline
 		case outcomeContinue:
 		}
 	}
+}
+
+// awaitAnyResult is how one broadcast wait ended: the tender finished, one
+// offer closed, or one offer took a counter with a new deadline.
+type awaitAnyResult struct {
+	finished         bool
+	closedOfferID    pulid.ID
+	counteredOfferID pulid.ID
+	counterDeadline  int64
 }
 
 // awaitAny is the broadcast counterpart: any outstanding offer can respond.
@@ -270,22 +292,27 @@ func awaitAny(
 	deadline int64,
 	signals workflow.ReceiveChannel,
 	isOutstanding func(pulid.ID) bool,
-) (finished bool, closedOfferID pulid.ID, err error) {
+) (awaitAnyResult, error) {
 	for {
 		sig, timedOut := receiveOrDeadline(ctx, signals, deadline)
 		if timedOut {
-			return false, pulid.Nil, nil
+			return awaitAnyResult{}, nil
 		}
 
-		outcome, oerr := handleSignal(ctx, a, base, sig, isOutstanding)
+		res, oerr := handleSignal(ctx, a, base, sig, isOutstanding)
 		if oerr != nil {
-			return false, pulid.Nil, oerr
+			return awaitAnyResult{}, oerr
 		}
-		switch outcome {
+		switch res.outcome {
 		case outcomeFinished:
-			return true, pulid.Nil, nil
+			return awaitAnyResult{finished: true}, nil
 		case outcomeOfferClosed:
-			return false, sig.OfferID, nil
+			return awaitAnyResult{closedOfferID: sig.OfferID}, nil
+		case outcomeCountered:
+			return awaitAnyResult{
+				counteredOfferID: sig.OfferID,
+				counterDeadline:  res.deadline,
+			}, nil
 		case outcomeContinue:
 		}
 	}
@@ -300,7 +327,7 @@ func handleSignal(
 	base TenderActivityInput,
 	sig tendercontract.Signal,
 	relevant func(pulid.ID) bool,
-) (responseOutcome, error) {
+) (signalResult, error) {
 	switch sig.Kind {
 	case tendercontract.SignalKindCancel:
 		in := base
@@ -309,11 +336,11 @@ func handleSignal(
 		if err := workflow.ExecuteActivity(
 			ctx, a.CancelTenderActivity, &in,
 		).Get(ctx, nil); err != nil {
-			return outcomeContinue, err
+			return signalResult{}, err
 		}
-		return outcomeFinished, nil
+		return signalResult{outcome: outcomeFinished}, nil
 	case SignalKindSweepNudge:
-		return outcomeContinue, nil
+		return signalResult{}, nil
 	case tendercontract.SignalKindResponse:
 		if !relevant(sig.OfferID) {
 			// The response was in flight when its offer expired or was
@@ -331,11 +358,11 @@ func handleSignal(
 					"failed to record late tender response", "error", err,
 				)
 			}
-			return outcomeContinue, nil
+			return signalResult{}, nil
 		}
 		return handleResponse(ctx, a, base, sig)
 	default:
-		return outcomeContinue, nil
+		return signalResult{}, nil
 	}
 }
 
@@ -344,7 +371,7 @@ func handleResponse(
 	a *Activities,
 	base TenderActivityInput,
 	sig tendercontract.Signal,
-) (responseOutcome, error) {
+) (signalResult, error) {
 	in := base
 	in.OfferID = sig.OfferID
 	in.Source = sig.Source
@@ -356,49 +383,76 @@ func handleResponse(
 		if err := workflow.ExecuteActivity(
 			ctx, a.DeclineOfferActivity, &in,
 		).Get(ctx, nil); err != nil {
-			return outcomeContinue, err
+			return signalResult{}, err
 		}
-		return outcomeOfferClosed, nil
+		return signalResult{outcome: outcomeOfferClosed}, nil
 	case tender.ResponseActionAccept:
-		var result tenderports.TenderAcceptResult
+		return acceptOffer(ctx, a, &in)
+	case tender.ResponseActionCounter:
+		in.CounterRate = sig.CounterRate
+		in.CounterNote = sig.CounterNote
+		var result tenderports.TenderCounterResult
 		if err := workflow.ExecuteActivity(
-			ctx, a.AcceptOfferActivity, &in,
+			ctx, a.RecordCounterActivity, &in,
 		).Get(ctx, &result); err != nil {
-			return outcomeContinue, err
+			return signalResult{}, err
 		}
 		switch {
 		case result.Ignored:
-			return outcomeContinue, nil
-		case result.NeedsReview:
-			reviewIn := in
-			reviewIn.Reason = result.ReviewReason
-			if err := workflow.ExecuteActivity(
-				ctx, a.MarkNeedsReviewActivity, &reviewIn,
-			).Get(ctx, nil); err != nil {
-				return outcomeContinue, err
-			}
-			return outcomeFinished, nil
+			return signalResult{}, nil
+		case result.AutoAccept:
+			return acceptOffer(ctx, a, &in)
 		default:
-			if err := workflow.ExecuteActivity(
-				ctx, a.FinalizeAcceptedActivity, &in,
-			).Get(ctx, nil); err != nil {
-				return outcomeContinue, err
-			}
-			// The acceptance is committed; its paperwork is best-effort here.
-			// A persistent issuance failure already raised a dispatch
-			// notification service-side and must never fail the workflow.
-			if err := workflow.ExecuteActivity(
-				ctx, a.IssueRateConfirmationActivity, &in,
-			).Get(ctx, nil); err != nil {
-				workflow.GetLogger(ctx).Error(
-					"failed to issue the rate confirmation for the accepted tender",
-					"error", err,
-				)
-			}
-			return outcomeFinished, nil
+			return signalResult{outcome: outcomeCountered, deadline: result.DecisionDeadline}, nil
 		}
 	default:
-		return outcomeContinue, nil
+		return signalResult{}, nil
+	}
+}
+
+// acceptOffer lands an acceptance, whether the carrier accepted the offer or
+// somebody, or the policy, took the carrier's counter.
+func acceptOffer(
+	ctx workflow.Context,
+	a *Activities,
+	in *TenderActivityInput,
+) (signalResult, error) {
+	var result tenderports.TenderAcceptResult
+	if err := workflow.ExecuteActivity(
+		ctx, a.AcceptOfferActivity, in,
+	).Get(ctx, &result); err != nil {
+		return signalResult{}, err
+	}
+	switch {
+	case result.Ignored:
+		return signalResult{}, nil
+	case result.NeedsReview:
+		reviewIn := *in
+		reviewIn.Reason = result.ReviewReason
+		if err := workflow.ExecuteActivity(
+			ctx, a.MarkNeedsReviewActivity, &reviewIn,
+		).Get(ctx, nil); err != nil {
+			return signalResult{}, err
+		}
+		return signalResult{outcome: outcomeFinished}, nil
+	default:
+		if err := workflow.ExecuteActivity(
+			ctx, a.FinalizeAcceptedActivity, in,
+		).Get(ctx, nil); err != nil {
+			return signalResult{}, err
+		}
+		// The acceptance is committed; its paperwork is best-effort here.
+		// A persistent issuance failure already raised a dispatch
+		// notification service-side and must never fail the workflow.
+		if err := workflow.ExecuteActivity(
+			ctx, a.IssueRateConfirmationActivity, in,
+		).Get(ctx, nil); err != nil {
+			workflow.GetLogger(ctx).Error(
+				"failed to issue the rate confirmation for the accepted tender",
+				"error", err,
+			)
+		}
+		return signalResult{outcome: outcomeFinished}, nil
 	}
 }
 

@@ -79,9 +79,26 @@ type ReadinessInputs struct {
 	InvoiceAcceptedTypeIDs map[pulid.ID]struct{}
 	AgreementDocuments     []DocumentNeed
 	SubmissionNumber       string
+	SubmissionItemStatus   SubmissionItemStatus
+	ChargedBack            bool
 }
 
 func EvaluateReadiness(in *ReadinessInputs) Readiness {
+	if in.SubmissionItemStatus == SubmissionItemStatusFunded {
+		return Readiness{Verdict: VerdictFunded, Checks: []Check{{
+			Code:    CheckEligible,
+			Passed:  true,
+			Message: "Funded by the factor on schedule " + in.SubmissionNumber,
+		}}}
+	}
+	if in.ChargedBack && in.SubmissionNumber == "" {
+		return Readiness{Verdict: VerdictExcluded, Checks: []Check{
+			{
+				Code:    CheckChargedBack,
+				Message: "The factor charged the invoice back; it is collected as the organization's own",
+			},
+		}}
+	}
 	if check, ok := eligibility(&in.Invoice); !ok {
 		return Readiness{Verdict: VerdictExcluded, Checks: []Check{check}}
 	}

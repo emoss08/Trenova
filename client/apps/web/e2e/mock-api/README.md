@@ -48,6 +48,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
 | `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
 | `deskReply` | `idle` \| `working` | `idle` | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued |
+| `agentMatch` | `match` \| `none` \| `hold` | `match` | The Desk home's agent suggestion (`MyAgentRecommendation`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, nobody, or the request left open (the "finding the agent" state) |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -333,6 +334,21 @@ there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in th
 A card read over REST answers its routes from the same handler; the EDI message card's X12,
 built segment by segment with its inspection, is in `fixtures/desk-edi.mjs`, and a REST
 fixture holds its skeleton with `{ __hold: true }` as a GraphQL one does.
+The worker and carrier settlement cards read `fixtures/desk-settlements.mjs`; the loads a
+settlement pays come from the board, and each one's share is filled in from them so the card's
+loads carry what the settlement pays.
+
+The Desk home suggesting the agent with the tools for a question has its own walkthrough:
+
+```bash
+node e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
+```
+
+It types a customer ETA question while Billing is chosen and shoots the suggestion of Customer
+service, keeping Billing, switching, the "finding the agent" state of a question sent before
+its match came back (`agentMatch: hold`) and no match (`agentMatch: none`), in light and dark
+and the suggestion at phone width. It writes to `e2e/mock-api/screenshots/desk-recommendation`
+by default.
 
 A Desk case and a reply under way have their own walkthrough:
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -49,6 +50,9 @@ type TenderActivityInput struct {
 	Action tender.ResponseAction `json:"action"`
 	Source tender.ResponseSource `json:"source"`
 	Reason string                `json:"reason"`
+
+	CounterRate decimal.Decimal `json:"counterRate"`
+	CounterNote string          `json:"counterNote"`
 
 	ActorUserID pulid.ID `json:"actorUserId"`
 }
@@ -92,6 +96,21 @@ func (a *Activities) AcceptOfferActivity(
 		in.TenantInfo.UserID = in.ActorUserID
 	}
 	return a.lifecycle.AcceptOffer(ctx, in.TenantInfo, in.OfferID, in.Source)
+}
+
+func (a *Activities) RecordCounterActivity(
+	ctx context.Context,
+	in *TenderActivityInput,
+) (*tenderports.TenderCounterResult, error) {
+	if !in.ActorUserID.IsNil() {
+		in.TenantInfo.UserID = in.ActorUserID
+	}
+	return a.lifecycle.RecordCounter(ctx, in.TenantInfo, &tenderports.RecordCounterRequest{
+		OfferID: in.OfferID,
+		Rate:    in.CounterRate,
+		Note:    in.CounterNote,
+		Source:  in.Source,
+	})
 }
 
 func (a *Activities) FinalizeAcceptedActivity(
