@@ -35,6 +35,10 @@ type Tender struct {
 	AcceptedAt         *int64    `json:"acceptedAt"         bun:"accepted_at,type:BIGINT,nullzero"`
 	ExhaustedAt        *int64    `json:"exhaustedAt"        bun:"exhausted_at,type:BIGINT,nullzero"`
 	CanceledAt         *int64    `json:"canceledAt"         bun:"canceled_at,type:BIGINT,nullzero"`
+	BounceCount        int16     `json:"bounceCount"        bun:"bounce_count,type:SMALLINT,notnull,default:0"`
+	LastBouncedAt      *int64    `json:"lastBouncedAt"      bun:"last_bounced_at,type:BIGINT,nullzero"`
+	EscalatedFromID    *pulid.ID `json:"escalatedFromId"    bun:"escalated_from_tender_id,type:VARCHAR(100),nullzero"`
+	EscalationRound    int16     `json:"escalationRound"    bun:"escalation_round,type:SMALLINT,notnull,default:0"`
 	Version            int64     `json:"version"            bun:"version,type:BIGINT"`
 	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -6,9 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -60,6 +63,8 @@ type Params struct {
 	EDIChannel            tenderports.EDITenderChannel                   `optional:"true"`
 	RateConIssuer         rateconfirmationports.RateConfirmationIssuer   `optional:"true"`
 	RateEngine            ratequoteports.RateEngine                      `optional:"true"`
+	DispatchControls      dispatchcontrolports.DispatchControlRepository `optional:"true"`
+	Permissions           permissionports.PermissionEngine               `optional:"true"`
 }
 
 type Service struct {
@@ -85,6 +90,8 @@ type Service struct {
 	ediChannel            tenderports.EDITenderChannel
 	rateConIssuer         rateconfirmationports.RateConfirmationIssuer
 	rateEngine            ratequoteports.RateEngine
+	dispatchControls      dispatchcontrolports.DispatchControlRepository
+	permissions           permissionports.PermissionEngine
 	intelGate             carrierintelports.CarrierIntelGate
 	lifecycle             carrierintelports.CarrierLifecycleObserver
 }
@@ -112,7 +119,34 @@ func New(p Params) *Service {
 		ediChannel:            p.EDIChannel,
 		rateConIssuer:         p.RateConIssuer,
 		rateEngine:            p.RateEngine,
+		dispatchControls:      p.DispatchControls,
+		permissions:           p.Permissions,
 	}
+}
+
+// tenderPolicy is how the organization's tenders treat counter-offers and an
+// exhausted waterfall. Settings that cannot be read fall back to the default
+// policy rather than stopping a tender mid-flight.
+func (s *Service) tenderPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) dispatchcontrol.TenderPolicy {
+	if s.dispatchControls == nil {
+		return dispatchcontrol.DefaultTenderPolicy()
+	}
+	control, err := s.dispatchControls.GetByOrgID(
+		ctx,
+		dispatchcontrolports.GetDispatchControlRequest{
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		if !errortypes.IsNotFoundError(err) {
+			s.l.Warn("failed to read tender policy; using defaults", zap.Error(err))
+		}
+		return dispatchcontrol.DefaultTenderPolicy()
+	}
+	return control.TenderPolicy()
 }
 
 // AssignerSetter breaks the construction cycle between the tender service

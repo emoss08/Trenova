@@ -86,6 +86,7 @@ func (s *Service) plan(
 	if err := validateRequest(req); err != nil {
 		return nil, err
 	}
+	req = withRedactedQuotes(req)
 
 	p := &planner{
 		s:        s,

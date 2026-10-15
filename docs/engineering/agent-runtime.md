@@ -1382,6 +1382,14 @@ sent. The preview a person approves from reads them the same way
 Nothing is told back there; what runs is what was read. The id checks
 below stay in the runtime.
 
+A proposal's tool runs for its approver with the conversation its run answered,
+as the turn that filed it would have: the executor and the preview both read the
+run and, when its subject is an assistant thread, set `ThreadID`
+(`proposalexecutor.WithConversation`). A tool that reads what was attached to the
+conversation, such as `apply_edi_connection_draft`, reads it for the approver
+too; a run about anything else leaves it unset, and a run that cannot be read
+refuses the approval rather than running without it.
+
 Dates and times come in three shapes, each from one helper in
 `agenttoolschema` that sets the `format`, an example and the same sentence on
 every tool: `Date` (`date`, YYYY-MM-DD), `DateTime` (`date-time`, RFC 3339 with

@@ -1,5 +1,6 @@
 import { type RichTags, translateRich } from "@trenova/shared/i18n/rich";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import type {
   ShipmentAssignmentEvent,
@@ -414,9 +415,140 @@ function renderTender(event: ShipmentTenderEvent, ctx: RenderContext): RenderedE
         actorHandle: ctx.actorHandle,
       };
     }
+    case "TenderBounced": {
+      const reoffers = metadataNumber(event.metadata, "reoffers");
+      return {
+        headline: translateRich(
+          "<actor>{0}</actor> backed out of the accepted tender for <target/>",
+          ctx.tags,
+          carrier,
+        ),
+        detail:
+          [
+            reasonDetail(present(event.reason)),
+            reoffers === undefined
+              ? undefined
+              : reoffers === 0
+                ? translate("No carrier was left to ask again")
+                : translate(
+                    "{0, plural, one {Offered again to # carrier} other {Offered again to # carriers}}",
+                    reoffers,
+                  ),
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
+        actorHandle: ctx.actorHandle,
+      };
+    }
+    case "TenderCountered": {
+      const counterRate = metadataMoney(event.metadata, "counterRate");
+      const offeredRate = metadataMoney(event.metadata, "offeredRate");
+      const margin = metadataString(event.metadata, "marginPercent");
+      const needsApproval = event.metadata.needsApproval === true;
+      return {
+        headline: counterRate
+          ? translateRich(
+              "<actor>{0}</actor> countered the tender for <target/> at {1}",
+              ctx.tags,
+              carrier,
+              counterRate,
+            )
+          : translateRich(
+              "<actor>{0}</actor> countered the tender for <target/>",
+              ctx.tags,
+              carrier,
+            ),
+        detail:
+          [
+            offeredRate ? translate("Offered {0}", offeredRate) : undefined,
+            margin ? translate("margin {0}%", margin) : undefined,
+            needsApproval ? translate("below the margin floor, needs approval") : undefined,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
+        actorHandle: ctx.actorHandle,
+      };
+    }
+    case "TenderCounterDecided": {
+      const counterRate = metadataMoney(event.metadata, "counterRate");
+      const approved = event.metadata.approved === true;
+      return {
+        headline: approved
+          ? translateRich(
+              "<actor>{0}</actor> took {1}'s counter-offer on <target/>",
+              ctx.tags,
+              ctx.actor,
+              carrier,
+            )
+          : translateRich(
+              "<actor>{0}</actor> refused {1}'s counter-offer on <target/>",
+              ctx.tags,
+              ctx.actor,
+              carrier,
+            ),
+        detail: approved
+          ? counterRate
+            ? translate("Agreed at {0}", counterRate)
+            : undefined
+          : reasonDetail(present(event.reason)),
+        actorHandle: ctx.actorHandle,
+      };
+    }
+    case "TenderEscalated": {
+      const round = metadataNumber(event.metadata, "round");
+      const carriers = metadataNumber(event.metadata, "carriers");
+      const increase = metadataString(event.metadata, "rateIncreasePercent");
+      return {
+        headline:
+          round === undefined
+            ? translateRich(
+                "<actor>{0}</actor> escalated the exhausted tender on <target/>",
+                ctx.tags,
+                ctx.actor,
+              )
+            : translateRich(
+                "<actor>{0}</actor> escalated the exhausted tender on <target/> (round {1})",
+                ctx.tags,
+                ctx.actor,
+                round,
+              ),
+        detail:
+          [
+            carriers === undefined
+              ? undefined
+              : translate(
+                  "{0, plural, one {Offered to # carrier} other {Offered to # carriers}}",
+                  carriers,
+                ),
+            increase && Number(increase) > 0
+              ? translate("rates raised up to {0}%", increase)
+              : undefined,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
+        actorHandle: ctx.actorHandle,
+      };
+    }
     default:
       return fallback(event, ctx);
   }
+}
+
+function metadataString(metadata: Record<string, unknown>, key: string): string | undefined {
+  const value = metadata[key];
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function metadataMoney(metadata: Record<string, unknown>, key: string): string | undefined {
+  const value = metadataString(metadata, key);
+  if (value === undefined) return undefined;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? formatCurrency(amount) : value;
+}
+
+function metadataNumber(metadata: Record<string, unknown>, key: string): number | undefined {
+  const value = metadata[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function renderHold(event: ShipmentHoldEvent, ctx: RenderContext): RenderedEvent {

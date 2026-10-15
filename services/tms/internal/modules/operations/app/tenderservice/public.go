@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -39,6 +40,20 @@ type PublicOfferView struct {
 	RateMethodLabel    string `json:"rateMethodLabel"`
 	ExpiresAt          int64  `json:"expiresAt"`
 	Responded          bool   `json:"responded"`
+	// RateValue is the offered rate as a plain number, for a counter-offer
+	// form to start from.
+	RateValue string `json:"rateValue"`
+	// CounterAllowed says whether the carrier may answer with a rate of its
+	// own instead of accepting or declining.
+	CounterAllowed bool `json:"counterAllowed"`
+}
+
+// PublicResponse is a carrier's answer from the public page.
+type PublicResponse struct {
+	Action        tender.ResponseAction
+	DeclineReason string
+	CounterRate   decimal.Decimal
+	CounterNote   string
 }
 
 // resolveToken maps a raw public token to its offer, enforcing usability with
@@ -120,6 +135,9 @@ func (s *Service) PreviewByToken(
 		RateMethodLabel:    emailCtx.RateMethodLabel,
 		ExpiresAt:          token.ExpiresAt,
 		Responded:          offer.Status != tender.OfferStatusSent,
+		RateValue:          offer.Rate.StringFixed(2),
+		CounterAllowed: offer.Status == tender.OfferStatusSent &&
+			s.tenderPolicy(ctx, tenantInfo).CountersEnabled,
 	}, nil
 }
 
@@ -130,10 +148,9 @@ func (s *Service) PreviewByToken(
 func (s *Service) RespondByToken(
 	ctx context.Context,
 	rawToken string,
-	action tender.ResponseAction,
-	declineReason string,
+	response PublicResponse,
 ) error {
-	if !action.IsValid() {
+	if !response.Action.IsValid() {
 		return errortypes.NewValidationError(
 			"action", errortypes.ErrInvalid, "Response action is invalid",
 		)
@@ -152,9 +169,11 @@ func (s *Service) RespondByToken(
 	if err = s.RecordResponse(ctx, &tenderports.TenderResponseRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offer.ID,
-		Action:        action,
+		Action:        response.Action,
 		Source:        tender.ResponseSourceEmail,
-		DeclineReason: declineReason,
+		DeclineReason: response.DeclineReason,
+		CounterRate:   response.CounterRate,
+		CounterNote:   response.CounterNote,
 	}); err != nil {
 		return err
 	}

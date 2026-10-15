@@ -167,3 +167,29 @@ func validUsage(usage ediports.RequirementUsage) bool {
 		return false
 	}
 }
+
+func withRedactedQuotes(req *ediports.ConnectionDraftRequest) *ediports.ConnectionDraftRequest {
+	redacted := *req
+	redacted.Values = slices.Clone(req.Values)
+	for index := range redacted.Values {
+		redactCitation(&redacted.Values[index].Citation)
+	}
+	redacted.Requirements = slices.Clone(req.Requirements)
+	for index := range redacted.Requirements {
+		redactCitation(&redacted.Requirements[index].Citation)
+	}
+	redacted.Mappings = slices.Clone(req.Mappings)
+	for index := range redacted.Mappings {
+		redactCitation(&redacted.Mappings[index].Citation)
+	}
+	redacted.Gaps = slices.Clone(req.Gaps)
+	for index := range redacted.Gaps {
+		redactCitation(&redacted.Gaps[index].Citation)
+		redacted.Gaps[index].Summary = edi.RedactSecrets(redacted.Gaps[index].Summary)
+	}
+	return &redacted
+}
+
+func redactCitation(citation *ediports.DraftCitation) {
+	citation.Quote = edi.RedactSecrets(citation.Quote)
+}

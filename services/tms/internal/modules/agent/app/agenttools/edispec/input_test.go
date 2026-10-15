@@ -142,3 +142,62 @@ func TestParse_KeepsEveryCitationAsTheModelGaveIt(t *testing.T) {
 	_, err = Parse(map[string]any{ParamDocumentID: "not-an-id"}, tenant)
 	require.Error(t, err)
 }
+
+func TestRedactQuotes_KeepsSecretsOutOfTheStoredArguments(t *testing.T) {
+	t.Parallel()
+
+	secretQuote := "Username: acme Password: Acme#Test2026"
+	params := map[string]any{
+		ParamDocumentID: pulid.MustNew("doc_").String(),
+		ParamValues: []any{map[string]any{
+			"field": "transport.username", "value": "acme", "confidence": 0.95,
+			"citation": map[string]any{"page": 2, "quote": secretQuote, "section": "2.1"},
+		}},
+		ParamRequirements: []any{map[string]any{
+			"segment": "ISA",
+			"citation": map[string]any{
+				"page": 3, "quote": "ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME",
+			},
+		}},
+		ParamMappings: []any{map[string]any{
+			"sourceValue": "CL",
+			"citation":    map[string]any{"page": 4, "quote": "API key = k-123 for code CL"},
+		}},
+		ParamGaps: []any{map[string]any{
+			"summary":  "The token: t-999 is sent by email",
+			"citation": map[string]any{"page": 6, "quote": "token: t-999"},
+		}},
+		ParamResolutions: []any{map[string]any{"field": "partner.timezone", "value": "America/Chicago"}},
+	}
+
+	redacted := RedactQuotes(params)
+
+	input, err := Parse(redacted, pagination.TenantInfo{})
+	require.NoError(t, err)
+	assert.Equal(t, "Username: acme Password: [redacted]", input.Draft.Values[0].Citation.Quote)
+	assert.Equal(t, "acme", input.Draft.Values[0].Value)
+	assert.Equal(t, 2, input.Draft.Values[0].Citation.Page)
+	assert.Equal(t, "2.1", input.Draft.Values[0].Citation.Section)
+	assert.Equal(t, "ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME", input.Draft.Requirements[0].Citation.Quote)
+	assert.Equal(t, "API key = [redacted] for code CL", input.Draft.Mappings[0].Citation.Quote)
+	assert.Equal(t, "The token: [redacted] is sent by email", input.Draft.Gaps[0].Summary)
+	assert.Equal(t, "token: [redacted]", input.Draft.Gaps[0].Citation.Quote)
+	assert.Equal(t, params[ParamResolutions], redacted[ParamResolutions])
+
+	original, err := Parse(params, pagination.TenantInfo{})
+	require.NoError(t, err)
+	assert.Equal(t, secretQuote, original.Draft.Values[0].Citation.Quote,
+		"the arguments the model sent are left as it sent them")
+}
+
+func TestRedactQuotes_LeavesWhatItCannotReadForValidateToRefuse(t *testing.T) {
+	t.Parallel()
+
+	params := map[string]any{
+		ParamValues: "not a list",
+		ParamGaps:   []any{"not an object", map[string]any{"citation": "not an object"}},
+	}
+
+	assert.Equal(t, params, RedactQuotes(params))
+	assert.Nil(t, RedactQuotes(nil))
+}

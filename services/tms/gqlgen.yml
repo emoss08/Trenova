@@ -4490,6 +4490,12 @@ models:
         resolver: true
       responseSource:
         resolver: true
+      counterRate:
+        resolver: true
+      counterMarginPercent:
+        resolver: true
+      agreedRate:
+        resolver: true
   Carrier:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrier.Carrier

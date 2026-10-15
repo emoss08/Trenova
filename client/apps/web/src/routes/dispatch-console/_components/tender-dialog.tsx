@@ -547,6 +547,7 @@ export function TenderDialog({
               isTendering={actions.isTendering}
               onCancelTender={actions.cancelTender}
               onRecordResponse={actions.recordOfferResponse}
+              onBounceTender={actions.bounceTender}
             />
           ) : (
             <Tabs defaultValue="waterfall">

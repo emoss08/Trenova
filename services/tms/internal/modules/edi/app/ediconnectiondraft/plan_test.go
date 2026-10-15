@@ -419,6 +419,39 @@ func TestPlan_RefusesSecretsAndUnknownFields(t *testing.T) {
 	assert.Contains(t, err.Error(), `Unknown field "partner.favoriteColor"`)
 }
 
+func TestPlan_DraftsTheSameFromAQuoteWhoseSecretWasRedacted(t *testing.T) {
+	t.Parallel()
+
+	const raw = "For the test environment, the keystore password: Acme#Test2026 is sent separately."
+	const redacted = "For the test environment, the keystore password: [redacted] is sent separately."
+
+	planWith := func(quote string) *ediports.ConnectionDraft {
+		req := acmeRequest(t)
+		for index := range req.Values {
+			if req.Values[index].Field == fieldTransportEnvironment {
+				req.Values[index].Citation = cite(2, quote)
+			}
+		}
+		draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+		require.NoError(t, err)
+		return draft
+	}
+
+	fromRaw := planWith(raw)
+	fromRedacted := planWith(redacted)
+
+	require.NotNil(t, fromRaw.Transport)
+	require.NotNil(t, fromRedacted.Transport)
+	environment := valueOf(t, fromRedacted.Transport.Fields, fieldTransportEnvironment)
+	assert.Equal(t, ediports.ValueStatusAccepted, environment.Status)
+	assert.Equal(t, "test", environment.Value)
+	assert.Equal(t, 2, environment.Source.Page)
+	assert.Equal(t, redacted, environment.Source.Quote)
+	assert.Equal(t, valueOf(t, fromRaw.Transport.Fields, fieldTransportEnvironment), environment)
+	assert.Equal(t, fromRaw.Ready, fromRedacted.Ready)
+	assert.Equal(t, fromRaw.Blockers, fromRedacted.Blockers)
+}
+
 func TestPlan_NeedsReadableText(t *testing.T) {
 	t.Parallel()
 
@@ -614,20 +647,4 @@ func TestDocumentDigest_IsTheTextInPageOrder(t *testing.T) {
 	reordered := []ediports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "b"}}
 	assert.Equal(t, DocumentDigest(pages), DocumentDigest(reordered))
 	assert.NotEqual(t, DocumentDigest(pages), DocumentDigest([]ediports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "c"}}))
-}
-
-func TestRedact_KeepsSecretsOutOfQuotes(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "the keystore password: [redacted] is sent separately",
-		redact("the keystore password: Acme#Test2026 is sent separately"))
-	assert.Equal(t, "Shared key = [redacted]", redact("Shared key = s3cr3t"))
-	assert.Equal(t, "cert: [redacted key or certificate]",
-		redact("cert: -----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"))
-	assert.Equal(t,
-		"ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
-		redact("ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME"),
-	)
-	assert.Equal(t, "ISA*00*          *00*          *ZZ*ACME",
-		redact("ISA*00*          *00*          *ZZ*ACME"), "empty authorization is kept")
 }

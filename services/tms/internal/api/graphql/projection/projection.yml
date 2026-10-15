@@ -1,4 +1,6 @@
 aliases:
+  TenderOffer:
+    counterMarginPercent: counterMargin
   WatchtowerItem:
     assignee: assigneeId
     resolvedBy: resolvedById
@@ -153,6 +155,8 @@ virtuals:
     - moveInvoices
   AgentProfileGuidance:
     - createdByName
+  TenderOffer:
+    - agreedRate
   CustomerEmailProfile:
     - fromEmail
   ShipmentEta:

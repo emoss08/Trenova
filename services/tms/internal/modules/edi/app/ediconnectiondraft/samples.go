@@ -160,7 +160,7 @@ func (s *specSample) source(note string) ediports.DraftSource {
 	return ediports.DraftSource{
 		Kind:  ediports.SourceKindSample,
 		Page:  s.page,
-		Quote: clampQuote(redact(s.isaSegment())),
+		Quote: clampQuote(edi.RedactSecrets(s.isaSegment())),
 		Note:  note,
 	}
 }
