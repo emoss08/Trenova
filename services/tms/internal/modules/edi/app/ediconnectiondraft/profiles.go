@@ -233,7 +233,7 @@ func (p *planner) profileRequest(
 		Name:           profileName(p.partnerName(), set, direction),
 		Status:         edi.DocumentStatusInactive,
 		ValidationMode: edi.ValidationModeStrict,
-		Envelope:       p.envelope(direction),
+		Envelope:       p.envelope(direction, existing),
 	}
 	if existing == nil {
 		return request
