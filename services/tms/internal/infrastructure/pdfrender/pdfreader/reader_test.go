@@ -309,3 +309,31 @@ func TestReaderReadsABrowserRenderedRateConfirmationRowByRow(t *testing.T) {
 	}
 	assert.Contains(t, layout.Text, "every four hours in transit, and at delivery.")
 }
+
+func TestReaderReadsAPartnersEDIGuidePageByPage(t *testing.T) {
+	t.Parallel()
+
+	data, err := os.ReadFile(
+		"../../../../deskbench/fixtures/attachments/edi-guide-acme-retail-v3.pdf",
+	)
+	require.NoError(t, err)
+
+	reader := newReader(t, nil)
+	doc := openDoc(t, reader, data)
+	require.Equal(t, 7, doc.PageCount())
+
+	pages := map[int][]string{
+		0: {"Trading Partner Code: ACMERETAIL", "EDI Coordinator: Dana Whitfield"},
+		1: {"Acme AS2 Identifier: ACMERETAILAS2", "Test AS2 URL: https://as2-test.acmeretail.example/as2/receive"},
+		2: {"Acme interchange sender: qualifier 01 (DUNS), ID 007912345", "must start at 1000"},
+		4: {"MS1 Equipment Location is mandatory on every status."},
+		6: {"*01*007912345", "GS*SM*ACMERETAIL*TRNV*20261014*0930*123*X*004010~", "IEA*1*000000123~"},
+	}
+	for page, lines := range pages {
+		layout, layoutErr := doc.PageLayout(t.Context(), page)
+		require.NoError(t, layoutErr)
+		for _, line := range lines {
+			assert.Containsf(t, layout.Text, line, "page %d", page+1)
+		}
+	}
+}

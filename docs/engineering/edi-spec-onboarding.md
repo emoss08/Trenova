@@ -3,8 +3,9 @@
 A trading partner sends an implementation guide (a PDF, a DOCX, or a text file of sample X12).
 An agent on the Desk reads it, drafts the whole connection, and proposes it. A person reviews the
 draft and approves it. Nothing is written before that approval. Read this before changing
-`ediservice/onboarding*.go`, the `draft_edi_connection` or `apply_edi_connection_draft` tools, the
-`edi_connection_draft` Desk card, or the communication profile validator's credential rules.
+`modules/edi/app/ediconnectiondraft`, its ports (`ediports/ediconnectiondraft.go`) or repository
+(`ediconnectiondraftrepository`), the `draft_edi_connection` or `apply_edi_connection_draft` tools,
+the `edi_connection_draft` Desk artifact, or the communication profile validator's credential rules.
 
 ## The shape of it
 
@@ -13,49 +14,59 @@ person attaches spec ─▶ document intelligence (pages, OCR) ─▶ document_c
                                                                     │
 agent reads pages (read_attachment) and cites every value ─────────┤
                                                                     ▼
-draft_edi_connection(documentId, cited values, requirements, mappings, gaps)
-   └─ ediservice.PlanConnectionDraft
-        ├─ verify every citation against the stored page text
+draft_edi_connection(documentId, cited values, requirements, mappings, gaps, resolutions)
+   └─ ediconnectiondraft.Service.PlanConnectionDraft
+        ├─ check every citation against the stored page text
         ├─ hold back low-confidence, unverified and conflicting values
         ├─ match an existing partner (or plan a new one, never a duplicate)
         ├─ plan partner, communication profile, document profiles, control numbers, mappings
         ├─ pick the closest template per set and list every unmet requirement
-        ├─ run the spec's sample X12 through the inspector and the inbound parser
+        ├─ run the spec's sample X12 through the inbound parser and compare its envelope
         ├─ validate every planned record with the validators the setup screens use
         └─ diff against what the partner has today (a change set on a re-run)
    ▼
-edi_connection_draft Desk card (the review)
+edi_connection_draft artifact on the Desk (the review)
    ▼
 apply_edi_connection_draft (always proposed) ─▶ Preview = the same plan, recomputed now
-   ▼ person approves (approval carries the preview digest; the plan carries the document digest)
-Execute ─▶ one transaction through the ediservice create and update paths
+   ▼ person approves (approval carries the preview digest; the input carries the document digest)
+Execute ─▶ ApplyConnectionDraft: re-plan, check the digest and readiness, write in one transaction
 ```
 
 ## Tools
 
 | Tool | Kind | Holds it | What it does |
 |---|---|---|---|
-| `draft_edi_connection` | query, EDI read | EDI desk | Builds the plan and returns the review. Writes nothing. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, `outsideTextTools`). |
-| `apply_edi_connection_draft` | action, EDI create and update | EDI desk | The same input. Its `Preview` recomputes the plan from the document and the configuration as they are at decision time. Its ceiling is `Propose`: a person always decides. |
+| `draft_edi_connection` | query, EDI read | EDI desk | Builds the plan and returns the review (`connectionDraftView`: the draft, a title and a note for the model). Writes nothing. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, listed in `agentruntime.outsideTextTools`). |
+| `apply_edi_connection_draft` | action, EDI update, egress internal | EDI desk | The same input plus `documentDigest`. Its `Preview` recomputes the plan from the document and the configuration as they are at decision time; `Validate` refuses a digest that does not match or a draft that is not ready; `Execute` runs only from an approved proposal. Its default tier and ceiling are both `Propose`. It is an update because creating EDI records is not something an agent may hold; the records it creates are created under a person's approval. |
 
-Both tools take the same input. Reading the document is document intelligence's job, through the
-pipeline every attachment goes through (`DocumentContentService.GetContent`). No second extractor
-exists. The agent reads the pages with `read_attachment` and passes what it found, each value with
-its citation:
+Both tools take the same input (`agenttools/edispec`: `ParamSchema`, `Parse`). Reading the
+document is document intelligence's job, through the pipeline every attachment goes through
+(`DocumentContentService.GetContent`). No second extractor exists. The agent reads the pages with
+`read_attachment` and passes what it found, each value with its citation:
 
-- `documentId`: a file the person attached to this conversation, or a document they may read on a
-  record.
-- `partnerId` (optional): the partner to update. Without it, the planner matches one.
-- `values[]`: `{field, value, page, quote, confidence}`. `field` names a slot the planner knows
-  (`partner.name`, `isa.receiverId`, `204.inbound.ack.type`, `as2.partnerAs2Id`, ...).
-  Secret slots do not exist.
-- `requirements[]`: the segment and element usage the spec states, per set and direction, each cited.
-- `mappings[]`: the partner's codes the spec lists, with the Trenova record each should map to, each
-  cited.
-- `gaps[]`: what the spec asks for that Trenova does not support, or that the spec leaves
-  ambiguous, each with a page and section.
-- `resolutions[]`: a person's answer to a held-back value. Each one is either one of the cited
-  candidates or a value the person gave in the conversation, and the review labels it that way.
+- `documentId`: a file attached to this conversation. `draft_edi_connection` reads only a file the
+  person it works for attached (`Document.AttachedBy`); `apply_edi_connection_draft` reads any file
+  attached to the conversation (`Document.AttachedTo`), because the approver need not be the
+  person who uploaded it. A file still being read answers "still reading" (`ErrStillReading`).
+- `ediPartnerId`, `customerId` (optional): the partner to update and the customer to link. Without
+  a partner, the planner matches one.
+- `values[]`: `{field, value, confidence, citation: {page, quote, section}}`. `field` names a slot
+  the planner knows (`partner.name`, `isa.ourId`, `sets.214.outbound.ack`, `as2.partnerAs2Id`, ...;
+  the catalog is `ediconnectiondraft/catalog.go`, exposed as the `edi.connectionDraftField` enum
+  source). Secret slots do not exist.
+- `requirements[]`: `{transactionSet, direction, segment, elementPosition, usage, codes, citation}`,
+  the segment and element usage the spec states.
+- `mappings[]`: `{entityType, sourceId, sourceLabel, targetId, confidence, citation}`, the partner's
+  codes the spec lists, each with the Trenova record it maps to. `targetId` comes from the list
+  tool for its entity type.
+- `gaps[]`: `{kind: Unsupported | Ambiguous, summary, citation}`, what the spec asks for that
+  Trenova does not support, or that the spec leaves unclear.
+- `resolutions[]`: a person's answer to a held-back value, each either one of the cited candidates
+  or a value the person gave in the conversation (`source: Candidate | Person`); the review labels
+  it that way.
+
+Input sizes are bounded (`input.go`: 300 values, 300 requirements, 500 mappings, 100 gaps, 100
+resolutions).
 
 ## No draft table
 
@@ -63,196 +74,161 @@ A draft is a pure function of three things: the stored page text, the cited inpu
 configuration as it is now. The proposal row is the durable record. It holds:
 
 - the input;
-- the document digest;
+- the document digest (`documentDigest`, SHA-256 over the stored page text in page order);
 - the approved preview.
 
-The tool result holds the review the person read. A separate drafts table would be a second copy
+The artifact holds the review the person read. A separate drafts table would be a second copy
 that could go stale against the configuration it describes. Each re-plan reads the configuration
 again instead.
 
 ## Every value has a source
 
-- **Citations are checked.** A quote must appear on the page it cites, with whitespace and case
-  normalized. The value must also appear in that quote, or be a code a cited phrase spells out
+- **Citations are checked.** A quote must appear on the page it cites, with whitespace, case and
+  typographic quotes and dashes normalized; a quote found on another page is followed there. The
+  value must also appear in that quote as a whole token, or be a code a cited phrase spells out
   (for example "Mutually Defined" for `ZZ`). A citation that fails either check makes the value
-  **unverified**. An unverified value is never used.
-- **Confidence.** A value whose confidence is below `0.8` is **held back**. So is a field that two
-  citations give different values for, or a value the spec's own sample X12 contradicts. A
-  held-back value is left unset, or left at the partner's current value on a re-run. The review
-  lists it under *Needs your decision*, showing each candidate with its page and quote.
+  **unverified**, and an unverified value is never used.
+- **Confidence.** A value whose confidence is below `0.8` is **held**. So is a field two citations
+  give different values for, or a value the spec's own sample X12 contradicts. A held value is
+  left unset, or at the partner's current value on a re-run, and the review lists it under *To
+  decide* with each candidate, its page and quote. The planner never picks between them.
 - **Samples are evidence.** A sample's ISA/GS envelope is parsed rather than read by a model, so a
-  value taken from it has confidence 1 and cites the sample's page and ISA segment.
+  value taken from it cites the sample's page and its ISA segment. A sample printed in a PDF reads
+  back with its fixed-width padding squeezed and its long lines wrapped; the finder joins the
+  wrap and the parser reads the squeezed ISA.
 - **Quotes are redacted** before they are stored or shown. Anything after a password, passphrase,
-  secret or key label, and any PEM block, is masked. A spec that prints a credential beside a
-  username therefore never puts that credential into the proposal.
+  secret, key or token label, and any PEM block, is masked, and a sample's ISA02 and ISA04 are
+  masked with `X`. A spec that prints a credential beside a username therefore never puts that
+  credential into the proposal.
 
 ## The plan
 
 ### Partner
 
-- **Matching.** The planner looks for an existing partner by, in order: the `partnerId` given; the
-  code; the ISA ids on the partner's document profiles; the AS2 ids on its communication profiles;
-  the customer.
+- **Matching.** The planner looks for an existing partner by the `ediPartnerId` given, else by
+  code, name, the ISA id on its document profiles, the AS2 id on its communication profiles and
+  the customer (`FindPartnerMatches`).
   - Exactly one match: the plan updates that partner.
-  - More than one: the plan stops at *Needs your decision* and creates nothing.
-  - None: the plan creates a new External partner, but only when no partner with that code or
-    name exists. Those are the unique indexes the create path enforces.
-- **Status.** A new partner is created `Inactive`, and so is everything under it. No message can go
-  out from a drafted setup until a person has entered its credentials, run a test case, and turned
-  it on.
+  - More than one: the plan stops with the candidates under *Which partner is this?* and creates
+    nothing.
+  - None: the plan creates a new External partner. An internal (Trenova-to-Trenova) partner is
+    never set up from a spec.
+- **Status.** A new partner is created `Inactive`, and so is everything under it. No message can
+  go out from a drafted setup until a person has entered its credentials and turned it on.
 
 ### Connection and capabilities
 
-An outside partner has no `edi_connections` row: that table joins two Trenova organizations.
-Its capabilities are:
-
-- the partner's inbound and outbound flags;
-- the transaction sets it has document profiles for.
-
-The review shows both under *Connection*.
+An outside partner has no `edi_connections` row: that table joins two Trenova organizations. Its
+capabilities are the partner's inbound and outbound flags and the transaction sets it has document
+profiles for; the review shows both in its head.
 
 ### Document profiles
 
-There is one per transaction set and direction the spec covers (204 inbound, 990/214/210 outbound,
-and so on). Each carries:
-
-- the X12 version;
-- the ISA and GS qualifiers and ids;
-- the usage indicator;
-- the four separators;
-- the functional acknowledgment the partner expects: 997 or 999, and the window in minutes;
-- the validation mode.
-
-They are written through `UpsertPartnerDocumentProfile`.
+There is one per transaction set and direction the spec covers (204 inbound, 990/214/210
+outbound). Each carries the X12 version, the functional group id, the ISA and GS qualifiers and
+ids, the usage indicator, the separators, and the acknowledgment the partner expects (997 or 999,
+and the window in minutes). They are written through `UpsertPartnerDocumentProfile`; on an
+existing profile only the fields whose value changes are written.
 
 ### Control numbers
 
-A sequence is written only when the spec states a range or a starting number. A re-run never
-moves an existing sequence's next value backwards, because that would reissue numbers the partner
-has already seen. A spec that asks for a lower start is listed as a decision instead.
+A sequence is written only when the spec states a starting number
+(`StartControlNumber`, an upsert that only ever moves forward). A re-run never moves an existing
+sequence backwards, because that would reissue numbers the partner has already seen: a spec that
+asks for a lower start keeps the sequence where it is and the review says why.
 
 ### Communication profile
 
-The plan carries the method (AS2, SFTP or VAN) and its non-secret settings:
-
-- host, port, username, directories, file naming;
-- AS2 ids, endpoint, MDN mode and URL, algorithms;
-- ISA/GS ids, version, environment.
-
-The profile is created `Inactive`.
+The plan carries the method (AS2, SFTP or VAN) and its non-secret settings: AS2 ids, endpoint, MDN
+mode, algorithms; host, port, username, directories; environment. The profile is created
+`Inactive`.
 
 ### Templates
 
-For each set and direction, the planner scores two kinds of candidate against the spec's stated
-requirements:
-
-- the organization's own templates for that document type (active or certified versions);
-- the starter template (`templates.StarterSegments`).
-
-It picks the one with the fewest unmet requirements; on a tie, the organization's own template
-wins. Every requirement the chosen template does not meet is listed with its citation:
-
-- a mandatory segment it never writes;
-- a mandatory element it leaves empty;
-- a code it cannot produce.
-
-The plan never edits a template. Closing those gaps is template designer work, and the review
-says so.
+For each set and direction the planner scores the organization's own templates for that document
+type (active or certified versions) and the starter template (`EnsureStarterTemplate`) against the
+spec's stated requirements. It picks the one with the fewest unmet requirements; on a tie, the
+organization's own template wins, and a profile's current template that cannot be scored is kept
+with a note. Every requirement the chosen template does not meet is listed with its citation (a
+mandatory segment it never writes, a mandatory element it leaves empty, a segment marked not used
+that it writes). The plan never edits a template; closing those gaps is template designer work.
 
 ### Mappings
 
-The partner's codes become mapping items (`SaveMappingItems`). Each target must be a record that
-exists in this organization. A code whose target the agent could not name is listed as a gap.
+The partner's codes become mapping items (`SaveMappingProfile`). Each target must be a record that
+exists in this organization (`ResolveMappingTargets`). A code without a usable target is listed.
 
 ### Samples
 
-Every ISA…IEA run in the page text is checked in three ways:
-
-- `edix12inspect.InspectX12` checks its structure.
-- Its envelope is compared with the drafted profile for its set and direction: sender and
-  receiver, qualifiers, version, functional group, separators.
-- An inbound 204 sample is also parsed into a tender (`ediinboundservice.ParseSample`). The
-  drafted mapping items are then run against it (`BuildInboundMappingPreview`, unsaved items), so
-  the review shows which of the partner's codes still map to nothing.
+Every ISA…IEA run in the page text (up to ten) is parsed with `ediinboundservice.ParseSample`. Its
+envelope is compared with the drafted profile for its set and direction (sender and receiver,
+qualifiers, version, separators), and for an inbound 204 the codes it carries that no drafted or
+existing mapping covers are listed.
 
 ## Validation
 
 Every planned record goes through the validators the setup screens use:
 
-- `ValidatePartner` and the partner's unique code and name;
+- `ValidatePartner`;
 - `ValidateCommunicationProfile`;
-- `ValidatePartnerDocumentProfileRequest`, the template version check, and partner settings
-  against their schema;
-- `ValidateMappingItems`;
-- each control number sequence's domain `Validate`.
+- `ValidatePartnerDocumentProfileRequest` and partner settings against their schema
+  (`ValidatePartnerSettings`).
 
-The review shows each failure beside the record it belongs to. `apply_edi_connection_draft`
-refuses to run while any of these hold:
-
-- a validation failure;
-- an unverified or held-back value in a field the write needs;
-- an ambiguous partner match.
+The review shows each failure under *Would not save*. The draft is not ready, and
+`apply_edi_connection_draft` refuses to run, while any of these hold: a validation failure, a held
+or unverified value in a field the write needs, an ambiguous partner match, or nothing to change.
 
 ## Secrets
 
 Passwords, private keys, host keys and certificates never come from the document into storage.
-The input has no slot for them, and a value given for a secret key is refused. The plan leaves
-them unset. The review's *Enter before turning this on* section names each one, with the setting
-it belongs to and where to enter it:
-
-- SFTP/VAN password or private key;
-- known host key;
-- AS2 private key, needed when a local certificate is set;
-- partner signing and encryption certificates;
-- basic auth password.
+The input has no slot for them, and a value given for a secret key is refused
+(`IsCredentialKey`). The plan leaves them unset. The review's *Credentials you enter* section names
+each one (`CredentialRequirements`), marks the ones the connection cannot run without, and says
+where to enter them.
 
 So that an inactive profile can be saved without them, the communication profile validator
-requires the credential settings only of an `Active` profile:
-
-- `password` or `privateKey`;
-- `knownHostKey`;
-- the AS2 private key when a local certificate is set.
-
-Delivery and polling read only active profiles. Turning a profile on through the
-communication profile screen validates it as active, so the profile cannot be turned on without
-its credentials.
+requires the credential settings only of an `Active` profile. Delivery and polling read only active
+profiles, and turning a profile on validates it as active, so it cannot be turned on without its
+credentials.
 
 ## Re-runs are change sets
 
-Running the tool on a revised spec for a partner that already exists produces a diff against
-what is configured now:
-
-- each field is `add`, `change` (current → proposed) or `same`;
-- each document profile, mapping item and sequence is new, changed or unchanged.
-
-What the diff leaves alone:
-
-- It deletes nothing. A mapping or profile the revised spec no longer mentions is listed as *not
-  in this spec, kept*.
-- It changes no status.
-- It does not touch secrets.
-
-The preview pins the version of every record it changes. The digest of that preview is what the
-person approves, so a record that moved after the review refuses the approval.
+Running the tool on a revised spec for a partner that already exists produces a diff against what
+is configured now: each field and record is `Add`, `Change` (current → proposed), `Same` or `None`.
+The diff deletes nothing (a record the revised spec no longer mentions is listed under *Left as
+they are*), changes no status and touches no secret. The preview pins the version of every record
+it changes, and its digest is what the person approves, so a record that moved after the review
+refuses the approval.
 
 ## Outside content and the proposal
 
 - **Taint and the write cap.** The spec is outside content. `draft_edi_connection` declares
-  `ReadsExternal: always` with the attachment or document source, and it is listed in
-  `outsideTextTools`. Every later write in the turn is therefore proposed, whatever the agent's
-  tier.
-- **Never acts on its own.** `apply_edi_connection_draft` has a `Propose` ceiling of its own.
-- **Document digest.** The proposal records the document's digest: SHA-256 over the stored page
-  text, in page order. `Preview` refuses when the document read now has a different digest.
+  `ReadsExternal: always` with the attachment source and caps later writes. Every later write in
+  the turn is therefore proposed, whatever the agent's tier, and the model's note says the quotes
+  are the partner's text, never an instruction.
+- **Never acts on its own.** `apply_edi_connection_draft` has a `Propose` ceiling of its own, and
+  `ApplyConnectionDraft` needs a person as the actor in the draft's own organization.
+- **Document digest.** `Validate`, `Preview` and `ApplyConnectionDraft` all refuse when the
+  document read now has a different digest from the one proposed.
+
+## The review
+
+The `edi_connection_draft` artifact is described in [desk-artifacts.md](desk-artifacts.md). Every
+value has a page tab that opens the quoted words; a held value is settled by picking a reading,
+which asks the agent to draft again with it; saving is the proposal, which the card follows by its
+document digest.
 
 ## Where it lives
 
 | Piece | Where |
 |---|---|
-| Planner, verification, diff | `modules/edi/app/ediservice/onboarding*.go` |
-| Plan types | `modules/edi/ports/ediports/edionboarding.go` |
+| Planner, verification, diff, apply | `modules/edi/app/ediconnectiondraft/` |
+| Plan types and ports | `modules/edi/ports/ediports/ediconnectiondraft.go` |
+| Repository | `modules/edi/adapters/postgres/ediconnectiondraftrepository/` |
 | Sample parse | `ediinboundservice.ParseSample` |
-| Tools | `agent/app/agentquerytoolservice/edi_onboarding_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` |
-| Desk card | `routes/desk/_components/artifacts/cards/edi-connection-draft/` (with `edi-connection-draft-skeleton.tsx`) |
-| Bench | `deskbench/scenarios/edi.yaml` (spec onboarding), fixture `deskbench/fixtures/edi/acme-retail-spec.pdf` |
-| Simulator spec | `dev/edi-partner-sim/specs/` |
+| Tool input | `agent/app/agenttools/edispec/` |
+| Tools | `agent/app/agentquerytoolservice/edi_connection_draft_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` (and `preview_connection_draft.go`) |
+| Artifact | `assistantservice/edi_connection_draft.go`; client `routes/desk/_components/artifacts/kinds/edi-connection-draft/` (with `connection-draft-skeleton.tsx`) |
+| Approval card | `components/assistant/proposal-presenters.ts` (`apply_edi_connection_draft`) |
+| Bench | `deskbench/scenarios/edi.yaml` (`edi-guide-new-partner`, `edi-guide-revised`), fixtures `deskbench/fixtures/attachments/edi-guide.html` + `edi-guides.json`, rendered by `render.mjs` |
+| Simulator spec | `dev/edi-partner-sim/specs/simpartner-implementation-guide.txt`, held to the simulator by `internal/sim/spec_test.go` and drafted by `ediconnectiondraft/simulator_spec_test.go` |

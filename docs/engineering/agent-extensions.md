@@ -71,14 +71,17 @@ the ceiling or the private-write rule would allow, and the model is told why.
   content: tools that read inbound mail or documents keep the policy's own, narrower rule, which
   holds only what leaves the organization.
 
-### Pasted partner text
+### Partner text and guides
 
-`inspect_x12` is not an extension, but it returns text written outside the organization the same
-way: X12 a person pasted, which a trading partner wrote. A successful call sets the same turn
-flag, so every later write in the turn is capped at `Propose` and the model is told it read
-"content written outside the organization (a web page, or a trading partner's text it was given
-to inspect)". The tool also declares `ReadsExternal: always` with the `edi` source, so the run is
-tainted as any EDI read is.
+`inspect_x12` and `draft_edi_connection` are not extensions, but they return text written outside
+the organization the same way: X12 a person pasted, or an implementation guide a person attached,
+both written by a trading partner. A successful call sets the same turn flag, so every later write
+in the turn is capped at `Propose` and the model is told it read "content written outside the
+organization (a web page, or a trading partner's text or guide it was given)". Both declare
+`ReadsExternal: always`, `inspect_x12` with the `edi` source and `draft_edi_connection` with the
+`attachment` source, so the run is tainted too. The guide's write, `apply_edi_connection_draft`,
+has a `Propose` ceiling of its own and carries the guide's digest; see
+[edi-spec-onboarding.md](edi-spec-onboarding.md).
 
 Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
 extension whose spec returns outside content, or a name in `outsideTextTools`), because the loop
