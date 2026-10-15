@@ -13,6 +13,7 @@
   "Ignore line": "忽略明細",
   "Its text is being read; the lines appear here once it is matched.": "正在讀取其內容；比對完成後明細會顯示於此。",
   "Lines that did not match one open invoice on their own. Nothing here is booked until it is matched and the remittance applied.": "無法單獨比對到一張未結發票的明細。在比對完成並套用匯款通知之前，這裡的任何項目都不會入帳。",
+  "Loading remittance": "正在載入匯款通知",
   "Loading remittance...": "正在載入匯款通知...",
   "Map the columns": "對應欄位",
   "Match again": "重新比對",

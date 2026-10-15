@@ -4,6 +4,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { recordPath } from "@/config/record-links";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { usePermission } from "@/hooks/use-permission";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { FACTORING_PATH } from "@/lib/factoring";
 import {
   canApplyRemittance,
@@ -36,6 +37,9 @@ import { RemittanceExceptions, RemittanceMatched } from "./_components/remittanc
 import { RemittanceMappingStep } from "./_components/remittance-mapping";
 import { RemittancePageSkeleton } from "./_components/remittance-page-skeleton";
 import { RemittanceReupload } from "./_components/remittance-reupload";
+
+export const prefetch: RoutePrefetch = ({ params }) =>
+  params.id ? [factoringQueries.remittance(params.id)] : [];
 
 /** How often a remittance whose PDF is still being read is checked again. */
 const READING_POLL_MS = 5000;

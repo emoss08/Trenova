@@ -13,6 +13,7 @@
   "Ignore line": "忽略该行",
   "Its text is being read; the lines appear here once it is matched.": "正在读取其文本；匹配完成后，各行将显示在此处。",
   "Lines that did not match one open invoice on their own. Nothing here is booked until it is matched and the remittance applied.": "无法单独匹配到某张未结发票的行。在完成匹配并应用汇款之前，此处任何内容都不会入账。",
+  "Loading remittance": "正在加载汇款",
   "Loading remittance...": "正在加载汇款…",
   "Map the columns": "映射列",
   "Match again": "重新匹配",

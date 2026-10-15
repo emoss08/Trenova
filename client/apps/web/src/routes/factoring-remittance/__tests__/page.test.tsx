@@ -3,12 +3,13 @@ import type {
   FactoringRemittanceLine,
   FactoringRemittancePlan,
 } from "@/lib/graphql/factoring-remittance";
+import { factoring } from "@/lib/queries/factoring";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FactoringRemittancePage } from "../page";
+import { FactoringRemittancePage, prefetch } from "../page";
 
 const mocks = vi.hoisted(() => ({
   fetchFactoringRemittance: vi.fn(),
@@ -174,6 +175,22 @@ function renderPage() {
     </QueryClientProvider>,
   );
 }
+
+describe("prefetch", () => {
+  it("warms the remittance the route names and nothing without an id", () => {
+    const args = (id?: string) =>
+      ({
+        params: id ? { id } : {},
+        request: new Request("http://localhost/billing/factoring/remittances"),
+        context: undefined,
+      }) as unknown as Parameters<typeof prefetch>[0];
+
+    expect(prefetch(args("facrem_1"))).toEqual([
+      expect.objectContaining({ queryKey: factoring.remittance("facrem_1").queryKey }),
+    ]);
+    expect(prefetch(args())).toEqual([]);
+  });
+});
 
 describe("FactoringRemittancePage", () => {
   it("lists the exception with its suggestion and matches it on Use", async () => {

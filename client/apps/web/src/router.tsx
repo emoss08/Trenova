@@ -476,6 +476,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FactoringRemittance),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/factoring-remittance/page")),
+              ),
             ),
             async lazy() {
               const { FactoringRemittancePage } =

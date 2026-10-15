@@ -13,6 +13,7 @@
   "Ignore line": "Ignorar línea",
   "Its text is being read; the lines appear here once it is matched.": "Se está leyendo su texto; las líneas aparecerán aquí una vez emparejada.",
   "Lines that did not match one open invoice on their own. Nothing here is booked until it is matched and the remittance applied.": "Líneas que no se emparejaron por sí solas con una factura abierta. Nada de aquí se registra hasta que se empareje y se aplique la remesa.",
+  "Loading remittance": "Cargando la remesa",
   "Loading remittance...": "Cargando remesa...",
   "Map the columns": "Asignar las columnas",
   "Match again": "Volver a emparejar",

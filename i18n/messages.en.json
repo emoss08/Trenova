@@ -135019,6 +135019,15 @@
       "apps/web/components"
     ]
   },
+  "Loading remittance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
+    ]
+  },
   "Loading remittance...": {
     "sites": 1,
     "scope": [
