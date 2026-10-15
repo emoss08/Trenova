@@ -286,3 +286,77 @@ func TestRecommendAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 	require.NotNil(t, recommendation)
 	assert.LessOrEqual(t, len(recommendation.Tools), agentports.MaxAgentRecommendationTools)
 }
+
+func heldSets(tools ...[]string) []map[string]struct{} {
+	sets := make([]map[string]struct{}, 0, len(tools))
+	for _, names := range tools {
+		set := make(map[string]struct{}, len(names))
+		for _, name := range names {
+			set[name] = struct{}{}
+		}
+		sets = append(sets, set)
+	}
+
+	return sets
+}
+
+func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsTheBestMatch(t *testing.T) {
+	t.Parallel()
+
+	current := agentHolding("Billing assistant", "list_invoices")
+	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
+	ranked := []string{"list_invoices", "list_customers", "list_shipments", "list_workers"}
+
+	best := bestCandidate(
+		[]*agentdefinition.Definition{current, wide},
+		heldSets(current.ToolNames, wide.ToolNames),
+		ranked,
+		ranked,
+		current.ID,
+	)
+
+	require.NotNil(t, best)
+	assert.Equal(t, current.ID, best.definition.ID,
+		"an agent that scores higher on lesser matches does not manage the question better")
+	assert.True(t, best.current)
+}
+
+func TestBestCandidate_SuggestsOnlyAnAgentHoldingTheBestMatch(t *testing.T) {
+	t.Parallel()
+
+	current := agentHolding("Dispatch helper", "list_tractors")
+	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
+	billing := agentHolding("Billing assistant", "list_invoices")
+	ranked := []string{"list_invoices", "list_customers", "list_shipments", "list_workers"}
+
+	best := bestCandidate(
+		[]*agentdefinition.Definition{current, wide, billing},
+		heldSets(current.ToolNames, wide.ToolNames, billing.ToolNames),
+		ranked,
+		ranked,
+		current.ID,
+	)
+
+	require.NotNil(t, best)
+	assert.Equal(t, billing.ID, best.definition.ID)
+	assert.False(t, best.current)
+}
+
+func TestRecommendAgent_SuggestsNobodyElseOnceThePersonSwitchedToTheSuggestion(t *testing.T) {
+	t.Parallel()
+
+	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	compliance := agentHolding("Compliance assistant", "list_expiring_credentials")
+	fleet := agentHolding("Fleet helper", "list_expiring_credentials", "list_workers")
+	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance, fleet)
+	question := "when does the driver's medical card expire?"
+
+	first := recommend(t, service, question, dispatch.ID)
+	require.NotNil(t, first)
+	require.False(t, first.Current)
+
+	again := recommend(t, service, question, first.Agent.ID)
+	require.NotNil(t, again)
+	assert.Equal(t, first.Agent.ID, again.Agent.ID)
+	assert.True(t, again.Current, "the agent switched to is kept, not traded for another holder")
+}

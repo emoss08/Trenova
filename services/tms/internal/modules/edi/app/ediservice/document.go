@@ -385,18 +385,30 @@ func (r *resolvedDocumentContext) renderPreview() (*EDIDocumentPreview, error) {
 	}, nil
 }
 
-func (r *resolvedDocumentContext) provisionalRender() (*EDIDocumentPreview, error) {
+func (r *resolvedDocumentContext) outboundPreview() (*OutboundDocumentPreview, error) {
 	provisional := *r
 	provisional.runtime = maputils.CloneShallow(r.runtime)
 	preview, err := provisional.renderPreview()
 	if err != nil {
 		return nil, err
 	}
-	if edix12.HasBlockingDiagnostics(preview.Diagnostics, r.profile.ValidationMode) {
-		return nil, diagnosticsToValidationError(preview.Diagnostics)
+
+	return &OutboundDocumentPreview{
+		Document: preview,
+		Blocking: edix12.HasBlockingDiagnostics(preview.Diagnostics, r.profile.ValidationMode),
+	}, nil
+}
+
+func (r *resolvedDocumentContext) provisionalRender() (*EDIDocumentPreview, error) {
+	preview, err := r.outboundPreview()
+	if err != nil {
+		return nil, err
+	}
+	if preview.Blocking {
+		return nil, diagnosticsToValidationError(preview.Document.Diagnostics)
 	}
 
-	return preview, nil
+	return preview.Document, nil
 }
 
 func (s *Service) resolveGenerateContext(

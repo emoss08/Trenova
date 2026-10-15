@@ -12,8 +12,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const externalContentNote = " It was not run automatically because this turn read content from " +
-	"the web, and a change made after reading outside content always waits for a person."
+const externalContentNote = " It was not run automatically because this turn read content written " +
+	"outside the organization (a web page, or a trading partner's text it was given to inspect), " +
+	"and a change made after reading outside content always waits for a person."
+
+var outsideTextTools = []string{"inspect_x12"}
 
 type activeExtensions map[agentextension.Type]agentextension.Availability
 
@@ -118,6 +121,9 @@ func (s *Service) extensionRefusal(
 }
 
 func ReadsExternalContent(name string) bool {
+	if slices.Contains(outsideTextTools, name) {
+		return true
+	}
 	typ, isExtension := agentextension.ExtensionForTool(name)
 	if !isExtension {
 		return false

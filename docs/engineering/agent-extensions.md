@@ -71,6 +71,24 @@ the ceiling or the private-write rule would allow, and the model is told why.
   content: tools that read inbound mail or documents keep the policy's own, narrower rule, which
   holds only what leaves the organization.
 
+### Pasted partner text
+
+`inspect_x12` is not an extension, but it returns text written outside the organization the same
+way: X12 a person pasted, which a trading partner wrote. A successful call sets the same turn
+flag, so every later write in the turn is capped at `Propose` and the model is told it read
+"content written outside the organization (a web page, or a trading partner's text it was given
+to inspect)". The tool also declares `ReadsExternal: always` with the `edi` source, so the run is
+tainted as any EDI read is.
+
+Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
+extension whose spec returns outside content, or a name in `outsideTextTools`), because the loop
+runs in workflow code and must decide the same way on replay. Each such tool's policy declares
+`CapsLaterWrites`, which the safety table and the tool snapshot show, and
+`TestEveryToolThatCapsLaterWritesIsOneTheRuntimeCapsOn` (`agentevalgate`) fails when a policy and
+the runtime disagree. A tool that reads partner text already stored in Trenova (an inbound file,
+a message) taints the run but does not set the flag: the narrower taint rule holds only what
+leaves the organization.
+
 ## What leaves Trenova
 
 Queries are checked before they are sent (`agentextension.CheckSearchQuery`): record IDs, email

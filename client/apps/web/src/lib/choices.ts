@@ -1783,6 +1783,7 @@ export const ediAckStatusChoices = [
   { label: "Not expected", value: "NotExpected" },
   { label: "Pending", value: "Pending" },
   { label: "Accepted", value: "Accepted" },
+  { label: "Accepted with errors", value: "AcceptedWithErrors" },
   { label: "Rejected", value: "Rejected" },
   { label: "Failed", value: "Failed" },
 ] satisfies ReadonlyArray<GenericSelectOption<EDIMessageAcknowledgmentStatus>>;

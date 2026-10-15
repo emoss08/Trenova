@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9437d0559aabcc1f4e1b59654eb6da29c28526f1f9676c8b32520a827cea8bee",
+  "version": "sha256:31faa1ba43a814e1a85ff3b6c113998e547965e17ebcf88388627e53896ab5b6",
   "modules": [
     {
       "id": "home",
@@ -8802,7 +8802,7 @@
             "Open [Desk](/desk).",
             "The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.",
             "Type your question and send it, or press Tab to use the starter question on screen.",
-            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.",
+            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Unless you picked your agent from the list, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. If you change the question to something your agent cannot manage, another agent is suggested again. An agent you pick yourself from the list is always the one asked.",
             "Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it."
           ]
         },
@@ -11633,6 +11633,21 @@
             "Open [Messages](/edi/messages).",
             "Search or filter by **Partner**, **Transaction** or **Control number**, and read the **Delivery** and **Acknowledgment** columns.",
             "Select the row to see **Delivery** (status, **Attempts**, **Remote path**, **Last error**), **Acknowledgment** and the **Raw X12**."
+          ]
+        },
+        {
+          "title": "Find what a partner accepted with errors or rejected",
+          "keywords": [
+            "accepted with errors",
+            "997 errors",
+            "AK5 E",
+            "rejected 214",
+            "acknowledgment errors"
+          ],
+          "steps": [
+            "Open [Messages](/edi/messages).",
+            "Filter the **Acknowledgment** column to **Accepted with errors** or **Rejected**.",
+            "Select a row. **Acknowledgment** shows what the partner's 997 or 999 reported against the document: the segment and element it noted and why. A document accepted with errors reached the partner's system, but the partner flagged something in it to fix before the next one."
           ]
         },
         {

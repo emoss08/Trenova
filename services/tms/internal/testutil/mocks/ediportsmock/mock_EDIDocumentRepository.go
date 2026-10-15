@@ -4597,3 +4597,69 @@ func (_c *MockEDIDocumentRepository_SelectTransactionSetOptions_Call) RunAndRetu
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListOverdueAcks provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListOverdueAcks(ctx context.Context, req *ediports.ListOverdueEDIAcksRequest) (*ediports.OverdueEDIAcks, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOverdueAcks")
+	}
+
+	var r0 *ediports.OverdueEDIAcks
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListOverdueEDIAcksRequest) (*ediports.OverdueEDIAcks, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListOverdueEDIAcksRequest) *ediports.OverdueEDIAcks); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ediports.OverdueEDIAcks)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.ListOverdueEDIAcksRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListOverdueAcks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOverdueAcks'
+type MockEDIDocumentRepository_ListOverdueAcks_Call struct {
+	*mock.Call
+}
+
+// ListOverdueAcks is a helper method to define mock.On call
+func (_e *MockEDIDocumentRepository_Expecter) ListOverdueAcks(ctx any, req any) *MockEDIDocumentRepository_ListOverdueAcks_Call {
+	return &MockEDIDocumentRepository_ListOverdueAcks_Call{Call: _e.mock.On("ListOverdueAcks", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListOverdueAcks_Call) Run(run func(ctx context.Context, req *ediports.ListOverdueEDIAcksRequest)) *MockEDIDocumentRepository_ListOverdueAcks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ediports.ListOverdueEDIAcksRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ediports.ListOverdueEDIAcksRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListOverdueAcks_Call) Return(ret0 *ediports.OverdueEDIAcks, ret1 error) *MockEDIDocumentRepository_ListOverdueAcks_Call {
+	_c.Call.Return(ret0, ret1)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListOverdueAcks_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ListOverdueEDIAcksRequest) (*ediports.OverdueEDIAcks, error)) *MockEDIDocumentRepository_ListOverdueAcks_Call {
+	_c.Call.Return(run)
+	return _c
+}
