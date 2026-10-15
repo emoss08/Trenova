@@ -236,6 +236,31 @@ describe("DeskCarrierSettlement", () => {
     );
   });
 
+  it("offers nothing on the payable it stepped away from while the next one is read", async () => {
+    grant(Operation.Approve | Operation.Reject | Operation.Cancel);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const card = (recordId: string) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DeskCarrierSettlement
+            recordId={recordId}
+            order={["cstl_88", "cstl_91"]}
+            onSelect={vi.fn()}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { container, rerender } = render(card("cstl_88"));
+    await screen.findByRole("heading", { name: "Blue Ridge Freight LLC", level: 2 });
+
+    fetchers.settlement.mockReturnValue(new Promise(() => {}));
+    rerender(card("cstl_91"));
+
+    expect(screen.queryByRole("heading", { name: "Blue Ridge Freight LLC", level: 2 })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve $10,600.00" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("approves a payable waiting on approval and reads it again", async () => {
     grant(Operation.Approve | Operation.Reject | Operation.Cancel);
     const { container } = draw();
