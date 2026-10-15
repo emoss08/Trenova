@@ -11,7 +11,10 @@ import {
   type Signoff,
 } from "./settlement-values";
 
-/** The settlement as a pay stub, its perforated tear-off down one side: PAY for a worker, AP for a carrier. */
+/**
+ * A money record as a stub, its perforated tear-off down one side: PAY for a
+ * worker's settlement, AP for a carrier's, DET for a detention charge.
+ */
 export function SettlementStub({ mark }: { mark: string }) {
   return (
     <span className="dk-rec-stub" aria-hidden>

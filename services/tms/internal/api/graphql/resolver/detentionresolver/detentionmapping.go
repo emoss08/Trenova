@@ -1,9 +1,12 @@
 package detentionresolver
 
 import (
+	"context"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -443,9 +446,12 @@ func detentionOccurrenceToModel(
 		NoticeSentAt:        base.Int64PtrToIntPtr(entity.NoticeSentAt),
 		SuppressedByGate:    entity.SuppressedByGate,
 		RequiresApproval:    entity.RequiresApproval,
+		ApprovedByID:        base.IDPtrFromPulidPtr(entity.ApprovedByID),
+		ApprovedAt:          base.Int64PtrToIntPtr(entity.ApprovedAt),
 		WaiverReason:        entity.WaiverReason,
 		WaiverNote:          entity.WaiverNote,
 		WaivedAt:            base.Int64PtrToIntPtr(entity.WaivedAt),
+		WaivedByID:          base.IDPtrFromPulidPtr(entity.WaivedByID),
 		WaivedAmount:        entity.WaivedAmount.String(),
 		DisputeNote:         entity.DisputeNote,
 		DisputedAt:          base.Int64PtrToIntPtr(entity.DisputedAt),
@@ -611,11 +617,24 @@ func detentionOccurrenceDetailToModel(
 	}
 
 	return &gqlmodel.DetentionOccurrenceDetail{
-		Occurrence:     detentionOccurrenceToModel(detail.Occurrence),
-		Evidence:       detentionEvidenceListToModel(detail.Evidence),
-		Notices:        detentionNoticesToModel(detail.Notices),
-		Collectability: detentionCollectabilityToModel(detail.Collectability),
-		Receipt:        detail.Receipt,
+		Occurrence:        detentionOccurrenceToModel(detail.Occurrence),
+		Evidence:          detentionEvidenceListToModel(detail.Evidence),
+		Notices:           detentionNoticesToModel(detail.Notices),
+		Collectability:    detentionCollectabilityToModel(detail.Collectability),
+		Receipt:           detail.Receipt,
+		CurrentlyBillable: detentionClockPriceToModel(detail.CurrentlyBillable),
+	}
+}
+
+func detentionClockPriceToModel(price *detentionservice.ClockPrice) *gqlmodel.DetentionClockPrice {
+	if price == nil {
+		return nil
+	}
+
+	return &gqlmodel.DetentionClockPrice{
+		BillableMinutes: int(price.BillableMinutes),
+		BillableAmount:  price.BillableAmount.String(),
+		AsOf:            int(price.AsOf),
 	}
 }
 
@@ -855,4 +874,12 @@ func detentionStatsRequest(
 	}
 
 	return req, nil
+}
+
+func loadSignoff(ctx context.Context, id *string) (*tenant.User, error) {
+	userID, err := base.OptionalID(id)
+	if err != nil {
+		return nil, err
+	}
+	return base.LoadUser(ctx, userID)
 }
