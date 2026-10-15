@@ -2696,15 +2696,6 @@
       "apps/web/components"
     ]
   },
-  "<b>{0}</b> has the tools for this, so sending asks it": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "<b>{0}</b> is better on {1} of {2}": {
     "sites": 1,
     "scope": [
@@ -29485,7 +29476,7 @@
     ]
   },
   "Ask {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -125292,7 +125283,7 @@
     ]
   },
   "Keep {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -138291,15 +138282,6 @@
     ]
   },
   "Matches the table layout": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Matching tools": {
     "sites": 1,
     "scope": [
       "ts"
@@ -238891,6 +238873,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Switch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Switch artifact": {

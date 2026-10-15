@@ -40,7 +40,7 @@ function shotsFor(colorScheme, viewport = { width: 1440, height: 900 }, suffix =
       name: "switched",
       act: async (page) => {
         await typeQuestion(page);
-        await page.getByRole("button", { name: /^Ask Customer service/ }).click();
+        await page.getByRole("button", { name: "Switch" }).click();
       },
     },
     {
@@ -81,6 +81,9 @@ const shots = [
   ...shotsFor("light"),
   ...shotsFor("dark"),
   ...shotsFor("light", { width: 390, height: 844 }, "-phone").filter((shot) =>
+    shot.name.startsWith("suggested"),
+  ),
+  ...shotsFor("dark", { width: 390, height: 844 }, "-phone").filter((shot) =>
     shot.name.startsWith("suggested"),
   ),
 ];

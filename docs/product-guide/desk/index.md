@@ -27,7 +27,7 @@ Keywords: chat with AI, ask the assistant, start a conversation, which agent sho
 1. Open [Desk](/desk).
 2. The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.
 3. Type your question and send it, or press Tab to use the starter question on screen.
-4. When another of your agents has the tools your question needs, a line under the box names that agent and the tools of its that match. Select the button that asks it to switch, or the one that keeps your agent to stay. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.
+4. When another of your agents has the tools your question needs, a line at the top of the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.
 5. Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it.
 
 ### Approve a change on the Desk

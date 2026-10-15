@@ -80,6 +80,11 @@ export type DeskComposerProps = {
   lock?: ReactNode;
   /** A quiet line under the composer, such as how much of an allowance is used. */
   note?: ReactNode;
+  /**
+   * A line at the top of the box, above the text, while no reply is under
+   * way: the agent a question fits better, for one.
+   */
+  notice?: ReactNode;
   /** Seconds before the next message may be sent; the send button counts them down. */
   wait?: number;
   /** Opens the agent list each time it changes. */
@@ -148,6 +153,7 @@ export function DeskComposer({
   placeholder,
   lock,
   note,
+  notice,
   wait = 0,
   agentPickerSignal = 0,
   filePickerSignal = 0,
@@ -369,6 +375,7 @@ export function DeskComposer({
           )}
         </div>
       )}
+      {!busy && !compacting && notice}
       {compacting && (
         <div className="dk-cmp-st dk-cx-st">
           <DeskContextDrain

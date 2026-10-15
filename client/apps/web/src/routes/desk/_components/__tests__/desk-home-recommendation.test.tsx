@@ -133,16 +133,14 @@ beforeEach(() => {
 });
 
 describe("Desk home suggesting the agent with the tools for a question", () => {
-  it("offers the agent with the tools once typing pauses, naming the tools that matched", async () => {
+  it("offers the agent with the tools at the top of the box once typing pauses", async () => {
     renderHome(vi.fn());
 
     await type(QUESTION);
 
     const offer = await screen.findByText(/has the tools for this/, {}, { timeout: 3000 });
-    expect(offer).toHaveTextContent("Billing assistant has the tools for this, so sending asks it");
-    expect(screen.getByText("List invoices")).toBeInTheDocument();
-    expect(screen.getByText("Get invoice")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ask Billing assistant" })).toBeInTheDocument();
+    expect(offer).toHaveTextContent("Billing assistant has the tools for this");
+    expect(screen.getByRole("button", { name: "Switch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Keep Dispatch" })).toBeInTheDocument();
     expect(state.asked).toEqual([{ text: QUESTION, currentAgentId: dispatch.id }]);
   });
@@ -191,9 +189,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     renderHome(onStart);
 
     const box = await type(QUESTION);
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Ask Billing assistant" }, { timeout: 3000 }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Switch" }, { timeout: 3000 }));
     expect(screen.getByRole("textbox", { name: "Message Billing assistant" })).toBeInTheDocument();
     pressEnter(box);
 
