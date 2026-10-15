@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -169,4 +170,35 @@ func TestRemittanceProfileIsOnePerFactor(t *testing.T) {
 	assert.Equal(t, map[string]int{"invoiceNumber": 1, "advance": 4}, profile.Mapping)
 	assert.Equal(t, "sig-2", profile.HeaderSignature)
 	assert.Equal(t, int64(1), profile.Version)
+}
+
+func TestFactorIsFoundBySenderAddress(t *testing.T) {
+	e := setupFactoringEnv(t)
+	exact := e.createFactor(t, "FMAIL")
+	e.createFactor(t, "FOTHR")
+
+	found, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+		TenantInfo: e.tenantInfo,
+		Address:    " REMIT@FMAIL.example.com ",
+	})
+	require.NoError(t, err)
+	require.Len(t, found.Exact, 1)
+	assert.Equal(t, exact.ID, found.Exact[0].ID)
+	assert.Empty(t, found.ByDomain)
+
+	byDomain, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+		TenantInfo: e.tenantInfo,
+		Address:    "noreply@fmail.example.com",
+	})
+	require.NoError(t, err)
+	assert.Empty(t, byDomain.Exact)
+	require.Len(t, byDomain.ByDomain, 1, "a factor's other addresses share its domain")
+	assert.Equal(t, exact.ID, byDomain.ByDomain[0].ID)
+
+	none, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Address:    "remit@fmail.example.com",
+	})
+	require.NoError(t, err)
+	assert.Empty(t, none.Exact, "another tenant's factor is never found")
 }
