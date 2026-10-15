@@ -47,7 +47,9 @@ document is document intelligence's job, through the pipeline every attachment g
 - `documentId`: a file attached to this conversation. `draft_edi_connection` reads only a file the
   person it works for attached (`Document.AttachedBy`); `apply_edi_connection_draft` reads any file
   attached to the conversation (`Document.AttachedTo`), because the approver need not be the
-  person who uploaded it. A file still being read answers "still reading" (`ErrStillReading`).
+  person who uploaded it. On approval the conversation is the one the proposal's run answered,
+  which the executor and the preview both hand the tool (`proposalexecutor.WithConversation`). A
+  file still being read answers "still reading" (`ErrStillReading`).
 - `ediPartnerId`, `customerId` (optional): the partner to update and the customer to link. Without
   a partner, the planner matches one.
 - `values[]`: `{field, value, confidence, citation: {page, quote, section}}`. `field` names a slot
@@ -96,10 +98,15 @@ again instead.
   value taken from it cites the sample's page and its ISA segment. A sample printed in a PDF reads
   back with its fixed-width padding squeezed and its long lines wrapped; the finder joins the
   wrap and the parser reads the squeezed ISA.
-- **Quotes are redacted** before they are stored or shown. Anything after a password, passphrase,
-  secret, key or token label, and any PEM block, is masked, and a sample's ISA02 and ISA04 are
-  masked with `X`. A spec that prints a credential beside a username therefore never puts that
-  credential into the proposal.
+- **Quotes are redacted** before they are stored or shown (`edi.RedactSecrets`). Anything after a
+  password, passphrase, secret, key or token label, and any PEM block, is masked, and a sample's
+  ISA02 and ISA04 are masked with `X`. The planner redacts every quote and gap summary as it reads
+  the request, and checks a quote against the page in its original and its redacted form, so a
+  draft plans the same from either. `apply_edi_connection_draft` files its arguments redacted
+  (`ToolSelectionResolver`, `edispec.RedactQuotes`), so a spec that prints a credential beside a
+  username never puts that credential into the proposal, its preview or the approval card. What
+  is not redacted is what any attachment leaves: the document itself, the pages
+  `read_attachment` returned, and the model's own calls, kept in the thread as it sent them.
 
 ## The plan
 

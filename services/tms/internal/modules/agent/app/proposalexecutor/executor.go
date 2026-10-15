@@ -62,6 +62,10 @@ type proposalOutcomeRecorder interface {
 	) (*agent.AgentProposal, error)
 }
 
+type RunReader interface {
+	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+}
+
 // definitionResolver finds the agent behind a proposal, through its run,
 // so the executor can read the agent's simulation switch and its caps.
 type definitionResolver interface {
@@ -100,6 +104,7 @@ type Service struct {
 	audit        actionLogger
 	budgets      agentports.AgentBudgetService
 	definitions  definitionResolver
+	runs         RunReader
 	db           kernelports.DBConnection
 	zones        agentports.TenantTimezoneReader
 	// schemas holds each tool's compiled schema, against which an approver's
@@ -118,6 +123,7 @@ func New(p Params) *Service {
 		audit:        p.AuditService,
 		budgets:      p.Budgets,
 		definitions:  runDefinitions{runs: p.Runs, definitions: p.Definitions},
+		runs:         p.Runs,
 		db:           p.DB,
 		zones:        p.Zones,
 	}
@@ -250,7 +256,7 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 		return nil, ErrTenantMismatch
 	}
 
-	tool, params, err := s.admit(ctx, approval)
+	tool, execParams, err := s.admit(ctx, approval)
 	if err != nil {
 		s.recordFailureBy(ctx, proposal, err, actor)
 
@@ -258,12 +264,6 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 	}
 
 	policy := tool.Policy()
-	execParams, err := s.executionParams(ctx, proposal, &policy, params, actor)
-	if err != nil {
-		s.recordFailureBy(ctx, proposal, err, actor)
-
-		return nil, err
-	}
 
 	egress := policy.Classified(execParams).Egress
 	if err = assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
@@ -312,24 +312,28 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 func (s *Service) admit(
 	ctx context.Context,
 	approval *Approval,
-) (agentports.AgentTool, map[string]any, error) {
+) (agentports.AgentTool, agentports.ToolExecuteParams, error) {
 	proposal := approval.Proposal
 	modifications := approval.Modifications
 	tool, ok := s.tools.Get(proposal.ToolName)
 	if !ok {
-		return nil, nil, fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
+		return nil, agentports.ToolExecuteParams{}, fmt.Errorf(
+			"%w: %s",
+			ErrToolMissing,
+			proposal.ToolName,
+		)
 	}
 
 	if err := s.assertActorMayRun(ctx, tool, approval.Actor); err != nil {
-		return nil, nil, err
+		return nil, agentports.ToolExecuteParams{}, err
 	}
 
 	if err := s.assertTargetUnchanged(ctx, proposal, approval.ExpectedTargetVersion); err != nil {
-		return nil, nil, err
+		return nil, agentports.ToolExecuteParams{}, err
 	}
 
 	if err := refuseOwnerChange(modifications); err != nil {
-		return nil, nil, err
+		return nil, agentports.ToolExecuteParams{}, err
 	}
 
 	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
@@ -339,18 +343,24 @@ func (s *Service) admit(
 		// and the tool may have changed. It may not point the write at
 		// another record, and it must fit the tool's own schema.
 		if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
-			return nil, nil, err
+			return nil, agentports.ToolExecuteParams{}, err
 		}
 		if err := toolschema.CheckSubsets(
 			tool.ParamSchema(),
 			proposal.ToolParams,
 			modifications,
 		); err != nil {
-			return nil, nil, err
+			return nil, agentports.ToolExecuteParams{}, err
 		}
 		if err := s.validateParams(tool, params); err != nil {
-			return nil, nil, err
+			return nil, agentports.ToolExecuteParams{}, err
 		}
+	}
+
+	policy := tool.Policy()
+	execParams, err := s.executionParams(ctx, proposal, &policy, params, approval.Actor)
+	if err != nil {
+		return nil, agentports.ToolExecuteParams{}, err
 	}
 
 	// A tool that can check its own arguments does so where they run, not
@@ -358,17 +368,12 @@ func (s *Service) admit(
 	// proposal was filed, and a write that would fail is refused before the
 	// record of an execution is written.
 	if validator, checks := tool.(agentports.ToolValidator); checks {
-		policy := tool.Policy()
-		validateParams, err := s.executionParams(ctx, proposal, &policy, params, approval.Actor)
-		if err != nil {
-			return nil, nil, err
-		}
-		if err = validator.Validate(ctx, validateParams); err != nil {
-			return nil, nil, err
+		if err = validator.Validate(ctx, execParams); err != nil {
+			return nil, agentports.ToolExecuteParams{}, err
 		}
 	}
 
-	return tool, params, nil
+	return tool, execParams, nil
 }
 
 // ExecutionParams is what the tool behind a proposal is handed when it runs
@@ -405,7 +410,38 @@ func (s *Service) executionParams(
 	params map[string]any,
 	actor *permissionports.RequestActor,
 ) (agentports.ToolExecuteParams, error) {
-	return WithTimezone(ctx, s.zones, ExecutionParams(proposal, policy, params, actor))
+	execParams, err := WithTimezone(ctx, s.zones, ExecutionParams(proposal, policy, params, actor))
+	if err != nil {
+		return execParams, err
+	}
+
+	return WithConversation(ctx, s.runs, execParams)
+}
+
+func WithConversation(
+	ctx context.Context,
+	runs RunReader,
+	params agentports.ToolExecuteParams, //nolint:gocritic // returned as the tool is handed it
+) (agentports.ToolExecuteParams, error) {
+	if runs == nil || params.RunID.IsNil() || params.ThreadID.IsNotNil() {
+		return params, nil
+	}
+
+	run, err := runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		ID: params.RunID,
+		TenantInfo: &pagination.TenantInfo{
+			OrgID: params.OrganizationID,
+			BuID:  params.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return params, fmt.Errorf("read the run the proposal was raised in: %w", err)
+	}
+	if run.SubjectType == agent.SubjectAssistantThread {
+		params.ThreadID = run.SubjectID
+	}
+
+	return params, nil
 }
 
 func WithTimezone(

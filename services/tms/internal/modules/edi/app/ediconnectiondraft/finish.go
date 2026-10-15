@@ -206,7 +206,7 @@ func (p *planner) buildGaps() {
 		}
 		gap := ediports.DraftGap{
 			Kind:    input.Kind,
-			Summary: clampQuote(redact(strings.TrimSpace(input.Summary))),
+			Summary: clampQuote(edi.RedactSecrets(strings.TrimSpace(input.Summary))),
 			Source:  documentSource(page, input.Citation, ""),
 		}
 		if !check.ok {
@@ -226,14 +226,16 @@ func (p *planner) buildSamples() {
 			Parsed:         sample.err == nil,
 		}
 		if sample.err != nil {
-			out.Error = redact(sample.err.Error())
+			out.Error = edi.RedactSecrets(sample.err.Error())
 			p.draft.Samples = append(p.draft.Samples, out)
 			continue
 		}
 		overview := sample.parsed.Inspection
 		overview.Diagnostics = slices.Clone(overview.Diagnostics)
 		for index := range overview.Diagnostics {
-			overview.Diagnostics[index].Message = redact(overview.Diagnostics[index].Message)
+			overview.Diagnostics[index].Message = edi.RedactSecrets(
+				overview.Diagnostics[index].Message,
+			)
 		}
 		out.Overview = &overview
 		if sample.identifying {
