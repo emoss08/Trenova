@@ -30,6 +30,15 @@ type AgentSpec struct {
 	Delegates    []string `yaml:"delegates"`
 	MaxToolCalls int      `yaml:"maxToolCalls"`
 	Ceiling      string   `yaml:"autonomyCeiling"`
+	DataAccess   string   `yaml:"dataAccess"`
+}
+
+func (s *AgentSpec) dataAccess() agentdefinition.DataAccessCeiling {
+	if s.DataAccess == "" {
+		return agentdefinition.DataAccessInternal
+	}
+
+	return agentdefinition.DataAccessCeiling(s.DataAccess)
 }
 
 type AgentSync struct {
@@ -38,7 +47,10 @@ type AgentSync struct {
 	Unchanged []string
 }
 
-var ErrAgentSpecUnnamed = errors.New("a bench agent has no name")
+var (
+	ErrAgentSpecUnnamed    = errors.New("a bench agent has no name")
+	ErrAgentSpecDataAccess = errors.New("dataAccess must be Internal or Restricted")
+)
 
 func LoadAgentSpecs(path string) ([]AgentSpec, error) {
 	raw, err := os.ReadFile(path)
@@ -63,6 +75,9 @@ func LoadAgentSpecs(path string) ([]AgentSpec, error) {
 		spec := &doc.Agents[idx]
 		if strings.TrimSpace(spec.Name) == "" {
 			return nil, fmt.Errorf("%s: agent %d: %w", path, idx+1, ErrAgentSpecUnnamed)
+		}
+		if !spec.dataAccess().IsValid() {
+			return nil, fmt.Errorf("%s: %s: %w", path, spec.Name, ErrAgentSpecDataAccess)
 		}
 		if !strings.HasPrefix(spec.Name, BenchAgentPrefix) {
 			spec.Name = BenchAgentPrefix + spec.Name
@@ -126,16 +141,17 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 		_, err = s.bench.AgentDefinitions.Create(
 			ctx,
 			&agentdefinitionports.SaveAgentDefinitionRequest{
-				Name:            spec.Name,
-				Description:     spec.Description,
-				Template:        agentdefinition.Template(spec.Template),
-				Instructions:    spec.Instructions,
-				ToolNames:       tools,
-				AutonomyCeiling: ceiling,
-				Enabled:         true,
-				TriggerMode:     agentdefinition.TriggerChat,
-				MaxToolCalls:    spec.MaxToolCalls,
-				TenantInfo:      s.Tenant,
+				Name:              spec.Name,
+				Description:       spec.Description,
+				Template:          agentdefinition.Template(spec.Template),
+				Instructions:      spec.Instructions,
+				ToolNames:         tools,
+				AutonomyCeiling:   ceiling,
+				DataAccessCeiling: spec.dataAccess(),
+				Enabled:           true,
+				TriggerMode:       agentdefinition.TriggerChat,
+				MaxToolCalls:      spec.MaxToolCalls,
+				TenantInfo:        s.Tenant,
 			},
 			&s.Actor,
 		)
@@ -163,6 +179,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 			definition.Instructions = spec.Instructions
 			definition.ToolNames = tools
 			definition.AutonomyCeiling = ceiling
+			definition.DataAccessCeiling = spec.dataAccess()
 			definition.Enabled = true
 			if spec.MaxToolCalls > 0 {
 				definition.MaxToolCalls = spec.MaxToolCalls
@@ -195,6 +212,7 @@ func agentMatches(
 		string(existing.Template) == spec.Template &&
 		existing.Instructions == spec.Instructions &&
 		existing.AutonomyCeiling == ceiling &&
+		existing.DataAccessCeiling == spec.dataAccess() &&
 		(spec.MaxToolCalls == 0 || existing.MaxToolCalls == spec.MaxToolCalls) &&
 		slices.Equal(held, wanted)
 }

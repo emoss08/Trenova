@@ -27,6 +27,7 @@ export const Operation = {
   Unpin: 1 << 23,
   Resolve: 1 << 24,
   Manage: 1 << 25,
+  Post: 1 << 26,
 } as const;
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];

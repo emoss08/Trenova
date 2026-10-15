@@ -284,8 +284,55 @@ func (t *listEDIInboundFilesTool) Query(
 	}
 
 	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+	if len(rows) == 0 && status != "" && window.offset == 0 {
+		if note := t.inOtherStatuses(ctx, req); note != "" {
+			found.Note = note
+		}
+	}
 
 	return gatedResult(&found, nil).withTaint(refs), nil
+}
+
+func (t *listEDIInboundFilesTool) inOtherStatuses(
+	ctx context.Context,
+	asked *ediports.ListEDIInboundFilesRequest,
+) string {
+	wanted := asked.Status
+	result, err := t.inbound.ListInboundFiles(ctx, &ediports.ListEDIInboundFilesRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: asked.Filter.TenantInfo,
+			Pagination: pagination.Info{Limit: maxListLimit + 1},
+			Query:      asked.Filter.Query,
+		},
+		PartnerID: asked.PartnerID,
+	})
+	if err != nil {
+		return ""
+	}
+	if len(result.Items) == 0 {
+		return fmt.Sprintf("There are no inbound EDI files in any status for this search, so "+
+			"none is %s. Say so rather than searching again.", wanted)
+	}
+
+	counts := make(map[edi.InboundFileStatus]int, len(inboundFileStatuses.Values))
+	for _, file := range result.Items[:min(len(result.Items), maxListLimit)] {
+		if file != nil {
+			counts[file.Status]++
+		}
+	}
+	held := make([]string, 0, len(counts))
+	for _, value := range inboundFileStatuses.Values {
+		if count := counts[edi.InboundFileStatus(value)]; count > 0 {
+			held = append(held, fmt.Sprintf("%d %s", count, value))
+		}
+	}
+	more := ""
+	if len(result.Items) > maxListLimit {
+		more = "at least "
+	}
+
+	return fmt.Sprintf("None is %s. In any status this search holds %s%s. Say so rather than "+
+		"searching again; drop the status to list them.", wanted, more, strings.Join(held, ", "))
 }
 
 type getEDIInboundFileTool struct {
@@ -634,10 +681,22 @@ type rawX12Source struct {
 	remains string
 }
 
+func rawEDIWithheldNote(gate *fieldGate, field string) string {
+	if gate.heldByAgent(field) {
+		return "Raw EDI is Restricted and this agent reads at Internal, so the X12 is held " +
+			"back. Tell the person that someone whose role reaches Restricted can set this " +
+			"agent's Data access to Restricted in AI control."
+	}
+
+	return "Raw EDI is Restricted and the person's role does not reach it, so the X12 is held " +
+		"back. Tell them so."
+}
+
 func (e *rawX12Excerpt) excerpt(source *rawX12Source, gate *fieldGate) {
 	switch {
 	case !gate.show(source.field, "rawX12"):
 		e.Withheld = gate.Withheld()
+		e.Note = rawEDIWithheldNote(gate, source.field)
 	case source.purged || source.raw == "":
 		e.Note = fmt.Sprintf(
 			"The %s was purged under the retention policy; %s.",

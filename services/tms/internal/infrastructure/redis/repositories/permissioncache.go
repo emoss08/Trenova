@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	permissionCachePrefix = "perms:v4"
+	permissionCachePrefix = "perms:v5"
 	permissionEpochPrefix = "perms:epoch"
 )
 

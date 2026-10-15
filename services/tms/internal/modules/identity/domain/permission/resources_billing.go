@@ -76,6 +76,11 @@ func (r *Registry) registerBillingResources() {
 				Description: "Submit invoices for approval, and send or resend them by email or EDI",
 			},
 			{Operation: OpCancel, DisplayName: "Void", Description: "Void invoices"},
+			{
+				Operation:   OpPost,
+				DisplayName: "Post",
+				Description: "Post invoices to the ledger, by hand or from the billing queue",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{

@@ -140,6 +140,16 @@ Each run writes to `.deskbench/runs/<time>-<ask|run>/`:
 A call file names its system prompt and tool list by digest, so two calls with the same
 `systemDigest` saw the same prompt and a changed digest after an edit is the edit taking effect.
 
+## Agents
+
+`--agent` names an agent the bench keeps in AI Control from `services/tms/deskbench/agents.yaml`:
+before every run each is created when missing and changed when the file changes, through the
+agent definition service, named `Bench · <name>`. A spec gives its `template`, `instructions`,
+`tools`, `delegates`, `maxToolCalls`, `autonomyCeiling` and `dataAccess` (the agent's Data
+access, `Internal` unless set). `Restricted` is saved only when the bench user's role reaches it,
+as in AI Control; the EDI desk runs at `Restricted` so it can read the X12 it previews, as an
+organization that raised it would.
+
 ## Scenarios
 
 Scenarios live in `services/tms/deskbench/scenarios/*.yaml`. A file holds `defaults` (agent,

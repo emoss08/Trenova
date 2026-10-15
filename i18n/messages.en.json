@@ -28175,15 +28175,6 @@
       "go/other"
     ]
   },
-  "Approve, reject and cancel invoices, run invoice batches and settle disputes.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Approved": {
     "sites": 56,
     "scope": [
@@ -187974,6 +187965,15 @@
       "go/other"
     ]
   },
+  "Post invoices to the ledger, by hand or from the billing queue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Post it where employees can see it, from February 1 to April 30.": {
     "sites": 1,
     "scope": [
@@ -187990,6 +187990,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "Post records to the ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Post scheduled PTO accruals, carryover caps, and expiries for every assigned worker": {
@@ -188103,6 +188112,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Post, approve, reject and cancel invoices, run invoice batches and settle disputes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Post-accident": {
@@ -237595,6 +237613,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Someone who can post invoices posts this one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Someone with manage access to the accounting integration has to enter the {0} keys.": {
@@ -301898,6 +301925,15 @@
     ]
   },
   "Your review is requested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your role cannot post invoices. Ask someone who can post invoices to post this one.": {
     "sites": 1,
     "scope": [
       "go"

@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -68,9 +69,9 @@ func (t *getEDIAckHealthTool) Description() string {
 	return fmt.Sprintf(
 		"How partners are acknowledging what was sent: ack status counts overall and per "+
 			"partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner "+
-			"rather than listing its messages. acknowledged counts every 997 or 999 that came "+
-			"back, a rejection included, and awaiting those still pending, both since "+
-			"countsSince. A message is overdue "+
+			"rather than listing its messages, and lead with its answer: acknowledged counts every "+
+			"997 or 999 that came back, a rejection included, and awaiting those still pending, "+
+			"both since countsSince. A message is overdue "+
 			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
 			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
 			"list_edi_messages lists messages by filter. Each message has its id for "+
@@ -117,6 +118,7 @@ type partnerAckCountsRow struct {
 	PartnerCode  string        `json:"partnerCode,omitempty"`
 	Acknowledged int           `json:"acknowledged"`
 	Awaiting     int           `json:"awaiting"`
+	Answer       string        `json:"answer"`
 	AckCounts    []ackCountRow `json:"ackCounts"`
 }
 
@@ -301,6 +303,42 @@ func acknowledged(counts map[edi.MessageAcknowledgmentStatus]int) int {
 	return total
 }
 
+func ackAnswer(counts map[edi.MessageAcknowledgmentStatus]int) string {
+	received := acknowledged(counts)
+	awaiting := counts[edi.MessageAcknowledgmentStatusPending]
+	failed := counts[edi.MessageAcknowledgmentStatusFailed]
+	expected := received + awaiting + failed
+	if expected == 0 {
+		return "nothing sent in this window expects an acknowledgment"
+	}
+
+	outcomes := make([]string, 0, 3)
+	for _, outcome := range []struct {
+		status edi.MessageAcknowledgmentStatus
+		word   string
+	}{
+		{edi.MessageAcknowledgmentStatusAccepted, "accepted"},
+		{edi.MessageAcknowledgmentStatusAcceptedWithErrors, "accepted with errors"},
+		{edi.MessageAcknowledgmentStatusRejected, "rejected"},
+	} {
+		if count := counts[outcome.status]; count > 0 {
+			outcomes = append(outcomes, fmt.Sprintf("%d %s", count, outcome.word))
+		}
+	}
+	answer := fmt.Sprintf("%d of %d acknowledged", received, expected)
+	if len(outcomes) > 0 {
+		answer += " (" + strings.Join(outcomes, ", ") + ")"
+	}
+	if awaiting > 0 {
+		answer += fmt.Sprintf("; %d awaiting", awaiting)
+	}
+	if failed > 0 {
+		answer += fmt.Sprintf("; %d marked Failed", failed)
+	}
+
+	return answer
+}
+
 func partnerAckCounts(groups []*ediservice.EDIPartnerAckCounts) []partnerAckCountsRow {
 	rows := make([]partnerAckCountsRow, 0, len(groups))
 	for _, group := range groups {
@@ -313,6 +351,7 @@ func partnerAckCounts(groups []*ediservice.EDIPartnerAckCounts) []partnerAckCoun
 			PartnerCode:  group.PartnerCode,
 			Acknowledged: acknowledged(group.Counts),
 			Awaiting:     group.Counts[edi.MessageAcknowledgmentStatusPending],
+			Answer:       ackAnswer(group.Counts),
 			AckCounts:    make([]ackCountRow, 0, len(group.Counts)),
 		}
 		for _, status := range ackCountOrder {

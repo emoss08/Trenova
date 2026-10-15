@@ -121,11 +121,11 @@ var capabilityBundles = []Bundle{
 		ID:          "billing.post_invoices",
 		Module:      "Billing",
 		Label:       "Post invoices",
-		Description: "Approve, reject and cancel invoices, run invoice batches and settle disputes.",
+		Description: "Post, approve, reject and cancel invoices, run invoice batches and settle disputes.",
 		Grants: []BundleGrant{
 			{
 				Resource:   ResourceInvoice,
-				Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel, OpExport},
+				Operations: []Operation{OpRead, OpPost, OpApprove, OpReject, OpCancel, OpExport},
 			},
 			{
 				Resource:   ResourceInvoiceRun,

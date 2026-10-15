@@ -474,3 +474,50 @@ func TestGetEDIMessage_CapsTheFindingsAndCountsTheRest(t *testing.T) {
 	assert.Len(t, view.Diagnostics, maxMessageDiagnostics)
 	assert.Equal(t, 7, view.DiagnosticsOmitted)
 }
+
+type statusFilteredInboundFiles struct {
+	fakeInboundFiles
+}
+
+func (f *statusFilteredInboundFiles) ListInboundFiles(
+	_ context.Context,
+	req *ediports.ListEDIInboundFilesRequest,
+) (*pagination.ListResult[*edi.EDIInboundFile], error) {
+	items := make([]*edi.EDIInboundFile, 0, len(f.files))
+	for _, file := range f.files {
+		if req.Status == "" || file.Status == req.Status {
+			items = append(items, file)
+		}
+	}
+
+	return &pagination.ListResult[*edi.EDIInboundFile]{Items: items}, nil
+}
+
+func TestListEDIInboundFiles_AnEmptyStatusSaysWhatOtherStatusesHold(t *testing.T) {
+	t.Parallel()
+
+	processed := inboundFile("ISA*00~")
+	processed.Status = edi.InboundFileStatusProcessed
+	failed := inboundFile("ISA*00~")
+	failed.Status = edi.InboundFileStatusDuplicate
+	fake := &statusFilteredInboundFiles{fakeInboundFiles{
+		files: []*edi.EDIInboundFile{processed, processed, failed},
+	}}
+	tool := newListEDIInboundFilesTool(fake)
+	params := map[string]any{
+		paramPartnerID: pulid.MustNew("edip_").String(),
+		paramStatus:    string(edi.InboundFileStatusQuarantined),
+	}
+
+	result, err := tool.Query(t.Context(), agentParams(params, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	assert.Equal(t, "None is Quarantined. In any status this search holds 2 Processed, "+
+		"1 Duplicate. Say so rather than searching again; drop the status to list them.",
+		result.(*gatedOutcome).Note)
+
+	fake.files = nil
+	result, err = tool.Query(t.Context(), agentParams(params, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	assert.Equal(t, "There are no inbound EDI files in any status for this search, so none is "+
+		"Quarantined. Say so rather than searching again.", result.(*gatedOutcome).Note)
+}

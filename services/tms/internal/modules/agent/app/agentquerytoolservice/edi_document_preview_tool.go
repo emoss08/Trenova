@@ -30,8 +30,7 @@ const (
 
 	previewDocumentNote = "Rendered as a send would render it now, with provisional control " +
 		"numbers (zeros); the real ones are assigned when it is sent. Nothing was sent or saved."
-	previewWithheldNote = "The rendered X12 is withheld at your data access; the findings and " +
-		"whether it would go stand. Nothing was sent or saved."
+	previewWithheldNote = " The findings and whether it would go stand. Nothing was sent or saved."
 )
 
 var (
@@ -222,7 +221,7 @@ func (t *previewEDIDocumentTool) gated(
 	view.Segments = []string{}
 	view.SegmentsCut = 0
 	view.Withheld = gate.Withheld()
-	view.Note = previewWithheldNote
+	view.Note = rawEDIWithheldNote(gate, rawX12Field) + previewWithheldNote
 
 	return view
 }

@@ -16,7 +16,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const changeGroundingGuard = "agent-loop-grounding-guard"
+const (
+	changeGroundingGuard         = "agent-loop-grounding-guard"
+	changeGroundingTopLevelWords = "agent-loop-grounding-top-level-words"
+)
 
 const (
 	groundingCorrectionLead = "Your reply does not match what this turn filed."
@@ -46,15 +49,30 @@ type groundingFinding struct {
 	figures []string
 	fields  []string
 	tools   map[string][]string
+	nested  []string
 }
 
 func (f groundingFinding) empty() bool {
 	return len(f.figures) == 0 && len(f.fields) == 0
 }
 
+func (f *groundingFinding) dropNestedWords() {
+	if len(f.nested) == 0 {
+		return
+	}
+	f.fields = slices.DeleteFunc(f.fields, func(field string) bool {
+		return slices.Contains(f.nested, field)
+	})
+	for _, field := range f.nested {
+		delete(f.tools, field)
+	}
+	f.nested = nil
+}
+
 type schemaLabel struct {
-	path  string
-	words string
+	path       string
+	words      string
+	nestedWord bool
 }
 
 func (s *Service) reground(
@@ -70,6 +88,12 @@ func (s *Service) reground(
 	finding := s.groundingFindings(t, completion.Text)
 	if finding.empty() || !fx.Supports(changeGroundingGuard) {
 		return false
+	}
+	if len(finding.nested) > 0 && fx.Supports(changeGroundingTopLevelWords) {
+		finding.dropNestedWords()
+		if finding.empty() {
+			return false
+		}
 	}
 
 	if !state.rewritten {
@@ -160,8 +184,16 @@ func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 			if !claims.names(label.words) || filed.holds(label) {
 				continue
 			}
-			if !slices.Contains(finding.fields, label.words) {
+			switch {
+			case !slices.Contains(finding.fields, label.words):
 				finding.fields = append(finding.fields, label.words)
+				if label.nestedWord {
+					finding.nested = append(finding.nested, label.words)
+				}
+			case !label.nestedWord:
+				finding.nested = slices.DeleteFunc(finding.nested, func(words string) bool {
+					return words == label.words
+				})
 			}
 			if !slices.Contains(finding.tools[label.words], tool) {
 				finding.tools[label.words] = append(finding.tools[label.words], tool)
@@ -333,10 +365,15 @@ func schemaLabels(schema map[string]any) []schemaLabel {
 		)
 		kind, _ := node[toolschema.KeyType].(string)
 		collection := kind == toolschema.TypeArray || kind == toolschema.TypeObject
-		if !collection && len(strings.Fields(words)) < minLabelWords {
+		oneWord := len(strings.Fields(words)) < minLabelWords
+		if !collection && oneWord {
 			return
 		}
-		labels = append(labels, schemaLabel{path: path, words: words})
+		labels = append(labels, schemaLabel{
+			path:       path,
+			words:      words,
+			nestedWord: oneWord && strings.Contains(path, "."),
+		})
 	})
 
 	return labels

@@ -262,6 +262,7 @@ export const PERMISSION_OPERATIONS = [
   "unpin",
   "resolve",
   "manage",
+  "post",
 ] as const;
 
 export type PermissionOperation = (typeof PERMISSION_OPERATIONS)[number];

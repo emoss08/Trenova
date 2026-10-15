@@ -125,7 +125,8 @@ func TestDraftEDIConnection_AsksAboutWhatItHeld(t *testing.T) {
 	view := result.(*connectionDraftView)
 	assert.Equal(t, "Changes to acme-guide-v4.pdf from its EDI guide", view.Title)
 	assert.Contains(t, view.Note, "Open: Decide time zone.")
-	assert.Contains(t, view.Note, "Never fill a held value yourself")
+	assert.Contains(t, view.Note, "Ask the person about every other decision")
+	assert.Contains(t, view.Note, "never fill one of those yourself")
 }
 
 func TestDraftEDIConnection_RefusesWithoutAPersonOrAGuide(t *testing.T) {
@@ -226,6 +227,9 @@ func TestDraftEDIConnection_AsksOnlyTheQuestionWhileTheDraftIsBlocked(t *testing
 
 	assert.Contains(t, note, "Open: Decide MDN mode.")
 	assert.Contains(t, note, "Asking ends your turn, so ask only that now")
+	assert.Contains(t, note, "A decision whose candidate is Invalid, or whose quote states that "+
+		"value for a different field than the one you gave it, is your own misreading",
+		"the agent corrects what it misread instead of asking the person to")
 	assert.NotContains(t, note, "In your reply",
 		"a question ends the turn, so nothing else would reach the person")
 	assert.NotContains(t, note, "Appendix B")

@@ -1,6 +1,7 @@
 package deskbench_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -125,4 +126,23 @@ func TestValidate_AFoundMentionNamesItsTypeAndFindsItsIDWithOneSelect(t *testing
 		"type": "shipment",
 		"find": "delete from shipments",
 	}).Validate(), "a fact is a SELECT")
+}
+
+func TestLoadAgentSpecs_ReadsDataAccessAndRefusesAnUnknownOne(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	good := filepath.Join(dir, "agents.yaml")
+	require.NoError(t, os.WriteFile(good, []byte(
+		"agents:\n  - name: EDI desk\n    template: EDIDesk\n    dataAccess: Restricted\n"), 0o600))
+	specs, err := deskbench.LoadAgentSpecs(good)
+	require.NoError(t, err)
+	require.Len(t, specs, 1)
+	assert.Equal(t, "Restricted", specs[0].DataAccess)
+
+	bad := filepath.Join(dir, "bad.yaml")
+	require.NoError(t, os.WriteFile(bad, []byte(
+		"agents:\n  - name: EDI desk\n    dataAccess: Confidential\n"), 0o600))
+	_, err = deskbench.LoadAgentSpecs(bad)
+	require.ErrorIs(t, err, deskbench.ErrAgentSpecDataAccess)
 }

@@ -328,6 +328,7 @@ type fieldGate struct {
 	access   fieldAccess
 	resource permission.Resource
 	ceiling  permission.FieldSensitivity
+	agent    permission.FieldSensitivity
 	resolve  func() permission.FieldSensitivity
 	withheld []string
 }
@@ -337,7 +338,19 @@ func (a fieldAccess) gate(
 	params *agentports.QueryToolParams,
 	resource permission.Resource,
 ) *fieldGate {
-	return a.gateAt(resource, a.ceiling(ctx, params, resource))
+	gate := a.gateAt(resource, a.ceiling(ctx, params, resource))
+	gate.agent = agentLimit(params)
+
+	return gate
+}
+
+func agentLimit(params *agentports.QueryToolParams) permission.FieldSensitivity {
+	granted := agentDataAccess(params.DataAccessCeiling)
+	if granted == "" && (params.Actor == nil || !params.Actor.IsUser()) {
+		return permission.SensitivityInternal
+	}
+
+	return granted
 }
 
 func (a fieldAccess) gateAt(
@@ -357,6 +370,7 @@ func (a fieldAccess) deferredGate(
 	resource permission.Resource,
 ) *fieldGate {
 	gate := a.gateAt(resource, "")
+	gate.agent = agentLimit(params)
 	gate.resolve = func() permission.FieldSensitivity {
 		return a.ceiling(ctx, params, resource)
 	}
@@ -390,6 +404,11 @@ func (g *fieldGate) show(field, name string) bool {
 	}
 
 	return false
+}
+
+func (g *fieldGate) heldByAgent(field string) bool {
+	return g.agent != "" &&
+		!g.agent.CanAccess(g.access.registry.GetFieldSensitivity(g.resource.String(), field))
 }
 
 func (g *fieldGate) Withheld() []string {
