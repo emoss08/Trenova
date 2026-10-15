@@ -80,7 +80,12 @@ cases:
   - name: intake-reply-from-billing
     from: BillingAssistant
     ask: "reply to the inbound email from red river about the pod"
-    expect: IntakeDesk
+    expect: none|current
+    note: >
+      Was IntakeDesk, which the Desk can never suggest: the template is triggered by inbound
+      messages, not chat, and reply_to_inbound_message is on no chat template's tools. So either
+      no agent the person may use can reply (none), or Billing keeps it with request_missing_docs,
+      which asks Red River for the POD (current).
   - name: customer-eta-email-from-billing
     from: BillingAssistant
     ask: "email the customer an eta update on the dallas load"
@@ -117,7 +122,15 @@ cases:
     from: DispatchAssistant
     ask: "good morning team, hope the weekend went well"
     expect: nothing
-  - name: outside-every-agent
+  - name: fuel-diesel-prices-from-dispatch
     from: DispatchAssistant
     ask: "search the web for diesel prices in texas this week"
+    expect: FuelTaxClerk|none
+    note: >
+      Was outside-every-agent, expecting none|nothing. The weekly diesel price is the fuel index
+      Trenova records (list_fuel_index_prices, get_fuel_surcharge_rates), so the Fuel and IFTA
+      clerk answers it; with web search turned on for no agent, none is the other fair answer.
+  - name: outside-every-agent
+    from: DispatchAssistant
+    ask: "look up the latest trucking industry news online"
     expect: none|nothing

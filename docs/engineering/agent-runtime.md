@@ -1105,15 +1105,25 @@ match, so a tab still on the previous release keeps working.
 - **Delegates.** When the agent the question would go to can hand work to an agent that
   holds a best match (`DelegateIDs`, the delegate usable by the person and passing
   `DelegateRefusal`), it manages the question through `delegate_task`, so the answer is
-  `CurrentAgent` and nothing is suggested.
+  `CurrentAgent` and nothing is suggested. The match names that delegate
+  (`AgentMatch.Delegate`) for the routing bench; the query does not return it.
 - **What it is about.** `contextKinds` names the kinds of record the question is about:
   the records it mentions and the record or list the page it is asked from shows. A
   matched tool whose permission resource is one of them scores a quarter more, which
   breaks a tie or a near tie toward it without adding tools that did not match. A kind
   the server does not know is ignored; more than eleven is refused.
+- **What counts as naming a tool.** A word that only appears in a tool's description or
+  parameters is not enough on its own: "good morning team, hope the weekend went well"
+  reaches more than twenty tools that way ("morning" from `schedule_report`'s "every Monday
+  morning", "team", "went", "well"), and the embedding then picked the nearest of them at a
+  similarity of 0.23. So after ranking, a question is answered `NoMatch` unless a word of it
+  is in some tool's name or search terms (`Catalog.NamesAny`), its meaning comes within the
+  catalog's similarity floor of a tool (`Semantic.Clears`, 0.5), or a matched tool is on a
+  kind of record the question is about ("list them by status" asked from the customers
+  page).
 - **What it costs.** No model is asked. A question that names nothing any tool's name,
-  description or parameters do is answered `NoMatch` without an embedding, so small talk
-  costs nothing. A person's questions are embedded at most thirty a minute, ten at once
+  description or parameters do is answered `NoMatch` without an embedding, so most small
+  talk costs nothing. A person's questions are embedded at most thirty a minute, ten at once
   (`RateLimitStore`, key scope `agent-match`); past that they are matched by keyword
   alone rather than refused. The embedding is metered as the `AgentRecommendation` usage
   feature, so AI Control shows suggestions apart from the turns they precede.

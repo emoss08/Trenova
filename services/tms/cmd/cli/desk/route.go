@@ -26,7 +26,8 @@ var routeCmd = &cobra.Command{
 from the agent it names, and scores where the question would go: to another agent, kept
 where it was, to no agent that can help, or nowhere. No turn runs and nothing is written;
 it needs Postgres and Redis, the organization's embedding provider for the full ranking, and
-Temporal like every bench command.
+Temporal like every bench command. The bench's own agents (Bench · …) are left out, so the
+cases score the organization's agents.
 
 Each run writes routing.md and routing.json to .deskbench/runs/<time>-route/ and compares
 with the previous routing run. Exits non-zero when any question goes the wrong way.
@@ -76,12 +77,11 @@ func runRouting(cmd *cobra.Command, args []string) error {
 	}
 	baseline := loadRoutingBaseline(flags.compare)
 
-	bench, err := openBench(ctx, outDir)
+	bench, err := openBenchWith(ctx, deskbench.OpenOptions{
+		OutDir:             outDir,
+		WithoutBenchAgents: true,
+	})
 	if err != nil {
-		return err
-	}
-	if err = syncBenchAgents(ctx, bench); err != nil {
-		_ = bench.Close()
 		return err
 	}
 

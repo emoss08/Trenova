@@ -30,9 +30,10 @@ type AgentMatchTool struct {
 }
 
 type AgentMatch struct {
-	Outcome agentsuggestion.MatchOutcome
-	Agent   *agentdefinition.Definition
-	Tools   []AgentMatchTool
+	Outcome  agentsuggestion.MatchOutcome
+	Agent    *agentdefinition.Definition
+	Delegate *agentdefinition.Definition
+	Tools    []AgentMatchTool
 }
 
 type AgentRecommender interface {

@@ -83,6 +83,10 @@ func (s *Service) MatchAgent(
 	if len(wide) == 0 {
 		return noMatch(), nil
 	}
+	if !s.catalog.NamesAny(matchable, text) && !semantic.Clears(matchable) &&
+		!s.anyAbout(wide, resources) {
+		return noMatch(), nil
+	}
 	if !pool.permitsWithin(wide, recommendationToolLimit) {
 		return &agentports.AgentMatch{
 			Outcome: agentsuggestion.MatchNoAgent,
@@ -104,8 +108,14 @@ func (s *Service) MatchAgent(
 	if best.current {
 		return s.matchFor(agentsuggestion.MatchCurrentAgent, best.definition, best.matched), nil
 	}
-	if current, matched := pool.delegateHolding(req.CurrentAgentID, ranked); current != nil {
-		return s.matchFor(agentsuggestion.MatchCurrentAgent, current, matched), nil
+	if current, delegate, matched := pool.delegateHolding(
+		req.CurrentAgentID,
+		ranked,
+	); current != nil {
+		found := s.matchFor(agentsuggestion.MatchCurrentAgent, current, matched)
+		found.Delegate = delegate
+
+		return found, nil
 	}
 
 	return s.matchFor(agentsuggestion.MatchBetterAgent, best.definition, best.matched), nil
@@ -183,11 +193,7 @@ func (s *Service) boostForContext(
 	}
 	boosted := false
 	for idx := range matches {
-		resource, _, ok := s.toolGate(matches[idx].Name)
-		if !ok {
-			continue
-		}
-		if _, about := resources[resource]; about {
+		if s.isAbout(matches[idx].Name, resources) {
 			matches[idx].Score *= 1 + matchContextBoost
 			boosted = true
 		}
@@ -199,6 +205,32 @@ func (s *Service) boostForContext(
 	}
 
 	return matches
+}
+
+func (s *Service) anyAbout(
+	matches []agenttoolcatalog.Match,
+	resources map[permission.Resource]struct{},
+) bool {
+	for idx := range matches {
+		if s.isAbout(matches[idx].Name, resources) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *Service) isAbout(name string, resources map[permission.Resource]struct{}) bool {
+	if len(resources) == 0 {
+		return false
+	}
+	resource, _, ok := s.toolGate(name)
+	if !ok {
+		return false
+	}
+	_, about := resources[resource]
+
+	return about
 }
 
 func matchContextResources(kinds []string) (map[permission.Resource]struct{}, error) {

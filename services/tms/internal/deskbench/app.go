@@ -33,10 +33,11 @@ const (
 )
 
 type OpenOptions struct {
-	Namespace string
-	OutDir    string
-	LivePaths []string
-	LockDir   string
+	Namespace          string
+	OutDir             string
+	LivePaths          []string
+	LockDir            string
+	WithoutBenchAgents bool
 }
 
 type deps struct {
@@ -142,6 +143,7 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			bench.watcher = NewTurnWatcher(inner)
 			return bench.watcher
 		}),
+		benchAgentScope(opts.WithoutBenchAgents),
 		fx.Invoke(func(d deps) { bench.deps = d }),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger.Named("fx")}

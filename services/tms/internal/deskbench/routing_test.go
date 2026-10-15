@@ -101,7 +101,17 @@ func TestRoutingPasses(t *testing.T) {
 		Template: agentdefinition.TemplateBillingAssistant,
 	}
 	better := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}
+	compliance := &agentdefinition.Definition{
+		ID:       pulid.MustNew("agdef_"),
+		Name:     "Compliance",
+		Template: agentdefinition.TemplateComplianceAssistant,
+	}
 	current := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
+	delegated := &agentports.AgentMatch{
+		Outcome:  agentsuggestion.MatchCurrentAgent,
+		Agent:    dispatch,
+		Delegate: compliance,
+	}
 	nobody := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
 	nothing := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNone}
 
@@ -119,6 +129,10 @@ func TestRoutingPasses(t *testing.T) {
 		{"current", current, true},
 		{"DispatchAssistant", current, true},
 		{"BillingAssistant", current, false},
+		{"ComplianceAssistant", delegated, true},
+		{"DispatchAssistant", delegated, true},
+		{"current", delegated, true},
+		{"BillingAssistant", delegated, false},
 		{"none", nobody, true},
 		{"nothing", nothing, true},
 		{"none", nothing, false},
@@ -127,6 +141,24 @@ func TestRoutingPasses(t *testing.T) {
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, RoutingPasses(tc.expect, dispatch, tc.found), tc.expect)
 	}
+}
+
+func TestUnreachableExpectation_NamesTheAgentsNoEnabledChatAgentIs(t *testing.T) {
+	t.Parallel()
+
+	agents := []*agentdefinition.Definition{
+		{Name: "Dispatch desk", Template: agentdefinition.TemplateDispatchAssistant},
+		{Name: "Master data steward", Template: agentdefinition.TemplateMasterDataSteward},
+	}
+
+	assert.Equal(t, "no enabled chat agent is CustomerAssistant",
+		UnreachableExpectation("CustomerAssistant", agents))
+	assert.Equal(t, "no enabled chat agent is IntakeDesk or CustomerAssistant",
+		UnreachableExpectation("IntakeDesk|CustomerAssistant", agents))
+	assert.Empty(t, UnreachableExpectation("CustomerAssistant|MasterDataSteward", agents))
+	assert.Empty(t, UnreachableExpectation("Dispatch desk", agents))
+	assert.Empty(t, UnreachableExpectation("none|CustomerAssistant", agents))
+	assert.Empty(t, UnreachableExpectation("current", agents))
 }
 
 func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T) {

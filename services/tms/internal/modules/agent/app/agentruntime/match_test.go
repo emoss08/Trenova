@@ -409,6 +409,8 @@ func TestMatchAgent_KeepsTheCurrentAgentWhenOneOfItsDelegatesHoldsTheTool(t *tes
 		"an agent that can hand the task to one that holds the tool manages the question")
 	require.NotNil(t, found.Agent)
 	assert.Equal(t, dispatch.ID, found.Agent.ID)
+	require.NotNil(t, found.Delegate, "the match names the agent the work would be handed to")
+	assert.Equal(t, compliance.ID, found.Delegate.ID)
 	assert.Equal(t, []string{"list_expiring_credentials"}, toolNames(found.Tools))
 }
 
@@ -438,8 +440,8 @@ func TestMatchAgent_RanksToolsForWhatTheQuestionIsAbout(t *testing.T) {
 	question := "list them by status"
 
 	plain := match(t, service, question, pulid.Nil)
-	require.NotNil(t, plain.Agent)
-	require.Equal(t, shipments.ID, plain.Agent.ID, "without context the tie goes to the first by name")
+	require.Equal(t, agentsuggestion.MatchNone, plain.Outcome,
+		"without context the words name no tool, only a word in their descriptions")
 
 	about := match(t, service, question, pulid.Nil, permission.ResourceCustomer.String())
 
@@ -496,6 +498,72 @@ func TestMatchAgent_DoesNotEmbedAQuestionThatNamesNothingAToolDoes(t *testing.T)
 
 	_ = match(t, service, "which invoices are past due?", pulid.Nil)
 	assert.Len(t, vectorizer.calls, 1)
+}
+
+func greetingRuntime(t *testing.T) (*Service, *agentdefinition.Definition) {
+	t.Helper()
+
+	dispatch := agentHolding("Dispatch helper", "list_shipments")
+	reports := agentHolding("Report analyst", "schedule_report")
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
+		&agenttest.StubQueryTool{
+			ToolName: "list_shipments",
+			Desc:     "List shipments by status, billing state or dates.",
+			Resource: permission.ResourceShipment,
+		},
+		&agenttest.StubQueryTool{
+			ToolName: "schedule_report",
+			Desc:     "Email a saved report on a schedule, as in \"every Monday morning\".",
+			Resource: permission.ResourceReport,
+		},
+	}, dispatch, reports)
+
+	return service, dispatch
+}
+
+func TestMatchAgent_MatchesNothingWhenOnlyAnIncidentalWordReachesATool(t *testing.T) {
+	t.Parallel()
+
+	service, dispatch := greetingRuntime(t)
+
+	found := match(t, service, "good morning team, hope the weekend went well", dispatch.ID)
+
+	assert.Equal(t, agentsuggestion.MatchNone, found.Outcome,
+		"a word from a tool's example names nothing the tool does")
+}
+
+func TestMatchAgent_MatchesNothingWhenNoToolComesCloseInMeaning(t *testing.T) {
+	t.Parallel()
+
+	service, dispatch := greetingRuntime(t)
+	vectorizer := &fixedVectorizer{vector: usableQuery()}
+	service.vectorizer = vectorizer
+	service.vectors = &fixedSimilarities{byKey: map[string]float64{
+		"list_shipments":  0.12,
+		"schedule_report": 0.23,
+	}}
+
+	found := match(t, service, "good morning team, hope the weekend went well", dispatch.ID)
+
+	assert.Equal(t, agentsuggestion.MatchNone, found.Outcome)
+	assert.Len(t, vectorizer.calls, 1)
+}
+
+func TestMatchAgent_MatchesByMeaningWhenTheWordsAreOnlyInADescription(t *testing.T) {
+	t.Parallel()
+
+	service, dispatch := greetingRuntime(t)
+	service.vectorizer = &fixedVectorizer{vector: usableQuery()}
+	service.vectors = &fixedSimilarities{byKey: map[string]float64{
+		"list_shipments":  0.18,
+		"schedule_report": 0.62,
+	}}
+
+	found := match(t, service, "have the numbers emailed every monday morning", dispatch.ID)
+
+	assert.Equal(t, agentsuggestion.MatchBetterAgent, found.Outcome)
+	require.NotNil(t, found.Agent)
+	assert.Equal(t, "Report analyst", found.Agent.Name)
 }
 
 type limitedRates struct {

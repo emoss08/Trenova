@@ -134,17 +134,19 @@ func loadRoutingFile(file string) ([]*RoutingCase, error) {
 }
 
 type RoutingResult struct {
-	Case    string   `json:"case"`
-	Ask     string   `json:"ask"`
-	From    string   `json:"from"`
-	About   []string `json:"about,omitempty"`
-	Expect  string   `json:"expect"`
-	Outcome string   `json:"outcome"`
-	Agent   string   `json:"agent,omitempty"`
-	Tools   []string `json:"tools,omitempty"`
-	Passed  bool     `json:"passed"`
-	Error   string   `json:"error,omitempty"`
-	Millis  int64    `json:"millis"`
+	Case     string   `json:"case"`
+	Ask      string   `json:"ask"`
+	From     string   `json:"from"`
+	About    []string `json:"about,omitempty"`
+	Expect   string   `json:"expect"`
+	Outcome  string   `json:"outcome"`
+	Agent    string   `json:"agent,omitempty"`
+	Delegate string   `json:"delegate,omitempty"`
+	Tools    []string `json:"tools,omitempty"`
+	Passed   bool     `json:"passed"`
+	Note     string   `json:"note,omitempty"`
+	Error    string   `json:"error,omitempty"`
+	Millis   int64    `json:"millis"`
 }
 
 func (r *RoutingResult) Got() string {
@@ -155,6 +157,8 @@ func (r *RoutingResult) Got() string {
 		return RoutingExpectNone
 	case r.Outcome == string(agentsuggestion.MatchNone):
 		return RoutingExpectNothing
+	case r.Outcome == string(agentsuggestion.MatchCurrentAgent) && r.Delegate != "":
+		return RoutingExpectCurrent + " (" + r.Agent + ", handing it to " + r.Delegate + ")"
 	case r.Outcome == string(agentsuggestion.MatchCurrentAgent):
 		return RoutingExpectCurrent + " (" + r.Agent + ")"
 	default:
@@ -236,12 +240,42 @@ func (b *Bench) routeOne(
 	if found.Agent != nil {
 		result.Agent = found.Agent.Name
 	}
+	if found.Delegate != nil {
+		result.Delegate = found.Delegate.Name
+	}
 	for _, tool := range found.Tools {
 		result.Tools = append(result.Tools, tool.Name)
 	}
 	result.Passed = RoutingPasses(routing.Expect, from, found)
+	if !result.Passed {
+		if agents, listErr := session.Agents(ctx); listErr == nil {
+			result.Note = UnreachableExpectation(routing.Expect, agents)
+		}
+	}
 
 	return result
+}
+
+func UnreachableExpectation(expect string, agents []*agentdefinition.Definition) string {
+	named := make([]string, 0, 2)
+	for _, option := range strings.Split(expect, "|") {
+		option = strings.TrimSpace(option)
+		switch strings.ToLower(option) {
+		case RoutingExpectCurrent, RoutingExpectNone, RoutingExpectNothing:
+			return ""
+		}
+		if slices.ContainsFunc(agents, func(definition *agentdefinition.Definition) bool {
+			return agentNamed(definition, option)
+		}) {
+			return ""
+		}
+		named = append(named, option)
+	}
+	if len(named) == 0 {
+		return ""
+	}
+
+	return "no enabled chat agent is " + strings.Join(named, " or ")
 }
 
 func RoutingPasses(
@@ -268,7 +302,12 @@ func RoutingPasses(
 				return true
 			}
 		default:
-			if agentNamed(namedAgent(from, found), option) {
+			if slices.ContainsFunc(
+				answeredBy(from, found),
+				func(definition *agentdefinition.Definition) bool {
+					return agentNamed(definition, option)
+				},
+			) {
 				return true
 			}
 		}
@@ -277,15 +316,15 @@ func RoutingPasses(
 	return false
 }
 
-func namedAgent(
+func answeredBy(
 	from *agentdefinition.Definition,
 	found *agentports.AgentMatch,
-) *agentdefinition.Definition {
+) []*agentdefinition.Definition {
 	switch found.Outcome {
 	case agentsuggestion.MatchBetterAgent:
-		return found.Agent
+		return []*agentdefinition.Definition{found.Agent}
 	case agentsuggestion.MatchCurrentAgent:
-		return from
+		return []*agentdefinition.Definition{from, found.Delegate}
 	case agentsuggestion.MatchNoAgent, agentsuggestion.MatchNone:
 		return nil
 	}
@@ -421,6 +460,9 @@ func RenderRouting(r, baseline *RoutingReport) string {
 		got := result.Got()
 		if result.Error != "" {
 			got = "error: " + result.Error
+		}
+		if result.Note != "" {
+			got += "; " + result.Note
 		}
 		fmt.Fprintf(&out, "| %s %s | %s | %s | %s | %s |\n",
 			mark,

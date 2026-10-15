@@ -33,6 +33,19 @@ func NewSemantic(similarity map[string]float64) *Semantic {
 
 func (s *Semantic) usable() bool { return s != nil && len(s.Similarity) > 0 }
 
+func (s *Semantic) Clears(names []string) bool {
+	if !s.usable() {
+		return false
+	}
+	for _, name := range names {
+		if similarity, ok := s.Similarity[name]; ok && similarity >= s.Floor {
+			return true
+		}
+	}
+
+	return false
+}
+
 type Query struct {
 	Allowed      []string
 	Text         string

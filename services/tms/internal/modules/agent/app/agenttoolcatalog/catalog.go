@@ -217,13 +217,37 @@ func (c *Catalog) MatchesStrongly(name, query string) bool {
 }
 
 func (c *Catalog) MentionsAny(allowed []string, query string) bool {
+	return c.anyEntry(allowed, query, func(entry *indexed, terms map[string]struct{}) bool {
+		return score(entry, terms, false) > 0
+	})
+}
+
+func (c *Catalog) NamesAny(allowed []string, query string) bool {
+	return c.anyEntry(allowed, query, namedBy)
+}
+
+func namedBy(entry *indexed, terms map[string]struct{}) bool {
+	for term := range terms {
+		if _, ok := entry.nameTokens[term]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Catalog) anyEntry(
+	allowed []string,
+	query string,
+	matches func(entry *indexed, terms map[string]struct{}) bool,
+) bool {
 	terms := agentsearch.Terms(query)
 	if len(terms) == 0 {
 		return false
 	}
 	if allowed == nil {
 		for i := range c.entries {
-			if score(&c.entries[i], terms, false) > 0 {
+			if matches(&c.entries[i], terms) {
 				return true
 			}
 		}
@@ -232,7 +256,7 @@ func (c *Catalog) MentionsAny(allowed []string, query string) bool {
 	}
 	for _, name := range allowed {
 		index, ok := c.byName[name]
-		if ok && score(&c.entries[index], terms, false) > 0 {
+		if ok && matches(&c.entries[index], terms) {
 			return true
 		}
 	}

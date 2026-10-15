@@ -307,9 +307,22 @@ cases:
 
 `expect` also takes `none` (tools match but none of the person's agents holds them) and
 `nothing` (no tool matches). A case expecting an agent passes when that agent is suggested,
-or when it is the agent asked from and is kept. Name agents by template, as the cases do,
-so a reseed keeps them; `TestShippedRoutingCases_NameAgentsByTheirTemplates` refuses one
-that is not.
+when it is the agent asked from and is kept, or when the agent asked from keeps the question
+because it would hand it to that agent through `delegate_task` (the report reads
+`current (Billing exceptions, handing it to Compliance desk)`). Name agents by template, as
+the cases do, so a reseed keeps them; `TestShippedRoutingCases_NameAgentsByTheirTemplates`
+refuses one that is not. When the label itself was wrong, change `expect` and say why in the
+case's `note`.
+
+The bench's own agents (`Bench · …`, from `deskbench/agents.yaml`) are left out of a routing
+run, as the agent asked from and as suggestions, and `route` does not sync them: several of
+them share a shipped template (two are `DispatchAssistant`s), so a case asked from
+`DispatchAssistant` would otherwise be asked from whichever sorts first by name and the
+scores would measure the bench's agents, not the organization's. A case that fails while
+none of the agents it expects is an enabled chat agent says so (`no enabled chat agent is
+CustomerAssistant`): the seeded Customer service agent is off until someone reviews it, so
+the two cases expecting it fail on a fresh seed until it is turned on, and an `IntakeDesk`
+agent is started by inbound messages, never by the Desk.
 
 Each run writes `routing.md` (the score, the cases that changed since the previous routing
 run, and every case's expected and actual answer with the tools that matched) and
@@ -317,6 +330,13 @@ run, and every case's expected and actual answer with the tools that matched) an
 the wrong way. `--compare` takes a run directory or a `routing.json`, `''` for none. The bench
 lifts the per-person limit on matching embeddings for its own matches only, so a long run is
 ranked as a person's first question is, by keyword and embedding together.
+
+Embeddings are used only when the organization has an embedding provider and its retrieval
+settings (AI Control → Retrieval) name an active embedding model; otherwise every case is
+ranked by keyword alone, which `ai_usage_records` shows as no `AgentRecommendation`
+embedding rows. The first match after a reseed, or after a tool's description or search
+terms change, embeds the catalog in the background and may be ranked by keyword while it
+does, so run one case (`--name`) before a run you mean to compare.
 
 ## Findings
 

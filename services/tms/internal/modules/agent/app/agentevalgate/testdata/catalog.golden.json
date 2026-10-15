@@ -7480,6 +7480,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "order for several loads",
+        "group loads on one order",
+        "order covering loads"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",

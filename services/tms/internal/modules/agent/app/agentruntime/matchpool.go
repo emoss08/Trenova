@@ -153,9 +153,9 @@ func (p *matchPool) permitsWithin(matches []agenttoolcatalog.Match, limit int) b
 func (p *matchPool) delegateHolding(
 	currentID pulid.ID,
 	ranked []agenttoolcatalog.Match,
-) (asked *agentdefinition.Definition, delegated []string) {
+) (asked, delegate *agentdefinition.Definition, delegated []string) {
 	if currentID.IsNil() || len(ranked) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	var current *agentdefinition.Definition
 	for _, definition := range p.agents {
@@ -165,12 +165,12 @@ func (p *matchPool) delegateHolding(
 		}
 	}
 	if current == nil || !current.Delegates() {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	top := topTier(ranked)
-	for idx, delegate := range p.agents {
-		if !current.MayDelegateTo(delegate.ID) || current.DelegateRefusal(delegate) != "" {
+	for idx, candidate := range p.agents {
+		if !current.MayDelegateTo(candidate.ID) || current.DelegateRefusal(candidate) != "" {
 			continue
 		}
 		matched := make([]string, 0, len(top))
@@ -180,11 +180,11 @@ func (p *matchPool) delegateHolding(
 			}
 		}
 		if len(matched) > 0 {
-			return current, matched
+			return current, candidate, matched
 		}
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (s *Service) mayEmbedMatch(ctx context.Context, actor *permissionports.RequestActor) bool {

@@ -300,6 +300,11 @@ func NewCreateOrderTool(orders orderKeeper) agentports.AgentTool {
 			"as a Draft with its own number; attach shipments with attach_order_shipments " +
 			"and add charges with add_order_charge. Only from what the person or the " +
 			"customer asked for.",
+		SearchTerms: []string{
+			"order for several loads",
+			"group loads on one order",
+			"order covering loads",
+		},
 		Resource:    permission.ResourceOrder,
 		Operation:   permission.OpCreate,
 		Egress:      agent.EgressInternal,
