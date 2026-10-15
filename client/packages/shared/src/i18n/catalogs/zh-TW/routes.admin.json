@@ -1546,6 +1546,7 @@
   "Turn on scanning and printing into Trenova": "開啟掃描與列印到 Trenova",
   "Two-factor authentication reset": "已重設雙重驗證",
   "Unable to repair mapping for this worker.": "無法修復此員工的對應。",
+  "Unable to save organization access.": "無法儲存組織存取權。",
   "Unable to submit the sync request right now.": "目前無法送出同步要求。",
   "Under Authentication, add a Web platform with the redirect URI below exactly as written. Entra accepts http://localhost while developing; anything else needs https.": "在「驗證」下新增 Web 平台，並完全照下方內容填入重新導向 URI。開發期間 Entra 接受 http://localhost；其他位址都需要 https。",
   "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.": "在 Configuration 下，完全依照下方內容新增重新導向 URI。開發期間 Xero 接受 http://localhost；其他位址須使用 https。",

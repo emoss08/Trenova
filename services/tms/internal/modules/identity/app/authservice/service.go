@@ -639,8 +639,8 @@ func (s *Service) AuthenticateSession(
 	}
 
 	if now := timeutils.NowUnix(); sess.NeedsTouch(now) {
-		if touchErr := s.sr.Touch(ctx, sess.ID, now); touchErr == nil {
-			sess.LastAccessedAt = now
+		if err = s.confirmSessionAccess(ctx, sess, now); err != nil {
+			return nil, err
 		}
 	}
 
@@ -895,6 +895,8 @@ func (s *Service) createSession(
 		RiskDecision:          authn.RiskDecision,
 		RiskDecisionID:        authn.RiskDecisionID,
 	})
+
+	sess.IssuedBySignIn = true
 
 	issued, err := sessiontoken.Issue(sess.ID)
 	if err != nil {

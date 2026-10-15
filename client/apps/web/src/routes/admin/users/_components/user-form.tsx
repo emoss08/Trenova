@@ -293,7 +293,7 @@ function OrganizationMembershipSection({
         organizationIds: selectedOrgIDs,
       })
       .catch((err) => {
-        setError(describeApiError(err, "Unable to save organization access."));
+        setError(describeApiError(err, t("Unable to save organization access.")));
         console.error("Failed to save organization memberships", err);
         setIsSaving(false);
         return null;

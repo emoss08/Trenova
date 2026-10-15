@@ -145,8 +145,16 @@ Losing access ends it everywhere it is held, and each step is recorded:
   catches a removal whose revocation failed partway, and grants left behind by an
   expired membership.
 
+- A session issued by sign-in (`Session.IssuedBySignIn`, set only by
+  `authservice.createSession`) is checked again each time it is touched, at most every
+  five minutes: if the user is no longer a member of the session's organization (and it
+  is not their current one) or can no longer sign in, the session is deleted and the
+  request is refused. This catches whatever a failed revocation above left open. A
+  database error leaves the session alone and checks again on its next request.
+
 Support sessions draw their permissions from the support access grant, not from role
-assignments, so none of this touches them.
+assignments, and are not issued by sign-in, so none of this touches them; their own
+lifecycle (grant revoked or expired, staff removed) ends them.
 
 ## Trenova support sessions
 

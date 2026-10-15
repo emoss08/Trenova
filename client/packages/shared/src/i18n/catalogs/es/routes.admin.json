@@ -1546,6 +1546,7 @@
   "Turn on scanning and printing into Trenova": "Activar el escaneo y la impresión en Trenova",
   "Two-factor authentication reset": "Autenticación de dos factores restablecida",
   "Unable to repair mapping for this worker.": "No se puede reparar la asignación de este trabajador.",
+  "Unable to save organization access.": "No se pudo guardar el acceso a la organización.",
   "Unable to submit the sync request right now.": "No se puede enviar la solicitud de sincronización en este momento.",
   "Under Authentication, add a Web platform with the redirect URI below exactly as written. Entra accepts http://localhost while developing; anything else needs https.": "En Autenticación, agregue una plataforma web con el URI de redirección de abajo exactamente como está escrito. Entra acepta http://localhost durante el desarrollo; cualquier otro necesita https.",
   "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.": "En Configuration, agregue el URI de redirección de abajo exactamente como aparece. Xero acepta http://localhost durante el desarrollo; cualquier otra dirección requiere https.",
