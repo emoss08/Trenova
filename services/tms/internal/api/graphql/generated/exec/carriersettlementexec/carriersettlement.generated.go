@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -37,6 +38,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "CarrierSettlementControl", Implementors: []string{"CarrierSettlementControl"}},
 		{Name: "CarrierSettlementEdge", Implementors: []string{"CarrierSettlementEdge"}},
 		{Name: "CarrierSettlementLine", Implementors: []string{"CarrierSettlementLine"}},
+		{Name: "CarrierSettlementLineGroup", Implementors: []string{"CarrierSettlementLineGroup"}},
+		{Name: "CarrierSettlementMoveInvoice", Implementors: []string{"CarrierSettlementMoveInvoice"}},
 		{Name: "CarrierSettlementPeriodBounds", Implementors: []string{"CarrierSettlementPeriodBounds"}},
 		{Name: "CarrierSettlementWorkspaceSummary", Implementors: []string{"CarrierSettlementWorkspaceSummary"}},
 		{Name: "EdiCarrierInvoice", Implementors: []string{"EdiCarrierInvoice"}},
@@ -1150,6 +1153,102 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrierSettlementLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementLineᚄ),
 			},
+			{
+				Name:       "costSummary",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "CarrierSettlementLineGroup",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").CostSummary(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOCarrierSettlementLineGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostGroupᚄ),
+			},
+			{
+				Name:       "loadShares",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "SettlementLoadShare",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").LoadShares(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShareᚄ),
+			},
+			{
+				Name:       "moveInvoices",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "CarrierSettlementMoveInvoice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").MoveInvoices(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOCarrierSettlementMoveInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐMoveInvoiceᚄ),
+			},
+			{
+				Name:       "submittedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").SubmittedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "approvedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").ApprovedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "postedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PostedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "paidBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PaidBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "voidedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CarrierSettlement)
+					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").VoidedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
 		}},
 		{Object: "CarrierSettlementBatch", Fields: []*gqlexec.Field{
 			{
@@ -1766,6 +1865,119 @@ var Shard = &gqlexec.Shard{
 					return obj.ProNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "CarrierSettlementLineGroup", Fields: []*gqlexec.Field{
+			{
+				Name:     "eventType",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.EventType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrierCostEventType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostEventType),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "amountMinor",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.AmountMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "lineCount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.LineCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "shipmentCount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.ShipmentCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "manual",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.CostGroup)
+					return obj.Manual, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "CarrierSettlementMoveInvoice", Fields: []*gqlexec.Field{
+			{
+				Name:     "moveId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.MoveInvoice)
+					return obj.MoveID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.MoveInvoice)
+					return obj.ShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "proNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.MoveInvoice)
+					return obj.ProNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "costMinor",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.MoveInvoice)
+					return obj.CostMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:      "match",
+				HasChild:  true,
+				ChildType: "CarrierInvoiceMatch",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.MoveInvoice)
+					return obj.Match, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch),
 			},
 		}},
 		{Object: "CarrierSettlementPeriodBounds", Fields: []*gqlexec.Field{
@@ -2594,6 +2806,14 @@ var Shard = &gqlexec.Shard{
 type resolverCarrierSettlement interface {
 	ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
+	CostSummary(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.CostGroup, error)
+	LoadShares(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*settlementload.Share, error)
+	MoveInvoices(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.MoveInvoice, error)
+	SubmittedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	ApprovedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	PostedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	PaidBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error)
 }
 
 type resolverEdiCarrierInvoice interface {
@@ -3859,6 +4079,22 @@ func marshalNCarrierSettlementLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierSettlementLine", v)
 }
 
+func marshalNCarrierSettlementLineGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlement.CostGroup) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CarrierSettlementLineGroup", v)
+}
+
+func marshalNCarrierSettlementMoveInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐMoveInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlement.MoveInvoice) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CarrierSettlementMoveInvoice", v)
+}
+
 func marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -3947,6 +4183,14 @@ func marshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
+func marshalNSettlementLoadShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShare(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *settlementload.Share) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SettlementLoadShare", v)
+}
+
 func marshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.PayTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -3985,6 +4229,13 @@ func marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "CarrierAssignment", v)
 }
 
+func marshalOCarrierInvoiceMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlement.InvoiceMatch) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CarrierInvoiceMatch", v)
+}
+
 func marshalOCarrierSettlement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carriersettlement.CarrierSettlement) graphql.Marshaler {
 	return gqlexec.List[*carriersettlement.CarrierSettlement]{
 		Elem:        marshalNCarrierSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlement,
@@ -4009,6 +4260,20 @@ func marshalOCarrierSettlementBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 func marshalOCarrierSettlementLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carriersettlement.CarrierSettlementLine) graphql.Marshaler {
 	return gqlexec.List[*carriersettlement.CarrierSettlementLine]{
 		Elem:        marshalNCarrierSettlementLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCarrierSettlementLine,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOCarrierSettlementLineGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carriersettlement.CostGroup) graphql.Marshaler {
+	return gqlexec.List[*carriersettlement.CostGroup]{
+		Elem:        marshalNCarrierSettlementLineGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐCostGroup,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOCarrierSettlementMoveInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐMoveInvoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carriersettlement.MoveInvoice) graphql.Marshaler {
+	return gqlexec.List[*carriersettlement.MoveInvoice]{
+		Elem:        marshalNCarrierSettlementMoveInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐMoveInvoice,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
@@ -4042,10 +4307,24 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
+func marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShareᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*settlementload.Share) graphql.Marshaler {
+	return gqlexec.List[*settlementload.Share]{
+		Elem:        marshalNSettlementLoadShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShare,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

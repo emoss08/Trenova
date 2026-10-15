@@ -14,6 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	carriersettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	driversettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -293,4 +297,211 @@ func TestShipments_InvoiceIDsNeedPermissionToReadInvoices(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, invoices.requests)
 	assert.Empty(t, service.requests)
+}
+
+type settlementLinesRepo struct {
+	driversettlementports.DriverSettlementRepository
+
+	settlements map[pulid.ID]*driversettlementdomain.Settlement
+	requests    []driversettlementports.GetDriverSettlementByIDRequest
+}
+
+func (s *settlementLinesRepo) GetByID(
+	_ context.Context,
+	req driversettlementports.GetDriverSettlementByIDRequest,
+) (*driversettlementdomain.Settlement, error) {
+	s.requests = append(s.requests, req)
+	return s.settlements[req.ID], nil
+}
+
+type carrierSettlementLinesRepo struct {
+	carriersettlementports.CarrierSettlementRepository
+
+	settlements map[pulid.ID]*carriersettlementdomain.CarrierSettlement
+}
+
+func (s *carrierSettlementLinesRepo) GetByID(
+	_ context.Context,
+	req carriersettlementports.GetCarrierSettlementByIDRequest,
+) (*carriersettlementdomain.CarrierSettlement, error) {
+	return s.settlements[req.ID], nil
+}
+
+func newSettlementShipmentsResolver(
+	service shipmentports.ShipmentService,
+	grants map[permission.Resource]bool,
+	deps Deps,
+) *QueryResolver {
+	granted := map[string]bool{
+		permission.ResourceShipment.String() + "|" + string(permission.OpRead): true,
+	}
+	for resource, allowed := range grants {
+		granted[resource.String()+"|"+string(permission.OpRead)] = allowed
+	}
+	deps.Core = &base.Core{
+		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
+	}
+	deps.ShipmentService = service
+	return &QueryResolver{&deps}
+}
+
+func idRef(id pulid.ID) *pulid.ID {
+	return &id
+}
+
+func TestShipments_DriverSettlementIDsListTheLoadsTheSettlementPays(t *testing.T) {
+	t.Parallel()
+
+	first := pulid.MustNew("shp_")
+	second := pulid.MustNew("shp_")
+	settlementID := pulid.MustNew("dstl_")
+	repo := &settlementLinesRepo{settlements: map[pulid.ID]*driversettlementdomain.Settlement{
+		settlementID: {
+			ID: settlementID,
+			Lines: []*driversettlementdomain.SettlementLine{
+				{ShipmentID: idRef(second), AmountMinor: 100},
+				{AmountMinor: -9600},
+				{ShipmentID: idRef(first), AmountMinor: 100},
+				{ShipmentID: idRef(second), AmountMinor: 100},
+			},
+		},
+	}}
+	service := &listCapturingShipmentService{}
+
+	_, err := newSettlementShipmentsResolver(
+		service,
+		map[permission.Resource]bool{permission.ResourceDriverSettlement: true},
+		Deps{DriverSettlementRepo: repo},
+	).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{
+			DriverSettlementIds: []string{settlementID.String(), settlementID.String()},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, repo.requests, 1)
+	assert.True(t, repo.requests[0].IncludeLines)
+	require.Len(t, service.requests, 1)
+	assert.Equal(t, []pulid.ID{second, first}, service.requests[0].ShipmentOptions.IDs)
+}
+
+func TestShipments_CarrierSettlementIDsListTheLoadsTheSettlementPays(t *testing.T) {
+	t.Parallel()
+
+	load := pulid.MustNew("shp_")
+	settlementID := pulid.MustNew("carstl_")
+	repo := &carrierSettlementLinesRepo{
+		settlements: map[pulid.ID]*carriersettlementdomain.CarrierSettlement{
+			settlementID: {
+				ID: settlementID,
+				Lines: []*carriersettlementdomain.CarrierSettlementLine{
+					{ShipmentID: idRef(load), AmountMinor: 230000},
+					{AmountMinor: -35000},
+				},
+			},
+		},
+	}
+	service := &listCapturingShipmentService{}
+
+	_, err := newSettlementShipmentsResolver(
+		service,
+		map[permission.Resource]bool{permission.ResourceCarrierSettlement: true},
+		Deps{CarrierSettlementRepo: repo},
+	).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{CarrierSettlementIds: []string{settlementID.String()}},
+	)
+	require.NoError(t, err)
+	require.Len(t, service.requests, 1)
+	assert.Equal(t, []pulid.ID{load}, service.requests[0].ShipmentOptions.IDs)
+}
+
+func TestShipments_ASettlementThatPaysNoLoadListsNone(t *testing.T) {
+	t.Parallel()
+
+	settlementID := pulid.MustNew("dstl_")
+	repo := &settlementLinesRepo{settlements: map[pulid.ID]*driversettlementdomain.Settlement{
+		settlementID: {ID: settlementID},
+	}}
+	service := &listCapturingShipmentService{}
+
+	result, err := newSettlementShipmentsResolver(
+		service,
+		map[permission.Resource]bool{permission.ResourceDriverSettlement: true},
+		Deps{DriverSettlementRepo: repo},
+	).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{DriverSettlementIds: []string{settlementID.String()}},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, service.requests)
+	require.NotNil(t, result.TotalCount)
+	assert.Zero(t, *result.TotalCount)
+}
+
+func TestShipments_SettlementIDsNeedPermissionToReadThatKindOfSettlement(t *testing.T) {
+	t.Parallel()
+
+	driverRepo := &settlementLinesRepo{}
+	service := &listCapturingShipmentService{}
+
+	_, err := newSettlementShipmentsResolver(
+		service,
+		map[permission.Resource]bool{
+			permission.ResourceDriverSettlement:  false,
+			permission.ResourceCarrierSettlement: true,
+		},
+		Deps{DriverSettlementRepo: driverRepo},
+	).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{DriverSettlementIds: []string{pulid.MustNew("dstl_").String()}},
+	)
+	require.Error(t, err)
+	assert.Empty(t, driverRepo.requests)
+	assert.Empty(t, service.requests)
+}
+
+func TestShipments_SeveralScopesListOnlyTheLoadsTheyShare(t *testing.T) {
+	t.Parallel()
+
+	shared := pulid.MustNew("shp_")
+	invoicedOnly := pulid.MustNew("shp_")
+	paidOnly := pulid.MustNew("shp_")
+	invoiceID := pulid.MustNew("inv_")
+	settlementID := pulid.MustNew("dstl_")
+	invoices := &invoicesByIDService{invoices: []*invoicedomain.Invoice{{
+		ID: invoiceID,
+		Lines: []*invoicedomain.InvoiceLine{
+			{ShipmentID: invoicedOnly},
+			{ShipmentID: shared},
+		},
+	}}}
+	repo := &settlementLinesRepo{settlements: map[pulid.ID]*driversettlementdomain.Settlement{
+		settlementID: {
+			ID: settlementID,
+			Lines: []*driversettlementdomain.SettlementLine{
+				{ShipmentID: idRef(paidOnly)},
+				{ShipmentID: idRef(shared)},
+			},
+		},
+	}}
+	service := &listCapturingShipmentService{}
+
+	_, err := newSettlementShipmentsResolver(
+		service,
+		map[permission.Resource]bool{
+			permission.ResourceInvoice:          true,
+			permission.ResourceDriverSettlement: true,
+		},
+		Deps{InvoiceService: invoices, DriverSettlementRepo: repo},
+	).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{
+			InvoiceIds:          []string{invoiceID.String()},
+			DriverSettlementIds: []string{settlementID.String()},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, service.requests, 1)
+	assert.Equal(t, []pulid.ID{shared}, service.requests[0].ShipmentOptions.IDs)
 }

@@ -6,6 +6,10 @@ import { DESK_EDI_CONVERSATIONS } from "./desk-edi.mjs";
 import { DESK_EDI_FILE_CONVERSATIONS } from "./desk-edi-files.mjs";
 import { DESK_EDI_TRANSFER_CONVERSATIONS } from "./desk-edi-transfers.mjs";
 import { DESK_INVOICE_CONVERSATIONS } from "./desk-invoices.mjs";
+import {
+  DESK_CARRIER_SETTLEMENT_CONVERSATIONS,
+  DESK_DRIVER_SETTLEMENT_CONVERSATIONS,
+} from "./desk-settlements.mjs";
 
 export const DESK_THREAD_ID = "thr_desk_cards";
 
@@ -140,6 +144,18 @@ export function deskCardArtifacts(anchor) {
       Object.entries(DESK_INVOICE_CONVERSATIONS).map(([slug, entry]) => [
         slug,
         artifact(slug, "invoice", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_DRIVER_SETTLEMENT_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "driver_settlement", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_CARRIER_SETTLEMENT_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "carrier_settlement", entry.recordId, entry.title),
       ]),
     ),
   };
@@ -1987,6 +2003,12 @@ const TURNS = {
       slug,
       [entry.question, entry.reply],
     ]),
+  ),
+  ...Object.fromEntries(
+    [
+      ...Object.entries(DESK_DRIVER_SETTLEMENT_CONVERSATIONS),
+      ...Object.entries(DESK_CARRIER_SETTLEMENT_CONVERSATIONS),
+    ].map(([slug, entry]) => [slug, [entry.question, entry.reply]]),
   ),
   "failure-gone": [
     "Pull up SF-2608-0007.",

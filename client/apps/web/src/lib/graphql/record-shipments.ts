@@ -21,7 +21,9 @@ export type ShipmentScope =
   | { kind: "location"; id: string }
   | { kind: "carrier"; id: string }
   | { kind: "order"; id: string }
-  | { kind: "invoice"; id: string };
+  | { kind: "invoice"; id: string }
+  | { kind: "driver_settlement"; id: string }
+  | { kind: "carrier_settlement"; id: string };
 
 /** One page of a record's shipments, newest first. `total` is read with the first page only. */
 export type RecordShipmentsPage = {
@@ -42,6 +44,8 @@ function scopeInput(
   | "stopLocationIds"
   | "carrierIds"
   | "invoiceIds"
+  | "driverSettlementIds"
+  | "carrierSettlementIds"
 > {
   switch (scope.kind) {
     case "customer":
@@ -60,6 +64,10 @@ function scopeInput(
       return { fieldFilters: [{ field: "orderId", operator: "eq", value: scope.id }] };
     case "invoice":
       return { invoiceIds: [scope.id] };
+    case "driver_settlement":
+      return { driverSettlementIds: [scope.id] };
+    case "carrier_settlement":
+      return { carrierSettlementIds: [scope.id] };
   }
 }
 

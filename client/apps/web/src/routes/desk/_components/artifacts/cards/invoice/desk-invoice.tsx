@@ -1,13 +1,24 @@
 import { recordPath } from "@/config/record-links";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { usePermission } from "@/hooks/use-permission";
+import { sendInvoiceEdi } from "@/lib/graphql/invoice";
 import type { DeskInvoice as DeskInvoiceRecord } from "@/lib/graphql/invoice-card";
+import { invoiceEdiSendBlocker, invoiceEmailSendBlocker } from "@/lib/invoice-actions";
 import { accountingSync } from "@/lib/queries/accounting-sync";
-import { invoice as invoiceQueries } from "@/lib/queries/invoice";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { invalidateInvoiceQueries, invoice as invoiceQueries } from "@/lib/queries/invoice";
+import { InvoicePostDialog } from "@/routes/invoice/_components/invoice-post-dialog";
+import { InvoiceVoidDialog } from "@/routes/invoice/_components/invoice-void-dialog";
+import { apiService } from "@/services/api";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useMemo } from "react";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
+import { CardActionButton } from "../../record-card/card-action";
 import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardShipments } from "../../record-card/card-shipments";
@@ -49,9 +60,11 @@ import {
   type RemitRow,
   settledSummary,
   termsRuler,
+  voidBlocker,
   voidNote,
 } from "./invoice-card";
 import {
+  type ChannelAct,
   ChannelSlips,
   type ChannelSlip,
   ChargeBill,
@@ -93,8 +106,14 @@ const NO_ROWS: readonly string[] = [];
  * the formula template that rated the freight, what settled it, its disputes,
  * where it went by email, EDI and to the accounting system, and the shipments
  * it bills. A voided invoice says why; a credit memo, what it has left and
- * what it settled. It reads; posting, sending, applying cash and voiding stay
- * on the invoice's page, one click away.
+ * what it settled.
+ *
+ * Its buttons are the invoice's own actions, taken by the person, never by the
+ * agent, each under the permission the server checks: post a draft (after the
+ * same preview of what posting books that the invoice's page shows), email it
+ * or make its PDF first, send its EDI 210, and void it. One that cannot be
+ * taken now stays in place and says why. Applying cash, adjusting and
+ * disputing stay on the invoice's page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
  */
@@ -147,17 +166,17 @@ export function DeskInvoiceArtifact({ recordId }: RecordArtifactProps) {
   return <DeskInvoice recordId={recordId} />;
 }
 
-/** What the bar says of where the invoice is worked. */
+/** What the bar says of where the rest of the invoice's work is done. */
 function barHint(record: DeskInvoiceRecord, t: TranslateFn): string {
   if (record.status === "Voided") {
     return t("A voided invoice is kept for the record");
   }
   if (record.status === "Draft") {
-    return t("Post, send and change the invoice on its page");
+    return t("Change the lines and terms on its page");
   }
   return invoiceKind(record).kind === "credit"
     ? t("Apply or take back the credit on its page")
-    : t("Send, apply payments and void on its page");
+    : t("Apply payments and adjust on its page");
 }
 
 /** The ids of the listed records, held still while the list is. */
@@ -185,6 +204,9 @@ function InvoiceCard({
   const draft = record.status === "Draft";
   const voided = record.status === "Voided";
 
+  const { allowed: canEdit } = usePermission(Resource.Invoice, Operation.Update);
+  const { allowed: canSend } = usePermission(Resource.Invoice, Operation.Submit);
+  const { allowed: canVoid } = usePermission(Resource.Invoice, Operation.Cancel);
   const shipments = useRecordShipments({
     scope: { kind: "invoice", id },
     pageSize: INVOICE_SHIPMENT_ROWS,
@@ -200,16 +222,40 @@ function InvoiceCard({
     retry: false,
     enabled: record.sendStatus !== "NotSent",
   }).data;
-  const sendPlan = useQuery({
+  const sendPlanQuery = useQuery({
     ...invoiceQueries.sendPlan(id),
     retry: false,
-    enabled: record.sendStatus === "NotSent" && !voided,
-  }).data;
+    enabled: !voided && (record.sendStatus === "NotSent" || canSend),
+  });
+  const sendPlan = sendPlanQuery.data;
   const syncState = useQuery({
     ...accountingSync.syncObjectStates([id]),
     retry: false,
     enabled: access.books && !draft,
   }).data?.find((state) => state.objectId === id);
+
+  const queryClient = useQueryClient();
+  const [dialog, setDialog] = useState<"post" | "void" | null>(null);
+  const settle = (done: string) => {
+    invalidateInvoiceQueries(queryClient);
+    toast.success(done);
+  };
+  const sendEmail = useApiMutation({
+    resourceName: "invoice",
+    mutationFn: () => apiService.invoiceService.send(id),
+    onSuccess: () => settle(t("{0} send attempted", record.number)),
+  });
+  const makePdf = useApiMutation({
+    resourceName: "invoice PDF",
+    mutationFn: () => apiService.invoiceService.generatePdf(id),
+    onSuccess: () => settle(t("{0} PDF generation started", record.number)),
+  });
+  const sendEdi = useApiMutation({
+    resourceName: "invoice EDI",
+    mutationFn: () => sendInvoiceEdi(id, record.ediSendPlan.status === "Sent"),
+    onSuccess: () => settle(t("EDI 210 for {0} queued", record.number)),
+  });
+  const busy = sendEmail.isPending || makePdf.isPending || sendEdi.isPending;
 
   const standing = invoiceStanding(record, t);
   const figure = invoiceFigure(record, t);
@@ -292,44 +338,73 @@ function InvoiceCard({
     },
     t,
   );
+  const live = !draft && !voided;
+  const emailActs: ChannelAct[] = [];
+  if (live && !record.pdfDocumentId && canEdit) {
+    emailActs.push({
+      kind: "do",
+      label: t("Generate PDF"),
+      onClick: () => makePdf.mutate(undefined),
+      blocker: null,
+      busy,
+    });
+  } else if (live && canSend) {
+    emailActs.push({
+      kind: "do",
+      label: record.sendStatus === "Sent" ? t("Resend") : t("Send"),
+      onClick: () => sendEmail.mutate(undefined),
+      blocker: invoiceEmailSendBlocker(record, sendPlan, sendPlanQuery.isLoading, t),
+      busy,
+    });
+  }
+  const ediActs: ChannelAct[] = [];
+  if (live && canEdit && record.ediSendPlan.enabled) {
+    ediActs.push({
+      kind: "do",
+      label: record.ediSendPlan.status === "Sent" ? t("Resend 210") : t("Send 210"),
+      onClick: () => sendEdi.mutate(undefined),
+      blocker: invoiceEdiSendBlocker(record.status, record.ediSendPlan, t),
+      busy,
+    });
+  }
+  if (edi.messageId && listedMessages.open) {
+    ediActs.push({
+      kind: "open",
+      label: t("Open message"),
+      onClick: () => listedMessages.open?.(edi.messageId ?? ""),
+    });
+  }
   const slips: ChannelSlip[] = [
-    { key: "email", label: t("Email"), ...email },
-    {
-      key: "edi",
-      label: t("EDI 210"),
-      ...edi,
-      action:
-        edi.messageId && listedMessages.open
-          ? {
-              kind: "open",
-              label: t("Open message"),
-              onClick: () => listedMessages.open?.(edi.messageId ?? ""),
-            }
-          : undefined,
-    },
+    { key: "email", label: t("Email"), ...email, actions: emailActs },
+    { key: "edi", label: t("EDI 210"), ...edi, actions: ediActs },
   ];
   if (books) {
     slips.push({
       key: "books",
       label: t("Accounting"),
       ...books,
-      action: books.externalUrl
-        ? {
-            kind: "outside",
-            label: t("Open in {0}", books.provider),
-            href: books.externalUrl,
-          }
+      actions: books.externalUrl
+        ? [
+            {
+              kind: "outside",
+              label: t("Open in {0}", books.provider),
+              href: books.externalUrl,
+            },
+          ]
         : books.needsAction
-          ? {
-              kind: "page",
-              label: t("Resolve in the sync ledger"),
-              to: recordPath("accounting_sync_record", books.recordId),
-            }
+          ? [
+              {
+                kind: "page",
+                label: t("Resolve in the sync ledger"),
+                to: recordPath("accounting_sync_record", books.recordId),
+              },
+            ]
           : undefined,
     });
   }
 
   const showsOwed = !draft && !voided;
+  const postable = draft && canEdit;
   const related = record.relatedInvoices;
 
   return (
@@ -506,12 +581,37 @@ function InvoiceCard({
       )}
 
       <CardBar>
+        {!voided && canVoid && (
+          <CardActionButton
+            variant="quiet"
+            blocker={voidBlocker(record, t)}
+            busy={busy}
+            onClick={() => setDialog("void")}
+          >
+            <CardIcon name="x" size={12} stroke={2.4} />
+            {credit ? t("Void memo") : t("Void")}
+          </CardActionButton>
+        )}
         <CardBarHint>{barHint(record, t)}</CardBarHint>
-        <Link className="dk-ax-btn dk-ink" to={recordPath("invoice", id)}>
+        <Link className={cn("dk-ax-btn", !postable && "dk-ink")} to={recordPath("invoice", id)}>
           <CardIcon name="ext" size={13} />
           {credit ? t("Open credit memo") : t("Open invoice")}
         </Link>
+        {postable && (
+          <Button disabled={busy} onClick={() => setDialog("post")}>
+            {t("Post {0}", figure.amount)}
+          </Button>
+        )}
       </CardBar>
+
+      {dialog === "post" && (
+        <InvoicePostDialog invoiceId={id} open onOpenChange={(open) => !open && setDialog(null)} />
+      )}
+      <InvoiceVoidDialog
+        invoice={record}
+        open={dialog === "void"}
+        onOpenChange={(open) => setDialog(open ? "void" : null)}
+      />
     </RecordCard>
   );
 }

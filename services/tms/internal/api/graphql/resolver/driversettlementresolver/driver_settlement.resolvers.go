@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -19,12 +20,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *DriverPayEventResolver) TotalMiles(ctx context.Context, obj *driversettlement.PayEvent) (string, error) {
@@ -1149,4 +1153,75 @@ func (r *SettlementExceptionResolver) Severity(ctx context.Context, obj *drivers
 
 func (r *WorkerPayAssignmentResolver) SplitPercent(ctx context.Context, obj *driverpay.WorkerPayAssignment) (string, error) {
 	return obj.SplitPercent.String(), nil
+}
+
+func (r *DriverSettlementLineGroupResolver) Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error) {
+	return base.NullDecimalStringPtr(obj.Rate), nil
+}
+
+func (r *DriverSettlementLineGroupResolver) Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error) {
+	return obj.Quantity.String(), nil
+}
+
+func (r *DriverSettlementLineGroupResolver) Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error) {
+	id := typeutils.DerefID(obj.AdvanceID)
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if id.IsNil() || !ok || !loaders.Available(ctx) ||
+		!r.HasPermission(ctx, authCtx, permission.ResourcePayAdvance, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.PayAdvanceByID(ctx, id.String())
+}
+
+func (r *DriverSettlementLineGroupResolver) EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error) {
+	id := typeutils.DerefID(obj.EscrowAccountID)
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if id.IsNil() || !ok || !loaders.Available(ctx) ||
+		!r.HasPermission(ctx, authCtx, permission.ResourceEscrowAccount, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.EscrowAccountByID(ctx, id.String())
+}
+
+func (r *DriverSettlementResolver) LineSummary(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.LineGroup, error) {
+	if obj.Lines == nil {
+		return nil, nil
+	}
+	return sliceutils.Pointers(driversettlement.LineGroups(obj.Lines)), nil
+}
+
+func (r *DriverSettlementResolver) LoadShares(ctx context.Context, obj *driversettlement.Settlement) ([]*settlementload.Share, error) {
+	if obj.Lines == nil {
+		return nil, nil
+	}
+	return sliceutils.Pointers(settlementload.Shares(driversettlement.LoadLines(obj.Lines))), nil
+}
+
+func (r *DriverSettlementResolver) Disputes(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.Dispute, error) {
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if !ok || !loaders.Available(ctx) ||
+		!r.HasPermission(ctx, authCtx, permission.ResourceSettlementDispute, permission.OpRead) {
+		return []*driversettlement.Dispute{}, nil
+	}
+	return loaders.SettlementDisputesBySettlementID(ctx, obj.ID.String())
+}
+
+func (r *DriverSettlementResolver) SubmittedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.SubmittedByID)
+}
+
+func (r *DriverSettlementResolver) ApprovedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.ApprovedByID)
+}
+
+func (r *DriverSettlementResolver) PostedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.PostedByID)
+}
+
+func (r *DriverSettlementResolver) PaidBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.PaidByID)
+}
+
+func (r *DriverSettlementResolver) VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.VoidedByID)
 }

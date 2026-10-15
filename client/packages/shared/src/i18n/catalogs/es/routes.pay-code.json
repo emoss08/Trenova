@@ -15,7 +15,6 @@
   "Pay code activated — it appears in dropdowns again": "Código de pago activado — vuelve a aparecer en las listas desplegables",
   "Pay code deactivated — it stays on historical records only": "Código de pago desactivado — solo permanece en los registros históricos",
   "Prefills the amount when creating recurring earnings or deductions with this code.": "Rellena previamente el importe al crear percepciones o deducciones recurrentes con este código.",
-  "Reimbursement": "Reembolso",
   "Select GL account": "Seleccione la cuenta del libro mayor",
   "Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.": "Las líneas de liquidación con este código se contabilizan en esta cuenta; déjelo en blanco para usar los valores predeterminados del control contable.",
   "Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores.": "Identificador único corto que se muestra en estados de cuenta e informes; letras mayúsculas, dígitos, guiones o guiones bajos.",

@@ -638,7 +638,9 @@ export function paletteHandlers(base) {
     },
     ArCustomerProfile: (state, v) => ({ arCustomerProfile: arProfile(state, v.customerId) }),
     DeskRecordShipments: (state, v) =>
-      v.input?.invoiceIds?.length
+      v.input?.invoiceIds?.length ||
+      v.input?.driverSettlementIds?.length ||
+      v.input?.carrierSettlementIds?.length
         ? base.DeskRecordShipments(state, v)
         : recordShipments(state, v.input ?? {}, v.includeTotalCount),
     DeskWorkerCard: (state, v) => deskWorker(state, v.id),

@@ -30,6 +30,11 @@ type ListLiveCarrierInvoiceMatchesByAssignmentRequest struct {
 	AssignmentID pulid.ID
 }
 
+type ListLiveCarrierInvoiceMatchesByMoveIDsRequest struct {
+	TenantInfo pagination.TenantInfo
+	MoveIDs    []pulid.ID
+}
+
 type ListResolvedMatchAssignmentsRequest struct {
 	TenantInfo    pagination.TenantInfo
 	AssignmentIDs []pulid.ID
@@ -62,6 +67,10 @@ type CarrierInvoiceMatchRepository interface {
 		ctx context.Context,
 		req ListLiveCarrierInvoiceMatchesByAssignmentRequest,
 	) ([]*carriersettlement.InvoiceMatch, error)
+	ListLiveByMoveIDs(
+		ctx context.Context,
+		req ListLiveCarrierInvoiceMatchesByMoveIDsRequest,
+	) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error)
 	ListResolvedAssignmentIDs(
 		ctx context.Context,
 		req ListResolvedMatchAssignmentsRequest,

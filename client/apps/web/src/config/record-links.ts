@@ -133,7 +133,7 @@ export const RECORD_LINKS = {
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
   driver_settlement: {
-    label: "Driver settlement",
+    label: "Worker settlement",
     path: "/payroll/settlements",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
