@@ -1059,7 +1059,7 @@ is built from the same parts. The answer is one of four outcomes:
 |---|---|
 | `BetterAgent` | Another agent the person may use holds a best match and the agent the question would go to does not |
 | `CurrentAgent` | The agent the question would go to holds a best match, itself or through an agent on its delegate allowlist |
-| `NoAgent` | Tools match the question, but none the person's agents hold and may use scores as well as the eighth best match, ties included |
+| `NoAgent` | Tools match the question, but none of the best of them (every tool tied for the top score) is one the person's agents hold and may use |
 | `NoMatch` | No tool matches, or the person is not one who can be matched |
 
 Each but `NoMatch` names, best first, at most three tools: the agent's matched tools, or
@@ -1084,9 +1084,13 @@ match, so a tab still on the previous release keeps working.
 - **The ranking.** The question is ranked twice with `Catalog.Match` (`FindHybrid`'s
   keyword and embedding fusion and its cutoff, without the families it appends): once
   against every tool but the core ones, to tell `NoAgent` apart, and once against what
-  the person's agents hold and they may use. The first ranking is not cut at eight: an
-  agent's tool tied with the eighth best match counts however many tools tie with it, so a
-  held tool is never dropped by catalog order (`permitsWithin`). Its query vector is the one the turn embeds
+  the person's agents hold and they may use. When none of the tools tied for the first
+  ranking's top score is one the person's agents hold and may use (`permitsBest`), the
+  answer is `NoAgent`, naming those tools: a lesser tool some agent holds is not a reason
+  to send the question there. Before this, a lesser match anywhere in the first eight was
+  enough, so "search the web for the weekend weather forecast in amarillo", whose best tool
+  is `web_search`, was offered to Master data steward because one of its search tools
+  shares the word "search". Its query vector is the one the turn embeds
   for the same words: `retrievalquery` keeps it in its in-process cache and in Redis
   (`QueryVectorCache`, fifteen minutes, keyed by tenant, embedding model and a hash of the
   words), so a question sent after its match reuses the vector even when the API asked
@@ -1117,8 +1121,8 @@ match, so a tab still on the previous release keeps working.
   reaches more than twenty tools that way ("morning" from `schedule_report`'s "every Monday
   morning", "team", "went", "well"), and the embedding then picked the nearest of them at a
   similarity of 0.23. So after ranking, a question is answered `NoMatch` unless a word of it
-  is in some tool's name or search terms (`Catalog.NamesAny`), its meaning comes within the
-  catalog's similarity floor of a tool (`Semantic.Clears`, 0.5), or a matched tool is on a
+  is in some tool's name or search terms (`Catalog.NamesAny`), its meaning reaches the
+  embedding model's similarity floor for a tool (`Semantic.Clears`), or a matched tool is on a
   kind of record the question is about ("list them by status" asked from the customers
   page).
 - **What it costs.** No model is asked. A question that names nothing any tool's name,

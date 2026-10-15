@@ -305,7 +305,7 @@ cases:
     expect: current                      # the agent asked from holds the tools
 ```
 
-`expect` also takes `none` (tools match but none of the person's agents holds them) and
+`expect` also takes `none` (tools match but none of the person's agents holds the best of them) and
 `nothing` (no tool matches). A case expecting an agent passes when that agent is suggested,
 when it is the agent asked from and is kept, or when the agent asked from keeps the question
 because it would hand it to that agent through `delegate_task` (the report reads
@@ -320,9 +320,10 @@ them share a shipped template (two are `DispatchAssistant`s), so a case asked fr
 `DispatchAssistant` would otherwise be asked from whichever sorts first by name and the
 scores would measure the bench's agents, not the organization's. A case that fails while
 none of the agents it expects is an enabled chat agent says so (`no enabled chat agent is
-CustomerAssistant`): the seeded Customer service agent is off until someone reviews it, so
-the two cases expecting it fail on a fresh seed until it is turned on, and an `IntakeDesk`
-agent is started by inbound messages, never by the Desk.
+CustomerAssistant`), for an agent that is turned off or one, like an `IntakeDesk` agent, that
+is started by inbound messages and never by the Desk. The seeded Customer service agent is
+off until someone reviews it, so the cases that need it accept `none` too: with it off, no
+agent the person may use holds the best tool for them.
 
 Each run writes `routing.md` (the score, the cases that changed since the previous routing
 run, and every case's expected and actual answer with the tools that matched) and

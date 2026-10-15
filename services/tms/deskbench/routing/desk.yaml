@@ -80,20 +80,25 @@ cases:
   - name: intake-reply-from-billing
     from: BillingAssistant
     ask: "reply to the inbound email from red river about the pod"
-    expect: none|current
+    expect: none
     note: >
       Was IntakeDesk, which the Desk can never suggest: the template is triggered by inbound
-      messages, not chat, and reply_to_inbound_message is on no chat template's tools. So either
-      no agent the person may use can reply (none), or Billing keeps it with request_missing_docs,
-      which asks Red River for the POD (current).
+      messages, not chat, and reply_to_inbound_message, the best tool for it, is on no chat
+      template's tools, so no agent the person may use can reply.
   - name: customer-eta-email-from-billing
     from: BillingAssistant
     ask: "email the customer an eta update on the dallas load"
-    expect: CustomerAssistant
+    expect: CustomerAssistant|none
+    note: >
+      The seeded Customer service agent is off until someone reviews it, and it alone holds the
+      best tool for this, so on a fresh seed no agent the person may use can help (none).
   - name: customer-order-from-dispatch
     from: DispatchAssistant
     ask: "create an order for acme that covers the three dallas loads"
-    expect: CustomerAssistant
+    expect: CustomerAssistant|none
+    note: >
+      The seeded Customer service agent is off until someone reviews it, and it alone holds the
+      best tool for this, so on a fresh seed no agent the person may use can help (none).
   - name: dispatch-tender-from-billing
     from: BillingAssistant
     ask: "tender the houston load to a carrier"
@@ -134,3 +139,18 @@ cases:
     from: DispatchAssistant
     ask: "look up the latest trucking industry news online"
     expect: none|nothing
+  - name: web-forecast-not-master-data
+    from: DispatchAssistant
+    ask: "search the web for the weekend weather forecast in amarillo"
+    expect: none
+    note: >
+      web_search is the best tool and no agent holds it; Master data steward was offered
+      because one of its search tools shares the word "search".
+  - name: web-score-not-dispatch
+    from: DispatchAssistant
+    ask: "web search: who won the game last night"
+    expect: none
+  - name: web-restaurant-not-dispatch
+    from: DispatchAssistant
+    ask: "search the internet for a good restaurant downtown"
+    expect: none

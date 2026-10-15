@@ -182,9 +182,11 @@ func TestMatchAgent_NeverSuggestsAnAgentThePersonMayNotUse(t *testing.T) {
 
 	found := match(t, service, "driver medical card expiry", pulid.Nil)
 
-	require.NotNil(t, found.Agent)
-	assert.Equal(t, open.ID, found.Agent.ID,
-		"an agent restricted to roles the person does not hold is never offered")
+	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome,
+		"an agent restricted to roles the person does not hold is never offered, "+
+			"and the agent holding only a lesser match is not offered in its place")
+	assert.Nil(t, found.Agent)
+	assert.Equal(t, []string{"list_expiring_credentials"}, toolNames(found.Tools))
 
 	service.permissions = &agenttest.StubPermissions{GrantedAgents: []pulid.ID{restricted.ID}}
 	found = match(t, service, "driver medical card expiry", pulid.Nil)
@@ -223,6 +225,31 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenNoAgentHoldsTheBestTool(t *testing.T) 
 		Name:    "list_invoices",
 		Summary: "List invoices by status or due date.",
 	}}, found.Tools, "the tools that would answer it are named for whoever can add them")
+}
+
+func TestMatchAgent_SaysNoAgentWhenOnlyALesserToolIsHeld(t *testing.T) {
+	t.Parallel()
+
+	ledger := agentHolding("Ledger helper", "summarize_ledger")
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
+		&agenttest.StubQueryTool{
+			ToolName: "list_invoices",
+			Desc:     "List invoices by status or due date.",
+			Resource: permission.ResourceInvoice,
+		},
+		&agenttest.StubQueryTool{
+			ToolName: "summarize_ledger",
+			Desc:     "Summarize the ledger, including invoices.",
+			Resource: permission.ResourceInvoice,
+		},
+	}, ledger)
+
+	found := match(t, service, "which invoices are past due?", pulid.Nil)
+
+	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome,
+		"an agent holding only a lesser match is not where the question belongs")
+	assert.Nil(t, found.Agent)
+	assert.Equal(t, []string{"list_invoices"}, toolNames(found.Tools))
 }
 
 func TestMatchAgent_FindsTheAgentWhoseToolTiesBeyondTheFirstFewMatches(t *testing.T) {

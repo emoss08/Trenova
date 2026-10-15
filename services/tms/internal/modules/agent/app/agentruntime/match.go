@@ -87,10 +87,10 @@ func (s *Service) MatchAgent(
 		!s.anyAbout(wide, resources) {
 		return noMatch(), nil
 	}
-	if !pool.permitsWithin(wide, recommendationToolLimit) {
+	if best := topTier(wide); !pool.permitsBest(best) {
 		return &agentports.AgentMatch{
 			Outcome: agentsuggestion.MatchNoAgent,
-			Tools:   s.matchTools(topTier(wide)),
+			Tools:   s.matchTools(best),
 		}, nil
 	}
 

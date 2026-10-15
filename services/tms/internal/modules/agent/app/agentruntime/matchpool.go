@@ -133,16 +133,9 @@ func matchableTools(catalog *agenttoolcatalog.Catalog) func() []string {
 	})
 }
 
-func (p *matchPool) permitsWithin(matches []agenttoolcatalog.Match, limit int) bool {
-	if len(matches) == 0 || limit <= 0 {
-		return false
-	}
-	floor := matches[min(limit, len(matches))-1].Score
-	for _, match := range matches {
-		if match.Score < floor {
-			return false
-		}
-		if _, ok := p.allowed[match.Name]; ok {
+func (p *matchPool) permitsBest(best []string) bool {
+	for _, name := range best {
+		if _, ok := p.allowed[name]; ok {
 			return true
 		}
 	}
