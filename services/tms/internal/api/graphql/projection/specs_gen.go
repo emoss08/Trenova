@@ -301,6 +301,8 @@ var DOTRandomPoolSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
+var DetentionClockPriceSpec TypeSpec
+
 var DetentionEvidenceSpec TypeSpec
 
 var DetentionNoticeSpec TypeSpec
@@ -10244,6 +10246,29 @@ func init() {
 		},
 	}
 
+	DetentionClockPriceSpec = TypeSpec{
+		TypeName: "DetentionClockPrice",
+		FieldMap: detentioncol.DetentionOccurrenceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "billableMinutes",
+				FieldMapKey: "billableMinutes",
+			},
+			{
+				Name:        "billableAmount",
+				FieldMapKey: "billableAmount",
+			},
+			{
+				Name:    "asOf",
+				Special: "asOf",
+			},
+		},
+	}
+
 	DetentionEvidenceSpec = TypeSpec{
 		TypeName: "DetentionEvidence",
 		FieldMap: detentioncol.DetentionEvidenceFieldMap,
@@ -10451,6 +10476,10 @@ func init() {
 				FieldMapKey: "locationId",
 			},
 			{
+				Name:        "location",
+				FieldMapKey: "locationId",
+			},
+			{
 				Name:        "detentionPolicyId",
 				FieldMapKey: "detentionPolicyId",
 			},
@@ -10591,6 +10620,18 @@ func init() {
 				FieldMapKey: "requiresApproval",
 			},
 			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "approvedBy",
+				FieldMapKey: "approvedById",
+			},
+			{
 				Name:        "waiverReason",
 				FieldMapKey: "waiverReason",
 			},
@@ -10601,6 +10642,14 @@ func init() {
 			{
 				Name:        "waivedAt",
 				FieldMapKey: "waivedAt",
+			},
+			{
+				Name:        "waivedById",
+				FieldMapKey: "waivedById",
+			},
+			{
+				Name:        "waivedBy",
+				FieldMapKey: "waivedById",
 			},
 			{
 				Name:        "waivedAmount",

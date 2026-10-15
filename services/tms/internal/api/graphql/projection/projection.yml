@@ -16,6 +16,10 @@ aliases:
     postedBy: postedById
     paidBy: paidById
     voidedBy: voidedById
+  DetentionOccurrence:
+    approvedBy: approvedById
+    location: locationId
+    waivedBy: waivedById
   CarrierSettlement:
     submittedBy: submittedById
     approvedBy: approvedById
@@ -137,6 +141,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  DetentionClockPrice:
+    - asOf
   DriverSettlement:
     - lineSummary
     - loadShares

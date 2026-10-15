@@ -4126,6 +4126,14 @@ models:
   DetentionCapScope:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
+  DetentionOccurrence:
+    fields:
+      location:
+        resolver: true
+      approvedBy:
+        resolver: true
+      waivedBy:
+        resolver: true
   DetentionOccurrenceStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.OccurrenceStatus
