@@ -66,28 +66,61 @@ describe("offersRecommendation", () => {
     expect(offersRecommendation(recommending(billing), billing.id)).toBe(false);
   });
 
+  it("does not offer again an agent the person turned down, but offers another", () => {
+    expect(offersRecommendation(recommending(billing), dispatch.id, [billing.id])).toBe(false);
+    expect(offersRecommendation(recommending(billing), dispatch.id, ["agdef_other"])).toBe(true);
+  });
+
   it("offers nothing when there is no match", () => {
     expect(offersRecommendation(null, dispatch.id)).toBe(false);
   });
 });
 
 describe("agentToAsk", () => {
-  it("asks the agent with the tools until the person has chosen", () => {
+  it("asks the agent with the tools unless the person picked one", () => {
     expect(
-      agentToAsk({ agent: dispatch, recommendation: recommending(billing), chosen: false }),
+      agentToAsk({
+        agent: dispatch,
+        recommendation: recommending(billing),
+        pinned: false,
+        keptOver: [],
+      }),
     ).toBe(billing);
   });
 
-  it("asks the agent the person chose, whatever fits better", () => {
+  it("asks the agent picked from the picker, whatever fits better", () => {
     expect(
-      agentToAsk({ agent: dispatch, recommendation: recommending(billing), chosen: true }),
+      agentToAsk({
+        agent: dispatch,
+        recommendation: recommending(billing),
+        pinned: true,
+        keptOver: [],
+      }),
+    ).toBe(dispatch);
+  });
+
+  it("asks the agent already chosen over one the person turned down", () => {
+    expect(
+      agentToAsk({
+        agent: dispatch,
+        recommendation: recommending(billing),
+        pinned: false,
+        keptOver: [billing.id],
+      }),
     ).toBe(dispatch);
   });
 
   it("asks the agent already chosen when nothing fits better", () => {
-    expect(agentToAsk({ agent: dispatch, recommendation: null, chosen: false })).toBe(dispatch);
+    expect(agentToAsk({ agent: dispatch, recommendation: null, pinned: false, keptOver: [] })).toBe(
+      dispatch,
+    );
     expect(
-      agentToAsk({ agent: dispatch, recommendation: recommending(dispatch, true), chosen: false }),
+      agentToAsk({
+        agent: dispatch,
+        recommendation: recommending(dispatch, true),
+        pinned: false,
+        keptOver: [],
+      }),
     ).toBe(dispatch);
   });
 });

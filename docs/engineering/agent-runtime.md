@@ -1081,13 +1081,14 @@ No model is asked: the match costs one embedding at most and works the same on a
 self-hosted install with a small model. The browser asks once typing pauses
 (`use-agent-recommendation.ts`) and names a better fit in a small note floating just
 above the box, where the terms reminder sits, with Switch and a cross that keeps the
-agent chosen. Until the
-person chooses, from the picker or from that offer, a question sent goes to the
-better fit; one sent before its match came back waits at most 1.5 seconds for it
-and otherwise goes to the agent already chosen (`agentToAsk` in
-`agent-recommendation-state.ts`). Once they choose, nothing more is asked or
-suggested for that question, however it grows; clearing the box starts the next one
-afresh. The query key holds the person's words, so it is
+agent chosen. Unless the person picked an agent from the picker, a question sent
+goes to the better fit; one sent before its match came back waits at most 1.5
+seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
+`agent-recommendation-state.ts`). The browser keeps asking as the question changes,
+so a new question the agent switched to cannot manage is offered again; the server
+rule above keeps a switch from drawing a second suggestion for the words it was
+made for. The cross turns down only the agent it was used on, and clearing the box
+forgets the pick and the agents turned down. The query key holds the person's words, so it is
 never added to `SHELL_QUERIES`.
 
 ### Steering and the queue
