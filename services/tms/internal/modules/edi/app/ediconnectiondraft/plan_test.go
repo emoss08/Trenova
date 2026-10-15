@@ -297,17 +297,18 @@ func TestPlan_HoldsALowConfidenceValue(t *testing.T) {
 	t.Parallel()
 
 	req := acmeRequest(t)
-	req.Values[5].Confidence = 0.55
+	req.Values[1].Confidence = 0.55
 
 	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	timezone := valueOf(t, draft.Partner.Fields, fieldPartnerTimezone)
-	assert.Equal(t, ediports.ValueStatusHeld, timezone.Status)
-	assert.Empty(t, timezone.Value, "a held value is never written")
-	assert.Contains(t, timezone.Reason, "Confidence 0.55")
+	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
+	assert.Equal(t, ediports.ValueStatusHeld, name.Status)
+	assert.Empty(t, name.Value, "a held value is never written")
+	assert.Contains(t, name.Reason, "Confidence 0.55")
 	require.Len(t, draft.Decisions, 1)
-	assert.Equal(t, fieldPartnerTimezone, draft.Decisions[0].Field)
+	assert.Equal(t, fieldPartnerName, draft.Decisions[0].Field)
+	assert.Contains(t, draft.Blockers, "Decide partner name")
 	assert.False(t, draft.Ready)
 }
 

@@ -457,13 +457,25 @@ func (p *planner) buildInterchange() {
 	p.draft.Interchange = p.fields(keys...)
 }
 
-func (p *planner) envelope(direction edi.DocumentDirection) edi.X12EnvelopeSettings {
+func (p *planner) envelope(
+	direction edi.DocumentDirection,
+	existing *edi.EDIPartnerDocumentProfile,
+) edi.X12EnvelopeSettings {
 	envelope := edi.DefaultX12EnvelopeSettings()
 	set := func(target *string, key string) {
 		if value, ok := p.usable(key); ok {
 			*target = value
 		} else {
 			*target = ""
+		}
+	}
+	if existing != nil {
+		envelope = existing.Envelope
+		set = func(target *string, key string) {
+			if value, ok := p.values[key]; ok &&
+				value.Status == ediports.ValueStatusAccepted && value.Value != "" {
+				*target = value.Value
+			}
 		}
 	}
 	partnerQualifier, partnerID := &envelope.InterchangeReceiverQualifier,
