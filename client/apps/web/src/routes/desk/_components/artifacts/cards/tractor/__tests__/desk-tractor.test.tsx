@@ -156,14 +156,25 @@ const EVERYTHING = {
 function draw(props: Partial<Parameters<typeof DeskTractor>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <DeskTractor recordId="tr_1" order={["tr_0", "tr_1", "tr_2"]} {...handlers} {...props} />
+        <DeskTractor
+          recordId="tr_1"
+          order={["tr_0", "tr_1", "tr_2"]}
+          {...handlers}
+          {...props}
+          {...more}
+        />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -192,6 +203,19 @@ afterEach(() => {
 });
 
 describe("DeskTractor", () => {
+  it("draws the next tractor's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "2022 Freightliner Cascadia", level: 2 });
+
+    fetchers.tractor.mockReturnValue(new Promise(() => {}));
+    step("tr_0");
+
+    expect(
+      screen.queryByRole("heading", { name: "2022 Freightliner Cascadia", level: 2 }),
+    ).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the tractor is read, then draws what it is and where", async () => {
     const { container } = draw();
 

@@ -84,7 +84,7 @@ function route(overrides: Routes = {}) {
 function draw(props: Partial<Parameters<typeof DeskEdiMessage>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <DeskEdiMessage
@@ -92,11 +92,17 @@ function draw(props: Partial<Parameters<typeof DeskEdiMessage>[0]> = {}) {
           order={["edimsg_0", "edimsg_1"]}
           {...handlers}
           {...props}
+          {...more}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -124,6 +130,17 @@ afterEach(() => {
 });
 
 describe("DeskEdiMessage", () => {
+  it("draws the next message's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Shipment status", level: 2 });
+
+    server.get.mockReturnValue(new Promise(() => {}));
+    step("edimsg_0");
+
+    expect(screen.queryByRole("heading", { name: "Shipment status", level: 2 })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the message is read, then draws where it went and what it says", async () => {
     const { container } = draw();
 
