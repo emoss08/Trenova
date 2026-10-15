@@ -20,17 +20,15 @@ type identityHints struct {
 }
 
 func (e *evidence) hint(field string) string {
-	for _, c := range e.byField[field] {
-		if c.status == ediports.ValueStatusAccepted {
-			return c.value
-		}
+	spec, ok := fieldCatalog[field]
+	if !ok {
+		return ""
 	}
-	if resolution, ok := e.resolutions[field]; ok {
-		if normalized, err := fieldCatalog[field].normalize(resolution.Value); err == nil {
-			return normalized
-		}
+	settled := resolveField(spec, e, "", nil, false)
+	if settled.Status != ediports.ValueStatusAccepted {
+		return ""
 	}
-	return ""
+	return settled.Value
 }
 
 func (e *evidence) hints() *identityHints {

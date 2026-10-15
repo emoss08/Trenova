@@ -149,12 +149,12 @@ func TestApply_RefusesWhatThePersonDidNotApprove(t *testing.T) {
 			request: func() *ediports.ApplyConnectionDraftRequest {
 				held := acmeRequest(t)
 				held.Document = req.Document
-				held.Values[5].Confidence = 0.4
+				held.Values[1].Confidence = 0.4
 				return &ediports.ApplyConnectionDraftRequest{
 					Draft: held, ExpectedDocumentDigest: digest, Actor: approver(held),
 				}
 			},
-			contains: "Decide time zone",
+			contains: "Decide partner name",
 		},
 	}
 	for name, tc := range cases {
