@@ -5,6 +5,7 @@ fragment FactoringRemittanceFields on FactoringRemittance {
   fileName
   source
   inboundMessageId
+  senderEmail
   sourceFormat
   status
   defaultKind

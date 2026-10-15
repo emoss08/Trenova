@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -334,8 +335,11 @@ func (f *fakeRemitFactors) FindByEmail(
 	req factoringcompanyports.FindFactoringCompaniesByEmailRequest,
 ) (*factoringcompanyports.FactoringCompaniesByEmail, error) {
 	found := &factoringcompanyports.FactoringCompaniesByEmail{}
-	if req.Address == f.factor.Email {
+	switch {
+	case req.Address == f.factor.Email:
 		found.Exact = append(found.Exact, f.factor)
+	case emailutils.Domain(req.Address) == emailutils.Domain(f.factor.Email):
+		found.ByDomain = append(found.ByDomain, f.factor)
 	}
 	return found, nil
 }
@@ -425,11 +429,11 @@ func newRemittanceHarness(t *testing.T) *remittanceHarness {
 		})
 	}
 	h.funded = &factoring.SubmissionItem{
-		ID:                  pulid.MustNew("facsit_"),
-		SubmissionID:        h.subB,
-		InvoiceNumber:       "INV-050",
-		Status:              factoring.SubmissionItemStatusFunded,
-		FundedOn:            &funded,
+		ID:                   pulid.MustNew("facsit_"),
+		SubmissionID:         h.subB,
+		InvoiceNumber:        "INV-050",
+		Status:               factoring.SubmissionItemStatusFunded,
+		FundedOn:             &funded,
 		AdvanceMinor:         new(int64(45_000)),
 		FeeMinor:             new(int64(1_500)),
 		ReserveMinor:         new(int64(3_500)),
@@ -598,6 +602,18 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, factoring.RemittanceStatusParsed, again.Status,
 		"the factor's next file stages on the saved layout")
+
+	reordered := h.create(t)
+	reorderedDoc := h.upload(reordered, "odd-3.csv", "Wire Dt,Ref,Paid Out\n2027-01-15,INV-100,900.00\n")
+	moved, err := h.svc.Stage(t.Context(), &factoringports.StageRemittanceRequest{
+		TenantInfo: h.tenantInfo,
+		ID:         reordered.ID,
+		Version:    reordered.Version,
+		DocumentID: reorderedDoc,
+	}, h.actor)
+	require.NoError(t, err)
+	assert.Equal(t, factoring.RemittanceStatusNeedsMapping, moved.Status,
+		"a file whose headers differ from the saved layout is mapped again, not read by old positions")
 }
 
 func TestRemittancePdfWithoutAModelFails(t *testing.T) {
@@ -775,10 +791,41 @@ func TestRemittanceIngestEmailFindsTheFactorAndIsIdempotent(t *testing.T) {
 	assert.Equal(t, factoring.RemittanceSourceEmail, rem.Source)
 	assert.Equal(t, factoring.RemittanceStatusParsed, rem.Status)
 	assert.Equal(t, messageID, rem.InboundMessageID)
+	assert.Equal(t, h.factor.Email, rem.SenderEmail, "the remittance records who sent it")
 
 	again, err := h.svc.IngestEmail(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, ingested.RemittanceIDs, again.RemittanceIDs, "a retried message opens nothing twice")
+}
+
+func TestRemittanceIngestEmailIgnoresAPublicMailDomain(t *testing.T) {
+	t.Parallel()
+	h := newRemittanceHarness(t)
+	h.factor.Email = "rtsfunding@gmail.com"
+	messageID := pulid.MustNew("inmsg_")
+	docID := pulid.MustNew("doc_")
+	h.documents.docs[docID] = &document.Document{
+		ID:           docID,
+		OriginalName: "remit.csv",
+		FileSize:     int64(len(standardRemittance)),
+		ResourceType: inboundmessage.AttachmentResourceType,
+		ResourceID:   messageID.String(),
+	}
+	h.documents.contents[docID] = []byte(standardRemittance)
+
+	stranger, err := h.svc.IngestEmail(t.Context(), &factoringports.IngestRemittanceEmailRequest{
+		TenantInfo:       h.tenantInfo,
+		InboundMessageID: messageID,
+		FromAddress:      "anyone@gmail.com",
+		ReceivedAt:       testNow,
+		Attachments: []factoringports.RemittanceEmailAttachment{
+			{DocumentID: docID, FileName: "remit.csv", ContentType: "text/csv"},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, intakeNoFactor, stranger.Problem,
+		"a shared mail service's domain does not identify the factor")
+	assert.Empty(t, stranger.RemittanceIDs)
 }
 
 type fakeRemitContent struct {
@@ -903,4 +950,18 @@ func TestRemittancePdfStillUnreadWhenTheWaitEndsFails(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, factoring.RemittanceStatusFailed, gaveUp.Remittance.Status)
 	assert.Equal(t, problemPdfSlow, gaveUp.Remittance.Error)
+}
+
+func TestStepErrorKeepsTheRefusedField(t *testing.T) {
+	t.Parallel()
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add("items[2].advanceMinor", errortypes.ErrInvalid,
+		"The advance and fee for invoice {0} come to more than the invoice", "INV-7")
+
+	var business *errortypes.BusinessError
+	require.ErrorAs(t, stepError(multiErr), &business)
+	assert.Equal(t, "The advance and fee for invoice {0} come to more than the invoice", business.Message)
+	assert.Equal(t, []any{"INV-7"}, business.Args)
+	assert.Equal(t, "items[2].advanceMinor", business.Params["field"])
 }

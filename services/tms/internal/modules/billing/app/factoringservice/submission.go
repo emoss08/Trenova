@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"slices"
 	"strconv"
 	"strings"
@@ -40,7 +41,10 @@ const (
 	maxPlanProblemsInError  = 10
 	submissionResource      = permission.ResourceFactoringSubmission
 	submissionRealtimeEvent = "updated"
+	sendNotStarted          = "The schedule could not be handed to the sender; retry it"
 )
+
+var errSendUnavailable = errors.New("factoring schedule sending is not available in this process")
 
 type SubmissionParams struct {
 	fx.In
@@ -408,8 +412,7 @@ func (s *SubmissionService) Submit(
 	})
 	s.rec.publish(ctx, submissionResource, created, actor, "created")
 	s.requestInvoices(ctx, req.TenantInfo, created)
-	s.startSend(ctx, req.TenantInfo, created)
-	return created, nil
+	return s.startSend(ctx, req.TenantInfo, created), nil
 }
 
 func (s *SubmissionService) PlanRetry(
@@ -465,8 +468,7 @@ func (s *SubmissionService) Retry(
 		comment:  "Schedule " + updated.Number + " sent again to " + updated.TransportTarget,
 	})
 	s.rec.publish(ctx, submissionResource, updated, actor, submissionRealtimeEvent)
-	s.startSend(ctx, req.TenantInfo, updated)
-	return updated, nil
+	return s.startSend(ctx, req.TenantInfo, updated), nil
 }
 
 func (s *SubmissionService) PlanCancel(
@@ -527,11 +529,13 @@ func (s *SubmissionService) loadForAction(
 	if err != nil {
 		return nil, err
 	}
-	if current.Version != req.Version {
-		return nil, errortypes.NewConflictError(
-			"Schedule {0} changed since you opened it; reload and try again",
-			current.Number,
-		)
+	if err = requireVersion(
+		current.Version,
+		req.Version,
+		scheduleChanged,
+		current.Number,
+	); err != nil {
+		return nil, err
 	}
 	return current, nil
 }
@@ -607,13 +611,37 @@ func (s *SubmissionService) startSend(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sub *factoring.Submission,
-) {
-	if s.starter == nil {
-		s.l.Warn("factoring schedule sending is not available in this process",
-			zap.String("submissionId", sub.ID.String()))
-		return
+) *factoring.Submission {
+	err := errSendUnavailable
+	if s.starter != nil {
+		err = s.starter.StartSend(ctx, tenantInfo, sub)
 	}
-	s.starter.StartSend(ctx, tenantInfo, sub)
+	if err == nil {
+		return sub
+	}
+	s.l.Error("a factoring schedule could not be handed to the sender",
+		zap.String("submissionId", sub.ID.String()),
+		zap.Error(err))
+	if err = s.MarkFailed(ctx, &factoringports.FailSubmissionRequest{
+		TenantInfo:   tenantInfo,
+		SubmissionID: sub.ID,
+		Group:        sub.SendAttemptGroup,
+		Attempts:     sub.Attempts,
+		Cause:        sendNotStarted,
+	}); err != nil {
+		s.l.Error("could not mark an unsent factoring schedule failed",
+			zap.String("submissionId", sub.ID.String()),
+			zap.Error(err))
+		return sub
+	}
+	failed, err := s.repo.GetByID(ctx, factoringports.GetSubmissionRequest{
+		ID:         sub.ID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return sub
+	}
+	return failed
 }
 
 func (s *SubmissionService) publishEvent(

@@ -141,11 +141,8 @@ func (s *LedgerService) loadScope(
 	if err != nil {
 		return nil, err
 	}
-	if sub.Version != version {
-		return nil, errortypes.NewConflictError(
-			"Schedule {0} changed since you opened it; reload and try again",
-			sub.Number,
-		)
+	if err = requireVersion(sub.Version, version, scheduleChanged, sub.Number); err != nil {
+		return nil, err
 	}
 	agreement, err := s.agreements.GetByID(ctx, factoringports.GetAgreementRequest{
 		ID:         sub.AgreementID,

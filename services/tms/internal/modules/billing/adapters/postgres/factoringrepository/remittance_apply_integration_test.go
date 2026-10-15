@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +52,19 @@ func minorText(minor int64) string {
 	return strconv.FormatInt(minor/100, 10) + "." + strconv.FormatInt(100+minor%100, 10)[1:]
 }
 
-func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
+type remittanceApplyEnv struct {
+	*ledgerEnv
+	svc         factoringports.RemittanceService
+	remittances factoringports.RemittanceRepository
+	files       *remittanceFiles
+	actor       *permissionports.RequestActor
+	factor      *factoringcompany.FactoringCompany
+	sub         *factoring.Submission
+	now         int64
+}
+
+func setupRemittanceApplyEnv(t *testing.T, code string) *remittanceApplyEnv {
+	t.Helper()
 	e := setupLedgerEnv(t)
 	actor := testutil.NewSessionActor(e.userID, e.tenantInfo.OrgID, e.tenantInfo.BuID)
 	now := time.Now().Unix()
@@ -71,7 +85,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		Logger:      zap.NewNop(),
 	})
 
-	factor := e.createFactor(t, "FRAP")
+	factor := e.createFactor(t, code)
 	terms := e.agreement(factor.ID, now-3600, nil)
 	terms.DueFromFactorAccountID = e.accounts.DueFromFactor
 	terms.FeeExpenseAccountID = e.accounts.FeeExpense
@@ -80,41 +94,75 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	require.NoError(t, err)
 	first := e.postInvoice(t, 100000, &factor.ID)
 	second := e.postInvoice(t, 60000, &factor.ID)
-	sub, err := e.submissions.Create(e.ctx, e.submission(agreement, "FS-RA1", "key-ra1", first, second))
+	sub, err := e.submissions.Create(
+		e.ctx,
+		e.submission(agreement, "FS-"+code, "key-"+code, first, second),
+	)
 	require.NoError(t, err)
 	require.NoError(t, sub.MarkSent(now-86400, "", 1))
 	sub, err = e.submissions.Update(e.ctx, sub)
 	require.NoError(t, err)
 
-	rem, err := svc.Create(e.ctx, &factoringports.CreateRemittanceRequest{
-		TenantInfo:         e.tenantInfo,
-		FactoringCompanyID: factor.ID,
-	}, actor)
+	return &remittanceApplyEnv{
+		ledgerEnv:   e,
+		svc:         svc,
+		remittances: remittances,
+		files:       files,
+		actor:       actor,
+		factor:      factor,
+		sub:         sub,
+		now:         now,
+	}
+}
+
+func (r *remittanceApplyEnv) stage(
+	t *testing.T,
+	kind factoring.RemittanceLineKind,
+	csv string,
+) *factoring.Remittance {
+	t.Helper()
+	rem, err := r.svc.Create(r.ctx, &factoringports.CreateRemittanceRequest{
+		TenantInfo:         r.tenantInfo,
+		FactoringCompanyID: r.factor.ID,
+		DefaultKind:        kind,
+	}, r.actor)
 	require.NoError(t, err)
 
-	csv := "Invoice Number,Advance Amount,Date\n"
-	for _, item := range sub.Items {
-		csv += item.InvoiceNumber + "," + minorText(item.ExpectedAdvanceMinor) + "," +
-			time.Unix(now, 0).UTC().Format("2006-01-02") + "\n"
-	}
 	docID := pulid.MustNew("doc_")
-	files.docs[docID] = &document.Document{
+	r.files.docs[docID] = &document.Document{
 		ID:           docID,
-		OriginalName: "frap.csv",
+		OriginalName: "remittance.csv",
 		FileSize:     int64(len(csv)),
 		ResourceType: factoring.RemittanceDocumentResourceType,
 		ResourceID:   rem.ID.String(),
 	}
-	files.contents[docID] = []byte(csv)
+	r.files.contents[docID] = []byte(csv)
 
-	staged, err := svc.Stage(e.ctx, &factoringports.StageRemittanceRequest{
-		TenantInfo: e.tenantInfo,
+	staged, err := r.svc.Stage(r.ctx, &factoringports.StageRemittanceRequest{
+		TenantInfo: r.tenantInfo,
 		ID:         rem.ID,
 		Version:    rem.Version,
 		DocumentID: docID,
-	}, actor)
+	}, r.actor)
 	require.NoError(t, err)
 	require.Equal(t, factoring.RemittanceStatusParsed, staged.Status, staged.Error)
+	return staged
+}
+
+func (r *remittanceApplyEnv) day() string {
+	return time.Unix(r.now, 0).UTC().Format("2006-01-02")
+}
+
+func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
+	r := setupRemittanceApplyEnv(t, "FRAP")
+	e, svc, actor, sub, remittances := r.ledgerEnv, r.svc, r.actor, r.sub, r.remittances
+
+	csv := "Invoice Number,Advance Amount,Date\n"
+	for _, item := range sub.Items {
+		csv += item.InvoiceNumber + "," + minorText(item.ExpectedAdvanceMinor) + "," + r.day() + "\n"
+	}
+	staged := r.stage(t, factoring.RemittanceLineFunding, csv)
+	rem := staged
 	assert.Equal(t, 2, staged.MatchedCount)
 
 	plan, err := svc.PlanApply(e.ctx, &factoringports.RemittanceVersionRequest{
@@ -167,4 +215,39 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		Version:    applied.Remittance.Version,
 	}, actor)
 	require.Error(t, err, "an applied remittance books nothing twice")
+}
+
+func TestRemittanceAppliesAReleaseOfAnEmptyReserve(t *testing.T) {
+	r := setupRemittanceApplyEnv(t, "FRZR")
+	item := r.sub.Items[0]
+	advance := item.FaceMinor - item.ExpectedFeeMinor
+	fee := item.ExpectedFeeMinor
+	funded, err := r.ledgerEnv.svc.RecordFunding(r.ctx, &factoringports.RecordFundingRequest{
+		TenantInfo:   r.tenantInfo,
+		SubmissionID: r.sub.ID,
+		Version:      r.sub.Version,
+		FundedOn:     r.now,
+		Items: []factoringports.FundingItemInput{{
+			ItemID:       item.ID,
+			Outcome:      factoring.FundingOutcomeFunded,
+			AdvanceMinor: &advance,
+			FeeMinor:     &fee,
+		}},
+	}, r.actor)
+	require.NoError(t, err)
+	require.Len(t, funded.Entries, 1)
+
+	staged := r.stage(t, factoring.RemittanceLineReserveRelease,
+		"Invoice Number,Cash,Date\n"+item.InvoiceNumber+",0.00,"+r.day()+"\n")
+	require.Equal(t, 1, staged.MatchedCount, "a zero release matches the zero reserve held")
+
+	applied, err := r.svc.Apply(r.ctx, &factoringports.RemittanceVersionRequest{
+		TenantInfo: r.tenantInfo,
+		ID:         staged.ID,
+		Version:    staged.Version,
+	}, r.actor)
+	require.NoError(t, err, "a release that books nothing still settles the line")
+	assert.Equal(t, factoring.RemittanceStatusApplied, applied.Remittance.Status)
+	assert.Empty(t, applied.Entries, "an empty reserve books no journal")
+	assert.Zero(t, r.unbalancedEntries(t))
 }

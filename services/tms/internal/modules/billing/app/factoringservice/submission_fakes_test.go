@@ -3,6 +3,7 @@ package factoringservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"slices"
 	"sync"
@@ -290,8 +291,9 @@ func (f *fakeTemplates) RenderMessage(
 }
 
 type fakeDocumentStore struct {
-	mu     sync.Mutex
-	stored map[pulid.ID]*documentports.StoreDocumentRequest
+	mu       sync.Mutex
+	stored   map[pulid.ID]*documentports.StoreDocumentRequest
+	failName string
 }
 
 func (f *fakeDocumentStore) Store(
@@ -300,6 +302,9 @@ func (f *fakeDocumentStore) Store(
 ) (*document.Document, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.failName != "" && req.FileName == f.failName {
+		return nil, errors.New("storage refused " + req.FileName)
+	}
 	id := pulid.MustNew("doc_")
 	f.stored[id] = req
 	return &document.Document{ID: id}, nil
@@ -401,10 +406,19 @@ func (f *fakeSender) Test(context.Context, *factoringports.TransportTestRequest)
 
 type fakeStarter struct {
 	started []*factoring.Submission
+	err     error
 }
 
-func (f *fakeStarter) StartSend(_ context.Context, _ pagination.TenantInfo, sub *factoring.Submission) {
+func (f *fakeStarter) StartSend(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	sub *factoring.Submission,
+) error {
+	if f.err != nil {
+		return f.err
+	}
 	f.started = append(f.started, cloneSubmission(sub))
+	return nil
 }
 
 type fakeRequester struct {

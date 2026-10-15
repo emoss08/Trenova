@@ -249,10 +249,7 @@ func (r *remittanceRepository) scope(
 ) *bun.SelectQuery {
 	cols := factoringcol.RemittanceColumns
 	if term != "" {
-		q = q.Where(
-			cols.FileName.Qualified()+" ILIKE ?",
-			"%"+stringutils.EscapeLikePattern(term)+"%",
-		)
+		q = q.Where(cols.FileName.ILike(), "%"+stringutils.EscapeLikePattern(term)+"%")
 	}
 	if !req.FactoringCompanyID.IsNil() {
 		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
@@ -347,10 +344,11 @@ func (r *remittanceRepository) ReplaceLines(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		dba := r.db.DBForContext(ctx)
 		cols := factoringcol.RemittanceLineColumns
-		if _, err := dba.NewDelete().
-			Model((*factoring.RemittanceLine)(nil)).
-			Where(cols.OrganizationID.Eq(), remittance.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), remittance.BusinessUnitID).
+		del := dba.NewDelete().Model((*factoring.RemittanceLine)(nil))
+		if _, err := factoringcol.RemittanceLineScopeTenantDelete(del, pagination.TenantInfo{
+			OrgID: remittance.OrganizationID,
+			BuID:  remittance.BusinessUnitID,
+		}).
 			Where(cols.RemittanceID.Eq(), remittance.ID).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("clear factoring remittance lines: %w", err)
@@ -570,10 +568,10 @@ func (r *remittanceRepository) SaveProfile(
 		if _, err := r.db.DBForContext(ctx).NewInsert().
 			Model(profile).
 			On("CONFLICT (organization_id, business_unit_id, factoring_company_id) DO UPDATE").
-			Set(cols.Mapping.Bare() + " = EXCLUDED." + cols.Mapping.Bare()).
-			Set(cols.HeaderSignature.Bare() + " = EXCLUDED." + cols.HeaderSignature.Bare()).
-			Set(cols.Version.Bare() + " = " + factoringcol.RemittanceProfileTable.Alias + "." + cols.Version.Bare() + " + 1").
-			Set(cols.UpdatedAt.Bare() + " = EXCLUDED." + cols.UpdatedAt.Bare()).
+			Set(cols.Mapping.SetExcluded()).
+			Set(cols.HeaderSignature.SetExcluded()).
+			Set(cols.Version.IncConflict(1)).
+			Set(cols.UpdatedAt.SetExcluded()).
 			Returning("*").
 			Exec(ctx); err != nil {
 			return fmt.Errorf("save factoring remittance profile: %w", err)

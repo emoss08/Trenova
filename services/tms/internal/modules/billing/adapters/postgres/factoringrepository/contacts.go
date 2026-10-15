@@ -29,8 +29,10 @@ func (r *invoiceStateRepository) ListShipmentContacts(
 			}
 			dba := r.db.DBForContext(ctx)
 			inShipments := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("?.shipment_id IN (?)",
-					bun.Ident(moveRelationAlias), bun.List(req.ShipmentIDs))
+				return sq.Where(
+					shipmentcol.ShipmentMoveColumns.ShipmentID.WithAlias(moveRelationAlias).In(),
+					bun.List(req.ShipmentIDs),
+				)
 			}
 
 			assignments := make([]*shipment.Assignment, 0, len(req.ShipmentIDs))

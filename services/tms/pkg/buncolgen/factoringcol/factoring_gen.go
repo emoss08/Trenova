@@ -1126,6 +1126,7 @@ var RemittanceColumns = struct {
 	FileName           buncolgen.Column // "file_name" → qualified: "facrem.file_name"
 	Source             buncolgen.Column // "source" → qualified: "facrem.source"
 	InboundMessageID   buncolgen.Column // "inbound_message_id" → qualified: "facrem.inbound_message_id"
+	SenderEmail        buncolgen.Column // "sender_email" → qualified: "facrem.sender_email"
 	SourceFormat       buncolgen.Column // "source_format" → qualified: "facrem.source_format"
 	Status             buncolgen.Column // "status" → qualified: "facrem.status"
 	DefaultKind        buncolgen.Column // "default_kind" → qualified: "facrem.default_kind"
@@ -1158,6 +1159,7 @@ var RemittanceColumns = struct {
 	FileName:           buncolgen.NewColumn("file_name", "facrem"),
 	Source:             buncolgen.NewColumn("source", "facrem"),
 	InboundMessageID:   buncolgen.NewColumn("inbound_message_id", "facrem"),
+	SenderEmail:        buncolgen.NewColumn("sender_email", "facrem"),
 	SourceFormat:       buncolgen.NewColumn("source_format", "facrem"),
 	Status:             buncolgen.NewColumn("status", "facrem"),
 	DefaultKind:        buncolgen.NewColumn("default_kind", "facrem"),
@@ -1196,6 +1198,7 @@ var RemittanceFieldMap = map[string]string{
 	"fileName":           "file_name",
 	"source":             "source",
 	"inboundMessageId":   "inbound_message_id",
+	"senderEmail":        "sender_email",
 	"sourceFormat":       "source_format",
 	"status":             "status",
 	"defaultKind":        "default_kind",
@@ -1232,6 +1235,7 @@ var RemittanceInsertableColumns = []string{
 	"file_name",
 	"source",
 	"inbound_message_id",
+	"sender_email",
 	"source_format",
 	"status",
 	"default_kind",
@@ -1328,6 +1332,7 @@ var RemittanceFilter = struct {
 	FileName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
 	Source             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
 	InboundMessageID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundMessageId" → DB: "inbound_message_id"
+	SenderEmail        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "senderEmail" → DB: "sender_email"
 	SourceFormat       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceFormat" → DB: "source_format"
 	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	DefaultKind        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultKind" → DB: "default_kind"
@@ -1375,6 +1380,9 @@ var RemittanceFilter = struct {
 	},
 	InboundMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("inboundMessageId", op, value)
+	},
+	SenderEmail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("senderEmail", op, value)
 	},
 	SourceFormat: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("sourceFormat", op, value)
