@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -348,6 +349,10 @@ func (p *integrationPermCacheRepo) InvalidateByRole(
 	return nil
 }
 
+func (p *integrationPermCacheRepo) Epoch(context.Context, pulid.ID) (int64, error) {
+	return 0, nil
+}
+
 func (p *integrationPermCacheRepo) InvalidateOrganization(
 	ctx context.Context,
 	orgID pulid.ID,
@@ -597,7 +602,7 @@ func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {
 		l:          zap.NewNop().Named("test.role-service"),
 		roleRepo:   roleRepo,
 		rbacRepo:   &rbactest.Repository{},
-		permCache:  cacheRepo,
+		notifier:   &permchangetest.Recorder{},
 		permEngine: permEngine,
 		validator: &Validator{
 			validator: validationframework.

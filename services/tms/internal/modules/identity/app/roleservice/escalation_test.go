@@ -179,7 +179,6 @@ func TestUpsertRoleHierarchyEdge_AllowsWhatTheActorHolds(t *testing.T) {
 
 	deps.roleRepo.On("GetByID", ctx, roleLookup(senior.ID)).Return(senior, nil)
 	deps.roleRepo.On("GetByID", ctx, roleLookup(junior.ID)).Return(junior, nil)
-	deps.permCache.On("InvalidateByRole", ctx, senior.ID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.UpsertRoleHierarchyEdge(ctx, &UpsertHierarchyEdgeRequest{
 		ActorID:        actorID,
@@ -321,7 +320,6 @@ func TestUpdateRole_IgnoresFieldsTheEditorDoesNotOwn(t *testing.T) {
 	deps.roleRepo.On("Update", ctx, mock.Anything).Run(func(args mock.Arguments) {
 		written = args.Get(1).(*permission.Role)
 	}).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, existing.ID, deps.roleRepo).Return(nil)
 
 	require.NoError(t, deps.svc.UpdateRole(ctx, UpdateRoleRequest{
 		ActorID:        actorID,

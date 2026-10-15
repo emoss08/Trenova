@@ -350,7 +350,11 @@ func (h *Handler) deleteHierarchy(c *gin.Context) {
 
 	if err = h.service.DeleteRoleHierarchyEdge(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		edgeID,
 	); err != nil {
 		h.eh.HandleError(c, err)
@@ -436,7 +440,11 @@ func (h *Handler) deleteConstraint(c *gin.Context) {
 
 	if err = h.service.DeleteRoleConstraint(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		constraintID,
 	); err != nil {
 		h.eh.HandleError(c, err)
@@ -591,7 +599,11 @@ func (h *Handler) deletePermission(c *gin.Context) {
 
 	err = h.service.DeleteResourcePermission(
 		c.Request.Context(),
-		authCtx.OrganizationID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		permID,
 		roleID,
 	)
@@ -672,6 +684,7 @@ func (h *Handler) unassignRole(c *gin.Context) {
 	err = h.service.UnassignRole(c.Request.Context(), roleservice.UnassignRoleRequest{
 		ActorID:        authCtx.UserID,
 		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
 		AssignmentID:   assignmentID,
 	})
 	if err != nil {

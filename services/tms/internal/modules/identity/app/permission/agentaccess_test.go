@@ -121,13 +121,18 @@ type memoryPermissionCache struct {
 	permissionports.PermissionCacheRepository
 
 	entries map[permissionports.PermissionCacheKey]*permissionports.CachedPermissions
+	epoch   int64
 }
 
 func (c *memoryPermissionCache) Get(
 	_ context.Context,
 	key permissionports.PermissionCacheKey,
 ) (*permissionports.CachedPermissions, error) {
-	return c.entries[key], nil
+	entry := c.entries[key]
+	if entry == nil || entry.Epoch != c.epoch {
+		return nil, nil
+	}
+	return entry, nil
 }
 
 func (c *memoryPermissionCache) Set(
@@ -140,8 +145,12 @@ func (c *memoryPermissionCache) Set(
 	return nil
 }
 
+func (c *memoryPermissionCache) Epoch(context.Context, pulid.ID) (int64, error) {
+	return c.epoch, nil
+}
+
 func (c *memoryPermissionCache) invalidate() {
-	clear(c.entries)
+	c.epoch++
 }
 
 func restrictedAgent() *agentdefinition.Definition {

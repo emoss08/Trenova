@@ -44,6 +44,8 @@ func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) permissionports
 	}
 }
 
+const testEpoch int64 = 7
+
 func setupTestEngine(
 	t *testing.T,
 ) (*engine, *permissionportsmock.MockRoleRepository, *permissionportsmock.MockPermissionCacheRepository, *tenantportsmock.MockUserRepository) {
@@ -51,6 +53,7 @@ func setupTestEngine(
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
+	cacheRepo.On("Epoch", mock.Anything, mock.Anything).Return(testEpoch, nil).Maybe()
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 

@@ -171,37 +171,45 @@ func (_c *MockPermissionCacheRepository_Get_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// InvalidateByRole provides a mock function for the type MockPermissionCacheRepository
-func (_mock *MockPermissionCacheRepository) InvalidateByRole(ctx context.Context, roleID pulid.ID, roleRepo permissionports.RoleRepository) error {
-	ret := _mock.Called(ctx, roleID, roleRepo)
+// Epoch provides a mock function for the type MockPermissionCacheRepository
+func (_mock *MockPermissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, orgID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for InvalidateByRole")
+		panic("no return value specified for Epoch")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, permissionports.RoleRepository) error); ok {
-		r0 = returnFunc(ctx, roleID, roleRepo)
-	} else {
-		r0 = ret.Error(0)
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, orgID)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, orgID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockPermissionCacheRepository_InvalidateByRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InvalidateByRole'
-type MockPermissionCacheRepository_InvalidateByRole_Call struct {
+// MockPermissionCacheRepository_Epoch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Epoch'
+type MockPermissionCacheRepository_Epoch_Call struct {
 	*mock.Call
 }
 
-// InvalidateByRole is a helper method to define mock.On call
+// Epoch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - roleID pulid.ID
-//   - roleRepo repositories.RoleRepository
-func (_e *MockPermissionCacheRepository_Expecter) InvalidateByRole(ctx any, roleID any, roleRepo any) *MockPermissionCacheRepository_InvalidateByRole_Call {
-	return &MockPermissionCacheRepository_InvalidateByRole_Call{Call: _e.mock.On("InvalidateByRole", ctx, roleID, roleRepo)}
+//   - orgID pulid.ID
+func (_e *MockPermissionCacheRepository_Expecter) Epoch(ctx any, orgID any) *MockPermissionCacheRepository_Epoch_Call {
+	return &MockPermissionCacheRepository_Epoch_Call{Call: _e.mock.On("Epoch", ctx, orgID)}
 }
 
-func (_c *MockPermissionCacheRepository_InvalidateByRole_Call) Run(run func(ctx context.Context, roleID pulid.ID, roleRepo permissionports.RoleRepository)) *MockPermissionCacheRepository_InvalidateByRole_Call {
+func (_c *MockPermissionCacheRepository_Epoch_Call) Run(run func(ctx context.Context, orgID pulid.ID)) *MockPermissionCacheRepository_Epoch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -211,25 +219,20 @@ func (_c *MockPermissionCacheRepository_InvalidateByRole_Call) Run(run func(ctx 
 		if args[1] != nil {
 			arg1 = args[1].(pulid.ID)
 		}
-		var arg2 permissionports.RoleRepository
-		if args[2] != nil {
-			arg2 = args[2].(permissionports.RoleRepository)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_InvalidateByRole_Call) Return(err error) *MockPermissionCacheRepository_InvalidateByRole_Call {
-	_c.Call.Return(err)
+func (_c *MockPermissionCacheRepository_Epoch_Call) Return(n int64, err error) *MockPermissionCacheRepository_Epoch_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockPermissionCacheRepository_InvalidateByRole_Call) RunAndReturn(run func(ctx context.Context, roleID pulid.ID, roleRepo permissionports.RoleRepository) error) *MockPermissionCacheRepository_InvalidateByRole_Call {
+func (_c *MockPermissionCacheRepository_Epoch_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (int64, error)) *MockPermissionCacheRepository_Epoch_Call {
 	_c.Call.Return(run)
 	return _c
 }

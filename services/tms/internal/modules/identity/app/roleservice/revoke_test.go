@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,7 +34,6 @@ func TestRevokeOrganizationRoles_DeletesInThatOrganizationsScopeAndAudits(t *tes
 
 	deps.roleRepo.On("DeleteUserAssignments", scopedTo(orgID, buID), userID, orgID).
 		Return(deleted, nil).Once()
-	deps.permEngine.On("InvalidateUser", scopedTo(orgID, buID), userID, orgID).Return(nil).Once()
 
 	require.NoError(t, deps.svc.RevokeOrganizationRoles(t.Context(), RevokeOrganizationRolesRequest{
 		ActorID:        actorID,
@@ -70,4 +70,56 @@ func TestRevokeOrganizationRoles_ReportsAFailedDelete(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Empty(t, deps.audit.Changes())
+}
+
+func TestRevokeOrganizationRoles_TellsTheUser(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	userID, orgID, buID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
+	deps.roleRepo.On("DeleteUserAssignments", mock.Anything, userID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil).Once()
+
+	require.NoError(t, deps.svc.RevokeOrganizationRoles(t.Context(), RevokeOrganizationRolesRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	}))
+
+	require.Len(t, deps.notifier.Users(), 1)
+	assert.Equal(t, userID, deps.notifier.Users()[0].UserID)
+	assert.Equal(t, buID, deps.notifier.Users()[0].Tenant.BuID)
+}
+
+func TestDeleteRoleHierarchyEdge_InvalidatesTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	tenant := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+
+	require.NoError(t, deps.svc.DeleteRoleHierarchyEdge(t.Context(), tenant, pulid.MustNew("rhe_")))
+
+	assert.Equal(t, []pagination.TenantInfo{tenant}, deps.notifier.Organizations())
+	change := deps.audit.Only(t)
+	assert.Equal(t, tenant.UserID, change.Actor.UserID)
+}
+
+func TestDeleteRoleConstraint_RecordsTheActorAndInvalidates(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	tenant := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+
+	require.NoError(t, deps.svc.DeleteRoleConstraint(t.Context(), tenant, pulid.MustNew("rc_")))
+
+	assert.Equal(t, []pagination.TenantInfo{tenant}, deps.notifier.Organizations())
+	assert.Equal(t, tenant.UserID, deps.audit.Only(t).Actor.UserID)
 }

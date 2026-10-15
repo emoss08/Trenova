@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +32,7 @@ func newStubValidator() *Validator {
 type testServiceDeps struct {
 	roleRepo   *permissionportsmock.MockRoleRepository
 	rbacRepo   *rbactest.Repository
-	permCache  *permissionportsmock.MockPermissionCacheRepository
+	notifier   *permchangetest.Recorder
 	permEngine *permissionportsmock.MockPermissionEngine
 	audit      *securityaudittest.Recorder
 	svc        *Service
@@ -42,7 +43,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	rbacRepo := &rbactest.Repository{}
-	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
+	notifier := &permchangetest.Recorder{}
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
 	recorder := &securityaudittest.Recorder{}
@@ -51,7 +52,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		l:          logger.Named("test.role"),
 		roleRepo:   roleRepo,
 		rbacRepo:   rbacRepo,
-		permCache:  permCache,
+		notifier:   notifier,
 		permEngine: permEngine,
 		validator:  newStubValidator(),
 		registry:   permission.NewRegistry(),
@@ -61,7 +62,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	return &testServiceDeps{
 		roleRepo:   roleRepo,
 		rbacRepo:   rbacRepo,
-		permCache:  permCache,
+		notifier:   notifier,
 		permEngine: permEngine,
 		audit:      recorder,
 		svc:        svc,
@@ -195,7 +196,6 @@ func TestUpdateRole_Success(t *testing.T) {
 		return updated.ID == roleID && updated.Name == "Updated Role" &&
 			updated.OrganizationID == orgID
 	})).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
 		ActorID:        actorID,
@@ -206,7 +206,6 @@ func TestUpdateRole_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestListRoles(t *testing.T) {
@@ -267,7 +266,6 @@ func TestAssignRole_Success(t *testing.T) {
 	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
-	deps.permEngine.On("InvalidateUser", ctx, targetUserID, orgID).Return(nil)
 
 	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
 		ActorID:        actorID,
@@ -343,7 +341,6 @@ func TestUnassignRole_Success(t *testing.T) {
 		UserID:         userID,
 		OrganizationID: orgID,
 	}, nil)
-	deps.permEngine.On("InvalidateUser", ctx, userID, orgID).Return(nil)
 
 	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
 		ActorID:        actorID,
@@ -431,14 +428,12 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 		IsSystem: false,
 	}, nil)
 	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
 
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestCreateResourcePermission_SystemRole_Fails(t *testing.T) {
@@ -491,14 +486,12 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 		PermissionID: permID,
 		RoleID:       roleID,
 	}).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
-	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
 
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestCircularInheritance_DirectSelfReference(t *testing.T) {
@@ -746,14 +739,12 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 		IsSystem: false,
 	}, nil)
 	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
 
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
@@ -990,7 +981,7 @@ func TestDeleteResourcePermission_SystemRole_Fails(t *testing.T) {
 		IsSystem: true,
 	}, nil)
 
-	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
 
 	require.Error(t, err)
 	assert.Equal(t, ErrCannotModifySystemRole, err)
@@ -1160,7 +1151,7 @@ func TestDeleteResourcePermission_GetRoleError(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
 
-	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
 
 	require.Error(t, err)
 
@@ -1171,7 +1162,6 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
-	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	validator := newStubValidator()
 	registry := permission.NewRegistry()
@@ -1179,7 +1169,6 @@ func TestNew(t *testing.T) {
 	svc := New(Params{
 		Logger:           zap.NewNop(),
 		RoleRepo:         roleRepo,
-		PermissionCache:  permCache,
 		PermissionEngine: permEngine,
 		Validator:        validator,
 		Registry:         registry,
@@ -1302,15 +1291,12 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 		IsSystem: false,
 	}, nil)
 	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
-		Return(errors.New("cache error"))
 
 	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
 
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
@@ -1376,15 +1362,12 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 		IsSystem: false,
 	}, nil)
 	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
-	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
-		Return(errors.New("cache error"))
 
 	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
 
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
@@ -1408,7 +1391,7 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 		RoleID:       roleID,
 	}).Return(errors.New("not found"))
 
-	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
 
 	require.Error(t, err)
 	assert.Equal(t, "not found", err.Error())
@@ -1435,7 +1418,6 @@ func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
 		ID:         otherRoleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{ID: otherRoleID}, nil)
-	deps.permCache.On("InvalidateOrganization", ctx, orgID).Return(nil)
 
 	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
 		ActorID:        actorID,
@@ -1452,7 +1434,6 @@ func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertExpectations(t)
 }
 
 func TestSaveRoleConstraint_DuplicateRoleIDsFail(t *testing.T) {
@@ -1509,5 +1490,5 @@ func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
 	require.ErrorIs(t, err, expectedErr)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.permCache.AssertNotCalled(t, "InvalidateOrganization")
+	assert.Empty(t, deps.notifier.Organizations())
 }

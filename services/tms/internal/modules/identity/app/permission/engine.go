@@ -1152,6 +1152,11 @@ func (e *engine) getOrComputePermissions(
 		return result, nil
 	}
 
+	epoch, epochErr := e.cacheRepo.Epoch(ctx, orgID)
+	if epochErr != nil {
+		e.l.Warn("failed to read the permission epoch, not caching", zap.Error(epochErr))
+	}
+
 	computeStart := time.Now()
 	perms, err := e.computePermissions(ctx, userID, orgID)
 	result.computeDuration = time.Since(computeStart)
@@ -1160,8 +1165,11 @@ func (e *engine) getOrComputePermissions(
 	}
 	e.metrics.Permission.RecordCompute(metrics.PermissionPathCached, result.computeDuration)
 
-	if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
-		e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
+	if epochErr == nil {
+		perms.Epoch = epoch
+		if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
+			e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
+		}
 	}
 
 	result.perms = perms

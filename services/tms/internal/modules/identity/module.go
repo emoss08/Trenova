@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/app/permissionchange"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
@@ -118,6 +119,7 @@ func SharedOptions() fx.Option {
 			tableinsightservice.New,
 			autheventservice.New,
 			permission.NewEngine,
+			permissionchange.New,
 			roleservice.New,
 			permissiondomain.NewRegistry,
 			permissiondomain.NewRouteRegistry,

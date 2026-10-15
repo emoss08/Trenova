@@ -29,22 +29,22 @@ type Params struct {
 	Logger           *zap.Logger
 	RoleRepo         permissionports.RoleRepository
 	RBACRepo         permissionports.RBACRepository
-	PermissionCache  permissionports.PermissionCacheRepository
 	PermissionEngine permissionports.PermissionEngine
 	Validator        *Validator
 	Registry         *permission.Registry
 	Auditor          permissionports.SecurityAuditor
+	Notifier         permissionports.PermissionChangeNotifier
 }
 
 type Service struct {
 	l          *zap.Logger
 	roleRepo   permissionports.RoleRepository
 	rbacRepo   permissionports.RBACRepository
-	permCache  permissionports.PermissionCacheRepository
 	permEngine permissionports.PermissionEngine
 	validator  *Validator
 	registry   *permission.Registry
 	auditor    permissionports.SecurityAuditor
+	notifier   permissionports.PermissionChangeNotifier
 }
 
 //nolint:gocritic // dependencies injection
@@ -53,11 +53,11 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.role"),
 		roleRepo:   p.RoleRepo,
 		rbacRepo:   p.RBACRepo,
-		permCache:  p.PermissionCache,
 		permEngine: p.PermissionEngine,
 		validator:  p.Validator,
 		registry:   p.Registry,
 		auditor:    p.Auditor,
+		notifier:   p.Notifier,
 	}
 }
 
@@ -83,6 +83,7 @@ type AssignRoleRequest struct {
 type UnassignRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 	AssignmentID   pulid.ID
 }
 
@@ -223,9 +224,11 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		comment:        "Role updated",
 	})
 
-	if err = s.permCache.InvalidateByRole(ctx, updated.ID, s.roleRepo); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  req.OrganizationID,
+		BuID:   existingRole.BusinessUnitID,
+		UserID: req.ActorID,
+	})
 
 	return nil
 }
@@ -320,18 +323,19 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		zap.String("roleID", req.Assignment.RoleID.String()),
 	)
 
-	if err := s.validateAssignmentPrivileges(ctx, &req, log); err != nil {
+	role, err := s.validateAssignmentPrivileges(ctx, &req, log)
+	if err != nil {
 		return err
 	}
 
 	req.Assignment.OrganizationID = req.OrganizationID
 	req.Assignment.AssignedBy = req.ActorID
 
-	if err := s.validateStaticSeparationOfDutyForAssignment(ctx, &req); err != nil {
+	if err = s.validateStaticSeparationOfDutyForAssignment(ctx, &req); err != nil {
 		return err
 	}
 
-	if err := s.roleRepo.CreateAssignment(ctx, req.Assignment); err != nil {
+	if err = s.roleRepo.CreateAssignment(ctx, req.Assignment); err != nil {
 		log.Error("failed to create assignment", zap.Error(err))
 		return err
 	}
@@ -340,6 +344,7 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		s.recordChange(committedCtx, &roleChange{
 			actorID:        req.ActorID,
 			organizationID: req.OrganizationID,
+			businessUnitID: role.BusinessUnitID,
 			resourceID:     req.Assignment.RoleID.String(),
 			operation:      permission.OpAssign,
 			after:          req.Assignment,
@@ -350,13 +355,11 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 			},
 		})
 
-		if err := s.permEngine.InvalidateUser(
-			committedCtx,
-			req.Assignment.UserID,
-			req.OrganizationID,
-		); err != nil {
-			log.Warn("failed to invalidate user permission cache", zap.Error(err))
-		}
+		s.notifier.UserChanged(committedCtx, pagination.TenantInfo{
+			OrgID:  req.OrganizationID,
+			BuID:   role.BusinessUnitID,
+			UserID: req.ActorID,
+		}, req.Assignment.UserID)
 	})
 
 	return nil
@@ -366,7 +369,7 @@ func (s *Service) validateAssignmentPrivileges(
 	ctx context.Context,
 	req *AssignRoleRequest,
 	log *zap.Logger,
-) error {
+) (*permission.Role, error) {
 	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: req.Assignment.RoleID,
 		TenantInfo: pagination.TenantInfo{
@@ -375,10 +378,10 @@ func (s *Service) validateAssignmentPrivileges(
 	})
 	if err != nil {
 		log.Error("failed to get role", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
+	return role, s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
 		actorID: req.ActorID,
 		orgID:   req.OrganizationID,
 		role: &permission.Role{
@@ -473,9 +476,11 @@ func (s *Service) UpsertRoleHierarchyEdge(
 		},
 	})
 
-	if err := s.permCache.InvalidateByRole(ctx, req.SeniorRoleID, s.roleRepo); err != nil {
-		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  req.OrganizationID,
+		BuID:   req.BusinessUnitID,
+		UserID: req.ActorID,
+	})
 	return nil
 }
 
@@ -520,13 +525,13 @@ func (s *Service) validateHierarchyEdge(
 
 func (s *Service) DeleteRoleHierarchyEdge(
 	ctx context.Context,
-	orgID pulid.ID,
+	tenant pagination.TenantInfo,
 	edgeID pulid.ID,
 ) error {
 	if err := s.rbacRepo.DeleteRoleHierarchyEdge(
 		ctx,
 		permissionports.DeleteRoleHierarchyEdgeRequest{
-			OrganizationID: orgID,
+			OrganizationID: tenant.OrgID,
 			EdgeID:         edgeID,
 		},
 	); err != nil {
@@ -534,13 +539,16 @@ func (s *Service) DeleteRoleHierarchyEdge(
 	}
 
 	s.recordChange(ctx, &roleChange{
-		organizationID: orgID,
+		actorID:        tenant.UserID,
+		organizationID: tenant.OrgID,
+		businessUnitID: tenant.BuID,
 		resourceID:     edgeID.String(),
 		operation:      permission.OpUpdate,
 		comment:        "Role inheritance removed",
 		metadata:       map[string]any{"edgeId": edgeID.String()},
 	})
 
+	s.notifier.OrganizationChanged(ctx, tenant)
 	return nil
 }
 
@@ -599,9 +607,11 @@ func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintReq
 		},
 	})
 
-	if err := s.permCache.InvalidateOrganization(ctx, req.OrganizationID); err != nil {
-		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  req.OrganizationID,
+		BuID:   req.BusinessUnitID,
+		UserID: req.ActorID,
+	})
 	return nil
 }
 
@@ -644,22 +654,22 @@ func (s *Service) validateConstraintRoleIDs(
 
 func (s *Service) DeleteRoleConstraint(
 	ctx context.Context,
-	orgID pulid.ID,
+	tenant pagination.TenantInfo,
 	constraintID pulid.ID,
 ) error {
-	if err := s.rbacRepo.DeleteRoleConstraint(ctx, orgID, constraintID); err != nil {
+	if err := s.rbacRepo.DeleteRoleConstraint(ctx, tenant.OrgID, constraintID); err != nil {
 		return err
 	}
 	s.recordChange(ctx, &roleChange{
-		organizationID: orgID,
+		actorID:        tenant.UserID,
+		organizationID: tenant.OrgID,
+		businessUnitID: tenant.BuID,
 		resourceID:     constraintID.String(),
 		operation:      permission.OpUpdate,
 		comment:        "Separation of duty constraint removed",
 		metadata:       map[string]any{"constraintId": constraintID.String()},
 	})
-	if err := s.permCache.InvalidateOrganization(ctx, orgID); err != nil {
-		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, tenant)
 	return nil
 }
 
@@ -695,6 +705,7 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
+		businessUnitID: req.BusinessUnitID,
 		resourceID:     deleted.RoleID.String(),
 		operation:      permission.OpUnassign,
 		before:         deleted,
@@ -705,9 +716,11 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		},
 	})
 
-	if err = s.permEngine.InvalidateUser(ctx, deleted.UserID, req.OrganizationID); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.UserChanged(ctx, pagination.TenantInfo{
+		OrgID:  req.OrganizationID,
+		BuID:   req.BusinessUnitID,
+		UserID: req.ActorID,
+	}, deleted.UserID)
 
 	return nil
 }
@@ -797,9 +810,11 @@ func (s *Service) RevokeOrganizationRoles(
 		})
 	}
 
-	if err = s.permEngine.InvalidateUser(scoped, req.UserID, req.OrganizationID); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.UserChanged(scoped, pagination.TenantInfo{
+		OrgID:  req.OrganizationID,
+		BuID:   req.BusinessUnitID,
+		UserID: req.ActorID,
+	}, req.UserID)
 
 	return nil
 }
@@ -941,9 +956,11 @@ func (s *Service) CreateResourcePermission(
 		metadata:       map[string]any{"resource": rp.Resource},
 	})
 
-	if err = s.permCache.InvalidateByRole(ctx, rp.RoleID, s.roleRepo); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  orgID,
+		BuID:   role.BusinessUnitID,
+		UserID: actorID,
+	})
 
 	return nil
 }
@@ -998,16 +1015,19 @@ func (s *Service) UpdateResourcePermission(
 		metadata:       map[string]any{"resource": rp.Resource},
 	})
 
-	if err = s.permCache.InvalidateByRole(ctx, rp.RoleID, s.roleRepo); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  orgID,
+		BuID:   role.BusinessUnitID,
+		UserID: actorID,
+	})
 
 	return nil
 }
 
 func (s *Service) DeleteResourcePermission(
 	ctx context.Context,
-	orgID, permID, roleID pulid.ID,
+	tenant pagination.TenantInfo,
+	permID, roleID pulid.ID,
 ) error {
 	log := s.l.With(
 		zap.String("operation", "DeleteResourcePermission"),
@@ -1017,7 +1037,7 @@ func (s *Service) DeleteResourcePermission(
 	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: roleID,
 		TenantInfo: pagination.TenantInfo{
-			OrgID: orgID,
+			OrgID: tenant.OrgID,
 		},
 	})
 	if err != nil {
@@ -1040,7 +1060,8 @@ func (s *Service) DeleteResourcePermission(
 	}
 
 	s.recordChange(ctx, &roleChange{
-		organizationID: orgID,
+		actorID:        tenant.UserID,
+		organizationID: tenant.OrgID,
 		businessUnitID: role.BusinessUnitID,
 		resourceID:     role.ID.String(),
 		operation:      permission.OpUpdate,
@@ -1049,9 +1070,11 @@ func (s *Service) DeleteResourcePermission(
 		metadata:       map[string]any{"permissionId": permID.String()},
 	})
 
-	if err = s.permCache.InvalidateByRole(ctx, roleID, s.roleRepo); err != nil {
-		log.Warn("failed to invalidate permission cache", zap.Error(err))
-	}
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  tenant.OrgID,
+		BuID:   role.BusinessUnitID,
+		UserID: tenant.UserID,
+	})
 
 	return nil
 }

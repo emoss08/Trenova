@@ -1,12 +1,13 @@
 package userhandler_test
 
 import (
+	"errors"
+	"fmt"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"errors"
-	"fmt"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"net/http"
 	"testing"
 	"time"
@@ -14,12 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -96,7 +97,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	roleSvc := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         opts.roleRepo,
-		PermissionCache:  permissionportsmock.NewMockPermissionCacheRepository(t),
+		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
 		Registry:         permission.NewEmptyRegistry(),
