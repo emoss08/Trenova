@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { FactoringTab } from "../use-factoring-state";
 
 export function FactoringSummaryStrip({
@@ -39,7 +39,7 @@ export function FactoringSummaryStrip({
     <KpiStrip aria-label={t("Factoring summary")}>
       <KpiStripItem
         label={t("Ready")}
-        value={formatCurrency(data.ready.amountMinor / 100)}
+        value={formatMinor(data.ready.amountMinor)}
         sub={t("{0, plural, one {# invoice} other {# invoices}}", data.ready.count)}
         tone={data.ready.count > 0 ? "success" : undefined}
         active={active === "ready"}
@@ -47,7 +47,7 @@ export function FactoringSummaryStrip({
       />
       <KpiStripItem
         label={t("Not ready")}
-        value={formatCurrency(data.notReady.amountMinor / 100)}
+        value={formatMinor(data.notReady.amountMinor)}
         sub={t("{0, plural, one {# invoice} other {# invoices}}", data.notReady.count)}
         tone={data.notReady.count > 0 ? "warning" : undefined}
         active={active === "not-ready"}
@@ -55,21 +55,21 @@ export function FactoringSummaryStrip({
       />
       <KpiStripItem
         label={t("Submitted")}
-        value={formatCurrency(data.submitted.amountMinor / 100)}
+        value={formatMinor(data.submitted.amountMinor)}
         sub={t("{0, plural, one {# invoice} other {# invoices}}", data.submitted.count)}
         active={active === "submitted"}
         onClick={() => onSelect("submitted")}
       />
       <KpiStripItem
         label={t("Funded")}
-        value={formatCurrency(data.funded.amountMinor / 100)}
+        value={formatMinor(data.funded.amountMinor)}
         sub={t("{0, plural, one {# invoice} other {# invoices}}", data.funded.count)}
         active={active === "funded"}
         onClick={() => onSelect("funded")}
       />
       <KpiStripItem
         label={t("Reserve held")}
-        value={formatCurrency(data.reserveHeld.amountMinor / 100)}
+        value={formatMinor(data.reserveHeld.amountMinor)}
         sub={t(
           "{0, plural, one {# invoice} other {# invoices}} awaiting release",
           data.reserveHeld.count,
@@ -77,7 +77,7 @@ export function FactoringSummaryStrip({
       />
       <KpiStripItem
         label={t("Chargebacks due")}
-        value={formatCurrency(data.chargebacksDue.amountMinor / 100)}
+        value={formatMinor(data.chargebacksDue.amountMinor)}
         sub={t(
           "{0, plural, one {# invoice} other {# invoices}} within a week",
           data.chargebacksDue.count,
@@ -86,7 +86,7 @@ export function FactoringSummaryStrip({
       />
       <KpiStripItem
         label={t("Ready over a day")}
-        value={formatCurrency(data.readyUnsubmitted.amountMinor / 100)}
+        value={formatMinor(data.readyUnsubmitted.amountMinor)}
         sub={t(
           "{0, plural, one {# invoice} other {# invoices}} not yet submitted",
           data.readyUnsubmitted.count,

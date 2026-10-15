@@ -12,7 +12,7 @@ import {
   stageFactoringRemittance,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FactoringRemittanceField } from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";

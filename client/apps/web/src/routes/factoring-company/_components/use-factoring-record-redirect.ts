@@ -1,5 +1,6 @@
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { factoringNoa as factoringNoaQueries } from "@/lib/queries/factoring-noa";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useEffect } from "react";
@@ -22,7 +23,7 @@ export function useFactoringRecordRedirect() {
     enabled: waiting && !!state.agreement,
   });
   const noaOwner = useQuery({
-    ...factoringQueries.noaOwner(state.noa ?? ""),
+    ...factoringNoaQueries.owner(state.noa ?? ""),
     enabled: waiting && !state.agreement && !!state.noa,
   });
   const owner = state.agreement ? agreementOwner.data : noaOwner.data;

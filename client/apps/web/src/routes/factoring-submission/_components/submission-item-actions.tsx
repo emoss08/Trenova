@@ -24,10 +24,13 @@ export function SubmissionItemActions({
   item,
   recourse,
   onSelect,
+  onIntent,
 }: {
   item: FactoringSubmissionItem;
   recourse: boolean;
   onSelect: (action: FactoringReserveAction) => void;
+  /** Called when the pointer or focus reaches the menu, to read the dialog's code ahead. */
+  onIntent?: () => void;
 }) {
   const t = useT();
   const actions = factoringItemActions(item.status, recourse);
@@ -45,6 +48,8 @@ export function SubmissionItemActions({
             size="icon-sm"
             variant="ghost"
             aria-label={t("Actions for invoice {0}", item.invoiceNumber)}
+            onPointerEnter={onIntent}
+            onFocus={onIntent}
           >
             <DotsHorizontalIcon className="size-4" />
           </Button>

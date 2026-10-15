@@ -1,4 +1,4 @@
-import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
+import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-remittance-badges";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { recordPath } from "@/config/record-links";
@@ -18,7 +18,8 @@ import {
   rematchFactoringRemittance,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoringRemittance as factoringRemittanceQueries } from "@/lib/queries/factoring-remittance";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon, BankNote01Icon, RefreshCw01Icon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -26,7 +27,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
@@ -39,7 +40,7 @@ import { RemittancePageSkeleton } from "./_components/remittance-page-skeleton";
 import { RemittanceReupload } from "./_components/remittance-reupload";
 
 export const prefetch: RoutePrefetch = ({ params }) =>
-  params.id ? [factoringQueries.remittance(params.id)] : [];
+  params.id ? [factoringRemittanceQueries.detail(params.id)] : [];
 
 /** How often a remittance whose PDF is still being read is checked again. */
 const READING_POLL_MS = 5000;
@@ -53,7 +54,7 @@ export function FactoringRemittancePage() {
   const t = useT();
   const { id = "" } = useParams<{ id: string }>();
   const { data, isLoading, error, refetch } = useQuery({
-    ...factoringQueries.remittance(id),
+    ...factoringRemittanceQueries.detail(id),
     enabled: id !== "",
     refetchInterval: (query) =>
       query.state.data && remittanceStep(query.state.data) === "reading" ? READING_POLL_MS : false,
@@ -125,10 +126,10 @@ function RemittanceDetail({
   const step = remittanceStep(remittance);
   const showsLines = step === "review" || step === "done";
   const lines = useQuery({
-    ...factoringQueries.remittanceLines(remittance.id, null),
+    ...factoringRemittanceQueries.lines(remittance.id, null),
     enabled: showsLines,
   });
-  const money = (minor: number) => formatCurrency(minor / 100, remittance.currencyCode);
+  const money = (minor: number) => formatMinor(minor, remittance.currencyCode);
   const factorName = remittance.factoringCompany?.name ?? remittance.factoringCompanyId;
 
   const rematch = useMutation({
@@ -253,7 +254,9 @@ function RemittanceDetail({
       />
       {remittance.inboundMessageId ? (
         <p className="text-muted-foreground text-xs">
-          {t("Arrived by email.")}{" "}
+          {remittance.senderEmail
+            ? t("Arrived by email from {0}.", remittance.senderEmail)
+            : t("Arrived by email.")}{" "}
           <Link
             to={recordPath("inbound_message", remittance.inboundMessageId)}
             className="text-brand"

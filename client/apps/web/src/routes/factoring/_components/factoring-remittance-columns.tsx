@@ -1,10 +1,10 @@
-import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
+import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-remittance-badges";
 import { recordPath } from "@/config/record-links";
 import { FACTORING_REMITTANCE_LINE_KIND_LABELS } from "@/lib/factoring-remittance";
 import type { FactoringRemittanceRow } from "@/lib/graphql/factoring-remittance";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
@@ -76,7 +76,7 @@ export function getFactoringRemittanceColumns(t: TranslateFn): ColumnDef<Factori
       header: t("Cash"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatCurrency(row.original.totalCashMinor / 100, row.original.currencyCode)}
+          {formatMinor(row.original.totalCashMinor, row.original.currencyCode)}
         </span>
       ),
       size: 140,

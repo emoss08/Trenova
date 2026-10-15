@@ -1,17 +1,20 @@
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { FactoringNoaStatusBadge } from "@/components/factoring/factoring-badges";
 import {
-  AcknowledgeFactoringNoaDialog,
-  ReleaseFactoringNoaDialog,
-  SendFactoringNoaDialog,
-} from "@/components/factoring/factoring-noa-dialogs";
+  LazyAcknowledgeFactoringNoaDialog,
+  LazyReleaseFactoringNoaDialog,
+  LazySendFactoringNoaDialog,
+  preloadFactoringNoaDialogs,
+} from "@/components/factoring/factoring-noa-dialogs-lazy";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { SectionPanel } from "@/components/section-panel";
+import { FactoringNoticesBodySkeleton } from "./factoring-notices-section-skeleton";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring-noa";
+import { factoringNoa as factoringNoaQueries } from "@/lib/queries/factoring-noa";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,7 +39,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { dateToUnixTimestamp, formatUnixDate } from "@trenova/shared/lib/date";
@@ -65,7 +67,7 @@ export function FactoringNoticesSection({
   const { allowed: canCreate } = usePermission(Resource.FactoringNoa, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FactoringNoa, Operation.Update);
   const { data, isLoading, isError, refetch } = useQuery({
-    ...factoringQueries.noas({ factoringCompanyId }),
+    ...factoringNoaQueries.list({ factoringCompanyId }),
     enabled: canRead,
   });
   const [nowUnix] = useState(() => dateToUnixTimestamp(new Date()));
@@ -89,7 +91,13 @@ export function FactoringNoticesSection({
       )}
       action={
         canCreate ? (
-          <Button type="button" size="sm" onClick={() => setDrafting(true)}>
+          <Button
+            type="button"
+            size="sm"
+            onPointerEnter={preloadFactoringNoaDialogs}
+            onFocus={preloadFactoringNoaDialogs}
+            onClick={() => setDrafting(true)}
+          >
             <PlusIcon />
             {t("New notice")}
           </Button>
@@ -97,10 +105,7 @@ export function FactoringNoticesSection({
       }
     >
       {isLoading ? (
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
+        <FactoringNoticesBodySkeleton />
       ) : isError ? (
         <div className="p-3">
           <Alert size="sm" variant="destructive">
@@ -140,19 +145,19 @@ export function FactoringNoticesSection({
           if (canUpdate) setSending(noa);
         }}
       />
-      <SendFactoringNoaDialog
+      <LazySendFactoringNoaDialog
         noa={sending}
         onOpenChange={(open) => {
           if (!open) setSending(null);
         }}
       />
-      <AcknowledgeFactoringNoaDialog
+      <LazyAcknowledgeFactoringNoaDialog
         noa={acknowledging}
         onOpenChange={(open) => {
           if (!open) setAcknowledging(null);
         }}
       />
-      <ReleaseFactoringNoaDialog
+      <LazyReleaseFactoringNoaDialog
         noa={releasing}
         onOpenChange={(open) => {
           if (!open) setReleasing(null);
@@ -201,18 +206,39 @@ function NoticeRow({
         {canUpdate && noa.status !== "Released" ? (
           <div className="flex flex-wrap items-center gap-2">
             {open ? (
-              <Button type="button" size="sm" variant="outline" onClick={onSend}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onPointerEnter={preloadFactoringNoaDialogs}
+                onFocus={preloadFactoringNoaDialogs}
+                onClick={onSend}
+              >
                 <Send01Icon />
                 {noa.status === "Sent" ? t("Send again") : t("Send")}
               </Button>
             ) : null}
             {open ? (
-              <Button type="button" size="sm" variant="outline" onClick={onAcknowledge}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onPointerEnter={preloadFactoringNoaDialogs}
+                onFocus={preloadFactoringNoaDialogs}
+                onClick={onAcknowledge}
+              >
                 <FileCheck02Icon />
                 {t("Record acknowledgement")}
               </Button>
             ) : null}
-            <Button type="button" size="sm" variant="outline" onClick={onRelease}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onPointerEnter={preloadFactoringNoaDialogs}
+              onFocus={preloadFactoringNoaDialogs}
+              onClick={onRelease}
+            >
               <SlashCircle01Icon />
               {t("Release")}
             </Button>

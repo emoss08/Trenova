@@ -5,7 +5,7 @@ import {
   requestMissingFactoringDocuments,
   type FactoringDocumentRequestResult,
 } from "@/lib/graphql/factoring";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";

@@ -21,17 +21,45 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FactoringCompanyForm } from "./factoring-company-form";
-import { FactoringAgreementsSection } from "./factoring-agreements-section";
-import { FactoringDeliverySection } from "./factoring-delivery-section";
-import { FactoringNoticesSection } from "./factoring-notices-section";
-import { FactoringRemittancesSection } from "./factoring-remittances-section";
-import { FactoringReserveSection } from "./factoring-reserve-section";
+import { FactoringAgreementsSectionSkeleton } from "./factoring-agreements-section-skeleton";
+import { FactoringDeliverySectionSkeleton } from "./factoring-delivery-section-skeleton";
+import { FactoringNoticesSectionSkeleton } from "./factoring-notices-section-skeleton";
+import { FactoringRemittancesSectionSkeleton } from "./factoring-remittances-section-skeleton";
+import { FactoringReserveSectionSkeleton } from "./factoring-reserve-section-skeleton";
 import { useClearFactoringRecordParams } from "./use-factoring-record-redirect";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { factoringCompanyRecordSearchParamsParser } from "../use-factoring-company-state";
 import { useQuery } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useQueryStates } from "nuqs";
+import { lazy } from "react";
+
+const FactoringAgreementsSection = lazy(() =>
+  import("./factoring-agreements-section").then((module) => ({
+    default: module.FactoringAgreementsSection,
+  })),
+);
+const FactoringNoticesSection = lazy(() =>
+  import("./factoring-notices-section").then((module) => ({
+    default: module.FactoringNoticesSection,
+  })),
+);
+const FactoringDeliverySection = lazy(() =>
+  import("./factoring-delivery-section").then((module) => ({
+    default: module.FactoringDeliverySection,
+  })),
+);
+const FactoringReserveSection = lazy(() =>
+  import("./factoring-reserve-section").then((module) => ({
+    default: module.FactoringReserveSection,
+  })),
+);
+const FactoringRemittancesSection = lazy(() =>
+  import("./factoring-remittances-section").then((module) => ({
+    default: module.FactoringRemittancesSection,
+  })),
+);
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -246,14 +274,27 @@ function FactoringCompanyEditPanel({
           </FormProvider>
           {row.id ? (
             <>
-              <FactoringAgreementsSection
-                factoringCompanyId={row.id}
-                highlightedId={highlightedAgreement}
-              />
-              <FactoringNoticesSection factoringCompanyId={row.id} highlightedId={highlightedNoa} />
-              <FactoringDeliverySection factoringCompanyId={row.id} />
-              <FactoringReserveSection factoringCompanyId={row.id} />
-              <FactoringRemittancesSection factoringCompanyId={row.id} />
+              <LazyComponent fallback={<FactoringAgreementsSectionSkeleton />}>
+                <FactoringAgreementsSection
+                  factoringCompanyId={row.id}
+                  highlightedId={highlightedAgreement}
+                />
+              </LazyComponent>
+              <LazyComponent fallback={<FactoringNoticesSectionSkeleton />}>
+                <FactoringNoticesSection
+                  factoringCompanyId={row.id}
+                  highlightedId={highlightedNoa}
+                />
+              </LazyComponent>
+              <LazyComponent fallback={<FactoringDeliverySectionSkeleton />}>
+                <FactoringDeliverySection factoringCompanyId={row.id} />
+              </LazyComponent>
+              <LazyComponent fallback={<FactoringReserveSectionSkeleton />}>
+                <FactoringReserveSection factoringCompanyId={row.id} />
+              </LazyComponent>
+              <LazyComponent fallback={<FactoringRemittancesSectionSkeleton />}>
+                <FactoringRemittancesSection factoringCompanyId={row.id} />
+              </LazyComponent>
             </>
           ) : null}
         </div>

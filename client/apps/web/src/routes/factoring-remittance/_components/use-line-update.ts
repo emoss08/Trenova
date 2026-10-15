@@ -2,7 +2,7 @@ import {
   updateFactoringRemittanceLine,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   FactoringRemittanceLineAction,

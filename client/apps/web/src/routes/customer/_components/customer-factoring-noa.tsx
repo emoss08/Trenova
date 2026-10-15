@@ -1,10 +1,14 @@
 import { FactoringNoaStatusBadge } from "@/components/factoring/factoring-badges";
-import { SendFactoringNoaDialog } from "@/components/factoring/factoring-noa-dialogs";
+import {
+  LazySendFactoringNoaDialog,
+  preloadFactoringNoaDialogs,
+} from "@/components/factoring/factoring-noa-dialogs-lazy";
 import { recordPath } from "@/config/record-links";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring-noa";
+import { factoringNoa as factoringNoaQueries } from "@/lib/queries/factoring-noa";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinkExternal01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -64,7 +68,9 @@ function NoaStatus({
   const [sending, setSending] = useState<FactoringNoa | null>(null);
   const { allowed: canCreate } = usePermission(Resource.FactoringNoa, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FactoringNoa, Operation.Update);
-  const { data, isLoading } = useQuery(factoringQueries.noas({ customerId, factoringCompanyId }));
+  const { data, isLoading } = useQuery(
+    factoringNoaQueries.list({ customerId, factoringCompanyId }),
+  );
   const current = currentFactoringNoa(data ?? []);
 
   const draft = useMutation({
@@ -125,13 +131,15 @@ function NoaStatus({
           size="sm"
           variant="outline"
           isLoading={draft.isPending}
+          onPointerEnter={preloadFactoringNoaDialogs}
+          onFocus={preloadFactoringNoaDialogs}
           onClick={() => (current ? setSending(current) : draft.mutate())}
         >
           <Send01Icon />
           {t("Send NOA")}
         </Button>
       ) : null}
-      <SendFactoringNoaDialog
+      <LazySendFactoringNoaDialog
         noa={sending}
         onOpenChange={(open) => {
           if (!open) setSending(null);

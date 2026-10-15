@@ -15256,6 +15256,8 @@ type FactoringRemittance {
   matchedCount: Int!
   organizationId: ID!
   remittedOn: Timestamp
+  """The address an emailed remittance came from."""
+  senderEmail: String
   source: FactoringRemittanceSource!
   sourceFormat: FactoringRemittanceFormat
   stagedAt: Timestamp

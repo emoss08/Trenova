@@ -1,9 +1,7 @@
 import {
-  AcknowledgeFactoringNoaDocument,
   ActivateFactoringAgreementDocument,
   CancelFactoringSubmissionDocument,
   CreateFactoringAgreementDocument,
-  DraftFactoringNoaDocument,
   EndFactoringAgreementDocument,
   FactoringAgreementFieldsFragmentDoc,
   FactoringAgreementOwnerDocument,
@@ -11,9 +9,6 @@ import {
   FactoringCompanyRecordDocument,
   FactoringInvoiceStateFieldsFragmentDoc,
   FactoringInvoiceStateTableDocument,
-  FactoringNoaFieldsFragmentDoc,
-  FactoringNoaOwnerDocument,
-  FactoringNoasDocument,
   FactoringChargebackPlanDocument,
   FactoringChargebackReversalPlanDocument,
   FactoringFundingPlanDocument,
@@ -36,24 +31,18 @@ import {
   FactoringTransportDocument,
   FactoringTransportFieldsFragmentDoc,
   InvoiceFactoringDocument,
-  ReleaseFactoringNoaDocument,
   RequestMissingFactoringDocumentsDocument,
   RetryFactoringSubmissionDocument,
   SaveFactoringTransportDocument,
-  SendFactoringNoaDocument,
   SetInvoiceFactoringOverrideDocument,
   SubmitInvoicesToFactorDocument,
   TestFactoringTransportDocument,
   UpdateFactoringAgreementDocument,
-  type AcknowledgeFactoringNoaInput,
   type CancelFactoringSubmissionInput,
   type ChangeFactoringAgreementStatusInput,
-  type DraftFactoringNoaInput,
   type FactoringAgreementFieldsFragment,
   type FactoringAgreementInput,
   type FactoringInvoiceStateFieldsFragment,
-  type FactoringNoaFieldsFragment,
-  type FactoringNoaStatus,
   type FactoringFundingPlanQuery,
   type FactoringPlannedMovementFieldsFragment,
   type FactoringReserveBalanceQuery,
@@ -70,12 +59,10 @@ import {
   type FactoringTransportFieldsFragment,
   type FactoringVerdict,
   type InvoiceFactoringQuery,
-  type ReleaseFactoringNoaInput,
   type RequestMissingFactoringDocumentsInput,
   type RequestMissingFactoringDocumentsMutation,
   type RetryFactoringSubmissionInput,
   type SaveFactoringTransportInput,
-  type SendFactoringNoaInput,
   type SetInvoiceFactoringOverrideInput,
   type UpdateFactoringAgreementInput,
 } from "@trenova/graphql/generated/graphql";
@@ -88,7 +75,6 @@ import type { FactoringCompany } from "@/types/factoring-company";
 type RequestOptions = { signal?: AbortSignal };
 
 export type FactoringAgreement = FactoringAgreementFieldsFragment;
-export type FactoringNoa = FactoringNoaFieldsFragment;
 export type FactoringInvoiceState = FactoringInvoiceStateFieldsFragment;
 export type FactoringCheck = FactoringInvoiceState["checks"][number];
 export type FactoringSummary = FactoringSummaryQuery["factoringSummary"];
@@ -131,10 +117,6 @@ export type FactoringReserveMovementPlan = Omit<
 
 /** The movements a person books against one funded invoice on a schedule. */
 export type FactoringReserveAction = "release" | "chargeback" | "reverse";
-
-export const FACTORING_INVOICE_STATE_KEY = "factoring-invoice-state-list";
-export const FACTORING_SUBMISSION_KEY = "factoring-submission-list";
-export const FACTORING_REMITTANCE_KEY = "factoring-remittance-list";
 
 /** The most ledger rows one invoice lists; an invoice moves a handful of times at most. */
 export const FACTORING_INVOICE_ENTRY_LIMIT = 50;
@@ -408,91 +390,6 @@ export async function endFactoringAgreement(
     variables: { input },
   });
   return getFragmentData(FactoringAgreementFieldsFragmentDoc, data.endFactoringAgreement);
-}
-
-export type FactoringNoaFilter = {
-  factoringCompanyId?: string;
-  customerId?: string;
-  statuses?: FactoringNoaStatus[];
-};
-
-/** The most notices one factor or customer lists at once; a factor has one per customer. */
-export const FACTORING_NOA_PAGE_SIZE = 100;
-
-export async function listFactoringNoas(
-  filter: FactoringNoaFilter,
-  options?: RequestOptions,
-): Promise<FactoringNoa[]> {
-  const data = await requestGraphQL({
-    document: FactoringNoasDocument,
-    operationName: "FactoringNoas",
-    variables: {
-      input: {
-        table: {
-          first: FACTORING_NOA_PAGE_SIZE,
-          sort: [{ field: "createdAt", direction: "desc" }],
-        },
-        factoringCompanyId: filter.factoringCompanyId ?? null,
-        customerId: filter.customerId ?? null,
-        statuses: filter.statuses ?? null,
-      },
-    },
-    signal: options?.signal,
-  });
-  return data.factoringNoas.edges.map((edge) =>
-    getFragmentData(FactoringNoaFieldsFragmentDoc, edge.node),
-  );
-}
-
-export async function fetchFactoringNoaOwner(
-  id: string,
-  options?: RequestOptions,
-): Promise<string> {
-  const data = await requestGraphQL({
-    document: FactoringNoaOwnerDocument,
-    operationName: "FactoringNoaOwner",
-    variables: { id },
-    signal: options?.signal,
-  });
-  return data.factoringNoa.factoringCompanyId;
-}
-
-export async function draftFactoringNoa(input: DraftFactoringNoaInput): Promise<FactoringNoa> {
-  const data = await requestGraphQL({
-    document: DraftFactoringNoaDocument,
-    operationName: "DraftFactoringNoa",
-    variables: { input },
-  });
-  return getFragmentData(FactoringNoaFieldsFragmentDoc, data.draftFactoringNoa);
-}
-
-export async function sendFactoringNoa(input: SendFactoringNoaInput): Promise<FactoringNoa> {
-  const data = await requestGraphQL({
-    document: SendFactoringNoaDocument,
-    operationName: "SendFactoringNoa",
-    variables: { input },
-  });
-  return getFragmentData(FactoringNoaFieldsFragmentDoc, data.sendFactoringNoa);
-}
-
-export async function acknowledgeFactoringNoa(
-  input: AcknowledgeFactoringNoaInput,
-): Promise<FactoringNoa> {
-  const data = await requestGraphQL({
-    document: AcknowledgeFactoringNoaDocument,
-    operationName: "AcknowledgeFactoringNoa",
-    variables: { input },
-  });
-  return getFragmentData(FactoringNoaFieldsFragmentDoc, data.acknowledgeFactoringNoa);
-}
-
-export async function releaseFactoringNoa(input: ReleaseFactoringNoaInput): Promise<FactoringNoa> {
-  const data = await requestGraphQL({
-    document: ReleaseFactoringNoaDocument,
-    operationName: "ReleaseFactoringNoa",
-    variables: { input },
-  });
-  return getFragmentData(FactoringNoaFieldsFragmentDoc, data.releaseFactoringNoa);
 }
 
 export async function fetchFactoringCompany(

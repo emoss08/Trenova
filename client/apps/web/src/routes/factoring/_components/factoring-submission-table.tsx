@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import {
   createFactoringSubmissionTableConfig,
-  FACTORING_SUBMISSION_KEY,
   type FactoringSubmissionRow,
 } from "@/lib/graphql/factoring";
+import { FACTORING_SUBMISSION_KEY } from "@/lib/queries/factoring-roots";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";

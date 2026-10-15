@@ -2,6 +2,7 @@
   "A discarded remittance is set aside for good; nothing on it can be booked afterwards.": "已放弃的汇款将被永久搁置，其中任何内容此后都无法入账。",
   "An ignored line is not booked from the remittance. Book a fee or adjustment by hand.": "已忽略的行不会从汇款中入账。费用或调整请手动入账。",
   "Apply remittance": "应用汇款",
+  "Arrived by email from {0}.": "由 {0} 通过电子邮件发送。",
   "Arrived by email.": "通过电子邮件收到。",
   "Choose the column that holds the amount paid, the advance, the reserve or the invoice amount.": "请选择包含已付金额、预付款、保留金或发票金额的列。",
   "Choose the column that holds the invoice number or the factor's reference.": "请选择包含发票号码或保理公司参考号的列。",

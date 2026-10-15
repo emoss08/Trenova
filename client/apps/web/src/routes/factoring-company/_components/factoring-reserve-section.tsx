@@ -1,5 +1,6 @@
 import { FactoringReserveEntryList } from "@/components/factoring/factoring-reserve-entry-list";
 import { SectionPanel } from "@/components/section-panel";
+import { FactoringReserveBodySkeleton } from "./factoring-reserve-section-skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { useQuery } from "@tanstack/react-query";
@@ -10,9 +11,8 @@ import {
   DescriptionItem,
   DescriptionList,
 } from "@trenova/shared/components/ui/description-list";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 
@@ -50,11 +50,7 @@ export function FactoringReserveSection({ factoringCompanyId }: { factoringCompa
       )}
     >
       {balance.isLoading || entries.isLoading ? (
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-4 w-64" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+        <FactoringReserveBodySkeleton />
       ) : balance.isError || entries.isError || !balance.data || !entries.data ? (
         <div className="p-3">
           <Alert size="sm" variant="destructive">

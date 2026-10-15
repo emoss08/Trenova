@@ -22796,7 +22796,7 @@
     ]
   },
   "Amount": {
-    "sites": 52,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -29251,6 +29251,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Arrived by email from {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-remittance"
     ]
   },
   "Arrived by email.": {
@@ -50318,7 +50327,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Choose the factor whose reserve to read": {
@@ -84316,6 +84325,15 @@
       "routes/service-failure"
     ]
   },
+  "EDI partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "EDI partner does not have an active internal EDI connection": {
     "sites": 1,
     "scope": [
@@ -98772,6 +98790,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/factoring",
       "routes/factoring-submission",
       "routes/invoice"
@@ -118650,6 +118669,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/factoring",
       "routes/factoring-company"
     ]
@@ -135143,6 +135163,15 @@
       "apps/web/components"
     ]
   },
+  "Loading agreements": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Loading analytics": {
     "sites": 1,
     "scope": [
@@ -135313,6 +135342,15 @@
     "areas": [
       "apps/web/components",
       "packages/shared/components"
+    ]
+  },
+  "Loading delivery settings": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Loading difference...": {
@@ -135632,6 +135670,15 @@
       "routes/inbox"
     ]
   },
+  "Loading notices of assignment": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Loading notifications": {
     "sites": 1,
     "scope": [
@@ -135811,6 +135858,15 @@
     ],
     "areas": [
       "routes/factoring-remittance"
+    ]
+  },
+  "Loading remittances": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Loading retrieval": {
@@ -136282,6 +136338,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the reserve": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Loading the return": {
@@ -162755,7 +162820,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Nothing is booked: no money moves.": {
@@ -198252,7 +198317,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Reading the sheet…": {
@@ -198809,7 +198874,7 @@
     ]
   },
   "Reason": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -200227,7 +200292,7 @@
     ]
   },
   "Recipient must be a valid email address": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -204959,15 +205024,6 @@
       "routes/factoring-remittance"
     ]
   },
-  "Remittance {0} changed since you opened it; reload and try again": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Remittance {0} is {1}; it cannot be discarded": {
     "sites": 1,
     "scope": [
@@ -205048,7 +205104,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Remitted {0}": {
@@ -207529,6 +207585,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/factoring"
     ]
   },
@@ -221078,15 +221135,6 @@
       "routes/factoring-submission"
     ]
   },
-  "Schedule {0} changed since you opened it; reload and try again": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Schedule {0} from {1}": {
     "sites": 1,
     "scope": [
@@ -225851,7 +225899,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Select the fuel surcharge program to apply for this customer": {
@@ -227468,6 +227516,15 @@
       "go/other",
       "routes/desk",
       "routes/organization"
+    ]
+  },
+  "Sender Email": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Sender blocked": {
@@ -248241,7 +248298,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring",
+      "apps/web/components",
       "routes/factoring-remittance"
     ]
   },
@@ -254370,15 +254427,6 @@
       "routes/factoring-submission"
     ]
   },
-  "The factor's delivery settings changed since you opened them; reload and try again": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The factor's funding of a schedule was recorded: the advance, fee and reserve of each funded invoice were booked, and any invoice the factor rejected went back to the queue.": {
     "sites": 1,
     "scope": [
@@ -259783,7 +259831,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring",
+      "apps/web/components",
       "routes/factoring-remittance"
     ]
   },
@@ -260108,7 +260156,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "The reported time cannot be in the future": {
@@ -281570,7 +281618,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "Upload a factor's remittance and read it": {
@@ -281738,7 +281786,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring",
+      "apps/web/components",
       "routes/fuel-purchase"
     ]
   },
@@ -282030,7 +282078,7 @@
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/factoring",
+      "apps/web/components",
       "routes/fuel-purchase"
     ]
   },
@@ -289996,7 +290044,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "apps/web/components"
     ]
   },
   "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": {

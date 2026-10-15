@@ -1572,6 +1572,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
+				Name:     "senderEmail",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Remittance)
+					return obj.SenderEmail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
 				Name:       "sourceFormat",
 				IsResolver: true,
 				Concurrent: true,

@@ -5,6 +5,7 @@ import { SegmentedField } from "@/components/fields/segmented-field";
 import { FactoringMovementPreview } from "@/components/factoring/factoring-movement-preview";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePlannedPreview } from "@/hooks/use-planned-preview";
 import { FACTORING_SUBMISSION_STATUS_LABELS } from "@/lib/factoring";
 import {
   recordFactoringFunding,
@@ -12,15 +13,10 @@ import {
   type FactoringSubmission,
   type FactoringSubmissionDetail,
 } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-  type UseQueryResult,
-} from "@tanstack/react-query";
-import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -34,7 +30,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo } from "react";
@@ -49,7 +45,6 @@ import {
 } from "./funding-schema";
 
 const FUNDING_FORM_ID = "record-factoring-funding-form";
-const PREVIEW_DEBOUNCE_MS = 400;
 
 /**
  * Records what the factor did with a sent schedule, from its funding report
@@ -107,29 +102,11 @@ function FundingForm({
     resolver: zodResolver(fundingFormSchema) as Resolver<FundingFormValues>,
     defaultValues: fundingFormDefaults(submission, dateToUnixTimestamp(new Date())),
   });
-  const values = useWatch({ control: form.control }) as FundingFormValues;
-  const inputKey = useMemo(() => {
-    if (!fundingFormSchema.safeParse(values).success) {
-      return null;
-    }
-    const input = fundingFormToInput(submission, values);
-    return input ? JSON.stringify(input) : null;
-  }, [submission, values]);
-  const debouncedKey = useDebounce(inputKey, PREVIEW_DEBOUNCE_MS);
-  const planInput = useMemo(
-    () =>
-      debouncedKey
-        ? (JSON.parse(debouncedKey) as Parameters<typeof factoringQueries.fundingPlan>[0])
-        : null,
-    [debouncedKey],
-  );
-  const plan = useQuery({
-    ...factoringQueries.fundingPlan(
-      planInput ?? { submissionId: "", version: 0, fundedOn: 0, items: [] },
-    ),
-    enabled: planInput !== null,
-    placeholderData: keepPreviousData,
-    retry: false,
+  const { plan, hasInput, previewing } = usePlannedPreview({
+    control: form.control,
+    schema: fundingFormSchema,
+    toInput: (values: FundingFormValues) => fundingFormToInput(submission, values),
+    query: factoringQueries.fundingPlan,
   });
 
   const mutation = useApiMutation<
@@ -159,7 +136,6 @@ function FundingForm({
   const itemsError =
     form.formState.errors.items?.root?.message ?? form.formState.errors.items?.message;
   const money = (minor: number) => formatMinor(minor, submission.currencyCode);
-  const previewing = inputKey !== null && inputKey === debouncedKey;
 
   return (
     <>
@@ -216,7 +192,7 @@ function FundingForm({
         </FormProvider>
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-medium">{t("What it books")}</h3>
-          {inputKey === null ? (
+          {!hasInput ? (
             <p className="text-muted-foreground text-sm">
               {t("Mark an invoice funded or rejected to see the journal it books.")}
             </p>
