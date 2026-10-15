@@ -413,17 +413,18 @@ func (s *Service) raiseMemo(
 		)
 
 		memo, txErr = s.invoiceService.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
-			ID:           memoID,
-			TenantInfo:   tenantInfo,
-			CustomerID:   plan.result.CustomerID,
-			BillType:     billingqueue.BillTypeDebitMemo,
-			Lines:        memoLines(plan.result.Lines),
-			Reason:       "Late charges assessed as of " + formatDate(inserted[0].AsOfDate),
-			InvoiceDate:  inserted[0].AsOfDate,
-			Memo:         "Late charge run " + runKey,
-			MemoKind:     invoice.MemoKindLateCharge,
-			AutoPost:     memosAutoPost(control),
-			CurrencyCode: plan.result.CurrencyCode,
+			ID:               memoID,
+			TenantInfo:       tenantInfo,
+			CustomerID:       plan.result.CustomerID,
+			BillType:         billingqueue.BillTypeDebitMemo,
+			Lines:            memoLines(plan.result.Lines),
+			Reason:           "Late charges assessed as of " + formatDate(inserted[0].AsOfDate),
+			InvoiceDate:      inserted[0].AsOfDate,
+			Memo:             "Late charge run " + runKey,
+			MemoKind:         invoice.MemoKindLateCharge,
+			AutoPost:         memosAutoPost(control),
+			AutoPostByPolicy: memosAutoPost(control),
+			CurrencyCode:     plan.result.CurrencyCode,
 		}, actor)
 		if txErr != nil {
 			return txErr

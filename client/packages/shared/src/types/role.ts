@@ -23,6 +23,7 @@ export const operationSchema = z.enum([
   "submit",
   "cancel",
   "duplicate",
+  "post",
 ]);
 export type Operation = z.infer<typeof operationSchema>;
 

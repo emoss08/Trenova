@@ -46,6 +46,7 @@ type PostInvoiceRequest struct {
 	InvoiceID   pulid.ID
 	TenantInfo  pagination.TenantInfo
 	TriggeredBy string
+	Automatic   bool
 }
 
 // VoidInvoiceRequest takes an invoice out of circulation. A draft is voided in
@@ -109,6 +110,7 @@ type CreateMemoRequest struct {
 	Memo               string
 	MemoKind           invoice.MemoKind
 	AutoPost           bool
+	AutoPostByPolicy   bool `json:"-"`
 	// CurrencyCode bills the memo in a currency other than the customer's
 	// billing currency, as a late charge on an invoice in that currency must
 	// be. Blank means the customer's billing currency.

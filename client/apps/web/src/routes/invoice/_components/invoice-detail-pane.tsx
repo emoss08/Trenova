@@ -1,5 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
@@ -88,6 +90,7 @@ export default function InvoiceDetailPane({
   onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
   const t = useT();
+  const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
 
   const [{ tab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
   const { data: invoice, isLoading } = useQuery({
@@ -160,7 +163,7 @@ export default function InvoiceDetailPane({
                 <CheckIcon className="size-3.5 text-success-foreground" />
                 {t("Posted")}
               </span>
-            ) : isVoided ? null : (
+            ) : isVoided || !canPost ? null : (
               <Button size="sm" onClick={() => setPostDialogOpen(true)}>
                 <Send01Icon className="size-3.5" />
                 {t("Post invoice")}

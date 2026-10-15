@@ -836,6 +836,7 @@ export const operationChoices: SelectOption[] = [
   { value: "submit", label: "Submit" },
   { value: "cancel", label: "Cancel" },
   { value: "duplicate", label: "Duplicate" },
+  { value: "post", label: "Post" },
 ] satisfies ReadonlyArray<GenericSelectOption<Operation>>;
 
 // Derived from i18n/locales.json via the generated module, so shipping a new language does

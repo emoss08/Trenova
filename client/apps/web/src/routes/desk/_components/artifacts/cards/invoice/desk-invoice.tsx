@@ -205,6 +205,7 @@ function InvoiceCard({
   const { allowed: canEdit } = usePermission(Resource.Invoice, Operation.Update);
   const { allowed: canSend } = usePermission(Resource.Invoice, Operation.Submit);
   const { allowed: canVoid } = usePermission(Resource.Invoice, Operation.Cancel);
+  const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
   const shipments = useRecordShipments({
     scope: { kind: "invoice", id },
     pageSize: INVOICE_SHIPMENT_ROWS,
@@ -402,7 +403,7 @@ function InvoiceCard({
   }
 
   const showsOwed = !draft && !voided;
-  const postable = draft && canEdit;
+  const postable = draft && canPost;
   const related = record.relatedInvoices;
 
   return (

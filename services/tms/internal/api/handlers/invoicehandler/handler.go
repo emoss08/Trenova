@@ -100,12 +100,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	api.GET(
 		"/:invoiceID/post-preview/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpPost),
 		h.postPreview,
 	)
 	api.POST(
 		"/:invoiceID/post/",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpPost),
 		h.post,
 	)
 	api.POST(
