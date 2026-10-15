@@ -14,6 +14,8 @@ type Deps struct {
 	DetentionPolicyService *detentionpolicyservice.Service
 }
 
+type DetentionOccurrenceResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

@@ -91,6 +91,12 @@ const ICONS = {
       <path d="M11 12h6M15 10l2 2-2 2" />
     </>
   ),
+  detention: (
+    <>
+      <circle cx="12" cy="13" r="7.5" />
+      <path d="M12 9v4l2.75 1.75M10 3.5h4" />
+    </>
+  ),
   tender: (
     <>
       <path d="M4.5 6.5h15v3a2.5 2.5 0 0 0 0 5v3h-15v-3a2.5 2.5 0 0 0 0-5z" />
@@ -294,7 +300,8 @@ export type DeskArtKind =
   | "tender"
   | "invoice"
   | "pay"
-  | "payable";
+  | "payable"
+  | "detention";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -326,6 +333,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   invoice: "Invoice",
   pay: "Worker settlement",
   payable: "Carrier settlement",
+  detention: "Detention charge",
 });
 
 /**
@@ -345,7 +353,9 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * transfer as the load tender a coordinator accepts or declines, an invoice as
  * the bill a biller sends and a collector follows to paid, a worker settlement
  * as the pay stub a payroll clerk approves and pays, a carrier settlement as
- * the payable an AP clerk checks against the carrier's invoices and pays.
+ * the payable an AP clerk checks against the carrier's invoices and pays, a
+ * detention occurrence as the charge a biller approves for a stop that ran
+ * past its free time.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -366,6 +376,7 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   invoice: "invoice",
   driver_settlement: "pay",
   carrier_settlement: "payable",
+  detention_occurrence: "detention",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -472,6 +483,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Worker settlement");
     case "payable":
       return t("Carrier settlement");
+    case "detention":
+      return t("Detention charge");
   }
 }
 

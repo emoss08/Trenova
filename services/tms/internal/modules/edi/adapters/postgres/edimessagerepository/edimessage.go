@@ -452,6 +452,49 @@ func (r *repository) GetAckStatusCounts(
 	)
 }
 
+func (r *repository) GetAckStatusCountsByPartner(
+	ctx context.Context,
+	req ediports.GetEDIMessageStatusCountsRequest,
+) ([]*ediports.EDIPartnerAckStatusCount, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ediports.EDIPartnerAckStatusCount, error) {
+			cols := edicol.EDIMessageColumns
+			partner := edicol.EDIPartnerColumns
+			rows := make([]*ediports.EDIPartnerAckStatusCount, 0)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*edi.EDIMessage)(nil)).
+				ColumnExpr(cols.EDIPartnerID.Qualified()).
+				ColumnExpr(buncolgen.Max(partner.Name, "partner_name")).
+				ColumnExpr(buncolgen.Max(partner.Code, "partner_code")).
+				ColumnExpr(cols.AckStatus.Qualified()).
+				ColumnExpr(buncolgen.Count("count")).
+				Join("JOIN "+edicol.EDIPartnerTable.Name+" AS "+edicol.EDIPartnerTable.Alias).
+				JoinOn(partner.ID.EqColumn(cols.EDIPartnerID)).
+				JoinOn(partner.OrganizationID.EqColumn(cols.OrganizationID)).
+				JoinOn(partner.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+				Where(cols.AckStatus.IsNotNull()).
+				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
+				GroupExpr(cols.EDIPartnerID.Qualified()).
+				GroupExpr(cols.AckStatus.Qualified()).
+				OrderExpr("partner_name ASC").
+				Order(cols.EDIPartnerID.OrderAsc(), cols.AckStatus.OrderAsc())
+			if req.Since > 0 {
+				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			if err := query.Scan(ctx, &rows); err != nil {
+				return nil, err
+			}
+			return rows, nil
+		},
+	)
+}
+
 const scorecardPendingDeliveryFilter = "emsg.direction = 'Outbound' AND " +
 	"emsg.delivery_status IN ('Queued', 'Sending', 'Failed')"
 

@@ -11520,6 +11520,15 @@ enum DetentionCapScope {
   PerStop
 }
 
+"""
+A clock still running, priced as of now; the occurrence's own amounts date from its last recalculation.
+"""
+type DetentionClockPrice {
+  asOf: Timestamp!
+  billableAmount: Decimal!
+  billableMinutes: Int!
+}
+
 enum DetentionClockStartBasis {
   Appointment
   Arrival
@@ -11682,6 +11691,12 @@ type DetentionOccurrence {
   additionalChargeId: ID
   appointmentEnd: Timestamp
   appointmentStart: Timestamp
+  approvedAt: Timestamp
+  """
+  Who approved the charge to bill, null until it is approved or when it was approved automatically.
+  """
+  approvedBy: User
+  approvedById: ID
   arrivedAt: Timestamp
   arrivedLate: Boolean!
   billableAmount: Decimal!
@@ -11711,6 +11726,10 @@ type DetentionOccurrence {
   id: ID!
   isOpen: Boolean!
   lateByMinutes: Int!
+  """
+  The stop's location, null to someone who may not read locations or when it has been removed.
+  """
+  location: Location
   locationId: ID!
   locationName: String!
   netMargin: Decimal!
@@ -11735,12 +11754,17 @@ type DetentionOccurrence {
   version: Int!
   waivedAmount: Decimal!
   waivedAt: Timestamp
+  """Who waived the charge, null unless it was waived."""
+  waivedBy: User
+  waivedById: ID
   waiverNote: String!
   waiverReason: DetentionWaiverReason
 }
 
 type DetentionOccurrenceDetail {
   collectability: DetentionCollectability!
+  """Null once the clock has stopped."""
+  currentlyBillable: DetentionClockPrice
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
   occurrence: DetentionOccurrence!

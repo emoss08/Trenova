@@ -2,6 +2,7 @@ package development
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -239,11 +240,20 @@ func seedBaseTemplate(
 		return nil, nil, fmt.Errorf("find the X12 %s outbound document type: %w", set, err)
 	}
 
+	name := fmt.Sprintf("Base X12 %s %s", set, edi.DocumentDirectionOutbound)
+	existing, existingVersion, err := findBaseTemplate(ctx, tx, tenant, set, name)
+	if err != nil {
+		return nil, nil, err
+	}
+	if existing != nil {
+		return existing, existingVersion, nil
+	}
+
 	template := &edi.EDITemplate{
 		BusinessUnitID: tenant.BuID,
 		OrganizationID: tenant.OrgID,
 		DocumentTypeID: documentType.ID,
-		Name:           fmt.Sprintf("Base X12 %s Outbound", set),
+		Name:           name,
 		Description:    fmt.Sprintf("Tenant-scoped base outbound X12 %s template", set),
 		Direction:      edi.DocumentDirectionOutbound,
 		Standard:       edi.EDIStandardX12,
@@ -277,6 +287,50 @@ func seedBaseTemplate(
 	}
 	if _, err = tx.NewInsert().Model(&segments).Exec(ctx); err != nil {
 		return nil, nil, fmt.Errorf("insert the base %s template segments: %w", set, err)
+	}
+
+	return template, version, nil
+}
+
+func findBaseTemplate(
+	ctx context.Context,
+	tx bun.Tx,
+	tenant pagination.TenantInfo,
+	set edi.TransactionSet,
+	name string,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	template := new(edi.EDITemplate)
+	cols := edicol.EDITemplateColumns
+	err := tx.NewSelect().
+		Model(template).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return edicol.EDITemplateScopeTenant(sq, tenant).
+				Where(cols.Standard.Eq(), edi.EDIStandardX12).
+				Where(cols.TransactionSet.Eq(), set).
+				Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+				Where(cols.Name.Eq(), name)
+		}).
+		Limit(1).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil, nil
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("look for the base %s template: %w", set, err)
+	}
+
+	version := new(edi.EDITemplateVersion)
+	versionCols := edicol.EDITemplateVersionColumns
+	if err = tx.NewSelect().
+		Model(version).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return edicol.EDITemplateVersionScopeTenant(sq, tenant).
+				Where(versionCols.TemplateID.Eq(), template.ID).
+				Where(versionCols.IsActive.IsTrue())
+		}).
+		Limit(1).
+		Scan(ctx); err != nil {
+		return nil, nil, fmt.Errorf("find the active version of the base %s template: %w", set, err)
 	}
 
 	return template, version, nil

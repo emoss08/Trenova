@@ -36,8 +36,8 @@ Execute ─▶ ApplyConnectionDraft: re-plan, check the digest and readiness, wr
 
 | Tool | Kind | Holds it | What it does |
 |---|---|---|---|
-| `draft_edi_connection` | query, EDI read | EDI desk | Builds the plan and returns the review (`connectionDraftView`: the draft, a title and a note for the model). Writes nothing. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, listed in `agentruntime.outsideTextTools`). |
-| `apply_edi_connection_draft` | action, EDI update, egress internal | EDI desk | The same input plus `documentDigest`. Its `Preview` recomputes the plan from the document and the configuration as they are at decision time; `Validate` refuses a digest that does not match or a draft that is not ready; `Execute` runs only from an approved proposal. Its default tier and ceiling are both `Propose`. It is an update because creating EDI records is not something an agent may hold; the records it creates are created under a person's approval. |
+| `draft_edi_connection` | query, EDI read | EDI desk | Builds the plan and returns the review (`connectionDraftView`: the draft, a title and a note for the model). Writes nothing. The note names, for the model to repeat in its reply, each template rule left unmet (`MS1-01 (page 5)`), each gap the guide leaves open and the credentials to enter before the connection is turned on; a reply that leaves them out hides what the person must still do. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, listed in `agentruntime.outsideTextTools`). |
+| `apply_edi_connection_draft` | action, EDI update, egress internal | EDI desk | The same input plus `documentDigest`. Its `Preview` recomputes the plan from the document and the configuration as they are at decision time; `Validate` refuses a digest that does not match or a draft that is not ready; `Execute` runs only from an approved proposal, and reports what it saved (`ToolResultReporter`): the partner as an `edi_partner` record, and a state that counts the records by kind, says they were saved inactive (or, for a partner that exists, that what existed keeps its status) and names the credentials still to enter, so the reply after approval can say so. Its default tier and ceiling are both `Propose`. It is an update because creating EDI records is not something an agent may hold; the records it creates are created under a person's approval. |
 
 Both tools take the same input (`agenttools/edispec`: `ParamSchema`, `Parse`). Reading the
 document is document intelligence's job, through the pipeline every attachment goes through
@@ -114,7 +114,9 @@ again instead.
 
 - **Matching.** The planner looks for an existing partner by the `ediPartnerId` given, else by
   code, name, the ISA id on its document profiles, the AS2 id on its communication profiles and
-  the customer (`FindPartnerMatches`).
+  the customer (`FindPartnerMatches`). It matches only on a field's settled value, the one the plan
+  would write or the person picked: a code, name or id the plan holds back is not evidence of who
+  the partner is.
   - Exactly one match: the plan updates that partner.
   - More than one: the plan stops with the candidates under *Which partner is this?* and creates
     nothing.
@@ -182,8 +184,10 @@ Every planned record goes through the validators the setup screens use:
   (`ValidatePartnerSettings`).
 
 The review shows each failure under *Would not save*. The draft is not ready, and
-`apply_edi_connection_draft` refuses to run, while any of these hold: a validation failure, a held
-or unverified value in a field the write needs, an ambiguous partner match, or nothing to change.
+`apply_edi_connection_draft` refuses to run, while any of these hold: a validation failure, a held,
+unverified or invalid value in a required field, an ambiguous partner match, or nothing to change.
+A held value in an optional field (a contact phone, a time zone, an acknowledgment window) is still
+listed under *To decide* and left unset, or at its current value on a re-run; it does not block.
 
 ## Secrets
 
@@ -203,7 +207,10 @@ credentials.
 Running the tool on a revised spec for a partner that already exists produces a diff against what
 is configured now: each field and record is `Add`, `Change` (current → proposed), `Same` or `None`.
 The diff deletes nothing (a record the revised spec no longer mentions is listed under *Left as
-they are*), changes no status and touches no secret. The preview pins the version of every record
+they are*), changes no status and touches no secret. Each existing document profile keeps its own
+envelope: an interchange value is written to it only when the guide or the person gives it, so a
+setting the guide never names (a repetition separator, an inbound profile's usage indicator) stays
+as each profile has it. The preview pins the version of every record
 it changes, and its digest is what the person approves, so a record that moved after the review
 refuses the approval.
 

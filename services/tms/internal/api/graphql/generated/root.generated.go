@@ -384,6 +384,7 @@ type ResolverRoot interface {
 	DOTRandomPool() DOTRandomPoolResolver
 	DQFFile() DQFFileResolver
 	DQFItem() DQFItemResolver
+	DetentionOccurrence() DetentionOccurrenceResolver
 	DisciplinaryLadder() DisciplinaryLadderResolver
 	DistanceProfile() DistanceProfileResolver
 	DocumentTemplate() DocumentTemplateResolver
@@ -1168,6 +1169,12 @@ type DQFFileResolver interface {
 type DQFItemResolver interface {
 	Regulation(ctx context.Context, obj *worker.DQFItem) (*string, error)
 	ExpiresAt(ctx context.Context, obj *worker.DQFItem) (*int, error)
+}
+
+type DetentionOccurrenceResolver interface {
+	Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error)
+	ApprovedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
+	WaivedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
 }
 
 type DisciplinaryLadderResolver interface {
@@ -3913,6 +3920,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DOTRandomPool":                      func() any { return r.DOTRandomPool() },
 			"DQFFile":                            func() any { return r.DQFFile() },
 			"DQFItem":                            func() any { return r.DQFItem() },
+			"DetentionOccurrence":                func() any { return r.DetentionOccurrence() },
 			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
 			"DistanceProfile":                    func() any { return r.DistanceProfile() },
 			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },
@@ -15599,6 +15607,8 @@ type DetentionOccurrence {
   stopId: ID!
   customerId: ID!
   locationId: ID!
+  "The stop's location, null to someone who may not read locations or when it has been removed."
+  location: Location
   detentionPolicyId: ID
   policySnapshot: JSON
   calculationTrace: JSON
@@ -15634,9 +15644,16 @@ type DetentionOccurrence {
   noticeSentAt: Timestamp
   suppressedByGate: Boolean!
   requiresApproval: Boolean!
+  approvedById: ID
+  approvedAt: Timestamp
+  "Who approved the charge to bill, null until it is approved or when it was approved automatically."
+  approvedBy: User
   waiverReason: DetentionWaiverReason
   waiverNote: String!
   waivedAt: Timestamp
+  waivedById: ID
+  "Who waived the charge, null unless it was waived."
+  waivedBy: User
   waivedAmount: Decimal!
   disputeNote: String!
   disputedAt: Timestamp
@@ -15710,12 +15727,21 @@ type DetentionCollectability {
   summary: String!
 }
 
+"A clock still running, priced as of now; the occurrence's own amounts date from its last recalculation."
+type DetentionClockPrice {
+  billableMinutes: Int!
+  billableAmount: Decimal!
+  asOf: Timestamp!
+}
+
 type DetentionOccurrenceDetail {
   occurrence: DetentionOccurrence!
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
   collectability: DetentionCollectability!
   receipt: String!
+  "Null once the clock has stopped."
+  currentlyBillable: DetentionClockPrice
 }
 
 type DetentionDeskEntry {

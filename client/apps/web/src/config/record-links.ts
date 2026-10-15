@@ -151,6 +151,11 @@ export const RECORD_LINKS = {
     path: "/detention/desk",
     params: { stop: "{id}" },
   },
+  edi_partner: {
+    label: "EDI partner",
+    path: "/edi/partners",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   edi_inbound_file: {
     label: "EDI inbound file",
     path: "/edi/inbound-files",

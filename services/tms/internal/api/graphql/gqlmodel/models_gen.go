@@ -3046,6 +3046,13 @@ type DetentionBacktestResult struct {
 	Truncated           bool                       `json:"truncated"`
 }
 
+// A clock still running, priced as of now; the occurrence's own amounts date from its last recalculation.
+type DetentionClockPrice struct {
+	BillableMinutes int    `json:"billableMinutes"`
+	BillableAmount  string `json:"billableAmount"`
+	AsOf            int    `json:"asOf"`
+}
+
 type DetentionCollectability struct {
 	Score      int                     `json:"score"`
 	Band       detention.ScoreBand     `json:"band"`
@@ -3122,64 +3129,73 @@ type DetentionNotice struct {
 }
 
 type DetentionOccurrence struct {
-	ID                  string                       `json:"id"`
-	BusinessUnitID      string                       `json:"businessUnitId"`
-	OrganizationID      string                       `json:"organizationId"`
-	ShipmentID          string                       `json:"shipmentId"`
-	ShipmentMoveID      string                       `json:"shipmentMoveId"`
-	StopID              string                       `json:"stopId"`
-	CustomerID          string                       `json:"customerId"`
-	LocationID          string                       `json:"locationId"`
-	DetentionPolicyID   *string                      `json:"detentionPolicyId,omitempty"`
-	PolicySnapshot      map[string]any               `json:"policySnapshot,omitempty"`
-	CalculationTrace    map[string]any               `json:"calculationTrace,omitempty"`
-	StopType            string                       `json:"stopType"`
-	ScheduleType        string                       `json:"scheduleType"`
-	AppointmentStart    *int                         `json:"appointmentStart,omitempty"`
-	AppointmentEnd      *int                         `json:"appointmentEnd,omitempty"`
-	ArrivedAt           *int                         `json:"arrivedAt,omitempty"`
-	DepartedAt          *int                         `json:"departedAt,omitempty"`
-	ClockStartAt        int                          `json:"clockStartAt"`
-	ClockStopAt         *int                         `json:"clockStopAt,omitempty"`
-	FreeTimeExpiresAt   int                          `json:"freeTimeExpiresAt"`
-	NoticeDueAt         *int                         `json:"noticeDueAt,omitempty"`
-	NoticeDeadlineAt    *int                         `json:"noticeDeadlineAt,omitempty"`
-	IsOpen              bool                         `json:"isOpen"`
-	ArrivedLate         bool                         `json:"arrivedLate"`
-	LateByMinutes       int                          `json:"lateByMinutes"`
-	FreeMinutesGranted  int                          `json:"freeMinutesGranted"`
-	RawDwellMinutes     int                          `json:"rawDwellMinutes"`
-	BillableMinutes     int                          `json:"billableMinutes"`
-	RoundedMinutes      int                          `json:"roundedMinutes"`
-	BillableUnits       string                       `json:"billableUnits"`
-	GrossAmount         string                       `json:"grossAmount"`
-	BillableAmount      string                       `json:"billableAmount"`
-	DriverPayMinutes    int                          `json:"driverPayMinutes"`
-	DriverPayAmount     string                       `json:"driverPayAmount"`
-	NetMargin           string                       `json:"netMargin"`
-	CapApplied          detention.CapKind            `json:"capApplied"`
-	ConvertedToLayover  bool                         `json:"convertedToLayover"`
-	Currency            string                       `json:"currency"`
-	Status              detention.OccurrenceStatus   `json:"status"`
-	NotificationStatus  detention.NotificationStatus `json:"notificationStatus"`
-	NoticeSentAt        *int                         `json:"noticeSentAt,omitempty"`
-	SuppressedByGate    bool                         `json:"suppressedByGate"`
-	RequiresApproval    bool                         `json:"requiresApproval"`
-	WaiverReason        *detention.WaiverReason      `json:"waiverReason,omitempty"`
-	WaiverNote          string                       `json:"waiverNote"`
-	WaivedAt            *int                         `json:"waivedAt,omitempty"`
-	WaivedAmount        string                       `json:"waivedAmount"`
-	DisputeNote         string                       `json:"disputeNote"`
-	DisputedAt          *int                         `json:"disputedAt,omitempty"`
-	CollectabilityScore int                          `json:"collectabilityScore"`
-	EvidenceHead        string                       `json:"evidenceHead"`
-	AdditionalChargeID  *string                      `json:"additionalChargeId,omitempty"`
-	LocationName        string                       `json:"locationName"`
-	CustomerName        string                       `json:"customerName"`
-	ShipmentProNumber   string                       `json:"shipmentProNumber"`
-	Version             int                          `json:"version"`
-	CreatedAt           int                          `json:"createdAt"`
-	UpdatedAt           int                          `json:"updatedAt"`
+	ID             string `json:"id"`
+	BusinessUnitID string `json:"businessUnitId"`
+	OrganizationID string `json:"organizationId"`
+	ShipmentID     string `json:"shipmentId"`
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	StopID         string `json:"stopId"`
+	CustomerID     string `json:"customerId"`
+	LocationID     string `json:"locationId"`
+	// The stop's location, null to someone who may not read locations or when it has been removed.
+	Location           *location.Location           `json:"location,omitempty"`
+	DetentionPolicyID  *string                      `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot     map[string]any               `json:"policySnapshot,omitempty"`
+	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
+	StopType           string                       `json:"stopType"`
+	ScheduleType       string                       `json:"scheduleType"`
+	AppointmentStart   *int                         `json:"appointmentStart,omitempty"`
+	AppointmentEnd     *int                         `json:"appointmentEnd,omitempty"`
+	ArrivedAt          *int                         `json:"arrivedAt,omitempty"`
+	DepartedAt         *int                         `json:"departedAt,omitempty"`
+	ClockStartAt       int                          `json:"clockStartAt"`
+	ClockStopAt        *int                         `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt  int                          `json:"freeTimeExpiresAt"`
+	NoticeDueAt        *int                         `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt   *int                         `json:"noticeDeadlineAt,omitempty"`
+	IsOpen             bool                         `json:"isOpen"`
+	ArrivedLate        bool                         `json:"arrivedLate"`
+	LateByMinutes      int                          `json:"lateByMinutes"`
+	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
+	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
+	BillableMinutes    int                          `json:"billableMinutes"`
+	RoundedMinutes     int                          `json:"roundedMinutes"`
+	BillableUnits      string                       `json:"billableUnits"`
+	GrossAmount        string                       `json:"grossAmount"`
+	BillableAmount     string                       `json:"billableAmount"`
+	DriverPayMinutes   int                          `json:"driverPayMinutes"`
+	DriverPayAmount    string                       `json:"driverPayAmount"`
+	NetMargin          string                       `json:"netMargin"`
+	CapApplied         detention.CapKind            `json:"capApplied"`
+	ConvertedToLayover bool                         `json:"convertedToLayover"`
+	Currency           string                       `json:"currency"`
+	Status             detention.OccurrenceStatus   `json:"status"`
+	NotificationStatus detention.NotificationStatus `json:"notificationStatus"`
+	NoticeSentAt       *int                         `json:"noticeSentAt,omitempty"`
+	SuppressedByGate   bool                         `json:"suppressedByGate"`
+	RequiresApproval   bool                         `json:"requiresApproval"`
+	ApprovedByID       *string                      `json:"approvedById,omitempty"`
+	ApprovedAt         *int                         `json:"approvedAt,omitempty"`
+	// Who approved the charge to bill, null until it is approved or when it was approved automatically.
+	ApprovedBy   *tenant.User            `json:"approvedBy,omitempty"`
+	WaiverReason *detention.WaiverReason `json:"waiverReason,omitempty"`
+	WaiverNote   string                  `json:"waiverNote"`
+	WaivedAt     *int                    `json:"waivedAt,omitempty"`
+	WaivedByID   *string                 `json:"waivedById,omitempty"`
+	// Who waived the charge, null unless it was waived.
+	WaivedBy            *tenant.User `json:"waivedBy,omitempty"`
+	WaivedAmount        string       `json:"waivedAmount"`
+	DisputeNote         string       `json:"disputeNote"`
+	DisputedAt          *int         `json:"disputedAt,omitempty"`
+	CollectabilityScore int          `json:"collectabilityScore"`
+	EvidenceHead        string       `json:"evidenceHead"`
+	AdditionalChargeID  *string      `json:"additionalChargeId,omitempty"`
+	LocationName        string       `json:"locationName"`
+	CustomerName        string       `json:"customerName"`
+	ShipmentProNumber   string       `json:"shipmentProNumber"`
+	Version             int          `json:"version"`
+	CreatedAt           int          `json:"createdAt"`
+	UpdatedAt           int          `json:"updatedAt"`
 }
 
 type DetentionOccurrenceDetail struct {
@@ -3188,6 +3204,8 @@ type DetentionOccurrenceDetail struct {
 	Notices        []*DetentionNotice       `json:"notices,omitempty"`
 	Collectability *DetentionCollectability `json:"collectability"`
 	Receipt        string                   `json:"receipt"`
+	// Null once the clock has stopped.
+	CurrentlyBillable *DetentionClockPrice `json:"currentlyBillable,omitempty"`
 }
 
 type DetentionPolicy struct {

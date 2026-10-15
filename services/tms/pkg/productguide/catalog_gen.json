@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f5d94a611a48e84af010590a7e94a4be5c40324f13cce6cf5eed7336735fd92f",
+  "version": "sha256:be805ac0e03f6cdc276ec78299347a568d5eff32a74a15096c2c7d4d064cc6c9",
   "modules": [
     {
       "id": "home",
@@ -18042,7 +18042,8 @@
       "path": "/detention/desk",
       "params": {
         "stop": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "driver_settlement",
@@ -18073,6 +18074,15 @@
         "panelEntityId": "{id}"
       },
       "deskCard": true
+    },
+    {
+      "entity": "edi_partner",
+      "label": "EDI partner",
+      "path": "/edi/partners",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
     },
     {
       "entity": "edi_transfer",

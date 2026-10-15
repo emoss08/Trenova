@@ -159,6 +159,14 @@ type OverdueEDIAckPartner struct {
 	OldestGeneratedAt int64    `bun:"oldest_generated_at"`
 }
 
+type EDIPartnerAckStatusCount struct {
+	PartnerID   pulid.ID                        `bun:"edi_partner_id"`
+	PartnerName string                          `bun:"partner_name"`
+	PartnerCode string                          `bun:"partner_code"`
+	AckStatus   edi.MessageAcknowledgmentStatus `bun:"ack_status"`
+	Count       int                             `bun:"count"`
+}
+
 type OverdueEDIAcks struct {
 	Messages []*edi.EDIMessage
 	Partners []*OverdueEDIAckPartner
@@ -212,6 +220,10 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req GetEDIMessageStatusCountsRequest,
 	) (map[edi.MessageAcknowledgmentStatus]int, error)
+	GetAckStatusCountsByPartner(
+		ctx context.Context,
+		req GetEDIMessageStatusCountsRequest,
+	) ([]*EDIPartnerAckStatusCount, error)
 	GetOverdueAckCount(ctx context.Context, req GetEDIOverdueAckCountRequest) (int, error)
 	ListOverdueAcks(ctx context.Context, req *ListOverdueEDIAcksRequest) (*OverdueEDIAcks, error)
 	ListRecentDeadLettered(
