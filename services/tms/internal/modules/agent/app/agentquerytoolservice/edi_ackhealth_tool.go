@@ -66,9 +66,8 @@ func (t *getEDIAckHealthTool) SearchTerms() []string {
 
 func (t *getEDIAckHealthTool) Description() string {
 	return fmt.Sprintf(
-		"How partners are acknowledging what was sent: counts by ack status, overall and "+
-			"for each partner, overdue messages by partner oldest first, and recent dead "+
-			"letters. One call answers for one partner too: read its row in ackCountsByPartner "+
+		"How partners are acknowledging what was sent: ack status counts overall and per "+
+			"partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner "+
 			"rather than listing its messages. A message is overdue "+
 			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
 			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
