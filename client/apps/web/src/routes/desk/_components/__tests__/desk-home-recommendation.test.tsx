@@ -197,6 +197,75 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
   });
 
+  it("offers again when a new question replaces the one switched for, and Enter follows it", async () => {
+    const customerService = agentNamed("agdef_cs", "Customer service");
+    const shipments = "Show me a list of shipments";
+    state.recommend = (text, currentAgentId) =>
+      Promise.resolve(
+        text === shipments
+          ? { agent: customerService, current: false, tools: ["list_shipments"] }
+          : { ...billingFits(), current: currentAgentId === billing.id },
+      );
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    fireEvent.click(await screen.findByRole("button", { name: "Switch" }, { timeout: 3000 }));
+    await new Promise((settle) => setTimeout(settle, 1000));
+    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+
+    fireEvent.change(box, { target: { value: shipments } });
+
+    expect(
+      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
+    ).toHaveTextContent("Customer service has the tools for this");
+    pressEnter(box);
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(customerService.id);
+  });
+
+  it("turns down only the agent the cross was used on", async () => {
+    const customerService = agentNamed("agdef_cs", "Customer service");
+    const shipments = "Show me a list of shipments";
+    state.recommend = (text) =>
+      Promise.resolve(
+        text === shipments
+          ? { agent: customerService, current: false, tools: ["list_shipments"] }
+          : billingFits(),
+      );
+    renderHome(vi.fn());
+
+    const box = await type(QUESTION);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
+    );
+    fireEvent.change(box, { target: { value: `${QUESTION} today` } });
+    await new Promise((settle) => setTimeout(settle, 1000));
+    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+
+    fireEvent.change(box, { target: { value: shipments } });
+
+    expect(
+      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
+    ).toHaveTextContent("Customer service has the tools for this");
+  });
+
+  it("suggests again for the next question once the box is cleared", async () => {
+    renderHome(vi.fn());
+
+    const box = await type(QUESTION);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
+    );
+    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    fireEvent.change(box, { target: { value: "" } });
+    fireEvent.change(box, { target: { value: QUESTION } });
+
+    expect(
+      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
+    ).toHaveTextContent("Billing assistant has the tools for this");
+  });
+
   it("asks the agent already chosen when no agent fits better", async () => {
     state.recommend = () => Promise.resolve(null);
     const onStart = vi.fn();

@@ -50,10 +50,10 @@ export type DeskHomeAskOptions = {
  *
  * As the question is typed it is matched to the person's agents by the tools
  * each holds that the person may use, and an agent that fits better than the
- * one chosen is offered just above the box. Until the person chooses, from the
- * picker or from that offer, a question sent goes to the agent that fits it,
- * waiting a moment for the match when it was sent before one came back. One
- * of the chosen agent's own starter questions always goes to that agent.
+ * one chosen is offered just above the box. Unless the person picked an agent
+ * from the picker, a question sent goes to the agent that fits it, waiting a
+ * moment for the match when it was sent before one came back. One of the
+ * chosen agent's own starter questions always goes to that agent.
  */
 export function useDeskHomeAsk({
   agents,
@@ -74,39 +74,50 @@ export function useDeskHomeAsk({
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
   const drag = useDeskDrop(noAgents ? null : attachments.add);
   const agentId = askable.agent?.id ?? null;
+  // A pick from the picker pins the agent: Enter goes to it, though a better
+  // fit is still named. Switch only changes the agent, so a later question
+  // that needs another agent is offered and followed again; the server keeps
+  // the agent switched to for the words it was suggested for, so a switch
+  // never draws a second suggestion by itself. The cross turns down that one
+  // agent. Clearing the box starts the next question afresh.
+  const [pinned, setPinned] = useState(false);
+  const [keptOver, setKeptOver] = useState<readonly string[]>([]);
+  const [routing, setRouting] = useState(false);
   const advice = useAgentRecommendation({
     draft,
     agentId,
     enabled: !noAgents && agentId !== null,
   });
-  // The person has said where this question goes: a pick from the picker, or
-  // either answer to the offer. Until then a question goes where it fits.
-  const [chosen, setChosen] = useState(false);
-  const [keptOverId, setKeptOverId] = useState<string | null>(null);
-  const [routing, setRouting] = useState(false);
   const offered: AgentRecommendation | null = offersRecommendation(
     advice.recommendation,
     agentId,
-    keptOverId,
+    keptOver,
   )
     ? advice.recommendation
     : null;
 
+  const changeDraft = (value: string) => {
+    setDraft(value);
+    if (value.trim() === "") {
+      setPinned(false);
+      setKeptOver([]);
+    }
+  };
+
   const choose = (agent: AgentChoice) => {
     askable.choose(agent);
-    setChosen(true);
+    setPinned(true);
   };
 
   const acceptRecommendation = () => {
     if (offered) {
-      choose(offered.agent);
+      askable.choose(offered.agent);
     }
   };
 
   const keepAgent = () => {
     if (offered) {
-      setKeptOverId(offered.agent.id);
-      setChosen(true);
+      setKeptOver((previous) => [...previous, offered.agent.id]);
     }
   };
 
@@ -118,11 +129,11 @@ export function useDeskHomeAsk({
     const files = held.files();
     const starter = agent.starters?.some((item) => item.prompt === content.trim()) ?? false;
     let target = agent;
-    if (!chosen && !starter) {
+    if (!pinned && !starter) {
       setRouting(true);
       const recommendation = await advice.resolve(content);
       setRouting(false);
-      target = agentToAsk({ agent, recommendation, chosen });
+      target = agentToAsk({ agent, recommendation, pinned, keptOver });
     }
     onStart(target.id, content, {
       files,
@@ -142,7 +153,7 @@ export function useDeskHomeAsk({
     acceptRecommendation,
     keepAgent,
     draft,
-    setDraft,
+    setDraft: changeDraft,
     mentions,
     setMentions,
     providerId,

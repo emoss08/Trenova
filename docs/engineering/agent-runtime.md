@@ -1067,20 +1067,28 @@ same parts:
   `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
   appends, so only tools that matched are scored. Its query vector is the one the turn
   embeds for the same words, so a question sent after its match reuses the cached
-  vector rather than embedding twice. An agent scores 1/rank for each matched tool it
-  holds; ties go to the agent the question would go to now, then to the agent holding
-  fewer usable tools (the focused one), then by name. Nothing matched recommends
-  nobody, and the reply names at most three of the winning agent's matched tools.
+  vector rather than embedding twice. Only an agent holding the best match is ever
+  suggested, so a suggestion manages the question better than the agent it would
+  replace: the agent the question would go to now is kept whenever it holds that tool,
+  however many lesser matches another holds. Among the holders an agent scores 1/rank
+  for each matched tool it holds, then the one holding fewer usable tools (the focused
+  one) wins, then by name. Because the suggested agent holds the best match, switching
+  to it can never draw a second suggestion for the same words. Nothing matched
+  recommends nobody, and the reply names at most three of the winning agent's matched
+  tools.
 
 No model is asked: the match costs one embedding at most and works the same on a
 self-hosted install with a small model. The browser asks once typing pauses
 (`use-agent-recommendation.ts`) and names a better fit in a small note floating just
 above the box, where the terms reminder sits, with Switch and a cross that keeps the
-agent chosen. Until the
-person chooses, from the picker or from that offer, a question sent goes to the
-better fit; one sent before its match came back waits at most 1.5 seconds for it
-and otherwise goes to the agent already chosen (`agentToAsk` in
-`agent-recommendation-state.ts`). The query key holds the person's words, so it is
+agent chosen. Unless the person picked an agent from the picker, a question sent
+goes to the better fit; one sent before its match came back waits at most 1.5
+seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
+`agent-recommendation-state.ts`). The browser keeps asking as the question changes,
+so a new question the agent switched to cannot manage is offered again; the server
+rule above keeps a switch from drawing a second suggestion for the words it was
+made for. The cross turns down only the agent it was used on, and clearing the box
+forgets the pick and the agents turned down. The query key holds the person's words, so it is
 never added to `SHELL_QUERIES`.
 
 ### Steering and the queue
