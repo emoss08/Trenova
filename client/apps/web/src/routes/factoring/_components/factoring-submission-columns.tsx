@@ -4,7 +4,7 @@ import type { FactoringSubmissionRow } from "@/lib/graphql/factoring";
 import { FACTORING_TRANSPORT_METHOD_LABELS } from "@/lib/factoring";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
@@ -58,7 +58,7 @@ export function getFactoringSubmissionColumns(t: TranslateFn): ColumnDef<Factori
       header: t("Face value"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatCurrency(row.original.faceMinor / 100, row.original.currencyCode)}
+          {formatMinor(row.original.faceMinor, row.original.currencyCode)}
         </span>
       ),
       size: 140,
@@ -71,7 +71,7 @@ export function getFactoringSubmissionColumns(t: TranslateFn): ColumnDef<Factori
       header: t("Expected advance"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatCurrency(row.original.expectedAdvanceMinor / 100, row.original.currencyCode)}
+          {formatMinor(row.original.expectedAdvanceMinor, row.original.currencyCode)}
         </span>
       ),
       size: 150,

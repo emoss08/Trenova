@@ -457,7 +457,11 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/billing/factoring",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Invoice),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/factoring/page"))),
+            ),
             async lazy() {
               const { FactoringPage } = await import("@/routes/factoring/page");
               return { Component: FactoringPage };
@@ -491,6 +495,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FactoringSubmission),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/factoring-submission/page")),
+              ),
             ),
             async lazy() {
               const { FactoringSubmissionPage } =

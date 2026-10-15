@@ -18,7 +18,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useQueryStates } from "nuqs";
 import { Link } from "react-router";
@@ -89,7 +89,7 @@ export function FactoringInvoicePanel({
             <FactoringVerdictBadge verdict={state.verdict} />
           </DescriptionItem>
           <DescriptionItem label={t("Open balance")} numeric>
-            {formatCurrency(state.openBalanceMinor / 100, state.invoice?.currencyCode ?? "USD")}
+            {formatMinor(state.openBalanceMinor, state.invoice?.currencyCode ?? "USD")}
           </DescriptionItem>
           <DescriptionItem label={t("Customer")}>
             {state.customer ? (

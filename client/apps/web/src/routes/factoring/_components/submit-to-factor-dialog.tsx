@@ -11,7 +11,8 @@ import {
   formatBasisPoints,
   groupInvoicesByFactor,
 } from "@/lib/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -42,7 +43,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -249,7 +250,7 @@ function PlanBody({
   }
 
   const plan = query.data;
-  const money = (minor: number) => formatCurrency(minor / 100, plan.currencyCode);
+  const money = (minor: number) => formatMinor(minor, plan.currencyCode);
 
   return (
     <div className="flex min-w-0 flex-col gap-4">

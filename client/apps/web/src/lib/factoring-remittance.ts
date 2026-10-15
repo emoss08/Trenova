@@ -224,6 +224,12 @@ export const FACTORING_REMITTANCE_ACCEPT = {
   "application/pdf": [".pdf"],
 } as const;
 
+/** The files a remittance is read from, as a file picker's `accept` list. */
+export const FACTORING_REMITTANCE_FILE_TYPES = ".csv,.txt,.xlsx,.pdf";
+
+/** The largest remittance file the server reads: 32 MiB. */
+export const FACTORING_REMITTANCE_MAX_BYTES = 32 * 1024 * 1024;
+
 export function isPdfRemittance(fileName: string): boolean {
   return fileName.trim().toLowerCase().endsWith(".pdf");
 }

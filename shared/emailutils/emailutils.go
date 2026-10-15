@@ -27,6 +27,37 @@ var googleMailDomains = map[string]struct{}{
 	"googlemail.com": {},
 }
 
+var publicMailDomains = map[string]struct{}{
+	"aol.com":        {},
+	"gmail.com":      {},
+	"googlemail.com": {},
+	"gmx.com":        {},
+	"gmx.net":        {},
+	"hey.com":        {},
+	"hotmail.com":    {},
+	"icloud.com":     {},
+	"live.com":       {},
+	"mac.com":        {},
+	"mail.com":       {},
+	"me.com":         {},
+	"msn.com":        {},
+	"outlook.com":    {},
+	"proton.me":      {},
+	"protonmail.com": {},
+	"yahoo.com":      {},
+	"yandex.com":     {},
+	"ymail.com":      {},
+	"zoho.com":       {},
+}
+
+func IsPublicMailDomain(domain string) bool {
+	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	if _, ok := publicMailDomains[domain]; ok {
+		return true
+	}
+	return IsDisposableDomain(domain)
+}
+
 type Address struct {
 	Original   string
 	Lower      string

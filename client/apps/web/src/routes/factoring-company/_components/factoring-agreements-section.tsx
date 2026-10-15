@@ -1,6 +1,7 @@
 import { FactoringAgreementStatusBadge } from "@/components/factoring/factoring-badges";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { SectionPanel } from "@/components/section-panel";
+import { FactoringAgreementsBodySkeleton } from "./factoring-agreements-section-skeleton";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -14,7 +15,8 @@ import {
   endFactoringAgreement,
   type FactoringAgreement,
 } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit05Icon, PlayIcon, PlusIcon, StopCircleIcon } from "@trenova/shared/components/icons";
@@ -45,10 +47,10 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
+import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
@@ -103,10 +105,7 @@ export function FactoringAgreementsSection({
       }
     >
       {isLoading ? (
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
+        <FactoringAgreementsBodySkeleton />
       ) : isError ? (
         <div className="p-3">
           <Alert size="sm" variant="destructive">
@@ -231,7 +230,7 @@ function AgreementRow({
           {formatBasisPoints(agreement.reserveRateBp)}
         </DescriptionItem>
         <DescriptionItem label={t("Minimum fee")} numeric>
-          {formatCurrency(agreement.minimumFeeMinor / 100)}
+          {formatMinor(agreement.minimumFeeMinor)}
         </DescriptionItem>
         <DescriptionItem label={t("Recourse")}>
           {FACTORING_RECOURSE_LABELS[agreement.recourse]}
@@ -260,14 +259,14 @@ function AgreementRow({
                       "Day {0} on: {1} plus {2}",
                       tier.daysFrom,
                       formatBasisPoints(tier.rateBp),
-                      formatCurrency(tier.flatMinor / 100),
+                      formatMinor(tier.flatMinor),
                     )
                   : t(
                       "Days {0} to {1}: {2} plus {3}",
                       tier.daysFrom,
                       tier.daysTo,
                       formatBasisPoints(tier.rateBp),
-                      formatCurrency(tier.flatMinor / 100),
+                      formatMinor(tier.flatMinor),
                     )}
               </li>
             ))}

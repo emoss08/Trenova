@@ -1,5 +1,7 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { tablePaginationSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -11,6 +13,8 @@ import { factoringSearchParamsParser, type FactoringTab } from "./use-factoring-
 const Table = lazy(() => import("./_components/factoring-invoice-table"));
 const SubmissionTable = lazy(() => import("./_components/factoring-submission-table"));
 const RemittanceTable = lazy(() => import("./_components/factoring-remittance-table"));
+
+export const prefetch: RoutePrefetch = () => [factoringQueries.summary()];
 
 export function FactoringPage() {
   const t = useT();

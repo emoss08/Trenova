@@ -134,9 +134,7 @@ func (r *invoiceStateRepository) Upsert(
 ) error {
 	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
 		cols := factoringcol.InvoiceStateColumns
-		alias := factoringcol.InvoiceStateTable.Alias
-		stillReady := "EXCLUDED.verdict = '" + string(factoring.VerdictReady) + "' AND " +
-			alias + ".verdict = '" + string(factoring.VerdictReady) + "'"
+		stillReady := "EXCLUDED." + cols.Verdict.Bare() + " = ? AND " + cols.Verdict.Qualified() + " = ?"
 
 		if _, err := r.db.DBForContext(ctx).NewInsert().
 			Model(entity).
@@ -149,13 +147,13 @@ func (r *invoiceStateRepository) Upsert(
 			Set(cols.OpenBalanceMinor.SetExcluded()).
 			Set(cols.EvaluatedAt.SetExcluded()).
 			Set(cols.ReadySince.SetExpr(
-				"CASE WHEN " + stillReady + " THEN " + cols.ReadySince.Qualified() +
-					" ELSE EXCLUDED.ready_since END",
-			)).
+				"CASE WHEN "+stillReady+" THEN "+cols.ReadySince.Qualified()+
+					" ELSE EXCLUDED."+cols.ReadySince.Bare()+" END",
+			), factoring.VerdictReady, factoring.VerdictReady).
 			Set(cols.ReadyAnnouncedAt.SetExpr(
-				"CASE WHEN " + stillReady + " THEN " + cols.ReadyAnnouncedAt.Qualified() +
-					" ELSE EXCLUDED.ready_announced_at END",
-			)).
+				"CASE WHEN "+stillReady+" THEN "+cols.ReadyAnnouncedAt.Qualified()+
+					" ELSE EXCLUDED."+cols.ReadyAnnouncedAt.Bare()+" END",
+			), factoring.VerdictReady, factoring.VerdictReady).
 			Returning("*").
 			Exec(ctx); err != nil {
 			return struct{}{}, fmt.Errorf("upsert factoring invoice state: %w", err)

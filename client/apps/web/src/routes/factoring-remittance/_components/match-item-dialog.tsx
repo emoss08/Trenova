@@ -1,5 +1,6 @@
 import type { FactoringRemittanceLine } from "@/lib/graphql/factoring-remittance";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { factoringRemittance as factoringRemittanceQueries } from "@/lib/queries/factoring-remittance";
 import { useQuery } from "@tanstack/react-query";
 import type {
   FactoringRemittanceLineKind,
@@ -23,7 +24,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { useState } from "react";
 
 /** The schedule item statuses a line of this kind can be booked against. */
@@ -66,7 +67,7 @@ export function MatchItemDialog({
   const [scheduleId, setScheduleId] = useState<string>("");
   const [itemId, setItemId] = useState<string>("");
   const schedules = useQuery({
-    ...factoringQueries.openSchedules(factoringCompanyId),
+    ...factoringRemittanceQueries.openSchedules(factoringCompanyId),
     enabled: open,
   });
   const schedule = useQuery({
@@ -149,7 +150,7 @@ export function MatchItemDialog({
                         {t(
                           "{0} · {1}",
                           item.invoiceNumber,
-                          formatCurrency(item.faceMinor / 100, currencyCode),
+                          formatMinor(item.faceMinor, currencyCode),
                         )}
                       </SelectItem>
                     ))}

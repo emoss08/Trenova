@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import {
   createFactoringInvoiceStateTableConfig,
-  FACTORING_INVOICE_STATE_KEY,
   type FactoringInvoiceStateRow,
 } from "@/lib/graphql/factoring";
+import { FACTORING_INVOICE_STATE_KEY } from "@/lib/queries/factoring-roots";
 import { usePermission } from "@/hooks/use-permission";
 import { Send01Icon } from "@trenova/shared/components/icons";
 import { defineLabels } from "@trenova/shared/i18n/labels";

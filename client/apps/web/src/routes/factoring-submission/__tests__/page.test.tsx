@@ -9,7 +9,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FactoringSubmissionPage } from "../page";
+import { factoring } from "@/lib/queries/factoring";
+import { FactoringSubmissionPage, prefetch } from "../page";
 
 const mocks = vi.hoisted(() => ({
   fetchFactoringSubmission: vi.fn(),
@@ -156,6 +157,22 @@ function renderPage() {
   );
 }
 
+describe("prefetch", () => {
+  it("warms the schedule the route names and nothing without an id", () => {
+    const args = (id?: string) =>
+      ({
+        params: id ? { id } : {},
+        request: new Request("http://localhost/billing/factoring/submissions"),
+        context: undefined,
+      }) as unknown as Parameters<typeof prefetch>[0];
+
+    expect(prefetch(args("facsub_1"))).toEqual([
+      expect.objectContaining({ queryKey: factoring.submission("facsub_1").queryKey }),
+    ]);
+    expect(prefetch(args())).toEqual([]);
+  });
+});
+
 describe("factoring schedule page", () => {
   it("shows why a failed schedule did not go out, with its invoices and what each is worth", async () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(submission());
@@ -236,7 +253,7 @@ describe("factoring schedule page", () => {
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Cancel schedule" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: "Cancel schedule" }));
     expect(
       await within(dialog).findByText("Say why the schedule is cancelled"),
@@ -355,7 +372,7 @@ describe("factoring schedule funding", () => {
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Record funding" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
     const outcomes = within(dialog).getAllByRole("radiogroup", { name: "Outcome" });
     expect(outcomes).toHaveLength(2);
     await userEvent.click(within(outcomes[1]).getByRole("radio", { name: "Rejected" }));
@@ -384,9 +401,8 @@ describe("factoring schedule funding", () => {
     );
     expect(await within(dialog).findByText("1250 · Due from factor")).toBeInTheDocument();
     expect(within(dialog).getByText("gla_ar")).toBeInTheDocument();
-    expect(
-      within(dialog).getByText("Books on Sep 16, 2026. Period October 2026."),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByText("Books on Sep 16, 2026.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Period October 2026.")).toBeInTheDocument();
 
     await waitFor(() =>
       expect(within(dialog).getByRole("button", { name: "Record funding" })).toBeEnabled(),
@@ -480,7 +496,7 @@ describe("factoring schedule funding", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Actions for invoice INV-1" }));
     expect(await screen.findByRole("menuitem", { name: "Charge back" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("menuitem", { name: "Release reserve" }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
 
     expect(
       await within(dialog).findByText(

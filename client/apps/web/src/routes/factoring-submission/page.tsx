@@ -8,6 +8,8 @@ import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { usePermission } from "@/hooks/use-permission";
+import { lazyComponent } from "@/lib/lazy-component";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import {
   FACTORING_PATH,
   FACTORING_TRANSPORT_METHOD_LABELS,
@@ -17,6 +19,7 @@ import type { FactoringSubmissionDetail, FactoringSubmissionItem } from "@/lib/g
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { documentContentUrl } from "@/services/document";
 import { useQuery } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { ArrowLeftIcon, BankNote01Icon, Download01Icon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -37,21 +40,38 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { undecidedItems } from "./_components/funding-schema";
-import { RecordFundingDialog } from "./_components/record-funding-dialog";
-import {
-  ReserveMovementDialog,
-  type ReserveMovementTarget,
-} from "./_components/reserve-movement-dialog";
-import {
-  CancelFactoringSubmissionDialog,
-  RetryFactoringSubmissionButton,
-} from "./_components/submission-actions";
+import type { ReserveMovementTarget } from "./_components/reserve-movement-dialog";
+import { RetryFactoringSubmissionButton } from "./_components/submission-actions";
 import { SubmissionItemActions } from "./_components/submission-item-actions";
+
+const recordFundingDialog = lazyComponent(
+  () => import("./_components/record-funding-dialog"),
+  (module) => module.RecordFundingDialog,
+);
+const reserveMovementDialog = lazyComponent(
+  () => import("./_components/reserve-movement-dialog"),
+  (module) => module.ReserveMovementDialog,
+);
+const cancelSubmissionDialog = lazyComponent(
+  () => import("./_components/cancel-submission-dialog"),
+  (module) => module.CancelFactoringSubmissionDialog,
+);
+const RecordFundingDialog = recordFundingDialog.Component;
+const ReserveMovementDialog = reserveMovementDialog.Component;
+const CancelFactoringSubmissionDialog = cancelSubmissionDialog.Component;
+
+// Read when the pointer or focus reaches the action, so by the click the dialog is usually here.
+const preloadRecordFunding = () => void recordFundingDialog.preload().catch(() => undefined);
+const preloadReserveMovement = () => void reserveMovementDialog.preload().catch(() => undefined);
+const preloadCancelSubmission = () => void cancelSubmissionDialog.preload().catch(() => undefined);
+
+export const prefetch: RoutePrefetch = ({ params }) =>
+  params.id ? [factoringQueries.submission(params.id)] : [];
 
 /**
  * One schedule of accounts sent to a factor: what it carried, the funding
@@ -140,7 +160,7 @@ function SubmissionDetail({
   const recourse =
     agreements?.find((agreement) => agreement.id === submission.agreementId)?.recourse ===
     "Recourse";
-  const money = (minor: number) => formatCurrency(minor / 100, submission.currencyCode);
+  const money = (minor: number) => formatMinor(minor, submission.currencyCode);
   const factorName = submission.factoringCompany?.name ?? submission.factoringCompanyId;
   const failed = submission.status === "Failed";
   const canRecordFunding =
@@ -161,13 +181,26 @@ function SubmissionDetail({
           <div className="flex items-center gap-2">
             {backButton}
             {failed && canCancel ? (
-              <Button type="button" variant="outline" size="sm" onClick={() => setCancelling(true)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onPointerEnter={preloadCancelSubmission}
+                onFocus={preloadCancelSubmission}
+                onClick={() => setCancelling(true)}
+              >
                 {t("Cancel schedule")}
               </Button>
             ) : null}
             {failed && canRetry ? <RetryFactoringSubmissionButton submission={submission} /> : null}
             {canRecordFunding ? (
-              <Button type="button" size="sm" onClick={() => setRecordingFunding(true)}>
+              <Button
+                type="button"
+                size="sm"
+                onPointerEnter={preloadRecordFunding}
+                onFocus={preloadRecordFunding}
+                onClick={() => setRecordingFunding(true)}
+              >
                 <BankNote01Icon className="size-3.5" />
                 {t("Record funding")}
               </Button>
@@ -336,6 +369,7 @@ function SubmissionDetail({
                     <SubmissionItemActions
                       item={item}
                       recourse={recourse}
+                      onIntent={preloadReserveMovement}
                       onSelect={(action) => setMovement({ item, action })}
                     />
                   </TableCell>
@@ -345,24 +379,32 @@ function SubmissionDetail({
           </TableBody>
         </Table>
       </SectionPanel>
-      <CancelFactoringSubmissionDialog
-        submission={cancelling ? submission : null}
-        onOpenChange={(open) => {
-          if (!open) setCancelling(false);
-        }}
-      />
-      <RecordFundingDialog
-        submission={submission}
-        open={recordingFunding}
-        onOpenChange={setRecordingFunding}
-      />
-      <ReserveMovementDialog
-        submission={submission}
-        target={movement}
-        onOpenChange={(open) => {
-          if (!open) setMovement(null);
-        }}
-      />
+      {cancelling ? (
+        <LazyComponent fallback={null}>
+          <CancelFactoringSubmissionDialog
+            submission={submission}
+            onOpenChange={(open) => {
+              if (!open) setCancelling(false);
+            }}
+          />
+        </LazyComponent>
+      ) : null}
+      {recordingFunding ? (
+        <LazyComponent fallback={null}>
+          <RecordFundingDialog submission={submission} open onOpenChange={setRecordingFunding} />
+        </LazyComponent>
+      ) : null}
+      {movement ? (
+        <LazyComponent fallback={null}>
+          <ReserveMovementDialog
+            submission={submission}
+            target={movement}
+            onOpenChange={(open) => {
+              if (!open) setMovement(null);
+            }}
+          />
+        </LazyComponent>
+      ) : null}
     </PageLayout>
   );
 }

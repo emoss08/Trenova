@@ -70,7 +70,7 @@ func (s *RemittanceService) Stage(
 	if err != nil {
 		return nil, err
 	}
-	if err = requireVersion(current, req.Version); err != nil {
+	if err = requireRemittanceVersion(current, req.Version); err != nil {
 		return nil, err
 	}
 	if err = current.RequireStageable(); err != nil {
@@ -132,11 +132,10 @@ func (s *RemittanceService) validateStageRequest(req *factoringports.StageRemitt
 	return s.requireRemittedOn(req.RemittedOn)
 }
 
-func requireVersion(rem *factoring.Remittance, version int64) error {
-	if rem.Version == version {
-		return nil
-	}
-	return errortypes.NewConflictError(
+func requireRemittanceVersion(rem *factoring.Remittance, version int64) error {
+	return requireVersion(
+		rem.Version,
+		version,
 		"Remittance {0} changed since you opened it; reload and try again",
 		remittanceName(rem),
 	)
@@ -410,8 +409,7 @@ func (s *RemittanceService) resolveMapping(
 	if !usable {
 		return guessed, false, nil
 	}
-	if profile.HeaderSignature == factoringremit.HeaderSignature(headers) ||
-		len(factoringremit.Validate(guessed)) > 0 {
+	if profile.HeaderSignature == factoringremit.HeaderSignature(headers) {
 		return saved, false, nil
 	}
 	return guessed, false, nil

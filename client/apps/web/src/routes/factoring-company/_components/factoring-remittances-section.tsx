@@ -1,16 +1,19 @@
-import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
+import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-remittance-badges";
+import {
+  LazyImportRemittanceDialog,
+  preloadImportRemittanceDialog,
+} from "@/components/factoring/import-remittance-dialog-lazy";
 import { SectionPanel } from "@/components/section-panel";
+import { FactoringRemittancesBodySkeleton } from "./factoring-remittances-section-skeleton";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
-import { factoring as factoringQueries } from "@/lib/queries/factoring";
-import { ImportRemittanceDialog } from "@/routes/factoring/_components/import-remittance-dialog";
+import { factoringRemittance as factoringRemittanceQueries } from "@/lib/queries/factoring-remittance";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -32,7 +35,7 @@ export function FactoringRemittancesSection({
   const { allowed: canCreate } = usePermission(Resource.FactoringRemittance, Operation.Create);
   const [importing, setImporting] = useState(false);
   const remittances = useQuery({
-    ...factoringQueries.remittances({ factoringCompanyId }),
+    ...factoringRemittanceQueries.list({ factoringCompanyId }),
     enabled: canRead,
   });
 
@@ -49,18 +52,21 @@ export function FactoringRemittancesSection({
       )}
       action={
         canCreate ? (
-          <Button type="button" size="sm" variant="outline" onClick={() => setImporting(true)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onPointerEnter={preloadImportRemittanceDialog}
+            onFocus={preloadImportRemittanceDialog}
+            onClick={() => setImporting(true)}
+          >
             {t("Import remittance")}
           </Button>
         ) : undefined
       }
     >
       {remittances.isLoading ? (
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-4 w-64" />
-          <Skeleton className="h-4 w-56" />
-          <Skeleton className="h-4 w-48" />
-        </div>
+        <FactoringRemittancesBodySkeleton />
       ) : remittances.isError || !remittances.data ? (
         <div className="p-3">
           <Alert size="sm" variant="destructive">
@@ -104,7 +110,7 @@ export function FactoringRemittancesSection({
               </span>
               <span className="flex shrink-0 items-center gap-2">
                 <span className="text-sm tabular-nums">
-                  {formatCurrency(remittance.totalCashMinor / 100, remittance.currencyCode)}
+                  {formatMinor(remittance.totalCashMinor, remittance.currencyCode)}
                 </span>
                 <FactoringRemittanceStatusBadge status={remittance.status} />
               </span>
@@ -112,7 +118,7 @@ export function FactoringRemittancesSection({
           ))}
         </ul>
       )}
-      <ImportRemittanceDialog
+      <LazyImportRemittanceDialog
         open={importing}
         onOpenChange={setImporting}
         factoringCompanyId={factoringCompanyId}

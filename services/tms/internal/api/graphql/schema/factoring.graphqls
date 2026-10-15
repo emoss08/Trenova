@@ -880,6 +880,8 @@ type FactoringRemittance {
   source: FactoringRemittanceSource!
   "The message it came in on, when it was emailed."
   inboundMessageId: ID
+  "The address an emailed remittance came from."
+  senderEmail: String
   sourceFormat: FactoringRemittanceFormat
   status: FactoringRemittanceStatus!
   "What a line records when the file has no column saying so."

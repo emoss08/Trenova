@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
+	"errors"
 	"html/template"
 	"io"
 	"strings"
@@ -99,36 +100,58 @@ func (s *SubmissionService) PrepareDocuments(
 		ScheduleCSVDocumentID: sub.ScheduleCSVDocumentID,
 		Packets:               make(map[pulid.ID]pulid.ID, len(sub.Items)),
 	}
+	buildErr := s.buildDocuments(ctx, req.TenantInfo, sub, sources, update)
+	if !storedAny(sub, update) {
+		return buildErr
+	}
+	if err = s.repo.SetDocuments(ctx, update); err != nil {
+		return errors.Join(buildErr, err)
+	}
+	return buildErr
+}
 
+func storedAny(sub *factoring.Submission, update *factoringports.SetSubmissionDocumentsRequest) bool {
+	return len(update.Packets) > 0 ||
+		update.SchedulePDFDocumentID != sub.SchedulePDFDocumentID ||
+		update.ScheduleCSVDocumentID != sub.ScheduleCSVDocumentID
+}
+
+func (s *SubmissionService) buildDocuments(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sub *factoring.Submission,
+	sources *scheduleSources,
+	update *factoringports.SetSubmissionDocumentsRequest,
+) error {
 	if sub.SchedulePDFDocumentID.IsNil() {
-		rendered, renderErr := s.renderSchedule(ctx, req.TenantInfo, sub, sources)
-		if renderErr != nil {
-			return renderErr
+		rendered, err := s.renderSchedule(ctx, tenantInfo, sub, sources)
+		if err != nil {
+			return err
 		}
-		stored, storeErr := s.storeFile(ctx, req.TenantInfo, sub, &storedFile{
+		stored, err := s.storeFile(ctx, tenantInfo, sub, &storedFile{
 			name:        scheduleFileName(sub, ".pdf"),
 			contentType: pdfContentType,
 			content:     rendered.PDF,
 			description: "Schedule of accounts " + sub.Number,
 		})
-		if storeErr != nil {
-			return storeErr
+		if err != nil {
+			return err
 		}
 		update.SchedulePDFDocumentID = stored
 	}
 	if sub.ScheduleCSVDocumentID.IsNil() {
-		content, csvErr := scheduleCSV(sub, sources)
-		if csvErr != nil {
-			return csvErr
+		content, err := scheduleCSV(sub, sources)
+		if err != nil {
+			return err
 		}
-		stored, storeErr := s.storeFile(ctx, req.TenantInfo, sub, &storedFile{
+		stored, err := s.storeFile(ctx, tenantInfo, sub, &storedFile{
 			name:        scheduleFileName(sub, ".csv"),
 			contentType: csvContentType,
 			content:     content,
 			description: "Schedule of accounts " + sub.Number + " (CSV)",
 		})
-		if storeErr != nil {
-			return storeErr
+		if err != nil {
+			return err
 		}
 		update.ScheduleCSVDocumentID = stored
 	}
@@ -136,23 +159,22 @@ func (s *SubmissionService) PrepareDocuments(
 		if item == nil || !item.PacketDocumentID.IsNil() {
 			continue
 		}
-		packet, packetErr := s.buildPacket(ctx, req.TenantInfo, item, sources)
-		if packetErr != nil {
-			return packetErr
+		packet, err := s.buildPacket(ctx, tenantInfo, item, sources)
+		if err != nil {
+			return err
 		}
-		stored, storeErr := s.storeFile(ctx, req.TenantInfo, sub, &storedFile{
+		stored, err := s.storeFile(ctx, tenantInfo, sub, &storedFile{
 			name:        packetFileName(item),
 			contentType: pdfContentType,
 			content:     packet,
 			description: "Invoice " + item.InvoiceNumber + " packet on schedule " + sub.Number,
 		})
-		if storeErr != nil {
-			return storeErr
+		if err != nil {
+			return err
 		}
 		update.Packets[item.ID] = stored
 	}
-
-	return s.repo.SetDocuments(ctx, update)
+	return nil
 }
 
 func documentsMissing(sub *factoring.Submission) bool {

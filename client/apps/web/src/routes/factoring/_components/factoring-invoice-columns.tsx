@@ -6,7 +6,7 @@ import { recordPath } from "@/config/record-links";
 import type { FactoringInvoiceStateRow } from "@/lib/graphql/factoring";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 import type { FactoringQueueTab } from "../use-factoring-state";
@@ -59,10 +59,7 @@ export function getFactoringInvoiceColumns(
       header: t("Open balance"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatCurrency(
-            row.original.openBalanceMinor / 100,
-            row.original.invoice?.currencyCode ?? "USD",
-          )}
+          {formatMinor(row.original.openBalanceMinor, row.original.invoice?.currencyCode ?? "USD")}
         </span>
       ),
       size: 140,

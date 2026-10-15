@@ -323,7 +323,7 @@ func (s *RemittanceService) PlanUpdateLine(
 	if err != nil {
 		return nil, err
 	}
-	if err = requireVersion(rem, req.Version); err != nil {
+	if err = requireRemittanceVersion(rem, req.Version); err != nil {
 		return nil, err
 	}
 	line, err := rem.EditableLine(req.LineID)
@@ -542,7 +542,7 @@ func (s *RemittanceService) PlanDiscard(
 	if err != nil {
 		return nil, err
 	}
-	if err = requireVersion(rem, req.Version); err != nil {
+	if err = requireRemittanceVersion(rem, req.Version); err != nil {
 		return nil, err
 	}
 	plan := &factoringports.RemittanceDiscardPlan{Before: cloneRemittance(rem)}
@@ -607,7 +607,7 @@ func (s *RemittanceService) lock(
 	if err != nil {
 		return nil, err
 	}
-	if err = requireVersion(rem, version); err != nil {
+	if err = requireRemittanceVersion(rem, version); err != nil {
 		return nil, err
 	}
 	return rem, nil

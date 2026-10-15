@@ -1,6 +1,7 @@
 package factoringservice
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -249,6 +250,29 @@ func TestSubmitStoresAndStartsSendingOnce(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestScheduleThatCannotStartSendingFailsAndCanBeRetried(t *testing.T) {
+	t.Parallel()
+	h := newSubmissionHarness(t)
+	inv := h.readyInvoice("INV-1", 100000)
+	h.starter.err = errors.New("temporal unavailable")
+
+	created, err := h.svc.Submit(t.Context(), h.request(inv.ID), h.actor)
+	require.NoError(t, err, "the schedule is stored even when its send cannot start")
+	assert.Equal(t, factoring.SubmissionStatusFailed, created.Status,
+		"a schedule whose send never started is not left in Sending")
+	assert.Equal(t, sendNotStarted, created.LastError)
+	assert.True(t, created.CanRetry())
+	assert.Equal(t, []string{string(agent.EventFactoringSubmissionFailed)}, h.events.kinds())
+
+	h.starter.err = nil
+	retried, err := h.svc.Retry(t.Context(), &factoringports.SubmissionActionRequest{
+		TenantInfo: h.tenant, SubmissionID: created.ID, Version: created.Version,
+	}, h.actor)
+	require.NoError(t, err)
+	assert.Equal(t, factoring.SubmissionStatusSending, retried.Status)
+	require.Len(t, h.starter.started, 1)
+}
+
 func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	t.Parallel()
 	h := newSubmissionHarness(t)
@@ -300,6 +324,31 @@ func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, skipped.Skipped)
 	assert.Len(t, h.sender.requests, 1)
+}
+
+func TestPrepareKeepsTheDocumentsStoredBeforeAPacketFails(t *testing.T) {
+	t.Parallel()
+	h := newSubmissionHarness(t)
+	inv := h.readyInvoice("INV-1", 100000)
+	created, err := h.svc.Submit(t.Context(), h.request(inv.ID), h.actor)
+	require.NoError(t, err)
+	req := &factoringports.DeliverSubmissionRequest{
+		TenantInfo:   h.tenant,
+		SubmissionID: created.ID,
+		Group:        1,
+		Attempt:      1,
+	}
+
+	h.store.failName = "INV-1.pdf"
+	require.Error(t, h.svc.PrepareDocuments(t.Context(), req))
+	assert.Len(t, h.store.stored, 2, "the schedule PDF and CSV were stored before the packet failed")
+	require.NotNil(t, h.repo.docs, "what was stored is recorded on the schedule")
+	assert.False(t, h.repo.docs.SchedulePDFDocumentID.IsNil())
+	assert.False(t, h.repo.docs.ScheduleCSVDocumentID.IsNil())
+
+	h.store.failName = ""
+	require.NoError(t, h.svc.PrepareDocuments(t.Context(), req))
+	assert.Len(t, h.store.stored, 3, "the retry stores only the missing packet")
 }
 
 func TestDeliverWithoutPacketsSendsOnlyTheSchedule(t *testing.T) {

@@ -4,6 +4,7 @@ import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { FactoringMovementPreview } from "@/components/factoring/factoring-movement-preview";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePlannedPreview } from "@/hooks/use-planned-preview";
 import { FACTORING_SUBMISSION_ITEM_STATUS_LABELS } from "@/lib/factoring";
 import {
   bookFactoringReserveMovement,
@@ -13,15 +14,11 @@ import {
   type FactoringSubmissionDetail,
   type FactoringSubmissionItem,
 } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import type { FactoringReserveMovementInput } from "@trenova/graphql/generated/graphql";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-  type UseQueryResult,
-} from "@tanstack/react-query";
-import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -35,10 +32,9 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { dateToUnixTimestamp, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -50,7 +46,6 @@ import {
 } from "./funding-schema";
 
 const MOVEMENT_FORM_ID = "factoring-reserve-movement-form";
-const PREVIEW_DEBOUNCE_MS = 400;
 
 export type ReserveMovementTarget = {
   item: FactoringSubmissionItem;
@@ -177,35 +172,13 @@ function MovementForm({
       reason: "",
     },
   });
-  const values = useWatch({ control: form.control }) as ReserveMovementFormValues;
-  const inputKey = useMemo(() => {
-    if (!reserveMovementFormSchema.safeParse(values).success) {
-      return null;
-    }
-    const input = reserveMovementFormToInput(submission, target.item.id, values);
-    return input ? JSON.stringify(input) : null;
-  }, [submission, target.item.id, values]);
-  const debouncedKey = useDebounce(inputKey, PREVIEW_DEBOUNCE_MS);
-  const planInput = useMemo(
-    () =>
-      debouncedKey
-        ? (JSON.parse(debouncedKey) as Parameters<typeof factoringQueries.movementPlan>[1])
-        : null,
-    [debouncedKey],
-  );
-  const plan = useQuery({
-    ...factoringQueries.movementPlan(
-      target.action,
-      planInput ?? {
-        submissionId: submission.id,
-        itemId: target.item.id,
-        version: submission.version,
-        occurredOn: 0,
-      },
-    ),
-    enabled: planInput !== null,
-    placeholderData: keepPreviousData,
-    retry: false,
+  const { plan, hasInput, previewing } = usePlannedPreview({
+    control: form.control,
+    schema: reserveMovementFormSchema,
+    toInput: (values: ReserveMovementFormValues) =>
+      reserveMovementFormToInput(submission, target.item.id, values),
+    query: (input: FactoringReserveMovementInput) =>
+      factoringQueries.movementPlan(target.action, input),
   });
 
   const mutation = useApiMutation<
@@ -233,7 +206,6 @@ function MovementForm({
   const overrideCash = useWatch({ control: form.control, name: "overrideCash" });
   const takesCash = reserveActionTakesCash(target.action);
   const needsReason = reserveActionNeedsReason(target.action);
-  const previewing = inputKey !== null && inputKey === debouncedKey;
   const money = (minor: number) => formatMinor(minor, submission.currencyCode);
 
   return (
@@ -292,7 +264,7 @@ function MovementForm({
         </FormProvider>
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-medium">{t("What it books")}</h3>
-          {inputKey === null ? (
+          {!hasInput ? (
             <p className="text-muted-foreground text-sm">
               {t("Fill in the form to see the journal it books.")}
             </p>

@@ -9,8 +9,8 @@ import {
   releaseFactoringNoa,
   sendFactoringNoa,
   type FactoringNoa,
-} from "@/lib/graphql/factoring";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+} from "@/lib/graphql/factoring-noa";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { resourceDocumentsQuery } from "@/lib/resource-documents";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";

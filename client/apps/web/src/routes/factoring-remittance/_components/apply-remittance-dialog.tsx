@@ -4,7 +4,8 @@ import {
   applyFactoringRemittance,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoringRemittance as factoringRemittanceQueries } from "@/lib/queries/factoring-remittance";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,7 +20,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { toast } from "sonner";
 
 /**
@@ -38,8 +39,8 @@ export function ApplyRemittanceDialog({
   const t = useT();
   const queryClient = useQueryClient();
   const input = { id: remittance.id, version: remittance.version };
-  const plan = useQuery({ ...factoringQueries.remittancePlan(input), enabled: open });
-  const money = (minor: number) => formatCurrency(minor / 100, remittance.currencyCode);
+  const plan = useQuery({ ...factoringRemittanceQueries.plan(input), enabled: open });
+  const money = (minor: number) => formatMinor(minor, remittance.currencyCode);
 
   const apply = useMutation({
     mutationFn: () => applyFactoringRemittance(input),

@@ -1,20 +1,21 @@
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
+import { RemittanceUploader } from "@/components/factoring/remittance-uploader";
 import { SectionPanel } from "@/components/section-panel";
+import {
+  FACTORING_REMITTANCE_FILE_TYPES,
+  FACTORING_REMITTANCE_MAX_BYTES,
+} from "@/lib/factoring-remittance";
 import {
   stageFactoringRemittance,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
-import { RemittanceUploader } from "@/routes/factoring/_components/import-remittance-dialog";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import type { Document } from "@trenova/shared/types/document";
 import { useState } from "react";
-
-const REMITTANCE_FILE_TYPES = ".csv,.txt,.xlsx,.pdf";
-const REMITTANCE_MAX_BYTES = 32 * 1024 * 1024;
 
 /** Reads a remittance again from a new file, after its first could not be read. */
 export function RemittanceReupload({ remittance }: { remittance: FactoringRemittance }) {
@@ -56,8 +57,8 @@ export function RemittanceReupload({ remittance }: { remittance: FactoringRemitt
           />
         ) : (
           <DocumentUploadZone
-            accept={REMITTANCE_FILE_TYPES}
-            maxSize={REMITTANCE_MAX_BYTES}
+            accept={FACTORING_REMITTANCE_FILE_TYPES}
+            maxSize={FACTORING_REMITTANCE_MAX_BYTES}
             disabled={stage.isPending}
             onFilesSelected={(files) => {
               const next = files[0];

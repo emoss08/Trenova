@@ -22,7 +22,7 @@ import {
   updateFactoringAgreement,
   type FactoringAgreement,
 } from "@/lib/graphql/factoring";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";

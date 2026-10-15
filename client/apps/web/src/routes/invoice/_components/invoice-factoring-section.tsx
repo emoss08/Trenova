@@ -20,7 +20,8 @@ import {
   type FactoringInvoiceState,
   type InvoiceFactoring,
 } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

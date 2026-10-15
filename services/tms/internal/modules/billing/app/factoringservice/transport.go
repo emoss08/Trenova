@@ -105,10 +105,18 @@ func (s *TransportService) Save(
 		return nil, err
 	}
 	exists := err == nil
-	if exists && (req.Version == nil || *req.Version != current.Version) {
-		return nil, errortypes.NewConflictError(
+	if exists {
+		given := int64(-1)
+		if req.Version != nil {
+			given = *req.Version
+		}
+		if err = requireVersion(
+			current.Version,
+			given,
 			"The factor's delivery settings changed since you opened them; reload and try again",
-		)
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	entity := &factoring.Transport{

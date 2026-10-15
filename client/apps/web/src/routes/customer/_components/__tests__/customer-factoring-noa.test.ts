@@ -1,4 +1,4 @@
-import type { FactoringNoa } from "@/lib/graphql/factoring";
+import type { FactoringNoa } from "@/lib/graphql/factoring-noa";
 import { describe, expect, it } from "vitest";
 import { currentFactoringNoa } from "../customer-factoring-noa";
 

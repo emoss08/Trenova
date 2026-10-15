@@ -1,3 +1,5 @@
+import { numberFormatter } from "@trenova/shared/i18n/format";
+
 const AMOUNT_PATTERN = /^(\d+)(?:\.(\d{1,2}))?$/;
 
 /**
@@ -17,4 +19,18 @@ export function parseAmountToMinor(value: string): number | null {
   const minor = whole * 100 + fraction;
 
   return Number.isSafeInteger(minor) ? minor : null;
+}
+
+/**
+ * Renders a minor-unit amount (cents) as money in the reader's language.
+ * Integer arithmetic all the way to the formatter: dividing by 100 is the
+ * last thing that happens, not the first.
+ */
+export function formatMinor(minor: number, currency = "USD"): string {
+  return numberFormatter({
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minor / 100);
 }

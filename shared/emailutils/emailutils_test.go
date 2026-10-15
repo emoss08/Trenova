@@ -167,3 +167,14 @@ func TestDisposableListIsClean(t *testing.T) {
 		assert.NotContains(t, []string{"gmail.com", "outlook.com", "yahoo.com"}, domain)
 	}
 }
+
+func TestIsPublicMailDomain(t *testing.T) {
+	t.Parallel()
+
+	for _, domain := range []string{"gmail.com", "Outlook.com", " yahoo.com ", "icloud.com."} {
+		assert.True(t, IsPublicMailDomain(domain), domain)
+	}
+	for _, domain := range []string{"rtsfinancial.com", "triumphpay.com", ""} {
+		assert.False(t, IsPublicMailDomain(domain), domain)
+	}
+}

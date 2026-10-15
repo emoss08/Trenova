@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 /**
@@ -97,8 +97,8 @@ export function FactoringMovementPreview({
                 formatUnixDateMedium(movement.accountingDate),
               )
             : t("Books on {0}.", formatUnixDateMedium(movement.accountingDate))}
-          {movement.fiscalPeriodName ? ` ${t("Period {0}.", movement.fiscalPeriodName)}` : ""}
         </li>
+        {movement.fiscalPeriodName ? <li>{t("Period {0}.", movement.fiscalPeriodName)}</li> : null}
         {movement.requiresApproval ? (
           <li>{t("The entry waits for approval before it reaches the ledger.")}</li>
         ) : null}

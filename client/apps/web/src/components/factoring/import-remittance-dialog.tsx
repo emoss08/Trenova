@@ -4,19 +4,19 @@ import { DateField } from "@/components/fields/date-field/date-field";
 import { SelectField } from "@/components/fields/select-field";
 import { recordPath } from "@/config/record-links";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { RemittanceUploader } from "@/components/factoring/remittance-uploader";
 import {
+  FACTORING_REMITTANCE_FILE_TYPES,
   FACTORING_REMITTANCE_LINE_KIND_LABELS,
+  FACTORING_REMITTANCE_MAX_BYTES,
   FACTORING_REMITTANCE_REPORT_KINDS,
-  isPdfRemittance,
 } from "@/lib/factoring-remittance";
 import {
   createFactoringRemittance,
-  FACTORING_REMITTANCE_RESOURCE,
   stageFactoringRemittance,
   type FactoringRemittance,
 } from "@/lib/graphql/factoring-remittance";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
@@ -29,17 +29,13 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Progress } from "@trenova/shared/components/ui/progress";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Document } from "@trenova/shared/types/document";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-
-const REMITTANCE_FILE_TYPES = ".csv,.txt,.xlsx,.pdf";
-const REMITTANCE_MAX_BYTES = 32 * 1024 * 1024;
 
 const importRemittanceSchema = z.object({
   factoringCompanyId: z
@@ -56,52 +52,6 @@ const DEFAULTS: ImportRemittanceValues = {
   defaultKind: "Funding",
   remittedOn: null,
 };
-
-type RemittanceUploaderProps = {
-  remittance: FactoringRemittance;
-  file: File;
-  onUploaded: (document: Document) => void;
-  onFailed: (message: string) => void;
-};
-
-export function RemittanceUploader({
-  remittance,
-  file,
-  onUploaded,
-  onFailed,
-}: RemittanceUploaderProps) {
-  const t = useT();
-  const { uploads, uploadFiles } = useDocumentUpload({
-    resourceId: remittance.id,
-    resourceType: FACTORING_REMITTANCE_RESOURCE,
-    processingProfile: isPdfRemittance(file.name) ? "factoring_remittance" : undefined,
-    onSuccess: onUploaded,
-    onError: (error) => onFailed(error.message),
-  });
-  const started = useRef(false);
-
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    uploadFiles([file]);
-  }, [file, uploadFiles]);
-
-  const upload = uploads[0];
-  const progress = upload?.progress ?? 0;
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border p-3" aria-busy="true">
-      <p className="text-sm font-medium">
-        {upload?.status === "success"
-          ? t("Reading the remittance…")
-          : t("Uploading {0}…", file.name)}
-      </p>
-      <Progress value={progress} aria-label={t("Upload progress")} />
-      <p className="text-muted-foreground text-xs">
-        {t("Nothing is booked until you review the matches and apply them.")}
-      </p>
-    </div>
-  );
-}
 
 type ImportRemittanceDialogProps = {
   readonly open: boolean;
@@ -272,8 +222,8 @@ function ImportSession({
             />
           ) : (
             <DocumentUploadZone
-              accept={REMITTANCE_FILE_TYPES}
-              maxSize={REMITTANCE_MAX_BYTES}
+              accept={FACTORING_REMITTANCE_FILE_TYPES}
+              maxSize={FACTORING_REMITTANCE_MAX_BYTES}
               disabled={busy}
               onFilesSelected={(files) => {
                 const file = files[0];

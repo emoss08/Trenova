@@ -14610,6 +14610,10 @@ func init() {
 				FieldMapKey: "inboundMessageId",
 			},
 			{
+				Name:        "senderEmail",
+				FieldMapKey: "senderEmail",
+			},
+			{
 				Name:        "sourceFormat",
 				FieldMapKey: "sourceFormat",
 			},

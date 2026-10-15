@@ -25,6 +25,7 @@ const (
 	MaxRemittanceReasonLength      = 500
 	MaxRemittanceSuggestions       = 3
 	MaxRemittanceCellLength        = 255
+	MaxRemittanceSenderLength      = 320
 	remittanceStatusField          = "status"
 )
 
@@ -46,6 +47,7 @@ type Remittance struct {
 	FileName           string             `json:"fileName"           bun:"file_name,type:VARCHAR(255),nullzero"`
 	Source             RemittanceSource   `json:"source"             bun:"source,type:VARCHAR(20),notnull,default:'Upload'"`
 	InboundMessageID   pulid.ID           `json:"inboundMessageId"   bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
+	SenderEmail        string             `json:"senderEmail"        bun:"sender_email,type:VARCHAR(320),nullzero"`
 	SourceFormat       RemittanceFormat   `json:"sourceFormat"       bun:"source_format,type:VARCHAR(10),nullzero"`
 	Status             RemittanceStatus   `json:"status"             bun:"status,type:VARCHAR(30),notnull,default:'Pending'"`
 	DefaultKind        RemittanceLineKind `json:"defaultKind"        bun:"default_kind,type:VARCHAR(30),notnull,default:'Funding'"`

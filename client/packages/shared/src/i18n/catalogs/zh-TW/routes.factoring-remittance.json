@@ -2,6 +2,7 @@
   "A discarded remittance is set aside for good; nothing on it can be booked afterwards.": "捨棄的匯款通知將永久擱置，之後其中任何內容都無法入帳。",
   "An ignored line is not booked from the remittance. Book a fee or adjustment by hand.": "已忽略的明細不會從匯款通知入帳。費用或調整請手動入帳。",
   "Apply remittance": "套用匯款通知",
+  "Arrived by email from {0}.": "由 {0} 以電子郵件寄達。",
   "Arrived by email.": "經由電子郵件送達。",
   "Choose the column that holds the amount paid, the advance, the reserve or the invoice amount.": "請選擇存放已付金額、預付款、保留款或發票金額的欄位。",
   "Choose the column that holds the invoice number or the factor's reference.": "請選擇存放發票號碼或承購公司參考編號的欄位。",

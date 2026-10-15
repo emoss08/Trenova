@@ -192,13 +192,16 @@ func (s *NoaService) Send(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.send(ctx, req.TenantInfo, letter, &plan.Message); err != nil {
-		return nil, err
-	}
 
 	current := plan.Noa
 	previous := *current
 	if err = current.MarkSent(s.now(), plan.Message.To); err != nil {
+		return nil, err
+	}
+	if err = validateNoa(current); err != nil {
+		return nil, err
+	}
+	if err = s.send(ctx, req.TenantInfo, letter, &plan.Message); err != nil {
 		return nil, err
 	}
 	updated, err := s.save(ctx, current)
@@ -310,12 +313,16 @@ func (s *NoaService) Release(
 }
 
 func (s *NoaService) save(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error) {
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if err := validationOf(multiErr); err != nil {
+	if err := validateNoa(entity); err != nil {
 		return nil, err
 	}
 	return s.repo.Update(ctx, entity)
+}
+
+func validateNoa(entity *factoring.Noa) error {
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	return validationOf(multiErr)
 }
 
 func (s *NoaService) checkSignedCopy(

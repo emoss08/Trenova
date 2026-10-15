@@ -1,4 +1,4 @@
-import { FactoringRemittanceMatchBadge } from "@/components/factoring/factoring-badges";
+import { FactoringRemittanceMatchBadge } from "@/components/factoring/factoring-remittance-badges";
 import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import {
@@ -32,7 +32,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { useState } from "react";
 import { Link } from "react-router";
 import { MatchItemDialog } from "./match-item-dialog";
@@ -86,7 +86,7 @@ export function RemittanceExceptions({
     setIgnoring(null);
   });
   const money = (minor: number | null) =>
-    minor === null ? "" : formatCurrency(minor / 100, remittance.currencyCode);
+    minor === null ? "" : formatMinor(minor, remittance.currencyCode);
   const exceptions = lines.filter((line) => isRemittanceException(line.matchStatus));
   const ignored = lines.filter((line) => line.matchStatus === "Ignored");
 
@@ -278,7 +278,7 @@ export function RemittanceMatched({
   const editable = canEditRemittanceLines(remittance.status);
   const update = useLineUpdate(remittance);
   const money = (minor: number | null) =>
-    minor === null ? "" : formatCurrency(minor / 100, remittance.currencyCode);
+    minor === null ? "" : formatMinor(minor, remittance.currencyCode);
   const matched = lines.filter(
     (line) => line.matchStatus === "Matched" || line.matchStatus === "Applied",
   );

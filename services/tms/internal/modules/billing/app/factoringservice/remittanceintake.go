@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -89,6 +90,8 @@ func (s *RemittanceService) factorForSender(
 		return found.Exact[0], "", nil
 	case len(found.Exact) > 1:
 		return nil, intakeManyFactors, nil
+	case emailutils.IsPublicMailDomain(emailutils.Domain(address)):
+		return nil, intakeNoFactor, nil
 	case len(found.ByDomain) == 1:
 		return found.ByDomain[0], "", nil
 	case len(found.ByDomain) > 1:
@@ -134,6 +137,7 @@ func (s *RemittanceService) ingestAttachment(
 		InboundMessageID:   req.InboundMessageID,
 		DocumentID:         attachment.DocumentID,
 		FileName:           attachment.FileName,
+		SenderEmail:        senderEmail(req.FromAddress),
 		DefaultKind:        factoring.RemittanceLineFunding,
 	}
 	if req.ReceivedAt > 0 && req.ReceivedAt <= s.now()+maxFutureMovementSeconds {
@@ -194,4 +198,12 @@ func (s *RemittanceService) stageEmailed(
 		}
 		return lockErr
 	})
+}
+
+func senderEmail(address string) string {
+	address = strings.TrimSpace(address)
+	if emailutils.Validate(address) != nil || len(address) > factoring.MaxRemittanceSenderLength {
+		return ""
+	}
+	return address
 }

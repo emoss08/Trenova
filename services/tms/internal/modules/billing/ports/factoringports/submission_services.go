@@ -166,5 +166,5 @@ type SubmissionSendStarter interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		submission *factoring.Submission,
-	)
+	) error
 }

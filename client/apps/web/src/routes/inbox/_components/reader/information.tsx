@@ -1,9 +1,9 @@
-import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
+import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-remittance-badges";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
 import type { InboundMessageDetail, InboundShipmentRef } from "@/lib/graphql/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { factoringRemittance as factoringRemittanceQueries } from "@/lib/queries/factoring-remittance";
 import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
@@ -269,7 +269,7 @@ function CustomerButton({
 function RemittanceRows({ messageId }: { messageId: string }) {
   const t = useT();
   const navigate = useNavigate();
-  const { data } = useQuery(factoringQueries.remittances({ inboundMessageId: messageId }));
+  const { data } = useQuery(factoringRemittanceQueries.list({ inboundMessageId: messageId }));
   if (data === undefined) {
     return null;
   }

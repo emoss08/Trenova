@@ -114,3 +114,12 @@ func validationOf(multiErr *errortypes.MultiError) error {
 	}
 	return nil
 }
+
+const scheduleChanged = "Schedule {0} changed since you opened it; reload and try again"
+
+func requireVersion(current, given int64, message string, args ...any) error {
+	if current == given {
+		return nil
+	}
+	return errortypes.NewConflictError(message, args...)
+}

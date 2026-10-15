@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -72,7 +71,7 @@ func (n *Noa) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(
 			&n.SentTo,
-			is.EmailFormat.Error("Recipient must be a valid email address"),
+			domainvalidation.EmailList("Every recipient must be a valid email address"),
 		),
 		validation.Field(
 			&n.ReleaseReason,
@@ -250,7 +249,7 @@ func (n *Noa) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
-			{Name: "sentTo", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{Name: "sent_to", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
 	}
 }

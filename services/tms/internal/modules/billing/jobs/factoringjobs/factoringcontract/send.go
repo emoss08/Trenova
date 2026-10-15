@@ -2,6 +2,8 @@ package factoringcontract
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -16,6 +18,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var ErrSendUnavailable = errors.New("factoring schedule sending is not available in this process")
 
 const (
 	SendWorkflowName     = "FactoringSubmissionSendWorkflow"
@@ -59,39 +63,32 @@ func (s *SendStarter) StartSend(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	submission *factoring.Submission,
-) {
+) error {
 	if submission == nil {
-		return
+		return nil
 	}
 	if s.workflows == nil || !s.workflows.Enabled() {
-		s.l.Warn("factoring schedule sending is not available; the schedule waits in Sending",
-			zap.String("submissionId", submission.ID.String()))
-		return
+		return ErrSendUnavailable
 	}
-	id := SendWorkflowID(submission.ID, submission.SendAttemptGroup)
-	payload := &SendPayload{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		SubmissionID:   submission.ID,
-		Group:          submission.SendAttemptGroup,
+	_, err := s.workflows.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:                    SendWorkflowID(submission.ID, submission.SendAttemptGroup),
+			TaskQueue:             temporaltype.TaskQueueBilling.String(),
+			StaticSummary:         "Send factoring schedule " + submission.Number,
+			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+			Priority:              temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
+		},
+		SendWorkflowName,
+		&SendPayload{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			SubmissionID:   submission.ID,
+			Group:          submission.SendAttemptGroup,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("start sending factoring schedule %s: %w", submission.Number, err)
 	}
-	kernelports.AfterCommit(ctx, func(committed context.Context) {
-		_, err := s.workflows.StartWorkflow(
-			committed,
-			client.StartWorkflowOptions{
-				ID:                    id,
-				TaskQueue:             temporaltype.TaskQueueBilling.String(),
-				StaticSummary:         "Send factoring schedule " + submission.Number,
-				WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-				Priority:              temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
-			},
-			SendWorkflowName,
-			payload,
-		)
-		if err != nil {
-			s.l.Error("could not start sending a factoring schedule",
-				zap.String("submissionId", submission.ID.String()),
-				zap.Error(err))
-		}
-	})
+	return nil
 }

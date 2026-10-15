@@ -49,7 +49,7 @@ func (s *RemittanceService) PlanApply(
 	if err != nil {
 		return nil, err
 	}
-	if err = requireVersion(rem, req.Version); err != nil {
+	if err = requireRemittanceVersion(rem, req.Version); err != nil {
 		return nil, err
 	}
 	run, err := s.prepareApply(ctx, rem, actor)
@@ -457,7 +457,11 @@ func stepError(err error) error {
 	var multiErr *errortypes.MultiError
 	if errors.As(err, &multiErr) && len(multiErr.Errors) > 0 {
 		first := multiErr.Errors[0]
-		return errortypes.NewBusinessError(first.Message, first.Args...)
+		refused := errortypes.NewBusinessError(first.Message, first.Args...)
+		if first.Field != "" {
+			refused = refused.WithParam("field", first.Field)
+		}
+		return refused
 	}
 	return err
 }

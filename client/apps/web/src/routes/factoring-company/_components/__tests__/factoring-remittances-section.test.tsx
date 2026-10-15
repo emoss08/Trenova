@@ -1,11 +1,13 @@
 import type { FactoringRemittance } from "@/lib/graphql/factoring-remittance";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringRemittancesSection } from "../factoring-remittances-section";
 
 const mocks = vi.hoisted(() => ({
+  loaded: [] as string[],
   listFactoringRemittances: vi.fn(),
   granted: new Set<number>(),
 }));
@@ -20,9 +22,16 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-vi.mock("@/routes/factoring/_components/import-remittance-dialog", () => ({
-  ImportRemittanceDialog: () => null,
-}));
+vi.mock("@/components/factoring/import-remittance-dialog", () => {
+  mocks.loaded.push("import-dialog");
+  return {
+    ImportRemittanceDialog: ({ factoringCompanyId }: { factoringCompanyId?: string }) => (
+      <div role="dialog" aria-label="Import remittance">
+        {factoringCompanyId}
+      </div>
+    ),
+  };
+});
 
 const READ = 1 << 0;
 const CREATE = 1 << 1;
@@ -93,6 +102,38 @@ describe("FactoringRemittancesSection", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Import remittance" })).toBeTruthy();
+  });
+
+  it("reads the import dialog when the pointer reaches Import, and opens it for this factor", async () => {
+    mocks.granted.add(READ);
+    mocks.granted.add(CREATE);
+    mocks.listFactoringRemittances.mockResolvedValue({ remittances: [], totalCount: 0 });
+
+    renderSection();
+
+    const importButton = await screen.findByRole("button", { name: "Import remittance" });
+    expect(mocks.loaded).toEqual([]);
+
+    await userEvent.hover(importButton);
+    await waitFor(() => expect(mocks.loaded).toEqual(["import-dialog"]));
+    await userEvent.click(importButton);
+
+    expect((await screen.findByRole("dialog", { name: "Import remittance" })).textContent).toBe(
+      "fac_rts",
+    );
+  });
+
+  it("draws the list's own skeleton while the remittances are read", async () => {
+    mocks.granted.add(READ);
+    mocks.listFactoringRemittances.mockImplementation(() => new Promise<never>(() => {}));
+
+    renderSection();
+
+    expect(await screen.findByLabelText("Loading remittances")).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(screen.getByRole("region", { name: "Remittances" })).toBeTruthy();
   });
 
   it("shows nothing and reads nothing for someone who cannot see remittances", () => {

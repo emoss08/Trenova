@@ -7,6 +7,7 @@ import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-f
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { SectionPanel } from "@/components/section-panel";
+import { FactoringDeliveryBodySkeleton } from "./factoring-delivery-section-skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -23,7 +24,8 @@ import {
   testFactoringTransport,
   type FactoringTransport,
 } from "@/lib/graphql/factoring";
-import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { invalidateFactoringQueries } from "@/lib/queries/factoring-roots";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlugIcon, Settings01Icon } from "@trenova/shared/components/icons";
@@ -43,7 +45,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
@@ -214,7 +215,7 @@ export function FactoringDeliverySection({ factoringCompanyId }: { factoringComp
     >
       <div className="p-3">
         {isLoading ? (
-          <Skeleton className="h-16 w-full" />
+          <FactoringDeliveryBodySkeleton />
         ) : isError ? (
           <Alert size="sm" variant="destructive">
             <AlertDescription className="flex items-center justify-between gap-3">

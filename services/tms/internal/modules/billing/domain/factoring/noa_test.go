@@ -75,3 +75,25 @@ func TestAgreementInForce(t *testing.T) {
 	assert.False(t, none.InForce(now))
 	assert.False(t, none.IsNonRecourse())
 }
+
+func TestNoaSentToSeveralRecipientsStaysValid(t *testing.T) {
+	t.Parallel()
+
+	noa := &factoring.Noa{
+		OrganizationID:     pulid.MustNew("org_"),
+		BusinessUnitID:     pulid.MustNew("bu_"),
+		CustomerID:         pulid.MustNew("cus_"),
+		FactoringCompanyID: pulid.MustNew("fc_"),
+		Status:             factoring.NoaStatusDraft,
+	}
+	require.NoError(t, noa.MarkSent(now, []string{"ap@customer.example.com", "cfo@customer.example.com"}))
+
+	multiErr := errortypes.NewMultiError()
+	noa.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), "a notice sent to two people must save: %v", multiErr)
+
+	noa.SentTo = "ap@customer.example.com, not-an-address"
+	multiErr = errortypes.NewMultiError()
+	noa.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "one bad recipient in the list is refused")
+}

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:8ffbce08996d3b86d9f5a16a9a102152c20696d12b4cdfac10fdf3ee30a6fcdf"
+const Version = "sha256:505f6b5dd2a6a309e54bd6dee19ca49c32333af4235c19c938b2e220af1b0714"
 
 var Default = indexed(defaultCatalog)
 
@@ -6856,6 +6856,16 @@ var defaultCatalog = Catalog{
 					Column:       buncolgen.NewColumn("inbound_message_id", "facrem"),
 					Label:        "Inbound Message ID",
 					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "senderEmail",
+					Column:       buncolgen.NewColumn("sender_email", "facrem"),
+					Label:        "Sender Email",
+					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
