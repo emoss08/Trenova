@@ -812,7 +812,9 @@ export const coreResponsibilityChoices = [
 
 export const dataScopeChoices = [
   { value: "own", label: "Own data only" },
+  { value: "team", label: "Their team" },
   { value: "organization", label: "Organization" },
+  { value: "business_unit", label: "Business unit" },
   { value: "all", label: "All data" },
 ] satisfies ReadonlyArray<GenericSelectOption<DataScope>>;
 

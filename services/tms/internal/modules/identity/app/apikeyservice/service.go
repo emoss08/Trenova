@@ -29,6 +29,7 @@ type Params struct {
 	Registry *permission.Registry
 	Auditor  permissionports.SecurityAuditor
 	Engine   permissionports.PermissionEngine
+	Scopes   permissionports.ScopePolicy
 
 	Config *config.Config
 	Plans  platformplanports.PlanService `optional:"true"`
@@ -40,6 +41,7 @@ type Service struct {
 	registry *permission.Registry
 	auditor  permissionports.SecurityAuditor
 	engine   permissionports.PermissionEngine
+	scopes   permissionports.ScopePolicy
 	cfg      *config.Config
 	plans    platformplanports.PlanService
 }
@@ -51,6 +53,7 @@ func New(p Params) *Service {
 		registry: p.Registry,
 		auditor:  p.Auditor,
 		engine:   p.Engine,
+		scopes:   p.Scopes,
 		cfg:      p.Config,
 		plans:    p.Plans,
 	}
@@ -515,6 +518,13 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 				"permissions",
 				errortypes.ErrInvalid,
 				"Resource \"{0}\" has an invalid data scope", resource,
+			)
+		} else if input.DataScope.IsNarrow() && !s.scopes.Enforced(resource, input.DataScope) {
+			me.Add(
+				"permissions",
+				errortypes.ErrInvalid,
+				"Resource \"{0}\" cannot be limited to a narrower data scope here; choose Organization",
+				resource,
 			)
 		}
 

@@ -40571,11 +40571,12 @@
     ]
   },
   "Business unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/admin"
     ]
   },
@@ -175482,6 +175483,15 @@
       "routes/agent-control"
     ]
   },
+  "Own-records-only access to {0} is not enforced here, so it would reach the whole organization; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Owned land": {
     "sites": 1,
     "scope": [
@@ -208932,6 +208942,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Resource \"{0}\" cannot be limited to a narrower data scope here; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Resource \"{0}\" does not support operation \"{1}\"": {
@@ -244063,6 +244082,15 @@
       "apps/web/components"
     ]
   },
+  "Team-only access to {0} is not enforced here, so it would reach the whole organization; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Teammate": {
     "sites": 1,
     "scope": [
@@ -261878,6 +261906,15 @@
       "routes/agent-control"
     ]
   },
+  "Their team": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Theme": {
     "sites": 4,
     "scope": [
@@ -266965,6 +267002,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "This scope is not enforced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This server does not allow providers on private network addresses": {
@@ -316984,6 +317030,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0} is not enforced for {1} in this deployment, so this grant reaches the whole organization. Choose Organization to say so.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is not held by a closed period, so it keeps its date": {

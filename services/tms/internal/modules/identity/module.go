@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
@@ -63,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"go.uber.org/fx"
@@ -120,6 +122,10 @@ func SharedOptions() fx.Option {
 			autheventservice.New,
 			permission.NewEngine,
 			permissionchange.New,
+			readscopeservice.New,
+			func(s *orgstructureservice.Service) readscopeservice.TeamDirectory { return s },
+			func(s *readscopeservice.Service) permissionports.ScopePolicy { return s },
+			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },
 			roleservice.New,
 			permissiondomain.NewRegistry,
 			permissiondomain.NewRouteRegistry,

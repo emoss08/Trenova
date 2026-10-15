@@ -1,6 +1,7 @@
 import type {
   AddPermission,
   AssignRole,
+  DataScope,
   ResourcePermission,
   Role,
   RoleConstraint,
@@ -28,6 +29,7 @@ export type ResourceDefinition = {
   operations: OperationDefinition[];
   parentResource?: string;
   defaultSensitivity: string;
+  enforceableScopes?: DataScope[] | null;
 };
 
 export type ResourceCategory = {

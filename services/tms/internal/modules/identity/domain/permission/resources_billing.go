@@ -176,6 +176,9 @@ func (r *Registry) registerBillingResources() {
 			"remainingEligibleAmount":         SensitivityRestricted,
 			"rerateVariancePercent":           SensitivityRestricted,
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

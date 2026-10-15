@@ -34,7 +34,10 @@ type Params struct {
 	Registry         *permission.Registry
 	Auditor          permissionports.SecurityAuditor
 	Notifier         permissionports.PermissionChangeNotifier
+	Scopes           permissionports.ScopePolicy
 }
+
+type scopePolicy = permissionports.ScopePolicy
 
 type Service struct {
 	l          *zap.Logger
@@ -44,6 +47,7 @@ type Service struct {
 	validator  *Validator
 	registry   *permission.Registry
 	auditor    permissionports.SecurityAuditor
+	scopes     permissionports.ScopePolicy
 	notifier   permissionports.PermissionChangeNotifier
 }
 
@@ -58,6 +62,7 @@ func New(p Params) *Service {
 		registry:   p.Registry,
 		auditor:    p.Auditor,
 		notifier:   p.Notifier,
+		scopes:     p.Scopes,
 	}
 }
 
@@ -125,6 +130,16 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 
 	req.Role.IsSystem = false
 	req.Role.Permissions = compactPermissions(req.Role.Permissions)
+
+	if scopeErr := unenforcedScopes(
+		s.scopes,
+		s.registry,
+		req.Role.Permissions,
+		nil,
+		permissionField,
+	); scopeErr != nil {
+		return scopeErr
+	}
 
 	if inheritanceErr := s.validateNoCircularInheritance(
 		ctx,
@@ -195,6 +210,16 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 	}
 
 	updated := editableRoleUpdate(existingRole, req.Role)
+
+	if scopeErr := unenforcedScopes(
+		s.scopes,
+		s.registry,
+		updated.Permissions,
+		existingRole.Permissions,
+		permissionField,
+	); scopeErr != nil {
+		return scopeErr
+	}
 
 	if validateErr := s.validateNoEscalation(
 		ctx,
@@ -1060,6 +1085,16 @@ func (s *Service) CreateResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
+	if scopeErr := unenforcedScopes(
+		s.scopes,
+		s.registry,
+		[]*permission.ResourcePermission{rp},
+		role.Permissions,
+		singleField,
+	); scopeErr != nil {
+		return scopeErr
+	}
+
 	tempRole := &permission.Role{
 		Permissions: []*permission.ResourcePermission{rp},
 	}
@@ -1117,6 +1152,16 @@ func (s *Service) UpdateResourcePermission(
 	}
 
 	previous := findResourcePermission(role.Permissions, rp.ID)
+
+	if scopeErr := unenforcedScopes(
+		s.scopes,
+		s.registry,
+		[]*permission.ResourcePermission{rp},
+		role.Permissions,
+		singleField,
+	); scopeErr != nil {
+		return scopeErr
+	}
 
 	tempRole := &permission.Role{
 		Permissions: []*permission.ResourcePermission{rp},

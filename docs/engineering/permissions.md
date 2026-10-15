@@ -54,6 +54,50 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
    A new write route also needs an entry in `writecoverage.yml`.
 
+## Data scopes
+
+A grant's data scope narrows which records of a kind it reaches. Organization (and the
+legacy business unit and all, which read the same) reaches the whole organization. A
+narrower scope means something only where a kind declares it, in its registry
+definition's `Scopes`:
+
+| Kind | Scope | Enforced by |
+|---|---|---|
+| `shipment`, `order` | own: records whose `owner_id` is the person | database |
+| `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
+| `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
+| `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
+| `worker_schedule`, `timesheet`, `profile_change_request` | team | application (`RequireTeamScope`, `teamscope.Guard`) |
+
+**Database enforcement.** Each authenticated request (`ReadScopeMiddleware`) and each
+agent tool call (`agentflow.runTool`) carries a `pkg/readscope` holder. At its first
+query, `readscopeservice` checks the principal's read grant on every database-scoped
+kind in one `CheckBatch` and, for a team grant, resolves the team through
+`OrgStructureService.ManagerIDs`. The scoped driver then sends the result with the
+tenant scope as `SET LOCAL trenova.read_scope = '<kind>:<scope>[:<ids>]'`, and a
+restrictive `read_scope` policy on `shipments`, `orders`, `invoices` and `workers`
+applies it to every read: lists, lookups, loaders, search, insights and reports alike.
+The value only narrows what the signed tenant scope allows, so it is not signed; work
+with no holder (jobs, unattended agents) reads its whole tenant. Policies are
+`FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
+
+These policies apply only while row-level security is installed (`database.rls.mode`
+`observe` or `enforce`). With RLS off, a database-enforced scope is not enforced, so the
+server refuses to grant one and the editor does not offer it.
+
+**Granting.** Role create and update, a permission row's create and update, and API key
+create and update refuse a narrow scope the kind does not enforce in this deployment
+(`permissionports.ScopePolicy`). A role edit that leaves an existing grant's scope as it
+was is accepted, so a deployment that turns RLS off can still rename its roles; the
+editor shows such a grant with a warning that it reaches the whole organization.
+`GET /permissions/resources` sends each kind's `enforceableScopes`, and the editors offer
+only those (`components/permissions/data-scope-select.tsx`).
+
+Adding a scope to a kind: declare it in the registry; for the database, add the
+`read_scope` policy in a migration and keep the migration's kind lists equal to the
+registry (`migrations/read_scope_test.go` fails otherwise); for the application, enforce
+it where the kind is read before declaring it.
+
 ## Implied operations
 
 Some operations bring others with them (`permission.Dependencies`): approve, reject,

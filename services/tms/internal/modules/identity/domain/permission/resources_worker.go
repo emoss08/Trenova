@@ -77,6 +77,9 @@ func (r *Registry) registerWorkerResources() {
 			"drugAlcoholStatus":      SensitivityConfidential,
 			"returnToDutyStatus":     SensitivityConfidential,
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -424,6 +427,9 @@ func (r *Registry) registerWorkerResources() {
 			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export the rota"},
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -480,6 +486,9 @@ func (r *Registry) registerWorkerResources() {
 				Description: "Run payroll over approved weeks",
 			},
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -513,6 +522,9 @@ func (r *Registry) registerWorkerResources() {
 				Description: "Apply a requested change to the record",
 			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Turn a request down"},
+		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByApplication},
 		},
 	})
 

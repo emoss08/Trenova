@@ -2,16 +2,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { dataScopeChoices } from "@/lib/choices";
+import { DataScopeSelect } from "@/components/permissions/data-scope-select";
 import {
   getAvailableResources,
   type ResourceCategory,
@@ -485,22 +478,11 @@ function ResourceRow({
       </div>
 
       {isGranted && (
-        <Select
+        <DataScopeSelect
+          resource={resource}
           value={permission.dataScope}
-          onValueChange={(value) => onUpdateDataScope(value as DataScope)}
-          items={dataScopeChoices}
-        >
-          <SelectTrigger className="h-7 w-24 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {dataScopeChoices.map((choice) => (
-              <SelectItem key={choice.value} value={choice.value}>
-                {t(choice.label)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onValueChange={onUpdateDataScope}
+        />
       )}
     </div>
   );

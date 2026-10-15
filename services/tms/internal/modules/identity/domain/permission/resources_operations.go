@@ -14,6 +14,9 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel orders"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -36,6 +39,9 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpDuplicate, DisplayName: "Duplicate", Description: "Duplicate shipments"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

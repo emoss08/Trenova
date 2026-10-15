@@ -83,6 +83,9 @@ func (r *Registry) registerComplianceResources() {
 			},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	// Devices are separate from batches because they are a different

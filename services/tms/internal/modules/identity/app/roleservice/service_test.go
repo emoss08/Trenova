@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,6 +58,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		validator:  newStubValidator(),
 		registry:   permission.NewRegistry(),
 		auditor:    recorder,
+		scopes:     scopepolicytest.Enforcing(),
 	}
 
 	return &testServiceDeps{

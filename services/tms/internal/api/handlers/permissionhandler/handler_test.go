@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,6 +34,14 @@ func setupPermissionHandler(
 		DisplayName: "Test Resource",
 		Category:    "test",
 	})
+	_ = registry.Register(&permission.ResourceDefinition{
+		Resource:    "test_owned",
+		DisplayName: "Test Owned",
+		Category:    "test",
+		Scopes: []permission.ScopeSupport{
+			{Scope: permission.DataScopeOwn, EnforcedBy: permission.ScopeEnforcedByDatabase},
+		},
+	})
 
 	cfg := &config.Config{App: config.AppConfig{Debug: true}}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
@@ -40,6 +49,7 @@ func setupPermissionHandler(
 	return permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: engine,
 		Registry:         registry,
+		Scopes:           &scopepolicytest.Policy{Registry: registry, DatabaseEnforcing: true},
 		ErrorHandler:     errorHandler,
 	})
 }
@@ -255,10 +265,22 @@ func TestPermissionHandler_GetAvailableResources_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp []map[string]any
+	var resp []struct {
+		Category  string `json:"category"`
+		Resources []struct {
+			Resource          string   `json:"resource"`
+			DisplayName       string   `json:"displayName"`
+			EnforceableScopes []string `json:"enforceableScopes"`
+		} `json:"resources"`
+	}
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.Len(t, resp, 1)
-	assert.Equal(t, "test", resp[0]["category"])
+	assert.Equal(t, "test", resp[0].Category)
+	require.Len(t, resp[0].Resources, 2)
+	assert.Equal(t, "test_owned", resp[0].Resources[0].Resource)
+	assert.Equal(t, "Test Owned", resp[0].Resources[0].DisplayName)
+	assert.Equal(t, []string{"own", "organization"}, resp[0].Resources[0].EnforceableScopes)
+	assert.Equal(t, []string{"organization"}, resp[0].Resources[1].EnforceableScopes)
 }
 
 func TestPermissionHandler_GetAvailableOperations_Success(t *testing.T) {

@@ -30,6 +30,7 @@ type ResourceDefinition struct {
 	ParentResource     string                      `json:"parentResource,omitempty"`
 	FieldSensitivities map[string]FieldSensitivity `json:"fieldSensitivities,omitempty"`
 	DefaultSensitivity FieldSensitivity            `json:"defaultSensitivity"`
+	Scopes             []ScopeSupport              `json:"scopes,omitempty"`
 }
 
 type Registry struct {

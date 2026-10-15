@@ -158,6 +158,7 @@ type RouterParams struct {
 	ObservabilityMiddleware *observability.Middleware
 
 	AuthMiddleware                  *middleware.AuthMiddleware
+	ReadScopeMiddleware             *middleware.ReadScopeMiddleware
 	ReadOnlyGuard                   *middleware.ReadOnlyGuard
 	RateLimiter                     *middleware.RateLimiter
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -303,6 +304,7 @@ type Router struct {
 	l                               *zap.Logger
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
+	readScopeMiddleware             *middleware.ReadScopeMiddleware
 	readOnlyGuard                   *middleware.ReadOnlyGuard
 	rateLimiter                     *middleware.RateLimiter
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -452,6 +454,7 @@ func NewRouter(p RouterParams) *Router {
 		l:                               p.Logger,
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
+		readScopeMiddleware:             p.ReadScopeMiddleware,
 		readOnlyGuard:                   p.ReadOnlyGuard,
 		rateLimiter:                     p.RateLimiter,
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
@@ -804,6 +807,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(r.readScopeMiddleware.Install())
 	protected.Use(r.rateLimiter.ByPrincipal())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())

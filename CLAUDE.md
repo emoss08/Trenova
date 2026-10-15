@@ -500,9 +500,13 @@ Roles grant `(resource, operations, data scope)` from the registry in
 access runs the delegation check; every change goes through `PermissionChangeNotifier`, which
 advances an organization permission epoch instead of deleting cache keys. Administrators get
 new registry operations from `trenova db migrate`, never from a hand-written migration.
+Grants are stored as made and implied operations are applied when evaluated. An "own" or
+"team" scope exists only where a kind declares it; shipments, orders, invoices and workers
+are narrowed by restrictive `read_scope` policies fed from a per-request `pkg/readscope`
+holder, so they are enforced only while RLS is installed.
 **Read [docs/engineering/permissions.md](docs/engineering/permissions.md) before adding a
-resource or operation, a permission check, a way of granting access, or anything that
-invalidates cached permissions.**
+resource or operation, a permission check, a data scope, a way of granting access, or
+anything that invalidates cached permissions.**
 
 ## Security Audit Trail
 

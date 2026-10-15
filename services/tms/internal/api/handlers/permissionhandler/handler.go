@@ -18,12 +18,14 @@ type Params struct {
 
 	PermissionEngine permissionports.PermissionEngine
 	Registry         *permission.Registry
+	Scopes           permissionports.ScopePolicy
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
 	permEngine permissionports.PermissionEngine
 	registry   *permission.Registry
+	scopes     permissionports.ScopePolicy
 	eh         *helpers.ErrorHandler
 }
 
@@ -31,6 +33,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		permEngine: p.PermissionEngine,
 		registry:   p.Registry,
+		scopes:     p.Scopes,
 		eh:         p.ErrorHandler,
 	}
 }
@@ -195,8 +198,13 @@ func (h *Handler) checkBatch(c *gin.Context) {
 }
 
 type resourceCategoryResponse struct {
-	Category  string                           `json:"category"`
-	Resources []*permission.ResourceDefinition `json:"resources"`
+	Category  string             `json:"category"`
+	Resources []resourceResponse `json:"resources"`
+}
+
+type resourceResponse struct {
+	*permission.ResourceDefinition
+	EnforceableScopes []permission.DataScope `json:"enforceableScopes"`
 }
 
 // @Summary List available permission resources
@@ -219,9 +227,16 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 		sort.Slice(resources, func(i, j int) bool {
 			return resources[i].DisplayName < resources[j].DisplayName
 		})
+		entries := make([]resourceResponse, 0, len(resources))
+		for _, def := range resources {
+			entries = append(entries, resourceResponse{
+				ResourceDefinition: def,
+				EnforceableScopes:  h.scopes.EnforceableScopes(def.Resource),
+			})
+		}
 		response = append(response, resourceCategoryResponse{
 			Category:  cat,
-			Resources: resources,
+			Resources: entries,
 		})
 	}
 

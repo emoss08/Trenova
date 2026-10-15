@@ -14,6 +14,9 @@ func (r *Registry) registerReportingResources() {
 			{Operation: OpExport, DisplayName: "Export", Description: "Export reports"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

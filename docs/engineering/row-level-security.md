@@ -155,6 +155,14 @@ not listed, with a justification, in its `allowlist_test.go`. Prefer resolving
 the tenant first (a share token, a webhook's account) and continuing under
 `WithTenant`, so the system scope covers one lookup, not the request.
 
+**A role's data scope** rides beside the tenant scope. A request or agent tool call
+that holds a `pkg/readscope` holder sends `SET LOCAL trenova.read_scope` with its
+tenant scope, and restrictive `read_scope` policies on `shipments`, `orders`,
+`invoices` and `workers` read it through `trenova_rls.read_scope(kind)` and
+`trenova_rls.read_scope_ids(kind)`. It is unsigned because it can only narrow a read
+below what the signed scope allows; `apply_policy` and `reconcile()` leave the
+`read_scope` policies alone. See [permissions.md](permissions.md#data-scopes).
+
 ## Getting the scope right
 
 A missing scope fails closed: the statement is refused. A scope that is present
