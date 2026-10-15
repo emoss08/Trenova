@@ -58,6 +58,7 @@ type sqlArgs struct {
 	ToolName   string                `bun:"tool_name"`
 	Limit      int                   `bun:"limit"`
 	Candidates int                   `bun:"candidates"`
+	Pending    int64                 `bun:"pending_since"`
 	Model      string                `bun:"model"`
 	ModelKey   string                `bun:"model_key"`
 	Before     int64                 `bun:"before"`
@@ -353,6 +354,8 @@ const (
 	WHERE organization_id = ?org AND business_unit_id = ?bu AND finished_at < ?before`
 	pruneHoursSQL = `DELETE FROM ai_provider_hourly_stats
 	WHERE organization_id = ?org AND business_unit_id = ?bu AND hour < ?before_hour`
+	pruneSuggestionsSQL = `DELETE FROM agent_suggestions
+	WHERE organization_id = ?org AND business_unit_id = ?bu AND created_at < ?before`
 )
 
 func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneRequest) error {
@@ -363,7 +366,12 @@ func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneReques
 		args := tenantArgs(req.TenantInfo)
 		args.Before = req.Before
 		args.BeforeHour = floorHour(req.Before)
-		for _, query := range []string{pruneUnitToolsSQL, pruneUnitsSQL, pruneHoursSQL} {
+		for _, query := range []string{
+			pruneUnitToolsSQL,
+			pruneUnitsSQL,
+			pruneHoursSQL,
+			pruneSuggestionsSQL,
+		} {
 			if _, err := r.exec(ctx, query, args); err != nil {
 				r.l.Error("failed to prune ai analytics", zap.Error(err))
 				return fmt.Errorf("prune ai analytics: %w", err)
@@ -664,6 +672,39 @@ func (r *repository) Ratings(
 				DeploymentKey: row.key(),
 				Rated:         row.Rated,
 				Helpful:       row.Helpful,
+			}
+		})
+}
+
+type suggestionScan struct {
+	AgentDefinitionID string `bun:"agent_definition_id"`
+	AgentName         string `bun:"agent_name"`
+	Switched          int    `bun:"switched"`
+	SentThrough       int    `bun:"sent_through"`
+	AutoSwitched      int    `bun:"auto_switched"`
+	Kept              int    `bun:"kept"`
+	PassedOver        int    `bun:"passed_over"`
+}
+
+func (r *repository) Suggestions(
+	ctx context.Context,
+	req aianalyticsports.SuggestionRequest,
+) ([]aianalyticsports.SuggestionRow, error) {
+	args := filterArgs(req.Filter)
+	args.Pending = req.PendingSince
+
+	return scanMapped(ctx, r, "suggestions", suggestionsSQL, args,
+		func(row *suggestionScan) aianalyticsports.SuggestionRow {
+			return aianalyticsports.SuggestionRow{
+				AgentDefinitionID: pulid.ID(row.AgentDefinitionID),
+				AgentName:         row.AgentName,
+				SuggestionCounts: aianalyticsports.SuggestionCounts{
+					Switched:     row.Switched,
+					SentThrough:  row.SentThrough,
+					AutoSwitched: row.AutoSwitched,
+					Kept:         row.Kept,
+					PassedOver:   row.PassedOver,
+				},
 			}
 		})
 }

@@ -57,6 +57,7 @@ import { useNavigate } from "react-router";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
+import { DeskAgentRecommendation, DeskNoAgentFits } from "./composer/desk-agent-recommendation";
 import { DeskQueue } from "./composer/desk-queue";
 import { DeskWaits } from "./composer/desk-waits";
 import { DeskWaitNote } from "./conversation/desk-wait-note";
@@ -95,7 +96,10 @@ import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
 import { deskComposerLock, DeskUsageMeter, useRequestMore } from "./desk-locks";
 import { useOnline } from "./desk-online";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { DeskTermsNote } from "./desk-terms-note";
+import { useConversationSuggestion, type ConversationHandOff } from "./use-conversation-suggestion";
 import { DeskTranscriptSkeleton } from "./desk-skeletons";
 import { turnTime } from "./turn-time";
 import "./desk-frame.css";
@@ -158,6 +162,13 @@ export type DeskThreadProps = {
    * carrying the draft. Left out, the agent is fixed.
    */
   onSwitchAgent?: (agentId: string, draft?: string) => void;
+  /**
+   * Hands the conversation to another agent and asks it the reply being
+   * written there. With it, a reply another agent holds the tools for is
+   * offered to that agent, or handed off without asking when the person lets
+   * the Desk switch agents for them. Left out, nothing is matched.
+   */
+  onHandOff?: ConversationHandOff;
   /** Starts a fresh conversation with the same agent; offered when this one is full. */
   onStartNew?: () => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
@@ -268,6 +279,7 @@ export function DeskThread({
   density = "regular",
   threads,
   onSwitchAgent,
+  onHandOff,
   onStartNew,
   onWorkingChange,
   onLiveHandoff,
@@ -416,6 +428,17 @@ export function DeskThread({
     onPageRequestSent,
   });
   const { entries, placements, turn, isActive, compaction } = model;
+  const { allowed: canAddTools } = usePermission(Resource.AgentDefinition, Operation.Update);
+  const suggestion = useConversationSuggestion({
+    agent,
+    draft: model.draft,
+    mentions: composerContext.mentions,
+    page: page || pageSource === "none" ? null : deskPage.context(),
+    attachmentCount: composerContext.attachments.length,
+    busy: isActive,
+    onHandOff: thread.canContinue && !agentsUnavailable ? onHandOff : undefined,
+    clearDraft: () => model.onDraftChange(""),
+  });
 
   // The agents the reply's own find_tools answer named, told to the surface
   // only when they change: the list is the step's own, so a streamed word
@@ -1494,6 +1517,29 @@ export function DeskThread({
                       )}
                       <DeskWaits waits={model.waits} timezone={timezone} />
                       <DeskQueue queue={model.waiting} busy={isActive} />
+                      <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+                        {suggestion.offered
+                          ? t("{0} has the tools for this", suggestion.offered.agent.name)
+                          : suggestion.nobody
+                            ? t("None of your agents has the tools for this.")
+                            : ""}
+                      </span>
+                      {suggestion.offered && agent && (
+                        <DeskAgentRecommendation
+                          match={suggestion.offered}
+                          agent={agent}
+                          action="handoff"
+                          disabled={suggestion.routing || suggestion.handingOff}
+                          onUse={() => void suggestion.handOff()}
+                          onKeep={suggestion.keep}
+                        />
+                      )}
+                      {!suggestion.offered && suggestion.nobody && (
+                        <DeskNoAgentFits
+                          canManage={canAddTools}
+                          onDismiss={suggestion.dismissNobody}
+                        />
+                      )}
                       <DeskComposer
                         value={model.draft}
                         onChange={model.onDraftChange}
@@ -1517,9 +1563,16 @@ export function DeskThread({
                           }
                           if (!online) {
                             setQueued({ content, payload });
-                          } else {
-                            void model.send(content, undefined, model.providerId, payload);
+                            composerContext.clear();
+                            attachments.clear();
+                            return;
                           }
+                          void suggestion.route(content, payload.mentions).then((handed) => {
+                            if (!handed) {
+                              suggestion.sentHere();
+                              void model.send(content, undefined, model.providerId, payload);
+                            }
+                          });
                           composerContext.clear();
                           attachments.clear();
                         }}
@@ -1550,14 +1603,19 @@ export function DeskThread({
                         wait={rateLimited ?? 0}
                         agentPickerSignal={agentPickerSignal}
                         filePickerSignal={filePickerSignal}
+                        disabled={suggestion.routing || suggestion.handingOff}
                         placeholder={
-                          showCard
-                            ? t("Reply, or ask about this change…")
-                            : dockedAsk
-                              ? deskAskPlaceholder(dockedAsk, t)
-                              : lastIsRefusal
-                                ? t("Rephrase, or ask another agent…")
-                                : undefined
+                          suggestion.routing
+                            ? t("Finding the agent with the tools for this…")
+                            : suggestion.handingOff
+                              ? t("Handing off…")
+                              : showCard
+                                ? t("Reply, or ask about this change…")
+                                : dockedAsk
+                                  ? deskAskPlaceholder(dockedAsk, t)
+                                  : lastIsRefusal
+                                    ? t("Rephrase, or ask another agent…")
+                                    : undefined
                         }
                         lock={lock}
                         note={composerLock?.note}

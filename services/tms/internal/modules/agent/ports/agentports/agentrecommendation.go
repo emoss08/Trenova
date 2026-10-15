@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -11,23 +12,27 @@ import (
 const (
 	MaxAgentRecommendationTextRunes = 4000
 	MaxAgentRecommendationTools     = 3
+	MaxAgentMatchContextKinds       = 11
 )
 
-type AgentRecommendationRequest struct {
+type AgentMatchRequest struct {
 	Actor          *permissionports.RequestActor
 	Text           string
 	CurrentAgentID pulid.ID
+	ContextKinds   []string
 }
 
-type AgentRecommendation struct {
+type AgentMatchTool struct {
+	Name    string
+	Summary string
+}
+
+type AgentMatch struct {
+	Outcome agentsuggestion.MatchOutcome
 	Agent   *agentdefinition.Definition
-	Current bool
-	Tools   []string
+	Tools   []AgentMatchTool
 }
 
 type AgentRecommender interface {
-	RecommendAgent(
-		ctx context.Context,
-		req *AgentRecommendationRequest,
-	) (*AgentRecommendation, error)
+	MatchAgent(ctx context.Context, req *AgentMatchRequest) (*AgentMatch, error)
 }

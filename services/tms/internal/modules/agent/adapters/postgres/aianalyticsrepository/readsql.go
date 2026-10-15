@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
@@ -176,6 +177,31 @@ var ratingsSQL = fmt.Sprintf(`SELECT %[1]s,
 		AND %[2]s
 	GROUP BY 1, 2`,
 	deploymentColumnsSQL, unitScopeSQL)
+
+var suggestionsSQL = fmt.Sprintf(`SELECT s.suggested_agent_id AS agent_definition_id,
+		COALESCE(MAX(d.name), '') AS agent_name,
+		COUNT(*) FILTER (WHERE s.outcome = '%[1]s') AS switched,
+		COUNT(*) FILTER (WHERE s.outcome = '%[2]s') AS sent_through,
+		COUNT(*) FILTER (WHERE s.outcome = '%[3]s') AS auto_switched,
+		COUNT(*) FILTER (WHERE s.outcome = '%[4]s') AS kept,
+		COUNT(*) FILTER (WHERE s.outcome IN ('%[5]s', '%[6]s')) AS passed_over
+	FROM agent_suggestions AS s
+	LEFT JOIN agent_definitions AS d
+		ON d.organization_id = s.organization_id
+		AND d.business_unit_id = s.business_unit_id
+		AND d.id = s.suggested_agent_id
+	WHERE s.organization_id = ?org AND s.business_unit_id = ?bu
+		AND s.created_at >= ?since
+		AND (?agent = '' OR s.suggested_agent_id = ?agent)
+		AND (s.outcome <> '%[6]s' OR s.created_at < ?pending_since)
+	GROUP BY s.suggested_agent_id`,
+	agentsuggestion.OutcomeSwitched,
+	agentsuggestion.OutcomeSentThrough,
+	agentsuggestion.OutcomeAutoSwitched,
+	agentsuggestion.OutcomeKept,
+	agentsuggestion.OutcomePassedOver,
+	agentsuggestion.OutcomeShown,
+)
 
 var providerCallsSQL = `SELECT ` + hourDeploymentColumnsSQL + `, h.error_class,
 		SUM(h.calls) AS calls,

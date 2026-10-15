@@ -1,6 +1,6 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { describe, expect, it } from "vitest";
-import { composerBlock, shouldSendOpeningQuestion } from "../thread-guard";
+import { askedMessageCount, composerBlock, shouldSendOpeningQuestion } from "../thread-guard";
 
 const agent = { id: "agdef_1", name: "Report Builder" } as AgentChoice;
 
@@ -79,5 +79,26 @@ describe("shouldSendOpeningQuestion", () => {
 
   it("refuses a thread that already has messages", () => {
     expect(shouldSendOpeningQuestion({ ...ready, messageCount: 1 })).toBe(false);
+  });
+});
+
+describe("askedMessageCount", () => {
+  it("leaves out the brief a hand-off opens a conversation with", () => {
+    expect(askedMessageCount([{ kind: "HandoffBrief" }])).toBe(0);
+    expect(
+      askedMessageCount([{ kind: "HandoffBrief" }, { kind: null }, { kind: "Steer" }, {}]),
+    ).toBe(3);
+    expect(askedMessageCount([])).toBe(0);
+  });
+
+  it("lets the question handed over be asked in a conversation holding only its brief", () => {
+    expect(
+      shouldSendOpeningQuestion({
+        question: "When will the Acme load arrive?",
+        alreadySent: false,
+        historyLoading: false,
+        messageCount: askedMessageCount([{ kind: "HandoffBrief" }]),
+      }),
+    ).toBe(true);
   });
 });

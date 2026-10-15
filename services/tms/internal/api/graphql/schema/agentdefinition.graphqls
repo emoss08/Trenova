@@ -272,6 +272,49 @@ type MyAgentRecommendation {
   tools: [String!]!
 }
 
+"How well the chat agents a person may use fit a question."
+enum AgentMatchOutcome {
+  "Another of the person's agents holds the tools the question needs and the agent it would go to does not."
+  BetterAgent
+  "The agent the question would go to holds the tools it needs, itself or through an agent it hands work to."
+  CurrentAgent
+  "Tools match the question, but none of the person's agents holds one they may use."
+  NoAgent
+  "No tool matches the question."
+  NoMatch
+}
+
+input MyAgentMatchInput {
+  "What the caller is about to ask. At most 4000 characters."
+  text: String!
+  "The agent the question would go to now, kept when it fits as well as any."
+  currentAgentId: ID
+  """
+  The kinds of record the question is about: the records it mentions and the
+  record or list page it is asked from. At most 11. Tools that work on them
+  rank higher; a kind the server does not know is ignored.
+  """
+  contextKinds: [String!]
+}
+
+"A tool that matched a question."
+type AgentMatchTool {
+  name: String!
+  "The first sentence of the tool's description."
+  summary: String!
+}
+
+type MyAgentMatch {
+  outcome: AgentMatchOutcome!
+  "The agent, for BetterAgent and CurrentAgent; null otherwise."
+  agent: MyAgent
+  """
+  For BetterAgent and CurrentAgent, the agent's tools that matched; for
+  NoAgent, the tools that would answer it. Best first, at most three.
+  """
+  tools: [AgentMatchTool!]!
+}
+
 input SetAgentAccessInput {
   accessMode: AgentAccessMode!
   """
@@ -415,6 +458,13 @@ extend type Query {
   when no such agent holds a tool that matches it.
   """
   myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
+    @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
+  """
+  How well the chat agents the caller may use fit a question: another agent
+  that holds the tools it needs, the agent it would go to already, none of
+  them, or no tool at all.
+  """
+  myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   "Each role's coverage of an agent's tools, for choosing who may use it."
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
   """

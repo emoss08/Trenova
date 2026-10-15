@@ -4,7 +4,11 @@ import { AI_ANALYTICS_HANDLERS } from "./aianalytics.mjs";
 import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
-import { recommendAgent } from "./agentrecommendation.mjs";
+import {
+  matchAgent,
+  recordAgentSuggestion,
+  settleAgentSuggestion,
+} from "./agentrecommendation.mjs";
 import { paletteHandlers } from "./palette.mjs";
 import { CUSTOMER_TRACKING_HANDLERS } from "./customertracking.mjs";
 import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
@@ -1186,12 +1190,14 @@ const HANDLERS = {
       },
     };
   },
-  MyAgentRecommendation: (state, v) =>
-    recommendAgent(
+  MyAgentMatch: (state, v) =>
+    matchAgent(
       state,
       v,
       HANDLERS.MyAgents(state, {}).myAgents.edges.map((edge) => edge.node),
     ),
+  RecordMyAgentSuggestion: (state, v) => recordAgentSuggestion(state, v),
+  SettleMyAgentSuggestion: (state, v) => settleAgentSuggestion(state, v),
   ShipmentBoardTable: (state, v) => ({
     shipments: shipmentConnection(state, v.input, v.includeTotalCount),
   }),

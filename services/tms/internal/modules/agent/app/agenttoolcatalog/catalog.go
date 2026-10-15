@@ -216,6 +216,20 @@ func (c *Catalog) MatchesStrongly(name, query string) bool {
 	return score(&c.entries[index], agentsearch.Terms(query), true) > 0
 }
 
+func (c *Catalog) MentionsAny(query string) bool {
+	terms := agentsearch.Terms(query)
+	if len(terms) == 0 {
+		return false
+	}
+	for i := range c.entries {
+		if score(&c.entries[i], terms, false) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Prerequisites names the tools a tool's arguments come from.
 func (c *Catalog) Prerequisites(name string) []string {
 	descriptor, ok := c.Descriptor(name)

@@ -495,3 +495,15 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 	assert.Equal(t, matches[0].Score, matches[1].Score,
 		"tools tied on keywords and on meaning tie in the fused ranking too")
 }
+
+func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "list_invoices", Description: "List invoices by status."},
+	})
+
+	assert.True(t, catalog.MentionsAny("which invoices are past due"))
+	assert.False(t, catalog.MentionsAny("good morning, how are you"))
+	assert.False(t, catalog.MentionsAny(""))
+}

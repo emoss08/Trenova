@@ -1,9 +1,4 @@
-import { appendToHistory, type ThreadHistory } from "@/components/assistant/thread-history";
-import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -14,6 +9,7 @@ import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { HANDOFF_MENU_CLOSED, handoffMenuReducer, handoffTargets } from "./handoff-state";
+import { useHandOffThread } from "./use-hand-off-thread";
 import { useHandoffSuggestion } from "./use-handoff-suggestion";
 
 /**
@@ -37,7 +33,6 @@ export function DeskHandoffMenu({
   facts?: readonly string[];
 }) {
   const t = useT();
-  const queryClient = useQueryClient();
   const root = useRef<HTMLSpanElement>(null);
   const [state, dispatch] = useReducer(handoffMenuReducer, HANDOFF_MENU_CLOSED);
   const close = useCallback(() => dispatch({ type: "close" }), []);
@@ -54,21 +49,7 @@ export function DeskHandoffMenu({
   );
   const suggestedIds = useMemo(() => new Set(suggested), [suggested]);
 
-  const handoff = useApiMutation({
-    mutationFn: (agentId: string) =>
-      apiService.assistantService.handoffThread(threadId, agentId, facts),
-    onSuccess: async (result) => {
-      const card = result.message;
-      if (card) {
-        queryClient.setQueryData<ThreadHistory>(assistant.messages(threadId).queryKey, (history) =>
-          appendToHistory(history, [card]),
-        );
-      }
-      await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
-    },
-    onSettled: () => dispatch({ type: "settled" }),
-    resourceName: "Conversation",
-  });
+  const handoff = useHandOffThread(threadId, facts);
 
   return (
     <span className="dk-hom" ref={root}>
@@ -107,7 +88,7 @@ export function DeskHandoffMenu({
                 className="flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left hover:bg-dsk-hover"
                 onClick={() => {
                   dispatch({ type: "pick", agentId: target.id });
-                  handoff.mutate(target.id);
+                  handoff.mutate(target.id, { onSettled: () => dispatch({ type: "settled" }) });
                 }}
               >
                 <DeskAgentTile agent={target} size="xs" />

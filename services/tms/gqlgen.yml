@@ -5123,6 +5123,18 @@ models:
   AIUsageFeatureSlice:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageFeatureSlice
+  AgentSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Suggestion
+  AgentSuggestionSurface:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Surface
+  AgentSuggestionOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.Outcome
+  AgentMatchOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion.MatchOutcome
   AIUsageFeature:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiusage.Feature

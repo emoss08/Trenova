@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentscorecardrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentshadowrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentsubjectrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttoolrulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentwaitrepository"
@@ -83,6 +84,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadowservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsubjectservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttestpromptservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
@@ -193,6 +195,7 @@ func SharedOptions() fx.Option {
 			aicorrectionrepository.New,
 			aifeedbackrepository.New,
 			aifeedbackrepository.NewSource,
+			agentsuggestionrepository.New,
 			agentdecisionqueuerepository.New,
 			assistantartifactrepository.New,
 			agentevaluationrepository.New,
@@ -332,6 +335,7 @@ func SharedOptions() fx.Option {
 			aifeedbackservice.New,
 			aifeedbackservice.AsService,
 			aifeedbackservice.AsMaintenance,
+			agentsuggestionservice.New,
 			agentbudgetservice.New,
 			agentevaluationservice.New,
 			agentevalcaseservice.New,

@@ -5,9 +5,10 @@ import {
   AgentDefinitionCardsDocument,
   DataTablePageInfoFieldsFragmentDoc,
   MyAgentFieldsFragmentDoc,
-  MyAgentRecommendationDocument,
+  MyAgentMatchDocument,
   MyAgentsDocument,
   type AgentDefinitionCardFieldsFragment,
+  type AgentMatchOutcome,
   type FieldFilterInput,
   type MyAgentFieldsFragment,
   type MyAgentOrigin,
@@ -314,48 +315,59 @@ export async function fetchMyAgents(options?: RequestOptions): Promise<AgentChoi
 }
 
 /**
- * The agent a question is best put to before it is asked, among the agents
- * the person may start a conversation with, judged by the tools it holds that
- * the person may use. `current` is true when the agent the question would go
- * to now is already the best fit, and `tools` names, best first, at most three
- * of the tools that matched.
+ * How well the person's agents fit a question before it is asked, among the
+ * agents they may start a conversation with, judged by the tools each holds
+ * that the person may use. `BetterAgent` names another agent holding the tools
+ * the question needs; `CurrentAgent` says the agent it would go to holds them,
+ * itself or through an agent it hands work to; `NoAgent` says tools match but
+ * none of the person's agents holds them; `NoMatch` says no tool matches.
+ * `tools` names, best first, at most three of the tools that matched.
  */
-export type AgentRecommendation = {
-  agent: AgentChoice;
-  current: boolean;
-  tools: string[];
+export type AgentMatch = {
+  outcome: AgentMatchOutcome;
+  agent: AgentChoice | null;
+  tools: AgentMatchTool[];
 };
+
+export type AgentMatchTool = { name: string; summary: string };
 
 /** The most characters of a question the server matches to an agent. */
 export const AGENT_RECOMMENDATION_MAX_LENGTH = 4000;
 
-/**
- * Asks the server which agent the question is best put to. Null when no agent
- * the person may use holds a tool that matches it.
- */
-export async function fetchAgentRecommendation(
-  input: { text: string; currentAgentId?: string | null },
+/** The most kinds of record a question can be about when it is matched. */
+export const AGENT_MATCH_MAX_CONTEXT_KINDS = 11;
+
+export type AgentMatchInput = {
+  text: string;
+  currentAgentId?: string | null;
+  /** The kinds of record the question is about; tools for them rank higher. */
+  contextKinds?: readonly string[];
+};
+
+/** Asks the server how well the person's agents fit a question. */
+export async function fetchAgentMatch(
+  input: AgentMatchInput,
   options?: RequestOptions,
-): Promise<AgentRecommendation | null> {
+): Promise<AgentMatch> {
   const data = await requestGraphQL({
-    document: MyAgentRecommendationDocument,
-    operationName: "MyAgentRecommendation",
+    document: MyAgentMatchDocument,
+    operationName: "MyAgentMatch",
     variables: {
       input: {
         text: input.text,
         ...(input.currentAgentId ? { currentAgentId: input.currentAgentId } : {}),
+        ...(input.contextKinds && input.contextKinds.length > 0
+          ? { contextKinds: [...input.contextKinds] }
+          : {}),
       },
     },
     signal: options?.signal,
   });
-  const recommendation = data.myAgentRecommendation;
-  if (!recommendation) {
-    return null;
-  }
+  const match = data.myAgentMatch;
 
   return {
-    agent: getFragmentData(MyAgentFieldsFragmentDoc, recommendation.agent),
-    current: recommendation.current,
-    tools: [...recommendation.tools],
+    outcome: match.outcome,
+    agent: match.agent ? getFragmentData(MyAgentFieldsFragmentDoc, match.agent) : null,
+    tools: match.tools.map((tool) => ({ name: tool.name, summary: tool.summary })),
   };
 }

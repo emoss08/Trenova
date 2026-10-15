@@ -12,6 +12,10 @@ export type DeskSettings = {
   start: "today" | "last";
   /** The agent a fresh conversation starts with; empty follows the last one used. */
   agent: string;
+  /** Move a question to the agent with the tools for it without asking. */
+  autoSwitchAgent: "on" | "off";
+  /** With auto switch off: name a better agent, and whether a question sent goes to it. */
+  suggestAgent: "switch" | "suggest" | "off";
   sharePage: "on" | "off";
   mentions: "on" | "off";
   slash: "on" | "off";
@@ -36,6 +40,8 @@ export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
   refs: "on",
   start: "today",
   agent: "",
+  autoSwitchAgent: "off",
+  suggestAgent: "switch",
   sharePage: "on",
   mentions: "on",
   slash: "on",

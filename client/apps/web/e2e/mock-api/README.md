@@ -48,7 +48,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
 | `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
 | `deskReply` | `idle` \| `working` | `idle` | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued |
-| `agentMatch` | `match` \| `none` \| `hold` | `match` | The Desk home's agent suggestion (`MyAgentRecommendation`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, nobody, or the request left open (the "finding the agent" state) |
+| `agentMatch` | `match` \| `none` \| `nobody` \| `hold` | `match` | The Desk's agent suggestion (`MyAgentMatch`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, no tool matching, tools matching that none of the person's agents holds, or the request left open (the "finding the agent" state). Suggestions the page records (`RecordMyAgentSuggestion`, `SettleMyAgentSuggestion`) are kept and counted in AI analytics with a month of seeded ones |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \

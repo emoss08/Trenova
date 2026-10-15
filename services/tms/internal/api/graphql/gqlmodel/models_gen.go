@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
@@ -153,6 +154,18 @@ type AIAgentRosterStat struct {
 	ShadowRecorded int `json:"shadowRecorded"`
 	// Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided.
 	ApprovalRate *float64 `json:"approvalRate,omitempty"`
+}
+
+type AIAnalyticsAgentSuggestions struct {
+	AgentDefinitionID string   `json:"agentDefinitionId"`
+	Name              string   `json:"name"`
+	Suggested         int      `json:"suggested"`
+	Switched          int      `json:"switched"`
+	SentThrough       int      `json:"sentThrough"`
+	AutoSwitched      int      `json:"autoSwitched"`
+	Kept              int      `json:"kept"`
+	PassedOver        int      `json:"passedOver"`
+	TakenRate         *float64 `json:"takenRate,omitempty"`
 }
 
 type AIAnalyticsCauseCount struct {
@@ -328,6 +341,21 @@ type AIAnalyticsSeries struct {
 	Rated        int      `json:"rated"`
 	Helpful      int      `json:"helpful"`
 	HelpfulRate  *float64 `json:"helpfulRate,omitempty"`
+}
+
+// What became of the agents the Desk named for questions. A suggestion still on
+// screen for under half an hour is not counted yet; one left longer was passed over.
+type AIAnalyticsSuggestions struct {
+	Suggested    int `json:"suggested"`
+	Switched     int `json:"switched"`
+	SentThrough  int `json:"sentThrough"`
+	AutoSwitched int `json:"autoSwitched"`
+	Kept         int `json:"kept"`
+	PassedOver   int `json:"passedOver"`
+	// Switched, sent to it or moved to without asking, as a share of every suggestion.
+	TakenRate *float64 `json:"takenRate,omitempty"`
+	// Most suggested first.
+	Agents []*AIAnalyticsAgentSuggestions `json:"agents"`
 }
 
 // A task's completed runs per series, counting only the series it was routed to,
@@ -817,6 +845,9 @@ type AgentAnalytics struct {
 	Providers   []*AIAnalyticsProviderHealth `json:"providers"`
 	// The model that ran on two providers to compare, when one did.
 	SameModel *AIAnalyticsSameModel `json:"sameModel,omitempty"`
+	// What people did with the agents the Desk named for their questions, by the
+	// agent named. Absent when the view is narrowed to a task or nothing was named.
+	Suggestions *AIAnalyticsSuggestions `json:"suggestions,omitempty"`
 }
 
 // Why one tool's calls failed for one series, and the newest failures.
@@ -983,6 +1014,13 @@ type AgentInstructionLintInput struct {
 	Instructions      string   `json:"instructions"`
 	ToolNames         []string `json:"toolNames"`
 	DisabledToolNames []string `json:"disabledToolNames,omitempty"`
+}
+
+// A tool that matched a question.
+type AgentMatchTool struct {
+	Name string `json:"name"`
+	// The first sentence of the tool's description.
+	Summary string `json:"summary"`
 }
 
 type AgentMemoryConnection struct {
@@ -5792,6 +5830,26 @@ type MyAgentEdge struct {
 	Cursor string                      `json:"cursor"`
 }
 
+type MyAgentMatch struct {
+	Outcome agentsuggestion.MatchOutcome `json:"outcome"`
+	// The agent, for BetterAgent and CurrentAgent; null otherwise.
+	Agent *agentdefinition.Definition `json:"agent,omitempty"`
+	// For BetterAgent and CurrentAgent, the agent's tools that matched; for
+	// NoAgent, the tools that would answer it. Best first, at most three.
+	Tools []*AgentMatchTool `json:"tools"`
+}
+
+type MyAgentMatchInput struct {
+	// What the caller is about to ask. At most 4000 characters.
+	Text string `json:"text"`
+	// The agent the question would go to now, kept when it fits as well as any.
+	CurrentAgentID *string `json:"currentAgentId,omitempty"`
+	// The kinds of record the question is about: the records it mentions and the
+	// record or list page it is asked from. At most 11. Tools that work on them
+	// rank higher.
+	ContextKinds []string `json:"contextKinds,omitempty"`
+}
+
 // The agent a question is best put to, among the chat agents the caller may start
 // a conversation with, judged by the tools it holds that the caller may use.
 type MyAgentRecommendation struct {
@@ -6568,6 +6626,15 @@ type RecordLeaveDayInput struct {
 	Hours  string  `json:"hours"`
 	PTOID  *string `json:"ptoId,omitempty"`
 	Notes  *string `json:"notes,omitempty"`
+}
+
+type RecordMyAgentSuggestionInput struct {
+	SuggestedAgentID string `json:"suggestedAgentId"`
+	// The agent the question would have gone to.
+	CurrentAgentID *string                 `json:"currentAgentId,omitempty"`
+	Surface        agentsuggestion.Surface `json:"surface"`
+	// Shown when the suggestion appears, or AutoSwitched when the Desk moved the question without asking.
+	Outcome agentsuggestion.Outcome `json:"outcome"`
 }
 
 type RecordMyStopActionInput struct {
@@ -7688,6 +7755,12 @@ type SetWatchtowerItemDueInput struct {
 	DueAt           *int    `json:"dueAt,omitempty"`
 	Note            *string `json:"note,omitempty"`
 	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
+type SettleMyAgentSuggestionInput struct {
+	ID string `json:"id"`
+	// Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome.
+	Outcome agentsuggestion.Outcome `json:"outcome"`
 }
 
 type SettlementBatchConnection struct {

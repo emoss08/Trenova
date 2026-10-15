@@ -14,6 +14,8 @@ const (
 	ProviderErrorAlarmRate = 0.05
 	FellToNextAlarmCalls   = 50
 	QuietSeconds           = 24 * 60 * 60
+
+	SuggestionSettleSeconds = 30 * 60
 )
 
 func RanksByRuns(runs int) bool {
@@ -38,4 +40,8 @@ func FellToNextAlarm(calls int) bool {
 
 func IsQuiet(lastAt *int64, until int64) bool {
 	return lastAt != nil && until-*lastAt > QuietSeconds
+}
+
+func SuggestionPendingSince(now int64) int64 {
+	return now - SuggestionSettleSeconds
 }

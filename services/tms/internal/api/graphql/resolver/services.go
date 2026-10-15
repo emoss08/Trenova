@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
@@ -319,6 +320,7 @@ type Params struct {
 	AgentMemoryService           agentports.AgentMemoryService
 	AgentReflectionService       agentports.AgentReflectionService
 	AIFeedbackService            aifeedbackports.AIFeedbackService
+	AgentSuggestionService       agentsuggestionports.AgentSuggestionService
 	AgentEvaluationService       agentports.AgentEvaluationService
 	AgentEvalCaseService         agentports.AgentEvalCaseService
 	ExtractionEvalService        extractionevalports.ExtractionEvalService
@@ -545,6 +547,7 @@ type Services struct {
 	AgentMemoryService           agentports.AgentMemoryService
 	AgentReflectionService       agentports.AgentReflectionService
 	AiFeedbackService            aifeedbackports.AIFeedbackService
+	AgentSuggestionService       agentsuggestionports.AgentSuggestionService
 	AgentEvaluationService       agentports.AgentEvaluationService
 	AgentEvalCaseService         agentports.AgentEvalCaseService
 	ExtractionEvalService        extractionevalports.ExtractionEvalService
@@ -777,6 +780,7 @@ func newServices(p *Params) *Services {
 		AgentMemoryService:           p.AgentMemoryService,
 		AgentReflectionService:       p.AgentReflectionService,
 		AiFeedbackService:            p.AIFeedbackService,
+		AgentSuggestionService:       p.AgentSuggestionService,
 		AgentEvaluationService:       p.AgentEvaluationService,
 		AgentEvalCaseService:         p.AgentEvalCaseService,
 		ExtractionEvalService:        p.ExtractionEvalService,

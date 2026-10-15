@@ -79,3 +79,19 @@ export function shouldSendOpeningQuestion({
 
   return !historyLoading && messageCount === 0;
 }
+
+/**
+ * The messages that count toward whether a conversation has been asked
+ * anything: the brief a hand-off opens a conversation with is the agent's to
+ * read, not a question, so the question handed over is still asked first.
+ */
+export function askedMessageCount(messages: readonly { kind?: string | null }[]): number {
+  let count = 0;
+  for (const message of messages) {
+    if (message.kind !== "HandoffBrief") {
+      count += 1;
+    }
+  }
+
+  return count;
+}

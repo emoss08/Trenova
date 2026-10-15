@@ -1107,6 +1107,17 @@ export type AgentInstructionLintInput = {
   toolNames: Array<string>;
 };
 
+/** How well the chat agents a person may use fit a question. */
+export type AgentMatchOutcome =
+  /** Another of the person's agents holds the tools the question needs and the agent it would go to does not. */
+  | 'BetterAgent'
+  /** The agent the question would go to holds the tools it needs, itself or through an agent it hands work to. */
+  | 'CurrentAgent'
+  /** Tools match the question, but none of the person's agents holds one they may use. */
+  | 'NoAgent'
+  /** No tool matches the question. */
+  | 'NoMatch';
+
 export type AgentMemoryInput = {
   content: string;
   expiresAt?: number | null | undefined;
@@ -1416,6 +1427,28 @@ export type AgentSubjectType =
   | 'Shipment'
   | 'ShipmentMove'
   | 'Worker';
+
+/** What became of an agent the Desk named for a question. */
+export type AgentSuggestionOutcome =
+  /** The question went to the suggested agent without asking, as the person's settings say. */
+  | 'AutoSwitched'
+  /** The person kept the agent they had. */
+  | 'Kept'
+  /** The question went to another agent, or was put away, without the suggestion being taken. */
+  | 'PassedOver'
+  /** The question was sent and went to the suggested agent. */
+  | 'SentThrough'
+  /** The suggestion is on screen and nothing has been done with it yet. */
+  | 'Shown'
+  /** The person chose the suggested agent. */
+  | 'Switched';
+
+/** Where the Desk named an agent for a question. */
+export type AgentSuggestionSurface =
+  /** An open conversation, where the suggested agent takes it over by hand-off. */
+  | 'Conversation'
+  /** The Desk's front page, before a conversation starts. */
+  | 'Home';
 
 export type AgentSuiteRunStatus =
   /** The nightly or monthly evaluation budget ran out before every case was asked. */
@@ -5350,6 +5383,19 @@ export type MyAiFeedbackInput = {
   targets: Array<AiFeedbackTargetInput>;
 };
 
+export type MyAgentMatchInput = {
+  /**
+   * The kinds of record the question is about: the records it mentions and the
+   * record or list page it is asked from. At most 11. Tools that work on them
+   * rank higher.
+   */
+  contextKinds?: Array<string> | null | undefined;
+  /** The agent the question would go to now, kept when it fits as well as any. */
+  currentAgentId?: string | number | null | undefined;
+  /** What the caller is about to ask. At most 4000 characters. */
+  text: string;
+};
+
 /** Where an agent came from. */
 export type MyAgentOrigin =
   | 'All'
@@ -5357,13 +5403,6 @@ export type MyAgentOrigin =
   | 'Custom'
   /** Made from one of the platform's templates. */
   | 'Template';
-
-export type MyAgentRecommendationInput = {
-  /** The agent the question would go to now, kept when it fits as well as any. */
-  currentAgentId?: string | number | null | undefined;
-  /** What the caller is about to ask. At most 4000 characters. */
-  text: string;
-};
 
 export type MyAgentsInput = {
   after?: string | null | undefined;
@@ -6062,6 +6101,15 @@ export type RecordLeaveDayInput = {
   ptoId?: string | number | null | undefined;
   /** The day the leave was taken. */
   usedOn: number;
+};
+
+export type RecordMyAgentSuggestionInput = {
+  /** The agent the question would have gone to. */
+  currentAgentId?: string | number | null | undefined;
+  /** Shown when the suggestion appears, or AutoSwitched when the Desk moved the question without asking. */
+  outcome: AgentSuggestionOutcome;
+  suggestedAgentId: string | number;
+  surface: AgentSuggestionSurface;
 };
 
 export type RecordMyStopActionInput = {
@@ -6949,6 +6997,12 @@ export type SetWatchtowerItemDueInput = {
   dueAt?: number | null | undefined;
   expectedVersion?: number | null | undefined;
   note?: string | null | undefined;
+};
+
+export type SettleMyAgentSuggestionInput = {
+  id: string | number;
+  /** Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome. */
+  outcome: AgentSuggestionOutcome;
 };
 
 export type SettlementBatchStatus =
@@ -9553,12 +9607,26 @@ export type MyAgentsQueryVariables = Exact<{
 
 export type MyAgentsQuery = { myAgents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type MyAgentRecommendationQueryVariables = Exact<{
-  input: MyAgentRecommendationInput;
+export type MyAgentMatchQueryVariables = Exact<{
+  input: MyAgentMatchInput;
 }>;
 
 
-export type MyAgentRecommendationQuery = { myAgentRecommendation: { current: boolean, tools: Array<string>, agent: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } } | null };
+export type MyAgentMatchQuery = { myAgentMatch: { outcome: AgentMatchOutcome, agent: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } | null, tools: Array<{ name: string, summary: string }> } };
+
+export type RecordMyAgentSuggestionMutationVariables = Exact<{
+  input: RecordMyAgentSuggestionInput;
+}>;
+
+
+export type RecordMyAgentSuggestionMutation = { recordMyAgentSuggestion: { id: string, outcome: AgentSuggestionOutcome } };
+
+export type SettleMyAgentSuggestionMutationVariables = Exact<{
+  input: SettleMyAgentSuggestionInput;
+}>;
+
+
+export type SettleMyAgentSuggestionMutation = { settleMyAgentSuggestion: { id: string, outcome: AgentSuggestionOutcome } };
 
 export type DecideMyPlanMutationVariables = Exact<{
   id: string | number;
@@ -9746,7 +9814,7 @@ export type AgentAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type AgentAnalyticsQuery = { agentAnalytics: { window: AiAnalyticsWindow, compareBy: AiAnalyticsCompareBy, since: number, until: number, bucketSeconds: number, trendBuckets: Array<number>, refreshedAt: number | null, summary: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, runTimeNote: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, totals: { runs: number, modelCalls: number, completed: number, handedOff: number, stopped: number, failed: number, completedRate: number | null, medianRunMs: number | null, p95RunMs: number | null, toolCalls: number, toolCallsFailed: number, toolFailuresModel: number, toolFailureRate: number | null, modelShareOfToolFailures: number | null, costUsd: string, pricedRuns: number, costPerCompletedRun: string | null, toolFailureAlarm: boolean }, series: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, deployments: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, trend: Array<{ seriesKey: string, bucketStart: number, runs: number, completedRate: number | null, toolFailureRate: number | null, medianRunMs: number | null }>, events: Array<{ at: number, kind: AiAnalyticsEventKind, label: string, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } }>, tools: Array<{ name: string, calls: number, failed: number, failureRate: number | null, cells: Array<{ seriesKey: string, few: boolean, calls: number, failed: number, failureRate: number | null }> }>, tasks: Array<{ task: AiTask, currentSeriesKey: string | null, bestSeriesKey: string | null, current: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } | null, cells: Array<{ seriesKey: string, few: boolean, runs: number, completed: number, completedRate: number | null }>, suggestion: { seriesKey: string, gainPoints: number, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } } | null }>, providers: Array<{ key: string, modelKey: string, model: string, lastCalledAt: number | null, quiet: boolean, calls: number, errors: number, errorRate: number | null, errorAlarm: boolean, fellToNext: number, fellToNextAlarm: boolean, firstTokenMedianMs: number | null, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } }, errorsByKind: Array<{ kind: AiProviderErrorKind, calls: number }> }>, sameModel: { modelKey: string, betterKey: string, worseKey: string } | null } };
+export type AgentAnalyticsQuery = { agentAnalytics: { window: AiAnalyticsWindow, compareBy: AiAnalyticsCompareBy, since: number, until: number, bucketSeconds: number, trendBuckets: Array<number>, refreshedAt: number | null, summary: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, runTimeNote: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, totals: { runs: number, modelCalls: number, completed: number, handedOff: number, stopped: number, failed: number, completedRate: number | null, medianRunMs: number | null, p95RunMs: number | null, toolCalls: number, toolCallsFailed: number, toolFailuresModel: number, toolFailureRate: number | null, modelShareOfToolFailures: number | null, costUsd: string, pricedRuns: number, costPerCompletedRun: string | null, toolFailureAlarm: boolean }, series: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, deployments: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, trend: Array<{ seriesKey: string, bucketStart: number, runs: number, completedRate: number | null, toolFailureRate: number | null, medianRunMs: number | null }>, events: Array<{ at: number, kind: AiAnalyticsEventKind, label: string, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } }>, tools: Array<{ name: string, calls: number, failed: number, failureRate: number | null, cells: Array<{ seriesKey: string, few: boolean, calls: number, failed: number, failureRate: number | null }> }>, tasks: Array<{ task: AiTask, currentSeriesKey: string | null, bestSeriesKey: string | null, current: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } | null, cells: Array<{ seriesKey: string, few: boolean, runs: number, completed: number, completedRate: number | null }>, suggestion: { seriesKey: string, gainPoints: number, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } } | null }>, providers: Array<{ key: string, modelKey: string, model: string, lastCalledAt: number | null, quiet: boolean, calls: number, errors: number, errorRate: number | null, errorAlarm: boolean, fellToNext: number, fellToNextAlarm: boolean, firstTokenMedianMs: number | null, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } }, errorsByKind: Array<{ kind: AiProviderErrorKind, calls: number }> }>, sameModel: { modelKey: string, betterKey: string, worseKey: string } | null, suggestions: { suggested: number, switched: number, sentThrough: number, autoSwitched: number, kept: number, passedOver: number, takenRate: number | null, agents: Array<{ agentDefinitionId: string, name: string, suggested: number, switched: number, sentThrough: number, autoSwitched: number, kept: number, passedOver: number, takenRate: number | null }> } | null } };
 
 export type AgentAnalyticsToolFailuresQueryVariables = Exact<{
   input: AiAnalyticsInput;
@@ -18466,7 +18534,7 @@ export { AccountingSyncRecordTableDocument } from "./documents/accounting-sync/t
 export { LateChargeAssessmentResultFieldsFragmentDoc, LateChargePreviewDocument, AssessLateChargesDocument } from "./documents/accounts-receivable/late-charges";
 export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArCollectionPerformanceDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
-export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentRecommendationDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
+export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentMatchDocument, RecordMyAgentSuggestionDocument, SettleMyAgentSuggestionDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
 export { AiAnalyticsSegmentFieldsFragmentDoc, AiAnalyticsProviderFieldsFragmentDoc, AiAnalyticsSeriesFieldsFragmentDoc, AgentAnalyticsDocument, AgentAnalyticsToolFailuresDocument, RouteAiTaskDocument } from "./documents/agent/analytics";
 export { AiAuditEventRowFieldsFragmentDoc, AiAuditEventDetailFieldsFragmentDoc, AiAuditChainStatusFieldsFragmentDoc, AiAuditExportFieldsFragmentDoc, AiAuditEventTableDocument, AiAuditEventDetailDocument, AiAuditChainStatusDocument, AiAuditExportTableDocument, AiAuditExportDetailDocument, RequestAiAuditExportDocument, AiAuditExportDownloadDocument, VerifyAiAuditChainDocument } from "./documents/agent/audit";

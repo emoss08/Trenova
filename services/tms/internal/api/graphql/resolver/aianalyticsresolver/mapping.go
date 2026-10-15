@@ -348,6 +348,40 @@ func analyticsModel(analytics *aianalyticsports.Analytics) *gqlmodel.AgentAnalyt
 		Tasks:         taskModels(analytics.Tasks),
 		Providers:     providerHealthModels(analytics.Providers),
 		SameModel:     sameModelModel(analytics.SameModel),
+		Suggestions:   suggestionsModel(analytics.Suggestions),
+	}
+}
+
+func suggestionsModel(stats *aianalyticsports.SuggestionStats) *gqlmodel.AIAnalyticsSuggestions {
+	if stats == nil {
+		return nil
+	}
+
+	agents := make([]*gqlmodel.AIAnalyticsAgentSuggestions, 0, len(stats.Agents))
+	for idx := range stats.Agents {
+		agent := &stats.Agents[idx]
+		agents = append(agents, &gqlmodel.AIAnalyticsAgentSuggestions{
+			AgentDefinitionID: agent.AgentDefinitionID.String(),
+			Name:              agent.Name,
+			Suggested:         agent.Suggested,
+			Switched:          agent.Switched,
+			SentThrough:       agent.SentThrough,
+			AutoSwitched:      agent.AutoSwitched,
+			Kept:              agent.Kept,
+			PassedOver:        agent.PassedOver,
+			TakenRate:         agent.TakenRate,
+		})
+	}
+
+	return &gqlmodel.AIAnalyticsSuggestions{
+		Suggested:    stats.Suggested,
+		Switched:     stats.Switched,
+		SentThrough:  stats.SentThrough,
+		AutoSwitched: stats.AutoSwitched,
+		Kept:         stats.Kept,
+		PassedOver:   stats.PassedOver,
+		TakenRate:    stats.TakenRate,
+		Agents:       agents,
 	}
 }
 

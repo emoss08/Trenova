@@ -57,6 +57,7 @@ import { OverTimeCard } from "./over-time-card";
 import { ProviderHealthCard } from "./provider-health-card";
 import { RunTimeCard } from "./run-time-card";
 import { SameModelCard } from "./same-model-card";
+import { SuggestionsCard } from "./suggestions-card";
 import { TaskFitCard } from "./task-fit-card";
 import { ToolCallsCard } from "./tool-calls-card";
 import { TradeoffsCard } from "./tradeoffs-card";
@@ -395,6 +396,7 @@ export default function AnalyticsTab() {
                 canRoute={canRoute}
               />
             )}
+            {analytics.suggestions && <SuggestionsCard suggestions={analytics.suggestions} />}
             <div className="an-g2 is-health">
               <DecisionsCard series={visible} colors={colors} onOpen={openSeriesSheet} />
               <ProviderHealthCard

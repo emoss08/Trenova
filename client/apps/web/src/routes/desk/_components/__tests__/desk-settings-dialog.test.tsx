@@ -1,6 +1,7 @@
 import { apiService } from "@/services/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
@@ -30,7 +31,7 @@ function grant(permissions: Record<string, number>) {
   });
 }
 
-function renderDialog(initialSection?: "checklists") {
+function renderDialog(initialSection?: "checklists", agents: { id: string; name: string }[] = []) {
   vi.spyOn(apiService.caseChecklistService, "list").mockResolvedValue({
     kind: "ReadyToBill",
     organization: {
@@ -46,9 +47,15 @@ function renderDialog(initialSection?: "checklists") {
     locked: ["delivered"],
   });
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <MemoryRouter>
-        <DeskSettingsDialog agents={[]} initialSection={initialSection} onClose={vi.fn()} />
+        <DeskSettingsDialog
+          agents={agents as never}
+          initialSection={initialSection}
+          onClose={vi.fn()}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -71,7 +78,10 @@ describe("DeskSettingsDialog", () => {
 
     expect(screen.queryByText("Organization")).toBeNull();
     expect(screen.queryByRole("button", { name: "Case checklists" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Appearance" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Appearance" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("opens on case checklists, wide, and without the personal reset", async () => {
@@ -84,6 +94,48 @@ describe("DeskSettingsDialog", () => {
     );
     expect(screen.getByRole("dialog")).toHaveClass("dk-xl");
     expect(screen.queryByRole("button", { name: "Reset to defaults" })).toBeNull();
-    expect(await screen.findByRole("heading", { name: "Your organization's checklist" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Your organization's checklist" }),
+    ).toBeVisible();
+  });
+
+  it("lets the Desk switch agents without asking, and only then hides how suggestions behave", () => {
+    grant({});
+    useDeskSettingsStore.getState().reset();
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Composer" }));
+
+    expect(screen.getByText("Auto switch agent for tasks")).toBeVisible();
+    expect(screen.getByText("When another agent fits better")).toBeVisible();
+    expect(useDeskSettingsStore.getState().settings.suggestAgent).toBe("switch");
+
+    fireEvent.click(screen.getByRole("radio", { name: "Only suggest" }));
+    expect(useDeskSettingsStore.getState().settings.suggestAgent).toBe("suggest");
+
+    const autoSwitch = screen.getByRole("radiogroup", { name: "Auto switch agent for tasks" });
+    fireEvent.click(within(autoSwitch).getByRole("radio", { name: "On" }));
+    expect(useDeskSettingsStore.getState().settings.autoSwitchAgent).toBe("on");
+    expect(screen.queryByText("When another agent fits better")).toBeNull();
+  });
+
+  it("says the agent started with keeps every question, unless auto switch moves it", () => {
+    grant({});
+    useDeskSettingsStore.getState().reset();
+    useDeskSettingsStore.getState().set("agent", "agdef_billing");
+    renderDialog(undefined, [{ id: "agdef_billing", name: "Billing" }]);
+    fireEvent.click(screen.getByRole("button", { name: "Composer" }));
+
+    expect(
+      screen.getByText(
+        "Questions go to this agent even when another has the tools; Desk still says which. You can switch per message.",
+      ),
+    ).toBeVisible();
+
+    act(() => useDeskSettingsStore.getState().set("autoSwitchAgent", "on"));
+    expect(
+      screen.getByText(
+        "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.",
+      ),
+    ).toBeVisible();
   });
 });

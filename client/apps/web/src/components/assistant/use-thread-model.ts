@@ -36,7 +36,7 @@ import { groupPlans } from "./plan-state";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { agentSuggestions } from "./suggestions";
 import { threadAsks } from "./ask-requests";
-import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
+import { askedMessageCount, composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { groupThread, turnPlacements, type ThreadEntry } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
 import { steeredIds } from "./turn-stream";
@@ -376,6 +376,7 @@ export function useThreadModel({
   // otherwise a reload with the question still in hand would ask it twice.
   const openingSent = useRef(false);
   const pendingQuestion = openingQuestion?.trim() ?? "";
+  const askedCount = askedMessageCount(messages);
   useEffect(() => {
     if (
       readOnly ||
@@ -384,7 +385,7 @@ export function useThreadModel({
         question: pendingQuestion,
         alreadySent: openingSent.current,
         historyLoading: history.isLoading,
-        messageCount: messages.length,
+        messageCount: askedCount,
       })
     ) {
       return;
@@ -393,8 +394,8 @@ export function useThreadModel({
     onOpeningQuestionSent?.();
     void send(pendingQuestion, undefined, providerId, openingPayload);
   }, [
+    askedCount,
     history.isLoading,
-    messages.length,
     onOpeningQuestionSent,
     openingHold,
     openingPayload,

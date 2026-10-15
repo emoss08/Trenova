@@ -1,4 +1,5 @@
-import type { AgentChoice, AgentRecommendation } from "@/lib/graphql/agent-definition";
+import type { AgentChoice, AgentMatch } from "@/lib/graphql/agent-definition";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -7,15 +8,44 @@ import { DeskHome, type DeskHomeProps } from "../desk-home";
 
 const state = vi.hoisted(() => ({
   agent: null as unknown,
-  recommend: (() => Promise.resolve(null)) as (
+  recommend: (() => Promise.resolve({ outcome: "NoMatch", agent: null, tools: [] })) as (
     text: string,
     currentAgentId: string,
   ) => Promise<unknown>,
   asked: [] as { text: string; currentAgentId: string }[],
+  contextKinds: [] as string[][],
+  canAddTools: true,
+  recorded: [] as {
+    suggestedAgentId: string;
+    currentAgentId: string | null;
+    surface: string;
+    outcome: string;
+  }[],
+  settled: [] as { id: string; outcome: string }[],
 }));
 
-vi.mock("@/hooks/use-permission", () => ({
-  usePermission: () => ({ allowed: true, isLoading: false }),
+vi.mock("@/hooks/use-permission", async () => {
+  const { Operation } = await import("@trenova/shared/types/permission");
+
+  return {
+    usePermission: (_resource: unknown, operation: unknown) => ({
+      allowed: operation === Operation.Update ? state.canAddTools : true,
+      isLoading: false,
+    }),
+  };
+});
+
+vi.mock("@/lib/graphql/agent-suggestion", () => ({
+  recordAgentSuggestion: (input: (typeof state.recorded)[number]) => {
+    state.recorded.push(input);
+
+    return Promise.resolve(`agsg_${state.recorded.length}`);
+  },
+  settleAgentSuggestion: (id: string, outcome: string) => {
+    state.settled.push({ id, outcome });
+
+    return Promise.resolve();
+  },
 }));
 
 vi.mock("@/lib/queries/briefing", () => ({
@@ -29,10 +59,11 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   assistant: {
     myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
-    agentRecommendation: (text: string, currentAgentId: string | null) => ({
-      queryKey: ["agent-recommendation", text, currentAgentId ?? ""],
+    agentMatch: (text: string, currentAgentId: string | null, contextKinds: readonly string[]) => ({
+      queryKey: ["agent-match", text, currentAgentId ?? "", contextKinds.join(",")],
       queryFn: ({ signal }: { signal: AbortSignal }) => {
         state.asked.push({ text, currentAgentId: currentAgentId ?? "" });
+        state.contextKinds.push([...contextKinds]);
         // Like the real request, the answer is dropped when the query is cancelled.
         return new Promise((resolve, reject) => {
           signal.addEventListener("abort", () => reject(signal.reason), { once: true });
@@ -97,9 +128,24 @@ const billing = agentNamed("agdef_billing", "Billing assistant");
 
 const QUESTION = "which invoices are past due?";
 
-function billingFits(): AgentRecommendation {
-  return { agent: billing, current: false, tools: ["list_invoices", "get_invoice"] };
+function billingFits(): AgentMatch {
+  return {
+    outcome: "BetterAgent",
+    agent: billing,
+    tools: [
+      { name: "list_invoices", summary: "List invoices by status or due date." },
+      { name: "get_invoice", summary: "" },
+    ],
+  };
 }
+
+const NO_MATCH: AgentMatch = { outcome: "NoMatch", agent: null, tools: [] };
+
+const NO_AGENT: AgentMatch = {
+  outcome: "NoAgent",
+  agent: null,
+  tools: [{ name: "list_invoices", summary: "List invoices by status or due date." }],
+};
 
 function renderHome(onStart: DeskHomeProps["onStart"]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -153,6 +199,11 @@ beforeEach(() => {
   state.agent = dispatch;
   state.recommend = () => Promise.resolve(billingFits());
   state.asked = [];
+  state.contextKinds = [];
+  state.canAddTools = true;
+  state.recorded = [];
+  state.settled = [];
+  useDeskSettingsStore.getState().reset();
 });
 
 describe("Desk home suggesting the agent with the tools for a question", () => {
@@ -238,8 +289,14 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     state.recommend = (text, currentAgentId) =>
       Promise.resolve(
         text === shipments
-          ? { agent: customerService, current: false, tools: ["list_shipments"] }
-          : { ...billingFits(), current: currentAgentId === billing.id },
+          ? ({
+              outcome: "BetterAgent",
+              agent: customerService,
+              tools: [{ name: "list_shipments", summary: "" }],
+            } as AgentMatch)
+          : currentAgentId === billing.id
+            ? { ...billingFits(), outcome: "CurrentAgent" }
+            : billingFits(),
       );
     const onStart = vi.fn();
     renderHome(onStart);
@@ -263,7 +320,11 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     state.recommend = (text) =>
       Promise.resolve(
         text === shipments
-          ? { agent: customerService, current: false, tools: ["list_shipments"] }
+          ? ({
+              outcome: "BetterAgent",
+              agent: customerService,
+              tools: [{ name: "list_shipments", summary: "" }],
+            } as AgentMatch)
           : billingFits(),
       );
     renderHome(vi.fn());
@@ -319,7 +380,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
         ? new Promise((settle) => {
             finish = settle;
           })
-        : Promise.resolve(currentAgentId === dispatch.id ? billingFits() : null);
+        : Promise.resolve(currentAgentId === dispatch.id ? billingFits() : NO_MATCH);
     renderHome(vi.fn());
 
     const box = await type(QUESTION);
@@ -359,7 +420,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
   });
 
   it("asks the agent already chosen when no agent fits better", async () => {
-    state.recommend = () => Promise.resolve(null);
+    state.recommend = () => Promise.resolve(NO_MATCH);
     const onStart = vi.fn();
     renderHome(onStart);
 
@@ -419,5 +480,200 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
     expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
     expect(state.asked).toEqual([]);
+  });
+
+  it("says why the agent fits: the tools that matched, none of which the agent chosen holds", async () => {
+    renderHome(vi.fn());
+
+    await type(QUESTION);
+    await findNote();
+    fireEvent.click(screen.getByRole("button", { name: "Why Billing assistant" }));
+
+    const why = await waitFor(() => {
+      const found = document.querySelector<HTMLElement>('[data-slot="agent-recommendation-why"]');
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    expect(why).toHaveTextContent("Why Billing assistant");
+    expect(why).toHaveTextContent("List invoices by status or due date.");
+    expect(why).toHaveTextContent("Dispatch holds none of these.");
+    expect(why.querySelectorAll("li")).toHaveLength(2);
+  });
+
+  it("tells someone who can add tools that none of their agents has them, and where to add them", async () => {
+    state.recommend = () => Promise.resolve(NO_AGENT);
+    renderHome(vi.fn());
+
+    await type(QUESTION);
+
+    const note = await waitFor(
+      () => {
+        const found = document.querySelector<HTMLElement>(
+          '[data-slot="agent-recommendation-none"]',
+        );
+        expect(found).not.toBeNull();
+        return found as HTMLElement;
+      },
+      { timeout: 3000 },
+    );
+    expect(note).toHaveTextContent("None of your agents has the tools for this.");
+    expect(screen.getByRole("link", { name: "Add tools" })).toHaveAttribute(
+      "href",
+      "/admin/agent-control?tab=agents",
+    );
+  });
+
+  it("tells anyone else that none of their agents has the tools and who can add them", async () => {
+    state.recommend = () => Promise.resolve(NO_AGENT);
+    state.canAddTools = false;
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+
+    const note = await waitFor(
+      () => {
+        const found = document.querySelector<HTMLElement>(
+          '[data-slot="agent-recommendation-none"]',
+        );
+        expect(found).not.toBeNull();
+        return found as HTMLElement;
+      },
+      { timeout: 3000 },
+    );
+    expect(note).toHaveTextContent(
+      "None of your agents has the tools for this. An administrator can add them.",
+    );
+    expect(screen.queryByRole("link", { name: "Add tools" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(document.querySelector('[data-slot="agent-recommendation-none"]')).toBeNull();
+    pressEnter(box);
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
+  });
+
+  it("only names the better agent when the person asked to be told, and sends to the one chosen", async () => {
+    useDeskSettingsStore.getState().set("suggestAgent", "suggest");
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await findNote();
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "PassedOver" }]));
+  });
+
+  it("moves the question to the agent with the tools without a note when auto switch is on", async () => {
+    useDeskSettingsStore.getState().set("autoSwitchAgent", "on");
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await waitFor(() => expect(state.asked).toHaveLength(1), { timeout: 2000 });
+    await new Promise((settle) => setTimeout(settle, 300));
+    expect(queryNote()).toBeNull();
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
+    expect(state.recorded).toEqual([
+      {
+        suggestedAgentId: billing.id,
+        currentAgentId: dispatch.id,
+        surface: "Home",
+        outcome: "AutoSwitched",
+      },
+    ]);
+  });
+
+  it("matches nothing when the person turned suggestions off", async () => {
+    useDeskSettingsStore.getState().set("suggestAgent", "off");
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await new Promise((settle) => setTimeout(settle, 1000));
+    expect(state.asked).toEqual([]);
+    expect(queryNote()).toBeNull();
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
+  });
+
+  it("keeps the agent the person starts with, unless auto switch moves the question", async () => {
+    useDeskSettingsStore.getState().set("agent", dispatch.id);
+    const onStart = vi.fn();
+    const { unmount } = renderHome(onStart);
+
+    let box = await type(QUESTION);
+    await findNote();
+    pressEnter(box);
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
+    unmount();
+
+    useDeskSettingsStore.getState().set("autoSwitchAgent", "on");
+    renderHome(onStart);
+    box = await type(QUESTION);
+    pressEnter(box);
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(2));
+    expect(onStart.mock.calls[1]?.[0]).toBe(billing.id);
+  });
+
+  it("records a suggestion once while it stays on screen, and what the person did with it", async () => {
+    renderHome(vi.fn());
+
+    const box = await type(QUESTION);
+    await findNote();
+    fireEvent.change(box, { target: { value: `${QUESTION} please` } });
+    await new Promise((settle) => setTimeout(settle, 900));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+
+    expect(state.recorded).toEqual([
+      {
+        suggestedAgentId: billing.id,
+        currentAgentId: dispatch.id,
+        surface: "Home",
+        outcome: "Shown",
+      },
+    ]);
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "Switched" }]));
+  });
+
+  it("records the agent kept with the cross", async () => {
+    renderHome(vi.fn());
+
+    await type(QUESTION);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
+    );
+
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "Kept" }]));
+  });
+
+  it("records a question sent to the suggested agent as sent through it", async () => {
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await findNote();
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "SentThrough" }]));
+  });
+
+  it("asks for a match about nothing in particular when no record is named", async () => {
+    renderHome(vi.fn());
+
+    await type(QUESTION);
+
+    await waitFor(() => expect(state.contextKinds).toEqual([[]]), { timeout: 2000 });
   });
 });

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentruneventexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentscorecardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsuggestionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aianalyticsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiauditexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aicontrolexec"
@@ -160,6 +161,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
@@ -1836,6 +1838,8 @@ type MutationResolver interface {
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
 	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
+	RecordMyAgentSuggestion(ctx context.Context, input gqlmodel.RecordMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
+	SettleMyAgentSuggestion(ctx context.Context, input gqlmodel.SettleMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
 	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
 	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
@@ -2586,6 +2590,7 @@ type QueryResolver interface {
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error)
+	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
@@ -3640,6 +3645,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		agentruneventexec.Shard,
 		agentsafetyexec.Shard,
 		agentscorecardexec.Shard,
+		agentsuggestionexec.Shard,
 		aianalyticsexec.Shard,
 		aiauditexec.Shard,
 		aicontrolexec.Shard,
@@ -7155,6 +7161,49 @@ type MyAgentRecommendation {
   tools: [String!]!
 }
 
+"How well the chat agents a person may use fit a question."
+enum AgentMatchOutcome {
+  "Another of the person's agents holds the tools the question needs and the agent it would go to does not."
+  BetterAgent
+  "The agent the question would go to holds the tools it needs, itself or through an agent it hands work to."
+  CurrentAgent
+  "Tools match the question, but none of the person's agents holds one they may use."
+  NoAgent
+  "No tool matches the question."
+  NoMatch
+}
+
+input MyAgentMatchInput {
+  "What the caller is about to ask. At most 4000 characters."
+  text: String!
+  "The agent the question would go to now, kept when it fits as well as any."
+  currentAgentId: ID
+  """
+  The kinds of record the question is about: the records it mentions and the
+  record or list page it is asked from. At most 11. Tools that work on them
+  rank higher.
+  """
+  contextKinds: [String!]
+}
+
+"A tool that matched a question."
+type AgentMatchTool {
+  name: String!
+  "The first sentence of the tool's description."
+  summary: String!
+}
+
+type MyAgentMatch {
+  outcome: AgentMatchOutcome!
+  "The agent, for BetterAgent and CurrentAgent; null otherwise."
+  agent: MyAgent
+  """
+  For BetterAgent and CurrentAgent, the agent's tools that matched; for
+  NoAgent, the tools that would answer it. Best first, at most three.
+  """
+  tools: [AgentMatchTool!]!
+}
+
 input SetAgentAccessInput {
   accessMode: AgentAccessMode!
   """
@@ -7298,6 +7347,13 @@ extend type Query {
   when no such agent holds a tool that matches it.
   """
   myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
+    @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
+  """
+  How well the chat agents the caller may use fit a question: another agent
+  that holds the tools it needs, the agent it would go to already, none of
+  them, or no tool at all.
+  """
+  myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   "Each role's coverage of an agent's tools, for choosing who may use it."
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
   """
@@ -8818,6 +8874,63 @@ extend type Query {
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
 }
 `, BuiltIn: false},
+	{Name: "../schema/agentsuggestion.graphqls", Input: `"Where the Desk named an agent for a question."
+enum AgentSuggestionSurface {
+  "The Desk's front page, before a conversation starts."
+  Home
+  "An open conversation, where the suggested agent takes it over by hand-off."
+  Conversation
+}
+
+"What became of an agent the Desk named for a question."
+enum AgentSuggestionOutcome {
+  "The suggestion is on screen and nothing has been done with it yet."
+  Shown
+  "The person chose the suggested agent."
+  Switched
+  "The question was sent and went to the suggested agent."
+  SentThrough
+  "The question went to the suggested agent without asking, as the person's settings say."
+  AutoSwitched
+  "The person kept the agent they had."
+  Kept
+  "The question went to another agent, or was put away, without the suggestion being taken."
+  PassedOver
+}
+
+"An agent the Desk named, or moved to, for a question the caller was asking."
+type AgentSuggestion {
+  id: ID!
+  suggestedAgentId: ID!
+  currentAgentId: ID
+  surface: AgentSuggestionSurface!
+  outcome: AgentSuggestionOutcome!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input RecordMyAgentSuggestionInput {
+  suggestedAgentId: ID!
+  "The agent the question would have gone to."
+  currentAgentId: ID
+  surface: AgentSuggestionSurface!
+  "Shown when the suggestion appears, or AutoSwitched when the Desk moved the question without asking."
+  outcome: AgentSuggestionOutcome!
+}
+
+input SettleMyAgentSuggestionInput {
+  id: ID!
+  "Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome."
+  outcome: AgentSuggestionOutcome!
+}
+
+extend type Mutation {
+  "Records an agent the Desk named, or moved to, for a question the caller is asking."
+  recordMyAgentSuggestion(input: RecordMyAgentSuggestionInput!): AgentSuggestion!
+  "Records what the caller did with an agent the Desk named."
+  settleMyAgentSuggestion(input: SettleMyAgentSuggestionInput!): AgentSuggestion!
+}
+`, BuiltIn: false},
 	{Name: "../schema/aianalytics.graphqls", Input: `"How far back the analytics look."
 enum AIAnalyticsWindow {
   "The last 24 hours, in hourly points."
@@ -9155,6 +9268,40 @@ type AgentAnalytics {
   providers: [AIAnalyticsProviderHealth!]!
   "The model that ran on two providers to compare, when one did."
   sameModel: AIAnalyticsSameModel
+  """
+  What people did with the agents the Desk named for their questions, by the
+  agent named. Absent when the view is narrowed to a task or nothing was named.
+  """
+  suggestions: AIAnalyticsSuggestions
+}
+
+"""
+What became of the agents the Desk named for questions. A suggestion still on
+screen for under half an hour is not counted yet; one left longer was passed over.
+"""
+type AIAnalyticsSuggestions {
+  suggested: Int!
+  switched: Int!
+  sentThrough: Int!
+  autoSwitched: Int!
+  kept: Int!
+  passedOver: Int!
+  "Switched, sent to it or moved to without asking, as a share of every suggestion."
+  takenRate: Float
+  "Most suggested first."
+  agents: [AIAnalyticsAgentSuggestions!]!
+}
+
+type AIAnalyticsAgentSuggestions {
+  agentDefinitionId: ID!
+  name: String!
+  suggested: Int!
+  switched: Int!
+  sentThrough: Int!
+  autoSwitched: Int!
+  kept: Int!
+  passedOver: Int!
+  takenRate: Float
 }
 
 "One model on two providers: the deployment that completed more, and the one that completed less."

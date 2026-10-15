@@ -32,9 +32,9 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   assistant: {
     myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
-    agentRecommendation: (text: string) => ({
-      queryKey: ["agent-recommendation", text],
-      queryFn: () => null,
+    agentMatch: (text: string) => ({
+      queryKey: ["agent-match", text],
+      queryFn: () => ({ outcome: "NoMatch", agent: null, tools: [] }),
     }),
   },
 }));

@@ -131,6 +131,17 @@ type RatingRow struct {
 	Helpful int
 }
 
+type SuggestionRequest struct {
+	Filter       Filter
+	PendingSince int64
+}
+
+type SuggestionRow struct {
+	AgentDefinitionID pulid.ID
+	AgentName         string
+	SuggestionCounts
+}
+
 type ProviderCallRow struct {
 	DeploymentKey
 	Error      aianalytics.ProviderError
@@ -228,6 +239,7 @@ type AnalyticsReader interface {
 	TaskCells(ctx context.Context, filter Filter) ([]TaskCellRow, error)
 	Decisions(ctx context.Context, filter Filter) ([]DecisionRow, error)
 	Ratings(ctx context.Context, filter Filter) ([]RatingRow, error)
+	Suggestions(ctx context.Context, req SuggestionRequest) ([]SuggestionRow, error)
 	ProviderCalls(ctx context.Context, filter Filter) ([]ProviderCallRow, error)
 	FirstTokenHistograms(ctx context.Context, filter Filter) ([]HistogramRow, error)
 	ProviderHours(ctx context.Context, filter Filter) ([]ProviderHourRow, error)

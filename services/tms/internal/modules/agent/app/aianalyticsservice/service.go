@@ -107,6 +107,8 @@ type readings struct {
 	taskCells           []aianalyticsports.TaskCellRow
 	decisions           []aianalyticsports.DecisionRow
 	ratings             []aianalyticsports.RatingRow
+	suggestions         []aianalyticsports.SuggestionRow
+	suggestionsRead     bool
 	providerCalls       []aianalyticsports.ProviderCallRow
 	histograms          []aianalyticsports.HistogramRow
 	providerHours       []aianalyticsports.ProviderHourRow
@@ -246,6 +248,17 @@ func (s *Service) readReferences(run submitRead, out *readings, in *readRequest)
 	run(func(ctx context.Context) error {
 		var err error
 		out.ratings, err = s.reader.Ratings(ctx, filter)
+		return err
+	})
+	if req.Task != "" {
+		return
+	}
+	run(func(ctx context.Context) error {
+		rows, err := s.reader.Suggestions(ctx, aianalyticsports.SuggestionRequest{
+			Filter:       filter,
+			PendingSince: aianalytics.SuggestionPendingSince(in.until),
+		})
+		out.suggestions, out.suggestionsRead = rows, err == nil
 		return err
 	})
 }

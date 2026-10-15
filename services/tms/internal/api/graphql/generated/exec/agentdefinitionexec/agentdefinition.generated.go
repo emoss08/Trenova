@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -38,12 +39,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentDraftNote", Implementors: []string{"AgentDraftNote"}},
 		{Name: "AgentInstructionFinding", Implementors: []string{"AgentInstructionFinding"}},
 		{Name: "AgentInstructionsTightened", Implementors: []string{"AgentInstructionsTightened"}},
+		{Name: "AgentMatchTool", Implementors: []string{"AgentMatchTool"}},
 		{Name: "AgentShadowReport", Implementors: []string{"AgentShadowReport"}},
 		{Name: "AgentStarter", Implementors: []string{"AgentStarter"}},
 		{Name: "AgentTestPrompt", Implementors: []string{"AgentTestPrompt"}},
 		{Name: "MyAgent", Implementors: []string{"MyAgent"}},
 		{Name: "MyAgentConnection", Implementors: []string{"MyAgentConnection"}},
 		{Name: "MyAgentEdge", Implementors: []string{"MyAgentEdge"}},
+		{Name: "MyAgentMatch", Implementors: []string{"MyAgentMatch"}},
 		{Name: "MyAgentRecommendation", Implementors: []string{"MyAgentRecommendation"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -1559,6 +1562,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "AgentMatchTool", Fields: []*gqlexec.Field{
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentMatchTool)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "summary",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentMatchTool)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "AgentShadowReport", Fields: []*gqlexec.Field{
 			{
 				Name:     "days",
@@ -1941,6 +1966,39 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "MyAgentMatch", Fields: []*gqlexec.Field{
+			{
+				Name:     "outcome",
+				NonNull:  true,
+				ChildErr: errNoChild17,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.MyAgentMatch)
+					return obj.Outcome, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentMatchOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentsuggestionᚐMatchOutcome),
+			},
+			{
+				Name:      "agent",
+				HasChild:  true,
+				ChildType: "MyAgent",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.MyAgentMatch)
+					return obj.Agent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
+			},
+			{
+				Name:      "tools",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentMatchTool",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.MyAgentMatch)
+					return obj.Tools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentMatchTool2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMatchToolᚄ),
+			},
+		}},
 		{Object: "MyAgentRecommendation", Fields: []*gqlexec.Field{
 			{
 				Name:      "agent",
@@ -2086,6 +2144,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOMyAgentRecommendation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendation),
 			},
 			{
+				Name:       "myAgentMatch",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "MyAgentMatch",
+				Args:       field_Query_myAgentMatch_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAgentMatch(ctx, fc.Args["input"].(gqlmodel.MyAgentMatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNMyAgentMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatch),
+			},
+			{
 				Name:       "suggestedAgentAudience",
 				NonNull:    true,
 				IsResolver: true,
@@ -2159,6 +2231,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentCapabilityToolInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentCapabilityToolInput)},
 		{Name: "AgentDelegateTopicInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentDelegateTopicInput)},
 		{Name: "AgentInstructionLintInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentInstructionLintInput)},
+		{Name: "MyAgentMatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentMatchInput)},
 		{Name: "MyAgentRecommendationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentRecommendationInput)},
 		{Name: "MyAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentsInput)},
 		{Name: "SetAgentAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetAgentAccessInput)},
@@ -2220,6 +2293,7 @@ type resolverQuery interface {
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error)
+	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
@@ -2245,6 +2319,7 @@ var (
 	errNoChild14 = errors.New("field of type AgentContextProvider does not have child fields")
 	errNoChild15 = errors.New("field of type AgentOutputMode does not have child fields")
 	errNoChild16 = errors.New("field of type Float does not have child fields")
+	errNoChild17 = errors.New("field of type AgentMatchOutcome does not have child fields")
 )
 
 func field_Mutation_keepAgentTestPrompt_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2506,6 +2581,19 @@ func field_Query_myAgentRecommendation_args(ctx context.Context, ec *gqlexec.Exe
 	return args, nil
 }
 
+func field_Query_myAgentMatch_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.MyAgentMatchInput, error) {
+			return unmarshalNMyAgentMatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func field_Query_suggestedAgentAudience_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentId",
@@ -2715,6 +2803,50 @@ func unmarshalInputAgentInstructionLintInput(ctx context.Context, ec *gqlexec.Ex
 				return it, err
 			}
 			it.DisabledToolNames = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputMyAgentMatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.MyAgentMatchInput, error) {
+	var it gqlmodel.MyAgentMatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text", "currentAgentId", "contextKinds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		case "currentAgentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentAgentId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CurrentAgentID = data
+		case "contextKinds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextKinds"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContextKinds = data
 		}
 	}
 	return it, nil
@@ -3024,6 +3156,11 @@ func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 
 func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNMyAgentMatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MyAgentMatchInput, error) {
+	res, err := unmarshalInputMyAgentMatchInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3365,6 +3502,30 @@ func marshalNAgentInstructionsTightened2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "AgentInstructionsTightened", v)
 }
 
+func marshalNAgentMatchOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentsuggestionᚐMatchOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentsuggestion.MatchOutcome) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAgentMatchTool2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMatchToolᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentMatchTool) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AgentMatchTool]{
+		Elem:        marshalNAgentMatchTool2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMatchTool,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentMatchTool2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMatchTool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AgentMatchTool) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentMatchTool", v)
+}
+
 func marshalNAgentOutputMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐOutputMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.OutputMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -3526,6 +3687,14 @@ func marshalNMyAgentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋ
 	return ec.MarshalType(ctx, sel, "MyAgentEdge", v)
 }
 
+func marshalNMyAgentMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.MyAgentMatch) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MyAgentMatch", v)
+}
+
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -3612,6 +3781,13 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MyAgent", v)
 }
 
 func marshalOMyAgentRecommendation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.MyAgentRecommendation) graphql.Marshaler {
