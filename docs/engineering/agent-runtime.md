@@ -1287,8 +1287,12 @@ turns is refused as repeated, and a run nobody watches or a delegate's task is t
 there is no one to ask.
 
 The note on a shown question tells the model to end its turn and write nothing
-more: the question is on screen, and the loop accepts an empty reply after one
-(`TestRun_AcceptsSilenceAfterAQuestion`). A refused ask is a failed result with
+more, because the question is on screen. The loop ends the turn itself once every
+call of the reply that asked has its result (`TestRun_EndsTheTurnOnceAQuestionIsShown`),
+with an empty reply, and does not ask the model again: a model that obeyed the note
+answered with nothing, the completion router counts an empty answer as a provider
+failure and tries every provider, and the turn failed as though no provider could
+be reached. A refused ask is a failed result with
 verdict `invalid` and does not count as asked, so an empty reply after it is asked
 for again, and the same question may be asked again properly; a refused ask also
 does not count towards the repeated-question check of later turns
@@ -2188,6 +2192,7 @@ before the change:
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
+| `agent-loop-end-on-ask` | a turn that showed a question asks the model once more, and the empty answer the note asks for fails over every provider and ends the turn as unreachable | nothing; the check itself is the only cost, and it is asked only of a reply that showed a question |
 | `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
 | `agent-loop-concurrent-reads` | each read is dispatched and settled before the next call of the reply starts | nothing; the check itself is the only cost, and it is asked only when a second read would join a batch |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |

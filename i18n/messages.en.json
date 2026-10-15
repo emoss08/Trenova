@@ -8306,6 +8306,15 @@
       "apps/web/components"
     ]
   },
+  "A record changed after it was written; the evidence chain no longer verifies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A record hidden by your data access": {
     "sites": 1,
     "scope": [
@@ -19490,13 +19499,14 @@
     ]
   },
   "Advisory": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/desk"
     ]
   },
   "Advisory only": {
@@ -22757,7 +22767,7 @@
     ]
   },
   "Amount": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -27132,7 +27142,7 @@
     ]
   },
   "Appointment": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -27940,7 +27950,7 @@
     ]
   },
   "Approve {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -27969,7 +27979,7 @@
     ]
   },
   "Approved": {
-    "sites": 53,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -28065,7 +28075,25 @@
       "routes/agent-control"
     ]
   },
+  "Approved automatically · it posts to {0} with the next billing run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Approved by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Approved by {0} {1} · it posts to {2} with the next billing run": {
     "sites": 1,
     "scope": [
       "ts"
@@ -28955,12 +28983,13 @@
     ]
   },
   "Arrival": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "apps/web/lib"
     ]
   },
   "Arrival and departure times": {
@@ -29084,7 +29113,7 @@
     ]
   },
   "Arrived": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -29145,6 +29174,15 @@
       "routes/carrier-tracking-public",
       "routes/desk",
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Arrived {0} late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Arrived: {0}": {
@@ -32130,6 +32168,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "At the dock": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "At the dock {0}, free time {1}, billable {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "At the lab": {
@@ -35123,6 +35179,15 @@
       "routes/inbox"
     ]
   },
+  "Back to the charge at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Back to the desk": {
     "sites": 3,
     "scope": [
@@ -35143,7 +35208,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -37323,6 +37388,15 @@
       "apps/web/hooks"
     ]
   },
+  "Bill the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Bill this charge to": {
     "sites": 1,
     "scope": [
@@ -37517,12 +37591,13 @@
     ]
   },
   "Billable": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -37572,6 +37647,15 @@
       "routes/detention-policy"
     ]
   },
+  "Billable so far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Billable units": {
     "sites": 1,
     "scope": [
@@ -37582,7 +37666,7 @@
     ]
   },
   "Billed": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -39512,7 +39596,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk",
+      "apps/web/lib",
       "routes/invoice"
     ]
   },
@@ -47414,7 +47498,7 @@
     ]
   },
   "Charge": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -47467,11 +47551,12 @@
     ]
   },
   "Charge approved": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -48404,6 +48489,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Check the customer's detention contacts and send it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Check the date (one price per week) and value": {
@@ -52623,6 +52717,15 @@
       "go/other"
     ]
   },
+  "Clock starts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Clock starts at": {
     "sites": 1,
     "scope": [
@@ -53991,6 +54094,15 @@
     "areas": [
       "apps/web/lib",
       "go/other"
+    ]
+  },
+  "Collectability": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Collectability is reduced without a notice receipt": {
@@ -66535,7 +66647,7 @@
     ]
   },
   "Customer": {
-    "sites": 92,
+    "sites": 93,
     "scope": [
       "go",
       "ts"
@@ -67572,6 +67684,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "DET": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "DET-STD": {
@@ -73035,7 +73156,6 @@
       "routes/billing-queue",
       "routes/customer",
       "routes/desk",
-      "routes/detention-desk",
       "routes/home",
       "routes/inbox",
       "routes/invoice",
@@ -73670,13 +73790,14 @@
     ]
   },
   "Departed": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "routes/desk",
       "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
@@ -73727,6 +73848,15 @@
       "routes/shipment"
     ]
   },
+  "Departed {0} · approve it to post the charge to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Departed: {0}": {
     "sites": 1,
     "scope": [
@@ -73766,12 +73896,13 @@
     ]
   },
   "Departure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "apps/web/lib"
     ]
   },
   "Departure cannot precede arrival": {
@@ -75224,7 +75355,7 @@
     ]
   },
   "Detention charge": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -75232,6 +75363,7 @@
     "areas": [
       "apps/web/config",
       "routes/billing-queue",
+      "routes/desk",
       "routes/shipment-control",
       "template/detention.notice.email"
     ]
@@ -75371,6 +75503,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Detention lifecycle": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Detention management": {
@@ -77397,11 +77538,12 @@
     ]
   },
   "Dispute": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk",
       "routes/invoice-register"
     ]
@@ -77543,7 +77685,7 @@
     ]
   },
   "Disputed": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -78577,13 +78719,14 @@
     ]
   },
   "Document": {
-    "sites": 39,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
@@ -83280,7 +83423,7 @@
     ]
   },
   "EDI": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -88899,6 +89042,15 @@
       "go/other"
     ]
   },
+  "Engine {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Enough to recognise the card on a statement. The full card number is never stored.": {
     "sites": 1,
     "scope": [
@@ -90210,11 +90362,12 @@
     ]
   },
   "Entered by hand": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -93499,6 +93652,15 @@
       "apps/web/components"
     ]
   },
+  "Every record still matches the hash it was written with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Every release is published on GitHub with its installer and a signed manifest. Install it with administrator rights, then sign in from the Trenova Capture icon in the notification area.": {
     "sites": 1,
     "scope": [
@@ -94367,6 +94529,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Evidence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Evidence chain": {
@@ -98729,7 +98900,6 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
-      "routes/detention-desk",
       "routes/edi",
       "routes/formula-template",
       "routes/invoice-adjustment-batch",
@@ -103136,7 +103306,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/lib"
     ]
   },
   "Final reminder": {
@@ -106637,13 +106807,14 @@
     ]
   },
   "Free time": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
+      "routes/desk",
       "routes/detention-policy"
     ]
   },
@@ -106654,6 +106825,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Free time ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Free time expires": {
@@ -109940,11 +110120,12 @@
     ]
   },
   "Geofence": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/location",
       "routes/shipment"
     ]
@@ -111740,7 +111921,7 @@
     ]
   },
   "Had reached": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -115355,6 +115536,15 @@
     ]
   },
   "How it was resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "How it was worked out": {
     "sites": 1,
     "scope": [
       "ts"
@@ -124977,6 +125167,42 @@
       "routes/intake"
     ]
   },
+  "It was due at {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "It was due at {0}. Send it before {1}, or this policy holds the charge back and it won't bill.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "It was due at {0}. Send it before {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "It was due at {0}. Without it this policy holds the charge back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It was last checked {0} and <d>no longer matches</d> at #{1}.": {
     "sites": 1,
     "scope": [
@@ -127360,7 +127586,7 @@
     ]
   },
   "Kept": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -135198,6 +135424,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Loading the detention charge…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the detention claim file": {
     "sites": 1,
     "scope": [
@@ -135828,7 +136063,7 @@
     ]
   },
   "Location": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -149784,6 +150019,15 @@
       "routes/desk"
     ]
   },
+  "Next charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next check": {
     "sites": 1,
     "scope": [
@@ -151462,6 +151706,15 @@
     ]
   },
   "No bill-to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No billable time after free time and rounding": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153298,11 +153551,12 @@
     ]
   },
   "No evidence has been recorded yet.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -154908,6 +155162,15 @@
       "routes/invoice"
     ]
   },
+  "No notice has gone out for this stop.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No notice of assignment has been sent to the customer": {
     "sites": 1,
     "scope": [
@@ -156092,6 +156355,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No recipients recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No record chosen": {
@@ -159116,12 +159388,13 @@
     ]
   },
   "Not billable": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Not built yet": {
@@ -159482,11 +159755,12 @@
     ]
   },
   "Not given": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/osha"
     ]
   },
@@ -162894,12 +163168,13 @@
     ]
   },
   "Notice": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "packages/shared/lib"
     ]
   },
@@ -162928,6 +163203,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Notice due {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Notice failed": {
@@ -163040,12 +163324,22 @@
     ]
   },
   "Notice overdue": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
+    ]
+  },
+  "Notice overdue by {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Notice released": {
@@ -163087,13 +163381,23 @@
       "routes/detention-desk"
     ]
   },
-  "Notice sent late": {
+  "Notice sent in window": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "routes/desk"
+    ]
+  },
+  "Notice sent late": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Notice to": {
@@ -163103,6 +163407,15 @@
     ],
     "areas": [
       "template/factoring.noa.pdf"
+    ]
+  },
+  "Notice to the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Notice window": {
@@ -163115,11 +163428,12 @@
     ]
   },
   "Notice {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -163920,13 +164234,14 @@
     ]
   },
   "Now": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/factoring-company",
       "routes/formula-template",
       "routes/shipment"
@@ -165887,6 +166202,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "On the clock {0} · it settles when the truck departs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "On the composer": {
@@ -170369,6 +170693,15 @@
       "routes/desk"
     ]
   },
+  "Open in detention desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open in new tab": {
     "sites": 4,
     "scope": [
@@ -170742,7 +171075,7 @@
     ]
   },
   "Open shipment": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -171471,8 +171804,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
-      "routes/detention-desk",
       "routes/escrow-account",
       "routes/invoice"
     ]
@@ -174869,6 +175202,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Over the {0} approval line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Over time": {
@@ -186614,6 +186956,15 @@
       "routes/invoice"
     ]
   },
+  "Posted to {0} as a detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Posted today": {
     "sites": 1,
     "scope": [
@@ -187806,6 +188157,15 @@
     ]
   },
   "Previous carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Previous charge": {
     "sites": 1,
     "scope": [
       "ts"
@@ -192810,7 +193170,6 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
-      "routes/detention-desk",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -197403,7 +197762,7 @@
     ]
   },
   "Reason": {
-    "sites": 67,
+    "sites": 68,
     "scope": [
       "go",
       "ts"
@@ -198155,6 +198514,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Recalculated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Recalculating…": {
@@ -199654,11 +200022,12 @@
     ]
   },
   "Record dispute": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -207263,7 +207632,7 @@
     ]
   },
   "Required": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -221743,6 +222112,15 @@
       "routes/desk"
     ]
   },
+  "See the waiver against the facility's other stops on the detention desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "See theirs": {
     "sites": 1,
     "scope": [
@@ -225117,12 +225495,13 @@
     ]
   },
   "Send notice": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -226152,7 +226531,6 @@
       "go/other",
       "packages/shared/components",
       "routes/desk",
-      "routes/detention-desk",
       "routes/edi",
       "routes/factoring-submission",
       "routes/inbox",
@@ -231853,11 +232231,12 @@
     ]
   },
   "Short": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox",
       "routes/random-testing"
     ]
@@ -235029,7 +235408,7 @@
     ]
   },
   "Someone": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -238056,7 +238435,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/lib"
     ]
   },
   "Started the matching checklist": {
@@ -238908,6 +239287,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Status change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Status changed": {
@@ -242578,12 +242966,13 @@
     ]
   },
   "System": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/agent-control",
       "routes/desk",
       "routes/invoice-adjustment-batch",
@@ -244137,13 +244526,14 @@
     ]
   },
   "Telematics": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "apps/web/lib",
       "go/other",
       "packages/shared/types",
       "routes/tractor"
@@ -249625,11 +250015,12 @@
     ]
   },
   "The clock": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-policy"
     ]
   },
@@ -250462,6 +250853,15 @@
       "go/other"
     ]
   },
+  "The customer disputed it {0} · it stays off the invoice until it is settled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The customer for this mapping no longer exists": {
     "sites": 1,
     "scope": [
@@ -251207,6 +251607,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "The detention charge will post to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The detention charge, unformatted. Combine with Currency, or use the money function.": {
@@ -255742,6 +256151,15 @@
       "routes/worker"
     ]
   },
+  "The notice could not be delivered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The notice is already released": {
     "sites": 1,
     "scope": [
@@ -256711,6 +257129,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The policy and every stop are on the detention desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The policy only governs stops arriving on or after this date.": {
@@ -258216,6 +258643,15 @@
       "routes/worker"
     ]
   },
+  "The required notice was not sent, so the policy held the charge back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The reserve could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -259281,6 +259717,15 @@
       "routes/worker"
     ]
   },
+  "The shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The shipment board options are not in a shape this table reads": {
     "sites": 1,
     "scope": [
@@ -259288,6 +259733,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The shipment could not be found.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The shipment could not be loaded because of a temporary problem. Please try again in a moment.": {
@@ -260042,6 +260496,15 @@
       "routes/inbox"
     ]
   },
+  "The stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The stop a delay is about, as city and state.": {
     "sites": 1,
     "scope": [
@@ -260076,6 +260539,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The stop's moments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The stop's times were not changed by this report.": {
@@ -264055,6 +264527,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "This detention charge could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This detention charge has been put up for credit too many times. Adjust the invoice in billing.": {
@@ -269928,7 +270409,7 @@
     ]
   },
   "To {0}": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -275247,6 +275728,15 @@
       "routes/inbox"
     ]
   },
+  "Turned into layover": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Turned {0}° clockwise, as it will be filed": {
     "sites": 1,
     "scope": [
@@ -277347,11 +277837,12 @@
     ]
   },
   "Unknown customer": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -277482,12 +277973,13 @@
     ]
   },
   "Unknown location": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Unknown metric: {0}": {
@@ -279073,7 +279565,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/lib"
     ]
   },
   "Update password": {
@@ -285429,7 +285921,7 @@
     ]
   },
   "Waiting on approval": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -285733,11 +286225,12 @@
     ]
   },
   "Waive": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk",
       "routes/shipment",
       "routes/worker"
@@ -285853,7 +286346,7 @@
     ]
   },
   "Waived": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -285864,6 +286357,33 @@
       "routes/desk",
       "routes/rate-agreement",
       "routes/worker"
+    ]
+  },
+  "Waived after it was approved · nothing was posted to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Waived before approval · nothing was posted to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Waived by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waived {0}": {
@@ -285894,7 +286414,7 @@
     ]
   },
   "Waiver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -286195,7 +286715,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/lib"
     ]
   },
   "Warnings": {
@@ -288992,6 +289512,15 @@
       "routes/training-course"
     ]
   },
+  "What the customer disputes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What the customer is contesting": {
     "sites": 1,
     "scope": [
@@ -289823,7 +290352,7 @@
     ]
   },
   "When": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -291031,7 +291560,7 @@
     ]
   },
   "Where it stands": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -291040,7 +291569,7 @@
     ]
   },
   "Where it stood": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -292598,6 +293127,15 @@
       "routes/benefits"
     ]
   },
+  "Who pays, who's paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Who ran the report or owns the schedule.": {
     "sites": 1,
     "scope": [
@@ -293199,6 +293737,15 @@
       "routes/desk"
     ]
   },
+  "Why it was waived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why it would not read": {
     "sites": 1,
     "scope": [
@@ -293623,6 +294170,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Will it hold up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Will miss · {0}": {
@@ -294542,6 +295098,15 @@
       "go/other"
     ]
   },
+  "Worker app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Worker assignment": {
     "sites": 1,
     "scope": [
@@ -294778,6 +295343,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Worker's detention pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Worker's email address.": {
@@ -299691,6 +300265,24 @@
       "routes/shipment"
     ]
   },
+  "appointment {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "appointment {0} – {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "approved {0}": {
     "sites": 1,
     "scope": [
@@ -300626,11 +301218,12 @@
     ]
   },
   "due {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -303174,6 +303767,15 @@
       "routes/detention-desk"
     ]
   },
+  "free time ends {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "free {0}": {
     "sites": 1,
     "scope": [
@@ -303407,6 +304009,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "in dispute since {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "in the books": {
@@ -304356,6 +304967,24 @@
       "routes/agent-control"
     ]
   },
+  "not billable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "not billable · notice not sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "not read": {
     "sites": 1,
     "scope": [
@@ -304472,6 +305101,42 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "of 100 · adequate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "of 100 · at risk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "of 100 · strong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "of 100 · weak": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "of every billed detention dollar survives driver pay": {
@@ -305693,6 +306358,15 @@
       "routes/worker"
     ]
   },
+  "so far · billing since {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "specificity {0}": {
     "sites": 1,
     "scope": [
@@ -306309,6 +306983,24 @@
       "routes/agent-control"
     ]
   },
+  "to bill · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "to bill · {0} at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "to confirm": {
     "sites": 2,
     "scope": [
@@ -306902,6 +307594,15 @@
     ]
   },
   "waiting on your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "waived · {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -309894,6 +310595,24 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "{0, plural, one {# record} other {# records}} · chain broken": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# record} other {# records}} · chain verified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# recovery code left.} other {# recovery codes left.}}": {
@@ -313723,6 +314442,24 @@
       "routes/org-structure"
     ]
   },
+  "{0} asks for notice before free time runs out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} asks for notice {1} before free time runs out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} asks you to post updates for load {1} through this link.": {
     "sites": 2,
     "scope": [
@@ -313811,6 +314548,24 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "{0} at the dock": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} at the dock and counting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} at {1}": {
@@ -319945,11 +320700,12 @@
     ]
   },
   "{0} payable": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-desk"
     ]
   },
@@ -322015,6 +322771,15 @@
       "routes/shipment"
     ]
   },
+  "{0} v{1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} waiting": {
     "sites": 6,
     "scope": [
@@ -323949,6 +324714,15 @@
       "routes/scheduling"
     ]
   },
+  "{0}/day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}/gal ÷ {1} MPG": {
     "sites": 1,
     "scope": [
@@ -323956,6 +324730,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0}/hr": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}/mi": {
@@ -324219,6 +325002,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}; it is advisory.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}; without it the charge is held for review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}; without it the charge won't bill.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}; {1} could not be changed": {

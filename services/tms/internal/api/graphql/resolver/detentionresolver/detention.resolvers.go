@@ -8,11 +8,15 @@ package detentionresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -450,4 +454,21 @@ func (r *QueryResolver) DetentionPolicyPreview(ctx context.Context, policy gqlmo
 	}
 
 	return detentionPreviewResultToModel(result), nil
+}
+
+func (r *DetentionOccurrenceResolver) ApprovedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error) {
+	return loadSignoff(ctx, obj.ApprovedByID)
+}
+
+func (r *DetentionOccurrenceResolver) WaivedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error) {
+	return loadSignoff(ctx, obj.WaivedByID)
+}
+
+func (r *DetentionOccurrenceResolver) Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error) {
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if obj.LocationID == "" || !ok || !loaders.Available(ctx) ||
+		!r.HasPermission(ctx, authCtx, permission.ResourceLocation, permission.OpRead) {
+		return nil, nil
+	}
+	return base.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
 }

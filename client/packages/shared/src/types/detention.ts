@@ -258,6 +258,7 @@ export const policySnapshotSchema = z.object({
     .transform((value) => value ?? ""),
   policyCode: z.string(),
   policyName: z.string(),
+  policyVersion: z.number().int().nullish(),
   specificityScore: z.number().int(),
   priority: z.number().int(),
   clockStartBasis: clockStartBasisSchema,
@@ -274,7 +275,10 @@ export const policySnapshotSchema = z.object({
   flatRateUnit: tierRateUnitSchema,
   tiers: z.array(tierSnapshotSchema).nullish(),
   notificationRequirement: notificationRequirementSchema,
+  notificationLeadMinutes: z.number().int().nullish(),
+  notificationDeadlineMinutes: z.number().int().nullish(),
   unnotifiedBehavior: unnotifiedBehaviorSchema,
+  requireApprovalOverAmount: z.coerce.number().nullish(),
   currency: z.string(),
   capturedAt: z.number().int(),
 });

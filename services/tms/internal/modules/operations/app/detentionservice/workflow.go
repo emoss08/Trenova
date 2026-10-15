@@ -32,6 +32,7 @@ type OccurrenceDetail struct {
 	Notices        []*detention.DetentionNotice       `json:"notices"`
 	Collectability detention.CollectabilityAssessment `json:"collectability"`
 	Receipt        string                             `json:"receipt"`
+	CurrentlyBillable *ClockPrice `json:"currentlyBillable,omitempty"`
 }
 
 func (s *Service) GetOccurrenceDetail(
@@ -58,6 +59,12 @@ func (s *Service) GetOccurrenceDetail(
 	if occurrence.CalculationTrace != nil {
 		detail.Receipt = occurrence.CalculationTrace.Receipt()
 	}
+
+	current, err := s.PriceOpenClock(ctx, req.TenantInfo, occurrence)
+	if err != nil {
+		return nil, err
+	}
+	detail.CurrentlyBillable = current
 
 	return detail, nil
 }

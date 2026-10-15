@@ -23,7 +23,9 @@ import { deskEdiInboundFiles } from "../fixtures/desk-edi-files.mjs";
 import { DESK_EDI_FILE_TENDERS, deskEdiTransfers } from "../fixtures/desk-edi-transfers.mjs";
 import { deskInvoices } from "../fixtures/desk-invoices.mjs";
 import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-settlements.mjs";
+import { deskDetentions } from "../fixtures/desk-detention.mjs";
 import { hash } from "../state.mjs";
+import { TriageError } from "./triage-model.mjs";
 import { userSelectOptions } from "./settings.mjs";
 
 const HOLD = { __hold: true };
@@ -189,7 +191,20 @@ function settlementWithShares(state, settlementId, net) {
   };
 }
 
+/**
+ * The board shipment a detention charge's stop belongs to, picked the same way
+ * on every read so the card's shipment and its pro number agree.
+ */
+function detentionShipment(state, occurrenceId) {
+  const shipments = state.shipments;
+  return shipments.length ? shipments[hash(occurrenceId) % shipments.length] : null;
+}
+
 function scopedShipments(state, input) {
+  const shipmentId = input.fieldFilters?.find(
+    (filter) => filter.field === "id" && filter.operator === "eq",
+  )?.value;
+  if (shipmentId) return state.shipments.filter((shipment) => shipment.id === shipmentId);
   if (input.invoiceIds?.length) return invoiceShipments(state, input.invoiceIds[0]);
   if (input.driverSettlementIds?.length) {
     return settlementShipments(state, input.driverSettlementIds[0]);
@@ -459,6 +474,28 @@ export const DESK_CARD_HANDLERS = {
       carrierSettlement: empty(state)
         ? { ...record, costSummary: [], loadShares: [], moveInvoices: [] }
         : record,
+    };
+  },
+  DeskDetentionCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = deskDetentions(state.anchor)[variables.id];
+    if (!fixture) {
+      throw new TriageError("Detention occurrence not found", {
+        code: "NOT_FOUND",
+        type: "not-found",
+      });
+    }
+    const shipment = detentionShipment(state, variables.id);
+    const detail = {
+      ...fixture,
+      occurrence: {
+        ...fixture.occurrence,
+        shipmentId: shipment?.id ?? "",
+        shipmentProNumber: shipment?.proNumber ?? "",
+      },
+    };
+    return {
+      detentionOccurrence: empty(state) ? { ...detail, evidence: [], notices: [] } : detail,
     };
   },
   AccountingSyncObjectStates: (state, variables) => {
