@@ -1,5 +1,5 @@
 {
-  "version": "sha256:44198f29e374ef9f630297eccb21c3f8058acd0148817ff09a841ce6ce1b841c",
+  "version": "sha256:dc0e1b096017cf8e49de14d4caf65b502fa328e51bac0cc1a7b01dab6fcfd386",
   "modules": [
     {
       "id": "home",
@@ -18009,6 +18009,15 @@
         "panelEntityId": "{id}"
       },
       "deskCard": true
+    },
+    {
+      "entity": "edi_partner",
+      "label": "EDI partner",
+      "path": "/edi/partners",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
     },
     {
       "entity": "edi_transfer",

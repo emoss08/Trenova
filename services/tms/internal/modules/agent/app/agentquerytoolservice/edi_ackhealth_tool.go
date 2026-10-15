@@ -66,8 +66,10 @@ func (t *getEDIAckHealthTool) SearchTerms() []string {
 
 func (t *getEDIAckHealthTool) Description() string {
 	return fmt.Sprintf(
-		"How partners are acknowledging what was sent: counts by ack status, overdue "+
-			"messages by partner oldest first, and recent dead letters. A message is overdue "+
+		"How partners are acknowledging what was sent: counts by ack status, overall and "+
+			"for each partner, overdue messages by partner oldest first, and recent dead "+
+			"letters. One call answers for one partner too: read its row in ackCountsByPartner "+
+			"rather than listing its messages. A message is overdue "+
 			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
 			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
 			"list_edi_messages lists messages by filter. Each message has its id for "+
@@ -108,6 +110,13 @@ type ackCountRow struct {
 	Count  int    `json:"count"`
 }
 
+type partnerAckCountsRow struct {
+	PartnerID   string        `json:"partnerId"`
+	Partner     string        `json:"partner"`
+	PartnerCode string        `json:"partnerCode,omitempty"`
+	AckCounts   []ackCountRow `json:"ackCounts"`
+}
+
 type overdueAckRow struct {
 	ID             string       `json:"id"`
 	TransactionSet string       `json:"transactionSet"`
@@ -132,18 +141,19 @@ type overduePartnerRow struct {
 }
 
 type ediAckHealthView struct {
-	Title               string              `json:"title"`
-	PartnerID           string              `json:"partnerId,omitempty"`
-	CountsSince         optionalDate        `json:"countsSince"`
-	OverdueAfterSeconds int64               `json:"overdueAfterSeconds"`
-	OverdueAfter        string              `json:"overdueAfter"`
-	AckCounts           []ackCountRow       `json:"ackCounts"`
-	OverdueCount        int                 `json:"overdueCount"`
-	OverdueByPartner    []overduePartnerRow `json:"overdueByPartner"`
-	OverdueNotListed    int                 `json:"overdueNotListed,omitempty"`
-	RecentDeadLettered  []ediMessageListRow `json:"recentDeadLettered"`
-	FollowUp            string              `json:"followUp"`
-	Note                string              `json:"note,omitempty"`
+	Title               string                `json:"title"`
+	PartnerID           string                `json:"partnerId,omitempty"`
+	CountsSince         optionalDate          `json:"countsSince"`
+	OverdueAfterSeconds int64                 `json:"overdueAfterSeconds"`
+	OverdueAfter        string                `json:"overdueAfter"`
+	AckCounts           []ackCountRow         `json:"ackCounts"`
+	AckCountsByPartner  []partnerAckCountsRow `json:"ackCountsByPartner"`
+	OverdueCount        int                   `json:"overdueCount"`
+	OverdueByPartner    []overduePartnerRow   `json:"overdueByPartner"`
+	OverdueNotListed    int                   `json:"overdueNotListed,omitempty"`
+	RecentDeadLettered  []ediMessageListRow   `json:"recentDeadLettered"`
+	FollowUp            string                `json:"followUp"`
+	Note                string                `json:"note,omitempty"`
 
 	outside []agent.RecordRef
 }
@@ -200,6 +210,7 @@ func (t *getEDIAckHealthTool) Query(
 		OverdueAfterSeconds: health.OverdueAckAge,
 		OverdueAfter:        timeutils.FormatLongDurationMs(health.OverdueAckAge * 1000),
 		AckCounts:           ackCounts(health.AckStatusCounts),
+		AckCountsByPartner:  partnerAckCounts(health.AckCountsByPartner),
 		OverdueCount:        health.OverdueAckCount,
 		OverdueByPartner:    make([]overduePartnerRow, 0, len(health.OverdueByPartner)),
 		OverdueNotListed:    health.OverdueOmitted,
@@ -267,6 +278,32 @@ func ackCounts(counts map[edi.MessageAcknowledgmentStatus]int) []ackCountRow {
 	rows := make([]ackCountRow, 0, len(ackCountOrder))
 	for _, status := range ackCountOrder {
 		rows = append(rows, ackCountRow{Status: string(status), Count: counts[status]})
+	}
+
+	return rows
+}
+
+func partnerAckCounts(groups []*ediservice.EDIPartnerAckCounts) []partnerAckCountsRow {
+	rows := make([]partnerAckCountsRow, 0, len(groups))
+	for _, group := range groups {
+		if group == nil {
+			continue
+		}
+		row := partnerAckCountsRow{
+			PartnerID:   group.PartnerID.String(),
+			Partner:     group.PartnerName,
+			PartnerCode: group.PartnerCode,
+			AckCounts:   make([]ackCountRow, 0, len(group.Counts)),
+		}
+		for _, status := range ackCountOrder {
+			if count := group.Counts[status]; count > 0 {
+				row.AckCounts = append(
+					row.AckCounts,
+					ackCountRow{Status: string(status), Count: count},
+				)
+			}
+		}
+		rows = append(rows, row)
 	}
 
 	return rows

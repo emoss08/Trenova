@@ -154,3 +154,45 @@ func TestDraftEDIConnection_CapsEveryLaterWriteInTheTurn(t *testing.T) {
 	assert.Equal(t, agent.TaintSourceAttachment, policy.Source)
 	assert.True(t, policy.CapsLaterWrites)
 }
+
+func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
+	t.Parallel()
+
+	planner := &fakeDraftPlanner{draft: &ediports.ConnectionDraft{
+		FileName: "acme-guide.pdf",
+		Ready:    true,
+		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
+		DocumentProfiles: []ediports.DraftDocumentProfile{{
+			TransactionSet: edi.TransactionSet214,
+			Direction:      edi.DocumentDirectionOutbound,
+			Template: ediports.DraftTemplateChoice{Unmet: []ediports.DraftRequirementCheck{{
+				SegmentID: "MS1", ElementPosition: 1, Usage: ediports.RequirementUsageMandatory,
+				Source: ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 5},
+			}}},
+		}},
+		Gaps: []ediports.DraftGap{{
+			Kind:    ediports.GapKindAmbiguous,
+			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
+			Source:  ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 6},
+		}},
+		Transport: &ediports.DraftTransport{Credentials: []ediports.CredentialRequirement{
+			{Label: "AS2 private key", Required: true, Missing: true},
+			{Label: "Partner signing certificate", Missing: true},
+		}},
+	}}
+	tool := newDraftEDIConnectionTool(planner, &fakeGuideReader{})
+	params := chatParams(guideArgs(pulid.MustNew("doc_")), permission.SensitivityInternal)
+	params.ThreadID = pulid.MustNew("ath_")
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+	note := result.(*connectionDraftView).Note
+
+	assert.Contains(t, note, "In your reply, tell the person:")
+	assert.Contains(t, note, "the 214 outbound template does not meet MS1-01 (page 5)")
+	assert.Contains(t, note,
+		"the guide leaves this open: Accessorial charge codes are in Appendix B, which is not "+
+			"in this document (page 6)")
+	assert.Contains(t, note, "the credentials to enter before it is turned on: AS2 private key")
+	assert.NotContains(t, note, "Partner signing certificate", "only what the connection needs")
+}

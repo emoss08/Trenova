@@ -941,6 +941,74 @@ func (_c *MockEDIDocumentRepository_GetAckStatusCounts_Call) RunAndReturn(run fu
 	return _c
 }
 
+// GetAckStatusCountsByPartner provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetAckStatusCountsByPartner(ctx context.Context, req ediports.GetEDIMessageStatusCountsRequest) ([]*ediports.EDIPartnerAckStatusCount, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAckStatusCountsByPartner")
+	}
+
+	var r0 []*ediports.EDIPartnerAckStatusCount
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDIMessageStatusCountsRequest) ([]*ediports.EDIPartnerAckStatusCount, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDIMessageStatusCountsRequest) []*ediports.EDIPartnerAckStatusCount); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ediports.EDIPartnerAckStatusCount)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.GetEDIMessageStatusCountsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAckStatusCountsByPartner'
+type MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call struct {
+	*mock.Call
+}
+
+// GetAckStatusCountsByPartner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIMessageStatusCountsRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetAckStatusCountsByPartner(ctx any, req any) *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call {
+	return &MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call{Call: _e.mock.On("GetAckStatusCountsByPartner", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call) Run(run func(ctx context.Context, req ediports.GetEDIMessageStatusCountsRequest)) *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ediports.GetEDIMessageStatusCountsRequest
+		if args[1] != nil {
+			arg1 = args[1].(ediports.GetEDIMessageStatusCountsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call) Return(eDIPartnerAckStatusCounts []*ediports.EDIPartnerAckStatusCount, err error) *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call {
+	_c.Call.Return(eDIPartnerAckStatusCounts, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetEDIMessageStatusCountsRequest) ([]*ediports.EDIPartnerAckStatusCount, error)) *MockEDIDocumentRepository_GetAckStatusCountsByPartner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetActivePartnerDocumentProfile provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) GetActivePartnerDocumentProfile(ctx context.Context, req ediports.GetActiveEDIPartnerDocumentProfileRequest) (*edi.EDIPartnerDocumentProfile, error) {
 	ret := _mock.Called(ctx, req)

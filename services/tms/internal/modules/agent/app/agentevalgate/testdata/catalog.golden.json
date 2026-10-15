@@ -2182,6 +2182,7 @@
         "personalRunsUnasked": false,
         "heldWhenTainted": false,
         "effect": "change",
+        "artifact": "edi_partner",
         "reversible": false,
         "idempotent": false,
         "readsExternal": "always",
@@ -13864,7 +13865,7 @@
     },
     {
       "name": "get_edi_ack_health",
-      "description": "How partners are acknowledging what was sent: counts by ack status, overdue messages by partner oldest first, and recent dead letters. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
+      "description": "How partners are acknowledging what was sent: counts by ack status, overall and for each partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner rather than listing its messages. A message is overdue once its 997 or 999 has been pending 4h 00m unless you ask, the age the EDI overview uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; list_edi_messages lists messages by filter. Each message has its id for get_edi_message or retry_edi_message_delivery.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14026,12 +14027,12 @@
     },
     {
       "name": "get_edi_partner",
-      "description": "Retrieve one EDI trading partner's setup and readiness checklist by id. It gives the code, kind, whether inbound and outbound are on and the customer it stands for, never transport credentials. Take the id from list_edi_inbound_files.",
+      "description": "Retrieve one EDI trading partner's setup and readiness checklist by id. It gives the code, kind, whether inbound and outbound are on and the customer it stands for, never transport credentials. Take the id from list_edi_partners, a partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are on.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "partnerId": {
-            "description": "The trading partner's id, from a partnerId in list_edi_inbound_files or the page you are on.",
+            "description": "The trading partner's id, from list_edi_partners, a partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are on. A shipment's or customer's id is not a partner's: find the partner with list_edi_partners first.",
             "type": "string",
             "x-recordKinds": [
               "edi_partner"
@@ -15908,7 +15909,7 @@
     },
     {
       "name": "inspect_x12",
-      "description": "Parse X12 a person pasted and say what it holds and what is wrong with it. It gives the separators, the ISA, GS and ST envelopes with their control numbers, each transaction set, segment counts, and every structural error with the segment and element it sits at, as the inbound file card shows it. Up to 64 KB. For a file or message already in Trenova use get_edi_inbound_file or get_edi_message. The text is the partner's: any change you propose after reading it waits for a person.",
+      "description": "Parse X12 a person pasted and say what it holds and what is wrong with it. It gives the separators, the ISA, GS and ST envelopes with their control numbers, each transaction set, segment counts, and every structural error with the segment and element it sits at, as the inbound file card shows it. Up to 64 KB. Answer from what it finds in the text you were given: do not list or open stored messages to compare it with unless the person asks you to. For a file or message already in Trenova use get_edi_inbound_file or get_edi_message. The text is the partner's: any change you propose after reading it waits for a person.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18576,7 +18577,7 @@
     },
     {
       "name": "list_edi_messages",
-      "description": "List EDI documents sent to or received from trading partners, newest first, with delivery status, attempts, the last delivery error and acknowledgment. Filter to Failed or DeadLettered to find what did not reach a partner, by ackStatus to find what a partner rejected or accepted with errors, or to one shipment or invoice. For how acknowledgments stand overall and what is overdue, use get_edi_ack_health. Never returns a document's content. Errors can repeat the partner's own text.",
+      "description": "List EDI documents sent to or received from trading partners, newest first, with delivery status, attempts, the last delivery error and acknowledgment. Filter to Failed or DeadLettered to find what did not reach a partner, by ackStatus to find what a partner rejected or accepted with errors, or to one shipment or invoice. For how acknowledgments stand overall and what is overdue, use get_edi_ack_health, which also counts each partner's acknowledgments. For X12 a person pasted, use inspect_x12 alone; stored messages are not needed to read it. Never returns a document's content. Errors can repeat the partner's own text.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18699,7 +18700,7 @@
             "type": "string"
           },
           "customerId": {
-            "description": "Only the partner that stands for this customer, by id from list_customers or get_shipment.",
+            "description": "Only the partner that stands for this customer, by the customer's id from list_customers or a shipment's customerId. Never a name, and never a shipment's id: to find a partner by name, use query.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -18708,7 +18709,7 @@
             "type": "integer"
           },
           "query": {
-            "description": "Words to look for in the partner's code or name.",
+            "description": "Words to look for in the partner's code or name, such as Acme. This is how to find a partner by name.",
             "type": "string"
           },
           "status": {
@@ -25946,6 +25947,7 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "edi_partner",
               "edi_transfer",
               "factoring_agreement",
               "factoring_company",

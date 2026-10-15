@@ -112,3 +112,69 @@ func TestApplyConnectionDraft_ProposesItsArgumentsWithSecretsRedacted(t *testing
 	assert.Equal(t, "acme", input.Draft.Values[0].Value)
 	assert.Equal(t, draftDigest, input.Digest)
 }
+
+func TestApplyConnectionDraft_ReportsWhatItSavedAndWhatIsLeftToEnter(t *testing.T) {
+	t.Parallel()
+
+	plan := readyPlan()
+	partnerID := pulid.MustNew("edip_")
+	write := func(record, label string) ediports.DraftWrite {
+		return ediports.DraftWrite{Record: record, ID: pulid.MustNew("edidp_"), Action: "Created", Label: label}
+	}
+	drafts := &fakeConnectionDrafts{plan: plan, guard: &agenttoolstest.WriteGuard{}, result: &ediports.AppliedConnectionDraft{
+		PartnerID: partnerID,
+		Created:   true,
+		Writes: []ediports.DraftWrite{
+			write("Partner", "Acme Retail Group"),
+			write("Communication profile", "Acme Retail Group AS2"),
+			write("Document profile", "Acme 204 inbound"),
+			write("Document profile", "Acme 990 outbound"),
+			write("Document profile", "Acme 214 outbound"),
+			write("Document profile", "Acme 210 outbound"),
+			write("Control number", "ISA from 1000"),
+		},
+		Draft: plan.Draft,
+	}}
+	tool := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{})
+	reporter, reports := tool.(agentports.ToolResultReporter)
+	require.True(t, reports, "the agent is told what the approval saved")
+
+	result, err := reporter.ExecuteWithResult(t.Context(),
+		onThread(agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))), pulid.MustNew("ath_")))
+	require.NoError(t, err)
+
+	assert.Equal(t, "created", result.Action)
+	assert.Equal(t, "EDI connection", result.Kind)
+	assert.Equal(t, "Acme Retail Group", result.Name)
+	assert.Equal(t, map[string]string{"ediPartnerId": partnerID.String()}, result.IDs)
+	assert.Equal(t,
+		&agent.RecordRef{EntityType: "edi_partner", ID: partnerID.String()}, result.Record)
+	assert.Equal(t,
+		"Saved inactive: 1 partner, 1 communication profile, 4 document profiles, 1 control "+
+			"number. Before turning it on, enter: AS2 private key for your signing certificate.",
+		result.State)
+}
+
+func TestApplyConnectionDraft_ReportsThatAnExistingPartnerKeepsItsStatus(t *testing.T) {
+	t.Parallel()
+
+	plan := readyPlan()
+	plan.Draft.Transport.Credentials = nil
+	drafts := &fakeConnectionDrafts{plan: plan, guard: &agenttoolstest.WriteGuard{}, result: &ediports.AppliedConnectionDraft{
+		PartnerID: pulid.MustNew("edip_"),
+		Writes: []ediports.DraftWrite{
+			{Record: "Partner", ID: pulid.MustNew("edip_"), Action: "Updated", Label: "Acme Retail Group"},
+		},
+		Draft: plan.Draft,
+	}}
+	reporter := NewApplyConnectionDraftTool(drafts, &fakeSpecReader{}).(agentports.ToolResultReporter)
+
+	result, err := reporter.ExecuteWithResult(t.Context(),
+		onThread(agenttoolstest.ApprovedParams(draftArgs(pulid.MustNew("doc_"))), pulid.MustNew("ath_")))
+	require.NoError(t, err)
+
+	assert.Equal(t, "updated", result.Action)
+	assert.Equal(t,
+		"Saved: 1 partner. Anything new is inactive and what existed keeps its status.",
+		result.State)
+}

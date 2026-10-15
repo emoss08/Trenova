@@ -171,14 +171,18 @@ func writeChange[T any](
 	return toolpreview.Changed(record, before, after, toolpreview.Only(fields...))
 }
 
-func draftSummary(draft *ediports.ConnectionDraft) string {
-	name := draft.FileName
+func draftPartnerName(draft *ediports.ConnectionDraft) string {
 	for index := range draft.Partner.Fields {
 		if draft.Partner.Fields[index].Field == "partner.name" &&
 			draft.Partner.Fields[index].Value != "" {
-			name = draft.Partner.Fields[index].Value
+			return draft.Partner.Fields[index].Value
 		}
 	}
+	return draft.FileName
+}
+
+func draftSummary(draft *ediports.ConnectionDraft) string {
+	name := draftPartnerName(draft)
 	sets := make([]string, 0, len(draft.Connection.Sets))
 	for _, set := range draft.Connection.Sets {
 		sets = append(
@@ -206,16 +210,8 @@ func draftSummary(draft *ediports.ConnectionDraft) string {
 
 func outstanding(draft *ediports.ConnectionDraft) string {
 	notes := make([]string, 0, 3)
-	if transport := draft.Transport; transport != nil {
-		missing := make([]string, 0, len(transport.Credentials))
-		for _, credential := range transport.Credentials {
-			if credential.Missing && credential.Required {
-				missing = append(missing, credential.Label)
-			}
-		}
-		if len(missing) > 0 {
-			notes = append(notes, "Before turning it on, enter: "+strings.Join(missing, ", ")+".")
-		}
+	if missing := draft.CredentialsToEnter(); len(missing) > 0 {
+		notes = append(notes, "Before turning it on, enter: "+strings.Join(missing, ", ")+".")
 	}
 	unmet := 0
 	for index := range draft.DocumentProfiles {

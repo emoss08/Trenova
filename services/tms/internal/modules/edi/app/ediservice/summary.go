@@ -152,11 +152,19 @@ type EDIOverduePartner struct {
 	Messages          []*edi.EDIMessage
 }
 
+type EDIPartnerAckCounts struct {
+	PartnerID   pulid.ID
+	PartnerName string
+	PartnerCode string
+	Counts      map[edi.MessageAcknowledgmentStatus]int
+}
+
 type EDIAckHealth struct {
 	Since              int64
 	OverdueAckAge      int64
 	PendingSince       int64
 	AckStatusCounts    map[edi.MessageAcknowledgmentStatus]int
+	AckCountsByPartner []*EDIPartnerAckCounts
 	OverdueAckCount    int
 	OverdueByPartner   []*EDIOverduePartner
 	OverdueOmitted     int
@@ -185,15 +193,22 @@ func (s *Service) GetEDIAckHealth(
 		feedLimit = defaultSummaryFeedLimit
 	}
 
-	counts, err := s.messageRepo.GetAckStatusCounts(ctx, ediports.GetEDIMessageStatusCountsRequest{
+	countsReq := ediports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      health.Since,
 		PartnerID:  req.PartnerID,
-	})
+	}
+	counts, err := s.messageRepo.GetAckStatusCounts(ctx, countsReq)
 	if err != nil {
 		return nil, err
 	}
 	health.AckStatusCounts = counts
+
+	byPartner, err := s.messageRepo.GetAckStatusCountsByPartner(ctx, countsReq)
+	if err != nil {
+		return nil, err
+	}
+	health.AckCountsByPartner = groupAckCounts(byPartner)
 
 	health.OverdueAckCount, err = s.messageRepo.GetOverdueAckCount(
 		ctx,
@@ -231,6 +246,26 @@ func (s *Service) GetEDIAckHealth(
 	}
 
 	return health, nil
+}
+
+func groupAckCounts(rows []*ediports.EDIPartnerAckStatusCount) []*EDIPartnerAckCounts {
+	groups := make([]*EDIPartnerAckCounts, 0, len(rows))
+	byPartner := make(map[pulid.ID]*EDIPartnerAckCounts, len(rows))
+	for _, row := range rows {
+		group, ok := byPartner[row.PartnerID]
+		if !ok {
+			group = &EDIPartnerAckCounts{
+				PartnerID:   row.PartnerID,
+				PartnerName: row.PartnerName,
+				PartnerCode: row.PartnerCode,
+				Counts:      make(map[edi.MessageAcknowledgmentStatus]int),
+			}
+			byPartner[row.PartnerID] = group
+			groups = append(groups, group)
+		}
+		group.Counts[row.AckStatus] = row.Count
+	}
+	return groups
 }
 
 func groupOverdueAcks(
