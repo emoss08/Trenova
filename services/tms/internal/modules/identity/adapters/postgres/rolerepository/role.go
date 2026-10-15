@@ -402,6 +402,43 @@ func (r *repository) Update(ctx context.Context, role *permission.Role) error {
 	})
 }
 
+func (r *repository) Delete(ctx context.Context, req permissionports.DeleteRoleRequest) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(
+			zap.String("operation", "Delete"),
+			zap.String("id", req.RoleID.String()),
+		)
+
+		db := r.db.DBForContext(ctx)
+		cols := permissioncol.RoleColumns
+		result, err := db.NewDelete().
+			Model((*permission.Role)(nil)).
+			Where(cols.ID.Eq(), req.RoleID).
+			Where(cols.OrganizationID.Eq(), req.OrganizationID).
+			Where(cols.IsSystem.IsFalse()).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to delete role", zap.Error(err))
+			return err
+		}
+		if err = dberror.CheckFound(result, "Role"); err != nil {
+			return err
+		}
+
+		if _, err = db.NewUpdate().
+			Model((*permission.Role)(nil)).
+			Set(cols.ParentRoleIDs.Bare()+" = array_remove("+cols.ParentRoleIDs.Bare()+", ?)", req.RoleID).
+			Where("? = ANY("+cols.ParentRoleIDs.Qualified()+")", req.RoleID).
+			Where(cols.OrganizationID.Eq(), req.OrganizationID).
+			Exec(ctx); err != nil {
+			log.Error("failed to drop the deleted role from its seniors", zap.Error(err))
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (r *repository) replaceResourcePermissions(
 	ctx context.Context,
 	roleID pulid.ID,

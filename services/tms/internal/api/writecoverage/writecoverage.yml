@@ -2572,6 +2572,9 @@ writes:
     reason: "A saved view is one person's own columns and filters on a report page."
 
   # role
+  "DELETE /api/v1/roles/:roleID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
   "DELETE /api/v1/roles/:roleID/permissions/:permID":
     exempt: security
     reason: "Grants or removes access. An agent that could change access could widen its own."

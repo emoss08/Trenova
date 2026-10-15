@@ -69,6 +69,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	api.GET("/:roleID", require(permission.OpRead), h.get)
 	api.PUT("/:roleID", require(permission.OpUpdate), h.update)
+	api.DELETE("/:roleID", require(permission.OpDelete), h.delete)
 	api.GET("/:roleID/impact", require(permission.OpRead), h.getImpact)
 
 	api.POST("/:roleID/permissions", require(permission.OpUpdate), h.addPermission)
@@ -276,6 +277,43 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, role)
+}
+
+// @Summary Delete a role
+// @ID deleteRole
+// @Tags Roles
+// @Param roleID path string true "Role ID"
+// @Param force query bool false "Take the role from everyone who holds it"
+// @Success 204
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /roles/{roleID} [delete]
+func (h *Handler) delete(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	roleID, err := pulid.MustParse(c.Param("roleID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.DeleteRole(c.Request.Context(), roleservice.DeleteRoleRequest{
+		Tenant: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		RoleID: roleID,
+		Force:  c.Query("force") == "true",
+	}); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Get role impact

@@ -93,7 +93,11 @@ func TestUpsertRoleHierarchyEdge_RefusesInheritingMoreThanTheActorHolds(t *testi
 	})
 
 	requireForbidden(t, err)
-	assert.Empty(t, deps.audit.Changes())
+	refused := deps.audit.Only(t)
+	assert.Equal(t, "Refused a grant beyond the actor's own permissions", refused.Comment)
+	assert.Equal(t, actorID, refused.Actor.UserID)
+	assert.Equal(t, "maxSensitivity", refused.Metadata["refused"])
+	assert.Empty(t, deps.notifier.Organizations())
 }
 
 func TestUpsertRoleHierarchyEdge_RefusesTheJuniorsInheritedGrants(t *testing.T) {
@@ -360,4 +364,101 @@ func TestUpdateRole_RefusesARoleOfAnotherOrganization(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, ErrCannotModifySystemRole)
+}
+
+func TestDeleteRole_RefusesARoleSomeoneHoldsUnlessForced(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	tenant := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	role := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		Name:           "Dispatcher",
+	}
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(role, nil)
+	deps.roleRepo.On("GetUsersWithRole", mock.Anything, role.ID).
+		Return([]permissionports.ImpactedUser{{UserID: pulid.MustNew("usr_")}}, nil)
+
+	err := deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{Tenant: tenant, RoleID: role.ID})
+
+	require.Error(t, err)
+	var validationErr *errortypes.Error
+	require.ErrorAs(t, err, &validationErr)
+	deps.roleRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
+}
+
+func TestDeleteRole_ForcedTakesItFromItsHolders(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	tenant := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	role := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		Name:           "Dispatcher",
+	}
+	holder := pulid.MustNew("usr_")
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(role, nil)
+	deps.roleRepo.On("GetUsersWithRole", mock.Anything, role.ID).
+		Return([]permissionports.ImpactedUser{{UserID: holder}}, nil)
+	deps.roleRepo.On("Delete", mock.Anything, permissionports.DeleteRoleRequest{
+		RoleID:         role.ID,
+		OrganizationID: tenant.OrgID,
+	}).Return(nil).Once()
+
+	require.NoError(t, deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{
+		Tenant: tenant,
+		RoleID: role.ID,
+		Force:  true,
+	}))
+
+	changes := deps.audit.Changes()
+	require.Len(t, changes, 2)
+	assert.Equal(t, permission.OpUnassign, changes[0].Operation)
+	assert.Equal(t, holder.String(), changes[0].Metadata[metadataUserID])
+	assert.Equal(t, permission.OpDelete, changes[1].Operation)
+	assert.Len(t, deps.notifier.Organizations(), 1)
+}
+
+func TestDeleteRole_ForcingNeedsPermissionToUnassign(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), UserID: pulid.MustNew("usr_")}
+	role := &permission.Role{ID: pulid.MustNew("rol_"), OrganizationID: tenant.OrgID}
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(role, nil)
+	deps.roleRepo.On("GetUsersWithRole", mock.Anything, role.ID).
+		Return([]permissionports.ImpactedUser{{UserID: pulid.MustNew("usr_")}}, nil)
+	deps.permEngine.On("GetEffectivePermissions", mock.Anything, tenant.UserID, tenant.OrgID).
+		Return(limitedEffectivePermissions(), nil)
+
+	err := deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{Tenant: tenant, RoleID: role.ID, Force: true})
+
+	requireForbidden(t, err)
+	deps.roleRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
+}
+
+func TestDeleteRole_RefusesASystemRole(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
+	admin := adminRole(tenant.OrgID)
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(admin, nil)
+
+	err := deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{Tenant: tenant, RoleID: admin.ID, Force: true})
+
+	require.ErrorIs(t, err, ErrCannotDeleteSystemRole)
 }

@@ -493,6 +493,17 @@ see every tenant declares `dbscope.WithSystem(ctx, reason)` and is listed in
 before adding a table, a repository method, a background job, or anything that runs
 before a tenant is known.**
 
+## Permissions
+
+Roles grant `(resource, operations, data scope)` from the registry in
+`domain/permission/resources_*.go`; one engine answers every check; every writer that grants
+access runs the delegation check; every change goes through `PermissionChangeNotifier`, which
+advances an organization permission epoch instead of deleting cache keys. Administrators get
+new registry operations from `trenova db migrate`, never from a hand-written migration.
+**Read [docs/engineering/permissions.md](docs/engineering/permissions.md) before adding a
+resource or operation, a permission check, a way of granting access, or anything that
+invalidates cached permissions.**
+
 ## Security Audit Trail
 
 Sign-ins, SSO callbacks, sign-outs and password resets write `auth_events` through

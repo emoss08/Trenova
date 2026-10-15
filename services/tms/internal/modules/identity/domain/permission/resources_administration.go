@@ -55,6 +55,7 @@ func (r *Registry) registerAdministrationResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View roles"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new roles"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify roles"},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete roles"},
 		},
 		DefaultSensitivity: SensitivityConfidential,
 	})

@@ -68,6 +68,11 @@ type GetUserRoleAssignmentsByIDRequest struct {
 	ExpandRoles      bool                  `json:"expandRoles"`
 }
 
+type DeleteRoleRequest struct {
+	RoleID         pulid.ID
+	OrganizationID pulid.ID
+}
+
 type OrphanedAssignment struct {
 	UserID         pulid.ID `bun:"user_id"`
 	OrganizationID pulid.ID `bun:"organization_id"`
@@ -89,6 +94,7 @@ type RoleRepository interface {
 	) (*pagination.ListResult[*permission.Role], error)
 	Create(ctx context.Context, role *permission.Role) error
 	Update(ctx context.Context, role *permission.Role) error
+	Delete(ctx context.Context, req DeleteRoleRequest) error
 	GetByID(ctx context.Context, req GetRoleByIDRequest) (*permission.Role, error)
 	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
 	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)

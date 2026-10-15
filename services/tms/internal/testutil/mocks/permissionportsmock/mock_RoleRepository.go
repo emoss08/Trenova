@@ -212,6 +212,63 @@ func (_c *MockRoleRepository_CreateResourcePermission_Call) RunAndReturn(run fun
 	return _c
 }
 
+// Delete provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) Delete(ctx context.Context, req permissionports.DeleteRoleRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRoleRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockRoleRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req permissionports.DeleteRoleRequest
+func (_e *MockRoleRepository_Expecter) Delete(ctx any, req any) *MockRoleRepository_Delete_Call {
+	return &MockRoleRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
+}
+
+func (_c *MockRoleRepository_Delete_Call) Run(run func(ctx context.Context, req permissionports.DeleteRoleRequest)) *MockRoleRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 permissionports.DeleteRoleRequest
+		if args[1] != nil {
+			arg1 = args[1].(permissionports.DeleteRoleRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_Delete_Call) Return(err error) *MockRoleRepository_Delete_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRoleRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, req permissionports.DeleteRoleRequest) error) *MockRoleRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteAssignment provides a mock function for the type MockRoleRepository
 func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, req)

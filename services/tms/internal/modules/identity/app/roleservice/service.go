@@ -74,6 +74,12 @@ type UpdateRoleRequest struct {
 	Role           *permission.Role
 }
 
+type DeleteRoleRequest struct {
+	Tenant pagination.TenantInfo
+	RoleID pulid.ID
+	Force  bool
+}
+
 type AssignRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
@@ -229,6 +235,99 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		BuID:   existingRole.BusinessUnitID,
 		UserID: req.ActorID,
 	})
+
+	return nil
+}
+
+func (s *Service) DeleteRole(ctx context.Context, req DeleteRoleRequest) error {
+	log := s.l.With(
+		zap.String("operation", "DeleteRole"),
+		zap.String("actorID", req.Tenant.UserID.String()),
+		zap.String("roleID", req.RoleID.String()),
+	)
+
+	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         req.RoleID,
+		TenantInfo: pagination.TenantInfo{OrgID: req.Tenant.OrgID},
+	})
+	if err != nil {
+		return err
+	}
+	if role.IsSystem || role.OrganizationID != req.Tenant.OrgID {
+		return ErrCannotDeleteSystemRole
+	}
+
+	holders, err := s.roleRepo.GetUsersWithRole(ctx, role.ID)
+	if err != nil {
+		return err
+	}
+	if len(holders) > 0 {
+		if !req.Force {
+			return errortypes.NewValidationError(
+				"roleId",
+				errortypes.ErrInvalidOperation,
+				"This role is assigned to {0, plural, one {# person} other {# people}}. Unassign it first, or delete it anyway to take it from them",
+				len(holders),
+			)
+		}
+		if err = s.requireUnassign(ctx, req.Tenant); err != nil {
+			return err
+		}
+	}
+
+	if err = s.roleRepo.Delete(ctx, permissionports.DeleteRoleRequest{
+		RoleID:         role.ID,
+		OrganizationID: req.Tenant.OrgID,
+	}); err != nil {
+		log.Error("failed to delete role", zap.Error(err))
+		return err
+	}
+
+	for _, holder := range holders {
+		s.recordChange(ctx, &roleChange{
+			actorID:        req.Tenant.UserID,
+			organizationID: req.Tenant.OrgID,
+			businessUnitID: role.BusinessUnitID,
+			resourceID:     role.ID.String(),
+			operation:      permission.OpUnassign,
+			comment:        "Role unassigned because the role was deleted",
+			metadata:       map[string]any{metadataUserID: holder.UserID.String()},
+		})
+	}
+	s.recordChange(ctx, &roleChange{
+		actorID:        req.Tenant.UserID,
+		organizationID: req.Tenant.OrgID,
+		businessUnitID: role.BusinessUnitID,
+		resourceID:     role.ID.String(),
+		operation:      permission.OpDelete,
+		before:         role,
+		comment:        "Role deleted",
+		metadata:       map[string]any{"holderCount": len(holders)},
+	})
+
+	s.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+		OrgID:  req.Tenant.OrgID,
+		BuID:   role.BusinessUnitID,
+		UserID: req.Tenant.UserID,
+	})
+
+	return nil
+}
+
+func (s *Service) requireUnassign(ctx context.Context, tenant pagination.TenantInfo) error {
+	held, err := s.permEngine.GetEffectivePermissions(ctx, tenant.UserID, tenant.OrgID)
+	if err != nil {
+		return err
+	}
+
+	violation, violated := held.DelegationViolation(
+		permission.ResourceUser.String(),
+		[]permission.Operation{permission.OpUnassign},
+		permission.DataScopeOrganization,
+	)
+	if violated {
+		return violation.FieldError("roleId")
+	}
 
 	return nil
 }
@@ -830,6 +929,11 @@ func (s *Service) validateNoEscalation(
 	}
 
 	if targetRole.MaxSensitivity.Level() > actorPerms.MaxSensitivity.Level() {
+		s.recordRefusedGrant(ctx, actorID, orgID, targetRole, map[string]any{
+			"refused":          "maxSensitivity",
+			"maxSensitivity":   string(targetRole.MaxSensitivity),
+			"actorSensitivity": string(actorPerms.MaxSensitivity),
+		})
 		me := errortypes.NewMultiError()
 		me.Add(
 			"maxSensitivity",
@@ -849,11 +953,34 @@ func (s *Service) validateNoEscalation(
 			rp.DataScope,
 		)
 		if violated {
+			s.recordRefusedGrant(ctx, actorID, orgID, targetRole, map[string]any{
+				"refused":   "permissions",
+				"resource":  violation.Resource,
+				"operation": string(violation.Operation),
+				"dataScope": string(violation.Scope),
+			})
 			return violation.FieldError("permissions")
 		}
 	}
 
 	return nil
+}
+
+func (s *Service) recordRefusedGrant(
+	ctx context.Context,
+	actorID, orgID pulid.ID,
+	targetRole *permission.Role,
+	metadata map[string]any,
+) {
+	s.recordChange(ctx, &roleChange{
+		actorID:        actorID,
+		organizationID: orgID,
+		businessUnitID: targetRole.BusinessUnitID,
+		resourceID:     targetRole.ID.String(),
+		operation:      permission.OpUpdate,
+		comment:        "Refused a grant beyond the actor's own permissions",
+		metadata:       metadata,
+	})
 }
 
 func (s *Service) validateNoCircularInheritance(

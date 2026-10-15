@@ -63,7 +63,7 @@ func TestAnalyzerFollowsBoundWrappers(t *testing.T) {
 	require.Contains(t, found, "user:unassign")
 	require.Contains(t, found, "user:assign")
 	require.NotContains(t, found, "role:unassign")
-	require.NotContains(t, found, "role:delete")
+	require.NotContains(t, found, "role:assign")
 }
 
 func declares(registry *permission.Registry, resource string, operation permission.Operation) bool {

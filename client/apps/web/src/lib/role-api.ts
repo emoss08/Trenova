@@ -82,8 +82,9 @@ export async function updateRole(id: string, data: Partial<Role>): Promise<Role>
   return api.put<Role>(`/roles/${id}`, data);
 }
 
-export async function deleteRole(id: string): Promise<void> {
-  return api.delete(`/roles/${id}`);
+export async function deleteRole(id: string, options?: { force?: boolean }): Promise<void> {
+  const query = options?.force ? "?force=true" : "";
+  return api.delete(`/roles/${id}${query}`);
 }
 
 export async function getRoleImpact(id: string): Promise<RoleImpact[]> {
@@ -115,10 +116,6 @@ export async function assignRole(roleId: string, data: AssignRole): Promise<User
 
 export async function unassignRole(assignmentId: string): Promise<void> {
   return api.delete(`/roles/assignments/${assignmentId}`);
-}
-
-export async function getRoleAssignments(roleId: string): Promise<UserRoleAssignment[]> {
-  return api.get<UserRoleAssignment[]>(`/roles/${roleId}/assignments`);
 }
 
 export async function listRoleHierarchy(): Promise<RoleHierarchyEdge[]> {

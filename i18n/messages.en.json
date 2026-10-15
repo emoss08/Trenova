@@ -72272,6 +72272,15 @@
       "go/other"
     ]
   },
+  "Delete and unassign": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Delete audit entries past each organization's retention window": {
     "sites": 2,
     "scope": [
@@ -72625,6 +72634,24 @@
       "go/other"
     ]
   },
+  "Delete role": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Delete roles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Delete routing guide": {
     "sites": 1,
     "scope": [
@@ -72845,7 +72872,7 @@
     ]
   },
   "Delete {0}?": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -72947,7 +72974,7 @@
     ]
   },
   "Deleting...": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -126869,6 +126896,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Keep role": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Keep schedule": {
     "sites": 1,
     "scope": [
@@ -158033,6 +158069,15 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "Nobody holds this role. Roles that inherit it lose what it granted them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Nobody holds this title yet.": {
@@ -212528,6 +212573,15 @@
       "routes/admin"
     ]
   },
+  "Role deleted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Role details": {
     "sites": 2,
     "scope": [
@@ -266733,6 +266787,15 @@
       "go/other"
     ]
   },
+  "This role is assigned to {0, plural, one {# person} other {# people}}. Unassign it first, or delete it anyway to take it from them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This role is granted no agents limited to specific roles.": {
     "sites": 1,
     "scope": [
@@ -309506,6 +309569,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "{0, plural, one {# person holds} other {# people hold}} this role. Deleting it takes it from them, and anything they could do only through it stops working at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0, plural, one {# person in the period} other {# people in the period}}": {
