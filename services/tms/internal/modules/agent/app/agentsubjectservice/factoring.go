@@ -84,3 +84,45 @@ func (s *Service) factoringSubmission(
 	})
 	return subject, nil
 }
+
+func (s *Service) factoringRemittance(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	remittanceID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectFactoringRemittance,
+		ID:    remittanceID.String(),
+		Label: "Factor remittance",
+	}
+	if s.remittances == nil {
+		return subject, nil
+	}
+
+	found, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+		ID:         remittanceID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load factor remittance: %w", err)
+	}
+
+	if found.FileName != "" {
+		subject.Label = "Factor remittance " + found.FileName
+	}
+	subject.Notes = marshalNotes(map[string]any{
+		noteStatus:           found.Status,
+		"factoringCompanyId": found.FactoringCompanyID,
+		noteFileName:         found.FileName,
+		"source":             found.Source,
+		"defaultKind":        found.DefaultKind,
+		"lineCount":          found.LineCount,
+		"matchedCount":       found.MatchedCount,
+		"exceptionCount":     found.ExceptionCount,
+		"appliedCount":       found.AppliedCount,
+		"totalCashMinor":     found.TotalCashMinor,
+		"error":              found.Error,
+		"version":            found.Version,
+	})
+	return subject, nil
+}

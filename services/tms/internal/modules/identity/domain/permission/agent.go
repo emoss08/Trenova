@@ -38,6 +38,15 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpCreate: {},
 	},
+	// The clerk resolves remittance lines it is sure of and proposes applying
+	// the matched ones; applying books to the ledger, so it runs only from a
+	// person's approval.
+	ResourceFactoringRemittance: {
+		OpRead:   {},
+		OpUpdate: {},
+		OpImport: {},
+		OpCancel: {},
+	},
 	// Creating a shipment from a document is the intake desk's whole job.
 	// Editing or cancelling one that already exists is a person's: those
 	// tools are offered in chat, where the actor is the person asking.

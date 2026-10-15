@@ -419,6 +419,9 @@ type ResolverRoot interface {
 	FactoringNoa() FactoringNoaResolver
 	FactoringPlannedLine() FactoringPlannedLineResolver
 	FactoringPlannedMovement() FactoringPlannedMovementResolver
+	FactoringRemittance() FactoringRemittanceResolver
+	FactoringRemittanceLine() FactoringRemittanceLineResolver
+	FactoringRemittancePlan() FactoringRemittancePlanResolver
 	FactoringReserveEntry() FactoringReserveEntryResolver
 	FactoringReserveMovementPlan() FactoringReserveMovementPlanResolver
 	FactoringSubmission() FactoringSubmissionResolver
@@ -1349,6 +1352,28 @@ type FactoringPlannedMovementResolver interface {
 	FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error)
 }
 
+type FactoringRemittanceResolver interface {
+	DocumentID(ctx context.Context, obj *factoring.Remittance) (*string, error)
+	InboundMessageID(ctx context.Context, obj *factoring.Remittance) (*string, error)
+	SourceFormat(ctx context.Context, obj *factoring.Remittance) (*factoring.RemittanceFormat, error)
+	Mapping(ctx context.Context, obj *factoring.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error)
+	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringRemittanceLineResolver interface {
+	MatchedBy(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchedBy, error)
+	SubmissionItemID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
+	MatchedSubmissionID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
+	Reason(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchReason, error)
+	ReserveEntryID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
+}
+
+type FactoringRemittancePlanResolver interface {
+	RemittanceID(ctx context.Context, obj *factoringports.RemittancePlan) (string, error)
+}
+
 type FactoringReserveEntryResolver interface {
 	ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
 	CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
@@ -2065,6 +2090,12 @@ type MutationResolver interface {
 	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
 	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
 	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
+	CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoring.Remittance, error)
+	StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoring.Remittance, error)
+	RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
+	UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoring.Remittance, error)
+	ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
+	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoring.Remittance, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
@@ -2898,6 +2929,10 @@ type QueryResolver interface {
 	FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
 	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
 	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringRemittances(ctx context.Context, input gqlmodel.FactoringRemittanceListInput) (*gqlmodel.FactoringRemittanceConnection, error)
+	FactoringRemittance(ctx context.Context, id string) (*factoring.Remittance, error)
+	FactoringRemittanceLines(ctx context.Context, input gqlmodel.FactoringRemittanceLineListInput) (*gqlmodel.FactoringRemittanceLineConnection, error)
+	FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringports.RemittancePlan, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -3921,6 +3956,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FactoringNoa":                       func() any { return r.FactoringNoa() },
 			"FactoringPlannedLine":               func() any { return r.FactoringPlannedLine() },
 			"FactoringPlannedMovement":           func() any { return r.FactoringPlannedMovement() },
+			"FactoringRemittance":                func() any { return r.FactoringRemittance() },
+			"FactoringRemittanceLine":            func() any { return r.FactoringRemittanceLine() },
+			"FactoringRemittancePlan":            func() any { return r.FactoringRemittancePlan() },
 			"FactoringReserveEntry":              func() any { return r.FactoringReserveEntry() },
 			"FactoringReserveMovementPlan":       func() any { return r.FactoringReserveMovementPlan() },
 			"FactoringSubmission":                func() any { return r.FactoringSubmission() },
@@ -5793,6 +5831,7 @@ enum AgentSubjectType {
   InvoiceDispute
   FactoringNoa
   FactoringSubmission
+  FactoringRemittance
 }
 
 enum AgentRunTrigger {
@@ -10070,6 +10109,7 @@ enum AITask {
   QueryCompose
   InboundClassification
   AccountingMapping
+  RemittanceExtraction
   EvaluationJudge
   Embedding
   AssistantChat
@@ -10585,6 +10625,7 @@ enum AIUsageFeature {
   DocumentIntelligenceRoute
   DocumentIntelligenceExtract
   AccountingMapping
+  FactoringRemittanceExtract
   AgentReflection
   AgentDrafting
   AgentProfile
@@ -21213,6 +21254,292 @@ input RequestMissingFactoringDocumentsInput {
   message: String
 }
 
+enum FactoringRemittanceStatus {
+  Pending
+  NeedsMapping
+  Parsed
+  Failed
+  PartiallyApplied
+  Applied
+  Discarded
+}
+
+enum FactoringRemittanceSource {
+  Upload
+  Email
+}
+
+enum FactoringRemittanceFormat {
+  Csv
+  Xlsx
+  Pdf
+}
+
+"What a remittance line records."
+enum FactoringRemittanceLineKind {
+  Funding
+  Rejection
+  ReserveRelease
+  Chargeback
+  "A fee, adjustment or anything not tied to one invoice; it is not booked from the remittance."
+  Other
+}
+
+enum FactoringRemittanceMatchStatus {
+  Matched
+  Suggested
+  Unmatched
+  Ignored
+  Error
+  Applied
+}
+
+enum FactoringRemittanceMatchedBy {
+  Auto
+  Person
+}
+
+"Why a line was matched or suggested, or why nothing was."
+enum FactoringRemittanceMatchReason {
+  InvoiceAmountDate
+  InvoiceAmount
+  InvoiceNearAmount
+  PartialInvoiceAmount
+  InvoiceOnly
+  PartialInvoiceNearAmount
+  AmountOnly
+  NearAmountOnly
+  ClaimedByAnotherLine
+  ChosenByPerson
+  NoOpenItem
+  NotBookedFromRemittance
+}
+
+"What a remittance file's column holds."
+enum FactoringRemittanceField {
+  InvoiceNumber
+  FactorReference
+  Debtor
+  Kind
+  Face
+  Advance
+  Fee
+  Reserve
+  Cash
+  Date
+}
+
+enum FactoringRemittanceLineAction {
+  Match
+  Unmatch
+  Ignore
+  Restore
+  SetKind
+}
+
+"Which column of the file holds a field."
+type FactoringRemittanceColumn {
+  field: FactoringRemittanceField!
+  "The column's position, counting from zero."
+  column: Int!
+}
+
+"A factor's funding or reserve report, read and matched to schedule items before it is booked."
+type FactoringRemittance {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  factoringCompanyId: ID!
+  documentId: ID
+  fileName: String
+  source: FactoringRemittanceSource!
+  "The message it came in on, when it was emailed."
+  inboundMessageId: ID
+  sourceFormat: FactoringRemittanceFormat
+  status: FactoringRemittanceStatus!
+  "What a line records when the file has no column saying so."
+  defaultKind: FactoringRemittanceLineKind!
+  remittedOn: Timestamp
+  currencyCode: String!
+  mapping: [FactoringRemittanceColumn!]!
+  headers: [String!]!
+  "Columns of the file no field reads."
+  unmappedHeaders: [String!]!
+  lineCount: Int!
+  matchedCount: Int!
+  "Lines suggested, unmatched or unreadable."
+  exceptionCount: Int!
+  appliedCount: Int!
+  "Cash on the lines that are not ignored or unreadable."
+  totalCashMinor: Int!
+  error: String
+  stagedAt: Timestamp
+  appliedAt: Timestamp
+  appliedById: ID
+  discardedAt: Timestamp
+  discardReason: String
+  createdById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  factoringCompany: FactoringCompany
+}
+
+type FactoringRemittanceEdge {
+  node: FactoringRemittance!
+  cursor: String!
+}
+
+type FactoringRemittanceConnection {
+  edges: [FactoringRemittanceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A schedule item a line could pay, ranked."
+type FactoringRemittanceSuggestion {
+  itemId: ID!
+  submissionId: ID!
+  invoiceNumber: String!
+  score: Int!
+  reason: FactoringRemittanceMatchReason!
+}
+
+"One row of a factor's remittance."
+type FactoringRemittanceLine {
+  id: ID!
+  remittanceId: ID!
+  "The row in the factor's file, counting from the top."
+  rowNumber: Int!
+  cells: [String!]!
+  kind: FactoringRemittanceLineKind!
+  invoiceNumber: String
+  factorReference: String
+  debtorName: String
+  faceMinor: Int
+  advanceMinor: Int
+  feeMinor: Int
+  reserveMinor: Int
+  cashMinor: Int
+  occurredOn: Timestamp
+  matchStatus: FactoringRemittanceMatchStatus!
+  matchedBy: FactoringRemittanceMatchedBy
+  submissionItemId: ID
+  "The invoice number of the schedule item the line is matched to."
+  matchedInvoiceNumber: String
+  matchedSubmissionId: ID
+  score: Int!
+  reason: FactoringRemittanceMatchReason
+  suggestions: [FactoringRemittanceSuggestion!]!
+  error: String
+  ignoredReason: String
+  reserveEntryId: ID
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type FactoringRemittanceLineEdge {
+  node: FactoringRemittanceLine!
+  cursor: String!
+}
+
+type FactoringRemittanceLineConnection {
+  edges: [FactoringRemittanceLineEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"What applying one matched line would book."
+type FactoringRemittancePlanLine {
+  lineId: ID!
+  rowNumber: Int!
+  kind: FactoringRemittanceLineKind!
+  invoiceNumber: String!
+  submissionId: ID!
+  itemId: ID!
+  cashMinor: Int!
+  "Null for a rejection, which books nothing."
+  movement: FactoringPlannedMovement
+}
+
+"What applying a remittance's matched lines would book, before anything is booked."
+type FactoringRemittancePlan {
+  remittanceId: ID!
+  lines: [FactoringRemittancePlanLine!]!
+  fundedCount: Int!
+  rejectedCount: Int!
+  releasedCount: Int!
+  chargebackCount: Int!
+  "Lines still to resolve; they stay open after the apply."
+  leftOpenCount: Int!
+  advanceMinor: Int!
+  feeMinor: Int!
+  releasedMinor: Int!
+  chargebackMinor: Int!
+}
+
+input FactoringRemittanceListInput {
+  table: DataTableConnectionInput!
+  factoringCompanyId: ID
+  inboundMessageId: ID
+  statuses: [FactoringRemittanceStatus!]
+}
+
+input FactoringRemittanceLineListInput {
+  table: DataTableConnectionInput!
+  remittanceId: ID!
+  matchStatuses: [FactoringRemittanceMatchStatus!]
+}
+
+input CreateFactoringRemittanceInput {
+  factoringCompanyId: ID!
+  "Funding unless the report is of reserve releases, rejections or chargebacks."
+  defaultKind: FactoringRemittanceLineKind
+  "The day the factor sent the report."
+  remittedOn: Timestamp
+}
+
+input FactoringRemittanceColumnInput {
+  field: FactoringRemittanceField!
+  column: Int!
+}
+
+input StageFactoringRemittanceInput {
+  id: ID!
+  version: Int!
+  "The file, uploaded with resource type factoring_remittance and this remittance's id."
+  documentId: ID!
+  "Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor."
+  mapping: [FactoringRemittanceColumnInput!]
+  defaultKind: FactoringRemittanceLineKind
+  remittedOn: Timestamp
+}
+
+input FactoringRemittanceVersionInput {
+  id: ID!
+  version: Int!
+}
+
+input UpdateFactoringRemittanceLineInput {
+  remittanceId: ID!
+  "The remittance's version."
+  version: Int!
+  lineId: ID!
+  action: FactoringRemittanceLineAction!
+  "The schedule item, for Match."
+  itemId: ID
+  "What the line records, for SetKind."
+  kind: FactoringRemittanceLineKind
+  "Why the line is not booked, for Ignore."
+  reason: String
+}
+
+input DiscardFactoringRemittanceInput {
+  id: ID!
+  version: Int!
+  reason: String!
+}
+
 extend type Invoice {
   factoringOverride: InvoiceFactoringOverride!
   "Why the invoice stays out of factoring; null unless it is excluded."
@@ -21263,6 +21590,11 @@ extend type Query {
   factoringChargebackPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
   "What reversing the invoice's chargeback would book, without booking it."
   factoringChargebackReversalPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  factoringRemittances(input: FactoringRemittanceListInput!): FactoringRemittanceConnection!
+  factoringRemittance(id: ID!): FactoringRemittance!
+  factoringRemittanceLines(input: FactoringRemittanceLineListInput!): FactoringRemittanceLineConnection!
+  "What applying the remittance's matched lines would book, without booking it."
+  factoringRemittancePlan(input: FactoringRemittanceVersionInput!): FactoringRemittancePlan!
 }
 
 extend type Mutation {
@@ -21294,6 +21626,17 @@ extend type Mutation {
   recordFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
   "Undoes the invoice's last chargeback with the opposite entry."
   reverseFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
+  "Opens a remittance for a factor; upload its file next, then read it."
+  createFactoringRemittance(input: CreateFactoringRemittanceInput!): FactoringRemittance!
+  "Reads the uploaded file and matches its lines to the factor's schedule items."
+  stageFactoringRemittance(input: StageFactoringRemittanceInput!): FactoringRemittance!
+  "Matches the remittance's open lines again against the schedules as they are now."
+  rematchFactoringRemittance(input: FactoringRemittanceVersionInput!): FactoringRemittance!
+  "Matches, unmatches, ignores, restores or re-kinds one line."
+  updateFactoringRemittanceLine(input: UpdateFactoringRemittanceLineInput!): FactoringRemittance!
+  "Books every matched line through the factoring ledger in one transaction."
+  applyFactoringRemittance(input: FactoringRemittanceVersionInput!): FactoringRemittance!
+  discardFactoringRemittance(input: DiscardFactoringRemittanceInput!): FactoringRemittance!
 }
 `, BuiltIn: false},
 	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."
@@ -23542,6 +23885,7 @@ enum InboundClassification {
   Invoice
   StatusRequest
   DetentionDispute
+  FactorRemittance
   Other
 }
 

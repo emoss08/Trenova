@@ -19,6 +19,7 @@ const FEATURES: AiUsageFeature[] = [
   "DocumentIntelligenceRoute",
   "DocumentIntelligenceExtract",
   "AccountingMapping",
+  "FactoringRemittanceExtract",
   "AgentReflection",
   "AgentDrafting",
   "AgentProfile",

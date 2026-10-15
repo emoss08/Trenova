@@ -12,7 +12,7 @@ import type {
 } from "@/lib/graphql/carrier-card";
 import { carrier as carrierQueries } from "@/lib/queries/carrier";
 import { carrierSettlementsQuery } from "@/lib/queries/carrier";
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -97,6 +97,7 @@ const NO_ROWS: readonly string[] = [];
  * qualifying, vetting and paying the carrier stay on its page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next carrier's skeleton until it is read, never the one it left.
  */
 export function DeskCarrier({
   recordId,
@@ -106,11 +107,7 @@ export function DeskCarrier({
   backLabel,
 }: CarrierCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...carrierQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...carrierQueries.card(recordId), retry: false });
   const carrier = query.data;
 
   if (!carrier) {

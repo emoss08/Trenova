@@ -131,13 +131,35 @@ behind it (an API key), because the journal and customer ledger rows name who bo
 The factoring clerk holds the balance read, funding and release; chargebacks and their
 reversals are a person's and sit on no template.
 
+`factoringservice.RemittanceService` reads a factor's funding or reserve report (a CSV or
+spreadsheet by its headers, or a PDF through the `RemittanceExtraction` model task), matches
+each line to the factor's schedule items, and books the matched lines through the same
+`LedgerService` in one transaction: funding and rejection lines become one `RecordFunding`
+per schedule, reserve releases and chargebacks one movement each, and every reserve entry
+records the remittance line it came from. `PlanApply` returns each line's planned movement, so
+the apply tool's preview is the journal.
+
+| Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
+| --- | --- | --- | --- | --- |
+| `list_factoring_remittances` | factoring remittance / read | reads only | automatic | — |
+| `get_factoring_remittance` | factoring remittance / read | reads only | automatic | — |
+| `resolve_factoring_remittance_line` | factoring remittance / update | internal | Propose → ActWithApproval | no |
+| `rematch_factoring_remittance` | factoring remittance / update | internal | Propose → ActWithApproval | no |
+| `apply_factoring_remittance` | factoring remittance / import (Apply) | money | Propose → Propose | yes |
+| `discard_factoring_remittance` | factoring remittance / cancel | internal | Propose → ActWithApproval | no |
+
+Resolving a line books nothing: it matches the line to a schedule item, unmatches it, ignores
+it with a reason, restores it, or changes what it records. The clerk resolves only lines whose
+best suggestion names the same invoice and amount, proposes ignoring fees and adjustments, and
+then proposes the apply. Discarding is a person's and sits on no template.
+
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
 | Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
 | Cash application agent | unattended, on bank receipt exceptions | `triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
-| Factoring clerk | unattended, on factoring readiness, schedule and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve` |
+| Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve`, `list_factoring_remittances`, `get_factoring_remittance`, `resolve_factoring_remittance_line`, `rematch_factoring_remittance`, `apply_factoring_remittance` |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and

@@ -30,6 +30,7 @@ enum AgentSubjectType {
   InvoiceDispute
   FactoringNoa
   FactoringSubmission
+  FactoringRemittance
 }
 
 enum AgentRunTrigger {

@@ -30,6 +30,11 @@ customer to pay the factor. A customer's invoices are only ready to factor on th
 [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has
 acknowledged a notice.
 
+The panel's **Remittances** section lists the factor's newest funding and reserve reports, each
+opening its review on its own page, and **Import remittance** reads the next one. Emails the inbox
+classifies as a factor remittance are matched to the factor by its **Email** address, or by its
+domain when no factor uses that exact address, so keep the factor's email current.
+
 ## Tasks
 
 ### Add a factoring company

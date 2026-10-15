@@ -15,5 +15,9 @@ func Providers() []any {
 		NewReleaseFactoringReserveTool,
 		NewRecordFactoringChargebackTool,
 		NewReverseFactoringChargebackTool,
+		NewResolveFactoringRemittanceLineTool,
+		NewRematchFactoringRemittanceTool,
+		NewApplyFactoringRemittanceTool,
+		NewDiscardFactoringRemittanceTool,
 	}
 }

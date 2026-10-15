@@ -5,14 +5,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -21,10 +22,6 @@ var ErrBlankRow = errors.New("this row is empty")
 const (
 	syntheticPrefix   = "SYNTH:"
 	cardDigitsNeeded  = 4
-	excelEpochOffset  = 25569
-	secondsPerDay     = 86400
-	maxExcelSerial    = 2958465
-	minExcelSerial    = 20000
 	maxOdometerDigits = 9
 )
 
@@ -176,118 +173,20 @@ func ParseRow(cells []string, mapping Mapping, opts ParseOptions) (*ParsedRow, e
 	return row, nil
 }
 
-var dateLayouts = [...]string{
-	"2006-01-02T15:04:05Z07:00",
-	"2006-01-02T15:04:05",
-	"2006-01-02 15:04:05",
-	"2006-01-02 15:04",
-	"2006-01-02",
-	"01/02/2006 15:04:05",
-	"01/02/2006 15:04",
-	"01/02/2006 3:04:05 PM",
-	"01/02/2006 3:04 PM",
-	"01/02/2006",
-	"1/2/2006 15:04:05",
-	"1/2/2006 15:04",
-	"1/2/2006 3:04:05 PM",
-	"1/2/2006 3:04 PM",
-	"1/2/2006",
-	"01/02/06 15:04",
-	"01/02/06",
-	"1/2/06 15:04",
-	"1/2/06",
-	"2006/01/02",
-	"01-02-2006",
-	"1-2-2006",
-	"02-Jan-2006",
-	"2-Jan-2006",
-	"Jan 2, 2006",
-	"January 2, 2006",
-	"20060102",
-}
-
 func ParseDate(raw string, loc *time.Location) (int64, error) {
-	value := strings.TrimSpace(raw)
-	if value == "" {
+	seconds, err := timeutils.ParseLooseDate(raw, loc)
+	switch {
+	case err == nil:
+		return seconds, nil
+	case errors.Is(err, timeutils.ErrDateMissing):
 		return 0, errors.New("transaction date is missing")
+	default:
+		return 0, fmt.Errorf("transaction date %q is not a recognised date", raw)
 	}
-	if loc == nil {
-		loc = time.UTC
-	}
-
-	for _, layout := range dateLayouts {
-		parsed, err := time.ParseInLocation(layout, value, loc)
-		if err == nil {
-			return parsed.Unix(), nil
-		}
-	}
-
-	if serial, err := strconv.ParseFloat(value, 64); err == nil {
-		if serial >= minExcelSerial && serial <= maxExcelSerial {
-			return excelSerialToUnix(serial, loc), nil
-		}
-	}
-
-	return 0, fmt.Errorf("transaction date %q is not a recognised date", raw)
-}
-
-func excelSerialToUnix(serial float64, loc *time.Location) int64 {
-	days := math.Floor(serial)
-	fraction := serial - days
-	utcDay := int64(days-excelEpochOffset) * secondsPerDay
-	seconds := int64(math.Round(fraction * secondsPerDay))
-	utc := time.Unix(utcDay+seconds, 0).UTC()
-	local := time.Date(
-		utc.Year(), utc.Month(), utc.Day(),
-		utc.Hour(), utc.Minute(), utc.Second(), 0, loc,
-	)
-	return local.Unix()
 }
 
 func ParseNumber(raw string) (decimal.Decimal, error) {
-	value := strings.TrimSpace(raw)
-	if value == "" {
-		return decimal.Zero, errors.New("value is missing")
-	}
-
-	negative := false
-	if strings.HasPrefix(value, "(") && strings.HasSuffix(value, ")") {
-		negative = true
-		value = strings.TrimSuffix(strings.TrimPrefix(value, "("), ")")
-	}
-
-	var b strings.Builder
-	b.Grow(len(value))
-scan:
-	for _, r := range value {
-		switch {
-		case r >= '0' && r <= '9', r == '.':
-			b.WriteRune(r)
-		case r == '-':
-			negative = !negative
-		case r == ',', r == '$', r == ' ', r == '\u00a0', r == '+':
-		case r >= 'A' && r <= 'Z', r >= 'a' && r <= 'z':
-			if b.Len() > 0 {
-				break scan
-			}
-		default:
-			return decimal.Zero, fmt.Errorf("%q is not a number", raw)
-		}
-	}
-	cleaned := b.String()
-	if cleaned == "" || cleaned == "." {
-		return decimal.Zero, fmt.Errorf("%q is not a number", raw)
-	}
-
-	parsed, err := decimal.NewFromString(cleaned)
-	if err != nil {
-		return decimal.Zero, fmt.Errorf("%q is not a number", raw)
-	}
-	if negative {
-		parsed = parsed.Neg()
-	}
-
-	return parsed, nil
+	return decimalutils.ParseLoose(raw)
 }
 
 func parseOdometer(raw string) (*int64, error) {

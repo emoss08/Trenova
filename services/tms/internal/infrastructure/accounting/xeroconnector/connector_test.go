@@ -14,10 +14,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
@@ -127,7 +127,10 @@ func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	provider := newProvider(t, config.XeroConfig{})
-	provider.oauthOpts = []xero.Option{xero.WithIdentityURL(server.URL)}
+	provider.oauthOpts = []xero.Option{
+		xero.WithIdentityURL(server.URL),
+		xero.WithHTTPClient(server.Client()),
+	}
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 
@@ -371,7 +374,7 @@ func TestTenantGateCapsConcurrencyPerOrganisation(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	gate := newTenantGate()
-	client := &http.Client{Transport: gate.transport(http.DefaultTransport)}
+	client := &http.Client{Transport: gate.transport(server.Client().Transport)}
 
 	var wg sync.WaitGroup
 	for range 10 {

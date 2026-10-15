@@ -65,6 +65,8 @@ function readAs(t: TranslateFn, kind: InboundClassification | null): string {
       return t("Nova read it as a status request");
     case "DetentionDispute":
       return t("Nova read it as a detention dispute");
+    case "FactorRemittance":
+      return t("Nova read it as a factor's remittance");
     case "Other":
       return t("Nova read it as something else");
     case null:

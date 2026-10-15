@@ -233,6 +233,13 @@ const (
 	// a category produces a message for a person, not a new kind of work.
 	TaskInboundClassification = Task("InboundClassification")
 	TaskAccountingMapping     = Task("AccountingMapping")
+	// TaskRemittanceExtraction reads the lines of a factor's PDF remittance.
+	// It is kept apart from DocumentExtraction because the fine-tuned
+	// extraction model, its shadow runs and its training data all key on that
+	// task, and a remittance is not the kind of document they were built for.
+	// What it reads is matched to schedule items and a person applies it, so
+	// it never books anything on its own.
+	TaskRemittanceExtraction = Task("RemittanceExtraction")
 	TaskEvaluationJudge       = Task("EvaluationJudge")
 	TaskEmbedding             = Task("Embedding")
 	TaskGeneral               = Task("General")
@@ -251,6 +258,7 @@ func (t Task) IsValid() bool {
 		TaskQueryCompose,
 		TaskInboundClassification,
 		TaskAccountingMapping,
+		TaskRemittanceExtraction,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral:
@@ -274,6 +282,7 @@ func AllTasks() []Task {
 		TaskQueryCompose,
 		TaskInboundClassification,
 		TaskAccountingMapping,
+		TaskRemittanceExtraction,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral,

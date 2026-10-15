@@ -140,6 +140,9 @@ var minters = map[permission.Resource]minter{
 	permission.ResourceFactoringReserve: mint(
 		func(e *factoring.ReserveEntry) pulid.ID { return e.ID },
 	),
+	permission.ResourceFactoringRemittance: mint(
+		func(e *factoring.Remittance) pulid.ID { return e.ID },
+	),
 	permission.ResourceInvoiceRun: mint(
 		func(e *invoicerun.InvoiceRun) pulid.ID { return e.ID },
 	),

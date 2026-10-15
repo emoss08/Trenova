@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { edi } from "@/lib/queries/edi";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeApiError } from "@/lib/api-error-message";
@@ -76,6 +76,7 @@ const NO_ROWS: readonly string[] = [];
  * away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next message's skeleton until it is read, never the one it left.
  */
 export function DeskEdiMessage({
   recordId,
@@ -85,11 +86,7 @@ export function DeskEdiMessage({
   backLabel,
 }: EdiMessageCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...edi.message(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...edi.message(recordId), retry: false });
   const message = query.data;
 
   if (!message) {

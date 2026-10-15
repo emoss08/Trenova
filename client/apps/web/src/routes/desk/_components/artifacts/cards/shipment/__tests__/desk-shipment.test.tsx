@@ -389,10 +389,22 @@ function wrap(ui: ReactElement) {
 
 function draw(props: Partial<Parameters<typeof DeskShipment>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = wrap(
-    <DeskShipment recordId="shp_1" order={["shp_0", "shp_1", "shp_2"]} {...handlers} {...props} />,
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const tree = (more: Partial<typeof props> = {}) => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <DeskShipment
+          recordId="shp_1"
+          order={["shp_0", "shp_1", "shp_2"]}
+          {...handlers}
+          {...props}
+          {...more}
+        />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return { ...view, ...handlers, step: (recordId: string) => view.rerender(tree({ recordId })) };
 }
 
 function stopNames(container: HTMLElement): string[] {
@@ -447,6 +459,17 @@ function attached(fields: Partial<Document> & { id: string }): Document {
 }
 
 describe("DeskShipment", () => {
+  it("draws the next shipment's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "Dallas, TX → Atlanta, GA" });
+
+    service.get.mockReturnValue(new Promise(() => {}));
+    step("shp_0");
+
+    expect(screen.queryByRole("heading", { name: "Dallas, TX → Atlanta, GA" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the shipment is read, then draws the shipment", async () => {
     const { container } = draw();
 

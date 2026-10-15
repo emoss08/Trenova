@@ -43,6 +43,7 @@ type ReserveEntry struct {
 	AccountingDate     int64               `json:"accountingDate"     bun:"accounting_date,type:BIGINT,notnull"`
 	OccurredOn         int64               `json:"occurredOn"         bun:"occurred_on,type:BIGINT,notnull"`
 	ReversesEntryID    pulid.ID            `json:"reversesEntryId"    bun:"reverses_entry_id,type:VARCHAR(100),nullzero"`
+	RemittanceLineID   pulid.ID            `json:"remittanceLineId"   bun:"remittance_line_id,type:VARCHAR(100),nullzero"`
 	Memo               string              `json:"memo"               bun:"memo,type:VARCHAR(500),nullzero"`
 	CreatedByID        pulid.ID            `json:"createdById"        bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	CreatedAt          int64               `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`

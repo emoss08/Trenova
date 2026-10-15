@@ -12,7 +12,7 @@ import type {
   LocationPolicies,
 } from "@/lib/graphql/location-card";
 import { location as locationQueries } from "@/lib/queries/location";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -89,6 +89,7 @@ const NO_ROWS: readonly string[] = [];
  * page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next location's skeleton until it is read, never the one it left.
  */
 export function DeskLocation({
   recordId,
@@ -98,11 +99,7 @@ export function DeskLocation({
   backLabel,
 }: LocationCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...locationQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...locationQueries.card(recordId), retry: false });
   const location = query.data;
 
   if (!location) {

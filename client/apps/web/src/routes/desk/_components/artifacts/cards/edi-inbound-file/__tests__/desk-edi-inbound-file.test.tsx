@@ -83,7 +83,7 @@ function route(overrides: Routes = {}) {
 function draw(props: Partial<Parameters<typeof DeskEdiInboundFile>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
-  const view = render(
+  const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <DeskEdiInboundFile
@@ -91,11 +91,17 @@ function draw(props: Partial<Parameters<typeof DeskEdiInboundFile>[0]> = {}) {
           order={["ediinf_bad", "ediinf_sim", "ediinf_acme"]}
           {...handlers}
           {...props}
+          {...more}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, ...handlers };
+  const view = render(tree());
+  return {
+    ...view,
+    ...handlers,
+    step: (recordId: string) => view.rerender(tree({ recordId })),
+  };
 }
 
 function section(title: string): HTMLElement {
@@ -123,6 +129,19 @@ afterEach(() => {
 });
 
 describe("DeskEdiInboundFile", () => {
+  it("draws the next file's outline, not the one it left, while the next one is read", async () => {
+    const { container, step } = draw();
+    await screen.findByRole("heading", { name: "sim-204-1791716400000000000.edi", level: 2 });
+
+    server.get.mockReturnValue(new Promise(() => {}));
+    step("ediinf_acme");
+
+    expect(
+      screen.queryByRole("heading", { name: "sim-204-1791716400000000000.edi", level: 2 }),
+    ).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("holds the card's outline while the file is read, then draws the simulator's file", async () => {
     const { container } = draw();
 

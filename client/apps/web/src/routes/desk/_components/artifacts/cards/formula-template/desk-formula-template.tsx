@@ -94,6 +94,7 @@ const NO_REQUEST: TestExpressionRequest = { expression: "", schemaId: "shipment"
  * shipment and approving stay in the Formula Studio, one click away.
  *
  * The card steps through the table's rows in the order the table shows them.
+ * A step draws the next template's skeleton until it is read, never the one it left.
  */
 /**
  * What the card is given: the template, and when it was opened from a table,
@@ -119,11 +120,7 @@ export function DeskFormulaTemplate({
   backLabel,
 }: FormulaTemplateCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...formulaTemplate.get(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...formulaTemplate.get(recordId), retry: false });
   const template = query.data;
 
   if (!template) {

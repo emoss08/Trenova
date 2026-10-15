@@ -1491,6 +1491,7 @@ enum AITask {
   InboundClassification
   OperationalInsights
   QueryCompose
+  RemittanceExtraction
   ScopeClassification
 }
 
@@ -1695,6 +1696,7 @@ enum AIUsageFeature {
   AgentTurn
   DocumentIntelligenceExtract
   DocumentIntelligenceRoute
+  FactoringRemittanceExtract
   FormulaExplain
   FormulaGenerate
   ShipmentImportChat
@@ -5861,6 +5863,7 @@ enum AgentSubjectType {
   Document
   EDIInboundFile
   FactoringNoa
+  FactoringRemittance
   FactoringSubmission
   FormulaTemplate
   InboundMessage
@@ -10072,6 +10075,16 @@ input CreateDocumentTemplateVersionInput {
   templateId: ID!
 }
 
+input CreateFactoringRemittanceInput {
+  """
+  Funding unless the report is of reserve releases, rejections or chargebacks.
+  """
+  defaultKind: FactoringRemittanceLineKind
+  factoringCompanyId: ID!
+  """The day the factor sent the report."""
+  remittedOn: Timestamp
+}
+
 input CreateFuelPurchaseImportInput {
   defaultCurrency: String = "USD"
   defaultFuelCardId: ID
@@ -12022,6 +12035,12 @@ enum DetentionWaiverReason {
   ForceMajeure
   Other
   Weather
+}
+
+input DiscardFactoringRemittanceInput {
+  id: ID!
+  reason: String!
+  version: Int!
 }
 
 type DisciplinaryLadder {
@@ -15218,6 +15237,259 @@ enum FactoringRecourse {
   Recourse
 }
 
+"""
+A factor's funding or reserve report, read and matched to schedule items before it is booked.
+"""
+type FactoringRemittance {
+  appliedAt: Timestamp
+  appliedById: ID
+  appliedCount: Int!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID
+  currencyCode: String!
+  """What a line records when the file has no column saying so."""
+  defaultKind: FactoringRemittanceLineKind!
+  discardReason: String
+  discardedAt: Timestamp
+  documentId: ID
+  error: String
+  """Lines suggested, unmatched or unreadable."""
+  exceptionCount: Int!
+  factoringCompany: FactoringCompany
+  factoringCompanyId: ID!
+  fileName: String
+  headers: [String!]!
+  id: ID!
+  """The message it came in on, when it was emailed."""
+  inboundMessageId: ID
+  lineCount: Int!
+  mapping: [FactoringRemittanceColumn!]!
+  matchedCount: Int!
+  organizationId: ID!
+  remittedOn: Timestamp
+  source: FactoringRemittanceSource!
+  sourceFormat: FactoringRemittanceFormat
+  stagedAt: Timestamp
+  status: FactoringRemittanceStatus!
+  """Cash on the lines that are not ignored or unreadable."""
+  totalCashMinor: Int!
+  """Columns of the file no field reads."""
+  unmappedHeaders: [String!]!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""Which column of the file holds a field."""
+type FactoringRemittanceColumn {
+  """The column's position, counting from zero."""
+  column: Int!
+  field: FactoringRemittanceField!
+}
+
+input FactoringRemittanceColumnInput {
+  column: Int!
+  field: FactoringRemittanceField!
+}
+
+type FactoringRemittanceConnection {
+  edges: [FactoringRemittanceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringRemittanceEdge {
+  cursor: String!
+  node: FactoringRemittance!
+}
+
+"""What a remittance file's column holds."""
+enum FactoringRemittanceField {
+  Advance
+  Cash
+  Date
+  Debtor
+  Face
+  FactorReference
+  Fee
+  InvoiceNumber
+  Kind
+  Reserve
+}
+
+enum FactoringRemittanceFormat {
+  Csv
+  Pdf
+  Xlsx
+}
+
+"""One row of a factor's remittance."""
+type FactoringRemittanceLine {
+  advanceMinor: Int
+  cashMinor: Int
+  cells: [String!]!
+  createdAt: Timestamp!
+  debtorName: String
+  error: String
+  faceMinor: Int
+  factorReference: String
+  feeMinor: Int
+  id: ID!
+  ignoredReason: String
+  invoiceNumber: String
+  kind: FactoringRemittanceLineKind!
+  matchStatus: FactoringRemittanceMatchStatus!
+  matchedBy: FactoringRemittanceMatchedBy
+  """The invoice number of the schedule item the line is matched to."""
+  matchedInvoiceNumber: String
+  matchedSubmissionId: ID
+  occurredOn: Timestamp
+  reason: FactoringRemittanceMatchReason
+  remittanceId: ID!
+  reserveEntryId: ID
+  reserveMinor: Int
+  """The row in the factor's file, counting from the top."""
+  rowNumber: Int!
+  score: Int!
+  submissionItemId: ID
+  suggestions: [FactoringRemittanceSuggestion!]!
+  updatedAt: Timestamp!
+}
+
+enum FactoringRemittanceLineAction {
+  Ignore
+  Match
+  Restore
+  SetKind
+  Unmatch
+}
+
+type FactoringRemittanceLineConnection {
+  edges: [FactoringRemittanceLineEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringRemittanceLineEdge {
+  cursor: String!
+  node: FactoringRemittanceLine!
+}
+
+"""What a remittance line records."""
+enum FactoringRemittanceLineKind {
+  Chargeback
+  Funding
+  """
+  A fee, adjustment or anything not tied to one invoice; it is not booked from the remittance.
+  """
+  Other
+  Rejection
+  ReserveRelease
+}
+
+input FactoringRemittanceLineListInput {
+  matchStatuses: [FactoringRemittanceMatchStatus!]
+  remittanceId: ID!
+  table: DataTableConnectionInput!
+}
+
+input FactoringRemittanceListInput {
+  factoringCompanyId: ID
+  inboundMessageId: ID
+  statuses: [FactoringRemittanceStatus!]
+  table: DataTableConnectionInput!
+}
+
+"""Why a line was matched or suggested, or why nothing was."""
+enum FactoringRemittanceMatchReason {
+  AmountOnly
+  ChosenByPerson
+  ClaimedByAnotherLine
+  InvoiceAmount
+  InvoiceAmountDate
+  InvoiceNearAmount
+  InvoiceOnly
+  NearAmountOnly
+  NoOpenItem
+  NotBookedFromRemittance
+  PartialInvoiceAmount
+  PartialInvoiceNearAmount
+}
+
+enum FactoringRemittanceMatchStatus {
+  Applied
+  Error
+  Ignored
+  Matched
+  Suggested
+  Unmatched
+}
+
+enum FactoringRemittanceMatchedBy {
+  Auto
+  Person
+}
+
+"""
+What applying a remittance's matched lines would book, before anything is booked.
+"""
+type FactoringRemittancePlan {
+  advanceMinor: Int!
+  chargebackCount: Int!
+  chargebackMinor: Int!
+  feeMinor: Int!
+  fundedCount: Int!
+  """Lines still to resolve; they stay open after the apply."""
+  leftOpenCount: Int!
+  lines: [FactoringRemittancePlanLine!]!
+  rejectedCount: Int!
+  releasedCount: Int!
+  releasedMinor: Int!
+  remittanceId: ID!
+}
+
+"""What applying one matched line would book."""
+type FactoringRemittancePlanLine {
+  cashMinor: Int!
+  invoiceNumber: String!
+  itemId: ID!
+  kind: FactoringRemittanceLineKind!
+  lineId: ID!
+  """Null for a rejection, which books nothing."""
+  movement: FactoringPlannedMovement
+  rowNumber: Int!
+  submissionId: ID!
+}
+
+enum FactoringRemittanceSource {
+  Email
+  Upload
+}
+
+enum FactoringRemittanceStatus {
+  Applied
+  Discarded
+  Failed
+  NeedsMapping
+  Parsed
+  PartiallyApplied
+  Pending
+}
+
+"""A schedule item a line could pay, ranked."""
+type FactoringRemittanceSuggestion {
+  invoiceNumber: String!
+  itemId: ID!
+  reason: FactoringRemittanceMatchReason!
+  score: Int!
+  submissionId: ID!
+}
+
+input FactoringRemittanceVersionInput {
+  id: ID!
+  version: Int!
+}
+
 """What a factor holds and has paid, from its reserve entries."""
 type FactoringReserveBalance {
   """Cash advanced at funding."""
@@ -17636,6 +17908,7 @@ type InboundAwaitingReply {
 """What a message turned out to be, once it was read."""
 enum InboundClassification {
   DetentionDispute
+  FactorRemittance
   Invoice
   Other
   ProofOfDelivery
@@ -19685,6 +19958,10 @@ type Mutation {
   applyCarrierIntelSuggestions(input: ApplyCarrierIntelSuggestionsInput!): Int!
   """Settles open invoices of the same customer with a posted credit memo."""
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
+  """
+  Books every matched line through the factoring ledger in one transaction.
+  """
+  applyFactoringRemittance(input: FactoringRemittanceVersionInput!): FactoringRemittance!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   """
   Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed.
@@ -19895,6 +20172,8 @@ type Mutation {
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createFactoringAgreement(input: FactoringAgreementInput!): FactoringAgreement!
   createFactoringCompany(input: FactoringCompanyInput!): FactoringCompany!
+  """Opens a remittance for a factor; upload its file next, then read it."""
+  createFactoringRemittance(input: CreateFactoringRemittanceInput!): FactoringRemittance!
   createFuelCard(input: FuelCardInput!): FuelCard!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
   createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
@@ -20055,6 +20334,7 @@ type Mutation {
   Throws away one proposed document without filing it, and returns its stack as it now is.
   """
   discardCaptureItem(id: ID!, version: Int!): CaptureBatch!
+  discardFactoringRemittance(input: DiscardFactoringRemittanceInput!): FactoringRemittance!
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
   discardInboundLoad(messageId: ID!): InboundMessage!
   discardInboundReplyDraft(messageId: ID!): InboundMessage!
@@ -20352,6 +20632,10 @@ type Mutation {
   """
   releaseFactoringReserve(input: FactoringReserveMovementInput!): FactoringSubmission!
   """
+  Matches the remittance's open lines again against the schedules as they are now.
+  """
+  rematchFactoringRemittance(input: FactoringRemittanceVersionInput!): FactoringRemittance!
+  """
   Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them.
   """
   removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
@@ -20612,6 +20896,10 @@ type Mutation {
   """Puts an exception aside until a time; it wakes on its own."""
   snoozeWatchtowerItem(id: ID!, input: SnoozeWatchtowerItemInput!): WatchtowerItem!
   """
+  Reads the uploaded file and matches its lines to the factor's schedule items.
+  """
+  stageFactoringRemittance(input: StageFactoringRemittanceInput!): FactoringRemittance!
+  """
   Reads the uploaded statement and resolves every row without committing
   anything. Can be run again on the same batch with a different document or
   mapping until it is committed or discarded.
@@ -20749,6 +21037,8 @@ type Mutation {
   updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
   updateFactoringAgreement(input: UpdateFactoringAgreementInput!): FactoringAgreement!
   updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
+  """Matches, unmatches, ignores, restores or re-kinds one line."""
+  updateFactoringRemittanceLine(input: UpdateFactoringRemittanceLineInput!): FactoringRemittance!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
@@ -23134,6 +23424,13 @@ type Query {
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
   """What releasing this reserve would book, without booking it."""
   factoringReleasePlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  factoringRemittance(id: ID!): FactoringRemittance!
+  factoringRemittanceLines(input: FactoringRemittanceLineListInput!): FactoringRemittanceLineConnection!
+  """
+  What applying the remittance's matched lines would book, without booking it.
+  """
+  factoringRemittancePlan(input: FactoringRemittanceVersionInput!): FactoringRemittancePlan!
+  factoringRemittances(input: FactoringRemittanceListInput!): FactoringRemittanceConnection!
   factoringReserveBalance(factoringCompanyId: ID!): FactoringReserveBalance!
   factoringReserveEntries(input: FactoringReserveEntryListInput!): FactoringReserveEntryConnection!
   factoringSubmission(id: ID!): FactoringSubmission!
@@ -28214,6 +28511,21 @@ input SortFieldInput {
   field: String!
 }
 
+input StageFactoringRemittanceInput {
+  defaultKind: FactoringRemittanceLineKind
+  """
+  The file, uploaded with resource type factoring_remittance and this remittance's id.
+  """
+  documentId: ID!
+  id: ID!
+  """
+  Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor.
+  """
+  mapping: [FactoringRemittanceColumnInput!]
+  remittedOn: Timestamp
+  version: Int!
+}
+
 input StageFuelPurchaseImportInput {
   """
   The uploaded statement. The document must have been uploaded against this
@@ -30191,6 +30503,20 @@ input UpdateFactoringAgreementInput {
 input UpdateFactoringCompanyInput {
   factoringCompany: FactoringCompanyInput!
   id: ID!
+  version: Int!
+}
+
+input UpdateFactoringRemittanceLineInput {
+  action: FactoringRemittanceLineAction!
+  """The schedule item, for Match."""
+  itemId: ID
+  """What the line records, for SetKind."""
+  kind: FactoringRemittanceLineKind
+  lineId: ID!
+  """Why the line is not booked, for Ignore."""
+  reason: String
+  remittanceId: ID!
+  """The remittance's version."""
   version: Int!
 }
 

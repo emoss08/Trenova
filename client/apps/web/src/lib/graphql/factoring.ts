@@ -134,6 +134,7 @@ export type FactoringReserveAction = "release" | "chargeback" | "reverse";
 
 export const FACTORING_INVOICE_STATE_KEY = "factoring-invoice-state-list";
 export const FACTORING_SUBMISSION_KEY = "factoring-submission-list";
+export const FACTORING_REMITTANCE_KEY = "factoring-remittance-list";
 
 /** The most ledger rows one invoice lists; an invoice moves a handful of times at most. */
 export const FACTORING_INVOICE_ENTRY_LIMIT = 50;

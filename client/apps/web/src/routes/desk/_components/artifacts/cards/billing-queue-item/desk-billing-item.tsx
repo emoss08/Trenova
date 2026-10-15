@@ -6,12 +6,7 @@ import { assignBillingQueueBillerGraphQL } from "@/lib/graphql/billing-queue";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -394,7 +389,9 @@ function HoldMenu({
  *
  * The card shows whichever item is picked, and steps through the queue in the
  * list's own order; `onSelect` is how a step picks the next one. Until the
- * item loads, or if the person cannot read it, `fallback` shows instead.
+ * item loads, or if the person cannot read it, `fallback` shows instead; a
+ * step shows it too, never the item it left, whose buttons would act on the
+ * item now asked for.
  */
 export function DeskBillingItem({
   itemId,
@@ -418,11 +415,7 @@ export function DeskBillingItem({
   const { allowed: canAssign } = usePermission(Resource.BillingQueue, Operation.Assign);
   const [posted, setPosted] = useState<BillingQueuePostResult | null>(null);
 
-  const itemQuery = useQuery({
-    ...billingQueue.get(itemId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const itemQuery = useQuery({ ...billingQueue.get(itemId), retry: false });
   const item = itemQuery.data;
   const { data: neighbors } = useQuery({
     ...billingQueue.neighbors(itemId),

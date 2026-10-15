@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import type { DeskTrailer as DeskTrailerRecord } from "@/lib/graphql/trailer-card";
 import { trailer as trailerQueries } from "@/lib/queries/trailer";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -63,6 +63,7 @@ const NO_ROWS: readonly string[] = [];
  * page, one click away.
  *
  * The card steps through the rows it was opened from in the order shown.
+ * A step draws the next trailer's skeleton until it is read, never the one it left.
  */
 export function DeskTrailer({
   recordId,
@@ -72,11 +73,7 @@ export function DeskTrailer({
   backLabel,
 }: TrailerCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...trailerQueries.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...trailerQueries.card(recordId), retry: false });
   const trailer = query.data;
 
   if (!trailer) {

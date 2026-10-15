@@ -395,6 +395,7 @@ export type AiTask =
   | 'InboundClassification'
   | 'OperationalInsights'
   | 'QueryCompose'
+  | 'RemittanceExtraction'
   | 'ScopeClassification';
 
 /**
@@ -450,6 +451,7 @@ export type AiUsageFeature =
   | 'AgentTurn'
   | 'DocumentIntelligenceExtract'
   | 'DocumentIntelligenceRoute'
+  | 'FactoringRemittanceExtract'
   | 'FormulaExplain'
   | 'FormulaGenerate'
   | 'ShipmentImportChat'
@@ -1404,6 +1406,7 @@ export type AgentSubjectType =
   | 'Document'
   | 'EDIInboundFile'
   | 'FactoringNoa'
+  | 'FactoringRemittance'
   | 'FactoringSubmission'
   | 'FormulaTemplate'
   | 'InboundMessage'
@@ -2701,6 +2704,14 @@ export type CreateDeskMemoryInput = {
   scope: AgentMemoryScope;
 };
 
+export type CreateFactoringRemittanceInput = {
+  /** Funding unless the report is of reserve releases, rejections or chargebacks. */
+  defaultKind?: FactoringRemittanceLineKind | null | undefined;
+  factoringCompanyId: string | number;
+  /** The day the factor sent the report. */
+  remittedOn?: number | null | undefined;
+};
+
 export type CreateFuelPurchaseImportInput = {
   defaultCurrency?: string | null | undefined;
   defaultFuelCardId?: string | number | null | undefined;
@@ -3422,6 +3433,12 @@ export type DetentionWaiverReason =
   | 'Other'
   | 'Weather';
 
+export type DiscardFactoringRemittanceInput = {
+  id: string | number;
+  reason: string;
+  version: number;
+};
+
 export type DisciplinaryLevel =
   | 'Coaching'
   | 'FinalWarning'
@@ -4022,6 +4039,103 @@ export type FactoringRecourse =
   | 'NonRecourse'
   /** The factor can charge an unpaid invoice back after the chargeback window. */
   | 'Recourse';
+
+export type FactoringRemittanceColumnInput = {
+  column: number;
+  field: FactoringRemittanceField;
+};
+
+/** What a remittance file's column holds. */
+export type FactoringRemittanceField =
+  | 'Advance'
+  | 'Cash'
+  | 'Date'
+  | 'Debtor'
+  | 'Face'
+  | 'FactorReference'
+  | 'Fee'
+  | 'InvoiceNumber'
+  | 'Kind'
+  | 'Reserve';
+
+export type FactoringRemittanceFormat =
+  | 'Csv'
+  | 'Pdf'
+  | 'Xlsx';
+
+export type FactoringRemittanceLineAction =
+  | 'Ignore'
+  | 'Match'
+  | 'Restore'
+  | 'SetKind'
+  | 'Unmatch';
+
+/** What a remittance line records. */
+export type FactoringRemittanceLineKind =
+  | 'Chargeback'
+  | 'Funding'
+  /** A fee, adjustment or anything not tied to one invoice; it is not booked from the remittance. */
+  | 'Other'
+  | 'Rejection'
+  | 'ReserveRelease';
+
+export type FactoringRemittanceLineListInput = {
+  matchStatuses?: Array<FactoringRemittanceMatchStatus> | null | undefined;
+  remittanceId: string | number;
+  table: DataTableConnectionInput;
+};
+
+export type FactoringRemittanceListInput = {
+  factoringCompanyId?: string | number | null | undefined;
+  inboundMessageId?: string | number | null | undefined;
+  statuses?: Array<FactoringRemittanceStatus> | null | undefined;
+  table: DataTableConnectionInput;
+};
+
+/** Why a line was matched or suggested, or why nothing was. */
+export type FactoringRemittanceMatchReason =
+  | 'AmountOnly'
+  | 'ChosenByPerson'
+  | 'ClaimedByAnotherLine'
+  | 'InvoiceAmount'
+  | 'InvoiceAmountDate'
+  | 'InvoiceNearAmount'
+  | 'InvoiceOnly'
+  | 'NearAmountOnly'
+  | 'NoOpenItem'
+  | 'NotBookedFromRemittance'
+  | 'PartialInvoiceAmount'
+  | 'PartialInvoiceNearAmount';
+
+export type FactoringRemittanceMatchStatus =
+  | 'Applied'
+  | 'Error'
+  | 'Ignored'
+  | 'Matched'
+  | 'Suggested'
+  | 'Unmatched';
+
+export type FactoringRemittanceMatchedBy =
+  | 'Auto'
+  | 'Person';
+
+export type FactoringRemittanceSource =
+  | 'Email'
+  | 'Upload';
+
+export type FactoringRemittanceStatus =
+  | 'Applied'
+  | 'Discarded'
+  | 'Failed'
+  | 'NeedsMapping'
+  | 'Parsed'
+  | 'PartiallyApplied'
+  | 'Pending';
+
+export type FactoringRemittanceVersionInput = {
+  id: string | number;
+  version: number;
+};
 
 /** What a factoring reserve entry records. */
 export type FactoringReserveEntryKind =
@@ -4799,6 +4913,7 @@ export type InboundAttachmentPagesInput = {
 /** What a message turned out to be, once it was read. */
 export type InboundClassification =
   | 'DetentionDispute'
+  | 'FactorRemittance'
   | 'Invoice'
   | 'Other'
   | 'ProofOfDelivery'
@@ -7553,6 +7668,17 @@ export type SortFieldInput = {
   field: string;
 };
 
+export type StageFactoringRemittanceInput = {
+  defaultKind?: FactoringRemittanceLineKind | null | undefined;
+  /** The file, uploaded with resource type factoring_remittance and this remittance's id. */
+  documentId: string | number;
+  id: string | number;
+  /** Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor. */
+  mapping?: Array<FactoringRemittanceColumnInput> | null | undefined;
+  remittedOn?: number | null | undefined;
+  version: number;
+};
+
 export type StageFuelPurchaseImportInput = {
   /**
    * The uploaded statement. The document must have been uploaded against this
@@ -8230,6 +8356,20 @@ export type UpdateExtractionShadowSettingsInput = {
 export type UpdateFactoringAgreementInput = {
   agreement: FactoringAgreementInput;
   id: string | number;
+  version: number;
+};
+
+export type UpdateFactoringRemittanceLineInput = {
+  action: FactoringRemittanceLineAction;
+  /** The schedule item, for Match. */
+  itemId?: string | number | null | undefined;
+  /** What the line records, for SetKind. */
+  kind?: FactoringRemittanceLineKind | null | undefined;
+  lineId: string | number;
+  /** Why the line is not booked, for Ignore. */
+  reason?: string | null | undefined;
+  remittanceId: string | number;
+  /** The remittance's version. */
   version: number;
 };
 
@@ -13729,6 +13869,90 @@ export type RequestMissingFactoringDocumentsMutationVariables = Exact<{
 
 export type RequestMissingFactoringDocumentsMutation = { requestMissingFactoringDocuments: { recipient: string, recipientKind: string, documentTypes: Array<string>, shipmentIds: Array<string>, sent: boolean } };
 
+export type FactoringRemittanceFieldsFragment = { id: string, factoringCompanyId: string, documentId: string | null, fileName: string | null, source: FactoringRemittanceSource, inboundMessageId: string | null, sourceFormat: FactoringRemittanceFormat | null, status: FactoringRemittanceStatus, defaultKind: FactoringRemittanceLineKind, remittedOn: number | null, currencyCode: string, headers: Array<string>, unmappedHeaders: Array<string>, lineCount: number, matchedCount: number, exceptionCount: number, appliedCount: number, totalCashMinor: number, error: string | null, stagedAt: number | null, appliedAt: number | null, discardedAt: number | null, discardReason: string | null, version: number, createdAt: number, mapping: Array<{ field: FactoringRemittanceField, column: number }>, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringRemittanceFieldsFragment' };
+
+export type FactoringRemittanceLineFieldsFragment = { id: string, remittanceId: string, rowNumber: number, cells: Array<string>, kind: FactoringRemittanceLineKind, invoiceNumber: string | null, factorReference: string | null, debtorName: string | null, faceMinor: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, cashMinor: number | null, occurredOn: number | null, matchStatus: FactoringRemittanceMatchStatus, matchedBy: FactoringRemittanceMatchedBy | null, submissionItemId: string | null, matchedInvoiceNumber: string | null, matchedSubmissionId: string | null, score: number, reason: FactoringRemittanceMatchReason | null, error: string | null, ignoredReason: string | null, reserveEntryId: string | null, suggestions: Array<{ itemId: string, submissionId: string, invoiceNumber: string, score: number, reason: FactoringRemittanceMatchReason }> } & { ' $fragmentName'?: 'FactoringRemittanceLineFieldsFragment' };
+
+export type FactoringRemittancesQueryVariables = Exact<{
+  input: FactoringRemittanceListInput;
+}>;
+
+
+export type FactoringRemittancesQuery = { factoringRemittances: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } }> } };
+
+export type FactoringRemittanceDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FactoringRemittanceDetailQuery = { factoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type FactoringRemittanceLinesQueryVariables = Exact<{
+  input: FactoringRemittanceLineListInput;
+}>;
+
+
+export type FactoringRemittanceLinesQuery = { factoringRemittanceLines: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceLineFieldsFragment': FactoringRemittanceLineFieldsFragment } } }> } };
+
+export type FactoringRemittancePlanQueryVariables = Exact<{
+  input: FactoringRemittanceVersionInput;
+}>;
+
+
+export type FactoringRemittancePlanQuery = { factoringRemittancePlan: { remittanceId: string, fundedCount: number, rejectedCount: number, releasedCount: number, chargebackCount: number, leftOpenCount: number, advanceMinor: number, feeMinor: number, releasedMinor: number, chargebackMinor: number, lines: Array<{ lineId: string, rowNumber: number, kind: FactoringRemittanceLineKind, invoiceNumber: string, submissionId: string, itemId: string, cashMinor: number, movement: { ' $fragmentRefs'?: { 'FactoringPlannedMovementFieldsFragment': FactoringPlannedMovementFieldsFragment } } | null }> } };
+
+export type CreateFactoringRemittanceMutationVariables = Exact<{
+  input: CreateFactoringRemittanceInput;
+}>;
+
+
+export type CreateFactoringRemittanceMutation = { createFactoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type StageFactoringRemittanceMutationVariables = Exact<{
+  input: StageFactoringRemittanceInput;
+}>;
+
+
+export type StageFactoringRemittanceMutation = { stageFactoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type RematchFactoringRemittanceMutationVariables = Exact<{
+  input: FactoringRemittanceVersionInput;
+}>;
+
+
+export type RematchFactoringRemittanceMutation = { rematchFactoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type UpdateFactoringRemittanceLineMutationVariables = Exact<{
+  input: UpdateFactoringRemittanceLineInput;
+}>;
+
+
+export type UpdateFactoringRemittanceLineMutation = { updateFactoringRemittanceLine: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type ApplyFactoringRemittanceMutationVariables = Exact<{
+  input: FactoringRemittanceVersionInput;
+}>;
+
+
+export type ApplyFactoringRemittanceMutation = { applyFactoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type DiscardFactoringRemittanceMutationVariables = Exact<{
+  input: DiscardFactoringRemittanceInput;
+}>;
+
+
+export type DiscardFactoringRemittanceMutation = { discardFactoringRemittance: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } };
+
+export type FactoringRemittanceTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  factoringCompanyId?: string | number | null | undefined;
+  statuses?: Array<FactoringRemittanceStatus> | FactoringRemittanceStatus | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringRemittanceTableQuery = { factoringRemittances: { totalCount?: number | null, edges: Array<{ node: { id: string, factoringCompanyId: string, fileName: string | null, source: FactoringRemittanceSource, sourceFormat: FactoringRemittanceFormat | null, status: FactoringRemittanceStatus, defaultKind: FactoringRemittanceLineKind, remittedOn: number | null, currencyCode: string, lineCount: number, matchedCount: number, exceptionCount: number, appliedCount: number, totalCashMinor: number, error: string | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type FactoringSubmissionItemFieldsFragment = { id: string, submissionId: string, invoiceId: string, invoiceNumber: string, customerId: string, position: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, packetDocumentId: string | null, status: FactoringSubmissionItemStatus, releasedAt: number | null, fundedOn: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, rejectionReason: string | null, settledOn: number | null, chargedBackOn: number | null, chargebackReason: string | null, chargebackWarnedAt: number | null, customer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionItemFieldsFragment' };
 
 export type FactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, agreementId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, schedulePdfDocumentId: string | null, scheduleCsvDocumentId: string | null, transportMethod: FactoringTransportMethod, transportTarget: string, transportReference: string | null, sendAttemptGroup: number, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, fundedAt: number | null, cancelledAt: number | null, cancelReason: string | null, submittedById: string | null, version: number, createdAt: number, updatedAt: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionFieldsFragment' };
@@ -18567,6 +18791,7 @@ export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, Facto
 export { FactoringPlannedMovementFieldsFragmentDoc, FactoringReserveEntryFieldsFragmentDoc, FactoringReserveMovementPlanFieldsFragmentDoc, FactoringReserveEntriesDocument, FactoringReserveBalanceDocument, FactoringFundingPlanDocument, FactoringReleasePlanDocument, FactoringChargebackPlanDocument, FactoringChargebackReversalPlanDocument, RecordFactoringFundingDocument, ReleaseFactoringReserveDocument, RecordFactoringChargebackDocument, ReverseFactoringChargebackDocument } from "./documents/factoring/ledger";
 export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";
 export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocument, FactoringSummaryDocument, InvoiceFactoringDocument, SetInvoiceFactoringOverrideDocument, RequestMissingFactoringDocumentsDocument } from "./documents/factoring/readiness";
+export { FactoringRemittanceFieldsFragmentDoc, FactoringRemittanceLineFieldsFragmentDoc, FactoringRemittancesDocument, FactoringRemittanceDetailDocument, FactoringRemittanceLinesDocument, FactoringRemittancePlanDocument, CreateFactoringRemittanceDocument, StageFactoringRemittanceDocument, RematchFactoringRemittanceDocument, UpdateFactoringRemittanceLineDocument, ApplyFactoringRemittanceDocument, DiscardFactoringRemittanceDocument, FactoringRemittanceTableDocument } from "./documents/factoring/remittances";
 export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";
 export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
