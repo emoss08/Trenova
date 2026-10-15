@@ -3,31 +3,73 @@ import type { ShipmentTender } from "@/lib/graphql/tender";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { TenderOfferStatusBadge, TenderStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   TENDER_CHANNEL_LABEL,
   TENDER_MODE_LABEL,
   TENDER_RESPONSE_SOURCE_LABEL,
+  type BounceTenderPayload,
 } from "@trenova/shared/types/tender";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { TenderBounceDialog } from "./tender-bounce-dialog";
 import { formatOfferRate } from "./tender-vocabulary";
 
-function acceptedCarrierName(tender: ShipmentTender): string | null {
+type BounceTender = (params: {
+  tenderId: string;
+  payload: BounceTenderPayload;
+}) => Promise<unknown>;
+
+function acceptedOffer(tender: ShipmentTender) {
   if (!tender.acceptedOfferId) return null;
-  const accepted = tender.offers?.find((offer) => offer.id === tender.acceptedOfferId);
-  return accepted?.carrier?.name ?? null;
+  return tender.offers?.find((offer) => offer.id === tender.acceptedOfferId) ?? null;
 }
 
-function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
+/**
+ * A carrier can back out of a tender it accepted while the acceptance still
+ * stands: the tender is accepted, or parked for review, and the offer it
+ * accepted has not already been walked back. The server holds the same rule.
+ */
+export function canRecordBackout(tender: ShipmentTender): boolean {
+  if (tender.status !== "Accepted" && tender.status !== "NeedsReview") return false;
+  return acceptedOffer(tender)?.status === "Accepted";
+}
+
+function TenderHistoryRow({
+  tender,
+  isTendering,
+  onBounceTender,
+}: {
+  tender: ShipmentTender;
+  isTendering: boolean;
+  onBounceTender: BounceTender | null;
+}) {
   const t = useT();
 
   const [expanded, setExpanded] = useState(false);
+  const [bouncing, setBouncing] = useState(false);
   const offers = [...(tender.offers ?? [])].sort((a, b) => a.rank - b.rank);
-  const acceptedCarrier = acceptedCarrierName(tender);
+  const accepted = acceptedOffer(tender);
+  const acceptedCarrier = accepted?.carrier?.name ?? null;
+  const showBackout = onBounceTender !== null && canRecordBackout(tender);
+
+  const handleBounce = useCallback(
+    (payload: BounceTenderPayload) => {
+      if (!onBounceTender) return;
+      void onBounceTender({ tenderId: tender.id, payload })
+        .then(() => setBouncing(false))
+        .catch(() => {
+          // handled by the mutation's onError; the dialog stays open for a retry
+        });
+    },
+    [onBounceTender, tender.id],
+  );
 
   return (
     <div className="bg-card flex flex-col rounded-md border">
@@ -59,7 +101,46 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
         <span className="text-muted-foreground px-2 pb-1 text-2xs">
           {t("Accepted by")} <span className="text-foreground font-medium">{acceptedCarrier}</span>
           {tender.acceptedAt != null ? ` · ${formatUnixDateTime(tender.acceptedAt)}` : ""}
+          {accepted?.counterRate && accepted.agreedRate !== accepted.rate
+            ? ` · ${t("at {0} after a counter-offer", formatOfferRate(accepted.agreedRate, accepted.rateMethod))}`
+            : ""}
         </span>
+      )}
+      {(tender.bounceCount > 0 || tender.escalationRound > 0) && (
+        <span className="text-muted-foreground px-2 pb-1 text-2xs">
+          {[
+            tender.escalationRound > 0 ? t("Escalation round {0}", tender.escalationRound) : null,
+            tender.bounceCount > 0
+              ? t(
+                  "{0, plural, one {a carrier backed out once} other {carriers backed out # times}}",
+                  tender.bounceCount,
+                )
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+      )}
+      {showBackout && (
+        <div className="px-2 pb-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive hover:text-destructive h-6 px-2 text-2xs"
+            disabled={isTendering}
+            onClick={() => setBouncing(true)}
+          >
+            {t("Carrier backed out")}
+          </Button>
+        </div>
+      )}
+      {bouncing && (
+        <TenderBounceDialog
+          carrierName={acceptedCarrier}
+          isSubmitting={isTendering}
+          onOpenChange={setBouncing}
+          onConfirm={handleBounce}
+        />
       )}
       {tender.status === "Canceled" && tender.cancellationReason && (
         <span className="text-muted-foreground px-2 pb-1 text-2xs italic">
@@ -106,9 +187,20 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                   </span>
                 )}
               </div>
-              {offer.status === "Declined" && offer.declineReason && (
-                <span className="text-muted-foreground text-2xs italic">
-                  “{offer.declineReason}”
+              {offer.counterRate && (
+                <span className="text-muted-foreground text-2xs tabular-nums">
+                  {t("Countered at {0}", formatOfferRate(offer.counterRate, offer.rateMethod))}
+                </span>
+              )}
+              {(offer.status === "Declined" || offer.status === "CounterRejected") &&
+                offer.declineReason && (
+                  <span className="text-muted-foreground text-2xs italic">
+                    “{offer.declineReason}”
+                  </span>
+                )}
+              {offer.status === "Revoked" && offer.revokeReason && (
+                <span className="text-muted-foreground text-2xs">
+                  {t("Backed out: “{0}”", offer.revokeReason)}
                 </span>
               )}
             </div>
@@ -129,11 +221,20 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
 export function TenderHistory({
   shipmentId,
   className,
+  isTendering = false,
+  onBounceTender,
 }: {
   shipmentId: string;
   className?: string;
+  isTendering?: boolean;
+  /** Records that an accepting carrier backed out; offered to users with tender:update. */
+  onBounceTender?: BounceTender;
 }) {
   const t = useT();
+  const canUpdateTender = usePermissionStore((state) =>
+    state.hasPermission(Resource.Tender, Operation.Update),
+  );
+  const bounce = onBounceTender && canUpdateTender ? onBounceTender : null;
 
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.shipmentTenders(shipmentId),
@@ -151,7 +252,14 @@ export function TenderHistory({
       {isLoading ? (
         <Skeleton className="h-12 rounded-md" />
       ) : (
-        tenders.map((tender) => <TenderHistoryRow key={tender.id} tender={tender} />)
+        tenders.map((tender) => (
+          <TenderHistoryRow
+            key={tender.id}
+            tender={tender}
+            isTendering={isTendering}
+            onBounceTender={bounce}
+          />
+        ))
       )}
     </div>
   );

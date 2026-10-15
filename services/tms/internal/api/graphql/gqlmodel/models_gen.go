@@ -9356,8 +9356,9 @@ type ShipmentSuggestionQueue struct {
 
 // Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 // TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-// TenderEntryWarned.
+// TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+// TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+// TenderEscalated.
 type ShipmentTenderEvent struct {
 	ID             string                          `json:"id"`
 	OrganizationID string                          `json:"organizationId"`
@@ -13698,6 +13699,10 @@ const (
 	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
 	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
 	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeTenderBounced         ShipmentEventType = "TenderBounced"
+	ShipmentEventTypeTenderCountered       ShipmentEventType = "TenderCountered"
+	ShipmentEventTypeTenderCounterDecided  ShipmentEventType = "TenderCounterDecided"
+	ShipmentEventTypeTenderEscalated       ShipmentEventType = "TenderEscalated"
 	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
 	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
 	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
@@ -13731,6 +13736,10 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeTenderDeliveryFailed,
 	ShipmentEventTypeTenderEntrySkipped,
 	ShipmentEventTypeTenderEntryWarned,
+	ShipmentEventTypeTenderBounced,
+	ShipmentEventTypeTenderCountered,
+	ShipmentEventTypeTenderCounterDecided,
+	ShipmentEventTypeTenderEscalated,
 	ShipmentEventTypeHoldPlaced,
 	ShipmentEventTypeHoldUpdated,
 	ShipmentEventTypeHoldReleased,
@@ -13739,7 +13748,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeTenderBounced, ShipmentEventTypeTenderCountered, ShipmentEventTypeTenderCounterDecided, ShipmentEventTypeTenderEscalated, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

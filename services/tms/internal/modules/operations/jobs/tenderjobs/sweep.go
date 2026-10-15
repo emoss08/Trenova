@@ -76,7 +76,7 @@ func (a *Activities) SweepStalledTendersActivity(
 		// The stored workflow_id is informational; the identifier is fully
 		// deterministic, so a tender that crashed before recording it is
 		// still recoverable.
-		workflowID := tendercontract.WorkflowID(entity.ID)
+		workflowID := tendercontract.WorkflowID(entity.ID, entity.BounceCount)
 
 		signalErr := a.workflows.SignalWorkflow(
 			ctx, workflowID, "", tendercontract.TenderSignalName,

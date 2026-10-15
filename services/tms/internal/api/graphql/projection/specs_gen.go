@@ -25979,6 +25979,22 @@ func init() {
 				FieldMapKey: "canceledAt",
 			},
 			{
+				Name:        "bounceCount",
+				FieldMapKey: "bounceCount",
+			},
+			{
+				Name:        "lastBouncedAt",
+				FieldMapKey: "lastBouncedAt",
+			},
+			{
+				Name:        "escalatedFromId",
+				FieldMapKey: "escalatedFromId",
+			},
+			{
+				Name:        "escalationRound",
+				FieldMapKey: "escalationRound",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -26101,6 +26117,54 @@ func init() {
 			{
 				Name:        "lateResponseAt",
 				FieldMapKey: "lateResponseAt",
+			},
+			{
+				Name:        "counterRate",
+				FieldMapKey: "counterRate",
+			},
+			{
+				Name:        "counterNote",
+				FieldMapKey: "counterNote",
+			},
+			{
+				Name:        "counteredAt",
+				FieldMapKey: "counteredAt",
+			},
+			{
+				Name:        "counterMarginPercent",
+				FieldMapKey: "counterMargin",
+			},
+			{
+				Name:        "counterNeedsApproval",
+				FieldMapKey: "counterNeedsApproval",
+			},
+			{
+				Name:        "counterDecidedAt",
+				FieldMapKey: "counterDecidedAt",
+			},
+			{
+				Name:        "counterDecidedById",
+				FieldMapKey: "counterDecidedById",
+			},
+			{
+				Name:    "agreedRate",
+				Special: "agreedRate",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokeReason",
+				FieldMapKey: "revokeReason",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "reofferedFromId",
+				FieldMapKey: "reofferedFromId",
 			},
 			{
 				Name:        "version",

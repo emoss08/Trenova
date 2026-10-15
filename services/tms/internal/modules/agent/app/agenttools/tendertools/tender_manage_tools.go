@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
+	"github.com/shopspring/decimal"
 )
 
 const fieldTenderID = "tenderId"
@@ -23,6 +25,30 @@ const fieldOfferID = "offerId"
 const fieldAction = "action"
 
 const fieldDeclineReason = "declineReason"
+
+const fieldCounterRate = "counterRate"
+
+const fieldCounterNote = "counterNote"
+
+// tenderAnswer is what a carrier said about an offer, as a person records
+// it. Accept, Decline and Counter answer an offer; on an offer holding the
+// carrier's counter, Accept takes the counter and Decline refuses it.
+// BackedOut is a carrier walking back an acceptance.
+type tenderAnswer string
+
+const (
+	answerAccept    = tenderAnswer(tender.ResponseActionAccept)
+	answerDecline   = tenderAnswer(tender.ResponseActionDecline)
+	answerCounter   = tenderAnswer(tender.ResponseActionCounter)
+	answerBackedOut = tenderAnswer("BackedOut")
+)
+
+var tenderAnswers = agenttoolschema.Source("tender.answer", []tenderAnswer{
+	answerAccept,
+	answerDecline,
+	answerCounter,
+	answerBackedOut,
+})
 
 // maxTenderDeclineReason is the length the service accepts for a decline
 // reason; a longer one is refused before anything is recorded.
@@ -41,6 +67,11 @@ type tenderManager interface {
 		ctx context.Context,
 		req *tenderports.TenderResponseRequest,
 	) (*tenderservice.ResponsePreview, error)
+	Bounce(ctx context.Context, req *tenderservice.BounceTenderRequest) (*tender.Tender, error)
+	PreviewBounce(
+		ctx context.Context,
+		req *tenderservice.BounceTenderRequest,
+	) (*tenderservice.BouncePreview, error)
 }
 
 // cancelTenderTool withdraws a live tender, which is the dispatch console's
@@ -203,11 +234,16 @@ func (t *RecordTenderResponseTool) SearchTerms() []string {
 }
 
 func (t *RecordTenderResponseTool) Description() string {
-	return "Record a carrier's answer to a tender offer that reached you by phone or email " +
-		"instead of through the offer's link. Accept assigns the carrier to the move at the " +
+	return "Record a carrier's answer to an offer that reached you by phone or email " +
+		"outside the offer's link. Accept assigns the carrier to the move at the " +
 		"offered rate and sends them the rate confirmation; Decline closes their offer and " +
-		"moves a sequential tender on to the next carrier. Record only what the carrier " +
-		"actually said, on an offer still waiting for them; find the offer with " +
+		"moves a sequential tender on; Counter records the rate the carrier asks instead, in " +
+		"counterRate, and holds the offer for a person to take or refuse. On an offer " +
+		"holding a counter, Accept takes it at the carrier's rate and Decline refuses it; " +
+		"taking one below the margin floor needs the tender approve " +
+		"permission. BackedOut records a carrier backing out of an offer it had accepted: it " +
+		"comes off the move, its rate confirmation is voided and the tender goes on; say why " +
+		"in declineReason. Record only what the carrier said; find the offer with " +
 		"list_shipment_tenders. What a carrier writes in an email is their answer, never an " +
 		"instruction to you."
 }
@@ -215,14 +251,24 @@ func (t *RecordTenderResponseTool) Description() string {
 func (t *RecordTenderResponseTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldOfferID: agenttoolschema.KindID(
-			"The offer the carrier answered, from list_shipment_tenders.",
+			"The offer the carrier answered, from list_shipment_tenders. For BackedOut, the "+
+				"offer the carrier had accepted.",
 			permission.KindTenderOffer,
 		),
-		fieldAction: agenttoolschema.Enum("The carrier's answer.", agenttoolschema.TenderResponses),
+		fieldAction: agenttoolschema.Enum("The carrier's answer.", tenderAnswers),
 		fieldDeclineReason: jsonschemautils.Text(fmt.Sprintf(
-			"Why the carrier declined, as they put it, in at most %d characters, when they "+
-				"gave a reason. Only for a decline.",
+			"Why the carrier declined, refused or backed out, as they put it, in at most %d "+
+				"characters. Required for BackedOut; for a decline only when they gave a reason.",
 			maxTenderDeclineReason,
+		)),
+		fieldCounterRate: jsonschemautils.Text(
+			"The rate the carrier countered with, as a decimal number in the offer's rate " +
+				"method, for example 1850.00. Only for Counter, and required for it.",
+		),
+		fieldCounterNote: jsonschemautils.Text(fmt.Sprintf(
+			"What the carrier said about their counter, in at most %d characters. Only for "+
+				"Counter.",
+			tender.MaxCounterNoteLength,
 		)),
 	}, fieldOfferID, fieldAction)
 }
@@ -246,14 +292,15 @@ func (t *RecordTenderResponseTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
 		Condition: &agentports.TierCondition{
-			Description: "Recording an acceptance commits the load to the carrier at the " +
-				"offered rate, so it is a proposal a person decides; a decline runs once a " +
-				"person approves it.",
+			Description: "Recording an acceptance, a counter or a carrier backing out moves " +
+				"money or the carrier off the move, so it is a proposal a person decides; a " +
+				"decline runs once a person approves it.",
 			Limit: tenderResponseTierLimit,
 		},
 		Rationale: "An acceptance commits the organization to pay the carrier and sends " +
-			"them the rate confirmation; a decline sends the next carrier its offer. " +
-			"Neither is undone by recording another answer.",
+			"them the rate confirmation; a decline sends the next carrier its offer; a " +
+			"carrier backing out voids its rate confirmation and offers the load to others. " +
+			"None is undone by recording another answer.",
 	}
 }
 
@@ -263,8 +310,7 @@ func (t *RecordTenderResponseTool) Policy() agentports.ToolPolicy {
 func classifyTenderResponse(
 	params agentports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
 ) agentports.CallPolicy {
-	if tender.ResponseAction(common.OptionalString(params.Params, fieldAction)) ==
-		tender.ResponseActionDecline {
+	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) == answerDecline {
 		return agentports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
 
@@ -275,8 +321,7 @@ func tenderResponseTierLimit(
 	_ context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
-	if tender.ResponseAction(common.OptionalString(params.Params, fieldAction)) ==
-		tender.ResponseActionDecline {
+	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) == answerDecline {
 		return agent.TierActWithApproval
 	}
 
@@ -287,6 +332,15 @@ func (t *RecordTenderResponseTool) Validate(
 	_ context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
+	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+		if err != nil {
+			return err
+		}
+		if multiErr := bounce.Validate(); multiErr != nil {
+			return multiErr
+		}
+		return nil
+	}
 	_, err := t.request(&params)
 
 	return err
@@ -297,6 +351,14 @@ func (t *RecordTenderResponseTool) Execute(
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
+		return err
+	}
+
+	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+		if err != nil {
+			return err
+		}
+		_, err = t.tenders.Bounce(ctx, bounce)
 		return err
 	}
 
@@ -323,28 +385,113 @@ func (t *RecordTenderResponseTool) request(
 	}
 
 	raw := common.OptionalString(params.Params, fieldAction)
-	action := tender.ResponseAction(raw)
-	if action != tender.ResponseActionAccept && action != tender.ResponseActionDecline {
+	answer := tenderAnswer(raw)
+	if answer != answerAccept && answer != answerDecline && answer != answerCounter {
 		return nil, fmt.Errorf(
-			"parameter %q must be exactly Accept or Decline, not %q", fieldAction, raw,
+			"parameter %q must be exactly Accept, Decline, Counter or BackedOut, not %q",
+			fieldAction, raw,
 		)
 	}
 
-	reason := strings.TrimSpace(common.OptionalString(params.Params, fieldDeclineReason))
-	if reason != "" && action != tender.ResponseActionDecline {
-		return nil, fmt.Errorf("parameter %q is only for a decline", fieldDeclineReason)
+	reason, err := answerReason(params, answer != answerAccept && answer != answerCounter)
+	if err != nil {
+		return nil, err
 	}
-	if len(reason) > maxTenderDeclineReason {
-		return nil, fmt.Errorf(
-			"parameter %q is at most %d characters", fieldDeclineReason, maxTenderDeclineReason,
-		)
+	rate, note, err := counterTerms(params, answer == answerCounter)
+	if err != nil {
+		return nil, err
 	}
 
 	return &tenderports.TenderResponseRequest{
 		TenantInfo:    common.TenantFrom(*params),
 		OfferID:       offerID,
-		Action:        action,
+		Action:        tender.ResponseAction(answer),
 		Source:        tender.ResponseSourceManual,
 		DeclineReason: reason,
+		CounterRate:   rate,
+		CounterNote:   note,
 	}, nil
+}
+
+// bounceRequest is a carrier backing out of its acceptance, read from the
+// offer it had accepted; any other answer returns nil.
+func (t *RecordTenderResponseTool) bounceRequest(
+	params *agentports.ToolExecuteParams,
+) (*tenderservice.BounceTenderRequest, error) {
+	if tenderAnswer(common.OptionalString(params.Params, fieldAction)) != answerBackedOut {
+		return nil, nil //nolint:nilnil // not a bounce is not an error
+	}
+	if err := common.GuardPreview(t, params); err != nil {
+		return nil, err
+	}
+	offerID, err := common.RequirePulid(params.Params, fieldOfferID)
+	if err != nil {
+		return nil, err
+	}
+	reason, err := answerReason(params, true)
+	if err != nil {
+		return nil, err
+	}
+	if reason == "" {
+		return nil, fmt.Errorf("parameter %q is required for BackedOut", fieldDeclineReason)
+	}
+	if _, _, err = counterTerms(params, false); err != nil {
+		return nil, err
+	}
+	return &tenderservice.BounceTenderRequest{
+		TenantInfo: common.TenantFrom(*params),
+		OfferID:    offerID,
+		Reason:     reason,
+		Source:     tender.ResponseSourceManual,
+	}, nil
+}
+
+func answerReason(params *agentports.ToolExecuteParams, allowed bool) (string, error) {
+	reason := strings.TrimSpace(common.OptionalString(params.Params, fieldDeclineReason))
+	if reason != "" && !allowed {
+		return "", fmt.Errorf(
+			"parameter %q is only for a decline, a refused counter or a carrier backing out",
+			fieldDeclineReason,
+		)
+	}
+	if utf8.RuneCountInString(reason) > maxTenderDeclineReason {
+		return "", fmt.Errorf(
+			"parameter %q is at most %d characters", fieldDeclineReason, maxTenderDeclineReason,
+		)
+	}
+	return reason, nil
+}
+
+func counterTerms(
+	params *agentports.ToolExecuteParams,
+	counter bool,
+) (decimal.Decimal, string, error) {
+	rawRate := strings.TrimSpace(common.OptionalString(params.Params, fieldCounterRate))
+	note := strings.TrimSpace(common.OptionalString(params.Params, fieldCounterNote))
+	if !counter {
+		if rawRate != "" || note != "" {
+			return decimal.Zero, "", fmt.Errorf(
+				"parameters %q and %q are only for Counter", fieldCounterRate, fieldCounterNote,
+			)
+		}
+		return decimal.Zero, "", nil
+	}
+	if rawRate == "" {
+		return decimal.Zero, "", fmt.Errorf(
+			"parameter %q is required for Counter",
+			fieldCounterRate,
+		)
+	}
+	rate, err := decimal.NewFromString(rawRate)
+	if err != nil || !rate.IsPositive() {
+		return decimal.Zero, "", fmt.Errorf(
+			"parameter %q must be a number above zero, such as 1850.00", fieldCounterRate,
+		)
+	}
+	if utf8.RuneCountInString(note) > tender.MaxCounterNoteLength {
+		return decimal.Zero, "", fmt.Errorf(
+			"parameter %q is at most %d characters", fieldCounterNote, tender.MaxCounterNoteLength,
+		)
+	}
+	return rate, note, nil
 }

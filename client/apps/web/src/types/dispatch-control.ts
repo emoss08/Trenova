@@ -5,6 +5,7 @@ import {
   versionSchema,
 } from "@trenova/shared/types/helpers";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { compareDecimalStrings, decimalString } from "@trenova/shared/types/decimal";
 
 export const serviceIncidentTypeSchema = z.enum([
   "Never",
@@ -196,6 +197,36 @@ export const SCORING_FACTOR_META: ReadonlyArray<{
   },
 ];
 
+export const tenderExhaustedActionSchema = z.enum(["Notify", "Rebroadcast", "Rewaterfall"]);
+
+export type TenderExhaustedAction = z.infer<typeof tenderExhaustedActionSchema>;
+
+const PERCENT_SCALE = 4;
+
+/**
+ * A percentage the server keeps as NUMERIC(7,4). It travels as a decimal
+ * string so the digits a dispatcher typed are the digits saved, and the
+ * server's JSON number form is read back as the same string.
+ */
+function percentSchema(params: { min: string; max: string; fallback: string; label: string }) {
+  return z
+    .union([z.string(), z.number()])
+    .transform((value) => (typeof value === "number" ? value.toString() : value))
+    .pipe(
+      decimalString(
+        PERCENT_SCALE,
+        translate("{0} must be a number with at most 4 decimals", translate(params.label)),
+      )
+        .refine((value) => compareDecimalStrings(value, params.min) >= 0, {
+          error: () => translate("{0} cannot be below {1}%", translate(params.label), params.min),
+        })
+        .refine((value) => compareDecimalStrings(value, params.max) <= 0, {
+          error: () => translate("{0} cannot exceed {1}%", translate(params.label), params.max),
+        }),
+    )
+    .default(params.fallback);
+}
+
 export const complianceEnforcementLevelSchema = z.enum(["Warning", "Block", "Audit"]);
 
 export type ComplianceEnforcementLevel = z.infer<typeof complianceEnforcementLevelSchema>;
@@ -310,6 +341,41 @@ export const dispatchControlSchema = z
       .min(1, { error: () => translate("POD grace must be at least 1 hour") })
       .max(720, { error: () => translate("POD grace cannot exceed 720 hours") })
       .default(24),
+    tenderCounterOffersEnabled: z.boolean().default(true),
+    tenderCounterMarginFloorPercent: percentSchema({
+      min: "-100",
+      max: "100",
+      fallback: "10",
+      label: "Margin floor",
+    }),
+    tenderAutoAcceptCounters: z.boolean().default(false),
+    tenderCounterDecisionMinutes: z
+      .number({ error: () => translate("Enter how long dispatch has to answer a counter") })
+      .int()
+      .min(5, { error: () => translate("Counter decision time must be at least 5 minutes") })
+      .max(1440, { error: () => translate("Counter decision time cannot exceed 1440 minutes") })
+      .default(60),
+    tenderExhaustedAction: tenderExhaustedActionSchema.default("Notify"),
+    tenderEscalationRateIncreasePercent: percentSchema({
+      min: "0",
+      max: "100",
+      fallback: "0",
+      label: "Rate increase",
+    }),
+    tenderEscalationOfferTtlMinutes: z
+      .number({ error: () => translate("Enter how long an escalated offer stays open") })
+      .int()
+      .min(5, { error: () => translate("Escalated offers must stay open at least 5 minutes") })
+      .max(10080, {
+        error: () => translate("Escalated offers cannot stay open beyond 10080 minutes"),
+      })
+      .default(60),
+    tenderMaxEscalations: z
+      .number({ error: () => translate("Enter how many times an exhausted tender may escalate") })
+      .int()
+      .min(0, { error: () => translate("Escalations cannot be negative") })
+      .max(5, { error: () => translate("Escalations cannot exceed 5") })
+      .default(1),
   })
   .refine(
     (data) => {
