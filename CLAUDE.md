@@ -414,6 +414,12 @@ administration tools, and who holds them, are in
 The worker safety, compliance, HR, permit and driver pay tools, what is left to a person's
 signature, and who holds them are in
 [docs/engineering/agent-workforce-tools.md](docs/engineering/agent-workforce-tools.md).
+How an agent drafts a whole EDI connection from a trading partner's implementation guide (cited
+values checked against their pages, held values, secrets never taken, a change set on a revised
+guide, one proposal applied in one transaction) is in
+[docs/engineering/edi-spec-onboarding.md](docs/engineering/edi-spec-onboarding.md). Read it before
+changing `ediconnectiondraft`, `draft_edi_connection`, `apply_edi_connection_draft` or the
+`edi_connection_draft` Desk artifact.
 The carrier, customer, commodity, hazardous material, location and equipment tools, document,
 change alert and watchtower housekeeping, capture filing, and who holds them are in
 [docs/engineering/agent-master-data-tools.md](docs/engineering/agent-master-data-tools.md).

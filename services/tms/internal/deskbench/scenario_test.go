@@ -1,6 +1,7 @@
 package deskbench_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/deskbench"
@@ -59,6 +60,7 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 	require.NotEmpty(t, scenarios)
 
 	called := map[string]bool{}
+	proposed := map[string]bool{}
 	for _, scenario := range scenarios {
 		assert.Equal(t, deskbench.BenchAgentPrefix+"EDI desk", scenario.Agent, scenario.Name)
 		require.NoError(t, scenario.Validate(), scenario.Name)
@@ -66,10 +68,18 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 			for _, call := range step.Expect.Calls {
 				called[call] = true
 			}
+			for _, proposal := range step.Expect.Proposals {
+				proposed[proposal.Tool] = true
+			}
+			for _, attachment := range step.Attach {
+				assert.FileExists(t, filepath.Join("../../deskbench/scenarios", attachment), scenario.Name)
+			}
 		}
 	}
+	assert.True(t, proposed["apply_edi_connection_draft"], "no EDI scenario saves a drafted connection")
 	for _, tool := range []string{
 		"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
+		"draft_edi_connection",
 	} {
 		assert.Truef(t, called[tool], "no EDI scenario expects %s", tool)
 	}
@@ -82,6 +92,7 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 			found = true
 			assert.Subset(t, spec.Tools, []string{
 				"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
+				"draft_edi_connection", "apply_edi_connection_draft",
 			})
 		}
 	}
