@@ -14,6 +14,11 @@ type GetSubmissionRequest struct {
 	IncludeItems bool                  `json:"includeItems"`
 }
 
+type GetSubmissionsByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	IDs        []pulid.ID            `json:"ids"`
+}
+
 type GetSubmissionByKeyRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	IdempotencyKey string                `json:"idempotencyKey"`
@@ -27,15 +32,22 @@ type ListSubmissionConnectionRequest struct {
 }
 
 type ListLiveItemsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	InvoiceIDs []pulid.ID            `json:"invoiceIds"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	InvoiceIDs         []pulid.ID            `json:"invoiceIds"`
+	IncludeChargedBack bool                  `json:"includeChargedBack"`
 }
 
 type LiveItem struct {
-	InvoiceID        pulid.ID                   `json:"invoiceId"        bun:"invoice_id"`
-	SubmissionID     pulid.ID                   `json:"submissionId"     bun:"submission_id"`
-	SubmissionNumber string                     `json:"submissionNumber" bun:"submission_number"`
-	SubmissionStatus factoring.SubmissionStatus `json:"submissionStatus" bun:"submission_status"`
+	InvoiceID        pulid.ID                       `json:"invoiceId"        bun:"invoice_id"`
+	SubmissionID     pulid.ID                       `json:"submissionId"     bun:"submission_id"`
+	SubmissionNumber string                         `json:"submissionNumber" bun:"submission_number"`
+	SubmissionStatus factoring.SubmissionStatus     `json:"submissionStatus" bun:"submission_status"`
+	ItemID           pulid.ID                       `json:"itemId"           bun:"item_id"`
+	ItemStatus       factoring.SubmissionItemStatus `json:"itemStatus"       bun:"item_status"`
+}
+
+func (l *LiveItem) IsLive() bool {
+	return l != nil && l.ItemStatus.IsLive()
 }
 
 type ListItemsBySubmissionIDsRequest struct {
@@ -51,11 +63,19 @@ type SetSubmissionDocumentsRequest struct {
 	Packets               map[pulid.ID]pulid.ID `json:"packets"`
 }
 
+type ClaimChargebackWarningRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ItemID     pulid.ID              `json:"itemId"`
+	At         int64                 `json:"at"`
+}
+
 type SubmissionRepository interface {
+	ClaimChargebackWarning(ctx context.Context, req ClaimChargebackWarningRequest) (bool, error)
 	Create(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
 	Update(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
 	SetDocuments(ctx context.Context, req *SetSubmissionDocumentsRequest) error
 	GetByID(ctx context.Context, req GetSubmissionRequest) (*factoring.Submission, error)
+	GetByIDs(ctx context.Context, req GetSubmissionsByIDsRequest) ([]*factoring.Submission, error)
 	GetByIdempotencyKey(
 		ctx context.Context,
 		req GetSubmissionByKeyRequest,

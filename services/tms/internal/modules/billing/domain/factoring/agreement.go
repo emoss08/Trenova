@@ -24,6 +24,7 @@ const (
 	MaxAgreementNotesLength  = 2000
 	MaxFeeTiers              = 20
 	DefaultChargebackWindow  = 90
+	ChargebackWarningDays    = 7
 	DefaultFundingDays       = 2
 	DefaultSubmissionMinutes = 600
 )
@@ -37,27 +38,31 @@ type Agreement struct {
 	bun.BaseModel             `bun:"table:factoring_agreements,alias:facagr" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	FactoringCompanyID   pulid.ID            `json:"factoringCompanyId"   bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	Status               AgreementStatus     `json:"status"               bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
-	EffectiveFrom        int64               `json:"effectiveFrom"        bun:"effective_from,type:BIGINT,notnull"`
-	EffectiveTo          *int64              `json:"effectiveTo"          bun:"effective_to,type:BIGINT,nullzero"`
-	AdvanceRateBP        int                 `json:"advanceRateBp"        bun:"advance_rate_bp,type:INTEGER,notnull"`
-	ReserveRateBP        int                 `json:"reserveRateBp"        bun:"reserve_rate_bp,type:INTEGER,notnull"`
-	MinimumFeeMinor      int64               `json:"minimumFeeMinor"      bun:"minimum_fee_minor,type:BIGINT,notnull"`
-	ChargebackWindowDays int                 `json:"chargebackWindowDays" bun:"chargeback_window_days,type:INTEGER,notnull"`
-	Recourse             Recourse            `json:"recourse"             bun:"recourse,type:VARCHAR(20),notnull,default:'Recourse'"`
-	AccountingTreatment  AccountingTreatment `json:"accountingTreatment"  bun:"accounting_treatment,type:VARCHAR(30),notnull,default:'Sale'"`
-	FundingDays          int                 `json:"fundingDays"          bun:"funding_days,type:INTEGER,notnull"`
-	SubmissionTime       int                 `json:"submissionTime"       bun:"submission_time,type:INTEGER,notnull"`
-	Notes                string              `json:"notes"                bun:"notes,type:TEXT,nullzero"`
-	ActivatedAt          *int64              `json:"activatedAt"          bun:"activated_at,type:BIGINT,nullzero"`
-	EndedAt              *int64              `json:"endedAt"              bun:"ended_at,type:BIGINT,nullzero"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull"`
+	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	FactoringCompanyID     pulid.ID            `json:"factoringCompanyId"     bun:"factoring_company_id,type:VARCHAR(100),notnull"`
+	Status                 AgreementStatus     `json:"status"                 bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
+	EffectiveFrom          int64               `json:"effectiveFrom"          bun:"effective_from,type:BIGINT,notnull"`
+	EffectiveTo            *int64              `json:"effectiveTo"            bun:"effective_to,type:BIGINT,nullzero"`
+	AdvanceRateBP          int                 `json:"advanceRateBp"          bun:"advance_rate_bp,type:INTEGER,notnull"`
+	ReserveRateBP          int                 `json:"reserveRateBp"          bun:"reserve_rate_bp,type:INTEGER,notnull"`
+	MinimumFeeMinor        int64               `json:"minimumFeeMinor"        bun:"minimum_fee_minor,type:BIGINT,notnull"`
+	ChargebackWindowDays   int                 `json:"chargebackWindowDays"   bun:"chargeback_window_days,type:INTEGER,notnull"`
+	Recourse               Recourse            `json:"recourse"               bun:"recourse,type:VARCHAR(20),notnull,default:'Recourse'"`
+	AccountingTreatment    AccountingTreatment `json:"accountingTreatment"    bun:"accounting_treatment,type:VARCHAR(30),notnull,default:'Sale'"`
+	FundingDays            int                 `json:"fundingDays"            bun:"funding_days,type:INTEGER,notnull"`
+	SubmissionTime         int                 `json:"submissionTime"         bun:"submission_time,type:INTEGER,notnull"`
+	Notes                  string              `json:"notes"                  bun:"notes,type:TEXT,nullzero"`
+	DueFromFactorAccountID pulid.ID            `json:"dueFromFactorAccountId" bun:"due_from_factor_account_id,type:VARCHAR(100),nullzero"`
+	FeeExpenseAccountID    pulid.ID            `json:"feeExpenseAccountId"    bun:"fee_expense_account_id,type:VARCHAR(100),nullzero"`
+	LiabilityAccountID     pulid.ID            `json:"liabilityAccountId"     bun:"factoring_liability_account_id,type:VARCHAR(100),nullzero"`
+	CashAccountID          pulid.ID            `json:"cashAccountId"          bun:"cash_account_id,type:VARCHAR(100),nullzero"`
+	ActivatedAt            *int64              `json:"activatedAt"            bun:"activated_at,type:BIGINT,nullzero"`
+	EndedAt                *int64              `json:"endedAt"                bun:"ended_at,type:BIGINT,nullzero"`
+	Version                int64               `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull"`
+	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	FeeTiers         []*FeeTier                         `json:"feeTiers"                   bun:"rel:has-many,join:id=agreement_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
@@ -242,6 +247,93 @@ func (a *Agreement) InForce(at int64) bool {
 
 func (a *Agreement) IsNonRecourse() bool {
 	return a != nil && a.Recourse == RecourseNone
+}
+
+type PostingAccounts struct {
+	AR            pulid.ID
+	Cash          pulid.ID
+	DueFromFactor pulid.ID
+	FeeExpense    pulid.ID
+	Liability     pulid.ID
+}
+
+type MissingAccount struct {
+	Field   string
+	Message string
+}
+
+func (a *Agreement) PostingAccounts(defaultAR, defaultCash pulid.ID) PostingAccounts {
+	cash := a.CashAccountID
+	if cash.IsNil() {
+		cash = defaultCash
+	}
+	return PostingAccounts{
+		AR:            defaultAR,
+		Cash:          cash,
+		DueFromFactor: a.DueFromFactorAccountID,
+		FeeExpense:    a.FeeExpenseAccountID,
+		Liability:     a.LiabilityAccountID,
+	}
+}
+
+func (p *PostingAccounts) For(role AccountRole) pulid.ID {
+	switch role {
+	case AccountRoleAR:
+		return p.AR
+	case AccountRoleCash:
+		return p.Cash
+	case AccountRoleDueFromFactor:
+		return p.DueFromFactor
+	case AccountRoleFeeExpense:
+		return p.FeeExpense
+	case AccountRoleLiability:
+		return p.Liability
+	default:
+		return pulid.Nil
+	}
+}
+
+func (p *PostingAccounts) Missing(treatment AccountingTreatment) []MissingAccount {
+	missing := make([]MissingAccount, 0, 5)
+	if p.AR.IsNil() {
+		missing = append(missing, MissingAccount{
+			Field:   "defaultArAccountId",
+			Message: "Set the organization's accounts receivable account in accounting settings before booking factoring",
+		})
+	}
+	if p.Cash.IsNil() {
+		missing = append(missing, MissingAccount{
+			Field:   "cashAccountId",
+			Message: "Set a cash account on the agreement or in accounting settings before booking factoring",
+		})
+	}
+	if p.FeeExpense.IsNil() {
+		missing = append(missing, MissingAccount{
+			Field:   "feeExpenseAccountId",
+			Message: "Set the agreement's factoring fee account before booking factoring",
+		})
+	}
+	switch treatment {
+	case AccountingTreatmentSecuredBorrowing:
+		if p.Liability.IsNil() {
+			missing = append(missing, MissingAccount{
+				Field:   "liabilityAccountId",
+				Message: "Set the agreement's factoring liability account before booking factoring",
+			})
+		}
+	case AccountingTreatmentSale:
+		if p.DueFromFactor.IsNil() {
+			missing = append(missing, MissingAccount{
+				Field:   "dueFromFactorAccountId",
+				Message: "Set the agreement's due-from-factor account before booking factoring",
+			})
+		}
+	}
+	return missing
+}
+
+func (a *Agreement) ChargebackDeadline(fundedOn int64) int64 {
+	return fundedOn + int64(a.ChargebackWindowDays)*timeutils.SecondsPerDay
 }
 
 func (a *Agreement) DocumentTypeIDs() []pulid.ID {

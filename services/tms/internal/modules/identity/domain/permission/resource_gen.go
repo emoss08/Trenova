@@ -108,6 +108,7 @@ const (
 	ResourceFactoringAgreement   Resource = "factoring_agreement"
 	ResourceFactoringNoa         Resource = "factoring_noa"
 	ResourceFactoringSubmission  Resource = "factoring_submission"
+	ResourceFactoringReserve     Resource = "factoring_reserve"
 	ResourceBillingQueue         Resource = "billing_queue"
 	ResourceInvoiceRun           Resource = "invoice_run"
 	ResourceAccessorialCharge    Resource = "accessorial_charge"

@@ -27,7 +27,7 @@ export function FactoringPage() {
       pageHeaderProps={{
         title: t("Factoring"),
         description: t(
-          "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.",
+          "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.",
         ),
       }}
     >
@@ -38,6 +38,7 @@ export function FactoringPage() {
             <TabsTab value="ready">{t("Ready")}</TabsTab>
             <TabsTab value="not-ready">{t("Not ready")}</TabsTab>
             <TabsTab value="submitted">{t("Submitted")}</TabsTab>
+            <TabsTab value="funded">{t("Funded")}</TabsTab>
             <TabsTab value="schedules">{t("Schedules")}</TabsTab>
           </TabsList>
         </div>

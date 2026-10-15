@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,8 +118,8 @@ func (r *repository) SumBalanceAsOf(
 // factor without recourse: the agreement stamped on the invoice decides, and
 // an invoice posted before agreements existed falls back to the factor's flag. An invoice's own entry names it as its source; a
 // payment, credit memo or write-off applied to it names it as the related
-// invoice.
-const nonRecourseFactoredEntryFilter = `NOT EXISTS (
+// invoice. An invoice the factor charged back is the organization's again.
+var nonRecourseFactoredEntryFilter = `NOT EXISTS (
 	SELECT 1
 	FROM invoices AS inv
 	JOIN factoring_companies AS fac
@@ -136,6 +137,7 @@ const nonRecourseFactoredEntryFilter = `NOT EXISTS (
 			CASE WHEN cle.source_object_type = 'Invoice' THEN cle.source_object_id END
 		)
 		AND COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
+		AND NOT ` + factoringsql.ChargedBackInvoice() + `
 )`
 
 // SumCustomerBalances totals each named customer's subledger. A customer with

@@ -46,6 +46,7 @@ type ReadinessParams struct {
 	Agreements    factoringports.AgreementRepository
 	Noas          factoringports.NoaRepository
 	Submissions   factoringports.SubmissionRepository
+	Attention     factoringports.WatchtowerReader `optional:"true"`
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
 	Shipments     shipmentports.ShipmentService `optional:"true"`
@@ -65,6 +66,7 @@ type ReadinessService struct {
 	agreements    factoringports.AgreementRepository
 	noas          factoringports.NoaRepository
 	submissions   factoringports.SubmissionRepository
+	attention     factoringports.WatchtowerReader
 	invoices      invoiceports.InvoiceRepository
 	documents     documentports.DocumentRepository
 	shipments     shipmentports.ShipmentService
@@ -89,6 +91,7 @@ func NewReadinessService(p ReadinessParams) factoringports.ReadinessService {
 		agreements:    p.Agreements,
 		noas:          p.Noas,
 		submissions:   p.Submissions,
+		attention:     p.Attention,
 		invoices:      p.Invoices,
 		documents:     p.Documents,
 		shipments:     p.Shipments,
@@ -315,12 +318,21 @@ func (s *ReadinessService) gather(
 
 	in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
 
-	live, err := s.liveItem(ctx, tenantInfo, inv.ID)
+	items, err := s.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo:         tenantInfo,
+		InvoiceIDs:         []pulid.ID{inv.ID},
+		IncludeChargedBack: true,
+	})
 	if err != nil {
 		return err
 	}
-	if live != nil {
-		in.SubmissionNumber = live.SubmissionNumber
+	if item := items[inv.ID]; item != nil {
+		if item.IsLive() {
+			in.SubmissionNumber = item.SubmissionNumber
+			in.SubmissionItemStatus = item.ItemStatus
+		} else {
+			in.ChargedBack = item.ItemStatus == factoring.SubmissionItemStatusChargedBack
+		}
 	}
 
 	legs := inv.LegShipmentIDs()
@@ -465,9 +477,11 @@ func (s *ReadinessService) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*factoringports.Summary, error) {
+	now := s.now()
 	return s.states.GetSummary(ctx, factoringports.GetSummaryRequest{
-		TenantInfo:  tenantInfo,
-		ReadyBefore: s.now() - factoring.ReadyUnsubmittedSeconds,
+		TenantInfo:       tenantInfo,
+		ReadyBefore:      now - factoring.ReadyUnsubmittedSeconds,
+		ChargebackBefore: now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
 	})
 }
 
@@ -691,7 +705,59 @@ func (s *ReadinessService) SweepTenant(
 		return nil, err
 	}
 	result.NoasWarned = warned
+
+	if result.ChargebacksWarned, err = s.warnChargebacksDue(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
 	return result, nil
+}
+
+func (s *ReadinessService) warnChargebacksDue(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (int, error) {
+	if s.attention == nil {
+		return 0, nil
+	}
+	now := s.now()
+	due, err := s.attention.ListChargebacksDue(ctx, &factoringports.ListChargebacksDueRequest{
+		TenantInfo:   tenantInfo,
+		Before:       now + int64(factoring.ChargebackWarningDays)*timeutils.SecondsPerDay,
+		UnwarnedOnly: true,
+		Limit:        maxAnnouncements,
+	})
+	if err != nil {
+		return 0, err
+	}
+	warned := 0
+	for _, row := range due {
+		claimed, claimErr := s.submissions.ClaimChargebackWarning(
+			ctx,
+			factoringports.ClaimChargebackWarningRequest{
+				TenantInfo: tenantInfo,
+				ItemID:     row.ItemID,
+				At:         now,
+			},
+		)
+		if claimErr != nil {
+			s.l.Warn("could not claim a chargeback warning",
+				zap.String("itemId", row.ItemID.String()), zap.Error(claimErr))
+			continue
+		}
+		if !claimed {
+			continue
+		}
+		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+			Kind:       agent.EventFactoringChargebackDue,
+			SubjectID:  row.InvoiceID,
+			TenantInfo: tenantInfo,
+			Related:    []pulid.ID{row.SubmissionID, row.FactoringCompanyID, row.CustomerID},
+			Detail: "Invoice " + row.InvoiceNumber + " can be charged back from " +
+				timeutils.FormatUnixDate(row.DeadlineAt),
+		})
+		warned++
+	}
+	return warned, nil
 }
 
 func (s *ReadinessService) warnExpiringNoas(

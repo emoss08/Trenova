@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +31,7 @@ func New(p Params) paymentreminderports.Repository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.payment-reminder-repository")}
 }
 
-const overdueInvoicesSQL = `
+var overdueInvoicesSQL = `
 	SELECT
 		inv.id AS invoice_id,
 		inv.number AS invoice_number,
@@ -55,7 +56,7 @@ const overdueInvoicesSQL = `
 		AND inv.total_amount_minor > inv.applied_amount_minor
 		AND inv.due_date IS NOT NULL
 		AND inv.due_date < ?
-		AND inv.factoring_company_id IS NULL
+		AND (inv.factoring_company_id IS NULL OR ` + factoringsql.ChargedBackInvoice() + `)
 		%s
 	ORDER BY inv.customer_id, inv.due_date, inv.number`
 

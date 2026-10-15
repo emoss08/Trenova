@@ -1,5 +1,6 @@
 {
   "A schedule carries at most {0} invoices. Select fewer and send the rest on another schedule.": "一份清单最多包含 {0} 张发票。请减少所选发票，其余的以另一份清单发送。",
+  "Chargebacks due": "到期的退款追索",
   "Checks": "检查项目",
   "Emailed to {0} at {1}, with each invoice's packet attached.": "通过电子邮件发送给 {0}（{1}），并附上每张发票的资料包。",
   "Emailed to {0} at {1}, without the invoice packets.": "通过电子邮件发送给 {0}（{1}），不附发票资料包。",
@@ -8,12 +9,13 @@
   "Factoring summary": "保理摘要",
   "Failed checks": "未通过的检查",
   "Loading factoring readiness...": "正在加载保理就绪状态...",
+  "No funded invoices are waiting on their reserve": "没有等待释放保留金的已放款发票",
   "No invoices are ready to factor": "没有可保理的发票",
   "No invoices are waiting on a fix": "没有等待修正的发票",
   "No invoices are with a factor": "没有发票在保理公司处",
   "No schedules have been sent to a factor": "尚未向保理公司发送任何清单",
   "None of the selected invoices is assigned to a factor.": "所选发票均未转让给保理公司。",
-  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.": "已过账且已转让给保理公司的发票，按是否可出售分组。选择可出售的发票，以清单形式发送给其保理公司；或打开某张发票，查看其未通过的检查。",
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": "已转让给保理公司的已过账发票，按是否可出售分组。选择可出售的发票，以清单形式发送给其保理公司；打开发票可查看未通过的检查；或跟踪已放款的发票，直到保理公司释放其保留金。",
   "Ready over a day": "就绪超过一天",
   "Review the schedule of accounts and the funding expected under the agreement in force. The schedule, each invoice's packet and a CSV are sent to the factor once you confirm.": "请核对应收账款转让清单以及依生效中协议预期的放款金额。确认后，清单、每张发票的资料包和一份 CSV 将发送给保理公司。",
   "Schedule {0} is on its way": "清单 {0} 正在发送",
@@ -27,6 +29,8 @@
   "Uploaded by {0} to {1}.": "通过 {0} 上传到 {1}。",
   "Verdict": "判定",
   "{0, plural, one {# invoice is} other {# invoices are}} being sent to {1}.": "正在将 {0, plural, one {# 张发票} other {# 张发票}}发送给 {1}。",
+  "{0, plural, one {# invoice} other {# invoices}} awaiting release": "{0, plural, one {# 张发票} other {# 张发票}}等待释放",
   "{0, plural, one {# invoice} other {# invoices}} not yet submitted": "{0, plural, one {# 张发票} other {# 张发票}}尚未提交",
+  "{0, plural, one {# invoice} other {# invoices}} within a week": "{0, plural, one {# 张发票} other {# 张发票}}在一周内",
   "{0} ({1, plural, one {# invoice} other {# invoices}})": "{0}（{1, plural, one {# 张发票} other {# 张发票}}）"
 }

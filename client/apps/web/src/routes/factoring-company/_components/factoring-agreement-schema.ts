@@ -29,6 +29,16 @@ const feeTierSchema = z.object({
     .min(0, { error: () => translate("Flat fee cannot be negative") }),
 });
 
+const accountId = z.string().nullable();
+
+/** The accounts an agreement's factoring is booked to; each empty one falls back to the organization's. */
+export const FACTORING_AGREEMENT_ACCOUNT_FIELDS = [
+  "dueFromFactorAccountId",
+  "feeExpenseAccountId",
+  "liabilityAccountId",
+  "cashAccountId",
+] as const;
+
 const documentTypeValue = z.union([z.string(), z.object({ id: z.string().optional() }).loose()]);
 
 export const factoringAgreementFormSchema = z
@@ -72,6 +82,10 @@ export const factoringAgreementFormSchema = z
       .min(1, { error: () => translate("Add at least one fee tier") })
       .max(MAX_FEE_TIERS, { error: () => translate("An agreement can have at most 20 fee tiers") }),
     documentTypes: z.array(documentTypeValue),
+    dueFromFactorAccountId: accountId,
+    feeExpenseAccountId: accountId,
+    liabilityAccountId: accountId,
+    cashAccountId: accountId,
   })
   .superRefine((values, ctx) => {
     if (values.advanceRatePercent + values.reserveRatePercent > 100) {
@@ -144,6 +158,10 @@ export function emptyAgreementValues(nowUnix: number): FactoringAgreementFormVal
       { daysTo: null, ratePercent: 5, flatMinor: 0 },
     ],
     documentTypes: [],
+    dueFromFactorAccountId: null,
+    feeExpenseAccountId: null,
+    liabilityAccountId: null,
+    cashAccountId: null,
   };
 }
 
@@ -167,7 +185,15 @@ export function agreementToFormValues(agreement: FactoringAgreement): FactoringA
       flatMinor: tier.flatMinor,
     })),
     documentTypes: agreement.documentTypes.map((documentType) => documentType.id),
+    dueFromFactorAccountId: agreement.dueFromFactorAccountId ?? null,
+    feeExpenseAccountId: agreement.feeExpenseAccountId ?? null,
+    liabilityAccountId: agreement.liabilityAccountId ?? null,
+    cashAccountId: agreement.cashAccountId ?? null,
   };
+}
+
+function accountOrNull(value: string | null): string | null {
+  return value == null || value === "" ? null : value;
 }
 
 function documentTypeId(value: FactoringAgreementFormValues["documentTypes"][number]): string {
@@ -200,5 +226,9 @@ export function agreementFormToInput(
       flatMinor: tier.flatMinor,
     })),
     documentTypeIds: values.documentTypes.map(documentTypeId).filter((id) => id !== ""),
+    dueFromFactorAccountId: accountOrNull(values.dueFromFactorAccountId),
+    feeExpenseAccountId: accountOrNull(values.feeExpenseAccountId),
+    liabilityAccountId: accountOrNull(values.liabilityAccountId),
+    cashAccountId: accountOrNull(values.cashAccountId),
   };
 }

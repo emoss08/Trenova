@@ -19,6 +19,7 @@ type SweepResult struct {
 	OrganizationsProcessed int                           `json:"organizationsProcessed"`
 	Totals                 factoringports.EvaluateResult `json:"totals"`
 	NoasWarned             int                           `json:"noasWarned"`
+	ChargebacksWarned      int                           `json:"chargebacksWarned"`
 	FailedOrganizations    []string                      `json:"failedOrganizations"`
 }
 

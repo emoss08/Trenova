@@ -13,6 +13,15 @@ fragment FactoringSubmissionItemFields on FactoringSubmissionItem {
   packetDocumentId
   status
   releasedAt
+  fundedOn
+  advanceMinor
+  feeMinor
+  reserveMinor
+  rejectionReason
+  settledOn
+  chargedBackOn
+  chargebackReason
+  chargebackWarnedAt
   customer {
     id
     code
@@ -42,6 +51,7 @@ fragment FactoringSubmissionFields on FactoringSubmission {
   lastError
   sentAt
   failedAt
+  fundedAt
   cancelledAt
   cancelReason
   submittedById

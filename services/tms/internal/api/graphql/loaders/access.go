@@ -1501,6 +1501,21 @@ func (f *FactoringSubmissionItemsLoaderFactory) Attach(
 	})
 }
 
+func FactoringSubmissionByID(ctx context.Context, key string) (*factoring.Submission, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoring.Submission] {
+		return s.factoringSubmissionByID
+	})
+}
+
+func (f *FactoringSubmissionByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringSubmissionByID = newFactoringSubmissionByIDLoader(f, tenantInfo)
+	})
+}
+
 func FactoringLiveItemByInvoiceID(
 	ctx context.Context,
 	key string,

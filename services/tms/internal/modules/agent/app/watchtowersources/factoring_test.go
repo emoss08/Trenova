@@ -63,6 +63,10 @@ type fakeFactoringReader struct {
 	expiringErr error
 	failed      []*factoringports.FailedSubmission
 	failedErr   error
+	unfunded    []*factoringports.UnfundedSubmission
+	chargebacks []*factoringports.ChargebackDue
+	dueErr      error
+	dueReq      *factoringports.ListChargebacksDueRequest
 	labelReq    *factoringports.ListInvoiceLabelsRequest
 	missingReq  *factoringports.ListCustomersMissingNoaRequest
 	expiringReq *factoringports.ListNoasExpiringSoonRequest
@@ -97,6 +101,21 @@ func (f *fakeFactoringReader) ListFailedSubmissions(
 	*factoringports.ListFailedSubmissionsRequest,
 ) ([]*factoringports.FailedSubmission, error) {
 	return f.failed, f.failedErr
+}
+
+func (f *fakeFactoringReader) ListUnfundedSubmissions(
+	context.Context,
+	*factoringports.ListUnfundedSubmissionsRequest,
+) ([]*factoringports.UnfundedSubmission, error) {
+	return f.unfunded, nil
+}
+
+func (f *fakeFactoringReader) ListChargebacksDue(
+	_ context.Context,
+	req *factoringports.ListChargebacksDueRequest,
+) ([]*factoringports.ChargebackDue, error) {
+	f.dueReq = req
+	return f.chargebacks, f.dueErr
 }
 
 func newTestFactoringSource(
@@ -523,6 +542,115 @@ func TestFactoringSourceSnapshotFailsWhenFailedSendsCannotBeRead(t *testing.T) {
 	_, err := newTestFactoringSource(
 		&fakeFactoringStates{},
 		&fakeFactoringReader{failedErr: assert.AnError},
+	).Snapshot(t.Context(), factoringTenant())
+	require.ErrorIs(t, err, assert.AnError)
+}
+
+func TestDescribeFactoringUnfunded(t *testing.T) {
+	t.Parallel()
+
+	tenant := factoringTenant()
+	row := &factoringports.UnfundedSubmission{
+		SubmissionID:         pulid.MustNew("facsub_"),
+		Number:               "FS2610000007",
+		Status:               factoring.SubmissionStatusPartially,
+		FactorName:           "Lone Star Funding",
+		CurrencyCode:         "USD",
+		PendingCount:         2,
+		ExpectedAdvanceMinor: 180_000,
+		SentAt:               factoringNow - 5*timeutils.SecondsPerDay,
+		DueAt:                factoringNow - 3*timeutils.SecondsPerDay,
+	}
+	item, open := DescribeFactoringUnfunded(tenant, row, factoringNow)
+	require.True(t, open)
+	assertStorable(t, item)
+	assert.Equal(t, FactoringUnfundedSourceID(row.SubmissionID), item.SourceID)
+	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
+	assert.Equal(t, agent.SubjectFactoringSubmission, item.SubjectType)
+	assert.Equal(t, "Schedule FS2610000007 has not been funded by Lone Star Funding", item.Title)
+	assert.Contains(t, item.Summary, "1800.00 USD")
+	assert.Equal(t, row.DueAt, item.OccurredAt)
+
+	notYet := *row
+	notYet.DueAt = factoringNow + 1
+	_, open = DescribeFactoringUnfunded(tenant, &notYet, factoringNow)
+	assert.False(t, open)
+
+	nothingPending := *row
+	nothingPending.PendingCount = 0
+	_, open = DescribeFactoringUnfunded(tenant, &nothingPending, factoringNow)
+	assert.False(t, open)
+}
+
+func TestDescribeFactoringChargebackDue(t *testing.T) {
+	t.Parallel()
+
+	tenant := factoringTenant()
+	row := &factoringports.ChargebackDue{
+		ItemID:          pulid.MustNew("facsit_"),
+		SubmissionID:    pulid.MustNew("facsub_"),
+		InvoiceID:       pulid.MustNew("inv_"),
+		InvoiceNumber:   "INV-0042",
+		CustomerName:    "Acme Foods",
+		FactorName:      "Lone Star Funding",
+		CurrencyCode:    "USD",
+		FaceMinor:       100_000,
+		RepurchaseMinor: 93_000,
+		FundedOn:        factoringNow - 85*timeutils.SecondsPerDay,
+		DeadlineAt:      factoringNow + 5*timeutils.SecondsPerDay,
+	}
+	item, open := DescribeFactoringChargebackDue(tenant, row, factoringNow)
+	require.True(t, open)
+	assertStorable(t, item)
+	assert.Equal(t, FactoringChargebackDueSourceID(row.ItemID), item.SourceID)
+	assert.Equal(t, watchtower.SeverityCritical, item.Severity)
+	assert.Equal(t, agent.SubjectInvoice, item.SubjectType)
+	assert.Equal(t, row.InvoiceID, item.SubjectID)
+	assert.Equal(t, agent.EventFactoringChargebackDue, item.EventKind)
+	assert.Equal(t, "Invoice INV-0042 can be charged back in 5 days", item.Title)
+	assert.Contains(t, item.Summary, "930.00 USD")
+	assert.Contains(t, item.Summary, "Acme Foods has not paid it")
+
+	past := *row
+	past.DeadlineAt = factoringNow - timeutils.SecondsPerDay
+	item, open = DescribeFactoringChargebackDue(tenant, &past, factoringNow)
+	require.True(t, open)
+	assert.Equal(t, "Invoice INV-0042 is past its chargeback window", item.Title)
+
+	far := *row
+	far.DeadlineAt = factoringNow + 30*timeutils.SecondsPerDay
+	_, open = DescribeFactoringChargebackDue(tenant, &far, factoringNow)
+	assert.False(t, open)
+}
+
+func TestFactoringSourceSnapshotIncludesFundingFollowUps(t *testing.T) {
+	t.Parallel()
+
+	reader := &fakeFactoringReader{
+		unfunded: []*factoringports.UnfundedSubmission{{
+			SubmissionID: pulid.MustNew("facsub_"),
+			Number:       "FS2610000008",
+			PendingCount: 1,
+			DueAt:        factoringNow - 1,
+		}},
+		chargebacks: []*factoringports.ChargebackDue{{
+			ItemID:     pulid.MustNew("facsit_"),
+			InvoiceID:  pulid.MustNew("inv_"),
+			FundedOn:   factoringNow - 88*timeutils.SecondsPerDay,
+			DeadlineAt: factoringNow + 2*timeutils.SecondsPerDay,
+		}},
+	}
+	items, err := newTestFactoringSource(&fakeFactoringStates{}, reader).
+		Snapshot(t.Context(), factoringTenant())
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	require.NotNil(t, reader.dueReq)
+	assert.Equal(t, factoringNow+FactoringChargebackWarningSeconds(), reader.dueReq.Before)
+	assert.False(t, reader.dueReq.UnwarnedOnly)
+
+	_, err = newTestFactoringSource(
+		&fakeFactoringStates{},
+		&fakeFactoringReader{dueErr: assert.AnError},
 	).Snapshot(t.Context(), factoringTenant())
 	require.ErrorIs(t, err, assert.AnError)
 }

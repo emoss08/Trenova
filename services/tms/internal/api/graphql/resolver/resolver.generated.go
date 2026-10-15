@@ -266,8 +266,14 @@ type Resolver struct {
 	factoringAgreement                 *factoringresolver.FactoringAgreementResolver
 	factoringCheck                     *factoringresolver.FactoringCheckResolver
 	factoringCompany                   *factoringresolver.FactoringCompanyResolver
+	factoringFundingPlan               *factoringresolver.FactoringFundingPlanResolver
 	factoringInvoiceState              *factoringresolver.FactoringInvoiceStateResolver
+	factoringMovement                  *factoringresolver.FactoringMovementResolver
 	factoringNoa                       *factoringresolver.FactoringNoaResolver
+	factoringPlannedLine               *factoringresolver.FactoringPlannedLineResolver
+	factoringPlannedMovement           *factoringresolver.FactoringPlannedMovementResolver
+	factoringReserveEntry              *factoringresolver.FactoringReserveEntryResolver
+	factoringReserveMovementPlan       *factoringresolver.FactoringReserveMovementPlanResolver
 	factoringSubmission                *factoringresolver.FactoringSubmissionResolver
 	factoringSubmissionItem            *factoringresolver.FactoringSubmissionItemResolver
 	factoringSubmissionPlan            *factoringresolver.FactoringSubmissionPlanResolver
@@ -720,6 +726,7 @@ func FromServices(s *Services) *Resolver {
 		FactoringNoaService:        s.FactoringNoaService,
 		FactoringReadinessService:  s.FactoringReadinessService,
 		FactoringSubmissionService: s.FactoringSubmissionService,
+		FactoringLedgerService:     s.FactoringLedgerService,
 		FactoringTransportService:  s.FactoringTransportService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
@@ -1235,8 +1242,14 @@ func FromServices(s *Services) *Resolver {
 		factoringAgreement:           &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps},
 		factoringCheck:               &factoringresolver.FactoringCheckResolver{Deps: factoringDeps},
 		factoringCompany:             &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps},
+		factoringFundingPlan:         &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps},
 		factoringInvoiceState:        &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps},
+		factoringMovement:            &factoringresolver.FactoringMovementResolver{Deps: factoringDeps},
 		factoringNoa:                 &factoringresolver.FactoringNoaResolver{Deps: factoringDeps},
+		factoringPlannedLine:         &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps},
+		factoringPlannedMovement:     &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps},
+		factoringReserveEntry:        &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps},
+		factoringReserveMovementPlan: &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps},
 		factoringSubmission:          &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps},
 		factoringSubmissionItem:      &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps},
 		factoringSubmissionPlan:      &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps},
@@ -2129,12 +2142,36 @@ func (r *Resolver) FactoringCompany() generated.FactoringCompanyResolver {
 	return r.factoringCompany
 }
 
+func (r *Resolver) FactoringFundingPlan() generated.FactoringFundingPlanResolver {
+	return r.factoringFundingPlan
+}
+
 func (r *Resolver) FactoringInvoiceState() generated.FactoringInvoiceStateResolver {
 	return r.factoringInvoiceState
 }
 
+func (r *Resolver) FactoringMovement() generated.FactoringMovementResolver {
+	return r.factoringMovement
+}
+
 func (r *Resolver) FactoringNoa() generated.FactoringNoaResolver {
 	return r.factoringNoa
+}
+
+func (r *Resolver) FactoringPlannedLine() generated.FactoringPlannedLineResolver {
+	return r.factoringPlannedLine
+}
+
+func (r *Resolver) FactoringPlannedMovement() generated.FactoringPlannedMovementResolver {
+	return r.factoringPlannedMovement
+}
+
+func (r *Resolver) FactoringReserveEntry() generated.FactoringReserveEntryResolver {
+	return r.factoringReserveEntry
+}
+
+func (r *Resolver) FactoringReserveMovementPlan() generated.FactoringReserveMovementPlanResolver {
+	return r.factoringReserveMovementPlan
 }
 
 func (r *Resolver) FactoringSubmission() generated.FactoringSubmissionResolver {

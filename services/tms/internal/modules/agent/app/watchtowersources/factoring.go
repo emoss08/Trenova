@@ -24,6 +24,8 @@ const (
 	factoringMissingNoaPrefix   = "noa-missing:"
 	factoringExpiringNoaPrefix  = "noa-expiring:"
 	factoringSendFailedPrefix   = "send-failed:"
+	factoringUnfundedPrefix     = "unfunded:"
+	factoringChargebackPrefix   = "chargeback-due:"
 	pathFactoringQueue          = "/billing/factoring"
 	FactoringReadyCriticalAfter = int64(3 * timeutils.SecondsPerDay)
 	FactoringNoaCriticalWithin  = int64(7 * timeutils.SecondsPerDay)
@@ -48,13 +50,36 @@ func NewFactoringSource(
 
 func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.SourceFactoring }
 
+type factoringSnapshot struct {
+	ready       []*factoring.InvoiceState
+	labels      map[pulid.ID]*factoringports.InvoiceLabel
+	missing     []*factoringports.CustomerMissingNoa
+	expiring    []*factoringports.ExpiringNoa
+	failed      []*factoringports.FailedSubmission
+	unfunded    []*factoringports.UnfundedSubmission
+	chargebacks []*factoringports.ChargebackDue
+}
+
 func (s *FactoringSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	now := s.now()
+	snap, err := s.read(ctx, tenant, now)
+	if err != nil {
+		return nil, err
+	}
+	return snap.describe(tenant, now), nil
+}
 
-	ready, err := s.states.ListReadyUnsubmitted(ctx, factoringports.ListReadyUnsubmittedRequest{
+func (s *FactoringSource) read(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	now int64,
+) (*factoringSnapshot, error) {
+	snap := &factoringSnapshot{}
+	var err error
+	snap.ready, err = s.states.ListReadyUnsubmitted(ctx, factoringports.ListReadyUnsubmittedRequest{
 		TenantInfo:  tenant,
 		ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
 		Limit:       snapshotLimit,
@@ -63,85 +88,194 @@ func (s *FactoringSource) Snapshot(
 		return nil, err
 	}
 
-	invoiceIDs := make([]pulid.ID, 0, len(ready))
-	for _, state := range ready {
+	invoiceIDs := make([]pulid.ID, 0, len(snap.ready))
+	for _, state := range snap.ready {
 		if state != nil {
 			invoiceIDs = append(invoiceIDs, state.InvoiceID)
 		}
 	}
-	labels, err := s.reader.ListInvoiceLabels(ctx, &factoringports.ListInvoiceLabelsRequest{
+	if snap.labels, err = s.reader.ListInvoiceLabels(ctx, &factoringports.ListInvoiceLabelsRequest{
 		TenantInfo: tenant,
 		InvoiceIDs: invoiceIDs,
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
-
-	missing, err := s.reader.ListCustomersMissingNoa(
+	if snap.missing, err = s.reader.ListCustomersMissingNoa(
 		ctx,
 		&factoringports.ListCustomersMissingNoaRequest{
 			TenantInfo: tenant,
 			At:         now,
 			Limit:      snapshotLimit,
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
-
-	expiring, err := s.reader.ListNoasExpiringSoon(ctx, &factoringports.ListNoasExpiringSoonRequest{
-		TenantInfo: tenant,
-		At:         now,
-		Before:     now + FactoringNoaWarningSeconds(),
-		Limit:      snapshotLimit,
-	})
-	if err != nil {
+	if snap.expiring, err = s.reader.ListNoasExpiringSoon(
+		ctx,
+		&factoringports.ListNoasExpiringSoonRequest{
+			TenantInfo: tenant,
+			At:         now,
+			Before:     now + FactoringNoaWarningSeconds(),
+			Limit:      snapshotLimit,
+		},
+	); err != nil {
 		return nil, err
 	}
-
-	failed, err := s.reader.ListFailedSubmissions(ctx, &factoringports.ListFailedSubmissionsRequest{
-		TenantInfo: tenant,
-		Limit:      snapshotLimit,
-	})
-	if err != nil {
+	if snap.failed, err = s.reader.ListFailedSubmissions(
+		ctx,
+		&factoringports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: snapshotLimit},
+	); err != nil {
 		return nil, err
 	}
+	if snap.unfunded, err = s.reader.ListUnfundedSubmissions(
+		ctx,
+		&factoringports.ListUnfundedSubmissionsRequest{
+			TenantInfo: tenant,
+			At:         now,
+			Limit:      snapshotLimit,
+		},
+	); err != nil {
+		return nil, err
+	}
+	if snap.chargebacks, err = s.reader.ListChargebacksDue(
+		ctx,
+		&factoringports.ListChargebacksDueRequest{
+			TenantInfo: tenant,
+			Before:     now + FactoringChargebackWarningSeconds(),
+			Limit:      snapshotLimit,
+		},
+	); err != nil {
+		return nil, err
+	}
+	return snap, nil
+}
 
+func (snap *factoringSnapshot) describe(
+	tenant pagination.TenantInfo,
+	now int64,
+) []watchtowerports.WatchtowerItemInput {
 	items := make(
 		[]watchtowerports.WatchtowerItemInput,
 		0,
-		len(ready)+len(missing)+len(expiring)+len(failed),
+		len(snap.ready)+len(snap.missing)+len(snap.expiring)+len(snap.failed)+
+			len(snap.unfunded)+len(snap.chargebacks),
 	)
-	for _, state := range ready {
-		if state == nil {
-			continue
-		}
-		if item, open := DescribeFactoringReadyUnsubmitted(
-			tenant,
-			state,
-			labels[state.InvoiceID],
-			now,
-		); open {
+	keep := func(item watchtowerports.WatchtowerItemInput, open bool) {
+		if open {
 			items = append(items, item)
 		}
 	}
-	for _, row := range missing {
-		if item, open := DescribeFactoringMissingNoa(tenant, row, now); open {
-			items = append(items, item)
+	for _, state := range snap.ready {
+		if state != nil {
+			keep(DescribeFactoringReadyUnsubmitted(
+				tenant,
+				state,
+				snap.labels[state.InvoiceID],
+				now,
+			))
 		}
 	}
-	for _, row := range expiring {
-		if item, open := DescribeFactoringNoaExpiring(tenant, row, now); open {
-			items = append(items, item)
-		}
+	for _, row := range snap.missing {
+		keep(DescribeFactoringMissingNoa(tenant, row, now))
 	}
-	for _, row := range failed {
-		if item, open := DescribeFactoringSendFailed(tenant, row); open {
-			items = append(items, item)
-		}
+	for _, row := range snap.expiring {
+		keep(DescribeFactoringNoaExpiring(tenant, row, now))
+	}
+	for _, row := range snap.failed {
+		keep(DescribeFactoringSendFailed(tenant, row))
+	}
+	for _, row := range snap.unfunded {
+		keep(DescribeFactoringUnfunded(tenant, row, now))
+	}
+	for _, row := range snap.chargebacks {
+		keep(DescribeFactoringChargebackDue(tenant, row, now))
+	}
+	return items
+}
+
+func FactoringChargebackWarningSeconds() int64 {
+	return int64(factoring.ChargebackWarningDays) * timeutils.SecondsPerDay
+}
+
+func FactoringUnfundedSourceID(submissionID pulid.ID) string {
+	return factoringUnfundedPrefix + submissionID.String()
+}
+
+func FactoringChargebackDueSourceID(itemID pulid.ID) string {
+	return factoringChargebackPrefix + itemID.String()
+}
+
+func DescribeFactoringUnfunded(
+	tenant pagination.TenantInfo,
+	row *factoringports.UnfundedSubmission,
+	now int64,
+) (watchtowerports.WatchtowerItemInput, bool) {
+	if row == nil || row.SubmissionID.IsNil() || row.PendingCount <= 0 || row.DueAt >= now {
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
-	return items, nil
+	factorName := stringutils.FirstNonEmpty(row.FactorName, "the factor")
+	title := "Schedule " + row.Number + " has not been funded by " + factorName
+	summary := strconv.Itoa(row.PendingCount) + " invoices are still waiting on " +
+		money.FormatMinor(row.ExpectedAdvanceMinor, row.CurrencyCode) +
+		" in advances, due by " + factoringDate(row.DueAt) +
+		". Ask the factor about the schedule, then record its funding or rejections."
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceFactoring,
+		SourceID:    FactoringUnfundedSourceID(row.SubmissionID),
+		Severity:    watchtower.SeverityWarning,
+		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
+		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		SubjectType: agent.SubjectFactoringSubmission,
+		SubjectID:   row.SubmissionID,
+		Path: factoringRecordPath(
+			"factoring_submission",
+			row.SubmissionID,
+			pathFactoringQueue,
+		),
+		OccurredAt: row.DueAt,
+	}, true
+}
+
+func DescribeFactoringChargebackDue(
+	tenant pagination.TenantInfo,
+	row *factoringports.ChargebackDue,
+	now int64,
+) (watchtowerports.WatchtowerItemInput, bool) {
+	if row == nil || row.ItemID.IsNil() || row.InvoiceID.IsNil() ||
+		row.DeadlineAt-now > FactoringChargebackWarningSeconds() {
+		return watchtowerports.WatchtowerItemInput{}, false
+	}
+
+	factorName := stringutils.FirstNonEmpty(row.FactorName, "The factor")
+	invoiceName := "Invoice " + stringutils.FirstNonEmpty(row.InvoiceNumber, row.InvoiceID.String())
+	title := invoiceName + " can be charged back " + remainingLabel(max(row.DeadlineAt-now, 0))
+	if row.DeadlineAt <= now {
+		title = invoiceName + " is past its chargeback window"
+	}
+	summary := factorName + " funded it on " + factoringDate(row.FundedOn)
+	if row.CustomerName != "" {
+		summary += " and " + row.CustomerName + " has not paid it"
+	}
+	summary += ". From " + factoringDate(row.DeadlineAt) + " the factor can charge it back, and " +
+		"the organization would owe " + money.FormatMinor(row.RepurchaseMinor, row.CurrencyCode) +
+		". Chase the customer's payment now."
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceFactoring,
+		SourceID:    FactoringChargebackDueSourceID(row.ItemID),
+		Severity:    watchtower.SeverityCritical,
+		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
+		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		SubjectType: agent.SubjectInvoice,
+		SubjectID:   row.InvoiceID,
+		EventKind:   agent.EventFactoringChargebackDue,
+		Path:        factoringRecordPath("invoice", row.InvoiceID, pathFactoringInvoices),
+		OccurredAt:  max(row.DeadlineAt-FactoringChargebackWarningSeconds(), row.FundedOn, 1),
+	}, true
 }
 
 func FactoringNoaWarningSeconds() int64 {

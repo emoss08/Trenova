@@ -684,4 +684,29 @@ func (r *Registry) registerBillingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringReserve.String(),
+		DisplayName: "Factoring Reserve",
+		Description: "What factors funded, held in reserve, released and charged back, booked to the ledger",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View factor funding, reserve balances and chargebacks",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Book",
+				Description: "Record a factor's funding, release a reserve, and record or reverse a chargeback",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export factoring reserve entries",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }

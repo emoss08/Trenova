@@ -456,3 +456,69 @@ func factoringSchedules() *Entry {
 		},
 	}
 }
+
+func factoringFeesByCustomer() *Entry {
+	return &Entry{
+		Key:     "factoring-fees-by-customer",
+		Version: initialVersion,
+		Name:    "Factoring Fees by Customer",
+		Description: "What factoring cost for each customer's invoices: the fees booked at " +
+			"funding and on release or chargeback, the cash the factors paid and what was " +
+			"paid back, by customer and factor, over the window",
+		Category:      categoryBilling,
+		Tags:          []string{tagAR, "factoring", "fees"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringReserve,
+			Columns: []report.ColumnSpec{
+				dimCol("customer", "Customer", nameField, customerEdge),
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				distinctMeasure("invoices", "Invoices", "invoiceId"),
+				sumMinor("fees", "Fees", "feeMinor"),
+				sumMinor("net_cash", "Net Cash From Factor", "cashMinor"),
+			},
+			Filters:    andFilters(windowFilter("accountingDate")),
+			Sort:       []report.SortSpec{desc("fees")},
+			Parameters: []report.ParameterDef{windowParam(90)},
+		},
+	}
+}
+
+func factoringDaysToFund() *Entry {
+	return &Entry{
+		Key:     "factoring-days-to-fund",
+		Version: initialVersion,
+		Name:    "Days to Fund by Factor",
+		Description: "How long each factor takes to fund a schedule once it is sent, " +
+			"averaged over the schedules it funded in the window, with how many and how much",
+		Category:      categoryBilling,
+		Tags:          []string{tagAR, "factoring", "cash"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringSchedule,
+			Columns: []report.ColumnSpec{
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				countMeasure("schedules", "Schedules Funded"),
+				sumMinor("face", "Face Amount", "faceMinor"),
+				timestampMeasure("average_sent", "Average Sent", reportcatalog.AggAvg, "sentAt"),
+				timestampMeasure(
+					"average_funded",
+					"Average Funded",
+					reportcatalog.AggAvg,
+					"fundedAt",
+				),
+				difference("time_to_fund", "Average Time to Fund", "average_funded",
+					"average_sent", dwell()),
+			},
+			Filters: andFilters(
+				isNotNull("fundedAt"),
+				isNotNull("sentAt"),
+				windowFilter("fundedAt"),
+			),
+			Sort:       []report.SortSpec{desc("time_to_fund")},
+			Parameters: []report.ParameterDef{windowParam(180)},
+		},
+	}
+}

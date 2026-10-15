@@ -1499,6 +1499,10 @@ entities:
       submissionTime: { label: "Submission Cutoff (Minutes After Midnight)", type: int }
       activatedAt: { label: "Activated At" }
       endedAt: { label: "Ended At" }
+      dueFromFactorAccountId: { label: "Due From Factor Account ID" }
+      feeExpenseAccountId: { label: "Factoring Fee Account ID" }
+      liabilityAccountId: { label: "Factoring Liability Account ID" }
+      cashAccountId: { label: "Cash Account ID" }
     edges:
       factoringCompany: { label: "Factoring Company" }
 
@@ -1539,7 +1543,7 @@ entities:
       - checks
     fields:
       id: { label: "Invoice ID" }
-      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Submitted: "Submitted", Excluded: "Excluded" } }
+      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Submitted: "Submitted", Excluded: "Excluded", Funded: "Funded" } }
       failedChecks: { label: "Failed Checks", format: count }
       openBalanceMinor: { label: "Open Balance (Minor)" }
       readySince: { label: "Ready Since", type: epoch }
@@ -1561,7 +1565,7 @@ entities:
     category: Billing
     fields:
       number: { label: "Schedule Number" }
-      status: { label: "Status" }
+      status: { label: "Status", enumLabels: { PartiallyFunded: "Partially Funded" } }
       currencyCode: { label: "Currency" }
       invoiceCount: { label: "Invoices", format: count }
       faceMinor: { label: "Face Amount (Minor)" }
@@ -1580,6 +1584,7 @@ entities:
       failedAt: { label: "Failed At" }
       cancelledAt: { label: "Cancelled At" }
       cancelReason: { label: "Cancel Reason" }
+      fundedAt: { label: "Funded At" }
       submittedById: { label: "Submitted By ID" }
       agentRunId: { label: "Agent Run ID" }
     edges:
@@ -1603,8 +1608,50 @@ entities:
       expectedReserveMinor: { label: "Expected Reserve (Minor)" }
       expectedDays: { label: "Expected Days to Pay", type: int }
       packetDocumentId: { label: "Packet Document ID" }
-      status: { label: "Status" }
+      status: { label: "Status", enumLabels: { ChargedBack: "Charged Back" } }
       releasedAt: { label: "Released At" }
+      fundedOn: { label: "Funded On", type: epoch }
+      advanceMinor: { label: "Advance (Minor)" }
+      feeMinor: { label: "Fee (Minor)" }
+      reserveMinor: { label: "Reserve (Minor)" }
+      rejectionReason: { label: "Rejection Reason" }
+      settledOn: { label: "Settled On", type: epoch }
+      chargedBackOn: { label: "Charged Back On", type: epoch }
+      chargebackReason: { label: "Chargeback Reason" }
+      chargebackWarnedAt: { label: "Chargeback Warned At" }
     edges:
       invoice: { label: Invoice }
       customer: { label: Customer }
+
+  # One movement between the organization and a factor, booked to the ledger
+  # beside its journal entry. Signed amounts: cash in is positive, cash paid back
+  # negative; a negative AR amount settles the invoice, a positive one reopens it.
+  factoring_reserve_entry:
+    struct: factoring.ReserveEntry
+    resource: factoring_reserve
+    label: Factoring Reserve Entry
+    pluralLabel: Factoring Reserve Entries
+    description: Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved
+    category: Billing
+    fields:
+      kind: { label: "Kind", enumLabels: { ReserveRelease: "Reserve Release", ChargebackReversal: "Chargeback Reversal" } }
+      treatment: { label: "Accounting Treatment", enumLabels: { SecuredBorrowing: "Secured Borrowing" } }
+      currencyCode: { label: "Currency" }
+      cashMinor: { label: "Cash (Minor)" }
+      feeMinor: { label: "Fee (Minor)" }
+      reserveMinor: { label: "Reserve (Minor)" }
+      liabilityMinor: { label: "Owed to Factor (Minor)" }
+      arMinor: { label: "Receivables (Minor)" }
+      journalEntryId: { label: "Journal Entry ID" }
+      journalBatchId: { label: "Journal Batch ID" }
+      accountingDate: { label: "Accounting Date", type: epoch }
+      occurredOn: { label: "Occurred On", type: epoch }
+      reversesEntryId: { label: "Reverses Entry ID" }
+      memo: { label: "Memo" }
+      createdById: { label: "Booked By ID" }
+      submissionItemId: { label: "Schedule Invoice ID" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+      invoice: { label: Invoice }
+      customer: { label: Customer }
+      submission: { label: "Schedule" }

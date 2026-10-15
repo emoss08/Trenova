@@ -52,6 +52,19 @@ func agreementInputFromModel(
 	if err != nil {
 		return nil, err
 	}
+	accounts := make(map[string]pulid.ID, 4)
+	for field, value := range map[string]*string{
+		"dueFromFactorAccountId": in.DueFromFactorAccountID,
+		"feeExpenseAccountId":    in.FeeExpenseAccountID,
+		"liabilityAccountId":     in.LiabilityAccountID,
+		"cashAccountId":          in.CashAccountID,
+	} {
+		id, parseErr := parseOptionalID(value, field)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		accounts[field] = id
+	}
 	tiers := make([]*factoring.FeeTier, 0, len(in.FeeTiers))
 	for _, tier := range in.FeeTiers {
 		if tier == nil {
@@ -65,20 +78,24 @@ func agreementInputFromModel(
 		})
 	}
 	return &factoringports.AgreementInput{
-		FactoringCompanyID:   factorID,
-		EffectiveFrom:        int64(in.EffectiveFrom),
-		EffectiveTo:          int64Ptr(in.EffectiveTo),
-		AdvanceRateBP:        in.AdvanceRateBp,
-		ReserveRateBP:        in.ReserveRateBp,
-		MinimumFeeMinor:      int64(intOrZero(in.MinimumFeeMinor)),
-		ChargebackWindowDays: in.ChargebackWindowDays,
-		Recourse:             in.Recourse,
-		AccountingTreatment:  in.AccountingTreatment,
-		FundingDays:          in.FundingDays,
-		SubmissionTime:       in.SubmissionTime,
-		Notes:                stringutils.FromPtr(in.Notes),
-		FeeTiers:             tiers,
-		DocumentTypeIDs:      typeIDs,
+		FactoringCompanyID:     factorID,
+		EffectiveFrom:          int64(in.EffectiveFrom),
+		EffectiveTo:            int64Ptr(in.EffectiveTo),
+		AdvanceRateBP:          in.AdvanceRateBp,
+		ReserveRateBP:          in.ReserveRateBp,
+		MinimumFeeMinor:        int64(intOrZero(in.MinimumFeeMinor)),
+		ChargebackWindowDays:   in.ChargebackWindowDays,
+		Recourse:               in.Recourse,
+		AccountingTreatment:    in.AccountingTreatment,
+		FundingDays:            in.FundingDays,
+		SubmissionTime:         in.SubmissionTime,
+		Notes:                  stringutils.FromPtr(in.Notes),
+		FeeTiers:               tiers,
+		DocumentTypeIDs:        typeIDs,
+		DueFromFactorAccountID: accounts["dueFromFactorAccountId"],
+		FeeExpenseAccountID:    accounts["feeExpenseAccountId"],
+		LiabilityAccountID:     accounts["liabilityAccountId"],
+		CashAccountID:          accounts["cashAccountId"],
 	}, nil
 }
 

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:487f3b24ee082ef7dc9e21323094c11c620634e5df47d8dab871b21fad2494f7",
+  "version": "sha256:33d642f0789ac02404972617540be8ac9f969af7c1e7c4fd647ea77819df6ff6",
   "modules": [
     {
       "id": "home",
@@ -7558,7 +7558,7 @@
         "Billing management",
         "Factoring"
       ],
-      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, or open one to see the checks it failed.",
+      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.",
       "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, **Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.\n\nReady invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each opens on its own page with its delivery, documents and invoices.",
       "requires": [
         {
@@ -16615,7 +16615,10 @@
         "out of office",
         "away",
         "signed-in devices",
-        "sign out other devices"
+        "sign out other devices",
+        "hide the assistant",
+        "turn off the assistant",
+        "hide Nova"
       ],
       "tasks": [
         {
@@ -16648,6 +16651,20 @@
           "steps": [
             "Open [Settings](/settings) and go to **Preferences**.",
             "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement."
+          ]
+        },
+        {
+          "title": "Hide the assistant",
+          "keywords": [
+            "turn off the assistant",
+            "hide Nova",
+            "remove the AI button",
+            "disable AI chat",
+            "Ctrl+J"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Preferences**.",
+            "Turn off **Show the assistant**. Its button, the panel and the Ctrl+J shortcut leave every page, on every device you sign in from, until you turn it back on. The Desk and asking about a record from the command palette still work."
           ]
         },
         {
