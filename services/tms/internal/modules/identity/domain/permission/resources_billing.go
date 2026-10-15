@@ -709,4 +709,41 @@ func (r *Registry) registerBillingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourceFactoringRemittance.String(),
+		DisplayName:    "Factoring Remittance",
+		Description:    "A factor's funding or reserve report, matched to schedule items before it is booked",
+		Category:       "Billing",
+		ParentResource: ResourceFactoringReserve.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View remittances and their lines"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Import",
+				Description: "Upload a factor's remittance and read it",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Resolve",
+				Description: "Match, ignore or restore a remittance line",
+			},
+			{
+				Operation:   OpImport,
+				DisplayName: "Apply",
+				Description: "Book a remittance's matched lines to the ledger",
+			},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Discard",
+				Description: "Discard a remittance that will not be booked",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export remittances and their lines",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }

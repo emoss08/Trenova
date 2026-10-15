@@ -174,7 +174,7 @@ func (r *Remittance) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (r *Remittance) requireStageable() error {
+func (r *Remittance) RequireStageable() error {
 	if r.Status.CanStage() {
 		return nil
 	}
@@ -198,7 +198,7 @@ type RemittanceStaging struct {
 }
 
 func (r *Remittance) stage(in *RemittanceStaging) error {
-	if err := r.requireStageable(); err != nil {
+	if err := r.RequireStageable(); err != nil {
 		return err
 	}
 	r.DocumentID = in.DocumentID
@@ -228,6 +228,21 @@ func (r *Remittance) MarkNeedsMapping(in *RemittanceStaging) error {
 	return nil
 }
 
+func (r *Remittance) MarkReading(in *RemittanceStaging) error {
+	if err := r.stage(in); err != nil {
+		return err
+	}
+	r.Status = RemittanceStatusPending
+	r.Lines = nil
+	r.Recount()
+	return nil
+}
+
+func (r *Remittance) AwaitsReading() bool {
+	return r.Status == RemittanceStatusPending && r.DocumentID.IsNotNil() &&
+		r.SourceFormat == RemittanceFormatPdf
+}
+
 func (r *Remittance) MarkParsed(in *RemittanceStaging, lines []*RemittanceLine) error {
 	if err := r.stage(in); err != nil {
 		return err
@@ -253,7 +268,7 @@ func (r *Remittance) MarkParsed(in *RemittanceStaging, lines []*RemittanceLine) 
 }
 
 func (r *Remittance) MarkFailed(documentID pulid.ID, fileName, cause string, at int64) error {
-	if err := r.requireStageable(); err != nil {
+	if err := r.RequireStageable(); err != nil {
 		return err
 	}
 	if !documentID.IsNil() {
@@ -298,7 +313,7 @@ func (r *Remittance) Recount() {
 	}
 }
 
-func (r *Remittance) requireEditable() error {
+func (r *Remittance) RequireEditable() error {
 	if r.Status.CanEditLines() {
 		return nil
 	}
@@ -338,7 +353,7 @@ func (r *Remittance) Line(id pulid.ID) *RemittanceLine {
 }
 
 func (r *Remittance) EditableLine(id pulid.ID) (*RemittanceLine, error) {
-	if err := r.requireEditable(); err != nil {
+	if err := r.RequireEditable(); err != nil {
 		return nil, err
 	}
 	line := r.Line(id)
