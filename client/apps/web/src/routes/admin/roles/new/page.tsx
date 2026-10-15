@@ -22,7 +22,10 @@ import { toast } from "sonner";
 import { RolePageLayout } from "../_components/role-builder-layout";
 import { RoleForm } from "../_components/role-form";
 import { RolePermissionMatrix } from "../_components/role-permission-matrix";
-import { RoleTemplateSelector } from "../_components/role-template-selector";
+import {
+  RoleTemplateSelector,
+  type TemplateSelection,
+} from "../_components/role-template-selector";
 
 export function RoleCreatePage() {
   const t = useT();
@@ -67,12 +70,16 @@ export function RoleCreatePage() {
     await mutateAsync(values);
   });
 
+  const { setValue } = form;
   const handleTemplateSelect = useCallback(
-    (templateId: string, templatePermissions: AddPermission[]) => {
-      setSelectedTemplate(templateId);
-      setPermissions(templatePermissions);
+    (selection: TemplateSelection) => {
+      setSelectedTemplate(selection.templateId);
+      setPermissions(selection.permissions);
+      if (selection.maxSensitivity) {
+        setValue("maxSensitivity", selection.maxSensitivity, { shouldDirty: true });
+      }
     },
-    [],
+    [setValue],
   );
 
   const handleCancel = useCallback(() => {

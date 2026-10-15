@@ -303,3 +303,64 @@ func TestPermissionHandler_GetAvailableOperations_Success(t *testing.T) {
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.NotEmpty(t, resp)
 }
+
+func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforce(t *testing.T) {
+	t.Parallel()
+
+	logger := zap.NewNop()
+	registry := permission.NewRegistry()
+	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	handler := permissionhandler.New(permissionhandler.Params{
+		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
+		Registry:         registry,
+		Scopes:           &scopepolicytest.Policy{Registry: registry},
+		ErrorHandler: helpers.NewErrorHandler(
+			helpers.ErrorHandlerParams{Logger: logger, Config: cfg},
+		),
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/permissions/bundles").
+		WithDefaultAuthContext()
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	type grant struct {
+		Resource    string   `json:"resource"`
+		DisplayName string   `json:"displayName"`
+		Operations  []string `json:"operations"`
+		DataScope   string   `json:"dataScope"`
+	}
+	var resp struct {
+		Bundles []struct {
+			ID     string  `json:"id"`
+			Grants []grant `json:"grants"`
+		} `json:"bundles"`
+		Templates []struct {
+			ID     string  `json:"id"`
+			Grants []grant `json:"grants"`
+		} `json:"templates"`
+	}
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Len(t, resp.Bundles, len(permission.Bundles()))
+	require.Len(t, resp.Templates, len(permission.JobTemplates()))
+
+	for _, bundle := range resp.Bundles {
+		if bundle.ID != "hr.team" {
+			continue
+		}
+		for _, g := range bundle.Grants {
+			switch g.Resource {
+			case "worker":
+				assert.Equal(t, "organization", g.DataScope,
+					"the database does not enforce team here, so the grant says organization")
+				assert.Equal(t, "Worker", g.DisplayName)
+			case "timesheet":
+				assert.Equal(t, "team", g.DataScope, "the application enforces team on timesheets")
+			}
+		}
+	}
+}

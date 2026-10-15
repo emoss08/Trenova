@@ -11,6 +11,9 @@ import {
   type ResourceDefinition,
 } from "@/lib/role-api";
 import { impliedOperations } from "@/lib/implied-operations";
+import { bundleState } from "@/lib/role-bundles";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { permissionBundlesQuery, RoleBundlePicker } from "./role-bundle-picker";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
@@ -44,6 +47,22 @@ export function RolePermissionMatrix({
     queryFn: getAvailableResources,
     staleTime: 1000 * 60 * 30,
   });
+
+  const { data: bundleCatalog } = useQuery(permissionBundlesQuery);
+  const bundleSources = useMemo(() => {
+    const sources = new Map<string, string[]>();
+    for (const bundle of bundleCatalog?.bundles ?? []) {
+      if (bundleState(bundle, permissions) !== "full") {
+        continue;
+      }
+      for (const grant of bundle.grants) {
+        const labels = sources.get(grant.resource) ?? [];
+        labels.push(t(bundle.label));
+        sources.set(grant.resource, labels);
+      }
+    }
+    return sources;
+  }, [bundleCatalog?.bundles, permissions, t]);
 
   const permissionMap = useMemo(() => {
     const map = new Map<string, AddPermission>();
@@ -202,73 +221,83 @@ export function RolePermissionMatrix({
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Input
-            leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
-            placeholder={t("Search resources...")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            rightElement={
-              searchQuery && (
-                <Button
-                  type="button"
-                  variant="ghostInvert"
-                  size="icon-xs"
-                  onClick={() => setSearchQuery("")}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <XCloseIcon className="size-3.5" />
-                </Button>
-              )
-            }
-            className="h-9 pl-9 text-sm"
-          />
+    <Tabs defaultValue="capabilities" className="flex h-full flex-col gap-4">
+      <TabsList variant="underline">
+        <TabsTab value="capabilities">{t("Capabilities")}</TabsTab>
+        <TabsTab value="advanced">{t("Advanced")}</TabsTab>
+      </TabsList>
+      <TabsContent value="capabilities">
+        <RoleBundlePicker permissions={permissions} onPermissionsChange={onPermissionsChange} />
+      </TabsContent>
+      <TabsContent value="advanced" className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Input
+              leftElement={<SearchLgIcon className="text-muted-foreground size-4" />}
+              placeholder={t("Search resources...")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              rightElement={
+                searchQuery && (
+                  <Button
+                    type="button"
+                    variant="ghostInvert"
+                    size="icon-xs"
+                    onClick={() => setSearchQuery("")}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <XCloseIcon className="size-3.5" />
+                  </Button>
+                )
+              }
+              className="h-9 pl-9 text-sm"
+            />
+          </div>
+          <Badge variant="neutral" appearance="outline" className="shrink-0 text-xs font-normal">
+            {t("{0} selected", permissions.length)}
+          </Badge>
         </div>
-        <Badge variant="neutral" appearance="outline" className="shrink-0 text-xs font-normal">
-          {t("{0} selected", permissions.length)}
-        </Badge>
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
-        {filteredCategories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <SearchXIcon className="text-muted-foreground/50 size-8" />
-            <p className="mt-3 text-sm font-medium">{t("No resources found")}</p>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {t("No resources match “{0}”. Try a different search term.", searchQuery)}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => setSearchQuery("")}
-            >
-              {t("Clear search")}
-            </Button>
-          </div>
-        ) : (
-          <div>
-            {filteredCategories.map((category, idx) => (
-              <CategorySection
-                key={category.category}
-                category={category}
-                isExpanded={isSearching || expandedCategories.has(category.category)}
-                isLast={idx === filteredCategories.length - 1}
-                onToggle={() => toggleCategory(category.category)}
-                permissionMap={permissionMap}
-                onToggleOperation={toggleOperation}
-                onToggleAllForResource={toggleAllForResource}
-                onToggleAllForCategory={toggleAllForCategory}
-                onUpdateDataScope={updateDataScope}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+        <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
+          {filteredCategories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <SearchXIcon className="text-muted-foreground/50 size-8" />
+              <p className="mt-3 text-sm font-medium">{t("No resources found")}</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {t("No resources match “{0}”. Try a different search term.", searchQuery)}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => setSearchQuery("")}
+              >
+                {t("Clear search")}
+              </Button>
+            </div>
+          ) : (
+            <div>
+              {filteredCategories.map((category, idx) => (
+                <CategorySection
+                  key={category.category}
+                  category={category}
+                  isExpanded={isSearching || expandedCategories.has(category.category)}
+                  isLast={idx === filteredCategories.length - 1}
+                  onToggle={() => toggleCategory(category.category)}
+                  permissionMap={permissionMap}
+                  onToggleOperation={toggleOperation}
+                  onToggleAllForResource={toggleAllForResource}
+                  onToggleAllForCategory={toggleAllForCategory}
+                  onUpdateDataScope={updateDataScope}
+                  bundleSources={bundleSources}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -282,6 +311,7 @@ type CategorySectionProps = {
   onToggleAllForResource: (resource: ResourceDefinition) => void;
   onToggleAllForCategory: (category: ResourceCategory, action: "select" | "clear") => void;
   onUpdateDataScope: (resource: string, scope: DataScope) => void;
+  bundleSources: Map<string, string[]>;
 };
 
 function CategorySection({
@@ -294,6 +324,7 @@ function CategorySection({
   onToggleAllForResource,
   onToggleAllForCategory,
   onUpdateDataScope,
+  bundleSources,
 }: CategorySectionProps) {
   const t = useT();
 
@@ -359,6 +390,7 @@ function CategorySection({
                   onToggleOperation={(op) => onToggleOperation(resource, op)}
                   onToggleAll={() => onToggleAllForResource(resource)}
                   onUpdateDataScope={(scope) => onUpdateDataScope(resource.resource, scope)}
+                  sources={bundleSources.get(resource.resource)}
                 />
               ))}
             </div>
@@ -376,6 +408,7 @@ type ResourceRowProps = {
   onToggleOperation: (operation: string) => void;
   onToggleAll: () => void;
   onUpdateDataScope: (scope: DataScope) => void;
+  sources?: string[];
 };
 
 function ResourceRow({
@@ -385,6 +418,7 @@ function ResourceRow({
   onToggleOperation,
   onToggleAll,
   onUpdateDataScope,
+  sources,
 }: ResourceRowProps) {
   const t = useT();
 
@@ -437,6 +471,11 @@ function ResourceRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{resource.displayName}</p>
+        {sources?.length ? (
+          <p className="text-muted-foreground truncate text-xs">
+            {t("From {0}", sources.join(", "))}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-1.5">

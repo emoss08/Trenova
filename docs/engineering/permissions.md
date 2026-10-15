@@ -54,6 +54,29 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
    A new write route also needs an entry in `writecoverage.yml`.
 
+## Bundles and job templates
+
+A role is composed from **capability bundles** rather than from 180 resources one at a
+time. A bundle (`permission/bundles_catalog.go`) is a named set of grants for one job to be
+done, such as "Dispatch board" or "Post invoices", and a **job template** (Dispatcher,
+Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bundles with
+a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
+scope it will actually apply in this deployment (a scope the deployment does not enforce
+comes back as organization), and each template already composed (`Registry.TemplateGrants`:
+operations merged, the widest scope kept).
+
+Bundles are a way of choosing grants, not a second kind of grant: choosing one writes its
+grants into the role's ordinary `resource_permissions`, so evaluation, delegation and the
+audit trail are unchanged, and a later change to a bundle does not reach roles built from
+it. The role editor's Capabilities tab ticks bundles (full, partly granted, none); its
+Advanced tab is the resource grid, where each row says which ticked bundles it came from.
+Taking a bundle away removes its operations except where another fully ticked bundle
+grants them. `TestBundles_GrantOnlyWhatTheRegistryDeclares` keeps every bundle grant
+declared and every bundle scope one its kind supports.
+
+A role and all its grants are saved in one request and one transaction: `POST /roles/`
+creates both, and `PUT /roles/:id` replaces the grant set with the role's columns.
+
 ## Data scopes
 
 A grant's data scope narrows which records of a kind it reaches. Organization (and the
