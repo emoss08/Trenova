@@ -90,6 +90,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Storage:           opts.storage,
 		Config:            opts.cfg,
 		Validator:         userservice.NewTestValidator(),
+		PermissionEngine:  opts.permEngine,
 	})
 
 	roleSvc := roleservice.New(roleservice.Params{

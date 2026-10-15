@@ -181,7 +181,13 @@ deny, make sure the scope is the tenant the question is about.
 - **Two organizations, one transaction.** An internal EDI approval or transfer
   change writes both organizations atomically. Those transactions run under the
   system scope, with the tenant filters still written in Go; a read of the other
-  organization alone binds that organization's tenant instead.
+  organization alone binds that organization's tenant instead. Replacing a user's
+  organization memberships is the same shape: the user repository lists and rewrites
+  them under the system scope, filtered to that user and business unit, and the user
+  service first checks the caller holds `user:update` in every organization it adds or
+  removes, judged by that organization's own roles (`dbscope.WithTenant` for it, and
+  `authctx.WithoutSessionRoleActivation`, since the session's activated roles belong to
+  the caller's current organization).
 - **Business-unit-wide reads.** Organization pickers, the organization loader and
   organization uniqueness checks span the business unit; they run under the system
   scope and filter by business unit themselves. The `organizations` policy only

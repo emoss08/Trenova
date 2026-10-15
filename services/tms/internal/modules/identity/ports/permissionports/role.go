@@ -68,6 +68,12 @@ type GetUserRoleAssignmentsByIDRequest struct {
 	ExpandRoles      bool                  `json:"expandRoles"`
 }
 
+type OrphanedAssignment struct {
+	UserID         pulid.ID `bun:"user_id"`
+	OrganizationID pulid.ID `bun:"organization_id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+}
+
 type RoleRepository interface {
 	List(
 		ctx context.Context,
@@ -103,6 +109,11 @@ type RoleRepository interface {
 		ctx context.Context,
 		userID, orgID pulid.ID,
 	) ([]*permission.UserRoleAssignment, error)
+	ListOrphanedAssignments(
+		ctx context.Context,
+		now int64,
+		limit int,
+	) ([]OrphanedAssignment, error)
 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error

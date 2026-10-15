@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -128,6 +129,7 @@ func TestReplaceOrganizationMemberships_EndsOnlyTheRemovedOrganizationsSessions(
 	deps.repo.EXPECT().ReplaceOrganizationMemberships(mock.Anything, replace).
 		Return(memberships(kept), nil).
 		Once()
+	deps.expectUserManagement(actorID, removed, true)
 	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, userID).
 		Return([]*session.Session{keptSession, removedSession}, nil).Once()
 	deps.sessionRepo.EXPECT().Delete(mock.Anything, removedSession.ID).Return(nil).Once()
@@ -163,6 +165,7 @@ func TestReplaceOrganizationMemberships_ReportsRolesThatCouldNotBeRevoked(t *tes
 	deps.repo.EXPECT().ReplaceOrganizationMemberships(mock.Anything, mock.Anything).
 		Return(memberships(kept), nil).
 		Once()
+	deps.expectUserManagement(actorID, removed, true)
 	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, userID).Return(nil, nil).Once()
 
 	_, err := deps.svc.ReplaceOrganizationMemberships(
@@ -183,4 +186,75 @@ func memberships(orgIDs ...pulid.ID) []*tenant.OrganizationMembership {
 		out = append(out, &tenant.OrganizationMembership{OrganizationID: orgID})
 	}
 	return out
+}
+
+func TestPatch_RetryingADeactivationEndsSessionsLeftBehind(t *testing.T) {
+	t.Parallel()
+
+	d := setupPatchTest(t)
+	d.target.IsLocked = false
+	d.target.Status = domaintypes.StatusInactive
+	d.expectLoad(d.target)
+	lingering := &session.Session{ID: pulid.MustNew("ses_"), UserID: d.target.ID}
+	d.sessionRepo.EXPECT().ListForUser(mock.Anything, d.target.ID).
+		Return([]*session.Session{lingering}, nil).Once()
+	d.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, d.target.ID).Return(nil).Once()
+
+	_, err := d.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: d.actor,
+		UserID:     d.target.ID,
+		Apply: func(user *tenant.User) error {
+			user.Status = domaintypes.StatusInactive
+			return nil
+		},
+	})
+
+	require.NoError(t, err)
+	d.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
+}
+
+func TestPatch_ANoOpOnAnActiveUserLeavesSessionsAlone(t *testing.T) {
+	t.Parallel()
+
+	d := setupPatchTest(t)
+	d.target.IsLocked = false
+	d.expectLoad(d.target)
+
+	_, err := d.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: d.actor,
+		UserID:     d.target.ID,
+		Apply:      func(*tenant.User) error { return nil },
+	})
+
+	require.NoError(t, err)
+	d.sessionRepo.AssertNotCalled(t, "ListForUser", mock.Anything, mock.Anything)
+}
+
+func TestBulkUpdateStatus_RetryingADeactivationEndsSessionsLeftBehind(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	already := newTestUser()
+	already.Status = domaintypes.StatusInactive
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  already.CurrentOrganizationID,
+		BuID:   already.BusinessUnitID,
+		UserID: pulid.MustNew("usr_"),
+	}
+	req := &tenantports.BulkUpdateUserStatusRequest{
+		TenantInfo: tenantInfo,
+		UserIDs:    []pulid.ID{already.ID},
+		Status:     domaintypes.StatusInactive,
+	}
+
+	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*tenant.User{already}, nil)
+	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return([]*tenant.User{already}, nil)
+	deps.audit.On("LogActions", mock.Anything).Return(nil).Once()
+	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, already.ID).
+		Return([]*session.Session{{ID: pulid.MustNew("ses_")}}, nil).Once()
+	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, already.ID).Return(nil).Once()
+
+	_, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+
+	require.NoError(t, err)
 }

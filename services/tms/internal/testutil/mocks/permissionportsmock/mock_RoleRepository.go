@@ -411,6 +411,80 @@ func (_c *MockRoleRepository_DeleteUserAssignments_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// ListOrphanedAssignments provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) ListOrphanedAssignments(ctx context.Context, now int64, limit int) ([]permissionports.OrphanedAssignment, error) {
+	ret := _mock.Called(ctx, now, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOrphanedAssignments")
+	}
+
+	var r0 []permissionports.OrphanedAssignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) ([]permissionports.OrphanedAssignment, error)); ok {
+		return returnFunc(ctx, now, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) []permissionports.OrphanedAssignment); ok {
+		r0 = returnFunc(ctx, now, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]permissionports.OrphanedAssignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int) error); ok {
+		r1 = returnFunc(ctx, now, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_ListOrphanedAssignments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOrphanedAssignments'
+type MockRoleRepository_ListOrphanedAssignments_Call struct {
+	*mock.Call
+}
+
+// ListOrphanedAssignments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - now int64
+//   - limit int
+func (_e *MockRoleRepository_Expecter) ListOrphanedAssignments(ctx any, now any, limit any) *MockRoleRepository_ListOrphanedAssignments_Call {
+	return &MockRoleRepository_ListOrphanedAssignments_Call{Call: _e.mock.On("ListOrphanedAssignments", ctx, now, limit)}
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) Run(run func(ctx context.Context, now int64, limit int)) *MockRoleRepository_ListOrphanedAssignments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) Return(orphanedAssignments []permissionports.OrphanedAssignment, err error) *MockRoleRepository_ListOrphanedAssignments_Call {
+	_c.Call.Return(orphanedAssignments, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) RunAndReturn(run func(ctx context.Context, now int64, limit int) ([]permissionports.OrphanedAssignment, error)) *MockRoleRepository_ListOrphanedAssignments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockRoleRepository
 func (_mock *MockRoleRepository) GetByID(ctx context.Context, req permissionports.GetRoleByIDRequest) (*permission.Role, error) {
 	ret := _mock.Called(ctx, req)

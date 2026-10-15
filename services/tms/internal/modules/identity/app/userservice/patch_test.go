@@ -236,6 +236,7 @@ func TestPatch_IgnoresAttemptsToChangeImmutableFields(t *testing.T) {
 
 	d := setupPatchTest(t)
 	d.expectLoad(d.target)
+	d.sessionRepo.EXPECT().ListForUser(mock.Anything, d.target.ID).Return(nil, nil).Once()
 	original := *d.target
 
 	updated, err := d.svc.Patch(t.Context(), &PatchUserRequest{

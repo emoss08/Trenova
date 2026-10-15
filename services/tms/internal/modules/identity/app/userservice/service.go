@@ -46,6 +46,7 @@ type Params struct {
 	DB                kernelports.DBConnection
 	Roles             RoleAssigner
 	Invites           AccountInviter
+	PermissionEngine  permissionports.PermissionEngine
 	AuthEventHistory  iamports.AuthEventHistoryRepository `optional:"true"`
 	AuthEvents        iamports.AuthEventRecorder          `optional:"true"`
 }
@@ -64,6 +65,7 @@ type Service struct {
 	db           kernelports.DBConnection
 	roles        RoleAssigner
 	invites      AccountInviter
+	permissions  permissionports.PermissionEngine
 	signIns      iamports.AuthEventHistoryRepository
 	authEvents   iamports.AuthEventRecorder
 }
@@ -83,6 +85,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		db:           p.DB,
 		roles:        p.Roles,
 		invites:      p.Invites,
+		permissions:  p.PermissionEngine,
 		signIns:      p.AuthEventHistory,
 		authEvents:   p.AuthEvents,
 	}
@@ -196,10 +199,14 @@ func (s *Service) endSessionsAfterBulkStatus(
 		if !ok {
 			original = &tenant.User{Status: domaintypes.StatusActive}
 		}
-		if !lostSignInAccess(original, user) {
-			continue
+
+		var err error
+		if lostSignInAccess(original, user) {
+			err = s.endAllSessions(ctx, tenantInfo, user.ID)
+		} else {
+			err = s.endLingeringSessions(ctx, tenantInfo, user)
 		}
-		if err := s.endAllSessions(ctx, tenantInfo, user.ID); err != nil {
+		if err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -712,8 +719,22 @@ func (s *Service) ReplaceOrganizationMemberships(
 	actorID, userID, organizationID, businessUnitID pulid.ID,
 	organizationIDs []pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
+	if len(organizationIDs) == 0 {
+		return nil, tenant.NewNoOrganizationMembershipsError()
+	}
+
 	previous, err := s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = s.authorizeMembershipChange(ctx, &membershipAuthorization{
+		actorID:        actorID,
+		organizationID: organizationID,
+		businessUnitID: businessUnitID,
+		previous:       previous,
+		desired:        organizationIDs,
+	}); err != nil {
 		return nil, err
 	}
 

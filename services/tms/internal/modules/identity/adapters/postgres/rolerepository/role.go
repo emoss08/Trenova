@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -536,6 +537,48 @@ func (r *repository) DeleteUserAssignments(
 			}
 
 			return deleted, nil
+		},
+	)
+}
+
+const orphanedAssignmentsQuery = `
+SELECT DISTINCT ura.user_id, ura.organization_id, o.business_unit_id
+FROM user_role_assignments ura
+JOIN organizations o ON o.id = ura.organization_id
+JOIN users u ON u.id = ura.user_id
+WHERE u.current_organization_id <> ura.organization_id
+  AND NOT EXISTS (
+    SELECT 1
+    FROM user_organization_memberships m
+    WHERE m.user_id = ura.user_id
+      AND m.organization_id = ura.organization_id
+      AND (m.expires_at IS NULL OR m.expires_at > ?)
+  )
+ORDER BY ura.organization_id, ura.user_id
+LIMIT ?`
+
+func (r *repository) ListOrphanedAssignments(
+	ctx context.Context,
+	now int64,
+	limit int,
+) ([]permissionports.OrphanedAssignment, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"find role assignments in organizations their holders no longer belong to, across every organization",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]permissionports.OrphanedAssignment, error) {
+			orphans := make([]permissionports.OrphanedAssignment, 0)
+			if err := r.db.DBForContext(ctx).
+				NewRaw(orphanedAssignmentsQuery, now, limit).
+				Scan(ctx, &orphans); err != nil {
+				r.l.Error("failed to list orphaned role assignments", zap.Error(err))
+				return nil, err
+			}
+
+			return orphans, nil
 		},
 	)
 }

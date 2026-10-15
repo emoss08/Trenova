@@ -27,6 +27,8 @@ func TestReplaceOrganizationMembershipsRecordsWhatChanged(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	kept, removed, added := pulid.MustNew("org_"), pulid.MustNew("org_"), pulid.MustNew("org_")
 	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, userID).Return(nil, nil).Once()
+	deps.expectUserManagement(actorID, removed, true)
+	deps.expectUserManagement(actorID, added, true)
 
 	deps.repo.EXPECT().ListOrganizationMemberships(mock.Anything, userID, buID).
 		Return([]*tenant.OrganizationMembership{{OrganizationID: kept}, {OrganizationID: removed}}, nil).Once()

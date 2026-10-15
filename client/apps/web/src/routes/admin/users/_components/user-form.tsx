@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { describeApiError } from "@/lib/api-error-message";
 import { RoleAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField, InputFieldSkeleton } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -292,7 +293,7 @@ function OrganizationMembershipSection({
         organizationIds: selectedOrgIDs,
       })
       .catch((err) => {
-        setError("Unable to save organization access.");
+        setError(describeApiError(err, "Unable to save organization access."));
         console.error("Failed to save organization memberships", err);
         setIsSaving(false);
         return null;
@@ -375,7 +376,7 @@ function OrganizationMembershipSection({
             type="button"
             variant="outline"
             onClick={saveMemberships}
-            disabled={isDisabled || isLoading || isSaving}
+            disabled={isDisabled || isLoading || isSaving || selectedOrgIDs.length === 0}
             isLoading={isSaving}
             loadingText={t("Saving...")}
           >

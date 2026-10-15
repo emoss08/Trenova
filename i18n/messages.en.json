@@ -10727,6 +10727,15 @@
       "go/other"
     ]
   },
+  "A user must keep access to at least one organization. Deactivate the user to remove all access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A user notification must name its recipient": {
     "sites": 1,
     "scope": [
@@ -30828,6 +30837,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Assistant · Nova · AI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Assistant · ⌘J": {
@@ -117908,6 +117926,15 @@
       "routes/pto-policy"
     ]
   },
+  "Inherited roles must belong to your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Initial Backoff (seconds)": {
     "sites": 1,
     "scope": [
@@ -173643,7 +173670,7 @@
     ]
   },
   "PRO {0}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -209186,6 +209213,15 @@
       "routes/worker"
     ]
   },
+  "Revoke the roles and sessions people still hold in organizations they no longer belong to": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.": {
     "sites": 1,
     "scope": [
@@ -209607,6 +209643,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Role is already assigned to this user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Role is required": {
@@ -229309,6 +229354,15 @@
       "apps/web/components"
     ]
   },
+  "Show the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
   "Show the first {0}": {
     "sites": 1,
     "scope": [
@@ -244711,6 +244765,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The assistant on every page and its shortcut. Turned off, it stays off on every device you sign in from; the Desk is still there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "The assistant proposed a change that could not be saved for approval": {
@@ -276879,12 +276942,14 @@
     ]
   },
   "User not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "User not found with the given email address": {
@@ -287194,6 +287259,15 @@
       "go/other"
     ]
   },
+  "Whether the assistant is hidden is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Whether the carrier can be tendered could not be read.": {
     "sites": 1,
     "scope": [
@@ -292963,6 +293037,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "You need permission to manage users in every organization you add or remove": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You no longer have access to the {0} this conversation is about.": {
