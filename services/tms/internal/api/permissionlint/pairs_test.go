@@ -89,6 +89,7 @@ var dynamicChecks = map[string]string{
 	"graphql/resolver/datatableinsightresolver/data_table_insight.resolvers.go:DataTableInsightFields": "the table the insight service resolves",
 	"graphql/resolver/datatableinsightresolver/data_table_insight.resolvers.go:DataTableSeries":        "the table the insight service resolves",
 	"graphql/resolver/reportresolver/report.resolvers.go:ExportTableView":                              "the table being exported; an unknown resource has no grant",
+	"graphql/resolver/tableconfigurationresolver/access.go:mayReadTable":                               "the table a saved view belongs to; an unknown resource has no grant",
 	"graphql/resolver/reportresolver/report.resolvers.go:ScheduleTableView":                            "the table being scheduled; an unknown resource has no grant",
 	"handlers/assistanthandler/artifacts.go:registerArtifactRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/cases.go:registerCaseRoutes":                                            "the assistant resource, passed by RegisterRoutes",

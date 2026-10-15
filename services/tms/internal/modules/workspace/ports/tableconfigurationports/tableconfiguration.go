@@ -25,6 +25,8 @@ type ListTableConfigurationConnectionRequest struct {
 	Resource                  string                   `json:"resource"`
 	Visibility                string                   `json:"visibility"`
 	TableConfigurationColumns []string                 `json:"-"`
+	LimitToResources          bool                     `json:"-"`
+	ReadableResources         []string                 `json:"-"`
 }
 
 type GetDefaultTableConfigurationRequest struct {

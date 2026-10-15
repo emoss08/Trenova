@@ -53,6 +53,24 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    roles (the driver portal role) are never touched.
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
    A new write route also needs an entry in `writecoverage.yml`.
+4. Name the action. A route or mutation named for an action (`POST /:id/post/`,
+   `SendInvoiceEDI`, `ReleaseBillingQueueItem`) must check that action's own operation
+   (approve, cancel, archive…) or one whose display name or description on the resource
+   names it, so a role author can find "post" or "send" in the editor
+   (`permissionlint.TestEveryActionIsGatedByAPermissionThatNamesIt`). Posting an invoice is
+   `invoice` "Update and post"; sending one is "Submit and send". When an existing
+   operation already carries the action, say so in its description rather than adding a
+   verb no role holds.
+
+## Saved table views
+
+Anyone may keep private views of a table they can read. Sharing a view with the
+organization needs `table_configuration` create, and changing one that stays shared needs
+update; the owner may always withdraw or delete their own view
+(`tableconfigurationservice`, which the `save_table_view` agent tool goes through too). A
+reader only sees views, shared or private, of tables whose resource they can read, so a
+view's name and filters never reach someone who cannot open the table it is about.
+`reporting.reports` carries the share and change grants for new roles.
 
 ## Bundles and job templates
 

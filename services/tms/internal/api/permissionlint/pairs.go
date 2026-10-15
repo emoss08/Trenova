@@ -28,6 +28,8 @@ type Pair struct {
 	Position  string
 	Resource  string
 	Operation string
+	Function  string
+	Route     string
 }
 
 func (p Pair) String() string {
@@ -103,6 +105,8 @@ type analyzer struct {
 	locals     map[string]string
 	pairs      []Pair
 	unresolved []string
+	function   string
+	routes     map[*ast.CallExpr]string
 }
 
 type Result struct {
@@ -188,6 +192,8 @@ func (a *analyzer) collectPairs(file *ast.File) {
 		}
 		aliases := a.wrapperAliases(fn.Body)
 		a.locals = a.localResources(fn.Body)
+		a.function = fn.Name.Name
+		a.routes = make(map[*ast.CallExpr]string)
 		params := paramIndexes(fn.Type.Params)
 		_, isWrapperDecl := a.wrappers[fn.Name.Name]
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
@@ -195,6 +201,7 @@ func (a *analyzer) collectPairs(file *ast.File) {
 			if !isCall {
 				return true
 			}
+			a.markRouteArguments(call)
 			if isCheckCall(call) {
 				if !a.directPair(call) && !(isWrapperDecl && a.forwardsParams(call, params)) {
 					a.markUnresolved(call, fn.Name.Name)
@@ -325,7 +332,40 @@ func (a *analyzer) record(call *ast.CallExpr, resource, operation string) {
 		Position:  fmt.Sprintf("%s:%d", filepath.ToSlash(position.Filename), position.Line),
 		Resource:  resource,
 		Operation: operation,
+		Function:  a.function,
+		Route:     a.routes[call],
 	})
+}
+
+var routeMethods = map[string]struct{}{
+	"GET": {}, "POST": {}, "PUT": {}, "PATCH": {}, "DELETE": {},
+}
+
+func (a *analyzer) markRouteArguments(call *ast.CallExpr) {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || len(call.Args) < 2 {
+		return
+	}
+	if _, isRoute := routeMethods[selector.Sel.Name]; !isRoute {
+		return
+	}
+	literal, ok := call.Args[0].(*ast.BasicLit)
+	if !ok || literal.Kind != token.STRING {
+		return
+	}
+	path, err := strconv.Unquote(literal.Value)
+	if err != nil {
+		return
+	}
+	route := selector.Sel.Name + " " + path
+	for _, arg := range call.Args[1:] {
+		ast.Inspect(arg, func(node ast.Node) bool {
+			if inner, isCall := node.(*ast.CallExpr); isCall {
+				a.routes[inner] = route
+			}
+			return true
+		})
+	}
 }
 
 func (a *analyzer) resourceOf(expr ast.Expr) (string, bool) {

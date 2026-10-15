@@ -139,7 +139,7 @@ func (r *Registry) registerSettlementResources() {
 		DisplayName: "Driver Settlement",
 		Description: "Driver and owner-operator settlement statements and batches",
 		Category:    "Payroll",
-		Operations: append(slices.Clone(standardOps),
+		Operations: relabel(append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpSubmit,
 				DisplayName: "Submit",
@@ -160,7 +160,7 @@ func (r *Registry) registerSettlementResources() {
 				DisplayName: "Void",
 				Description: "Void settlements",
 			},
-		),
+		), OpUpdate, "Update", "Modify settlements and release held pay events"),
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
 			"advanceId":            SensitivityInternal,

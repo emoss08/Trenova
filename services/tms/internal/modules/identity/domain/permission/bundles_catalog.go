@@ -8,9 +8,15 @@ var capabilityBundles = []Bundle{
 		Description: "Work the board: move loads, assign drivers and equipment, and keep stops and holds current.",
 		Grants: []BundleGrant{
 			{Resource: ResourceShipment, Operations: []Operation{OpRead, OpUpdate}},
-			{Resource: ResourceShipmentMove, Operations: []Operation{OpRead, OpUpdate, OpAssign, OpUnassign}},
+			{
+				Resource:   ResourceShipmentMove,
+				Operations: []Operation{OpRead, OpUpdate, OpAssign, OpUnassign},
+			},
 			{Resource: ResourceShipmentStop, Operations: []Operation{OpRead, OpUpdate}},
-			{Resource: ResourceShipmentComment, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceShipmentComment,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceShipmentHold, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceWorker, Operations: []Operation{OpRead}},
 			{Resource: ResourceTractor, Operations: []Operation{OpRead}},
@@ -28,11 +34,28 @@ var capabilityBundles = []Bundle{
 		Label:       "Book shipments",
 		Description: "Enter, change, duplicate and cancel shipments and orders.",
 		Grants: []BundleGrant{
-			{Resource: ResourceShipment, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit, OpCancel, OpDuplicate, OpExport}},
+			{
+				Resource: ResourceShipment,
+				Operations: []Operation{
+					OpRead,
+					OpCreate,
+					OpUpdate,
+					OpSubmit,
+					OpCancel,
+					OpDuplicate,
+					OpExport,
+				},
+			},
 			{Resource: ResourceShipmentMove, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceShipmentStop, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceOrder, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpCancel}},
-			{Resource: ResourceRecurringShipment, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate}},
+			{
+				Resource:   ResourceOrder,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpCancel},
+			},
+			{
+				Resource:   ResourceRecurringShipment,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate},
+			},
 			{Resource: ResourceCommodity, Operations: []Operation{OpRead}},
 			{Resource: ResourceHazardousMaterial, Operations: []Operation{OpRead}},
 			{Resource: ResourceCustomer, Operations: []Operation{OpRead}},
@@ -47,10 +70,19 @@ var capabilityBundles = []Bundle{
 		Description: "Source, tender and confirm carriers for brokered loads.",
 		Grants: []BundleGrant{
 			{Resource: ResourceCarrier, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceTender, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpCancel, OpApprove}},
-			{Resource: ResourceRateConfirmation, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceTender,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpCancel, OpApprove},
+			},
+			{
+				Resource:   ResourceRateConfirmation,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceRoutingGuide, Operations: []Operation{OpRead}},
-			{Resource: ResourceCarrierCapacityPosting, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceCarrierCapacityPosting,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceCarrierSourcing, Operations: []Operation{OpRead}},
 			{Resource: ResourceCarrierIntelligence, Operations: []Operation{OpRead}},
 			{Resource: ResourceEquipmentVerification, Operations: []Operation{OpRead, OpCreate}},
@@ -75,7 +107,10 @@ var capabilityBundles = []Bundle{
 		Grants: []BundleGrant{
 			{Resource: ResourceBillingQueue, Operations: []Operation{OpRead, OpUpdate, OpAssign}},
 			{Resource: ResourceShipment, Operations: []Operation{OpRead}},
-			{Resource: ResourceInvoice, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit}},
+			{
+				Resource:   ResourceInvoice,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
 			{Resource: ResourceAccessorialCharge, Operations: []Operation{OpRead}},
 			{Resource: ResourceChargeType, Operations: []Operation{OpRead}},
 			{Resource: ResourceDocument, Operations: []Operation{OpRead}},
@@ -88,9 +123,18 @@ var capabilityBundles = []Bundle{
 		Label:       "Post invoices",
 		Description: "Approve, reject and cancel invoices, run invoice batches and settle disputes.",
 		Grants: []BundleGrant{
-			{Resource: ResourceInvoice, Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel, OpExport}},
-			{Resource: ResourceInvoiceRun, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpCancel}},
-			{Resource: ResourceInvoiceDispute, Operations: []Operation{OpRead, OpCreate, OpApprove, OpCancel}},
+			{
+				Resource:   ResourceInvoice,
+				Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel, OpExport},
+			},
+			{
+				Resource:   ResourceInvoiceRun,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpCancel},
+			},
+			{
+				Resource:   ResourceInvoiceDispute,
+				Operations: []Operation{OpRead, OpCreate, OpApprove, OpCancel},
+			},
 		},
 	},
 	{
@@ -99,12 +143,24 @@ var capabilityBundles = []Bundle{
 		Label:       "Rates and agreements",
 		Description: "Maintain rate agreements, matrices, zones, formulas and fuel surcharges.",
 		Grants: []BundleGrant{
-			{Resource: ResourceRateAgreement, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit, OpDuplicate}},
+			{
+				Resource:   ResourceRateAgreement,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit, OpDuplicate},
+			},
 			{Resource: ResourceRateMatrix, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceRateZone, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceFormulaTemplate, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit}},
-			{Resource: ResourceAccessorialCharge, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceFuelSurchargeProgram, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceFormulaTemplate,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit},
+			},
+			{
+				Resource:   ResourceAccessorialCharge,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
+			{
+				Resource:   ResourceFuelSurchargeProgram,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceRateSimulation, Operations: []Operation{OpRead, OpCreate}},
 			{Resource: ResourceDetentionPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedMargins, Operations: []Operation{OpRead}},
@@ -116,8 +172,14 @@ var capabilityBundles = []Bundle{
 		Label:       "Receivables",
 		Description: "Apply customer payments and bank receipts and work receivables.",
 		Grants: []BundleGrant{
-			{Resource: ResourceAccountsReceivable, Operations: []Operation{OpRead, OpUpdate, OpExport}},
-			{Resource: ResourceCustomerPayment, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceAccountsReceivable,
+				Operations: []Operation{OpRead, OpUpdate, OpExport},
+			},
+			{
+				Resource:   ResourceCustomerPayment,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceBankReceipt, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceBankReceiptWorkItem, Operations: []Operation{OpRead, OpUpdate}},
 			{Resource: ResourceCustomer, Operations: []Operation{OpRead}},
@@ -129,9 +191,15 @@ var capabilityBundles = []Bundle{
 		Label:       "General ledger",
 		Description: "Keep the chart of accounts and enter manual journals.",
 		Grants: []BundleGrant{
-			{Resource: ResourceGeneralLedgerAccount, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceGeneralLedgerAccount,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceJournalEntry, Operations: []Operation{OpRead, OpExport}},
-			{Resource: ResourceManualJournal, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit}},
+			{
+				Resource:   ResourceManualJournal,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
 			{Resource: ResourceJournalReversal, Operations: []Operation{OpRead, OpCreate}},
 			{Resource: ResourceAccountType, Operations: []Operation{OpRead}},
 			{Resource: ResourceDivisionCode, Operations: []Operation{OpRead}},
@@ -144,11 +212,17 @@ var capabilityBundles = []Bundle{
 		Label:       "Period close",
 		Description: "Approve journals and close, reopen and lock fiscal periods.",
 		Grants: []BundleGrant{
-			{Resource: ResourceFiscalPeriod, Operations: []Operation{OpRead, OpClose, OpReopen, OpLock, OpUnlock}},
+			{
+				Resource:   ResourceFiscalPeriod,
+				Operations: []Operation{OpRead, OpClose, OpReopen, OpLock, OpUnlock},
+			},
 			{Resource: ResourceFiscalYear, Operations: []Operation{OpRead, OpClose, OpReopen}},
 			{Resource: ResourceJournalEntry, Operations: []Operation{OpRead, OpApprove}},
 			{Resource: ResourceManualJournal, Operations: []Operation{OpRead, OpApprove, OpReject}},
-			{Resource: ResourceJournalReversal, Operations: []Operation{OpRead, OpApprove, OpReject}},
+			{
+				Resource:   ResourceJournalReversal,
+				Operations: []Operation{OpRead, OpApprove, OpReject},
+			},
 		},
 	},
 	{
@@ -157,12 +231,18 @@ var capabilityBundles = []Bundle{
 		Label:       "Driver settlements",
 		Description: "Build driver settlements with their expenses, advances and disputes.",
 		Grants: []BundleGrant{
-			{Resource: ResourceDriverSettlement, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit}},
+			{
+				Resource:   ResourceDriverSettlement,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
 			{Resource: ResourceDriverExpense, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourcePayAdvance, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceRecurringDeduction, Operations: []Operation{OpRead}},
 			{Resource: ResourceRecurringEarning, Operations: []Operation{OpRead}},
-			{Resource: ResourceSettlementDispute, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceSettlementDispute,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceEscrowAccount, Operations: []Operation{OpRead}},
 		},
 	},
@@ -172,8 +252,14 @@ var capabilityBundles = []Bundle{
 		Label:       "Carrier settlements",
 		Description: "Match carrier invoices and build carrier settlements.",
 		Grants: []BundleGrant{
-			{Resource: ResourceCarrierSettlement, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit}},
-			{Resource: ResourceCarrierInvoiceMatch, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceCarrierSettlement,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
+			{
+				Resource:   ResourceCarrierInvoiceMatch,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 		},
 	},
 	{
@@ -182,11 +268,20 @@ var capabilityBundles = []Bundle{
 		Label:       "Approve settlements",
 		Description: "Approve, reject and cancel driver and carrier settlements.",
 		Grants: []BundleGrant{
-			{Resource: ResourceDriverSettlement, Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel}},
+			{
+				Resource:   ResourceDriverSettlement,
+				Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel},
+			},
 			{Resource: ResourceDriverExpense, Operations: []Operation{OpRead, OpApprove}},
 			{Resource: ResourceSettlementDispute, Operations: []Operation{OpRead, OpApprove}},
-			{Resource: ResourceCarrierSettlement, Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel}},
-			{Resource: ResourceCarrierInvoiceMatch, Operations: []Operation{OpRead, OpApprove, OpReject}},
+			{
+				Resource:   ResourceCarrierSettlement,
+				Operations: []Operation{OpRead, OpApprove, OpReject, OpCancel},
+			},
+			{
+				Resource:   ResourceCarrierInvoiceMatch,
+				Operations: []Operation{OpRead, OpApprove, OpReject},
+			},
 		},
 	},
 	{
@@ -197,12 +292,21 @@ var capabilityBundles = []Bundle{
 		Grants: []BundleGrant{
 			{Resource: ResourceWorker, Operations: []Operation{OpRead, OpUpdate}},
 			{Resource: ResourceQualification, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceWorkerCredential, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove}},
+			{
+				Resource:   ResourceWorkerCredential,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove},
+			},
 			{Resource: ResourceWorkerDOTTest, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceWorkerSafetyEvent, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpClose}},
+			{
+				Resource:   ResourceWorkerSafetyEvent,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpClose},
+			},
 			{Resource: ResourceWorkerInjury, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceDOTRandomPool, Operations: []Operation{OpRead, OpManage}},
-			{Resource: ResourceDocument, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpReject}},
+			{
+				Resource:   ResourceDocument,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpReject},
+			},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
 		},
 	},
@@ -212,8 +316,14 @@ var capabilityBundles = []Bundle{
 		Label:       "Equipment",
 		Description: "Keep tractors and trailers and their types and fleets.",
 		Grants: []BundleGrant{
-			{Resource: ResourceTractor, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore}},
-			{Resource: ResourceTrailer, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore}},
+			{
+				Resource:   ResourceTractor,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore},
+			},
+			{
+				Resource:   ResourceTrailer,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore},
+			},
 			{Resource: ResourceEquipmentType, Operations: []Operation{OpRead}},
 			{Resource: ResourceEquipmentManufacturer, Operations: []Operation{OpRead}},
 			{Resource: ResourceFleetCode, Operations: []Operation{OpRead}},
@@ -225,10 +335,19 @@ var capabilityBundles = []Bundle{
 		Label:       "Fuel and IFTA",
 		Description: "Record fuel purchases and cards and prepare IFTA returns.",
 		Grants: []BundleGrant{
-			{Resource: ResourceFuelPurchase, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpImport}},
+			{
+				Resource:   ResourceFuelPurchase,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpImport},
+			},
 			{Resource: ResourceFuelCard, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
-			{Resource: ResourceIFTAReturn, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit}},
-			{Resource: ResourceIFTAJurisdictionMileage, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceIFTAReturn,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
+			{
+				Resource:   ResourceIFTAJurisdictionMileage,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceIFTATaxRate, Operations: []Operation{OpRead}},
 		},
 	},
@@ -238,11 +357,20 @@ var capabilityBundles = []Bundle{
 		Label:       "Worker records",
 		Description: "Keep worker records, employment events, positions, benefits and checklists.",
 		Grants: []BundleGrant{
-			{Resource: ResourceWorker, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore}},
-			{Resource: ResourceWorkerEmploymentEvent, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceWorker,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore},
+			},
+			{
+				Resource:   ResourceWorkerEmploymentEvent,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceJobPosition, Operations: []Operation{OpRead, OpAssign}},
 			{Resource: ResourceBenefitPlan, Operations: []Operation{OpRead, OpAssign}},
-			{Resource: ResourceWorkerChecklist, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceWorkerChecklist,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
 		},
@@ -256,10 +384,22 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceWorker, Operations: []Operation{OpRead}, Scope: DataScopeTeam},
 			{Resource: ResourceWorkerPTO, Operations: []Operation{OpRead, OpApprove, OpReject}},
 			{Resource: ResourceWorkerLeave, Operations: []Operation{OpRead, OpApprove}},
-			{Resource: ResourceTimesheet, Operations: []Operation{OpRead, OpApprove, OpReject}, Scope: DataScopeTeam},
+			{
+				Resource:   ResourceTimesheet,
+				Operations: []Operation{OpRead, OpApprove, OpReject},
+				Scope:      DataScopeTeam,
+			},
 			{Resource: ResourceShiftSwap, Operations: []Operation{OpRead, OpApprove, OpReject}},
-			{Resource: ResourceProfileChangeRequest, Operations: []Operation{OpRead, OpApprove, OpReject}, Scope: DataScopeTeam},
-			{Resource: ResourceWorkerSchedule, Operations: []Operation{OpRead, OpAssign, OpUpdate}, Scope: DataScopeTeam},
+			{
+				Resource:   ResourceProfileChangeRequest,
+				Operations: []Operation{OpRead, OpApprove, OpReject},
+				Scope:      DataScopeTeam,
+			},
+			{
+				Resource:   ResourceWorkerSchedule,
+				Operations: []Operation{OpRead, OpAssign, OpUpdate},
+				Scope:      DataScopeTeam,
+			},
 		},
 	},
 	{
@@ -268,8 +408,14 @@ var capabilityBundles = []Bundle{
 		Label:       "Customers and locations",
 		Description: "Keep customers, locations and commodities.",
 		Grants: []BundleGrant{
-			{Resource: ResourceCustomer, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore}},
-			{Resource: ResourceLocation, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore}},
+			{
+				Resource:   ResourceCustomer,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore},
+			},
+			{
+				Resource:   ResourceLocation,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpArchive, OpRestore},
+			},
 			{Resource: ResourceLocationCategory, Operations: []Operation{OpRead}},
 			{Resource: ResourceCommodity, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceHazardousMaterial, Operations: []Operation{OpRead}},
@@ -279,10 +425,17 @@ var capabilityBundles = []Bundle{
 		ID:          "reporting.reports",
 		Module:      "Reporting",
 		Label:       "Reports and dashboards",
-		Description: "Build, run and export reports and dashboards.",
+		Description: "Build, run and export reports and dashboards, and share table views with the organization.",
 		Grants: []BundleGrant{
-			{Resource: ResourceReport, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpExport}},
+			{
+				Resource:   ResourceReport,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpExport},
+			},
 			{Resource: ResourceDashboard, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceTableConfiguration,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
 		},
 	},
 	{
@@ -303,7 +456,10 @@ var capabilityBundles = []Bundle{
 		Label:       "Users",
 		Description: "Invite, change and deactivate people and give them roles.",
 		Grants: []BundleGrant{
-			{Resource: ResourceUser, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpAssign, OpUnassign}},
+			{
+				Resource:   ResourceUser,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpAssign, OpUnassign},
+			},
 			{Resource: ResourceRole, Operations: []Operation{OpRead}},
 		},
 	},
@@ -338,9 +494,18 @@ var capabilityBundles = []Bundle{
 		Label:       "Security and sign-in",
 		Description: "Configure single sign-on, SCIM, access policies and API keys, and review sign-in activity.",
 		Grants: []BundleGrant{
-			{Resource: ResourceIdentityProvider, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete}},
-			{Resource: ResourceSCIMDirectory, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete}},
-			{Resource: ResourceAccessPolicy, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete}},
+			{
+				Resource:   ResourceIdentityProvider,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete},
+			},
+			{
+				Resource:   ResourceSCIMDirectory,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete},
+			},
+			{
+				Resource:   ResourceAccessPolicy,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete},
+			},
 			{Resource: ResourceAuthEvent, Operations: []Operation{OpRead}},
 			{Resource: ResourceRiskDecision, Operations: []Operation{OpRead}},
 			{Resource: ResourceExternalIdentity, Operations: []Operation{OpRead}},
@@ -354,17 +519,30 @@ var capabilityBundles = []Bundle{
 
 var jobTemplates = []JobTemplate{
 	{
-		ID:             "dispatcher",
-		Label:          "Dispatcher",
-		Description:    "Books shipments and runs the board.",
-		Bundles:        []string{"dispatch.board", "dispatch.shipments", "dispatch.exceptions", "platform.assistant"},
+		ID:          "dispatcher",
+		Label:       "Dispatcher",
+		Description: "Books shipments and runs the board.",
+		Bundles: []string{
+			"dispatch.board",
+			"dispatch.shipments",
+			"dispatch.exceptions",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityInternal,
 	},
 	{
-		ID:             "dispatch_supervisor",
-		Label:          "Dispatch supervisor",
-		Description:    "Everything a dispatcher does, plus carrier coverage and customer records.",
-		Bundles:        []string{"dispatch.board", "dispatch.shipments", "dispatch.exceptions", "dispatch.carriers", "customers.records", "reporting.reports", "platform.assistant"},
+		ID:          "dispatch_supervisor",
+		Label:       "Dispatch supervisor",
+		Description: "Everything a dispatcher does, plus carrier coverage and customer records.",
+		Bundles: []string{
+			"dispatch.board",
+			"dispatch.shipments",
+			"dispatch.exceptions",
+			"dispatch.carriers",
+			"customers.records",
+			"reporting.reports",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityRestricted,
 	},
 	{
@@ -382,31 +560,54 @@ var jobTemplates = []JobTemplate{
 		MaxSensitivity: SensitivityInternal,
 	},
 	{
-		ID:             "billing_manager",
-		Label:          "Billing manager",
-		Description:    "Posts invoices and keeps rates, on top of the clerk's work.",
-		Bundles:        []string{"billing.queue", "billing.post_invoices", "billing.rates", "billing.receivables", "reporting.reports", "platform.assistant"},
+		ID:          "billing_manager",
+		Label:       "Billing manager",
+		Description: "Posts invoices and keeps rates, on top of the clerk's work.",
+		Bundles: []string{
+			"billing.queue",
+			"billing.post_invoices",
+			"billing.rates",
+			"billing.receivables",
+			"reporting.reports",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityRestricted,
 	},
 	{
-		ID:             "accountant",
-		Label:          "Accountant",
-		Description:    "Keeps the ledger and closes periods.",
-		Bundles:        []string{"accounting.ledger", "accounting.close", "billing.receivables", "reporting.reports", "platform.assistant"},
+		ID:          "accountant",
+		Label:       "Accountant",
+		Description: "Keeps the ledger and closes periods.",
+		Bundles: []string{
+			"accounting.ledger",
+			"accounting.close",
+			"billing.receivables",
+			"reporting.reports",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityConfidential,
 	},
 	{
-		ID:             "payroll",
-		Label:          "Settlements",
-		Description:    "Builds and approves driver and carrier settlements.",
-		Bundles:        []string{"settlement.drivers", "settlement.carriers", "settlement.approve", "platform.assistant"},
+		ID:          "payroll",
+		Label:       "Settlements",
+		Description: "Builds and approves driver and carrier settlements.",
+		Bundles: []string{
+			"settlement.drivers",
+			"settlement.carriers",
+			"settlement.approve",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityConfidential,
 	},
 	{
-		ID:             "safety",
-		Label:          "Safety and compliance",
-		Description:    "Keeps drivers qualified, equipment current and fuel tax filed.",
-		Bundles:        []string{"safety.drivers", "safety.equipment", "compliance.fuel", "platform.assistant"},
+		ID:          "safety",
+		Label:       "Safety and compliance",
+		Description: "Keeps drivers qualified, equipment current and fuel tax filed.",
+		Bundles: []string{
+			"safety.drivers",
+			"safety.equipment",
+			"compliance.fuel",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityRestricted,
 	},
 	{

@@ -236,12 +236,20 @@ func (o Operation) IsValid() bool {
 // a name cannot come to differ between the registry and the screen that shows
 // it.
 var operationDefinitions = map[Operation]OperationDefinition{
-	OpRead:     {Operation: OpRead, DisplayName: "Read", Description: "View records"},
-	OpCreate:   {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
-	OpUpdate:   {Operation: OpUpdate, DisplayName: "Update", Description: "Modify existing records"},
-	OpDelete:   {Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
-	OpExport:   {Operation: OpExport, DisplayName: "Export", Description: "Export records to file"},
-	OpImport:   {Operation: OpImport, DisplayName: "Import", Description: "Import records from file"},
+	OpRead:   {Operation: OpRead, DisplayName: "Read", Description: "View records"},
+	OpCreate: {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
+	OpUpdate: {
+		Operation:   OpUpdate,
+		DisplayName: "Update",
+		Description: "Modify existing records",
+	},
+	OpDelete: {Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
+	OpExport: {Operation: OpExport, DisplayName: "Export", Description: "Export records to file"},
+	OpImport: {
+		Operation:   OpImport,
+		DisplayName: "Import",
+		Description: "Import records from file",
+	},
 	OpApprove:  {Operation: OpApprove, DisplayName: "Approve", Description: "Approve records"},
 	OpReject:   {Operation: OpReject, DisplayName: "Reject", Description: "Reject records"},
 	OpAssign:   {Operation: OpAssign, DisplayName: "Assign", Description: "Assign to users"},
@@ -330,4 +338,20 @@ var listedOperations = []Operation{
 
 func GetAllOperations() []OperationDefinition {
 	return withImplications(operations(listedOperations...))
+}
+
+func relabel(
+	defs []OperationDefinition,
+	op Operation,
+	displayName, description string,
+) []OperationDefinition {
+	result := make([]OperationDefinition, len(defs))
+	copy(result, defs)
+	for i := range result {
+		if result[i].Operation == op {
+			result[i].DisplayName = displayName
+			result[i].Description = description
+		}
+	}
+	return result
 }

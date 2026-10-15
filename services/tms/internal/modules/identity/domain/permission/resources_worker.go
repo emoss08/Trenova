@@ -486,7 +486,7 @@ func (r *Registry) registerWorkerResources() {
 			{
 				Operation:   OpExport,
 				DisplayName: "Export",
-				Description: "Run payroll over approved weeks",
+				Description: "Run payroll over approved weeks, and void a payroll export",
 			},
 		},
 		Scopes: []ScopeSupport{
@@ -619,7 +619,7 @@ func (r *Registry) registerWorkerResources() {
 			{
 				Operation:   OpManage,
 				DisplayName: "Draw",
-				Description: "Run and finalise a selection round",
+				Description: "Run, finalize or cancel a selection round",
 			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export selection evidence"},
 		},

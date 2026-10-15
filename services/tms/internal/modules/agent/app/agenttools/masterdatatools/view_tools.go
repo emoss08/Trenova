@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,6 +21,7 @@ type tableConfigWriter interface {
 	Create(
 		ctx context.Context,
 		entity *tableconfiguration.TableConfiguration,
+		actor *permissionports.RequestActor,
 	) (*tableconfiguration.TableConfiguration, error)
 }
 
@@ -172,7 +174,7 @@ func (t *SaveTableViewTool) Execute(
 		)
 	}
 
-	_, err = t.configs.Create(ctx, draft.configuration(&params, composed))
+	_, err = t.configs.Create(ctx, draft.configuration(&params, composed), params.Actor)
 
 	return err
 }

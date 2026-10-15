@@ -70,11 +70,27 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceTableConfiguration.String(),
-		DisplayName:        "Table Configuration",
-		Description:        "User table preferences and configurations",
-		Category:           "Administration",
-		Operations:         standardOps,
+		Resource:    ResourceTableConfiguration.String(),
+		DisplayName: "Table Configuration",
+		Description: "Saved table views. Anyone may keep private views; sharing one with the organization needs these",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "See saved views on the home page",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Share",
+				Description: "Share a view with the organization",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Change shared",
+				Description: "Change a view shared with the organization",
+			},
+		},
 		DefaultSensitivity: SensitivityPublic,
 	})
 
@@ -150,11 +166,16 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceEDI.String(),
-		DisplayName:        "EDI",
-		Description:        "EDI partner setup, mapping profiles, and load tender transfers",
-		Category:           "Administration",
-		Operations:         standardOpsWithDelete,
+		Resource:    ResourceEDI.String(),
+		DisplayName: "EDI",
+		Description: "EDI partner setup, mapping profiles, and load tender transfers",
+		Category:    "Administration",
+		Operations: relabel(
+			standardOpsWithDelete,
+			OpUpdate,
+			"Update",
+			"Modify EDI settings, and apply, approve, reject, cancel, activate and archive EDI changes, transfers, connections and template versions",
+		),
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -328,7 +349,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName: "Document & Message Template",
 		Description: "Templates for customer documents, emails, and notifications",
 		Category:    "Administration",
-		Operations: append(slices.Clone(standardOpsWithDelete),
+		Operations: relabel(append(slices.Clone(standardOpsWithDelete),
 			OperationDefinition{
 				Operation:   OpActivate,
 				DisplayName: "Publish",
@@ -349,7 +370,7 @@ func (r *Registry) registerAdministrationResources() {
 				DisplayName: "Unassign",
 				Description: "Remove a customer's template override",
 			},
-		),
+		), OpUpdate, "Update", "Modify templates and send test messages"),
 		DefaultSensitivity: SensitivityInternal,
 	})
 }

@@ -3,6 +3,9 @@ package tableconfigurationservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,25 +18,56 @@ import (
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Repo   tableconfigurationports.TableConfigurationRepository
+	Logger      *zap.Logger
+	Repo        tableconfigurationports.TableConfigurationRepository
+	Permissions permissionports.PermissionEngine `optional:"true"`
 }
 
 type Service struct {
-	l    *zap.Logger
-	repo tableconfigurationports.TableConfigurationRepository
+	l           *zap.Logger
+	repo        tableconfigurationports.TableConfigurationRepository
+	permissions permissionports.PermissionEngine
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:    p.Logger.Named("service.tableconfiguration"),
-		repo: p.Repo,
+		l:           p.Logger.Named("service.tableconfiguration"),
+		repo:        p.Repo,
+		permissions: p.Permissions,
 	}
+}
+
+func (s *Service) mayPublish(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	entity *tableconfiguration.TableConfiguration,
+	operation permission.Operation,
+) error {
+	if entity.Visibility == tableconfiguration.VisibilityPrivate {
+		return nil
+	}
+	if actor != nil && s.permissions != nil {
+		result, err := s.permissions.Check(
+			ctx,
+			actor.PermissionCheck(permission.ResourceTableConfiguration, operation),
+		)
+		if err != nil {
+			return err
+		}
+		if result != nil && result.Allowed {
+			return nil
+		}
+	}
+
+	return errortypes.NewAuthorizationError(
+		"Your role cannot share views with your organization. Keep the view private or ask an administrator to share it.",
+	)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
 	entity *tableconfiguration.TableConfiguration,
+	actor *permissionports.RequestActor,
 ) (*tableconfiguration.TableConfiguration, error) {
 	log := s.l.With(
 		zap.String("operation", "Create"),
@@ -45,6 +79,10 @@ func (s *Service) Create(
 
 	if multiErr.HasErrors() {
 		return nil, multiErr
+	}
+
+	if err := s.mayPublish(ctx, actor, entity, permission.OpCreate); err != nil {
+		return nil, err
 	}
 
 	if entity.IsDefault {
@@ -75,8 +113,9 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *tableconfiguration.TableConfiguration,
-	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
 ) (*tableconfiguration.TableConfiguration, error) {
+	tenantInfo := actor.TenantInfo()
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("id", entity.ID.String()),
@@ -104,9 +143,13 @@ func (s *Service) Update(
 		)
 	}
 
+	if err = s.mayPublish(ctx, actor, entity, permission.OpUpdate); err != nil {
+		return nil, err
+	}
+
 	entity.UserID = existing.UserID
 	entity.Version = existing.Version
-	entity.IsOrgDefault = existing.IsOrgDefault
+	entity.IsOrgDefault = existing.IsOrgDefault && entity.Visibility == tableconfiguration.VisibilityPublic
 
 	if entity.IsDefault {
 		if err := s.repo.ClearDefaultForResource(

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const readScopesUp = "20261231009570_enforced_read_scopes.tx.up.sql"
+const readScopesUp = "20261231009720_enforced_read_scopes.tx.up.sql"
 
 var (
 	policyKind     = regexp.MustCompile(`trenova_rls\.read_scope\('([a-z_]+)'\)`)

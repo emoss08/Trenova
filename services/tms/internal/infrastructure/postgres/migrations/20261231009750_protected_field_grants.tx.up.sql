@@ -3,7 +3,8 @@
 -- from anyone whose role does not grant protected_personal or
 -- protected_margins. Every role that could read those records before keeps
 -- seeing them, so nothing disappears on upgrade; an administrator narrows the
--- roles that should not.
+-- roles that should not. The Organization Administrator role gets both from
+-- ReconcileAdminRoles after the migrations, and other system roles are left alone.
 INSERT INTO "resource_permissions"("id", "role_id", "resource", "operations", "data_scope", "created_at", "updated_at")
 SELECT CONCAT('rp_', replace(gen_random_uuid()::text, '-', '')),
        r."id",
@@ -13,16 +14,14 @@ SELECT CONCAT('rp_', replace(gen_random_uuid()::text, '-', '')),
        EXTRACT(EPOCH FROM current_timestamp)::bigint,
        EXTRACT(EPOCH FROM current_timestamp)::bigint
 FROM "roles" r
-WHERE (
-        r."is_system" = true
-        OR EXISTS (
-            SELECT 1
-            FROM "resource_permissions" rp
-            WHERE rp."role_id" = r."id"
-              AND rp."resource" IN ('worker', 'worker_credential')
-              AND 'read' = ANY(rp."operations")
-        )
-    )
+WHERE r."is_system" = false
+  AND EXISTS (
+      SELECT 1
+      FROM "resource_permissions" rp
+      WHERE rp."role_id" = r."id"
+        AND rp."resource" IN ('worker', 'worker_credential')
+        AND 'read' = ANY(rp."operations")
+  )
   AND NOT EXISTS (
       SELECT 1
       FROM "resource_permissions" rp
@@ -40,16 +39,14 @@ SELECT CONCAT('rp_', replace(gen_random_uuid()::text, '-', '')),
        EXTRACT(EPOCH FROM current_timestamp)::bigint,
        EXTRACT(EPOCH FROM current_timestamp)::bigint
 FROM "roles" r
-WHERE (
-        r."is_system" = true
-        OR EXISTS (
-            SELECT 1
-            FROM "resource_permissions" rp
-            WHERE rp."role_id" = r."id"
-              AND rp."resource" = 'rate_agreement'
-              AND 'read' = ANY(rp."operations")
-        )
-    )
+WHERE r."is_system" = false
+  AND EXISTS (
+      SELECT 1
+      FROM "resource_permissions" rp
+      WHERE rp."role_id" = r."id"
+        AND rp."resource" = 'rate_agreement'
+        AND 'read' = ANY(rp."operations")
+  )
   AND NOT EXISTS (
       SELECT 1
       FROM "resource_permissions" rp

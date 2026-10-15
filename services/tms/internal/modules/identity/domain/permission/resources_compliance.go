@@ -15,9 +15,9 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName: "Document",
 		Description: "Uploaded document records and intelligence output",
 		Category:    "Compliance",
-		Operations: operations(
+		Operations: relabel(relabel(operations(
 			OpRead, OpCreate, OpUpdate, OpExport, OpImport, OpDelete, OpApprove, OpReject,
-		),
+		), OpCreate, "Create", "Upload documents and cancel uploads"), OpUpdate, "Update", "Modify documents and restore deleted ones"),
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -44,11 +44,11 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName: "Document Parsing Rule",
 		Description: "Tenant-managed parsing rules, versions, fixtures, and simulations",
 		Category:    "Compliance",
-		Operations: append(GetAllOperations(), OperationDefinition{
+		Operations: relabel(append(GetAllOperations(), OperationDefinition{
 			Operation:   OpDelete,
 			DisplayName: "Delete",
 			Description: "Delete rule sets and fixtures",
-		}),
+		}), OpActivate, "Activate", "Activate and publish parsing rule versions"),
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -69,7 +69,7 @@ func (r *Registry) registerComplianceResources() {
 			{
 				Operation:   OpCreate,
 				DisplayName: "Capture",
-				Description: "Scan or print into Trenova from a paired device",
+				Description: "Scan or print into Trenova from a paired device, approve device pairings and cancel capture requests",
 			},
 			{
 				Operation:   OpUpdate,

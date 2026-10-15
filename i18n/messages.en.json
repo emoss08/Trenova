@@ -12956,7 +12956,7 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Accept, modify, or reject agent proposals": {
+  "Accept, modify or reject agent proposals, and resolve proposals and plans": {
     "sites": 1,
     "scope": [
       "go"
@@ -27748,6 +27748,24 @@
       "go/other"
     ]
   },
+  "Approve and post journal reversals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Approve and post manual journals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Approve and post settlements": {
     "sites": 1,
     "scope": [
@@ -27866,7 +27884,7 @@
       "go/other"
     ]
   },
-  "Approve invoices": {
+  "Approve invoices, and approve or reject invoice adjustments": {
     "sites": 1,
     "scope": [
       "go"
@@ -27884,25 +27902,7 @@
       "go/other"
     ]
   },
-  "Approve journal reversals": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Approve journals and close, reopen and lock fiscal periods.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Approve manual journals": {
     "sites": 1,
     "scope": [
       "go"
@@ -28699,6 +28699,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Archive and reactivate reason codes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Archive anyway": {
     "sites": 1,
     "scope": [
@@ -28736,24 +28745,6 @@
     ]
   },
   "Archive records": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Archive service failure reason codes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Archive service failures": {
     "sites": 1,
     "scope": [
       "go"
@@ -40574,7 +40565,7 @@
       "routes/fuel-management"
     ]
   },
-  "Build, run and export reports and dashboards.": {
+  "Build, run and export reports and dashboards, and share table views with the organization.": {
     "sites": 1,
     "scope": [
       "go"
@@ -46690,6 +46681,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Change a view shared with the organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it. Send only what changes; everything else stays as it is. Use release_shipment_hold to clear a hold rather than unblocking everything. Making a hold visible to the customer is shown to them, so only do it when the person asked.": {
@@ -77557,7 +77557,7 @@
       "routes/shipment"
     ]
   },
-  "Dismiss an insight that is not worth acting on": {
+  "Dismiss an insight that is not worth acting on, or restore one": {
     "sites": 1,
     "scope": [
       "go"
@@ -86615,7 +86615,7 @@
       "apps/web/components"
     ]
   },
-  "Edit what a case expects, and activate, quarantine or retire it": {
+  "Edit what a case expects, activate, quarantine or retire it, and cancel runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -133960,7 +133960,7 @@
       "routes/commodity"
     ]
   },
-  "Link a message to a record, reply to it, or mark it handled": {
+  "Link a message to a record, reply to it or mark it handled, and resolve or reopen messages and conflicts": {
     "sites": 1,
     "scope": [
       "go"
@@ -145729,6 +145729,15 @@
       "go/other"
     ]
   },
+  "Modify and resolve service failures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Modify carriers": {
     "sites": 1,
     "scope": [
@@ -145837,7 +145846,7 @@
       "go/other"
     ]
   },
-  "Modify invoices": {
+  "Modify invoices, submit adjustments and post invoices to the ledger": {
     "sites": 1,
     "scope": [
       "go"
@@ -145856,15 +145865,6 @@
     ]
   },
   "Modify moves": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Modify orders": {
     "sites": 1,
     "scope": [
       "go"
@@ -145936,15 +145936,6 @@
       "go/other"
     ]
   },
-  "Modify service failures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Modify shipment comments": {
     "sites": 1,
     "scope": [
@@ -145954,7 +145945,7 @@
       "go/other"
     ]
   },
-  "Modify shipments": {
+  "Modify shipments and cancel billing transfer runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -146036,6 +146027,15 @@
     ]
   },
   "Modify, assign, and lock home screen presets": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Modify, cancel and close orders": {
     "sites": 1,
     "scope": [
       "go"
@@ -179296,7 +179296,7 @@
       "routes/inbox"
     ]
   },
-  "Parse a statement and commit its rows as purchases": {
+  "Parse a statement, resolve rows that need review and commit them as purchases": {
     "sites": 1,
     "scope": [
       "go"
@@ -187873,7 +187873,7 @@
       "apps/web/components"
     ]
   },
-  "Post customer payments": {
+  "Post customer payments and apply credit memos": {
     "sites": 1,
     "scope": [
       "go"
@@ -206013,6 +206013,15 @@
       "routes/reports"
     ]
   },
+  "Remove org default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Remove override": {
     "sites": 1,
     "scope": [
@@ -212316,7 +212325,7 @@
       "routes/billing-queue"
     ]
   },
-  "Retry, skip and resolve sync records and differences": {
+  "Retry, skip and resolve sync records and differences, apply inbound changes and release held syncs": {
     "sites": 1,
     "scope": [
       "go"
@@ -216622,15 +216631,6 @@
       "routes/agent-control"
     ]
   },
-  "Run and finalise a selection round": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Run as of {0}: {1, plural, one {# memo} other {# memos}} raised, {2} skipped": {
     "sites": 1,
     "scope": [
@@ -216876,7 +216876,7 @@
       "routes/time-attendance"
     ]
   },
-  "Run payroll over approved weeks": {
+  "Run payroll over approved weeks, and void a payroll export": {
     "sites": 1,
     "scope": [
       "go"
@@ -217129,6 +217129,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Run, finalize or cancel a selection round": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Run-as user is required": {
@@ -219833,6 +219842,15 @@
       "routes/edi"
     ]
   },
+  "Saved table views. Anyone may keep private views; sharing one with the organization needs these": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Saved time": {
     "sites": 1,
     "scope": [
@@ -220979,7 +220997,7 @@
       "apps/web/components"
     ]
   },
-  "Scan or print into Trenova from a paired device": {
+  "Scan or print into Trenova from a paired device, approve device pairings and cancel capture requests": {
     "sites": 1,
     "scope": [
       "go"
@@ -224029,6 +224047,15 @@
     ]
   },
   "See personal details": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "See saved views on the home page": {
     "sites": 1,
     "scope": [
       "go"
@@ -230226,6 +230253,15 @@
       "apps/web/components"
     ]
   },
+  "Set as org default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Set aside": {
     "sites": 5,
     "scope": [
@@ -231740,6 +231776,15 @@
     ]
   },
   "Share a link to a shipment's tracking page with the customer, and email it when given an address. The page shows only what the customer's tracking settings allow and needs no sign-in. Use the address the customer asked you to send it to; never invent one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Share a view with the organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -243355,7 +243400,7 @@
       "go/other"
     ]
   },
-  "Submit invoices for approval": {
+  "Submit invoices for approval, and send or resend them by email or EDI": {
     "sites": 1,
     "scope": [
       "go"
@@ -245374,6 +245419,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Table configuration not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Table is not eligible for change alerts": {
@@ -281802,7 +281856,7 @@
       "apps/web/components"
     ]
   },
-  "Update agent control settings": {
+  "Update agent control settings, and apply or restore tune-ups": {
     "sites": 1,
     "scope": [
       "go"
@@ -281829,7 +281883,7 @@
       "go/other"
     ]
   },
-  "Update billing queue item status": {
+  "Update billing queue items: post them, release them and resolve their issues": {
     "sites": 1,
     "scope": [
       "go"
@@ -283998,15 +284052,6 @@
       "apps/web/config"
     ]
   },
-  "User table preferences and configurations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Username": {
     "sites": 6,
     "scope": [
@@ -285698,7 +285743,7 @@
       "routes/admin"
     ]
   },
-  "Vet and refresh carriers, acknowledge events and apply suggested updates": {
+  "Vet and refresh carriers, acknowledge and resolve events, and apply suggested updates": {
     "sites": 1,
     "scope": [
       "go"
@@ -285876,7 +285921,7 @@
       "go/other"
     ]
   },
-  "View agent control settings": {
+  "View agent control settings, and dismiss or restore provider failure notices": {
     "sites": 1,
     "scope": [
       "go"
@@ -286534,7 +286579,7 @@
       "go/other"
     ]
   },
-  "View own conversations": {
+  "View own conversations and pin artifacts in them": {
     "sites": 1,
     "scope": [
       "go"
@@ -286696,7 +286741,7 @@
       "apps/web/hooks"
     ]
   },
-  "View reports": {
+  "View reports and cancel your own report runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -287586,6 +287631,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Void service failures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Void settlement": {
@@ -301852,6 +301906,15 @@
       "go/other"
     ]
   },
+  "Your role cannot share views with your organization. Keep the view private or ask an administrator to share it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your role cannot view carrier intelligence. Ask an administrator for read access to Carrier Intelligence.": {
     "sites": 3,
     "scope": [
@@ -301879,6 +301942,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Your role keeps views private. An administrator can share one with your organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your roles don't include permission to view this. Ask an administrator if you need it.": {
