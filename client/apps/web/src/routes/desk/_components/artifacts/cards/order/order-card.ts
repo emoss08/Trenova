@@ -1,6 +1,7 @@
 import { choiceLabel, orderStatusChoices } from "@/lib/choices";
 import type { DeskOrder, DeskOrderCharge } from "@/lib/graphql/order-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import type { CardTrackStep } from "../../record-card/card-track";
 import type { CardFact, CardStat, CardTone } from "../../record-card/record-card";
 import { cardDate, money } from "../../record-card/record-card-values";
 
@@ -16,19 +17,12 @@ export const ORDER_LIFECYCLE = [
   "Closed",
 ] as const satisfies readonly OrderStatus[];
 
-/** One step of the order's way, behind it, where it is, or ahead. */
-export type LifecycleStep = {
-  key: OrderStatus;
-  label: string;
-  state: "done" | "now" | "next" | "off";
-};
-
 /**
  * The order's way from draft to closed, each step marked done, now or next,
  * so the card shows how far its legs have carried it. A canceled order shows
  * the whole way off.
  */
-export function lifecycleSteps(status: OrderStatus): LifecycleStep[] {
+export function lifecycleSteps(status: OrderStatus): CardTrackStep[] {
   const at = (ORDER_LIFECYCLE as readonly OrderStatus[]).indexOf(status);
   return ORDER_LIFECYCLE.map((key, index) => ({
     key,

@@ -592,6 +592,55 @@ type DriverSettlement {
   updatedAt: Timestamp!
   worker: Worker
   lines: [DriverSettlementLine!]
+  "The lines summed by how each was paid: one row per pay component, deduction, advance, escrow account or line added by hand. Null when the lines were not read."
+  lineSummary: [DriverSettlementLineGroup!]
+  "What each load came to on the statement, every line tied to it summed, in the order the loads first appear. Null when the lines were not read."
+  loadShares: [SettlementLoadShare!]
+  "The worker's disputes against this settlement, newest first; empty for someone who may not read settlement disputes."
+  disputes: [SettlementDispute!]!
+  submittedBy: User
+  approvedBy: User
+  postedBy: User
+  paidBy: User
+  voidedBy: User
+}
+
+"""
+Settlement lines paid the same way, summed: the same category, pay component,
+calculation method and pay code, and for a deduction the same recurring
+deduction, advance or escrow account. A line added by hand stands alone.
+"""
+type DriverSettlementLineGroup {
+  category: SettlementLineCategory!
+  componentKind: PayComponentKind
+  method: PayCalcMethod
+  payCodeId: ID
+  "The lines' description when every line shares it, else empty."
+  description: String!
+  "The rate when every line shares it."
+  rate: Decimal
+  quantity: Decimal!
+  amountMinor: Int!
+  lineCount: Int!
+  shipmentCount: Int!
+  advanceId: ID
+  escrowAccountId: ID
+  recurringDeductionId: ID
+  recurringEarningId: ID
+  "Added by a person rather than from a load, a recurring earning or a recurring deduction."
+  manual: Boolean!
+  "The advance these lines recover, as it stands now; null for someone who may not read pay advances."
+  advance: PayAdvance
+  "The escrow account these lines pay into, as it stands now; null for someone who may not read escrow accounts."
+  escrowAccount: EscrowAccount
+}
+
+"What one load came to on a settlement: every line tied to it, summed."
+type SettlementLoadShare {
+  shipmentId: ID!
+  proNumber: String!
+  amountMinor: Int!
+  lineCount: Int!
 }
 
 type DriverSettlementEdge {

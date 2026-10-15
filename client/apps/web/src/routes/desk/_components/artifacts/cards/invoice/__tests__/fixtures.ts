@@ -173,6 +173,7 @@ export function postedInvoice(overrides: Partial<DeskInvoice> = {}): DeskInvoice
     memoKind: null,
     ediSendStatus: "Sent",
     ediSentAt: DAY.sep2 + 9 * HOUR,
+    pdfDocumentId: "doc_inv_412",
     lastEdiError: "",
     lastEdiMessageId: "edim_210",
     createdAt: DAY.sep2 + 9 * HOUR,
@@ -290,6 +291,7 @@ export function consolidatedDraft(overrides: Partial<DeskInvoice> = {}): DeskInv
     sentAt: null,
     ediSendStatus: "NotSent",
     ediSentAt: null,
+    pdfDocumentId: null,
     lastEdiMessageId: null,
     customer: { id: "cus_tyson", code: "TYSON", name: "Tyson Foods" },
     chargeSummary: [

@@ -334,6 +334,9 @@ there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in th
 A card read over REST answers its routes from the same handler; the EDI message card's X12,
 built segment by segment with its inspection, is in `fixtures/desk-edi.mjs`, and a REST
 fixture holds its skeleton with `{ __hold: true }` as a GraphQL one does.
+The worker and carrier settlement cards read `fixtures/desk-settlements.mjs`; the loads a
+settlement pays come from the board, and each one's share is filled in from them so the card's
+loads carry what the settlement pays.
 
 The Desk home suggesting the agent with the tools for a question has its own walkthrough:
 

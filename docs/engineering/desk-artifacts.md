@@ -10,7 +10,9 @@ manager or a biller keeps, the tractor and trailer a fleet manager runs, the dri
 dispatcher puts on loads, the dock a planner sends trucks to, the carrier a carrier manager
 qualifies and pays, the order a customer service rep follows to billing, the service failure
 a customer service rep explains and settles, the rate agreement a pricing analyst holds
-freight to, the invoice a biller sends and a collector follows to paid.
+freight to, the invoice a biller sends and a collector follows to paid, the worker
+settlement a payroll clerk approves and pays, and the carrier settlement accounts payable
+reconciles against the carrier's invoices and pays.
 
 ## Naming and linking artifacts
 
@@ -81,7 +83,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement; the parts the two settlement cards share are `dk-rec-*` in `record-card/`).
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
@@ -108,6 +110,8 @@ ask what the record looks like to the person who reads it, and draw that:
 | EDI inbound file | the file as a sheet with its corner folded and the way it came in tabbed to its foot, its intake as chevrons (received, envelope read, sets handled) with each processing note the service wrote kept as written, a routing label from the ISA (sender and receiver with their qualifiers, the interchange number, the channel, the AS2 message or mailbox path, the checksum drawn as bars), what it carried as a folder per functional group with each transaction set opening in place as the message it was kept as and its own notes, SE01 miscount and findings pinned under it, a ruler of the whole interchange shaded by group, and the envelope's ISA/IEA and group counts checked; a file that is not X12 shows how it begins; each 204 names the tender it opened, which opens in place |
 | EDI transfer | the tender as a ticket torn from a book (its 204 over the tear, the way it travels under it), titled by its bill of lading and named for the partner as the reading organization keeps them (the other side's partner row is hidden by row-level security), its decision as four gates in one meter (received or sent, mapped, decided, shipment) with a mapping hold in amber, a failure in red and a close struck through, why it closed kept as written, its stops down one rail with each window, load and whether the partner's location is mapped yet, its freight beside the rate run down to the total, and the partner's codes against our records with those still unmapped first; mappings are read live while an inbound tender waits on a decision, from the snapshot once it is decided |
 | Invoice | a receipt slip of its bill type (INV, CR, DR) beside who it bills; the figure is what is still owed (amber once late), a credit memo's credit left, a draft's total or a voided total struck through; what is owed as one strip (paid, credited hatched, in dispute amber, still open) keyed underneath, and the terms as a ruler from the invoice date to the due date with today on it, past it in amber once late; a draft instead shows how many of the customer's days have already run while it waits to be posted, since its terms count from the invoice date; the charges as the bill reads them, one row per way a charge was billed (`Invoice.chargeSummary`, summed on the server so a consolidated invoice of hundreds of lines is a handful of rows), the freight rated by the formula template named on the line and opening that template's card, its name cut to fit with the whole of it on hover; the foot from the total down to the balance due over a double rule; payments and credits as remittance stubs (a reversed payment or a credit taken back struck through, a short pay tagged); the open dispute as an amber slip over the closed ones; and where it went as one slip each for email, the EDI 210 (opening its message) and the accounting system it is in, each line cut to one row and told in full on hover only when cut. A voided invoice says why and what became of its freight; a credit memo, what it corrects and the invoices it settled |
+| Worker settlement | a pay stub marked PAY beside the worker; the figure is the net pay, struck through once voided and quiet at zero, with what carries forward under it; the flags the run raised to look at before approving; how earnings, reimbursements and deductions add up to the net pay as a waterfall, a shortfall carried to the next settlement hanging below zero; the statement summed by how each line was paid (`DriverSettlement.lineSummary`, one row per pay component, method, recurring item, advance or escrow account, so a week of loads is a handful of rows), the advance still owed and the escrow held beside their rows, pay added by hand marked; the worker's disputes, an open one in their words; and each load with the share the settlement pays for it (`loadShares`) in place of its charge |
+| Carrier settlement | an AP stub beside the carrier and its MC number; the figure is the net payable with its terms; the carrier's invoices reconciled move by move (`CarrierSettlement.moveInvoices`, each move's standing invoice read through its carrier assignment, since a match names a settlement only once its variance is accepted) as a strip of cells (matched, off the buy rate, waiting to be accepted, not invoiced yet) keyed underneath, with only the moves that need someone listed, each invoice against the buy rate; the costs summed by kind over the adjustments (`costSummary`) down to the net payable; where the money goes (the remit-to address, the method, and the terms); and each load with its share |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. `CardStatus` takes `danger` with an `x` mark only for a state that is final and failed
@@ -173,7 +177,10 @@ unit or the driver; `stopLocationIds` matches loads with a live stop at the loca
 legs filter on `orderId`; `invoiceIds` matches the shipments an invoice bills, as its shipment or
 on a line, and needs permission to read invoices: the resolver reads the invoices through the
 billing module and hands the shipment list their ids, so the operations module never reads a
-billing table).
+billing table; `driverSettlementIds` and `carrierSettlementIds` match the shipments a
+settlement's lines pay, read through the settlement module the same way, under permission to
+read that kind of settlement). `CardShipments` takes `figureOf(shipmentId)` to show, in place of
+a load's charge, what the listing record makes of it (the share a settlement pays for it).
 
 A record's service failures are `CardFailures` over `useRecordFailures({ scope, pageSize,
 enabled })` (`record-card/record-failures.ts`), one operation, `DeskRecordFailures`, for every
@@ -186,6 +193,35 @@ A record's way through review or approval, step by step down a rail, is `CardPat
 stands, or still to come; a closing step is held or closed; and a note (a reviewer's
 comment, why a failure was voided) sits on the step it was left at. The rate agreement's
 approval and the service failure's review are both drawn with it.
+
+A record's lifecycle in a fixed order of steps, drawn across the card as segments, is
+`CardTrack` (`record-card/card-track.tsx`, with `CardTrackSkeleton`): the steps behind it
+ticked, the one it stands at in ink, those ahead open, and the whole track struck off
+(`off`) once the record is voided or canceled, with a note under it saying who moved it last
+and what comes next. The order and both settlement cards draw their lifecycles with it.
+
+The two settlement cards share their frame in `record-card/card-settlement.tsx` and
+`record-card/settlement-values.ts`: the stub, the track's steps and note (`settlementTrack`,
+`trackNote`), who signed each step (`SettlementSignoffs`), why a voided one was voided and how
+far it had got (`SettlementVoidSlip`), the summed statement (`SettlementStatement`), and the
+bar of the settlement's own steps (`SettlementBar`). Each kind draws what only it holds, the
+worker's waterfall, flags and disputes, the carrier's invoices and remittance, in its own
+folder.
+
+## Actions on a card
+
+A card's buttons are the record's own steps, taken by the person and never by the agent,
+each shown only to someone holding the permission the server checks for it
+(`useSettlementSteps` reads them once for a settlement card; the invoice card reads its own).
+`CardActionButton` (`record-card/card-action.tsx`) draws each: when something stands in the
+way (an invoice that has not been posted cannot be sent by EDI) it stays where it is,
+disabled, and says why on hover and to a screen reader, rather than vanishing. A step that
+needs more from the person (a reason to send back or void, how a settlement was paid) opens
+the dialog its page already uses, imported from the page, so the card and the page cannot ask
+for different things. After a step the card reads its record again through the module's own
+invalidation (`invalidateDriverWorkspace`, `invalidateCarrierWorkspace`), whose prefixes
+include the card's query keys. What takes a form of its own (adding pay by hand, accepting an
+invoice's variance) stays on the record's page, and the bar's hint says so.
 
 Any other list a card reads a page at a time (a carrier's
 settlements, a record's activity) goes through `usePagedRows` (`record-card/paged-rows.ts`),

@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -19,9 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func (r *CarrierSettlementResolver) ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error) {
@@ -517,4 +520,56 @@ func (r *QueryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, bat
 		base.TenantInfo(authCtx),
 		parsedBatchID,
 	)
+}
+
+func (r *CarrierSettlementResolver) CostSummary(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.CostGroup, error) {
+	if obj.Lines == nil {
+		return nil, nil
+	}
+	return sliceutils.Pointers(carriersettlement.CostGroups(obj.Lines)), nil
+}
+
+func (r *CarrierSettlementResolver) LoadShares(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*settlementload.Share, error) {
+	if obj.Lines == nil {
+		return nil, nil
+	}
+	return sliceutils.Pointers(settlementload.Shares(carriersettlement.LoadLines(obj.Lines))), nil
+}
+
+func (r *CarrierSettlementResolver) MoveInvoices(ctx context.Context, obj *carriersettlement.CarrierSettlement) ([]*carriersettlement.MoveInvoice, error) {
+	if obj.Lines == nil {
+		return nil, nil
+	}
+	moveIDs := carriersettlement.MoveIDs(obj.Lines)
+	matchesByMove := make(map[pulid.ID][]*carriersettlement.InvoiceMatch, len(moveIDs))
+	if len(moveIDs) > 0 && loaders.Available(ctx) {
+		groups, err := loaders.CarrierInvoiceMatchesByMoveIDs(ctx, sliceutils.Strings(moveIDs))
+		if err != nil {
+			return nil, err
+		}
+		for idx, id := range moveIDs {
+			matchesByMove[id] = groups[idx]
+		}
+	}
+	return sliceutils.Pointers(carriersettlement.MoveInvoices(obj.Lines, matchesByMove)), nil
+}
+
+func (r *CarrierSettlementResolver) SubmittedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.SubmittedByID)
+}
+
+func (r *CarrierSettlementResolver) ApprovedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.ApprovedByID)
+}
+
+func (r *CarrierSettlementResolver) PostedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.PostedByID)
+}
+
+func (r *CarrierSettlementResolver) PaidBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.PaidByID)
+}
+
+func (r *CarrierSettlementResolver) VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.VoidedByID)
 }

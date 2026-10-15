@@ -17895,7 +17895,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "commodity",
@@ -17932,12 +17933,13 @@
     },
     {
       "entity": "driver_settlement",
-      "label": "Driver settlement",
+      "label": "Worker settlement",
       "path": "/payroll/settlements",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "edi_inbound_file",

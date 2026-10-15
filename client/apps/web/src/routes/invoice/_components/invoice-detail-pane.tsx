@@ -29,6 +29,7 @@ import { useInvoiceDeliveryToasts } from "@/hooks/use-invoice-delivery-toasts";
 import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { invoiceEmailSendBlocker } from "@/lib/invoice-actions";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
 import { invoice as invoiceQueries } from "@/lib/queries/invoice";
 import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
@@ -394,11 +395,7 @@ function InvoiceDeliveryTab({
   });
 
   const sendPlan = sendPlanQuery.data;
-  const sendDisabledReason = getInvoiceSendDisabledReason(
-    invoice,
-    sendPlan,
-    sendPlanQuery.isLoading,
-  );
+  const sendDisabledReason = invoiceEmailSendBlocker(invoice, sendPlan, sendPlanQuery.isLoading, t);
   const canSend = !sendDisabledReason;
   const hasGeneratedPDF = Boolean(invoice.pdfDocumentId);
   const pdfActionLabel = hasGeneratedPDF ? "Regenerate" : "Generate PDF";
@@ -933,35 +930,6 @@ function emailProviderDetail(
     default:
       return null;
   }
-}
-
-function getInvoiceSendDisabledReason(
-  invoice: Invoice,
-  sendPlan: InvoiceSendPlan | undefined,
-  sendPlanLoading: boolean,
-): string | null {
-  if (invoice.status === "Voided") {
-    return "A voided invoice is never sent.";
-  }
-  if (invoice.status === "Draft") {
-    return "Post the invoice before sending it. Draft invoices are never emailed.";
-  }
-  if (sendPlanLoading) {
-    return "Checking invoice email configuration.";
-  }
-  if (!invoice.pdfDocumentId) {
-    return "Generate the invoice PDF before sending.";
-  }
-  if (invoice.sendStatus === "Sending") {
-    return "This invoice is already being sent. Wait for that send to finish.";
-  }
-  if (!sendPlan) {
-    return "Send plan is unavailable.";
-  }
-  if (sendPlan.errors.length > 0) {
-    return sendPlan.errors.join("; ");
-  }
-  return null;
 }
 
 function invoiceAttemptDisplayStatus(attempt: InvoiceEmailAttempt): InvoiceSendStatus {

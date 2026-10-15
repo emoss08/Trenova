@@ -1,0 +1,95 @@
+# The Desk's carrier settlement card: where the payable stands and who moved
+# it, each move's invoice against what the move costs here, the costs summed by
+# kind, where the money goes, and each load's share. The loads it pays are read
+# a page at a time through shipments.
+query DeskCarrierSettlementCard($id: ID!) {
+  carrierSettlement(id: $id) {
+    id
+    settlementNumber
+    status
+    periodStart
+    periodEnd
+    payDate
+    grossCostMinor
+    adjustmentsMinor
+    netPayableMinor
+    shipmentCount
+    currencyCode
+    submittedAt
+    approvedAt
+    postedAt
+    paidAt
+    paymentMethod
+    paymentReference
+    voidedAt
+    voidReason
+    createdAt
+    updatedAt
+    carrier {
+      id
+      code
+      name
+      mcNumber
+      paymentMethod
+      paymentTermDays
+      remitToName
+      remitAddressLine1
+      remitAddressLine2
+      remitCity
+      remitPostalCode
+      remitState {
+        id
+        abbreviation
+      }
+    }
+    submittedBy {
+      id
+      name
+    }
+    approvedBy {
+      id
+      name
+    }
+    postedBy {
+      id
+      name
+    }
+    paidBy {
+      id
+      name
+    }
+    voidedBy {
+      id
+      name
+    }
+    costSummary {
+      eventType
+      description
+      amountMinor
+      lineCount
+      shipmentCount
+      manual
+    }
+    loadShares {
+      shipmentId
+      proNumber
+      amountMinor
+    }
+    moveInvoices {
+      moveId
+      shipmentId
+      proNumber
+      costMinor
+      match {
+        id
+        status
+        invoiceNumber
+        invoiceTotalMinor
+        expectedTotalMinor
+        varianceMinor
+        currencyCode
+        duplicateOfMatchId
+      }
+    }
+  }
+}

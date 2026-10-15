@@ -56,7 +56,7 @@ import type { QueryClient } from "@tanstack/react-query";
 /**
  * Invalidates every query the carrier settlement workspace renders — the queue
  * and summary, the selected detail, the history table, and the context rail
- * (cost events, recent settlements, AP ledger). Any surface that mutates a
+ * (cost events, recent settlements, AP ledger), and the Desk's card. Any surface that mutates a
  * carrier settlement must use this so the rail refreshes with the money.
  */
 export function invalidateCarrierWorkspace(queryClient: QueryClient) {
@@ -69,6 +69,7 @@ export function invalidateCarrierWorkspace(queryClient: QueryClient) {
     "carrier-pending-cost-events",
     "carrier-recent-settlements",
     "carrier-ledger-entries",
+    "settlement",
   ];
   for (const prefix of prefixes) {
     void queryClient.invalidateQueries({ queryKey: [prefix] });

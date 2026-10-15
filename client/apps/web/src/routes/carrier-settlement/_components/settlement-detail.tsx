@@ -64,7 +64,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import { translate } from "@trenova/shared/i18n/runtime";
 
-type ReasonAction = "reject" | "void";
+export type ReasonAction = "reject" | "void";
 
 const lineTypeOrder = carrierCostEventTypeChoices.map((choice) => choice.value);
 
@@ -405,7 +405,7 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
   );
 }
 
-function ReasonDialog({
+export function ReasonDialog({
   action,
   settlementId,
   onOpenChange,
@@ -474,14 +474,16 @@ function ReasonDialog({
   );
 }
 
-function MarkPaidDialog({
+export function MarkPaidDialog({
   open,
   settlement,
   onOpenChange,
   onChanged,
 }: {
   open: boolean;
-  settlement: SettlementDetailData;
+  settlement: Pick<SettlementDetailData, "id"> & {
+    carrier?: Pick<NonNullable<SettlementDetailData["carrier"]>, "paymentMethod"> | null;
+  };
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {

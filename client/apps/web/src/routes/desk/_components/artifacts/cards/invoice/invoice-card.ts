@@ -19,6 +19,7 @@ import {
 import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingSyncRecordStatus, RateUnit } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { invoiceVoidBlocker } from "@trenova/shared/types/invoice";
 import type { CardStatusMark, CardTone } from "../../record-card/record-card";
 import { cardDay, cardMoment, money } from "../../record-card/record-card-values";
 
@@ -694,6 +695,26 @@ export function disputeCases(
       };
     });
   return { open, closed };
+}
+
+/**
+ * Why the invoice cannot be voided now, or null when it can: a voided one is
+ * already gone, and cash or credit still applied to it must be taken off
+ * first. A reversed payment and a credit taken back no longer count.
+ */
+export function voidBlocker(record: DeskInvoice, t: TranslateFn): string | null {
+  const blocker = invoiceVoidBlocker(
+    { status: record.status, appliedAmount: Number(record.appliedAmount) },
+    {
+      paymentApplications: record.paymentApplications.filter(
+        (application) => application.payment?.status !== "Reversed",
+      ).length,
+      creditApplications: record.creditApplications.filter(
+        (application) => application.status !== "Unapplied",
+      ).length,
+    },
+  );
+  return blocker === null ? null : t(blocker);
 }
 
 export type VoidNote = { reason: string; freight: string; when: string };

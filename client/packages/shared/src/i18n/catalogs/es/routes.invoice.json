@@ -70,7 +70,6 @@
   "Disputed only": "Solo en disputa",
   "Documents ({0})": "Documentos ({0})",
   "Drops the case without recording an outcome. The invoice stops reading Disputed.": "Descarta el caso sin registrar un resultado. La factura deja de mostrarse como En disputa.",
-  "EDI 210 for {0} queued": "EDI 210 para {0} en cola",
   "EDI delivery": "Entrega por EDI",
   "EDI invoicing is not enabled for this customer": "La facturación por EDI no está habilitada para este cliente",
   "Each invoice is emailed to the recipients on its customer's billing profile. Invoices that already went out are not sent again.": "Cada factura se envía por correo electrónico a los destinatarios del perfil de facturación de su cliente. Las facturas que ya se enviaron no se vuelven a enviar.",
@@ -261,7 +260,6 @@
   "{0, plural, one {Send # invoice?} other {Send # invoices?}}": "{0, plural, one {¿Enviar # factura?} other {¿Enviar # facturas?}}",
   "{0, plural, one {Sending # invoice} other {Sending # invoices}}": "{0, plural, one {Enviando # factura} other {Enviando # facturas}}",
   "{0, plural, one {Show # To recipient} other {Show # To recipients}}": "{0, plural, one {Mostrar # destinatario Para} other {Mostrar # destinatarios Para}}",
-  "{0} PDF generation started": "Generación del PDF de {0} iniciada",
   "{0} applied to {1, plural, one {# invoice} other {# invoices}}": "{0} aplicado a {1, plural, one {# factura} other {# facturas}}",
   "{0} credited": "{0} abonado",
   "{0} days past due": "{0} días de mora",
@@ -270,7 +268,6 @@
   "{0} is kept out of factoring": "{0} queda fuera del factoraje",
   "{0} original": "{0} original",
   "{0} remains on this credit memo. Pick the open invoices it settles and how much of each.": "Queda {0} en esta nota de crédito. Elija las facturas abiertas que liquida y cuánto de cada una.",
-  "{0} send attempted": "Intento de envío de {0}",
   "{0} to {1}. Once posted, it can only be corrected by an adjustment.": "{0} para {1}. Una vez contabilizada, solo puede corregirse mediante un ajuste.",
   "{0} · {1, plural, one {# shipment} other {# shipments}}": "{0} · {1, plural, one {# envío} other {# envíos}}"
 }

@@ -1873,6 +1873,16 @@ input ShipmentsInput {
   lines. Needs permission to read invoices.
   """
   invoiceIds: [ID!]
+  """
+  Only shipments one of these worker settlements pays, on one of its lines.
+  Needs permission to read worker settlements.
+  """
+  driverSettlementIds: [ID!]
+  """
+  Only shipments one of these carrier settlements pays, on one of its lines.
+  Needs permission to read carrier settlements.
+  """
+  carrierSettlementIds: [ID!]
 }
 
 input ShipmentEventsInput {

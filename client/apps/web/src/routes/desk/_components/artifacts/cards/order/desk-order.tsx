@@ -22,12 +22,13 @@ import {
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
-import { money, neighborsIn } from "../../record-card/record-card-values";
+import { CardTrack } from "../../record-card/card-track";
+import { cardMoment, money, neighborsIn } from "../../record-card/record-card-values";
 import { useRecordActivity } from "../../record-card/record-activity";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import { lifecycleSteps, orderFacts, orderStanding, orderWorth } from "./order-card";
-import { ChargeLedger, LifecycleTrack, OrderReferences } from "./order-parts";
+import { ChargeLedger, OrderReferences } from "./order-parts";
 import { ORDER_SECTIONS } from "./order-sections";
 import { DeskOrderSkeleton } from "./order-skeleton";
 
@@ -224,10 +225,20 @@ function OrderCard({
         {record.status === "Canceled" && (
           <p className="dk-rec-note dk-or-canceled">{t("This order was canceled.")}</p>
         )}
-        <LifecycleTrack
+        <CardTrack
           steps={steps}
-          canceled={record.status === "Canceled"}
-          changedAt={record.updatedAt}
+          label={t("Order lifecycle")}
+          off={record.status === "Canceled"}
+          note={
+            record.status === "Canceled"
+              ? t("Canceled · last changed {0}", cardMoment(record.updatedAt))
+              : t(
+                  "Step {0} of {1} · last changed {2}",
+                  steps.findIndex((step) => step.state === "now") + 1,
+                  steps.length,
+                  cardMoment(record.updatedAt),
+                )
+          }
         />
       </CardSection>
 

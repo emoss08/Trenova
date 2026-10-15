@@ -421,3 +421,45 @@ export function CardDocumentsSkeleton() {
     </CardSectionSkeleton>
   );
 }
+
+/** A record's track while it is read: one bar where the segments will stand, and its line. */
+export function CardTrackSkeleton() {
+  return (
+    <div className="dk-rec-track" aria-hidden>
+      <i className="dk-sk dk-rec-track-sk" />
+      <SkeletonBar w="34%" className="dk-rec-sk-label" />
+    </div>
+  );
+}
+
+/** A settlement's statement while it is read: a group heading, then its rows. */
+export function SettlementStatementSkeleton({ rows }: { rows: readonly number[] }) {
+  return (
+    <table className="dk-rec-stmt" aria-hidden>
+      <tbody>
+        <tr className="dk-grp">
+          <th colSpan={2}>
+            <SkeletonBar w="72px" className="dk-rec-sk-label" />
+          </th>
+          <th className="dk-amt">
+            <SkeletonBar w="64px" className="dk-rec-sk-label" />
+          </th>
+        </tr>
+        {rows.map((width, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+          <tr key={index}>
+            <td>
+              <SkeletonBar w={`${width}%`} className="dk-rec-sk-line" />
+            </td>
+            <td className="dk-qty">
+              <SkeletonBar w="88px" className="dk-rec-sk-label" />
+            </td>
+            <td className="dk-amt">
+              <SkeletonBar w="64px" className="dk-rec-sk-line" />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

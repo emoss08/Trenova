@@ -9279,11 +9279,16 @@ disbursement (DR AP / CR cash) and the Payment ledger entry.
 type CarrierSettlement {
   adjustmentsMinor: Int!
   approvedAt: Timestamp
+  approvedBy: User
   approvedById: ID
   batchId: ID
   businessUnitId: ID!
   carrier: Carrier
   carrierId: ID!
+  """
+  The lines summed by cost: one row per kind of cost and description, and each adjustment added by hand on its own. Null when the lines were not read.
+  """
+  costSummary: [CarrierSettlementLineGroup!]
   createdAt: Timestamp!
   currencyCode: String!
   """
@@ -9296,10 +9301,19 @@ type CarrierSettlement {
   grossCostMinor: Int!
   id: ID!
   lines: [CarrierSettlementLine!]
+  """
+  What each load came to on the statement, every line tied to it summed. Null when the lines were not read.
+  """
+  loadShares: [SettlementLoadShare!]
+  """
+  Each move the statement pays and the carrier's invoice for it, if one came in. Null when the lines were not read.
+  """
+  moveInvoices: [CarrierSettlementMoveInvoice!]
   netPayableMinor: Int!
   notes: String!
   organizationId: ID!
   paidAt: Timestamp
+  paidBy: User
   paidById: ID
   """The exchange rate fixed when the settlement was paid."""
   paidExchangeRate: Decimal
@@ -9312,18 +9326,21 @@ type CarrierSettlement {
   periodEnd: Timestamp!
   periodStart: Timestamp!
   postedAt: Timestamp
+  postedBy: User
   postedById: ID
   postedJournalBatchId: ID
   settlementNumber: String!
   shipmentCount: Int!
   status: CarrierSettlementStatus!
   submittedAt: Timestamp
+  submittedBy: User
   submittedById: ID
   updatedAt: Timestamp!
   version: Int!
   voidJournalBatchId: ID
   voidReason: String!
   voidedAt: Timestamp
+  voidedBy: User
   voidedById: ID
 }
 
@@ -9448,6 +9465,34 @@ type CarrierSettlementLine {
   moveId: ID
   proNumber: String!
   settlementId: ID!
+  shipmentId: ID
+}
+
+"""
+Carrier settlement lines of the same kind of cost and description, summed.
+"""
+type CarrierSettlementLineGroup {
+  amountMinor: Int!
+  description: String!
+  eventType: CarrierCostEventType!
+  lineCount: Int!
+  """
+  An adjustment added by a person rather than accrued or accepted from an invoice variance.
+  """
+  manual: Boolean!
+  shipmentCount: Int!
+}
+
+"""
+One move a carrier settlement pays and the carrier's invoice for it: what the
+move costs on the statement, and the newest live invoice match on its carrier
+assignment, when one came in.
+"""
+type CarrierSettlementMoveInvoice {
+  costMinor: Int!
+  match: CarrierInvoiceMatch
+  moveId: ID!
+  proNumber: String!
   shipmentId: ID
 }
 
@@ -13002,6 +13047,7 @@ negative — shortfalls carry forward to the next settlement instead.
 """
 type DriverSettlement {
   approvedAt: Timestamp
+  approvedBy: User
   approvedById: ID
   batchId: ID
   businessUnitId: ID!
@@ -13011,6 +13057,10 @@ type DriverSettlement {
   createdAt: Timestamp!
   currencyCode: String!
   deductionsMinor: Int!
+  """
+  The worker's disputes against this settlement, newest first; empty for someone who may not read settlement disputes.
+  """
+  disputes: [SettlementDispute!]!
   exceptions: [SettlementException!]
   """
   Units of the organization's functional currency per one unit of the
@@ -13022,11 +13072,20 @@ type DriverSettlement {
   grossEarningsMinor: Int!
   hasExceptions: Boolean!
   id: ID!
+  """
+  The lines summed by how each was paid: one row per pay component, deduction, advance, escrow account or line added by hand. Null when the lines were not read.
+  """
+  lineSummary: [DriverSettlementLineGroup!]
   lines: [DriverSettlementLine!]
+  """
+  What each load came to on the statement, every line tied to it summed, in the order the loads first appear. Null when the lines were not read.
+  """
+  loadShares: [SettlementLoadShare!]
   netPayMinor: Int!
   notes: String!
   organizationId: ID!
   paidAt: Timestamp
+  paidBy: User
   paidById: ID
   """The exchange rate fixed when the settlement was paid."""
   paidExchangeRate: Decimal
@@ -13040,18 +13099,21 @@ type DriverSettlement {
   periodEnd: Timestamp!
   periodStart: Timestamp!
   postedAt: Timestamp
+  postedBy: User
   postedById: ID
   reimbursementsMinor: Int!
   settlementNumber: String!
   shipmentCount: Int!
   status: DriverSettlementStatus!
   submittedAt: Timestamp
+  submittedBy: User
   submittedById: ID
   totalMiles: Decimal!
   updatedAt: Timestamp!
   version: Int!
   voidReason: String!
   voidedAt: Timestamp
+  voidedBy: User
   voidedById: ID
   worker: Worker
   workerId: ID!
@@ -13099,6 +13161,42 @@ type DriverSettlementLine {
   recurringEarningId: ID
   settlementId: ID!
   shipmentId: ID
+}
+
+"""
+Settlement lines paid the same way, summed: the same category, pay component,
+calculation method and pay code, and for a deduction the same recurring
+deduction, advance or escrow account. A line added by hand stands alone.
+"""
+type DriverSettlementLineGroup {
+  """
+  The advance these lines recover, as it stands now; null for someone who may not read pay advances.
+  """
+  advance: PayAdvance
+  advanceId: ID
+  amountMinor: Int!
+  category: SettlementLineCategory!
+  componentKind: PayComponentKind
+  """The lines' description when every line shares it, else empty."""
+  description: String!
+  """
+  The escrow account these lines pay into, as it stands now; null for someone who may not read escrow accounts.
+  """
+  escrowAccount: EscrowAccount
+  escrowAccountId: ID
+  lineCount: Int!
+  """
+  Added by a person rather than from a load, a recurring earning or a recurring deduction.
+  """
+  manual: Boolean!
+  method: PayCalcMethod
+  payCodeId: ID
+  quantity: Decimal!
+  """The rate when every line shares it."""
+  rate: Decimal
+  recurringDeductionId: ID
+  recurringEarningId: ID
+  shipmentCount: Int!
 }
 
 enum DriverSettlementStatus {
@@ -18120,6 +18218,10 @@ type Invoice {
   """
   paymentApplications: [CustomerPaymentApplication!]!
   paymentTerm: InvoicePaymentTerm!
+  """
+  The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one.
+  """
+  pdfDocumentId: ID
   """End of the period billed. Consolidated invoices only."""
   periodEnd: Timestamp
   """Start of the period billed. Consolidated invoices only."""
@@ -25783,6 +25885,14 @@ enum SettlementLineCategory {
   Reimbursement
 }
 
+"""What one load came to on a settlement: every line tied to it, summed."""
+type SettlementLoadShare {
+  amountMinor: Int!
+  lineCount: Int!
+  proNumber: String!
+  shipmentId: ID!
+}
+
 enum SettlementPayTrigger {
   """
   Pay accrues the moment a driver completes their move — even before the full shipment delivers.
@@ -27914,6 +28024,16 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   """Only shipments with a live move tendered to one of these carriers."""
   carrierIds: [ID!]
+  """
+  Only shipments one of these carrier settlements pays, on one of its lines.
+  Needs permission to read carrier settlements.
+  """
+  carrierSettlementIds: [ID!]
+  """
+  Only shipments one of these worker settlements pays, on one of its lines.
+  Needs permission to read worker settlements.
+  """
+  driverSettlementIds: [ID!]
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]

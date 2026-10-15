@@ -22,6 +22,8 @@ import { DeskEdiMessageSkeleton } from "./edi-message/edi-message-skeleton";
 import { DeskEdiInboundFileSkeleton } from "./edi-inbound-file/edi-inbound-file-skeleton";
 import { DeskEdiTransferSkeleton } from "./edi-transfer/edi-transfer-skeleton";
 import { DeskInvoiceSkeleton } from "./invoice/invoice-skeleton";
+import { DeskDriverSettlementSkeleton } from "./driver-settlement/driver-settlement-skeleton";
+import { DeskCarrierSettlementSkeleton } from "./carrier-settlement/carrier-settlement-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -78,6 +80,12 @@ const loadEdiMessage = preloadable(() => import("./edi-message/desk-edi-message"
 const loadEdiInboundFile = preloadable(() => import("./edi-inbound-file/desk-edi-inbound-file"));
 const loadEdiTransfer = preloadable(() => import("./edi-transfer/desk-edi-transfer"));
 const loadInvoice = preloadable(() => import("./invoice/desk-invoice"));
+const loadDriverSettlement = preloadable(
+  () => import("./driver-settlement/desk-driver-settlement"),
+);
+const loadCarrierSettlement = preloadable(
+  () => import("./carrier-settlement/desk-carrier-settlement"),
+);
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -175,6 +183,21 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskInvoiceSkeleton,
     inPlace: lazyComponent(loadInvoice, (module) => module.DeskInvoice),
     artifact: lazyComponent(loadInvoice, (module) => module.DeskInvoiceArtifact),
+  },
+  driver_settlement: {
+    resource: Resource.DriverSettlement,
+    Skeleton: DeskDriverSettlementSkeleton,
+    inPlace: lazyComponent(loadDriverSettlement, (module) => module.DeskDriverSettlement),
+    artifact: lazyComponent(loadDriverSettlement, (module) => module.DeskDriverSettlementArtifact),
+  },
+  carrier_settlement: {
+    resource: Resource.CarrierSettlement,
+    Skeleton: DeskCarrierSettlementSkeleton,
+    inPlace: lazyComponent(loadCarrierSettlement, (module) => module.DeskCarrierSettlement),
+    artifact: lazyComponent(
+      loadCarrierSettlement,
+      (module) => module.DeskCarrierSettlementArtifact,
+    ),
   },
 };
 

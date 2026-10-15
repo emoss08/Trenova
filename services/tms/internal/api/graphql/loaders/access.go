@@ -41,6 +41,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -1531,5 +1534,78 @@ func (f *FactoringLiveItemByInvoiceIDLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.factoringLiveItemByInvoiceID = newFactoringLiveItemByInvoiceIDLoader(f, tenantInfo)
+	})
+}
+
+func PayAdvanceByID(ctx context.Context, key string) (*driverpay.PayAdvance, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *driverpay.PayAdvance] {
+		return s.payAdvanceByID
+	})
+}
+
+func (f *PayAdvanceByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.payAdvanceByID = newPayAdvanceByIDLoader(f, tenantInfo)
+	})
+}
+
+func EscrowAccountByID(ctx context.Context, key string) (*driverpay.EscrowAccount, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *driverpay.EscrowAccount] {
+		return s.escrowAccountByID
+	})
+}
+
+func (f *EscrowAccountByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.escrowAccountByID = newEscrowAccountByIDLoader(f, tenantInfo)
+	})
+}
+
+func SettlementDisputesBySettlementID(
+	ctx context.Context,
+	key string,
+) ([]*driversettlement.Dispute, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*driversettlement.Dispute] {
+		return s.settlementDisputesBySettlementID
+	})
+}
+
+func (f *SettlementDisputesBySettlementIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.settlementDisputesBySettlementID = newSettlementDisputesBySettlementIDLoader(
+			f,
+			tenantInfo,
+		)
+	})
+}
+
+func CarrierInvoiceMatchesByMoveIDs(
+	ctx context.Context,
+	keys []string,
+) ([][]*carriersettlement.InvoiceMatch, error) {
+	return loadAll(
+		ctx,
+		keys,
+		func(s *set) *dataloadgen.Loader[string, []*carriersettlement.InvoiceMatch] {
+			return s.carrierInvoiceMatchesByMoveID
+		},
+	)
+}
+
+func (f *CarrierInvoiceMatchesByMoveIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.carrierInvoiceMatchesByMoveID = newCarrierInvoiceMatchesByMoveIDLoader(f, tenantInfo)
 	})
 }
