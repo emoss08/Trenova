@@ -446,6 +446,7 @@ export type AiUsageFeature =
   | 'AgentDrafting'
   | 'AgentEvaluation'
   | 'AgentProfile'
+  | 'AgentRecommendation'
   | 'AgentReflection'
   | 'AgentTurn'
   | 'DocumentIntelligenceExtract'

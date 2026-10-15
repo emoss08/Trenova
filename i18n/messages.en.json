@@ -19832,6 +19832,15 @@
       "go/other"
     ]
   },
+  "Agent suggestions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent trust loader is not configured": {
     "sites": 1,
     "scope": [
@@ -39016,15 +39025,6 @@
     "areas": [
       "apps/web/lib",
       "go/other"
-    ]
-  },
-  "Book": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": {
@@ -78019,7 +78019,7 @@
     ]
   },
   "Document": {
-    "sites": 37,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -78033,6 +78033,7 @@
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/desk",
@@ -98939,24 +98940,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Failed to load PDF": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "Failed to load PDF. Please check the file or URL.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Failed to load accounting control": {
     "sites": 3,
     "scope": [
@@ -103611,15 +103594,6 @@
     "areas": [
       "apps/web/config",
       "routes/fiscal-year"
-    ]
-  },
-  "Fit": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Fit columns to content": {
@@ -133373,15 +133347,6 @@
       "go/other"
     ]
   },
-  "Loading PDF...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Loading activity": {
     "sites": 2,
     "scope": [
@@ -133971,15 +133936,6 @@
       "routes/admin"
     ]
   },
-  "Loading page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Loading payment...": {
     "sites": 2,
     "scope": [
@@ -134406,11 +134362,12 @@
     ]
   },
   "Loading the document": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/shipment"
     ]
@@ -169803,6 +169760,15 @@
       "apps/web/config"
     ]
   },
+  "Open the PDF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open the amendment": {
     "sites": 1,
     "scope": [
@@ -175736,8 +175702,7 @@
       "routes/admin",
       "routes/desk",
       "routes/inbox",
-      "routes/intake",
-      "routes/shipment"
+      "routes/intake"
     ]
   },
   "Page {0} actions": {
@@ -186614,14 +186579,12 @@
     ]
   },
   "Preview unavailable": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/billing-queue",
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Preview {0}": {
@@ -218837,15 +218800,6 @@
       "routes/edi"
     ]
   },
-  "Scroll": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Scroll for more": {
     "sites": 3,
     "scope": [
@@ -232630,15 +232584,6 @@
       "template/factoring.noa.pdf"
     ]
   },
-  "Single": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Single currency": {
     "sites": 1,
     "scope": [
@@ -246334,6 +246279,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The agent the question would go to must be an agent ID.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "The agent was told, and reads them again before relying on them.": {
@@ -261598,6 +261552,15 @@
       "routes/settings"
     ]
   },
+  "This browser can't show PDFs inside the page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This browser can't show desktop notifications.": {
     "sites": 1,
     "scope": [
@@ -262578,6 +262541,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This document could not be shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This document has no version {0}": {
@@ -264511,15 +264483,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "This page could not be shown.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "This page has no assistant conversation": {
@@ -273115,7 +273078,7 @@
     ]
   },
   "Try again": {
-    "sites": 61,
+    "sites": 62,
     "scope": [
       "ts"
     ],
@@ -314132,6 +314095,15 @@
       "routes/shipment"
     ]
   },
+  "{0} has the tools for this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} has used <b>{1}%</b> of {2}'s budget": {
     "sites": 1,
     "scope": [
@@ -317880,15 +317852,6 @@
     ],
     "areas": [
       "routes/time-attendance"
-    ]
-  },
-  "{0} pages": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "{0} paid": {

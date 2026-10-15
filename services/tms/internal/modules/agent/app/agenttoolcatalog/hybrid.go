@@ -72,7 +72,7 @@ func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
 
 	wanted := c.allowedSet(q.Allowed)
 	terms := agentsearch.Terms(q.Text)
-	fused := c.fuse(wanted, c.keywordRanked(wanted, terms, keywordRanking{minScore: 1}), q)
+	fused, _ := c.fuse(wanted, c.keywordRanked(wanted, terms, keywordRanking{minScore: 1}), q)
 
 	out := make([]agentports.AgentToolDescriptor, 0, q.Limit)
 	taken := make(map[string]struct{}, q.Limit)
@@ -101,43 +101,82 @@ func (c *Catalog) FindHybrid(q Query) []agentports.AgentToolDescriptor {
 	return c.withFamilies(c.allowedSet(q.Allowed), c.matched(q))
 }
 
-func (c *Catalog) Match(q Query) []string {
-	matched := c.matched(q)
-	names := make([]string, 0, len(matched))
+type Match struct {
+	Name  string
+	Score float64
+}
+
+func (c *Catalog) Match(q Query) []Match {
+	matched := c.matchedScored(q)
+	out := make([]Match, 0, len(matched))
 	for idx := range matched {
-		names = append(names, matched[idx].Name)
+		out = append(out, Match{Name: matched[idx].descriptor.Name, Score: matched[idx].score})
 	}
 
-	return names
+	return out
 }
 
 func (c *Catalog) matched(q Query) []agentports.AgentToolDescriptor {
-	if !q.Semantic.usable() {
-		return c.rank(q.Allowed, q.Text, q.Limit, 1, q.StrongOnly)
-	}
-	if q.Limit <= 0 {
-		return nil
-	}
-
-	wanted := c.allowedSet(q.Allowed)
-	fused := c.fuse(wanted, c.keywordRanked(wanted, agentsearch.Terms(q.Text), keywordRanking{
-		minScore: 1,
-		cutoff:   true,
-		strong:   q.StrongOnly,
-	}), q)
-	if len(fused) > q.Limit {
-		fused = fused[:q.Limit]
-	}
-
-	found := make([]agentports.AgentToolDescriptor, 0, len(fused)+maxFamilySize)
-	for _, entry := range fused {
-		found = append(found, entry.descriptor)
+	matched := c.matchedScored(q)
+	found := make([]agentports.AgentToolDescriptor, 0, len(matched)+maxFamilySize)
+	for idx := range matched {
+		found = append(found, matched[idx].descriptor)
 	}
 
 	return found
 }
 
-func (c *Catalog) fuse(wanted map[string]struct{}, keyword []scored, q Query) []*indexed {
+type scoredDescriptor struct {
+	descriptor agentports.AgentToolDescriptor
+	score      float64
+}
+
+func (c *Catalog) matchedScored(q Query) []scoredDescriptor {
+	if q.Limit <= 0 {
+		return nil
+	}
+
+	wanted := c.allowedSet(q.Allowed)
+	keyword := c.keywordRanked(wanted, agentsearch.Terms(q.Text), keywordRanking{
+		minScore: 1,
+		cutoff:   true,
+		strong:   q.StrongOnly,
+	})
+	if !q.Semantic.usable() {
+		if len(keyword) > q.Limit {
+			keyword = keyword[:q.Limit]
+		}
+		out := make([]scoredDescriptor, 0, len(keyword))
+		for _, candidate := range keyword {
+			out = append(out, scoredDescriptor{
+				descriptor: candidate.entry.descriptor,
+				score:      float64(candidate.score),
+			})
+		}
+
+		return out
+	}
+
+	fused, scores := c.fuse(wanted, keyword, q)
+	if len(fused) > q.Limit {
+		fused = fused[:q.Limit]
+	}
+	out := make([]scoredDescriptor, 0, len(fused))
+	for _, entry := range fused {
+		out = append(out, scoredDescriptor{
+			descriptor: entry.descriptor,
+			score:      scores[entry.descriptor.Name],
+		})
+	}
+
+	return out
+}
+
+func (c *Catalog) fuse(
+	wanted map[string]struct{},
+	keyword []scored,
+	q Query,
+) ([]*indexed, map[string]float64) {
 	keywordNames := make([]string, 0, len(keyword))
 	matched := make(map[string]struct{}, len(keyword))
 	for _, candidate := range keyword {
@@ -169,7 +208,7 @@ func (c *Catalog) fuse(wanted map[string]struct{}, keyword []scored, q Query) []
 		return fused[i].catalogRank < fused[j].catalogRank
 	})
 
-	return fused
+	return fused, scores
 }
 
 func (c *Catalog) vectorRanked(wanted map[string]struct{}, q Query) []*indexed {

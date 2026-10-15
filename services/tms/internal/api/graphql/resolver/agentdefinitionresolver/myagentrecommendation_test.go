@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -148,5 +149,9 @@ func TestMyAgentRecommendation_RefusesAnAgentIDThatIsNotOne(t *testing.T) {
 	})
 
 	require.Error(t, err)
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation, "a malformed id is the caller's mistake, not a server fault")
+	assert.Equal(t, "currentAgentId", validation.Field)
+	assert.Equal(t, errortypes.ErrInvalid, validation.Code)
 	assert.Empty(t, recommender.asked)
 }

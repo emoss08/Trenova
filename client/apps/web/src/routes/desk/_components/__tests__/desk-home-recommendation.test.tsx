@@ -31,9 +31,13 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
     agentRecommendation: (text: string, currentAgentId: string | null) => ({
       queryKey: ["agent-recommendation", text, currentAgentId ?? ""],
-      queryFn: () => {
+      queryFn: ({ signal }: { signal: AbortSignal }) => {
         state.asked.push({ text, currentAgentId: currentAgentId ?? "" });
-        return state.recommend(text, currentAgentId ?? "");
+        // Like the real request, the answer is dropped when the query is cancelled.
+        return new Promise((resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+          state.recommend(text, currentAgentId ?? "").then(resolve, reject);
+        });
       },
     }),
   },
@@ -122,6 +126,25 @@ async function type(text: string) {
   return box;
 }
 
+const NOTE = '[data-slot="agent-recommendation"]';
+
+function queryNote(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(NOTE);
+}
+
+async function findNote(): Promise<HTMLElement> {
+  let note: HTMLElement | null = null;
+  await waitFor(
+    () => {
+      note = queryNote();
+      expect(note).not.toBeNull();
+    },
+    { timeout: 3000 },
+  );
+
+  return note as unknown as HTMLElement;
+}
+
 function pressEnter(box: HTMLElement) {
   fireEvent.keyDown(box, { key: "Enter" });
 }
@@ -138,7 +161,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
 
     await type(QUESTION);
 
-    const offer = await screen.findByText(/has the tools for this/, {}, { timeout: 3000 });
+    const offer = await findNote();
     expect(offer).toHaveTextContent("Billing assistant has the tools for this");
     expect(screen.getByRole("button", { name: "Switch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Keep Dispatch" })).toBeInTheDocument();
@@ -154,7 +177,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
 
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
     expect(onStart).toHaveBeenCalledWith(billing.id, QUESTION, expect.anything());
-    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(queryNote()).toBeNull();
   });
 
   it("asks the agent with the tools when the suggestion was shown and nobody chose", async () => {
@@ -162,7 +185,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     renderHome(onStart);
 
     const box = await type(QUESTION);
-    await screen.findByText(/has the tools for this/, {}, { timeout: 3000 });
+    await findNote();
     pressEnter(box);
 
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
@@ -177,7 +200,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
     );
-    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(queryNote()).toBeNull();
     pressEnter(box);
 
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
@@ -212,13 +235,11 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     const box = await type(QUESTION);
     fireEvent.click(await screen.findByRole("button", { name: "Switch" }, { timeout: 3000 }));
     await new Promise((settle) => setTimeout(settle, 1000));
-    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(queryNote()).toBeNull();
 
     fireEvent.change(box, { target: { value: shipments } });
 
-    expect(
-      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
-    ).toHaveTextContent("Customer service has the tools for this");
+    expect(await findNote()).toHaveTextContent("Customer service has the tools for this");
     pressEnter(box);
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
     expect(onStart.mock.calls[0]?.[0]).toBe(customerService.id);
@@ -241,13 +262,11 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     );
     fireEvent.change(box, { target: { value: `${QUESTION} today` } });
     await new Promise((settle) => setTimeout(settle, 1000));
-    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(queryNote()).toBeNull();
 
     fireEvent.change(box, { target: { value: shipments } });
 
-    expect(
-      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
-    ).toHaveTextContent("Customer service has the tools for this");
+    expect(await findNote()).toHaveTextContent("Customer service has the tools for this");
   });
 
   it("suggests again for the next question once the box is cleared", async () => {
@@ -257,13 +276,74 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
     );
-    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(queryNote()).toBeNull();
     fireEvent.change(box, { target: { value: "" } });
     fireEvent.change(box, { target: { value: QUESTION } });
 
-    expect(
-      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
-    ).toHaveTextContent("Billing assistant has the tools for this");
+    expect(await findNote()).toHaveTextContent("Billing assistant has the tools for this");
+  });
+
+  it("waits on a match already under way when the question is sent, though the box empties", async () => {
+    state.recommend = () =>
+      new Promise((settle) => {
+        setTimeout(() => settle(billingFits()), 800);
+      });
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    await waitFor(() => expect(state.asked).toHaveLength(1), { timeout: 2000 });
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
+    expect(state.asked).toHaveLength(1);
+  });
+
+  it("holds the suggestion's choices still while a question waits on its match", async () => {
+    let finish: (value: unknown) => void = () => undefined;
+    state.recommend = (_text, currentAgentId) =>
+      state.asked.length > 1
+        ? new Promise((settle) => {
+            finish = settle;
+          })
+        : Promise.resolve(currentAgentId === dispatch.id ? billingFits() : null);
+    renderHome(vi.fn());
+
+    const box = await type(QUESTION);
+    await findNote();
+    fireEvent.change(box, { target: { value: `${QUESTION} now` } });
+    pressEnter(box);
+
+    expect(await screen.findByRole("button", { name: "Switch" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Keep Dispatch" })).toBeDisabled();
+    finish(billingFits());
+  });
+
+  it("puts the cursor back in the box after Switch or the cross", async () => {
+    renderHome(vi.fn());
+
+    await type(QUESTION);
+    fireEvent.click(await screen.findByRole("button", { name: "Switch" }, { timeout: 3000 }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Message Billing assistant" })).toHaveFocus(),
+    );
+  });
+
+  it("announces the suggestion in a region that is always there", async () => {
+    renderHome(vi.fn());
+
+    const status = screen
+      .getAllByRole("status")
+      .find((region) => region.getAttribute("aria-live") === "polite" && region.textContent === "");
+    expect(status).toBeDefined();
+    await type(QUESTION);
+
+    await waitFor(
+      () => expect(status).toHaveTextContent("Billing assistant has the tools for this"),
+      { timeout: 3000 },
+    );
   });
 
   it("asks the agent already chosen when no agent fits better", async () => {

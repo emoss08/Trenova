@@ -1057,25 +1057,34 @@ same parts:
 
 - **Who is eligible.** `OtherUsableAgents`, the list the hand-off note reads: enabled
   chat agents in the person's audience that `AgentsUsable` allows at `assistant:create`,
-  the check that starting the conversation makes again (`assertMayUseAgent`). The
-  resolver itself requires `assistant:create`. An API key or system actor is matched
-  to nobody.
+  the check that starting the conversation makes again (`assertMayUseAgent`). It reads
+  the agents a hundred at a time, in name then ID order, up to a thousand, so an
+  organization with many agents is matched against all of them. The resolver itself
+  requires `assistant:create`, and a malformed `currentAgentId` is refused as a
+  validation error on that field. An API key or system actor is matched to nobody.
 - **What counts.** Each agent's `heldTools` without the core tools every agent holds,
   narrowed once, for every agent together, by `permittedWith` for the person. A tool
   the person may not use through any agent never makes an agent the better fit.
 - **The ranking.** The question is ranked against the catalog with `Catalog.Match`:
   `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
-  appends, so only tools that matched are scored. Its query vector is the one the turn
-  embeds for the same words, so a question sent after its match reuses the cached
-  vector rather than embedding twice. Only an agent holding the best match is ever
-  suggested, so a suggestion manages the question better than the agent it would
-  replace: the agent the question would go to now is kept whenever it holds that tool,
-  however many lesser matches another holds. Among the holders an agent scores 1/rank
-  for each matched tool it holds, then the one holding fewer usable tools (the focused
-  one) wins, then by name. Because the suggested agent holds the best match, switching
-  to it can never draw a second suggestion for the same words. Nothing matched
-  recommends nobody, and the reply names at most three of the winning agent's matched
-  tools.
+  appends, so only tools that matched are scored, each with its fused score. Its query
+  vector is the one the turn embeds for the same words: `retrievalquery` keeps it in
+  its in-process cache and in Redis (`QueryVectorCache`, an hour, keyed by tenant,
+  embedding model and a hash of the words), so a question sent after its match reuses
+  the vector even when the API asked and the worker runs the turn. Only an agent
+  holding a best match is ever suggested, and every tool whose score equals the top
+  score is a best match, so two tools the question matches equally well are treated
+  alike. A suggestion therefore manages the question better than the agent it would
+  replace: the agent the question would go to now is kept whenever it holds any best
+  match, however many lesser matches another holds. Among the holders an agent scores
+  1/(rank+1) for each matched tool it holds, ranks dense so tied tools weigh the same,
+  then the one holding fewer usable tools (the focused one) wins, then by name, then by
+  ID. Because the suggested agent holds a best match, switching to it can never draw a
+  second suggestion for the same words. Nothing matched recommends nobody, and the
+  reply names at most three of the winning agent's matched tools. A cancelled request
+  (the person typed on) stops quietly, without logging a failed embedding.
+- **What it costs.** The embedding is metered as the `AgentRecommendation` usage
+  feature, so AI Control shows suggestions apart from the turns they precede.
 
 No model is asked: the match costs one embedding at most and works the same on a
 self-hosted install with a small model. The browser asks once typing pauses
@@ -1084,7 +1093,11 @@ above the box, where the terms reminder sits, with Switch and a cross that keeps
 agent chosen. Unless the person picked an agent from the picker, a question sent
 goes to the better fit; one sent before its match came back waits at most 1.5
 seconds for it and otherwise goes to the agent already chosen (`agentToAsk` in
-`agent-recommendation-state.ts`). The browser keeps asking as the question changes,
+`agent-recommendation-state.ts`). While it waits the match stays keyed to the words
+sent, not the emptied box, so the request it waits on keeps an observer and is not
+cancelled under it; Switch and the cross are disabled meanwhile, and both return focus
+to the box. The suggestion is announced through a status region that is always
+mounted, so a screen reader hears it when it appears. The browser keeps asking as the question changes,
 so a new question the agent switched to cannot manage is offered again; the server
 rule above keeps a switch from drawing a second suggestion for the words it was
 made for. The cross turns down only the agent it was used on, and clearing the box

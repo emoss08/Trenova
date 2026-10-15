@@ -82,7 +82,7 @@ func (r *repository) List(
 					return sq.
 						Limit(int64(req.Filter.Pagination.SafeLimit())).
 						Offset(int64(req.Filter.Pagination.SafeOffset())).
-						Order(cols.Name.OrderAsc())
+						Order(cols.Name.OrderAsc(), cols.ID.OrderAsc())
 				}).ScanAndCount(ctx)
 			if err != nil {
 				r.l.Error("failed to list agent definitions", zap.Error(err))

@@ -15,9 +15,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// maxOtherAgents bounds how many of the person's other agents are read for
-// one that holds a tool; it is the most a list page reads.
-const maxOtherAgents = 100
+// otherAgentsPage is how many agents one read takes, the most a list page
+// reads; maxOtherAgents bounds how many are read in all.
+const (
+	otherAgentsPage = 100
+	maxOtherAgents  = 1000
+)
 
 // OtherUsableAgentsRequest names whose other agents to read.
 type OtherUsableAgentsRequest struct {
@@ -47,25 +50,34 @@ func OtherUsableAgents(
 		return nil, nil
 	}
 
-	result, err := req.Definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: req.Actor.TenantInfo(),
-			Pagination: pagination.Info{Limit: maxOtherAgents},
-		},
-		EnabledOnly: true,
-		ChatOnly:    true,
-		Audience:    usable.Audience(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("list the agents the person may use: %w", err)
-	}
-
-	out := make([]*agentdefinition.Definition, 0, len(result.Items))
-	for _, definition := range result.Items {
-		if definition == nil || definition.ID == req.Self || !usable.Allows(definition) {
-			continue
+	out := make([]*agentdefinition.Definition, 0, otherAgentsPage)
+	seen := make(map[pulid.ID]struct{}, otherAgentsPage)
+	for offset := 0; offset < maxOtherAgents; offset += otherAgentsPage {
+		result, listErr := req.Definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: req.Actor.TenantInfo(),
+				Pagination: pagination.Info{Limit: otherAgentsPage, Offset: offset},
+			},
+			EnabledOnly: true,
+			ChatOnly:    true,
+			Audience:    usable.Audience(),
+		})
+		if listErr != nil {
+			return nil, fmt.Errorf("list the agents the person may use: %w", listErr)
 		}
-		out = append(out, definition)
+		for _, definition := range result.Items {
+			if definition == nil || definition.ID == req.Self || !usable.Allows(definition) {
+				continue
+			}
+			if _, dup := seen[definition.ID]; dup {
+				continue
+			}
+			seen[definition.ID] = struct{}{}
+			out = append(out, definition)
+		}
+		if len(result.Items) < otherAgentsPage || offset+len(result.Items) >= result.Total {
+			break
+		}
 	}
 	slices.SortStableFunc(out, func(a, b *agentdefinition.Definition) int {
 		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))

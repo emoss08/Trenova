@@ -22,6 +22,7 @@ const FEATURES: AiUsageFeature[] = [
   "AgentReflection",
   "AgentDrafting",
   "AgentProfile",
+  "AgentRecommendation",
 ];
 
 /** The share of the busiest feature's calls a bar may never fall below, so a failure shows. */

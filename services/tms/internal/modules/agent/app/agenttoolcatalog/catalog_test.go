@@ -436,10 +436,10 @@ func TestMatch_IsWhatTheSearchFoundWithoutItsFamily(t *testing.T) {
 	catalog := reportFamilyCatalog()
 	allowed := []string{"run_report", "list_reports", "list_workers"}
 
-	assert.Equal(t,
-		[]string{"run_report"},
-		catalog.Match(Query{Allowed: allowed, Text: "start", Limit: 6}),
-	)
+	matches := catalog.Match(Query{Allowed: allowed, Text: "start", Limit: 6})
+	require.Len(t, matches, 1)
+	assert.Equal(t, "run_report", matches[0].Name)
+	assert.Positive(t, matches[0].Score)
 	assert.Equal(t,
 		[]string{"run_report", "list_reports"},
 		names(catalog.FindHybrid(Query{Allowed: allowed, Text: "start", Limit: 6})),
@@ -451,4 +451,19 @@ func TestMatch_FindsNothingForWordsNoToolCarries(t *testing.T) {
 	t.Parallel()
 
 	assert.Empty(t, reportFamilyCatalog().Match(Query{Text: "zzzz no such thing zzzz", Limit: 6}))
+}
+
+func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "create_shipment", Description: "Create a shipment."},
+		{Name: "get_shipment", Description: "Retrieve one shipment."},
+	})
+
+	matches := catalog.Match(Query{Text: "shipment", Limit: 6})
+
+	require.Len(t, matches, 2)
+	assert.Equal(t, matches[0].Score, matches[1].Score,
+		"a tie stays a tie for the caller to break, not one decided by catalog order")
 }

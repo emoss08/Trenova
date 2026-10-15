@@ -555,7 +555,11 @@ func (r *QueryResolver) MyAgentRecommendation(ctx context.Context, input gqlmode
 	if input.CurrentAgentID != nil && *input.CurrentAgentID != "" {
 		currentAgentID, err = pulid.MustParse(*input.CurrentAgentID)
 		if err != nil {
-			return nil, err
+			return nil, errortypes.NewValidationError(
+				"currentAgentId",
+				errortypes.ErrInvalid,
+				"The agent the question would go to must be an agent ID.",
+			)
 		}
 	}
 

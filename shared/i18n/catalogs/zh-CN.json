@@ -8741,6 +8741,7 @@
   "The agent": "智能体",
   "The agent refused a question it should answer": "代理拒绝回答了应该回答的问题",
   "The agent that raised this plan no longer exists, so the plan cannot be decided": "提出此计划的智能体已不存在，因此无法对此计划做出决定",
+  "The agent the question would go to must be an agent ID.": "问题要发送到的代理必须是代理 ID。",
   "The agent whose changes are waiting.": "有变更正在等待的智能体。",
   "The agent's reason.": "智能体给出的理由。",
   "The agreed fuel surcharge amount.": "议定的燃油附加费金额。",

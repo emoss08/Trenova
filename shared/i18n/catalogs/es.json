@@ -8741,6 +8741,7 @@
   "The agent": "El agente",
   "The agent refused a question it should answer": "El agente rechazó una pregunta que debía responder",
   "The agent that raised this plan no longer exists, so the plan cannot be decided": "El agente que generó este plan ya no existe, por lo que no se puede decidir sobre el plan",
+  "The agent the question would go to must be an agent ID.": "El agente al que iría la pregunta debe ser un ID de agente.",
   "The agent whose changes are waiting.": "El agente cuyos cambios están esperando.",
   "The agent's reason.": "El motivo del agente.",
   "The agreed fuel surcharge amount.": "El importe acordado del recargo por combustible.",

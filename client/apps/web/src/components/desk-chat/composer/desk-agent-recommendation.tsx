@@ -16,12 +16,15 @@ import { DeskIcon } from "../desk-icons";
 export function DeskAgentRecommendation({
   recommendation,
   agent,
+  disabled = false,
   onUse,
   onKeep,
 }: {
   recommendation: AgentRecommendation;
   /** The agent the question would go to now. */
   agent: AgentChoice;
+  /** A question is being sent: the choice it was sent with stands. */
+  disabled?: boolean;
   onUse: () => void;
   onKeep: () => void;
 }) {
@@ -33,20 +36,27 @@ export function DeskAgentRecommendation({
     <div className="dk-arec-w">
       <div className="dk-arec" data-slot="agent-recommendation">
         <DeskAgentTile agent={suggested} size="xs" />
-        <span className="dk-arec-t" role="status">
+        <span className="dk-arec-t">
           {rt(
             "<b>{0}</b> has the tools for this",
             { b: (chunk) => <b>{chunk}</b> },
             suggested.name,
           )}
         </span>
-        <Button variant="bare" size="bare" className={deskLinkClass} onClick={onUse}>
+        <Button
+          variant="bare"
+          size="bare"
+          className={deskLinkClass}
+          disabled={disabled}
+          onClick={onUse}
+        >
           {t("Switch")}
         </Button>
         <Button
           variant="bare"
           size="bare"
           className={deskSmallIconClass}
+          disabled={disabled}
           aria-label={t("Keep {0}", agent.name)}
           title={t("Keep {0}", agent.name)}
           onClick={onKeep}

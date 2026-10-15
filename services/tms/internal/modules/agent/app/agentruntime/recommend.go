@@ -27,6 +27,7 @@ type recommendationCandidate struct {
 	matched    []string
 	usable     int
 	current    bool
+	holdsTop   bool
 }
 
 func (s *Service) RecommendAgent(
@@ -118,7 +119,7 @@ func (s *Service) rankForRecommendation(
 	req *agentports.AgentRecommendationRequest,
 	text string,
 	permitted []string,
-) []string {
+) []agenttoolcatalog.Match {
 	tenant := req.Actor.TenantInfo()
 	query := s.vectorize(ctx, &agentports.QueryVectorRequest{
 		TenantInfo: tenant,
@@ -126,7 +127,7 @@ func (s *Service) rankForRecommendation(
 		Focus:      text,
 		Attribution: aiusageports.AIUsageAttribution{
 			UserID:  req.Actor.UserID,
-			Feature: aiusage.FeatureAgentTurn,
+			Feature: aiusage.FeatureAgentRecommendation,
 		},
 	})
 
@@ -142,9 +143,15 @@ func bestCandidate(
 	agents []*agentdefinition.Definition,
 	held []map[string]struct{},
 	permitted []string,
-	ranked []string,
+	ranked []agenttoolcatalog.Match,
 	currentID pulid.ID,
 ) *recommendationCandidate {
+	if len(ranked) == 0 {
+		return nil
+	}
+
+	weights := rankWeights(ranked)
+	top := ranked[0].Score
 	candidates := make([]recommendationCandidate, 0, len(agents))
 	for idx, definition := range agents {
 		candidate := recommendationCandidate{
@@ -152,15 +159,21 @@ func bestCandidate(
 			matched:    make([]string, 0, len(ranked)),
 			current:    !currentID.IsNil() && definition.ID == currentID,
 		}
-		for position, name := range ranked {
-			if _, ok := held[idx][name]; !ok {
+		for position, match := range ranked {
+			if _, ok := held[idx][match.Name]; !ok {
 				continue
 			}
-			candidate.score += 1 / float64(position+1)
-			candidate.matched = append(candidate.matched, name)
+			candidate.score += weights[position]
+			candidate.matched = append(candidate.matched, match.Name)
+			if match.Score == top {
+				candidate.holdsTop = true
+			}
 		}
-		if candidate.score == 0 {
+		if !candidate.holdsTop {
 			continue
+		}
+		if candidate.current {
+			return &candidate
 		}
 		for _, name := range permitted {
 			if _, ok := held[idx][name]; ok {
@@ -173,24 +186,22 @@ func bestCandidate(
 		return nil
 	}
 
-	best := ranked[0]
-	holders := make([]recommendationCandidate, 0, len(candidates))
-	for idx := range candidates {
-		if !slices.Contains(candidates[idx].matched, best) {
-			continue
+	slices.SortStableFunc(candidates, compareCandidates)
+
+	return &candidates[0]
+}
+
+func rankWeights(ranked []agenttoolcatalog.Match) []float64 {
+	weights := make([]float64, len(ranked))
+	rank := 0
+	for idx := range ranked {
+		if idx > 0 && ranked[idx].Score != ranked[idx-1].Score {
+			rank++
 		}
-		if candidates[idx].current {
-			return &candidates[idx]
-		}
-		holders = append(holders, candidates[idx])
-	}
-	if len(holders) == 0 {
-		return nil
+		weights[idx] = 1 / float64(rank+1)
 	}
 
-	slices.SortStableFunc(holders, compareCandidates)
-
-	return &holders[0]
+	return weights
 }
 
 func compareCandidates(a, b recommendationCandidate) int {

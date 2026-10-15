@@ -83,8 +83,13 @@ export function useDeskHomeAsk({
   const [pinned, setPinned] = useState(false);
   const [keptOver, setKeptOver] = useState<readonly string[]>([]);
   const [routing, setRouting] = useState(false);
+  // The words being sent stay what the match is asked for until it answers:
+  // the box empties on send, and letting the match follow it would cancel the
+  // very request the send is waiting on.
+  const [sending, setSending] = useState<string | null>(null);
+  const [focusSignal, setFocusSignal] = useState(0);
   const advice = useAgentRecommendation({
-    draft,
+    draft: sending ?? draft,
     agentId,
     enabled: !noAgents && agentId !== null,
   });
@@ -110,14 +115,16 @@ export function useDeskHomeAsk({
   };
 
   const acceptRecommendation = () => {
-    if (offered) {
+    if (offered && !routing) {
       askable.choose(offered.agent);
+      setFocusSignal((signal) => signal + 1);
     }
   };
 
   const keepAgent = () => {
-    if (offered) {
+    if (offered && !routing) {
       setKeptOver((previous) => [...previous, offered.agent.id]);
+      setFocusSignal((signal) => signal + 1);
     }
   };
 
@@ -130,9 +137,11 @@ export function useDeskHomeAsk({
     const starter = agent.starters?.some((item) => item.prompt === content.trim()) ?? false;
     let target = agent;
     if (!pinned && !starter) {
+      setSending(content);
       setRouting(true);
       const recommendation = await advice.resolve(content);
       setRouting(false);
+      setSending(null);
       target = agentToAsk({ agent, recommendation, pinned, keptOver });
     }
     onStart(target.id, content, {
@@ -150,6 +159,7 @@ export function useDeskHomeAsk({
     choose,
     offered,
     routing,
+    focusSignal,
     acceptRecommendation,
     keepAgent,
     draft,
@@ -201,10 +211,14 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
   return (
     <>
       <DeskTermsNote />
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+        {ask.offered ? t("{0} has the tools for this", ask.offered.agent.name) : ""}
+      </span>
       {ask.offered && askable.agent && (
         <DeskAgentRecommendation
           recommendation={ask.offered}
           agent={askable.agent}
+          disabled={ask.routing}
           onUse={ask.acceptRecommendation}
           onKeep={ask.keepAgent}
         />
@@ -219,6 +233,7 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
         agentLastUsedAt={askable.recency.lastUsedAt}
         busy={false}
         disabled={isStarting || ask.routing || askable.agent === null}
+        focusSignal={ask.focusSignal}
         placeholder={ask.routing ? t("Finding the agent with the tools for this…") : undefined}
         presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
         suggestions={askable.agent?.starters?.map((starter) => ({

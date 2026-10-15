@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -287,6 +288,27 @@ func TestRecommendAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 	assert.LessOrEqual(t, len(recommendation.Tools), agentports.MaxAgentRecommendationTools)
 }
 
+func ranking(pairs ...any) []agenttoolcatalog.Match {
+	out := make([]agenttoolcatalog.Match, 0, len(pairs)/2)
+	for idx := 0; idx+1 < len(pairs); idx += 2 {
+		out = append(out, agenttoolcatalog.Match{
+			Name:  pairs[idx].(string),
+			Score: float64(pairs[idx+1].(int)),
+		})
+	}
+
+	return out
+}
+
+func names(ranked []agenttoolcatalog.Match) []string {
+	out := make([]string, 0, len(ranked))
+	for _, match := range ranked {
+		out = append(out, match.Name)
+	}
+
+	return out
+}
+
 func heldSets(tools ...[]string) []map[string]struct{} {
 	sets := make([]map[string]struct{}, 0, len(tools))
 	for _, names := range tools {
@@ -305,12 +327,12 @@ func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsTheBestMatch(t *testing.T)
 
 	current := agentHolding("Billing assistant", "list_invoices")
 	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
-	ranked := []string{"list_invoices", "list_customers", "list_shipments", "list_workers"}
+	ranked := ranking("list_invoices", 4, "list_customers", 3, "list_shipments", 2, "list_workers", 1)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide},
 		heldSets(current.ToolNames, wide.ToolNames),
-		ranked,
+		names(ranked),
 		ranked,
 		current.ID,
 	)
@@ -327,12 +349,12 @@ func TestBestCandidate_SuggestsOnlyAnAgentHoldingTheBestMatch(t *testing.T) {
 	current := agentHolding("Dispatch helper", "list_tractors")
 	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
 	billing := agentHolding("Billing assistant", "list_invoices")
-	ranked := []string{"list_invoices", "list_customers", "list_shipments", "list_workers"}
+	ranked := ranking("list_invoices", 4, "list_customers", 3, "list_shipments", 2, "list_workers", 1)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide, billing},
 		heldSets(current.ToolNames, wide.ToolNames, billing.ToolNames),
-		ranked,
+		names(ranked),
 		ranked,
 		current.ID,
 	)
@@ -359,4 +381,98 @@ func TestRecommendAgent_SuggestsNobodyElseOnceThePersonSwitchedToTheSuggestion(t
 	require.NotNil(t, again)
 	assert.Equal(t, first.Agent.ID, again.Agent.ID)
 	assert.True(t, again.Current, "the agent switched to is kept, not traded for another holder")
+}
+
+func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsAToolTiedForTheBestMatch(t *testing.T) {
+	t.Parallel()
+
+	current := agentHolding("Dispatch reader", "get_shipment", "list_shipments")
+	writer := agentHolding("Shipment builder", "create_shipment")
+	ranked := ranking("create_shipment", 4, "get_shipment", 4, "list_shipments", 4)
+
+	best := bestCandidate(
+		[]*agentdefinition.Definition{writer, current},
+		heldSets(writer.ToolNames, current.ToolNames),
+		names(ranked),
+		ranked,
+		current.ID,
+	)
+
+	require.NotNil(t, best)
+	assert.Equal(t, current.ID, best.definition.ID,
+		"a tool tied with the first match is as good a match; catalog order does not decide")
+	assert.True(t, best.current)
+}
+
+func TestBestCandidate_WeighsToolsTiedOnScoreEqually(t *testing.T) {
+	t.Parallel()
+
+	current := agentHolding("Fleet helper", "list_tractors")
+	builder := agentHolding("Shipment builder", "create_shipment")
+	reader := agentHolding("Dispatch reader", "get_shipment", "list_shipments")
+	ranked := ranking("create_shipment", 4, "get_shipment", 4, "list_shipments", 4, "list_tractors", 1)
+
+	best := bestCandidate(
+		[]*agentdefinition.Definition{builder, reader, current},
+		heldSets(builder.ToolNames, reader.ToolNames, current.ToolNames),
+		names(ranked),
+		ranked,
+		current.ID,
+	)
+
+	require.NotNil(t, best)
+	assert.Equal(t, reader.ID, best.definition.ID,
+		"two tools tied at the top outweigh one, whichever the catalog lists first")
+}
+
+func TestRankWeights_GivesTiedScoresTheSameWeight(t *testing.T) {
+	t.Parallel()
+
+	weights := rankWeights(ranking("a", 4, "b", 4, "c", 2, "d", 2, "e", 1))
+
+	assert.Equal(t, []float64{1, 1, 0.5, 0.5, 1.0 / 3}, weights)
+}
+
+type pagedDefinitions struct {
+	listedDefinitions
+
+	all   []*agentdefinition.Definition
+	pages int
+}
+
+func (p *pagedDefinitions) List(
+	_ context.Context,
+	req *agentdefinitionports.ListAgentDefinitionRequest,
+) (*pagination.ListResult[*agentdefinition.Definition], error) {
+	p.pages++
+	offset := req.Filter.Pagination.Offset
+	end := min(offset+req.Filter.Pagination.Limit, len(p.all))
+	if offset > len(p.all) {
+		offset = len(p.all)
+	}
+
+	return &pagination.ListResult[*agentdefinition.Definition]{
+		Items: p.all[offset:end],
+		Total: len(p.all),
+	}, nil
+}
+
+func TestRecommendAgent_ReadsPastTheFirstHundredAgents(t *testing.T) {
+	t.Parallel()
+
+	all := make([]*agentdefinition.Definition, 0, 150)
+	for idx := range 149 {
+		all = append(all, agentHolding(fmt.Sprintf("Agent %03d", idx), "list_customers"))
+	}
+	compliance := agentHolding("Zeta compliance", "list_expiring_credentials")
+	all = append(all, compliance)
+	definitions := &pagedDefinitions{all: all}
+	service := recommendationRuntime(t, &agenttest.StubPermissions{})
+	service.definitions = definitions
+
+	recommendation := recommend(t, service, "driver medical card expiry", pulid.Nil)
+
+	require.NotNil(t, recommendation)
+	assert.Equal(t, compliance.ID, recommendation.Agent.ID)
+	assert.Equal(t, 2, definitions.pages)
 }

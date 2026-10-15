@@ -67,4 +67,8 @@ describe("aiUsageFeatureLabel", () => {
     expect(aiUsageFeatureLabel("AgentDrafting", t)).toBe("Agent drafting");
     expect(aiUsageFeatureLabel("AccountingMapping", t)).toBe("Accounting mapping");
   });
+
+  it("names the Desk's agent suggestions, so typing a question is not booked as a turn", () => {
+    expect(aiUsageFeatureLabel("AgentRecommendation", t)).toBe("Agent suggestions");
+  });
 });

@@ -8741,6 +8741,7 @@
   "The agent": "代理",
   "The agent refused a question it should answer": "代理拒絕回答了應該回答的問題",
   "The agent that raised this plan no longer exists, so the plan cannot be decided": "提出此計畫的代理已不存在，因此無法對此計畫做出決定",
+  "The agent the question would go to must be an agent ID.": "問題要傳送到的代理必須是代理 ID。",
   "The agent whose changes are waiting.": "有變更正在等待處理的代理。",
   "The agent's reason.": "代理的理由。",
   "The agreed fuel surcharge amount.": "議定的燃油附加費金額。",

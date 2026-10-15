@@ -10564,6 +10564,7 @@ enum AIUsageFeature {
   AgentReflection
   AgentDrafting
   AgentProfile
+  AgentRecommendation
 }
 
 """
