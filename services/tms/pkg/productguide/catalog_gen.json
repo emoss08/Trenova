@@ -18012,6 +18012,15 @@
       "deskCard": true
     },
     {
+      "entity": "edi_partner",
+      "label": "EDI partner",
+      "path": "/edi/partners",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "edi_transfer",
       "label": "EDI transfer",
       "path": "/edi/transfers/inbound",
