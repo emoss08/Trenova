@@ -112,6 +112,8 @@ type RemittanceLine struct {
 	Error             string                  `json:"error"            bun:"error,type:VARCHAR(500),nullzero"`
 	IgnoredReason     string                  `json:"ignoredReason"    bun:"ignored_reason,type:VARCHAR(500),nullzero"`
 	ReserveEntryID    pulid.ID                `json:"reserveEntryId"   bun:"reserve_entry_id,type:VARCHAR(100),nullzero"`
+	MatchedInvoice    string                  `json:"matchedInvoice"   bun:"matched_invoice_number,scanonly"`
+	MatchedSubmission pulid.ID                `json:"-"                bun:"matched_submission_id,scanonly"`
 	CreatedAt         int64                   `json:"createdAt"        bun:"created_at,type:BIGINT,notnull"`
 	UpdatedAt         int64                   `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull"`
 

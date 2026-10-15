@@ -287,5 +287,9 @@ type RemittanceService interface {
 }
 
 type RemittanceStageStarter interface {
-	StartStage(ctx context.Context, tenantInfo pagination.TenantInfo, remittance *factoring.Remittance)
+	StartStage(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		remittance *factoring.Remittance,
+	)
 }

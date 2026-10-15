@@ -137,6 +137,8 @@ func (r *remittanceRepository) lines(
 	lines := make([]*factoring.RemittanceLine, 0, 32)
 	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&lines).
+		ColumnExpr(factoringcol.RemittanceLineTable.All()).
+		Apply(withMatchedItem).
 		Apply(factoringcol.RemittanceLineApplyTenant(tenantInfo)).
 		Where(cols.RemittanceID.Eq(), remittanceID).
 		Order(cols.RowNumber.OrderAsc())
@@ -307,7 +309,8 @@ func (r *remittanceRepository) ListLineConnection(
 					Query: func(entities *[]*factoring.RemittanceLine) *bun.SelectQuery {
 						return dba.NewSelect().
 							Model(entities).
-							ColumnExpr(factoringcol.RemittanceLineTable.All())
+							ColumnExpr(factoringcol.RemittanceLineTable.All()).
+							Apply(withMatchedItem)
 					},
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						q, applyErr := querybuilder.ApplyCursorFilters(
@@ -617,4 +620,17 @@ func candidateMatchSQL() (invoiceMatch, amountMatch string) {
 		normalized + " = ref.v OR (length(ref.v) >= 4 AND length(" + normalized + ") >= 4 AND (" +
 		normalized + " LIKE '%' || ref.v || '%' OR ref.v LIKE '%' || " + normalized + " || '%')))"
 	return invoiceMatch, amountMatch
+}
+
+func withMatchedItem(q *bun.SelectQuery) *bun.SelectQuery {
+	line := factoringcol.RemittanceLineColumns
+	item := factoringcol.SubmissionItemColumns
+	itemTable := factoringcol.SubmissionItemTable
+	return q.
+		ColumnExpr(item.InvoiceNumber.As("matched_invoice_number")).
+		ColumnExpr(item.SubmissionID.As("matched_submission_id")).
+		Join("LEFT JOIN " + itemTable.As(itemTable.Alias)).
+		JoinOn(item.ID.EqColumn(line.SubmissionItemID)).
+		JoinOn(item.OrganizationID.EqColumn(line.OrganizationID)).
+		JoinOn(item.BusinessUnitID.EqColumn(line.BusinessUnitID))
 }

@@ -406,9 +406,8 @@ func (s *RemittanceService) resolveMapping(
 	if profile == nil {
 		return guessed, false, nil
 	}
-	saved, parseErr := factoringremit.MappingFromStrings(profile.Mapping)
-	if parseErr != nil || !saved.FitsHeaders(len(headers)) ||
-		len(factoringremit.Validate(saved)) > 0 {
+	saved, usable := usableProfile(profile, len(headers))
+	if !usable {
 		return guessed, false, nil
 	}
 	if profile.HeaderSignature == factoringremit.HeaderSignature(headers) ||
@@ -416,6 +415,17 @@ func (s *RemittanceService) resolveMapping(
 		return saved, false, nil
 	}
 	return guessed, false, nil
+}
+
+func usableProfile(
+	profile *factoring.RemittanceProfile,
+	width int,
+) (factoringremit.Mapping, bool) {
+	saved, err := factoringremit.MappingFromStrings(profile.Mapping)
+	if err != nil {
+		return nil, false
+	}
+	return saved, saved.FitsHeaders(width) && len(factoringremit.Validate(saved)) == 0
 }
 
 func mappingFromRequest(raw map[string]int, width int) (factoringremit.Mapping, error) {
@@ -622,7 +632,7 @@ func (s *RemittanceService) preparePdf(
 	}
 	sheet, err := s.extractPdf(ctx, rem, doc.ID, content.ContentText)
 	if err != nil {
-		var problem *pdfProblem
+		var problem *pdfProblemError
 		if errors.As(err, &problem) {
 			return &preparedStage{problem: problem.message}, nil
 		}

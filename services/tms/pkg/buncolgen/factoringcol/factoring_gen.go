@@ -1499,6 +1499,8 @@ var RemittanceLineColumns = struct {
 	Error             buncolgen.Column // "error" → qualified: "facrml.error"
 	IgnoredReason     buncolgen.Column // "ignored_reason" → qualified: "facrml.ignored_reason"
 	ReserveEntryID    buncolgen.Column // "reserve_entry_id" → qualified: "facrml.reserve_entry_id"
+	MatchedInvoice    buncolgen.Column // "matched_invoice_number" → qualified: "facrml.matched_invoice_number"
+	MatchedSubmission buncolgen.Column // "matched_submission_id" → qualified: "facrml.matched_submission_id"
 	CreatedAt         buncolgen.Column // "created_at" → qualified: "facrml.created_at"
 	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "facrml.updated_at"
 }{
@@ -1528,6 +1530,8 @@ var RemittanceLineColumns = struct {
 	Error:             buncolgen.NewColumn("error", "facrml"),
 	IgnoredReason:     buncolgen.NewColumn("ignored_reason", "facrml"),
 	ReserveEntryID:    buncolgen.NewColumn("reserve_entry_id", "facrml"),
+	MatchedInvoice:    buncolgen.NewColumn("matched_invoice_number", "facrml"),
+	MatchedSubmission: buncolgen.NewColumn("matched_submission_id", "facrml"),
 	CreatedAt:         buncolgen.NewColumn("created_at", "facrml"),
 	UpdatedAt:         buncolgen.NewColumn("updated_at", "facrml"),
 }
@@ -1562,6 +1566,7 @@ var RemittanceLineFieldMap = map[string]string{
 	"error":            "error",
 	"ignoredReason":    "ignored_reason",
 	"reserveEntryId":   "reserve_entry_id",
+	"matchedInvoice":   "matched_invoice_number",
 	"createdAt":        "created_at",
 	"updatedAt":        "updated_at",
 }

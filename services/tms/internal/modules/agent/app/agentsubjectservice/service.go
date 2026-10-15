@@ -863,7 +863,7 @@ func (s *Service) ediInboundFile(
 	subject.Label = "EDI file " + stringutils.FirstNonEmpty(file.FileName, file.ID.String())
 	notes := map[string]any{
 		"status":            file.Status,
-		"fileName":          file.FileName,
+		noteFileName:        file.FileName,
 		"failureReason":     file.FailureReason,
 		"receivedAt":        file.ReceivedAt,
 		"processedAt":       file.ProcessedAt,
@@ -1080,8 +1080,8 @@ func describeAttachments(
 	described := make([]map[string]any, 0, len(attachments))
 	for _, attachment := range attachments {
 		entry := map[string]any{
-			"fileName": attachment.FileName,
-			"kind":     attachment.Kind,
+			noteFileName: attachment.FileName,
+			"kind":       attachment.Kind,
 		}
 		if attachment.DocumentID.IsNotNil() {
 			entry["documentId"] = attachment.DocumentID.String()

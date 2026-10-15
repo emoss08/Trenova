@@ -174,8 +174,11 @@ func factoringOptions() fx.Option {
 			factoringservice.NewReadinessService,
 			factoringservice.NewSubmissionService,
 			factoringservice.NewLedgerService,
+			factoringservice.NewRemittanceService,
+			factoringservice.NewRemittanceIntake,
 			factoringservice.NewTransportService,
 			factoringcontract.NewSendStarter,
+			factoringcontract.NewRemittanceStageStarter,
 			fx.Annotate(
 				factoringtransport.NewEmail,
 				fx.ResultTags(factoringports.TransportGroup),

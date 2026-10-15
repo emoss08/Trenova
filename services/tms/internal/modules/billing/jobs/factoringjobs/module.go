@@ -42,6 +42,11 @@ var Workflows = []registry.WorkflowDefinition{
 		Fn:          FactoringSubmissionSendWorkflow,
 		Description: sendDescription,
 	},
+	{
+		Name:        factoringcontract.RemittanceStageWorkflowName,
+		Fn:          FactoringRemittanceStageWorkflow,
+		Description: remittanceStageDescription,
+	},
 }
 
 type RegistryParams struct {

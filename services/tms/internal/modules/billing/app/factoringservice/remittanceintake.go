@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	intakeNoFactor       = "No factor uses this address"
-	intakeManyFactors    = "More than one factor uses this address; import the remittance by hand"
-	intakeNoRemittance   = "The message has no CSV, spreadsheet or PDF to read"
+	intakeNoFactor      = "No factor uses this address"
+	intakeManyFactors   = "More than one factor uses this address; import the remittance by hand"
+	intakeNoRemittance  = "The message has no CSV, spreadsheet or PDF to read"
 	maxEmailRemittances = 10
 )
 
@@ -74,10 +74,13 @@ func (s *RemittanceService) factorForSender(
 	tenantInfo pagination.TenantInfo,
 	address string,
 ) (*factoringcompany.FactoringCompany, string, error) {
-	found, err := s.factors.FindByEmail(ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
-		TenantInfo: tenantInfo,
-		Address:    strings.TrimSpace(address),
-	})
+	found, err := s.factors.FindByEmail(
+		ctx,
+		factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+			TenantInfo: tenantInfo,
+			Address:    strings.TrimSpace(address),
+		},
+	)
 	if err != nil {
 		return nil, "", err
 	}
@@ -104,7 +107,7 @@ func (s *RemittanceService) ingestAttachment(
 	if attachment.DocumentID.IsNil() {
 		return pulid.Nil, nil
 	}
-	if _, err := factoringremit.FormatFor(attachment.FileName, attachment.ContentType); err != nil {
+	if !factoringremit.IsRemittanceFile(attachment.FileName, attachment.ContentType) {
 		return pulid.Nil, nil
 	}
 	existing, err := s.remittances.FindByInboundDocument(

@@ -287,7 +287,7 @@ func (s *RemittanceService) UpdateLine(
 		if comment, err = s.resolveLine(txCtx, rem, line, req); err != nil {
 			return err
 		}
-		rem.Recount()
+		rem.SettleIfDone()
 		if err = s.remittances.UpdateLines(txCtx, []*factoring.RemittanceLine{line}); err != nil {
 			return err
 		}

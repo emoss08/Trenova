@@ -33,6 +33,11 @@ func FormatFor(fileName, contentType string) (factoring.RemittanceFormat, error)
 	return "", ErrUnsupportedFile
 }
 
+func IsRemittanceFile(fileName, contentType string) bool {
+	_, err := FormatFor(fileName, contentType)
+	return err == nil
+}
+
 func ReadSheet(data []byte, format factoring.RemittanceFormat) (*rateimport.Sheet, error) {
 	switch format {
 	case factoring.RemittanceFormatCsv:

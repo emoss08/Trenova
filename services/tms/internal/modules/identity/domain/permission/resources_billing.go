@@ -4,6 +4,8 @@ import (
 	"slices"
 )
 
+const displayDiscard = "Discard"
+
 func (r *Registry) registerBillingResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceInvoiceRun.String(),
@@ -717,10 +719,14 @@ func (r *Registry) registerBillingResources() {
 		Category:       "Billing",
 		ParentResource: ResourceFactoringReserve.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View remittances and their lines"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View remittances and their lines",
+			},
 			{
 				Operation:   OpCreate,
-				DisplayName: "Import",
+				DisplayName: operationDefinitions[OpImport].DisplayName,
 				Description: "Upload a factor's remittance and read it",
 			},
 			{
@@ -735,7 +741,7 @@ func (r *Registry) registerBillingResources() {
 			},
 			{
 				Operation:   OpCancel,
-				DisplayName: "Discard",
+				DisplayName: displayDiscard,
 				Description: "Discard a remittance that will not be booked",
 			},
 			{

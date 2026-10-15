@@ -113,7 +113,7 @@ func (s *Service) factoringRemittance(
 	subject.Notes = marshalNotes(map[string]any{
 		noteStatus:           found.Status,
 		"factoringCompanyId": found.FactoringCompanyID,
-		"fileName":           found.FileName,
+		noteFileName:         found.FileName,
 		"source":             found.Source,
 		"defaultKind":        found.DefaultKind,
 		"lineCount":          found.LineCount,
