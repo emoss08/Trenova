@@ -138,7 +138,6 @@
   "Renewal notice": "续约通知",
   "Replay historical shipments": "重放历史运单",
   "Resume agreement": "恢复协议",
-  "Row": "数据行",
   "Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.": "运行一次，即可在此合同为任何实际运单计价之前，先看出它对您已承运的货物原本会收取多少。",
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": "请先保存协议。模拟会以已承运的运单重放合同，因此必须先有可重放的合同。",
   "Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.": "请先保存协议。版本会记录当时的条款，而在有合同之前并无条款可记。",

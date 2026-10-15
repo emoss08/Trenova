@@ -20,6 +20,7 @@ type ListRemittanceConnectionRequest struct {
 	Filter             *pagination.QueryOptions     `json:"filter"`
 	Cursor             pagination.CursorInfo        `json:"-"`
 	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
+	InboundMessageID   pulid.ID                     `json:"inboundMessageId"`
 	Statuses           []factoring.RemittanceStatus `json:"statuses"`
 }
 
@@ -225,6 +226,19 @@ type IngestRemittanceEmailResult struct {
 	Problem            string     `json:"problem"`
 }
 
+type RemittanceLinePlan struct {
+	Before     *factoring.Remittance     `json:"before"`
+	After      *factoring.Remittance     `json:"after"`
+	LineBefore *factoring.RemittanceLine `json:"lineBefore"`
+	LineAfter  *factoring.RemittanceLine `json:"lineAfter"`
+	Comment    string                    `json:"comment"`
+}
+
+type RemittanceDiscardPlan struct {
+	Before *factoring.Remittance `json:"before"`
+	After  *factoring.Remittance `json:"after"`
+}
+
 type StagePendingResult struct {
 	Remittance *factoring.Remittance `json:"remittance"`
 	Waiting    bool                  `json:"waiting"`
@@ -260,6 +274,11 @@ type RemittanceService interface {
 		req *RemittanceVersionRequest,
 		actor *permissionports.RequestActor,
 	) (*factoring.Remittance, error)
+	PlanUpdateLine(
+		ctx context.Context,
+		req *UpdateRemittanceLineRequest,
+		actor *permissionports.RequestActor,
+	) (*RemittanceLinePlan, error)
 	UpdateLine(
 		ctx context.Context,
 		req *UpdateRemittanceLineRequest,
@@ -275,6 +294,11 @@ type RemittanceService interface {
 		req *RemittanceVersionRequest,
 		actor *permissionports.RequestActor,
 	) (*ApplyRemittanceResult, error)
+	PlanDiscard(
+		ctx context.Context,
+		req *DiscardRemittanceRequest,
+		actor *permissionports.RequestActor,
+	) (*RemittanceDiscardPlan, error)
 	Discard(
 		ctx context.Context,
 		req *DiscardRemittanceRequest,

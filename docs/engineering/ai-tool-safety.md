@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 601.
+Tools listed: 607.
 
 ## The model
 
@@ -59,13 +59,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 207 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 209 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 239 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 242 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 39 |
-| Money | Moves or commits money. | Automatic | Yes | 102 |
+| Money | Moves or commits money. | Automatic | Yes | 103 |
 
 ## Reads only
 
@@ -113,6 +113,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get factoring agreement (`get_factoring_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring readiness (`get_factoring_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get factoring remittance (`get_factoring_remittance`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring reserve balance (`get_factoring_reserve_balance`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring submission (`get_factoring_submission`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -189,6 +190,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List expiring credentials (`list_expiring_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring noas (`list_factoring_noas`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring ready invoices (`list_factoring_ready_invoices`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List factoring remittances (`list_factoring_remittances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring submissions (`list_factoring_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fiscal periods (`list_fiscal_periods`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fleet codes (`list_fleet_codes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -376,6 +378,7 @@ Changes records only people inside the organization see.
 | Detach pay event from settlement (`detach_pay_event_from_settlement`) | Inside the organization | Automatic | — | — | Moves pay a driver already earned between the pool and a draft settlement inside Trenova; nothing is paid until a person approves it. |
 | Discard capture batch (`discard_capture_batch`) | Inside the organization | Propose | — | — | Closes a scanned stack inside Trenova and drops its unfiled pages; nothing is sent, but nothing brings the pages back, so it is always proposed. |
 | Discard capture item (`discard_capture_item`) | Inside the organization | Ask first | — | — | Marks one scanned document not worth filing inside Trenova; nothing is sent, and its pages are removed with the stack's other unfiled pages. |
+| Discard factoring remittance (`discard_factoring_remittance`) | Inside the organization | Ask first | — | — | Sets a remittance aside for good before anything on it is booked. |
 | Discard fuel purchase import (`discard_fuel_purchase_import`) | Inside the organization | Ask first | — | — | Closes a staged statement inside Trenova without adding any purchase; it can be staged again. |
 | Discard rate import (`discard_rate_import`) | Inside the organization | Ask first | — | — | Closes a staged rate sheet inside Trenova without changing any rate; the sheet can be uploaded again. |
 | Dismiss accounting drift (`dismiss_accounting_drift`) | Inside the organization | Ask first | — | — | Closes a difference with the books without fixing it, so a person approves it. |
@@ -451,6 +454,7 @@ Changes records only people inside the organization see.
 | Release driver pay event (`release_driver_pay_event`) | Inside the organization | Automatic | — | — | Returns held pay to the settlement pool inside Trenova; nothing is paid until a settlement is approved, and the pay is held again the same way. |
 | Release factoring noa (`release_factoring_noa`) | Inside the organization | Ask first | — | — | Ends the customer's assignment to the factor; only the factor can release it, so a person confirms the release. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
+| Rematch factoring remittance (`rematch_factoring_remittance`) | Inside the organization | Ask first | — | — | Recomputes suggestions and automatic matches before anything is booked; a person's own matches are kept. |
 | Remember (`remember`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations. |
 | Reopen exception (`reopen_exception`) | Inside the organization | Ask first | — | — | Puts an exception back on the open queue inside Trenova; nothing outside changes. |
 | Request accounting backfill (`request_accounting_backfill`) | Inside the organization | Ask first | — | — | Sends historical documents to the organization's books, some of which may already be there by hand, and cannot be called back; a person who manages the integration approves it. |
@@ -459,6 +463,7 @@ Changes records only people inside the organization see.
 | Resolve bank receipt work item (`resolve_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Closes a reconciliation work item without moving money; the note is read inside the organization. |
 | Resolve carrier intel event (`resolve_carrier_intel_event`) | Inside the organization | Automatic | — | — | Closes a carrier finding inside Trenova. |
 | Resolve exception (`resolve_exception`) | Inside the organization | Ask first | — | — | Closes an exception inside Trenova with an audited reason; the record behind it is unchanged. |
+| Resolve factoring remittance line (`resolve_factoring_remittance_line`) | Inside the organization | Ask first | — | — | Changes which schedule item a remittance line pays before anything is booked; it can be undone until the remittance is applied. |
 | Resolve fuel purchase import rows (`resolve_fuel_purchase_import_rows`) | Inside the organization | Ask first | — | — | Re-matches held statement rows inside Trenova and, for a feed, posts the purchases that now resolve; nothing is sent. |
 | Resolve invoice dispute (`resolve_invoice_dispute`) | Inside the organization | Propose | — | — | Records the outcome of a customer's dispute and releases the invoice back to collections; the outcome is a biller's call, so the agent proposes it. |
 | Resolve shipment comment (`resolve_shipment_comment`) | Inside the organization | Automatic | — | — | Marks a shipment's own comment settled inside Trenova; reopening undoes it and nothing is sent. |
@@ -626,6 +631,7 @@ Moves or commits money.
 | Apply accounting inbound change (`apply_accounting_inbound_change`) | Money | Ask first | — | — | Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one. |
 | Apply credit memo (`apply_credit_memo`) | Money | Propose | — | — | Uses a customer's credit to settle what they owe; only a person applies credit. |
 | Apply customer payment (`apply_customer_payment`) | Money | Propose | — | — | Moves a customer's cash onto their invoices and books the entry that says so; only a person applies cash. |
+| Apply factoring remittance (`apply_factoring_remittance`) | Money | Propose | — | — | Books the factor's advances, fees, reserve releases and chargebacks to the general ledger; only a person's approval runs it. |
 | Apply rate increase (`apply_rate_increase`) | Money | Propose | — | — | Changes the rates many agreements charge customers or pay carriers; only a person applies a rate increase. |
 | Approve billing queue item (`approve_billing_queue_item`) | Money | Propose | — | — | Approving creates the invoice a customer is billed on, so only a person approves; the agent proposes it with what it checked. |
 | Approve billing queue items (`approve_billing_queue_items`) | Money | Propose | — | — | Approving creates the invoices customers are billed on, so only a person approves, item by item exactly as approve_billing_queue_item, and may untick any of them. |

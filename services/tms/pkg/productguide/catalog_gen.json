@@ -1,5 +1,5 @@
 {
-  "version": "sha256:31faa1ba43a814e1a85ff3b6c113998e547965e17ebcf88388627e53896ab5b6",
+  "version": "sha256:76cc4f73a8f33d7abb894ef0bc953022b4b4876cc1b24fc7e11f236dfb2ae105",
   "modules": [
     {
       "id": "home",
@@ -7019,7 +7019,7 @@
         "Factoring companies"
       ],
       "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
-      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.\n\nEach factor's panel also holds its **Agreements** and its **Notices of assignment**. The agreement records the terms: advance and reserve rates, the fee by days outstanding, the chargeback window, funding days and the documents the factor needs with every invoice. A notice of assignment tells one customer to pay the factor. A customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.\n\nEach factor's panel also holds its **Agreements** and its **Notices of assignment**. The agreement records the terms: advance and reserve rates, the fee by days outstanding, the chargeback window, funding days and the documents the factor needs with every invoice. A notice of assignment tells one customer to pay the factor. A customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice.\n\nThe panel's **Remittances** section lists the factor's newest funding and reserve reports, each opening its review on its own page, and **Import remittance** reads the next one. Emails the inbox classifies as a factor remittance are matched to the factor by its **Email** address, or by its domain when no factor uses that exact address, so keep the factor's email current.",
       "requires": [
         {
           "resource": "factoring_company",
@@ -7559,7 +7559,7 @@
         "Factoring"
       ],
       "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.",
-      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, **Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.\n\nReady invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each opens on its own page with its delivery, documents and invoices.",
+      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, **Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.\n\nReady invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each opens on its own page with its delivery, documents and invoices.\n\nWhat the factor pays back arrives as a remittance: its funding, rejection, reserve release or chargeback report as a CSV, an Excel workbook or a PDF. The **Remittances** tab lists every one, whether it was imported by hand or read from an email the factor sent to your inbox. Each line is matched to an invoice on one of the factor's schedules; a line that matched on its own waits to be booked, and the rest wait for someone to resolve them. Nothing reaches the ledger until the remittance is applied.",
       "requires": [
         {
           "resource": "invoice",
@@ -7579,7 +7579,13 @@
         "missing POD for factoring",
         "submit to factor",
         "factoring schedule",
-        "failed schedule"
+        "failed schedule",
+        "factor remittance",
+        "funding report",
+        "reserve report",
+        "remittance import",
+        "remittance exceptions",
+        "apply remittance"
       ],
       "tasks": [
         {
@@ -7639,6 +7645,63 @@
           ]
         },
         {
+          "title": "Import a factor's remittance",
+          "keywords": [
+            "upload remittance",
+            "funding report",
+            "reserve report",
+            "factor statement",
+            "import factor file"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring), select the **Remittances** tab and select **Import remittance**.",
+            "Choose the **Factor**, what the file is a **Report of** when it has no column saying so, and optionally the date it was **Remitted on**.",
+            "Drop the file or select it. The remittance opens on its own page once it is read; a PDF is read in the background and its lines appear when it is done.",
+            "If the page asks you to **Map the columns**, choose the column that holds the invoice number or the factor's reference and the one that holds the amount, then select **Read with this mapping**. The factor's next file with the same columns is read on its own."
+          ]
+        },
+        {
+          "title": "Resolve remittance lines that did not match",
+          "keywords": [
+            "remittance exceptions",
+            "unmatched remittance lines",
+            "match remittance line",
+            "ignore remittance line"
+          ],
+          "steps": [
+            "Open the remittance from the **Remittances** tab.",
+            "Under **To resolve**, select **Use** beside a suggested invoice, or **Pick invoice** to choose another open invoice on the factor's schedules.",
+            "Change what a line records when the factor's file got it wrong, or select **Ignore**, enter the **Reason** and confirm for a fee or adjustment you book by hand. **Restore** brings an ignored line back, and **Unmatch** under **Matched** undoes a match.",
+            "Select **Match again** to rematch every open line against the schedules as they are now."
+          ]
+        },
+        {
+          "title": "Book a remittance to the ledger",
+          "keywords": [
+            "apply remittance",
+            "book factor funding",
+            "post remittance",
+            "record reserve release from remittance"
+          ],
+          "steps": [
+            "Open the remittance and select **Apply**.",
+            "Check what is booked: the invoices funded, rejected, released and charged back, the advance, fee and reserve, and each line's journal. Lines still to resolve stay open.",
+            "Select **Apply**. The remittance is marked **Applied**, or **Partly applied** while lines are left; resolve them and apply again to book the rest."
+          ]
+        },
+        {
+          "title": "Discard a remittance",
+          "keywords": [
+            "delete remittance",
+            "duplicate remittance",
+            "wrong remittance file"
+          ],
+          "steps": [
+            "Open the remittance and select **Discard**.",
+            "Enter the **Reason** and confirm. A discarded remittance can no longer be booked; lines already booked stay in the ledger."
+          ]
+        },
+        {
           "title": "Ask for a missing document",
           "keywords": [
             "request POD",
@@ -7667,14 +7730,15 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices. Sending invoices to a factor needs permission to submit factoring schedules; retrying a failed schedule needs update access to them, and cancelling one needs permission to cancel them. Opening a schedule needs read access to factoring schedules.\n\nA schedule carries at most 200 invoices, all for one factor, and the factor needs schedule delivery set up first. A failed delivery is retried on its own before the schedule is marked **Failed to send**, and Watchtower raises it as an exception. An invoice on a schedule stays off the other tabs until the schedule is cancelled.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
+      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices. Sending invoices to a factor needs permission to submit factoring schedules; retrying a failed schedule needs update access to them, and cancelling one needs permission to cancel them. Opening a schedule needs read access to factoring schedules.\n\nA schedule carries at most 200 invoices, all for one factor, and the factor needs schedule delivery set up first. A failed delivery is retried on its own before the schedule is marked **Failed to send**, and Watchtower raises it as an exception. An invoice on a schedule stays off the other tabs until the schedule is cancelled.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nOpening a remittance needs read access to factor remittances; importing one needs permission to create them, resolving lines and matching again need update access, applying needs permission to import them, and discarding needs permission to cancel them. A remittance holds at most 2,000 lines and a file at most 32 MiB. An email the inbox classifies as a factor remittance is read into a remittance for the factor whose address or domain sent it, and the message links to it.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
       "related": [
         "/billing/configuration-files/factoring-companies",
         "/billing/configuration-files/customers",
         "/billing/invoices"
       ],
       "covers": [
-        "/billing/factoring/submissions/:id"
+        "/billing/factoring/submissions/:id",
+        "/billing/factoring/remittances/:id"
       ],
       "createAction": null,
       "inNavigation": true
@@ -18012,6 +18076,12 @@
         "section": "notices",
         "noa": "{id}"
       }
+    },
+    {
+      "entity": "factoring_remittance",
+      "label": "Factor remittance",
+      "path": "/billing/factoring/remittances/{id}",
+      "params": {}
     },
     {
       "entity": "factoring_submission",

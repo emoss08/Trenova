@@ -83,6 +83,7 @@ func (t Template) StarterEvents() []agent.EventKind {
 			agent.EventFactoringSubmissionFailed,
 			agent.EventFactoringSubmissionFunded,
 			agent.EventFactoringChargebackDue,
+			agent.EventFactoringRemittanceStaged,
 		}
 	case TemplateBooksKeeper:
 		return []agent.EventKind{

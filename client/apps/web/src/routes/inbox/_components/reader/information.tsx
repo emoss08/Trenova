@@ -1,6 +1,9 @@
+import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
+import { usePermission } from "@/hooks/use-permission";
 import type { InboundMessageDetail, InboundShipmentRef } from "@/lib/graphql/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +12,7 @@ import {
   AlertTriangleIcon,
   ArrowRightIcon,
   Building07Icon,
+  CoinsHandIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   Copy01Icon,
@@ -21,6 +25,7 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/date";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -260,6 +265,42 @@ function CustomerButton({
   );
 }
 
+/** The factor remittances this email's attachments were read into, each opening its review. */
+function RemittanceRows({ messageId }: { messageId: string }) {
+  const t = useT();
+  const navigate = useNavigate();
+  const { data } = useQuery(factoringQueries.remittances({ inboundMessageId: messageId }));
+  if (data === undefined) {
+    return null;
+  }
+
+  return data.remittances.map((remittance) => (
+    <button
+      key={remittance.id}
+      type="button"
+      onClick={() => void navigate(recordPath("factoring_remittance", remittance.id))}
+      className="hover:bg-surface-hover ui-focus-ring flex w-full items-center gap-2.5 rounded-lg p-2 text-left"
+    >
+      <RowIcon>
+        <CoinsHandIcon className="size-3.25" />
+      </RowIcon>
+      <span className="flex min-w-0 flex-1 flex-col leading-snug">
+        <span className="truncate text-base font-medium">
+          {remittance.fileName || t("Factor remittance")}
+        </span>
+        <span className="text-foreground-subtle truncate text-xs">
+          {t(
+            "Remittance · {0}",
+            remittance.factoringCompany?.name ?? remittance.factoringCompanyId,
+          )}
+        </span>
+      </span>
+      <FactoringRemittanceStatusBadge status={remittance.status} />
+      <LinkExternal01Icon aria-hidden className="text-foreground-subtle size-3" />
+    </button>
+  ));
+}
+
 type FactCell = {
   key: string | null;
   label: string;
@@ -378,7 +419,9 @@ export function Information({ message }: { message: InboundMessageDetail }) {
   const hasFacts =
     message.facts.length > 0 ||
     message.attachments.some((attachment) => (attachment.reading?.fields.length ?? 0) > 0);
-  if (shipment === null && message.matchedCustomer === null && !hasFacts) {
+  const { allowed: readsRemittances } = usePermission(Resource.FactoringRemittance, Operation.Read);
+  const remittance = readsRemittances && message.classification === "FactorRemittance";
+  if (shipment === null && message.matchedCustomer === null && !hasFacts && !remittance) {
     return null;
   }
 
@@ -388,6 +431,7 @@ export function Information({ message }: { message: InboundMessageDetail }) {
       <div className="flex flex-col gap-0.5">
         {shipment !== null && <ShipmentRow message={message} shipment={shipment} />}
         <CustomerRow message={message} />
+        {remittance && <RemittanceRows messageId={message.id} />}
       </div>
       <Facts message={message} />
     </section>

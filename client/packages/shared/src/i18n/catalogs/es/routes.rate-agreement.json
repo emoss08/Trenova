@@ -138,7 +138,6 @@
   "Renewal notice": "Aviso de renovación",
   "Replay historical shipments": "Reproducir envíos históricos",
   "Resume agreement": "Reanudar el acuerdo",
-  "Row": "Fila",
   "Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.": "Ejecute una para ver qué habría cobrado este contrato por la carga que ya transportó, antes de que tarifique un solo envío real.",
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": "Guarde primero el acuerdo. Una simulación reproduce un contrato sobre envíos ya realizados, y tiene que haber un contrato que reproducir.",
   "Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.": "Guarde primero el acuerdo. Las versiones registran las condiciones tal como estaban, y no hay condiciones hasta que hay un contrato.",

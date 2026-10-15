@@ -273,6 +273,9 @@ type Resolver struct {
 	factoringNoa                       *factoringresolver.FactoringNoaResolver
 	factoringPlannedLine               *factoringresolver.FactoringPlannedLineResolver
 	factoringPlannedMovement           *factoringresolver.FactoringPlannedMovementResolver
+	factoringRemittance                *factoringresolver.FactoringRemittanceResolver
+	factoringRemittanceLine            *factoringresolver.FactoringRemittanceLineResolver
+	factoringRemittancePlan            *factoringresolver.FactoringRemittancePlanResolver
 	factoringReserveEntry              *factoringresolver.FactoringReserveEntryResolver
 	factoringReserveMovementPlan       *factoringresolver.FactoringReserveMovementPlanResolver
 	factoringSubmission                *factoringresolver.FactoringSubmissionResolver
@@ -729,6 +732,7 @@ func FromServices(s *Services) *Resolver {
 		FactoringReadinessService:  s.FactoringReadinessService,
 		FactoringSubmissionService: s.FactoringSubmissionService,
 		FactoringLedgerService:     s.FactoringLedgerService,
+		FactoringRemittanceService: s.FactoringRemittanceService,
 		FactoringTransportService:  s.FactoringTransportService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
@@ -1253,6 +1257,9 @@ func FromServices(s *Services) *Resolver {
 		factoringNoa:                 &factoringresolver.FactoringNoaResolver{Deps: factoringDeps},
 		factoringPlannedLine:         &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps},
 		factoringPlannedMovement:     &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps},
+		factoringRemittance:          &factoringresolver.FactoringRemittanceResolver{Deps: factoringDeps},
+		factoringRemittanceLine:      &factoringresolver.FactoringRemittanceLineResolver{Deps: factoringDeps},
+		factoringRemittancePlan:      &factoringresolver.FactoringRemittancePlanResolver{Deps: factoringDeps},
 		factoringReserveEntry:        &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps},
 		factoringReserveMovementPlan: &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps},
 		factoringSubmission:          &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps},
@@ -2173,6 +2180,18 @@ func (r *Resolver) FactoringPlannedLine() generated.FactoringPlannedLineResolver
 
 func (r *Resolver) FactoringPlannedMovement() generated.FactoringPlannedMovementResolver {
 	return r.factoringPlannedMovement
+}
+
+func (r *Resolver) FactoringRemittance() generated.FactoringRemittanceResolver {
+	return r.factoringRemittance
+}
+
+func (r *Resolver) FactoringRemittanceLine() generated.FactoringRemittanceLineResolver {
+	return r.factoringRemittanceLine
+}
+
+func (r *Resolver) FactoringRemittancePlan() generated.FactoringRemittancePlanResolver {
+	return r.factoringRemittancePlan
 }
 
 func (r *Resolver) FactoringReserveEntry() generated.FactoringReserveEntryResolver {

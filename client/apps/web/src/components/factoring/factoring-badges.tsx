@@ -11,9 +11,17 @@ import {
   factoringSubmissionPhase,
   factoringVerdictPhase,
 } from "@/lib/factoring";
+import {
+  FACTORING_REMITTANCE_MATCH_STATUS_LABELS,
+  FACTORING_REMITTANCE_STATUS_LABELS,
+  factoringRemittanceMatchPhase,
+  factoringRemittancePhase,
+} from "@/lib/factoring-remittance";
 import type {
   FactoringAgreementStatus,
   FactoringNoaStatus,
+  FactoringRemittanceMatchStatus,
+  FactoringRemittanceStatus,
   FactoringSubmissionItemStatus,
   FactoringSubmissionStatus,
   FactoringVerdict,
@@ -68,6 +76,26 @@ export function FactoringSubmissionItemStatusBadge({
   return (
     <Badge variant={phaseTone(factoringSubmissionItemPhase(status))}>
       {FACTORING_SUBMISSION_ITEM_STATUS_LABELS[status]}
+    </Badge>
+  );
+}
+
+export function FactoringRemittanceStatusBadge({ status }: { status: FactoringRemittanceStatus }) {
+  return (
+    <Badge variant={phaseTone(factoringRemittancePhase(status))}>
+      {FACTORING_REMITTANCE_STATUS_LABELS[status]}
+    </Badge>
+  );
+}
+
+export function FactoringRemittanceMatchBadge({
+  status,
+}: {
+  status: FactoringRemittanceMatchStatus;
+}) {
+  return (
+    <Badge variant={phaseTone(factoringRemittanceMatchPhase(status))}>
+      {FACTORING_REMITTANCE_MATCH_STATUS_LABELS[status]}
     </Badge>
   );
 }

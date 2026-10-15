@@ -1792,6 +1792,20 @@ writes:
     reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
   "mutation releaseFactoringNoa":
     tools: [release_factoring_noa]
+  "mutation applyFactoringRemittance":
+    tools: [apply_factoring_remittance]
+  "mutation createFactoringRemittance":
+    exempt: infrastructure
+    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance."
+  "mutation discardFactoringRemittance":
+    tools: [discard_factoring_remittance]
+  "mutation rematchFactoringRemittance":
+    tools: [rematch_factoring_remittance]
+  "mutation stageFactoringRemittance":
+    exempt: infrastructure
+    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance."
+  "mutation updateFactoringRemittanceLine":
+    tools: [resolve_factoring_remittance_line]
   "mutation recordFactoringChargeback":
     tools: [record_factoring_chargeback]
   "mutation recordFactoringFunding":

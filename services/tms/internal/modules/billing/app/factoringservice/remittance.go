@@ -301,6 +301,48 @@ func (s *RemittanceService) UpdateLine(
 	return updated, nil
 }
 
+func (s *RemittanceService) PlanUpdateLine(
+	ctx context.Context,
+	req *factoringports.UpdateRemittanceLineRequest,
+	actor *permissionports.RequestActor,
+) (*factoringports.RemittanceLinePlan, error) {
+	if err := requireRequest(req != nil); err != nil {
+		return nil, err
+	}
+	if err := requireActor(actor, "Resolving a remittance line"); err != nil {
+		return nil, err
+	}
+	if err := validateLineRequest(req); err != nil {
+		return nil, err
+	}
+	rem, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+		TenantInfo:   req.TenantInfo,
+		ID:           req.RemittanceID,
+		IncludeLines: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = requireVersion(rem, req.Version); err != nil {
+		return nil, err
+	}
+	line, err := rem.EditableLine(req.LineID)
+	if err != nil {
+		return nil, err
+	}
+	plan := &factoringports.RemittanceLinePlan{
+		Before:     cloneRemittance(rem),
+		LineBefore: new(*line),
+	}
+	if plan.Comment, err = s.resolveLine(ctx, rem, line, req); err != nil {
+		return nil, err
+	}
+	rem.SettleIfDone()
+	plan.After = cloneRemittance(rem)
+	plan.LineAfter = line
+	return plan, nil
+}
+
 func validateLineRequest(req *factoringports.UpdateRemittanceLineRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.LineID.IsNil() {
@@ -480,6 +522,35 @@ func (s *RemittanceService) suggestFor(
 	}
 	line.Suggest(factoring.RankRemittanceLine(line, candidates), "")
 	return nil
+}
+
+func (s *RemittanceService) PlanDiscard(
+	ctx context.Context,
+	req *factoringports.DiscardRemittanceRequest,
+	actor *permissionports.RequestActor,
+) (*factoringports.RemittanceDiscardPlan, error) {
+	if err := requireRequest(req != nil); err != nil {
+		return nil, err
+	}
+	if err := requireActor(actor, "Discarding a remittance"); err != nil {
+		return nil, err
+	}
+	rem, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+		TenantInfo: req.TenantInfo,
+		ID:         req.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = requireVersion(rem, req.Version); err != nil {
+		return nil, err
+	}
+	plan := &factoringports.RemittanceDiscardPlan{Before: cloneRemittance(rem)}
+	if err = rem.Discard(s.now(), req.Reason); err != nil {
+		return nil, err
+	}
+	plan.After = rem
+	return plan, nil
 }
 
 func (s *RemittanceService) Discard(

@@ -616,5 +616,7 @@ func factoringToolProviders() []any {
 		provideListFactoringSubmissionsTool,
 		provideGetFactoringSubmissionTool,
 		provideGetFactoringReserveBalanceTool,
+		provideListFactoringRemittancesTool,
+		provideGetFactoringRemittanceTool,
 	}
 }

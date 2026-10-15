@@ -512,6 +512,11 @@ func (t Template) StarterTools() []string {
 			"get_factoring_reserve_balance",
 			"record_factoring_funding",
 			"release_factoring_reserve",
+			"list_factoring_remittances",
+			"get_factoring_remittance",
+			"resolve_factoring_remittance_line",
+			"rematch_factoring_remittance",
+			"apply_factoring_remittance",
 			"list_invoices",
 			"get_invoice",
 		}

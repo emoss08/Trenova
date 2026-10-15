@@ -137,6 +137,9 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  FactoringRemittanceLine:
+    - matchedInvoiceNumber
+    - matchedSubmissionId
   DriverSettlement:
     - lineSummary
     - loadShares

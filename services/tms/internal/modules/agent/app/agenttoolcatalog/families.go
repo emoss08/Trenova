@@ -67,6 +67,13 @@ var families = [...][]string{
 		"record_factoring_chargeback",
 		"reverse_factoring_chargeback",
 	},
+	{"list_factoring_remittances", "get_factoring_remittance", "discard_factoring_remittance"},
+	{
+		"get_factoring_remittance",
+		"resolve_factoring_remittance_line",
+		"rematch_factoring_remittance",
+		"apply_factoring_remittance",
+	},
 	{"list_edi_inbound_files", "get_edi_inbound_file", "get_edi_partner"},
 	{"list_edi_transfers", "get_edi_transfer", "accept_edi_tender", "decline_edi_tender"},
 	{"list_edi_tender_changes", "review_edi_tender_change"},

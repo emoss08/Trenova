@@ -257,6 +257,9 @@ func (r *remittanceRepository) scope(
 	if !req.FactoringCompanyID.IsNil() {
 		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
 	}
+	if !req.InboundMessageID.IsNil() {
+		q = q.Where(cols.InboundMessageID.Eq(), req.InboundMessageID)
+	}
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
 	}
