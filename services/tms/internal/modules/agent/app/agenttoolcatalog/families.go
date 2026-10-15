@@ -84,6 +84,7 @@ var families = [...][]string{
 		"replay_edi_message",
 	},
 	{"preview_edi_document", "send_edi_status_update"},
+	{"draft_edi_connection", "apply_edi_connection_draft"},
 	{"list_rate_agreements", "get_rate_agreement", "explain_rate"},
 	{"describe_formula_schema", "test_formula_expression", "propose_formula"},
 	{"accept_field", "accept_all_confident", "set_field_value"},

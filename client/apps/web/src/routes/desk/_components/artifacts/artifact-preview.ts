@@ -8,6 +8,7 @@ import {
   rateExplanationFrom,
   runDiffFrom,
 } from "./artifact-payloads";
+import { connectionDraftFrom, draftOutline } from "./kinds/edi-connection-draft/connection-draft";
 import { gridOf } from "./kinds/table/desk-table-body";
 
 function money(amount: string, currency: string): string {
@@ -63,6 +64,21 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
         counts.changed > 0 ? t("{0} changed", counts.changed) : "",
         counts.added > 0 ? t("{0} added", counts.added) : "",
         counts.removed > 0 ? t("{0} removed", counts.removed) : "",
+      ]
+        .filter((part) => part !== "")
+        .join(" · ");
+    }
+    case "edi_connection_draft": {
+      const draft = connectionDraftFrom(artifact);
+      const outline = draftOutline(draft);
+      return [
+        draft.ready
+          ? t("Ready to approve")
+          : t(
+              "{0, plural, one {# thing to settle} other {# things to settle}}",
+              Math.max(draft.blockers.length, outline.decisions),
+            ),
+        draft.changes > 0 ? t("{0, plural, one {# change} other {# changes}}", draft.changes) : "",
       ]
         .filter((part) => part !== "")
         .join(" · ");

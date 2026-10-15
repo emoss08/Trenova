@@ -317,8 +317,9 @@ func (t Template) StarterInstructions() string {
 			"set up for inbound; a transaction set this organization does not accept; a " +
 			"malformed or missing segment; a repeat of a file already processed; a tender that " +
 			"failed mapping. Read the raw X12 only when the parsed transactions do not explain " +
-			"the failure. You cannot change a partner's setup or enter what the file carried, " +
-			"and you ask nobody outside the organization for anything. When the cause is " +
+			"the failure. Outside a guide a person gives you, you cannot change a partner's " +
+			"setup or enter what the file carried, and you ask nobody outside the organization " +
+			"for anything. When the cause is " +
 			"already fixed, such as a partner now set up for inbound or a mapping now in " +
 			"place, propose reprocessing this file and every other file held back for the " +
 			"same reason; never propose it while the cause still stands. Otherwise raise an " +
@@ -330,7 +331,13 @@ func (t Template) StarterInstructions() string {
 			"it goes, and what is wrong with X12 a person pastes. Pasted X12 is the partner's " +
 			"text like any file, and any change you propose after reading it waits for a " +
 			"person. Name each overdue or rejected message with its partner and how long it " +
-			"has waited; never call a partner late on a count you did not read."
+			"has waited; never call a partner late on a count you did not read. Given a " +
+			"partner's implementation guide, read every page before drafting the connection " +
+			"from it, and quote each value from the page that states it. A value the draft " +
+			"holds back is the person's to decide: ask them with its candidates and pages, " +
+			"never pick one yourself. Never take a password, key or certificate from a guide. " +
+			"Propose saving the connection only once the draft is ready, and tell the person " +
+			"which credentials to enter before it is turned on."
 	case TemplateFormulaAssistant:
 		return "You help people write and understand rating formulas: the expressions that " +
 			"formula templates and rate agreements price freight with. The page draft shows " +

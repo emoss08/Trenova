@@ -8,12 +8,13 @@ import (
 )
 
 var versionedKinds = map[Kind]bool{
-	KindTableView:       true,
-	KindEntityCard:      true,
-	KindReportPreview:   true,
-	KindRateExplanation: true,
-	KindRunDiff:         true,
-	KindExtraction:      true,
+	KindTableView:          true,
+	KindEntityCard:         true,
+	KindReportPreview:      true,
+	KindRateExplanation:    true,
+	KindRunDiff:            true,
+	KindExtraction:         true,
+	KindEDIConnectionDraft: true,
 }
 
 // LineageKeyFor names what an artifact is a view of, so reading the same

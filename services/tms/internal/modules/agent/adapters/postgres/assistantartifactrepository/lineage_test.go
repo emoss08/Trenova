@@ -87,6 +87,6 @@ func TestFamilyExprMatchesTheDomainsFamilies(t *testing.T) {
 
 	assert.Contains(t, expr, "WHEN ((aart.kind = 'table_view' AND aart.payload->'path' IS NULL)) THEN 'table'")
 	assert.Contains(t, expr, "(aart.kind = 'table_view' AND aart.payload->'path' IS NOT NULL)) THEN 'view'")
-	assert.Contains(t, expr, "WHEN (aart.kind IN ('extraction')) THEN 'extract'")
+	assert.Contains(t, expr, "WHEN (aart.kind IN ('extraction', 'edi_connection_draft')) THEN 'extract'")
 	assert.Contains(t, expr, "WHEN (aart.kind IN ('report_preview', 'report_run')) THEN 'report'")
 }

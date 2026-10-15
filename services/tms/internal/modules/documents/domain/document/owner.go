@@ -85,6 +85,15 @@ func (d *Document) VisibleToPerson(conversationOwners map[pulid.ID]pulid.ID, use
 	return ok && owner == userID
 }
 
+func (d *Document) AttachedTo(conversationID pulid.ID) bool {
+	if conversationID.IsNil() {
+		return false
+	}
+	id, ok := d.conversationID()
+
+	return ok && id == conversationID
+}
+
 func (d *Document) AttachedBy(conversationID, userID pulid.ID) bool {
 	if conversationID.IsNil() || userID.IsNil() || d.UploadedByID != userID {
 		return false

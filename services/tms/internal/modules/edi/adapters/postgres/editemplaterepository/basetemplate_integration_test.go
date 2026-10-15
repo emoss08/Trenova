@@ -70,6 +70,51 @@ func TestEnsureBaseTemplate_EveryTransactionSetCanBeSentOut(t *testing.T) {
 	}
 }
 
+func TestEnsureStarterTemplate_GivesAnInboundSetItsOwnTemplate(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	defer cleanup()
+	seedRegistry := seeder.NewRegistry()
+	seeds.Register(seedRegistry)
+	_, err := seeder.NewEngine(
+		db,
+		seedRegistry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	var org seededTenant
+	require.NoError(t, db.NewSelect().
+		Table("organizations").
+		Column("id", "business_unit_id").
+		Limit(1).
+		Scan(ctx, &org))
+	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	repo := editemplaterepository.New(editemplaterepository.Params{
+		DB:     postgres.NewTestConnection(db),
+		Logger: zap.NewNop(),
+	})
+
+	inbound, version, err := repo.EnsureStarterTemplate(
+		ctx, tenant, edi.TransactionSet204, edi.DocumentDirectionInbound,
+	)
+	require.NoError(t, err)
+	require.Equal(t, edi.DocumentDirectionInbound, inbound.Direction)
+	require.Equal(t, "Base X12 204 Inbound", inbound.Name)
+	require.True(t, version.IsActive)
+	require.NotEmpty(t, version.Segments)
+
+	outbound, _, err := repo.EnsureBaseTemplate(ctx, tenant, edi.TransactionSet204)
+	require.NoError(t, err)
+	require.NotEqual(t, inbound.ID, outbound.ID, "each direction has its own template")
+	require.NotEqual(t, inbound.DocumentTypeID, outbound.DocumentTypeID)
+
+	again, _, err := repo.EnsureStarterTemplate(
+		ctx, tenant, edi.TransactionSet204, edi.DocumentDirectionInbound,
+	)
+	require.NoError(t, err)
+	require.Equal(t, inbound.ID, again.ID)
+}
+
 func TestDocumentTypeCatalog_HoldsEverySetInBothDirections(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()

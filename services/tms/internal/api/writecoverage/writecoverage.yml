@@ -1284,8 +1284,7 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/communication-profiles/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "POST /api/v1/edi/communication-profiles/:profileID/poll/":
     exempt: infrastructure
     reason: "Polls a partner mailbox now; the scheduler polls on its own."
@@ -1314,8 +1313,7 @@ writes:
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "POST /api/v1/edi/document-profiles/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "POST /api/v1/edi/documents/generate/":
     tools: [send_edi_status_update]
   "POST /api/v1/edi/documents/preview/":
@@ -1334,8 +1332,7 @@ writes:
   "POST /api/v1/edi/messages/bulk-retry-delivery/":
     tools: [retry_edi_message_delivery]
   "POST /api/v1/edi/partners/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "POST /api/v1/edi/partners/internal-pairs/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1392,20 +1389,16 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "PUT /api/v1/edi/communication-profiles/:profileID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "PUT /api/v1/edi/document-profiles/:profileID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "PUT /api/v1/edi/mapping-profiles/:profileID/items/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "PUT /api/v1/edi/partners/:partnerID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "PUT /api/v1/edi/partners/:partnerID/mapping-profile/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    tools: [apply_edi_connection_draft]
   "PUT /api/v1/edi/templates/:templateID/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."

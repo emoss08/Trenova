@@ -1623,6 +1623,574 @@
       }
     },
     {
+      "name": "apply_edi_connection_draft",
+      "description": "Propose saving the EDI connection draft_edi_connection drafted from a partner's guide. It writes the partner, its communication profile, a document profile per document type, control number starts and code mappings, all inactive until a person enters the credentials and turns them on. For a partner that exists it changes only what the guide changed. Pass the same input and the draft's documentDigest. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The customer this partner's documents are for, from list_customers, when the person says which.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "documentDigest": {
+            "description": "The documentDigest draft_edi_connection returned for this guide.",
+            "maxLength": 80,
+            "type": "string"
+          },
+          "documentId": {
+            "description": "The partner's implementation guide the person attached to this conversation, from read_attachment.",
+            "type": "string",
+            "x-recordOf": "document"
+          },
+          "ediPartnerId": {
+            "description": "The partner to update when the person names one, from list_edi_partners. Leave it out and the draft matches one by code, ISA ID or AS2 ID, or plans a new partner.",
+            "type": "string",
+            "x-recordKinds": [
+              "edi_partner"
+            ]
+          },
+          "gaps": {
+            "description": "What the guide asks for that Trenova does not do, or leaves unclear.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "kind": {
+                  "enum": [
+                    "Unsupported",
+                    "Ambiguous"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.specGapKind"
+                },
+                "summary": {
+                  "description": "What the person needs to know, in a sentence.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "summary",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "mappings": {
+            "description": "A code the partner uses and the Trenova record it means.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "confidence": {
+                  "description": "How sure you are that the quote means this value, from 0 to 1. Below 0.8 is held for the person to decide.",
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "entityType": {
+                  "enum": [
+                    "Customer",
+                    "ServiceType",
+                    "ShipmentType",
+                    "FormulaTemplate",
+                    "Location",
+                    "Commodity",
+                    "AccessorialCharge",
+                    "ServiceFailureReasonCode"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.mappingEntityType"
+                },
+                "sourceLabel": {
+                  "description": "The guide's meaning for the code.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "sourceValue": {
+                  "description": "The partner's code as the guide lists it.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "targetId": {
+                  "description": "The Trenova record it maps to, of the entityType's kind: from list_customers, list_service_types, list_shipment_types, list_formula_templates, list_locations, list_commodities, list_accessorial_charges or list_service_failure_reason_codes. Never guess one.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "entityType",
+                "sourceValue",
+                "targetId",
+                "confidence",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "requirements": {
+            "description": "What the guide requires of a segment or element of a transaction set.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "codes": {
+                  "description": "The only codes the guide allows there.",
+                  "items": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "type": "array"
+                },
+                "direction": {
+                  "description": "Inbound is what the partner sends you; Outbound is what you send them.",
+                  "enum": [
+                    "Inbound",
+                    "Outbound"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.documentDirection"
+                },
+                "elementPosition": {
+                  "description": "The element's position, such as 4 for B2-04. Leave it out for the segment itself.",
+                  "maximum": 99,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "segment": {
+                  "description": "The segment, such as B2, N1 or AT7.",
+                  "maxLength": 3,
+                  "type": "string"
+                },
+                "transactionSet": {
+                  "enum": [
+                    "204",
+                    "210",
+                    "214",
+                    "990"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftTransactionSet"
+                },
+                "usage": {
+                  "enum": [
+                    "Mandatory",
+                    "Optional",
+                    "Conditional",
+                    "NotUsed"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.requirementUsage"
+                }
+              },
+              "required": [
+                "transactionSet",
+                "direction",
+                "segment",
+                "usage",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 300,
+            "type": "array"
+          },
+          "resolutions": {
+            "description": "The person's answer to a setting the last draft held for them.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "enum": [
+                    "as2.basicAuthUsername",
+                    "as2.compressionAlgorithm",
+                    "as2.encryptionAlgorithm",
+                    "as2.endpointUrl",
+                    "as2.localAs2Id",
+                    "as2.mdnMode",
+                    "as2.mdnUrl",
+                    "as2.partnerAs2Id",
+                    "as2.signingAlgorithm",
+                    "carrier.scac",
+                    "controlNumbers.group.start",
+                    "controlNumbers.interchange.start",
+                    "controlNumbers.transaction.start",
+                    "gs.ourId",
+                    "gs.partnerId",
+                    "isa.ourId",
+                    "isa.ourQualifier",
+                    "isa.partnerId",
+                    "isa.partnerQualifier",
+                    "isa.usageIndicator",
+                    "partner.code",
+                    "partner.contactEmail",
+                    "partner.contactName",
+                    "partner.contactPhone",
+                    "partner.country",
+                    "partner.name",
+                    "partner.timezone",
+                    "separators.component",
+                    "separators.element",
+                    "separators.repetition",
+                    "separators.segment",
+                    "sets.204.inbound.ack",
+                    "sets.204.inbound.ackWindowMinutes",
+                    "sets.204.inbound.functionalGroupId",
+                    "sets.204.inbound.supported",
+                    "sets.204.inbound.version",
+                    "sets.204.outbound.ack",
+                    "sets.204.outbound.ackWindowMinutes",
+                    "sets.204.outbound.functionalGroupId",
+                    "sets.204.outbound.supported",
+                    "sets.204.outbound.version",
+                    "sets.210.inbound.ack",
+                    "sets.210.inbound.ackWindowMinutes",
+                    "sets.210.inbound.functionalGroupId",
+                    "sets.210.inbound.supported",
+                    "sets.210.inbound.version",
+                    "sets.210.outbound.ack",
+                    "sets.210.outbound.ackWindowMinutes",
+                    "sets.210.outbound.functionalGroupId",
+                    "sets.210.outbound.supported",
+                    "sets.210.outbound.version",
+                    "sets.214.inbound.ack",
+                    "sets.214.inbound.ackWindowMinutes",
+                    "sets.214.inbound.functionalGroupId",
+                    "sets.214.inbound.supported",
+                    "sets.214.inbound.version",
+                    "sets.214.outbound.ack",
+                    "sets.214.outbound.ackWindowMinutes",
+                    "sets.214.outbound.functionalGroupId",
+                    "sets.214.outbound.supported",
+                    "sets.214.outbound.version",
+                    "sets.990.inbound.ack",
+                    "sets.990.inbound.ackWindowMinutes",
+                    "sets.990.inbound.functionalGroupId",
+                    "sets.990.inbound.supported",
+                    "sets.990.inbound.version",
+                    "sets.990.outbound.ack",
+                    "sets.990.outbound.ackWindowMinutes",
+                    "sets.990.outbound.functionalGroupId",
+                    "sets.990.outbound.supported",
+                    "sets.990.outbound.version",
+                    "transport.archiveDirectory",
+                    "transport.authMode",
+                    "transport.environment",
+                    "transport.fileNamingPattern",
+                    "transport.host",
+                    "transport.inboundDirectory",
+                    "transport.method",
+                    "transport.outboundDirectory",
+                    "transport.port",
+                    "transport.username",
+                    "van.mailboxId",
+                    "van.providerName",
+                    "x12.version"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftField"
+                },
+                "note": {
+                  "description": "What they said, in their words.",
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                "source": {
+                  "description": "Candidate when they picked one of the draft's values; Person when they gave it.",
+                  "enum": [
+                    "Candidate",
+                    "Person"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.draftResolutionSource"
+                },
+                "value": {
+                  "description": "The value they chose.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "value",
+                "source"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "values": {
+            "description": "Every setting the guide states, each with the quote that states it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "confidence": {
+                  "description": "How sure you are that the quote means this value, from 0 to 1. Below 0.8 is held for the person to decide.",
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "field": {
+                  "description": "The setting the value fills.",
+                  "enum": [
+                    "as2.basicAuthUsername",
+                    "as2.compressionAlgorithm",
+                    "as2.encryptionAlgorithm",
+                    "as2.endpointUrl",
+                    "as2.localAs2Id",
+                    "as2.mdnMode",
+                    "as2.mdnUrl",
+                    "as2.partnerAs2Id",
+                    "as2.signingAlgorithm",
+                    "carrier.scac",
+                    "controlNumbers.group.start",
+                    "controlNumbers.interchange.start",
+                    "controlNumbers.transaction.start",
+                    "gs.ourId",
+                    "gs.partnerId",
+                    "isa.ourId",
+                    "isa.ourQualifier",
+                    "isa.partnerId",
+                    "isa.partnerQualifier",
+                    "isa.usageIndicator",
+                    "partner.code",
+                    "partner.contactEmail",
+                    "partner.contactName",
+                    "partner.contactPhone",
+                    "partner.country",
+                    "partner.name",
+                    "partner.timezone",
+                    "separators.component",
+                    "separators.element",
+                    "separators.repetition",
+                    "separators.segment",
+                    "sets.204.inbound.ack",
+                    "sets.204.inbound.ackWindowMinutes",
+                    "sets.204.inbound.functionalGroupId",
+                    "sets.204.inbound.supported",
+                    "sets.204.inbound.version",
+                    "sets.204.outbound.ack",
+                    "sets.204.outbound.ackWindowMinutes",
+                    "sets.204.outbound.functionalGroupId",
+                    "sets.204.outbound.supported",
+                    "sets.204.outbound.version",
+                    "sets.210.inbound.ack",
+                    "sets.210.inbound.ackWindowMinutes",
+                    "sets.210.inbound.functionalGroupId",
+                    "sets.210.inbound.supported",
+                    "sets.210.inbound.version",
+                    "sets.210.outbound.ack",
+                    "sets.210.outbound.ackWindowMinutes",
+                    "sets.210.outbound.functionalGroupId",
+                    "sets.210.outbound.supported",
+                    "sets.210.outbound.version",
+                    "sets.214.inbound.ack",
+                    "sets.214.inbound.ackWindowMinutes",
+                    "sets.214.inbound.functionalGroupId",
+                    "sets.214.inbound.supported",
+                    "sets.214.inbound.version",
+                    "sets.214.outbound.ack",
+                    "sets.214.outbound.ackWindowMinutes",
+                    "sets.214.outbound.functionalGroupId",
+                    "sets.214.outbound.supported",
+                    "sets.214.outbound.version",
+                    "sets.990.inbound.ack",
+                    "sets.990.inbound.ackWindowMinutes",
+                    "sets.990.inbound.functionalGroupId",
+                    "sets.990.inbound.supported",
+                    "sets.990.inbound.version",
+                    "sets.990.outbound.ack",
+                    "sets.990.outbound.ackWindowMinutes",
+                    "sets.990.outbound.functionalGroupId",
+                    "sets.990.outbound.supported",
+                    "sets.990.outbound.version",
+                    "transport.archiveDirectory",
+                    "transport.authMode",
+                    "transport.environment",
+                    "transport.fileNamingPattern",
+                    "transport.host",
+                    "transport.inboundDirectory",
+                    "transport.method",
+                    "transport.outboundDirectory",
+                    "transport.port",
+                    "transport.username",
+                    "van.mailboxId",
+                    "van.providerName",
+                    "x12.version"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftField"
+                },
+                "value": {
+                  "description": "The value as the guide gives it.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "value",
+                "confidence",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 300,
+            "type": "array"
+          }
+        },
+        "required": [
+          "documentId",
+          "values",
+          "documentDigest"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "save the drafted edi connection",
+        "apply the edi draft",
+        "approve the drafted connection",
+        "commit the edi draft"
+      ],
+      "prerequisites": [
+        "draft_edi_connection"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "edi",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "always",
+        "source": "attachment",
+        "carriesTaint": false,
+        "rationale": "Sets up a trading partner from a guide the partner wrote, so a person checks every value against its page before anything is saved A person always decides."
+      }
+    },
+    {
       "name": "apply_factoring_remittance",
       "description": "Book every matched line of a factor remittance to the ledger in one go. Funded and rejected invoices are recorded on their schedules, reserve releases and chargebacks are booked with the line's cash, and each entry remembers its line. Lines still to resolve stay open. A person approves every booking.",
       "parameters": {
@@ -9874,6 +10442,569 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Marks a detention charge disputed inside Trenova and holds it from billing; nothing is sent, but the hold is not undone by a tool."
+      }
+    },
+    {
+      "name": "draft_edi_connection",
+      "description": "Draft a whole EDI connection from the implementation guide the person attached, and check it. Read the guide with read_attachment first, then pass every setting it states with the exact quote and page, plus the segment rules, code mappings and gaps you find. It checks each quote against its page, holds back what is uncertain or conflicting, matches an existing EDI partner rather than adding one, picks templates, runs the guide's sample X12, validates every record and lists the credentials the person must enter. A re-run on a revised guide shows only what changes. It writes nothing.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The customer this partner's documents are for, from list_customers, when the person says which.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "documentId": {
+            "description": "The partner's implementation guide the person attached to this conversation, from read_attachment.",
+            "type": "string",
+            "x-recordOf": "document"
+          },
+          "ediPartnerId": {
+            "description": "The partner to update when the person names one, from list_edi_partners. Leave it out and the draft matches one by code, ISA ID or AS2 ID, or plans a new partner.",
+            "type": "string",
+            "x-recordKinds": [
+              "edi_partner"
+            ]
+          },
+          "gaps": {
+            "description": "What the guide asks for that Trenova does not do, or leaves unclear.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "kind": {
+                  "enum": [
+                    "Unsupported",
+                    "Ambiguous"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.specGapKind"
+                },
+                "summary": {
+                  "description": "What the person needs to know, in a sentence.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "summary",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "mappings": {
+            "description": "A code the partner uses and the Trenova record it means.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "confidence": {
+                  "description": "How sure you are that the quote means this value, from 0 to 1. Below 0.8 is held for the person to decide.",
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "entityType": {
+                  "enum": [
+                    "Customer",
+                    "ServiceType",
+                    "ShipmentType",
+                    "FormulaTemplate",
+                    "Location",
+                    "Commodity",
+                    "AccessorialCharge",
+                    "ServiceFailureReasonCode"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.mappingEntityType"
+                },
+                "sourceLabel": {
+                  "description": "The guide's meaning for the code.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "sourceValue": {
+                  "description": "The partner's code as the guide lists it.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "targetId": {
+                  "description": "The Trenova record it maps to, of the entityType's kind: from list_customers, list_service_types, list_shipment_types, list_formula_templates, list_locations, list_commodities, list_accessorial_charges or list_service_failure_reason_codes. Never guess one.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "entityType",
+                "sourceValue",
+                "targetId",
+                "confidence",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "requirements": {
+            "description": "What the guide requires of a segment or element of a transaction set.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "codes": {
+                  "description": "The only codes the guide allows there.",
+                  "items": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "type": "array"
+                },
+                "direction": {
+                  "description": "Inbound is what the partner sends you; Outbound is what you send them.",
+                  "enum": [
+                    "Inbound",
+                    "Outbound"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.documentDirection"
+                },
+                "elementPosition": {
+                  "description": "The element's position, such as 4 for B2-04. Leave it out for the segment itself.",
+                  "maximum": 99,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "segment": {
+                  "description": "The segment, such as B2, N1 or AT7.",
+                  "maxLength": 3,
+                  "type": "string"
+                },
+                "transactionSet": {
+                  "enum": [
+                    "204",
+                    "210",
+                    "214",
+                    "990"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftTransactionSet"
+                },
+                "usage": {
+                  "enum": [
+                    "Mandatory",
+                    "Optional",
+                    "Conditional",
+                    "NotUsed"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.requirementUsage"
+                }
+              },
+              "required": [
+                "transactionSet",
+                "direction",
+                "segment",
+                "usage",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 300,
+            "type": "array"
+          },
+          "resolutions": {
+            "description": "The person's answer to a setting the last draft held for them.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "enum": [
+                    "as2.basicAuthUsername",
+                    "as2.compressionAlgorithm",
+                    "as2.encryptionAlgorithm",
+                    "as2.endpointUrl",
+                    "as2.localAs2Id",
+                    "as2.mdnMode",
+                    "as2.mdnUrl",
+                    "as2.partnerAs2Id",
+                    "as2.signingAlgorithm",
+                    "carrier.scac",
+                    "controlNumbers.group.start",
+                    "controlNumbers.interchange.start",
+                    "controlNumbers.transaction.start",
+                    "gs.ourId",
+                    "gs.partnerId",
+                    "isa.ourId",
+                    "isa.ourQualifier",
+                    "isa.partnerId",
+                    "isa.partnerQualifier",
+                    "isa.usageIndicator",
+                    "partner.code",
+                    "partner.contactEmail",
+                    "partner.contactName",
+                    "partner.contactPhone",
+                    "partner.country",
+                    "partner.name",
+                    "partner.timezone",
+                    "separators.component",
+                    "separators.element",
+                    "separators.repetition",
+                    "separators.segment",
+                    "sets.204.inbound.ack",
+                    "sets.204.inbound.ackWindowMinutes",
+                    "sets.204.inbound.functionalGroupId",
+                    "sets.204.inbound.supported",
+                    "sets.204.inbound.version",
+                    "sets.204.outbound.ack",
+                    "sets.204.outbound.ackWindowMinutes",
+                    "sets.204.outbound.functionalGroupId",
+                    "sets.204.outbound.supported",
+                    "sets.204.outbound.version",
+                    "sets.210.inbound.ack",
+                    "sets.210.inbound.ackWindowMinutes",
+                    "sets.210.inbound.functionalGroupId",
+                    "sets.210.inbound.supported",
+                    "sets.210.inbound.version",
+                    "sets.210.outbound.ack",
+                    "sets.210.outbound.ackWindowMinutes",
+                    "sets.210.outbound.functionalGroupId",
+                    "sets.210.outbound.supported",
+                    "sets.210.outbound.version",
+                    "sets.214.inbound.ack",
+                    "sets.214.inbound.ackWindowMinutes",
+                    "sets.214.inbound.functionalGroupId",
+                    "sets.214.inbound.supported",
+                    "sets.214.inbound.version",
+                    "sets.214.outbound.ack",
+                    "sets.214.outbound.ackWindowMinutes",
+                    "sets.214.outbound.functionalGroupId",
+                    "sets.214.outbound.supported",
+                    "sets.214.outbound.version",
+                    "sets.990.inbound.ack",
+                    "sets.990.inbound.ackWindowMinutes",
+                    "sets.990.inbound.functionalGroupId",
+                    "sets.990.inbound.supported",
+                    "sets.990.inbound.version",
+                    "sets.990.outbound.ack",
+                    "sets.990.outbound.ackWindowMinutes",
+                    "sets.990.outbound.functionalGroupId",
+                    "sets.990.outbound.supported",
+                    "sets.990.outbound.version",
+                    "transport.archiveDirectory",
+                    "transport.authMode",
+                    "transport.environment",
+                    "transport.fileNamingPattern",
+                    "transport.host",
+                    "transport.inboundDirectory",
+                    "transport.method",
+                    "transport.outboundDirectory",
+                    "transport.port",
+                    "transport.username",
+                    "van.mailboxId",
+                    "van.providerName",
+                    "x12.version"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftField"
+                },
+                "note": {
+                  "description": "What they said, in their words.",
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                "source": {
+                  "description": "Candidate when they picked one of the draft's values; Person when they gave it.",
+                  "enum": [
+                    "Candidate",
+                    "Person"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.draftResolutionSource"
+                },
+                "value": {
+                  "description": "The value they chose.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "value",
+                "source"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "values": {
+            "description": "Every setting the guide states, each with the quote that states it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "additionalProperties": false,
+                  "description": "Where the document says it.",
+                  "properties": {
+                    "page": {
+                      "description": "The page the quote is on, counting from 1 as read_attachment numbers them.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "quote": {
+                      "description": "The exact words on that page that state the value. Copy them; never paraphrase.",
+                      "maxLength": 400,
+                      "type": "string"
+                    },
+                    "section": {
+                      "description": "The guide's own section number or heading, when it has one.",
+                      "maxLength": 120,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "quote"
+                  ],
+                  "type": "object"
+                },
+                "confidence": {
+                  "description": "How sure you are that the quote means this value, from 0 to 1. Below 0.8 is held for the person to decide.",
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "field": {
+                  "description": "The setting the value fills.",
+                  "enum": [
+                    "as2.basicAuthUsername",
+                    "as2.compressionAlgorithm",
+                    "as2.encryptionAlgorithm",
+                    "as2.endpointUrl",
+                    "as2.localAs2Id",
+                    "as2.mdnMode",
+                    "as2.mdnUrl",
+                    "as2.partnerAs2Id",
+                    "as2.signingAlgorithm",
+                    "carrier.scac",
+                    "controlNumbers.group.start",
+                    "controlNumbers.interchange.start",
+                    "controlNumbers.transaction.start",
+                    "gs.ourId",
+                    "gs.partnerId",
+                    "isa.ourId",
+                    "isa.ourQualifier",
+                    "isa.partnerId",
+                    "isa.partnerQualifier",
+                    "isa.usageIndicator",
+                    "partner.code",
+                    "partner.contactEmail",
+                    "partner.contactName",
+                    "partner.contactPhone",
+                    "partner.country",
+                    "partner.name",
+                    "partner.timezone",
+                    "separators.component",
+                    "separators.element",
+                    "separators.repetition",
+                    "separators.segment",
+                    "sets.204.inbound.ack",
+                    "sets.204.inbound.ackWindowMinutes",
+                    "sets.204.inbound.functionalGroupId",
+                    "sets.204.inbound.supported",
+                    "sets.204.inbound.version",
+                    "sets.204.outbound.ack",
+                    "sets.204.outbound.ackWindowMinutes",
+                    "sets.204.outbound.functionalGroupId",
+                    "sets.204.outbound.supported",
+                    "sets.204.outbound.version",
+                    "sets.210.inbound.ack",
+                    "sets.210.inbound.ackWindowMinutes",
+                    "sets.210.inbound.functionalGroupId",
+                    "sets.210.inbound.supported",
+                    "sets.210.inbound.version",
+                    "sets.210.outbound.ack",
+                    "sets.210.outbound.ackWindowMinutes",
+                    "sets.210.outbound.functionalGroupId",
+                    "sets.210.outbound.supported",
+                    "sets.210.outbound.version",
+                    "sets.214.inbound.ack",
+                    "sets.214.inbound.ackWindowMinutes",
+                    "sets.214.inbound.functionalGroupId",
+                    "sets.214.inbound.supported",
+                    "sets.214.inbound.version",
+                    "sets.214.outbound.ack",
+                    "sets.214.outbound.ackWindowMinutes",
+                    "sets.214.outbound.functionalGroupId",
+                    "sets.214.outbound.supported",
+                    "sets.214.outbound.version",
+                    "sets.990.inbound.ack",
+                    "sets.990.inbound.ackWindowMinutes",
+                    "sets.990.inbound.functionalGroupId",
+                    "sets.990.inbound.supported",
+                    "sets.990.inbound.version",
+                    "sets.990.outbound.ack",
+                    "sets.990.outbound.ackWindowMinutes",
+                    "sets.990.outbound.functionalGroupId",
+                    "sets.990.outbound.supported",
+                    "sets.990.outbound.version",
+                    "transport.archiveDirectory",
+                    "transport.authMode",
+                    "transport.environment",
+                    "transport.fileNamingPattern",
+                    "transport.host",
+                    "transport.inboundDirectory",
+                    "transport.method",
+                    "transport.outboundDirectory",
+                    "transport.port",
+                    "transport.username",
+                    "van.mailboxId",
+                    "van.providerName",
+                    "x12.version"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "edi.connectionDraftField"
+                },
+                "value": {
+                  "description": "The value as the guide gives it.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "value",
+                "confidence",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "maxItems": 300,
+            "type": "array"
+          }
+        },
+        "required": [
+          "documentId",
+          "values"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "implementation guide",
+        "edi spec document",
+        "companion guide",
+        "onboard edi",
+        "edi setup from pdf",
+        "edi connection from a guide",
+        "edi requirements document"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "edi",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "always",
+        "source": "attachment",
+        "carriesTaint": false,
+        "capsLaterWrites": true,
+        "rationale": "Reads a trading partner's guide the person attached and plans the connection from it; nothing is stored or sent, and every write after it waits for a person."
       }
     },
     {
@@ -25059,7 +26190,6 @@
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
-              "factoring_remittance",
               "factoring_submission",
               "formula_template",
               "fuel_purchase",

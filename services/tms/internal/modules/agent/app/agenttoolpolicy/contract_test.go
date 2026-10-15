@@ -298,6 +298,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"reprocess_edi_inbound_files":        {agent.EgressExternalRecipient},
 		"send_edi_tender":                    {agent.EgressExternalRecipient},
 		"send_edi_status_update":             {agent.EgressExternalRecipient},
+		"apply_edi_connection_draft":         {agent.EgressInternal},
 		"submit_driver_settlement":           {agent.EgressInternal},
 		"submit_carrier_settlement":          {agent.EgressInternal},
 		"reject_driver_settlement":           {agent.EgressInternal},

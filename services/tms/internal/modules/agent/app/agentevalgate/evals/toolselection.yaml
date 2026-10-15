@@ -376,6 +376,12 @@ cases:
     expect: [preview_edi_document]
   - request: show me the 990 we would send back on this tender
     expect: [preview_edi_document]
+  - request: here is the partner's EDI implementation guide, set up the connection from it
+    expect: [draft_edi_connection]
+  - request: they sent a revised companion guide, what changes in our EDI setup
+    expect: [draft_edi_connection]
+  - request: save the EDI connection you drafted from the guide
+    expect: [apply_edi_connection_draft]
   - request: which EDI load tenders are pending approval
     expect: [list_edi_transfers]
   - request: why was the EDI tender transfer rejected
