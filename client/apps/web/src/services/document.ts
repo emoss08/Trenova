@@ -30,7 +30,12 @@ import { z } from "zod";
 export type DocumentContentAction = "download" | "view" | "preview";
 
 export function documentContentUrl(documentId: string, action: DocumentContentAction): string {
-  return `${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/${action}/`;
+  return `${API_BASE_URL}${documentContentEndpoint(documentId, action)}`;
+}
+
+/** A document's content as an endpoint for the app's request helpers (`api.download`). */
+export function documentContentEndpoint(documentId: string, action: DocumentContentAction): string {
+  return `/documents/${encodeURIComponent(documentId)}/${action}/`;
 }
 
 export class DocumentService {

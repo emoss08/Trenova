@@ -10,19 +10,21 @@ import { StatementDetail } from "../statements/statement-detail";
 
 const mocks = vi.hoisted(() => ({
   getById: vi.fn(),
-  getViewUrl: vi.fn(),
+  download: vi.fn(),
   getStatement: vi.fn(),
 }));
 
 vi.mock("@/services/api", () => ({
   apiService: {
     billingQueueService: { getById: mocks.getById },
-    documentService: { getViewUrl: mocks.getViewUrl },
     invoiceRunService: { getStatement: mocks.getStatement },
   },
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock("@/components/elements/pdf-viewer", () => ({ PdfViewer: () => null }));
+vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
+  return { ...actual, api: { ...actual.api, download: mocks.download } };
+});
 vi.mock("@/routes/shipment/_components/comments", () => ({ default: () => null }));
 vi.mock("@/components/audit-tab", () => ({ default: () => null }));
 
@@ -42,7 +44,7 @@ const pending = () => new Promise<never>(() => {});
 
 beforeEach(() => {
   mocks.getById.mockImplementation(pending);
-  mocks.getViewUrl.mockImplementation(pending);
+  mocks.download.mockImplementation(pending);
   mocks.getStatement.mockImplementation(pending);
 });
 
@@ -87,10 +89,12 @@ describe("billing queue loading states", () => {
     expect(mocks.getStatement).not.toHaveBeenCalled();
   });
 
-  it("draws the document viewer's outline while the document's address is read", () => {
+  it("draws the document viewer's outline while the document downloads", () => {
     renderWithin(<BillingQueueDocumentPreview documentId="doc_1" fileName="pod.pdf" />);
 
     expect(screen.getByLabelText("Loading the document")).toHaveAttribute("aria-busy", "true");
-    expect(mocks.getViewUrl).toHaveBeenCalledWith("doc_1");
+    expect(mocks.download).toHaveBeenCalledWith("/documents/doc_1/view/", "document.pdf", {
+      signal: expect.any(AbortSignal),
+    });
   });
 });

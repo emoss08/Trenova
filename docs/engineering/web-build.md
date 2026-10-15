@@ -55,6 +55,30 @@ Things that were on every page and are not any more, and how they were kept off:
 ranked by where its name first appears, and component stylesheets carry `@layer base` rules
 of their own; imported after the router, they put `base` below Tailwind's `theme`.
 
+## PDFs
+
+Every PDF is shown by the browser's own viewer through `PdfFrame`
+(`src/components/elements/pdf-frame.tsx`), which brings paging, zoom, search and printing for
+free. There is no PDF rendering library in the app: pdf.js and react-pdf were two packages and
+hundreds of kilobytes on four screens, and loaded their worker from unpkg.com, which the
+Content Security Policy never allowed.
+
+- **Fetched, then framed from a blob.** The API sends `X-Frame-Options: DENY`, so a document
+  URL cannot be framed. `usePdfDocument` fetches the file through `api.download` (the session's
+  credentials, CSRF and error handling) and `useObjectUrl` turns it into a `blob:` URL.
+- **Always typed as a PDF.** A blob URL is the app's own origin. The blob is re-typed
+  `application/pdf` whatever the response said, so a file mislabelled as HTML only ever reaches
+  the PDF viewer and never renders as a page of the app.
+- **What it asks of the viewer** goes in the URL fragment (`pdfViewerFragment`: `#page=`,
+  `#zoom=`, `#view=Fit`, `#toolbar=0`). Chrome, Edge and Firefox honour all of them; Safari the
+  page. Rotation (intake's preview of how a page will be filed) turns the frame, not the file.
+- **No built-in viewer**, usually a phone (`navigator.pdfViewerEnabled === false`): the frame
+  offers the file to open in a tab instead.
+- **The CSP must keep `frame-src 'self' blob:`**: in `deploy/Caddyfile`, and in Cloud's worker
+  (`trenova-cloud-deploy`, `edition/cloudflare/web/worker.ts`). Without it every preview is blank.
+- pdf-lib still builds Capture's printable cover sheets. It is imported only when someone prints
+  them (`cover-sheet-dialog.tsx`), and the sheet opens in the browser's viewer to print.
+
 ## Returning visits
 
 Four pieces make a returning visit open fast, move every open tab onto a new release, and do
@@ -190,6 +214,15 @@ The dev server bundles with `build.rolldownOptions`, so two of them are split by
   9 GB, against 4 checkers' 6 GB).
 
 ## Measuring
+
+- **A light helper in a component module brings the component.** `import { pageAssistantThreadKey }`
+  from `page-assistant.tsx` put the whole Desk thread into the rate confirmation import's
+  preview (306 → 584 kB gzip). Keys, constants and pure functions that pages share live in a
+  module of their own (`page-assistant-thread-key.ts`, `capture-cover-sheet-print.ts`), never
+  beside the component that uses them.
+- To see what fills a chunk, build with a config that adds a `generateBundle` plugin writing
+  each chunk's `modules` (`renderedLength` per module), `imports` and `facadeModuleId`; diff two
+  builds' module sets for one route to name exactly what it gained.
 
 - Rolldown prints `PLUGIN_TIMINGS` after a slow build: which plugin hook took the time.
   A hook another plugin wraps reports that plugin's time as its own.
