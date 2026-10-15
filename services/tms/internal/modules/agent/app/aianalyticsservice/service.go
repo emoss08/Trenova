@@ -254,7 +254,7 @@ func (s *Service) readReferences(run submitRead, out *readings, in *readRequest)
 		return
 	}
 	run(func(ctx context.Context) error {
-		rows, err := s.reader.Suggestions(ctx, aianalyticsports.SuggestionRequest{
+		rows, err := s.reader.Suggestions(ctx, &aianalyticsports.SuggestionRequest{
 			Filter:       filter,
 			PendingSince: aianalytics.SuggestionPendingSince(in.until),
 		})

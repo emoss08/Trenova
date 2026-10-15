@@ -35,9 +35,9 @@ func (r *recordingRepository) Insert(
 
 func (r *recordingRepository) Settle(
 	_ context.Context,
-	req agentsuggestionports.SettleAgentSuggestionRow,
+	req *agentsuggestionports.SettleAgentSuggestionRow,
 ) (*agentsuggestion.Suggestion, error) {
-	r.settled = append(r.settled, req)
+	r.settled = append(r.settled, *req)
 
 	return &agentsuggestion.Suggestion{ID: req.ID, Outcome: req.Outcome}, nil
 }

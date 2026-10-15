@@ -42,7 +42,7 @@ func NewQueryVectorCache(p QueryVectorCacheParams) agentports.QueryVectorCache {
 	}
 }
 
-func (c *queryVectorCache) key(key agentports.QueryVectorCacheKey) string {
+func (c *queryVectorCache) key(key *agentports.QueryVectorCacheKey) string {
 	return fmt.Sprintf(
 		"%s:%s:%s:%s:%s",
 		queryVectorPrefix,
@@ -55,7 +55,7 @@ func (c *queryVectorCache) key(key agentports.QueryVectorCacheKey) string {
 
 func (c *queryVectorCache) Get(
 	ctx context.Context,
-	key agentports.QueryVectorCacheKey,
+	key *agentports.QueryVectorCacheKey,
 ) (agentports.QueryVector, bool, error) {
 	raw, err := c.client.Get(ctx, c.key(key)).Bytes()
 	if err != nil {
@@ -92,7 +92,7 @@ func (c *queryVectorCache) Get(
 
 func (c *queryVectorCache) Set(
 	ctx context.Context,
-	key agentports.QueryVectorCacheKey,
+	key *agentports.QueryVectorCacheKey,
 	vector agentports.QueryVector,
 	ttl time.Duration,
 ) error {
@@ -115,7 +115,7 @@ func (c *queryVectorCache) Set(
 }
 
 func cachedVectorMismatch(
-	key agentports.QueryVectorCacheKey,
+	key *agentports.QueryVectorCacheKey,
 	cached cachedQueryVector,
 	length int,
 ) error {
@@ -131,7 +131,11 @@ func cachedVectorMismatch(
 	}
 }
 
-func (c *queryVectorCache) drop(ctx context.Context, key agentports.QueryVectorCacheKey, cause error) {
+func (c *queryVectorCache) drop(
+	ctx context.Context,
+	key *agentports.QueryVectorCacheKey,
+	cause error,
+) {
 	c.l.Warn("dropping an unreadable cached query vector", zap.Error(cause))
 	if err := c.client.Del(ctx, c.key(key)).Err(); err != nil {
 		c.l.Warn("could not drop an unreadable cached query vector", zap.Error(err))

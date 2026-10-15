@@ -14,6 +14,6 @@ type QueryVectorCacheKey struct {
 }
 
 type QueryVectorCache interface {
-	Get(ctx context.Context, key QueryVectorCacheKey) (QueryVector, bool, error)
-	Set(ctx context.Context, key QueryVectorCacheKey, vector QueryVector, ttl time.Duration) error
+	Get(ctx context.Context, key *QueryVectorCacheKey) (QueryVector, bool, error)
+	Set(ctx context.Context, key *QueryVectorCacheKey, vector QueryVector, ttl time.Duration) error
 }

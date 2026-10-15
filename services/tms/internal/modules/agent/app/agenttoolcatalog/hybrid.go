@@ -177,7 +177,7 @@ func (c *Catalog) fuse(
 	wanted map[string]struct{},
 	keyword []scored,
 	q Query,
-) ([]*indexed, map[string]float64) {
+) (fused []*indexed, scores map[string]float64) {
 	matched := make(map[string]struct{}, len(keyword))
 	for _, candidate := range keyword {
 		matched[candidate.entry.descriptor.Name] = struct{}{}
@@ -195,8 +195,8 @@ func (c *Catalog) fuse(
 		func(entry *indexed) string { return entry.descriptor.Name },
 	)
 
-	scores := rankfusion.ReciprocalTiers(RRFK, keywordTiers, vectorTiers)
-	fused := make([]*indexed, 0, len(scores))
+	scores = rankfusion.ReciprocalTiers(RRFK, keywordTiers, vectorTiers)
+	fused = make([]*indexed, 0, len(scores))
 	for name := range scores {
 		if _, ok := matched[name]; !ok && q.Semantic.Similarity[name] < q.Semantic.Floor {
 			continue

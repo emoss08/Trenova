@@ -56,7 +56,7 @@ func (r *repository) Insert(
 
 func (r *repository) Settle(
 	ctx context.Context,
-	req agentsuggestionports.SettleAgentSuggestionRow,
+	req *agentsuggestionports.SettleAgentSuggestionRow,
 ) (*agentsuggestion.Suggestion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentsuggestion.Suggestion, error) {
 		cols := agentsuggestioncol.SuggestionColumns

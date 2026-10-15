@@ -31,8 +31,11 @@ type SettleAgentSuggestionRow struct {
 }
 
 type AgentSuggestionRepository interface {
-	Insert(ctx context.Context, entity *agentsuggestion.Suggestion) (*agentsuggestion.Suggestion, error)
-	Settle(ctx context.Context, req SettleAgentSuggestionRow) (*agentsuggestion.Suggestion, error)
+	Insert(
+		ctx context.Context,
+		entity *agentsuggestion.Suggestion,
+	) (*agentsuggestion.Suggestion, error)
+	Settle(ctx context.Context, req *SettleAgentSuggestionRow) (*agentsuggestion.Suggestion, error)
 }
 
 type AgentSuggestionService interface {

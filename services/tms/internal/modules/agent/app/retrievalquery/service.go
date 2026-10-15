@@ -179,8 +179,8 @@ func (s *Service) storeShared(
 	}
 }
 
-func sharedKey(tenant pagination.TenantInfo, key queryKey) agentports.QueryVectorCacheKey {
-	return agentports.QueryVectorCacheKey{
+func sharedKey(tenant pagination.TenantInfo, key queryKey) *agentports.QueryVectorCacheKey {
+	return &agentports.QueryVectorCacheKey{
 		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
 		ModelKey:   key.modelKey,
 		TextHash:   key.textHash,

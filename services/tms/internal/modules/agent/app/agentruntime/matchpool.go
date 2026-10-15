@@ -153,7 +153,7 @@ func (p *matchPool) permitsWithin(matches []agenttoolcatalog.Match, limit int) b
 func (p *matchPool) delegateHolding(
 	currentID pulid.ID,
 	ranked []agenttoolcatalog.Match,
-) (*agentdefinition.Definition, []string) {
+) (asked *agentdefinition.Definition, delegated []string) {
 	if currentID.IsNil() || len(ranked) == 0 {
 		return nil, nil
 	}
@@ -203,7 +203,8 @@ func (s *Service) mayEmbedMatch(ctx context.Context, actor *permissionports.Requ
 		Cost: 1,
 	}})
 	if err != nil {
-		s.logger.Warn("could not check how often this person's questions were matched; embedding anyway",
+		s.logger.Warn(
+			"could not check how often this person's questions were matched; embedding anyway",
 			zap.Error(err),
 		)
 

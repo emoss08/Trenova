@@ -202,9 +202,6 @@ func (s *Service) boostForContext(
 }
 
 func matchContextResources(kinds []string) (map[permission.Resource]struct{}, error) {
-	if len(kinds) == 0 {
-		return nil, nil
-	}
 	if len(kinds) > agentports.MaxAgentMatchContextKinds {
 		return nil, errortypes.NewValidationError(
 			"contextKinds",

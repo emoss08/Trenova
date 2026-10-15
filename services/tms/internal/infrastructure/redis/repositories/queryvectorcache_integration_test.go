@@ -25,8 +25,8 @@ func setupQueryVectorCache(t *testing.T) *queryVectorCache {
 	return &queryVectorCache{client: client, l: zap.NewNop()}
 }
 
-func queryVectorKey() agentports.QueryVectorCacheKey {
-	return agentports.QueryVectorCacheKey{
+func queryVectorKey() *agentports.QueryVectorCacheKey {
+	return &agentports.QueryVectorCacheKey{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		ModelKey:   "nomic-embed-text",
 		TextHash:   "abc123",

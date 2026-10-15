@@ -95,7 +95,7 @@ func (s *Service) SettleMine(
 		)
 	}
 
-	return s.repo.Settle(ctx, agentsuggestionports.SettleAgentSuggestionRow{
+	return s.repo.Settle(ctx, &agentsuggestionports.SettleAgentSuggestionRow{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 		UserID:     actor.UserID,
@@ -113,10 +113,13 @@ func (s *Service) requireAgents(
 		ids = append(ids, req.CurrentAgentID)
 	}
 
-	found, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: req.TenantInfo,
-	})
+	found, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -145,7 +148,7 @@ func (s *Service) requireAgents(
 		)
 	}
 	if req.CurrentAgentID.IsNotNil() {
-		if _, ok := known[req.CurrentAgentID]; !ok {
+		if _, listed := known[req.CurrentAgentID]; !listed {
 			return errortypes.NewValidationError(
 				"currentAgentId",
 				errortypes.ErrInvalid,

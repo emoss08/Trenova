@@ -28,27 +28,27 @@ func newMemorySharedVectors() *memorySharedVectors {
 
 func (m *memorySharedVectors) Get(
 	_ context.Context,
-	key agentports.QueryVectorCacheKey,
+	key *agentports.QueryVectorCacheKey,
 ) (agentports.QueryVector, bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.failGet {
 		return agentports.QueryVector{}, false, errors.New("redis is down")
 	}
-	vector, ok := m.vectors[key]
+	vector, ok := m.vectors[*key]
 
 	return vector, ok, nil
 }
 
 func (m *memorySharedVectors) Set(
 	_ context.Context,
-	key agentports.QueryVectorCacheKey,
+	key *agentports.QueryVectorCacheKey,
 	vector agentports.QueryVector,
 	ttl time.Duration,
 ) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.vectors[key] = vector
+	m.vectors[*key] = vector
 	m.ttls = append(m.ttls, ttl)
 
 	return nil
@@ -112,7 +112,7 @@ func TestVectorize_IgnoresASharedVectorOfTheWrongSize(t *testing.T) {
 	repo := newFakeRepository(activeSettings(tenant))
 	service := sharedVectorizer(repo, embeddings, shared)
 	text := QueryText("chase the shipper")
-	shared.vectors[sharedKey(tenant, queryKey{
+	shared.vectors[*sharedKey(tenant, queryKey{
 		organizationID: tenant.OrgID,
 		businessUnitID: tenant.BuID,
 		modelKey:       testModelKey,

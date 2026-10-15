@@ -284,7 +284,9 @@ func (r *repository) UnkeyedModels(
 		args.FromHour = req.FromHour
 
 		models := make([]string, 0, 8)
-		if err := r.db.DBForContext(ctx).NewRaw(unkeyedModelsSQL, &args).Scan(ctx, &models); err != nil {
+		if err := r.db.DBForContext(ctx).
+			NewRaw(unkeyedModelsSQL, &args).
+			Scan(ctx, &models); err != nil {
 			r.l.Error("failed to list unkeyed ai models", zap.Error(err))
 			return nil, fmt.Errorf("list unkeyed ai models: %w", err)
 		}
@@ -688,7 +690,7 @@ type suggestionScan struct {
 
 func (r *repository) Suggestions(
 	ctx context.Context,
-	req aianalyticsports.SuggestionRequest,
+	req *aianalyticsports.SuggestionRequest,
 ) ([]aianalyticsports.SuggestionRow, error) {
 	args := filterArgs(req.Filter)
 	args.Pending = req.PendingSince

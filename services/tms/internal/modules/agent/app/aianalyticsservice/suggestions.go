@@ -40,7 +40,10 @@ func buildSuggestions(data *readings) *aianalyticsports.SuggestionStats {
 		if a.Suggested != b.Suggested {
 			return cmp.Compare(b.Suggested, a.Suggested)
 		}
-		if byName := strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)); byName != 0 {
+		if byName := strings.Compare(
+			strings.ToLower(a.Name),
+			strings.ToLower(b.Name),
+		); byName != 0 {
 			return byName
 		}
 

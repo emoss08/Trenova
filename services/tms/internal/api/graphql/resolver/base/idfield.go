@@ -8,7 +8,11 @@ import (
 func ParseIDField(field, raw string) (pulid.ID, error) {
 	id, err := pulid.MustParse(raw)
 	if err != nil {
-		return pulid.Nil, errortypes.NewValidationError(field, errortypes.ErrInvalid, "Invalid identifier")
+		return pulid.Nil, errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"Invalid identifier",
+		)
 	}
 
 	return id, nil

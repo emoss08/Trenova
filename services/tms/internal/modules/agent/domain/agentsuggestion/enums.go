@@ -69,12 +69,7 @@ func (o Outcome) IsValid() bool {
 func (o Outcome) String() string { return string(o) }
 
 func (o Outcome) Settles() bool {
-	switch o {
-	case OutcomeSwitched, OutcomeSentThrough, OutcomeKept, OutcomePassedOver:
-		return true
-	default:
-		return false
-	}
+	return o.IsValid() && !o.Opens()
 }
 
 func (o Outcome) Opens() bool {

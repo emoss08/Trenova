@@ -53,15 +53,18 @@ func OtherUsableAgents(
 	out := make([]*agentdefinition.Definition, 0, otherAgentsPage)
 	seen := make(map[pulid.ID]struct{}, otherAgentsPage)
 	for offset := 0; offset < maxOtherAgents; {
-		result, listErr := req.Definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: req.Actor.TenantInfo(),
-				Pagination: pagination.Info{Limit: otherAgentsPage, Offset: offset},
+		result, listErr := req.Definitions.List(
+			ctx,
+			&agentdefinitionports.ListAgentDefinitionRequest{
+				Filter: &pagination.QueryOptions{
+					TenantInfo: req.Actor.TenantInfo(),
+					Pagination: pagination.Info{Limit: otherAgentsPage, Offset: offset},
+				},
+				EnabledOnly: true,
+				ChatOnly:    true,
+				Audience:    usable.Audience(),
 			},
-			EnabledOnly: true,
-			ChatOnly:    true,
-			Audience:    usable.Audience(),
-		})
+		)
 		if listErr != nil {
 			return nil, fmt.Errorf("list the agents the person may use: %w", listErr)
 		}

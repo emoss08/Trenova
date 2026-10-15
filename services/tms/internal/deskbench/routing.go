@@ -199,7 +199,11 @@ func (b *Bench) Route(
 	return results, nil
 }
 
-func (b *Bench) routeOne(ctx context.Context, session *Session, routing *RoutingCase) *RoutingResult {
+func (b *Bench) routeOne(
+	ctx context.Context,
+	session *Session,
+	routing *RoutingCase,
+) *RoutingResult {
 	result := &RoutingResult{
 		Case:   routing.Name,
 		Ask:    routing.Ask,
@@ -264,20 +268,29 @@ func RoutingPasses(
 				return true
 			}
 		default:
-			switch found.Outcome {
-			case agentsuggestion.MatchBetterAgent:
-				if agentNamed(found.Agent, option) {
-					return true
-				}
-			case agentsuggestion.MatchCurrentAgent:
-				if agentNamed(from, option) {
-					return true
-				}
+			if agentNamed(namedAgent(from, found), option) {
+				return true
 			}
 		}
 	}
 
 	return false
+}
+
+func namedAgent(
+	from *agentdefinition.Definition,
+	found *agentports.AgentMatch,
+) *agentdefinition.Definition {
+	switch found.Outcome {
+	case agentsuggestion.MatchBetterAgent:
+		return found.Agent
+	case agentsuggestion.MatchCurrentAgent:
+		return from
+	case agentsuggestion.MatchNoAgent, agentsuggestion.MatchNone:
+		return nil
+	}
+
+	return nil
 }
 
 func agentNamed(definition *agentdefinition.Definition, ref string) bool {
@@ -391,7 +404,7 @@ func RenderRouting(r, baseline *RoutingReport) string {
 			if result.Passed {
 				word = "now passes"
 			}
-			changed = append(changed, fmt.Sprintf("- `%s` %s", result.Case, word))
+			changed = append(changed, fmt.Sprintf("- %#q %s", result.Case, word))
 		}
 		if len(changed) > 0 {
 			slices.Sort(changed)
