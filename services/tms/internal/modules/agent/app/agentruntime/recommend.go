@@ -173,21 +173,29 @@ func bestCandidate(
 		return nil
 	}
 
-	slices.SortStableFunc(candidates, compareCandidates)
+	best := ranked[0]
+	holders := make([]recommendationCandidate, 0, len(candidates))
+	for idx := range candidates {
+		if !slices.Contains(candidates[idx].matched, best) {
+			continue
+		}
+		if candidates[idx].current {
+			return &candidates[idx]
+		}
+		holders = append(holders, candidates[idx])
+	}
+	if len(holders) == 0 {
+		return nil
+	}
 
-	return &candidates[0]
+	slices.SortStableFunc(holders, compareCandidates)
+
+	return &holders[0]
 }
 
 func compareCandidates(a, b recommendationCandidate) int {
 	if a.score != b.score {
 		return cmp.Compare(b.score, a.score)
-	}
-	if a.current != b.current {
-		if a.current {
-			return -1
-		}
-
-		return 1
 	}
 	if a.usable != b.usable {
 		return cmp.Compare(a.usable, b.usable)

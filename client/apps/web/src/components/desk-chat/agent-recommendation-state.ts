@@ -38,20 +38,13 @@ export function recommendationQueryText(draft: string): string | null {
 
 /**
  * Whether a match is worth offering beside the composer: it names an agent
- * other than the one the question would go to now, and the person has not
- * already said to keep theirs over that agent.
+ * other than the one the question would go to now.
  */
 export function offersRecommendation(
   recommendation: AgentRecommendation | null,
   agentId: string | null,
-  keptOverId: string | null,
 ): recommendation is AgentRecommendation {
-  return (
-    recommendation !== null &&
-    !recommendation.current &&
-    recommendation.agent.id !== agentId &&
-    recommendation.agent.id !== keptOverId
-  );
+  return recommendation !== null && !recommendation.current && recommendation.agent.id !== agentId;
 }
 
 /**
@@ -69,7 +62,7 @@ export function agentToAsk({
   recommendation: AgentRecommendation | null;
   chosen: boolean;
 }): AgentChoice {
-  if (chosen || !offersRecommendation(recommendation, agent.id, null)) {
+  if (chosen || !offersRecommendation(recommendation, agent.id)) {
     return agent;
   }
 

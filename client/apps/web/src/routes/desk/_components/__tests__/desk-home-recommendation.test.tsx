@@ -197,6 +197,42 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
   });
 
+  it("suggests nothing more once the person switched, however the question grows", async () => {
+    const customerService = agentNamed("agdef_cs", "Customer service");
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    fireEvent.click(await screen.findByRole("button", { name: "Switch" }, { timeout: 3000 }));
+    state.recommend = () =>
+      Promise.resolve({ agent: customerService, current: false, tools: ["draft_reply"] });
+    const asked = state.asked.length;
+    fireEvent.change(box, { target: { value: `${QUESTION} Then email the customer.` } });
+    await new Promise((settle) => setTimeout(settle, 1000));
+
+    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    expect(state.asked).toHaveLength(asked);
+    pressEnter(box);
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0]?.[0]).toBe(billing.id);
+  });
+
+  it("suggests again for the next question once the box is cleared", async () => {
+    renderHome(vi.fn());
+
+    const box = await type(QUESTION);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
+    );
+    expect(screen.queryByText(/has the tools for this/)).toBeNull();
+    fireEvent.change(box, { target: { value: "" } });
+    fireEvent.change(box, { target: { value: QUESTION } });
+
+    expect(
+      await screen.findByText(/has the tools for this/, {}, { timeout: 3000 }),
+    ).toHaveTextContent("Billing assistant has the tools for this");
+  });
+
   it("asks the agent already chosen when no agent fits better", async () => {
     state.recommend = () => Promise.resolve(null);
     const onStart = vi.fn();
