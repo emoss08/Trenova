@@ -15,7 +15,7 @@ const (
 var (
 	pemBlockRe  = regexp.MustCompile(`(?s)-{5}BEGIN [A-Z0-9 ]+-{5}.*?-{5}END [A-Z0-9 ]+-{5}`)
 	secretLabel = regexp.MustCompile(
-		`(?i)\b(password|passphrase|pass\s*word|pwd|passcode|secret|private\s+key|api\s+key|access\s+key|token|shared\s+key)(s?)\b(\s*(?:is|:|=|-)?\s*)([^\s,;]+)`,
+		`(?i)\b(password|passphrase|pass\s*word|pwd|passcode|secret|private\s+key|api\s+key|access\s+key|token|shared\s+key)(s?)\b(\s*(?:is|:|=|-)?\s*)("[^"\r\n]*"|“[^”\r\n]*”|[^\s,;]+)`,
 	)
 )
 
@@ -43,7 +43,7 @@ func redactInterchangeSecurity(value string) string {
 			continue
 		}
 		parts := strings.SplitN(value[index:], string(separator), 6)
-		if len(parts) < 6 || !isQualifier(parts[1]) || !isQualifier(parts[3]) {
+		if !isInterchangeHeader(parts) {
 			builder.WriteString(value[index : index+3])
 			value = value[index+3:]
 			continue
@@ -56,8 +56,25 @@ func redactInterchangeSecurity(value string) string {
 	}
 }
 
+func isInterchangeHeader(parts []string) bool {
+	if len(parts) < 6 {
+		return false
+	}
+	for _, element := range parts[1:5] {
+		if strings.ContainsAny(element, "\r\n") || strings.Contains(element, "ISA") {
+			return false
+		}
+	}
+	return isQualifier(parts[1]) && isQualifier(parts[3]) &&
+		isSecurityElement(parts[2]) && isSecurityElement(parts[4])
+}
+
 func isQualifier(element string) bool {
 	return len(strings.TrimSpace(element)) == 2
+}
+
+func isSecurityElement(element string) bool {
+	return len(strings.TrimSpace(element)) <= isaSecurityPadding
 }
 
 func maskElement(qualifier, element string) string {

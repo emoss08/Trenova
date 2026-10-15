@@ -31,6 +31,8 @@ func TestRedactSecrets_ChangesNothingItAlreadyRedacted(t *testing.T) {
 		"cert: -----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----",
 		"ISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME",
 		"Trading Partner Code: ACMERETAIL",
+		`the passphrase: "correct horse battery staple" is sent separately`,
+		"ISA*AA*guide text\nISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME",
 	} {
 		once := RedactSecrets(text)
 		assert.Equal(t, once, RedactSecrets(once), text)
@@ -63,4 +65,29 @@ func TestRedactSecrets_FindsTheInterchangeAfterTextThatOnlyLooksLikeOne(t *testi
 	)
 	assert.Equal(t, "ISA/a/b/c/d/e/f", RedactSecrets("ISA/a/b/c/d/e/f"),
 		"text whose qualifiers are not two characters is not an interchange")
+}
+
+func TestRedactSecrets_NeverLetsTextThatLooksLikeAnInterchangeSwallowARealOne(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t,
+		"ISA*AA*guide text\nISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
+		RedactSecrets("ISA*AA*guide text\nISA*01*LOGIN     *06*PASSWORD12*ZZ*ACME"),
+	)
+	assert.Equal(t,
+		"ISA*AA*x ISA*01*XXXXXXXXXX*06*XXXXXXXXXX*ZZ*ACME",
+		RedactSecrets("ISA*AA*x ISA*01*LOGIN*06*PWD*ZZ*ACME"),
+	)
+}
+
+func TestRedactSecrets_RedactsAQuotedCredentialWhole(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, `the passphrase: [redacted] is sent separately`,
+		RedactSecrets(`the passphrase: "correct horse battery staple" is sent separately`))
+	assert.Equal(t, "Password: [redacted], then the AS2 ID ACMEAS2",
+		RedactSecrets("Password: “alpha beta”, then the AS2 ID ACMEAS2"))
+	assert.Equal(t, "Password: [redacted] for the test AS2 ID ACMEAS2",
+		RedactSecrets("Password: abc for the test AS2 ID ACMEAS2"),
+		"an unquoted value ends at the first space")
 }
