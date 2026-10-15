@@ -165,6 +165,7 @@ func factoringOptions() fx.Option {
 			factoringrepository.NewInvoiceStateRepository,
 			factoringrepository.NewSubmissionRepository,
 			factoringrepository.NewReserveEntryRepository,
+			factoringrepository.NewRemittanceRepository,
 			factoringrepository.NewTransportRepository,
 			factoringrepository.NewWatchtowerReader,
 			factoringcontract.NewRequester,
