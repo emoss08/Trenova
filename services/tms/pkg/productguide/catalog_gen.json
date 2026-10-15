@@ -1,5 +1,5 @@
 {
-  "version": "sha256:44bd89c6b966011e2b6360286c75a33608710b981f971125cd925f84d03f69c8",
+  "version": "sha256:28540fee6a130e7d18b5b41f5daa85c514f0357984b9b8e96b2d78563cf33a34",
   "modules": [
     {
       "id": "home",
@@ -10437,7 +10437,7 @@
       "summary": "The detention desk is the live board of every stop where a driver is currently on a dock. Each row shows the facility, customer and PRO number, the free-time clock, the customer notice deadline and the detention accruing. The strip across the top totals what is **Collectable now**, what is in the **Notice window**, what is **Uncollectable** and the **Longest wait**.\n\nOperations and billing staff use it to get customer notices out before their deadlines, since detention that needs notice cannot be defended in a dispute once the deadline passes, and to approve, dispute or waive the resulting charges. The terms behind each clock come from [Detention policies](/detention/configuration-files/detention-policies).",
       "requires": [
         {
-          "resource": "detention_policy",
+          "resource": "detention",
           "operation": "read"
         }
       ],
@@ -10544,7 +10544,7 @@
       "summary": "Detention intelligence looks back over settled detention and answers three questions: which facilities cost the most, which customers lose money on detention once driver pay is netted off, and where revenue is being forgiven through waivers. It is for billing managers, controllers and operations leads deciding which facilities to raise with customers and which contract terms to renegotiate.\n\nThe page opens with a ledger of what was **Billed**, paid out as **Driver pay**, **Forgiven** and **Kept**, and the **Net detention margin**. Below it are three panels: **Facility profiles**, **Customer margin** and **Waiver leakage**. Nothing on this page changes a charge; charges are worked on the [Detention desk](/detention/desk).",
       "requires": [
         {
-          "resource": "detention_policy",
+          "resource": "detention",
           "operation": "read"
         }
       ],
