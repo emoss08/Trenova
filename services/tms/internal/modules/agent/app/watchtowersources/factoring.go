@@ -26,6 +26,7 @@ const (
 	factoringSendFailedPrefix   = "send-failed:"
 	factoringUnfundedPrefix     = "unfunded:"
 	factoringChargebackPrefix   = "chargeback-due:"
+	factoringRemittancePrefix   = "remittance-exceptions:"
 	pathFactoringQueue          = "/billing/factoring"
 	FactoringReadyCriticalAfter = int64(3 * timeutils.SecondsPerDay)
 	FactoringNoaCriticalWithin  = int64(7 * timeutils.SecondsPerDay)
@@ -36,16 +37,23 @@ const (
 )
 
 type FactoringSource struct {
-	states factoringports.InvoiceStateRepository
-	reader factoringports.WatchtowerReader
-	now    func() int64
+	states      factoringports.InvoiceStateRepository
+	reader      factoringports.WatchtowerReader
+	remittances factoringports.RemittanceRepository
+	now         func() int64
 }
 
 func NewFactoringSource(
 	states factoringports.InvoiceStateRepository,
 	reader factoringports.WatchtowerReader,
+	remittances factoringports.RemittanceRepository,
 ) watchtowerports.WatchtowerSource {
-	return &FactoringSource{states: states, reader: reader, now: timeutils.NowUnix}
+	return &FactoringSource{
+		states:      states,
+		reader:      reader,
+		remittances: remittances,
+		now:         timeutils.NowUnix,
+	}
 }
 
 func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.SourceFactoring }
@@ -58,6 +66,7 @@ type factoringSnapshot struct {
 	failed      []*factoringports.FailedSubmission
 	unfunded    []*factoringports.UnfundedSubmission
 	chargebacks []*factoringports.ChargebackDue
+	remittances []*factoringports.OpenRemittance
 }
 
 func (s *FactoringSource) Snapshot(
@@ -147,6 +156,12 @@ func (s *FactoringSource) read(
 	); err != nil {
 		return nil, err
 	}
+	if snap.remittances, err = s.remittances.ListOpen(
+		ctx,
+		&factoringports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: snapshotLimit},
+	); err != nil {
+		return nil, err
+	}
 	return snap, nil
 }
 
@@ -158,7 +173,7 @@ func (snap *factoringSnapshot) describe(
 		[]watchtowerports.WatchtowerItemInput,
 		0,
 		len(snap.ready)+len(snap.missing)+len(snap.expiring)+len(snap.failed)+
-			len(snap.unfunded)+len(snap.chargebacks),
+			len(snap.unfunded)+len(snap.chargebacks)+len(snap.remittances),
 	)
 	keep := func(item watchtowerports.WatchtowerItemInput, open bool) {
 		if open {
@@ -189,6 +204,9 @@ func (snap *factoringSnapshot) describe(
 	}
 	for _, row := range snap.chargebacks {
 		keep(DescribeFactoringChargebackDue(tenant, row, now))
+	}
+	for _, row := range snap.remittances {
+		keep(DescribeFactoringRemittanceExceptions(tenant, row))
 	}
 	return items
 }
@@ -529,4 +547,52 @@ func remainingLabel(seconds int64) string {
 		return "within a day"
 	}
 	return "in " + strconv.FormatInt(days, 10) + " days"
+}
+
+func FactoringRemittanceSourceID(remittanceID pulid.ID) string {
+	return factoringRemittancePrefix + remittanceID.String()
+}
+
+func DescribeFactoringRemittanceExceptions(
+	tenant pagination.TenantInfo,
+	row *factoringports.OpenRemittance,
+) (watchtowerports.WatchtowerItemInput, bool) {
+	if row == nil || row.RemittanceID.IsNil() {
+		return watchtowerports.WatchtowerItemInput{}, false
+	}
+	needsMapping := row.Status == factoring.RemittanceStatusNeedsMapping
+	if !needsMapping && (row.ExceptionCount <= 0 || !row.Status.CanEditLines()) {
+		return watchtowerports.WatchtowerItemInput{}, false
+	}
+
+	factorName := stringutils.FirstNonEmpty(row.FactorName, "the factor")
+	fileName := stringutils.FirstNonEmpty(row.FileName, "A remittance")
+	title := fileName + " from " + factorName + " has lines to resolve"
+	summary := strconv.Itoa(row.ExceptionCount) + " lines could not be matched on their own"
+	if row.MatchedCount > 0 {
+		summary += " and " + strconv.Itoa(row.MatchedCount) + " matched lines wait to be applied"
+	}
+	summary += ". Match or ignore each exception, then apply the remittance."
+	if needsMapping {
+		title = fileName + " from " + factorName + " needs its columns mapped"
+		summary = "The file's headers did not say which columns hold the invoice and the " +
+			"amounts. Map them once and the factor's next file is read on its own."
+	}
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceFactoring,
+		SourceID:    FactoringRemittanceSourceID(row.RemittanceID),
+		Severity:    watchtower.SeverityWarning,
+		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
+		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		SubjectType: agent.SubjectFactoringRemittance,
+		SubjectID:   row.RemittanceID,
+		Path: factoringRecordPath(
+			"factoring_remittance",
+			row.RemittanceID,
+			pathFactoringQueue,
+		),
+		OccurredAt: row.CreatedAt,
+	}, true
 }

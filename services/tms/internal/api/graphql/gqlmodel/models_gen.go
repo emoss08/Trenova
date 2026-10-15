@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -2505,6 +2506,14 @@ type CreateDocumentTemplateVersionInput struct {
 	Content         *DocumentTemplateVersionInput `json:"content,omitempty"`
 }
 
+type CreateFactoringRemittanceInput struct {
+	FactoringCompanyID string `json:"factoringCompanyId"`
+	// Funding unless the report is of reserve releases, rejections or chargebacks.
+	DefaultKind *factoring.RemittanceLineKind `json:"defaultKind,omitempty"`
+	// The day the factor sent the report.
+	RemittedOn *int `json:"remittedOn,omitempty"`
+}
+
 type CreateFuelPurchaseImportInput struct {
 	Provider          fuelpurchase.CardProvider `json:"provider"`
 	DefaultFuelType   *domaintypes.IFTAFuelType `json:"defaultFuelType,omitempty"`
@@ -3393,6 +3402,12 @@ type DetentionWaiverLeakageStat struct {
 	WaiverCount   int    `json:"waiverCount"`
 	ApproverCount int    `json:"approverCount"`
 	WaivedAmount  string `json:"waivedAmount"`
+}
+
+type DiscardFactoringRemittanceInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Reason  string `json:"reason"`
 }
 
 type DismissAccountingDriftInput struct {
@@ -4531,6 +4546,58 @@ type FactoringNoaListInput struct {
 	CustomerID         *string                   `json:"customerId,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
+}
+
+// Which column of the file holds a field.
+type FactoringRemittanceColumn struct {
+	Field FactoringRemittanceField `json:"field"`
+	// The column's position, counting from zero.
+	Column int `json:"column"`
+}
+
+type FactoringRemittanceColumnInput struct {
+	Field  FactoringRemittanceField `json:"field"`
+	Column int                      `json:"column"`
+}
+
+type FactoringRemittanceConnection struct {
+	Edges      []*FactoringRemittanceEdge `json:"edges"`
+	PageInfo   *PageInfo                  `json:"pageInfo"`
+	TotalCount *int                       `json:"totalCount,omitempty"`
+}
+
+type FactoringRemittanceEdge struct {
+	Node   *factoring.Remittance `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type FactoringRemittanceLineConnection struct {
+	Edges      []*FactoringRemittanceLineEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+}
+
+type FactoringRemittanceLineEdge struct {
+	Node   *factoring.RemittanceLine `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
+type FactoringRemittanceLineListInput struct {
+	Table         *DataTableConnectionInput         `json:"table"`
+	RemittanceID  string                            `json:"remittanceId"`
+	MatchStatuses []factoring.RemittanceMatchStatus `json:"matchStatuses,omitempty"`
+}
+
+type FactoringRemittanceListInput struct {
+	Table              *DataTableConnectionInput    `json:"table"`
+	FactoringCompanyID *string                      `json:"factoringCompanyId,omitempty"`
+	InboundMessageID   *string                      `json:"inboundMessageId,omitempty"`
+	Statuses           []factoring.RemittanceStatus `json:"statuses,omitempty"`
+}
+
+type FactoringRemittanceVersionInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
 }
 
 type FactoringReserveEntryConnection struct {
@@ -9654,6 +9721,17 @@ type SortFieldInput struct {
 	Direction string `json:"direction"`
 }
 
+type StageFactoringRemittanceInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// The file, uploaded with resource type factoring_remittance and this remittance's id.
+	DocumentID string `json:"documentId"`
+	// Which column holds each field; omitted to use the factor's saved layout or the standard headers. A mapping that reads is saved for the factor.
+	Mapping     []*FactoringRemittanceColumnInput `json:"mapping,omitempty"`
+	DefaultKind *factoring.RemittanceLineKind     `json:"defaultKind,omitempty"`
+	RemittedOn  *int                              `json:"remittedOn,omitempty"`
+}
+
 type StageFuelPurchaseImportInput struct {
 	ID string `json:"id"`
 	// The uploaded statement. The document must have been uploaded against this
@@ -10403,6 +10481,20 @@ type UpdateFactoringCompanyInput struct {
 	ID               string                 `json:"id"`
 	Version          int                    `json:"version"`
 	FactoringCompany *FactoringCompanyInput `json:"factoringCompany"`
+}
+
+type UpdateFactoringRemittanceLineInput struct {
+	RemittanceID string `json:"remittanceId"`
+	// The remittance's version.
+	Version int                                 `json:"version"`
+	LineID  string                              `json:"lineId"`
+	Action  factoringports.RemittanceLineAction `json:"action"`
+	// The schedule item, for Match.
+	ItemID *string `json:"itemId,omitempty"`
+	// What the line records, for SetKind.
+	Kind *factoring.RemittanceLineKind `json:"kind,omitempty"`
+	// Why the line is not booked, for Ignore.
+	Reason *string `json:"reason,omitempty"`
 }
 
 type UpdateFuelIndexPriceInput struct {
@@ -12369,6 +12461,78 @@ func (e *FactoringInvoiceEffect) UnmarshalJSON(b []byte) error {
 }
 
 func (e FactoringInvoiceEffect) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// What a remittance file's column holds.
+type FactoringRemittanceField string
+
+const (
+	FactoringRemittanceFieldInvoiceNumber   FactoringRemittanceField = "InvoiceNumber"
+	FactoringRemittanceFieldFactorReference FactoringRemittanceField = "FactorReference"
+	FactoringRemittanceFieldDebtor          FactoringRemittanceField = "Debtor"
+	FactoringRemittanceFieldKind            FactoringRemittanceField = "Kind"
+	FactoringRemittanceFieldFace            FactoringRemittanceField = "Face"
+	FactoringRemittanceFieldAdvance         FactoringRemittanceField = "Advance"
+	FactoringRemittanceFieldFee             FactoringRemittanceField = "Fee"
+	FactoringRemittanceFieldReserve         FactoringRemittanceField = "Reserve"
+	FactoringRemittanceFieldCash            FactoringRemittanceField = "Cash"
+	FactoringRemittanceFieldDate            FactoringRemittanceField = "Date"
+)
+
+var AllFactoringRemittanceField = []FactoringRemittanceField{
+	FactoringRemittanceFieldInvoiceNumber,
+	FactoringRemittanceFieldFactorReference,
+	FactoringRemittanceFieldDebtor,
+	FactoringRemittanceFieldKind,
+	FactoringRemittanceFieldFace,
+	FactoringRemittanceFieldAdvance,
+	FactoringRemittanceFieldFee,
+	FactoringRemittanceFieldReserve,
+	FactoringRemittanceFieldCash,
+	FactoringRemittanceFieldDate,
+}
+
+func (e FactoringRemittanceField) IsValid() bool {
+	switch e {
+	case FactoringRemittanceFieldInvoiceNumber, FactoringRemittanceFieldFactorReference, FactoringRemittanceFieldDebtor, FactoringRemittanceFieldKind, FactoringRemittanceFieldFace, FactoringRemittanceFieldAdvance, FactoringRemittanceFieldFee, FactoringRemittanceFieldReserve, FactoringRemittanceFieldCash, FactoringRemittanceFieldDate:
+		return true
+	}
+	return false
+}
+
+func (e FactoringRemittanceField) String() string {
+	return string(e)
+}
+
+func (e *FactoringRemittanceField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FactoringRemittanceField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FactoringRemittanceField", str)
+	}
+	return nil
+}
+
+func (e FactoringRemittanceField) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FactoringRemittanceField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FactoringRemittanceField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

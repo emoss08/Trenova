@@ -304,3 +304,23 @@ func (a *Activities) InboundMessageRetentionActivity(
 
 	return result, nil
 }
+
+// IngestFactorRemittanceActivity opens a remittance for each file a factor's
+// remittance mail carries.
+func (a *Activities) IngestFactorRemittanceActivity(
+	ctx context.Context,
+	payload *ProcessInboundMessagePayload,
+) (*inboundmessageservice.IngestRemittancesResult, error) {
+	result, err := a.inbound.IngestRemittances(ctx, payload.MessageID, pagination.TenantInfo{
+		OrgID: payload.OrganizationID,
+		BuID:  payload.BusinessUnitID,
+	})
+	if err != nil {
+		a.l.Error("failed to open a factor remittance from a message",
+			zap.String("messageId", payload.MessageID.String()), zap.Error(err))
+
+		return nil, err
+	}
+
+	return result, nil
+}

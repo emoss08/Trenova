@@ -1,5 +1,6 @@
 import {
   FACTORING_INVOICE_STATE_KEY,
+  FACTORING_REMITTANCE_KEY,
   FACTORING_SUBMISSION_KEY,
   fetchFactoringAgreementOwner,
   fetchFactoringCompany,
@@ -19,7 +20,17 @@ import {
   type FactoringReserveAction,
   type FactoringReserveEntryFilter,
 } from "@/lib/graphql/factoring";
+import {
+  fetchFactoringRemittance,
+  fetchFactoringRemittancePlan,
+  listFactoringRemittanceLines,
+  listOpenFactoringSchedules,
+  listFactoringRemittances,
+  type FactoringRemittanceFilter,
+} from "@/lib/graphql/factoring-remittance";
 import type {
+  FactoringRemittanceMatchStatus,
+  FactoringRemittanceVersionInput,
   FactoringReserveMovementInput,
   RecordFactoringFundingInput,
 } from "@trenova/graphql/generated/graphql";
@@ -87,6 +98,31 @@ export const factoring = createQueryKeys("factoring", {
     queryKey: ["reserve-entries", filter],
     queryFn: async ({ signal }: QueryContext) => listFactoringReserveEntries(filter, { signal }),
   }),
+  remittances: (filter: FactoringRemittanceFilter) => ({
+    queryKey: ["remittances", filter],
+    queryFn: async ({ signal }: QueryContext) => listFactoringRemittances(filter, { signal }),
+  }),
+  remittance: (remittanceId: string) => ({
+    queryKey: ["remittance", remittanceId],
+    queryFn: async ({ signal }: QueryContext) => fetchFactoringRemittance(remittanceId, { signal }),
+  }),
+  remittanceLines: (
+    remittanceId: string,
+    matchStatuses: FactoringRemittanceMatchStatus[] | null,
+  ) => ({
+    queryKey: ["remittance-lines", remittanceId, matchStatuses ?? "all"],
+    queryFn: async ({ signal }: QueryContext) =>
+      listFactoringRemittanceLines(remittanceId, matchStatuses, { signal }),
+  }),
+  openSchedules: (factoringCompanyId: string) => ({
+    queryKey: ["open-schedules", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      listOpenFactoringSchedules(factoringCompanyId, { signal }),
+  }),
+  remittancePlan: (input: FactoringRemittanceVersionInput) => ({
+    queryKey: ["remittance-plan", input],
+    queryFn: async ({ signal }: QueryContext) => fetchFactoringRemittancePlan(input, { signal }),
+  }),
   company: (factoringCompanyId: string) => ({
     queryKey: ["company", factoringCompanyId],
     queryFn: async ({ signal }: QueryContext) =>
@@ -104,4 +140,5 @@ export function invalidateFactoringQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: factoring._def });
   void queryClient.invalidateQueries({ queryKey: [FACTORING_INVOICE_STATE_KEY] });
   void queryClient.invalidateQueries({ queryKey: [FACTORING_SUBMISSION_KEY] });
+  void queryClient.invalidateQueries({ queryKey: [FACTORING_REMITTANCE_KEY] });
 }

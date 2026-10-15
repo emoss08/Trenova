@@ -139,6 +139,7 @@ func (s *LedgerService) planRelease(
 		date:      req.OccurredOn,
 		dateField: "releasedOn",
 		memo:      req.Reason,
+		remitLine: req.RemittanceLineID,
 		actor:     actor,
 	})
 }
@@ -179,6 +180,7 @@ func (s *LedgerService) planChargeback(
 		date:      req.OccurredOn,
 		dateField: "chargedBackOn",
 		memo:      item.ChargebackReason,
+		remitLine: req.RemittanceLineID,
 		actor:     actor,
 	})
 }
@@ -229,6 +231,7 @@ func (s *LedgerService) planReversal(
 		dateField: "reversedOn",
 		memo:      req.Reason,
 		reverses:  history.open.ID,
+		remitLine: req.RemittanceLineID,
 		actor:     actor,
 	})
 }

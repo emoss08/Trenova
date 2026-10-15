@@ -1650,8 +1650,72 @@ entities:
       memo: { label: "Memo" }
       createdById: { label: "Booked By ID" }
       submissionItemId: { label: "Schedule Invoice ID" }
+      remittanceLineId: { label: "Remittance Line ID" }
     edges:
       factoringCompany: { label: "Factoring Company" }
       invoice: { label: Invoice }
       customer: { label: Customer }
       submission: { label: "Schedule" }
+
+  # A factor's funding or reserve report, read and matched to schedule items
+  # before its lines are booked through the factoring ledger.
+  factoring_remittance:
+    struct: factoring.Remittance
+    resource: factoring_remittance
+    label: Factoring Remittance
+    pluralLabel: Factoring Remittances
+    description: The funding and reserve reports factors sent, how far each was read, matched and booked
+    category: Billing
+    fields:
+      fileName: { label: "File Name" }
+      source: { label: "Source" }
+      sourceFormat: { label: "Format", enumLabels: { Csv: "CSV", Xlsx: "Excel", Pdf: "PDF" } }
+      status: { label: "Status", enumLabels: { NeedsMapping: "Needs Mapping", PartiallyApplied: "Partially Applied" } }
+      defaultKind: { label: "Report Of", enumLabels: { ReserveRelease: "Reserve Release" } }
+      remittedOn: { label: "Remitted On", type: epoch }
+      currencyCode: { label: "Currency" }
+      lineCount: { label: "Lines", format: count }
+      matchedCount: { label: "Matched Lines", format: count }
+      exceptionCount: { label: "Lines to Resolve", format: count }
+      appliedCount: { label: "Booked Lines", format: count }
+      totalCashMinor: { label: "Total Cash (Minor)" }
+      error: { label: "Error" }
+      stagedAt: { label: "Read At" }
+      appliedAt: { label: "Applied At" }
+      appliedById: { label: "Applied By ID" }
+      discardedAt: { label: "Discarded At" }
+      discardReason: { label: "Discard Reason" }
+      inboundMessageId: { label: "Inbound Message ID" }
+      documentId: { label: "Document ID" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+
+  # One row of a factor's remittance, with what it was matched to.
+  factoring_remittance_line:
+    struct: factoring.RemittanceLine
+    resource: factoring_remittance
+    label: Factoring Remittance Line
+    pluralLabel: Factoring Remittance Lines
+    description: Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to
+    category: Billing
+    fields:
+      remittanceId: { label: "Remittance ID" }
+      rowNumber: { label: "Row", type: int }
+      kind: { label: "Kind", enumLabels: { ReserveRelease: "Reserve Release" } }
+      invoiceNumber: { label: "Invoice Number" }
+      factorReference: { label: "Factor Reference" }
+      debtorName: { label: "Debtor" }
+      faceMinor: { label: "Invoice Amount (Minor)" }
+      advanceMinor: { label: "Advance (Minor)" }
+      feeMinor: { label: "Fee (Minor)" }
+      reserveMinor: { label: "Reserve (Minor)" }
+      cashMinor: { label: "Cash (Minor)" }
+      occurredOn: { label: "Occurred On", type: epoch }
+      matchStatus: { label: "Match Status" }
+      matchedBy: { label: "Matched By" }
+      submissionItemId: { label: "Schedule Invoice ID" }
+      score: { label: "Match Score", type: int }
+      reason: { label: "Match Reason" }
+      error: { label: "Error" }
+      ignoredReason: { label: "Ignored Reason" }
+      reserveEntryId: { label: "Reserve Entry ID" }

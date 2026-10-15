@@ -66,5 +66,8 @@ describe("aiUsageFeatureLabel", () => {
     expect(aiUsageFeatureLabel("AgentReflection", t)).toBe("Agents learning from their work");
     expect(aiUsageFeatureLabel("AgentDrafting", t)).toBe("Agent drafting");
     expect(aiUsageFeatureLabel("AccountingMapping", t)).toBe("Accounting mapping");
+    expect(aiUsageFeatureLabel("FactoringRemittanceExtract", t)).toBe(
+      "Factor remittance reading",
+    );
   });
 });

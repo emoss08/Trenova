@@ -1,9 +1,16 @@
 import type { FactoringVerdict } from "@trenova/graphql/generated/graphql";
 import { parseAsStringLiteral } from "nuqs";
 
-export const FACTORING_TABS = ["ready", "not-ready", "submitted", "funded", "schedules"] as const;
+export const FACTORING_TABS = [
+  "ready",
+  "not-ready",
+  "submitted",
+  "funded",
+  "schedules",
+  "remittances",
+] as const;
 export type FactoringTab = (typeof FACTORING_TABS)[number];
-export type FactoringQueueTab = Exclude<FactoringTab, "schedules">;
+export type FactoringQueueTab = Exclude<FactoringTab, "schedules" | "remittances">;
 
 export const factoringSearchParamsParser = {
   view: parseAsStringLiteral(FACTORING_TABS).withDefault("ready"),

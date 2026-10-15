@@ -61,6 +61,7 @@
   "Folder": "文件夹",
   "For your team only. Never printed.": "仅供您的团队使用。不会打印。",
   "From day": "起始天",
+  "Funding and reserve reports from this factor. Each is matched to its schedules and booked only when someone applies it.": "来自此保理公司的放款和保留金报告。每份报告都会与其清单匹配，并仅在有人应用后才入账。",
   "Funding days": "放款天数",
   "Funding days are required": "放款天数为必填项",
   "Funding days cannot be more than 60": "放款天数不得超过 60",
@@ -85,6 +86,7 @@
   "No agreements yet. Invoices assigned to this factor are not ready until one is active.": "尚无协议。转让给此保理公司的发票在有协议生效前均未就绪。",
   "No factoring companies yet": "尚无保理公司",
   "No notices yet. Draft one for each customer whose invoices you sell to this factor.": "尚无通知。请为每位将发票出售给此保理公司的客户起草一份。",
+  "No remittance from this factor yet. Import one, or forward the factor's emails to your inbox.": "此保理公司尚无汇款。请导入一份，或将保理公司的邮件转发到您的收件箱。",
   "Not attached": "不附加",
   "Not set up. Invoices for this factor can't be submitted until it is.": "尚未设置。完成设置前，无法提交此保理公司的发票。",
   "Notes cannot be longer than 2000 characters": "备注不得超过 2000 个字符",
@@ -131,6 +133,7 @@
   "The least the factor charges on one invoice.": "保理公司对单张发票收取的最低费用。",
   "The liability for what the factor advanced, until the customer pays.": "在客户付款前，对保理公司所预付款项的负债。",
   "The notices could not be loaded.": "无法加载通知。",
+  "The remittances could not be loaded.": "无法加载汇款。",
   "The reserve could not be loaded.": "无法加载保留金。",
   "The reserve the factor holds until the customer pays it.": "在客户付款前由保理公司持有的保留金。",
   "The server's public key from the factor, in known_hosts form. A server presenting any other key is refused.": "保理公司提供的服务器公钥，采用 known_hosts 格式。出示其他密钥的服务器将被拒绝。",
@@ -159,5 +162,6 @@
   "e.g., payments@factor.com": "例如：payments@factor.com",
   "sftp.factor.com": "sftp.factor.com",
   "ssh-ed25519 AAAA…": "ssh-ed25519 AAAA…",
-  "{0, plural, one {# business day} other {# business days}}": "{0, plural, one {# 个工作日} other {# 个工作日}}"
+  "{0, plural, one {# business day} other {# business days}}": "{0, plural, one {# 个工作日} other {# 个工作日}}",
+  "{0} · {1, plural, one {# line} other {# lines}}": "{0} · {1, plural, one {# 行} other {# 行}}"
 }

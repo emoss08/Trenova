@@ -1,0 +1,202 @@
+fragment FactoringRemittanceFields on FactoringRemittance {
+  id
+  factoringCompanyId
+  documentId
+  fileName
+  source
+  inboundMessageId
+  sourceFormat
+  status
+  defaultKind
+  remittedOn
+  currencyCode
+  mapping {
+    field
+    column
+  }
+  headers
+  unmappedHeaders
+  lineCount
+  matchedCount
+  exceptionCount
+  appliedCount
+  totalCashMinor
+  error
+  stagedAt
+  appliedAt
+  discardedAt
+  discardReason
+  version
+  createdAt
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+fragment FactoringRemittanceLineFields on FactoringRemittanceLine {
+  id
+  remittanceId
+  rowNumber
+  cells
+  kind
+  invoiceNumber
+  factorReference
+  debtorName
+  faceMinor
+  advanceMinor
+  feeMinor
+  reserveMinor
+  cashMinor
+  occurredOn
+  matchStatus
+  matchedBy
+  submissionItemId
+  matchedInvoiceNumber
+  matchedSubmissionId
+  score
+  reason
+  suggestions {
+    itemId
+    submissionId
+    invoiceNumber
+    score
+    reason
+  }
+  error
+  ignoredReason
+  reserveEntryId
+}
+
+query FactoringRemittances($input: FactoringRemittanceListInput!) {
+  factoringRemittances(input: $input) {
+    edges {
+      node {
+        ...FactoringRemittanceFields
+      }
+    }
+    totalCount
+  }
+}
+
+query FactoringRemittanceDetail($id: ID!) {
+  factoringRemittance(id: $id) {
+    ...FactoringRemittanceFields
+  }
+}
+
+query FactoringRemittanceLines($input: FactoringRemittanceLineListInput!) {
+  factoringRemittanceLines(input: $input) {
+    edges {
+      node {
+        ...FactoringRemittanceLineFields
+      }
+    }
+    totalCount
+  }
+}
+
+query FactoringRemittancePlan($input: FactoringRemittanceVersionInput!) {
+  factoringRemittancePlan(input: $input) {
+    remittanceId
+    fundedCount
+    rejectedCount
+    releasedCount
+    chargebackCount
+    leftOpenCount
+    advanceMinor
+    feeMinor
+    releasedMinor
+    chargebackMinor
+    lines {
+      lineId
+      rowNumber
+      kind
+      invoiceNumber
+      submissionId
+      itemId
+      cashMinor
+      movement {
+        ...FactoringPlannedMovementFields
+      }
+    }
+  }
+}
+
+mutation CreateFactoringRemittance($input: CreateFactoringRemittanceInput!) {
+  createFactoringRemittance(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+mutation StageFactoringRemittance($input: StageFactoringRemittanceInput!) {
+  stageFactoringRemittance(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+mutation RematchFactoringRemittance($input: FactoringRemittanceVersionInput!) {
+  rematchFactoringRemittance(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+mutation UpdateFactoringRemittanceLine($input: UpdateFactoringRemittanceLineInput!) {
+  updateFactoringRemittanceLine(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+mutation ApplyFactoringRemittance($input: FactoringRemittanceVersionInput!) {
+  applyFactoringRemittance(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+mutation DiscardFactoringRemittance($input: DiscardFactoringRemittanceInput!) {
+  discardFactoringRemittance(input: $input) {
+    ...FactoringRemittanceFields
+  }
+}
+
+query FactoringRemittanceTable(
+  $input: DataTableConnectionInput!
+  $factoringCompanyId: ID
+  $statuses: [FactoringRemittanceStatus!]
+  $includeTotalCount: Boolean = true
+) {
+  factoringRemittances(
+    input: { table: $input, factoringCompanyId: $factoringCompanyId, statuses: $statuses }
+  ) {
+    edges {
+      node {
+        id
+        factoringCompanyId
+        fileName
+        source
+        sourceFormat
+        status
+        defaultKind
+        remittedOn
+        currencyCode
+        lineCount
+        matchedCount
+        exceptionCount
+        appliedCount
+        totalCashMinor
+        error
+        createdAt
+        factoringCompany {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

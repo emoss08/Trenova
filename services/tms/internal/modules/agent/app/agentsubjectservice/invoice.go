@@ -16,6 +16,7 @@ const (
 	noteCustomerID = "customerId"
 	noteNumber     = "number"
 	noteStatus     = "status"
+	noteFileName   = "fileName"
 	noteResolution = "resolution"
 )
 

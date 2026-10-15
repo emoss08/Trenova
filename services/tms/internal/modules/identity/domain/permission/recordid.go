@@ -41,6 +41,7 @@ var recordIDPrefixes = map[Resource]string{
 	ResourceFactoringNoa:        "facnoa_",
 	ResourceFactoringSubmission: "facsub_",
 	ResourceFactoringReserve:    "facres_",
+	ResourceFactoringRemittance: "facrem_",
 	ResourceInvoiceRun:          "invrun_",
 	ResourceRateAgreement:       "rag_",
 	ResourceCustomerPayment:     "cpay_",

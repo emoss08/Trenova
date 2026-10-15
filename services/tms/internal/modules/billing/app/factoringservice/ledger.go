@@ -224,19 +224,25 @@ func (s *LedgerService) finish(
 	comment string,
 	invoiceIDs []pulid.ID,
 ) {
-	s.rec.log(actor, &auditEntry{
-		resource: submissionResource,
-		entity:   updated,
-		previous: before,
-		op:       permission.OpUpdate,
-		comment:  comment,
-	})
-	s.rec.publish(ctx, submissionResource, updated, actor, submissionRealtimeEvent)
-	if s.requester != nil && len(invoiceIDs) > 0 {
-		s.requester.RequestEvaluation(ctx, tenantInfo, &factoringports.EvaluationTargets{
-			InvoiceIDs: invoiceIDs,
+	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
+		s.rec.log(actor, &auditEntry{
+			resource: submissionResource,
+			entity:   updated,
+			previous: before,
+			op:       permission.OpUpdate,
+			comment:  comment,
 		})
-	}
+		s.rec.publish(committedCtx, submissionResource, updated, actor, submissionRealtimeEvent)
+		if s.requester != nil && len(invoiceIDs) > 0 {
+			s.requester.RequestEvaluation(
+				committedCtx,
+				tenantInfo,
+				&factoringports.EvaluationTargets{
+					InvoiceIDs: invoiceIDs,
+				},
+			)
+		}
+	})
 }
 
 func (s *LedgerService) publishEvent(

@@ -10,6 +10,7 @@ import { factoringSearchParamsParser, type FactoringTab } from "./use-factoring-
 
 const Table = lazy(() => import("./_components/factoring-invoice-table"));
 const SubmissionTable = lazy(() => import("./_components/factoring-submission-table"));
+const RemittanceTable = lazy(() => import("./_components/factoring-remittance-table"));
 
 export function FactoringPage() {
   const t = useT();
@@ -40,12 +41,15 @@ export function FactoringPage() {
             <TabsTab value="submitted">{t("Submitted")}</TabsTab>
             <TabsTab value="funded">{t("Funded")}</TabsTab>
             <TabsTab value="schedules">{t("Schedules")}</TabsTab>
+            <TabsTab value="remittances">{t("Remittances")}</TabsTab>
           </TabsList>
         </div>
       </Tabs>
       <DataTableLazyComponent>
         {state.view === "schedules" ? (
           <SubmissionTable />
+        ) : state.view === "remittances" ? (
+          <RemittanceTable />
         ) : (
           <Table key={state.view} tab={state.view} />
         )}

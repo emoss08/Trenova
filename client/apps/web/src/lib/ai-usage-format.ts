@@ -101,6 +101,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Document extraction");
     case "AccountingMapping":
       return t("Accounting mapping");
+    case "FactoringRemittanceExtract":
+      return t("Factor remittance reading");
     case "AgentReflection":
       return t("Agents learning from their work");
     case "AgentDrafting":

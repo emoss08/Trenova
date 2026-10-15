@@ -537,6 +537,15 @@ func taskDescriptors() []TaskDescriptor {
 				"small, inexpensive model is enough.",
 		},
 		{
+			Task:        aiprovider.TaskRemittanceExtraction,
+			Label:       "Factor remittances",
+			Description: "Read the lines of a factor's PDF funding or reserve report.",
+			VolumeGuidance: "One call per PDF remittance, usually a few a week per factor. " +
+				"Every line it reads is matched to a schedule item and applied by a person, " +
+				"so a mid-sized model that reads tables reliably is enough. Without one, " +
+				"PDF remittances are refused and the factor's CSV or spreadsheet is used.",
+		},
+		{
 			Task:  aiprovider.TaskEvaluationJudge,
 			Label: "Evaluation judge",
 			Description: "Score a sample of agents' answers to their evaluation cases " +

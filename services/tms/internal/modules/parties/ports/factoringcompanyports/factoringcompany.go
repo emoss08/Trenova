@@ -33,6 +33,11 @@ type FactoringCompanySelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 }
 
+type FindFactoringCompaniesByEmailRequest struct {
+	TenantInfo pagination.TenantInfo
+	Address    string
+}
+
 type CountAssignedCustomersRequest struct {
 	TenantInfo         pagination.TenantInfo
 	FactoringCompanyID pulid.ID
@@ -70,4 +75,13 @@ type FactoringCompanyRepository interface {
 	// CountAssignedCustomers is how many customers' invoices are assigned to
 	// the factor.
 	CountAssignedCustomers(ctx context.Context, req CountAssignedCustomersRequest) (int, error)
+	FindByEmail(
+		ctx context.Context,
+		req FindFactoringCompaniesByEmailRequest,
+	) (*FactoringCompaniesByEmail, error)
+}
+
+type FactoringCompaniesByEmail struct {
+	Exact    []*factoringcompany.FactoringCompany
+	ByDomain []*factoringcompany.FactoringCompany
 }

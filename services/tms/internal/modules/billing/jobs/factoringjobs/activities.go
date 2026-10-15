@@ -38,6 +38,7 @@ type ActivitiesParams struct {
 	Readiness   factoringports.ReadinessService
 	Submissions factoringports.SubmissionService
 	States      factoringports.InvoiceStateRepository
+	Remittances factoringports.RemittanceService
 	Logger      *zap.Logger
 }
 
@@ -45,6 +46,7 @@ type Activities struct {
 	readiness   factoringports.ReadinessService
 	submissions factoringports.SubmissionService
 	states      factoringports.InvoiceStateRepository
+	remittances factoringports.RemittanceService
 	l           *zap.Logger
 }
 
@@ -53,6 +55,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		readiness:   p.Readiness,
 		submissions: p.Submissions,
 		states:      p.States,
+		remittances: p.Remittances,
 		l:           p.Logger.Named("temporal.factoring-activities"),
 	}
 }

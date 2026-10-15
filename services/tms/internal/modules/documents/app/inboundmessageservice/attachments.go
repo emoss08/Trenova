@@ -21,7 +21,7 @@ import (
 // time nobody knows which shipment it is — that is what reading it decides.
 // tenant.DocumentControl maps it onto "shipment" for the draft gate, so a
 // tenant that allows shipment drafts allows them on forwarded tenders too.
-const attachmentResourceType = "inbound_message"
+const attachmentResourceType = inboundmessage.AttachmentResourceType
 
 // AttachmentRef is one file the pipeline still has work to do on.
 type AttachmentRef struct {

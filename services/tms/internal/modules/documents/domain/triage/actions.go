@@ -93,7 +93,9 @@ func NeedsRecord(class inboundmessage.Classification) bool {
 		inboundmessage.ClassificationDetentionDispute,
 		inboundmessage.ClassificationStatusRequest:
 		return true
-	case inboundmessage.ClassificationTender, inboundmessage.ClassificationOther:
+	case inboundmessage.ClassificationTender,
+		inboundmessage.ClassificationFactorRemittance,
+		inboundmessage.ClassificationOther:
 		return false
 	default:
 		return false
@@ -102,7 +104,9 @@ func NeedsRecord(class inboundmessage.Classification) bool {
 
 func FilesAttachments(class inboundmessage.Classification) bool {
 	switch class {
-	case inboundmessage.ClassificationDetentionDispute, inboundmessage.ClassificationStatusRequest:
+	case inboundmessage.ClassificationDetentionDispute,
+		inboundmessage.ClassificationStatusRequest,
+		inboundmessage.ClassificationFactorRemittance:
 		return false
 	case inboundmessage.ClassificationTender,
 		inboundmessage.ClassificationRateConfirmation,
@@ -201,7 +205,9 @@ func classActions(in ActionInput) []Action {
 		return deliveryActions(in)
 	case inboundmessage.ClassificationStatusRequest:
 		return []Action{replyAction(in.Reply, ReplySendEta, true)}
-	case inboundmessage.ClassificationInvoice, inboundmessage.ClassificationOther:
+	case inboundmessage.ClassificationInvoice,
+		inboundmessage.ClassificationFactorRemittance,
+		inboundmessage.ClassificationOther:
 		return nil
 	default:
 		return nil
@@ -350,6 +356,7 @@ func IsPaperwork(class inboundmessage.Classification) bool {
 	case inboundmessage.ClassificationTender,
 		inboundmessage.ClassificationStatusRequest,
 		inboundmessage.ClassificationDetentionDispute,
+		inboundmessage.ClassificationFactorRemittance,
 		inboundmessage.ClassificationOther:
 		return false
 	default:

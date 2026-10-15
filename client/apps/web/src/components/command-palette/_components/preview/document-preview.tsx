@@ -29,6 +29,7 @@ const INTAKE_LABELS = defineLabels({
   assistant_attachment: "A conversation with Nova",
   inbound_attachment: "A monitored mailbox",
   capture: "Scanning and printing",
+  factoring_remittance: "A factor's remittance",
 });
 
 function readable(value: unknown): string | null {

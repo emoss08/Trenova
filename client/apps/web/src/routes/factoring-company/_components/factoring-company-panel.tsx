@@ -24,6 +24,7 @@ import { FactoringCompanyForm } from "./factoring-company-form";
 import { FactoringAgreementsSection } from "./factoring-agreements-section";
 import { FactoringDeliverySection } from "./factoring-delivery-section";
 import { FactoringNoticesSection } from "./factoring-notices-section";
+import { FactoringRemittancesSection } from "./factoring-remittances-section";
 import { FactoringReserveSection } from "./factoring-reserve-section";
 import { useClearFactoringRecordParams } from "./use-factoring-record-redirect";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -252,6 +253,7 @@ function FactoringCompanyEditPanel({
               <FactoringNoticesSection factoringCompanyId={row.id} highlightedId={highlightedNoa} />
               <FactoringDeliverySection factoringCompanyId={row.id} />
               <FactoringReserveSection factoringCompanyId={row.id} />
+              <FactoringRemittancesSection factoringCompanyId={row.id} />
             </>
           ) : null}
         </div>
