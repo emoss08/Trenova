@@ -378,7 +378,7 @@ func TestAccountGateBoundsConcurrentCallsPerAccount(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	client := &http.Client{Transport: newAccountGate().transport(http.DefaultTransport)}
+	client := &http.Client{Transport: newAccountGate().transport(server.Client().Transport)}
 	var wg sync.WaitGroup
 	for range 6 {
 		wg.Go(func() {

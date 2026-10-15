@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
@@ -42,7 +42,10 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	conn := newConnector(t, config.QuickBooksConfig{})
-	conn.apiOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
+	conn.apiOpts = []quickbooks.Option{
+		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
+	}
 
 	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       "123",
@@ -80,7 +83,10 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	conn := newConnector(t, config.QuickBooksConfig{})
-	conn.apiOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
+	conn.apiOpts = []quickbooks.Option{
+		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
+	}
 
 	vendor, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID:     "123",
@@ -129,7 +135,11 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 	require.NoError(t, err)
 	conn, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
 	require.NoError(t, err)
-	conn.apiOpts = append(conn.apiOpts, quickbooks.WithBaseURL(server.URL))
+	conn.apiOpts = append(
+		conn.apiOpts,
+		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
+	)
 
 	_, err = conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       "555",

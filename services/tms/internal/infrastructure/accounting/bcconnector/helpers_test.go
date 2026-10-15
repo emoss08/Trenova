@@ -198,10 +198,14 @@ func testConnector(t *testing.T, fake *fakeBC) *Connector {
 	t.Cleanup(server.Close)
 
 	provider := newProvider(t, config.BusinessCentralConfig{})
-	provider.oauthOpts = []businesscentral.Option{businesscentral.WithLoginURL(server.URL)}
+	provider.oauthOpts = []businesscentral.Option{
+		businesscentral.WithLoginURL(server.URL),
+		businesscentral.WithHTTPClient(server.Client()),
+	}
 	provider.now = func() time.Time { return testNow }
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
+	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
 	conn.apiOpts = []businesscentral.Option{
 		businesscentral.WithBaseURL(server.URL),
 		businesscentral.WithWebURL(testWebURL),
