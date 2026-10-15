@@ -215,6 +215,156 @@ var AccessPolicyFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// AccessSettings — table "organization_access_settings", alias "oas"
+// ---------------------------------------------------------------------------
+
+// AccessSettingsTable holds the table name, alias, and primary key columns
+// for the "organization_access_settings" table. The alias "oas" is used in all generated
+// SQL fragments (e.g. "oas.id = ?").
+var AccessSettingsTable = buncolgen.TableInfo{
+	Name:       "organization_access_settings",
+	Alias:      "oas",
+	PrimaryKey: []string{"organization_id", "business_unit_id"},
+}
+
+// AccessSettingsColumns provides type-safe column references for the "organization_access_settings" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccessSettingsColumns.ID.String())
+//	// SELECT oas.id FROM organization_access_settings AS oas
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccessSettingsColumns.ID.Eq(), id)           // WHERE oas.id = ?
+//	q.Order(AccessSettingsColumns.CreatedAt.OrderDesc())  // ORDER BY oas.created_at DESC
+var AccessSettingsColumns = struct {
+	OrganizationID        buncolgen.Column // "organization_id" → qualified: "oas.organization_id"
+	BusinessUnitID        buncolgen.Column // "business_unit_id" → qualified: "oas.business_unit_id"
+	RequireRoleActivation buncolgen.Column // "require_role_activation" → qualified: "oas.require_role_activation"
+	UpdatedByID           buncolgen.Column // "updated_by_id" → qualified: "oas.updated_by_id"
+	Version               buncolgen.Column // "version" → qualified: "oas.version"
+	CreatedAt             buncolgen.Column // "created_at" → qualified: "oas.created_at"
+	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "oas.updated_at"
+}{
+	OrganizationID:        buncolgen.NewColumn("organization_id", "oas"),
+	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "oas"),
+	RequireRoleActivation: buncolgen.NewColumn("require_role_activation", "oas"),
+	UpdatedByID:           buncolgen.NewColumn("updated_by_id", "oas"),
+	Version:               buncolgen.NewColumn("version", "oas"),
+	CreatedAt:             buncolgen.NewColumn("created_at", "oas"),
+	UpdatedAt:             buncolgen.NewColumn("updated_at", "oas"),
+}
+
+// AccessSettingsFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccessSettings.GetStaticFieldMap().
+var AccessSettingsFieldMap = map[string]string{
+	"organizationId":        "organization_id",
+	"businessUnitId":        "business_unit_id",
+	"requireRoleActivation": "require_role_activation",
+	"updatedById":           "updated_by_id",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
+}
+
+// AccessSettingsInsertableColumns lists column names suitable for INSERT statements on the "organization_access_settings" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccessSettingsInsertableColumns = []string{
+	"organization_id",
+	"business_unit_id",
+	"require_role_activation",
+	"updated_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccessSettingsScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE oas.organization_id = ? AND oas.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	iamcol.AccessSettingsScopeTenant(sq, ti).
+//		Where(iamcol.AccessSettingsColumns.ID.Eq(), id)
+func AccessSettingsScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, AccessSettingsColumns.OrganizationID, AccessSettingsColumns.BusinessUnitID, ti)
+}
+
+// AccessSettingsScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return iamcol.AccessSettingsScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(iamcol.AccessSettingsColumns.ID.In(), bun.List(ids))
+//	})
+func AccessSettingsScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, AccessSettingsColumns.OrganizationID, AccessSettingsColumns.BusinessUnitID, ti)
+}
+
+// AccessSettingsScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return iamcol.AccessSettingsScopeTenantDelete(dq, req.TenantInfo).
+//			Where(iamcol.AccessSettingsColumns.ID.Eq(), id)
+//	})
+func AccessSettingsScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, AccessSettingsColumns.OrganizationID, AccessSettingsColumns.BusinessUnitID, ti)
+}
+
+// AccessSettingsApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(iamcol.AccessSettingsApplyTenant(tenantInfo))
+func AccessSettingsApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(AccessSettingsColumns.OrganizationID, AccessSettingsColumns.BusinessUnitID, ti)
+}
+
+// AccessSettingsFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "organization_access_settings" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccessSettingsFilter.OrganizationID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "organizationId", Operator: "eq", Value: value}
+var AccessSettingsFilter = struct {
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	RequireRoleActivation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireRoleActivation" → DB: "require_role_activation"
+	UpdatedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedById" → DB: "updated_by_id"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	RequireRoleActivation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requireRoleActivation", op, value)
+	},
+	UpdatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // AuthEvent — table "auth_events", alias "ae"
 // ---------------------------------------------------------------------------
 

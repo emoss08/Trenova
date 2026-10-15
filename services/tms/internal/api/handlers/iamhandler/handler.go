@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -22,12 +23,14 @@ type Params struct {
 	fx.In
 
 	Service              iamports.IAMService
+	AccessSettings       iamports.AccessSettingsService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service iamports.IAMService
+	access  iamports.AccessSettingsService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -35,6 +38,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
+		access:  p.AccessSettings,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}
@@ -45,6 +49,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerIdentityProviderRoutes(api)
 	h.registerSCIMRoutes(api)
 	h.registerAccessPolicyRoutes(api)
+	api.GET(
+		"access-settings",
+		h.pm.RequirePermission(permission.ResourceAccessPolicy.String(), permission.OpRead),
+		h.getAccessSettings,
+	)
+	api.PUT(
+		"access-settings",
+		h.pm.RequirePermission(permission.ResourceAccessPolicy.String(), permission.OpUpdate),
+		h.updateAccessSettings,
+	)
 
 	api.GET(
 		"provisioning-audit",
@@ -635,6 +649,48 @@ func (h *Handler) listMFAAuthenticators(c *gin.Context) {
 		tenantInfo.OrgID,
 		queryLimit(c),
 	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+type accessSettingsInput struct {
+	RequireRoleActivation bool  `json:"requireRoleActivation"`
+	Version               int64 `json:"version"`
+}
+
+func (h *Handler) getAccessSettings(c *gin.Context) {
+	tenantInfo, ok := h.tenantInfo(c)
+	if !ok {
+		return
+	}
+	resp, err := h.access.Get(c.Request.Context(), tenantInfo)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) updateAccessSettings(c *gin.Context) {
+	tenantInfo, ok := h.tenantInfo(c)
+	if !ok {
+		return
+	}
+	authCtx := authctx.GetAuthContext(c)
+	req := new(accessSettingsInput)
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	resp, err := h.access.Update(c.Request.Context(), &iamports.UpdateAccessSettingsRequest{
+		TenantInfo:            tenantInfo,
+		Actor:                 actorutil.FromAuthContext(authCtx),
+		RequireRoleActivation: req.RequireRoleActivation,
+		Version:               req.Version,
+	})
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

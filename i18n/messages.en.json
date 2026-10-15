@@ -83618,6 +83618,15 @@
       "routes/desk"
     ]
   },
+  "Dynamic separation of duty is enforced when people activate their roles. Turn on role activation in the security settings first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "E-85": {
     "sites": 1,
     "scope": [
@@ -93963,6 +93972,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Every role a person holds is now in force when they sign in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Every row in the file is published for this year.": {
@@ -181693,6 +181711,15 @@
       "routes/carrier"
     ]
   },
+  "People choose which of their roles to work under each time they sign in or switch organization, and a newly assigned role waits until they choose it. Needed for dynamic separation of duty. When off, every role a person holds is in force at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "People covered": {
     "sites": 3,
     "scope": [
@@ -181718,6 +181745,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "People now choose their roles when they sign in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "People on the plan": {
@@ -207898,6 +207934,15 @@
       "apps/web/lib"
     ]
   },
+  "Require role activation": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Require signed inbound": {
     "sites": 1,
     "scope": [
@@ -213308,6 +213353,15 @@
       "apps/dash/routes",
       "go/other",
       "routes/admin"
+    ]
+  },
+  "Role activation enforces your dynamic separation of duty constraints. Remove them before turning it off.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Role and permission management": {
@@ -222425,6 +222479,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Security settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "See all {0}": {
@@ -263309,6 +263372,15 @@
     ]
   },
   "These settings were changed by someone else while you were editing. Reload and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "These settings were changed by someone else. Reload them and try again.": {
     "sites": 1,
     "scope": [
       "go"

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -35,6 +36,7 @@ type Params struct {
 	Auditor          permissionports.SecurityAuditor
 	Notifier         permissionports.PermissionChangeNotifier
 	Scopes           permissionports.ScopePolicy
+	RoleActivation   iamports.RoleActivationPolicy `optional:"true"`
 }
 
 type scopePolicy = permissionports.ScopePolicy
@@ -48,6 +50,7 @@ type Service struct {
 	registry   *permission.Registry
 	auditor    permissionports.SecurityAuditor
 	scopes     permissionports.ScopePolicy
+	activation iamports.RoleActivationPolicy
 	notifier   permissionports.PermissionChangeNotifier
 }
 
@@ -63,6 +66,7 @@ func New(p Params) *Service {
 		auditor:    p.Auditor,
 		notifier:   p.Notifier,
 		scopes:     p.Scopes,
+		activation: p.RoleActivation,
 	}
 }
 
@@ -701,6 +705,9 @@ func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintReq
 	if err := s.validateConstraintRoleIDs(ctx, req.OrganizationID, req.RoleIDs); err != nil {
 		return err
 	}
+	if err := s.requireActivationForDSD(ctx, req); err != nil {
+		return err
+	}
 
 	req.Constraint.OrganizationID = req.OrganizationID
 	req.Constraint.BusinessUnitID = req.BusinessUnitID
@@ -1317,4 +1324,25 @@ func (s *Service) allResourcePermissions() []*permission.ResourcePermission {
 		})
 	}
 	return permissions
+}
+
+func (s *Service) requireActivationForDSD(ctx context.Context, req *SaveConstraintRequest) error {
+	if req.Constraint.Type != permission.RoleConstraintTypeDSD || s.activation == nil {
+		return nil
+	}
+	required, err := s.activation.RoleActivationRequired(ctx, pagination.TenantInfo{
+		OrgID: req.OrganizationID,
+		BuID:  req.BusinessUnitID,
+	})
+	if err != nil {
+		return err
+	}
+	if !required {
+		return errortypes.NewValidationError(
+			"type",
+			errortypes.ErrInvalid,
+			"Dynamic separation of duty is enforced when people activate their roles. Turn on role activation in the security settings first.",
+		)
+	}
+	return nil
 }

@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { effectFilterOptions } from "./policies/constants";
 import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy-panel";
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
+import { RoleActivationSetting } from "./role-activation-setting";
 import { useSecurityAccess } from "./use-security-access";
 
 export function PoliciesTab({ organizationId }: { organizationId: string }) {
@@ -112,6 +113,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
 
   return (
     <div className="space-y-3">
+      <RoleActivationSetting organizationId={organizationId} />
       <ConsoleToolbar
         title={t("Access policies")}
         description={t("Priority-ordered authorization decisions for protected resources.")}

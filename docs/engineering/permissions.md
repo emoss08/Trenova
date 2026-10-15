@@ -142,6 +142,27 @@ The client's operation and data scope lists (`PERMISSION_OPERATIONS`, `DATA_SCOP
 constants with the resource enum; a hand-kept list once kept the role form from saving any
 role holding manage, delete or close.
 
+## Role activation
+
+By default every role a person holds is in force from the moment they sign in, and a role
+assigned during a session takes effect on its next request (the session carries no
+activation, so the engine reads every unexpired assignment). An organization that turns on
+**role activation** (`organization_access_settings.require_role_activation`, the Policies
+tab, `GET`/`PUT /organizations/:id/iam/access-settings`, `access_policy` read/update) has
+its people choose the roles they work under at sign-in and after switching organization;
+only those roles count, which is what dynamic separation of duty checks.
+
+Activation cannot be turned off while the organization keeps a dynamic separation of duty
+constraint, and such a constraint cannot be saved while activation is off. The migration
+that added the setting turned it on for every organization that already had one.
+
+`AuthenticateSession` reads the setting through `iamports.RoleActivationPolicy`
+(`accesssettingsservice`, cached for 30 seconds per instance and dropped at once on the
+instance that saved a change) and stamps it on the session for the request; the auth
+middleware installs the session's activation into the request context only when it is
+required. A change advances the permission epoch and is recorded in the security audit
+trail.
+
 ## Agents
 
 In a conversation an agent acts as the person: every tool call is checked against the

@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 86 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1149 writes: 632 GraphQL mutations and 517 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1150 writes: 632 GraphQL mutations and 518 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 421 |
-| Exempt | 694 |
-| — Security | 85 |
+| Exempt | 695 |
+| — Security | 86 |
 | — Configuration | 270 |
 | — User preference | 39 |
 | — Infrastructure | 52 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1149 |
+| Total | 1150 |
 
 Of the 455 writes an agent should be able to make, 421 have a tool (92%).
 
@@ -252,7 +252,7 @@ The writes no tool performs yet, and what the tool would do.
 | hazmatsegregationrule | 3 | 0 | 3 | 0 |
 | holdreason | 3 | 0 | 3 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
-| iam | 14 | 0 | 14 | 0 |
+| iam | 15 | 0 | 15 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 23 | 2 | 13 | 8 |
@@ -1446,6 +1446,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/tokens`<br>iamhandler.createSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke`<br>iamhandler.revokeSCIMToken | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/access-policies/:policyId`<br>iamhandler.updateAccessPolicy | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
+| `PUT /api/v1/organizations/:id/iam/access-settings`<br>iamhandler.updateAccessSettings | Exempt, security: Decides whether people choose the roles they work under; it changes what everyone may do. |
 | `PUT /api/v1/organizations/:id/iam/identity-providers/:providerId`<br>iamhandler.updateIdentityProvider | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId`<br>iamhandler.updateSCIMDirectory | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |
 | `PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId`<br>iamhandler.updateSCIMGroupRoleMapping | Exempt, security: Identity providers, SCIM directories and access policies decide who can sign in and with what access. |

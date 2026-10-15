@@ -1882,6 +1882,9 @@ writes:
   "POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/access-settings":
+    exempt: security
+    reason: "Decides whether people choose the roles they work under; it changes what everyone may do."
   "PUT /api/v1/organizations/:id/iam/access-policies/:policyId":
     exempt: security
     reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."

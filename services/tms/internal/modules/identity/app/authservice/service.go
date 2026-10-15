@@ -55,6 +55,7 @@ type Params struct {
 	Plans             platformplanports.PlanService   `optional:"true"`
 	MFA               sessionports.MFAService         `optional:"true"`
 	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
+	RoleActivation    iamports.RoleActivationPolicy   `optional:"true"`
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
@@ -77,6 +78,7 @@ type Service struct {
 	plans      platformplanports.PlanService
 	mfa        sessionports.MFAService
 	challenges iamports.MFAChallengeRepository
+	activation iamports.RoleActivationPolicy
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
@@ -100,6 +102,7 @@ func New(p Params) tenantports.AuthService {
 		plans:      p.Plans,
 		mfa:        p.MFA,
 		challenges: p.MFAChallenges,
+		activation: p.RoleActivation,
 		enc:        p.Encryption,
 		cfg:        p.Config,
 		l:          p.Logger.Named("service.auth"),
@@ -643,6 +646,7 @@ func (s *Service) AuthenticateSession(
 			return nil, err
 		}
 	}
+	sess.RoleActivationRequired = s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID)
 
 	return sess, nil
 }
@@ -733,11 +737,12 @@ func (s *Service) ActivateSessionRoles(
 	}
 
 	return &tenantports.ActivateSessionRolesResponse{
-		ActiveRoleIDs:          activeRoleIDs,
-		AuthorizedRoleIDs:      authorizedRoleIDs,
-		ActiveRoles:            activeRoleSummaries(activeRoleIDs, authorizedRoles),
-		AuthorizedRoles:        authorizedRoles,
-		RequiresRoleActivation: len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0,
+		ActiveRoleIDs:     activeRoleIDs,
+		AuthorizedRoleIDs: authorizedRoleIDs,
+		ActiveRoles:       activeRoleSummaries(activeRoleIDs, authorizedRoles),
+		AuthorizedRoles:   authorizedRoles,
+		RequiresRoleActivation: len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0 &&
+			s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID),
 	}, nil
 }
 
@@ -948,7 +953,8 @@ func (s *Service) createLoginResponse(
 		ActiveRoles:           activeRoleSummaries(sess.ActiveRoleIDs, authorizedRoles),
 		AuthorizedRoles:       authorizedRoles,
 		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0 &&
-			len(authorizedRoleIDs) > 0,
+			len(authorizedRoleIDs) > 0 &&
+			s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID),
 	}, nil
 }
 

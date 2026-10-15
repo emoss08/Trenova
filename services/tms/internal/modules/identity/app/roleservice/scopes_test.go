@@ -1,6 +1,7 @@
 package roleservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -138,4 +139,36 @@ func TestCreateResourcePermission_RefusesTeamOnAKindWithoutTeams(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, []string{"dataScope"}, scopeErrorFields(t, err))
 	deps.roleRepo.AssertNotCalled(t, "CreateResourcePermission", mock.Anything, mock.Anything)
+}
+
+type activationPolicy bool
+
+func (p activationPolicy) RoleActivationRequired(context.Context, pagination.TenantInfo) (bool, error) {
+	return bool(p), nil
+}
+
+func TestSaveRoleConstraint_DynamicSeparationNeedsRoleActivation(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.svc.activation = activationPolicy(false)
+	orgID := pulid.MustNew("org_")
+	first, second := pulid.MustNew("rol_"), pulid.MustNew("rol_")
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{}, nil)
+
+	err := deps.svc.SaveRoleConstraint(t.Context(), &SaveConstraintRequest{
+		ActorID:        pulid.MustNew("usr_"),
+		OrganizationID: orgID,
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Constraint: &permission.RoleConstraint{
+			Name:     "Approve or post, not both at once",
+			Type:     permission.RoleConstraintTypeDSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{first, second},
+	})
+
+	var fieldErr *errortypes.Error
+	require.True(t, errors.As(err, &fieldErr), "expected a field error, got %v", err)
+	assert.Equal(t, "type", fieldErr.Field)
 }

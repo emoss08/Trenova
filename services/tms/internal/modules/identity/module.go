@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accesssettingsservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
@@ -64,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -82,6 +84,7 @@ func SharedOptions() fx.Option {
 			onboardingrepository.New,
 			iamrepository.New,
 			iamrepository.NewAuthEventRepository,
+			iamrepository.NewAccessSettingsRepository,
 			iamrepository.NewAuthEventHistoryRepository,
 			iamrepository.NewMFARepository,
 			ssoconfigrepository.New,
@@ -123,6 +126,9 @@ func SharedOptions() fx.Option {
 			permission.NewEngine,
 			permissionchange.New,
 			readscopeservice.New,
+			accesssettingsservice.New,
+			func(s *accesssettingsservice.Service) iamports.RoleActivationPolicy { return s },
+			func(s *accesssettingsservice.Service) iamports.AccessSettingsService { return s },
 			func(s *orgstructureservice.Service) readscopeservice.TeamDirectory { return s },
 			func(s *readscopeservice.Service) permissionports.ScopePolicy { return s },
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },

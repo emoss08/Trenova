@@ -11,6 +11,13 @@ func (e *AccessPolicy) GetStaticFieldMap() map[string]string {
 	return iamcol.AccessPolicyFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccessSettings].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [iamcol.AccessSettingsFieldMap] instead of parsing struct tags via reflection.
+func (e *AccessSettings) GetStaticFieldMap() map[string]string {
+	return iamcol.AccessSettingsFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AuthEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [iamcol.AuthEventFieldMap] instead of parsing struct tags via reflection.
