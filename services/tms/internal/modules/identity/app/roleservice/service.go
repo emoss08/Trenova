@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -85,6 +86,13 @@ type UnassignRoleRequest struct {
 	AssignmentID   pulid.ID
 }
 
+type RevokeOrganizationRolesRequest struct {
+	ActorID        pulid.ID
+	UserID         pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
 type UpsertHierarchyEdgeRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
@@ -108,14 +116,8 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 		zap.String("roleName", req.Role.Name),
 	)
 
-	if validateErr := s.validateNoEscalation(
-		ctx,
-		req.ActorID,
-		req.OrganizationID,
-		req.Role,
-	); validateErr != nil {
-		return validateErr
-	}
+	req.Role.IsSystem = false
+	req.Role.Permissions = compactPermissions(req.Role.Permissions)
 
 	if inheritanceErr := s.validateNoCircularInheritance(
 		ctx,
@@ -123,6 +125,18 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 		req.Role.ParentRoleIDs,
 	); inheritanceErr != nil {
 		return inheritanceErr
+	}
+
+	if validateErr := s.validateNoEscalationWithInheritance(
+		ctx,
+		&escalationCheck{
+			actorID:   req.ActorID,
+			orgID:     req.OrganizationID,
+			role:      req.Role,
+			parentIDs: req.Role.ParentRoleIDs,
+		},
+	); validateErr != nil {
+		return validateErr
 	}
 
 	if valErr := s.validator.ValidateCreate(ctx, req.Role); valErr != nil {
@@ -169,52 +183,91 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		return err
 	}
 
-	if existingRole.IsSystem {
+	if existingRole.IsSystem || existingRole.OrganizationID != req.OrganizationID {
 		return ErrCannotModifySystemRole
 	}
+
+	updated := editableRoleUpdate(existingRole, req.Role)
 
 	if validateErr := s.validateNoEscalation(
 		ctx,
 		req.ActorID,
 		req.OrganizationID,
-		req.Role,
+		updated,
 	); validateErr != nil {
 		return validateErr
 	}
 
-	if inheritanceErr := s.validateNoCircularInheritance(
-		ctx,
-		req.Role.ID,
-		req.Role.ParentRoleIDs,
-	); inheritanceErr != nil {
-		return inheritanceErr
-	}
-
-	if valErr := s.validator.ValidateUpdate(ctx, req.Role); valErr != nil {
+	if valErr := s.validator.ValidateUpdate(ctx, updated); valErr != nil {
 		return valErr
 	}
 
-	if err = s.roleRepo.Update(ctx, req.Role); err != nil {
+	if err = s.roleRepo.Update(ctx, updated); err != nil {
 		log.Error("failed to update role", zap.Error(err))
 		return err
 	}
+
+	if updated.Permissions == nil {
+		updated.Permissions = existingRole.Permissions
+	}
+	*req.Role = *updated
 
 	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		businessUnitID: existingRole.BusinessUnitID,
-		resourceID:     req.Role.ID.String(),
+		resourceID:     updated.ID.String(),
 		operation:      permission.OpUpdate,
 		before:         existingRole,
 		after:          req.Role,
 		comment:        "Role updated",
 	})
 
-	if err = s.permCache.InvalidateByRole(ctx, req.Role.ID, s.roleRepo); err != nil {
+	if err = s.permCache.InvalidateByRole(ctx, updated.ID, s.roleRepo); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
 
 	return nil
+}
+
+func editableRoleUpdate(existing, requested *permission.Role) *permission.Role {
+	maxSensitivity := requested.MaxSensitivity
+	if maxSensitivity == "" {
+		maxSensitivity = existing.MaxSensitivity
+	}
+
+	return &permission.Role{
+		ID:                 existing.ID,
+		BusinessUnitID:     existing.BusinessUnitID,
+		OrganizationID:     existing.OrganizationID,
+		Name:               requested.Name,
+		Description:        requested.Description,
+		CoreResponsibility: requested.CoreResponsibility,
+		ParentRoleIDs:      existing.ParentRoleIDs,
+		MaxSensitivity:     maxSensitivity,
+		IsSystem:           existing.IsSystem,
+		CreatedBy:          existing.CreatedBy,
+		CreatedAt:          existing.CreatedAt,
+		UpdatedAt:          existing.UpdatedAt,
+		Permissions:        compactPermissions(requested.Permissions),
+	}
+}
+
+func compactPermissions(
+	permissions []*permission.ResourcePermission,
+) []*permission.ResourcePermission {
+	if permissions == nil {
+		return nil
+	}
+
+	compacted := make([]*permission.ResourcePermission, 0, len(permissions))
+	for _, rp := range permissions {
+		if rp != nil {
+			compacted = append(compacted, rp)
+		}
+	}
+
+	return compacted
 }
 
 func (s *Service) ListRoles(
@@ -325,8 +378,14 @@ func (s *Service) validateAssignmentPrivileges(
 		return err
 	}
 
-	return s.validateNoEscalation(ctx, req.ActorID, req.OrganizationID, &permission.Role{
-		Permissions: role.Permissions,
+	return s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
+		actorID: req.ActorID,
+		orgID:   req.OrganizationID,
+		role: &permission.Role{
+			MaxSensitivity: role.MaxSensitivity,
+			Permissions:    role.Permissions,
+		},
+		parentIDs: role.ParentRoleIDs,
 	})
 }
 
@@ -381,6 +440,10 @@ func (s *Service) UpsertRoleHierarchyEdge(
 	ctx context.Context,
 	req *UpsertHierarchyEdgeRequest,
 ) error {
+	if err := s.validateHierarchyEdge(ctx, req); err != nil {
+		return err
+	}
+
 	if err := s.rbacRepo.UpsertRoleHierarchyEdge(
 		ctx,
 		&permissionports.UpsertRoleHierarchyEdgeRequest{
@@ -414,6 +477,45 @@ func (s *Service) UpsertRoleHierarchyEdge(
 		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
 	return nil
+}
+
+func (s *Service) validateHierarchyEdge(
+	ctx context.Context,
+	req *UpsertHierarchyEdgeRequest,
+) error {
+	if req.SeniorRoleID == req.JuniorRoleID {
+		return ErrCircularInheritance
+	}
+
+	tenantInfo := pagination.TenantInfo{OrgID: req.OrganizationID}
+	senior, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         req.SeniorRoleID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if senior.IsSystem {
+		return ErrCannotModifySystemRole
+	}
+
+	junior, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         req.JuniorRoleID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	return s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
+		actorID: req.ActorID,
+		orgID:   req.OrganizationID,
+		role: &permission.Role{
+			MaxSensitivity: junior.MaxSensitivity,
+			Permissions:    junior.Permissions,
+		},
+		parentIDs: junior.ParentRoleIDs,
+	})
 }
 
 func (s *Service) DeleteRoleHierarchyEdge(
@@ -610,6 +712,98 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 	return nil
 }
 
+type escalationCheck struct {
+	actorID   pulid.ID
+	orgID     pulid.ID
+	role      *permission.Role
+	parentIDs []pulid.ID
+}
+
+func (s *Service) validateNoEscalationWithInheritance(
+	ctx context.Context,
+	check *escalationCheck,
+) error {
+	if len(check.parentIDs) == 0 {
+		return s.validateNoEscalation(ctx, check.actorID, check.orgID, check.role)
+	}
+
+	inherited, err := s.roleRepo.GetRolesWithInheritance(ctx, check.parentIDs)
+	if err != nil {
+		return err
+	}
+
+	combined := &permission.Role{
+		MaxSensitivity: check.role.MaxSensitivity,
+		Permissions: make(
+			[]*permission.ResourcePermission,
+			0,
+			len(check.role.Permissions)+len(inherited),
+		),
+	}
+	combined.Permissions = append(combined.Permissions, check.role.Permissions...)
+	for _, role := range inherited {
+		if role.OrganizationID.IsNotNil() && role.OrganizationID != check.orgID {
+			return errortypes.NewValidationError(
+				"parentRoleIds",
+				errortypes.ErrInvalid,
+				"Inherited roles must belong to your organization",
+			)
+		}
+		if role.MaxSensitivity.Level() > combined.MaxSensitivity.Level() {
+			combined.MaxSensitivity = role.MaxSensitivity
+		}
+		combined.Permissions = append(combined.Permissions, role.Permissions...)
+	}
+
+	return s.validateNoEscalation(ctx, check.actorID, check.orgID, combined)
+}
+
+func (s *Service) RevokeOrganizationRoles(
+	ctx context.Context,
+	req RevokeOrganizationRolesRequest,
+) error {
+	log := s.l.With(
+		zap.String("operation", "RevokeOrganizationRoles"),
+		zap.String("actorID", req.ActorID.String()),
+		zap.String("userID", req.UserID.String()),
+		zap.String("orgID", req.OrganizationID.String()),
+	)
+
+	scoped := dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		UserID:         req.ActorID,
+	})
+
+	deleted, err := s.roleRepo.DeleteUserAssignments(scoped, req.UserID, req.OrganizationID)
+	if err != nil {
+		log.Error("failed to delete role assignments", zap.Error(err))
+		return err
+	}
+
+	for _, assignment := range deleted {
+		s.recordChange(scoped, &roleChange{
+			actorID:        req.ActorID,
+			organizationID: req.OrganizationID,
+			businessUnitID: req.BusinessUnitID,
+			resourceID:     assignment.RoleID.String(),
+			operation:      permission.OpUnassign,
+			before:         assignment,
+			comment:        "Role unassigned because the user left the organization",
+			metadata: map[string]any{
+				metadataAssignmentID: assignment.ID.String(),
+				metadataUserID:       assignment.UserID.String(),
+			},
+		})
+	}
+
+	if err = s.permEngine.InvalidateUser(scoped, req.UserID, req.OrganizationID); err != nil {
+		log.Warn("failed to invalidate permission cache", zap.Error(err))
+	}
+
+	return nil
+}
+
 func (s *Service) validateNoEscalation(
 	ctx context.Context,
 	actorID, orgID pulid.ID,
@@ -631,6 +825,9 @@ func (s *Service) validateNoEscalation(
 	}
 
 	for _, rp := range targetRole.Permissions {
+		if rp == nil {
+			continue
+		}
 		actorResourcePerm, ok := actorPerms.Resources[rp.Resource]
 		if !ok {
 			me := errortypes.NewMultiError()

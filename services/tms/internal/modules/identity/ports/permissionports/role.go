@@ -99,6 +99,10 @@ type RoleRepository interface {
 		ctx context.Context,
 		req DeleteRoleAssignmentRequest,
 	) (*permission.UserRoleAssignment, error)
+	DeleteUserAssignments(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+	) ([]*permission.UserRoleAssignment, error)
 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error

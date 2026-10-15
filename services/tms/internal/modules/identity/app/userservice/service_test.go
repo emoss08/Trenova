@@ -214,6 +214,8 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		UserIDs:    userIDs,
 	}).Return(originals, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return(updated, nil)
+	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user1.ID).Return(nil).Once()
+	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user2.ID).Return(nil).Once()
 	deps.audit.On("LogActions", mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)

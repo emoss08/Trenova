@@ -159,6 +159,12 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 		})
 	}
 
+	if lostSignInAccess(&original, updated) {
+		if err = s.endAllSessions(ctx, req.TenantInfo, updated.ID); err != nil {
+			return nil, err
+		}
+	}
+
 	return updated, nil
 }
 

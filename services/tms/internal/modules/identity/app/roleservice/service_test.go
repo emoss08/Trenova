@@ -187,10 +187,14 @@ func TestUpdateRole_Success(t *testing.T) {
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
-		ID:       roleID,
-		IsSystem: false,
+		ID:             roleID,
+		OrganizationID: orgID,
+		IsSystem:       false,
 	}, nil)
-	deps.roleRepo.On("Update", ctx, role).Return(nil)
+	deps.roleRepo.On("Update", ctx, mock.MatchedBy(func(updated *permission.Role) bool {
+		return updated.ID == roleID && updated.Name == "Updated Role" &&
+			updated.OrganizationID == orgID
+	})).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
@@ -501,7 +505,6 @@ func TestCircularInheritance_DirectSelfReference(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
-	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -836,7 +839,6 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
-	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -927,6 +929,12 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 		ID:            parentRoleID,
 		ParentRoleIDs: []pulid.ID{},
 	}, nil)
+	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{parentRoleID}).
+		Return([]*permission.Role{{
+			ID:             parentRoleID,
+			OrganizationID: orgID,
+			MaxSensitivity: permission.SensitivityInternal,
+		}}, nil)
 	deps.roleRepo.On("Create", ctx, role).Return(nil)
 
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{

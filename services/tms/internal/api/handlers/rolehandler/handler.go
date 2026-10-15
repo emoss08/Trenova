@@ -54,14 +54,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/constraints", require(permission.OpRead), h.listConstraints)
 	api.POST("/constraints", require(permission.OpUpdate), h.saveConstraint)
 	api.PUT("/constraints/:constraintID", require(permission.OpUpdate), h.saveConstraint)
-	api.DELETE("/constraints/:constraintID", require(permission.OpDelete), h.deleteConstraint)
+	api.DELETE("/constraints/:constraintID", require(permission.OpUpdate), h.deleteConstraint)
 	api.GET("/preflight", require(permission.OpRead), h.preflight)
 
 	selectOptions := api.Group("/select-options")
 	selectOptions.GET("/", require(permission.OpRead), h.selectOptions)
 	selectOptions.GET("/:roleID", require(permission.OpRead), h.getOption)
 
-	api.DELETE("/assignments/:assignmentID", require(permission.OpUnassign), h.unassignRole)
+	api.DELETE(
+		"/assignments/:assignmentID",
+		h.requireUserPermission(permission.OpUnassign),
+		h.unassignRole,
+	)
 
 	api.GET("/:roleID", require(permission.OpRead), h.get)
 	api.PUT("/:roleID", require(permission.OpUpdate), h.update)
@@ -71,7 +75,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.PUT("/:roleID/permissions/:permID", require(permission.OpUpdate), h.updatePermission)
 	api.DELETE("/:roleID/permissions/:permID", require(permission.OpUpdate), h.deletePermission)
 
-	api.POST("/:roleID/assignments", require(permission.OpAssign), h.assignRole)
+	api.POST("/:roleID/assignments", h.requireUserPermission(permission.OpAssign), h.assignRole)
 }
 
 func (h *Handler) requireRolePermission(operation permission.Operation) gin.HandlerFunc {
@@ -79,6 +83,13 @@ func (h *Handler) requireRolePermission(operation permission.Operation) gin.Hand
 		return func(c *gin.Context) { c.Next() }
 	}
 	return h.perm.RequirePermission(permission.ResourceRole.String(), operation)
+}
+
+func (h *Handler) requireUserPermission(operation permission.Operation) gin.HandlerFunc {
+	if h.perm == nil {
+		return func(c *gin.Context) { c.Next() }
+	}
+	return h.perm.RequirePermission(permission.ResourceUser.String(), operation)
 }
 
 // @Summary List roles

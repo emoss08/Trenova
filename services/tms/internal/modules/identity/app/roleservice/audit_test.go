@@ -18,14 +18,21 @@ func TestUpdateRoleRecordsBeforeAndAfter(t *testing.T) {
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
 	actorID, orgID, buID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
-	existing := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch", BusinessUnitID: buID}
+	existing := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		Name:           "Dispatch",
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+	}
 	updated := &permission.Role{ID: existing.ID, Name: "Dispatch lead", MaxSensitivity: permission.SensitivityInternal}
 
 	deps.roleRepo.On("GetByID", mock.Anything, permissionports.GetRoleByIDRequest{
 		ID:         existing.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(existing, nil)
-	deps.roleRepo.On("Update", mock.Anything, updated).Return(nil)
+	deps.roleRepo.On("Update", mock.Anything, mock.MatchedBy(func(role *permission.Role) bool {
+		return role.ID == existing.ID && role.Name == "Dispatch lead"
+	})).Return(nil)
 	deps.permCache.On("InvalidateByRole", mock.Anything, existing.ID, deps.roleRepo).Return(nil)
 
 	require.NoError(t, deps.svc.UpdateRole(t.Context(), UpdateRoleRequest{

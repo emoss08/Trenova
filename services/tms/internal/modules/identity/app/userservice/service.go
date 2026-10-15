@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	"errors"
 	"mime/multipart"
 	"slices"
 
@@ -167,7 +168,43 @@ func (s *Service) BulkUpdateStatus(
 		log.Warn("failed to publish user invalidation", zap.Error(err))
 	}
 
+	if err = s.endSessionsAfterBulkStatus(
+		ctx,
+		req.TenantInfo,
+		originalEntities,
+		entities,
+	); err != nil {
+		return nil, err
+	}
+
 	return entities, nil
+}
+
+func (s *Service) endSessionsAfterBulkStatus(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	originals, updated []*tenant.User,
+) error {
+	before := make(map[pulid.ID]*tenant.User, len(originals))
+	for _, user := range originals {
+		before[user.ID] = user
+	}
+
+	var errs []error
+	for _, user := range updated {
+		original, ok := before[user.ID]
+		if !ok {
+			original = &tenant.User{Status: domaintypes.StatusActive}
+		}
+		if !lostSignInAccess(original, user) {
+			continue
+		}
+		if err := s.endAllSessions(ctx, tenantInfo, user.ID); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 func (s *Service) GetByID(
@@ -693,14 +730,24 @@ func (s *Service) ReplaceOrganizationMemberships(
 		return nil, err
 	}
 
-	s.recordMembershipChange(ctx, &membershipChange{
+	change := &membershipChange{
 		actorID:        actorID,
 		userID:         userID,
 		organizationID: organizationID,
 		businessUnitID: businessUnitID,
 		before:         previous,
 		after:          memberships,
-	})
+	}
+	s.recordMembershipChange(ctx, change)
+
+	if err = s.revokeRemovedOrganizations(ctx, change); err != nil {
+		s.l.Error(
+			"failed to revoke access to organizations the user left",
+			zap.String("userID", userID.String()),
+			zap.Error(err),
+		)
+		return nil, err
+	}
 
 	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: organizationID,

@@ -475,8 +475,11 @@ func TestUserHandler_BulkUpdateStatus_Success(t *testing.T) {
 		{ID: userID1, Status: domaintypes.StatusInactive},
 		{ID: userID2, Status: domaintypes.StatusInactive},
 	}, nil)
+	sessions := sessionportsmock.NewMockSessionRepository(t)
+	sessions.On("DeleteAllForUser", mock.Anything, userID1).Return(nil).Once()
+	sessions.On("DeleteAllForUser", mock.Anything, userID2).Return(nil).Once()
 
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+	handler := setupUserHandler(t, setupOptions{userRepo: repo, sessionRepo: sessions})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -639,6 +642,8 @@ func TestUserHandler_SimulatePermissions_Success(t *testing.T) {
 	addRoleID := pulid.MustNew("rol_")
 
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	permEngine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(&permissionports.EffectivePermissions{
 			UserID:         userID,
@@ -705,6 +710,8 @@ func TestUserHandler_SimulatePermissions_EngineError(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	permEngine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(nil, errors.New("simulate error"))
 
@@ -1118,4 +1125,25 @@ func newTestUserForHandler() *tenant.User {
 		TimeFormat:            domaintypes.TimeFormat12Hour,
 		Status:                domaintypes.StatusActive,
 	}
+}
+
+func TestUserHandler_SimulatePermissions_RequiresUserRead(t *testing.T) {
+	t.Parallel()
+
+	handler := setupUserHandler(t, setupOptions{
+		permEngine: &mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceUser.String()},
+		},
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/users/" + pulid.MustNew("usr_").String() + "/permissions/simulate/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"addRoleIds": []string{}, "removeRoleIds": []string{}})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
 }

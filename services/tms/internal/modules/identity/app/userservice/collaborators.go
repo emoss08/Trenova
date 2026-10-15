@@ -9,6 +9,10 @@ import (
 
 type RoleAssigner interface {
 	AssignRole(ctx context.Context, req roleservice.AssignRoleRequest) error
+	RevokeOrganizationRoles(
+		ctx context.Context,
+		req roleservice.RevokeOrganizationRolesRequest,
+	) error
 }
 
 type AccountInviter interface {
