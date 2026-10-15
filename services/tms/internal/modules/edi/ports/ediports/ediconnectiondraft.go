@@ -131,7 +131,7 @@ type DraftValueInput struct {
 type DraftRequirementInput struct {
 	TransactionSet  edi.TransactionSet    `json:"transactionSet"`
 	Direction       edi.DocumentDirection `json:"direction"`
-	SegmentID       string                `json:"segmentId"`
+	SegmentID       string                `json:"segment"`
 	ElementPosition int                   `json:"elementPosition,omitempty"`
 	Usage           RequirementUsage      `json:"usage"`
 	Codes           []string              `json:"codes,omitempty"`
@@ -395,11 +395,54 @@ type AppliedConnectionDraft struct {
 	Draft     *ConnectionDraft `json:"draft"`
 }
 
+type PlannedPartner struct {
+	Before *edi.EDIPartner `json:"before,omitempty"`
+	After  *edi.EDIPartner `json:"after"`
+	Change ChangeKind      `json:"change"`
+}
+
+type PlannedTransport struct {
+	Before *edi.EDICommunicationProfile `json:"before,omitempty"`
+	After  *edi.EDICommunicationProfile `json:"after"`
+	Change ChangeKind                   `json:"change"`
+}
+
+type PlannedDocumentProfile struct {
+	Before *edi.EDIPartnerDocumentProfile `json:"before,omitempty"`
+	After  *edi.EDIPartnerDocumentProfile `json:"after"`
+	Change ChangeKind                     `json:"change"`
+}
+
+type PlannedMapping struct {
+	Before *edi.EDIMappingProfileItem `json:"before,omitempty"`
+	After  *edi.EDIMappingProfileItem `json:"after"`
+	Change ChangeKind                 `json:"change"`
+}
+
+type PlannedControlNumber struct {
+	Before *edi.EDIControlNumberSequence `json:"before,omitempty"`
+	After  *edi.EDIControlNumberSequence `json:"after"`
+	Change ChangeKind                    `json:"change"`
+}
+
+type ConnectionDraftPlan struct {
+	Draft            *ConnectionDraft         `json:"draft"`
+	Partner          PlannedPartner           `json:"partner"`
+	Transport        *PlannedTransport        `json:"transport,omitempty"`
+	DocumentProfiles []PlannedDocumentProfile `json:"documentProfiles"`
+	Mappings         []PlannedMapping         `json:"mappings"`
+	ControlNumbers   []PlannedControlNumber   `json:"controlNumbers"`
+}
+
 type EDIConnectionDraftService interface {
 	PlanConnectionDraft(
 		ctx context.Context,
 		req *ConnectionDraftRequest,
 	) (*ConnectionDraft, error)
+	PreviewConnectionDraft(
+		ctx context.Context,
+		req *ConnectionDraftRequest,
+	) (*ConnectionDraftPlan, error)
 	ApplyConnectionDraft(
 		ctx context.Context,
 		req *ApplyConnectionDraftRequest,
