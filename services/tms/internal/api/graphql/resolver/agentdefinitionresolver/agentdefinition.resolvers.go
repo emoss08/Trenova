@@ -14,10 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -543,4 +543,34 @@ func (r *QueryResolver) AgentDraftingAvailable(ctx context.Context) (bool, error
 	}
 
 	return r.AgentDraftingService.Available(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	currentAgentID := pulid.Nil
+	if input.CurrentAgentID != nil && *input.CurrentAgentID != "" {
+		currentAgentID, err = pulid.MustParse(*input.CurrentAgentID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	recommendation, err := r.AgentRecommender.RecommendAgent(ctx, &agentports.AgentRecommendationRequest{
+		Actor:          actorutil.FromAuthContext(authCtx),
+		Text:           input.Text,
+		CurrentAgentID: currentAgentID,
+	})
+	if err != nil || recommendation == nil {
+		return nil, err
+	}
+
+	return &gqlmodel.MyAgentRecommendation{
+		Agent:   recommendation.Agent,
+		Current: recommendation.Current,
+		Tools:   recommendation.Tools,
+	}, nil
 }

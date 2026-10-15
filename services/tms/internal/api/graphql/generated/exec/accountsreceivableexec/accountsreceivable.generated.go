@@ -292,6 +292,26 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 			{
+				Name:     "factorAdvancesMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARCashFlowPoint)
+					return obj.FactorAdvancesMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reserveReleasesMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARCashFlowPoint)
+					return obj.ReserveReleasesMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
 				Name:     "isForecast",
 				NonNull:  true,
 				ChildErr: errNoChild3,

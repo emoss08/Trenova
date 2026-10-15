@@ -71,6 +71,26 @@ const ICONS = {
       <path d="M14 3.5v4h4M12.25 10v6.5M9.5 14l2.75 2.75L15 14" />
     </>
   ),
+  invoice: (
+    <>
+      <path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z" />
+      <path d="M9 8h6M9 11.5h6M9 15h3.5" />
+    </>
+  ),
+  pay: (
+    <>
+      <path d="M3.5 6h17v12h-17z" />
+      <path d="M7.5 6v12" strokeDasharray="1.6 1.9" />
+      <path d="M11 10h6M11 14h4" />
+    </>
+  ),
+  payable: (
+    <>
+      <path d="M3.5 6h17v12h-17z" />
+      <path d="M7.5 6v12" strokeDasharray="1.6 1.9" />
+      <path d="M11 12h6M15 10l2 2-2 2" />
+    </>
+  ),
   tender: (
     <>
       <path d="M4.5 6.5h15v3a2.5 2.5 0 0 0 0 5v3h-15v-3a2.5 2.5 0 0 0 0-5z" />
@@ -271,7 +291,10 @@ export type DeskArtKind =
   | "agreement"
   | "edi"
   | "inbound"
-  | "tender";
+  | "tender"
+  | "invoice"
+  | "pay"
+  | "payable";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -300,6 +323,9 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   edi: "EDI message",
   inbound: "EDI inbound file",
   tender: "Load tender",
+  invoice: "Invoice",
+  pay: "Worker settlement",
+  payable: "Carrier settlement",
 });
 
 /**
@@ -316,7 +342,10 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * analyst holds freight to, an EDI message as the document an EDI coordinator
  * follows to and from a trading partner, an EDI inbound file as the delivery
  * a trading partner sent that the coordinator traces into messages, an EDI
- * transfer as the load tender a coordinator accepts or declines.
+ * transfer as the load tender a coordinator accepts or declines, an invoice as
+ * the bill a biller sends and a collector follows to paid, a worker settlement
+ * as the pay stub a payroll clerk approves and pays, a carrier settlement as
+ * the payable an AP clerk checks against the carrier's invoices and pays.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -334,6 +363,9 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   edi_message: "edi",
   edi_inbound_file: "inbound",
   edi_transfer: "tender",
+  invoice: "invoice",
+  driver_settlement: "pay",
+  carrier_settlement: "payable",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -433,6 +465,12 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("EDI inbound file");
     case "tender":
       return t("Load tender");
+    case "invoice":
+      return t("Invoice");
+    case "pay":
+      return t("Worker settlement");
+    case "payable":
+      return t("Carrier settlement");
   }
 }
 

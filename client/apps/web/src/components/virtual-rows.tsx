@@ -1,4 +1,5 @@
 "use no memo";
+import { useDeferredMeasure } from "@/hooks/use-deferred-measure";
 import { cn } from "@trenova/shared/lib/utils";
 import { defaultRangeExtractor, useVirtualizer, type Range } from "@tanstack/react-virtual";
 import {
@@ -133,25 +134,7 @@ export function VirtualRows({
     rangeExtractor: stickyIndexes.length > 0 ? rangeExtractor : undefined,
   });
 
-  // A row is measured once the commit that attached it is over. Measured
-  // during it, a row above the viewport that is taller than its estimate
-  // moves the scroll position and asks React to flush the new positions at
-  // once, which React refuses mid-commit. A microtask still runs before the
-  // browser paints, so the corrected positions land in the same frame.
-  const measureRow = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (node === null) {
-        virtualizer.measureElement(null);
-        return;
-      }
-      queueMicrotask(() => {
-        if (node.isConnected) {
-          virtualizer.measureElement(node);
-        }
-      });
-    },
-    [virtualizer],
-  );
+  const measureRow = useDeferredMeasure(virtualizer);
 
   useImperativeHandle(
     handleRef,

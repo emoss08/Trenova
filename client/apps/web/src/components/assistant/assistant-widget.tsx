@@ -26,6 +26,7 @@ import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { beaconState } from "./beacon-state";
 import { useLiveTurns } from "./use-active-turns";
 import { useAssistantThreads } from "./use-assistant-threads";
+import { useAssistantEnabled } from "./use-assistant-enabled";
 import "./assistant.css";
 
 const OPEN_PARAM = "assistant";
@@ -70,12 +71,12 @@ export function assistantView(
  * closed, or cannot be used.
  */
 export function useAssistantSideInset(): "left" | "right" | null {
-  const { allowed } = usePermission(Resource.Assistant, Operation.Read);
+  const enabled = useAssistantEnabled();
   const open = useAssistantStore((state) => state.open);
   const layout = useAssistantStore((state) => state.layout);
   const dock = useAssistantStore((state) => state.dock);
 
-  if (!allowed || !open || layout !== "side") {
+  if (!enabled || !open || layout !== "side") {
     return null;
   }
 
@@ -88,12 +89,18 @@ export function useAssistantSideInset(): "left" | "right" | null {
  * store remembers its layout (floating in a corner, docked down the side with
  * the page beside it, or full screen), which corner it sits in, how big the
  * floating panel is, and whether the beacon is tucked away, because whatever
- * it covers on one page it covers on every page.
+ * it covers on one page it covers on every page. Someone who has turned it off
+ * in Settings, or may not use it, gets none of it: nothing is mounted, so no
+ * beacon, no shortcut and none of its queries.
  */
 export function AssistantWidget() {
+  const enabled = useAssistantEnabled();
+  return enabled ? <MountedAssistantWidget /> : null;
+}
+
+function MountedAssistantWidget() {
   const t = useT();
   const reduceMotion = useReducedMotion();
-  const { allowed } = usePermission(Resource.Assistant, Operation.Read);
   const { allowed: canSeeProposals } = usePermission(Resource.AgentProposal, Operation.Read);
 
   const open = useAssistantStore((state) => state.open);
@@ -129,7 +136,7 @@ export function AssistantWidget() {
   const requestedOpen = searchParams.get(OPEN_PARAM) === "open";
 
   useEffect(() => {
-    if (!allowed || !requestedOpen) {
+    if (!requestedOpen) {
       return;
     }
     openWidget();
@@ -141,26 +148,25 @@ export function AssistantWidget() {
       },
       { replace: true },
     );
-  }, [allowed, openWidget, requestedOpen, setSearchParams]);
+  }, [openWidget, requestedOpen, setSearchParams]);
 
   useHotkey("Mod+J", () => toggleWidget(), {
     ignoreInputs: false,
     preventDefault: true,
-    enabled: allowed,
   });
 
   // Esc shrinks the full-screen layout back into the corner; otherwise it closes.
   useHotkey("Escape", () => (full ? setLayout("compact") : closeWidget()), {
     ignoreInputs: false,
     preventDefault: false,
-    enabled: allowed && open,
+    enabled: open,
   });
 
   // The beacon is a signal: it says what the assistant is doing and, above
   // all, when a change is waiting on someone. The count is the same one the
   // sidebar and the Desk show, read once through the attention summary.
   const { data: attention } = useAttentionSummary();
-  const pendingCount = allowed && canSeeProposals ? (attention?.agentDecisions ?? 0) : 0;
+  const pendingCount = canSeeProposals ? (attention?.agentDecisions ?? 0) : 0;
   const liveTurns = useLiveTurns();
   const { agents, agentsById, threads } = data;
   const repliedThread = repliedThreadId
@@ -195,10 +201,6 @@ export function AssistantWidget() {
     }
     openWidget();
   };
-
-  if (!allowed) {
-    return null;
-  }
 
   const sizeStyle = panelSizeStyle(dock, panelSize);
 

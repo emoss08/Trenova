@@ -1,5 +1,4 @@
-// Walks through the fullscreen Settings dialog against the mock API and writes one PNG per
-// state. Usage: node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
+// Walks through the Settings page against the mock API and writes one PNG per state. Usage: node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
@@ -14,7 +13,12 @@ const SETTLE_MS = Number(process.env.SETTLE_MS ?? 6000);
 async function openSettings(page) {
   await page.getByRole("heading", { name: "Shipments" }).first().click();
   await page.keyboard.press("Control+Shift+S");
-  await page.getByRole("dialog", { name: "Settings" }).waitFor();
+  await page.waitForURL("**/settings");
+  await settingsReady(page);
+}
+
+async function settingsReady(page) {
+  await page.getByRole("navigation", { name: "Settings sections" }).waitFor();
   await page.getByText("All changes saved").waitFor();
   await page.waitForTimeout(800);
 }
@@ -149,12 +153,22 @@ const SHOTS = [
     act: openSettings,
   },
   {
-    name: "closed-returns",
+    name: "back-returns",
     colorScheme: "light",
     act: async (page) => {
       await openSettings(page);
-      await page.keyboard.press("Escape");
+      await page.goBack();
+      await page.getByRole("heading", { name: "Shipments" }).first().waitFor();
       await page.waitForTimeout(600);
+    },
+  },
+  {
+    name: "email-link",
+    colorScheme: "light",
+    act: async (page) => {
+      await page.goto(`${APP}/?settings=notifications`, { waitUntil: "domcontentloaded" });
+      await page.waitForURL("**/settings");
+      await settingsReady(page);
     },
   },
 ];

@@ -100,6 +100,7 @@ type User struct {
 	AwayDelegateUserID    *pulid.ID              `json:"awayDelegateUserId"    bun:"away_delegate_user_id,type:VARCHAR(100),nullzero"`
 	AwayNote              string                 `json:"awayNote"              bun:"away_note,type:VARCHAR(280),notnull"`
 	PasswordChangedAt     *int64                 `json:"passwordChangedAt"     bun:"password_changed_at,nullzero"`
+	AssistantHidden       bool                   `json:"assistantHidden"       bun:"assistant_hidden,type:BOOLEAN,notnull,default:false"`
 
 	BusinessUnit        *BusinessUnit                    `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
 	CurrentOrganization *Organization                    `json:"-"                     bun:"rel:belongs-to,join:current_organization_id=id"`

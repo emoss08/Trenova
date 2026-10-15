@@ -195,6 +195,35 @@ func (s *Service) UpdateMyProfile(
 	})
 }
 
+func (s *Service) SetMyAssistantHidden(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	hidden bool,
+) (*tenant.User, error) {
+	user, original, err := s.loadSelf(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.AssistantHidden == hidden {
+		return user, nil
+	}
+
+	user.AssistantHidden = hidden
+	comment := "Assistant shown"
+	if hidden {
+		comment = "Assistant hidden"
+	}
+
+	return s.updateColumns(ctx, &columnUpdate{
+		tenantInfo: tenantInfo,
+		user:       user,
+		original:   original,
+		columns:    []string{tenantcol.UserColumns.AssistantHidden.String()},
+		comment:    comment,
+	})
+}
+
 func (s *Service) UpdateMyAvailability(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

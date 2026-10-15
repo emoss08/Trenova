@@ -3,7 +3,6 @@ import { PreviewValuesProvider } from "@/components/formula-editor/preview-value
 import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useNavigationStore } from "@/stores/navigation-store";
 import {
   buildTemplateExport,
   downloadJson,
@@ -320,9 +319,6 @@ function StudioLayout() {
   const form = useFormContext<FormulaTemplateFormValues>();
   const expression = useWatch({ control: form.control, name: "expression" }) ?? "";
   const stacked = useMediaQuery("(max-width: 899px)");
-  // The studio is a room: the rate trace stands where the panel would and
-  // folds with the rail's fold tile and ⌘B, like Triage's folder rail.
-  const traceFolded = useNavigationStore((state) => state.sidebarCollapsed);
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -431,12 +427,9 @@ function StudioLayout() {
           </ScrollArea>
         ) : (
           <div
-            className={cn(
-              "grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)]",
-              !traceFolded && "min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]",
-            )}
+            className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]"
           >
-            {!traceFolded && <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />}
+            <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />
             <ScrollArea maskVariant="background" viewportRef={formViewport} className="min-h-0">
               <FormColumn />
             </ScrollArea>

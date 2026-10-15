@@ -4549,6 +4549,7 @@ var UserColumns = struct {
 	AwayDelegateUserID    buncolgen.Column // "away_delegate_user_id" → qualified: "usr.away_delegate_user_id"
 	AwayNote              buncolgen.Column // "away_note" → qualified: "usr.away_note"
 	PasswordChangedAt     buncolgen.Column // "password_changed_at" → qualified: "usr.password_changed_at"
+	AssistantHidden       buncolgen.Column // "assistant_hidden" → qualified: "usr.assistant_hidden"
 }{
 	ID:                    buncolgen.NewColumn("id", "usr"),
 	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "usr"),
@@ -4578,6 +4579,7 @@ var UserColumns = struct {
 	AwayDelegateUserID:    buncolgen.NewColumn("away_delegate_user_id", "usr"),
 	AwayNote:              buncolgen.NewColumn("away_note", "usr"),
 	PasswordChangedAt:     buncolgen.NewColumn("password_changed_at", "usr"),
+	AssistantHidden:       buncolgen.NewColumn("assistant_hidden", "usr"),
 }
 
 // UserFieldMap maps JSON API field names to database column names.
@@ -4612,6 +4614,7 @@ var UserFieldMap = map[string]string{
 	"awayDelegateUserId":    "away_delegate_user_id",
 	"awayNote":              "away_note",
 	"passwordChangedAt":     "password_changed_at",
+	"assistantHidden":       "assistant_hidden",
 }
 
 // UserInsertableColumns lists column names suitable for INSERT statements on the "users" table.
@@ -4645,6 +4648,7 @@ var UserInsertableColumns = []string{
 	"away_delegate_user_id",
 	"away_note",
 	"password_changed_at",
+	"assistant_hidden",
 }
 
 // UserRelations provides type-safe names for Bun eager-loading.
@@ -4699,6 +4703,7 @@ var UserFilter = struct {
 	AwayDelegateUserID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awayDelegateUserId" → DB: "away_delegate_user_id"
 	AwayNote              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awayNote" → DB: "away_note"
 	PasswordChangedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "passwordChangedAt" → DB: "password_changed_at"
+	AssistantHidden       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assistantHidden" → DB: "assistant_hidden"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -4780,5 +4785,8 @@ var UserFilter = struct {
 	},
 	PasswordChangedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("passwordChangedAt", op, value)
+	},
+	AssistantHidden: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("assistantHidden", op, value)
 	},
 }

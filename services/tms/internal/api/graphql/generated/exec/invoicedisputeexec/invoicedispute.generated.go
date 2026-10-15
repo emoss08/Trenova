@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -269,6 +270,30 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
+			{
+				Name:       "openedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoice.InvoiceDispute)
+					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").OpenedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "resolvedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoice.InvoiceDispute)
+					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").ResolvedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
@@ -349,6 +374,8 @@ type resolverInvoice interface {
 type resolverInvoiceDispute interface {
 	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (string, error)
 	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
+	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
 }
 
 type resolverMutation interface {
@@ -728,4 +755,11 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

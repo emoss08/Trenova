@@ -261,7 +261,9 @@ func (t Template) Description() string {
 	case TemplateFactoringClerk:
 		return "Gets factored invoices ready to sell and sends them: chases the notices of " +
 			"assignment and documents the factor needs, proposes one schedule per factor for " +
-			"the invoices that are ready, and follows up schedules that fail to send."
+			"the invoices that are ready, follows up schedules that fail to send or go " +
+			"unfunded, proposes booking the factor's funding and reserve releases, and warns " +
+			"before a chargeback."
 	default:
 		return ""
 	}

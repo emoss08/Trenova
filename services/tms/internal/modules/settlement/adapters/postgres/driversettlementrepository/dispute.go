@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -199,6 +200,41 @@ func (r *disputeRepository) ListForWorker(
 		}
 		return items, nil
 	})
+}
+
+func (r *disputeRepository) ListBySettlementIDs(
+	ctx context.Context,
+	req *driversettlementports.ListSettlementDisputesBySettlementIDsRequest,
+) (map[pulid.ID][]*driversettlement.Dispute, error) {
+	if len(req.SettlementIDs) == 0 {
+		return map[pulid.ID][]*driversettlement.Dispute{}, nil
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*driversettlement.Dispute, error) {
+			cols := driversettlementcol.DisputeColumns
+			items := make([]*driversettlement.Dispute, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return driversettlementcol.DisputeScopeTenant(sq, req.TenantInfo).
+						Where(cols.SettlementID.In(), bun.List(req.SettlementIDs))
+				}).
+				Relation(driversettlementcol.DisputeRelations.SettlementLine).
+				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list settlement disputes by settlement ids: %w", err)
+			}
+			grouped := make(map[pulid.ID][]*driversettlement.Dispute, len(req.SettlementIDs))
+			for _, item := range items {
+				grouped[item.SettlementID] = append(grouped[item.SettlementID], item)
+			}
+			return grouped, nil
+		},
+	)
 }
 
 func (r *disputeRepository) CountOpen(

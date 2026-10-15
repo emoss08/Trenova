@@ -159,18 +159,23 @@ export function ActivityTimelineSkeleton() {
     <div className="relative flex flex-col px-4 py-3" aria-busy aria-label={t("Loading activity")}>
       <div className="contents" aria-hidden>
         <span className="bg-border absolute top-5 bottom-5 left-[19px] w-px" />
-        {ACTIVITY_WIDTHS.map((width, index) => (
-          <div key={index} className="relative flex items-start gap-3 py-1.5">
-            <Skeleton className="relative mt-1.5 size-[7px] shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1 text-sm leading-snug">
-              <Skeleton className={cn("inline-block h-3 align-middle", width)} />
-            </div>
-            <Skeleton className="mt-1 h-2.5 w-10 shrink-0" />
-          </div>
-        ))}
+        <ActivityRowsSkeleton />
       </div>
     </div>
   );
+}
+
+/** Events waiting to load, each drawn as the timeline draws an event: a dot, a line and a time. */
+export function ActivityRowsSkeleton({ count = ACTIVITY_WIDTHS.length }: { count?: number }) {
+  return ACTIVITY_WIDTHS.slice(0, count).map((width, index) => (
+    <div key={index} className="relative flex items-start gap-3 py-1.5">
+      <Skeleton className="relative mt-1.5 size-[7px] shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 text-sm leading-snug">
+        <Skeleton className={cn("inline-block h-3 align-middle", width)} />
+      </div>
+      <Skeleton className="mt-1 h-2.5 w-10 shrink-0" />
+    </div>
+  ));
 }
 
 /** The whole panel, open on whichever tab the address names. */

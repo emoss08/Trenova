@@ -109,31 +109,6 @@ func SharedOptions() fx.Option {
 			invoiceadjustmentrepository.New,
 			invoicerepository.New,
 			invoicedisputerepository.New,
-			factoringrepository.NewAgreementRepository,
-			factoringrepository.NewNoaRepository,
-			factoringrepository.NewInvoiceStateRepository,
-			factoringrepository.NewSubmissionRepository,
-			factoringrepository.NewTransportRepository,
-			factoringrepository.NewWatchtowerReader,
-			factoringcontract.NewRequester,
-			factoringservice.NewAgreementService,
-			factoringservice.NewNoaService,
-			factoringservice.NewReadinessService,
-			factoringservice.NewSubmissionService,
-			factoringservice.NewTransportService,
-			factoringcontract.NewSendStarter,
-			fx.Annotate(
-				factoringtransport.NewEmail,
-				fx.ResultTags(factoringports.TransportGroup),
-			),
-			fx.Annotate(
-				factoringtransport.NewSftp,
-				fx.ResultTags(factoringports.TransportGroup),
-			),
-			fx.Annotate(
-				factoringservice.NewDocumentObserver,
-				fx.ResultTags(documentports.DocumentChangeObserverGroup),
-			),
 			latechargerepository.New,
 			invoicerunrepository.New,
 			invoicesharerepository.New,
@@ -176,6 +151,41 @@ func SharedOptions() fx.Option {
 			fx.Annotate(
 				func(b *invoiceservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
+			),
+		),
+		factoringOptions(),
+	)
+}
+
+func factoringOptions() fx.Option {
+	return fx.Options(
+		fx.Provide(
+			factoringrepository.NewAgreementRepository,
+			factoringrepository.NewNoaRepository,
+			factoringrepository.NewInvoiceStateRepository,
+			factoringrepository.NewSubmissionRepository,
+			factoringrepository.NewReserveEntryRepository,
+			factoringrepository.NewTransportRepository,
+			factoringrepository.NewWatchtowerReader,
+			factoringcontract.NewRequester,
+			factoringservice.NewAgreementService,
+			factoringservice.NewNoaService,
+			factoringservice.NewReadinessService,
+			factoringservice.NewSubmissionService,
+			factoringservice.NewLedgerService,
+			factoringservice.NewTransportService,
+			factoringcontract.NewSendStarter,
+			fx.Annotate(
+				factoringtransport.NewEmail,
+				fx.ResultTags(factoringports.TransportGroup),
+			),
+			fx.Annotate(
+				factoringtransport.NewSftp,
+				fx.ResultTags(factoringports.TransportGroup),
+			),
+			fx.Annotate(
+				factoringservice.NewDocumentObserver,
+				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
 		),
 		fx.Decorate(factoringservice.WatchInvoices),

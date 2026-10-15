@@ -1,6 +1,9 @@
 package sliceutils
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 func FirstOrDefault[T any](slice []T, fallback T) T {
 	if len(slice) > 0 {
@@ -26,6 +29,23 @@ func Difference[T comparable](items, exclude []T) []T {
 		}
 	}
 
+	return result
+}
+
+func Intersect[T comparable](items []T, others ...[]T) []T {
+	result := make([]T, 0, len(items))
+	for _, item := range items {
+		kept := true
+		for _, other := range others {
+			if !slices.Contains(other, item) {
+				kept = false
+				break
+			}
+		}
+		if kept {
+			result = append(result, item)
+		}
+	}
 	return result
 }
 

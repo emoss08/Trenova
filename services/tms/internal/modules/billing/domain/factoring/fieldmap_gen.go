@@ -39,6 +39,13 @@ func (e *Noa) GetStaticFieldMap() map[string]string {
 	return factoringcol.NoaFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReserveEntry].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [factoringcol.ReserveEntryFieldMap] instead of parsing struct tags via reflection.
+func (e *ReserveEntry) GetStaticFieldMap() map[string]string {
+	return factoringcol.ReserveEntryFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Submission].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [factoringcol.SubmissionFieldMap] instead of parsing struct tags via reflection.

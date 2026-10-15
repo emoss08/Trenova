@@ -119,6 +119,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/change-password/", h.changeMyPassword)
 	meAPI.PATCH("/profile/", h.updateMyProfile)
 	meAPI.PUT("/availability/", h.updateMyAvailability)
+	meAPI.PUT("/assistant-visibility/", h.updateMyAssistantVisibility)
 	meAPI.GET("/sessions/", h.listMySessions)
 	meAPI.POST("/sessions/revoke-others/", h.revokeMyOtherSessions)
 	meAPI.DELETE("/sessions/:sessionID/", h.revokeMySession)

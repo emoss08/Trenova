@@ -1,4 +1,7 @@
-import { FactoringSubmissionStatusBadge } from "@/components/factoring/factoring-badges";
+import {
+  FactoringSubmissionItemStatusBadge,
+  FactoringSubmissionStatusBadge,
+} from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import type { FactoringInvoiceStateRow } from "@/lib/graphql/factoring";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -90,7 +93,7 @@ export function getFactoringInvoiceColumns(
         filterType: "date",
       },
     });
-  } else if (tab === "submitted") {
+  } else if (tab === "submitted" || tab === "funded") {
     columns.push(
       {
         id: "submission",
@@ -112,18 +115,31 @@ export function getFactoringInvoiceColumns(
         maxSize: 220,
         meta: { label: t("Schedule") },
       },
-      {
-        id: "submissionStatus",
-        header: t("Delivery"),
-        cell: ({ row }) =>
-          row.original.submission ? (
-            <FactoringSubmissionStatusBadge status={row.original.submission.submissionStatus} />
-          ) : null,
-        size: 150,
-        minSize: 120,
-        maxSize: 200,
-        meta: { label: t("Delivery") },
-      },
+      tab === "funded"
+        ? {
+            id: "itemStatus",
+            header: t("Reserve"),
+            cell: ({ row }) =>
+              row.original.submission ? (
+                <FactoringSubmissionItemStatusBadge status={row.original.submission.itemStatus} />
+              ) : null,
+            size: 150,
+            minSize: 120,
+            maxSize: 200,
+            meta: { label: t("Reserve") },
+          }
+        : {
+            id: "submissionStatus",
+            header: t("Delivery"),
+            cell: ({ row }) =>
+              row.original.submission ? (
+                <FactoringSubmissionStatusBadge status={row.original.submission.submissionStatus} />
+              ) : null,
+            size: 150,
+            minSize: 120,
+            maxSize: 200,
+            meta: { label: t("Delivery") },
+          },
     );
   } else {
     columns.push({

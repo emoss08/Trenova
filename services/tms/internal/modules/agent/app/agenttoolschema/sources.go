@@ -61,6 +61,10 @@ var (
 		"factoring.submissionStatus",
 		factoring.AllSubmissionStatuses(),
 	)
+	FactoringFundingOutcomes = Source(
+		"factoring.fundingOutcome",
+		factoring.AllFundingOutcomes(),
+	)
 	FactoringOverrides = Source(
 		"invoice.factoringOverride",
 		invoice.FactoringOverrideValues(),

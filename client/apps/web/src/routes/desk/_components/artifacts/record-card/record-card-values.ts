@@ -59,6 +59,16 @@ export function cardDate(seconds: number | null | undefined): string {
   return formatUnixDateMedium(seconds, { fallback: "" });
 }
 
+/** A unix second as a card names a day ahead or just gone: "Fri, Oct 17". */
+export function cardWeekday(seconds: number | null | undefined): string {
+  if (!seconds) return "";
+  return new Date(seconds * 1000).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 /** A unix second as a card writes a month: the month and the year. */
 export function cardMonth(seconds: number | null | undefined): string {
   if (!seconds) return "";

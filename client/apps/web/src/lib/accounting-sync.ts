@@ -20,6 +20,9 @@ import type {
   AccountingSetupStep,
   AccountingSystem,
 } from "@trenova/graphql/generated/graphql";
+import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 
@@ -213,6 +216,74 @@ const SYNC_RECORD_PHASES: Record<AccountingSyncRecordStatus, StatusPhase> = {
 
 export function accountingSyncRecordPhase(status: AccountingSyncRecordStatus): StatusPhase {
   return SYNC_RECORD_PHASES[status];
+}
+
+/** Where a record stands with the accounting system, named for that system. */
+export function accountingSyncStateLabel(
+  status: AccountingSyncRecordStatus,
+  provider: string,
+  t: TranslateFn,
+): string {
+  switch (status) {
+    case "Queued":
+      return t("Queued for {0}", provider);
+    case "AwaitingApproval":
+      return t("Waiting to be released to {0}", provider);
+    case "InFlight":
+      return t("Sending to {0}", provider);
+    case "Retrying":
+      return t("Retrying {0}", provider);
+    case "Synced":
+      return t("In {0}", provider);
+    case "Blocked":
+      return t("Held from {0}", provider);
+    case "DeadLettered":
+    case "Skipped":
+      return t("Not sent to {0}", provider);
+    case "Superseded":
+      return t("Replaced by a newer version");
+  }
+}
+
+type AccountingSyncStateRecord = Pick<
+  AccountingSyncRecord,
+  | "status"
+  | "syncedAt"
+  | "nextAttemptAt"
+  | "resolution"
+  | "errorMessage"
+  | "attemptCount"
+  | "skippedReason"
+>;
+
+/** What else there is to say of where a record stands: since when, the next try, or why it stopped. */
+export function accountingSyncStateDetail(
+  state: { record: AccountingSyncStateRecord },
+  t: TranslateFn,
+): string {
+  const record = state.record;
+  switch (record.status) {
+    case "Synced":
+      return record.syncedAt ? t("since {0}", formatUnixDateTimeShort(record.syncedAt)) : "";
+    case "Retrying":
+      return record.nextAttemptAt
+        ? t("next try {0}", formatUnixDateTimeShort(record.nextAttemptAt))
+        : "";
+    case "Blocked":
+      return record.resolution || record.errorMessage;
+    case "DeadLettered":
+      return t(
+        "{0, plural, one {gave up after # try} other {gave up after # tries}}",
+        record.attemptCount,
+      );
+    case "Skipped":
+      return record.skippedReason;
+    case "Queued":
+    case "AwaitingApproval":
+    case "InFlight":
+    case "Superseded":
+      return "";
+  }
 }
 
 export function accountingSyncNeedsAction(status: AccountingSyncRecordStatus): boolean {

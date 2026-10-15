@@ -21,21 +21,33 @@ const (
 	factoringSubmissionsDefaultLimit = 25
 	factoringSubmissionsMaxLimit     = 50
 
-	absentNotSentYet = "not sent"
-	absentNotFailed  = "not failed"
+	absentNotSentYet     = "not sent"
+	absentNotFailed      = "not failed"
+	absentNotFunded      = "not funded"
+	absentNotSettled     = "not settled"
+	absentNotChargedBack = "not charged back"
 )
 
 type factoringSubmissionItemRow struct {
-	InvoiceID       string `json:"invoiceId"`
-	InvoiceNumber   string `json:"invoiceNumber"`
-	CustomerID      string `json:"customerId"`
-	Face            string `json:"face,omitempty"`
-	ExpectedAdvance string `json:"expectedAdvance,omitempty"`
-	ExpectedFee     string `json:"expectedFee,omitempty"`
-	ExpectedReserve string `json:"expectedReserve,omitempty"`
-	ExpectedDays    int    `json:"expectedDays"`
-	Status          string `json:"status"`
-	HasPacket       bool   `json:"hasPacket"`
+	ItemID          string       `json:"itemId"`
+	InvoiceID       string       `json:"invoiceId"`
+	InvoiceNumber   string       `json:"invoiceNumber"`
+	CustomerID      string       `json:"customerId"`
+	Face            string       `json:"face,omitempty"`
+	ExpectedAdvance string       `json:"expectedAdvance,omitempty"`
+	ExpectedFee     string       `json:"expectedFee,omitempty"`
+	ExpectedReserve string       `json:"expectedReserve,omitempty"`
+	ExpectedDays    int          `json:"expectedDays"`
+	Status          string       `json:"status"`
+	HasPacket       bool         `json:"hasPacket"`
+	FundedOn        optionalDate `json:"fundedOn"`
+	Advance         string       `json:"advance,omitempty"`
+	Fee             string       `json:"fee,omitempty"`
+	Reserve         string       `json:"reserve,omitempty"`
+	RejectionReason string       `json:"rejectionReason,omitempty"`
+	SettledOn       optionalDate `json:"settledOn"`
+	ChargedBackOn   optionalDate `json:"chargedBackOn"`
+	ChargebackWhy   string       `json:"chargebackReason,omitempty"`
 }
 
 type factoringSubmissionRow struct {
@@ -63,6 +75,13 @@ type factoringSubmissionRow struct {
 
 func minorAmount(show amounts, minor int64) string {
 	return show.of(decimal.New(minor, minorUnitsExponent))
+}
+
+func fundedAmount(show amounts, funded bool, minor int64) string {
+	if !funded {
+		return ""
+	}
+	return minorAmount(show, minor)
 }
 
 func factoringSubmissionRowFrom(sub *factoring.Submission, show amounts) factoringSubmissionRow {
@@ -95,7 +114,10 @@ func factoringSubmissionRowFrom(sub *factoring.Submission, show amounts) factori
 		if item == nil {
 			continue
 		}
+		advance, fee, reserve := item.Actuals()
+		funded := item.FundedOn != nil
 		row.Items = append(row.Items, factoringSubmissionItemRow{
+			ItemID:          item.ID.String(),
 			InvoiceID:       item.InvoiceID.String(),
 			InvoiceNumber:   item.InvoiceNumber,
 			CustomerID:      item.CustomerID.String(),
@@ -106,6 +128,14 @@ func factoringSubmissionRowFrom(sub *factoring.Submission, show amounts) factori
 			ExpectedDays:    item.ExpectedDays,
 			Status:          string(item.Status),
 			HasPacket:       !item.PacketDocumentID.IsNil(),
+			FundedOn:        pointerDateOr(item.FundedOn, absentNotFunded),
+			Advance:         fundedAmount(show, funded, advance),
+			Fee:             fundedAmount(show, funded, fee),
+			Reserve:         fundedAmount(show, funded, reserve),
+			RejectionReason: item.RejectionReason,
+			SettledOn:       pointerDateOr(item.SettledOn, absentNotSettled),
+			ChargedBackOn:   pointerDateOr(item.ChargedBackOn, absentNotChargedBack),
+			ChargebackWhy:   item.ChargebackReason,
 		})
 	}
 	return row
@@ -130,11 +160,12 @@ func (t *listFactoringSubmissionsTool) Name() string { return "list_factoring_su
 
 func (t *listFactoringSubmissionsTool) Description() string {
 	return "List the schedules of accounts sent to factors, newest first, with their status " +
-		"and totals. Each has its number, factor, status (Sending, Sent, Failed or " +
-		"Cancelled), invoice count, expected funding, where it went, and for a failed one " +
-		"the last error. Pass a " +
-		"schedule's id to get_factoring_submission for its invoices, and its id and version " +
-		"to retry_factoring_submission or cancel_factoring_submission."
+		"and totals. Each has its number, factor, status (Sending, Sent, Failed, Cancelled, " +
+		"PartiallyFunded, Funded or Rejected), invoice count, expected funding, where it " +
+		"went, and for a failed one the last error. Pass a schedule's id to " +
+		"get_factoring_submission for its invoices; a failed one's id and version go to " +
+		"retry_factoring_submission or cancel_factoring_submission, and a sent one's to " +
+		"record_factoring_funding."
 }
 
 func (t *listFactoringSubmissionsTool) SearchTerms() []string {
@@ -256,10 +287,14 @@ func (t *getFactoringSubmissionTool) Name() string { return "get_factoring_submi
 
 func (t *getFactoringSubmissionTool) Description() string {
 	return "Read one schedule of accounts with every invoice on it and why it failed, if it " +
-		"did. Each invoice has its amount, expected advance, fee and reserve, and whether its " +
-		"packet was built; the schedule has its status, where it went, attempts and last " +
-		"error. Use its version with " +
-		"retry_factoring_submission or cancel_factoring_submission."
+		"did. Each invoice has its item id, amount, expected advance, fee and reserve, " +
+		"whether its packet was built, and once the factor decided it, what it funded (the " +
+		"advance, fee and reserve it holds) or why it rejected it, and whether its reserve " +
+		"was released or it was charged back; the schedule has its status, where it went, " +
+		"attempts and last error. Use its version and an invoice's item id with " +
+		"record_factoring_funding, release_factoring_reserve, record_factoring_chargeback or " +
+		"reverse_factoring_chargeback, and with retry_factoring_submission or " +
+		"cancel_factoring_submission for a failed one."
 }
 
 func (t *getFactoringSubmissionTool) SearchTerms() []string {

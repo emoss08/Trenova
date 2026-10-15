@@ -114,6 +114,15 @@ func (_mock *MockCarrierInvoiceMatchRepository) ListLiveByAssignment(ctx context
 	return r0, ret.Error(1)
 }
 
+func (_mock *MockCarrierInvoiceMatchRepository) ListLiveByMoveIDs(ctx context.Context, req carriersettlementports.ListLiveCarrierInvoiceMatchesByMoveIDsRequest) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error) {
+	ret := _mock.Called(ctx, req)
+	var r0 map[pulid.ID][]*carriersettlement.InvoiceMatch
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(map[pulid.ID][]*carriersettlement.InvoiceMatch)
+	}
+	return r0, ret.Error(1)
+}
+
 func (_mock *MockCarrierInvoiceMatchRepository) ListResolvedAssignmentIDs(ctx context.Context, req carriersettlementports.ListResolvedMatchAssignmentsRequest) ([]pulid.ID, error) {
 	ret := _mock.Called(ctx, req)
 	var r0 []pulid.ID

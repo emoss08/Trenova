@@ -2,11 +2,8 @@ import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields"
 import { NumberField } from "@/components/fields/number-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { captureRecordKindLabel, type CaptureRecordKind } from "@/lib/capture";
-import {
-  buildCoverSheetPdf,
-  openCoverSheetsForPrinting,
-  type CoverSheetPrint,
-} from "@/lib/capture-cover-sheet";
+import type { CoverSheetPrint } from "@/lib/capture-cover-sheet";
+import { openCoverSheetsForPrinting } from "@/lib/capture-cover-sheet-print";
 import {
   MAX_COVER_SHEETS,
   coverSheetFormSchema,
@@ -89,6 +86,7 @@ export function CoverSheetDialog({
         expiresOn: formatUnixDateMedium(sheet.expiresAt),
       }));
 
+      const { buildCoverSheetPdf } = await import("@/lib/capture-cover-sheet");
       return buildCoverSheetPdf(sheets, {
         heading: t("Trenova cover sheet"),
         separatorTitle: t("Separator"),

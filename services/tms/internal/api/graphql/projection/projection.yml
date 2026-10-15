@@ -7,6 +7,23 @@ aliases:
     overdue: dueAt
   WatchtowerItemEvent:
     actor: actorId
+  Invoice:
+    voidedBy: voidedById
+  InvoiceDispute:
+    openedBy: openedById
+    resolvedBy: resolvedById
+  DriverSettlement:
+    submittedBy: submittedById
+    approvedBy: approvedById
+    postedBy: postedById
+    paidBy: paidById
+    voidedBy: voidedById
+  CarrierSettlement:
+    submittedBy: submittedById
+    approvedBy: approvedById
+    postedBy: postedById
+    paidBy: paidById
+    voidedBy: voidedById
   AgentToolRule:
     updatedBy: updatedById
   Shipment:
@@ -122,6 +139,14 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  DriverSettlement:
+    - lineSummary
+    - loadShares
+    - disputes
+  CarrierSettlement:
+    - costSummary
+    - loadShares
+    - moveInvoices
   AgentProfileGuidance:
     - createdByName
   TenderOffer:
@@ -274,6 +299,7 @@ virtuals:
     - lateChargeAssessments
     - ediSendPlan
     - factoringState
+    - chargeSummary
   LateChargeAssessment:
     - sourceInvoice
     - debitMemo

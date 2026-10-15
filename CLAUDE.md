@@ -211,6 +211,10 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Never let an exported type, or the signature of an exported function or method, mention a concrete generic type that has methods (`*validationframework.TenantedValidator[*X]`, `*dataloadgen.Loader[K, V]`). Go compiles that type's methods again in every package that can see it, so hold it behind a generic interface (`validationframework.TenantedEntityValidator[*X]`) or in an unexported type reached only through package-level functions; an unexported field of an exported type still spreads it. See "Generics and build time" in [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md).
 
 ### TypeScript/React
+- **Use the `trenova-frontend` skill** (`.claude/skills/trenova-frontend/`) for any change under
+  `client/`: where code goes, page and loading anatomy, data and query keys, forms, i18n,
+  styling, bundle discipline, tests and what to verify. When one of its rules is wrong, fix the
+  rule in the same change.
 - Format with OxFmt (`client/.oxfmtrc.json`): double quotes, semicolons, trailing commas, 100 char width
 - Lint with OxLint (`client/.oxlintrc.json`): strict React hooks, TanStack Query exhaustive deps, no console.log
 - Prefer named exports over default exports
@@ -321,7 +325,9 @@ bundles without typechecking, and CI fails a build whose first-visit download pa
 to `node_modules/<name>/`, or a feature imported statically from the shell has each already broken
 the app or put a whole feature on every page. Query key factories are imported from their own
 module (`import { shipment } from "@/lib/queries/shipment"`); there is no merged `queries`
-object, and lint rejects an import of `@/lib/queries`. A service worker (`/sw.js`) serves the app shell
+object, and lint rejects an import of `@/lib/queries`. PDFs are shown by the browser's own
+viewer through `PdfFrame` (`components/elements/pdf-frame.tsx`); never add a PDF rendering
+library, and every CSP keeps `frame-src 'self' blob:`. A service worker (`/sw.js`) serves the app shell
 and hashed assets from cache, and the shell's queries persist to IndexedDB from an allow-list
 (`SHELL_QUERIES` in `lib/session-cache.ts`) that must never hold business records or personal
 details; every session end goes through `clearSessionCache()`. Open tabs reload onto a new

@@ -116,6 +116,10 @@ describe("factoring agreement form", () => {
       accountingTreatment: "SecuredBorrowing",
       fundingDays: 2,
       submissionTime: 540,
+      dueFromFactorAccountId: null,
+      feeExpenseAccountId: "gla_fee",
+      liabilityAccountId: "gla_liab",
+      cashAccountId: null,
       notes: null,
       activatedAt: START,
       endedAt: null,
@@ -146,6 +150,39 @@ describe("factoring agreement form", () => {
         { daysTo: null, ratePercent: 5, flatMinor: 0 },
       ],
       documentTypes: ["dt_1"],
+      dueFromFactorAccountId: null,
+      feeExpenseAccountId: "gla_fee",
+      liabilityAccountId: "gla_liab",
+      cashAccountId: null,
+    });
+  });
+
+  it("sends each posting account it was given and null for one left empty", () => {
+    const input = agreementFormToInput(
+      "fac_1",
+      values({
+        accountingTreatment: "Sale",
+        dueFromFactorAccountId: "gla_due",
+        feeExpenseAccountId: "gla_fee",
+        liabilityAccountId: "",
+        cashAccountId: null,
+      }),
+    );
+
+    expect(input).toMatchObject({
+      dueFromFactorAccountId: "gla_due",
+      feeExpenseAccountId: "gla_fee",
+      liabilityAccountId: null,
+      cashAccountId: null,
+    });
+  });
+
+  it("starts a new agreement with no posting accounts, so the organization's apply", () => {
+    expect(emptyAgreementValues(START)).toMatchObject({
+      dueFromFactorAccountId: null,
+      feeExpenseAccountId: null,
+      liabilityAccountId: null,
+      cashAccountId: null,
     });
   });
 });

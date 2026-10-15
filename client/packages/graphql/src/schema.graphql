@@ -1828,8 +1828,16 @@ type ARBalanceOverview {
 type ARCashFlowPoint {
   actualMinor: Int!
   expectedMinor: Int!
+  """
+  Advances expected from factors on schedules not yet funded, in the week they are due.
+  """
+  factorAdvancesMinor: Int!
   isForecast: Boolean!
   openDueMinor: Int!
+  """
+  Reserves factors hold, expected back in the week the customer's invoice falls due.
+  """
+  reserveReleasesMinor: Int!
   weekStart: Timestamp!
 }
 
@@ -9271,11 +9279,16 @@ disbursement (DR AP / CR cash) and the Payment ledger entry.
 type CarrierSettlement {
   adjustmentsMinor: Int!
   approvedAt: Timestamp
+  approvedBy: User
   approvedById: ID
   batchId: ID
   businessUnitId: ID!
   carrier: Carrier
   carrierId: ID!
+  """
+  The lines summed by cost: one row per kind of cost and description, and each adjustment added by hand on its own. Null when the lines were not read.
+  """
+  costSummary: [CarrierSettlementLineGroup!]
   createdAt: Timestamp!
   currencyCode: String!
   """
@@ -9288,10 +9301,19 @@ type CarrierSettlement {
   grossCostMinor: Int!
   id: ID!
   lines: [CarrierSettlementLine!]
+  """
+  What each load came to on the statement, every line tied to it summed. Null when the lines were not read.
+  """
+  loadShares: [SettlementLoadShare!]
+  """
+  Each move the statement pays and the carrier's invoice for it, if one came in. Null when the lines were not read.
+  """
+  moveInvoices: [CarrierSettlementMoveInvoice!]
   netPayableMinor: Int!
   notes: String!
   organizationId: ID!
   paidAt: Timestamp
+  paidBy: User
   paidById: ID
   """The exchange rate fixed when the settlement was paid."""
   paidExchangeRate: Decimal
@@ -9304,18 +9326,21 @@ type CarrierSettlement {
   periodEnd: Timestamp!
   periodStart: Timestamp!
   postedAt: Timestamp
+  postedBy: User
   postedById: ID
   postedJournalBatchId: ID
   settlementNumber: String!
   shipmentCount: Int!
   status: CarrierSettlementStatus!
   submittedAt: Timestamp
+  submittedBy: User
   submittedById: ID
   updatedAt: Timestamp!
   version: Int!
   voidJournalBatchId: ID
   voidReason: String!
   voidedAt: Timestamp
+  voidedBy: User
   voidedById: ID
 }
 
@@ -9440,6 +9465,34 @@ type CarrierSettlementLine {
   moveId: ID
   proNumber: String!
   settlementId: ID!
+  shipmentId: ID
+}
+
+"""
+Carrier settlement lines of the same kind of cost and description, summed.
+"""
+type CarrierSettlementLineGroup {
+  amountMinor: Int!
+  description: String!
+  eventType: CarrierCostEventType!
+  lineCount: Int!
+  """
+  An adjustment added by a person rather than accrued or accepted from an invoice variance.
+  """
+  manual: Boolean!
+  shipmentCount: Int!
+}
+
+"""
+One move a carrier settlement pays and the carrier's invoice for it: what the
+move costs on the statement, and the newest live invoice match on its carrier
+assignment, when one came in.
+"""
+type CarrierSettlementMoveInvoice {
+  costMinor: Int!
+  match: CarrierInvoiceMatch
+  moveId: ID!
+  proNumber: String!
   shipmentId: ID
 }
 
@@ -12994,6 +13047,7 @@ negative — shortfalls carry forward to the next settlement instead.
 """
 type DriverSettlement {
   approvedAt: Timestamp
+  approvedBy: User
   approvedById: ID
   batchId: ID
   businessUnitId: ID!
@@ -13003,6 +13057,10 @@ type DriverSettlement {
   createdAt: Timestamp!
   currencyCode: String!
   deductionsMinor: Int!
+  """
+  The worker's disputes against this settlement, newest first; empty for someone who may not read settlement disputes.
+  """
+  disputes: [SettlementDispute!]!
   exceptions: [SettlementException!]
   """
   Units of the organization's functional currency per one unit of the
@@ -13014,11 +13072,20 @@ type DriverSettlement {
   grossEarningsMinor: Int!
   hasExceptions: Boolean!
   id: ID!
+  """
+  The lines summed by how each was paid: one row per pay component, deduction, advance, escrow account or line added by hand. Null when the lines were not read.
+  """
+  lineSummary: [DriverSettlementLineGroup!]
   lines: [DriverSettlementLine!]
+  """
+  What each load came to on the statement, every line tied to it summed, in the order the loads first appear. Null when the lines were not read.
+  """
+  loadShares: [SettlementLoadShare!]
   netPayMinor: Int!
   notes: String!
   organizationId: ID!
   paidAt: Timestamp
+  paidBy: User
   paidById: ID
   """The exchange rate fixed when the settlement was paid."""
   paidExchangeRate: Decimal
@@ -13032,18 +13099,21 @@ type DriverSettlement {
   periodEnd: Timestamp!
   periodStart: Timestamp!
   postedAt: Timestamp
+  postedBy: User
   postedById: ID
   reimbursementsMinor: Int!
   settlementNumber: String!
   shipmentCount: Int!
   status: DriverSettlementStatus!
   submittedAt: Timestamp
+  submittedBy: User
   submittedById: ID
   totalMiles: Decimal!
   updatedAt: Timestamp!
   version: Int!
   voidReason: String!
   voidedAt: Timestamp
+  voidedBy: User
   voidedById: ID
   worker: Worker
   workerId: ID!
@@ -13091,6 +13161,42 @@ type DriverSettlementLine {
   recurringEarningId: ID
   settlementId: ID!
   shipmentId: ID
+}
+
+"""
+Settlement lines paid the same way, summed: the same category, pay component,
+calculation method and pay code, and for a deduction the same recurring
+deduction, advance or escrow account. A line added by hand stands alone.
+"""
+type DriverSettlementLineGroup {
+  """
+  The advance these lines recover, as it stands now; null for someone who may not read pay advances.
+  """
+  advance: PayAdvance
+  advanceId: ID
+  amountMinor: Int!
+  category: SettlementLineCategory!
+  componentKind: PayComponentKind
+  """The lines' description when every line shares it, else empty."""
+  description: String!
+  """
+  The escrow account these lines pay into, as it stands now; null for someone who may not read escrow accounts.
+  """
+  escrowAccount: EscrowAccount
+  escrowAccountId: ID
+  lineCount: Int!
+  """
+  Added by a person rather than from a load, a recurring earning or a recurring deduction.
+  """
+  manual: Boolean!
+  method: PayCalcMethod
+  payCodeId: ID
+  quantity: Decimal!
+  """The rate when every line shares it."""
+  rate: Decimal
+  recurringDeductionId: ID
+  recurringEarningId: ID
+  shipmentCount: Int!
 }
 
 enum DriverSettlementStatus {
@@ -14634,6 +14740,15 @@ enum FacilityType {
   StorageWarehouse
 }
 
+"""The account a factoring journal line books to."""
+enum FactoringAccountRole {
+  AccountsReceivable
+  Cash
+  DueFromFactor
+  FeeExpense
+  Liability
+}
+
 """How factored invoices are booked."""
 enum FactoringAccountingTreatment {
   """Each funded invoice leaves receivables, with the fee as an expense."""
@@ -14652,6 +14767,10 @@ type FactoringAgreement {
   advanceRateBp: Int!
   businessUnitId: ID!
   """
+  Where the factor's payments land; the organization's cash account when empty.
+  """
+  cashAccountId: ID
+  """
   Days after the due date before a recourse factor can charge an unpaid invoice back.
   """
   chargebackWindowDays: Int!
@@ -14660,15 +14779,21 @@ type FactoringAgreement {
   Documents the factor needs with every invoice, beyond what billing already requires.
   """
   documentTypes: [DocumentType!]!
+  """Where the reserve the factor holds is booked, for a sale."""
+  dueFromFactorAccountId: ID
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
   endedAt: Timestamp
   factoringCompany: FactoringCompany
   factoringCompanyId: ID!
+  """Where the factor's fee is expensed."""
+  feeExpenseAccountId: ID
   feeTiers: [FactoringFeeTier!]!
   """Business days from submission to funding."""
   fundingDays: Int!
   id: ID!
+  """What is owed the factor, for secured borrowing."""
+  liabilityAccountId: ID
   minimumFeeMinor: Int!
   notes: String
   organizationId: ID!
@@ -14689,13 +14814,17 @@ type FactoringAgreement {
 input FactoringAgreementInput {
   accountingTreatment: FactoringAccountingTreatment!
   advanceRateBp: Int!
+  cashAccountId: ID
   chargebackWindowDays: Int!
   documentTypeIds: [ID!]
+  dueFromFactorAccountId: ID
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
   factoringCompanyId: ID!
+  feeExpenseAccountId: ID
   feeTiers: [FactoringFeeTierInput!]!
   fundingDays: Int!
+  liabilityAccountId: ID
   minimumFeeMinor: Int = 0
   notes: String
   recourse: FactoringRecourse!
@@ -14728,6 +14857,10 @@ enum FactoringCheckCode {
   AgreementDocument
   BillingDocument
   BillingValidation
+  """
+  The factor charged the invoice back, so it is collected as the organization's own.
+  """
+  ChargedBack
   Dispute
   Eligible
   Factored
@@ -14854,6 +14987,45 @@ type FactoringFunding {
   restOnReleaseMinor: Int!
 }
 
+input FactoringFundingItemInput {
+  """What the factor advanced. Defaults to the expected advance."""
+  advanceMinor: Int
+  """What the factor kept as its fee. Defaults to the expected fee."""
+  feeMinor: Int
+  itemId: ID!
+  outcome: FactoringFundingOutcome!
+  """Why the factor rejected the invoice."""
+  reason: String
+}
+
+enum FactoringFundingOutcome {
+  Funded
+  Rejected
+}
+
+"""What recording a factor's funding would do."""
+type FactoringFundingPlan {
+  advanceMinor: Int!
+  feeMinor: Int!
+  fundedCount: Int!
+  movements: [FactoringPlannedMovement!]!
+  rejectCount: Int!
+  reserveMinor: Int!
+  """The schedule's status once the funding is recorded."""
+  status: FactoringSubmissionStatus!
+  submissionId: ID!
+}
+
+"""What a factoring entry does to the invoice."""
+enum FactoringInvoiceEffect {
+  """Leaves the invoice as it is."""
+  None
+  """Puts the invoice's balance back open."""
+  Reopen
+  """Settles the invoice's open balance."""
+  Settle
+}
+
 """Whether an invoice is ready to factor, and why not."""
 type FactoringInvoiceState {
   checks: [FactoringCheck!]!
@@ -14893,9 +15065,29 @@ input FactoringInvoiceStateListInput {
 
 """The schedule an invoice is on while it is with the factor."""
 type FactoringLiveSubmission {
+  itemId: ID!
+  itemStatus: FactoringSubmissionItemStatus!
   submissionId: ID!
   submissionNumber: String!
   submissionStatus: FactoringSubmissionStatus!
+}
+
+"""The amounts one factoring movement moves, by what they touch."""
+type FactoringMovement {
+  arMinor: Int!
+  """Cash in from the factor (positive) or paid back to it (negative)."""
+  cashMinor: Int!
+  """
+  Fee expense booked (positive) or rebated (negative); it balances the entry.
+  """
+  feeMinor: Int!
+  invoiceEffect: FactoringInvoiceEffect!
+  """What is settled on or reopened on the invoice."""
+  invoiceMinor: Int!
+  kind: FactoringReserveEntryKind!
+  liabilityMinor: Int!
+  reserveMinor: Int!
+  treatment: FactoringAccountingTreatment!
 }
 
 """
@@ -14949,6 +15141,36 @@ enum FactoringNoaStatus {
   Sent
 }
 
+"""One line of the journal a factoring action would book."""
+type FactoringPlannedLine {
+  account: JournalEntryLineAccount
+  accountId: ID!
+  credit: Int!
+  debit: Int!
+  role: FactoringAccountRole!
+}
+
+"""What one factoring action books, before anything is booked."""
+type FactoringPlannedMovement {
+  """
+  The day it books on: the first open day when the asked day falls in a closed period.
+  """
+  accountingDate: Timestamp!
+  customerId: ID!
+  fiscalPeriodId: ID
+  fiscalPeriodName: String
+  invoiceId: ID!
+  invoiceNumber: String!
+  itemId: ID!
+  """Empty when nothing is booked, such as releasing an empty reserve."""
+  lines: [FactoringPlannedLine!]!
+  movement: FactoringMovement!
+  """The day asked for."""
+  requestedDate: Timestamp!
+  """Whether the entry waits for approval before it posts."""
+  requiresApproval: Boolean!
+}
+
 """Who carries the loss when a customer does not pay a factored invoice."""
 enum FactoringRecourse {
   """The factor buys the invoice and carries the credit risk."""
@@ -14957,6 +15179,123 @@ enum FactoringRecourse {
   The factor can charge an unpaid invoice back after the chargeback window.
   """
   Recourse
+}
+
+"""What a factor holds and has paid, from its reserve entries."""
+type FactoringReserveBalance {
+  """Cash advanced at funding."""
+  advancedMinor: Int!
+  """Cash paid back for chargebacks, net of reversals."""
+  chargedBackMinor: Int!
+  entryCount: Int!
+  factoringCompanyId: ID!
+  """Fees booked to date."""
+  feeMinor: Int!
+  lastOccurredOn: Timestamp
+  """What is owed the factor under secured borrowing."""
+  liabilityMinor: Int!
+  """Cash released from the reserve."""
+  releasedMinor: Int!
+  """Reserve the factor holds and has not released or charged back."""
+  reserveMinor: Int!
+}
+
+"""
+One movement between the organization and a factor, booked to the ledger. Entries are never edited; a chargeback is undone by a reversal entry.
+"""
+type FactoringReserveEntry {
+  accountingDate: Timestamp!
+  agreementId: ID!
+  """
+  Change in receivables: negative settles the invoice, positive reopens it.
+  """
+  arMinor: Int!
+  businessUnitId: ID!
+  """Cash in from the factor (positive) or paid back to it (negative)."""
+  cashMinor: Int!
+  createdAt: Timestamp!
+  createdById: ID
+  currencyCode: String!
+  customer: Customer
+  customerId: ID!
+  factoringCompany: FactoringCompany
+  factoringCompanyId: ID!
+  """Fee expense booked (positive) or rebated (negative)."""
+  feeMinor: Int!
+  id: ID!
+  invoice: Invoice
+  invoiceId: ID!
+  journalBatchId: ID!
+  journalEntryId: ID!
+  kind: FactoringReserveEntryKind!
+  """Change in what is owed the factor, for secured borrowing."""
+  liabilityMinor: Int!
+  memo: String
+  occurredOn: Timestamp!
+  organizationId: ID!
+  """Change in the reserve the factor holds."""
+  reserveMinor: Int!
+  reversesEntryId: ID
+  submission: FactoringSubmission
+  submissionId: ID!
+  submissionItemId: ID!
+  treatment: FactoringAccountingTreatment!
+}
+
+type FactoringReserveEntryConnection {
+  edges: [FactoringReserveEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringReserveEntryEdge {
+  cursor: String!
+  node: FactoringReserveEntry!
+}
+
+"""What a factoring reserve entry records."""
+enum FactoringReserveEntryKind {
+  Chargeback
+  ChargebackReversal
+  Funding
+  ReserveRelease
+}
+
+input FactoringReserveEntryListInput {
+  factoringCompanyId: ID
+  invoiceId: ID
+  kinds: [FactoringReserveEntryKind!]
+  submissionId: ID
+  table: DataTableConnectionInput!
+}
+
+input FactoringReserveMovementInput {
+  """
+  The cash that moved. A release defaults to the reserve held; a chargeback to the advance and fee. A reversal takes none.
+  """
+  cashMinor: Int
+  itemId: ID!
+  """The day it happened."""
+  occurredOn: Timestamp!
+  """A memo for a release; why for a chargeback or its reversal."""
+  reason: String
+  submissionId: ID!
+  """The schedule's version."""
+  version: Int!
+}
+
+"""
+What releasing a reserve, or recording or reversing a chargeback, would do.
+"""
+type FactoringReserveMovementPlan {
+  itemId: ID!
+  """The invoice's status on the schedule afterwards."""
+  itemStatus: FactoringSubmissionItemStatus!
+  """Null when nothing is booked."""
+  movement: FactoringPlannedMovement
+  """The chargeback a reversal undoes."""
+  reverses: FactoringReserveEntry
+  submissionId: ID!
 }
 
 enum FactoringSftpAuthMethod {
@@ -14980,6 +15319,8 @@ type FactoringSubmission {
   factoringCompany: FactoringCompany
   factoringCompanyId: ID!
   failedAt: Timestamp
+  """When the factor's funding was first recorded."""
+  fundedAt: Timestamp
   id: ID!
   invoiceCount: Int!
   items: [FactoringSubmissionItem!]!
@@ -15015,6 +15356,14 @@ type FactoringSubmissionEdge {
 
 """One invoice on a schedule of accounts."""
 type FactoringSubmissionItem {
+  """What the factor advanced; null until funded."""
+  advanceMinor: Int
+  chargebackReason: String
+  """
+  When the organization was warned that the chargeback window was closing.
+  """
+  chargebackWarnedAt: Timestamp
+  chargedBackOn: Timestamp
   customer: Customer
   customerId: ID!
   expectedAdvanceMinor: Int!
@@ -15022,6 +15371,9 @@ type FactoringSubmissionItem {
   expectedFeeMinor: Int!
   expectedReserveMinor: Int!
   faceMinor: Int!
+  """What the factor kept as its fee; null until funded."""
+  feeMinor: Int
+  fundedOn: Timestamp
   id: ID!
   invoice: Invoice
   invoiceId: ID!
@@ -15029,15 +15381,31 @@ type FactoringSubmissionItem {
   """The invoice and its supporting documents merged into one PDF."""
   packetDocumentId: ID
   position: Int!
+  rejectionReason: String
   releasedAt: Timestamp
+  """
+  What the factor holds back until the customer pays it; null until funded.
+  """
+  reserveMinor: Int
+  settledOn: Timestamp
   status: FactoringSubmissionItemStatus!
   submissionId: ID!
 }
 
 enum FactoringSubmissionItemStatus {
+  """The factor charged it back; the organization collects it again."""
+  ChargedBack
+  """
+  The factor advanced it; its reserve is held until the customer pays the factor.
+  """
+  Funded
   Pending
+  """The factor would not buy it; it goes back to the queue."""
+  Rejected
   """Released when its schedule was cancelled."""
   Released
+  """The factor released its reserve; the factor's part is done."""
+  Settled
 }
 
 input FactoringSubmissionListInput {
@@ -15086,16 +15454,36 @@ enum FactoringSubmissionStatus {
   Cancelled
   """Could not be delivered after every retry; retry it or cancel it."""
   Failed
+  """Every invoice is decided and at least one was funded."""
+  Funded
+  """
+  Some invoices are funded or rejected and some still wait on the factor.
+  """
+  PartiallyFunded
+  """The factor rejected every invoice on it."""
+  Rejected
   """Being built and delivered; retried automatically before it fails."""
   Sending
   Sent
 }
 
 type FactoringSummary {
+  """
+  Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay.
+  """
+  chargebacksDue: FactoringVerdictTotals!
+  """
+  Funded by the factor, by face value, until the reserve is released or charged back.
+  """
+  funded: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   ready: FactoringVerdictTotals!
   """Ready for more than a day without being submitted."""
   readyUnsubmitted: FactoringVerdictTotals!
+  """
+  Funded invoices whose reserve the factor still holds, by the reserve held.
+  """
+  reserveHeld: FactoringVerdictTotals!
   """On a schedule with the factor or being sent to it."""
   submitted: FactoringVerdictTotals!
 }
@@ -15136,9 +15524,13 @@ type FactoringTransportTestResult {
 
 enum FactoringVerdict {
   """
-  Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored.
+  Not something to factor: unposted, voided, paid, a credit memo, kept out, charged back, or not factored.
   """
   Excluded
+  """
+  Funded by the factor; its reserve comes back when the customer pays the factor.
+  """
+  Funded
   NotReady
   Ready
   """On a schedule sent, being sent, or that failed to send to the factor."""
@@ -17734,6 +18126,12 @@ type Invoice {
   billType: BillType!
   billingQueueItemId: ID!
   businessUnitId: ID!
+  """
+  The lines summed by how each was billed: one entry per freight rating,
+  accessorial charge or memo line, however many shipments share it. Freight
+  comes first, then accessorials, then memo lines.
+  """
+  chargeSummary: [InvoiceChargeGroup!]!
   createdAt: Timestamp!
   """
   Credit memo applications touching this invoice: the credits that settled it,
@@ -17820,6 +18218,10 @@ type Invoice {
   """
   paymentApplications: [CustomerPaymentApplication!]!
   paymentTerm: InvoicePaymentTerm!
+  """
+  The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one.
+  """
+  pdfDocumentId: ID
   """End of the period billed. Consolidated invoices only."""
   periodEnd: Timestamp
   """Start of the period billed. Consolidated invoices only."""
@@ -17858,6 +18260,8 @@ type Invoice {
   voidDisposition: InvoiceVoidDisposition
   voidReason: String!
   voidedAt: Timestamp
+  """Who voided the invoice; null while it stands."""
+  voidedBy: User
   """The full-reversal adjustment that voided a posted invoice."""
   voidedByAdjustmentId: ID
   voidedById: ID
@@ -18060,6 +18464,38 @@ type InvoiceAdjustmentSummaryCount {
   label: String!
 }
 
+"""
+Every line of an invoice billed the same way, summed across the shipments it ran on.
+"""
+type InvoiceChargeGroup {
+  amount: Decimal!
+  chargeCode: String
+  """How an accessorial was charged; null on freight and memo lines."""
+  chargeMethod: AccessorialMethod
+  """What the first line in the group says."""
+  description: String!
+  """The formula template that rated the freight, when the line kept it."""
+  formulaTemplateId: ID
+  """The template's name as it stood when the freight was billed."""
+  formulaTemplateName: String
+  lineCount: Int!
+  """Units billed across the group."""
+  quantity: Decimal!
+  """
+  The rate every line in the group was billed at: a freight load's base rate,
+  an accessorial's amount per unit or its percentage. Null when the lines
+  differ.
+  """
+  rate: Decimal
+  """The amount a percentage was taken of, when the group is one line."""
+  rateBasisAmount: Decimal
+  """What a per-unit charge was counted in."""
+  rateUnit: RateUnit
+  """Distinct shipments the group bills; zero for memo lines."""
+  shipmentCount: Int!
+  type: InvoiceLineType!
+}
+
 type InvoiceConnection {
   edges: [InvoiceEdge!]!
   pageInfo: PageInfo!
@@ -18085,6 +18521,7 @@ type InvoiceDispute {
   invoiceId: ID!
   notes: String!
   openedAt: Timestamp!
+  openedBy: User
   openedById: ID!
   organizationId: ID!
   reasonCode: InvoiceDisputeReasonCode!
@@ -18092,6 +18529,7 @@ type InvoiceDispute {
   resolutionAdjustmentId: ID
   resolutionNotes: String!
   resolvedAt: Timestamp
+  resolvedBy: User
   resolvedById: ID
   status: InvoiceDisputeCaseStatus!
   updatedAt: Timestamp!
@@ -18204,6 +18642,10 @@ type InvoiceLine {
   chargeMethod: String
   createdAt: Timestamp!
   description: String!
+  """The formula template that rated a freight line, when the line kept it."""
+  formulaTemplateId: ID
+  """The template's name as it stood when the line was billed."""
+  formulaTemplateName: String
   id: ID!
   invoiceId: ID!
   lineNumber: Int!
@@ -19811,6 +20253,14 @@ type Mutation {
   recordDotViolation(input: RecordDOTViolationInput!): WorkerDOTViolation!
   recordEmploymentVerification(input: RecordEmploymentVerificationInput!): WorkerEmploymentVerification!
   recordEmploymentVerificationFollowUp(id: ID!): WorkerEmploymentVerification!
+  """
+  Books a recourse factor's chargeback; the invoice is the organization's to collect again.
+  """
+  recordFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
+  """
+  Records what the factor funded or rejected on a schedule and books each funded invoice.
+  """
+  recordFactoringFunding(input: RecordFactoringFundingInput!): FactoringSubmission!
   recordLeaveCertification(input: RecordLeaveCertificationInput!): WorkerLeaveCase!
   recordLeaveDay(input: RecordLeaveDayInput!): WorkerLeaveEntry!
   """
@@ -19860,6 +20310,10 @@ type Mutation {
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
   releaseFactoringNoa(input: ReleaseFactoringNoaInput!): FactoringNoa!
+  """
+  Books the factor's release of an invoice's reserve; the factor's part is then done.
+  """
+  releaseFactoringReserve(input: FactoringReserveMovementInput!): FactoringSubmission!
   """
   Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them.
   """
@@ -19974,6 +20428,8 @@ type Mutation {
   """
   retryFactoringSubmission(input: RetryFactoringSubmissionInput!): FactoringSubmission!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+  """Undoes the invoice's last chargeback with the opposite entry."""
+  reverseFactoringChargeback(input: FactoringReserveMovementInput!): FactoringSubmission!
   """
   Clears a tainted memory's taint once a person has read it and keeps it: it is followed as the
   organization's own and no longer taints the turns that read it. Refused for a memory that does
@@ -20399,6 +20855,31 @@ enum MyAgentOrigin {
   Custom
   """Made from one of the platform's templates."""
   Template
+}
+
+"""
+The agent a question is best put to, among the chat agents the caller may start
+a conversation with, judged by the tools it holds that the caller may use.
+"""
+type MyAgentRecommendation {
+  agent: MyAgent!
+  """
+  True when the agent the question would go to now is already the best fit.
+  """
+  current: Boolean!
+  """
+  The tools the agent holds that matched the question, best first. At most three.
+  """
+  tools: [String!]!
+}
+
+input MyAgentRecommendationInput {
+  """
+  The agent the question would go to now, kept when it fits as well as any.
+  """
+  currentAgentId: ID
+  """What the caller is about to ask. At most 4000 characters."""
+  text: String!
 }
 
 input MyAgentsInput {
@@ -22578,13 +23059,25 @@ type Query {
   extractionShadowSettings: ExtractionShadowSettings!
   factoringAgreement(id: ID!): FactoringAgreement!
   factoringAgreements(factoringCompanyId: ID!): [FactoringAgreement!]!
+  """What recording this chargeback would book, without booking it."""
+  factoringChargebackPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  """
+  What reversing the invoice's chargeback would book, without booking it.
+  """
+  factoringChargebackReversalPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
   factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
   factoringCompany(id: ID!): FactoringCompany
+  """What recording this funding would book, without booking it."""
+  factoringFundingPlan(input: RecordFactoringFundingInput!): FactoringFundingPlan!
   factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
   factoringNoa(id: ID!): FactoringNoa!
   factoringNoas(input: FactoringNoaListInput!): FactoringNoaConnection!
   """Evaluates the invoice now and returns its readiness."""
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
+  """What releasing this reserve would book, without booking it."""
+  factoringReleasePlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
+  factoringReserveBalance(factoringCompanyId: ID!): FactoringReserveBalance!
+  factoringReserveEntries(input: FactoringReserveEntryListInput!): FactoringReserveEntryConnection!
   factoringSubmission(id: ID!): FactoringSubmission!
   """
   The schedule these invoices would make, with expected funding, without sending anything.
@@ -22715,6 +23208,11 @@ type Query {
   myAdvances: [PayAdvance!]!
   """What agents are told about the signed-in person's own work."""
   myAgentProfile: AgentProfile!
+  """
+  The chat agent the caller may use that holds the tools a question needs. Null
+  when no such agent holds a tool that matches it.
+  """
+  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
   """The chat agents the caller may use, enabled and by name."""
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
@@ -23502,6 +24000,15 @@ input RecordEmploymentVerificationInput {
   status: EmploymentVerificationStatus
   wasDotRegulated: Boolean
   workerId: ID!
+}
+
+input RecordFactoringFundingInput {
+  """The day the factor funded."""
+  fundedOn: Timestamp!
+  items: [FactoringFundingItemInput!]!
+  memo: String
+  submissionId: ID!
+  version: Int!
 }
 
 input RecordLeaveCertificationInput {
@@ -25376,6 +25883,14 @@ enum SettlementLineCategory {
   EscrowContribution
   GuaranteeTopUp
   Reimbursement
+}
+
+"""What one load came to on a settlement: every line tied to it, summed."""
+type SettlementLoadShare {
+  amountMinor: Int!
+  lineCount: Int!
+  proNumber: String!
+  shipmentId: ID!
 }
 
 enum SettlementPayTrigger {
@@ -27514,6 +28029,16 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   """Only shipments with a live move tendered to one of these carriers."""
   carrierIds: [ID!]
+  """
+  Only shipments one of these carrier settlements pays, on one of its lines.
+  Needs permission to read carrier settlements.
+  """
+  carrierSettlementIds: [ID!]
+  """
+  Only shipments one of these worker settlements pays, on one of its lines.
+  Needs permission to read worker settlements.
+  """
+  driverSettlementIds: [ID!]
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
@@ -27522,6 +28047,11 @@ input ShipmentsInput {
   Load each shipment's customer without expanding the rest of its details.
   """
   includeCustomer: Boolean = false
+  """
+  Only shipments one of these invoices bills, as its shipment or on one of its
+  lines. Needs permission to read invoices.
+  """
+  invoiceIds: [ID!]
   query: String
   quickFilters: [ShipmentQuickFilterInput!]
   sort: [SortFieldInput!]

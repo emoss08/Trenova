@@ -10,11 +10,20 @@ const SERVER_API_PREFIX = "/api/v1";
  * configured base rather than resolved against the page.
  */
 export function apiUrl(serverPath: string): string {
+  return `${API_BASE_URL}${apiEndpoint(serverPath)}`;
+}
+
+/**
+ * A path the server returned, as the endpoint the app's own request helpers take: relative to
+ * the configured API base, so `api.download(apiEndpoint(path))` reaches the same file as
+ * `apiUrl(path)`.
+ */
+export function apiEndpoint(serverPath: string): string {
   const relative = serverPath.startsWith(SERVER_API_PREFIX)
     ? serverPath.slice(SERVER_API_PREFIX.length)
     : serverPath;
 
-  return `${API_BASE_URL}${relative.startsWith("/") ? relative : `/${relative}`}`;
+  return relative.startsWith("/") ? relative : `/${relative}`;
 }
 
 /**

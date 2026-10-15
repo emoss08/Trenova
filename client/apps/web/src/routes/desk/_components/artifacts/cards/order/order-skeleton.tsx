@@ -6,6 +6,7 @@ import {
   CardSectionSkeleton,
   CardShipmentsSkeleton,
   CardTimelineSkeleton,
+  CardTrackSkeleton,
   RecordCardSkeleton,
   SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
@@ -15,16 +16,6 @@ const SHIPMENT_ROWS = 2;
 const CHARGE_ROWS = 2;
 const ACTIVITY_ENTRIES = [58, 46, 52] as const;
 const REFERENCES = [88, 72, 72, 56, 72, 80] as const;
-
-/** The order's track while it is read: one bar where the segments will stand, and its line. */
-export function LifecycleSkeleton() {
-  return (
-    <div className="dk-or-track" aria-hidden>
-      <i className="dk-sk dk-or-track-sk" />
-      <SkeletonBar w="34%" className="dk-rec-sk-label" />
-    </div>
-  );
-}
 
 /** The charge ledger while it is read: its bar, its lines on their leaders, and its total. */
 function LedgerSkeleton() {
@@ -72,7 +63,7 @@ export function DeskOrderSkeleton({ stepper = false }: { stepper?: boolean }) {
         meta={[72, 96]}
       />
       <CardSectionSkeleton title={96}>
-        <LifecycleSkeleton />
+        <CardTrackSkeleton />
       </CardSectionSkeleton>
       {access.shipments && (
         <CardSectionSkeleton title={64} aside={72}>

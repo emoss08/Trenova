@@ -4,10 +4,13 @@ package shipmentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
+	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )
 
 type Deps struct {
@@ -18,6 +21,9 @@ type Deps struct {
 	ShipmentEventService    shipmenteventports.ShipmentEventService
 	TrackingEventService    trackingeventports.TrackingEventService
 	ShipmentImportAssistant shipmentports.ShipmentImportAssistantService
+	InvoiceService          invoiceports.InvoiceService
+	DriverSettlementRepo    driversettlementports.DriverSettlementRepository
+	CarrierSettlementRepo   carriersettlementports.CarrierSettlementRepository
 }
 
 type CarrierAssignmentAccessorialResolver struct{ *Deps }

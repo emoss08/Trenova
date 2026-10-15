@@ -709,3 +709,319 @@ func (r *FactoringTransportResolver) EmailRecipients(ctx context.Context, obj *f
 	}
 	return obj.EmailRecipients, nil
 }
+
+func (r *FactoringAgreementResolver) DueFromFactorAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.DueFromFactorAccountID), nil
+}
+
+func (r *FactoringAgreementResolver) FeeExpenseAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.FeeExpenseAccountID), nil
+}
+
+func (r *FactoringAgreementResolver) LiabilityAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.LiabilityAccountID), nil
+}
+
+func (r *FactoringAgreementResolver) CashAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.CashAccountID), nil
+}
+
+func (r *FactoringFundingPlanResolver) SubmissionID(ctx context.Context, obj *factoringports.FundingPlan) (string, error) {
+	if obj == nil || obj.Before == nil {
+		return "", nil
+	}
+	return obj.Before.ID.String(), nil
+}
+
+func (r *FactoringFundingPlanResolver) Status(ctx context.Context, obj *factoringports.FundingPlan) (factoring.SubmissionStatus, error) {
+	if obj == nil || obj.After == nil {
+		return "", nil
+	}
+	return obj.After.Status, nil
+}
+
+func (r *FactoringMovementResolver) InvoiceEffect(ctx context.Context, obj *factoring.Movement) (gqlmodel.FactoringInvoiceEffect, error) {
+	if obj == nil {
+		return gqlmodel.FactoringInvoiceEffectNone, nil
+	}
+	return invoiceEffectToModel(obj.InvoiceEffect), nil
+}
+
+func (r *FactoringPlannedLineResolver) Account(ctx context.Context, obj *factoringports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error) {
+	if obj == nil || obj.AccountID.IsNil() || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	if _, err := r.RequireAuth(ctx); err != nil {
+		return nil, err
+	}
+	account, err := loaders.GLAccountByID(ctx, obj.AccountID.String())
+	if err != nil {
+		return nil, nil //nolint:nilerr,nilnil // fall back to the raw account id in the UI
+	}
+	return &gqlmodel.JournalEntryLineAccount{
+		ID:          account.ID.String(),
+		AccountCode: account.AccountCode,
+		Name:        account.Name,
+	}, nil
+}
+
+func (r *FactoringPlannedMovementResolver) FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.FiscalPeriodID), nil
+}
+
+func (r *FactoringReserveEntryResolver) ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.ReversesEntryID), nil
+}
+
+func (r *FactoringReserveEntryResolver) CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.CreatedByID), nil
+}
+
+func (r *FactoringReserveEntryResolver) FactoringCompany(ctx context.Context, obj *factoring.ReserveEntry) (*factoringcompany.FactoringCompany, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.factorFor(ctx, obj.FactoringCompanyID)
+}
+
+func (r *FactoringReserveEntryResolver) Invoice(ctx context.Context, obj *factoring.ReserveEntry) (*invoice.Invoice, error) {
+	if obj == nil || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+}
+
+func (r *FactoringReserveEntryResolver) Customer(ctx context.Context, obj *factoring.ReserveEntry) (*customer.Customer, error) {
+	if obj == nil || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	if _, err := r.RequireAuth(ctx); err != nil {
+		return nil, err
+	}
+	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+}
+
+func (r *FactoringReserveEntryResolver) Submission(ctx context.Context, obj *factoring.ReserveEntry) (*factoring.Submission, error) {
+	if obj == nil || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringSubmission, permission.OpRead) {
+		return nil, nil
+	}
+	return loaders.FactoringSubmissionByID(ctx, obj.SubmissionID.String())
+}
+
+func (r *FactoringReserveMovementPlanResolver) SubmissionID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error) {
+	if obj == nil || obj.Before == nil {
+		return "", nil
+	}
+	return obj.Before.ID.String(), nil
+}
+
+func (r *FactoringReserveMovementPlanResolver) ItemID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error) {
+	if obj == nil || obj.Item == nil {
+		return "", nil
+	}
+	return obj.Item.ID.String(), nil
+}
+
+func (r *FactoringReserveMovementPlanResolver) ItemStatus(ctx context.Context, obj *factoringports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error) {
+	if obj == nil || obj.Item == nil {
+		return "", nil
+	}
+	return obj.Item.Status, nil
+}
+
+func (r *MutationResolver) RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := fundingRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringLedgerService.RecordFunding(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return result.Submission, nil
+}
+
+func (r *MutationResolver) ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringLedgerService.ReleaseReserve(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return result.Submission, nil
+}
+
+func (r *MutationResolver) RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringLedgerService.RecordChargeback(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return result.Submission, nil
+}
+
+func (r *MutationResolver) ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringLedgerService.ReverseChargeback(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return result.Submission, nil
+}
+
+func (r *QueryResolver) FactoringReserveEntries(ctx context.Context, input gqlmodel.FactoringReserveEntryListInput) (*gqlmodel.FactoringReserveEntryConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, input.Table, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseOptionalID(input.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	submissionID, err := parseOptionalID(input.SubmissionID, "submissionId")
+	if err != nil {
+		return nil, err
+	}
+	invoiceID, err := parseOptionalID(input.InvoiceID, "invoiceId")
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringLedgerService.ListEntries(ctx, &factoringports.ListReserveEntryConnectionRequest{
+		Filter:             tableInput.Filter,
+		Cursor:             tableInput.Cursor,
+		FactoringCompanyID: factorID,
+		SubmissionID:       submissionID,
+		InvoiceID:          invoiceID,
+		Kinds:              input.Kinds,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return reserveConnectionToModel(result)
+}
+
+func (r *QueryResolver) FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringports.ReserveBalance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.GetBalance(ctx, factoringports.GetReserveBalanceRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+	})
+}
+
+func (r *QueryResolver) FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringports.FundingPlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := fundingRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.PlanFunding(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.PlanRelease(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.PlanChargeback(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := movementRequestFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.PlanChargebackReversal(ctx, req, actorutil.FromAuthContext(authCtx))
+}

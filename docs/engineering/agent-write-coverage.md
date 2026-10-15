@@ -87,7 +87,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 277 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
@@ -97,15 +97,15 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1142 writes: 627 GraphQL mutations and 515 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1147 writes: 631 GraphQL mutations and 516 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 410 |
-| Exempt | 698 |
+| Covered by a tool | 414 |
+| Exempt | 699 |
 | — Security | 83 |
 | — Configuration | 277 |
-| — User preference | 38 |
+| — User preference | 39 |
 | — Infrastructure | 52 |
 | — Agent administration | 101 |
 | — Counterparty | 35 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1142 |
+| Total | 1147 |
 
-Of the 444 writes an agent should be able to make, 410 have a tool (92%).
+Of the 448 writes an agent should be able to make, 414 have a tool (92%).
 
 ## Pending
 
@@ -236,7 +236,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 15 | 9 | 6 | 0 |
+| factoring | 19 | 13 | 6 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
@@ -324,7 +324,7 @@ The writes no tool performs yet, and what the tool would do.
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 0 | 6 | 2 |
-| user | 20 | 0 | 20 | 0 |
+| user | 21 | 0 | 21 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 11 | 7 | 4 | 0 |
 | worker | 8 | 5 | 3 | 0 |
@@ -1244,9 +1244,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation recordFactoringChargeback` | Tool: `record_factoring_chargeback` |
+| `mutation recordFactoringFunding` | Tool: `record_factoring_funding` |
 | `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
+| `mutation releaseFactoringReserve` | Tool: `release_factoring_reserve` |
 | `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
 | `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
+| `mutation reverseFactoringChargeback` | Tool: `reverse_factoring_chargeback` |
 | `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
 | `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
 | `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
@@ -2210,6 +2214,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `PUT /api/v1/users/me/assistant-visibility/`<br>userhandler.updateMyAssistantVisibility | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 
 ### version

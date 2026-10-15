@@ -31,6 +31,8 @@ const (
 	EventFactoringNoaExpiring         = EventKind("factoring.noa_expiring")
 	EventFactoringSubmissionSent      = EventKind("factoring.submission_sent")
 	EventFactoringSubmissionFailed    = EventKind("factoring.submission_failed")
+	EventFactoringSubmissionFunded    = EventKind("factoring.submission_funded")
+	EventFactoringChargebackDue       = EventKind("factoring.chargeback_due")
 )
 
 type EventDescriptor struct {
@@ -208,6 +210,18 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectFactoringSubmission,
 		Label:       "Factoring schedule failed to send",
 		Description: "A schedule of accounts could not be delivered to the factor after every retry; it waits for someone to fix the factor's delivery settings and retry it, or cancel it and release its invoices.",
+	},
+	{
+		Kind:        EventFactoringSubmissionFunded,
+		SubjectType: SubjectFactoringSubmission,
+		Label:       "Factoring schedule funded",
+		Description: "The factor's funding of a schedule was recorded: the advance, fee and reserve of each funded invoice were booked, and any invoice the factor rejected went back to the queue.",
+	},
+	{
+		Kind:        EventFactoringChargebackDue,
+		SubjectType: SubjectInvoice,
+		Label:       "Factored invoice nearing chargeback",
+		Description: "A funded invoice sold with recourse is still unpaid and its chargeback window closes within 7 days; unless the customer pays, the factor will charge it back and the organization will owe the advance and fee.",
 	},
 }
 

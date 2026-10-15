@@ -1,5 +1,6 @@
 import type { QuickActionCommand } from "@/config/navigation.types";
 import { canAccessQuickAction, type NavAccessContext } from "@/hooks/use-filtered-navigation";
+import { settingsPath } from "@/lib/settings-path";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Operation } from "@trenova/shared/types/permission";
@@ -95,6 +96,20 @@ export function buildQuickActionCommands(
         intent: opensAssistant ? { type: "assistant", mode: "open" } : { type: "navigate", href },
       } satisfies PaletteCommand;
     });
+}
+
+/**
+ * The commands left once the assistant is turned off: none of them opens the
+ * assistant's panel, since it is not there to open.
+ */
+export function withoutAssistantCommands(
+  commands: PaletteCommand[],
+  assistantHidden: boolean,
+): PaletteCommand[] {
+  if (!assistantHidden) {
+    return commands;
+  }
+  return commands.filter((command) => command.intent.type !== "assistant");
 }
 
 export interface AppCommandContext {
@@ -211,7 +226,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       group: "account",
       icon: User01Icon,
       keywords: ["profile", "account", "me", "user"],
-      intent: { type: "navigate", href: "/profile" },
+      intent: { type: "navigate", href: settingsPath("profile") },
     },
     {
       id: "app:settings",
@@ -220,7 +235,7 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
       group: "account",
       icon: Settings01Icon,
       keywords: ["settings", "preferences", "timezone", "language", "account"],
-      intent: { type: "open-dialog", dialog: "settings" },
+      intent: { type: "navigate", href: settingsPath() },
       shortcut: [mod, "Shift", "S"],
     },
     {

@@ -40,6 +40,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -104,10 +107,15 @@ type FactoryParams struct {
 	CustomerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
 	CreditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
 	InvoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	PayAdvanceByID                            *PayAdvanceByIDLoaderFactory
+	EscrowAccountByID                         *EscrowAccountByIDLoaderFactory
+	SettlementDisputesBySettlementID          *SettlementDisputesBySettlementIDLoaderFactory
+	CarrierInvoiceMatchesByMoveID             *CarrierInvoiceMatchesByMoveIDLoaderFactory
 	FactoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
 	FactoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	FactoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	FactoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	FactoringSubmissionByID                   *FactoringSubmissionByIDLoaderFactory
 	FactoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
@@ -184,10 +192,15 @@ type Factory struct {
 	customerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
 	creditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
 	invoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	payAdvanceByID                            *PayAdvanceByIDLoaderFactory
+	escrowAccountByID                         *EscrowAccountByIDLoaderFactory
+	settlementDisputesBySettlementID          *SettlementDisputesBySettlementIDLoaderFactory
+	carrierInvoiceMatchesByMoveID             *CarrierInvoiceMatchesByMoveIDLoaderFactory
 	factoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
 	factoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
 	factoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	factoringSubmissionItems                  *FactoringSubmissionItemsLoaderFactory
+	factoringSubmissionByID                   *FactoringSubmissionByIDLoaderFactory
 	factoringLiveItemByInvoiceID              *FactoringLiveItemByInvoiceIDLoaderFactory
 	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
@@ -264,10 +277,15 @@ type set struct {
 	customerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
 	creditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
 	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
+	payAdvanceByID                            *dataloadgen.Loader[string, *driverpay.PayAdvance]
+	escrowAccountByID                         *dataloadgen.Loader[string, *driverpay.EscrowAccount]
+	settlementDisputesBySettlementID          *dataloadgen.Loader[string, []*driversettlement.Dispute]
+	carrierInvoiceMatchesByMoveID             *dataloadgen.Loader[string, []*carriersettlement.InvoiceMatch]
 	factoringCompanyByID                      *dataloadgen.Loader[string, *factoringcompany.FactoringCompany]
 	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoring.InvoiceState]
 	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
 	factoringSubmissionItems                  *dataloadgen.Loader[string, []*factoring.SubmissionItem]
+	factoringSubmissionByID                   *dataloadgen.Loader[string, *factoring.Submission]
 	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
@@ -351,10 +369,15 @@ func NewFactory(p FactoryParams) *Factory {
 		customerPaymentApplicationsByInvoiceID:    p.CustomerPaymentApplicationsByInvoiceID,
 		creditMemoApplicationsByInvoiceID:         p.CreditMemoApplicationsByInvoiceID,
 		invoiceDisputesByInvoiceID:                p.InvoiceDisputesByInvoiceID,
+		payAdvanceByID:                            p.PayAdvanceByID,
+		escrowAccountByID:                         p.EscrowAccountByID,
+		settlementDisputesBySettlementID:          p.SettlementDisputesBySettlementID,
+		carrierInvoiceMatchesByMoveID:             p.CarrierInvoiceMatchesByMoveID,
 		factoringCompanyByID:                      p.FactoringCompanyByID,
 		factoringStateByInvoiceID:                 p.FactoringStateByInvoiceID,
 		factoringAgreementsByCompanyID:            p.FactoringAgreementsByCompanyID,
 		factoringSubmissionItems:                  p.FactoringSubmissionItems,
+		factoringSubmissionByID:                   p.FactoringSubmissionByID,
 		factoringLiveItemByInvoiceID:              p.FactoringLiveItemByInvoiceID,
 		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
 		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
@@ -502,6 +525,16 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 			f.invoiceDisputesByInvoiceID,
 			tenantInfo,
 		),
+		payAdvanceByID:    newPayAdvanceByIDLoader(f.payAdvanceByID, tenantInfo),
+		escrowAccountByID: newEscrowAccountByIDLoader(f.escrowAccountByID, tenantInfo),
+		settlementDisputesBySettlementID: newSettlementDisputesBySettlementIDLoader(
+			f.settlementDisputesBySettlementID,
+			tenantInfo,
+		),
+		carrierInvoiceMatchesByMoveID: newCarrierInvoiceMatchesByMoveIDLoader(
+			f.carrierInvoiceMatchesByMoveID,
+			tenantInfo,
+		),
 		factoringCompanyByID: newFactoringCompanyByIDLoader(
 			f.factoringCompanyByID,
 			tenantInfo,
@@ -516,6 +549,10 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		factoringSubmissionItems: newFactoringSubmissionItemsLoader(
 			f.factoringSubmissionItems,
+			tenantInfo,
+		),
+		factoringSubmissionByID: newFactoringSubmissionByIDLoader(
+			f.factoringSubmissionByID,
 			tenantInfo,
 		),
 		factoringLiveItemByInvoiceID: newFactoringLiveItemByInvoiceIDLoader(

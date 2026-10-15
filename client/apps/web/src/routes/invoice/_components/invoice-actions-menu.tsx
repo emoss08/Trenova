@@ -1,6 +1,7 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { sendInvoiceEdi, type InvoiceArContext } from "@/lib/graphql/invoice";
+import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -22,25 +23,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { InvoiceVoidDialog } from "./invoice-void-dialog";
-
-/**
- * Why an EDI send cannot go right now, in the customer's terms. The plan's own
- * blockers come first; a missing plan means the AR context has not loaded.
- */
-export function invoiceEdiSendBlocker(
-  invoice: Pick<Invoice, "status">,
-  arContext: InvoiceArContext | null | undefined,
-): string | null {
-  if (!arContext) return "Checking the customer's EDI configuration.";
-  const plan = arContext.ediSendPlan;
-  if (!plan.enabled) return plan.blockers[0] ?? "EDI invoicing is not enabled for this customer.";
-  if (plan.blockers.length > 0) return plan.blockers[0];
-  if (invoice.status !== "Posted") return "Only a posted invoice can be sent by EDI.";
-  if (plan.status === "Queued" || plan.status === "Sending") {
-    return "An EDI send for this invoice is already in progress.";
-  }
-  return null;
-}
 
 /**
  * The invoice-level actions that are neither posting nor sharing: voiding and
@@ -67,7 +49,7 @@ export function InvoiceActionsMenu({
     paymentApplications: arContext?.paymentApplications.length ?? 0,
     creditApplications: arContext?.creditApplications.length ?? 0,
   });
-  const ediBlocker = invoiceEdiSendBlocker(invoice, arContext);
+  const ediBlocker = invoiceEdiSendBlocker(invoice.status, arContext?.ediSendPlan, t);
   const ediSent = arContext?.ediSendPlan.status === "Sent";
 
   const sendEdi = useApiMutation({
@@ -103,7 +85,7 @@ export function InvoiceActionsMenu({
             <>
               <DropdownMenuItem
                 title={ediSent ? t("Resend EDI") : t("Send EDI")}
-                description={ediBlocker ? t(ediBlocker) : undefined}
+                description={ediBlocker ?? undefined}
                 descriptionClassProps="whitespace-normal"
                 startContent={<Signal01Icon className="size-3.5" />}
                 disabled={Boolean(ediBlocker) || sendEdi.isPending}

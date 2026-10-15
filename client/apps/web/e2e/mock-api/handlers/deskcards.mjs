@@ -21,6 +21,8 @@ import {
 import { deskEdiMessages } from "../fixtures/desk-edi.mjs";
 import { deskEdiInboundFiles } from "../fixtures/desk-edi-files.mjs";
 import { DESK_EDI_FILE_TENDERS, deskEdiTransfers } from "../fixtures/desk-edi-transfers.mjs";
+import { deskInvoices } from "../fixtures/desk-invoices.mjs";
+import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-settlements.mjs";
 import { hash } from "../state.mjs";
 import { userSelectOptions } from "./settings.mjs";
 
@@ -141,9 +143,82 @@ function unitShipments(state, unitId) {
     .slice(0, fixture.shipments);
 }
 
+/** The shipments an invoice bills: the one it names, or a page of the board for a consolidated one. */
+function invoiceShipments(state, invoiceId) {
+  const fixture = deskInvoices(state.anchor)[invoiceId];
+  if (!fixture || empty(state)) return [];
+  const count = Math.min(fixture.invoice.shipmentCount, 12);
+  return [...state.shipments]
+    .filter((shipment) => hash(shipment.id + invoiceId) % 3 === 0)
+    .slice(0, count);
+}
+
+/** A settlement of either kind, as its card reads it. */
+function settlementFixture(state, id) {
+  return (
+    deskDriverSettlements(state.anchor)[id] ?? deskCarrierSettlements(state.anchor)[id] ?? null
+  );
+}
+
+/** The shipments a settlement pays, as many as it counts, from the board. */
+function settlementShipments(state, settlementId) {
+  const fixture = settlementFixture(state, settlementId);
+  if (!fixture || empty(state)) return [];
+  return [...state.shipments]
+    .filter((shipment) => hash(shipment.id + settlementId) % 3 === 0)
+    .slice(0, Math.min(fixture.settlement.shipmentCount, 12));
+}
+
+/**
+ * The settlement with each load's share filled from the shipments the mock
+ * answers for it, so the card's loads carry the amount the settlement pays.
+ */
+function settlementWithShares(state, settlementId, net) {
+  const fixture = settlementFixture(state, settlementId);
+  if (!fixture) return null;
+  const record = fixture.settlement;
+  const loads = settlementShipments(state, settlementId);
+  const each = loads.length ? Math.round(record[net] / record.shipmentCount) : 0;
+  return {
+    ...record,
+    loadShares: loads.map((shipment, index) => ({
+      shipmentId: shipment.id,
+      proNumber: shipment.proNumber,
+      amountMinor: each + ((hash(shipment.id) % 9) - 4) * 1_250 * (index % 2 ? 1 : -1),
+    })),
+  };
+}
+
+function scopedShipments(state, input) {
+  if (input.invoiceIds?.length) return invoiceShipments(state, input.invoiceIds[0]);
+  if (input.driverSettlementIds?.length) {
+    return settlementShipments(state, input.driverSettlementIds[0]);
+  }
+  if (input.carrierSettlementIds?.length) {
+    return settlementShipments(state, input.carrierSettlementIds[0]);
+  }
+  return null;
+}
+
 function recordShipments(state, variables) {
   if (held(state)) return HOLD;
   const input = variables.input ?? {};
+  const scoped = scopedShipments(state, input);
+  if (scoped) {
+    const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
+    const page = scoped.slice(offset, offset + (input.first ?? 20));
+    const end = offset + page.length;
+    return {
+      shipments: {
+        edges: page.map((shipment) => ({ node: recordShipmentNode(shipment) })),
+        pageInfo: {
+          hasNextPage: end < scoped.length,
+          endCursor: page.length ? Buffer.from(String(end)).toString("base64url") : null,
+        },
+        ...(variables.includeTotalCount ? { totalCount: scoped.length } : {}),
+      },
+    };
+  }
   const unitId =
     input.tractorIds?.[0] ??
     input.trailerIds?.[0] ??
@@ -347,6 +422,54 @@ export const DESK_CARD_HANDLERS = {
     const fixture = orderFixture(state, variables.id);
     return { order: fixture ? fixture.order : null };
   },
+  DeskInvoiceCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = deskInvoices(state.anchor)[variables.id];
+    if (!fixture) return { invoice: null };
+    if (!empty(state)) return { invoice: fixture.invoice };
+    return {
+      invoice: {
+        ...fixture.invoice,
+        paymentApplications: [],
+        creditApplications: [],
+        disputes: [],
+        relatedInvoices: [],
+      },
+    };
+  },
+  DeskDriverSettlementCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const record = settlementWithShares(state, variables.id, "netPayMinor");
+    if (!record || !deskDriverSettlements(state.anchor)[variables.id]) {
+      return { driverSettlement: null };
+    }
+    return {
+      driverSettlement: empty(state)
+        ? { ...record, lineSummary: [], loadShares: [], disputes: [], exceptions: [] }
+        : record,
+    };
+  },
+  DeskCarrierSettlementCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const record = settlementWithShares(state, variables.id, "netPayableMinor");
+    if (!record || !deskCarrierSettlements(state.anchor)[variables.id]) {
+      return { carrierSettlement: null };
+    }
+    return {
+      carrierSettlement: empty(state)
+        ? { ...record, costSummary: [], loadShares: [], moveInvoices: [] }
+        : record,
+    };
+  },
+  AccountingSyncObjectStates: (state, variables) => {
+    if (held(state)) return HOLD;
+    const invoices = deskInvoices(state.anchor);
+    return {
+      accountingSyncObjectStates: (variables.objectIds ?? [])
+        .map((id) => invoices[id]?.sync)
+        .filter(Boolean),
+    };
+  },
   DeskRateAgreementPricing: (state, variables) => {
     if (held(state)) return HOLD;
     const agreementId = variables.input?.fieldFilters?.find(
@@ -385,7 +508,9 @@ export const DESK_CARD_HANDLERS = {
     const fixture =
       orderFixture(state, variables.resourceId) ??
       agreementFixture(state, variables.resourceId) ??
-      failureFixture(state, variables.resourceId);
+      failureFixture(state, variables.resourceId) ??
+      deskInvoices(state.anchor)[variables.resourceId] ??
+      settlementFixture(state, variables.resourceId);
     const rows = fixture && !empty(state) ? fixture.activity : [];
     return {
       auditEntriesByResourceId: connectionPage(rows, variables.input, variables.includeTotalCount),
@@ -462,7 +587,87 @@ function ediFileTenders(state, query) {
   return { results, count: results.length, next: null, prev: null };
 }
 
+/** The invoice a billing route names, or the 404 the API answers for one that is gone. */
+function invoiceRoute(state, path) {
+  const id = path.match(/billing\/invoices\/([a-z0-9_]+)/)?.[1] ?? "";
+  const fixture = deskInvoices(state.anchor)[id];
+  return fixture
+    ? { fixture }
+    : {
+        missing: {
+          __status: 404,
+          body: { title: "Not Found", status: 404, detail: "Invoice not found" },
+        },
+      };
+}
+
+/** An email attempt as the invoice's send history lists it. */
+function emailAttempt(fixture) {
+  const { invoice, attempt } = fixture;
+  return {
+    id: `inea_${invoice.id}`,
+    organizationId: "org_mock",
+    businessUnitId: "bu_mock",
+    version: 1,
+    invoiceId: invoice.id,
+    emailMessageId: null,
+    attemptNumber: 1,
+    partNumber: 1,
+    totalParts: 1,
+    status: attempt.error ? "Failed" : "Sent",
+    provider: "resend",
+    providerMessageId: null,
+    toRecipients: attempt.toRecipients,
+    ccRecipients: [],
+    bccRecipients: [],
+    subject: `Invoice ${invoice.number}`,
+    body: null,
+    estimatedSize: 182_000,
+    warnings: [],
+    error: attempt.error,
+    sentAt: attempt.sentAt,
+    createdById: null,
+    createdAt: attempt.sentAt ?? invoice.createdAt,
+    updatedAt: attempt.sentAt ?? invoice.createdAt,
+    attachments: [],
+  };
+}
+
 export const DESK_CARD_ROUTES = [
+  [
+    "GET",
+    /^\/api\/v1\/billing\/invoices\/[a-z0-9_]+\/email-attempts\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = invoiceRoute(state, path);
+      if (missing) return missing;
+      const results = fixture.attempt ? [emailAttempt(fixture)] : [];
+      return { results, count: results.length, next: null, prev: null };
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/billing\/invoices\/[a-z0-9_]+\/send-plan\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = invoiceRoute(state, path);
+      if (missing) return missing;
+      const plan = fixture.plan ?? { to: [], errors: [] };
+      return {
+        invoiceId: fixture.invoice.id,
+        providerLimitBytes: 40_000_000,
+        estimatedBodyBytes: 4_000,
+        parts: [],
+        warnings: [],
+        errors: plan.errors,
+        recipients: { to: plan.to, cc: [], bcc: [] },
+        fromEmail: "billing@trenova.example",
+        subject: `Invoice ${fixture.invoice.number}`,
+        body: "",
+        invoicePdfDocumentId: null,
+      };
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/edi\/transfers\/?$/,

@@ -122,3 +122,28 @@ func TestAnys(t *testing.T) {
 	assert.Equal(t, []any{"a", "b"}, sliceutils.Anys([]string{"a", "b"}))
 	assert.Empty(t, sliceutils.Anys([]int{}))
 }
+
+func TestIntersect(t *testing.T) {
+	t.Parallel()
+
+	t.Run("keeps what every list holds, in the first list's order", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(
+			t,
+			[]string{"c", "a"},
+			sliceutils.Intersect([]string{"c", "b", "a"}, []string{"a", "c", "d"}, []string{"a", "c"}),
+		)
+	})
+
+	t.Run("returns the list itself, copied, when there is nothing to meet", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, []int{1, 2}, sliceutils.Intersect([]int{1, 2}))
+	})
+
+	t.Run("returns an empty list when the lists share nothing", func(t *testing.T) {
+		t.Parallel()
+		result := sliceutils.Intersect([]int{1, 2}, []int{3})
+		assert.NotNil(t, result)
+		assert.Empty(t, result)
+	})
+}

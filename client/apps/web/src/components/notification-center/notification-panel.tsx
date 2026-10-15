@@ -27,7 +27,7 @@ import {
   MailCheckIcon,
   Settings01Icon,
 } from "@trenova/shared/components/icons";
-import { useAppDialogsStore } from "@/stores/app-dialogs-store";
+import { settingsPath } from "@/lib/settings-path";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { NotificationItem, type NotificationItemActions } from "./notification-item";
@@ -114,7 +114,6 @@ export default function NotificationPanel({
   const markUnread = useNotificationAction("unread");
   const archive = useNotificationAction("dismiss");
   const restore = useNotificationAction("restore");
-  const openDialog = useAppDialogsStore((state) => state.openDialog);
   const markAllRead = useMarkAllNotificationsRead();
 
   const actions = useMemo<NotificationItemActions>(
@@ -188,7 +187,7 @@ export default function NotificationPanel({
                   size="icon-xs"
                   aria-label={t("Notification settings")}
                   className="text-muted-foreground"
-                  onClick={() => openDialog("settings", { section: "notifications" })}
+                  onClick={() => handleNavigate(settingsPath("notifications"))}
                 />
               }
             >

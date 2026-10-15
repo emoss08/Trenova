@@ -1,0 +1,110 @@
+# The Desk's worker settlement card: where the statement stands and who moved
+# it, the flags the run raised, how it adds up, its lines summed by how each
+# was paid, each load's share, and the worker's disputes. The loads it pays are
+# read a page at a time through shipments.
+query DeskDriverSettlementCard($id: ID!) {
+  driverSettlement(id: $id) {
+    id
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    exceptions {
+      code
+      severity
+      message
+    }
+    submittedAt
+    approvedAt
+    postedAt
+    paidAt
+    paymentMethod
+    paymentReference
+    voidedAt
+    voidReason
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+      wholeName
+    }
+    submittedBy {
+      id
+      name
+    }
+    approvedBy {
+      id
+      name
+    }
+    postedBy {
+      id
+      name
+    }
+    paidBy {
+      id
+      name
+    }
+    voidedBy {
+      id
+      name
+    }
+    lineSummary {
+      category
+      componentKind
+      method
+      description
+      rate
+      quantity
+      amountMinor
+      lineCount
+      shipmentCount
+      advanceId
+      escrowAccountId
+      recurringDeductionId
+      manual
+      advance {
+        id
+        reference
+        amountMinor
+        outstandingMinor
+      }
+      escrowAccount {
+        id
+        balanceMinor
+        targetAmountMinor
+      }
+    }
+    loadShares {
+      shipmentId
+      proNumber
+      amountMinor
+    }
+    disputes {
+      id
+      status
+      category
+      description
+      resolutionNote
+      resolvedAt
+      createdAt
+      settlementLine {
+        description
+        proNumber
+      }
+    }
+  }
+}

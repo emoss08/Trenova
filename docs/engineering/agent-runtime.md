@@ -1047,6 +1047,42 @@ its own, in one plan with the turn's when several wait on the person. One level 
 **Read [agent-delegation.md](agent-delegation.md)
 before changing it.**
 
+### Matching a question to an agent
+
+Before a conversation exists, the Desk's front page and the assistant's home ask
+`myAgentRecommendation` which of the person's agents a question is best put to
+(`agentruntime.RecommendAgent`, the `AgentRecommender` port). It is the find_tools
+hand-off asked before the first turn instead of during it, and it is built from the
+same parts:
+
+- **Who is eligible.** `OtherUsableAgents`, the list the hand-off note reads: enabled
+  chat agents in the person's audience that `AgentsUsable` allows at `assistant:create`,
+  the check that starting the conversation makes again (`assertMayUseAgent`). The
+  resolver itself requires `assistant:create`. An API key or system actor is matched
+  to nobody.
+- **What counts.** Each agent's `heldTools` without the core tools every agent holds,
+  narrowed once, for every agent together, by `permittedWith` for the person. A tool
+  the person may not use through any agent never makes an agent the better fit.
+- **The ranking.** The question is ranked against the catalog with `Catalog.Match`:
+  `FindHybrid`'s keyword and embedding fusion and its cutoff, without the families it
+  appends, so only tools that matched are scored. Its query vector is the one the turn
+  embeds for the same words, so a question sent after its match reuses the cached
+  vector rather than embedding twice. An agent scores 1/rank for each matched tool it
+  holds; ties go to the agent the question would go to now, then to the agent holding
+  fewer usable tools (the focused one), then by name. Nothing matched recommends
+  nobody, and the reply names at most three of the winning agent's matched tools.
+
+No model is asked: the match costs one embedding at most and works the same on a
+self-hosted install with a small model. The browser asks once typing pauses
+(`use-agent-recommendation.ts`) and names a better fit in a small note floating just
+above the box, where the terms reminder sits, with Switch and a cross that keeps the
+agent chosen. Until the
+person chooses, from the picker or from that offer, a question sent goes to the
+better fit; one sent before its match came back waits at most 1.5 seconds for it
+and otherwise goes to the agent already chosen (`agentToAsk` in
+`agent-recommendation-state.ts`). The query key holds the person's words, so it is
+never added to `SHELL_QUERIES`.
+
 ### Steering and the queue
 
 A person can talk to a conversation while its agent is still working. What they

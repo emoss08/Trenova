@@ -1,0 +1,155 @@
+# The Desk's invoice card: what is owed and when, the charges summed by how
+# each was billed, what settled it, its disputes, and where it went. The
+# shipments it bills are read a page at a time through shipments, and the
+# lines themselves stay on the invoice's page.
+query DeskInvoiceCard($id: ID!) {
+  invoice(id: $id) {
+    id
+    number
+    billType
+    status
+    scope
+    currencyCode
+    paymentTerm
+    invoiceDate
+    dueDate
+    postedAt
+    periodStart
+    periodEnd
+    shipmentCount
+    shipmentProNumber
+    shipmentBol
+    orderId
+    orderNumber
+    billToName
+    isSplitBill
+    factoringCompanyId
+    subtotalAmount
+    otherAmount
+    totalAmount
+    appliedAmount
+    openBalance
+    creditRemaining
+    daysPastDue
+    settlementStatus
+    disputeStatus
+    sendStatus
+    sentAt
+    voidedAt
+    voidReason
+    voidDisposition
+    memoReason
+    memoKind
+    ediSendStatus
+    ediSentAt
+    pdfDocumentId
+    lastEdiError
+    lastEdiMessageId
+    createdAt
+    updatedAt
+    customer {
+      id
+      code
+      name
+    }
+    voidedBy {
+      id
+      name
+    }
+    referenceInvoice {
+      ...DeskInvoiceNeighbor
+    }
+    relatedInvoices {
+      ...DeskInvoiceNeighbor
+    }
+    chargeSummary {
+      type
+      description
+      chargeCode
+      chargeMethod
+      rateUnit
+      rate
+      rateBasisAmount
+      quantity
+      formulaTemplateId
+      formulaTemplateName
+      lineCount
+      shipmentCount
+      amount
+    }
+    paymentApplications {
+      id
+      appliedAmountMinor
+      shortPayAmountMinor
+      createdAt
+      payment {
+        id
+        paymentDate
+        status
+        paymentMethod
+        referenceNumber
+      }
+    }
+    creditApplications {
+      id
+      appliedAmountMinor
+      accountingDate
+      status
+      unappliedAt
+      unappliedReason
+      creditMemo {
+        id
+        number
+      }
+      invoice {
+        id
+        number
+      }
+    }
+    disputes {
+      id
+      status
+      reasonCode
+      disputedAmount
+      notes
+      openedAt
+      resolvedAt
+      resolution
+      resolutionNotes
+      openedBy {
+        id
+        name
+      }
+      resolvedBy {
+        id
+        name
+      }
+    }
+    ediSendPlan {
+      enabled
+      partnerName
+      communicationMethod
+      status
+      lastMessageId
+      lastError
+      sentAt
+      blockers
+    }
+  }
+}
+
+# Another invoice the card names: the one a memo corrects, or a split bill's
+# sibling.
+fragment DeskInvoiceNeighbor on Invoice {
+  id
+  number
+  billType
+  status
+  totalAmount
+  openBalance
+  currencyCode
+  settlementStatus
+  daysPastDue
+  postedAt
+  billToName
+}

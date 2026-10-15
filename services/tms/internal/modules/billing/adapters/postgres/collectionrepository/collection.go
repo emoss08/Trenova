@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/pkg/buncolgen/collectioncol"
@@ -189,9 +190,9 @@ func (r *repository) ListActivities(
 
 // worklistSQL reads every customer collections should see: anyone with an
 // overdue invoice, plus anyone already being worked. An invoice sold to a
-// non-recourse factor is the factor's to collect, so it is left out. %s
-// narrows by collector, customer and search.
-const worklistSQL = `
+// non-recourse factor is the factor's to collect, so it is left out, unless
+// the factor charged it back. %s narrows by collector, customer and search.
+var worklistSQL = `
 	WITH open_invoices AS (
 		SELECT inv.customer_id,
 			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
@@ -217,6 +218,7 @@ const worklistSQL = `
 					AND fac.organization_id = inv.organization_id
 					AND fac.business_unit_id = inv.business_unit_id
 					AND COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
+					AND NOT ` + factoringsql.ChargedBackInvoice() + `
 			)
 		GROUP BY inv.customer_id
 	)

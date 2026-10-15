@@ -1,12 +1,25 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { frameOfMatches } from "../shell-frame";
+import { frameOfMatches, roomRailOfMatches } from "../shell-frame";
 import { PageLayout, SidebarLayout } from "../sidebar-layout";
 
 vi.mock("../module-rail", () => ({
-  ModuleRail: ({ fold, search }: { fold?: boolean; search: boolean }) => (
-    <nav aria-label="Modules" data-search={search || undefined}>
+  ModuleRail: ({
+    fold,
+    search,
+    panelFolded,
+  }: {
+    fold?: boolean;
+    search: boolean;
+    panelFolded: boolean;
+  }) => (
+    <nav
+      aria-label="Modules"
+      data-search={search || undefined}
+      data-panel-folded={panelFolded || undefined}
+    >
       {fold && <button type="button">Hide sidebar</button>}
     </nav>
   ),
@@ -17,7 +30,6 @@ vi.mock("../rail-panel", () => ({
   ),
   RailPanelBody: () => null,
 }));
-vi.mock("../user-settings-host", () => ({ UserSettingsHost: () => null }));
 vi.mock("../../assistant/assistant-widget", () => ({
   AssistantWidget: () => null,
   useAssistantSideInset: () => null,
@@ -39,6 +51,7 @@ vi.mock("@/stores/update-store", () => ({
 }));
 
 beforeEach(() => {
+  useNavigationStore.setState({ sidebarCollapsed: false, compactSidebarOpen: false });
   vi.stubGlobal(
     "matchMedia",
     (query: string) =>
@@ -72,6 +85,11 @@ function renderAt(path: string) {
         ),
         children: [
           { path: "/triage", handle: { frame: "room" }, element: page("Triage") },
+          {
+            path: "/studio",
+            handle: { frame: "room", roomRail: "stands" },
+            element: page("Studio"),
+          },
           { path: "/shipments", element: page("Shipments") },
           { path: "/shipments/hazardous-materials", element: page("Hazardous materials") },
         ],
@@ -154,5 +172,47 @@ describe("the shell's frame", () => {
     expect(heading.closest("[data-slot=page-header]")).toHaveClass("sr-only");
     expect(screen.getByText("What Triage is for")).toBeInTheDocument();
     expect(screen.queryByRole("button")).toHaveAccessibleName("Hide sidebar");
+  });
+
+  it("takes the room rail the deepest route that names one asks for, folding by default", () => {
+    expect(roomRailOfMatches([])).toBe("folds");
+    expect(roomRailOfMatches([{ handle: { frame: "room" } }])).toBe("folds");
+    expect(
+      roomRailOfMatches([{ handle: { roomRail: "folds" } }, { handle: { roomRail: "stands" } }]),
+    ).toBe("stands");
+    expect(
+      roomRailOfMatches([{ handle: { roomRail: "stands" } }, { handle: { roomRail: "folds" } }]),
+    ).toBe("folds");
+  });
+
+  it("folds a room's rail with ⌘B", async () => {
+    renderAt("/triage");
+
+    await screen.findByText("Triage body");
+    expect(screen.getByRole("navigation", { name: "Modules" })).not.toHaveAttribute(
+      "data-panel-folded",
+    );
+
+    fireEvent.keyDown(document, { key: "b", metaKey: true });
+
+    expect(useNavigationStore.getState().sidebarCollapsed).toBe(true);
+    expect(screen.getByRole("navigation", { name: "Modules" })).toHaveAttribute(
+      "data-panel-folded",
+    );
+  });
+
+  it("keeps a standing room's rail open, with the panel folded in its favour and no fold", async () => {
+    renderAt("/studio");
+
+    await screen.findByText("Studio body");
+    const rail = screen.getByRole("navigation", { name: "Modules" });
+    expect(rail).toHaveAttribute("data-panel-folded");
+    expect(rail).toHaveAttribute("data-search");
+    expect(screen.queryByRole("button", { name: "Hide sidebar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary", { name: "Sidebar" })).not.toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "b", metaKey: true });
+
+    expect(useNavigationStore.getState().sidebarCollapsed).toBe(false);
   });
 });
