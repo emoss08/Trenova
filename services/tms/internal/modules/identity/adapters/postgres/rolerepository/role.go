@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -725,8 +726,9 @@ func (r *repository) GetResourcePermissionsByRoleID(
 
 // usersWithPermissionQuery walks each active assignment up through its role's
 // parents, so a person who holds a child role inherits what its parents
-// grant, the way the permission engine reads it. "manage" on a resource
-// carries every operation on it, so it counts as a match whatever was asked.
+// grant, the way the permission engine reads it. A grant is stored as it was
+// made, so it matches on any operation that implies the one asked for
+// (approve brings update and read), as the engine evaluates it.
 const usersWithPermissionQuery = `
 WITH RECURSIVE held AS (
     SELECT ura.user_id, r.id AS role_id, r.parent_role_ids
@@ -746,7 +748,7 @@ FROM held h
 JOIN resource_permissions rp ON rp.role_id = h.role_id
 JOIN users u ON u.id = h.user_id
 WHERE rp.resource = ?
-  AND (? = ANY(rp.operations) OR ? = ANY(rp.operations))
+  AND rp.operations && ?::text[]
   AND u.status = ?
 ORDER BY u.name`
 
@@ -771,8 +773,7 @@ func (r *repository) ListUsersWithPermission(
 				req.BusinessUnitID,
 				req.Now,
 				req.Resource.String(),
-				string(req.Operation),
-				string(permission.OpManage),
+				pgdialect.Array(grantingOperations(req.Operation)),
 				domaintypes.StatusActive,
 			).Scan(ctx, &users); err != nil {
 				log.Error("failed to list users with permission", zap.Error(err))
@@ -782,4 +783,13 @@ func (r *repository) ListUsersWithPermission(
 			return users, nil
 		},
 	)
+}
+
+func grantingOperations(op permission.Operation) []string {
+	granting := permission.GrantingOperations(op)
+	out := make([]string, len(granting))
+	for i, candidate := range granting {
+		out[i] = string(candidate)
+	}
+	return out
 }

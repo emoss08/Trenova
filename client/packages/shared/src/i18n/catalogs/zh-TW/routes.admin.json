@@ -729,6 +729,7 @@
   "Include blank lines within the section boundaries": "納入區段界線內的空白行",
   "Include open tenders": "包含未結的派車要約",
   "Include toll data": "包含通行費資料",
+  "Included with {0}. Select it to grant it on its own.": "已隨 {0} 一併包含。選取它即可單獨授予。",
   "Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.": "每週二擷取美國能源部柴油價格，並自動佈建全部 11 項能源部區域指數。",
   "Insert a delimiter between each token segment.": "在每個權杖區段之間插入分隔符號。",
   "Inserted between the prefix and the sequence.": "插入於前置字元與序號之間。",

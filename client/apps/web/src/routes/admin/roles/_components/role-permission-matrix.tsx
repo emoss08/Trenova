@@ -17,6 +17,7 @@ import {
   type ResourceCategory,
   type ResourceDefinition,
 } from "@/lib/role-api";
+import { impliedOperations } from "@/lib/implied-operations";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
@@ -395,6 +396,14 @@ function ResourceRow({
   const t = useT();
 
   const isGranted = !!permission;
+  const implied = useMemo(
+    () => impliedOperations(permission?.operations ?? [], resource.operations),
+    [permission?.operations, resource.operations],
+  );
+  const displayNames = useMemo(
+    () => new Map(resource.operations.map((op) => [op.operation, op.displayName])),
+    [resource.operations],
+  );
   const operationCount = permission?.operations.length || 0;
   const totalOperations = resource.operations.length;
   const isFullAccess = operationCount === totalOperations;
@@ -440,6 +449,7 @@ function ResourceRow({
       <div className="flex items-center gap-1.5">
         {resource.operations.map((op) => {
           const isChecked = permission?.operations.includes(op.operation as Operation);
+          const impliedBy = isChecked ? undefined : implied.get(op.operation);
           return (
             <Tooltip key={op.operation}>
               <TooltipTrigger
@@ -451,14 +461,24 @@ function ResourceRow({
                       "cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-all",
                       isChecked
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                        : impliedBy
+                          ? "bg-primary/15 text-primary hover:bg-primary/25"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
                     )}
+                    aria-pressed={isChecked}
                   >
                     {op.displayName}
                   </button>
                 }
               />
-              <TooltipContent className="text-xs">{t(op.description)}</TooltipContent>
+              <TooltipContent className="text-xs">
+                {impliedBy
+                  ? t(
+                      "Included with {0}. Select it to grant it on its own.",
+                      impliedBy.map((name) => displayNames.get(name) ?? name).join(", "),
+                    )
+                  : t(op.description)}
+              </TooltipContent>
             </Tooltip>
           );
         })}

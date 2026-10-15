@@ -729,6 +729,7 @@
   "Include blank lines within the section boundaries": "纳入区段边界内的空白行",
   "Include open tenders": "包含未结的派车要约",
   "Include toll data": "包含通行费数据",
+  "Included with {0}. Select it to grant it on its own.": "已随 {0} 一并包含。选中它可单独授予。",
   "Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.": "每周二采集美国能源部柴油价格，并自动配置全部 11 项能源部区域指数。",
   "Insert a delimiter between each token segment.": "在每个令牌区段之间插入分隔符。",
   "Inserted between the prefix and the sequence.": "插入于前缀与序列号之间。",

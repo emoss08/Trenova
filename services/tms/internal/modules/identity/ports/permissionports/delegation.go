@@ -30,8 +30,8 @@ func (e *EffectivePermissions) DelegationViolation(
 		return DelegationViolation{Kind: DelegationResourceNotHeld, Resource: resource}, true
 	}
 
-	heldOps := permission.NewOperationSet(held.Operations...)
-	for _, op := range operations {
+	heldOps := permission.ExpandWithDependencies(permission.NewOperationSet(held.Operations...))
+	for _, op := range permission.Implied(operations) {
 		if !heldOps.Has(op) {
 			return DelegationViolation{
 				Kind:      DelegationOperationNotHeld,

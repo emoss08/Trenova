@@ -14,9 +14,10 @@ const (
 )
 
 type OperationDefinition struct {
-	Operation   Operation `json:"operation"`
-	DisplayName string    `json:"displayName"`
-	Description string    `json:"description"`
+	Operation   Operation   `json:"operation"`
+	DisplayName string      `json:"displayName"`
+	Description string      `json:"description"`
+	Implies     []Operation `json:"implies"`
 }
 
 type ResourceDefinition struct {
@@ -68,6 +69,7 @@ func (r *Registry) Register(def *ResourceDefinition) error {
 	if def.DefaultSensitivity == "" {
 		def.DefaultSensitivity = SensitivityInternal
 	}
+	def.Operations = withImplications(def.Operations)
 
 	r.resources[def.Resource] = def
 

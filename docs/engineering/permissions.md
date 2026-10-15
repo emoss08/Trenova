@@ -54,6 +54,27 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
    A new write route also needs an entry in `writecoverage.yml`.
 
+## Implied operations
+
+Some operations bring others with them (`permission.Dependencies`): approve, reject,
+assign, archive and the other state changes bring update and read; import and duplicate
+bring create; manage brings update and delete. A grant is stored exactly as it was made
+and the implication is applied when it is evaluated (`permission.Implied`), in the
+engine's cached set, its effective permissions, the delegation check, API keys and
+`ListUsersWithPermission` (which matches any stored operation that implies the one asked
+for, `permission.GrantingOperations`). Nothing widens a grant on write, so the audit
+trail and the role editor show what a person chose.
+
+The registry sends each operation's implications with it (`OperationDefinition.Implies`),
+and the role editor marks an operation that a selected one brings as included rather than
+leaving it looking ungranted. Rows written before this change were stored already widened
+and read the same either way.
+
+The client's operation and data scope lists (`PERMISSION_OPERATIONS`, `DATA_SCOPES` in
+`@trenova/shared/types/generated/permission-resources`) are generated from the Go
+constants with the resource enum; a hand-kept list once kept the role form from saving any
+role holding manage, delete or close.
+
 ## Organization security settings
 
 Single sign-on, SCIM, access policies and the sign-in activity views each have their own

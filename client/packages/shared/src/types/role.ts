@@ -1,29 +1,15 @@
 import { z } from "zod";
 import { optionalStringSchema, timestampSchema } from "./helpers";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { DATA_SCOPES, PERMISSION_OPERATIONS } from "./generated/permission-resources";
 
 export const fieldSensitivitySchema = z.enum(["public", "internal", "restricted", "confidential"]);
 export type FieldSensitivity = z.infer<typeof fieldSensitivitySchema>;
 
-export const dataScopeSchema = z.enum(["own", "organization", "all"]);
+export const dataScopeSchema = z.enum(DATA_SCOPES);
 export type DataScope = z.infer<typeof dataScopeSchema>;
 
-export const operationSchema = z.enum([
-  "read",
-  "create",
-  "update",
-  "export",
-  "import",
-  "approve",
-  "reject",
-  "assign",
-  "unassign",
-  "archive",
-  "restore",
-  "submit",
-  "cancel",
-  "duplicate",
-]);
+export const operationSchema = z.enum(PERMISSION_OPERATIONS);
 export type Operation = z.infer<typeof operationSchema>;
 
 export const resourcePermissionSchema = z.object({

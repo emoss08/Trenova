@@ -45,18 +45,17 @@ func TestResourcePermission_BeforeAppendModel(t *testing.T) {
 		assert.Equal(t, existingID, rp.ID)
 	})
 
-	t.Run("insert expands operations with dependencies", func(t *testing.T) {
+	t.Run("insert stores what was granted, once each and in order", func(t *testing.T) {
 		t.Parallel()
 
 		rp := &ResourcePermission{
-			Operations: []Operation{OpCreate},
+			Operations: []Operation{OpUpdate, OpApprove, OpUpdate},
 		}
 
 		err := rp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
 		require.NoError(t, err)
 
-		assert.Contains(t, rp.Operations, OpCreate)
-		assert.Contains(t, rp.Operations, OpRead)
+		assert.Equal(t, []Operation{OpApprove, OpUpdate}, rp.Operations)
 	})
 
 	t.Run("update sets UpdatedAt", func(t *testing.T) {
@@ -86,18 +85,18 @@ func TestResourcePermission_BeforeAppendModel(t *testing.T) {
 		assert.NotZero(t, rp.UpdatedAt)
 	})
 
-	t.Run("update expands operations with dependencies", func(t *testing.T) {
+	t.Run("update stores what was granted without widening it", func(t *testing.T) {
 		t.Parallel()
 
 		rp := &ResourcePermission{
-			Operations: []Operation{OpUpdate},
+			Operations: []Operation{OpManage},
 		}
 
 		err := rp.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
 		require.NoError(t, err)
 
-		assert.Contains(t, rp.Operations, OpUpdate)
-		assert.Contains(t, rp.Operations, OpRead)
+		assert.Equal(t, []Operation{OpManage}, rp.Operations)
+		assert.True(t, rp.HasOperation(OpDelete), "manage still allows delete when evaluated")
 	})
 }
 

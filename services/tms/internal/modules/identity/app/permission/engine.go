@@ -1308,13 +1308,13 @@ func (e *engine) mergeAPIKeyPermissionIntoCache(
 	existing, ok := resources[rp.Resource]
 	if !ok {
 		resources[rp.Resource] = &permissionports.CachedResourcePermission{
-			Operations: e.opsToStrings(rp.Operations),
+			Operations: e.opsToStrings(permission.Implied(rp.Operations)),
 			DataScope:  string(rp.DataScope),
 		}
 		return
 	}
 
-	existing.Operations = e.mergeOpStrings(existing.Operations, rp.Operations)
+	existing.Operations = e.mergeOpStrings(existing.Operations, permission.Implied(rp.Operations))
 	if rp.DataScope.IsMorePermissive(permission.DataScope(existing.DataScope)) {
 		existing.DataScope = string(rp.DataScope)
 	}
@@ -1327,13 +1327,13 @@ func (e *engine) mergeResourcePermissionIntoCache(
 	existing, ok := resources[rp.Resource]
 	if !ok {
 		resources[rp.Resource] = &permissionports.CachedResourcePermission{
-			Operations: e.opsToStrings(rp.Operations),
+			Operations: e.opsToStrings(permission.Implied(rp.Operations)),
 			DataScope:  string(rp.DataScope),
 		}
 		return
 	}
 
-	existing.Operations = e.mergeOpStrings(existing.Operations, rp.Operations)
+	existing.Operations = e.mergeOpStrings(existing.Operations, permission.Implied(rp.Operations))
 	if rp.DataScope.IsMorePermissive(permission.DataScope(existing.DataScope)) {
 		existing.DataScope = string(rp.DataScope)
 	}
@@ -1387,16 +1387,14 @@ func (e *engine) buildEffectivePermissions(
 			existing, ok := resources[rp.Resource]
 			if !ok {
 				resources[rp.Resource] = permissionports.EffectiveResourcePermission{
-					Operations: rp.Operations,
+					Operations: permission.Implied(rp.Operations),
 					DataScope:  rp.DataScope,
 					GrantedBy:  []string{role.Name},
 				}
 			} else {
 				opSet := permission.NewOperationSet(existing.Operations...)
-				for _, op := range rp.Operations {
-					opSet.Add(op)
-				}
-				existing.Operations = opSet.ToSlice()
+				opSet.Add(permission.Implied(rp.Operations)...)
+				existing.Operations = permission.Normalize(opSet.ToSlice())
 
 				if rp.DataScope.IsMorePermissive(existing.DataScope) {
 					existing.DataScope = rp.DataScope

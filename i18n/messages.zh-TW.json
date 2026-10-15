@@ -12824,6 +12824,7 @@
   "Include {0} → {1}": "納入 {0} → {1}",
   "Included in {0, plural, one {# training export} other {# training exports}}, {1, plural, one {# correction} other {# corrections}} in all": "已納入 {0, plural, one {# 次訓練匯出} other {# 次訓練匯出}}，共 {1, plural, one {# 筆更正} other {# 筆更正}}",
   "Included on a posted carrier settlement.": "已列入已過帳的承運業者結算。",
+  "Included with {0}. Select it to grant it on its own.": "已隨 {0} 一併包含。選取它即可單獨授予。",
   "Includes {0} of rest for hours of service": "包含 {0} 的工時規定休息",
   "Income Statement": "損益表",
   "Income from freight operations": "貨運營運收入",

@@ -17,6 +17,7 @@ export type OperationDefinition = {
   operation: string;
   displayName: string;
   description: string;
+  implies?: string[] | null;
 };
 
 export type ResourceDefinition = {

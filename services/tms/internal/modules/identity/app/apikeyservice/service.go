@@ -461,12 +461,6 @@ func normalizeDataScope(scope permission.DataScope) permission.DataScope {
 	return scope
 }
 
-func normalizeOperations(ops []permission.Operation) []permission.Operation {
-	expanded := permission.ExpandWithDependencies(permission.NewOperationSet(ops...)).ToSlice()
-	slices.Sort(expanded)
-	return expanded
-}
-
 func (s *Service) normalizePermissions(
 	inputs []apikeyports.APIKeyPermissionInput,
 ) ([]apikeyports.APIKeyPermissionInput, error) {
@@ -474,7 +468,7 @@ func (s *Service) normalizePermissions(
 	for _, input := range inputs {
 		normalized = append(normalized, apikeyports.APIKeyPermissionInput{
 			Resource:   strings.TrimSpace(input.Resource),
-			Operations: normalizeOperations(input.Operations),
+			Operations: permission.Normalize(input.Operations),
 			DataScope:  normalizeDataScope(input.DataScope),
 		})
 	}

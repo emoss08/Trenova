@@ -729,6 +729,7 @@
   "Include blank lines within the section boundaries": "Incluir las líneas en blanco dentro de los límites de la sección",
   "Include open tenders": "Incluir ofertas de carga abiertas",
   "Include toll data": "Incluir datos de peajes",
+  "Included with {0}. Select it to grant it on its own.": "Incluido con {0}. Selecciónalo para concederlo por sí solo.",
   "Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.": "Incorpora los precios semanales del diésel del DOE cada martes y aprovisiona automáticamente los 11 índices regionales del DOE.",
   "Insert a delimiter between each token segment.": "Inserte un delimitador entre cada segmento de token.",
   "Inserted between the prefix and the sequence.": "Se inserta entre el prefijo y la secuencia.",

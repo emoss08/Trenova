@@ -1751,3 +1751,100 @@ func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
 	}
 	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
 }
+
+func TestCheck_AllowsWhatAGrantImpliesAtEvaluation(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Billing approver",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "invoice",
+					Operations: []permission.Operation{permission.OpApprove},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		},
+	}, nil)
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
+		Return(nil)
+
+	results, err := eng.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Checks: []permissionports.ResourceOperationCheck{
+			{Resource: "invoice", Operation: permission.OpApprove},
+			{Resource: "invoice", Operation: permission.OpUpdate},
+			{Resource: "invoice", Operation: permission.OpRead},
+			{Resource: "invoice", Operation: permission.OpDelete},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, results.Results, 4)
+	assert.True(t, results.Results[0].Allowed, "approve is granted")
+	assert.True(t, results.Results[1].Allowed, "approve implies update")
+	assert.True(t, results.Results[2].Allowed, "approve implies read")
+	assert.False(t, results.Results[3].Allowed, "approve does not imply delete")
+}
+
+func TestGetEffectivePermissions_ReportsImpliedOperations(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Memory keeper",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "agent_memory",
+					Operations: []permission.Operation{permission.OpManage},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		},
+	}, nil)
+
+	result, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		[]permission.Operation{
+			permission.OpDelete,
+			permission.OpManage,
+			permission.OpRead,
+			permission.OpUpdate,
+		},
+		result.Resources["agent_memory"].Operations,
+	)
+}

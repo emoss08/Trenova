@@ -12824,6 +12824,7 @@
   "Include {0} → {1}": "Incluir {0} → {1}",
   "Included in {0, plural, one {# training export} other {# training exports}}, {1, plural, one {# correction} other {# corrections}} in all": "Incluido en {0, plural, one {# exportación de entrenamiento} other {# exportaciones de entrenamiento}}, {1, plural, one {# corrección} other {# correcciones}} en total",
   "Included on a posted carrier settlement.": "Incluido en una liquidación de transportista ya registrada.",
+  "Included with {0}. Select it to grant it on its own.": "Incluido con {0}. Selecciónalo para concederlo por sí solo.",
   "Includes {0} of rest for hours of service": "Incluye {0} de descanso por horas de servicio",
   "Income Statement": "Estado de resultados",
   "Income from freight operations": "Ingresos por operaciones de flete",

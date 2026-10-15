@@ -342,3 +342,53 @@ func TestDependents(t *testing.T) {
 	assert.Contains(t, Dependents[OpUpdate], OpApprove)
 	assert.Contains(t, Dependents[OpCreate], OpImport)
 }
+
+func TestImplied_FollowsDependenciesTransitively(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		[]Operation{OpApprove, OpRead, OpUpdate},
+		Implied([]Operation{OpApprove}),
+	)
+	assert.Equal(
+		t,
+		[]Operation{OpDelete, OpManage, OpRead, OpUpdate},
+		Implied([]Operation{OpManage}),
+	)
+	assert.Empty(t, Implied(nil))
+}
+
+func TestImpliedByOperation_LeavesOutTheOperationItself(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []Operation{OpCreate, OpRead}, ImpliedByOperation(OpImport))
+	assert.Empty(t, ImpliedByOperation(OpRead))
+}
+
+func TestRegistry_OperationsCarryWhatTheyImply(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	def, ok := reg.Get(ResourceShipment.String())
+	require.True(t, ok)
+
+	for _, op := range def.Operations {
+		assert.Equal(t, ImpliedByOperation(op.Operation), op.Implies, "%s", op.Operation)
+	}
+
+	for _, op := range GetAllOperations() {
+		assert.Equal(t, ImpliedByOperation(op.Operation), op.Implies, "%s", op.Operation)
+	}
+}
+
+func TestGrantingOperations_NamesEveryOperationThatBringsIt(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []Operation{OpDelete, OpManage}, GrantingOperations(OpDelete))
+	assert.Equal(t, []Operation{OpApprove}, GrantingOperations(OpApprove))
+	assert.Contains(t, GrantingOperations(OpUpdate), OpApprove)
+	assert.Contains(t, GrantingOperations(OpUpdate), OpManage)
+	assert.NotContains(t, GrantingOperations(OpUpdate), OpCreate)
+	assert.Len(t, GrantingOperations(OpRead), len(Dependencies))
+}
