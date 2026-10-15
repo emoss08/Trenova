@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,6 +63,7 @@ type Params struct {
 	AccessPolicyCacheRepo iamports.AccessPolicyCacheRepository
 	UserRepository        tenantports.UserRepository
 	AgentGrants           permissionports.RoleAgentGrantRepository  `optional:"true"`
+	AgentRoles            permissionports.AgentRoleSource           `optional:"true"`
 	Delegated             permissionports.DelegatedPermissionSource `optional:"true"`
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
@@ -78,6 +80,7 @@ type engine struct {
 	policyCache   iamports.AccessPolicyCacheRepository
 	userRepo      tenantports.UserRepository
 	agentGrants   permissionports.RoleAgentGrantRepository
+	agentRoles    permissionports.AgentRoleSource
 	delegated     permissionports.DelegatedPermissionSource
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
@@ -96,6 +99,7 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
 		agentGrants:   p.AgentGrants,
+		agentRoles:    p.AgentRoles,
 		delegated:     p.Delegated,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
@@ -116,7 +120,12 @@ func (e *engine) Check(
 	}
 
 	if req.PrincipalType == permissionports.PrincipalTypeAgent {
-		return e.checkAgentPermission(req, start), nil
+		return e.checkAgentPermission(
+			ctx,
+			req,
+			start,
+			e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID),
+		)
 	}
 
 	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
@@ -140,25 +149,6 @@ func (e *engine) checkLogger(
 		zap.String("resource", req.Resource),
 		zap.String("op", string(req.Operation)),
 	)
-}
-
-func (e *engine) checkAgentPermission(
-	req *permissionports.PermissionCheckRequest,
-	start time.Time,
-) *permissionports.PermissionCheckResult {
-	allowed := permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
-
-	reason := "agent_denied"
-	if allowed {
-		reason = "agent_allowed"
-	}
-
-	return &permissionports.PermissionCheckResult{
-		Allowed:       allowed,
-		Reason:        reason,
-		DataScope:     permission.DataScopeOrganization,
-		CheckDuration: time.Since(start).Milliseconds(),
-	}
 }
 
 func (e *engine) checkUserPermission(
@@ -396,6 +386,8 @@ func accessPolicyConditionMatches(
 	switch normalizedKey {
 	case "principalType":
 		return string(req.PrincipalType) == normalizedExpected
+	case "principalId":
+		return req.PrincipalID.String() == normalizedExpected
 	case "userId":
 		return req.UserID.String() == normalizedExpected
 	case "businessUnitId":
@@ -491,7 +483,7 @@ func (e *engine) CheckBatch(
 	case permissionports.PrincipalTypeAPIKey:
 		err = e.checkAPIKeyBatch(ctx, req, results)
 	case permissionports.PrincipalTypeAgent:
-		e.checkAgentBatch(req, results)
+		err = e.checkAgentBatch(ctx, req, results)
 	default:
 		err = e.checkUserBatch(ctx, req, results)
 	}
@@ -578,15 +570,6 @@ func (e *engine) checkAPIKeyBatch(
 		results[i] = *e.resolveAPIKeyPermission(perms, batchCheckRequest(req, check), time.Now())
 	}
 	return nil
-}
-
-func (e *engine) checkAgentBatch(
-	req *permissionports.BatchPermissionCheckRequest,
-	results []permissionports.PermissionCheckResult,
-) {
-	for i, check := range req.Checks {
-		results[i] = *e.checkAgentPermission(batchCheckRequest(req, check), time.Now())
-	}
 }
 
 func enforceResourceAttributes(
@@ -1034,11 +1017,79 @@ func (e *engine) computeAPIKeyPermissions(
 		e.mergeAPIKeyPermissionIntoCache(resources, rp)
 	}
 
+	creator, err := e.apiKeyCreatorPermissions(ctx, key.CreatedByID, buID, orgID)
+	if err != nil {
+		return nil, err
+	}
+	e.restrictToCreator(resources, creator)
+
 	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityRestricted),
 		Resources:      resources,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, nil
+}
+
+func (e *engine) apiKeyCreatorPermissions(
+	ctx context.Context,
+	creatorID, buID, orgID pulid.ID,
+) (*permissionports.CachedPermissions, error) {
+	empty := &permissionports.CachedPermissions{
+		Resources: make(map[string]*permissionports.CachedResourcePermission),
+	}
+
+	creator, err := e.userRepo.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
+		UserID:     creatorID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Now:        timeutils.NowUnix(),
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return empty, nil
+		}
+		return nil, err
+	}
+	if creator.ValidateStatus() != nil {
+		return empty, nil
+	}
+
+	load, err := e.getOrComputePermissions(
+		authctx.WithoutSessionRoleActivation(ctx),
+		creator.ID,
+		orgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return load.perms, nil
+}
+
+func (e *engine) restrictToCreator(
+	resources map[string]*permissionports.CachedResourcePermission,
+	creator *permissionports.CachedPermissions,
+) {
+	for resource, rp := range resources {
+		kept := make([]string, 0, len(rp.Operations))
+		for _, op := range rp.Operations {
+			held, ok := e.resolveResourcePermission(creator, resource, permission.Operation(op))
+			if !ok {
+				continue
+			}
+			kept = append(kept, op)
+			if permission.DataScope(rp.DataScope).IsMorePermissive(
+				permission.DataScope(held.DataScope),
+			) {
+				rp.DataScope = held.DataScope
+			}
+		}
+
+		if len(kept) == 0 {
+			delete(resources, resource)
+			continue
+		}
+		rp.Operations = kept
+	}
 }
 
 func (e *engine) getOrComputePermissions(
@@ -1083,6 +1134,11 @@ func (e *engine) getOrComputePermissions(
 		return result, nil
 	}
 
+	epoch, epochErr := e.cacheRepo.Epoch(ctx, orgID)
+	if epochErr != nil {
+		e.l.Warn("failed to read the permission epoch, not caching", zap.Error(epochErr))
+	}
+
 	computeStart := time.Now()
 	perms, err := e.computePermissions(ctx, userID, orgID)
 	result.computeDuration = time.Since(computeStart)
@@ -1091,8 +1147,11 @@ func (e *engine) getOrComputePermissions(
 	}
 	e.metrics.Permission.RecordCompute(metrics.PermissionPathCached, result.computeDuration)
 
-	if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
-		e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
+	if epochErr == nil {
+		perms.Epoch = epoch
+		if cacheErr := e.cacheRepo.Set(ctx, key, perms, cacheTTL); cacheErr != nil {
+			e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
+		}
 	}
 
 	result.perms = perms
@@ -1231,13 +1290,13 @@ func (e *engine) mergeAPIKeyPermissionIntoCache(
 	existing, ok := resources[rp.Resource]
 	if !ok {
 		resources[rp.Resource] = &permissionports.CachedResourcePermission{
-			Operations: e.opsToStrings(rp.Operations),
+			Operations: e.opsToStrings(permission.Implied(rp.Operations)),
 			DataScope:  string(rp.DataScope),
 		}
 		return
 	}
 
-	existing.Operations = e.mergeOpStrings(existing.Operations, rp.Operations)
+	existing.Operations = e.mergeOpStrings(existing.Operations, permission.Implied(rp.Operations))
 	if rp.DataScope.IsMorePermissive(permission.DataScope(existing.DataScope)) {
 		existing.DataScope = string(rp.DataScope)
 	}
@@ -1250,13 +1309,13 @@ func (e *engine) mergeResourcePermissionIntoCache(
 	existing, ok := resources[rp.Resource]
 	if !ok {
 		resources[rp.Resource] = &permissionports.CachedResourcePermission{
-			Operations: e.opsToStrings(rp.Operations),
+			Operations: e.opsToStrings(permission.Implied(rp.Operations)),
 			DataScope:  string(rp.DataScope),
 		}
 		return
 	}
 
-	existing.Operations = e.mergeOpStrings(existing.Operations, rp.Operations)
+	existing.Operations = e.mergeOpStrings(existing.Operations, permission.Implied(rp.Operations))
 	if rp.DataScope.IsMorePermissive(permission.DataScope(existing.DataScope)) {
 		existing.DataScope = string(rp.DataScope)
 	}
@@ -1310,16 +1369,14 @@ func (e *engine) buildEffectivePermissions(
 			existing, ok := resources[rp.Resource]
 			if !ok {
 				resources[rp.Resource] = permissionports.EffectiveResourcePermission{
-					Operations: rp.Operations,
+					Operations: permission.Implied(rp.Operations),
 					DataScope:  rp.DataScope,
 					GrantedBy:  []string{role.Name},
 				}
 			} else {
 				opSet := permission.NewOperationSet(existing.Operations...)
-				for _, op := range rp.Operations {
-					opSet.Add(op)
-				}
-				existing.Operations = opSet.ToSlice()
+				opSet.Add(permission.Implied(rp.Operations)...)
+				existing.Operations = permission.Normalize(opSet.ToSlice())
 
 				if rp.DataScope.IsMorePermissive(existing.DataScope) {
 					existing.DataScope = rp.DataScope

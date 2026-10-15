@@ -7,13 +7,20 @@ func (r *Registry) registerReportingResources() {
 		Description: "Report generation and management",
 		Category:    "Reporting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View reports"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View reports and cancel your own report runs",
+			},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create reports"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify reports"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete reports"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export reports"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

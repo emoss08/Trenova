@@ -5,9 +5,12 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -24,12 +27,14 @@ type Params struct {
 	Service              *rateagreementservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     permissionports.PermissionEngine
 }
 
 type Handler struct {
 	service *rateagreementservice.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+	engine  permissionports.PermissionEngine
 }
 
 func New(p Params) *Handler {
@@ -37,7 +42,12 @@ func New(p Params) *Handler {
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
+		engine:  p.PermissionEngine,
 	}
+}
+
+func (h *Handler) withhold(c *gin.Context, entities ...*rateagreement.RateAgreement) {
+	fieldguard.Withhold(fieldguard.Visible(c, h.engine), entities...)
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -155,7 +165,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-			return h.service.List(
+			result, err := h.service.List(
 				c.Request.Context(),
 				&rateagreementports.ListRateAgreementRequest{
 					Filter:    req,
@@ -163,6 +173,11 @@ func (h *Handler) list(c *gin.Context) {
 					Status:    rateagreement.Status(helpers.QueryString(c, "status")),
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			h.withhold(c, result.Items...)
+			return result, nil
 		},
 	)
 }
@@ -204,6 +219,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, entity)
 	c.JSON(http.StatusOK, entity)
 }
 
@@ -236,6 +252,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, created)
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -272,12 +289,13 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity.ID = agreementID
 
-	updated, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
+	updated, err := h.service.Update(c.Request.Context(), entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
+	h.withhold(c, updated)
 	c.JSON(http.StatusOK, updated)
 }
 
@@ -481,7 +499,7 @@ func (h *Handler) listVersions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
-			return h.service.ListVersions(
+			result, err := h.service.ListVersions(
 				c.Request.Context(),
 				&rateagreementports.ListRateAgreementVersionsRequest{
 					TenantInfo:      tenantOf(authCtx),
@@ -490,6 +508,11 @@ func (h *Handler) listVersions(c *gin.Context) {
 					Offset:          req.Pagination.Offset,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			fieldguard.Withhold(fieldguard.Visible(c, h.engine), result.Items...)
+			return result, nil
 		},
 	)
 }
@@ -515,7 +538,12 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-			return h.service.SelectOptions(c.Request.Context(), req)
+			result, err := h.service.SelectOptions(c.Request.Context(), req)
+			if err != nil {
+				return nil, err
+			}
+			h.withhold(c, result.Items...)
+			return result, nil
 		},
 	)
 }
@@ -636,6 +664,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, created)
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -664,6 +693,7 @@ func (h *Handler) review(action rateagreementservice.ReviewAction) gin.HandlerFu
 			return
 		}
 
+		h.withhold(c, updated)
 		c.JSON(http.StatusOK, updated)
 	}
 }

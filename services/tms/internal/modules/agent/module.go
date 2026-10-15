@@ -144,6 +144,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"go.uber.org/fx"
 )
@@ -219,6 +220,9 @@ func SharedOptions() fx.Option {
 			agentdecisionrepository.New,
 			agentdefinitionrepository.New,
 			agentdefinitionrepository.NewVersionRepository,
+			func(r agentdefinitionports.AgentDefinitionRepository) permissionports.AgentRoleSource {
+				return r
+			},
 			agentshadowrepository.New,
 			aicontrolfactsrepository.New,
 			aiproviderrepository.NewDismissalRepository,

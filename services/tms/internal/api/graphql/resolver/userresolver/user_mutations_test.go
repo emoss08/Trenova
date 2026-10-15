@@ -36,6 +36,13 @@ func (r *recordingRoles) AssignRole(_ context.Context, req roleservice.AssignRol
 	return nil
 }
 
+func (r *recordingRoles) RevokeOrganizationRoles(
+	context.Context,
+	roleservice.RevokeOrganizationRolesRequest,
+) error {
+	return nil
+}
+
 type recordingInvites struct {
 	requests []passwordresetservice.InviteRequest
 }

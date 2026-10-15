@@ -193,12 +193,7 @@ import type {
 import type { LocationGeofenceType } from "@trenova/shared/types/location";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
-import type {
-  CoreResponsibility,
-  DataScope,
-  FieldSensitivity,
-  Operation,
-} from "@trenova/shared/types/role";
+import type { CoreResponsibility, DataScope, FieldSensitivity } from "@trenova/shared/types/role";
 import type {
   CarrierAssignmentStatus,
   CarrierRateMethod,
@@ -817,27 +812,11 @@ export const coreResponsibilityChoices = [
 
 export const dataScopeChoices = [
   { value: "own", label: "Own data only" },
+  { value: "team", label: "Their team" },
   { value: "organization", label: "Organization" },
+  { value: "business_unit", label: "Business unit" },
   { value: "all", label: "All data" },
 ] satisfies ReadonlyArray<GenericSelectOption<DataScope>>;
-
-export const operationChoices: SelectOption[] = [
-  { value: "read", label: "Read" },
-  { value: "create", label: "Create" },
-  { value: "update", label: "Update" },
-  { value: "export", label: "Export" },
-  { value: "import", label: "Import" },
-  { value: "approve", label: "Approve" },
-  { value: "reject", label: "Reject" },
-  { value: "assign", label: "Assign" },
-  { value: "unassign", label: "Unassign" },
-  { value: "archive", label: "Archive" },
-  { value: "restore", label: "Restore" },
-  { value: "submit", label: "Submit" },
-  { value: "cancel", label: "Cancel" },
-  { value: "duplicate", label: "Duplicate" },
-  { value: "post", label: "Post" },
-] satisfies ReadonlyArray<GenericSelectOption<Operation>>;
 
 // Derived from i18n/locales.json via the generated module, so shipping a new language does
 // not also require editing this list. Each option is labelled in its own language, which is

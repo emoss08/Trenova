@@ -54,6 +54,7 @@ func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.
 		Logger:   zap.NewNop(),
 		Repo:     repo,
 		Registry: permissiondomain.NewRegistry(),
+		Engine:   &mocks.AllowAllPermissionEngine{},
 		Config:   cfg,
 	})
 

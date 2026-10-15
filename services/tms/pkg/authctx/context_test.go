@@ -317,3 +317,31 @@ func TestWithoutSessionRoleActivationKeepsCancellation(t *testing.T) {
 
 	assert.ErrorIs(t, masked.Err(), context.Canceled)
 }
+
+func TestSetSessionAuthContext_ActivationOnlyWhereTheOrganizationAsksForIt(t *testing.T) {
+	t.Parallel()
+
+	base := authctx.SessionAuthContextParams{
+		SessionID:      pulid.MustNew("ses_"),
+		UserID:         pulid.MustNew("usr_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	}
+
+	off := newTestContext()
+	off.Request = httptest.NewRequest("GET", "/", nil)
+	authctx.SetSessionAuthContext(off, base)
+	_, ok := authctx.GetSessionRoleActivation(off.Request.Context())
+	assert.False(t, ok, "every held role is in force, so no activation narrows it")
+
+	role := pulid.MustNew("rol_")
+	on := newTestContext()
+	on.Request = httptest.NewRequest("GET", "/", nil)
+	withActivation := base
+	withActivation.RoleActivation = true
+	withActivation.ActiveRoleIDs = []pulid.ID{role}
+	authctx.SetSessionAuthContext(on, withActivation)
+	activation, ok := authctx.GetSessionRoleActivation(on.Request.Context())
+	require.True(t, ok)
+	assert.Equal(t, []pulid.ID{role}, activation.ActiveRoleIDs)
+}

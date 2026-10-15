@@ -144,7 +144,6 @@ const (
 
 	// Customers
 	ResourceCustomer         Resource = "customer"
-	ResourceCustomerContact  Resource = "customer_contact"
 	ResourceFactoringCompany Resource = "factoring_company"
 
 	// Carriers
@@ -204,23 +203,18 @@ const (
 	ResourceDriverPortal       Resource = "driver_portal"
 
 	// Compliance
-	ResourceQualification          Resource = "qualification"
-	ResourceDocumentClassification Resource = "document_classification"
-	ResourceDocument               Resource = "document"
-	ResourceDocumentType           Resource = "document_type"
-	ResourceDocumentControl        Resource = "document_control"
-	ResourceDocumentParsingRule    Resource = "document_parsing_rule"
-	ResourceCaptureBatch           Resource = "capture_batch"
-	ResourceCaptureDevice          Resource = "capture_device"
-	ResourceCaptureProfile         Resource = "capture_profile"
+	ResourceQualification       Resource = "qualification"
+	ResourceDocument            Resource = "document"
+	ResourceDocumentType        Resource = "document_type"
+	ResourceDocumentControl     Resource = "document_control"
+	ResourceDocumentParsingRule Resource = "document_parsing_rule"
+	ResourceCaptureBatch        Resource = "capture_batch"
+	ResourceCaptureDevice       Resource = "capture_device"
+	ResourceCaptureProfile      Resource = "capture_profile"
 
 	// Reference Data
 	ResourceShipmentType Resource = "shipment_type"
 	ResourceServiceType  Resource = "service_type"
-	ResourceDelayCode    Resource = "delay_code"
-	ResourceReasonCode   Resource = "reason_code"
-	ResourceCommentType  Resource = "comment_type"
-	ResourceTag          Resource = "tag"
 
 	// Reporting
 	ResourceReport    Resource = "report"
@@ -231,6 +225,10 @@ const (
 	ResourceCustomerCommunication Resource = "customer_communication"
 	ResourceInboundMessage        Resource = "inbound_message"
 	ResourceInboundMailbox        Resource = "inbound_mailbox"
+
+	// Protected fields
+	ResourceProtectedPersonal Resource = "protected_personal"
+	ResourceProtectedMargins  Resource = "protected_margins"
 )
 
 func (r Resource) String() string {

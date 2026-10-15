@@ -44,6 +44,8 @@ func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) permissionports
 	}
 }
 
+const testEpoch int64 = 7
+
 func setupTestEngine(
 	t *testing.T,
 ) (*engine, *permissionportsmock.MockRoleRepository, *permissionportsmock.MockPermissionCacheRepository, *tenantportsmock.MockUserRepository) {
@@ -51,6 +53,7 @@ func setupTestEngine(
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
+	cacheRepo.On("Epoch", mock.Anything, mock.Anything).Return(testEpoch, nil).Maybe()
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 
@@ -1508,18 +1511,23 @@ func TestCheck_UsesTenantPolicyLookup(t *testing.T) {
 func TestCheckBatch_APIKeyLoadsKeyOnce(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, _ := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	apiKeyRepo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	eng.apiKeyRepo = apiKeyRepo
 	ctx := t.Context()
 	apiKeyID := pulid.MustNew("ak_")
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
+	creatorID := expectAPIKeyCreator(userRepo, cacheRepo, creatorHolds(map[string][]string{
+		"shipment": {"read", "create"},
+		"customer": {"read"},
+	}))
 
 	apiKeyRepo.EXPECT().
 		GetByID(ctx, pagination.TenantInfo{OrgID: orgID, BuID: buID}, apiKeyID).
 		Return(&apikey.Key{
-			ID: apiKeyID,
+			ID:          apiKeyID,
+			CreatedByID: creatorID,
 			Permissions: []*apikey.Permission{
 				{
 					Resource:   "shipment",
@@ -1742,4 +1750,101 @@ func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
 		assert.True(t, r.Allowed)
 	}
 	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
+}
+
+func TestCheck_AllowsWhatAGrantImpliesAtEvaluation(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Billing approver",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "invoice",
+					Operations: []permission.Operation{permission.OpApprove},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		},
+	}, nil)
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
+		Return(nil)
+
+	results, err := eng.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Checks: []permissionports.ResourceOperationCheck{
+			{Resource: "invoice", Operation: permission.OpApprove},
+			{Resource: "invoice", Operation: permission.OpUpdate},
+			{Resource: "invoice", Operation: permission.OpRead},
+			{Resource: "invoice", Operation: permission.OpDelete},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, results.Results, 4)
+	assert.True(t, results.Results[0].Allowed, "approve is granted")
+	assert.True(t, results.Results[1].Allowed, "approve implies update")
+	assert.True(t, results.Results[2].Allowed, "approve implies read")
+	assert.False(t, results.Results[3].Allowed, "approve does not imply delete")
+}
+
+func TestGetEffectivePermissions_ReportsImpliedOperations(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Memory keeper",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "agent_memory",
+					Operations: []permission.Operation{permission.OpManage},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		},
+	}, nil)
+
+	result, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		[]permission.Operation{
+			permission.OpDelete,
+			permission.OpManage,
+			permission.OpRead,
+			permission.OpUpdate,
+		},
+		result.Resources["agent_memory"].Operations,
+	)
 }

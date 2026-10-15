@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -24,6 +25,7 @@ type savingViews struct {
 func (f *savingViews) Create(
 	_ context.Context,
 	entity *tableconfiguration.TableConfiguration,
+	_ *permissionports.RequestActor,
 ) (*tableconfiguration.TableConfiguration, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err

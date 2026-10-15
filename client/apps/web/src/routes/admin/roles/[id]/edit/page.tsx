@@ -21,14 +21,18 @@ import type { AddPermission, CreateRole, Role } from "@trenova/shared/types/role
 import { createRoleSchema } from "@trenova/shared/types/role";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon } from "@trenova/shared/components/icons";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { AlertTriangleIcon, Trash01Icon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { usePermission } from "@/hooks/use-permission";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { RolePageLayout } from "../../_components/role-builder-layout";
 import { RoleAgentsSection } from "../../_components/role-agents-section";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
+import { DeleteRoleDialog } from "../../_components/delete-role-dialog";
 
 export function RoleEditPage() {
   const t = useT();
@@ -37,6 +41,8 @@ export function RoleEditPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isInitializedRef = useRef(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { allowed: canDelete } = usePermission(Resource.Role, Operation.Delete);
 
   const { data: role, isLoading } = useQuery({
     queryKey: ["role", id],
@@ -107,6 +113,12 @@ export function RoleEditPage() {
     void navigate("/admin/roles");
   }, [navigate]);
 
+  const handleDeleted = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["role-list"] });
+    queryClient.removeQueries({ queryKey: ["role", id] });
+    void navigate("/admin/roles");
+  }, [navigate, queryClient, id]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-full flex-col">
@@ -148,6 +160,20 @@ export function RoleEditPage() {
           onCancel={handleCancel}
           permissionCount={permissions.length}
           banner={systemRoleBanner}
+          secondaryAction={
+            canDelete && !role.isSystem ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash01Icon className="size-4" />
+                {t("Delete role")}
+              </Button>
+            ) : undefined
+          }
         >
           <Card>
             <CardHeader>
@@ -210,6 +236,13 @@ export function RoleEditPage() {
           {role.id && <RoleAgentsSection roleId={role.id} />}
         </RolePageLayout>
       </Form>
+      <DeleteRoleDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        roleId={role.id!}
+        roleName={role.name}
+        onDeleted={handleDeleted}
+      />
     </FormProvider>
   );
 }

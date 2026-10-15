@@ -1,12 +1,15 @@
 package rateagreementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -166,7 +169,7 @@ func TestPlanUpdate_ShowsTheAmendmentAndSavesNothing(t *testing.T) {
 	changed.Rate = decimal.NewNullDecimal(decimal.RequireFromString("2.25"))
 	edited.Rules = []*rateagreement.RateAgreementRule{&changed}
 
-	plan, err := svc.PlanUpdate(t.Context(), &edited)
+	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
 	require.NoError(t, err)
 	assert.Equal(t, "Acme Freight Agreement", plan.Before.Name)
 	assert.Equal(t, "Acme Freight Agreement 2026", plan.After.Name)
@@ -242,4 +245,79 @@ func TestRateIncreaseApplicable_RefusesWhatApplyRefuses(t *testing.T) {
 	require.NoError(t, rateIncreaseApplicable(&RateIncreasePlan{
 		Lines: []*RateIncreaseLine{{}},
 	}))
+}
+
+func testActor() *permissionports.RequestActor {
+	userID := pulid.MustNew("usr_")
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   userID,
+		UserID:        userID,
+	}
+}
+
+func carrierAgreement() *rateagreement.RateAgreement {
+	agreement := draftAgreement(rateagreement.StatusDraft)
+	carrierID := pulid.MustNew("car_")
+	agreement.PartyType = rateagreement.PartyTypeCarrier
+	agreement.CustomerID = nil
+	agreement.CarrierID = &carrierID
+	return agreement
+}
+
+type fixedFieldAccess permission.FieldGroupSet
+
+func (f fixedFieldAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
+	return permission.FieldGroupSet(f)
+}
+
+func TestPlanUpdate_KeepsStoredMarginsForAnEditorWithoutTheGroup(t *testing.T) {
+	t.Parallel()
+
+	stored := carrierAgreement()
+	stored.MarginFloorPercent = decimal.NewNullDecimal(decimal.RequireFromString("12.5"))
+	stored.MaxPayPercentOfSell = decimal.NewNullDecimal(decimal.RequireFromString("85"))
+	repo := agreementRepoReturning(t, stored)
+	svc := New(Params{
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Validator: NewTestValidator(),
+		Fields:    fixedFieldAccess(0),
+	})
+
+	edited := *stored
+	edited.Name = "Acme Freight Agreement 2026"
+	edited.MarginFloorPercent = decimal.NullDecimal{}
+	edited.MaxPayPercentOfSell = decimal.NullDecimal{}
+
+	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
+	require.NoError(t, err)
+	assert.Equal(t, "Acme Freight Agreement 2026", plan.After.Name)
+	assert.Equal(t, "12.5", plan.After.MarginFloorPercent.Decimal.String())
+	assert.Equal(t, "85", plan.After.MaxPayPercentOfSell.Decimal.String())
+	assert.NotContains(t, plan.ChangeSummary, "marginFloorPercent")
+}
+
+func TestPlanUpdate_TakesMarginsFromAnEditorWithTheGroup(t *testing.T) {
+	t.Parallel()
+
+	stored := carrierAgreement()
+	stored.MarginFloorPercent = decimal.NewNullDecimal(decimal.RequireFromString("12.5"))
+	repo := agreementRepoReturning(t, stored)
+	svc := New(Params{
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Validator: NewTestValidator(),
+		Fields:    fixedFieldAccess(permission.AllFieldGroups()),
+	})
+
+	edited := *stored
+	edited.MarginFloorPercent = decimal.NewNullDecimal(decimal.RequireFromString("15"))
+
+	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
+	require.NoError(t, err)
+	assert.Equal(t, "15", plan.After.MarginFloorPercent.Decimal.String())
 }

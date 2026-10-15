@@ -49,6 +49,7 @@ type Params struct {
 	// DriverNotify carries a renewal ask to the driver, in the wording the
 	// organization's own template gives it.
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
+	Fields       permissionports.FieldAccess        `optional:"true"`
 }
 
 type Service struct {
@@ -59,6 +60,7 @@ type Service struct {
 	auditService  auditports.AuditService
 	realtime      agentports.RealtimeService
 	driverNotify  *drivernotificationservice.Service
+	fields        permissionports.FieldAccess
 	seededTenants sync.Map
 }
 
@@ -71,6 +73,7 @@ func New(p Params) *Service {
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
 		driverNotify: p.DriverNotify,
+		fields:       p.Fields,
 	}
 }
 

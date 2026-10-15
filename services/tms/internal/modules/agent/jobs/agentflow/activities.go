@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/sdk/activity"
@@ -66,6 +68,7 @@ type ActivitiesParams struct {
 	Delegates DelegateOpener              `optional:"true"`
 	Metrics   *metrics.Registry           `optional:"true"`
 	Changes   agentports.RecordChangeFeed `optional:"true"`
+	Scopes    permissionports.ReadScopes  `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
@@ -77,6 +80,7 @@ type Activities struct {
 	delegates DelegateOpener
 	metrics   *metrics.Assistant
 	changes   agentports.RecordChangeFeed
+	scopes    permissionports.ReadScopes
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -88,6 +92,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		delegates: p.Delegates,
 		metrics:   metrics.AssistantFrom(p.Metrics),
 		changes:   p.Changes,
+		scopes:    p.Scopes,
 	}
 }
 
@@ -299,6 +304,9 @@ func (a *Activities) runTool(
 		)
 	}
 	ctx = dbscope.WithTenant(ctx, tenant)
+	if a.scopes != nil {
+		ctx = readscope.With(ctx, a.scopes.Resolver(in.Run.Actor.PermissionCheck("", "")))
+	}
 
 	req := in.Run.request()
 	req.Steps = a.steps

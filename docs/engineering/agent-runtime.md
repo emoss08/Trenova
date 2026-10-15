@@ -1764,7 +1764,12 @@ A run nobody is in has two identities, kept apart on purpose.
 
 - **Authorization is the agent's.** The actor `runRequest` builds is
   `PrincipalTypeAgent`, so the permission engine judges every call against the
-  fixed agent table (`permission.IsAgentAllowed`), never against a role. Approving
+  fixed agent table (`permission.IsAgentAllowed`). An organization may also name the
+  role the agent runs as (`agent_definitions.unattended_role_id`,
+  `setAgentUnattendedRole`); a call then passes only where both the table and that
+  role (with its parents) allow it, and the organization's access policies apply to
+  agent principals as to people (match them with `principalType` `agent` or
+  `principalId` the agent's id). See [permissions.md](permissions.md#agents). Approving
   is refused outright (`guardExecute`), a self-scoped tool is refused because
   nobody is in the run, and nothing that reads a person's access (field
   sensitivity ceilings, report authorization, the user context provider, usage

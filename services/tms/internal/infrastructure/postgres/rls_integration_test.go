@@ -16,10 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap/zaptest"
 )
@@ -367,4 +369,58 @@ func TestRLS_ObserveModeAllowsButReportsUnscopedAccess(t *testing.T) {
 	err = conn.DBForContext(t.Context()).NewRaw("SELECT count(*) FROM fleet_codes").Scan(t.Context(), &count)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no tenant scope")
+}
+
+func readScopeSettings(ctx context.Context, conn *Connection) (scope string, team []string, err error) {
+	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
+		return tx.NewRaw(
+			"SELECT trenova_rls.read_scope('worker'), trenova_rls.read_scope_ids('worker')",
+		).Scan(ctx, &scope, pgdialect.Array(&team))
+	})
+
+	return scope, team, err
+}
+
+func TestRLS_ReadScopeTravelsWithTheTenantScope(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+	conn := f.connect(t)
+
+	manager := pulid.MustNew("usr_")
+	ctx := readscope.With(
+		dbscope.WithTenant(t.Context(), f.tenantA),
+		func(context.Context) (readscope.Grants, error) {
+			return readscope.Grants{
+				"worker": {Scope: readscope.ScopeTeam, Team: []pulid.ID{manager}},
+			}, nil
+		},
+	)
+
+	scope, team, err := readScopeSettings(ctx, conn)
+	require.NoError(t, err)
+	assert.Equal(t, "team", scope)
+	assert.Equal(t, []string{manager.String()}, team)
+
+	scope, team, err = readScopeSettings(dbscope.WithTenant(t.Context(), f.tenantA), conn)
+	require.NoError(t, err)
+	assert.Empty(t, scope, "a transaction without a read scope reads its whole tenant")
+	assert.Empty(t, team)
+}
+
+func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+
+	var policies []string
+	require.NoError(t, f.admin.NewRaw(`
+		SELECT c.relname || ':' || p.polcmd || ':' || p.polpermissive::text
+		FROM pg_policy p
+		JOIN pg_class c ON c.oid = p.polrelid
+		WHERE p.polname = 'read_scope'
+		ORDER BY c.relname`).Scan(t.Context(), &policies))
+
+	assert.Equal(t, []string{
+		"invoices:r:false",
+		"orders:r:false",
+		"shipments:r:false",
+		"workers:r:false",
+	}, policies)
 }

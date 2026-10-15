@@ -62,6 +62,7 @@ var DefinitionColumns = struct {
 	ToolTiers              buncolgen.Column // "tool_tiers" → qualified: "agdef.tool_tiers"
 	AutonomyCeiling        buncolgen.Column // "autonomy_ceiling" → qualified: "agdef.autonomy_ceiling"
 	DataAccessCeiling      buncolgen.Column // "data_access_ceiling" → qualified: "agdef.data_access_ceiling"
+	UnattendedRoleID       buncolgen.Column // "unattended_role_id" → qualified: "agdef.unattended_role_id"
 	Enabled                buncolgen.Column // "enabled" → qualified: "agdef.enabled"
 	DisabledAt             buncolgen.Column // "disabled_at" → qualified: "agdef.disabled_at"
 	DisabledByID           buncolgen.Column // "disabled_by_id" → qualified: "agdef.disabled_by_id"
@@ -116,6 +117,7 @@ var DefinitionColumns = struct {
 	ToolTiers:              buncolgen.NewColumn("tool_tiers", "agdef"),
 	AutonomyCeiling:        buncolgen.NewColumn("autonomy_ceiling", "agdef"),
 	DataAccessCeiling:      buncolgen.NewColumn("data_access_ceiling", "agdef"),
+	UnattendedRoleID:       buncolgen.NewColumn("unattended_role_id", "agdef"),
 	Enabled:                buncolgen.NewColumn("enabled", "agdef"),
 	DisabledAt:             buncolgen.NewColumn("disabled_at", "agdef"),
 	DisabledByID:           buncolgen.NewColumn("disabled_by_id", "agdef"),
@@ -176,6 +178,7 @@ var DefinitionFieldMap = map[string]string{
 	"toolTiers":              "tool_tiers",
 	"autonomyCeiling":        "autonomy_ceiling",
 	"dataAccessCeiling":      "data_access_ceiling",
+	"unattendedRoleId":       "unattended_role_id",
 	"enabled":                "enabled",
 	"disabledAt":             "disabled_at",
 	"disabledById":           "disabled_by_id",
@@ -234,6 +237,7 @@ var DefinitionInsertableColumns = []string{
 	"tool_tiers",
 	"autonomy_ceiling",
 	"data_access_ceiling",
+	"unattended_role_id",
 	"enabled",
 	"disabled_at",
 	"disabled_by_id",
@@ -352,6 +356,7 @@ var DefinitionFilter = struct {
 	ToolTiers              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolTiers" → DB: "tool_tiers"
 	AutonomyCeiling        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyCeiling" → DB: "autonomy_ceiling"
 	DataAccessCeiling      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataAccessCeiling" → DB: "data_access_ceiling"
+	UnattendedRoleID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unattendedRoleId" → DB: "unattended_role_id"
 	Enabled                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
 	DisabledAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledAt" → DB: "disabled_at"
 	DisabledByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledById" → DB: "disabled_by_id"
@@ -429,6 +434,9 @@ var DefinitionFilter = struct {
 	},
 	DataAccessCeiling: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("dataAccessCeiling", op, value)
+	},
+	UnattendedRoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("unattendedRoleId", op, value)
 	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("enabled", op, value)

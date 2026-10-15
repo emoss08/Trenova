@@ -210,7 +210,11 @@ func (s *Service) RevokeAccess(
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("Portal revocation requires an authenticated user")
 	}
-	if err := s.portalRepo.RevokePortalAccess(ctx, tenantInfo, workerID); err != nil {
+	wrk, err := s.portalRepo.GetWorkerForPortalManagement(ctx, tenantInfo, workerID)
+	if err != nil {
+		return err
+	}
+	if err = s.portalRepo.RevokePortalAccess(ctx, tenantInfo, workerID); err != nil {
 		return err
 	}
 	s.logPortalAudit(
@@ -221,6 +225,18 @@ func (s *Service) RevokeAccess(
 		"Portal access revoked",
 		nil,
 	)
+	if wrk.UserID.IsNil() {
+		return nil
+	}
+	if err = s.sessions.DeleteAllForUser(ctx, wrk.UserID); err != nil {
+		s.l.Error(
+			"failed to end the portal sessions of a revoked driver",
+			zap.String("workerID", workerID.String()),
+			zap.String("userID", wrk.UserID.String()),
+			zap.Error(err),
+		)
+		return fmt.Errorf("end portal sessions: %w", err)
+	}
 	return nil
 }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,7 +55,6 @@ func TestSaveWithAccess_CreatesARestrictedAgentInOneStep(t *testing.T) {
 
 	f := newFixture(t)
 	saved := &savedIn{agent: newAgent(f)}
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
 	agent, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
@@ -112,7 +110,7 @@ func TestSaveWithAccess_RefusesAnAccessChangeWithoutRoleUpdate(t *testing.T) {
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Contains(t, err.Error(), "update roles")
 	assert.Empty(t, f.audit.logged)
-	f.cache.AssertNotCalled(t, "InvalidateByRole", mock.Anything, mock.Anything, mock.Anything)
+	assert.Empty(t, f.notifier.Organizations())
 }
 
 // Access that already reads as asked is no change, so a person who may not

@@ -2,10 +2,10 @@ package agentaccessservice
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -194,7 +193,7 @@ type fixture struct {
 	db          *txDB
 	definitions *fakeDefinitions
 	grants      *fakeGrants
-	cache       *permissionportsmock.MockPermissionCacheRepository
+	notifier    *permchangetest.Recorder
 	permissions *checkingPermissions
 	audit       *recordingAudit
 	actor       *permissionports.RequestActor
@@ -246,7 +245,7 @@ func newFixture(t *testing.T) *fixture {
 			agentRoles: map[pulid.ID][]pulid.ID{},
 			roleAgents: map[pulid.ID][]pulid.ID{},
 		},
-		cache:       permissionportsmock.NewMockPermissionCacheRepository(t),
+		notifier:    &permchangetest.Recorder{},
 		permissions: &checkingPermissions{denied: map[string]bool{}},
 		audit:       &recordingAudit{},
 		actor: &permissionports.RequestActor{
@@ -268,7 +267,7 @@ func newFixture(t *testing.T) *fixture {
 		definitions: f.definitions,
 		grants:      f.grants,
 		roles:       permissionportsmock.NewMockRoleRepository(t),
-		cache:       f.cache,
+		notifier:    f.notifier,
 		permissions: f.permissions,
 		audit:       f.audit,
 		sensitive:   DefaultSensitiveRule(permission.NewRegistry()),
@@ -287,8 +286,6 @@ func TestSetAgentAccess_RestrictsGrantsAndInvalidatesTheChangedRoles(t *testing.
 
 	f := newFixture(t)
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleB.ID}
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleB.ID, mock.Anything).Return(nil).Once()
 
 	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: f.tenant,
@@ -406,7 +403,6 @@ func TestSetAgentAccess_RemovingTheLastRoleKeepsItRestricted(t *testing.T) {
 	f := newFixture(t)
 	f.agent.AccessMode = agentdefinition.AccessRoles
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleA.ID}
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
 	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: f.tenant,
@@ -425,7 +421,6 @@ func TestSetRoleAgents_ReplacesAndInvalidatesTheRole(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
 	result, err := f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
@@ -489,15 +484,25 @@ func TestSetRoleAgents_UnknownRoleIsNotFound(t *testing.T) {
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
-func TestInvalidate_KeepsGoingPastAFailure(t *testing.T) {
+func TestInvalidate_AnnouncesOnceForAnyChangedRole(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).
-		Return(errors.New("redis is down")).Once()
-	f.cache.On("InvalidateByRole", mock.Anything, f.roleB.ID, mock.Anything).Return(nil).Once()
 
-	f.service.invalidate(t.Context(), []pulid.ID{f.roleA.ID, f.roleB.ID}, []pulid.ID{f.roleA.ID})
+	f.service.invalidate(t.Context(), f.tenant, []pulid.ID{f.roleA.ID, f.roleB.ID}, []pulid.ID{f.roleA.ID})
+
+	require.Len(t, f.notifier.Organizations(), 1)
+	assert.Equal(t, f.tenant.OrgID, f.notifier.Organizations()[0].OrgID)
+}
+
+func TestInvalidate_AnnouncesNothingWhenNoRoleChanged(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+
+	f.service.invalidate(t.Context(), f.tenant, nil, []pulid.ID{})
+
+	assert.Empty(t, f.notifier.Organizations())
 }
 
 type summarizingRuntime struct {

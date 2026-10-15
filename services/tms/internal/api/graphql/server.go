@@ -29,6 +29,7 @@ type ServerParams struct {
 	Observability     *ObservabilityExtension
 	CostBudget        *CostBudgetExtension
 	ReadOnly          *ReadOnlyExtension
+	FieldGuard        *FieldGuardExtension
 	EditionExtensions []graphql.HandlerExtension `group:"edition_graphql_extensions"`
 }
 
@@ -56,6 +57,7 @@ func NewServer(p ServerParams) *gqlhandler.Server {
 		}
 	}
 	srv.Use(p.ReadOnly)
+	srv.Use(p.FieldGuard)
 	srv.Use(p.Observability)
 
 	if devToolingEnabled(p.Config) {

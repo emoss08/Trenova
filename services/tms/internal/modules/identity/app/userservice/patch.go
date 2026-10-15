@@ -131,6 +131,9 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 
 	changes := diffPatchedUser(&original, user)
 	if len(changes.columns) == 0 {
+		if err = s.endLingeringSessions(ctx, req.TenantInfo, &original); err != nil {
+			return nil, err
+		}
 		return &original, nil
 	}
 
@@ -157,6 +160,12 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 			after:      updated,
 			columns:    changes.access,
 		})
+	}
+
+	if lostSignInAccess(&original, updated) {
+		if err = s.endAllSessions(ctx, req.TenantInfo, updated.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	return updated, nil

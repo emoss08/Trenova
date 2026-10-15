@@ -1,12 +1,13 @@
 package userhandler_test
 
 import (
+	"errors"
+	"fmt"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"errors"
-	"fmt"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"net/http"
 	"testing"
 	"time"
@@ -14,12 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -90,12 +91,13 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Storage:           opts.storage,
 		Config:            opts.cfg,
 		Validator:         userservice.NewTestValidator(),
+		PermissionEngine:  opts.permEngine,
 	})
 
 	roleSvc := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         opts.roleRepo,
-		PermissionCache:  permissionportsmock.NewMockPermissionCacheRepository(t),
+		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
 		Registry:         permission.NewEmptyRegistry(),
@@ -475,8 +477,11 @@ func TestUserHandler_BulkUpdateStatus_Success(t *testing.T) {
 		{ID: userID1, Status: domaintypes.StatusInactive},
 		{ID: userID2, Status: domaintypes.StatusInactive},
 	}, nil)
+	sessions := sessionportsmock.NewMockSessionRepository(t)
+	sessions.On("DeleteAllForUser", mock.Anything, userID1).Return(nil).Once()
+	sessions.On("DeleteAllForUser", mock.Anything, userID2).Return(nil).Once()
 
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+	handler := setupUserHandler(t, setupOptions{userRepo: repo, sessionRepo: sessions})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -639,6 +644,8 @@ func TestUserHandler_SimulatePermissions_Success(t *testing.T) {
 	addRoleID := pulid.MustNew("rol_")
 
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	permEngine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(&permissionports.EffectivePermissions{
 			UserID:         userID,
@@ -705,6 +712,8 @@ func TestUserHandler_SimulatePermissions_EngineError(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	permEngine.On("Check", mock.Anything, mock.Anything).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(nil, errors.New("simulate error"))
 
@@ -1118,4 +1127,25 @@ func newTestUserForHandler() *tenant.User {
 		TimeFormat:            domaintypes.TimeFormat12Hour,
 		Status:                domaintypes.StatusActive,
 	}
+}
+
+func TestUserHandler_SimulatePermissions_RequiresUserRead(t *testing.T) {
+	t.Parallel()
+
+	handler := setupUserHandler(t, setupOptions{
+		permEngine: &mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceUser.String()},
+		},
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/users/" + pulid.MustNew("usr_").String() + "/permissions/simulate/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"addRoleIds": []string{}, "removeRoleIds": []string{}})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
 }

@@ -142,6 +142,14 @@ func NewDuplicateEmailAddressError() *errortypes.Error {
 	)
 }
 
+func NewNoOrganizationMembershipsError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"organizationIds",
+		errortypes.ErrRequired,
+		"A user must keep access to at least one organization. Deactivate the user to remove all access",
+	)
+}
+
 func NewDuplicateUsernameError() *errortypes.Error {
 	return errortypes.NewValidationError(
 		"username",

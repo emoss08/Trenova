@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -112,6 +113,7 @@ func (f *fakeAgreements) Create(
 func (f *fakeAgreements) PlanUpdate(
 	_ context.Context,
 	entity *rateagreement.RateAgreement,
+	_ *permissionports.RequestActor,
 ) (*rateagreementservice.UpdatePlan, error) {
 	return &rateagreementservice.UpdatePlan{Before: f.stored, After: entity}, nil
 }
@@ -119,7 +121,7 @@ func (f *fakeAgreements) PlanUpdate(
 func (f *fakeAgreements) Update(
 	_ context.Context,
 	entity *rateagreement.RateAgreement,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) (*rateagreement.RateAgreement, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err

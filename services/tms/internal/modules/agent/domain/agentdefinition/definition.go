@@ -69,6 +69,8 @@ type Definition struct {
 
 	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
 
+	UnattendedRoleID pulid.ID `json:"unattendedRoleId" bun:"unattended_role_id,type:VARCHAR(100),nullzero"`
+
 	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
 	// DisabledAt and DisabledByID say when the agent was last turned off and
 	// by whom; both are cleared when it is turned back on.

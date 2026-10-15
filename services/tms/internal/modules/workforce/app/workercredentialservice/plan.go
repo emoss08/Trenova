@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -70,6 +71,7 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 func (s *Service) planUpdate(
 	ctx context.Context,
 	entity *worker.WorkerCredential,
+	actor *permissionports.RequestActor,
 ) (*CredentialChange, *worker.WorkerCredentialType, error) {
 	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
 		ID:         entity.ID,
@@ -98,6 +100,7 @@ func (s *Service) planUpdate(
 	if entity.DocumentID.IsNil() {
 		entity.DocumentID = original.DocumentID
 	}
+	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 
 	credentialType, err := s.prepare(ctx, entity)
 	if err != nil {
@@ -114,9 +117,10 @@ func (s *Service) planUpdate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *worker.WorkerCredential,
+	actor *permissionports.RequestActor,
 ) (*CredentialChange, error) {
 	planned := *entity
-	change, credentialType, err := s.planUpdate(ctx, &planned)
+	change, credentialType, err := s.planUpdate(ctx, &planned, actor)
 	if err != nil {
 		return nil, err
 	}

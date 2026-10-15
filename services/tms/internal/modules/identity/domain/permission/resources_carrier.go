@@ -222,7 +222,7 @@ func (r *Registry) registerCarrierResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Vet and refresh carriers, acknowledge events and apply suggested updates",
+				Description: "Vet and refresh carriers, acknowledge and resolve events, and apply suggested updates",
 			},
 			{
 				Operation:   OpApprove,

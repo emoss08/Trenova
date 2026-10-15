@@ -4,9 +4,11 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -22,12 +24,14 @@ type Params struct {
 
 	Service              *workerservice.Service
 	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     permissionports.PermissionEngine
 	ErrorHandler         *helpers.ErrorHandler
 }
 
 type Handler struct {
 	service *workerservice.Service
 	pm      *middleware.PermissionMiddleware
+	engine  permissionports.PermissionEngine
 	eh      *helpers.ErrorHandler
 }
 
@@ -35,8 +39,13 @@ func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
 		pm:      p.PermissionMiddleware,
+		engine:  p.PermissionEngine,
 		eh:      p.ErrorHandler,
 	}
+}
+
+func (h *Handler) withhold(c *gin.Context, entities ...*worker.Worker) {
+	fieldguard.Withhold(fieldguard.Visible(c, h.engine), entities...)
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -96,13 +105,18 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.Worker], error) {
-			return h.service.List(
+			result, err := h.service.List(
 				c.Request.Context(),
 				&workerports.ListWorkersRequest{
 					Filter: req,
 					Cursor: cursor,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			h.withhold(c, result.Items...)
+			return result, nil
 		},
 	)
 }
@@ -136,6 +150,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, entity)
 	c.JSON(http.StatusOK, entity)
 }
 
@@ -161,13 +176,18 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*worker.Worker], error) {
-			return h.service.SelectOptions(
+			result, err := h.service.SelectOptions(
 				c.Request.Context(),
 				&workerports.WorkerSelectOptionsRequest{
 					SelectQueryRequest: req,
 					IncludeProfile:     helpers.QueryBool(c, "includeProfile", false),
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			h.withhold(c, result.Items...)
+			return result, nil
 		},
 	)
 }
@@ -207,6 +227,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, entity)
 	c.JSON(http.StatusOK, entity)
 }
 
@@ -240,6 +261,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, created)
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -281,6 +303,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, updated)
 	c.JSON(http.StatusOK, updated)
 }
 
@@ -333,5 +356,6 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
+	h.withhold(c, updated)
 	c.JSON(http.StatusOK, updated)
 }

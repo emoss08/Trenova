@@ -23,6 +23,9 @@ var runtimePolicy = map[string][]permission.Operation{
 		permission.OpCreate,
 		permission.OpUpdate,
 	},
+	permission.ResourceProtectedPersonal.String(): {
+		permission.OpRead,
+	},
 	permission.ResourceTrailer.String(): {
 		permission.OpRead,
 		permission.OpCreate,

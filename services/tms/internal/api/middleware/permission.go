@@ -101,12 +101,16 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) g
 	return func(c *gin.Context) {
 		authCtx := authctx.GetAuthContext(c)
 
+		var checkErr error
 		for _, check := range checks {
 			result, err := m.permEngine.Check(
 				c.Request.Context(),
 				BuildPermissionCheckRequest(authCtx, check.Resource, check.Operation),
 			)
 			if err != nil {
+				if checkErr == nil {
+					checkErr = err
+				}
 				continue
 			}
 
@@ -115,6 +119,11 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) g
 				c.Next()
 				return
 			}
+		}
+
+		if checkErr != nil {
+			m.errorHandler.HandleError(c, checkErr)
+			return
 		}
 
 		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(

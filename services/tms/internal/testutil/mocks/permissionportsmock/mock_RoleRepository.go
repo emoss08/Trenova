@@ -212,6 +212,63 @@ func (_c *MockRoleRepository_CreateResourcePermission_Call) RunAndReturn(run fun
 	return _c
 }
 
+// Delete provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) Delete(ctx context.Context, req permissionports.DeleteRoleRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRoleRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockRoleRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req permissionports.DeleteRoleRequest
+func (_e *MockRoleRepository_Expecter) Delete(ctx any, req any) *MockRoleRepository_Delete_Call {
+	return &MockRoleRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
+}
+
+func (_c *MockRoleRepository_Delete_Call) Run(run func(ctx context.Context, req permissionports.DeleteRoleRequest)) *MockRoleRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 permissionports.DeleteRoleRequest
+		if args[1] != nil {
+			arg1 = args[1].(permissionports.DeleteRoleRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_Delete_Call) Return(err error) *MockRoleRepository_Delete_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRoleRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, req permissionports.DeleteRoleRequest) error) *MockRoleRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteAssignment provides a mock function for the type MockRoleRepository
 func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, req)
@@ -333,6 +390,154 @@ func (_c *MockRoleRepository_DeleteResourcePermission_Call) Return(err error) *M
 }
 
 func (_c *MockRoleRepository_DeleteResourcePermission_Call) RunAndReturn(run func(ctx context.Context, req permissionports.DeleteResourcePermissionRequest) error) *MockRoleRepository_DeleteResourcePermission_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteUserAssignments provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) DeleteUserAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error) {
+	ret := _mock.Called(ctx, userID, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUserAssignments")
+	}
+
+	var r0 []*permission.UserRoleAssignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*permission.UserRoleAssignment, error)); ok {
+		return returnFunc(ctx, userID, orgID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*permission.UserRoleAssignment); ok {
+		r0 = returnFunc(ctx, userID, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*permission.UserRoleAssignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_DeleteUserAssignments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUserAssignments'
+type MockRoleRepository_DeleteUserAssignments_Call struct {
+	*mock.Call
+}
+
+// DeleteUserAssignments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+//   - orgID pulid.ID
+func (_e *MockRoleRepository_Expecter) DeleteUserAssignments(ctx any, userID any, orgID any) *MockRoleRepository_DeleteUserAssignments_Call {
+	return &MockRoleRepository_DeleteUserAssignments_Call{Call: _e.mock.On("DeleteUserAssignments", ctx, userID, orgID)}
+}
+
+func (_c *MockRoleRepository_DeleteUserAssignments_Call) Run(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID)) *MockRoleRepository_DeleteUserAssignments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_DeleteUserAssignments_Call) Return(userRoleAssignments []*permission.UserRoleAssignment, err error) *MockRoleRepository_DeleteUserAssignments_Call {
+	_c.Call.Return(userRoleAssignments, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_DeleteUserAssignments_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error)) *MockRoleRepository_DeleteUserAssignments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListOrphanedAssignments provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) ListOrphanedAssignments(ctx context.Context, now int64, limit int) ([]permissionports.OrphanedAssignment, error) {
+	ret := _mock.Called(ctx, now, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOrphanedAssignments")
+	}
+
+	var r0 []permissionports.OrphanedAssignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) ([]permissionports.OrphanedAssignment, error)); ok {
+		return returnFunc(ctx, now, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) []permissionports.OrphanedAssignment); ok {
+		r0 = returnFunc(ctx, now, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]permissionports.OrphanedAssignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int) error); ok {
+		r1 = returnFunc(ctx, now, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_ListOrphanedAssignments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOrphanedAssignments'
+type MockRoleRepository_ListOrphanedAssignments_Call struct {
+	*mock.Call
+}
+
+// ListOrphanedAssignments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - now int64
+//   - limit int
+func (_e *MockRoleRepository_Expecter) ListOrphanedAssignments(ctx any, now any, limit any) *MockRoleRepository_ListOrphanedAssignments_Call {
+	return &MockRoleRepository_ListOrphanedAssignments_Call{Call: _e.mock.On("ListOrphanedAssignments", ctx, now, limit)}
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) Run(run func(ctx context.Context, now int64, limit int)) *MockRoleRepository_ListOrphanedAssignments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) Return(orphanedAssignments []permissionports.OrphanedAssignment, err error) *MockRoleRepository_ListOrphanedAssignments_Call {
+	_c.Call.Return(orphanedAssignments, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_ListOrphanedAssignments_Call) RunAndReturn(run func(ctx context.Context, now int64, limit int) ([]permissionports.OrphanedAssignment, error)) *MockRoleRepository_ListOrphanedAssignments_Call {
 	_c.Call.Return(run)
 	return _c
 }

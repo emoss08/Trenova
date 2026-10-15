@@ -3,6 +3,7 @@ package workercredentialservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +52,7 @@ func TestPlanCreate_NamesWhatARenewalArchives(t *testing.T) {
 
 	edit := *first
 	edit.Number = "N-2"
-	change, err := h.svc.PlanUpdate(t.Context(), &edit)
+	change, err := h.svc.PlanUpdate(t.Context(), &edit, h.actor())
 	require.NoError(t, err)
 	assert.Equal(t, "N-2", change.After.Number)
 	assert.Equal(t, "N-1", h.repo.credentials[first.ID].Number)
@@ -62,4 +63,49 @@ func TestPlanCreate_NamesWhatARenewalArchives(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, worker.CredentialStatusArchived, archive.After.Status)
 	assert.Equal(t, worker.CredentialStatusActive, h.repo.credentials[first.ID].Status)
+}
+
+func TestUpdateKeepsTheStoredNumberForAnEditorWithoutPersonalDetails(t *testing.T) {
+	h := newHarnessSeeing(t, fixedFieldAccess(0))
+	h.workerRepo.EXPECT().
+		UpdateProfileComplianceStatus(mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+
+	created, err := h.svc.Create(t.Context(), &workercredentialservice.CreateRequest{
+		Entity: h.credential(h.forklift, 1_900_000_000),
+		UserID: h.userID,
+	})
+	require.NoError(t, err)
+
+	edit := *created
+	edit.Number = ""
+	edit.Notes = "renewed at the depot"
+	updated, err := h.svc.Update(t.Context(), &edit, h.actor())
+	require.NoError(t, err)
+
+	assert.Equal(t, "N-1", updated.Number)
+	assert.Equal(t, "renewed at the depot", updated.Notes)
+	assert.Equal(t, "N-1", h.repo.credentials[created.ID].Number)
+}
+
+func TestUpdateTakesTheNumberFromAnEditorWithPersonalDetails(t *testing.T) {
+	h := newHarnessSeeing(t, fixedFieldAccess(permission.AllFieldGroups()))
+	h.workerRepo.EXPECT().
+		UpdateProfileComplianceStatus(mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+
+	created, err := h.svc.Create(t.Context(), &workercredentialservice.CreateRequest{
+		Entity: h.credential(h.forklift, 1_900_000_000),
+		UserID: h.userID,
+	})
+	require.NoError(t, err)
+
+	edit := *created
+	edit.Number = "N-2"
+	updated, err := h.svc.Update(t.Context(), &edit, h.actor())
+	require.NoError(t, err)
+
+	assert.Equal(t, "N-2", updated.Number)
 }

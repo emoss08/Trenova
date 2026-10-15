@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -99,11 +100,12 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *worker.WorkerCredential,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) (*worker.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
+	userID := actor.UserIDOrNil()
 
-	change, credentialType, err := s.planUpdate(ctx, entity)
+	change, credentialType, err := s.planUpdate(ctx, entity, actor)
 	if err != nil {
 		return nil, err
 	}

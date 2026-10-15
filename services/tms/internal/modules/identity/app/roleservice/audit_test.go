@@ -18,15 +18,21 @@ func TestUpdateRoleRecordsBeforeAndAfter(t *testing.T) {
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
 	actorID, orgID, buID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
-	existing := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch", BusinessUnitID: buID}
+	existing := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		Name:           "Dispatch",
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+	}
 	updated := &permission.Role{ID: existing.ID, Name: "Dispatch lead", MaxSensitivity: permission.SensitivityInternal}
 
 	deps.roleRepo.On("GetByID", mock.Anything, permissionports.GetRoleByIDRequest{
 		ID:         existing.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(existing, nil)
-	deps.roleRepo.On("Update", mock.Anything, updated).Return(nil)
-	deps.permCache.On("InvalidateByRole", mock.Anything, existing.ID, deps.roleRepo).Return(nil)
+	deps.roleRepo.On("Update", mock.Anything, mock.MatchedBy(func(role *permission.Role) bool {
+		return role.ID == existing.ID && role.Name == "Dispatch lead"
+	})).Return(nil)
 
 	require.NoError(t, deps.svc.UpdateRole(t.Context(), UpdateRoleRequest{
 		ActorID:        actorID,
@@ -64,7 +70,6 @@ func TestAssignAndUnassignRoleRecordTheUser(t *testing.T) {
 		AssignmentID:   assignment.ID,
 		OrganizationID: orgID,
 	}).Return(assignment, nil)
-	deps.permEngine.On("InvalidateUser", mock.Anything, target, orgID).Return(nil)
 
 	require.NoError(t, deps.svc.AssignRole(t.Context(), AssignRoleRequest{
 		ActorID:        actorID,
@@ -116,7 +121,6 @@ func TestUpdateResourcePermissionRecordsThePreviousGrant(t *testing.T) {
 		Permissions: []*permission.ResourcePermission{previous},
 	}, nil)
 	deps.roleRepo.On("UpdateResourcePermission", mock.Anything, updated).Return(nil)
-	deps.permCache.On("InvalidateByRole", mock.Anything, roleID, deps.roleRepo).Return(nil)
 
 	require.NoError(t, deps.svc.UpdateResourcePermission(t.Context(), actorID, orgID, updated))
 
@@ -136,7 +140,12 @@ func TestRefusedRoleChangesAreNotRecorded(t *testing.T) {
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).
 		Return(&permission.Role{ID: roleID, IsSystem: true}, nil)
 
-	err := deps.svc.DeleteResourcePermission(t.Context(), orgID, pulid.MustNew("rp_"), roleID)
+	err := deps.svc.DeleteResourcePermission(
+		t.Context(),
+		pagination.TenantInfo{OrgID: orgID},
+		pulid.MustNew("rp_"),
+		roleID,
+	)
 	require.ErrorIs(t, err, ErrCannotModifySystemRole)
 	assert.Empty(t, deps.audit.Changes())
 }

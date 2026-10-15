@@ -1,5 +1,7 @@
 package permission
 
+import "slices"
+
 type Operation string
 
 const (
@@ -115,12 +117,28 @@ func (s OperationSet) Clone() OperationSet {
 
 func ExpandWithDependencies(ops OperationSet) OperationSet {
 	expanded := ops.Clone()
-	for op := range ops {
+	pending := ops.ToSlice()
+	for len(pending) > 0 {
+		op := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
 		for _, dep := range Dependencies[op] {
-			expanded[dep] = true
+			if !expanded[dep] {
+				expanded[dep] = true
+				pending = append(pending, dep)
+			}
 		}
 	}
 	return expanded
+}
+
+func Normalize(ops []Operation) []Operation {
+	normalized := NewOperationSet(ops...).ToSlice()
+	slices.Sort(normalized)
+	return normalized
+}
+
+func Implied(ops []Operation) []Operation {
+	return Normalize(ExpandWithDependencies(NewOperationSet(ops...)).ToSlice())
 }
 
 func CollapseOnRevoke(ops OperationSet, revoked Operation) OperationSet {
@@ -222,12 +240,20 @@ func (o Operation) IsValid() bool {
 // a name cannot come to differ between the registry and the screen that shows
 // it.
 var operationDefinitions = map[Operation]OperationDefinition{
-	OpRead:     {Operation: OpRead, DisplayName: "Read", Description: "View records"},
-	OpCreate:   {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
-	OpUpdate:   {Operation: OpUpdate, DisplayName: "Update", Description: "Modify existing records"},
-	OpDelete:   {Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
-	OpExport:   {Operation: OpExport, DisplayName: "Export", Description: "Export records to file"},
-	OpImport:   {Operation: OpImport, DisplayName: "Import", Description: "Import records from file"},
+	OpRead:   {Operation: OpRead, DisplayName: "Read", Description: "View records"},
+	OpCreate: {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
+	OpUpdate: {
+		Operation:   OpUpdate,
+		DisplayName: "Update",
+		Description: "Modify existing records",
+	},
+	OpDelete: {Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
+	OpExport: {Operation: OpExport, DisplayName: "Export", Description: "Export records to file"},
+	OpImport: {
+		Operation:   OpImport,
+		DisplayName: "Import",
+		Description: "Import records from file",
+	},
 	OpApprove:  {Operation: OpApprove, DisplayName: "Approve", Description: "Approve records"},
 	OpReject:   {Operation: OpReject, DisplayName: "Reject", Description: "Reject records"},
 	OpAssign:   {Operation: OpAssign, DisplayName: "Assign", Description: "Assign to users"},
@@ -269,6 +295,31 @@ func operations(ops ...Operation) []OperationDefinition {
 	return result
 }
 
+func withImplications(defs []OperationDefinition) []OperationDefinition {
+	result := make([]OperationDefinition, len(defs))
+	for i, def := range defs {
+		def.Implies = ImpliedByOperation(def.Operation)
+		result[i] = def
+	}
+	return result
+}
+
+func GrantingOperations(op Operation) []Operation {
+	granting := []Operation{op}
+	for candidate := range Dependencies {
+		if candidate != op && slices.Contains(ImpliedByOperation(candidate), op) {
+			granting = append(granting, candidate)
+		}
+	}
+	slices.Sort(granting)
+	return granting
+}
+
+func ImpliedByOperation(op Operation) []Operation {
+	implied := Implied([]Operation{op})
+	return slices.DeleteFunc(implied, func(dep Operation) bool { return dep == op })
+}
+
 var (
 	standardOps = operations(OpRead, OpCreate, OpUpdate, OpExport, OpImport)
 
@@ -291,5 +342,21 @@ var listedOperations = []Operation{
 }
 
 func GetAllOperations() []OperationDefinition {
-	return operations(listedOperations...)
+	return withImplications(operations(listedOperations...))
+}
+
+func relabel(
+	defs []OperationDefinition,
+	op Operation,
+	displayName, description string,
+) []OperationDefinition {
+	result := make([]OperationDefinition, len(defs))
+	copy(result, defs)
+	for i := range result {
+		if result[i].Operation == op {
+			result[i].DisplayName = displayName
+			result[i].Description = description
+		}
+	}
+	return result
 }

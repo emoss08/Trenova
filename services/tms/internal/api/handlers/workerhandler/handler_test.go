@@ -1,24 +1,27 @@
 package workerhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,6 +46,15 @@ type handlerDeps struct {
 func setupWorkerHandler(
 	t *testing.T,
 	repo *workerportsmock.MockWorkerRepository,
+) *handlerDeps {
+	t.Helper()
+	return setupWorkerHandlerWithEngine(t, repo, &mocks.AllowAllPermissionEngine{})
+}
+
+func setupWorkerHandlerWithEngine(
+	t *testing.T,
+	repo *workerportsmock.MockWorkerRepository,
+	engine permissionports.PermissionEngine,
 ) *handlerDeps {
 	t.Helper()
 
@@ -96,6 +108,7 @@ func setupWorkerHandler(
 		Service:              service,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
+		PermissionEngine:     engine,
 	})
 
 	return &handlerDeps{
@@ -183,6 +196,72 @@ func TestWorkerHandler_Get_Success(t *testing.T) {
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "John", resp["firstName"])
+}
+
+func getWorkerAs(t *testing.T, engine permissionports.PermissionEngine) map[string]any {
+	t.Helper()
+
+	wkrID := pulid.MustNew("wrk_")
+	repo := workerportsmock.NewMockWorkerRepository(t)
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
+		ID:             wkrID,
+		OrganizationID: testutil.TestOrgID,
+		BusinessUnitID: testutil.TestBuID,
+		FirstName:      "John",
+		Status:         domaintypes.StatusActive,
+		Profile: &worker.WorkerProfile{
+			DOB:            946684800,
+			LicenseNumber:  "DL123456",
+			TWICCardNumber: "TWIC-1",
+			LastDrugTest:   1767225600,
+			LicenseExpiry:  1893456000,
+		},
+	}, nil)
+
+	deps := setupWorkerHandlerWithEngine(t, repo, engine)
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, customerports.ErrCacheMiss)
+	deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldValue{}, nil)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/workers/" + wkrID.String() + "/").
+		WithDefaultAuthContext()
+
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	profile, ok := resp["profile"].(map[string]any)
+	require.True(t, ok)
+	return profile
+}
+
+func TestWorkerHandler_Get_WithholdsPersonalDetailsFromAReaderWithoutTheGroup(t *testing.T) {
+	t.Parallel()
+
+	profile := getWorkerAs(t, &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceProtectedPersonal.String()},
+	})
+
+	assert.Equal(t, "", profile["licenseNumber"])
+	assert.Equal(t, "", profile["twicCardNumber"])
+	assert.InDelta(t, 0, profile["dob"], 0)
+	assert.InDelta(t, 0, profile["lastDrugTest"], 0)
+	assert.InDelta(t, 1893456000, profile["licenseExpiry"], 0)
+}
+
+func TestWorkerHandler_Get_ShowsPersonalDetailsToAReaderWithTheGroup(t *testing.T) {
+	t.Parallel()
+
+	profile := getWorkerAs(t, &mocks.AllowAllPermissionEngine{})
+
+	assert.Equal(t, "DL123456", profile["licenseNumber"])
+	assert.Equal(t, "TWIC-1", profile["twicCardNumber"])
+	assert.InDelta(t, 946684800, profile["dob"], 0)
 }
 
 func TestWorkerHandler_Get_InvalidID(t *testing.T) {

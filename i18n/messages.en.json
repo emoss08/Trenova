@@ -8956,6 +8956,15 @@
       "routes/scheduling"
     ]
   },
+  "A role": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A role cannot inherit from itself": {
     "sites": 1,
     "scope": [
@@ -10988,6 +10997,15 @@
       "go/other"
     ]
   },
+  "A user must keep access to at least one organization. Deactivate the user to remove all access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A user notification must name its recipient": {
     "sites": 1,
     "scope": [
@@ -11323,6 +11341,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A worker's date of birth, licence, TWIC and credential numbers, and drug test dates": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A worker’s credential is about to expire": {
@@ -12929,7 +12956,7 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Accept, modify, or reject agent proposals": {
+  "Accept, modify or reject agent proposals, and resolve proposals and plans": {
     "sites": 1,
     "scope": [
       "go"
@@ -13815,8 +13842,17 @@
       "go/other"
     ]
   },
+  "Accountant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Accounting": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -15712,7 +15748,7 @@
     ]
   },
   "Add": {
-    "sites": 16,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -15746,6 +15782,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Add Entra ID or Okta to enable federated sign-in for users.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add Filter to group": {
@@ -16707,15 +16752,6 @@
       "routes/carrier"
     ]
   },
-  "Add contacts": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Add credential": {
     "sites": 2,
     "scope": [
@@ -17153,15 +17189,6 @@
       "apps/web/components"
     ]
   },
-  "Add new role": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add new tractors": {
     "sites": 1,
     "scope": [
@@ -17313,15 +17340,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Add permission": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add place": {
@@ -18766,6 +18784,15 @@
       "routes/billing-queue"
     ]
   },
+  "Adjust filters to find a policy.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Adjust invoice": {
     "sites": 1,
     "scope": [
@@ -18791,6 +18818,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Adjust the search filter to find a configured provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Adjust the visible bounds before uploading your organization logo.": {
@@ -19200,7 +19236,7 @@
     ]
   },
   "Administration": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -19208,7 +19244,8 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/admin"
     ]
   },
   "Administrative name that explains when this policy should match.": {
@@ -19497,7 +19534,7 @@
     ]
   },
   "Advanced": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -19677,7 +19714,7 @@
     ]
   },
   "Agent": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -23576,6 +23613,15 @@
       "go/other"
     ]
   },
+  "An agent cannot run as a role that sees more sensitive fields than you can": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An agent definition id or system key is required": {
     "sites": 1,
     "scope": [
@@ -25857,6 +25903,15 @@
       "routes/detention-policy"
     ]
   },
+  "Any domain": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Any driver credential — CDL, medical card, hazmat, or TWIC — expiring inside the horizon, with fleet and contact routing": {
     "sites": 1,
     "scope": [
@@ -26958,6 +27013,15 @@
       "routes/invoice"
     ]
   },
+  "Apply customer payments and bank receipts and work receivables.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Apply in Trenova": {
     "sites": 1,
     "scope": [
@@ -27548,7 +27612,7 @@
     ]
   },
   "Approve": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -27684,6 +27748,24 @@
       "go/other"
     ]
   },
+  "Approve and post journal reversals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Approve and post manual journals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Approve and post settlements": {
     "sites": 1,
     "scope": [
@@ -27802,7 +27884,7 @@
       "go/other"
     ]
   },
-  "Approve invoices": {
+  "Approve invoices, and approve or reject invoice adjustments": {
     "sites": 1,
     "scope": [
       "go"
@@ -27820,16 +27902,7 @@
       "go/other"
     ]
   },
-  "Approve journal reversals": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Approve manual journals": {
+  "Approve journals and close, reopen and lock fiscal periods.": {
     "sites": 1,
     "scope": [
       "go"
@@ -27893,6 +27966,15 @@
     ]
   },
   "Approve service failures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Approve settlements": {
     "sites": 1,
     "scope": [
       "go"
@@ -27991,6 +28073,15 @@
       "apps/web/components"
     ]
   },
+  "Approve time off, timesheets, swaps and profile changes, and schedule a team.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Approve with changes": {
     "sites": 4,
     "scope": [
@@ -28067,6 +28158,15 @@
     ]
   },
   "Approve, deny, designate and close a leave case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Approve, reject and cancel driver and carrier settlements.": {
     "sites": 1,
     "scope": [
       "go"
@@ -28548,13 +28648,12 @@
     ]
   },
   "Archive": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
       "routes/admin",
       "routes/edi",
       "routes/formula-template",
@@ -28589,6 +28688,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Archive and reactivate reason codes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Archive anyway": {
@@ -28628,24 +28736,6 @@
     ]
   },
   "Archive records": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Archive service failure reason codes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Archive service failures": {
     "sites": 1,
     "scope": [
       "go"
@@ -30411,7 +30501,7 @@
     ]
   },
   "Assign": {
-    "sites": 19,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -31376,13 +31466,15 @@
     ]
   },
   "Assistant": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "go/other",
       "routes/shipment"
     ]
   },
@@ -31810,15 +31902,14 @@
     ]
   },
   "At least one operation is required": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "packages/shared/types",
-      "routes/admin"
+      "packages/shared/types"
     ]
   },
   "At least one passing test case": {
@@ -37957,7 +38048,7 @@
     ]
   },
   "Billing": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -38077,6 +38168,15 @@
   },
   "Billing checks are unavailable": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing clerk": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -38332,6 +38432,15 @@
       "apps/web/config"
     ]
   },
+  "Billing manager": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Billing notes": {
     "sites": 2,
     "scope": [
@@ -38379,7 +38488,7 @@
     ]
   },
   "Billing queue": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -39452,6 +39561,15 @@
       "go/other"
     ]
   },
+  "Book shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": {
     "sites": 1,
     "scope": [
@@ -39569,6 +39687,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Books shipments and runs the board.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Boolean": {
@@ -40375,6 +40502,15 @@
       "go/other"
     ]
   },
+  "Build driver settlements with their expenses, advances and disputes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Build it": {
     "sites": 1,
     "scope": [
@@ -40411,24 +40547,6 @@
       "routes/inbox"
     ]
   },
-  "Build your own permission set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Build your own permissions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Build your price band table": {
     "sites": 1,
     "scope": [
@@ -40436,6 +40554,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Build, run and export reports and dashboards, and share table views with the organization.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Build, run, and share reports over your organization's data": {
@@ -40490,6 +40617,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Builds and approves driver and carrier settlements.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Built a table": {
@@ -40783,11 +40919,12 @@
     ]
   },
   "Business unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/admin"
     ]
   },
@@ -41800,6 +41937,15 @@
       "routes/agent-control"
     ]
   },
+  "Can read every record and change nothing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Can take a load": {
     "sites": 1,
     "scope": [
@@ -41901,14 +42047,13 @@
     ]
   },
   "Cancel": {
-    "sites": 307,
+    "sites": 302,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
-      "apps/web/lib",
       "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync",
@@ -43354,7 +43499,7 @@
     ]
   },
   "Capabilities": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -43363,6 +43508,15 @@
     ]
   },
   "Capabilities are listed once {0} is the primary provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Capabilities could not be loaded. Use the advanced view to choose permissions.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -44278,6 +44432,15 @@
       "go/other"
     ]
   },
+  "Carrier coverage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier delay": {
     "sites": 1,
     "scope": [
@@ -44791,6 +44954,15 @@
       "go/other"
     ]
   },
+  "Carrier sales": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier search": {
     "sites": 1,
     "scope": [
@@ -44951,12 +45123,14 @@
     ]
   },
   "Carrier settlements": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "go/other"
     ]
   },
   "Carrier settlements created for this period, across every status except voided.": {
@@ -46500,6 +46674,15 @@
       "apps/web/components"
     ]
   },
+  "Change a view shared with the organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it. Send only what changes; everything else stays as it is. Use release_shipment_hold to clear a hold rather than unblocking everything. Making a hold visible to the customer is shown to them, so only do it when the person asked.": {
     "sites": 1,
     "scope": [
@@ -46869,6 +47052,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Change the organization's profile and operating controls.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Change the profile, credentials and status on the worker's page": {
@@ -47270,13 +47462,12 @@
     ]
   },
   "Changes have been saved": {
-    "sites": 16,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/document-type",
       "routes/factoring-company",
@@ -52291,7 +52482,7 @@
     ]
   },
   "Clear": {
-    "sites": 30,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -55055,15 +55246,6 @@
       "go/other"
     ]
   },
-  "Comment type definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Commented": {
     "sites": 1,
     "scope": [
@@ -57317,6 +57499,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Configure single sign-on, SCIM, access policies and API keys, and review sign-in activity.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Configure the accounting currency mode and functional currency for financial reporting.": {
@@ -63683,6 +63874,15 @@
       "routes/org-structure"
     ]
   },
+  "Covers brokered loads with carriers.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Covers {0}. Each invoice is created as a draft — it still has to be posted and sent.": {
     "sites": 1,
     "scope": [
@@ -63720,7 +63920,7 @@
     ]
   },
   "Create": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -63728,7 +63928,6 @@
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
-      "apps/web/lib",
       "go/other",
       "routes/admin",
       "routes/agent-control",
@@ -63968,6 +64167,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Create allow and deny policies to control sensitive operations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Create an API key and webhook in": {
@@ -64493,7 +64701,7 @@
     ]
   },
   "Create role": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -64698,6 +64906,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Create, change and delete roles.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Create, renew and remove the webhook subscriptions accounting systems require": {
@@ -65002,7 +65219,7 @@
     ]
   },
   "Creating...": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -67206,15 +67423,6 @@
       "routes/detention-desk"
     ]
   },
-  "Customer contact management": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Customer copy lists every charge": {
     "sites": 1,
     "scope": [
@@ -67734,7 +67942,7 @@
     ]
   },
   "Customers": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -67746,8 +67954,18 @@
       "apps/web/lib",
       "apps/web/types",
       "go/other",
+      "routes/admin",
       "routes/customer",
       "routes/desk"
+    ]
+  },
+  "Customers and locations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": {
@@ -68829,15 +69047,6 @@
     ],
     "areas": [
       "routes/organization"
-    ]
-  },
-  "Data scope": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Data scope is required": {
@@ -71224,6 +71433,15 @@
       "go/other"
     ]
   },
+  "Default OIDC scopes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Default PC*Miler": {
     "sites": 1,
     "scope": [
@@ -72163,15 +72381,6 @@
       "routes/accounting-control"
     ]
   },
-  "Define the role and configure what it can access.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Define whether unapplied customer credits are allowed, whether over-crediting can occur, and what external users may see after invoice replacement.": {
     "sites": 1,
     "scope": [
@@ -72487,15 +72696,6 @@
       "template/customertracking.status.email"
     ]
   },
-  "Delay code definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Delay notice": {
     "sites": 1,
     "scope": [
@@ -72714,6 +72914,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Delete and unassign": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Delete audit entries past each organization's retention window": {
@@ -73069,6 +73278,24 @@
       "go/other"
     ]
   },
+  "Delete role": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Delete roles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Delete routing guide": {
     "sites": 1,
     "scope": [
@@ -73289,7 +73516,7 @@
     ]
   },
   "Delete {0}?": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -73391,7 +73618,7 @@
     ]
   },
   "Deleting...": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -77321,7 +77548,7 @@
       "routes/shipment"
     ]
   },
-  "Dismiss an insight that is not worth acting on": {
+  "Dismiss an insight that is not worth acting on, or restore one": {
     "sites": 1,
     "scope": [
       "go"
@@ -77466,7 +77693,7 @@
     ]
   },
   "Dispatch": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -77478,6 +77705,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/admin",
       "routes/inbox",
       "routes/worker"
     ]
@@ -77492,6 +77720,15 @@
     ]
   },
   "Dispatch assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Dispatch board": {
     "sites": 1,
     "scope": [
       "go"
@@ -77653,6 +77890,15 @@
       "go/other"
     ]
   },
+  "Dispatch supervisor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Dispatchable": {
     "sites": 1,
     "scope": [
@@ -77663,12 +77909,14 @@
     ]
   },
   "Dispatcher": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "go/other"
     ]
   },
   "Display": {
@@ -79179,15 +79427,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Document classification definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document classification is required": {
@@ -81985,6 +82224,15 @@
       "go/other"
     ]
   },
+  "Driver manager": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Driver must be at least 21 years old for interstate commerce (49 CFR 391.11(b)(1))": {
     "sites": 2,
     "scope": [
@@ -82205,6 +82453,15 @@
       "routes/accounting-control"
     ]
   },
+  "Driver safety and qualification": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Driver settlement paid": {
     "sites": 1,
     "scope": [
@@ -82239,6 +82496,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Driver settlements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Driver type": {
@@ -83246,7 +83512,7 @@
     ]
   },
   "Duplicate": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -83720,6 +83986,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Dynamic separation of duty is enforced when people activate their roles. Turn on role activation in the security settings first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "E-85": {
@@ -86331,7 +86606,7 @@
       "apps/web/components"
     ]
   },
-  "Edit what a case expects, and activate, quarantine or retire it": {
+  "Edit what a case expects, activate, quarantine or retire it, and cancel runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -90697,6 +90972,15 @@
       "routes/shipment"
     ]
   },
+  "Enter, change, duplicate and cancel shipments and orders.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Entered By ID": {
     "sites": 2,
     "scope": [
@@ -91158,7 +91442,7 @@
     ]
   },
   "Equipment": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -94096,6 +94380,15 @@
       "routes/worker"
     ]
   },
+  "Every role a person holds is now in force when they sign in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Every row in the file is published for this year.": {
     "sites": 1,
     "scope": [
@@ -94739,6 +95032,15 @@
       "routes/policies",
       "routes/scheduling",
       "routes/settings"
+    ]
+  },
+  "Everything a dispatcher does, plus carrier coverage and customer records.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.": {
@@ -97238,13 +97540,12 @@
     ]
   },
   "Export": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
       "routes/admin",
       "routes/agent-control",
       "routes/customer-ledger",
@@ -99559,15 +99860,6 @@
       "routes/settlement-workspace"
     ]
   },
-  "Failed to add permission": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Failed to approve PTO": {
     "sites": 2,
     "scope": [
@@ -100791,15 +101083,6 @@
       "routes/driver-settlement"
     ]
   },
-  "Failed to remove permission": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Failed to remove profile picture": {
     "sites": 1,
     "scope": [
@@ -101273,15 +101556,6 @@
   },
   "Failed to update mapping": {
     "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Failed to update permission": {
-    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -108125,11 +108399,12 @@
     ]
   },
   "From {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk",
       "routes/factoring-company",
       "routes/inbox"
@@ -108322,6 +108597,15 @@
   },
   "Fuel Type": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fuel and IFTA": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -108879,24 +109163,6 @@
       "routes/desk"
     ]
   },
-  "Full CRUD access": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Full CRUD access to all resources": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Full Reversal": {
     "sites": 2,
     "scope": [
@@ -108909,7 +109175,7 @@
     ]
   },
   "Full access": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -110046,6 +110312,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "General ledger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "General liability": {
@@ -114208,13 +114483,16 @@
     ]
   },
   "Hidden": {
-    "sites": 3,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/shipment"
+      "routes/desk",
+      "routes/rate-agreement",
+      "routes/shipment",
+      "routes/worker"
     ]
   },
   "Hidden by your data access": {
@@ -117131,6 +117409,15 @@
       "apps/web/config"
     ]
   },
+  "Human resources": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Human-friendly name shown in boards, forms, and customer portals.": {
     "sites": 1,
     "scope": [
@@ -118384,12 +118671,11 @@
     ]
   },
   "Import": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/admin",
       "routes/carrier-sourcing",
       "routes/formula-template"
@@ -119953,6 +120239,15 @@
       "packages/shared/components"
     ]
   },
+  "Included with {0}. Select it to grant it on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Includes {0} of rest for hours of service": {
     "sites": 1,
     "scope": [
@@ -120488,6 +120783,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "Inherited roles must belong to your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Initial Backoff (seconds)": {
@@ -123100,6 +123404,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Invite, change and deactivate people and give them roles.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invited": {
@@ -127590,6 +127903,15 @@
       "routes/order"
     ]
   },
+  "Keep customers, locations and commodities.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep each entry under {0} characters": {
     "sites": 1,
     "scope": [
@@ -127810,6 +128132,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Keep qualifications, credentials, DOT tests, safety events and injuries.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep rate": {
     "sites": 1,
     "scope": [
@@ -127826,6 +128157,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Keep role": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Keep schedule": {
@@ -127862,6 +128202,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Keep the chart of accounts and enter manual journals.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Keep the city under {0} characters": {
@@ -128125,6 +128474,15 @@
       "routes/invoice"
     ]
   },
+  "Keep tractors and trailers and their types and fleets.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep unfiled pages for (days)": {
     "sites": 1,
     "scope": [
@@ -128135,6 +128493,15 @@
     ]
   },
   "Keep what the work taught": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Keep worker records, employment events, positions, benefits and checklists.": {
     "sites": 1,
     "scope": [
       "go"
@@ -128215,6 +128582,15 @@
       "routes/agent-control"
     ]
   },
+  "Keeps drivers qualified, equipment current and fuel tax filed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keeps email logs current after delivery, bounces, complaints, and other provider events.": {
     "sites": 1,
     "scope": [
@@ -128231,6 +128607,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keeps the ledger and closes periods.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Keeps the page out of every document": {
@@ -128258,6 +128643,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Keeps worker records and approves time off for everyone.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Kentucky (KY)": {
@@ -130223,13 +130617,12 @@
     ]
   },
   "Last updated on {0}": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/customer",
       "routes/document-type",
       "routes/factoring-company",
@@ -133558,7 +133951,7 @@
       "routes/commodity"
     ]
   },
-  "Link a message to a record, reply to it, or mark it handled": {
+  "Link a message to a record, reply to it or mark it handled, and resolve or reopen messages and conflicts": {
     "sites": 1,
     "scope": [
       "go"
@@ -135831,15 +136224,6 @@
       "routes/agent-control"
     ]
   },
-  "Loading role...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Loading roles…": {
     "sites": 1,
     "scope": [
@@ -137901,6 +138285,15 @@
       "apps/web/components"
     ]
   },
+  "Looks after the drivers on their team.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Looks good, finish setup": {
     "sites": 1,
     "scope": [
@@ -138642,6 +139035,15 @@
       "apps/web/lib"
     ]
   },
+  "Maintain rate agreements, matrices, zones, formulas and fuel surcharges.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Maintenance": {
     "sites": 2,
     "scope": [
@@ -139011,6 +139413,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Manage a team": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Manage and configure accessorial charges for your organization": {
@@ -140108,7 +140519,7 @@
     ]
   },
   "Margin floor": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -140986,6 +141397,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Match carrier invoices and build carrier settlements.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Match config": {
@@ -145300,6 +145720,15 @@
       "go/other"
     ]
   },
+  "Modify and resolve service failures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Modify carriers": {
     "sites": 1,
     "scope": [
@@ -145310,15 +145739,6 @@
     ]
   },
   "Modify checklist templates": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Modify contacts": {
     "sites": 1,
     "scope": [
       "go"
@@ -145417,7 +145837,7 @@
       "go/other"
     ]
   },
-  "Modify invoices": {
+  "Modify invoices, submit adjustments and post invoices to the ledger": {
     "sites": 1,
     "scope": [
       "go"
@@ -145436,15 +145856,6 @@
     ]
   },
   "Modify moves": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Modify orders": {
     "sites": 1,
     "scope": [
       "go"
@@ -145516,15 +145927,6 @@
       "go/other"
     ]
   },
-  "Modify service failures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Modify shipment comments": {
     "sites": 1,
     "scope": [
@@ -145534,7 +145936,7 @@
       "go/other"
     ]
   },
-  "Modify shipments": {
+  "Modify shipments and cancel billing transfer runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -145616,6 +146018,15 @@
     ]
   },
   "Modify, assign, and lock home screen presets": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Modify, cancel and close orders": {
     "sites": 1,
     "scope": [
       "go"
@@ -151851,6 +152262,15 @@
       "routes/desk"
     ]
   },
+  "No access policies configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No accessorial charges": {
     "sites": 2,
     "scope": [
@@ -154982,6 +155402,15 @@
       "routes/dispatch-console"
     ]
   },
+  "No identity providers configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No income-statement activity to close.": {
     "sites": 1,
     "scope": [
@@ -156538,24 +156967,6 @@
       "go/other"
     ]
   },
-  "No permissions configured for this role.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "No permissions configured. Add permissions to define what this role can do.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No phone on file": {
     "sites": 1,
     "scope": [
@@ -156644,6 +157055,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No policies found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No policy is written for this location; the customer's or the organization's applies.": {
@@ -156910,6 +157330,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No providers found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No providers yet": {
@@ -157382,7 +157811,7 @@
     ]
   },
   "No resources found matching “{0}”": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -159263,6 +159692,15 @@
       "routes/collections"
     ]
   },
+  "Nobody holds this role. Roles that inherit it lose what it granted them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Nobody holds this title yet.": {
     "sites": 1,
     "scope": [
@@ -159817,7 +160255,7 @@
     ]
   },
   "None on file": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -163929,7 +164367,7 @@
     ]
   },
   "Nothing was given to save": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -173300,7 +173738,7 @@
     ]
   },
   "Operations": {
-    "sites": 11,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -174683,12 +175121,14 @@
     ]
   },
   "Organization settings": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "go/other",
       "routes/admin"
     ]
   },
@@ -176776,6 +177216,15 @@
       "routes/agent-control"
     ]
   },
+  "Own-records-only access to {0} is not enforced here, so it would reach the whole organization; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Owned land": {
     "sites": 1,
     "scope": [
@@ -178838,7 +179287,7 @@
       "routes/inbox"
     ]
   },
-  "Parse a statement and commit its rows as purchases": {
+  "Parse a statement, resolve rows that need review and commit them as purchases": {
     "sites": 1,
     "scope": [
       "go"
@@ -179231,6 +179680,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Partly granted: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Partly invoiced": {
@@ -182040,7 +182498,7 @@
     ]
   },
   "Pays at most": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -182359,6 +182817,15 @@
       "routes/carrier"
     ]
   },
+  "People choose which of their roles to work under each time they sign in or switch organization, and a newly assigned role waits until they choose it. Needed for dynamic separation of duty. When off, every role a person holds is in force at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "People covered": {
     "sites": 3,
     "scope": [
@@ -182384,6 +182851,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "People now choose their roles when they sign in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "People on the plan": {
@@ -183262,6 +183738,15 @@
       "go/other"
     ]
   },
+  "Period close": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Period close approval must be disabled when period close mode is SystemScheduled": {
     "sites": 1,
     "scope": [
@@ -183661,15 +184146,6 @@
       "go/other"
     ]
   },
-  "Permission added": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Permission engine is not configured": {
     "sites": 1,
     "scope": [
@@ -183679,17 +184155,8 @@
       "go/other"
     ]
   },
-  "Permission removed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Permissions": {
-    "sites": 7,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -186176,11 +186643,12 @@
     ]
   },
   "Platform": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -186318,24 +186786,6 @@
     ],
     "areas": [
       "template/notification.dash.policy_published"
-    ]
-  },
-  "Please select a resource": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Please select at least one operation": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Please sign and return the attached confirmation before dispatching, and submit it with your invoice. Reply to this message if any detail needs review.": {
@@ -187343,12 +187793,11 @@
     ]
   },
   "Post": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/journal-reversal"
     ]
   },
@@ -187415,7 +187864,7 @@
       "apps/web/components"
     ]
   },
-  "Post customer payments": {
+  "Post customer payments and apply credit memos": {
     "sites": 1,
     "scope": [
       "go"
@@ -187506,12 +187955,14 @@
     ]
   },
   "Post invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Post invoices to the ledger, by hand or from the billing queue": {
@@ -187661,6 +188112,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Post, approve, reject and cancel invoices, run invoice batches and settle disputes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Post-accident": {
@@ -188207,6 +188667,15 @@
       "routes/admin"
     ]
   },
+  "Posts invoices and keeps rates, on top of the clerk's work.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Pounds": {
     "sites": 1,
     "scope": [
@@ -188616,6 +189085,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Prepares invoices and applies payments.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Preparing": {
@@ -196658,6 +197136,15 @@
       "routes/shipment"
     ]
   },
+  "Rates and agreements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Rates applied to the agreement": {
     "sites": 1,
     "scope": [
@@ -197452,13 +197939,12 @@
     ]
   },
   "Read": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/lib",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -197557,15 +198043,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Read and update access": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Read at its next step": {
@@ -197993,27 +198470,19 @@
     ]
   },
   "Read-only": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "api/writecoverage",
+      "go/other",
       "routes/edi"
     ]
   },
   "Read-only access": {
     "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Read-only access to all resources": {
-    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -199035,15 +199504,6 @@
       "go/other"
     ]
   },
-  "Reason code definitions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Reason code is required": {
     "sites": 5,
     "scope": [
@@ -199748,11 +200208,13 @@
     ]
   },
   "Receivables": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/collections",
       "routes/desk"
     ]
@@ -201197,6 +201659,15 @@
       "apps/web/config"
     ]
   },
+  "Record fuel purchases and cards and prepare IFTA returns.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Record funding": {
     "sites": 3,
     "scope": [
@@ -201498,6 +201969,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Record service failures and place and release holds.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Record service failures is required": {
@@ -203817,13 +204297,12 @@
     ]
   },
   "Reject": {
-    "sites": 31,
+    "sites": 30,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-invoice-matching",
@@ -205550,6 +206029,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Remove org default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Remove override": {
@@ -207767,6 +208255,15 @@
       "routes/desk"
     ]
   },
+  "Reporting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Reporting & Analytics": {
     "sites": 2,
     "scope": [
@@ -207808,6 +208305,15 @@
     ]
   },
   "Reports To Position ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reports and dashboards": {
     "sites": 1,
     "scope": [
       "go"
@@ -208821,6 +209327,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Require role activation": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Require signed inbound": {
@@ -210598,12 +211113,21 @@
     ]
   },
   "Resource": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Resource \"{0}\" cannot be limited to a narrower data scope here; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Resource \"{0}\" does not support operation \"{1}\"": {
@@ -210942,13 +211466,12 @@
     ]
   },
   "Restore": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
@@ -211820,7 +212343,7 @@
       "routes/billing-queue"
     ]
   },
-  "Retry, skip and resolve sync records and differences": {
+  "Retry, skip and resolve sync records and differences, apply inbound changes and release held syncs": {
     "sites": 1,
     "scope": [
       "go"
@@ -213853,6 +214376,15 @@
       "routes/worker"
     ]
   },
+  "Revoke the roles and sessions people still hold in organizations they no longer belong to": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Revoke this bearer credential immediately. Existing integrations will stop authenticating until a new key is provisioned.": {
     "sites": 1,
     "scope": [
@@ -214231,6 +214763,15 @@
       "routes/admin"
     ]
   },
+  "Role activation enforces your dynamic separation of duty constraints. Remove them before turning it off.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Role and permission management": {
     "sites": 1,
     "scope": [
@@ -214259,7 +214800,16 @@
     ]
   },
   "Role created successfully": {
-    "sites": 2,
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Role deleted": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -214274,6 +214824,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Role is already assigned to this user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Role is required": {
@@ -214325,7 +214884,7 @@
     ]
   },
   "Role updated successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -214343,11 +214902,13 @@
     ]
   },
   "Roles": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin",
       "routes/agent-control"
     ]
@@ -216088,15 +216649,6 @@
       "routes/agent-control"
     ]
   },
-  "Run and finalise a selection round": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Run as of {0}: {1, plural, one {# memo} other {# memos}} raised, {2} skipped": {
     "sites": 1,
     "scope": [
@@ -216342,7 +216894,7 @@
       "routes/time-attendance"
     ]
   },
-  "Run payroll over approved weeks": {
+  "Run payroll over approved weeks, and void a payroll export": {
     "sites": 1,
     "scope": [
       "go"
@@ -216597,6 +217149,15 @@
       "routes/agent-control"
     ]
   },
+  "Run, finalize or cancel a selection round": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Run-as user is required": {
     "sites": 1,
     "scope": [
@@ -216815,6 +217376,15 @@
   },
   "Runs on its own": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Runs on its own as": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -217538,7 +218108,7 @@
     ]
   },
   "Safety": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -217549,6 +218119,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/worker"
@@ -217573,6 +218144,15 @@
     ]
   },
   "Safety Score": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Safety and compliance": {
     "sites": 1,
     "scope": [
       "go"
@@ -218350,7 +218930,7 @@
     ]
   },
   "Save": {
-    "sites": 51,
+    "sites": 50,
     "scope": [
       "ts"
     ],
@@ -219280,6 +219860,15 @@
       "routes/edi"
     ]
   },
+  "Saved table views. Anyone may keep private views; sharing one with the organization needs these": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Saved time": {
     "sites": 1,
     "scope": [
@@ -219490,7 +220079,7 @@
     ]
   },
   "Saving...": {
-    "sites": 61,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -220426,7 +221015,7 @@
       "apps/web/components"
     ]
   },
-  "Scan or print into Trenova from a paired device": {
+  "Scan or print into Trenova from a paired device, approve device pairings and cancel capture requests": {
     "sites": 1,
     "scope": [
       "go"
@@ -221656,7 +222245,7 @@
     ]
   },
   "Scope:": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -222696,7 +223285,7 @@
     ]
   },
   "Search resources...": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -223394,6 +223983,15 @@
       "routes/edi"
     ]
   },
+  "Security and sign-in": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Security information": {
     "sites": 1,
     "scope": [
@@ -223430,6 +224028,15 @@
       "go/other"
     ]
   },
+  "Security settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "See all {0}": {
     "sites": 1,
     "scope": [
@@ -223446,6 +224053,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "See margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "See personal details": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "See saved views on the home page": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "See sustained wind speed (wind gusts not indicated)": {
@@ -224339,13 +224973,12 @@
     ]
   },
   "Select all": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/ar-open-items",
       "routes/desk",
       "routes/inbox",
@@ -229333,6 +229966,15 @@
       "routes/service-failure"
     ]
   },
+  "Service failures and holds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Service failures by shipment request is required": {
     "sites": 1,
     "scope": [
@@ -229476,7 +230118,7 @@
     ]
   },
   "Session is invalid. Please login again.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -229622,6 +230264,15 @@
   },
   "Set as default": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Set as org default": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -230728,7 +231379,7 @@
     ]
   },
   "Settlements": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -231143,6 +231794,15 @@
     ]
   },
   "Share a link to a shipment's tracking page with the customer, and email it when given an address. The page shows only what the customer's tracking settings allow and needs no sign-in. Use the address the customer asked you to send it to; never invent one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Share a view with the organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -237055,6 +237715,15 @@
       "routes/onboarding"
     ]
   },
+  "Something went wrong. Please try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Something went wrong. Try again in a moment.": {
     "sites": 2,
     "scope": [
@@ -237942,6 +238611,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Source, tender and confirm carriers for brokered loads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Source: {0}": {
@@ -239417,11 +240095,12 @@
     ]
   },
   "Start empty": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/onboarding"
     ]
   },
@@ -239433,6 +240112,15 @@
     "areas": [
       "routes/agent-control",
       "routes/formula-template"
+    ]
+  },
+  "Start from a job": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Start from scratch": {
@@ -239698,15 +240386,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Start with a template": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Start with another agent": {
@@ -242649,13 +243328,12 @@
     ]
   },
   "Submit": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/lib",
       "routes/admin",
       "routes/billing-queue",
       "routes/formula-template",
@@ -242749,7 +243427,7 @@
       "go/other"
     ]
   },
-  "Submit invoices for approval": {
+  "Submit invoices for approval, and send or resend them by email or EDI": {
     "sites": 1,
     "scope": [
       "go"
@@ -244770,6 +245448,15 @@
       "apps/web/components"
     ]
   },
+  "Table configuration not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Table is not eligible for change alerts": {
     "sites": 1,
     "scope": [
@@ -244842,15 +245529,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Tag management": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Tags": {
@@ -245927,6 +246605,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Team-only access to {0} is not enforced here, so it would reach the whole organization; choose Organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Teammate": {
@@ -249489,6 +250176,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The agent ceiling alone": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The agent could not settle this on its own. Add a note about what you did so the outcome is on record.": {
@@ -256633,6 +257329,15 @@
     "areas": [
       "routes/accounting-mapping",
       "routes/admin"
+    ]
+  },
+  "The margin floor and pay ceiling a rate agreement sets against the sell price": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The market area this end covers": {
@@ -264000,6 +264705,15 @@
       "routes/agent-control"
     ]
   },
+  "Their team": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Theme": {
     "sites": 4,
     "scope": [
@@ -264508,6 +265222,15 @@
     ]
   },
   "These settings were changed by someone else while you were editing. Reload and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "These settings were changed by someone else. Reload them and try again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -267278,15 +268001,6 @@
       "routes/document-type"
     ]
   },
-  "This is a system role and cannot be modified.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "This is a system role. Some properties may be restricted.": {
     "sites": 1,
     "scope": [
@@ -268955,6 +269669,15 @@
     ]
   },
   "This role does not exist in this organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This role is assigned to {0, plural, one {# person} other {# people}}. Unassign it first, or delete it anyway to take it from them": {
     "sites": 1,
     "scope": [
       "go"
@@ -269114,6 +269837,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "This scope is not enforced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This server does not allow providers on private network addresses": {
@@ -278282,6 +279014,15 @@
       "routes/admin"
     ]
   },
+  "Unable to save organization access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Unable to submit the sync request right now.": {
     "sites": 2,
     "scope": [
@@ -278423,12 +279164,11 @@
     ]
   },
   "Unassign": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/admin",
       "routes/inbox",
       "routes/shipment"
@@ -281122,14 +281862,13 @@
     ]
   },
   "Update": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
-      "apps/web/lib",
       "go/other",
       "routes/admin",
       "routes/worker"
@@ -281144,7 +281883,7 @@
       "apps/web/components"
     ]
   },
-  "Update agent control settings": {
+  "Update agent control settings, and apply or restore tune-ups": {
     "sites": 1,
     "scope": [
       "go"
@@ -281171,7 +281910,7 @@
       "go/other"
     ]
   },
-  "Update billing queue item status": {
+  "Update billing queue items: post them, release them and resolve their issues": {
     "sites": 1,
     "scope": [
       "go"
@@ -283285,12 +284024,14 @@
     ]
   },
   "User not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "User not found with the given email address": {
@@ -283338,15 +284079,6 @@
       "apps/web/config"
     ]
   },
-  "User table preferences and configurations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Username": {
     "sites": 6,
     "scope": [
@@ -283390,11 +284122,13 @@
     ]
   },
   "Users": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin"
     ]
   },
@@ -285036,7 +285770,7 @@
       "routes/admin"
     ]
   },
-  "Vet and refresh carriers, acknowledge events and apply suggested updates": {
+  "Vet and refresh carriers, acknowledge and resolve events, and apply suggested updates": {
     "sites": 1,
     "scope": [
       "go"
@@ -285214,7 +285948,7 @@
       "go/other"
     ]
   },
-  "View agent control settings": {
+  "View agent control settings, and dismiss or restore provider failure notices": {
     "sites": 1,
     "scope": [
       "go"
@@ -285386,15 +286120,6 @@
     ]
   },
   "View configured agents": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "View contacts": {
     "sites": 1,
     "scope": [
       "go"
@@ -285837,7 +286562,7 @@
     ]
   },
   "View only": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -285881,7 +286606,7 @@
       "go/other"
     ]
   },
-  "View own conversations": {
+  "View own conversations and pin artifacts in them": {
     "sites": 1,
     "scope": [
       "go"
@@ -286043,7 +286768,7 @@
       "apps/web/hooks"
     ]
   },
-  "View reports": {
+  "View reports and cancel your own report runs": {
     "sites": 1,
     "scope": [
       "go"
@@ -286933,6 +287658,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Void service failures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Void settlement": {
@@ -292657,6 +293391,15 @@
       "routes/agent-control"
     ]
   },
+  "When no person is present, the agent may do only what both the agent ceiling and this role allow. You can choose only a role whose access you hold yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "When occurrences land, and how far ahead the shipment is booked": {
     "sites": 1,
     "scope": [
@@ -296753,6 +297496,24 @@
       "routes/fuel-feed-run"
     ]
   },
+  "Work the billing queue and prepare invoices for review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Work the board: move loads, assign drivers and equipment, and keep stops and holds current.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Work the dispute": {
     "sites": 1,
     "scope": [
@@ -296769,6 +297530,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Work with the assistant, briefings and insights.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Worked examples priced by the same engine that bills real shipments.": {
@@ -297022,6 +297792,15 @@
     ]
   },
   "Worker profile must be provided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker records": {
     "sites": 1,
     "scope": [
       "go"
@@ -297390,6 +298169,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Workforce": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Workforce Attention": {
@@ -299765,6 +300553,15 @@
       "routes/inbox"
     ]
   },
+  "You need permission to manage users in every organization you add or remove": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You no longer have access to the {0} this conversation is about.": {
     "sites": 1,
     "scope": [
@@ -301145,6 +301942,15 @@
       "go/other"
     ]
   },
+  "Your role cannot share views with your organization. Keep the view private or ask an administrator to share it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your role cannot view carrier intelligence. Ask an administrator for read access to Carrier Intelligence.": {
     "sites": 3,
     "scope": [
@@ -301154,6 +301960,33 @@
       "routes/carrier",
       "routes/customer",
       "routes/fleet-safety"
+    ]
+  },
+  "Your role does not include margins.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
+  "Your role does not include personal details.": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Your role keeps views private. An administrator can share one with your organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your roles don't include permission to view this. Ask an administrator if you need it.": {
@@ -312165,6 +312998,15 @@
       "routes/customer-payments"
     ]
   },
+  "{0, plural, one {# person holds} other {# people hold}} this role. Deleting it takes it from them, and anything they could do only through it stops working at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# person in the period} other {# people in the period}}": {
     "sites": 1,
     "scope": [
@@ -312519,15 +313361,6 @@
     ]
   },
   "{0, plural, one {# resource} other {# resources}} configured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0, plural, one {# resource} other {# resources}} granted": {
     "sites": 1,
     "scope": [
       "ts"
@@ -318261,7 +319094,7 @@
     ]
   },
   "{0} granted": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -319634,6 +320467,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0} is not enforced for {1} in this deployment, so this grant reaches the whole organization. Choose Organization to say so.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is not held by a closed period, so it keeps its date": {
@@ -321419,6 +322261,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} now runs on its own under the role you chose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} now uses your organization's checklist": {

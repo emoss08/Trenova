@@ -16,6 +16,7 @@ import { DirectoryRail } from "./provisioning/directory-rail";
 import { MappingsPanelController } from "./provisioning/mappings-panel";
 import { SCIMTokenPanel } from "./provisioning/scim-token-panel";
 import { EmptyState } from "./security-access/shared";
+import { useSecurityAccess } from "./security-access/use-security-access";
 
 export function ProvisioningTab({
   organizationId,
@@ -27,7 +28,11 @@ export function ProvisioningTab({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const auditQuery = useQuery(organization.provisioningAudit(organizationId));
+  const access = useSecurityAccess();
+  const auditQuery = useQuery({
+    ...organization.provisioningAudit(organizationId),
+    enabled: access.provisioningAudit,
+  });
   const [directoryPanelMode, setDirectoryPanelMode] = useState<SCIMDirectoryPanelMode>("create");
   const [directoryPanelOpen, setDirectoryPanelOpen] = useState(false);
   const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory | null>(null);
@@ -99,6 +104,14 @@ export function ProvisioningTab({
     setDirectoryPanelOpen(true);
   }, []);
 
+  const auditTimeline = access.provisioningAudit ? (
+    <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />
+  ) : null;
+
+  if (!access.scimDirectories.read) {
+    return <ContentOuter>{auditTimeline}</ContentOuter>;
+  }
+
   return (
     <TabOuter>
       <RailOuter>
@@ -138,7 +151,7 @@ export function ProvisioningTab({
             )}
           />
         )}
-        <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />
+        {auditTimeline}
       </ContentOuter>
       <SCIMDirectoryPanel
         organizationId={organizationId}

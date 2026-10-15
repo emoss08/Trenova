@@ -47,7 +47,7 @@ func (r *Registry) registerCommunicationResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Review",
-				Description: "Link a message to a record, reply to it, or mark it handled",
+				Description: "Link a message to a record, reply to it or mark it handled, and resolve or reopen messages and conflicts",
 			},
 			{
 				Operation:   OpAssign,
@@ -72,7 +72,12 @@ func (r *Registry) registerCommunicationResources() {
 		DisplayName: "Inbound Mailbox",
 		Description: "Addresses the system listens on, and how much they are trusted to act alone",
 		Category:    "Communications",
-		Operations:  standardOpsWithDelete,
+		Operations: relabel(
+			standardOpsWithDelete,
+			OpUpdate,
+			"Update",
+			"Modify mailboxes and send test messages",
+		),
 
 		DefaultSensitivity: SensitivityRestricted,
 	})

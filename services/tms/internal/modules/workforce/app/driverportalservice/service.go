@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -66,6 +67,7 @@ type Params struct {
 	SettlementService   *driversettlementservice.Service
 	NotificationService *notificationservice.Service
 	AuditService        auditports.AuditService
+	Sessions            sessionports.SessionRepository
 }
 
 type Service struct {
@@ -99,6 +101,7 @@ type Service struct {
 	settlementService   *driversettlementservice.Service
 	notificationService *notificationservice.Service
 	auditService        auditports.AuditService
+	sessions            sessionports.SessionRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -133,5 +136,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		settlementService:   p.SettlementService,
 		notificationService: p.NotificationService,
 		auditService:        p.AuditService,
+		sessions:            p.Sessions,
 	}
 }

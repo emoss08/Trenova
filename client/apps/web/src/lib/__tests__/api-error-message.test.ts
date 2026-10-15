@@ -32,5 +32,6 @@ describe("describeApiError", () => {
   it("uses a plain error message or the fallback", () => {
     expect(describeApiError(new Error("network down"))).toBe("network down");
     expect(describeApiError("??", "nope")).toBe("nope");
+    expect(describeApiError("??")).toBe("Something went wrong. Please try again.");
   });
 });
