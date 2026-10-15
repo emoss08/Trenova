@@ -979,6 +979,8 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return composedViewArtifact(observation.Call.ID, result)
 	case pagedraft.IsEditTool(name):
 		return draftEditArtifact(observation.Call.ID, result)
+	case name == toolDraftEDIConnection:
+		return connectionDraftArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
 			return card

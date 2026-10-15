@@ -493,6 +493,8 @@ func (t Template) StarterTools() []string {
 			"get_edi_partner",
 			"list_edi_partners",
 			"reprocess_edi_inbound_files",
+			"draft_edi_connection",
+			"apply_edi_connection_draft",
 		}
 	case TemplateFactoringClerk:
 		return []string{

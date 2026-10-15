@@ -41,6 +41,8 @@ import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
 import { DeskViewBody } from "./kinds/view/desk-view-body";
 import { DeskDocBody } from "./kinds/document/desk-doc-body";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
+import { ConnectionDraftSkeleton } from "./kinds/edi-connection-draft/connection-draft-skeleton";
+import { DeskConnectionDraftBody } from "./kinds/edi-connection-draft/desk-connection-draft-body";
 import { DeskExtractBody } from "./kinds/extraction/desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
@@ -374,6 +376,8 @@ export function ArtifactBody({
       );
     case "extraction":
       return <DeskExtractBody artifact={artifact} />;
+    case "edi_connection_draft":
+      return <DeskConnectionDraftBody artifact={artifact} />;
     case "navigation":
     case "dashboard_ref":
       return <DeskViewBody artifact={artifact} />;
@@ -439,6 +443,9 @@ const READ_AHEAD = 4;
  * in that card's outline, anything else in the shape its kind is drawn in.
  */
 function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
+  if (artifact.kind === "edi_connection_draft") {
+    return <ConnectionDraftSkeleton />;
+  }
   const resource =
     artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"
       ? recordCardFor(artifact.payload.entity)

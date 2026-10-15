@@ -1,0 +1,23 @@
+{
+  "edi-guide-acme-retail-v3.pdf": {
+    "VERSION": "3.2",
+    "ISSUED": "September 1, 2026",
+    "REVISIONS": "<tr><td>3.2</td><td>2026-09-01</td><td>Test AS2 URL added; ISA13 starting number set.</td></tr><tr><td>3.1</td><td>2026-03-15</td><td>214 status codes updated.</td></tr>",
+    "COORDINATOR": "Dana Whitfield",
+    "COORDINATOR_EMAIL": "edi@acmeretail.example",
+    "COORDINATOR_PHONE": "+1 312 555 0142",
+    "ISA13_START": "1000",
+    "MS1_RULE": "MS1 Equipment Location is mandatory on every status."
+  },
+  "edi-guide-acme-retail-v4.pdf": {
+    "extends": "edi-guide-acme-retail-v3.pdf",
+    "VERSION": "4.0",
+    "ISSUED": "October 6, 2026",
+    "REVISIONS": "<tr><td>4.0</td><td>2026-10-06</td><td>New EDI Coordinator; ISA13 now starts at 5000; MS1 optional.</td></tr><tr><td>3.2</td><td>2026-09-01</td><td>Test AS2 URL added; ISA13 starting number set.</td></tr>",
+    "COORDINATOR": "Priya Raman",
+    "COORDINATOR_EMAIL": "edi-ops@acmeretail.example",
+    "COORDINATOR_PHONE": "+1 312 555 0177",
+    "ISA13_START": "5000",
+    "MS1_RULE": "MS1 Equipment Location is optional; send it when the equipment location is known."
+  }
+}

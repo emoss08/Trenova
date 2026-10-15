@@ -1,4 +1,5 @@
 import type { Tone } from "@/components/kpi/tone";
+import { shortDigest } from "@/lib/digest";
 import type { AssistantProposal } from "@/types/assistant";
 import { formatList } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -711,6 +712,42 @@ const PRESENTERS: Record<string, Presenter> = {
       ),
       covered: ["shipmentMoveId", "mode", "lines", "overrideInsuranceWarnings"],
       reversible: true,
+    };
+  },
+
+  apply_edi_connection_draft: (args) => {
+    const counted = (label: string, value: unknown) =>
+      fact(label, Array.isArray(value) && value.length > 0 ? String(value.length) : "");
+
+    return {
+      title: "Save the EDI connection from the guide",
+      summary: text(args.ediPartnerId)
+        ? translate(
+            "Update a trading partner you already have from its revised guide. Only what the guide changed is written, and nothing is turned on.",
+          )
+        : translate(
+            "Set up a trading partner from its guide: the partner, its communication profile, a document profile per document type, control number starts and code mappings, all inactive until you enter the credentials and turn them on.",
+          ),
+      highlights: facts(
+        counted("Settings from the guide", args.values),
+        counted("Segment rules", args.requirements),
+        counted("Code mappings", args.mappings),
+        counted("Gaps noted", args.gaps),
+        counted("Your answers", args.resolutions),
+        fact("Guide digest", shortDigest(text(args.documentDigest))),
+      ),
+      covered: [
+        "documentId",
+        "ediPartnerId",
+        "customerId",
+        "values",
+        "requirements",
+        "mappings",
+        "gaps",
+        "resolutions",
+        "documentDigest",
+      ],
+      reversible: false,
     };
   },
 

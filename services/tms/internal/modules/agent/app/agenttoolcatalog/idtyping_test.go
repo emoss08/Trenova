@@ -38,6 +38,10 @@ var untypedIDs = map[string]string{
 		"gives a widget, not PULIDs",
 	"open_page.recordId": "its kind follows the entity parameter, drawn from the " +
 		"generated product-guide catalog; the id only builds a link and is never read",
+	"draft_edi_connection.mappings[].targetId": "its kind follows the mapping's entityType, " +
+		"and the planner resolves it against that entity's table before drafting",
+	"apply_edi_connection_draft.mappings[].targetId": "its kind follows the mapping's entityType, " +
+		"and the planner resolves it against that entity's table before writing",
 }
 
 /*

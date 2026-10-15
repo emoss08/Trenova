@@ -3,6 +3,7 @@ package edi
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediconnectiondraftrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edidocumenttyperepository"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransactionsetrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
@@ -57,6 +59,9 @@ func SharedOptions() fx.Option {
 			ediservice.NewValidator,
 			ediservice.New,
 			func(s *ediservice.Service) ediports.EDIService { return s },
+			ediconnectiondraftrepository.New,
+			ediconnectiondraft.New,
+			func(s *ediconnectiondraft.Service) ediports.EDIConnectionDraftService { return s },
 		),
 		editransport.Module,
 	)

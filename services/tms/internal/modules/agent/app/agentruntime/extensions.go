@@ -13,10 +13,10 @@ import (
 )
 
 const externalContentNote = " It was not run automatically because this turn read content written " +
-	"outside the organization (a web page, or a trading partner's text it was given to inspect), " +
+	"outside the organization (a web page, or a trading partner's text or guide it was given), " +
 	"and a change made after reading outside content always waits for a person."
 
-var outsideTextTools = []string{"inspect_x12"}
+var outsideTextTools = []string{"inspect_x12", "draft_edi_connection"}
 
 type activeExtensions map[agentextension.Type]agentextension.Availability
 
