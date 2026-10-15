@@ -74,23 +74,27 @@ export function useDeskHomeAsk({
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
   const drag = useDeskDrop(noAgents ? null : attachments.add);
   const agentId = askable.agent?.id ?? null;
+  // The person has said where this question goes: a pick from the picker, or
+  // either answer to the offer. From then on nothing more is suggested for it,
+  // so a suggestion never follows the one just taken; clearing the box starts
+  // the next question afresh.
+  const [chosen, setChosen] = useState(false);
+  const [routing, setRouting] = useState(false);
   const advice = useAgentRecommendation({
     draft,
     agentId,
-    enabled: !noAgents && agentId !== null,
+    enabled: !noAgents && agentId !== null && !chosen,
   });
-  // The person has said where this question goes: a pick from the picker, or
-  // either answer to the offer. Until then a question goes where it fits.
-  const [chosen, setChosen] = useState(false);
-  const [keptOverId, setKeptOverId] = useState<string | null>(null);
-  const [routing, setRouting] = useState(false);
-  const offered: AgentRecommendation | null = offersRecommendation(
-    advice.recommendation,
-    agentId,
-    keptOverId,
-  )
+  const offered: AgentRecommendation | null = offersRecommendation(advice.recommendation, agentId)
     ? advice.recommendation
     : null;
+
+  const changeDraft = (value: string) => {
+    setDraft(value);
+    if (value.trim() === "") {
+      setChosen(false);
+    }
+  };
 
   const choose = (agent: AgentChoice) => {
     askable.choose(agent);
@@ -105,7 +109,6 @@ export function useDeskHomeAsk({
 
   const keepAgent = () => {
     if (offered) {
-      setKeptOverId(offered.agent.id);
       setChosen(true);
     }
   };
@@ -142,7 +145,7 @@ export function useDeskHomeAsk({
     acceptRecommendation,
     keepAgent,
     draft,
-    setDraft,
+    setDraft: changeDraft,
     mentions,
     setMentions,
     providerId,

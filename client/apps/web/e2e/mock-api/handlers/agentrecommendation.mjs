@@ -1,10 +1,11 @@
 // The agent a question is best put to, as `agentruntime.RecommendAgent` works
 // it out: the question ranks the tools the agents hold, only matches count (a
-// tool scoring under half the best match is cut), an agent scores 1/rank for
-// each matched tool it holds, and ties go to the agent the question would go to
-// now, then to the agent holding fewer tools, then by name. The server ranks
-// with keyword and embedding fusion; here the keywords alone stand in, read
-// from each tool's description and the words people use for it.
+// tool scoring under half the best match is cut), and only an agent holding
+// the best match is suggested. The agent the question would go to now is kept
+// when it holds it; otherwise the holder scoring 1/rank for each matched tool
+// it holds wins, then the one holding fewer tools, then by name. The server
+// ranks with keyword and embedding fusion; here the keywords alone stand in,
+// read from each tool's description and the words people use for it.
 //
 // Scenario `agentMatch`: match (the default) | none (no agent fits) | hold
 // (the request is left open, as a slow match is, for the "finding" state).
@@ -117,20 +118,26 @@ export function recommendAgent(state, variables, agents) {
   const ranked = rankTools(text, [...held]);
   if (ranked.length === 0) return { myAgentRecommendation: null };
 
+  const top = ranked[0];
   const candidates = agents
     .map((agent) => {
       const tools = ranked.filter((name) => (agent.toolNames ?? []).includes(name));
       const score = tools.reduce((sum, name) => sum + 1 / (ranked.indexOf(name) + 1), 0);
       return { agent, tools, score, current: agent.id === currentId };
     })
-    .filter((candidate) => candidate.score > 0)
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        Number(b.current) - Number(a.current) ||
-        (a.agent.toolNames?.length ?? 0) - (b.agent.toolNames?.length ?? 0) ||
-        a.agent.name.localeCompare(b.agent.name),
-    );
+    .filter((candidate) => candidate.tools.includes(top));
+  const kept = candidates.find((candidate) => candidate.current);
+  if (kept) {
+    return {
+      myAgentRecommendation: { agent: kept.agent, current: true, tools: kept.tools.slice(0, 3) },
+    };
+  }
+  candidates.sort(
+    (a, b) =>
+      b.score - a.score ||
+      (a.agent.toolNames?.length ?? 0) - (b.agent.toolNames?.length ?? 0) ||
+      a.agent.name.localeCompare(b.agent.name),
+  );
   const best = candidates[0];
   if (!best) return { myAgentRecommendation: null };
 

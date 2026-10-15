@@ -8802,7 +8802,7 @@
             "Open [Desk](/desk).",
             "The box shows which agent it will ask. To ask a different one, select the agent's name in the box and pick another from **Recent** or **All agents**; use **Search agents** when there are many.",
             "Type your question and send it, or press Tab to use the starter question on screen.",
-            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. Only agents you are allowed to use are ever suggested, judged by the tools you can use through them.",
+            "When another of your agents has the tools your question needs, a note just above the box names it. Select **Switch** to ask it, or the cross to keep your agent. Until you choose, sending asks the suggested agent, and a question sent before the suggestion appears goes to the agent with the tools for it. An agent is suggested only when it has the tool your question most needs and your agent does not, and only agents you are allowed to use are ever suggested, judged by the tools you can use through them. Once you choose, nothing more is suggested for that question; clear the box to start a new one.",
             "Keep asking follow-ups in the conversation. Anything the agent produces opens in the workspace beside it."
           ]
         },

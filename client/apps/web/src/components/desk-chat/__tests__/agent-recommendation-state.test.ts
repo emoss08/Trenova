@@ -58,20 +58,16 @@ describe("recommendationQueryText", () => {
 
 describe("offersRecommendation", () => {
   it("offers an agent other than the one the question would go to", () => {
-    expect(offersRecommendation(recommending(billing), dispatch.id, null)).toBe(true);
+    expect(offersRecommendation(recommending(billing), dispatch.id)).toBe(true);
   });
 
   it("offers nothing when the agent chosen is already the best fit", () => {
-    expect(offersRecommendation(recommending(dispatch, true), dispatch.id, null)).toBe(false);
-    expect(offersRecommendation(recommending(billing), billing.id, null)).toBe(false);
+    expect(offersRecommendation(recommending(dispatch, true), dispatch.id)).toBe(false);
+    expect(offersRecommendation(recommending(billing), billing.id)).toBe(false);
   });
 
   it("offers nothing when there is no match", () => {
-    expect(offersRecommendation(null, dispatch.id, null)).toBe(false);
-  });
-
-  it("does not offer again an agent the person kept theirs over", () => {
-    expect(offersRecommendation(recommending(billing), dispatch.id, billing.id)).toBe(false);
+    expect(offersRecommendation(null, dispatch.id)).toBe(false);
   });
 });
 
