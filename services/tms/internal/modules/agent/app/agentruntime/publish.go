@@ -300,6 +300,15 @@ func shownNote(shown *agentports.ShownArtifact) string {
 			artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 	}
 
+	if shown.MustBeLinked() {
+		return fmt.Sprintf("\n\n[This result is kept as %s titled %q beside the conversation, "+
+			"where the person reads it before anything is decided, so your reply points to it. "+
+			"Point to it in the sentence that says what it holds, and answer with what the "+
+			"person must check, decide or do; never repeat its fields or set them out as a "+
+			"markdown table.%s]",
+			artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
+	}
+
 	return fmt.Sprintf("\n\n[This result can be shown to the person as %s titled %q, which "+
 		"they can open beside the conversation. Point to it only if your answer rests on it; "+
 		"a result you do not point to is not shown. Answer with what matters rather than "+
@@ -330,6 +339,8 @@ func artifactNoun(kind string) string {
 		return "a draft"
 	case "plan":
 		return "a plan"
+	case "edi_connection_draft":
+		return "a connection draft"
 	default:
 		return "an artifact"
 	}

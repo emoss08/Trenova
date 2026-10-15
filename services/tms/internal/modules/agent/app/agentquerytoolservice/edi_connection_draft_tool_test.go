@@ -195,4 +195,7 @@ func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 			"in this document (page 6)")
 	assert.Contains(t, note, "the credentials to enter before it is turned on: AS2 private key")
 	assert.NotContains(t, note, "Partner signing certificate", "only what the connection needs")
+	assert.NotContains(t, note, "show the person the draft",
+		"the draft is pointed to inside a sentence, never set out on its own")
+	assert.Contains(t, note, "point the person to the draft in the sentence that says what it sets up")
 }

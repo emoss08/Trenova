@@ -16,8 +16,8 @@ import (
 const (
 	DraftEDIConnectionToolName = "draft_edi_connection"
 
-	draftReadyNote = "Ready: show the person the draft, then propose apply_edi_connection_draft " +
-		"with the same input and documentDigest. Nothing is written until they approve it. Tell " +
+	draftReadyNote = "Ready: point the person to the draft in the sentence that says what it " +
+		"sets up, then propose apply_edi_connection_draft with the same input and documentDigest. Nothing is written until they approve it. Tell " +
 		"them which credentials to enter before the connection is turned on."
 	draftBlockedNote = "Not ready. Ask the person about each decision with its candidates and " +
 		"pages, add their answers as resolutions, and draft again. Never fill a held value " +
