@@ -138,21 +138,24 @@ func valueInQuote(spec *fieldSpec, value, quote string) bool {
 }
 
 func containsToken(haystack, needle string) bool {
-	if !isWordLike(needle) {
-		return strings.Contains(haystack, needle)
-	}
-	for start := 0; ; {
+	return tokenIndex(haystack, needle, 0) >= 0
+}
+
+func tokenIndex(haystack, needle string, from int) int {
+	wordLike := isWordLike(needle)
+	for start := from; start <= len(haystack); {
 		index := strings.Index(haystack[start:], needle)
 		if index < 0 {
-			return false
+			return -1
 		}
 		index += start
-		end := index + len(needle)
-		if boundary(haystack, index-1) && boundary(haystack, end) {
-			return true
+		if !wordLike ||
+			(boundary(haystack, index-1) && boundary(haystack, index+len(needle))) {
+			return index
 		}
 		start = index + 1
 	}
+	return -1
 }
 
 func isWordLike(value string) bool {

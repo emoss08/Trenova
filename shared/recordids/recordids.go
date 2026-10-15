@@ -38,7 +38,13 @@ var (
 	// with it.
 	labelled = regexp.MustCompile(`,?\s*\b` + labelPattern + wrapPattern + idPattern + wrapPattern)
 	// bare is any id left on its own, with the comma or space before it.
-	bare = regexp.MustCompile(`,?\s*` + wrapPattern + idPattern + wrapPattern)
+	bare      = regexp.MustCompile(`,?\s*` + wrapPattern + idPattern + wrapPattern)
+	statement = regexp.MustCompile(`(,?[ \t]+and[ \t]+|[ \t]*)\b` +
+		`(?:[Ii]ts|[Tt]he|[Tt]heir|[Tt]his|[Tt]hat|[Yy]our|[Oo]ur|` +
+		`[A-Z]\w*(?:[ \t]+[A-Z]\w*){0,3}['’]s)` +
+		`(?:[ \t]+[\w'’]+){0,2}[ \t]+(?:[A-Za-z]*(?:ID|Id)|id)` +
+		`(?:[ \t]+(?:is|was)[ \t]+|[ \t]*:[ \t]*)` +
+		wrapPattern + idPattern + wrapPattern + `([.!?]?)`)
 
 	spaceBeforePunctuation = regexp.MustCompile(`[ \t]+([,.;:!?)])`)
 	emptyParentheses       = regexp.MustCompile(`\(\s*\)`)
@@ -55,7 +61,8 @@ func Strip(text string) string {
 		return text
 	}
 
-	out := remove(aside, text)
+	out := removeStatements(text)
+	out = remove(aside, out)
 	out = remove(labelled, out)
 	out = remove(bare, out)
 	if out == text {
@@ -94,6 +101,54 @@ func remove(pattern *regexp.Regexp, text string) string {
 	out.WriteString(text[last:])
 
 	return out.String()
+}
+
+func removeStatements(text string) string {
+	matches := statement.FindAllStringSubmatchIndex(text, -1)
+	if len(matches) == 0 {
+		return text
+	}
+
+	var out strings.Builder
+	out.Grow(len(text))
+	last := 0
+	for _, match := range matches {
+		if !standsAlone(text, match[4], match[5]) || !endsSentence(text, match) {
+			continue
+		}
+		start, end := match[0], match[1]
+		switch {
+		case strings.Contains(text[match[2]:match[3]], "and"):
+			end = match[6]
+		case !startsSentence(text, start):
+			continue
+		case start == 0 || text[start-1] == '\n':
+			end += len(text[end:]) - len(strings.TrimLeft(text[end:], " \t"))
+			if end < len(text) && text[end] == '\n' {
+				end++
+			}
+		}
+		out.WriteString(text[last:start])
+		last = end
+	}
+	out.WriteString(text[last:])
+
+	return out.String()
+}
+
+func endsSentence(text string, match []int) bool {
+	rest := strings.TrimLeft(text[match[1]:], " \t")
+	if match[7] > match[6] {
+		return match[1] == len(text) || rest != text[match[1]:] || text[match[1]] == '\n'
+	}
+
+	return rest == "" || rest[0] == '\n'
+}
+
+func startsSentence(text string, start int) bool {
+	before := strings.TrimRight(text[:start], " \t")
+
+	return before == "" || strings.IndexByte(".!?\n", before[len(before)-1]) >= 0
 }
 
 func standsAlone(text string, start, end int) bool {

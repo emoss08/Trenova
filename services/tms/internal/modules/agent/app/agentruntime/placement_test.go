@@ -260,3 +260,87 @@ func TestPointerLead(t *testing.T) {
 	assert.Equal(t, detailsPointerLead, pointerLead([]string{""}))
 	assert.Equal(t, "A, B and C", joinRefs([]string{"A", "B", "C"}))
 }
+
+func draftVersions(lineage bool) (first, second agentports.ShownArtifact) {
+	first = agentports.ShownArtifact{
+		ID:    pulid.MustNew("art_"),
+		Kind:  "edi_connection_draft",
+		Title: "EDI connection for Acme Retail Group",
+	}
+	second = agentports.ShownArtifact{
+		ID:    pulid.MustNew("art_"),
+		Kind:  first.Kind,
+		Title: first.Title,
+	}
+	if lineage {
+		first.Lineage = first.ID
+		second.Lineage = first.ID
+	}
+
+	return first, second
+}
+
+func redraftRun(
+	t *testing.T,
+	first, second *agentports.ShownArtifact,
+	replies ...string,
+) (*agentports.RunResult, *[]kernelports.StreamEvent) {
+	t.Helper()
+
+	turns := []*agentports.ChatCompletionResult{
+		toolTurn("draft_edi_connection", map[string]any{}),
+		toolTurn("draft_edi_connection", map[string]any{"values": []any{"again"}}),
+	}
+	for _, reply := range replies {
+		turns = append(turns, textTurn(reply))
+	}
+	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{
+		Tools: []agentports.AgentQueryTool{
+			queryTool("draft_edi_connection", map[string]any{"ready": true}, nil),
+		},
+	}, &stubActionRegistry{}, nil)
+	shown := []*agentports.ShownArtifact{first, second}
+	req := &agentports.RunRequest{
+		Definition: testDefinition("draft_edi_connection"),
+		Actor:      testActor(),
+		Input:      "acme retail sent over their edi guide, can you get them set up?",
+		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+			next := shown[0]
+			shown = shown[1:]
+
+			return next, nil
+		},
+	}
+	events := recordEvents(req)
+
+	result, err := rt.Run(t.Context(), req)
+	require.NoError(t, err)
+
+	return result, events
+}
+
+func TestDrive_AsksOnlyForTheLatestVersionOfAnArtifact(t *testing.T) {
+	t.Parallel()
+
+	first, second := draftVersions(true)
+	reply := "The connection is drafted in " + ArtifactRef(&second) + ", waiting for approval."
+
+	result, events := redraftRun(t, &first, &second, reply)
+
+	assert.Equal(t, reply, result.Reply)
+	assert.False(t, retried(events))
+	assert.Empty(t, regroundedActions(events))
+}
+
+func TestDrive_AsksForEachArtifactOutsideALineage(t *testing.T) {
+	t.Parallel()
+
+	first, second := draftVersions(false)
+	reply := "The connection is drafted in " + ArtifactRef(&second) + ", waiting for approval."
+	fixed := reply + " The first attempt is in " + ArtifactRef(&first) + "."
+
+	result, events := redraftRun(t, &first, &second, reply, fixed)
+
+	assert.Equal(t, fixed, result.Reply)
+	assert.True(t, retried(events))
+}

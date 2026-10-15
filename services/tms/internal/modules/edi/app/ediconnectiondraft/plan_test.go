@@ -247,6 +247,81 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	assert.NotContains(t, string(encoded), "Acme#Test2026")
 }
 
+func TestPlan_TakesSettingsAsTheGuideWritesThem(t *testing.T) {
+	t.Parallel()
+
+	written := map[string]string{
+		"as2.mdnMode":             "Synchronous, signed",
+		"as2.signingAlgorithm":    "SHA-256",
+		"as2.encryptionAlgorithm": "AES-256 (CBC)",
+		fieldPartnerQualifier:     "qualifier 01 (DUNS)",
+		fieldOurQualifier:         "SCAC",
+		fieldElementSep:           "* (asterisk)",
+		fieldSegmentSep:           "tilde",
+	}
+	req := acmeRequest(t)
+	for idx := range req.Values {
+		if v, ok := written[req.Values[idx].Field]; ok {
+			req.Values[idx].Value = v
+		}
+	}
+
+	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	require.NoError(t, err)
+
+	assert.Empty(t, draft.Decisions)
+	assert.Empty(t, draft.Failures)
+	assert.True(t, draft.Ready, draft.Blockers)
+	require.NotNil(t, draft.Transport)
+	assert.Equal(t, "sync", valueOf(t, draft.Transport.Fields, "as2.mdnMode").Value)
+	assert.Equal(t, "sha256", valueOf(t, draft.Transport.Fields, "as2.signingAlgorithm").Value)
+	assert.Equal(t, "aes256-cbc", valueOf(t, draft.Transport.Fields, "as2.encryptionAlgorithm").Value)
+	assert.Equal(t, "01", valueOf(t, draft.Interchange, fieldPartnerQualifier).Value)
+	assert.Equal(t, "02", valueOf(t, draft.Interchange, fieldOurQualifier).Value)
+	assert.Equal(t, "*", valueOf(t, draft.Interchange, fieldElementSep).Value)
+	assert.Equal(t, "~", valueOf(t, draft.Interchange, fieldSegmentSep).Value)
+}
+
+func TestCatalog_ReadsAValueThroughItsSpellings(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		field string
+		value string
+		want  string
+		fails bool
+	}{
+		{field: "as2.mdnMode", value: "synchronous, signed", want: "sync"},
+		{field: "as2.mdnMode", value: "Asynchronous MDN to the return URL", want: "async"},
+		{field: "as2.mdnMode", value: "synchronous or asynchronous", fails: true},
+		{field: "as2.signingAlgorithm", value: "SHA 256", want: "sha256"},
+		{field: "as2.signingAlgorithm", value: "SHA-512 with RSA", want: "sha512"},
+		{field: "as2.signingAlgorithm", value: "MD5", fails: true},
+		{field: "as2.encryptionAlgorithm", value: "AES-256-GCM", want: "aes256-gcm"},
+		{field: "as2.encryptionAlgorithm", value: "AES-128 (CBC)", want: "aes128-cbc"},
+		{field: "as2.encryptionAlgorithm", value: "3DES", want: "3des"},
+		{field: fieldPartnerQualifier, value: "DUNS plus 4", want: "16"},
+		{field: fieldPartnerQualifier, value: "DUNS or SCAC", fails: true},
+		{field: fieldTransportMethod, value: "AS2 over HTTPS", want: "AS2"},
+		{field: fieldTransportEnvironment, value: "test or production", fails: true},
+		{field: fieldElementSep, value: "| (pipe)", want: "|"},
+		{field: "as2.mdnMode", value: "   ", fails: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.field+"/"+tt.value, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := fieldCatalog[tt.field].normalize(tt.value)
+			if tt.fails {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestPlan_HoldsAValueWhoseQuoteIsNotOnThePage(t *testing.T) {
 	t.Parallel()
 

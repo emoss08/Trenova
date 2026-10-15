@@ -68,7 +68,9 @@ func (t *getEDIAckHealthTool) Description() string {
 	return fmt.Sprintf(
 		"How partners are acknowledging what was sent: ack status counts overall and per "+
 			"partner, overdue messages by partner oldest first, and recent dead letters. One call answers for one partner too: read its row in ackCountsByPartner "+
-			"rather than listing its messages. A message is overdue "+
+			"rather than listing its messages. acknowledged counts every 997 or 999 that came "+
+			"back, a rejection included, and awaiting those still pending, both since "+
+			"countsSince. A message is overdue "+
 			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
 			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
 			"list_edi_messages lists messages by filter. Each message has its id for "+
@@ -110,10 +112,12 @@ type ackCountRow struct {
 }
 
 type partnerAckCountsRow struct {
-	PartnerID   string        `json:"partnerId"`
-	Partner     string        `json:"partner"`
-	PartnerCode string        `json:"partnerCode,omitempty"`
-	AckCounts   []ackCountRow `json:"ackCounts"`
+	PartnerID    string        `json:"partnerId"`
+	Partner      string        `json:"partner"`
+	PartnerCode  string        `json:"partnerCode,omitempty"`
+	Acknowledged int           `json:"acknowledged"`
+	Awaiting     int           `json:"awaiting"`
+	AckCounts    []ackCountRow `json:"ackCounts"`
 }
 
 type overdueAckRow struct {
@@ -145,6 +149,8 @@ type ediAckHealthView struct {
 	CountsSince         optionalDate          `json:"countsSince"`
 	OverdueAfterSeconds int64                 `json:"overdueAfterSeconds"`
 	OverdueAfter        string                `json:"overdueAfter"`
+	Acknowledged        int                   `json:"acknowledged"`
+	Awaiting            int                   `json:"awaiting"`
 	AckCounts           []ackCountRow         `json:"ackCounts"`
 	AckCountsByPartner  []partnerAckCountsRow `json:"ackCountsByPartner"`
 	OverdueCount        int                   `json:"overdueCount"`
@@ -208,6 +214,8 @@ func (t *getEDIAckHealthTool) Query(
 		CountsSince:         recordedDate(health.Since),
 		OverdueAfterSeconds: health.OverdueAckAge,
 		OverdueAfter:        timeutils.FormatLongDurationMs(health.OverdueAckAge * 1000),
+		Acknowledged:        acknowledged(health.AckStatusCounts),
+		Awaiting:            health.AckStatusCounts[edi.MessageAcknowledgmentStatusPending],
 		AckCounts:           ackCounts(health.AckStatusCounts),
 		AckCountsByPartner:  partnerAckCounts(health.AckCountsByPartner),
 		OverdueCount:        health.OverdueAckCount,
@@ -282,6 +290,17 @@ func ackCounts(counts map[edi.MessageAcknowledgmentStatus]int) []ackCountRow {
 	return rows
 }
 
+func acknowledged(counts map[edi.MessageAcknowledgmentStatus]int) int {
+	total := 0
+	for status, count := range counts {
+		if status.IsReceived() {
+			total += count
+		}
+	}
+
+	return total
+}
+
 func partnerAckCounts(groups []*ediservice.EDIPartnerAckCounts) []partnerAckCountsRow {
 	rows := make([]partnerAckCountsRow, 0, len(groups))
 	for _, group := range groups {
@@ -289,10 +308,12 @@ func partnerAckCounts(groups []*ediservice.EDIPartnerAckCounts) []partnerAckCoun
 			continue
 		}
 		row := partnerAckCountsRow{
-			PartnerID:   group.PartnerID.String(),
-			Partner:     group.PartnerName,
-			PartnerCode: group.PartnerCode,
-			AckCounts:   make([]ackCountRow, 0, len(group.Counts)),
+			PartnerID:    group.PartnerID.String(),
+			Partner:      group.PartnerName,
+			PartnerCode:  group.PartnerCode,
+			Acknowledged: acknowledged(group.Counts),
+			Awaiting:     group.Counts[edi.MessageAcknowledgmentStatusPending],
+			AckCounts:    make([]ackCountRow, 0, len(group.Counts)),
 		}
 		for _, status := range ackCountOrder {
 			if count := group.Counts[status]; count > 0 {
