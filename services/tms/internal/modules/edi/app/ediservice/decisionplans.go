@@ -366,6 +366,184 @@ func (s *Service) deliverableMessage(
 	})
 }
 
+type OutboundDocumentPreview struct {
+	Document *EDIDocumentPreview
+	Blocking bool
+}
+
+func (s *Service) PreviewOutboundDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+) (*OutboundDocumentPreview, error) {
+	resolved, err := s.resolveGenerateContext(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolved.outboundPreview()
+}
+
+type TenderResponseChoice string
+
+const (
+	TenderResponseAccept  = TenderResponseChoice("Accept")
+	TenderResponseDecline = TenderResponseChoice("Decline")
+)
+
+type PreviewTenderResponseRequest struct {
+	TenantInfo pagination.TenantInfo
+	PartnerID  pulid.ID
+	TransferID pulid.ID
+	Choice     TenderResponseChoice
+	Reason     string
+}
+
+type TenderResponsePreview struct {
+	OutboundDocumentPreview
+
+	Transfer *edi.EDITransfer
+	Choice   TenderResponseChoice
+}
+
+func (s *Service) PreviewTenderResponse(
+	ctx context.Context,
+	req *PreviewTenderResponseRequest,
+) (*TenderResponsePreview, error) {
+	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+		ID:         req.TransferID,
+		TenantInfo: req.TenantInfo,
+		Direction:  TransferDirectionInbound,
+	})
+	if err != nil {
+		return nil, err
+	}
+	answered, err := tenderResponseToPreview(transfer, req.PartnerID, req.Choice, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
+		ctx,
+		ediports.GetActiveEDIPartnerDocumentProfileRequest{
+			PartnerID:      transfer.TargetPartnerID,
+			TenantInfo:     req.TenantInfo,
+			TransactionSet: edi.TransactionSet990,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, errortypes.NewValidationError(
+				"partnerId",
+				errortypes.ErrInvalidOperation,
+				"This partner has no active outbound 990 profile yet. Trenova creates one from the partner's envelope and the base 990 template when the tender is decided, so its 990 cannot be previewed before then",
+			)
+		}
+		return nil, err
+	}
+
+	preview, err := s.PreviewOutboundDocument(
+		ctx,
+		tenderResponseRequest(req.TenantInfo, answered, profile.ID, req.TenantInfo.UserID),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TenderResponsePreview{
+		OutboundDocumentPreview: *preview,
+		Transfer:                transfer,
+		Choice:                  tenderChoiceOf(answered),
+	}, nil
+}
+
+func tenderResponseRequest(
+	tenantInfo pagination.TenantInfo,
+	transfer *edi.EDITransfer,
+	profileID pulid.ID,
+	actorID pulid.ID,
+) *GenerateEDIDocumentRequest {
+	payload := buildTenderResponsePayload(transfer)
+
+	return &GenerateEDIDocumentRequest{
+		TenantInfo:               tenantInfo,
+		PartnerDocumentProfileID: profileID,
+		EDIPartnerID:             transfer.TargetPartnerID,
+		TransferID:               transfer.ID,
+		TransactionSet:           edi.TransactionSet990,
+		Direction:                edi.DocumentDirectionOutbound,
+		Payload:                  &payload,
+		GeneratedByID:            actorID,
+	}
+}
+
+func tenderResponseToPreview(
+	transfer *edi.EDITransfer,
+	partnerID pulid.ID,
+	choice TenderResponseChoice,
+	reason string,
+) (*edi.EDITransfer, error) {
+	if transfer.InboundMessageID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"transferId",
+			errortypes.ErrInvalidOperation,
+			"This tender came from another Trenova organization and is answered inside Trenova, so no 990 is sent for it",
+		)
+	}
+	if partnerID.IsNotNil() && partnerID != transfer.TargetPartnerID {
+		return nil, errortypes.NewValidationError(
+			"partnerId",
+			errortypes.ErrInvalidReference,
+			"This tender came from another trading partner; its 990 goes to the partner that sent it",
+		)
+	}
+
+	answered := *transfer
+	switch {
+	case transfer.Status == edi.TransferStatusApproved || transfer.Status == edi.TransferStatusRejected:
+		decided := tenderChoiceOf(transfer)
+		if choice != "" && choice != decided {
+			return nil, errortypes.NewValidationError(
+				"response",
+				errortypes.ErrInvalidOperation,
+				"This tender was already answered {0}; its 990 says so",
+				string(decided),
+			)
+		}
+	case transfer.Status.IsActionable():
+		switch choice {
+		case TenderResponseAccept:
+			answered.Status = edi.TransferStatusApproved
+		case TenderResponseDecline:
+			answered.Status = edi.TransferStatusRejected
+			answered.RejectionReason = strings.TrimSpace(reason)
+		default:
+			return nil, errortypes.NewValidationError(
+				"response",
+				errortypes.ErrRequired,
+				"This tender is not answered yet; say whether to preview the 990 that accepts it or the one that declines it",
+			)
+		}
+	default:
+		return nil, errortypes.NewValidationError(
+			"transferId",
+			errortypes.ErrInvalidOperation,
+			"This tender is {0} and will not be answered with a 990",
+			string(transfer.Status),
+		)
+	}
+
+	return &answered, nil
+}
+
+func tenderChoiceOf(transfer *edi.EDITransfer) TenderResponseChoice {
+	if transfer.Status == edi.TransferStatusRejected {
+		return TenderResponseDecline
+	}
+
+	return TenderResponseAccept
+}
+
 func (s *Service) PlanGenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,

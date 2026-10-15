@@ -29,6 +29,7 @@ type ToolPolicy struct {
 	Source              agent.TaintSource
 	Sources             []agent.TaintSource
 	CarriesTaint        bool
+	CapsLaterWrites     bool
 	Rationale           string
 }
 

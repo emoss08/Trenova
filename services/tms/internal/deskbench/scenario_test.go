@@ -51,6 +51,43 @@ func TestLoadScenarios_ThePaletteScenariosAskFromThePalette(t *testing.T) {
 	}
 }
 
+func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExistFor(t *testing.T) {
+	t.Parallel()
+
+	scenarios, err := deskbench.LoadScenarios([]string{"../../deskbench/scenarios/edi.yaml"})
+	require.NoError(t, err)
+	require.NotEmpty(t, scenarios)
+
+	called := map[string]bool{}
+	for _, scenario := range scenarios {
+		assert.Equal(t, deskbench.BenchAgentPrefix+"EDI desk", scenario.Agent, scenario.Name)
+		require.NoError(t, scenario.Validate(), scenario.Name)
+		for _, step := range scenario.Steps {
+			for _, call := range step.Expect.Calls {
+				called[call] = true
+			}
+		}
+	}
+	for _, tool := range []string{
+		"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
+	} {
+		assert.Truef(t, called[tool], "no EDI scenario expects %s", tool)
+	}
+
+	agents, err := deskbench.LoadAgentSpecs("../../deskbench/agents.yaml")
+	require.NoError(t, err)
+	found := false
+	for _, spec := range agents {
+		if spec.Name == deskbench.BenchAgentPrefix+"EDI desk" {
+			found = true
+			assert.Subset(t, spec.Tools, []string{
+				"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
+			})
+		}
+	}
+	assert.True(t, found, "the EDI scenarios ask an agent agents.yaml does not keep")
+}
+
 func TestValidate_AFoundMentionNamesItsTypeAndFindsItsIDWithOneSelect(t *testing.T) {
 	t.Parallel()
 

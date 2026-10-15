@@ -3648,6 +3648,7 @@ export type EdiMappingEntityType =
 
 export type EdiMessageAckStatus =
   | 'Accepted'
+  | 'AcceptedWithErrors'
   | 'Failed'
   | 'NotExpected'
   | 'Pending'

@@ -77,6 +77,7 @@ export const ediMessageAcknowledgmentStatusSchema = z.enum([
   "NotExpected",
   "Pending",
   "Accepted",
+  "AcceptedWithErrors",
   "Rejected",
   "Failed",
 ]);
