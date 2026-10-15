@@ -59,11 +59,46 @@ describe("createSuggestionRecord", () => {
     const record = createSuggestionRecord("Home");
 
     record.shown("agdef_billing", "agdef_dispatch");
-    const settle = record.take();
+    const taken = record.take();
     record.forget();
-    settle("SentThrough");
+    taken.settle("SentThrough");
+    taken.settle("PassedOver");
     await flush();
 
+    expect(calls.settled).toEqual([{ id: "agsg_1", outcome: "SentThrough" }]);
+  });
+
+  it("leaves a suggestion taken for a question that went nowhere to be settled later", async () => {
+    const record = createSuggestionRecord("Conversation");
+
+    record.shown("agdef_billing", "agdef_dispatch");
+    record.take().putBack();
+    record.settle("Kept");
+    await flush();
+
+    expect(calls.settled).toEqual([{ id: "agsg_1", outcome: "Kept" }]);
+  });
+
+  it("does not put a taken suggestion back over one named since", async () => {
+    const record = createSuggestionRecord("Conversation");
+
+    record.shown("agdef_billing", "agdef_dispatch");
+    const taken = record.take();
+    record.shown("agdef_service", "agdef_dispatch");
+    taken.putBack();
+    record.settle("Kept");
+    await flush();
+
+    expect(calls.settled).toEqual([{ id: "agsg_2", outcome: "Kept" }]);
+  });
+
+  it("records a question moved before its note showed as shown and sent through", async () => {
+    const record = createSuggestionRecord("Home");
+
+    record.sentThrough("agdef_billing", "agdef_dispatch");
+    await flush();
+
+    expect(calls.recorded).toEqual([{ suggestedAgentId: "agdef_billing", outcome: "Shown" }]);
     expect(calls.settled).toEqual([{ id: "agsg_1", outcome: "SentThrough" }]);
   });
 

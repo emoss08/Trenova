@@ -7,6 +7,14 @@ import { useState } from "react";
 
 type SettledOutcome = Parameters<typeof settleAgentSuggestion>[1];
 
+/** A suggestion taken for a question in flight. */
+export type TakenSuggestion = {
+  /** Settles it once the question has gone somewhere. */
+  settle: (outcome: SettledOutcome) => void;
+  /** The question went nowhere: the suggestion is on screen again as it was. */
+  putBack: () => void;
+};
+
 type OpenSuggestion = {
   agentId: string;
   /** The record's id once the server has it; null when recording failed. */
@@ -23,9 +31,14 @@ export type SuggestionRecord = {
    * the send knows where the question went; clearing the box meanwhile does
    * not lose it.
    */
-  take: () => (outcome: SettledOutcome) => void;
+  take: () => TakenSuggestion;
   /** The question went to another agent without a suggestion being shown. */
   autoSwitched: (suggestedAgentId: string, currentAgentId: string | null) => void;
+  /**
+   * Switch on send asked another agent before its suggestion reached the
+   * screen: recorded as shown and sent to it, as if the note had been there.
+   */
+  sentThrough: (suggestedAgentId: string, currentAgentId: string | null) => void;
   /** The box was cleared: the suggestion on screen is left as it was. */
   forget: () => void;
 };
@@ -39,20 +52,38 @@ export type SuggestionRecord = {
 export function createSuggestionRecord(surface: AgentSuggestionSurface): SuggestionRecord {
   let open: OpenSuggestion | null = null;
 
-  const take = () => {
+  const record = (
+    suggestedAgentId: string,
+    currentAgentId: string | null,
+    outcome: "Shown" | "AutoSwitched",
+  ) =>
+    recordAgentSuggestion({ suggestedAgentId, currentAgentId, surface, outcome }).catch(() => null);
+  const settleOpen = (suggestion: OpenSuggestion, outcome: SettledOutcome) => {
+    void suggestion.id
+      .then((id) => (id ? settleAgentSuggestion(id, outcome) : undefined))
+      .catch(() => undefined);
+  };
+  const take = (): TakenSuggestion => {
     const current = open;
     open = null;
+    let done = false;
 
-    return (outcome: SettledOutcome) => {
-      if (!current) {
-        return;
-      }
-      void current.id
-        .then((id) => (id ? settleAgentSuggestion(id, outcome) : undefined))
-        .catch(() => undefined);
+    return {
+      settle: (outcome) => {
+        if (current && !done) {
+          done = true;
+          settleOpen(current, outcome);
+        }
+      },
+      putBack: () => {
+        if (current && !done && open === null) {
+          done = true;
+          open = current;
+        }
+      },
     };
   };
-  const settle = (outcome: SettledOutcome) => take()(outcome);
+  const settle = (outcome: SettledOutcome) => take().settle(outcome);
 
   return {
     shown: (suggestedAgentId, currentAgentId) => {
@@ -62,23 +93,22 @@ export function createSuggestionRecord(surface: AgentSuggestionSurface): Suggest
       settle("PassedOver");
       open = {
         agentId: suggestedAgentId,
-        id: recordAgentSuggestion({
-          suggestedAgentId,
-          currentAgentId,
-          surface,
-          outcome: "Shown",
-        }).catch(() => null),
+        id: record(suggestedAgentId, currentAgentId, "Shown"),
       };
     },
     settle,
     take,
     autoSwitched: (suggestedAgentId, currentAgentId) => {
-      void recordAgentSuggestion({
-        suggestedAgentId,
-        currentAgentId,
-        surface,
-        outcome: "AutoSwitched",
-      }).catch(() => undefined);
+      void record(suggestedAgentId, currentAgentId, "AutoSwitched");
+    },
+    sentThrough: (suggestedAgentId, currentAgentId) => {
+      settleOpen(
+        {
+          agentId: suggestedAgentId,
+          id: record(suggestedAgentId, currentAgentId, "Shown"),
+        },
+        "SentThrough",
+      );
     },
     forget: () => {
       open = null;

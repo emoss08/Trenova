@@ -1332,7 +1332,7 @@
   "When I click": "Cuando haga clic",
   "When an agent makes a table, record or draft.": "Cuando un agente crea una tabla, un registro o un borrador.",
   "When another agent fits better": "Cuando otro agente encaja mejor",
-  "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it when you send, unless you picked an agent.": "Cuando otro de tus agentes tiene las herramientas que necesita una pregunta, Desk lo indica encima del cuadro. Cambiar al enviar también se la pregunta al enviar, salvo que hayas elegido un agente.",
+  "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it a new question when you send, unless you picked an agent; in a conversation, Desk offers to hand off.": "Cuando otro de tus agentes tiene las herramientas que necesita una pregunta, Desk lo indica encima del cuadro. Cambiar al enviar también le hace la pregunta nueva al enviarla, salvo que hayas elegido un agente; en una conversación, Desk ofrece transferirla.",
   "When it's the next step": "Cuando es el siguiente paso",
   "When the agent pulls a table, opens a record or drafts an email, it lands here so you can check it, pin it or export it.": "Cuando el agente obtiene una tabla, abre un registro o redacta un correo, aparece aquí para que puedas revisarlo, fijarlo o exportarlo.",
   "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.": "Dónde empieza una conversación nueva. El cambio automático sigue moviendo la pregunta al agente que tiene las herramientas.",

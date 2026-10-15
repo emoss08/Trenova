@@ -503,7 +503,21 @@ func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
 		{Name: "list_invoices", Description: "List invoices by status."},
 	})
 
-	assert.True(t, catalog.MentionsAny("which invoices are past due"))
-	assert.False(t, catalog.MentionsAny("good morning, how are you"))
-	assert.False(t, catalog.MentionsAny(""))
+	assert.True(t, catalog.MentionsAny(nil, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny(nil, "good morning, how are you"))
+	assert.False(t, catalog.MentionsAny(nil, ""))
+}
+
+func TestMentionsAny_LooksOnlyAtTheToolsAllowed(t *testing.T) {
+	t.Parallel()
+
+	catalog := New([]agentports.AgentToolDescriptor{
+		{Name: "list_invoices", Description: "List invoices by status."},
+		{Name: "get_shipment", Description: "Get a shipment by its number."},
+	})
+
+	assert.True(t, catalog.MentionsAny([]string{"list_invoices"}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{"get_shipment"}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{"unknown_tool"}, "which invoices are past due"))
 }

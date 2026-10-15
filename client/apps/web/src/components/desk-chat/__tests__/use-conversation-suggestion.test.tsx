@@ -134,6 +134,27 @@ describe("useConversationSuggestion", () => {
 
     expect(clearDraft).not.toHaveBeenCalled();
     expect(result.current.handingOff).toBe(false);
+    await new Promise((settle) => setTimeout(settle, 0));
+    expect(state.settled).toEqual([]);
+
+    act(() => result.current.keep());
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "Kept" }]));
+  });
+
+  it("records no automatic switch when the hand-off it tried fails", async () => {
+    useDeskSettingsStore.getState().set("autoSwitchAgent", "on");
+    const onHandOff = vi.fn(() => Promise.reject(new Error("refused")));
+    const { result } = renderSuggestion({ onHandOff });
+    await waitFor(() => expect(state.asked).toHaveLength(1), { timeout: 2000 });
+
+    let handed = true;
+    await act(async () => {
+      handed = await result.current.route(REPLY, []);
+    });
+
+    expect(handed).toBe(false);
+    expect(onHandOff).toHaveBeenCalledTimes(1);
+    expect(state.recorded).toEqual([]);
   });
 
   it("matches nothing while the agent works, files are attached or the conversation cannot be handed off", async () => {

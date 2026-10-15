@@ -8758,6 +8758,7 @@
   "The agent": "El agente",
   "The agent refused a question it should answer": "El agente rechazó una pregunta que debía responder",
   "The agent suggested is not one of this organization's agents": "El agente sugerido no es uno de los agentes de esta organización",
+  "The agent suggested is not one you may use": "El agente sugerido no es uno que puedas usar",
   "The agent suggested is required": "El agente sugerido es obligatorio",
   "The agent that raised this plan no longer exists, so the plan cannot be decided": "El agente que generó este plan ya no existe, por lo que no se puede decidir sobre el plan",
   "The agent the question would go to must be an agent ID.": "El agente al que iría la pregunta debe ser un ID de agente.",

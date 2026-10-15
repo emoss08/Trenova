@@ -149,8 +149,12 @@ export function useConversationSuggestion({
       if (!offered || routing || handingOff) {
         return;
       }
-      record.settle("Switched");
-      await handOffTo(offered.agent.id, draft.trim(), mentions);
+      const shown = record.take();
+      if (await handOffTo(offered.agent.id, draft.trim(), mentions)) {
+        shown.settle("Switched");
+      } else {
+        shown.putBack();
+      }
     },
     keep: () => {
       if (offered && !routing && !handingOff) {
@@ -163,20 +167,22 @@ export function useConversationSuggestion({
       if (mode !== "auto" || !enabled || agentId === null) {
         return false;
       }
-      const settleShown = record.take();
+      const shown = record.take();
       setSending(content);
       setRouting(true);
       const match = await advice.resolve(content);
       setRouting(false);
       setSending(null);
+      shown.settle("PassedOver");
       if (!offersAgent(match, agentId, keptOver)) {
-        settleShown("PassedOver");
         return false;
       }
-      settleShown("PassedOver");
-      record.autoSwitched(match.agent.id, agentId);
+      const handed = await handOffTo(match.agent.id, content, carried);
+      if (handed) {
+        record.autoSwitched(match.agent.id, agentId);
+      }
 
-      return handOffTo(match.agent.id, content, carried);
+      return handed;
     },
     sentHere: () => record.settle("PassedOver"),
   };

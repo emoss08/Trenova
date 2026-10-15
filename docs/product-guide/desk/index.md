@@ -35,7 +35,7 @@ Keywords: chat with AI, ask the assistant, start a conversation, which agent sho
 Keywords: auto switch agent, switch agents automatically, stop suggesting agents, suggested agent setting, turn off agent suggestions, only suggest
 1. On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Composer**.
 2. Turn **Auto switch agent for tasks** on to let the Desk move a question to the agent with the tools for it without asking: a new question starts with that agent, and in a conversation the conversation is handed off to it, with its summary and pinned facts, and your message is asked there.
-3. With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send, unless you picked an agent; **Only suggest** names it and asks the agent you chose; **Off** names nothing.
+3. With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send a new question, unless you picked an agent (in a conversation it offers **Hand off**); **Only suggest** names it and asks the agent you chose; **Off** names nothing.
 4. **Start new conversations with** sets the agent a fresh conversation starts with. Questions go to it even when another agent has the tools, unless auto switch is on.
 
 ### Approve a change on the Desk

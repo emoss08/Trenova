@@ -3,6 +3,7 @@ package agentsuggestionservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
@@ -17,15 +18,17 @@ type Params struct {
 
 	Repository  agentsuggestionports.AgentSuggestionRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
+	Permissions permissionports.PermissionEngine
 }
 
 type Service struct {
 	repo        agentsuggestionports.AgentSuggestionRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
+	permissions permissionports.PermissionEngine
 }
 
 func New(p Params) agentsuggestionports.AgentSuggestionService {
-	return &Service{repo: p.Repository, definitions: p.Definitions}
+	return &Service{repo: p.Repository, definitions: p.Definitions, permissions: p.Permissions}
 }
 
 func (s *Service) RecordMine(
@@ -62,7 +65,7 @@ func (s *Service) RecordMine(
 	if me.HasErrors() {
 		return nil, me
 	}
-	if err := s.requireAgents(ctx, req); err != nil {
+	if err := s.requireAgents(ctx, req, actor); err != nil {
 		return nil, err
 	}
 
@@ -103,6 +106,7 @@ func (s *Service) SettleMine(
 func (s *Service) requireAgents(
 	ctx context.Context,
 	req *agentsuggestionports.RecordAgentSuggestionRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	ids := []pulid.ID{req.SuggestedAgentID}
 	if req.CurrentAgentID.IsNotNil() {
@@ -117,15 +121,27 @@ func (s *Service) requireAgents(
 		return err
 	}
 
-	known := make(map[pulid.ID]struct{}, len(found))
+	known := make(map[pulid.ID]*agentdefinition.Definition, len(found))
 	for _, definition := range found {
-		known[definition.ID] = struct{}{}
+		known[definition.ID] = definition
 	}
-	if _, ok := known[req.SuggestedAgentID]; !ok {
+	suggested, ok := known[req.SuggestedAgentID]
+	if !ok {
 		return errortypes.NewValidationError(
 			"suggestedAgentId",
 			errortypes.ErrInvalid,
 			"The agent suggested is not one of this organization's agents",
+		)
+	}
+	usable, err := s.permissions.MayUseAgent(ctx, actor, suggested)
+	if err != nil {
+		return err
+	}
+	if !usable {
+		return errortypes.NewValidationError(
+			"suggestedAgentId",
+			errortypes.ErrInvalid,
+			"The agent suggested is not one you may use",
 		)
 	}
 	if req.CurrentAgentID.IsNotNil() {

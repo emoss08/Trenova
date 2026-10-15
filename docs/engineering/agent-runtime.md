@@ -1059,7 +1059,7 @@ is built from the same parts. The answer is one of four outcomes:
 |---|---|
 | `BetterAgent` | Another agent the person may use holds a best match and the agent the question would go to does not |
 | `CurrentAgent` | The agent the question would go to holds a best match, itself or through an agent on its delegate allowlist |
-| `NoAgent` | Tools match the question, but none of the eight best is one the person's agents hold and may use |
+| `NoAgent` | Tools match the question, but none the person's agents hold and may use scores as well as the eighth best match, ties included |
 | `NoMatch` | No tool matches, or the person is not one who can be matched |
 
 Each but `NoMatch` names, best first, at most three tools: the agent's matched tools, or
@@ -1084,7 +1084,9 @@ match, so a tab still on the previous release keeps working.
 - **The ranking.** The question is ranked twice with `Catalog.Match` (`FindHybrid`'s
   keyword and embedding fusion and its cutoff, without the families it appends): once
   against every tool but the core ones, to tell `NoAgent` apart, and once against what
-  the person's agents hold and they may use. Its query vector is the one the turn embeds
+  the person's agents hold and they may use. The first ranking is not cut at eight: an
+  agent's tool tied with the eighth best match counts however many tools tie with it, so a
+  held tool is never dropped by catalog order (`permitsWithin`). Its query vector is the one the turn embeds
   for the same words: `retrievalquery` keeps it in its in-process cache and in Redis
   (`QueryVectorCache`, fifteen minutes, keyed by tenant, embedding model and a hash of the
   words), so a question sent after its match reuses the vector even when the API asked
@@ -1123,7 +1125,7 @@ with the answer follows the person's Desk settings (`suggestionMode` in
 | Setting | Note above the box | A question sent |
 |---|---|---|
 | Auto switch agent for tasks: On | None | Goes to the better agent; in a conversation, the conversation is handed off |
-| When another agent fits better: Switch on send (default) | Names the agent | Goes to the better agent unless the person picked one |
+| When another agent fits better: Switch on send (default) | Names the agent | A new question goes to the better agent unless the person picked one; in a conversation the note offers Hand off and the reply stays |
 | Only suggest | Names the agent | Goes to the agent chosen |
 | Off | None, and nothing is matched | Goes to the agent chosen |
 
@@ -1157,8 +1159,12 @@ reply is handed off on send without a note; otherwise a reply sent stays here.
 **What people do with it.** Each suggestion is recorded in `agent_suggestions`
 (`recordMyAgentSuggestion` when it is shown, or `AutoSwitched` when the Desk moved the
 question without asking, then `settleMyAgentSuggestion`: Switched, SentThrough, Kept or
-PassedOver), once while the same agent stays named. Recording never holds anything up and
-a failure is not shown. A suggestion left on screen is counted as passed over after half an
+PassedOver), once while the same agent stays named. A question switch on send moved before
+its note appeared is recorded as shown and sent through, so `AutoSwitched` counts only auto
+switch. A hand-off is recorded once it has happened: one that fails leaves the suggestion
+on screen and unsettled, and records no automatic switch. Only an agent the person may use
+is recorded as suggested to them. Recording never holds anything up and a failure is not
+shown. A suggestion left on screen is counted as passed over after half an
 hour. AI Control's analytics reads them as the Agent suggestions card (see
 [ai-analytics.md](ai-analytics.md)). Only the agents, the surface and the outcome are kept,
 never the words. The match query's key holds the person's words, so it is never added to

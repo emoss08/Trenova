@@ -216,13 +216,23 @@ func (c *Catalog) MatchesStrongly(name, query string) bool {
 	return score(&c.entries[index], agentsearch.Terms(query), true) > 0
 }
 
-func (c *Catalog) MentionsAny(query string) bool {
+func (c *Catalog) MentionsAny(allowed []string, query string) bool {
 	terms := agentsearch.Terms(query)
 	if len(terms) == 0 {
 		return false
 	}
-	for i := range c.entries {
-		if score(&c.entries[i], terms, false) > 0 {
+	if allowed == nil {
+		for i := range c.entries {
+			if score(&c.entries[i], terms, false) > 0 {
+				return true
+			}
+		}
+
+		return false
+	}
+	for _, name := range allowed {
+		index, ok := c.byName[name]
+		if ok && score(&c.entries[index], terms, false) > 0 {
 			return true
 		}
 	}

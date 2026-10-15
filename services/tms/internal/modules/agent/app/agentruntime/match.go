@@ -68,21 +68,22 @@ func (s *Service) MatchAgent(
 	if err != nil {
 		return nil, err
 	}
-	if len(pool.agents) == 0 || !s.catalog.MentionsAny(text) {
+	matchable := s.matchableTools()
+	if len(pool.agents) == 0 || !s.catalog.MentionsAny(matchable, text) {
 		return noMatch(), nil
 	}
 
 	semantic := s.toolSemantic(ctx, req.Actor.TenantInfo(), s.matchVector(ctx, req.Actor, text))
 	wide := s.boostForContext(s.catalog.Match(agenttoolcatalog.Query{
-		Allowed:  s.matchableTools(),
+		Allowed:  matchable,
 		Text:     text,
-		Limit:    recommendationToolLimit,
+		Limit:    len(matchable),
 		Semantic: semantic,
 	}), resources)
 	if len(wide) == 0 {
 		return noMatch(), nil
 	}
-	if !pool.permitsAny(wide) {
+	if !pool.permitsWithin(wide, recommendationToolLimit) {
 		return &agentports.AgentMatch{
 			Outcome: agentsuggestion.MatchNoAgent,
 			Tools:   s.matchTools(topTier(wide)),
@@ -95,6 +96,7 @@ func (s *Service) MatchAgent(
 		Limit:    recommendationToolLimit,
 		Semantic: semantic,
 	}), resources)
+
 	best := bestCandidate(pool.agents, pool.held, pool.permitted, ranked, req.CurrentAgentID)
 	if best == nil {
 		return noMatch(), nil
@@ -149,7 +151,7 @@ func (s *Service) matchVector(
 	actor *permissionports.RequestActor,
 	text string,
 ) agentports.QueryVector {
-	if !s.mayEmbedMatch(ctx, actor) {
+	if s.vectorizer == nil || !s.mayEmbedMatch(ctx, actor) {
 		return agentports.QueryVector{}
 	}
 

@@ -3,8 +3,10 @@ package agentsuggestionservice
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -43,7 +45,8 @@ func (r *recordingRepository) Settle(
 type knownAgents struct {
 	agentdefinitionports.AgentDefinitionRepository
 
-	ids []pulid.ID
+	ids        []pulid.ID
+	restricted []pulid.ID
 }
 
 func (k *knownAgents) ListByIDs(
@@ -52,9 +55,19 @@ func (k *knownAgents) ListByIDs(
 ) ([]*agentdefinition.Definition, error) {
 	found := make([]*agentdefinition.Definition, 0, len(req.IDs))
 	for _, id := range req.IDs {
+		if slices.Contains(k.restricted, id) {
+			found = append(found, &agentdefinition.Definition{
+				ID:         id,
+				AccessMode: agentdefinition.AccessRoles,
+			})
+			continue
+		}
 		for _, known := range k.ids {
 			if id == known {
-				found = append(found, &agentdefinition.Definition{ID: id})
+				found = append(found, &agentdefinition.Definition{
+					ID:         id,
+					AccessMode: agentdefinition.AccessEveryone,
+				})
 			}
 		}
 	}
@@ -88,7 +101,7 @@ func TestRecordMine_RecordsTheSuggestionAsThePerson(t *testing.T) {
 
 	suggested, current := pulid.MustNew("agdef_"), pulid.MustNew("agdef_")
 	repo := &recordingRepository{}
-	service := New(Params{Repository: repo, Definitions: &knownAgents{ids: []pulid.ID{suggested, current}}})
+	service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{ids: []pulid.ID{suggested, current}}})
 	actor := person()
 
 	_, err := service.RecordMine(t.Context(), &agentsuggestionports.RecordAgentSuggestionRequest{
@@ -117,7 +130,7 @@ func TestRecordMine_RecordsAnAutomaticSwitchWithNoAgentBefore(t *testing.T) {
 
 	suggested := pulid.MustNew("agdef_")
 	repo := &recordingRepository{}
-	service := New(Params{Repository: repo, Definitions: &knownAgents{ids: []pulid.ID{suggested}}})
+	service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{ids: []pulid.ID{suggested}}})
 	actor := person()
 
 	_, err := service.RecordMine(t.Context(), &agentsuggestionports.RecordAgentSuggestionRequest{
@@ -182,7 +195,7 @@ func TestRecordMine_Refuses(t *testing.T) {
 			t.Parallel()
 
 			repo := &recordingRepository{}
-			service := New(Params{Repository: repo, Definitions: &knownAgents{ids: []pulid.ID{known}}})
+			service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{ids: []pulid.ID{known}}})
 
 			_, err := service.RecordMine(t.Context(), &tc.req, actor)
 
@@ -198,11 +211,34 @@ func TestRecordMine_Refuses(t *testing.T) {
 	}
 }
 
+func TestRecordMine_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
+	t.Parallel()
+
+	restricted := pulid.MustNew("agdef_")
+	actor := person()
+	repo := &recordingRepository{}
+	service := New(Params{
+		Repository:  repo,
+		Permissions: &agenttest.StubPermissions{},
+		Definitions: &knownAgents{restricted: []pulid.ID{restricted}},
+	})
+
+	_, err := service.RecordMine(t.Context(), &agentsuggestionports.RecordAgentSuggestionRequest{
+		TenantInfo:       actor.TenantInfo(),
+		SuggestedAgentID: restricted,
+		Surface:          agentsuggestion.SurfaceHome,
+		Outcome:          agentsuggestion.OutcomeShown,
+	}, actor)
+
+	assert.Equal(t, "suggestedAgentId", fieldOf(t, err))
+	assert.Empty(t, repo.inserted, "only an agent the person may use is ever suggested to them")
+}
+
 func TestRecordMine_RecordsOnlyAPersonsSuggestions(t *testing.T) {
 	t.Parallel()
 
 	repo := &recordingRepository{}
-	service := New(Params{Repository: repo, Definitions: &knownAgents{}})
+	service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{}})
 	actor := person()
 	actor.PrincipalType = permissionports.PrincipalTypeAPIKey
 
@@ -221,7 +257,7 @@ func TestSettleMine_SettlesThePersonsOwnSuggestion(t *testing.T) {
 	t.Parallel()
 
 	repo := &recordingRepository{}
-	service := New(Params{Repository: repo, Definitions: &knownAgents{}})
+	service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{}})
 	actor := person()
 	id := pulid.MustNew("agsg_")
 
@@ -245,7 +281,7 @@ func TestSettleMine_RefusesAnOutcomeThatDoesNotSettle(t *testing.T) {
 	t.Parallel()
 
 	repo := &recordingRepository{}
-	service := New(Params{Repository: repo, Definitions: &knownAgents{}})
+	service := New(Params{Repository: repo, Permissions: &agenttest.StubPermissions{}, Definitions: &knownAgents{}})
 	actor := person()
 
 	for _, outcome := range []agentsuggestion.Outcome{

@@ -173,7 +173,7 @@ export function useDeskHomeAsk({
     }
     const files = held.files();
     const starter = agent.starters?.some((item) => item.prompt === content.trim()) ?? false;
-    const settleShown = record.take();
+    const shown = record.take();
     let target = agent;
     if (!pinned && !starter && routesOnSend(mode)) {
       setSending(content);
@@ -184,11 +184,13 @@ export function useDeskHomeAsk({
       target = agentToAsk({ agent, match, pinned, keptOver, mode });
     }
     if (target.id !== agent.id && target.id === offeredId) {
-      settleShown("SentThrough");
+      shown.settle("SentThrough");
     } else {
-      settleShown("PassedOver");
-      if (target.id !== agent.id) {
+      shown.settle("PassedOver");
+      if (target.id !== agent.id && mode === "auto") {
         record.autoSwitched(target.id, agent.id);
+      } else if (target.id !== agent.id) {
+        record.sentThrough(target.id, agent.id);
       }
     }
     onStart(target.id, content, {

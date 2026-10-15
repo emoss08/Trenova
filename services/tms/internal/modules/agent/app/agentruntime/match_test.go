@@ -30,7 +30,7 @@ func recommendationRuntime(
 ) *Service {
 	t.Helper()
 
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	return runtimeWithTools(t, permissions, []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
 			ToolName: "list_shipments",
 			Desc:     "List shipments by status, billing state or dates.",
@@ -56,7 +56,18 @@ func recommendationRuntime(
 			Desc:     "List workers (drivers) by status or employment type.",
 			Resource: permission.ResourceWorker,
 		},
-	}}
+	}, agents...)
+}
+
+func runtimeWithTools(
+	t *testing.T,
+	permissions *agenttest.StubPermissions,
+	tools []agentports.AgentQueryTool,
+	agents ...*agentdefinition.Definition,
+) *Service {
+	t.Helper()
+
+	query := &stubQueryRegistry{Tools: tools}
 	action := &stubActionRegistry{}
 
 	byID := make(map[pulid.ID]*agentdefinition.Definition, len(agents))
@@ -212,6 +223,55 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenNoAgentHoldsTheBestTool(t *testing.T) 
 		Name:    "list_invoices",
 		Summary: "List invoices by status or due date.",
 	}}, found.Tools, "the tools that would answer it are named for whoever can add them")
+}
+
+func TestMatchAgent_FindsTheAgentWhoseToolTiesBeyondTheFirstFewMatches(t *testing.T) {
+	t.Parallel()
+
+	tools := make([]agentports.AgentQueryTool, 0, recommendationToolLimit+2)
+	for idx := range recommendationToolLimit + 2 {
+		tools = append(tools, &agenttest.StubQueryTool{
+			ToolName: fmt.Sprintf("invoice_report_%02d", idx),
+			Desc:     "Invoice report of invoices past due.",
+			Resource: permission.ResourceInvoice,
+		})
+	}
+	last := fmt.Sprintf("invoice_report_%02d", recommendationToolLimit+1)
+	billing := agentHolding("Billing assistant", last)
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, tools, billing)
+
+	found := match(t, service, "which invoices are past due?", pulid.Nil)
+
+	assert.Equal(t, agentsuggestion.MatchBetterAgent, found.Outcome,
+		"a held tool tied with the best matches counts however many tie with it")
+	require.NotNil(t, found.Agent)
+	assert.Equal(t, billing.ID, found.Agent.ID)
+}
+
+func TestMatchAgent_SaysNoAgentWhenEveryHeldToolRanksBelowTheFirstFewMatches(t *testing.T) {
+	t.Parallel()
+
+	tools := make([]agentports.AgentQueryTool, 0, recommendationToolLimit+1)
+	for idx := range recommendationToolLimit {
+		tools = append(tools, &agenttest.StubQueryTool{
+			ToolName: fmt.Sprintf("invoice_report_%02d", idx),
+			Desc:     "Invoice report of invoices past due.",
+			Resource: permission.ResourceInvoice,
+		})
+	}
+	tools = append(tools, &agenttest.StubQueryTool{
+		ToolName: "summarize_ledger",
+		Desc:     "Summarize the ledger, including invoices.",
+		Resource: permission.ResourceInvoice,
+	})
+	ledger := agentHolding("Ledger helper", "summarize_ledger")
+	service := runtimeWithTools(t, &agenttest.StubPermissions{}, tools, ledger)
+
+	found := match(t, service, "which invoices are past due?", pulid.Nil)
+
+	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome,
+		"a tool that only touches the question does not make its agent the one for it")
+	assert.Nil(t, found.Agent)
 }
 
 func TestMatchAgent_MatchesNothingForAPersonWhoMayNotStartAConversation(t *testing.T) {
@@ -475,6 +535,20 @@ func TestMatchAgent_MatchesByKeywordOncePastThePersonsEmbeddingRate(t *testing.T
 	assert.Empty(t, vectorizer.calls, "a person over the rate is matched without an embedding")
 	require.Len(t, rates.keys, 1)
 	assert.Contains(t, rates.keys[0], testActor().OrganizationID.Prefix())
+}
+
+func TestMatchAgent_SpendsNoEmbeddingRateWithoutAnEmbeddingProvider(t *testing.T) {
+	t.Parallel()
+
+	billing := agentHolding("Billing assistant", "list_invoices")
+	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
+	rates := &limitedRates{allowed: true}
+	service.rateLimits = rates
+
+	found := match(t, service, "which invoices are past due?", pulid.Nil)
+
+	assert.Equal(t, agentsuggestion.MatchBetterAgent, found.Outcome)
+	assert.Empty(t, rates.keys, "nothing is embedded, so nothing is counted against the rate")
 }
 
 func TestMatchAgent_ReadsAPersonsAgentsOnceWhileTheyType(t *testing.T) {

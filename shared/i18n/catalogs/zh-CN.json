@@ -8758,6 +8758,7 @@
   "The agent": "智能体",
   "The agent refused a question it should answer": "代理拒绝回答了应该回答的问题",
   "The agent suggested is not one of this organization's agents": "建议的代理不属于此组织",
+  "The agent suggested is not one you may use": "建议的代理不是你可以使用的代理",
   "The agent suggested is required": "必须指定建议的代理",
   "The agent that raised this plan no longer exists, so the plan cannot be decided": "提出此计划的智能体已不存在，因此无法对此计划做出决定",
   "The agent the question would go to must be an agent ID.": "问题要发送到的代理必须是代理 ID。",

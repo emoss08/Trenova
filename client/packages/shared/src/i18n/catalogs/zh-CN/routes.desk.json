@@ -1332,7 +1332,7 @@
   "When I click": "点击时",
   "When an agent makes a table, record or draft.": "当代理生成表格、记录或草稿时。",
   "When another agent fits better": "当其他代理更合适时",
-  "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it when you send, unless you picked an agent.": "当你的其他代理拥有问题所需的工具时，Desk 会在输入框上方提示。选择“发送时切换”时，除非你已手动选择代理，否则发送时也会向它提问。",
+  "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it a new question when you send, unless you picked an agent; in a conversation, Desk offers to hand off.": "当你的其他代理拥有问题所需的工具时，Desk 会在输入框上方提示。选择“发送时切换”时，除非你已手动选择代理，否则发送新问题时也会向它提问；在对话中，Desk 会提供转交选项。",
   "When it's the next step": "当它是下一步时",
   "When the agent pulls a table, opens a record or drafts an email, it lands here so you can check it, pin it or export it.": "当代理拉取表格、打开记录或起草邮件时，结果会出现在这里，供你查看、固定或导出。",
   "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.": "新对话从这里开始。自动切换仍会把问题转给拥有相应工具的代理。",

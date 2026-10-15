@@ -1,5 +1,5 @@
 {
-  "version": "sha256:743b336f4c1a67d7b4f7aa738ec0a20b44333b2bab4d05a7593c777285722cfa",
+  "version": "sha256:f071cbea4cee5b800027fd387151872a460209702a0aee24f7224d65a17f869a",
   "modules": [
     {
       "id": "home",
@@ -8820,7 +8820,7 @@
           "steps": [
             "On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Composer**.",
             "Turn **Auto switch agent for tasks** on to let the Desk move a question to the agent with the tools for it without asking: a new question starts with that agent, and in a conversation the conversation is handed off to it, with its summary and pinned facts, and your message is asked there.",
-            "With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send, unless you picked an agent; **Only suggest** names it and asks the agent you chose; **Off** names nothing.",
+            "With it off, choose **When another agent fits better**: **Switch on send** names the agent above the box and asks it when you send a new question, unless you picked an agent (in a conversation it offers **Hand off**); **Only suggest** names it and asks the agent you chose; **Off** names nothing.",
             "**Start new conversations with** sets the agent a fresh conversation starts with. Questions go to it even when another agent has the tools, unless auto switch is on."
           ]
         },

@@ -669,6 +669,20 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "SentThrough" }]));
   });
 
+  it("records a question switch on send moved before its note showed as shown and sent through", async () => {
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type(QUESTION);
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(state.recorded).toEqual([
+      expect.objectContaining({ suggestedAgentId: billing.id, outcome: "Shown" }),
+    ]);
+    await waitFor(() => expect(state.settled).toEqual([{ id: "agsg_1", outcome: "SentThrough" }]));
+  });
+
   it("asks for a match about nothing in particular when no record is named", async () => {
     renderHome(vi.fn());
 

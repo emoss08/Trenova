@@ -437,7 +437,7 @@ export function DeskSettingsDialog({
                   <Row
                     title={t("When another agent fits better")}
                     detail={t(
-                      "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it when you send, unless you picked an agent.",
+                      "When another of your agents has the tools a question needs, Desk names it above the box. Switch on send also asks it a new question when you send, unless you picked an agent; in a conversation, Desk offers to hand off.",
                     )}
                   >
                     <Seg
