@@ -35,6 +35,7 @@ var defaultTargetMinutes = map[inboundmessage.Classification]int{
 	inboundmessage.ClassificationProofOfDelivery:  480,
 	inboundmessage.ClassificationInvoice:          1440,
 	inboundmessage.ClassificationDetentionDispute: 1440,
+	inboundmessage.ClassificationFactorRemittance: 1440,
 	inboundmessage.ClassificationOther:            2880,
 }
 

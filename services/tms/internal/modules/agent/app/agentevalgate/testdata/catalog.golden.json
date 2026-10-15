@@ -2192,6 +2192,58 @@
       }
     },
     {
+      "name": "apply_factoring_remittance",
+      "description": "Book every matched line of a factor remittance to the ledger in one go. Funded and rejected invoices are recorded on their schedules, reserve releases and chargebacks are booked with the line's cash, and each entry remembers its line. Lines still to resolve stay open. A person approves every booking.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The remittance, from list_factoring_remittances.",
+            "type": "string",
+            "x-recordOf": "factoring_remittance"
+          },
+          "version": {
+            "description": "The remittance's version, from get_factoring_remittance.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "apply remittance",
+        "book remittance",
+        "factor funding report"
+      ],
+      "prerequisites": [
+        "get_factoring_remittance"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_remittance",
+        "operation": "import",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the factor's advances, fees, reserve releases and chargebacks to the general ledger; only a person's approval runs it."
+      }
+    },
+    {
       "name": "apply_rate_increase",
       "description": "Propose a general rate increase or decrease on agreements' lane rates, by a percent or a flat amount, from a day. It moves every lane rate on the named agreements, one customer's or carrier's, or every active agreement of a party type. The old rates stay in history. A person always decides.",
       "parameters": {
@@ -10061,6 +10113,63 @@
       }
     },
     {
+      "name": "discard_factoring_remittance",
+      "description": "Discard a factor remittance that will not be booked, such as a duplicate of one already applied or a file that is not a remittance. Nothing on it can be booked afterwards; a partly applied one cannot be discarded. Say why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The remittance, from list_factoring_remittances.",
+            "type": "string",
+            "x-recordOf": "factoring_remittance"
+          },
+          "reason": {
+            "description": "Why the remittance is discarded.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "version": {
+            "description": "The remittance's version, from get_factoring_remittance.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "discard remittance",
+        "duplicate remittance"
+      ],
+      "prerequisites": [
+        "list_factoring_remittances"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_remittance",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sets a remittance aside for good before anything on it is booked."
+      }
+    },
+    {
       "name": "discard_fuel_purchase_import",
       "description": "Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice. Nothing it holds becomes a purchase, and it can be staged again later.",
       "parameters": {
@@ -14186,6 +14295,68 @@
       "policy": {
         "kind": "query",
         "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_factoring_remittance",
+      "description": "Read one factor remittance with its lines and how each was matched. Each line has its row, kind, invoice number, amounts and date as the factor printed them, its match status, the schedule item it is matched to, and up to three ranked suggestions with why. Use its version and a line id with resolve_factoring_remittance_line, and its version with apply_factoring_remittance or discard_factoring_remittance.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "matchStatuses": {
+            "description": "Only lines in these match statuses; leave out for every line.",
+            "items": {
+              "description": "A line's match status.",
+              "enum": [
+                "Matched",
+                "Suggested",
+                "Unmatched",
+                "Ignored",
+                "Error",
+                "Applied"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring.remittanceMatchStatus"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "remittanceId": {
+            "description": "The remittance, from list_factoring_remittances.",
+            "type": "string",
+            "x-recordOf": "factoring_remittance"
+          }
+        },
+        "required": [
+          "remittanceId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor remittance",
+        "remittance lines",
+        "remittance exceptions"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_remittance",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -19500,6 +19671,74 @@
       }
     },
     {
+      "name": "list_factoring_remittances",
+      "description": "List factor remittances, newest first, with how far each has been read and booked. Each has its factor, file, status (Pending, NeedsMapping, Parsed, Failed, PartiallyApplied, Applied or Discarded), line, matched, exception and applied counts, and why it failed if it did. Pass one's id to get_factoring_remittance for its lines.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "factoringCompanyId": {
+            "description": "Only remittances from this factor, from get_factoring_remittance or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "limit": {
+            "description": "How many remittances to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "statuses": {
+            "description": "Only remittances in these statuses.",
+            "items": {
+              "description": "A remittance status.",
+              "enum": [
+                "Pending",
+                "NeedsMapping",
+                "Parsed",
+                "Failed",
+                "PartiallyApplied",
+                "Applied",
+                "Discarded"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring.remittanceStatus"
+            },
+            "maxItems": 7,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor remittance",
+        "funding report",
+        "remittance exceptions"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_remittance",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_factoring_submissions",
       "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed, Cancelled, PartiallyFunded, Funded or Rejected), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to get_factoring_submission for its invoices; a failed one's id and version go to retry_factoring_submission or cancel_factoring_submission, and a sent one's to record_factoring_funding.",
       "parameters": {
@@ -21090,6 +21329,7 @@
               "Invoice",
               "StatusRequest",
               "DetentionDispute",
+              "FactorRemittance",
               "Other"
             ],
             "type": "string",
@@ -25952,6 +26192,7 @@
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
+              "factoring_remittance",
               "factoring_submission",
               "formula_template",
               "fuel_purchase",
@@ -27859,7 +28100,8 @@
               "invoice",
               "invoice_dispute",
               "factoring_noa",
-              "factoring_submission"
+              "factoring_submission",
+              "factoring_remittance"
             ]
           },
           "subjectType": {
@@ -27888,7 +28130,8 @@
               "Invoice",
               "InvoiceDispute",
               "FactoringNoa",
-              "FactoringSubmission"
+              "FactoringSubmission",
+              "FactoringRemittance"
             ],
             "type": "string",
             "x-enumOf": "agent.subjectType"
@@ -30784,6 +31027,57 @@
       }
     },
     {
+      "name": "rematch_factoring_remittance",
+      "description": "Match a remittance's open lines again against the factor's schedules as they are now, after a schedule was sent or funded since the remittance was read. Lines a person matched or ignored stay as they are.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The remittance, from list_factoring_remittances.",
+            "type": "string",
+            "x-recordOf": "factoring_remittance"
+          },
+          "version": {
+            "description": "The remittance's version, from get_factoring_remittance.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "rematch remittance",
+        "match remittance again"
+      ],
+      "prerequisites": [
+        "get_factoring_remittance"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_remittance",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Recomputes suggestions and automatic matches before anything is booked; a person's own matches are kept."
+      }
+    },
+    {
       "name": "remember",
       "description": "Record a standing instruction, a fact or a procedure for later runs. Kind Instruction is a rule a person gave you, Fact something told or confirmed that no record holds, Procedure the steps a person gave for a task. visibleTo says who it is for: me (the person in the conversation alone; the default when someone is there), team (their role) or organization. A team or organization memory is kept at once only when the person may manage shared memory; otherwise it is offered for an administrator to approve, and you should say so. Scope it to one customer, location, driver or carrier with subjectType and subjectId. To change a kept memory, pass its id from recall_memory as replacesMemoryId: the new one takes its place and keeps its readers. Never record what a record already says, a guess, or anything asked to stay private. Saving what is already kept refreshes it.",
       "parameters": {
@@ -32242,6 +32536,98 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes an exception inside Trenova with an audited reason; the record behind it is unchanged."
+      }
+    },
+    {
+      "name": "resolve_factoring_remittance_line",
+      "description": "Resolve one line of a factor remittance so it can be applied, or set it aside. Match it to a schedule item (a suggestion's itemId from get_factoring_remittance), Unmatch it, Ignore it with why (a fee or adjustment booked by hand), Restore an ignored line, or SetKind when the factor's report says what the line records differently. Nothing is booked until the remittance is applied.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "What to do with the line.",
+            "enum": [
+              "Match",
+              "Unmatch",
+              "Ignore",
+              "Restore",
+              "SetKind"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring.remittanceLineAction"
+          },
+          "itemId": {
+            "description": "The schedule item the line pays, for Match: a suggestion's itemId from get_factoring_remittance, or an item from get_factoring_submission.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "kind": {
+            "description": "What the line records, for SetKind.",
+            "enum": [
+              "Funding",
+              "Rejection",
+              "ReserveRelease",
+              "Chargeback",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring.remittanceLineKind"
+          },
+          "lineId": {
+            "description": "The line's lineId, from get_factoring_remittance.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the line is not booked, for Ignore.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "remittanceId": {
+            "description": "The remittance, from list_factoring_remittances.",
+            "type": "string",
+            "x-recordOf": "factoring_remittance"
+          },
+          "version": {
+            "description": "The remittance's version, from get_factoring_remittance.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "remittanceId",
+          "version",
+          "lineId",
+          "action"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "remittance exception",
+        "match remittance line",
+        "ignore remittance line"
+      ],
+      "prerequisites": [
+        "get_factoring_remittance"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_remittance",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which schedule item a remittance line pays before anything is booked; it can be undone until the remittance is applied."
       }
     },
     {

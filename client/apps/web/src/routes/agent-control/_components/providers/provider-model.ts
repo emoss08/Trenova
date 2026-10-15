@@ -42,6 +42,7 @@ const TASK_ORDER: readonly AITask[] = [
   "QueryCompose",
   "InboundClassification",
   "AccountingMapping",
+  "RemittanceExtraction",
   "EvaluationJudge",
   "Embedding",
   "General",

@@ -128,6 +128,10 @@ func (s *LedgerService) planFunding(
 	if err = requireAccounts(&scope.accounts, treatment); err != nil {
 		return nil, err
 	}
+	remitLines := make(map[pulid.ID]pulid.ID, len(req.Items))
+	for idx := range req.Items {
+		remitLines[req.Items[idx].ItemID] = req.Items[idx].RemittanceLineID
+	}
 	for _, item := range funded {
 		movement, planErr := factoring.PlanFundingMovement(item, treatment)
 		if planErr != nil {
@@ -142,6 +146,7 @@ func (s *LedgerService) planFunding(
 			date:      req.FundedOn,
 			dateField: "fundedOn",
 			memo:      req.Memo,
+			remitLine: remitLines[item.ID],
 			actor:     actor,
 		})
 	}

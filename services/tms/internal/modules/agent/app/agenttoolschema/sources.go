@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -64,6 +65,22 @@ var (
 	FactoringFundingOutcomes = Source(
 		"factoring.fundingOutcome",
 		factoring.AllFundingOutcomes(),
+	)
+	FactoringRemittanceStatuses = Source(
+		"factoring.remittanceStatus",
+		factoring.AllRemittanceStatuses(),
+	)
+	FactoringRemittanceLineKinds = Source(
+		"factoring.remittanceLineKind",
+		factoring.AllRemittanceLineKinds(),
+	)
+	FactoringRemittanceMatchStatuses = Source(
+		"factoring.remittanceMatchStatus",
+		factoring.AllRemittanceMatchStatuses(),
+	)
+	FactoringRemittanceLineActions = Source(
+		"factoring.remittanceLineAction",
+		factoringports.AllRemittanceLineActions(),
 	)
 	FactoringOverrides = Source(
 		"invoice.factoringOverride",

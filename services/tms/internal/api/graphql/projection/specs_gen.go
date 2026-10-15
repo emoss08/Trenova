@@ -401,6 +401,10 @@ var FactoringInvoiceStateSpec TypeSpec
 
 var FactoringNoaSpec TypeSpec
 
+var FactoringRemittanceSpec TypeSpec
+
+var FactoringRemittanceLineSpec TypeSpec
+
 var FactoringReserveEntrySpec TypeSpec
 
 var FactoringSubmissionSpec TypeSpec
@@ -14561,6 +14565,267 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
+			},
+		},
+	}
+
+	FactoringRemittanceSpec = TypeSpec{
+		TypeName: "FactoringRemittance",
+		FieldMap: factoringcol.RemittanceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "inboundMessageId",
+				FieldMapKey: "inboundMessageId",
+			},
+			{
+				Name:        "sourceFormat",
+				FieldMapKey: "sourceFormat",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "defaultKind",
+				FieldMapKey: "defaultKind",
+			},
+			{
+				Name:        "remittedOn",
+				FieldMapKey: "remittedOn",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "mapping",
+				FieldMapKey: "mapping",
+			},
+			{
+				Name:        "headers",
+				FieldMapKey: "headers",
+			},
+			{
+				Name:        "unmappedHeaders",
+				FieldMapKey: "unmappedHeaders",
+			},
+			{
+				Name:        "lineCount",
+				FieldMapKey: "lineCount",
+			},
+			{
+				Name:        "matchedCount",
+				FieldMapKey: "matchedCount",
+			},
+			{
+				Name:        "exceptionCount",
+				FieldMapKey: "exceptionCount",
+			},
+			{
+				Name:        "appliedCount",
+				FieldMapKey: "appliedCount",
+			},
+			{
+				Name:        "totalCashMinor",
+				FieldMapKey: "totalCashMinor",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "stagedAt",
+				FieldMapKey: "stagedAt",
+			},
+			{
+				Name:        "appliedAt",
+				FieldMapKey: "appliedAt",
+			},
+			{
+				Name:        "appliedById",
+				FieldMapKey: "appliedById",
+			},
+			{
+				Name:        "discardedAt",
+				FieldMapKey: "discardedAt",
+			},
+			{
+				Name:        "discardReason",
+				FieldMapKey: "discardReason",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
+	FactoringRemittanceLineSpec = TypeSpec{
+		TypeName: "FactoringRemittanceLine",
+		FieldMap: factoringcol.RemittanceLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "remittanceId",
+				FieldMapKey: "remittanceId",
+			},
+			{
+				Name:        "rowNumber",
+				FieldMapKey: "rowNumber",
+			},
+			{
+				Name:        "cells",
+				FieldMapKey: "cells",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "invoiceNumber",
+				FieldMapKey: "invoiceNumber",
+			},
+			{
+				Name:        "factorReference",
+				FieldMapKey: "factorReference",
+			},
+			{
+				Name:        "debtorName",
+				FieldMapKey: "debtorName",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "advanceMinor",
+				FieldMapKey: "advanceMinor",
+			},
+			{
+				Name:        "feeMinor",
+				FieldMapKey: "feeMinor",
+			},
+			{
+				Name:        "reserveMinor",
+				FieldMapKey: "reserveMinor",
+			},
+			{
+				Name:        "cashMinor",
+				FieldMapKey: "cashMinor",
+			},
+			{
+				Name:        "occurredOn",
+				FieldMapKey: "occurredOn",
+			},
+			{
+				Name:        "matchStatus",
+				FieldMapKey: "matchStatus",
+			},
+			{
+				Name:        "matchedBy",
+				FieldMapKey: "matchedBy",
+			},
+			{
+				Name:        "submissionItemId",
+				FieldMapKey: "submissionItemId",
+			},
+			{
+				Name:    "matchedInvoiceNumber",
+				Special: "matchedInvoiceNumber",
+			},
+			{
+				Name:    "matchedSubmissionId",
+				Special: "matchedSubmissionId",
+			},
+			{
+				Name:        "score",
+				FieldMapKey: "score",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "suggestions",
+				FieldMapKey: "suggestions",
+			},
+			{
+				Name:        "error",
+				FieldMapKey: "error",
+			},
+			{
+				Name:        "ignoredReason",
+				FieldMapKey: "ignoredReason",
+			},
+			{
+				Name:        "reserveEntryId",
+				FieldMapKey: "reserveEntryId",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

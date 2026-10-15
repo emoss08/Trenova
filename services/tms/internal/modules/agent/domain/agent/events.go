@@ -33,6 +33,7 @@ const (
 	EventFactoringSubmissionFailed    = EventKind("factoring.submission_failed")
 	EventFactoringSubmissionFunded    = EventKind("factoring.submission_funded")
 	EventFactoringChargebackDue       = EventKind("factoring.chargeback_due")
+	EventFactoringRemittanceStaged    = EventKind("factoring.remittance_staged")
 )
 
 type EventDescriptor struct {
@@ -222,6 +223,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectInvoice,
 		Label:       "Factored invoice nearing chargeback",
 		Description: "A funded invoice sold with recourse is still unpaid and its chargeback window closes within 7 days; unless the customer pays, the factor will charge it back and the organization will owe the advance and fee.",
+	},
+	{
+		Kind:        EventFactoringRemittanceStaged,
+		SubjectType: SubjectFactoringRemittance,
+		Label:       "Factor remittance read",
+		Description: "A factor's funding or reserve report was read and matched to schedule items; its matched lines wait to be applied to the ledger and its exceptions wait to be resolved.",
 	},
 }
 

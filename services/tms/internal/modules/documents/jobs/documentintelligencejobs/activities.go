@@ -1104,6 +1104,15 @@ func (a *Activities) enrichWithAI(
 		FallbackAnalysis: payload.Intelligence,
 		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
 	}
+	if !payload.Document.ProcessingProfile.ExtractsWithAI() {
+		diagnostics.RejectionReason = "profile_text_only"
+		return &EnrichmentResult{
+			Classification:       payload.Classification,
+			DocumentIntelligence: payload.Intelligence,
+			AIDiagnostics:        diagnostics,
+			EnqueueAsyncAI:       false,
+		}, nil
+	}
 	if !a.cfg.DocumentExtractionEnabled() {
 		diagnostics.RejectionReason = "ai_disabled"
 		return &EnrichmentResult{

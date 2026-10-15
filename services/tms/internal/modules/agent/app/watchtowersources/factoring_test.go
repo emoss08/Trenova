@@ -118,11 +118,25 @@ func (f *fakeFactoringReader) ListChargebacksDue(
 	return f.chargebacks, f.dueErr
 }
 
+type fakeFactoringRemittances struct {
+	factoringports.RemittanceRepository
+
+	open []*factoringports.OpenRemittance
+	err  error
+}
+
+func (f *fakeFactoringRemittances) ListOpen(
+	context.Context,
+	*factoringports.ListOpenRemittancesRequest,
+) ([]*factoringports.OpenRemittance, error) {
+	return f.open, f.err
+}
+
 func newTestFactoringSource(
 	states *fakeFactoringStates,
 	reader *fakeFactoringReader,
 ) *FactoringSource {
-	source := NewFactoringSource(states, reader).(*FactoringSource)
+	source := NewFactoringSource(states, reader, &fakeFactoringRemittances{}).(*FactoringSource)
 	source.now = func() int64 { return factoringNow }
 	return source
 }
@@ -653,4 +667,65 @@ func TestFactoringSourceSnapshotIncludesFundingFollowUps(t *testing.T) {
 		&fakeFactoringReader{dueErr: assert.AnError},
 	).Snapshot(t.Context(), factoringTenant())
 	require.ErrorIs(t, err, assert.AnError)
+}
+
+func TestDescribeFactoringRemittanceExceptions(t *testing.T) {
+	t.Parallel()
+
+	tenant := factoringTenant()
+	open := &factoringports.OpenRemittance{
+		RemittanceID:   pulid.MustNew("facrem_"),
+		FactorName:     "RTS Financial",
+		FileName:       "rts-funding.csv",
+		Status:         factoring.RemittanceStatusParsed,
+		ExceptionCount: 2,
+		MatchedCount:   5,
+		CreatedAt:      factoringNow,
+	}
+	item, ok := DescribeFactoringRemittanceExceptions(tenant, open)
+	require.True(t, ok)
+	assert.Equal(t, FactoringRemittanceSourceID(open.RemittanceID), item.SourceID)
+	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
+	assert.Equal(t, agent.SubjectFactoringRemittance, item.SubjectType)
+	assert.Contains(t, item.Title, "rts-funding.csv from RTS Financial")
+	assert.Contains(t, item.Summary, "2 lines could not be matched")
+	assert.Contains(t, item.Summary, "5 matched lines wait to be applied")
+	assertStorable(t, item)
+
+	mapping := *open
+	mapping.Status = factoring.RemittanceStatusNeedsMapping
+	mapping.ExceptionCount = 0
+	item, ok = DescribeFactoringRemittanceExceptions(tenant, &mapping)
+	require.True(t, ok)
+	assert.Contains(t, item.Title, "needs its columns mapped")
+
+	settled := *open
+	settled.ExceptionCount = 0
+	_, ok = DescribeFactoringRemittanceExceptions(tenant, &settled)
+	assert.False(t, ok, "a remittance with nothing left to resolve raises nothing")
+
+	applied := *open
+	applied.Status = factoring.RemittanceStatusApplied
+	_, ok = DescribeFactoringRemittanceExceptions(tenant, &applied)
+	assert.False(t, ok)
+}
+
+func TestFactoringSnapshotRaisesOpenRemittances(t *testing.T) {
+	t.Parallel()
+
+	tenant := factoringTenant()
+	source := newTestFactoringSource(&fakeFactoringStates{}, &fakeFactoringReader{})
+	source.remittances = &fakeFactoringRemittances{open: []*factoringports.OpenRemittance{{
+		RemittanceID:   pulid.MustNew("facrem_"),
+		Status:         factoring.RemittanceStatusPartiallyApplied,
+		ExceptionCount: 1,
+	}}}
+	items, err := source.Snapshot(t.Context(), tenant)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.Equal(t, agent.SubjectFactoringRemittance, items[0].SubjectType)
+
+	source.remittances = &fakeFactoringRemittances{err: errortypes.NewBusinessError("down")}
+	_, err = source.Snapshot(t.Context(), tenant)
+	require.Error(t, err)
 }

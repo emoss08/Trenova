@@ -120,3 +120,34 @@ func TestProcessInboundMessageWorkflow_RecordsAFetchThatFailedOutright(t *testin
 	assert.Equal(t, payload.MessageID, recorded.MessageID)
 	env.AssertNotCalled(t, "SettleInboundMessageActivity", mock.Anything, mock.Anything)
 }
+
+// A factor's remittance mail is handed to billing once it is settled, so its
+// files become remittances without anyone forwarding them; other mail is not.
+func TestProcessInboundMessageWorkflow_HandsAFactorRemittanceToBilling(t *testing.T) {
+	t.Parallel()
+
+	env := processEnv(t)
+	payload := processPayload()
+	var a *Activities
+
+	env.OnActivity(a.FetchInboundContentActivity, mock.Anything, mock.Anything).
+		Return(&FetchInboundContentResult{Readable: true}, nil).Once()
+	env.OnActivity(a.ListInboundAttachmentsActivity, mock.Anything, mock.Anything).
+		Return(&ListInboundAttachmentsResult{}, nil).Once()
+	env.OnActivity(a.SettleInboundMessageActivity, mock.Anything, mock.Anything).
+		Return(&ProcessInboundMessageResult{
+			MessageID:      payload.MessageID,
+			Status:         inboundmessage.StatusClassified,
+			Classification: inboundmessage.ClassificationFactorRemittance,
+		}, nil).Once()
+	env.OnActivity(a.IngestFactorRemittanceActivity, mock.Anything, mock.Anything).
+		Return(&inboundmessageservice.IngestRemittancesResult{
+			RemittanceIDs: []pulid.ID{pulid.MustNew("facrem_")},
+		}, nil).Once()
+
+	env.ExecuteWorkflow(ProcessInboundMessageWorkflow, payload)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
+}

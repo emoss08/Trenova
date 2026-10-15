@@ -78,7 +78,6 @@
   "Up to four decimals. Leave empty when only the total is known.": "最多四位小数。若仅知总额，请留空。",
   "Upload a Comdata, EFS or WEX statement and review it before it is recorded.": "上传 Comdata、EFS 或 WEX 对账单，并于记录前先行查看。",
   "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.": "上传提供商对账单、查看其将记录的内容，然后确认。在您确认之前，不会生成任何采购记录。",
-  "Upload progress": "上传进度",
   "Use computed ({0})": "使用计算值 ({0})",
   "Used for rows the statement cannot match to a card of their own.": "用于对账单无法比对到自有卡片的数据行。",
   "What was bought and what it cost. The total follows quantity × price until you change it.": "购买的品项与金额。在您修改之前，总额会按数量 × 单价自动计算。",

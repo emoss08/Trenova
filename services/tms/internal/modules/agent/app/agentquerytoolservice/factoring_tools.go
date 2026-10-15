@@ -19,6 +19,11 @@ import (
 )
 
 const (
+	pageKeyHasMore    = "hasMore"
+	pageKeyNextCursor = "nextCursor"
+)
+
+const (
 	paramFactoringInvoice = "invoiceId"
 	paramFactoringFactor  = "factoringCompanyId"
 	paramFactoringVerdict = "verdict"
@@ -570,9 +575,9 @@ func (t *listFactoringNoasTool) Query(
 		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
 	}
 	return map[string]any{
-		"notices":    rows,
-		"hasMore":    page.HasNextPage,
-		"nextCursor": next,
+		"notices":         rows,
+		pageKeyHasMore:    page.HasNextPage,
+		pageKeyNextCursor: next,
 	}, nil
 }
 
@@ -616,5 +621,7 @@ func factoringToolProviders() []any {
 		provideListFactoringSubmissionsTool,
 		provideGetFactoringSubmissionTool,
 		provideGetFactoringReserveBalanceTool,
+		provideListFactoringRemittancesTool,
+		provideGetFactoringRemittanceTool,
 	}
 }

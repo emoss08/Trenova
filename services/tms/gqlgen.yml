@@ -1913,6 +1913,76 @@ models:
         resolver: true
       itemStatus:
         resolver: true
+  FactoringRemittanceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceStatus
+  FactoringRemittanceSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSource
+  FactoringRemittanceFormat:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceFormat
+  FactoringRemittanceLineKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLineKind
+  FactoringRemittanceMatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchStatus
+  FactoringRemittanceMatchedBy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchedBy
+  FactoringRemittanceMatchReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchReason
+  FactoringRemittanceLineAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+  FactoringRemittance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance
+    fields:
+      documentId:
+        resolver: true
+      inboundMessageId:
+        resolver: true
+      sourceFormat:
+        resolver: true
+      mapping:
+        resolver: true
+      appliedById:
+        resolver: true
+      createdById:
+        resolver: true
+      factoringCompany:
+        resolver: true
+  FactoringRemittanceSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSuggestion
+  FactoringRemittanceLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLine
+    fields:
+      matchedBy:
+        resolver: true
+      submissionItemId:
+        resolver: true
+      matchedInvoiceNumber:
+        fieldName: MatchedInvoice
+      matchedSubmissionId:
+        resolver: true
+      reason:
+        resolver: true
+      reserveEntryId:
+        resolver: true
+  FactoringRemittancePlanLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedRemittanceLine
+  FactoringRemittancePlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittancePlan
+    fields:
+      remittanceId:
+        resolver: true
   InvoiceDisputeCaseStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus

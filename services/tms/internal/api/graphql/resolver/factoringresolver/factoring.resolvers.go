@@ -1025,3 +1025,296 @@ func (r *QueryResolver) FactoringChargebackReversalPlan(ctx context.Context, inp
 	}
 	return r.FactoringLedgerService.PlanChargebackReversal(ctx, req, actorutil.FromAuthContext(authCtx))
 }
+
+func (r *FactoringRemittanceLineResolver) MatchedBy(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchedBy, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return nonEmptyEnum(obj.MatchedBy), nil
+}
+
+func (r *FactoringRemittanceLineResolver) SubmissionItemID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.SubmissionItemID), nil
+}
+
+func (r *FactoringRemittanceLineResolver) MatchedSubmissionID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.MatchedSubmission), nil
+}
+
+func (r *FactoringRemittanceLineResolver) Reason(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchReason, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return nonEmptyEnum(obj.Reason), nil
+}
+
+func (r *FactoringRemittanceLineResolver) ReserveEntryID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.ReserveEntryID), nil
+}
+
+func (r *FactoringRemittancePlanResolver) RemittanceID(ctx context.Context, obj *factoringports.RemittancePlan) (string, error) {
+	if obj == nil || obj.Remittance == nil {
+		return "", nil
+	}
+	return obj.Remittance.ID.String(), nil
+}
+
+func (r *FactoringRemittanceResolver) DocumentID(ctx context.Context, obj *factoring.Remittance) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.DocumentID), nil
+}
+
+func (r *FactoringRemittanceResolver) InboundMessageID(ctx context.Context, obj *factoring.Remittance) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.InboundMessageID), nil
+}
+
+func (r *FactoringRemittanceResolver) SourceFormat(ctx context.Context, obj *factoring.Remittance) (*factoring.RemittanceFormat, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return nonEmptyEnum(obj.SourceFormat), nil
+}
+
+func (r *FactoringRemittanceResolver) Mapping(ctx context.Context, obj *factoring.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return remittanceMappingToModel(obj.Mapping), nil
+}
+
+func (r *FactoringRemittanceResolver) AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.AppliedByID), nil
+}
+
+func (r *FactoringRemittanceResolver) CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return idOrNil(obj.CreatedByID), nil
+}
+
+func (r *FactoringRemittanceResolver) FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.factorFor(ctx, obj.FactoringCompanyID)
+}
+
+func (r *MutationResolver) CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(input.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.Create(ctx, &factoringports.CreateRemittanceRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+		DefaultKind:        validRemittanceKind(input.DefaultKind),
+		RemittedOn:         int64Ptr(input.RemittedOn),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID(input.ID, "id")
+	if err != nil {
+		return nil, err
+	}
+	documentID, err := parseID(input.DocumentID, "documentId")
+	if err != nil {
+		return nil, err
+	}
+	mapping, err := remittanceMappingFromModel(input.Mapping)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.Stage(ctx, &factoringports.StageRemittanceRequest{
+		TenantInfo:  base.TenantInfo(authCtx),
+		ID:          id,
+		Version:     int64(input.Version),
+		DocumentID:  documentID,
+		Mapping:     mapping,
+		DefaultKind: validRemittanceKind(input.DefaultKind),
+		RemittedOn:  int64Ptr(input.RemittedOn),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	req, err := remittanceVersionFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.Rematch(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	remittanceID, err := parseID(input.RemittanceID, "remittanceId")
+	if err != nil {
+		return nil, err
+	}
+	lineID, err := parseID(input.LineID, "lineId")
+	if err != nil {
+		return nil, err
+	}
+	itemID, err := parseOptionalID(input.ItemID, "itemId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.UpdateLine(ctx, &factoringports.UpdateRemittanceLineRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		RemittanceID: remittanceID,
+		Version:      int64(input.Version),
+		LineID:       lineID,
+		Action:       input.Action,
+		ItemID:       itemID,
+		Kind:         validRemittanceKind(input.Kind),
+		Reason:       stringutils.FromPtr(input.Reason),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpImport)
+	if err != nil {
+		return nil, err
+	}
+	req, err := remittanceVersionFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringRemittanceService.Apply(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return result.Remittance, nil
+}
+
+func (r *MutationResolver) DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpCancel)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID(input.ID, "id")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.Discard(ctx, &factoringports.DiscardRemittanceRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ID:         id,
+		Version:    int64(input.Version),
+		Reason:     input.Reason,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) FactoringRemittances(ctx context.Context, input gqlmodel.FactoringRemittanceListInput) (*gqlmodel.FactoringRemittanceConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, input.Table, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseOptionalID(input.FactoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	messageID, err := parseOptionalID(input.InboundMessageID, "inboundMessageId")
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringRemittanceService.ListConnection(ctx, &factoringports.ListRemittanceConnectionRequest{
+		Filter:             tableInput.Filter,
+		Cursor:             tableInput.Cursor,
+		FactoringCompanyID: factorID,
+		InboundMessageID:   messageID,
+		Statuses:           input.Statuses,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return remittanceConnectionToModel(result)
+}
+
+func (r *QueryResolver) FactoringRemittance(ctx context.Context, id string) (*factoring.Remittance, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	remittanceID, err := parseID(id, "id")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.Get(ctx, factoringports.GetRemittanceRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ID:         remittanceID,
+	})
+}
+
+func (r *QueryResolver) FactoringRemittanceLines(ctx context.Context, input gqlmodel.FactoringRemittanceLineListInput) (*gqlmodel.FactoringRemittanceLineConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, input.Table, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	remittanceID, err := parseID(input.RemittanceID, "remittanceId")
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.FactoringRemittanceService.ListLineConnection(ctx, &factoringports.ListRemittanceLineConnectionRequest{
+		Filter:        tableInput.Filter,
+		TenantInfo:    base.TenantInfo(authCtx),
+		Cursor:        tableInput.Cursor,
+		RemittanceID:  remittanceID,
+		MatchStatuses: input.MatchStatuses,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return remittanceLineConnectionToModel(result)
+}
+
+func (r *QueryResolver) FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringports.RemittancePlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringRemittance, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := remittanceVersionFromModel(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringRemittanceService.PlanApply(ctx, req, actorutil.FromAuthContext(authCtx))
+}

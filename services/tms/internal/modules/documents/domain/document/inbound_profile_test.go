@@ -76,5 +76,21 @@ func TestAllProcessingProfiles_IsComplete(t *testing.T) {
 	for _, profile := range document.AllProcessingProfiles() {
 		assert.Truef(t, profile.IsValid(), "%s is listed but not valid", profile)
 	}
-	assert.Len(t, document.AllProcessingProfiles(), 5)
+	assert.Len(t, document.AllProcessingProfiles(), 6)
+}
+
+// A factor's remittance has its text read so billing can read its lines, and
+// is never handed to the shipment extraction model.
+func TestFactoringRemittanceProfile_ReadsTextOnly(t *testing.T) {
+	t.Parallel()
+
+	profile := document.ProcessingProfileFactoringRemittance
+	assert.True(t, profile.SupportsIntelligence())
+	assert.False(t, profile.ExtractsWithAI())
+	for _, other := range document.IntelligenceProcessingProfiles() {
+		if other != profile {
+			assert.Truef(t, other.ExtractsWithAI(), "%s stopped being extracted", other)
+		}
+	}
+	assert.False(t, document.ProcessingProfileNone.ExtractsWithAI())
 }
