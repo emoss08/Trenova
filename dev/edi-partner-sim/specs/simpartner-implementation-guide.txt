@@ -1,0 +1,91 @@
+Trenova Partner Simulator
+EDI Implementation Guide
+Version 1.0 - Motor carrier connections
+
+This guide describes the trading partner that dev/edi-partner-sim plays. Upload it to a
+Desk conversation with an agent that handles EDI and ask for the connection to be set up
+from it; the draft should match the simulator's defaults below. Start the simulator first
+(task sim in dev/edi-partner-sim).
+
+1. Trading partner
+Trading Partner Code: SIMPARTNER
+Trading Partner Name: Trenova Partner Simulator
+EDI Contact: Simulator EDI desk
+Email: sim-edi@partner-sim.example
+Phone: +1 312 555 0190
+All times in this guide and in the simulator's documents are UTC (Etc/UTC).
+
+2. Communications
+2.1 AS2
+The simulator exchanges documents over AS2.
+Simulator AS2 Identifier: SIMPARTNER
+Carrier AS2 Identifier: TRENOVA
+AS2 URL: http://localhost:9210/as2
+MDN: synchronous, signed.
+Signing algorithm: SHA-256. Encryption algorithm: AES-256 (CBC). Compression: none.
+The simulator's public certificate is served at http://localhost:9210/control/identity.
+Your private key and certificate stay with you; enter them on the communication profile.
+2.2 SFTP mailbox
+The simulator also runs an SFTP mailbox for the mailbox pickup path.
+SFTP host: localhost, port 9222, user trenova.
+The SFTP password is the one the simulator was started with (-sftp-password); it is not
+given here. The host key is served at http://localhost:9210/control/sftp.
+
+3. Envelopes
+3.1 Interchange (ISA)
+ISA05/ISA06 Simulator interchange sender: qualifier ZZ (mutually defined), ID SIMPARTNER
+ISA07/ISA08 Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA
+ISA11 repetition separator: ^ (caret). ISA12 version 00401. ISA15 usage indicator: T.
+3.2 Functional group (GS)
+GS02 Application Sender Code: SIMPARTNER
+GS03 Application Receiver Code: TRENOVA
+GS08 Version: 004010
+3.3 Delimiters
+Element separator: * (asterisk). Segment terminator: ~ (tilde). Sub-element separator: > (greater than).
+3.4 Control numbers
+Carrier interchange control numbers (ISA13) start at 1 and increase by one.
+
+4. Transaction sets
+4.1 Documents exchanged
+The simulator sends the 204 Motor Carrier Load Tender to the carrier.
+The carrier answers each tender with a 990 Response to a Load Tender.
+The carrier sends the 214 Transportation Carrier Shipment Status Message for pickups and deliveries.
+4.2 Acknowledgments
+The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.
+The carrier returns a 997 for every 204. The 999 Implementation Acknowledgment is not used.
+
+5. 204 Load Tender requirements
+B2 Beginning Segment is mandatory. B2-02 Standard Carrier Alpha Code is SIML. B2-04 Shipment Identification Number is mandatory.
+B2A Set Purpose is mandatory. B2A-01 code: 00 Original.
+L11 with qualifier CR (Customer Reference Number) is mandatory and repeats B2-04.
+S5 Stop Off Details is mandatory for every stop. S5-02 codes: CL Complete Load, CU Complete Unload.
+G62 is mandatory on every stop: qualifier 10 (requested pickup) on the pickup, 68 (requested delivery) on the delivery.
+N1 is mandatory on every stop: SF (ship from) on the pickup and ST (ship to) on the delivery, identified by qualifier 93 (code assigned by the party originating the transaction).
+L3 Total Weight and Charges is mandatory.
+
+6. Code lists
+6.1 Stop locations (N1-04 with N1-03 = 93)
+SIM-SHIP Simulator Shipper, 100 Simulator Way, Chicago, IL 60601
+SIM-CONS Simulator Consignee, 200 Receiver Road, Dallas, TX 75201
+
+7. Sample 204
+ISA*00*          *00*          *ZZ*SIMPARTNER     *ZZ*TRENOVA        *261014*0930*^*00401*000000501*0*T*>~
+GS*SM*SIMPARTNER*TRENOVA*20261014*0930*501*X*004010~
+ST*204*0001~
+B2**SIML**SIM000501**PP~
+B2A*00~
+L11*SIM000501*CR~
+S5*1*CL~
+G62*10*20261014*Y*0930~
+N1*SF*Simulator Shipper*93*SIM-SHIP~
+N3*100 Simulator Way~
+N4*Chicago*IL*60601*US~
+S5*2*CU~
+G62*68*20261016*Z*0930~
+N1*ST*Simulator Consignee*93*SIM-CONS~
+N3*200 Receiver Road~
+N4*Dallas*TX*75201*US~
+L3*1000*G***150000~
+SE*16*0001~
+GE*1*501~
+IEA*1*000000501~

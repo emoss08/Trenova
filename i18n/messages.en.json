@@ -5517,6 +5517,24 @@
       "routes/inbox"
     ]
   },
+  "A draft is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A draft request is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A driver": {
     "sites": 2,
     "scope": [
@@ -6046,6 +6064,15 @@
     ]
   },
   "A funded invoice sold with recourse is still unpaid and its chargeback window closes within 7 days; unless the customer pays, the factor will charge it back and the organization will owe the advance and fee.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A gap is Unsupported or Ambiguous": {
     "sites": 1,
     "scope": [
       "go"
@@ -6985,6 +7012,15 @@
       "go/other"
     ]
   },
+  "A new trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A new webhook URL is ready": {
     "sites": 1,
     "scope": [
@@ -7356,6 +7392,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "A person must approve the connection before it is written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A person on the case": {
@@ -19476,7 +19521,7 @@
     ]
   },
   "Agent": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -22218,6 +22263,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Already set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Also enroll carriers with a tender that is still open.": {
@@ -39246,7 +39300,7 @@
     ]
   },
   "Both ways": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -46692,7 +46746,7 @@
     ]
   },
   "Changes": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -46700,6 +46754,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/rate-agreement"
     ]
   },
@@ -46875,6 +46930,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Changes to a trading partner you already have": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
@@ -53374,6 +53438,15 @@
       "packages/shared/types"
     ]
   },
+  "Code mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Code must be 10 characters or less": {
     "sites": 2,
     "scope": [
@@ -53583,6 +53656,15 @@
     ],
     "areas": [
       "routes/pay-code"
+    ]
+  },
+  "Codes {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cold Storage": {
@@ -54682,6 +54764,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Communication": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Communication number": {
@@ -64364,6 +64455,15 @@
       "routes/worker"
     ]
   },
+  "Credentials you enter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Credit": {
     "sites": 17,
     "scope": [
@@ -65552,6 +65652,15 @@
       "go/other"
     ]
   },
+  "Current setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Current source": {
     "sites": 1,
     "scope": [
@@ -66031,7 +66140,7 @@
     ]
   },
   "Customer": {
-    "sites": 91,
+    "sites": 92,
     "scope": [
       "go",
       "ts"
@@ -70152,7 +70261,7 @@
     ]
   },
   "Default": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -75671,6 +75780,15 @@
       "go/other"
     ]
   },
+  "Direction must be Inbound or Outbound": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Direction must be PushTrenovaValue or AdjustTrenova": {
     "sites": 1,
     "scope": [
@@ -78789,12 +78907,13 @@
     ]
   },
   "Document types": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/desk",
       "routes/document-type"
     ]
   },
@@ -82968,6 +83087,15 @@
       "go/other"
     ]
   },
+  "EDI connection draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "EDI connection is not enabled for inbound load tenders": {
     "sites": 1,
     "scope": [
@@ -83077,6 +83205,15 @@
     ]
   },
   "EDI documents that failed or are waiting on a reply.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "EDI draft": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104860,6 +104997,24 @@
       "routes/worker"
     ]
   },
+  "For the EDI connection drafted from {0}, use \"{1}\" for {2} (page {3}) and draft it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "For the EDI connection drafted from {0}, use \"{1}\" for {2} and draft it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "For your team only. Never printed.": {
     "sites": 1,
     "scope": [
@@ -108427,6 +108582,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Gaps in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Garnishment": {
@@ -112458,6 +112622,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Held for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Held from {0}": {
@@ -116593,6 +116766,15 @@
       "routes/detention-policy"
     ]
   },
+  "If the partner uses it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "If this takes too long, please refresh the page.": {
     "sites": 1,
     "scope": [
@@ -117326,6 +117508,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "In": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "In 3 hours": {
@@ -118094,6 +118285,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Inbound only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Inbound tender": {
@@ -119965,7 +120165,7 @@
     ]
   },
   "Interchange": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -123817,6 +124017,15 @@
       "routes/desk"
     ]
   },
+  "It could not be read as X12.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It could not be removed": {
     "sites": 1,
     "scope": [
@@ -123950,6 +124159,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "It is {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "It is {0}. A reply can carry {1} in all, and {2} is left.": {
@@ -126533,13 +126751,14 @@
     ]
   },
   "Kept": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/detention-intelligence"
     ]
   },
@@ -130130,6 +130349,15 @@
     "areas": [
       "routes/my-team",
       "routes/worker"
+    ]
+  },
+  "Left as they are": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Left of this month's budget": {
@@ -134208,6 +134436,15 @@
       "routes/edi"
     ]
   },
+  "Loading the EDI connection draft…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the EDI inbound file…": {
     "sites": 1,
     "scope": [
@@ -138105,6 +138342,15 @@
       "routes/edi"
     ]
   },
+  "Mapping entity type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mapping is required for source ID {0}": {
     "sites": 1,
     "scope": [
@@ -139469,6 +139715,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Matches more than one trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Matches one facility pair": {
@@ -146373,6 +146628,15 @@
       "routes/edi"
     ]
   },
+  "Name the segment the spec describes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Name the sign-in provider and configure the identifier used by hosted login flows.": {
     "sites": 1,
     "scope": [
@@ -147602,6 +147866,15 @@
       "routes/agent-control"
     ]
   },
+  "Never chosen for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Never connected": {
     "sites": 1,
     "scope": [
@@ -147712,7 +147985,7 @@
     ]
   },
   "New": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -149633,6 +149906,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No EDI partner with that ID exists in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No EDI test cases yet": {
@@ -156411,6 +156693,15 @@
       "routes/shipment"
     ]
   },
+  "No template chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No template selected": {
     "sites": 1,
     "scope": [
@@ -157737,11 +158028,12 @@
     ]
   },
   "None required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -158495,6 +158787,15 @@
       "apps/web/hooks"
     ]
   },
+  "Not found on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not found with provider": {
     "sites": 1,
     "scope": [
@@ -158584,6 +158885,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Not in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not in use": {
@@ -158698,12 +159008,13 @@
     ]
   },
   "Not matched": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Not now": {
@@ -159225,12 +159536,13 @@
     ]
   },
   "Not set": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Not set (UTC)": {
@@ -159300,6 +159612,15 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/osha"
+    ]
+  },
+  "Not supported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not supported in this browser. On iPhone, add Dash to your Home Screen first.": {
@@ -160698,6 +161019,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing is saved until you approve the proposal.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing is sent to {0} until setup is finished: confirm the mappings, then choose a start date.": {
     "sites": 1,
     "scope": [
@@ -161333,6 +161663,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Nothing secret is taken from the guide. After you approve, enter these on the communication profile, then turn it on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing selected": {
@@ -167020,6 +167359,15 @@
     ]
   },
   "Only an open exception can be acknowledged": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an outside trading partner is set up from a spec": {
     "sites": 1,
     "scope": [
       "go"
@@ -173242,6 +173590,15 @@
       "routes/desk"
     ]
   },
+  "Out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Out Of Service": {
     "sites": 2,
     "scope": [
@@ -173449,6 +173806,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Outbound only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Outbound tender": {
@@ -175693,7 +176059,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -189321,6 +189687,24 @@
       "go/other"
     ]
   },
+  "Propose saving it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Propose saving the EDI connection drafted from {0}, with document digest {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Propose sending a posted invoice to the customer's EDI partner as a 210. Set force only to resend one that already went, when the partner asks for it again. A person always decides.": {
     "sites": 1,
     "scope": [
@@ -196046,7 +196430,7 @@
     ]
   },
   "Ready to approve": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -206146,6 +206530,15 @@
       "routes/billing-queue"
     ]
   },
+  "Required before it can be turned on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Required confirmed": {
     "sites": 1,
     "scope": [
@@ -206335,6 +206728,15 @@
     ],
     "areas": [
       "routes/driver-expense"
+    ]
+  },
+  "Required, not in the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Required, not on file": {
@@ -214958,6 +215360,15 @@
       "routes/agent-control"
     ]
   },
+  "Sample": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Sample 53 ft dry van": {
     "sites": 1,
     "scope": [
@@ -215092,6 +215503,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Sample {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Sample, page {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Samsara asset ID": {
@@ -215951,6 +216380,15 @@
       "routes/edi"
     ]
   },
+  "Save the EDI connection from the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": {
     "sites": 1,
     "scope": [
@@ -216169,7 +216607,7 @@
     ]
   },
   "Saved": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -216177,6 +216615,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template",
       "routes/settings"
     ]
@@ -220195,6 +220634,15 @@
       "routes/edi"
     ]
   },
+  "Secrets, keys and certificates are never taken from a document; leave them for the person to enter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr": {
     "sites": 1,
     "scope": [
@@ -220250,12 +220698,13 @@
     ]
   },
   "Section {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Sections": {
@@ -226853,6 +227302,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Set up a trading partner from its guide: the partner, its communication profile, a document profile per document type, control number starts and code mappings, all inactive until you enter the credentials and turn them on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Set up accounting before booking factoring to the ledger": {
@@ -236789,6 +237247,15 @@
       "go/other"
     ]
   },
+  "Starter template {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Starting": {
     "sites": 1,
     "scope": [
@@ -243382,6 +243849,15 @@
       "go/other"
     ]
   },
+  "Template {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Template {0} is {1}; only Active and Inactive templates can be bulk updated": {
     "sites": 1,
     "scope": [
@@ -246765,6 +247241,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The approver belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The argument must be this value.": {
@@ -250638,6 +251123,15 @@
       "apps/web/components"
     ]
   },
+  "The envelope matches the drafted profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The equipment could not be checked against a registration.": {
     "sites": 1,
     "scope": [
@@ -251989,6 +252483,42 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "The guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide gives no value. Tell the agent what it is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide {0} is for the existing trading partner {1} ({2}, id {3}). Draft it again for that partner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The guide's samples": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The hashing algorithm used to sign outbound messages and MDNs.": {
@@ -254575,6 +255105,15 @@
     ]
   },
   "The organization default profile cannot target a customer or type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The organization is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -258182,6 +258721,33 @@
     ]
   },
   "The source version belongs to a different template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The spec document has no readable text yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The spec document is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The spec document was read differently since this draft was approved; draft it again": {
     "sites": 1,
     "scope": [
       "go"
@@ -268195,6 +268761,15 @@
       "go/other"
     ]
   },
+  "To decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "To file": {
     "sites": 3,
     "scope": [
@@ -270769,6 +271344,15 @@
       "routes/agent-control"
     ]
   },
+  "Trading partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Trading partner this transport profile delivers documents for.": {
     "sites": 1,
     "scope": [
@@ -271516,6 +272100,15 @@
   },
   "Transaction set is required": {
     "sites": 10,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Transaction set must be 204, 210, 214 or 990": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -274804,6 +275397,15 @@
       "routes/desk"
     ]
   },
+  "Unclear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Uncollectable": {
     "sites": 1,
     "scope": [
@@ -277312,6 +277914,15 @@
       "routes/worker"
     ]
   },
+  "Update a trading partner you already have from its revised guide. Only what the guide changed is written, and nothing is turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Update agent control settings": {
     "sites": 1,
     "scope": [
@@ -278432,6 +279043,15 @@
       "apps/web/components"
     ]
   },
+  "Usage must be Mandatory, Optional, Conditional or NotUsed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Usage notes for this profile": {
     "sites": 1,
     "scope": [
@@ -279056,12 +279676,13 @@
     ]
   },
   "Use {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -283884,12 +284505,13 @@
     ]
   },
   "Waiting on your approval": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Waiting on {0} to reply": {
@@ -290423,6 +291045,15 @@
       "apps/web/components"
     ]
   },
+  "Which partner is this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Which policies to show": {
     "sites": 1,
     "scope": [
@@ -291927,6 +292558,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Will not save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Will pay by": {
@@ -293619,6 +294259,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Would not save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Wrap": {
@@ -296114,6 +296763,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Your answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Your carrier": {
@@ -301845,6 +302503,15 @@
       "routes/shipment"
     ]
   },
+  "kept at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "key {0}": {
     "sites": 1,
     "scope": [
@@ -303189,6 +303856,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "page {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "paid at {0}, quoted {1}": {
     "sites": 1,
     "scope": [
@@ -304140,6 +304816,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "the guide": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "the last 24 hours": {
@@ -305829,7 +306514,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -305930,6 +306615,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# code has no mapping} other {# codes have no mapping}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# condition} other {# conditions}}": {
@@ -307618,7 +308312,7 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -308090,6 +308784,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# required} other {# required}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# resource} other {# resources}}": {
     "sites": 1,
     "scope": [
@@ -308274,6 +308977,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# rule met} other {# rules met}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# rule not checked} other {# rules not checked}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# rule unmet} other {# rules unmet}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# run today} other {# runs today}}": {
@@ -308688,6 +309418,15 @@
       "routes/scheduling"
     ]
   },
+  "{0, plural, one {# template weighed} other {# templates weighed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# the same} other {# the same}}": {
     "sites": 1,
     "scope": [
@@ -308695,6 +309434,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# thing to settle} other {# things to settle}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.": {
@@ -310638,6 +311386,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0, plural, one {change} other {changes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {correction this week} other {corrections this week}}": {
@@ -317383,7 +318140,7 @@
     ]
   },
   "{0} of {1} shown": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -321484,7 +322241,7 @@
     ]
   },
   "{0}% confident": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -321802,7 +322559,7 @@
     ]
   },
   "{0}, element {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -321990,6 +322747,15 @@
       "apps/web/components"
     ]
   },
+  "{0}: guide {1}, sample {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}: retrying after {1, plural, one {# failure} other {# failures}}": {
     "sites": 1,
     "scope": [
@@ -322015,6 +322781,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "{0}: what the guide says": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}: {1, plural, one {# call} other {# calls}}": {

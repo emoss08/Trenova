@@ -106,6 +106,7 @@ func ediDecisionToolProviders() []any {
 		provideGetEDIAckHealthTool,
 		provideInspectX12Tool,
 		providePreviewEDIDocumentTool,
+		provideDraftEDIConnectionTool,
 	}
 }
 

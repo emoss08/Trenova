@@ -379,6 +379,58 @@ func (s *Service) ResetControlNumber(
 	req *ediports.ResetEDIControlNumberRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.EDIControlNumberSequence, error) {
+	if err := validateControlNumberRequest(req); err != nil {
+		return nil, err
+	}
+
+	sequence, err := s.controlNumberRepo.ResetControlNumber(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(
+		sequence,
+		actor,
+		permission.OpUpdate,
+		nil,
+		sequence,
+		fmt.Sprintf(
+			"EDI %s control number sequence reset to %d",
+			sequence.Kind,
+			req.NextValue,
+		),
+	)
+	return sequence, nil
+}
+
+func (s *Service) StartControlNumber(
+	ctx context.Context,
+	req *ediports.ResetEDIControlNumberRequest,
+	actor *permissionports.RequestActor,
+) (*edi.EDIControlNumberSequence, error) {
+	if err := validateControlNumberRequest(req); err != nil {
+		return nil, err
+	}
+
+	sequence, err := s.controlNumberRepo.StartControlNumber(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(
+		sequence,
+		actor,
+		permission.OpUpdate,
+		nil,
+		sequence,
+		fmt.Sprintf(
+			"EDI %s control numbers start at %d",
+			sequence.Kind,
+			sequence.NextValue,
+		),
+	)
+	return sequence, nil
+}
+
+func validateControlNumberRequest(req *ediports.ResetEDIControlNumberRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.PartnerID.IsNil() {
 		multiErr.Add("partnerId", errortypes.ErrRequired, "EDI partner is required")
@@ -401,26 +453,9 @@ func (s *Service) ResetControlNumber(
 		multiErr.Add("nextValue", errortypes.ErrInvalid, "Next value must be at least 1")
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return multiErr
 	}
-
-	sequence, err := s.controlNumberRepo.ResetControlNumber(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	s.logAction(
-		sequence,
-		actor,
-		permission.OpUpdate,
-		nil,
-		sequence,
-		fmt.Sprintf(
-			"EDI %s control number sequence reset to %d",
-			sequence.Kind,
-			req.NextValue,
-		),
-	)
-	return sequence, nil
+	return nil
 }
 
 func (s *Service) queueMessageForDelivery(

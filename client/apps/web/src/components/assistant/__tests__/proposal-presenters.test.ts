@@ -233,6 +233,61 @@ describe("presentProposal", () => {
     expect(wide.severity).toEqual({ label: "High", tone: "danger" });
   });
 
+  it("sums up a drafted EDI connection by what it holds, keeping the arrays off the card", () => {
+    const value = (field: string) => ({
+      field,
+      value: "x",
+      confidence: 0.9,
+      citation: { page: 1, quote: "x" },
+    });
+    const view = presentProposal(
+      proposal({
+        toolName: "apply_edi_connection_draft",
+        arguments: {
+          documentId: "doc_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
+          documentDigest: "sha256:5f1c9a0b7e3d2c1f00aa11bb22cc33dd44ee55ff66778899aabbccddeeff0011",
+          values: [value("partner.name"), value("partner.code"), value("isa.senderId")],
+          requirements: [{ transactionSet: "214", segment: "MS1", usage: "Mandatory" }],
+          mappings: [],
+          gaps: [{ kind: "Unsupported", summary: "Appendix B" }],
+          resolutions: [{ field: "partner.timezone", value: "America/Chicago" }],
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Save the EDI connection from the guide");
+    expect(view.summary).toBe(
+      "Set up a trading partner from its guide: the partner, its communication profile, a document profile per document type, control number starts and code mappings, all inactive until you enter the credentials and turn them on.",
+    );
+    expect(view.highlights).toEqual([
+      { label: "Settings from the guide", value: "3" },
+      { label: "Segment rules", value: "1" },
+      { label: "Gaps noted", value: "1" },
+      { label: "Your answers", value: "1" },
+      { label: "Guide digest", value: "sha256:5f1c9a0b7e3d" },
+    ]);
+    expect(view.reversible).toBe(false);
+  });
+
+  it("says a revised guide changes only what it changed for a partner that exists", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "apply_edi_connection_draft",
+        arguments: {
+          documentId: "doc_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
+          ediPartnerId: "edip_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
+          documentDigest: "sha256:5f1c",
+          values: [],
+        },
+      }),
+    );
+
+    expect(view.summary).toBe(
+      "Update a trading partner you already have from its revised guide. Only what the guide changed is written, and nothing is turned on.",
+    );
+    expect(view.highlights).toEqual([{ label: "Guide digest", value: "sha256:5f1c" }]);
+  });
+
   it("puts every argument on the face of the card for a tool it has no words for", () => {
     const view = presentProposal(
       proposal({

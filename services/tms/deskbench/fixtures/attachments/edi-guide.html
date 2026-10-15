@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Acme Retail Group EDI Implementation Guide {{VERSION}}</title>
+<style>
+  @page { size: Letter; margin: 0.75in; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #111; }
+  section { break-after: page; }
+  section:last-child { break-after: auto; }
+  h1 { font-size: 16pt; margin: 0 0 4pt; }
+  h2 { font-size: 12pt; margin: 14pt 0 4pt; }
+  h3 { font-size: 10.5pt; margin: 10pt 0 3pt; }
+  p { margin: 0 0 6pt; line-height: 1.35; }
+  .sub { font-size: 11pt; margin-bottom: 18pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 8pt; }
+  td, th { text-align: left; padding: 3pt 10pt 3pt 0; border-bottom: 0.5pt solid #999; vertical-align: top; }
+  pre { font-family: Courier, monospace; font-size: 8.5pt; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<section>
+<h1>Acme Retail Group</h1>
+<p class="sub">Transportation EDI Implementation Guide<br>Version {{VERSION}} - Motor Carrier Partners<br>Issued {{ISSUED}}</p>
+<h2>Revision history</h2>
+<table>
+  <tr><th>Version</th><th>Date</th><th>Changes</th></tr>
+  {{REVISIONS}}
+</table>
+<h2>1. Introduction</h2>
+<p>This guide describes how carriers exchange X12 transportation documents with Acme Retail Group.</p>
+<p>Trading Partner Code: ACMERETAIL<br>Trading Partner Name: Acme Retail Group</p>
+<p>EDI Coordinator: {{COORDINATOR}}<br>Email: {{COORDINATOR_EMAIL}}<br>Phone: {{COORDINATOR_PHONE}}</p>
+<p>All times in this guide are Central Time (America/Chicago).</p>
+</section>
+
+<section>
+<h2>2. Communications</h2>
+<h3>2.1 Connection method</h3>
+<p>Acme exchanges all documents over AS2 (Applicability Statement 2). FTP and VAN connections are not offered.</p>
+<p>Acme AS2 Identifier: ACMERETAILAS2<br>Carrier AS2 Identifier: TRENOVA-AS2</p>
+<p>Production AS2 URL: https://as2.acmeretail.example/as2/receive<br>Test AS2 URL: https://as2-test.acmeretail.example/as2/receive</p>
+<p>MDN: synchronous, signed.<br>Signing algorithm: SHA-256. Encryption algorithm: AES-256 (CBC).</p>
+<h3>2.2 Certificates</h3>
+<p>Certificates are exchanged by email with the EDI Coordinator before testing starts.</p>
+<p>For the test environment, the keystore password: Acme#Test2026 is sent separately.</p>
+<p>Begin in the test environment; Acme moves the connection to production after certification.</p>
+</section>
+
+<section>
+<h2>3. Envelopes</h2>
+<h3>3.1 Interchange (ISA)</h3>
+<p>ISA05/ISA06 Acme interchange sender: qualifier 01 (DUNS), ID 007912345</p>
+<p>ISA07/ISA08 Carrier interchange receiver: qualifier 02 (SCAC), ID TRNV</p>
+<p>ISA12 Interchange version 00401. ISA15 usage indicator: T during testing, P in production.</p>
+<h3>3.2 Functional group (GS)</h3>
+<p>GS02 Application Sender Code: ACMERETAIL<br>GS03 Application Receiver Code: TRNV<br>GS08 Version: 004010</p>
+<h3>3.3 Delimiters</h3>
+<p>Element separator: * (asterisk). Segment terminator: ~ (tilde). Sub-element separator: &gt; (greater than).</p>
+<h3>3.4 Control numbers</h3>
+<p>Carrier interchange control numbers (ISA13) must start at {{ISA13_START}} and increase by one.</p>
+</section>
+
+<section>
+<h2>4. Transaction sets</h2>
+<h3>4.1 Documents exchanged</h3>
+<p>Acme sends the 204 Motor Carrier Load Tender to the carrier.</p>
+<p>The carrier answers each tender with a 990 Response to a Load Tender within 2 hours.</p>
+<p>The carrier sends the 214 Transportation Carrier Shipment Status Message for every pickup and delivery.</p>
+<p>The carrier invoices with the 210 Motor Carrier Freight Details and Invoice.</p>
+<h3>4.2 Acknowledgments</h3>
+<p>Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.</p>
+<p>Acme returns a 997 for each document it receives. Acme does not support the 999 Implementation Acknowledgment.</p>
+</section>
+
+<section>
+<h2>5. 204 Load Tender requirements</h2>
+<p>B2 Beginning Segment is mandatory. B2-02 Standard Carrier Alpha Code is mandatory. B2-04 Shipment Identification Number is mandatory.</p>
+<p>B2A Set Purpose is mandatory. B2A-01 codes: 00 Original, 01 Cancellation, 04 Change.</p>
+<p>L11 with qualifier BM (Bill of Lading) is mandatory.</p>
+<p>S5 Stop Off Details is mandatory for every stop.</p>
+<h2>6. 214 Shipment Status requirements</h2>
+<p>AT7 Shipment Status Details is mandatory. AT7-01 codes: X3 Arrived at Pickup, AF Departed Pickup, X1 Arrived at Delivery, D1 Delivered.</p>
+<p>{{MS1_RULE}}</p>
+<p>K1 Remarks is not used.</p>
+</section>
+
+<section>
+<h2>7. Code lists</h2>
+<p>7.1 Stop reason codes (S5-02): CL Complete Load, CU Complete Unload.</p>
+<p>7.2 Service levels (L5): STD Standard, EXP Expedited.</p>
+<h2>8. Invoicing notes</h2>
+<p>Detention and other accessorial charges are billed on the 210 with the Acme charge codes listed in Appendix B.</p>
+<p>Appendix B is distributed separately to certified carriers.</p>
+</section>
+
+<section>
+<h2>9. Sample 204</h2>
+<pre>ISA*00*          *00*          *01*007912345      *02*TRNV           *261014*0930*U*00401*000000123*0*T*&gt;~
+GS*SM*ACMERETAIL*TRNV*20261014*0930*123*X*004010~
+ST*204*0001~
+B2**TRNV**ACM-55821**PP~
+B2A*00~
+L11*BOL-77812*BM~
+S5*1*CL~
+N1*SH*ACME DC 14~
+S5*2*CU~
+N1*CN*ACME STORE 220~
+SE*9*0001~
+GE*1*123~
+IEA*1*000000123~</pre>
+</section>
+</body>
+</html>

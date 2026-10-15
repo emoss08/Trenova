@@ -279,7 +279,7 @@ func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
 	assert.True(t, result.Actions[0].Tainted)
 	contents := toolResults(result, "create_report")
 	require.Len(t, contents, 1)
-	assert.Contains(t, contents[0], "a trading partner's text it was given to inspect")
+	assert.Contains(t, contents[0], "a trading partner's text or guide it was given")
 }
 
 func TestReadsExternalContent_NamesTheWebAndPastedPartnerText(t *testing.T) {
@@ -288,6 +288,8 @@ func TestReadsExternalContent_NamesTheWebAndPastedPartnerText(t *testing.T) {
 	assert.True(t, ReadsExternalContent(agentextension.ToolWebSearch))
 	assert.True(t, ReadsExternalContent(agentextension.ToolWebRead))
 	assert.True(t, ReadsExternalContent("inspect_x12"))
+	assert.True(t, ReadsExternalContent("draft_edi_connection"),
+		"a partner's implementation guide is their text too")
 	assert.False(t, ReadsExternalContent("get_edi_message"),
 		"a stored partner document taints the run; only text handed to the agent caps writes")
 }

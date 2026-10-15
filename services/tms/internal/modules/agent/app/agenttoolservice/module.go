@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
@@ -33,8 +34,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -507,6 +510,7 @@ func ediToolProviders() []any {
 		provideReprocessEDIInboundFilesTool,
 		provideSendEDILoadTenderTool,
 		provideSendEDIStatusUpdateTool,
+		provideApplyEDIConnectionDraftTool,
 	}
 }
 
@@ -552,6 +556,17 @@ func provideSendEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool 
 
 func provideSendEDIStatusUpdateTool(edi *ediservice.Service) agentports.AgentTool {
 	return editools.NewSendEDIStatusUpdateTool(edi)
+}
+
+func provideApplyEDIConnectionDraftTool(
+	drafts ediports.EDIConnectionDraftService,
+	documents documentports.DocumentRepository,
+	contents documentports.DocumentContentService,
+) agentports.AgentTool {
+	return editools.NewApplyConnectionDraftTool(
+		drafts,
+		edispec.NewDocumentReader(documents, contents),
+	)
 }
 
 func provideOpenInvoiceDisputeTool(

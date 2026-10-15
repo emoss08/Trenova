@@ -201,7 +201,8 @@ made up: no real broker, carrier or person. Each rate confirmation there is one 
 `variants.json` (an entry may `extend` another and change a few values) filled into
 `rate-confirmation.html` and printed by Gotenberg's Chromium (`node render.mjs` from that folder,
 with the local stack up), so it is laid out the way a browser-printed confirmation is; the PDF
-reader's own tests read them too.
+reader's own tests read them too. A trading partner's EDI implementation guide is printed the same
+way, from `edi-guide.html` and `edi-guides.json` (a version and its revision).
 
 A scenario with a `formula:` block talks to the Formula Studio's own assistant instead of a Desk
 agent: the bench opens the studio's page thread (`OpenPageThread`, origin `Formula`), on the

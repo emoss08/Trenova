@@ -9,6 +9,7 @@ import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
   Compass03Icon,
+  Dataflow03Icon,
   File06Icon,
   GavelIcon,
   GitCompareArrowsIcon,
@@ -56,6 +57,7 @@ export const ARTIFACT_KINDS: Record<
   draft_edit: { label: "Draft change", icon: PencilLineIcon },
   decision_request: { label: "Decision", icon: GavelIcon },
   extraction: { label: "Extraction", icon: ScanTextIcon },
+  edi_connection_draft: { label: "EDI draft", icon: Dataflow03Icon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */
