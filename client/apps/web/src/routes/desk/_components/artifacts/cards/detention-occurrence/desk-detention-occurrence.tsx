@@ -13,7 +13,7 @@ import {
   useSendDetentionNotice,
 } from "@/routes/detention-desk/_components/use-detention-actions";
 import { apiService } from "@/services/api";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
@@ -110,7 +110,9 @@ const NO_ROWS: readonly string[] = [];
  * approval, send the notice while one is owed, record the customer's dispute,
  * and waive the charge. The policy and every other stop stay on the desk.
  *
- * The card steps through the rows it was opened from in the order shown.
+ * The card steps through the rows it was opened from in the order shown. A
+ * step draws the next charge's skeleton until it is read, never the charge it
+ * left with its buttons still live.
  */
 export function DeskDetentionOccurrence({
   recordId,
@@ -120,11 +122,7 @@ export function DeskDetentionOccurrence({
   backLabel,
 }: DetentionOccurrenceCardProps) {
   const t = useT();
-  const query = useQuery({
-    ...detention.card(recordId),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
+  const query = useQuery({ ...detention.card(recordId), retry: false });
   const detail = query.data;
 
   if (!detail) {

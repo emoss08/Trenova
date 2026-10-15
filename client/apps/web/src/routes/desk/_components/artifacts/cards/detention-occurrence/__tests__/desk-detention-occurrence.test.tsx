@@ -199,6 +199,31 @@ describe("DeskDetentionOccurrence", () => {
     await vi.waitFor(() => expect(fetchers.detention).toHaveBeenCalledTimes(2));
   });
 
+  it("offers nothing on the charge it stepped away from while the next one is read", async () => {
+    grant(true);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const card = (recordId: string) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DeskDetentionOccurrence
+            recordId={recordId}
+            order={["dto_kroger", "dto_lineage"]}
+            onSelect={vi.fn()}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { container, rerender } = render(card("dto_kroger"));
+    await screen.findByRole("heading", { name: "Kroger Atlanta DC", level: 2 });
+
+    fetchers.detention.mockReturnValue(new Promise(() => {}));
+    rerender(card("dto_lineage"));
+
+    expect(screen.queryByRole("heading", { name: "Kroger Atlanta DC", level: 2 })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve $337.50" })).toBeNull();
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+  });
+
   it("asks why before waiving a charge", async () => {
     grant(true);
     const { container } = draw();
