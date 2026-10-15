@@ -1406,6 +1406,7 @@ export type AgentSubjectType =
   | 'Document'
   | 'EDIInboundFile'
   | 'FactoringNoa'
+  | 'FactoringRemittance'
   | 'FactoringSubmission'
   | 'FormulaTemplate'
   | 'InboundMessage'

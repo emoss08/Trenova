@@ -56,7 +56,10 @@ func remittancePreviewOptions() []toolpreview.Option {
 	}
 }
 
-func remittanceLineRecord(rem *factoring.Remittance, line *factoring.RemittanceLine) toolpreview.Record {
+func remittanceLineRecord(
+	rem *factoring.Remittance,
+	line *factoring.RemittanceLine,
+) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceFactoringRemittance,
 		ID:       rem.ID,
@@ -80,8 +83,11 @@ func remittanceLinePreviewOptions() []toolpreview.Option {
 	}
 }
 
-func remittanceIDParam(description string) map[string]any {
-	return agenttoolschema.RecordIDText(permission.ResourceFactoringRemittance, description)
+func remittanceIDParam() map[string]any {
+	return agenttoolschema.RecordIDText(
+		permission.ResourceFactoringRemittance,
+		"The remittance, from list_factoring_remittances.",
+	)
 }
 
 func remittanceVersionParam() map[string]any {
@@ -139,14 +145,19 @@ func (t *ResolveFactoringRemittanceLineTool) Prerequisites() []string {
 
 func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID: remittanceIDParam("The remittance, from list_factoring_remittances."),
+		paramRemittanceID: remittanceIDParam(),
 		paramVersion:      remittanceVersionParam(),
-		paramLineID: jsonschemautils.Text("The line's lineId, from get_factoring_remittance."),
+		paramLineID: jsonschemautils.Text(
+			"The line's lineId, from get_factoring_remittance.",
+		),
 		paramLineAction: agenttoolschema.Enum(
 			"What to do with the line.",
 			agenttoolschema.FactoringRemittanceLineActions,
 		),
-		paramItemID: itemIDParam("The schedule item the line pays, for Match."),
+		paramItemID: itemIDParam(
+			"The schedule item the line pays, for Match: a suggestion's itemId from " +
+				"get_factoring_remittance, or an item from get_factoring_submission.",
+		),
 		paramLineKind: agenttoolschema.Enum(
 			"What the line records, for SetKind.",
 			agenttoolschema.FactoringRemittanceLineKinds,
@@ -314,7 +325,7 @@ func (t *RematchFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *RematchFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam("The remittance, from list_factoring_remittances."),
+		paramRemittanceID2: remittanceIDParam(),
 		paramVersion:       remittanceVersionParam(),
 	}, paramRemittanceID2, paramVersion)
 }
@@ -423,7 +434,7 @@ func (t *ApplyFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *ApplyFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam("The remittance, from list_factoring_remittances."),
+		paramRemittanceID2: remittanceIDParam(),
 		paramVersion:       remittanceVersionParam(),
 	}, paramRemittanceID2, paramVersion)
 }
@@ -557,7 +568,7 @@ func (t *DiscardFactoringRemittanceTool) Prerequisites() []string {
 
 func (t *DiscardFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2: remittanceIDParam("The remittance, from list_factoring_remittances."),
+		paramRemittanceID2: remittanceIDParam(),
 		paramVersion:       remittanceVersionParam(),
 		paramReason: common.StringProperty(
 			"Why the remittance is discarded.",

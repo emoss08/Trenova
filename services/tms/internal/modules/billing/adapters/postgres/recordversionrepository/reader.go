@@ -469,6 +469,12 @@ var lookups = map[permission.Resource]lookup{
 		idEq:    factoringcol.SubmissionColumns.ID.Eq(),
 		version: versionOf(func(entity *factoring.Submission) int64 { return entity.Version }),
 	},
+	permission.ResourceFactoringRemittance: {
+		model:   func() versioned { return new(factoring.Remittance) },
+		scope:   factoringcol.RemittanceScopeTenant,
+		idEq:    factoringcol.RemittanceColumns.ID.Eq(),
+		version: versionOf(func(entity *factoring.Remittance) int64 { return entity.Version }),
+	},
 	permission.ResourceFactoringCompany: {
 		model: func() versioned { return new(factoringcompany.FactoringCompany) },
 		scope: factoringcompanycol.FactoringCompanyScopeTenant,

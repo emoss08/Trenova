@@ -18549,7 +18549,7 @@
             "type": "string"
           },
           "factoringCompanyId": {
-            "description": "Only remittances from this factor.",
+            "description": "Only remittances from this factor, from get_factoring_remittance or list_factoring_ready_invoices.",
             "type": "string",
             "x-recordOf": "factoring_company"
           },
@@ -25059,6 +25059,7 @@
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
+              "factoring_remittance",
               "factoring_submission",
               "formula_template",
               "fuel_purchase",
@@ -31413,7 +31414,7 @@
             "x-enumOf": "factoring.remittanceLineAction"
           },
           "itemId": {
-            "description": "The schedule item the line pays, for Match.",
+            "description": "The schedule item the line pays, for Match: a suggestion's itemId from get_factoring_remittance, or an item from get_factoring_submission.",
             "type": "string",
             "x-recordOf": "factoring_submission"
           },

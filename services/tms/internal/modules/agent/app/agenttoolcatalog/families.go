@@ -69,7 +69,6 @@ var families = [...][]string{
 	},
 	{"list_factoring_remittances", "get_factoring_remittance", "discard_factoring_remittance"},
 	{
-		"get_factoring_remittance",
 		"resolve_factoring_remittance_line",
 		"rematch_factoring_remittance",
 		"apply_factoring_remittance",

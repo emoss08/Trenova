@@ -209,7 +209,8 @@ func (t *listFactoringRemittancesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only remittances from this factor.",
+			"Only remittances from this factor, from get_factoring_remittance or "+
+				"list_factoring_ready_invoices.",
 		),
 		paramRemittanceStatus: jsonschemautils.DescribedArray(
 			"Only remittances in these statuses.",
@@ -288,10 +289,10 @@ func (t *listFactoringRemittancesTool) Query(
 		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
 	}
 	result := map[string]any{
-		"remittances": rows,
-		"hasMore":     page.HasNextPage,
-		"nextCursor":  next,
-		"queuePath":   factoringQueuePath,
+		"remittances":     rows,
+		pageKeyHasMore:    page.HasNextPage,
+		pageKeyNextCursor: next,
+		"queuePath":       factoringQueuePath,
 	}
 	if gate != nil {
 		result["withheldByAccess"] = gate.Withheld()
@@ -378,7 +379,11 @@ func (t *getFactoringRemittanceTool) Query(
 	}
 	show, gate := amountsFor(ctx, t.access, params)
 	row := factoringRemittanceRowFrom(rem, show)
-	row.Lines = make([]factoringRemittanceLineRow, 0, min(len(rem.Lines), factoringRemittanceMaxLines))
+	row.Lines = make(
+		[]factoringRemittanceLineRow,
+		0,
+		min(len(rem.Lines), factoringRemittanceMaxLines),
+	)
 	for _, line := range rem.Lines {
 		if line == nil || (len(statuses) > 0 && !slices.Contains(statuses, line.MatchStatus)) {
 			continue

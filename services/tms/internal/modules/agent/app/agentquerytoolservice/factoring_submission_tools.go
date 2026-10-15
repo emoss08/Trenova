@@ -257,10 +257,10 @@ func (t *listFactoringSubmissionsTool) Query(
 		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
 	}
 	result := map[string]any{
-		"schedules":  rows,
-		"hasMore":    page.HasNextPage,
-		"nextCursor": next,
-		"queuePath":  factoringQueuePath,
+		"schedules":       rows,
+		pageKeyHasMore:    page.HasNextPage,
+		pageKeyNextCursor: next,
+		"queuePath":       factoringQueuePath,
 	}
 	if gate != nil {
 		result["withheldByAccess"] = gate.Withheld()

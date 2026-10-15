@@ -5851,6 +5851,7 @@ enum AgentSubjectType {
   Document
   EDIInboundFile
   FactoringNoa
+  FactoringRemittance
   FactoringSubmission
   FormulaTemplate
   InboundMessage

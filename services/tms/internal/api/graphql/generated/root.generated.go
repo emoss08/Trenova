@@ -5819,6 +5819,7 @@ enum AgentSubjectType {
   InvoiceDispute
   FactoringNoa
   FactoringSubmission
+  FactoringRemittance
 }
 
 enum AgentRunTrigger {
@@ -10600,6 +10601,7 @@ enum AIUsageFeature {
   DocumentIntelligenceRoute
   DocumentIntelligenceExtract
   AccountingMapping
+  FactoringRemittanceExtract
   AgentReflection
   AgentDrafting
   AgentProfile
