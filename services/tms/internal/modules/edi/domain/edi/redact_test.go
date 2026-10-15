@@ -36,3 +36,16 @@ func TestRedactSecrets_ChangesNothingItAlreadyRedacted(t *testing.T) {
 		assert.Equal(t, once, RedactSecrets(once), text)
 	}
 }
+
+func TestRedactSecrets_LeavesWordsThatOnlyStartWithALabel(t *testing.T) {
+	t.Parallel()
+
+	for _, text := range []string{
+		"the secretary signs the trading partner agreement",
+		"Trading Partner Name: Tokenizer Freight Inc",
+		"Acme offers passwordless SFTP with keys",
+	} {
+		assert.Equal(t, text, RedactSecrets(text))
+	}
+	assert.Equal(t, "Tokens: [redacted]", RedactSecrets("Tokens: t-1"))
+}

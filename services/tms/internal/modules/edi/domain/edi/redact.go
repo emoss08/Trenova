@@ -15,7 +15,7 @@ const (
 var (
 	pemBlockRe  = regexp.MustCompile(`(?s)-{5}BEGIN [A-Z0-9 ]+-{5}.*?-{5}END [A-Z0-9 ]+-{5}`)
 	secretLabel = regexp.MustCompile(
-		`(?i)\b(password|passphrase|pass\s*word|pwd|passcode|secret|private\s+key|api\s+key|access\s+key|token|shared\s+key)(s?)(\s*(?:is|:|=|-)?\s*)([^\s,;]+)`,
+		`(?i)\b(password|passphrase|pass\s*word|pwd|passcode|secret|private\s+key|api\s+key|access\s+key|token|shared\s+key)(s?)\b(\s*(?:is|:|=|-)?\s*)([^\s,;]+)`,
 	)
 )
 
