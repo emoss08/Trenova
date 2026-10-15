@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
@@ -77,6 +77,7 @@ func documentConnector(t *testing.T, fake *fakeQBO) *Connector {
 	conn := newConnector(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
 		quickbooks.WithRetry(restx.RetryConfig{}),
 	}
 	return conn

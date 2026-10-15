@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
@@ -158,9 +158,13 @@ func testConnector(t *testing.T, fake *fakeXero) *Connector {
 	t.Cleanup(server.Close)
 
 	provider := newProvider(t, config.XeroConfig{})
-	provider.oauthOpts = []xero.Option{xero.WithIdentityURL(server.URL)}
+	provider.oauthOpts = []xero.Option{
+		xero.WithIdentityURL(server.URL),
+		xero.WithHTTPClient(server.Client()),
+	}
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
+	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
 	conn.apiOpts = []xero.Option{
 		xero.WithBaseURL(server.URL),
 		xero.WithRetry(restx.RetryConfig{}),

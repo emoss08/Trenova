@@ -237,11 +237,15 @@ func testConnector(t *testing.T, fake *fakeNS) *Connector {
 	provider.oauthOpts = []netsuite.Option{
 		netsuite.WithBaseURL(fake.server.URL),
 		netsuite.WithLoginURL(fake.server.URL),
+		netsuite.WithHTTPClient(fake.server.Client()),
 	}
 	provider.now = func() time.Time { return testNow }
 	provider.books = newCurrencyBooks(provider.now)
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
+	conn.httpClient = &http.Client{
+		Transport: provider.gate.transport(fake.server.Client().Transport),
+	}
 	conn.apiOpts = []netsuite.Option{
 		netsuite.WithBaseURL(fake.server.URL),
 		netsuite.WithRetry(restx.RetryConfig{}),

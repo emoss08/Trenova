@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
@@ -188,7 +188,10 @@ func verifyAppAgainst(t *testing.T, status int, body string) error {
 	t.Cleanup(server.Close)
 
 	provider := newProvider(t, config.QuickBooksConfig{})
-	provider.oauthOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
+	provider.oauthOpts = []quickbooks.Option{
+		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
+	}
 	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	return conn.VerifyApp(t.Context())
@@ -246,7 +249,10 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	conn := newConnector(t, config.QuickBooksConfig{})
-	conn.apiOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
+	conn.apiOpts = []quickbooks.Option{
+		quickbooks.WithBaseURL(server.URL),
+		quickbooks.WithHTTPClient(server.Client()),
+	}
 
 	facts, err := conn.CompanyFacts(t.Context(), "123", "token")
 	require.NoError(t, err)
