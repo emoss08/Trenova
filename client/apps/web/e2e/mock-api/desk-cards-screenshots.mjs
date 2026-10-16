@@ -174,6 +174,20 @@ const CARDS = [
     empty: "detention-quick",
     gone: "detention-gone",
   },
+  {
+    card: "edi-partner",
+    loaded: "partner-tyson",
+    attention: "partner-acme",
+    empty: "partner-kroger",
+    gone: "partner-gone",
+  },
+  {
+    card: "edi-partner-internal",
+    loaded: "partner-lonestar",
+    attention: "partner-acme",
+    empty: "partner-kroger",
+    gone: "partner-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {
