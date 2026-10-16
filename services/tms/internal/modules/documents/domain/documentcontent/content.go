@@ -26,6 +26,13 @@ const (
 	StatusFailed     Status = "Failed"
 )
 
+type Converter string
+
+const (
+	ConverterLegacy  Converter = "legacy"
+	ConverterDocling Converter = "docling"
+)
+
 const (
 	SourceKindNative SourceKind = "native_text"
 	SourceKindOCR    SourceKind = "ocr"
@@ -58,6 +65,9 @@ type Content struct {
 	CreatedAt                int64          `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	LastExtractedAt          *int64         `json:"lastExtractedAt"          bun:"last_extracted_at,type:BIGINT,nullzero"`
+	Converter                Converter      `json:"converter"                bun:"converter,type:VARCHAR(20),notnull,default:'legacy'"`
+	ConverterVersion         string         `json:"converterVersion"         bun:"converter_version,type:VARCHAR(40),nullzero"`
+	RawObjectKey             string         `json:"-"                        bun:"raw_object_key,type:TEXT,nullzero"`
 	Pages                    []*Page        `json:"pages,omitempty"          bun:"-"`
 }
 
@@ -74,6 +84,9 @@ func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		}
 		if c.Status == "" {
 			c.Status = StatusPending
+		}
+		if c.Converter == "" {
+			c.Converter = ConverterLegacy
 		}
 		c.CreatedAt = now
 		c.UpdatedAt = now
@@ -106,6 +119,13 @@ func (c *Content) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.SourceKind,
 			validation.In(SourceKindNative, SourceKindOCR, SourceKindMixed).
 				Error("Source kind is invalid"),
+		),
+		validation.Field(&c.Converter,
+			validation.In(ConverterLegacy, ConverterDocling).Error("Converter is invalid"),
+		),
+		validation.Field(&c.ConverterVersion,
+			validation.Length(0, maxConverterVersionLength).
+				Error("Converter version cannot be longer than 40 characters"),
 		),
 		validation.Field(&c.PageCount,
 			validation.Min(0).Error("Page count cannot be negative"),
@@ -147,6 +167,8 @@ const (
 	maxLanguageLength     = 20
 	maxDetectedKindLength = 100
 	maxFailureCodeLength  = 100
+
+	maxConverterVersionLength = 40
 )
 
 // poorReadingConfidence is the average OCR confidence under which a scan is

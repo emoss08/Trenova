@@ -2,6 +2,7 @@ package documentcontent
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,6 +23,7 @@ type Page struct {
 	PageNumber           int            `json:"pageNumber"           bun:"page_number,type:INTEGER,notnull"`
 	SourceKind           SourceKind     `json:"sourceKind"           bun:"source_kind,type:VARCHAR(20),notnull"`
 	ExtractedText        string         `json:"extractedText"        bun:"extracted_text,type:TEXT,nullzero"`
+	Markdown             string         `json:"markdown"             bun:"markdown,type:TEXT,nullzero"`
 	OCRConfidence        float64        `json:"ocrConfidence"        bun:"ocr_confidence,type:DOUBLE PRECISION,notnull"`
 	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull"`
 	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull"`
@@ -34,6 +36,7 @@ type Page struct {
 
 func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
+	p.Markdown = stringutils.StripNUL(p.Markdown)
 
 	now := timeutils.NowUnix()
 
@@ -71,4 +74,12 @@ func (p *Page) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.Width, validation.Min(0).Error("Width cannot be negative")),
 		validation.Field(&p.Height, validation.Min(0).Error("Height cannot be negative")),
 	))
+}
+
+func (p *Page) ModelText() string {
+	if strings.TrimSpace(p.Markdown) != "" {
+		return p.Markdown
+	}
+
+	return p.ExtractedText
 }

@@ -20,6 +20,17 @@ var (
 	_ validationframework.TenantedEntity = (*DocumentControl)(nil)
 )
 
+type ExtractionEngine string
+
+const (
+	ExtractionEngineLegacy  ExtractionEngine = "legacy"
+	ExtractionEngineDocling ExtractionEngine = "docling"
+)
+
+func (e ExtractionEngine) IsValid() bool {
+	return e == ExtractionEngineLegacy || e == ExtractionEngineDocling
+}
+
 type DocumentControl struct {
 	bun.BaseModel `bun:"table:document_controls,alias:dc" json:"-"`
 
@@ -41,6 +52,7 @@ type DocumentControl struct {
 	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
 	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
 	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull"`
+	ExtractionEngine                ExtractionEngine `json:"extractionEngine"                bun:"extraction_engine,type:VARCHAR(10),notnull,default:'legacy'"`
 	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
 	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -64,7 +76,12 @@ func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {
 		CaptureAutoFileCoverSheets:      true,
 		CaptureRetentionDays:            DefaultCaptureRetentionDays,
 		CaptureAllowAutoUpdate:          true,
+		ExtractionEngine:                ExtractionEngineLegacy,
 	}
+}
+
+func (dc *DocumentControl) UsesDocling() bool {
+	return dc.ExtractionEngine == ExtractionEngineDocling
 }
 
 const (
@@ -86,6 +103,12 @@ func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 				Error("Intake retention must be at least 1 day"),
 			validation.Max(maxCaptureRetentionDays).
 				Error("Intake retention must be at most 365 days"),
+		),
+		validation.Field(
+			&dc.ExtractionEngine,
+			validation.Required.Error("Extraction engine is required"),
+			validation.In(ExtractionEngineLegacy, ExtractionEngineDocling).
+				Error("Extraction engine must be Legacy or Docling"),
 		),
 		validation.Field(
 			&dc.CaptureMinAgentVersion,
@@ -174,6 +197,9 @@ func (dc *DocumentControl) BeforeAppendModel(_ context.Context, query bun.Query)
 		}
 		if dc.CaptureRetentionDays == 0 {
 			dc.CaptureRetentionDays = DefaultCaptureRetentionDays
+		}
+		if dc.ExtractionEngine == "" {
+			dc.ExtractionEngine = ExtractionEngineLegacy
 		}
 		dc.CreatedAt = now
 		dc.UpdatedAt = now

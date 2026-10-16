@@ -110,6 +110,9 @@ func (r *repository) Upsert(
 			Set(cols.FailureCode.SetExcluded()).
 			Set(cols.FailureMessage.SetExcluded()).
 			Set(cols.LastExtractedAt.SetExcluded()).
+			Set(cols.Converter.SetExcluded()).
+			Set(cols.ConverterVersion.SetExcluded()).
+			Set(cols.RawObjectKey.SetExcluded()).
 			Set(cols.UpdatedAt.SetExcluded()).
 			Returning("*").
 			Exec(ctx); err != nil {
