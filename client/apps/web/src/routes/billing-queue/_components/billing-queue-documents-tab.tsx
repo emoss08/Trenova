@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircleIcon,
   CircleDashedIcon,
+  Edit05Icon,
   File04Icon,
   File06Icon,
   Image01Icon,
@@ -28,6 +29,11 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
 import { UnmetRequirementNote } from "@/components/documents/unmet-requirement-note";
+import { DocumentSignatureBadge } from "@/components/documents/document-signature-badge";
+import { DocumentSignatureDialog } from "@/components/documents/document-signature-dialog";
+import { documentNeedsSignature } from "@/lib/document-signature";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 
 function getFileIcon(fileType: string) {
   if (fileType.startsWith("image/")) return Image01Icon;
@@ -52,6 +58,8 @@ export function BillingQueueDocumentsTab({
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [replacingLineageId, setReplacingLineageId] = useState<string | null>(null);
+  const [signatureDocument, setSignatureDocument] = useState<Document | null>(null);
+  const { allowed: canRecordSignature } = usePermission(Resource.Document, Operation.Update);
   const queryClient = useQueryClient();
   const docTypeForm = useForm<{ documentTypeId: string }>({
     defaultValues: { documentTypeId: "" },
@@ -257,8 +265,32 @@ export function BillingQueueDocumentsTab({
                           <span>{doc.documentType.name}</span>
                         </>
                       )}
+                      {documentNeedsSignature(doc) && <DocumentSignatureBadge document={doc} />}
                     </div>
                   </div>
+                  {canRecordSignature && documentNeedsSignature(doc) && (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label={t("Record signature")}
+                            className="shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSignatureDocument(doc);
+                            }}
+                          >
+                            <Edit05Icon className="size-3" />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent side="top" sideOffset={10}>
+                        {t("Record signature")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {isEditable && (
                     <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <Tooltip>
@@ -308,6 +340,14 @@ export function BillingQueueDocumentsTab({
           </div>
         </ScrollArea>
       )}
+
+      <DocumentSignatureDialog
+        document={signatureDocument}
+        open={signatureDocument !== null}
+        onOpenChange={(open) => {
+          if (!open) setSignatureDocument(null);
+        }}
+      />
 
       <UploadPanel
         isOpen={uploadOpen}

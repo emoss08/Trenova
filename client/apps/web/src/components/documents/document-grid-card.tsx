@@ -15,6 +15,7 @@ import {
   ClockRewindIcon,
   DotsVerticalIcon,
   Download01Icon,
+  Edit05Icon,
   EyeIcon,
   ScanSearchIcon,
   SlashCircle01Icon,
@@ -25,7 +26,9 @@ import { useEffect, useState } from "react";
 import { LazyImage } from "../image";
 import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
 import { DocumentFileTypeIcon } from "./document-file-type-icon";
+import { documentNeedsSignature } from "@/lib/document-signature";
 import { DocumentReviewBadge } from "./document-review-badge";
+import { DocumentSignatureBadge } from "./document-signature-badge";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 interface DocumentGridCardProps {
@@ -37,6 +40,7 @@ interface DocumentGridCardProps {
   onVersions?: (document: Document) => void;
   onApprove?: (document: Document) => void;
   onReject?: (document: Document) => void;
+  onRecordSignature?: (document: Document) => void;
   isDeleting?: boolean;
   isReviewing?: boolean;
   className?: string;
@@ -67,6 +71,7 @@ export function DocumentGridCard({
   onVersions,
   onApprove,
   onReject,
+  onRecordSignature,
   isDeleting = false,
   isReviewing = false,
   className,
@@ -92,7 +97,8 @@ export function DocumentGridCard({
     onVersions ||
     onDelete ||
     (onApprove && canApproveDocument(document)) ||
-    (onReject && canRejectDocument(document)),
+    (onReject && canRejectDocument(document)) ||
+    (onRecordSignature && documentNeedsSignature(document)),
   );
 
   useEffect(() => {
@@ -169,6 +175,9 @@ export function DocumentGridCard({
           <p className="text-muted-foreground truncate text-xs">{documentTypeName}</p>
         )}
         <DocumentReviewBadge document={document} className="mt-0.5" />
+        {documentNeedsSignature(document) && (
+          <DocumentSignatureBadge document={document} className="mt-0.5 self-start" />
+        )}
         {document.versionNumber > 1 && onVersions && (
           <button
             type="button"
@@ -275,6 +284,14 @@ export function DocumentGridCard({
                   startContent={<SlashCircle01Icon className="size-3.5" />}
                   disabled={isReviewing}
                   onClick={() => onReject(document)}
+                />
+              )}
+              {onRecordSignature && documentNeedsSignature(document) && (
+                <DropdownMenuItem
+                  title={t("Record signature")}
+                  description={t("Say whether the receiver signed it")}
+                  startContent={<Edit05Icon className="size-3.5" />}
+                  onClick={() => onRecordSignature(document)}
                 />
               )}
               {onDelete && (

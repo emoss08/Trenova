@@ -18,7 +18,10 @@ const (
 	maxStopPostalRunes     = 20
 	maxStopDateRunes       = 40
 	maxStopTimeWindowRunes = 64
+	maxSignedDateRunes     = 10
 )
+
+var signatureReadingStatuses = []string{"Signed", "Unsigned", "Unknown"}
 
 const (
 	schemaTypeInteger   = "integer"
@@ -45,6 +48,7 @@ func buildRouteSchema() map[string]any {
 			"classifierSource":    map[string]any{"type": "string"},
 			"providerFingerprint": map[string]any{"type": "string"},
 			"reason":              map[string]any{"type": "string"},
+			"signature":           routeSignatureSchema(),
 		},
 		"required": []string{
 			"shouldExtract",
@@ -55,7 +59,24 @@ func buildRouteSchema() map[string]any {
 			"classifierSource",
 			"providerFingerprint",
 			"reason",
+			"signature",
 		},
+	}
+}
+
+func routeSignatureSchema() map[string]any {
+	return map[string]any{
+		"type":                 "object",
+		"additionalProperties": false,
+		"properties": map[string]any{
+			"status": map[string]any{
+				"type": "string",
+				"enum": slices.Clone(signatureReadingStatuses),
+			},
+			"confidence": map[string]any{"type": "number"},
+			"signedDate": map[string]any{"type": "string", "maxLength": maxSignedDateRunes},
+		},
+		"required": []string{"status", "confidence", "signedDate"},
 	}
 }
 

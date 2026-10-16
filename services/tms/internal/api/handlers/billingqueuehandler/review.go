@@ -34,6 +34,42 @@ func (h *Handler) registerReviewRoutes(api *gin.RouterGroup) {
 	api.POST("/:itemID/issues/:issueID/undo/", update, h.undoIssue)
 	api.POST("/:itemID/release/", update, h.release)
 	api.POST("/:itemID/post/", update, h.post)
+	api.POST(
+		"/pod-signatures/redetect/",
+		update,
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.redetectPODSignatures,
+	)
+}
+
+// @Summary Re-read the signatures on queued PODs
+// @Description Runs document intelligence again on the current proof-of-delivery documents of every shipment still in the billing queue whose signature nobody has read yet, so each one is marked signed or unsigned. Documents a person already marked, documents already read, and documents uploaded without machine reading are left alone and counted. Requires billing queue update and document update.
+// @ID redetectBillingQueuePODSignatures
+// @Tags Billing Queue
+// @Produce json
+// @Success 200 {object} billingqueueports.RedetectPODSignaturesResult
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/pod-signatures/redetect/ [post]
+func (h *Handler) redetectPODSignatures(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	result, err := h.review.RedetectPODSignatures(
+		c.Request.Context(),
+		&billingqueueports.RedetectPODSignaturesRequest{
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) itemID(c *gin.Context) (pulid.ID, bool) {

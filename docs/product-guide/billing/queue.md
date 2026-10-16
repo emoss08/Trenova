@@ -36,6 +36,13 @@ Keywords: hold billing, send back to ops, billing exception, dispute charges
 3. For **Send back** and **Exception**, pick a **Reason**, add **Notes** if needed, and select **Submit**.
 4. When the problem is fixed, select **Resume** (on a held item) or **Resolve** (on an exception or sent-back item) to return it to review.
 
+### Check or correct a POD's signature
+Keywords: unsigned POD, signed proof of delivery, POD not signed, receiver signature, mark signed
+1. Open [Billing queue](/billing/queue), select the item and open the **Documents** tab. Each document whose type needs a signature shows whether it is **Signed**, **Unsigned** or not read yet.
+2. To correct it, select **Record signature** on the document, choose **Signed**, **Unsigned** or **Signature not read**, and for a signed copy pick the date in **Signed on** if it can be read.
+3. Select **Save**. The item's proof of delivery check updates straight away, and an unsigned POD raises an issue to ask the driver or bill without it.
+4. To have document intelligence read the queued PODs nobody has checked yet, select **Read POD signatures** in the header, then **Read signatures**.
+
 ### Correct charges before approval
 Keywords: add accessorial, edit charge, re-rate, change formula template, base rate
 1. Open [Billing queue](/billing/queue), select the item and open the **Charges** tab.
@@ -66,6 +73,8 @@ Keywords: consolidated invoice, statement cycle, bill period, bill early
 
 ## Notes
 Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.
+
+Document intelligence reads the receiver's signature when it reads a delivery document, and marks it signed or unsigned only when it is sure; otherwise the signature stays unread. A signature a person records is final: reading the document again never changes it. Documents uploaded by hand from a shipment are not machine-read, so their signature is recorded with **Record signature**. Recording a signature needs permission to update documents.
 
 A detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.
 

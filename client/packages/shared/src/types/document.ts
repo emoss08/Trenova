@@ -46,6 +46,14 @@ export const documentProcessingProfileSchema = z.enum([
 
 export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;
 
+export const documentSignatureStatusSchema = z.enum(["Unknown", "Signed", "Unsigned"]);
+
+export type DocumentSignatureStatus = z.infer<typeof documentSignatureStatusSchema>;
+
+export const documentSignatureSourceSchema = z.enum(["Extraction", "Person"]);
+
+export type DocumentSignatureSource = z.infer<typeof documentSignatureSourceSchema>;
+
 export const documentSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -88,6 +96,14 @@ export const documentSchema = z.object({
   shipmentDraftStatus: documentShipmentDraftStatusSchema,
   documentTypeId: z.string().nullable().optional(),
   documentType: documentTypeSchema.nullable().optional(),
+  signatureStatus: documentSignatureStatusSchema.nullish().transform((value) => value ?? "Unknown"),
+  signedAt: z.number().nullable().optional(),
+  signatureSource: z
+    .union([documentSignatureSourceSchema, z.literal("")])
+    .nullish()
+    .transform((value) => value || null),
+  signatureUpdatedById: z.string().nullable().optional(),
+  signatureUpdatedAt: z.number().nullable().optional(),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
