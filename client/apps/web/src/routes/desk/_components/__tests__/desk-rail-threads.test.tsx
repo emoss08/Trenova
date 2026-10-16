@@ -157,7 +157,7 @@ describe("DeskRailThreads", () => {
     expect(api.countThreadShelves.mock.calls[0][0]).toHaveLength(4);
   });
 
-  it("asks nothing of a folded shelf but shows how many it holds", async () => {
+  it("asks nothing of a folded shelf but still draws its heading", async () => {
     useDeskSettingsStore.setState({ collapsedShelves: ["older", "pinned"] });
     serve({
       pinned: [thread("p", { pinned: true })],
@@ -171,7 +171,7 @@ describe("DeskRailThreads", () => {
 
     expect(await screen.findByText("Today's one")).toBeInTheDocument();
     expect(
-      await screen.findByRole("button", { name: "Older, 2 conversations", expanded: false }),
+      await screen.findByRole("button", { name: "Older", expanded: false }),
     ).toBeInTheDocument();
     expect(askedFor(olderShelf)).toBe(false);
     expect(askedFor(pinnedShelf)).toBe(false);
@@ -183,7 +183,7 @@ describe("DeskRailThreads", () => {
     renderRail();
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Older, 1 conversation", expanded: false }),
+      await screen.findByRole("button", { name: "Older", expanded: false }),
     );
 
     expect(await screen.findByText("Old one")).toBeInTheDocument();

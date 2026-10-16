@@ -67,8 +67,8 @@ export type DeskRailProps = {
 /**
  * The Desk's rail: the logo, search and a new conversation across the top,
  * the three places, then every conversation shelved by when it was last
- * touched. Each shelf folds away from its heading, and a folded shelf shows
- * how many it holds and reads nothing more. Each conversation is one line
+ * touched. Each shelf folds away from its heading, and a folded shelf reads
+ * nothing more. Each conversation is one line
  * with a dot that says what it is waiting on, and the current place sits on
  * a raised card that slides to whatever is chosen. Pin and delete come
  * forward on hover in place of the time; delete asks once more, inline,
@@ -159,27 +159,15 @@ export function DeskRail({
   const renderRow = (row: DeskRailRow) => {
     switch (row.kind) {
       case "shelf": {
-        const heading = shelfHeading(t, row.key);
-        const counted = row.collapsed && typeof row.count === "number" ? row.count : null;
         return (
           <Button
             variant="bare"
             size="bare"
             className="dk-sb-gh dk-sb-gt"
             aria-expanded={!row.collapsed}
-            aria-label={
-              counted === null
-                ? heading
-                : t("{0}, {1, plural, one {# conversation} other {# conversations}}", heading, counted)
-            }
             onClick={() => toggleShelf(row.key)}
           >
-            <span className="min-w-0 flex-1 truncate">{heading}</span>
-            {counted !== null && (
-              <em className="dk-sb-ct" aria-hidden>
-                {counted}
-              </em>
-            )}
+            <span className="min-w-0 flex-1 truncate">{shelfHeading(t, row.key)}</span>
             <DeskIcon name="chevR" size={12} stroke={2} className="dk-sb-gc" />
           </Button>
         );

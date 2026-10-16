@@ -197,13 +197,13 @@ describe("DeskRail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Today", expanded: true }));
 
     expect(
-      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+      screen.getByRole("button", { name: "Today", expanded: false }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
     expect(screen.getByText("Old question")).toBeInTheDocument();
     expect(useDeskSettingsStore.getState().collapsedShelves).toEqual(["today"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }));
+    fireEvent.click(screen.getByRole("button", { name: "Today", expanded: false }));
 
     expect(screen.getByText("Today's question")).toBeInTheDocument();
     expect(useDeskSettingsStore.getState().collapsedShelves).toEqual([]);
@@ -214,7 +214,7 @@ describe("DeskRail", () => {
     renderRail({ threads: [thread({ id: "a", title: "Today's question" })] });
 
     expect(
-      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+      screen.getByRole("button", { name: "Today", expanded: false }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
   });
@@ -571,26 +571,17 @@ describe("DeskRail paging", () => {
 
 /**
  * The server counts every shelf, so the rail knows which shelves hold
- * anything without reading them, and a folded one says how much it holds.
+ * anything without reading them. A heading names its shelf and nothing more:
+ * the count decides whether it is drawn, not what it says.
  */
 describe("DeskRail shelf counts", () => {
-  it("shows how many a folded shelf holds", () => {
+  it("draws a folded shelf's heading by its name alone", () => {
     useDeskSettingsStore.setState({ collapsedShelves: ["month"] });
     renderRail({ counts: { month: 42 } });
 
-    const heading = screen.getByRole("button", {
-      name: "Previous 30 days, 42 conversations",
-      expanded: false,
-    });
-    expect(heading.querySelector(".dk-sb-ct")).toHaveTextContent("42");
-  });
-
-  it("leaves the count off an open shelf", () => {
-    renderRail({ threads: many(2), counts: { today: 2 } });
-
-    expect(
-      screen.getByRole("button", { name: "Today", expanded: true }).querySelector(".dk-sb-ct"),
-    ).toBeNull();
+    const heading = screen.getByRole("button", { name: "Previous 30 days", expanded: false });
+    expect(heading).toHaveTextContent(/^Previous 30 days$/);
+    expect(heading.querySelector(".dk-sb-ct")).toBeNull();
   });
 
   it("leaves out a shelf counted empty", () => {
