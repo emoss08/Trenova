@@ -14374,6 +14374,644 @@ button.dk-dtn-ref:hover {
   }
 }
 
+/* Journals: a journal written into the book and what it does to the accounting equation, shared by the journal entry and manual journal cards */
+.dk-rec-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.dk-rec-seal > i {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  font: 600 11px var(--dk-plex);
+  font-style: normal;
+}
+.dk-rec-seal.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-rec-seal.dk-ok > i {
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-rec-seal.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-seal.dk-warn > i {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-rec-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dk-rec-period > em {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-rec-period > em.dk-shut {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+  box-shadow: none;
+}
+.dk-rec-jrnl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--dsk-b);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12.5px;
+  background: var(--dsk-card);
+}
+.dk-rec-jrnl th {
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--dsk-subtle);
+}
+.dk-rec-jrnl thead th {
+  background: var(--dsk-sunken);
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-rec-jrnl td {
+  padding: 8px 12px;
+  vertical-align: top;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-jrnl tbody tr:first-child td {
+  border-top: 0;
+}
+.dk-rec-jrnl .dk-n {
+  width: 26px;
+  padding-right: 0;
+  font: 11.5px var(--dk-plex);
+  color: var(--dsk-faint);
+}
+.dk-rec-jrnl .dk-jm {
+  width: 118px;
+  text-align: right;
+  font: 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-jrnl th.dk-jm {
+  font: 500 11.5px var(--font-sans);
+  color: var(--dsk-subtle);
+}
+.dk-rec-jrnl .dk-acct > span {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.dk-rec-jrnl .dk-acct code {
+  flex: none;
+  font: 11.5px var(--dk-plex);
+  color: var(--dsk-fg2);
+}
+.dk-rec-jrnl .dk-acct b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-jrnl .dk-acct em {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-rec-jrnl .dk-acct em > span + span::before {
+  content: "·";
+  margin: 0 6px;
+  color: var(--dsk-faint);
+}
+.dk-rec-jrnl .dk-acct > .dk-sk {
+  display: block;
+}
+.dk-rec-jrnl .dk-acct > .dk-sk + .dk-sk {
+  margin-top: 5px;
+}
+.dk-rec-jrnl tr.dk-credit .dk-acct {
+  padding-left: 34px;
+}
+.dk-rec-jrnl tfoot td,
+.dk-rec-jrnl tfoot th {
+  padding: 9px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+  border-top: 3px double var(--dsk-b-strong);
+}
+.dk-rec-jrnl tfoot .dk-jm {
+  font-weight: 600;
+}
+.dk-rec-jrnl tfoot .dk-jm.dk-short {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-jrnl tfoot tr.dk-off td,
+.dk-rec-jrnl tfoot tr.dk-off th {
+  padding-top: 6px;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+  border-top: 0;
+}
+.dk-rec-jrnl tfoot tr.dk-off .dk-jm {
+  font-weight: 500;
+}
+.dk-rec-eqn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr) 18px minmax(0, 1fr) 18px minmax(
+      0,
+      1fr
+    ) 18px minmax(0, 1fr);
+  align-items: stretch;
+  margin: 0;
+}
+.dk-rec-eqn > i {
+  display: grid;
+  place-items: center;
+  font: 15px var(--dk-plex);
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-rec-eqn > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 10px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-eqn > div.dk-moves {
+  border-color: transparent;
+  background: var(--dsk-sunken);
+}
+.dk-rec-eqn dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-eqn dd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--dsk-faint);
+}
+.dk-rec-eqn .dk-moves > dd:first-of-type {
+  font: 14px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-rec-eqn dd > svg {
+  flex: none;
+  color: var(--dsk-fg2);
+}
+.dk-rec-eqn dd.dk-accts {
+  display: block;
+}
+.dk-rec-eqn ul {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-rec-eqn li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--dsk-fg2);
+}
+.dk-rec-eqn li > span:last-child {
+  flex: none;
+  font: 11px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-eqn-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-rec-eqn-note.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+i.dk-rec-eqn-note {
+  display: block;
+  height: 10px;
+}
+.dk-rec-jrefs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-rec-row.dk-rec-jref {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  background: var(--dsk-card);
+}
+.dk-rec-jref-mark {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font: 600 10.5px var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+  outline: 1px dashed var(--dsk-b-strong);
+  outline-offset: -3px;
+}
+.dk-rec-jref .dk-rec-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-rec-jref .dk-rec-main > b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-jref > svg {
+  color: var(--dsk-faint);
+}
+.dk-rec-jref-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+
+/* The journal entry card */
+.dk-jen,
+.dk-mj {
+  container: dkjrnl / inline-size;
+}
+.dk-rec-amt > b.dk-struck {
+  color: var(--dsk-subtle);
+}
+.dk-rec-amt > b.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-jen-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px auto;
+  align-items: stretch;
+}
+.dk-jen-pair > ol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-jen-pair-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  text-align: left;
+  border-radius: 8px;
+  border: 1px solid var(--dsk-b-sub);
+  background: var(--dsk-card);
+}
+.dk-jen-pair li.dk-this .dk-jen-pair-row {
+  border-color: transparent;
+  background: var(--dsk-sunken);
+}
+.dk-jen-pair-row > em {
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-jen-pair-row .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-jen-pair-row .dk-what > b {
+  font: 500 12.5px var(--dk-plex);
+  color: var(--dsk-fg);
+}
+.dk-jen-pair-row .dk-what > span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-jen-pair-row .dk-amt {
+  font: 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-jen-pair .dk-brace {
+  position: relative;
+}
+.dk-jen-pair .dk-brace::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 6px;
+  width: 8px;
+  border: 1.5px solid var(--dsk-b-strong);
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.dk-jen-pair .dk-brace::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 8px;
+  border-top: 1.5px solid var(--dsk-b-strong);
+}
+.dk-jen-pair .dk-net {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 4px 0 6px;
+}
+.dk-jen-pair .dk-net > b {
+  font: 600 15px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-jen-pair .dk-net > span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-jen-why {
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-jen-why > code,
+.dk-jen-slip-t code {
+  margin-right: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font: 600 11px var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-jen-slip {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-jen-pair + .dk-jen-slip,
+.dk-jen-slip:first-child {
+  margin-top: 0;
+}
+.dk-jen-slip-i {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-jen-slip.dk-refused .dk-jen-slip-i {
+  color: var(--dsk-error);
+}
+.dk-jen-slip-t {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-jen-slip-t > b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-jen-slip-said {
+  color: var(--dsk-fg2);
+  font-style: italic;
+}
+
+/* The manual journal card */
+.dk-mj-why {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--dsk-b-sub);
+}
+.dk-mj-why > p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+}
+.dk-mj-why > footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mj-why > .dk-sk {
+  display: block;
+}
+.dk-mj-why > .dk-sk + .dk-sk {
+  margin-top: 7px;
+}
+.dk-mj-post {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.dk-mj-cal {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dsk-b-sub);
+}
+.dk-mj-cal.dk-lands {
+  border-color: transparent;
+  background: var(--dsk-sunken);
+}
+.dk-mj-cal.dk-shut {
+  border-style: dashed;
+}
+.dk-mj-leaf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+i.dk-mj-leaf {
+  height: 44px;
+}
+.dk-mj-leaf > span {
+  width: 100%;
+  padding: 2px 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+}
+.dk-mj-leaf > b {
+  padding: 3px 0 4px;
+  font: 600 15px var(--dk-plex);
+  color: var(--dsk-fg);
+}
+.dk-mj-cal.dk-shut .dk-mj-leaf > span {
+  color: var(--dsk-fg2);
+  background: var(--dsk-b);
+}
+.dk-mj-cal .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-mj-cal .dk-what > .dk-rec-period {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-mj-cal .dk-what > span:last-child {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-mj-arrow {
+  flex: none;
+  align-self: center;
+  color: var(--dsk-faint);
+}
+.dk-mj-postnote {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-mj-refused {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-mj-slip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-mj-slip > p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dsk-fg);
+}
+.dk-mj-slip > span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+
+@container dkjrnl (max-width: 640px) {
+  .dk-rec-eqn {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--dsk-b-sub);
+    border-radius: 8px;
+  }
+  .dk-rec-eqn > i {
+    display: none;
+  }
+  .dk-rec-eqn > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 0;
+  }
+  .dk-rec-eqn > i + div {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+  .dk-rec-eqn dt {
+    align-self: center;
+    font-size: 12.5px;
+    color: var(--dsk-fg2);
+  }
+  .dk-rec-eqn dd.dk-accts {
+    grid-column: 1 / -1;
+  }
+  .dk-rec-jrnl .dk-jm {
+    width: 92px;
+  }
+  .dk-mj-post {
+    flex-direction: column;
+  }
+  .dk-mj-arrow {
+    transform: rotate(90deg);
+  }
+  .dk-jen .dk-rec-bar:has(button) .dk-rec-bh,
+  .dk-mj .dk-rec-bar:has(button) .dk-rec-bh {
+    visibility: hidden;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+
 /* an EDI connection drafted from a partner's guide: each setting with the page it came from */
 .dk-ecd {
   container: dkecd / inline-size;

@@ -9,9 +9,14 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -19,7 +24,10 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "journalentry",
 	Objects: []*gqlexec.Object{
+		{Name: "JournalCardLine", Implementors: []string{"JournalCardLine"}},
+		{Name: "JournalCardPosting", Implementors: []string{"JournalCardPosting"}},
 		{Name: "JournalEntry", Implementors: []string{"JournalEntry"}},
+		{Name: "JournalEntryCard", Implementors: []string{"JournalEntryCard"}},
 		{Name: "JournalEntryConnection", Implementors: []string{"JournalEntryConnection"}},
 		{Name: "JournalEntryEdge", Implementors: []string{"JournalEntryEdge"}},
 		{Name: "JournalEntryLine", Implementors: []string{"JournalEntryLine"}},
@@ -30,11 +38,165 @@ var Shard = &gqlexec.Shard{
 		{Name: "JournalSourceInfo", Implementors: []string{"JournalSourceInfo"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "JournalCardLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "lineNumber",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.LineNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "glAccountId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.GLAccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "accountCode",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.AccountCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accountName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.AccountName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "category",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return gqlexec.Resolver[resolverJournalCardLine](ec, "JournalCardLine").Category(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAccountCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "debitAmount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.DebitAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "creditAmount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.CreditAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "customerId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "customerName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.CustomerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "locationName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Line)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "JournalCardPosting", Fields: []*gqlexec.Field{
+			{
+				Name:      "period",
+				HasChild:  true,
+				ChildType: "FiscalPeriod",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Posting)
+					return obj.Period, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:       "accountingDate",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Posting)
+					return gqlexec.Resolver[resolverJournalCardPosting](ec, "JournalCardPosting").AccountingDate(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "refusal",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.Posting)
+					return obj.Refusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "JournalEntry", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ID, nil
@@ -44,7 +206,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.OrganizationID, nil
@@ -54,7 +216,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.BusinessUnitID, nil
@@ -64,7 +226,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "batchId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.BatchID, nil
@@ -74,7 +236,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fiscalYearId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.FiscalYearID, nil
@@ -84,7 +246,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fiscalPeriodId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.FiscalPeriodID, nil
@@ -94,7 +256,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "entryNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.EntryNumber, nil
@@ -106,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return gqlexec.Resolver[resolverJournalEntry](ec, "JournalEntry").EntryType(ctx, obj)
@@ -118,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return gqlexec.Resolver[resolverJournalEntry](ec, "JournalEntry").Status(ctx, obj)
@@ -128,7 +290,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accountingDate",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.AccountingDate, nil
@@ -138,7 +300,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.Description, nil
@@ -148,7 +310,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "referenceType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReferenceType, nil
@@ -158,7 +320,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "referenceId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReferenceID, nil
@@ -168,7 +330,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalDebit",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.TotalDebit, nil
@@ -178,7 +340,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCredit",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.TotalCredit, nil
@@ -188,7 +350,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isPosted",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.IsPosted, nil
@@ -198,7 +360,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isReversal",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.IsReversal, nil
@@ -207,7 +369,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reversalOfId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReversalOfID, nil
@@ -216,7 +378,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reversedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReversedByID, nil
@@ -225,7 +387,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reversalDate",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReversalDate, nil
@@ -235,7 +397,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reversalReason",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReversalReason, nil
@@ -245,7 +407,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "referenceNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ReferenceNumber, nil
@@ -255,7 +417,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isAutoGenerated",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.IsAutoGenerated, nil
@@ -265,7 +427,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresApproval",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.RequiresApproval, nil
@@ -275,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isApproved",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.IsApproved, nil
@@ -284,7 +446,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ApprovedByID, nil
@@ -293,7 +455,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedAt",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.ApprovedAt, nil
@@ -302,7 +464,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "postedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.PostedByID, nil
@@ -311,7 +473,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "postedAt",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.PostedAt, nil
@@ -320,7 +482,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "createdById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.CreatedByID, nil
@@ -330,7 +492,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.CreatedAt, nil
@@ -340,7 +502,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntry)
 					return obj.Version, nil
@@ -356,6 +518,140 @@ var Shard = &gqlexec.Shard{
 					return obj.Lines, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryLineᚄ),
+			},
+		}},
+		{Object: "JournalEntryCard", Fields: []*gqlexec.Field{
+			{
+				Name:      "entry",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "JournalEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Entry, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "JournalCardLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalCardLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLineᚄ),
+			},
+			{
+				Name:      "period",
+				HasChild:  true,
+				ChildType: "FiscalPeriod",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Period, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:      "posting",
+				HasChild:  true,
+				ChildType: "JournalCardPosting",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Posting, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalCardPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐPosting),
+			},
+			{
+				Name:      "source",
+				HasChild:  true,
+				ChildType: "JournalSourceInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalsourceᚐSource),
+			},
+			{
+				Name:      "createdBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.CreatedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "approvedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.ApprovedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "postedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.PostedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "rejectedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.RejectedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "reversalOf",
+				HasChild:  true,
+				ChildType: "JournalEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.ReversalOf, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
+			},
+			{
+				Name:      "reversedBy",
+				HasChild:  true,
+				ChildType: "JournalEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.ReversedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
+			},
+			{
+				Name:      "reversal",
+				HasChild:  true,
+				ChildType: "JournalReversal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.Reversal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+			{
+				Name:      "reversalRequestedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.JournalEntryCard)
+					return obj.ReversalRequestedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "JournalEntryConnection", Fields: []*gqlexec.Field{
@@ -383,7 +679,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JournalEntryConnection)
 					return obj.TotalCount, nil
@@ -406,7 +702,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JournalEntryEdge)
 					return obj.Cursor, nil
@@ -418,7 +714,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.ID, nil
@@ -428,7 +724,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "journalEntryId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.JournalEntryID, nil
@@ -438,7 +734,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "glAccountId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.GLAccountID, nil
@@ -448,7 +744,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lineNumber",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.LineNumber, nil
@@ -458,7 +754,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.Description, nil
@@ -468,7 +764,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "debitAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.DebitAmount, nil
@@ -478,7 +774,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "creditAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.CreditAmount, nil
@@ -488,7 +784,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "netAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.NetAmount, nil
@@ -497,7 +793,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.CustomerID, nil
@@ -506,7 +802,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "locationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentry.JournalEntryLine)
 					return obj.LocationID, nil
@@ -530,7 +826,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JournalEntryLineAccount)
 					return obj.ID, nil
@@ -540,7 +836,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accountCode",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JournalEntryLineAccount)
 					return obj.AccountCode, nil
@@ -550,7 +846,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.JournalEntryLineAccount)
 					return obj.Name, nil
@@ -562,7 +858,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "entryId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.EntryID, nil
@@ -572,7 +868,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "entryNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.EntryNumber, nil
@@ -582,7 +878,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Status, nil
@@ -592,7 +888,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "changed",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Changed, nil
@@ -602,7 +898,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "error",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Error, nil
@@ -625,7 +921,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "changed",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewResult)
 					return obj.Changed, nil
@@ -635,7 +931,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewResult)
 					return obj.Failed, nil
@@ -647,7 +943,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "awaitingApproval",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.AwaitingApproval, nil
@@ -657,7 +953,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "readyToPost",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.ReadyToPost, nil
@@ -666,7 +962,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "oldestAccountingDate",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.OldestAccountingDate, nil
@@ -678,7 +974,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
 					return gqlexec.Resolver[resolverJournalReviewSummary](ec, "JournalReviewSummary").PostingMode(ctx, obj)
@@ -688,7 +984,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresApproval",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.RequiresApproval, nil
@@ -700,7 +996,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.ID, nil
@@ -710,7 +1006,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sourceObjectType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.SourceObjectType, nil
@@ -720,7 +1016,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sourceObjectId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.SourceObjectID, nil
@@ -730,7 +1026,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sourceEventType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.SourceEventType, nil
@@ -740,7 +1036,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sourceDocumentNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.SourceDocumentNumber, nil
@@ -750,12 +1046,23 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*journalsource.Source)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "batchNumber",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalsource.Source)
+					return gqlexec.Resolver[resolverJournalSourceInfo](ec, "JournalSourceInfo").BatchNumber(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -853,18 +1160,43 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewSummary),
 			},
+			{
+				Name:       "journalEntryCard",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "JournalEntryCard",
+				Args:       field_Query_journalEntryCard_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntryCard(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalEntryCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐJournalEntryCard),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "JournalReviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputJournalReviewInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "JournalCardLine", Check: func(r any) bool { _, ok := r.(resolverJournalCardLine); return ok }},
+		{Root: "JournalCardPosting", Check: func(r any) bool { _, ok := r.(resolverJournalCardPosting); return ok }},
 		{Root: "JournalEntry", Check: func(r any) bool { _, ok := r.(resolverJournalEntry); return ok }},
 		{Root: "JournalEntryLine", Check: func(r any) bool { _, ok := r.(resolverJournalEntryLine); return ok }},
 		{Root: "JournalReviewSummary", Check: func(r any) bool { _, ok := r.(resolverJournalReviewSummary); return ok }},
+		{Root: "JournalSourceInfo", Check: func(r any) bool { _, ok := r.(resolverJournalSourceInfo); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverJournalCardLine interface {
+	Category(ctx context.Context, obj *journalcardservice.Line) (*accounttype.Category, error)
+}
+
+type resolverJournalCardPosting interface {
+	AccountingDate(ctx context.Context, obj *journalcardservice.Posting) (*int, error)
 }
 
 type resolverJournalEntry interface {
@@ -880,6 +1212,10 @@ type resolverJournalReviewSummary interface {
 	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
 }
 
+type resolverJournalSourceInfo interface {
+	BatchNumber(ctx context.Context, obj *journalsource.Source) (*string, error)
+}
+
 type resolverMutation interface {
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
@@ -891,14 +1227,16 @@ type resolverQuery interface {
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error)
+	JournalEntryCard(ctx context.Context, id string) (*journalcardservice.JournalEntryCard, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0 = errors.New("field of type Int does not have child fields")
+	errNoChild1 = errors.New("field of type ID does not have child fields")
+	errNoChild2 = errors.New("field of type String does not have child fields")
+	errNoChild3 = errors.New("field of type AccountCategory does not have child fields")
+	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild5 = errors.New("field of type Boolean does not have child fields")
 )
 
 func field_Mutation_approveJournalEntries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -992,6 +1330,19 @@ func field_Query_journalReviewTable_args(ctx context.Context, ec *gqlexec.Exec, 
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_journalEntryCard_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1101,6 +1452,22 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNJournalCardLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalcardservice.Line) graphql.Marshaler {
+	return gqlexec.List[*journalcardservice.Line]{
+		Elem:        marshalNJournalCardLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNJournalCardLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.Line) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalCardLine", v)
+}
+
 func marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
 	return gqlexec.List[*journalentry.JournalEntry]{
 		Elem:        marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry,
@@ -1115,6 +1482,14 @@ func marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "JournalEntry", v)
+}
+
+func marshalNJournalEntryCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐJournalEntryCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.JournalEntryCard) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalEntryCard", v)
 }
 
 func marshalNJournalEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.JournalEntryConnection) graphql.Marshaler {
@@ -1205,6 +1580,21 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOAccountCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.Category) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalperiod.FiscalPeriod) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalPeriod", v)
+}
+
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
@@ -1216,6 +1606,13 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOJournalCardPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.Posting) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalCardPosting", v)
 }
 
 func marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
@@ -1239,11 +1636,34 @@ func marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "JournalEntryLineAccount", v)
 }
 
+func marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalreversal.Reversal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalReversal", v)
+}
+
 func marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalsourceᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalsource.Source) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "JournalSourceInfo", v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
 }
 
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
@@ -1252,4 +1672,11 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
@@ -283,6 +284,7 @@ type Params struct {
 	StoredMileageService         *storedmileageservice.Service
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
+	JournalCards                 *journalcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -511,6 +513,7 @@ type Services struct {
 	StoredMileageService         *storedmileageservice.Service
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
+	JournalCards                 *journalcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -745,6 +748,7 @@ func newServices(p *Params) *Services {
 		StoredMileageService:         p.StoredMileageService,
 		ManualJournalService:         p.ManualJournalService,
 		JournalEntryService:          p.JournalEntryService,
+		JournalCards:                 p.JournalCards,
 		JournalReview:                p.JournalReview,
 		JournalReversalService:       p.JournalReversalService,
 		AuditService:                 p.AuditService,

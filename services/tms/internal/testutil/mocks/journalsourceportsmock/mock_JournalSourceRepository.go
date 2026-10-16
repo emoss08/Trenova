@@ -248,3 +248,72 @@ func (_c *MockJournalSourceRepository_GetByObjectAndEvent_Call) RunAndReturn(run
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetByJournalEntry provides a mock function for the type MockJournalSourceRepository
+func (_mock *MockJournalSourceRepository) GetByJournalEntry(ctx context.Context, req journalsourceports.GetJournalSourceByEntryRequest) (*journalsource.Source, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByJournalEntry")
+	}
+
+	var r0 *journalsource.Source
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, journalsourceports.GetJournalSourceByEntryRequest) (*journalsource.Source, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, journalsourceports.GetJournalSourceByEntryRequest) *journalsource.Source); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*journalsource.Source)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, journalsourceports.GetJournalSourceByEntryRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockJournalSourceRepository_GetByJournalEntry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByJournalEntry'
+type MockJournalSourceRepository_GetByJournalEntry_Call struct {
+	*mock.Call
+}
+
+// GetByJournalEntry is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetJournalSourceByObjectRequest
+func (_e *MockJournalSourceRepository_Expecter) GetByJournalEntry(ctx any, req any) *MockJournalSourceRepository_GetByJournalEntry_Call {
+	return &MockJournalSourceRepository_GetByJournalEntry_Call{Call: _e.mock.On("GetByJournalEntry", ctx, req)}
+}
+
+func (_c *MockJournalSourceRepository_GetByJournalEntry_Call) Run(run func(ctx context.Context, req journalsourceports.GetJournalSourceByEntryRequest)) *MockJournalSourceRepository_GetByJournalEntry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 journalsourceports.GetJournalSourceByEntryRequest
+		if args[1] != nil {
+			arg1 = args[1].(journalsourceports.GetJournalSourceByEntryRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockJournalSourceRepository_GetByJournalEntry_Call) Return(source *journalsource.Source, err error) *MockJournalSourceRepository_GetByJournalEntry_Call {
+	_c.Call.Return(source, err)
+	return _c
+}
+
+func (_c *MockJournalSourceRepository_GetByJournalEntry_Call) RunAndReturn(run func(ctx context.Context, req journalsourceports.GetJournalSourceByEntryRequest) (*journalsource.Source, error)) *MockJournalSourceRepository_GetByJournalEntry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+

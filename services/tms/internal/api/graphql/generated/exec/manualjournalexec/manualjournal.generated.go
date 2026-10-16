@@ -9,7 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -18,6 +22,7 @@ var Shard = &gqlexec.Shard{
 	Name: "manualjournal",
 	Objects: []*gqlexec.Object{
 		{Name: "ManualJournal", Implementors: []string{"ManualJournal"}},
+		{Name: "ManualJournalCard", Implementors: []string{"ManualJournalCard"}},
 		{Name: "ManualJournalConnection", Implementors: []string{"ManualJournalConnection"}},
 		{Name: "ManualJournalEdge", Implementors: []string{"ManualJournalEdge"}},
 	},
@@ -282,6 +287,120 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "ManualJournalCard", Fields: []*gqlexec.Field{
+			{
+				Name:      "journal",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ManualJournal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.Journal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "JournalCardLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalCardLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLineᚄ),
+			},
+			{
+				Name:      "requestedPeriod",
+				HasChild:  true,
+				ChildType: "FiscalPeriod",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.RequestedPeriod, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:      "posting",
+				HasChild:  true,
+				ChildType: "JournalCardPosting",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.Posting, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalCardPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐPosting),
+			},
+			{
+				Name:      "createdBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.CreatedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "approvedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.ApprovedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "rejectedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.RejectedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "cancelledBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.CancelledBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:      "postedBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.PostedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "postedAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.PostedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:      "entries",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "JournalEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*journalcardservice.ManualJournalCard)
+					return obj.Entries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ),
+			},
+		}},
 		{Object: "ManualJournalConnection", Fields: []*gqlexec.Field{
 			{
 				Name:      "edges",
@@ -366,6 +485,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
 			},
+			{
+				Name:       "manualJournalCard",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ManualJournalCard",
+				Args:       field_Query_manualJournalCard_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ManualJournalCard(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournalCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐManualJournalCard),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -376,6 +509,7 @@ var Shard = &gqlexec.Shard{
 type resolverQuery interface {
 	ManualJournals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ManualJournalConnection, error)
 	ManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
+	ManualJournalCard(ctx context.Context, id string) (*journalcardservice.ManualJournalCard, error)
 }
 
 var (
@@ -400,6 +534,19 @@ func field_Query_manualJournals_args(ctx context.Context, ec *gqlexec.Exec, rawA
 }
 
 func field_Query_manualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_manualJournalCard_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (string, error) {
@@ -442,12 +589,52 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNJournalCardLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalcardservice.Line) graphql.Marshaler {
+	return gqlexec.List[*journalcardservice.Line]{
+		Elem:        marshalNJournalCardLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNJournalCardLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.Line) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalCardLine", v)
+}
+
+func marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
+	return gqlexec.List[*journalentry.JournalEntry]{
+		Elem:        marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalEntry", v)
+}
+
 func marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ManualJournal", v)
+}
+
+func marshalNManualJournalCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐManualJournalCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.ManualJournalCard) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ManualJournalCard", v)
 }
 
 func marshalNManualJournalConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ManualJournalConnection) graphql.Marshaler {
@@ -506,6 +693,13 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalperiod.FiscalPeriod) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalPeriod", v)
+}
+
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
@@ -517,6 +711,13 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOJournalCardPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋappᚋjournalcardserviceᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalcardservice.Posting) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalCardPosting", v)
 }
 
 func marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
@@ -537,4 +738,11 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

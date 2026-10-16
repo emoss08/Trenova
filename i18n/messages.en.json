@@ -3769,6 +3769,15 @@
       "go/other"
     ]
   },
+  "A cancelled journal can't be submitted again; nothing it books reaches the general ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A cancelled reversal must record when it was cancelled": {
     "sites": 1,
     "scope": [
@@ -7019,6 +7028,15 @@
       "go/other"
     ]
   },
+  "A mirror entry posts on this date and takes back everything {0} booked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "A model key cannot start or end with spaces": {
     "sites": 2,
     "scope": [
@@ -8884,6 +8902,42 @@
       "routes/pay-profile"
     ]
   },
+  "A reversal asked for on {0} is approved and waits to post": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "A reversal asked for on {0} waits on approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "A reversal asked for on {0} was cancelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "A reversal asked for on {0} was rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A reversal must name the entry it reverses": {
     "sites": 1,
     "scope": [
@@ -8900,6 +8954,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A reversed entry stays in the ledger as it was posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A review template with this code already exists": {
@@ -11758,6 +11821,15 @@
       "routes/shipment"
     ]
   },
+  "ADJ": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "AES-128-CBC": {
     "sites": 1,
     "scope": [
@@ -12142,7 +12214,7 @@
     ]
   },
   "AP": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -13625,7 +13697,7 @@
     ]
   },
   "Account": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -13634,6 +13706,7 @@
       "apps/web/components",
       "apps/web/hooks",
       "go/other",
+      "routes/desk",
       "routes/invoice",
       "routes/journal-entry",
       "routes/trial-balance",
@@ -13875,6 +13948,15 @@
     "areas": [
       "apps/web/components",
       "routes/trial-balance"
+    ]
+  },
+  "Account not found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Account roles": {
@@ -14152,6 +14234,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Accounting date {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Accounting management": {
@@ -16814,6 +16905,15 @@
       "go/other"
     ]
   },
+  "Add at least two lines on its page before submitting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Add axis": {
     "sites": 1,
     "scope": [
@@ -19024,14 +19124,15 @@
     ]
   },
   "Adjusting": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Adjusting Period": {
@@ -27910,7 +28011,7 @@
     ]
   },
   "Approve": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -28040,12 +28141,14 @@
     ]
   },
   "Approve and post": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Approve and post carrier settlements": {
@@ -28503,7 +28606,7 @@
     ]
   },
   "Approved": {
-    "sites": 56,
+    "sites": 60,
     "scope": [
       "go",
       "ts"
@@ -28725,6 +28828,15 @@
       "apps/web/components"
     ]
   },
+  "Approved {0} by {1} · waiting to be posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Approved {0} of {1}": {
     "sites": 1,
     "scope": [
@@ -28736,6 +28848,15 @@
   },
   "Approved {0} · post it to send it to the ledger": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Approved {0} · waiting to be posted": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -28786,6 +28907,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Approved, not posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Approved: {0}": {
@@ -28868,6 +28998,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Approving lets it post to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Approving makes this content the one that rates shipments, from now or from the date you choose.": {
@@ -30580,6 +30719,15 @@
       "routes/desk"
     ]
   },
+  "Asked for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Asked from": {
     "sites": 2,
     "scope": [
@@ -30831,12 +30979,22 @@
     ]
   },
   "Assets": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/balance-sheet",
+      "routes/desk"
+    ]
+  },
+  "Assets don't move, and the other side nets to zero, so the books still balance.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/balance-sheet"
+      "routes/desk"
     ]
   },
   "Assets, liabilities, and equity as of a fiscal period.": {
@@ -34418,7 +34576,7 @@
     ]
   },
   "Automatic": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -34426,7 +34584,8 @@
     "areas": [
       "apps/web/lib",
       "go/other",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Automatic (require when certificates are configured)": {
@@ -35547,7 +35706,7 @@
     ]
   },
   "Back": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -35560,6 +35719,7 @@
       "routes/factoring-remittance",
       "routes/inbox",
       "routes/journal-entry",
+      "routes/journal-reversal",
       "routes/onboarding",
       "routes/worker"
     ]
@@ -35818,7 +35978,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 21,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -35845,7 +36005,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -36272,6 +36432,24 @@
     ],
     "areas": [
       "routes/balance-sheet"
+    ]
+  },
+  "Balance the lines on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Balance the lines on its page before submitting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Balanced": {
@@ -40231,6 +40409,24 @@
       "routes/admin"
     ]
   },
+  "Both sides of the equation fall by {0}, so the books still balance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Both sides of the equation rise by {0}, so the books still balance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Both sides stay as they are. The difference is larger than the tolerance.": {
     "sites": 1,
     "scope": [
@@ -42508,7 +42704,7 @@
     ]
   },
   "Cancel": {
-    "sites": 314,
+    "sites": 315,
     "scope": [
       "go",
       "ts"
@@ -42784,11 +42980,12 @@
     ]
   },
   "Cancel journal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/manual-journal"
     ]
   },
@@ -43023,12 +43220,13 @@
     ]
   },
   "Cancel {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -43244,7 +43442,7 @@
     ]
   },
   "Cancelled": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -43256,6 +43454,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/desk",
       "routes/driver-expense",
       "routes/worker"
     ]
@@ -43351,6 +43550,15 @@
       "packages/shared/lib"
     ]
   },
+  "Cancelled {0} by {1}; nothing reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Cancelled {0}: {1}": {
     "sites": 1,
     "scope": [
@@ -43358,6 +43566,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "Cancelled {0}; nothing reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cancelled: {0}": {
@@ -45562,7 +45779,7 @@
     ]
   },
   "Carrier settlement": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -54355,7 +54572,7 @@
     ]
   },
   "Closed": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -54459,6 +54676,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Closed for good": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Closed in the driver's favor, optionally with a correcting adjustment.": {
@@ -54579,7 +54805,7 @@
     ]
   },
   "Closed {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -54598,12 +54824,14 @@
     ]
   },
   "Closing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Closing a review schedules the next one this far out. Leave empty for one-off reviews.": {
@@ -66187,7 +66415,7 @@
     ]
   },
   "Credit": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -66726,6 +66954,15 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "Credits are short by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Critical": {
@@ -68415,12 +68652,13 @@
     ]
   },
   "Customer payment": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/desk"
     ]
   },
   "Customer payment applied": {
@@ -71062,7 +71300,7 @@
     ]
   },
   "Debit": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -71071,6 +71309,7 @@
       "apps/web/components",
       "go/other",
       "routes/customer-ledger",
+      "routes/desk",
       "routes/invoice",
       "routes/journal-entry",
       "routes/trial-balance"
@@ -71194,6 +71433,33 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "Debits and credits differ by {0}, so the books won't balance until the lines do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Debits are short by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Debits equal credits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Debits, credits and net change per GL account for the current fiscal year, grouped by account category": {
@@ -81742,7 +82008,7 @@
     ]
   },
   "Down": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -81750,6 +82016,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/desk",
       "routes/edi",
       "routes/formula-template",
       "routes/worker-checklist-template"
@@ -82004,7 +82271,7 @@
     ]
   },
   "Draft": {
-    "sites": 52,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -87668,6 +87935,15 @@
       "routes/worker"
     ]
   },
+  "Edit lines on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Edit manual journal drafts": {
     "sites": 1,
     "scope": [
@@ -87802,6 +88078,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Edit the lines on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Edit the plan": {
@@ -93038,14 +93323,15 @@
     ]
   },
   "Equity": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Erg Guide Number": {
@@ -95388,6 +95674,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Every line and its source are on the entry's page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Every line is matched.": {
@@ -98052,12 +98347,13 @@
     ]
   },
   "Expenses": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "routes/desk"
     ]
   },
   "Expenses & disputes": {
@@ -100328,6 +100624,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "FY": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "FY 2025": {
@@ -106555,6 +106860,15 @@
       "apps/web/components",
       "routes/fiscal-year",
       "routes/manual-journal"
+    ]
+  },
+  "Fiscal year close": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Fiscal year identifier": {
@@ -119392,6 +119706,15 @@
       "apps/web/lib"
     ]
   },
+  "INV": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "IP address": {
     "sites": 1,
     "scope": [
@@ -124515,7 +124838,7 @@
     ]
   },
   "Invalid journal entry": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -124576,6 +124899,15 @@
     "areas": [
       "api/graphql",
       "api/handlers"
+    ]
+  },
+  "Invalid manual journal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Invalid match": {
@@ -125103,7 +125435,7 @@
     ]
   },
   "Invoice": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -125456,12 +125788,13 @@
     ]
   },
   "Invoice adjustment": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -127778,6 +128111,15 @@
       "routes/holiday"
     ]
   },
+  "It posts to {0} on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It ran out on {0}. Messages signed or encrypted with it are refused.": {
     "sites": 1,
     "scope": [
@@ -128377,6 +128719,15 @@
       "routes/intake"
     ]
   },
+  "Its reversal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Its runs": {
     "sites": 1,
     "scope": [
@@ -128510,6 +128861,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "JE": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "JSON": {
@@ -128882,13 +129242,14 @@
     ]
   },
   "Journal entry": {
-    "sites": 6,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
       "apps/web/hooks",
+      "routes/desk",
       "routes/journal-entry"
     ]
   },
@@ -128910,6 +129271,15 @@
       "go/other"
     ]
   },
+  "Journal entry lifecycle": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Journal entry not found": {
     "sites": 2,
     "scope": [
@@ -128926,6 +129296,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Journal entry {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Journal entry {0} does not balance and cannot be posted": {
@@ -128989,6 +129368,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Journal entry · posted {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Journal entry · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Journal policy": {
@@ -130139,7 +130536,7 @@
     ]
   },
   "Keep the reason under 500 characters": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -130149,7 +130546,6 @@
       "go/other",
       "packages/shared/types",
       "routes/accounting-sync",
-      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/invoice"
     ]
@@ -130161,6 +130557,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Keep the reason under {0} characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep the reference under {0} characters": {
@@ -134612,6 +135017,15 @@
       "packages/shared/lib"
     ]
   },
+  "Liabilities": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Liability": {
     "sites": 3,
     "scope": [
@@ -135220,7 +135634,7 @@
     ]
   },
   "Line": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -138431,6 +138845,15 @@
       "routes/desk"
     ]
   },
+  "Loading the journal entry…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the location…": {
     "sites": 1,
     "scope": [
@@ -138447,6 +138870,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Loading the manual journal…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading the order…": {
@@ -139339,7 +139771,7 @@
     ]
   },
   "Locked": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -140638,6 +141070,15 @@
       "routes/admin"
     ]
   },
+  "MJ": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "MM/DD/YYYY": {
     "sites": 27,
     "scope": [
@@ -141784,12 +142225,13 @@
     ]
   },
   "Manual journal": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "routes/desk"
     ]
   },
   "Manual journal actions require an authenticated user": {
@@ -141853,6 +142295,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Manual journal lifecycle": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Manual journal lines require active GL accounts": {
@@ -151806,6 +152257,15 @@
       "go/other"
     ]
   },
+  "Nets to zero": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Network error": {
     "sites": 3,
     "scope": [
@@ -153289,6 +153749,15 @@
       "routes/worker"
     ]
   },
+  "Next entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next failure": {
     "sites": 1,
     "scope": [
@@ -153353,6 +153822,15 @@
     ]
   },
   "Next item": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Next journal": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155387,12 +155865,13 @@
     ]
   },
   "No change": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "No changes": {
@@ -159592,7 +160071,7 @@
     ]
   },
   "No reason was given.": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -163404,6 +163883,15 @@
       "go/other"
     ]
   },
+  "Not open yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not opened yet": {
     "sites": 2,
     "scope": [
@@ -163475,6 +163963,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Not posted yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not priced": {
@@ -164110,7 +164607,7 @@
     ]
   },
   "Not yet": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -168569,6 +169066,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Off by {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Off duty": {
@@ -174116,6 +174622,15 @@
       "routes/worker"
     ]
   },
+  "Open entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open exceptions": {
     "sites": 2,
     "scope": [
@@ -174151,6 +174666,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Open for posting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Open formula template {0}": {
@@ -174415,6 +174939,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Open journal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Open leave cases": {
@@ -175233,7 +175766,7 @@
     ]
   },
   "Open {0}": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -175482,12 +176015,14 @@
     ]
   },
   "Opening": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Opening Balances": {
@@ -179839,7 +180374,7 @@
     ]
   },
   "PAY": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -180038,6 +180573,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "PMT": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "PO": {
@@ -190182,13 +190726,14 @@
     ]
   },
   "Post": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/desk",
       "routes/journal-reversal"
     ]
   },
@@ -190467,6 +191012,15 @@
       "routes/desk"
     ]
   },
+  "Post to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Post {0, plural, one {# draft invoice} other {# draft invoices}} to the ledger and queue each for the accounting system.": {
     "sites": 1,
     "scope": [
@@ -190635,7 +191189,7 @@
     ]
   },
   "Posted": {
-    "sites": 33,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -190872,6 +191426,24 @@
       "go/other"
     ]
   },
+  "Posted {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Posted {0} as {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Posted {0} of {1, plural, one {# held row} other {# held rows}}": {
     "sites": 1,
     "scope": [
@@ -190879,6 +191451,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "Posted {0} · batch {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Posted {0} · pays {1}": {
@@ -191065,6 +191646,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Posts on {0}, its first open day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Posts on {0}, the date asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Pounds": {
@@ -192109,6 +192708,15 @@
       "routes/worker"
     ]
   },
+  "Previous entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Previous failure": {
     "sites": 1,
     "scope": [
@@ -192173,6 +192781,15 @@
     ]
   },
   "Previous item": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Previous journal": {
     "sites": 1,
     "scope": [
       "ts"
@@ -201899,7 +202516,6 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/dispatch-console",
-      "routes/factoring-remittance",
       "routes/factoring-submission",
       "routes/fiscal-year",
       "routes/fuel-card",
@@ -203343,12 +203959,14 @@
     ]
   },
   "Reclassification": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Recognition": {
@@ -203669,13 +204287,14 @@
     ]
   },
   "Reconciliation": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/desk",
       "routes/invoice-approval"
     ]
   },
@@ -205007,13 +205626,14 @@
     ]
   },
   "Recorded": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/desk"
     ]
   },
   "Recorded By ID": {
@@ -205050,6 +205670,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Recorded by Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Recorded by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Recorded by {0}": {
@@ -205150,6 +205788,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Recorded {0} · not yet sent for approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -206908,7 +207555,7 @@
     ]
   },
   "Reject": {
-    "sites": 43,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -206920,6 +207567,7 @@
       "routes/agent-control",
       "routes/carrier-invoice-matching",
       "routes/carrier-settlement",
+      "routes/desk",
       "routes/driver-expense",
       "routes/driver-settlement",
       "routes/edi",
@@ -207222,8 +207870,17 @@
       "routes/worker"
     ]
   },
+  "Reject {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rejected": {
-    "sites": 43,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -207298,6 +207955,15 @@
       "routes/desk"
     ]
   },
+  "Rejected by {0}; it never reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rejected our message": {
     "sites": 1,
     "scope": [
@@ -207343,6 +208009,24 @@
       "routes/edi"
     ]
   },
+  "Rejected {0} by {1}; nothing reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Rejected {0}; nothing reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rejected: {0}": {
     "sites": 1,
     "scope": [
@@ -207350,6 +208034,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Rejected; it never reached the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Rejected{0}": {
@@ -211135,6 +211828,15 @@
       "routes/auth"
     ]
   },
+  "Request a reversal of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "Request access": {
     "sites": 1,
     "scope": [
@@ -211342,6 +212044,16 @@
       "routes/worker"
     ]
   },
+  "Request reversal": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/journal-reversal"
+    ]
+  },
   "Request sent — you'll get a notification when it's reviewed.": {
     "sites": 1,
     "scope": [
@@ -211451,7 +212163,7 @@
     ]
   },
   "Requested": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -211463,6 +212175,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/edi"
     ]
   },
@@ -211573,6 +212286,15 @@
     ],
     "areas": [
       "template/report.pdf"
+    ]
+  },
+  "Requested by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Requested fiscal year. The posting period is resolved from the accounting date.": {
@@ -215532,7 +216254,7 @@
     ]
   },
   "Revenue": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -215540,6 +216262,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/desk",
       "routes/fiscal-year",
       "routes/formula-template",
       "routes/home",
@@ -215738,7 +216461,7 @@
     ]
   },
   "Reversal": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -215867,6 +216590,15 @@
       "routes/journal-reversal"
     ]
   },
+  "Reversal requested": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "Reversal target": {
     "sites": 1,
     "scope": [
@@ -215912,6 +216644,15 @@
       "routes/factoring-submission"
     ]
   },
+  "Reverse it from its journal entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reverse payment": {
     "sites": 2,
     "scope": [
@@ -215922,7 +216663,7 @@
     ]
   },
   "Reversed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -215969,6 +216710,15 @@
       "go/other"
     ]
   },
+  "Reversed by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reversed {0} — cash was backed out and the applied invoices were reopened.": {
     "sites": 1,
     "scope": [
@@ -216003,6 +216753,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Reverses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reverses Entry": {
@@ -216049,6 +216808,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Reversing posts a mirror entry after someone approves it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Revert to review": {
@@ -223345,7 +224113,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring-remittance"
+      "apps/web/components"
     ]
   },
   "Say why both sides stay as they are": {
@@ -240594,6 +241362,15 @@
       "routes/desk"
     ]
   },
+  "Someone recorded this entry by hand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Someone reviewed the latest vetting.": {
     "sites": 1,
     "scope": [
@@ -242575,12 +243352,14 @@
     ]
   },
   "Standard": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Standard Carrier Alpha Code": {
@@ -243569,6 +244348,15 @@
       "apps/web/components",
       "routes/my-team",
       "routes/worker"
+    ]
+  },
+  "Started {0} · not submitted yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Started {0}{1}{2}{3}{4}": {
@@ -246415,7 +247203,7 @@
     ]
   },
   "Submit for approval": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -246555,7 +247343,7 @@
     ]
   },
   "Submitted": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -246682,6 +247470,15 @@
     ]
   },
   "Submitted {0} · approve it to pay {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Submitted {0} · waiting on someone who may approve manual journals": {
     "sites": 1,
     "scope": [
       "ts"
@@ -248805,6 +249602,24 @@
     ]
   },
   "Taken": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Taken back {0} by {1}, so nothing it booked remains": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Taken back {0}, so nothing it booked remains": {
     "sites": 1,
     "scope": [
       "ts"
@@ -257812,6 +258627,15 @@
       "routes/admin"
     ]
   },
+  "The entry could not be approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The entry could not be planned. Try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -257819,6 +258643,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "The entry could not be posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The entry is deleted outright and cannot be restored; the week's totals are worked out again from the punches that are left.": {
@@ -257830,6 +258663,15 @@
       "routes/time-attendance"
     ]
   },
+  "The entry stays in the ledger as it was posted; the reversal takes it back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "The entry waits for approval before it reaches the ledger.": {
     "sites": 1,
     "scope": [
@@ -257837,6 +258679,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The entry's lines": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The envelope matches the drafted profile.": {
@@ -259732,6 +260583,15 @@
       "routes/worker"
     ]
   },
+  "The journal": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The journal review queue could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -259739,6 +260599,15 @@
     ],
     "areas": [
       "routes/journal-review"
+    ]
+  },
+  "The journal's lines": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.": {
@@ -264163,6 +265032,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "The requester sees why. Nothing it books reaches the general ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The requesting driver is required": {
@@ -270492,6 +271370,15 @@
       "go/other"
     ]
   },
+  "This entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This entry type must add days": {
     "sites": 1,
     "scope": [
@@ -271493,6 +272380,15 @@
       "routes/billing-queue"
     ]
   },
+  "This journal entry could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This jurisdiction and fuel type already appears at row {0}; each pair may be sent once per period": {
     "sites": 1,
     "scope": [
@@ -271835,6 +272731,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This manual journal could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This match repeats invoice {0}, which another match already holds; reject one of them before accepting": {
@@ -277951,13 +278856,14 @@
     ]
   },
   "Totals": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/customer-payments",
+      "routes/desk",
       "routes/trial-balance"
     ]
   },
@@ -279927,7 +280833,7 @@
     ]
   },
   "Trenova": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -280356,6 +281262,15 @@
     ]
   },
   "Trenova to Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Trenova wrote this entry from its source when the source posted.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -285144,7 +286059,7 @@
     ]
   },
   "Up": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -285153,6 +286068,7 @@
       "apps/web/lib",
       "go/other",
       "routes/agent-control",
+      "routes/desk",
       "routes/edi",
       "routes/formula-template",
       "routes/worker-checklist-template"
@@ -291226,7 +292142,7 @@
     ]
   },
   "Voided": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -291378,6 +292294,15 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/driver-settlement"
+    ]
+  },
+  "Voided; nothing it booked stands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Voiding a run needs a reason": {
@@ -291906,7 +292831,7 @@
     ]
   },
   "Waiting on approval": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -295038,6 +295963,15 @@
       "routes/desk"
     ]
   },
+  "What it became": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What it books": {
     "sites": 2,
     "scope": [
@@ -295101,6 +296035,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "What it does to the books": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What it found": {
@@ -295319,6 +296262,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What needs to change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What needs to change (required)": {
@@ -297720,12 +298672,13 @@
     ]
   },
   "Where it came from": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Where it happened": {
@@ -297765,7 +298718,7 @@
     ]
   },
   "Where it stands": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -297774,7 +298727,7 @@
     ]
   },
   "Where it stood": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -297801,6 +298754,15 @@
     ]
   },
   "Where it will go": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Where it will post": {
     "sites": 1,
     "scope": [
       "ts"
@@ -299658,7 +300620,7 @@
     ]
   },
   "Why": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -299889,6 +300851,15 @@
       "routes/invoice"
     ]
   },
+  "Why it is no longer needed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why it looked": {
     "sites": 1,
     "scope": [
@@ -299925,6 +300896,15 @@
       "routes/desk"
     ]
   },
+  "Why it was cancelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why it was declined": {
     "sites": 1,
     "scope": [
@@ -299950,6 +300930,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Why it was rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Why it was voided": {
@@ -301633,7 +302622,7 @@
     ]
   },
   "Worker settlement": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -304756,6 +305745,15 @@
       "routes/auth"
     ]
   },
+  "Your accounting policy books it on the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Your accounting settings book no ledger entry when an invoice posts.": {
     "sites": 1,
     "scope": [
@@ -305421,6 +306419,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Your organization reviews journals before they reach the general ledger · waiting since {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Your organization uses Trenova's default checklist again": {
@@ -307370,6 +308377,15 @@
       "routes/desk"
     ]
   },
+  "credits exceed debits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "current_view": {
     "sites": 1,
     "scope": [
@@ -307431,6 +308447,24 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "debits and credits differ": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "debits exceed credits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "delivered · last 7 days": {
@@ -309773,6 +310807,51 @@
       "routes/table-change-alert"
     ]
   },
+  "each side · balanced": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "each side · never posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "each side · posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "each side · reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "each side · void": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "earned autonomy is off for the organization": {
     "sites": 1,
     "scope": [
@@ -310811,6 +311890,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "left in the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "left {0}": {
@@ -316146,6 +317234,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "{0, plural, one {# line books to an account whose type could not be read, so it is left out.} other {# lines book to accounts whose types could not be read, so they are left out.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# line fails} other {# lines fail}} on the preview load": {
     "sites": 1,
     "scope": [
@@ -316174,7 +317271,7 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -321055,6 +322152,15 @@
       "routes/desk"
     ]
   },
+  "{0} approved and posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} approved as proposed, {1} with changes, {2} rejected": {
     "sites": 1,
     "scope": [
@@ -321090,6 +322196,42 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} asked for a reversal on {1}; it is approved and waits to post": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} asked for a reversal on {1}; it waits on approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} asked for a reversal on {1}; it was cancelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} asked for a reversal on {1}; it was rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} asks for notice before free time runs out": {
@@ -324039,6 +325181,15 @@
       "go/other"
     ]
   },
+  "{0} is approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} is archived and cannot be sent": {
     "sites": 1,
     "scope": [
@@ -324064,6 +325215,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is cancelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} is connected. New mail on {1} shows up in Waiting on you.": {
@@ -324779,6 +325939,15 @@
       "go/other"
     ]
   },
+  "{0} is posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} is ready": {
     "sites": 1,
     "scope": [
@@ -324795,6 +325964,15 @@
     ],
     "areas": [
       "template/notification.dash.review_submitted"
+    ]
+  },
+  "{0} is rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} is required": {
@@ -324825,6 +326003,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is reversed once someone approves and posts the request.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
     ]
   },
   "{0} is revoked": {
@@ -328894,8 +330081,17 @@
       "routes/detention-policy"
     ]
   },
+  "{0} submitted and approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} submitted for approval": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -328975,6 +330171,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} takes no more postings, and your accounting policy books late entries on the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} takes numbers, but {1}": {

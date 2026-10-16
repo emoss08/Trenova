@@ -26,6 +26,8 @@ import { DeskInvoiceSkeleton } from "./invoice/invoice-skeleton";
 import { DeskDriverSettlementSkeleton } from "./driver-settlement/driver-settlement-skeleton";
 import { DeskCarrierSettlementSkeleton } from "./carrier-settlement/carrier-settlement-skeleton";
 import { DeskDetentionOccurrenceSkeleton } from "./detention-occurrence/detention-occurrence-skeleton";
+import { DeskJournalEntrySkeleton } from "./journal-entry/journal-entry-skeleton";
+import { DeskManualJournalSkeleton } from "./manual-journal/manual-journal-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -92,6 +94,8 @@ const loadCarrierSettlement = preloadable(
 const loadDetentionOccurrence = preloadable(
   () => import("./detention-occurrence/desk-detention-occurrence"),
 );
+const loadJournalEntry = preloadable(() => import("./journal-entry/desk-journal-entry"));
+const loadManualJournal = preloadable(() => import("./manual-journal/desk-manual-journal"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -219,6 +223,18 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
       loadDetentionOccurrence,
       (module) => module.DeskDetentionOccurrenceArtifact,
     ),
+  },
+  journal_entry: {
+    resource: Resource.JournalEntry,
+    Skeleton: DeskJournalEntrySkeleton,
+    inPlace: lazyComponent(loadJournalEntry, (module) => module.DeskJournalEntry),
+    artifact: lazyComponent(loadJournalEntry, (module) => module.DeskJournalEntryArtifact),
+  },
+  manual_journal: {
+    resource: Resource.ManualJournal,
+    Skeleton: DeskManualJournalSkeleton,
+    inPlace: lazyComponent(loadManualJournal, (module) => module.DeskManualJournal),
+    artifact: lazyComponent(loadManualJournal, (module) => module.DeskManualJournalArtifact),
   },
 };
 

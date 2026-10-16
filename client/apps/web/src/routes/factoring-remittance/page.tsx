@@ -32,7 +32,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { ApplyRemittanceDialog } from "./_components/apply-remittance-dialog";
-import { ReasonDialog } from "./_components/reason-dialog";
+import { ReasonDialog } from "@/components/reason-dialog";
 import { RemittanceExceptions, RemittanceMatched } from "./_components/remittance-lines";
 import { RemittanceMappingStep } from "./_components/remittance-mapping";
 import { RemittancePageSkeleton } from "./_components/remittance-page-skeleton";

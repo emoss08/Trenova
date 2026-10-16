@@ -188,6 +188,27 @@ const CARDS = [
     empty: "partner-kroger",
     gone: "partner-gone",
   },
+  {
+    card: "journal-entry",
+    loaded: "journal-posted",
+    attention: "journal-pending",
+    empty: "journal-reversed",
+    gone: "journal-gone",
+  },
+  {
+    card: "manual-journal",
+    loaded: "manual-pending",
+    attention: "manual-draft",
+    empty: "manual-posted",
+    gone: "manual-gone",
+  },
+  {
+    card: "manual-journal-closed",
+    loaded: "manual-rejected",
+    attention: "manual-draft",
+    empty: "manual-posted",
+    gone: "manual-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

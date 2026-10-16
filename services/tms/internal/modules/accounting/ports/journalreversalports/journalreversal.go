@@ -22,6 +22,11 @@ type ListJournalReversalConnectionRequest struct {
 	Cursor pagination.CursorInfo    `json:"-"`
 }
 
+type ListJournalReversalsByEntryRequest struct {
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	JournalEntryID pulid.ID              `json:"journalEntryId"`
+}
+
 type JournalReversalRepository interface {
 	List(
 		ctx context.Context,
@@ -35,6 +40,10 @@ type JournalReversalRepository interface {
 		ctx context.Context,
 		req GetJournalReversalByIDRequest,
 	) (*journalreversal.Reversal, error)
+	ListByJournalEntry(
+		ctx context.Context,
+		req ListJournalReversalsByEntryRequest,
+	) ([]*journalreversal.Reversal, error)
 	Create(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error)
 	Update(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error)
 }
