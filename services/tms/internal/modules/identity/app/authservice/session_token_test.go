@@ -1,10 +1,12 @@
 package authservice
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
@@ -148,4 +150,95 @@ func TestAuthenticateSession_RejectsASessionStoredWithoutASecret(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthenticationError(err))
+}
+
+func TestKeepSessionAlive_RecordsActivityEvenInsideTheTouchResolution(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	stored := storedSession(sessionID, issued.SecretHash)
+	stored.LastAccessedAt = time.Now().Add(-time.Minute).Unix()
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(stored, nil)
+	deps.sessionRepo.On("Touch", mock.Anything, sessionID, mock.AnythingOfType("int64")).
+		Return(nil).
+		Once()
+
+	sess, err := deps.svc.KeepSessionAlive(t.Context(), issued.Token)
+
+	require.NoError(t, err)
+	assert.WithinDuration(t, time.Now(), time.Unix(sess.LastAccessedAt, 0), 5*time.Second)
+	deps.sessionRepo.AssertNumberOfCalls(t, "Touch", 1)
+}
+
+func TestKeepSessionAlive_RefusesATokenThatDoesNotAuthenticate(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	other, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(storedSession(sessionID, other.SecretHash), nil)
+
+	_, err = deps.svc.KeepSessionAlive(t.Context(), issued.Token)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthenticationError(err))
+	deps.sessionRepo.AssertNotCalled(t, "Touch", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestKeepSessionAlive_FailsWhenActivityCannotBeRecorded(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	stored := storedSession(sessionID, issued.SecretHash)
+	stored.LastAccessedAt = time.Now().Add(-time.Minute).Unix()
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(stored, nil)
+	deps.sessionRepo.On("Touch", mock.Anything, sessionID, mock.AnythingOfType("int64")).
+		Return(errors.New("redis unavailable"))
+
+	_, err = deps.svc.KeepSessionAlive(t.Context(), issued.Token)
+
+	require.Error(t, err)
+}
+
+func TestAuthenticateSession_AnEndedSessionIsAnAuthenticationError(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(nil, sessionports.ErrSessionNotFound)
+
+	_, err = deps.svc.AuthenticateSession(t.Context(), issued.Token)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthenticationError(err))
+}
+
+func TestAuthenticateSession_AStoreFailureDoesNotEndTheSession(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	outage := errors.New("redis: connection refused")
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(nil, outage)
+
+	_, err = deps.svc.AuthenticateSession(t.Context(), issued.Token)
+
+	require.ErrorIs(t, err, outage)
+	assert.False(t, errortypes.IsAuthenticationError(err))
+	deps.sessionRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
 }

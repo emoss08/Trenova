@@ -10,7 +10,24 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const DefaultTTL = 30 * 24 * time.Hour
+const (
+	lastAccessedResolution = 5 * time.Minute
+	IdleGrace              = lastAccessedResolution
+	KeepAliveInterval      = time.Minute
+)
+
+type Policy struct {
+	MaxAge      time.Duration
+	IdleTimeout time.Duration
+}
+
+func (p Policy) ExpiresAt(issuedAt int64) int64 {
+	return issuedAt + int64(p.MaxAge/time.Second)
+}
+
+func (p Policy) IdleEnabled() bool {
+	return p.IdleTimeout > 0
+}
 
 type Session struct {
 	ID                    pulid.ID   `json:"id"`
@@ -118,7 +135,31 @@ func (s *Session) IsExpired() bool {
 	return s.ExpiresAt < timeutils.NowUnix()
 }
 
-const lastAccessedResolution = 5 * time.Minute
+func (s *Session) Bound(p Policy) {
+	if p.MaxAge > 0 {
+		s.ExpiresAt = min(s.ExpiresAt, p.ExpiresAt(s.CreatedAt))
+	}
+}
+
+func (s *Session) IdleExpiresAt(p Policy) int64 {
+	if !p.IdleEnabled() {
+		return 0
+	}
+
+	return s.LastAccessedAt + int64((p.IdleTimeout+IdleGrace)/time.Second)
+}
+
+func (s *Session) IsExpiredAt(p Policy, now int64) bool {
+	if s.ExpiresAt < now {
+		return true
+	}
+	if p.MaxAge > 0 && p.ExpiresAt(s.CreatedAt) < now {
+		return true
+	}
+
+	idleExpiresAt := s.IdleExpiresAt(p)
+	return idleExpiresAt > 0 && idleExpiresAt < now
+}
 
 func (s *Session) NeedsTouch(now int64) bool {
 	return now-s.LastAccessedAt >= int64(lastAccessedResolution/time.Second)
@@ -131,8 +172,20 @@ func (s *Session) UpdateLastAccessedAt() {
 
 func (s *Session) Validate() error {
 	if s.IsExpired() {
-		return errortypes.NewBusinessError("Session has expired. Please login again.")
+		return errSessionExpired()
 	}
 
 	return nil
+}
+
+func (s *Session) ValidateAt(p Policy, now int64) error {
+	if s.IsExpiredAt(p, now) {
+		return errSessionExpired()
+	}
+
+	return nil
+}
+
+func errSessionExpired() error {
+	return errortypes.NewBusinessError("Session has expired. Please login again.")
 }

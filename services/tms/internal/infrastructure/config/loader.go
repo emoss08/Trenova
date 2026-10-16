@@ -360,7 +360,9 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")
-	l.viper.SetDefault("security.session.maxAge", "24h")
+	l.viper.SetDefault("security.session.maxAge", "12h")
+	l.viper.SetDefault("security.session.idleTimeout", "30m")
+	l.viper.SetDefault("security.session.idleWarning", "2m")
 	l.viper.SetDefault("security.session.httpOnly", true)
 	l.viper.SetDefault("security.session.secure", false)
 	l.viper.SetDefault("security.session.sameSite", "lax")
@@ -543,6 +545,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		validateServerTimeouts,
 		validateTrustedProxies,
 		validateHostPrefixCookie,
+		validateSessionLifetime,
 		validateLoggingConfig,
 		validateR2PublicEndpoint,
 		validateTracingConfig,
@@ -655,6 +658,21 @@ func validateHostPrefixCookie(config *Config) error {
 		config.Security.Session.Path != "/" ||
 		!strings.EqualFold(config.Security.Session.SameSite, "strict") {
 		return ErrInvalidHostPrefixCookie
+	}
+
+	return nil
+}
+
+func validateSessionLifetime(config *Config) error {
+	sessionCfg := config.Security.Session
+	if !sessionCfg.IdleTimeoutEnabled() {
+		return nil
+	}
+	if sessionCfg.IdleTimeout > sessionCfg.MaxAge {
+		return ErrSessionIdleTimeoutExceedsMaxAge
+	}
+	if sessionCfg.IdleWarning <= 0 || sessionCfg.IdleWarning >= sessionCfg.IdleTimeout {
+		return ErrSessionIdleWarningOutOfRange
 	}
 
 	return nil

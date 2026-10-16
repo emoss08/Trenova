@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -34,6 +35,8 @@ type testDeps struct {
 	svc         *Service
 }
 
+var testSessionPolicy = session.Policy{MaxAge: 12 * time.Hour, IdleTimeout: 30 * time.Minute}
+
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	ur := tenantportsmock.NewMockUserRepository(t)
@@ -46,6 +49,7 @@ func setupTest(t *testing.T) *testDeps {
 		portalRepo: pr,
 		rbacRepo:   &rbactest.Repository{},
 		authEvents: events,
+		policy:     testSessionPolicy,
 		l:          zap.NewNop(),
 	}
 	return &testDeps{userRepo: ur, sessionRepo: sr, portalRepo: pr, authEvents: events, svc: svc}
@@ -128,7 +132,7 @@ func TestLogin_Success(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, usr, result.User)
 	assert.NotEmpty(t, result.SessionID)
-	assert.Greater(t, result.ExpiresAt, timeutils.NowUnix())
+	assert.InDelta(t, timeutils.NowUnix()+12*60*60, result.ExpiresAt, 5)
 	deps.userRepo.AssertExpectations(t)
 	deps.sessionRepo.AssertExpectations(t)
 }
@@ -614,10 +618,19 @@ func TestNew(t *testing.T) {
 	svc := New(Params{
 		UserRepository:    userRepo,
 		SessionRepository: sessionRepo,
-		Logger:            zap.NewNop(),
+		Config: &config.Config{
+			Security: config.SecurityConfig{
+				Session: config.SessionConfig{
+					MaxAge:      12 * time.Hour,
+					IdleTimeout: 30 * time.Minute,
+				},
+			},
+		},
+		Logger: zap.NewNop(),
 	})
 
 	require.NotNil(t, svc)
+	assert.Equal(t, testSessionPolicy, svc.(*Service).policy)
 }
 
 func newOIDCDiscoveryServer(t *testing.T) *httptest.Server {

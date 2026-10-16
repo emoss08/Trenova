@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
@@ -26,18 +27,24 @@ type SessionRepositoryParams struct {
 	fx.In
 
 	Client *redis.Client
+	Config *config.Config
 	Logger *zap.Logger
 }
 
 type sessionRepository struct {
 	client *redis.Client
+	policy session.Policy
 	l      *zap.Logger
 }
 
 func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionRepository {
 	return &sessionRepository{
 		client: p.Client,
-		l:      p.Logger.Named("redis.session-repository"),
+		policy: session.Policy{
+			MaxAge:      p.Config.Security.Session.MaxAge,
+			IdleTimeout: p.Config.Security.Session.IdleTimeout,
+		},
+		l: p.Logger.Named("redis.session-repository"),
 	}
 }
 
@@ -49,22 +56,46 @@ func (r *sessionRepository) Get(ctx context.Context, sessionID pulid.ID) (*sessi
 
 	sess := new(session.Session)
 	if err := redishelpers.GetJSON(ctx, r.client, r.getSessionKey(sessionID), sess); err != nil {
+		if redishelpers.IsRedisNil(err) {
+			return nil, sessionports.ErrSessionNotFound
+		}
 		log.Error("failed to get session from cache", zap.Error(err))
 		return nil, err
 	}
 
-	if err := sess.Validate(); err != nil {
-		log.Error("session is not valid", zap.Error(err))
-		return nil, err
+	sess.Bound(r.policy)
+	if sess.IsExpiredAt(r.policy, timeutils.NowUnix()) {
+		log.Debug("session has ended")
+		r.discard(ctx, sess)
+		return nil, sessionports.ErrSessionNotFound
 	}
 
 	return sess, nil
+}
+
+func (r *sessionRepository) discard(ctx context.Context, sess *session.Session) {
+	pipe := r.client.Pipeline()
+	pipe.Del(ctx, r.getSessionKey(sess.ID))
+	pipe.ZRem(ctx, r.getUserSessionsKey(sess.UserID), sess.ID.String())
+	if _, err := pipe.Exec(ctx); err != nil {
+		r.l.Warn(
+			"failed to discard an ended session",
+			zap.String("sessionID", sess.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) error {
 	log := r.l.With(
 		zap.String("operation", "CreateSession"),
 	)
+
+	now := timeutils.NowUnix()
+	if err := sess.ValidateAt(r.policy, now); err != nil {
+		return err
+	}
+	ttl := max(time.Duration(sess.ExpiresAt-now)*time.Second, time.Second)
 
 	userSessionsKey := r.getUserSessionsKey(sess.UserID)
 
@@ -83,7 +114,7 @@ func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) e
 		pipe,
 		sessionKey,
 		sess,
-		session.DefaultTTL,
+		ttl,
 	); err != nil {
 		log.Error("failed to marshal session", zap.Error(err))
 		return err
@@ -93,7 +124,7 @@ func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) e
 		Score:  float64(sess.CreatedAt),
 		Member: sess.ID.String(),
 	})
-	pipe.Expire(ctx, userSessionsKey, session.DefaultTTL)
+	pipe.Expire(ctx, userSessionsKey, ttl)
 
 	if _, err := pipe.Exec(ctx); err != nil {
 		log.Error("failed to create session in redis", zap.Error(err))
@@ -239,7 +270,8 @@ func (r *sessionRepository) ListForUser(
 			log.Warn("skipping undecodable session", zap.String("member", ids[index]))
 			continue
 		}
-		if sess.UserID != userID || sess.ExpiresAt < now {
+		sess.Bound(r.policy)
+		if sess.UserID != userID || sess.IsExpiredAt(r.policy, now) {
 			stale = append(stale, ids[index])
 			continue
 		}

@@ -29012,6 +29012,15 @@
       "routes/worker"
     ]
   },
+  "Are you still there?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
   "Are you sure you want to cancel this shipment? You can optionally provide a reason.": {
     "sites": 1,
     "scope": [
@@ -228848,7 +228857,7 @@
     ]
   },
   "Session not found": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -234478,12 +234487,13 @@
     ]
   },
   "Sign out": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "packages/shared/components",
       "routes/settings"
     ]
   },
@@ -240370,6 +240380,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Stay signed in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "Stays as proposed: a change can't point this at a different record.": {
@@ -270050,6 +270069,15 @@
       "routes/settings"
     ]
   },
+  "Time left before you are signed out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
   "Time left to decide the counter": {
     "sites": 1,
     "scope": [
@@ -298892,6 +298920,15 @@
       "routes/home"
     ]
   },
+  "You haven't been active for a while. To keep your account secure, you will be signed out when the timer runs out, and anything you haven't saved will be lost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
   "You ignored {0} of {1} {2} from {3} by hand": {
     "sites": 1,
     "scope": [
@@ -299034,6 +299071,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You were signed out after a period of inactivity. Sign in again to continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
     ]
   },
   "You will be told when the file is ready. It is kept in Reports.": {
@@ -300347,6 +300393,15 @@
     ]
   },
   "Your session has ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Your session has ended. Sign in again to continue.": {
     "sites": 1,
     "scope": [
       "ts"

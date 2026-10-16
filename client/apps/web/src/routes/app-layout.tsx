@@ -1,5 +1,6 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { SidebarLayout } from "@/components/navigation";
+import { SessionIdleTimeout } from "@/components/session-idle-timeout";
 import { lazyComponent } from "@/lib/lazy-component";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
@@ -18,9 +19,9 @@ const RoleActivationGate = lazyComponent(loadSessionGates, (module) => module.Ro
 
 /**
  * Everything a signed-in session owes before a page may render: the polling
- * and realtime connection it keeps open, the two gates that can stand in
- * front of it, and the remount key that repaints formatted timestamps when
- * the clock preference moves.
+ * and realtime connection it keeps open, the idle timeout that signs a quiet
+ * session out, the two gates that can stand in front of it, and the remount
+ * key that repaints formatted timestamps when the clock preference moves.
  *
  * It takes the outlet as an argument rather than rendering it directly
  * because the app has two frames now. Inside the sidebar, a page is
@@ -29,6 +30,17 @@ const RoleActivationGate = lazyComponent(loadSessionGates, (module) => module.Ro
  * one of them would be a session check the other could be used to skip.
  */
 export function AppSession({ children }: { children: (outlet: ReactNode) => ReactNode }) {
+  return (
+    <>
+      <SessionContent>{children}</SessionContent>
+      <SessionIdleTimeout />
+    </>
+  );
+}
+
+// The idle timeout stands beside the gates rather than behind them: a session left on
+// the password-change or role screen is as unattended as one left on a page.
+function SessionContent({ children }: { children: (outlet: ReactNode) => ReactNode }) {
   usePermissionPolling();
   useRealtimeConnection();
   const manifest = usePermissionStore((state) => state.manifest);

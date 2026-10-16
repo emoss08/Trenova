@@ -462,12 +462,18 @@ type SessionConfig struct {
 	Secret        string        `mapstructure:"secret"        validate:"required,min=32"`
 	Name          string        `mapstructure:"name"          validate:"required"`
 	MaxAge        time.Duration `mapstructure:"maxAge"        validate:"required,min=1m"`
+	IdleTimeout   time.Duration `mapstructure:"idleTimeout"   validate:"omitempty,min=5m"`
+	IdleWarning   time.Duration `mapstructure:"idleWarning"   validate:"omitempty,min=10s"`
 	HTTPOnly      bool          `mapstructure:"httpOnly"`
 	Secure        bool          `mapstructure:"secure"`
 	SameSite      string        `mapstructure:"sameSite"      validate:"required,oneof=strict lax none"`
 	Domain        string        `mapstructure:"domain"`
 	Path          string        `mapstructure:"path"          validate:"required"`
 	RefreshWindow time.Duration `mapstructure:"refreshWindow"`
+}
+
+func (s *SessionConfig) IdleTimeoutEnabled() bool {
+	return s.IdleTimeout > 0
 }
 
 func (s *SessionConfig) GetSameSite() http.SameSite {

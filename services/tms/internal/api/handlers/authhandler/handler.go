@@ -56,6 +56,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("mfa/verify", h.verifyMFA)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
+	api.POST("session/keepalive", h.keepSessionAlive)
 	api.POST("forgot-password", h.forgotPassword)
 	api.POST("reset-password", h.resetPassword)
 	api.GET("session/roles", h.listAuthorizedSessionRoles)
@@ -215,6 +216,29 @@ func (h *Handler) validateSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"valid": true})
+}
+
+// @Summary Keep session alive
+// @Description Records that the person is still using the app, restarting the current session's idle timeout.
+// @ID keepSessionAlive
+// @Tags Auth
+// @Success 204 "No Content"
+// @Failure 401 {object} helpers.ProblemDetail
+// @Router /auth/session/keepalive [post]
+func (h *Handler) keepSessionAlive(c *gin.Context) {
+	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || token == "" {
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
+		return
+	}
+
+	if _, err = h.service.KeepSessionAlive(c.Request.Context(), token); err != nil {
+		h.clearSessionCookie(c)
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) csrfToken(c *gin.Context) {

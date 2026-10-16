@@ -335,6 +335,62 @@ func TestValidateSession_InvalidSession(t *testing.T) {
 	assert.False(t, resp["valid"])
 }
 
+func TestKeepSessionAlive_RecordsActivityOnTheCookieSession(t *testing.T) {
+	t.Parallel()
+
+	sessionID := pulid.MustNew("ses_")
+
+	svc := tenantportsmock.NewMockAuthService(t)
+	svc.On("KeepSessionAlive", mock.Anything, "token-value").
+		Return(&session.Session{ID: sessionID}, nil).
+		Once()
+
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/session/keepalive", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "token-value"})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.Empty(t, w.Result().Cookies())
+}
+
+func TestKeepSessionAlive_NoCookieIsUnauthorized(t *testing.T) {
+	t.Parallel()
+
+	svc := tenantportsmock.NewMockAuthService(t)
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/session/keepalive", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestKeepSessionAlive_EndedSessionClearsTheCookie(t *testing.T) {
+	t.Parallel()
+
+	svc := tenantportsmock.NewMockAuthService(t)
+	svc.On("KeepSessionAlive", mock.Anything, "token-value").
+		Return(nil, errortypes.NewAuthenticationError("Session has expired. Please login again."))
+
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/session/keepalive", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "token-value"})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	cookies := w.Result().Cookies()
+	require.Len(t, cookies, 1)
+	assert.Equal(t, "session_id", cookies[0].Name)
+	assert.Empty(t, cookies[0].Value)
+	assert.Negative(t, cookies[0].MaxAge)
+}
+
 func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
 	t.Parallel()
 

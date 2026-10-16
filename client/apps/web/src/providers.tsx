@@ -17,6 +17,7 @@ import { MotionPreferenceProvider } from "@/components/motion-preference-provide
 import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
+import { signInPathAfter } from "@trenova/shared/lib/sign-out-notice";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type { ReactNode } from "react";
@@ -36,7 +37,7 @@ setSessionExpiryHandler(() => {
   // next on this device.
   void clearSessionCache().then(() => {
     if (window.location.pathname !== "/login") {
-      window.location.assign("/login");
+      window.location.assign(signInPathAfter("/login", "expired"));
     }
   });
 });

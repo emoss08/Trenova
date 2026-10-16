@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  formatCountdownClock,
   partOfDay,
   daysUntil,
   formatISODateMedium,
@@ -583,5 +584,25 @@ describe("formatCompactAge", () => {
     expect(formatCompactAge(3600)).toBe("1h");
     expect(formatCompactAge(86399)).toBe("23h");
     expect(formatCompactAge(86400 * 2)).toBe("2d");
+  });
+});
+
+describe("formatCountdownClock", () => {
+  it("reads as minutes and zero-padded seconds", () => {
+    expect(formatCountdownClock(120)).toBe("2:00");
+    expect(formatCountdownClock(65)).toBe("1:05");
+    expect(formatCountdownClock(9)).toBe("0:09");
+    expect(formatCountdownClock(0)).toBe("0:00");
+  });
+
+  it("rounds a part second up so it never reads 0:00 before time is up", () => {
+    expect(formatCountdownClock(0.2)).toBe("0:01");
+    expect(formatCountdownClock(59.5)).toBe("1:00");
+  });
+
+  it("reads anything that is not a time left as 0:00", () => {
+    expect(formatCountdownClock(-3)).toBe("0:00");
+    expect(formatCountdownClock(Number.NaN)).toBe("0:00");
+    expect(formatCountdownClock(Number.POSITIVE_INFINITY)).toBe("0:00");
   });
 });

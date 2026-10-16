@@ -2,6 +2,7 @@ package session
 
 import (
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,4 +128,158 @@ func TestSession_UpdateLastAccessedAt(t *testing.T) {
 
 	assert.NotZero(t, s.LastAccessedAt)
 	assert.Equal(t, s.LastAccessedAt, s.UpdatedAt)
+}
+
+func TestPolicy_ExpiresAt(t *testing.T) {
+	t.Parallel()
+
+	policy := Policy{MaxAge: 12 * time.Hour}
+
+	assert.Equal(t, int64(1_000+12*60*60), policy.ExpiresAt(1_000))
+}
+
+func TestSession_Bound(t *testing.T) {
+	t.Parallel()
+
+	t.Run("caps a session issued under a longer lifetime", func(t *testing.T) {
+		t.Parallel()
+
+		s := &Session{CreatedAt: 1_000, ExpiresAt: 1_000 + 30*24*60*60}
+		s.Bound(Policy{MaxAge: 12 * time.Hour})
+
+		assert.Equal(t, int64(1_000+12*60*60), s.ExpiresAt)
+	})
+
+	t.Run("keeps an expiry already inside the lifetime", func(t *testing.T) {
+		t.Parallel()
+
+		s := &Session{CreatedAt: 1_000, ExpiresAt: 1_000 + 60*60}
+		s.Bound(Policy{MaxAge: 12 * time.Hour})
+
+		assert.Equal(t, int64(1_000+60*60), s.ExpiresAt)
+	})
+
+	t.Run("leaves the expiry alone without a lifetime", func(t *testing.T) {
+		t.Parallel()
+
+		s := &Session{CreatedAt: 1_000, ExpiresAt: 99_999}
+		s.Bound(Policy{})
+
+		assert.Equal(t, int64(99_999), s.ExpiresAt)
+	})
+}
+
+func TestSession_IdleExpiresAt(t *testing.T) {
+	t.Parallel()
+
+	s := &Session{LastAccessedAt: 10_000}
+
+	assert.Zero(t, s.IdleExpiresAt(Policy{MaxAge: time.Hour}))
+	assert.Equal(
+		t,
+		int64(10_000+30*60)+int64(IdleGrace/time.Second),
+		s.IdleExpiresAt(Policy{MaxAge: time.Hour, IdleTimeout: 30 * time.Minute}),
+	)
+}
+
+func TestSession_IsExpiredAt(t *testing.T) {
+	t.Parallel()
+
+	policy := Policy{MaxAge: 12 * time.Hour, IdleTimeout: 30 * time.Minute}
+	const createdAt int64 = 100_000
+	idleWindow := int64((30*time.Minute + IdleGrace) / time.Second)
+
+	tests := []struct {
+		name    string
+		session Session
+		policy  Policy
+		now     int64
+		expired bool
+	}{
+		{
+			name: "active session inside every limit",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt + 60,
+				ExpiresAt:      createdAt + 12*60*60,
+			},
+			policy:  policy,
+			now:     createdAt + 120,
+			expired: false,
+		},
+		{
+			name: "idle exactly to the end of its window",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt,
+				ExpiresAt:      createdAt + 12*60*60,
+			},
+			policy:  policy,
+			now:     createdAt + idleWindow,
+			expired: false,
+		},
+		{
+			name: "idle past its window",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt,
+				ExpiresAt:      createdAt + 12*60*60,
+			},
+			policy:  policy,
+			now:     createdAt + idleWindow + 1,
+			expired: true,
+		},
+		{
+			name: "idle past the window with the idle timeout turned off",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt,
+				ExpiresAt:      createdAt + 12*60*60,
+			},
+			policy:  Policy{MaxAge: 12 * time.Hour},
+			now:     createdAt + idleWindow + 1,
+			expired: false,
+		},
+		{
+			name: "issued under a thirty day lifetime and older than the current one",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt + 12*60*60,
+				ExpiresAt:      createdAt + 30*24*60*60,
+			},
+			policy:  policy,
+			now:     createdAt + 12*60*60 + 1,
+			expired: true,
+		},
+		{
+			name: "past its own expiry",
+			session: Session{
+				CreatedAt:      createdAt,
+				LastAccessedAt: createdAt + 60,
+				ExpiresAt:      createdAt + 90,
+			},
+			policy:  policy,
+			now:     createdAt + 91,
+			expired: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.expired, tt.session.IsExpiredAt(tt.policy, tt.now))
+			if tt.expired {
+				require.Error(t, tt.session.ValidateAt(tt.policy, tt.now))
+			} else {
+				require.NoError(t, tt.session.ValidateAt(tt.policy, tt.now))
+			}
+		})
+	}
+}
+
+func TestKeepAliveIntervalFitsInsideIdleGrace(t *testing.T) {
+	t.Parallel()
+
+	assert.Less(t, KeepAliveInterval, IdleGrace)
 }

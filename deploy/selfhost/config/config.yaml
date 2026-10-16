@@ -139,7 +139,9 @@ security:
   session:
     secret: change-me-session-secret-min-32-characters # from .env
     name: __Host-trenova_session
-    maxAge: 24h
+    maxAge: 12h # A session ends this long after sign-in, however active
+    idleTimeout: 30m # Signed out after this long without activity; 0 turns it off
+    idleWarning: 2m # How long before the idle sign-out the warning dialog opens
     httpOnly: true
     secure: true
     sameSite: strict

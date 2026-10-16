@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -19,7 +20,8 @@ import (
 )
 
 const selfHostedBody = `{"platformMode":"self_hosted","signupEnabled":false,` +
-	`"turnstileSiteKey":"","termsUrl":"","privacyUrl":"","freePlan":{"limits":{}}}`
+	`"turnstileSiteKey":"","termsUrl":"","privacyUrl":"","freePlan":{"limits":{}},` +
+	`"session":{"idleTimeoutSeconds":0,"idleWarningSeconds":0,"keepAliveSeconds":0}}`
 
 type contributorFunc func(ctx context.Context, cfg *kernelports.PublicConfig) error
 
@@ -99,7 +101,10 @@ func TestContributorsShapeTheResponse(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"platformMode":"cloud","signupEnabled":true,"turnstileSiteKey":"site-key",`+
 		`"termsUrl":"https://example.test/terms","privacyUrl":"https://example.test/privacy",`+
-		`"freePlan":{"limits":{"shipments.total":12}}}`, w.Body.String())
+		`"freePlan":{"limits":{"shipments.total":12}},`+
+		`"session":{"idleTimeoutSeconds":0,"idleWarningSeconds":0,"keepAliveSeconds":0}}`,
+		w.Body.String(),
+	)
 }
 
 func TestAContributorThatClearsTheLimitsStillAnswersAnObject(t *testing.T) {
@@ -145,4 +150,25 @@ func TestAsContributorJoinsTheGroup(t *testing.T) {
 	)
 	require.NoError(t, app.Err())
 	assert.Len(t, got, 1)
+}
+
+func TestSessionIdlePolicyIsPublished(t *testing.T) {
+	t.Parallel()
+
+	w := serve(t, &config.Config{
+		Security: config.SecurityConfig{
+			Session: config.SessionConfig{
+				MaxAge:      12 * time.Hour,
+				IdleTimeout: 30 * time.Minute,
+				IdleWarning: 2 * time.Minute,
+			},
+		},
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(
+		t,
+		w.Body.String(),
+		`"session":{"idleTimeoutSeconds":1800,"idleWarningSeconds":120,"keepAliveSeconds":60}`,
+	)
 }

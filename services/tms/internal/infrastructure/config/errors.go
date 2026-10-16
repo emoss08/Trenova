@@ -72,6 +72,12 @@ var (
 	ErrInvalidHostPrefixCookie = errors.New(
 		"__Host- session cookies require secure=true, httpOnly=true, sameSite=strict, path=/, and an empty domain",
 	)
+	ErrSessionIdleTimeoutExceedsMaxAge = errors.New(
+		"security.session.idleTimeout cannot be longer than security.session.maxAge",
+	)
+	ErrSessionIdleWarningOutOfRange = errors.New(
+		"security.session.idleWarning must be set and shorter than security.session.idleTimeout",
+	)
 	ErrLoggingOutputIsFileButFileConfigIsMissing = errors.New(
 		"logging output is 'file' but file config is missing",
 	)

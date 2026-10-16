@@ -2,10 +2,13 @@ package sessionports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+var ErrSessionNotFound = errors.New("session not found")
 
 type SessionRepository interface {
 	Get(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
