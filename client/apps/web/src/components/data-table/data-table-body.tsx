@@ -319,12 +319,18 @@ function skeletonWidth(columnId: string): string {
 function DataTableSkeletonRows<TData extends Record<string, any>>({
   table,
   label,
+  rows,
 }: {
   table: DataTableBodyProps<TData>["table"];
   label: string;
+  /** Rows on their way; defaults to a page's worth. */
+  rows?: number;
 }) {
   const visibleColumns = table.getVisibleLeafColumns();
-  const count = Math.min(table.state.pagination?.pageSize ?? MAX_SKELETON_ROWS, MAX_SKELETON_ROWS);
+  const count = Math.min(
+    rows ?? table.state.pagination?.pageSize ?? MAX_SKELETON_ROWS,
+    MAX_SKELETON_ROWS,
+  );
 
   return (
     <>
@@ -367,6 +373,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   getFormatClass,
   grouping,
   loadingGroupKeys,
+  onGroupToggleIntent,
   expansion,
   cursorRowId = null,
   isFirstPage = true,
@@ -377,6 +384,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   changesSince = 0,
   seenRowIds,
   rowOffset = 0,
+  pageSize = MAX_SKELETON_ROWS,
   virtualized = false,
   tableRef,
   estimatedRowHeight = 40,
@@ -385,6 +393,8 @@ export function DataTableBody<TData extends Record<string, any>>({
   getFormatClass?: CompiledFormatRules<TData> | null;
   grouping?: DataTableGrouping<TData>;
   loadingGroupKeys?: readonly DataTableGroupKey[];
+  /** The person is about to toggle this group: warm what the toggle will show. */
+  onGroupToggleIntent?: (key: DataTableGroupKey) => void;
   expansion?: DataTableExpansion<TData>;
   cursorRowId?: string | null;
   isFirstPage?: boolean;
@@ -397,6 +407,8 @@ export function DataTableBody<TData extends Record<string, any>>({
   seenRowIds?: ReadonlySet<string>;
   /** How many matching rows come before this page, so each row can say where it is. */
   rowOffset?: number;
+  /** Rows a page holds. */
+  pageSize?: number;
   /**
    * Draw only the page rows near the visible part of the table. Off by default, as
    * the browser's find-in-page sees only drawn rows; ignored while rows are grouped.
@@ -590,6 +602,7 @@ export function DataTableBody<TData extends Record<string, any>>({
         loadingKeys: loadingGroupKeys,
         isFirstPage,
         isLastPage,
+        pageSize,
       })
     : rows.map((row, index) => ({ kind: "row" as const, row, index }));
   const firstPageRowIndex = shownPinnedRows.length;
@@ -624,7 +637,9 @@ export function DataTableBody<TData extends Record<string, any>>({
       isExpanded={expandedRowId === row.id}
       selectable={enableSelection}
       ariaRowIndex={
-        pinned ? rowIndex + 2 : rowIndex - firstPageRowIndex + rowOffset + shownPinnedRows.length + 2
+        pinned
+          ? rowIndex + 2
+          : rowIndex - firstPageRowIndex + rowOffset + shownPinnedRows.length + 2
       }
       measureRef={slot?.measureRef}
       virtualIndex={slot?.index}
@@ -704,19 +719,32 @@ export function DataTableBody<TData extends Record<string, any>>({
               }
             />
           ) : null}
-          {(windowed ? [] : bodyItems).map((item) =>
-            item.kind === "group" ? (
-              <DataTableGroupHeader
-                key={`group:${item.group.key}`}
-                group={item.group}
-                collapsed={item.collapsed}
-                colSpan={colSpan}
-                onToggle={grouping!.onToggleGroup}
-              />
-            ) : (
-              renderWithExpansion(item.row, firstPageRowIndex + item.index, false)
-            ),
-          )}
+          {(windowed ? [] : bodyItems).map((item) => {
+            switch (item.kind) {
+              case "group":
+                return (
+                  <DataTableGroupHeader
+                    key={`group:${item.group.key}`}
+                    group={item.group}
+                    collapsed={item.collapsed}
+                    colSpan={colSpan}
+                    onToggle={grouping!.onToggleGroup}
+                    onToggleIntent={onGroupToggleIntent}
+                  />
+                );
+              case "pending":
+                return (
+                  <DataTableSkeletonRows
+                    key={`pending:${item.key}`}
+                    table={table}
+                    label={t("Loading data...")}
+                    rows={item.count}
+                  />
+                );
+              case "row":
+                return renderWithExpansion(item.row, firstPageRowIndex + item.index, false);
+            }
+          })}
         </DataTableRowActionsContext>
       ) : isLoading ? (
         <DataTableSkeletonRows table={table} label={t("Loading data...")} />

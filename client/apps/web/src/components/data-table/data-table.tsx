@@ -46,7 +46,13 @@ import { BulkEditDialog } from "./bulk-edit/bulk-edit-dialog";
 import { BulkEditProgress } from "./bulk-edit/bulk-edit-progress";
 import type { BulkEditJob } from "@/lib/graphql/bulk-edit";
 import type { BulkEditSelectionInput } from "@trenova/graphql/generated/graphql";
-import { groupedScope, groupedSort } from "@/lib/data-table-grouping";
+import {
+  groupedScope,
+  groupedSort,
+  groupScopedQuery,
+  toggleGroupKey,
+} from "@/lib/data-table-grouping";
+import { PREFETCH_STALE_TIME_MS } from "@/lib/route-prefetch";
 import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { bulkEdit } from "@/lib/queries/bulk-edit";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
@@ -369,19 +375,21 @@ export function DataTable<TData extends Record<string, any>>({
     // oxlint-disable-next-line react-hooks/exhaustive-deps
     [grouping?.field, grouping?.collapsedKeys, grouping?.collapsedScope],
   );
-  const scopeFilters = useMemo(
+  const {
+    scopeFilters,
+    filterGroups: effectiveFilterGroups,
+    options: baseQueryOptions,
+  } = useMemo(
     () =>
-      collapsedGroupScope.fieldFilters.length > 0
-        ? [...ownScopeFilters, ...collapsedGroupScope.fieldFilters]
-        : ownScopeFilters,
-    [collapsedGroupScope, ownScopeFilters],
-  );
-  const effectiveFilterGroups = useMemo(
-    () =>
-      collapsedGroupScope.filterGroups.length > 0
-        ? [...collapsedGroupScope.filterGroups, ...filterGroups]
-        : filterGroups,
-    [collapsedGroupScope, filterGroups],
+      groupScopedQuery({
+        query,
+        ownScopeFilters,
+        fieldFilters,
+        filterGroups,
+        sort: effectiveSort,
+        groupScope: collapsedGroupScope,
+      }),
+    [query, ownScopeFilters, fieldFilters, filterGroups, effectiveSort, collapsedGroupScope],
   );
   const cursorScopeKey = useMemo(
     () =>
@@ -404,16 +412,6 @@ export function DataTable<TData extends Record<string, any>>({
     cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
   const currentCursor = scopedCursorState.cursors[zeroBasedPageIndex];
   const canFetchPage = zeroBasedPageIndex === 0 || currentCursor !== undefined;
-
-  const baseQueryOptions = useMemo(
-    () => ({
-      query,
-      fieldFilters: scopeFilters.length > 0 ? [...scopeFilters, ...fieldFilters] : fieldFilters,
-      filterGroups: effectiveFilterGroups,
-      sort: effectiveSort,
-    }),
-    [query, scopeFilters, fieldFilters, effectiveFilterGroups, effectiveSort],
-  );
 
   const queryOptions = useMemo(
     () => ({
@@ -506,6 +504,50 @@ export function DataTable<TData extends Record<string, any>>({
         ? settledCollapsedKeys.filter((key) => !collapsedGroupKeys.includes(key))
         : EMPTY_GROUP_KEYS,
     [collapsedGroupKeys, dataQuery.isPlaceholderData, settledCollapsedKeys],
+  );
+
+  // Toggling a group changes which rows the server sends, so the first page of
+  // the toggled grouping is warmed as soon as the person shows they may toggle
+  // it, and the toggle lays out from the cache instead of waiting on a request.
+  const prefetchGroupToggle = useCallback(
+    (key: DataTableGroupKey) => {
+      if (!grouping || !initialStateApplied) return;
+      const { options: scoped } = groupScopedQuery({
+        query,
+        ownScopeFilters,
+        fieldFilters,
+        filterGroups,
+        sort: effectiveSort,
+        groupScope: groupedScope({
+          ...grouping,
+          collapsedKeys: toggleGroupKey(grouping.collapsedKeys, key),
+        }),
+      });
+      // A toggle starts a new cursor scope, so the table asks for its first page.
+      const options = { ...scoped, cursor: EMPTY_CURSOR_STATE.cursors[0] };
+      const firstPage = { pageIndex: 0, pageSize };
+      // The page size is in the key through `firstPage`, the same key the table's own
+      // page query builds.
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps
+      void queryClient.prefetchQuery({
+        queryKey: buildDataTableQueryKey(queryKey, graphql, firstPage, options),
+        queryFn: ({ signal }) => fetchDataTablePage<TData>({ pageSize, options, graphql, signal }),
+        staleTime: PREFETCH_STALE_TIME_MS,
+      });
+    },
+    [
+      grouping,
+      initialStateApplied,
+      query,
+      ownScopeFilters,
+      fieldFilters,
+      filterGroups,
+      effectiveSort,
+      pageSize,
+      queryClient,
+      queryKey,
+      graphql,
+    ],
   );
 
   // Pinned rows are fetched by ID, so they stay at the top whatever page, filter or
@@ -1506,6 +1548,7 @@ export function DataTable<TData extends Record<string, any>>({
                       getFormatClass={compiledFormatRules}
                       grouping={grouping}
                       loadingGroupKeys={loadingGroupKeys}
+                      onGroupToggleIntent={prefetchGroupToggle}
                       expansion={expansion}
                       cursorRowId={cursorRowId}
                       isFirstPage={zeroBasedPageIndex === 0}
@@ -1516,6 +1559,7 @@ export function DataTable<TData extends Record<string, any>>({
                       seenRowIds={seenRowIds}
                       onPinnedRowsCollapsedChange={setPinnedRowsCollapsed}
                       rowOffset={zeroBasedPageIndex * pageSize}
+                      pageSize={pageSize}
                       virtualized={virtualized}
                       tableRef={tableElementRef}
                       estimatedRowHeight={density === "compact" ? 30 : 40}

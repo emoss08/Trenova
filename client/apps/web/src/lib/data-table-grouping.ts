@@ -3,6 +3,9 @@ import type {
   DataTableGroupKey,
   DataTableGroupScope,
   DataTableGrouping,
+  DataTableQueryOptions,
+  FieldFilter,
+  FilterGroup,
   SortField,
 } from "@trenova/shared/types/data-table";
 
@@ -49,9 +52,68 @@ export function groupedScope(grouping: GroupScopeSource | undefined): DataTableG
   };
 }
 
+/** The collapsed keys after a group's header is toggled, in the order the host keeps them. */
+export function toggleGroupKey(
+  keys: readonly DataTableGroupKey[],
+  key: DataTableGroupKey,
+): DataTableGroupKey[] {
+  return keys.includes(key) ? keys.filter((entry) => entry !== key) : [...keys, key];
+}
+
+type GroupScopedQuerySource = {
+  query?: string;
+  ownScopeFilters: FieldFilter[];
+  fieldFilters: FieldFilter[];
+  filterGroups: FilterGroup[];
+  sort: SortField[];
+  groupScope: DataTableGroupScope;
+};
+
+export type GroupScopedQuery = {
+  /** The host's own scope plus the filters that drop collapsed groups. */
+  scopeFilters: FieldFilter[];
+  filterGroups: FilterGroup[];
+  options: Pick<DataTableQueryOptions, "query"> &
+    Required<Pick<DataTableQueryOptions, "fieldFilters" | "filterGroups" | "sort">>;
+};
+
+/**
+ * The page request with collapsed groups dropped. The table's own page and a
+ * page warmed for a toggle that has not happened yet are built here, so the
+ * two land on the same cache entry.
+ */
+export function groupScopedQuery({
+  query,
+  ownScopeFilters,
+  fieldFilters,
+  filterGroups,
+  sort,
+  groupScope,
+}: GroupScopedQuerySource): GroupScopedQuery {
+  const scopeFilters =
+    groupScope.fieldFilters.length > 0
+      ? [...ownScopeFilters, ...groupScope.fieldFilters]
+      : ownScopeFilters;
+  const scopedFilterGroups =
+    groupScope.filterGroups.length > 0
+      ? [...groupScope.filterGroups, ...filterGroups]
+      : filterGroups;
+  return {
+    scopeFilters,
+    filterGroups: scopedFilterGroups,
+    options: {
+      query,
+      fieldFilters: scopeFilters.length > 0 ? [...scopeFilters, ...fieldFilters] : fieldFilters,
+      filterGroups: scopedFilterGroups,
+      sort,
+    },
+  };
+}
+
 export type GroupedBodyItem<TRow> =
   | { kind: "group"; group: DataTableGroup; collapsed: boolean }
-  | { kind: "row"; row: TRow; index: number };
+  | { kind: "row"; row: TRow; index: number }
+  | { kind: "pending"; key: string; count: number };
 
 type BuildGroupedBodyParams<TRow> = {
   rows: readonly TRow[];
@@ -61,6 +123,8 @@ type BuildGroupedBodyParams<TRow> = {
   loadingKeys?: readonly DataTableGroupKey[];
   isFirstPage: boolean;
   isLastPage: boolean;
+  /** Rows a page holds, so a pending group never promises more than fit on it. */
+  pageSize: number;
 };
 
 /**
@@ -70,7 +134,11 @@ type BuildGroupedBodyParams<TRow> = {
  * the visible groups it sorts between, ahead of the rows on the first page, and
  * after them on the last. While the next page loads, rows of a group that has
  * just collapsed are left out, and a group that has just opened keeps its
- * header in the same place until its rows arrive.
+ * header in the same place until its rows arrive. Rows that are on their way
+ * are held open as `pending` items: under a group that has just opened, as
+ * many as the group has and the page has room for, and at the foot of a page
+ * that is not the last, as many as a just-collapsed group gave up, since the
+ * next groups' rows move up to fill them.
  */
 export function buildGroupedBody<TRow>({
   rows,
@@ -80,6 +148,7 @@ export function buildGroupedBody<TRow>({
   loadingKeys = [],
   isFirstPage,
   isLastPage,
+  pageSize,
 }: BuildGroupedBodyParams<TRow>): GroupedBodyItem<TRow>[] {
   const order = new Map<DataTableGroupKey, number>();
   groups.forEach((group, index) => order.set(group.key, index));
@@ -96,6 +165,8 @@ export function buildGroupedBody<TRow>({
 
   const items: GroupedBodyItem<TRow>[] = [];
   let collapsedCursor = 0;
+  let shownRows = 0;
+  let foldedRows = 0;
 
   const emitCollapsedBefore = (limit: number) => {
     while (
@@ -104,6 +175,10 @@ export function buildGroupedBody<TRow>({
     ) {
       const group = collapsedInOrder[collapsedCursor];
       items.push({ kind: "group", group, collapsed: collapsed.has(group.key) });
+      if (loading.has(group.key)) {
+        const count = Math.min(group.count ?? pageSize, pageSize - shownRows);
+        if (count > 0) items.push({ kind: "pending", key: `group:${group.key}`, count });
+      }
       collapsedCursor += 1;
     }
   };
@@ -114,6 +189,7 @@ export function buildGroupedBody<TRow>({
   rows.forEach((row, index) => {
     const key = getGroupKey(row);
     if (collapsed.has(key)) {
+      foldedRows += 1;
       return;
     }
     if (!seenRow || key !== currentKey) {
@@ -137,12 +213,16 @@ export function buildGroupedBody<TRow>({
       seenRow = true;
     }
     items.push({ kind: "row", row, index });
+    shownRows += 1;
   });
 
   if (isLastPage || !seenRow) {
     if (seenRow || isFirstPage) {
       emitCollapsedBefore(Number.POSITIVE_INFINITY);
     }
+  }
+  if (!isLastPage && foldedRows > 0) {
+    items.push({ kind: "pending", key: "backfill", count: foldedRows });
   }
 
   return items;

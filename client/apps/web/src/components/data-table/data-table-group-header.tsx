@@ -3,12 +3,22 @@ import { TableCell, TableRow } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DataTableGroup, DataTableGroupKey } from "@trenova/shared/types/data-table";
+import { useEffect, useRef } from "react";
+
+/**
+ * How long the pointer rests on a header before it counts as intent to toggle
+ * it: long enough that sweeping across the table warms nothing, short enough
+ * that the page is in flight well before the click lands.
+ */
+export const GROUP_TOGGLE_INTENT_DELAY_MS = 80;
 
 type DataTableGroupHeaderProps = {
   group: DataTableGroup;
   collapsed: boolean;
   colSpan: number;
   onToggle: (key: DataTableGroupKey) => void;
+  /** The person is about to toggle this group: a resting pointer or keyboard focus. */
+  onToggleIntent?: (key: DataTableGroupKey) => void;
 };
 
 /**
@@ -21,15 +31,32 @@ export function DataTableGroupHeader({
   collapsed,
   colSpan,
   onToggle,
+  onToggleIntent,
 }: DataTableGroupHeaderProps) {
   const t = useT();
+  const intentTimer = useRef<number | undefined>(undefined);
   const toggle = () => onToggle(group.key);
+  const cancelIntent = () => window.clearTimeout(intentTimer.current);
+  const showIntent = () => {
+    cancelIntent();
+    onToggleIntent?.(group.key);
+  };
+  const awaitIntent = () => {
+    if (!onToggleIntent) return;
+    cancelIntent();
+    intentTimer.current = window.setTimeout(showIntent, GROUP_TOGGLE_INTENT_DELAY_MS);
+  };
+
+  useEffect(() => () => window.clearTimeout(intentTimer.current), []);
 
   return (
     <TableRow
       data-group-key={group.key}
       data-collapsed={collapsed || undefined}
       className="hover:bg-transparent"
+      onPointerEnter={awaitIntent}
+      onPointerLeave={cancelIntent}
+      onPointerDown={onToggleIntent ? showIntent : undefined}
     >
       <TableCell
         colSpan={colSpan}
@@ -45,6 +72,7 @@ export function DataTableGroupHeader({
               event.stopPropagation();
               toggle();
             }}
+            onFocus={onToggleIntent ? showIntent : undefined}
             className="ui-focus-ring text-muted-foreground grid size-5 place-items-center rounded-sm"
           >
             <ChevronDownIcon
