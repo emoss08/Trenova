@@ -9,6 +9,7 @@ import {
   matchTerm,
   mergeRanges,
   rankMatches,
+  sameFieldsMatch,
   TITLE_PHRASE_SCORE,
   type MatchField,
 } from "../fuzzy-score";
@@ -221,5 +222,53 @@ describe("rankMatches", () => {
       "Sb",
       "Sa",
     ]);
+  });
+});
+
+describe("sameFieldsMatch", () => {
+  const FIELDS: MatchField[] = [
+    { key: "title", text: "Customer invoices" },
+    { key: "trail", text: "Billing" },
+    { key: "keyword", text: "receivables", via: "Keyword" },
+  ];
+
+  it("treats two matches that mark the same characters as the same, whatever they scored", () => {
+    const shorter = matchFields("cust", FIELDS)!;
+    const rescored = { ...matchFields("cust", FIELDS)!, score: 0.1 };
+
+    expect(shorter).not.toBe(rescored);
+    expect(sameFieldsMatch(shorter, rescored)).toBe(true);
+  });
+
+  it("tells matches apart when a longer query marks more characters", () => {
+    expect(sameFieldsMatch(matchFields("cu", FIELDS), matchFields("cust", FIELDS))).toBe(false);
+  });
+
+  it("tells matches apart when the same characters land in another field", () => {
+    expect(
+      sameFieldsMatch(
+        { score: 1, highlights: { title: [[0, 4]] }, via: null },
+        { score: 1, highlights: { trail: [[0, 4]] }, via: null },
+      ),
+    ).toBe(false);
+  });
+
+  it("tells matches apart by the hidden field they came through", () => {
+    const viaKeyword = matchFields("rece", FIELDS);
+
+    expect(viaKeyword?.via).toEqual({ label: "Keyword", text: "receivables", ranges: [[0, 4]] });
+    expect(sameFieldsMatch(viaKeyword, { ...viaKeyword!, via: null })).toBe(false);
+    expect(
+      sameFieldsMatch(viaKeyword, {
+        ...viaKeyword!,
+        via: { label: "Keyword", text: "receivables", ranges: [[0, 4]] },
+      }),
+    ).toBe(true);
+  });
+
+  it("treats an absent match as the same only as another absent one", () => {
+    expect(sameFieldsMatch(undefined, null)).toBe(false);
+    expect(sameFieldsMatch(undefined, undefined)).toBe(true);
+    expect(sameFieldsMatch(matchFields("cu", FIELDS), undefined)).toBe(false);
   });
 });

@@ -42,7 +42,9 @@ export interface HomeInput {
 }
 
 export interface RemoteState {
+  /** The answer on screen. While a newer search is in flight it is the last one that landed. */
   groups: readonly GlobalSearchGroup[];
+  /** Nothing has landed for this search yet, so there is no answer to show in the meantime. */
   loading: boolean;
   error: boolean;
   /** The request is one worth sending: a long enough query, or a scope to browse. */
@@ -107,15 +109,28 @@ function nonEmpty(sections: PaletteSection[]): PaletteSection[] {
 }
 
 export interface FoundRecords {
-  records: PaletteRecord[];
+  records: readonly PaletteRecord[];
   /** How many match in all, which the index can know beyond what it returned. */
   total: number;
 }
 
-/** Search hits as palette records; a type the palette does not know is dropped, not guessed at. */
+const foundByGroups = new WeakMap<
+  readonly GlobalSearchGroup[],
+  ReadonlyMap<GlobalSearchEntityType, FoundRecords>
+>();
+
+/**
+ * Search hits as palette records; a type the palette does not know is dropped,
+ * not guessed at. One answer always gives the same records, so the list built
+ * from it on every key hands each row the record it drew last time.
+ */
 export function recordsFromGroups(
   groups: readonly GlobalSearchGroup[],
-): Map<GlobalSearchEntityType, FoundRecords> {
+): ReadonlyMap<GlobalSearchEntityType, FoundRecords> {
+  const cached = foundByGroups.get(groups);
+  if (cached) {
+    return cached;
+  }
   const byType = new Map<GlobalSearchEntityType, FoundRecords>();
   for (const group of groups) {
     if (!isGlobalSearchEntityType(group.entityType)) {
@@ -132,6 +147,7 @@ export function recordsFromGroups(
     }));
     byType.set(entityType, { records, total: Math.max(group.total ?? 0, records.length) });
   }
+  foundByGroups.set(groups, byType);
   return byType;
 }
 
@@ -533,8 +549,9 @@ export function buildSubjectSections(
 export type ScopeCountMode = "search" | "commands";
 
 /**
- * What each scope tab counts for the query. A record type's count waits for
- * its search to settle, so a tab never shows a figure about to change. Command
+ * What each scope tab counts for the query. A record type's count is what the
+ * answer on screen found: absent until the first answer lands, then held while
+ * the next search is in flight, so the strip does not reflow on every key. Command
  * mode searched only commands, so the tabs it skipped read zero rather than a
  * count it never ran. A question searches records by its search words, so its
  * tabs count what that found.

@@ -9,11 +9,20 @@ import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { CommandDialog } from "@trenova/shared/components/ui/command";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { PalettePreview, type PreviewContext } from "./_components/preview/palette-preview";
 import { prefetchRecordPreview } from "./_components/preview/preview-queries";
 import { answerSources, plainAnswer } from "./ask-answer";
@@ -37,6 +46,7 @@ import { PaletteList } from "./palette-list";
 import {
   intentKeepsPaletteOpen,
   itemTitle,
+  sameSubject,
   type PaletteAction,
   type PaletteIcon,
   type PaletteIntent,
@@ -83,6 +93,8 @@ const AnswerCard = lazyComponent(
 
 const SEARCH_DEBOUNCE_MS = 200;
 const PREVIEW_SETTLE_MS = 90;
+/** The longest the preview waits on typing and searching before it catches up anyway. */
+const PREVIEW_HOLD_MS = 600;
 const CONFIRMATION_MS = 1800;
 
 interface MentionState {
@@ -99,12 +111,37 @@ interface AskedQuestion {
   subject: AssistantEntityRef | null;
 }
 
-function caretAtEnd(input: HTMLInputElement): boolean {
-  return input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
+/** What the box holds that decides the list, read together so a list is never drawn from half of it. */
+interface PaletteView {
+  query: string;
+  scope: PaletteScope;
+  mentionOpen: boolean;
+  askSubject: AssistantEntityRef | null;
 }
 
-function sameSubject(a: AssistantEntityRef | null, b: AssistantEntityRef | null): boolean {
-  return a === b || (a !== null && b !== null && a.type === b.type && a.id === b.id);
+/** A query that starts with ">" searches only commands, unless something already narrows the box. */
+function commandTextOf(
+  query: string,
+  scope: PaletteScope,
+  askSubject: AssistantEntityRef | null,
+): string | null {
+  return askSubject === null && scope === "all" ? commandModeQuery(query) : null;
+}
+
+/**
+ * The row the person moved to, and the list it was in. A new list starts on
+ * its first row; the old one keeps the person's row until the new one is drawn,
+ * so the selection never jumps within a list that is about to be replaced.
+ */
+interface Selection {
+  key: string;
+  view: PaletteView | null;
+}
+
+const NO_SELECTION: Selection = { key: "", view: null };
+
+function caretAtEnd(input: HTMLInputElement): boolean {
+  return input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
 }
 
 /** A record an answer cited, as a palette record, when the palette can draw and open it. */
@@ -149,7 +186,7 @@ export function CommandPalette() {
   const [scope, setScope] = useState<PaletteScope>("all");
   const [mention, setMention] = useState<MentionState>(CLOSED_MENTION);
   const [actionsOpen, setActionsOpen] = useState(false);
-  const [selected, setSelected] = useState("");
+  const [selection, setSelection] = useState<Selection>(NO_SELECTION);
   const [askSubject, setAskSubject] = useState<AssistantEntityRef | null>(null);
   const [asked, setAsked] = useState<AskedQuestion | null>(null);
   const [peek, setPeek] = useState<AssistantEntityRef | null>(null);
@@ -162,12 +199,21 @@ export function CommandPalette() {
   const pinned = usePinnedPages(open, catalog.pageIndex);
   const home = usePaletteHome({ catalog, pinned });
 
-  const commandText = askSubject === null && scope === "all" ? commandModeQuery(query) : null;
-  const effectiveScope: PaletteScope = commandText !== null ? "commands" : scope;
-  const searchQuery = commandText ?? (mention.open ? stripMentionToken(query) : query);
+  // The box takes every key at once and the list follows at a lower priority, so a key
+  // never waits on ranking and redrawing rows, and a burst of keys draws the list once.
+  const typed = useMemo(
+    (): PaletteView => ({ query, scope, mentionOpen: mention.open, askSubject }),
+    [askSubject, mention.open, query, scope],
+  );
+  const view = useDeferredValue(typed);
+
+  const commandText = commandTextOf(view.query, view.scope, view.askSubject);
+  const effectiveScope: PaletteScope = commandText !== null ? "commands" : view.scope;
+  const searchQuery =
+    commandText ?? (view.mentionOpen ? stripMentionToken(view.query) : view.query);
   const trimmedQuery = searchQuery.trim();
   const question =
-    askSubject !== null
+    view.askSubject !== null
       ? null
       : effectiveScope === "commands" || effectiveScope === "pages"
         ? null
@@ -176,10 +222,11 @@ export function CommandPalette() {
   const recordQuery = question !== null ? questionSearchText(question) : searchQuery;
   const debouncedRecordQuery = useDebounce(recordQuery, SEARCH_DEBOUNCE_MS);
   const remote = usePaletteRemoteSearch({
-    enabled: open && askSubject === null,
+    enabled: open && view.askSubject === null,
     query: debouncedRecordQuery,
     scope: effectiveScope,
   });
+  const settling = view !== typed || recordQuery !== debouncedRecordQuery || remote.refreshing;
 
   const getPageContext = usePageContext();
   const { turn, ask, stop: stopAsk, reset: resetAsk, keep: keepAsk } = useAsk();
@@ -212,7 +259,7 @@ export function CommandPalette() {
     setScope("all");
     setMention(CLOSED_MENTION);
     setActionsOpen(false);
-    setSelected("");
+    setSelection(NO_SELECTION);
     setAskSubject(null);
     setAsked(null);
     setPeek(null);
@@ -234,7 +281,6 @@ export function CommandPalette() {
       setActionsOpen(false);
       setScope("all");
       setQuery("");
-      setSelected("");
       setMention(CLOSED_MENTION);
       clearAnswer();
       focusInput();
@@ -257,17 +303,17 @@ export function CommandPalette() {
   const answerVisible =
     turn !== null &&
     asked !== null &&
-    sameSubject(asked.subject, askSubject) &&
-    (askSubject !== null
-      ? query.trim() === "" || query.trim() === asked.question
+    sameSubject(asked.subject, view.askSubject) &&
+    (view.askSubject !== null
+      ? view.query.trim() === "" || view.query.trim() === asked.question
       : question === asked.question);
 
   const { sections, empty } = useMemo((): { sections: PaletteSection[]; empty: boolean } => {
-    if (askSubject !== null) {
+    if (view.askSubject !== null) {
       return {
         sections: buildSubjectSections(
-          askSubject,
-          query,
+          view.askSubject,
+          view.query,
           answerVisible && asked ? asked.question : null,
           t,
         ),
@@ -280,7 +326,7 @@ export function CommandPalette() {
     const results = buildSearchSections(
       {
         query: searchQuery,
-        recordQuery,
+        recordQuery: remote.query,
         scope: effectiveScope,
         question,
         remote,
@@ -294,39 +340,44 @@ export function CommandPalette() {
       : results;
   }, [
     answerVisible,
-    askSubject,
     asked,
     effectiveScope,
     home,
-    query,
     question,
     ranking,
-    recordQuery,
     remote,
     searchQuery,
     t,
     trimmedQuery,
+    view.askSubject,
+    view.query,
   ]);
 
   const counts = useMemo(
     () =>
-      askSubject === null && trimmedQuery !== ""
+      view.askSubject === null && trimmedQuery !== ""
         ? scopeCounts(ranking, remote, commandText !== null ? "commands" : "search")
         : null,
-    [askSubject, commandText, ranking, remote, trimmedQuery],
+    [commandText, ranking, remote, trimmedQuery, view.askSubject],
   );
 
   const items = useMemo(() => flattenSections(sections), [sections]);
   const itemsByKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
-  const selectedKey = itemsByKey.has(selected) ? selected : (items[0]?.key ?? "");
+  const selectedKey =
+    selection.view === view && itemsByKey.has(selection.key)
+      ? selection.key
+      : (items[0]?.key ?? "");
   const selectedItem = itemsByKey.get(selectedKey) ?? null;
   const selectedActions = useMemo(
     () => (selectedItem ? buildItemActions(selectedItem, actionContext, t) : []),
     [actionContext, selectedItem, t],
   );
 
-  const settledKey = useDebounce(selectedKey, PREVIEW_SETTLE_MS);
-  const settledItem = itemsByKey.get(settledKey) ?? (settledKey === "" ? null : selectedItem);
+  // The preview follows the selection once it settles. While the person is still typing,
+  // or the records for what they typed are still on their way, it keeps what it shows,
+  // even a row that has left the list, rather than redrawing for each row that passes
+  // through the top of the list on the way to the answer.
+  const settledItem = useDebounce(selectedItem, settling ? PREVIEW_HOLD_MS : PREVIEW_SETTLE_MS);
   const previewItem = useMemo((): PaletteItem | null => {
     const peekRecord = peek ? recordFromRef(peek) : null;
     return peekRecord
@@ -429,7 +480,7 @@ export function CommandPalette() {
   const followUp = useCallback(() => {
     clearAnswer();
     setQuery("");
-    setSelected("");
+    setSelection(NO_SELECTION);
     focusInput();
   }, [clearAnswer, focusInput]);
 
@@ -458,30 +509,26 @@ export function CommandPalette() {
   const changeScope = useCallback(
     (next: PaletteScope) => {
       setScope(next);
-      setSelected("");
       setActionsOpen(false);
       focusInput();
     },
     [focusInput],
   );
 
-  const handleSelect = useCallback(
-    (item: PaletteItem) => {
-      if (item.kind === "ask") {
-        startAsk(item);
-        return;
-      }
-      if (item.kind === "widen") {
-        changeScope("all");
-        return;
-      }
-      const primary = buildItemActions(item, actionContext, t)[0];
-      if (primary) {
-        runAction(item, primary);
-      }
-    },
-    [actionContext, changeScope, runAction, startAsk, t],
-  );
+  const handleSelect = useLatestCallback((item: PaletteItem) => {
+    if (item.kind === "ask") {
+      startAsk(item);
+      return;
+    }
+    if (item.kind === "widen") {
+      changeScope("all");
+      return;
+    }
+    const primary = buildItemActions(item, actionContext, t)[0];
+    if (primary) {
+      runAction(item, primary);
+    }
+  });
 
   const previewContext = useMemo(
     (): PreviewContext => ({
@@ -526,7 +573,6 @@ export function CommandPalette() {
       setScope(option.key);
       setQuery((current) => stripMentionToken(current));
       setMention(CLOSED_MENTION);
-      setSelected("");
       focusInput();
     },
     [focusInput],
@@ -740,7 +786,7 @@ export function CommandPalette() {
           ? null
           : { kind: "ask" };
 
-  const scopeLabel = scope !== "all" ? scopePresentation(scope, t).label : null;
+  const scopeLabel = view.scope !== "all" ? scopePresentation(view.scope, t).label : null;
   const showEmpty = empty && !answerVisible;
   const actionTile = selectedItem ? itemTile(selectedItem) : {};
 
@@ -771,7 +817,7 @@ export function CommandPalette() {
               : t("Nothing called “{0}”", trimmedQuery)}
           </p>
           <p className="text-foreground-subtle mt-1 max-w-md text-sm">
-            {scope !== "all"
+            {view.scope !== "all"
               ? t(
                   "Try everything instead, or ask Nova — it reads records the search index doesn't, like stop notes and email.",
                 )
@@ -805,7 +851,12 @@ export function CommandPalette() {
         loop: true,
         value: selectedKey,
         onValueChange: (value) => {
-          setSelected(value);
+          // cmdk picks the first row it finds after every key, which is the old list's
+          // while the new one is still being drawn; each list already starts on its own.
+          if (view !== typed || value === selectedKey) {
+            return;
+          }
+          setSelection({ key: value, view });
           setPeek(null);
         },
         className: "flex h-full min-h-0 flex-col rounded-none bg-transparent",
@@ -822,7 +873,7 @@ export function CommandPalette() {
         }}
         scope={scope}
         onClearScope={() => changeScope("all")}
-        commandMode={commandText !== null}
+        commandMode={commandTextOf(query, scope, askSubject) !== null}
         askSubject={askSubject?.label ?? null}
         onClearAskSubject={() => {
           setAskSubject(null);
