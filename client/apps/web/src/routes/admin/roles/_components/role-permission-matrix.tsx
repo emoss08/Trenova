@@ -57,12 +57,12 @@ export function RolePermissionMatrix({
       }
       for (const grant of bundle.grants) {
         const labels = sources.get(grant.resource) ?? [];
-        labels.push(t(bundle.label));
+        labels.push(bundle.label);
         sources.set(grant.resource, labels);
       }
     }
     return sources;
-  }, [bundleCatalog?.bundles, permissions, t]);
+  }, [bundleCatalog?.bundles, permissions]);
 
   const permissionMap = useMemo(() => {
     const map = new Map<string, AddPermission>();

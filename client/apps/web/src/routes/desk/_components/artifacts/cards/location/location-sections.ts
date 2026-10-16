@@ -7,7 +7,7 @@ import { Resource } from "@trenova/shared/types/permission";
  * reads it without the card's code.
  */
 export const LOCATION_SECTIONS = {
-  detention: Resource.DetentionPolicy,
+  detention: Resource.Detention,
   shipments: Resource.Shipment,
   failures: Resource.ServiceFailure,
 } as const;

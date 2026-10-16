@@ -5,11 +5,11 @@ func (r *Registry) registerReportingResources() {
 		Resource:    ResourceReport.String(),
 		DisplayName: "Report",
 		Description: "Report generation and management",
-		Category:    "Reporting",
+		Category:    "Reports",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View reports and cancel your own report runs",
 			},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create reports"},
@@ -27,9 +27,9 @@ func (r *Registry) registerReportingResources() {
 		Resource:    ResourceDashboard.String(),
 		DisplayName: "Dashboard",
 		Description: "Dashboard configuration",
-		Category:    "Reporting",
+		Category:    "Reports",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View dashboards"},
+			{Operation: OpRead, DisplayName: "View", Description: "View dashboards"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create dashboards"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify dashboards"},
 		},

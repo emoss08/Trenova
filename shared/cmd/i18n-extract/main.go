@@ -39,6 +39,7 @@ var messageFields = map[string]struct{}{
 	"Message":     {},
 	"Detail":      {},
 	"Description": {},
+	"DisplayName": {},
 	"Label":       {},
 	"PluralLabel": {},
 	"Summary":     {},

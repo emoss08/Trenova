@@ -50,7 +50,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceWeatherAlert:           permission.ResourceShipment,
 	SourceEDIInboundQuarantined:  permission.ResourceEDI,
 	SourceBillingException:       permission.ResourceBillingQueue,
-	SourceDetentionOccurrence:    permission.ResourceDetentionPolicy,
+	SourceDetentionOccurrence:    permission.ResourceDetention,
 	SourceInboundMessage:         permission.ResourceInboundMessage,
 	SourceWorkerCredential:       permission.ResourceWorker,
 	SourceMoveCoverage:           permission.ResourceShipmentMove,

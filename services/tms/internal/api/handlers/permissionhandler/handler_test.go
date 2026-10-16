@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -363,4 +364,67 @@ func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforc
 			}
 		}
 	}
+}
+
+func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+		Resource:    "invoice",
+		DisplayName: "Invoice",
+		Category:    "Billing",
+		Operations: []permission.OperationDefinition{
+			{Operation: permission.OpRead, DisplayName: "View"},
+		},
+	}))
+	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+		Resource:    "assistant",
+		DisplayName: "Desk",
+		Category:    "Desk",
+	}))
+
+	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	handler := permissionhandler.New(permissionhandler.Params{
+		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
+		Registry:         registry,
+		Scopes:           &scopepolicytest.Policy{Registry: registry, DatabaseEnforcing: true},
+		ErrorHandler: helpers.NewErrorHandler(
+			helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg},
+		),
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/permissions/resources").
+		WithDefaultAuthContext()
+	ginCtx.Context.Request = ginCtx.Context.Request.WithContext(
+		i18n.WithLocale(ginCtx.Context.Request.Context(), i18n.ES),
+	)
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp []struct {
+		Category  string `json:"category"`
+		Resources []struct {
+			DisplayName string `json:"displayName"`
+			Operations  []struct {
+				DisplayName string `json:"displayName"`
+			} `json:"operations"`
+		} `json:"resources"`
+	}
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Len(t, resp, 2)
+	assert.Equal(t, i18n.Translate(i18n.ES, "Desk"), resp[0].Category)
+	assert.Equal(t, "Facturación", resp[1].Category)
+	require.Len(t, resp[1].Resources, 1)
+	assert.Equal(t, "Factura", resp[1].Resources[0].DisplayName)
+	require.Len(t, resp[1].Resources[0].Operations, 1)
+	assert.Equal(t, "Ver", resp[1].Resources[0].Operations[0].DisplayName)
+
+	def, ok := registry.Get("invoice")
+	require.True(t, ok)
+	assert.Equal(t, "Invoice", def.DisplayName, "translating a response must not change the registry")
 }

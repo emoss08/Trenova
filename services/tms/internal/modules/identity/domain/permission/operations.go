@@ -240,7 +240,7 @@ func (o Operation) IsValid() bool {
 // a name cannot come to differ between the registry and the screen that shows
 // it.
 var operationDefinitions = map[Operation]OperationDefinition{
-	OpRead:   {Operation: OpRead, DisplayName: "Read", Description: "View records"},
+	OpRead:   {Operation: OpRead, DisplayName: "View", Description: "View records"},
 	OpCreate: {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
 	OpUpdate: {
 		Operation:   OpUpdate,

@@ -9,7 +9,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceOrganization.String(),
 		DisplayName:        "Organization",
 		Description:        "Organization settings and configuration",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -18,7 +18,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceBusinessUnit.String(),
 		DisplayName:        "Business Unit",
 		Description:        "Business unit management",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -27,9 +27,9 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceUser.String(),
 		DisplayName: "User",
 		Description: "User account management",
-		Category:    "Administration",
+		Category:    "Users & security",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View user accounts"},
+			{Operation: OpRead, DisplayName: "View", Description: "View user accounts"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new users"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify user accounts"},
 			{
@@ -50,9 +50,9 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceRole.String(),
 		DisplayName: "Role",
 		Description: "Role and permission management",
-		Category:    "Administration",
+		Category:    "Users & security",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View roles"},
+			{Operation: OpRead, DisplayName: "View", Description: "View roles"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new roles"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify roles"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete roles"},
@@ -64,7 +64,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceAuditLog.String(),
 		DisplayName:        "Audit Log",
 		Description:        "System audit logs",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -73,11 +73,11 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceTableConfiguration.String(),
 		DisplayName: "Table Configuration",
 		Description: "Saved table views. Anyone may keep private views; sharing one with the organization needs these",
-		Category:    "Administration",
+		Category:    "Organization settings",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "See saved views on the home page",
 			},
 			{
@@ -98,9 +98,9 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceCustomFieldDefinition.String(),
 		DisplayName: "Custom Field Definition",
 		Description: "Custom field definitions and resource assignments",
-		Category:    "Administration",
+		Category:    "Organization settings",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View custom field definitions"},
+			{Operation: OpRead, DisplayName: "View", Description: "View custom field definitions"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -124,7 +124,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceSequenceConfig.String(),
 		DisplayName:        "Sequence Configuration",
 		Description:        "Sequence generator configuration",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -133,7 +133,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceIntegration.String(),
 		DisplayName:        "Integration",
 		Description:        "External integration configuration and synchronization",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -142,7 +142,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceEmailProfile.String(),
 		DisplayName:        "Email Profile",
 		Description:        "Transactional email sender profiles and assignments",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -151,7 +151,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceEmailLog.String(),
 		DisplayName:        "Email Log",
 		Description:        "Transactional email send and delivery logs",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -160,7 +160,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceEmailSuppression.String(),
 		DisplayName:        "Email Suppression",
 		Description:        "Email bounce, complaint, and manual suppression records",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -169,7 +169,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceEDI.String(),
 		DisplayName: "EDI",
 		Description: "EDI partner setup, mapping profiles, and load tender transfers",
-		Category:    "Administration",
+		Category:    "EDI",
 		Operations: relabel(
 			standardOpsWithDelete,
 			OpUpdate,
@@ -183,7 +183,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceAPIKey.String(),
 		DisplayName:        "API Key",
 		Description:        "API key creation, rotation, revocation, and permission management",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -192,7 +192,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourcePlatformCatalog.String(),
 		DisplayName:        "Platform Catalog",
 		Description:        "Platform catalog and entitlement metadata administration",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -201,9 +201,9 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceDocumentOperation.String(),
 		DisplayName: "Document Operation",
 		Description: "Document diagnostics, extraction, preview, and search operations",
-		Category:    "Administration",
+		Category:    "Documents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View document diagnostics"},
+			{Operation: OpRead, DisplayName: "View", Description: "View document diagnostics"},
 			{Operation: OpUpdate, DisplayName: "Run", Description: "Run document operations"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -213,7 +213,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceIdentityProvider.String(),
 		DisplayName:        "Identity Provider",
 		Description:        "OIDC identity provider configuration",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -222,7 +222,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceSCIMDirectory.String(),
 		DisplayName:        "SCIM Directory",
 		Description:        "SCIM directory, token, and group mapping administration",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -231,7 +231,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceProvisioningAudit.String(),
 		DisplayName:        "Provisioning Audit",
 		Description:        "SCIM provisioning activity",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -240,7 +240,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceAccessPolicy.String(),
 		DisplayName:        "Access Policy",
 		Description:        "Organization access policy decisions",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -249,7 +249,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceAuthEvent.String(),
 		DisplayName:        "Authentication Event",
 		Description:        "Authentication and sign-in activity",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -258,7 +258,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceRiskDecision.String(),
 		DisplayName:        "Risk Decision",
 		Description:        "Authentication risk decisions",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -267,7 +267,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceExternalIdentity.String(),
 		DisplayName:        "External Identity",
 		Description:        "Federated identity links",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -276,7 +276,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:           ResourceMFAAuthenticator.String(),
 		DisplayName:        "MFA Authenticator",
 		Description:        "MFA authenticator inventory",
-		Category:           "Administration",
+		Category:           "Users & security",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -285,11 +285,11 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceTableChangeAlert.String(),
 		DisplayName: "Table Change Alert",
 		Description: "Table change alert subscriptions and notifications",
-		Category:    "Administration",
+		Category:    "Organization settings",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View table change alert subscriptions",
 			},
 			{
@@ -315,11 +315,11 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceHomeLayoutPreset.String(),
 		DisplayName: "Home Screen Preset",
 		Description: "Home screens administrators author and assign to roles",
-		Category:    "Administration",
+		Category:    "Organization settings",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View home screen presets",
 			},
 			{
@@ -348,7 +348,7 @@ func (r *Registry) registerAdministrationResources() {
 		Resource:    ResourceDocumentTemplate.String(),
 		DisplayName: "Document & Message Template",
 		Description: "Templates for customer documents, emails, and notifications",
-		Category:    "Administration",
+		Category:    "Documents",
 		Operations: relabel(append(slices.Clone(standardOpsWithDelete),
 			OperationDefinition{
 				Operation:   OpActivate,

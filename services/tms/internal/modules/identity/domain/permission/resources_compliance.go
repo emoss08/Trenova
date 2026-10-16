@@ -5,7 +5,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:           ResourceQualification.String(),
 		DisplayName:        "Qualification",
 		Description:        "Driver qualification management",
-		Category:           "Compliance",
+		Category:           "Human resources",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -14,7 +14,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:    ResourceDocument.String(),
 		DisplayName: "Document",
 		Description: "Uploaded document records and intelligence output",
-		Category:    "Compliance",
+		Category:    "Documents",
 		Operations: relabel(relabel(operations(
 			OpRead, OpCreate, OpUpdate, OpExport, OpImport, OpDelete, OpApprove, OpReject,
 		), OpCreate, "Create", "Upload documents and cancel uploads"), OpUpdate, "Update", "Modify documents and restore deleted ones"),
@@ -25,7 +25,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:           ResourceDocumentType.String(),
 		DisplayName:        "Document Type",
 		Description:        "Document type configuration and classification targets",
-		Category:           "Compliance",
+		Category:           "Documents",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -34,7 +34,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:           ResourceDocumentControl.String(),
 		DisplayName:        "Document Control",
 		Description:        "Document intelligence and OCR settings",
-		Category:           "Compliance",
+		Category:           "Documents",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -43,7 +43,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:    ResourceDocumentParsingRule.String(),
 		DisplayName: "Document Parsing Rule",
 		Description: "Tenant-managed parsing rules, versions, fixtures, and simulations",
-		Category:    "Compliance",
+		Category:    "Intake",
 		Operations: relabel(append(GetAllOperations(), OperationDefinition{
 			Operation:   OpDelete,
 			DisplayName: "Delete",
@@ -57,13 +57,13 @@ func (r *Registry) registerComplianceResources() {
 	// document create on the record it lands on, which is checked separately.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceCaptureBatch.String(),
-		DisplayName: "Document Capture",
+		DisplayName: "Intake",
 		Description: "Scans and print jobs waiting in intake, and filing them onto records",
-		Category:    "Compliance",
+		Category:    "Intake",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View scanned and printed batches in intake",
 			},
 			{
@@ -96,11 +96,11 @@ func (r *Registry) registerComplianceResources() {
 		Resource:    ResourceCaptureDevice.String(),
 		DisplayName: "Capture Device",
 		Description: "Paired Trenova Capture installs across the organization",
-		Category:    "Compliance",
+		Category:    "Intake",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View every paired device and who it acts for",
 			},
 			{
@@ -116,7 +116,7 @@ func (r *Registry) registerComplianceResources() {
 		Resource:           ResourceCaptureProfile.String(),
 		DisplayName:        "Capture Profile",
 		Description:        "Named scan settings offered to people who scan",
-		Category:           "Compliance",
+		Category:           "Intake",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})

@@ -1,6 +1,7 @@
 package permissionhandler
 
 import (
+	"context"
 	"net/http"
 	"sort"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -219,24 +221,24 @@ type resourceResponse struct {
 // @Security BearerAuth
 // @Router /permissions/resources [get]
 func (h *Handler) getAvailableResources(c *gin.Context) {
+	ctx := c.Request.Context()
 	categories := h.registry.GetCategories()
-	sort.Strings(categories)
 
 	response := make([]resourceCategoryResponse, 0, len(categories))
 	for _, cat := range categories {
 		resources := h.registry.GetByCategory(cat)
-		sort.Slice(resources, func(i, j int) bool {
-			return resources[i].DisplayName < resources[j].DisplayName
-		})
 		entries := make([]resourceResponse, 0, len(resources))
 		for _, def := range resources {
 			entries = append(entries, resourceResponse{
-				ResourceDefinition: def,
+				ResourceDefinition: translatedDefinition(ctx, def),
 				EnforceableScopes:  h.scopes.EnforceableScopes(def.Resource),
 			})
 		}
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].DisplayName < entries[j].DisplayName
+		})
 		response = append(response, resourceCategoryResponse{
-			Category:  cat,
+			Category:  i18n.T(ctx, cat),
 			Resources: entries,
 		})
 	}
@@ -298,6 +300,7 @@ type bundlesResponse struct {
 // @Security BearerAuth
 // @Router /permissions/bundles [get]
 func (h *Handler) getBundles(c *gin.Context) {
+	ctx := c.Request.Context()
 	bundles := permission.Bundles()
 	templates := permission.JobTemplates()
 
@@ -309,6 +312,7 @@ func (h *Handler) getBundles(c *gin.Context) {
 		grants := make([]bundleGrantResponse, 0, len(bundle.Grants))
 		for _, grant := range bundle.Grants {
 			grants = append(grants, h.bundleGrant(
+				ctx,
 				grant.Resource.String(),
 				grant.Operations,
 				grant.Scope,
@@ -317,8 +321,8 @@ func (h *Handler) getBundles(c *gin.Context) {
 		resp.Bundles = append(resp.Bundles, bundleResponse{
 			ID:          bundle.ID,
 			Module:      bundle.Module,
-			Label:       bundle.Label,
-			Description: bundle.Description,
+			Label:       i18n.T(ctx, bundle.Label),
+			Description: i18n.T(ctx, bundle.Description),
 			Grants:      grants,
 		})
 	}
@@ -326,12 +330,12 @@ func (h *Handler) getBundles(c *gin.Context) {
 		composed := h.registry.TemplateGrants(template)
 		grants := make([]bundleGrantResponse, 0, len(composed))
 		for _, rp := range composed {
-			grants = append(grants, h.bundleGrant(rp.Resource, rp.Operations, rp.DataScope))
+			grants = append(grants, h.bundleGrant(ctx, rp.Resource, rp.Operations, rp.DataScope))
 		}
 		resp.Templates = append(resp.Templates, jobTemplateResponse{
 			ID:             template.ID,
-			Label:          template.Label,
-			Description:    template.Description,
+			Label:          i18n.T(ctx, template.Label),
+			Description:    i18n.T(ctx, template.Description),
 			Bundles:        template.Bundles,
 			MaxSensitivity: template.MaxSensitivity,
 			Grants:         grants,
@@ -342,6 +346,7 @@ func (h *Handler) getBundles(c *gin.Context) {
 }
 
 func (h *Handler) bundleGrant(
+	ctx context.Context,
 	resource string,
 	operations []permission.Operation,
 	scope permission.DataScope,
@@ -351,7 +356,7 @@ func (h *Handler) bundleGrant(
 	}
 	name := resource
 	if def, ok := h.registry.Get(resource); ok {
-		name = def.DisplayName
+		name = i18n.T(ctx, def.DisplayName)
 	}
 	return bundleGrantResponse{
 		Resource:    resource,
@@ -359,4 +364,21 @@ func (h *Handler) bundleGrant(
 		Operations:  operations,
 		DataScope:   scope,
 	}
+}
+
+func translatedDefinition(
+	ctx context.Context,
+	def *permission.ResourceDefinition,
+) *permission.ResourceDefinition {
+	translated := *def
+	translated.DisplayName = i18n.T(ctx, def.DisplayName)
+	translated.Description = i18n.T(ctx, def.Description)
+	translated.Category = i18n.T(ctx, def.Category)
+	translated.Operations = make([]permission.OperationDefinition, len(def.Operations))
+	for i, op := range def.Operations {
+		op.DisplayName = i18n.T(ctx, op.DisplayName)
+		op.Description = i18n.T(ctx, op.Description)
+		translated.Operations[i] = op
+	}
+	return &translated
 }

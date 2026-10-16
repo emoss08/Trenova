@@ -408,9 +408,10 @@ func TestRegistry_RegisterAll_CategoriesExist(t *testing.T) {
 	reg := NewRegistry()
 
 	expectedCategories := []string{
-		"Administration", "Equipment", "Fuel & IFTA", "Workers", "Operations",
-		"Billing", "Customers", "Locations", "Commodities",
-		"Accounting", "Compliance", "Reference Data", "Reporting",
+		"Desk", "Triage", "Intake", "Shipments", "Dispatch", "Carriers", "Equipment",
+		"Fuel & tax", "EDI", "Human resources", "Payroll", "Billing", "Detention",
+		"Carrier settlements", "Accounting", "Reports", "Documents", "AI & agents",
+		"Organization settings", "Users & security", "Protected fields",
 	}
 
 	categories := reg.GetCategories()
@@ -488,7 +489,7 @@ func TestRegistry_ServiceFailureResourcesUseReadinessOperations(t *testing.T) {
 
 			def, ok := reg.Get(resource.String())
 			require.True(t, ok)
-			assert.Equal(t, "Operations", def.Category)
+			assert.Equal(t, "Shipments", def.Category)
 			assert.ElementsMatch(t, wantOps, reg.GetOperationsForResource(resource.String()))
 		})
 	}
@@ -502,7 +503,7 @@ func TestRegistry_RegisterWorkerPTOResource(t *testing.T) {
 	def, ok := reg.Get(ResourceWorkerPTO.String())
 	require.True(t, ok)
 	assert.Equal(t, "Worker PTO", def.DisplayName)
-	assert.Equal(t, "Workers", def.Category)
+	assert.Equal(t, "Human resources", def.Category)
 	assert.Empty(t, def.ParentResource)
 	assert.Equal(t, SensitivityRestricted, def.DefaultSensitivity)
 
@@ -555,7 +556,7 @@ func TestRegistry_HasDistanceOverrideResource(t *testing.T) {
 	def, ok := reg.Get(ResourceDistanceOverride.String())
 	require.True(t, ok)
 	assert.Equal(t, "Distance Override", def.DisplayName)
-	assert.Equal(t, "Operations", def.Category)
+	assert.Equal(t, "Dispatch", def.Category)
 	assert.Equal(t, SensitivityInternal, def.DefaultSensitivity)
 	assert.Contains(t, reg.GetOperationsForResource(ResourceDistanceOverride.String()), OpRead)
 }
@@ -806,4 +807,61 @@ func TestRouteRegistry_RegisterAll_CategoriesExist(t *testing.T) {
 	for _, cat := range expectedCategories {
 		assert.True(t, categorySet[cat], "route registry should have category %s", cat)
 	}
+}
+
+func TestRegistry_EveryResourceSitsInACategoryTheRoleEditorOrders(t *testing.T) {
+	t.Parallel()
+
+	order := CategoryOrder()
+	known := make(map[string]struct{}, len(order))
+	for _, category := range order {
+		known[category] = struct{}{}
+	}
+	for _, def := range NewRegistry().All() {
+		_, ok := known[def.Category]
+		assert.Truef(t, ok, "%s is in category %q, which CategoryOrder does not list",
+			def.Resource, def.Category)
+	}
+}
+
+func TestRegistry_GetCategoriesFollowsTheModuleRail(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, CategoryOrder(), NewRegistry().GetCategories())
+
+	reg := NewEmptyRegistry()
+	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "b", Category: "Zeta"}))
+	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "a", Category: "Billing"}))
+	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "c", Category: "Alpha"}))
+	require.NoError(t, reg.Register(&ResourceDefinition{Resource: "d", Category: "Desk"}))
+	assert.Equal(t, []string{"Desk", "Billing", "Alpha", "Zeta"}, reg.GetCategories())
+}
+
+func TestRegistry_ModulesAreNamedAsTheAppNamesThem(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	for resource, want := range map[Resource]struct{ name, category string }{
+		ResourceAssistant:      {"Desk", "Desk"},
+		ResourceInboundMessage: {"Triage", "Triage"},
+		ResourceCaptureBatch:   {"Intake", "Intake"},
+		ResourceAgentProposal:  {"Decisions", "Desk"},
+		ResourceDetention:      {"Detention", "Detention"},
+	} {
+		def, ok := reg.Get(resource.String())
+		require.True(t, ok, resource)
+		assert.Equal(t, want.name, def.DisplayName, resource)
+		assert.Equal(t, want.category, def.Category, resource)
+	}
+}
+
+func TestRegistry_WorkingDetentionIsApartFromItsPolicies(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	assert.ElementsMatch(t, []Operation{OpRead, OpUpdate},
+		reg.GetOperationsForResource(ResourceDetention.String()))
+	assert.Contains(t, reg.GetOperationsForResource(ResourceDetentionPolicy.String()), OpDelete)
+
+	assert.Equal(t, ResourceDetention, KindDetentionOccurrence.Resource())
 }

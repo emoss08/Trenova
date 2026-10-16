@@ -623,7 +623,7 @@ func (s *Service) audit(
 	}
 
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceDetentionPolicy,
+		Resource:       permission.ResourceDetention,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         userID,

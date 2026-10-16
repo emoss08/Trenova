@@ -5,9 +5,9 @@ func (r *Registry) registerOperationsResources() {
 		Resource:    ResourceOrder.String(),
 		DisplayName: "Order",
 		Description: "Commercial order management (groups shipments/legs under one customer order)",
-		Category:    "Operations",
+		Category:    "Shipments",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View orders"},
+			{Operation: OpRead, DisplayName: "View", Description: "View orders"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new orders"},
 			{
 				Operation:   OpUpdate,
@@ -27,9 +27,9 @@ func (r *Registry) registerOperationsResources() {
 		Resource:    ResourceShipment.String(),
 		DisplayName: "Shipment",
 		Description: "Shipment management",
-		Category:    "Operations",
+		Category:    "Shipments",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View shipments"},
+			{Operation: OpRead, DisplayName: "View", Description: "View shipments"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new shipments"},
 			{
 				Operation:   OpUpdate,
@@ -56,10 +56,10 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourceRecurringShipment.String(),
 		DisplayName:    "Recurring Shipment",
 		Description:    "Recurring shipment series management and scheduled generation",
-		Category:       "Operations",
+		Category:       "Shipments",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View recurring shipments"},
+			{Operation: OpRead, DisplayName: "View", Description: "View recurring shipments"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -83,10 +83,10 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourceShipmentComment.String(),
 		DisplayName:    "Shipment Comment",
 		Description:    "Shipment comment management",
-		Category:       "Operations",
+		Category:       "Shipments",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View shipment comments"},
+			{Operation: OpRead, DisplayName: "View", Description: "View shipment comments"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add shipment comments"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify shipment comments"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete shipment comments"},
@@ -118,10 +118,10 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourceShipmentMove.String(),
 		DisplayName:    "Shipment Move",
 		Description:    "Shipment move management",
-		Category:       "Operations",
+		Category:       "Dispatch",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View moves"},
+			{Operation: OpRead, DisplayName: "View", Description: "View moves"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add moves"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify moves"},
 			{Operation: OpAssign, DisplayName: "Assign", Description: "Assign resources to moves"},
@@ -143,10 +143,10 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourceShipmentStop.String(),
 		DisplayName:    "Shipment Stop",
 		Description:    "Shipment stop management",
-		Category:       "Operations",
+		Category:       "Shipments",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View stops"},
+			{Operation: OpRead, DisplayName: "View", Description: "View stops"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add stops"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify stops"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export shipment stop data"},
@@ -161,10 +161,10 @@ func (r *Registry) registerOperationsResources() {
 			"worker record on purpose: taking somebody off the board until a paper is " +
 			"renewed is a dispatch decision, and it is not the same permission as " +
 			"editing their employment, their pay or their profile.",
-		Category:       "Operations",
+		Category:       "Dispatch",
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "See who is held off dispatch"},
+			{Operation: OpRead, DisplayName: "View", Description: "See who is held off dispatch"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -178,10 +178,10 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourceShipmentHold.String(),
 		DisplayName:    "Shipment Hold",
 		Description:    "Shipment hold management",
-		Category:       "Operations",
+		Category:       "Shipments",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View shipment holds"},
+			{Operation: OpRead, DisplayName: "View", Description: "View shipment holds"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create shipment holds"},
 			{
 				Operation:   OpUpdate,
@@ -198,10 +198,10 @@ func (r *Registry) registerOperationsResources() {
 		Description: "This organization's stricter posture on a jurisdiction. " +
 			"Unlike a jurisdiction rule these are yours alone, and an override can " +
 			"only tighten a state limit, never loosen one.",
-		Category:       "Operations",
+		Category:       "Dispatch",
 		ParentResource: ResourceJurisdictionRule.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View carrier overrides"},
+			{Operation: OpRead, DisplayName: "View", Description: "View carrier overrides"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -224,11 +224,11 @@ func (r *Registry) registerOperationsResources() {
 			"This data is global: it has no organization column and every tenant " +
 			"reads the same rows, so a change here alters what the whole platform " +
 			"is told is legal. Carrier-specific posture belongs in an override.",
-		Category: "Operations",
+		Category: "Dispatch",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View jurisdiction limits and their verification state",
 			},
 			{
@@ -254,12 +254,12 @@ func (r *Registry) registerOperationsResources() {
 		Resource:       ResourcePermit.String(),
 		DisplayName:    "Oversize Permit",
 		Description:    "Oversize and overweight permits and their derived requirements",
-		Category:       "Operations",
+		Category:       "Shipments",
 		ParentResource: ResourceShipment.String(),
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View permits and permit requirements",
 			},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Record permits"},
@@ -277,9 +277,9 @@ func (r *Registry) registerOperationsResources() {
 		Resource:    ResourceServiceFailure.String(),
 		DisplayName: "Service Failure",
 		Description: "Service failure investigation and approval records",
-		Category:    "Operations",
+		Category:    "Shipments",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View service failures"},
+			{Operation: OpRead, DisplayName: "View", Description: "View service failures"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create service failures"},
 			{
 				Operation:   OpUpdate,
@@ -297,11 +297,11 @@ func (r *Registry) registerOperationsResources() {
 		Resource:    ResourceServiceFailureReasonCode.String(),
 		DisplayName: "Service Failure Reason Code",
 		Description: "Service failure reason code reference data",
-		Category:    "Operations",
+		Category:    "Shipments",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View service failure reason codes",
 			},
 			{
@@ -337,7 +337,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceShipmentType.String(),
 		DisplayName:        "Shipment Type",
 		Description:        "Shipment type definitions",
-		Category:           "Operations",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
@@ -358,7 +358,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceDispatchControl.String(),
 		DisplayName:        "Dispatch Control",
 		Description:        "Dispatch settings and configuration",
-		Category:           "Operations",
+		Category:           "Dispatch",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -367,7 +367,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceDistanceProfile.String(),
 		DisplayName:        "Distance Profile",
 		Description:        "Distance calculation routing profiles",
-		Category:           "Operations",
+		Category:           "Dispatch",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -376,7 +376,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceDistanceOverride.String(),
 		DisplayName:        "Distance Override",
 		Description:        "Lane-specific distance overrides",
-		Category:           "Operations",
+		Category:           "Dispatch",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -385,7 +385,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceDistanceControl.String(),
 		DisplayName:        "Distance Control",
 		Description:        "Distance calculation settings and profile assignments",
-		Category:           "Operations",
+		Category:           "Dispatch",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -394,7 +394,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceStoredMileage.String(),
 		DisplayName:        "Stored Mileage",
 		Description:        "Reusable stored mileage lane records",
-		Category:           "Operations",
+		Category:           "Dispatch",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -403,7 +403,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceDataEntryControl.String(),
 		DisplayName:        "Data Entry Control",
 		Description:        "Data entry case formatting settings",
-		Category:           "Administration",
+		Category:           "Organization settings",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -412,7 +412,7 @@ func (r *Registry) registerOperationsResources() {
 		Resource:           ResourceShipmentControl.String(),
 		DisplayName:        "Shipment Control",
 		Description:        "Shipment control settings and configuration",
-		Category:           "Operations",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -421,9 +421,9 @@ func (r *Registry) registerOperationsResources() {
 		Resource:    ResourceHoldReason.String(),
 		DisplayName: "Hold Reason",
 		Description: "Hold reason management",
-		Category:    "Operations",
+		Category:    "Shipments",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View hold reasons"},
+			{Operation: OpRead, DisplayName: "View", Description: "View hold reasons"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new hold reasons"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify hold reasons"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export hold reason data"},

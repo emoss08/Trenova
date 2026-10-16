@@ -81,7 +81,7 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 	case SubjectBankReceipt:
 		return permission.ResourceBankReceipt, true
 	case SubjectDetentionOccurrence:
-		return permission.ResourceDetentionPolicy, true
+		return permission.ResourceDetention, true
 	case SubjectWorker:
 		return permission.ResourceWorker, true
 	case SubjectCarrierIntelEvent:

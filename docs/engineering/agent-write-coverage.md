@@ -345,7 +345,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
-| `escalate_detention` | detention_policy | update |
+| `escalate_detention` | detention | update |
 | `flag_for_manual_review` | agent_exception | create |
 | `notify_driver` | driver_message | create |
 | `place_worker_dispatch_hold` | worker_dispatch_hold | create |

@@ -15,7 +15,7 @@ func TestAIAuditTrail_IsAConfidentialAdministrationResource(t *testing.T) {
 	require.True(t, ok, "ai_audit_trail must be registered")
 
 	assert.Equal(t, "ai_audit_trail", permission.ResourceAIAuditTrail.String())
-	assert.Equal(t, "Administration", def.Category)
+	assert.Equal(t, "Users & security", def.Category)
 	assert.Equal(t, permission.SensitivityConfidential, def.DefaultSensitivity)
 
 	operations := make([]permission.Operation, 0, len(def.Operations))
@@ -34,14 +34,14 @@ func TestAIAuditTrail_IsNeverAnAgentsToHold(t *testing.T) {
 	}
 }
 
-func TestAIAuditTrail_IsGrantedWithEveryAdministrationResource(t *testing.T) {
+func TestAIAuditTrail_IsGrantedWithEveryUsersAndSecurityResource(t *testing.T) {
 	t.Parallel()
 
 	registry := permission.NewRegistry()
-	administration := registry.GetByCategory("Administration")
+	security := registry.GetByCategory("Users & security")
 
 	var trail, auditLog bool
-	for _, def := range administration {
+	for _, def := range security {
 		switch def.Resource {
 		case permission.ResourceAIAuditTrail.String():
 			trail = true
@@ -51,5 +51,5 @@ func TestAIAuditTrail_IsGrantedWithEveryAdministrationResource(t *testing.T) {
 	}
 
 	assert.True(t, auditLog)
-	assert.True(t, trail, "an administrator granted every Administration resource gets the trail")
+	assert.True(t, trail, "an auditor granted every Users & security resource gets the trail")
 }

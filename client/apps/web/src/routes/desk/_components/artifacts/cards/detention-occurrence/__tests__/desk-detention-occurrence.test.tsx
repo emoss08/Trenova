@@ -52,7 +52,7 @@ const shipment = {
 /** Signs the test's person in to read every section, and to act on charges when asked. */
 function grant(act = false) {
   seedPermissions({
-    [Resource.DetentionPolicy]: Operation.Read | (act ? Operation.Update : 0),
+    [Resource.Detention]: Operation.Read | (act ? Operation.Update : 0),
     [Resource.Shipment]: Operation.Read,
     [Resource.Location]: Operation.Read,
     [Resource.Customer]: Operation.Read,
@@ -268,7 +268,7 @@ describe("DeskDetentionOccurrence", () => {
   });
 
   it("leaves out what the person may not read and never asks for it", async () => {
-    seedPermissions({ [Resource.DetentionPolicy]: Operation.Read });
+    seedPermissions({ [Resource.Detention]: Operation.Read });
     draw();
     await screen.findByRole("heading", { name: "Kroger Atlanta DC", level: 2 });
 

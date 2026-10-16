@@ -164,7 +164,7 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceServiceFailureReasonCode: {
 		OpRead: {},
 	},
-	ResourceDetentionPolicy: {
+	ResourceDetention: {
 		OpRead:   {},
 		OpUpdate: {},
 	},

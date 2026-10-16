@@ -18,7 +18,7 @@ func (r *Registry) registerAccountingResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View the accounting connection, its health and its mappings",
 			},
 			{
@@ -55,7 +55,7 @@ func (r *Registry) registerAccountingResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View sync status, records and differences",
 			},
 			{
@@ -72,7 +72,7 @@ func (r *Registry) registerAccountingResources() {
 		Resource:           ResourceBillingControl.String(),
 		DisplayName:        "Billing Control",
 		Description:        "Billing policy and workflow control configuration",
-		Category:           "Accounting",
+		Category:           "Billing",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -90,7 +90,7 @@ func (r *Registry) registerAccountingResources() {
 		Resource:           ResourceInvoiceAdjustmentControl.String(),
 		DisplayName:        "Invoice Adjustment Control",
 		Description:        "Invoice adjustment policy and approval control configuration",
-		Category:           "Accounting",
+		Category:           "Billing",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -148,7 +148,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Fiscal year management",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View fiscal years"},
+			{Operation: OpRead, DisplayName: "View", Description: "View fiscal years"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create fiscal years"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify fiscal years"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete fiscal years"},
@@ -200,7 +200,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Fiscal period management",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View fiscal periods"},
+			{Operation: OpRead, DisplayName: "View", Description: "View fiscal periods"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create fiscal periods"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify fiscal periods"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete fiscal periods"},
@@ -253,7 +253,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Manual journal request workflow and approvals",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View manual journals"},
+			{Operation: OpRead, DisplayName: "View", Description: "View manual journals"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -308,7 +308,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Journal reversal workflow and posting",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View journal reversals"},
+			{Operation: OpRead, DisplayName: "View", Description: "View journal reversals"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -358,7 +358,7 @@ func (r *Registry) registerAccountingResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View journal entry details and accounting sources",
 			},
 			{
@@ -448,7 +448,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Customer payment posting and applications",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View customer payments"},
+			{Operation: OpRead, DisplayName: "View", Description: "View customer payments"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -504,7 +504,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "AR ledger and aging reporting",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View AR ledger and aging"},
+			{Operation: OpRead, DisplayName: "View", Description: "View AR ledger and aging"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Work collections",
@@ -537,7 +537,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Imported bank receipts and payment matching",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipts"},
+			{Operation: OpRead, DisplayName: "View", Description: "View bank receipts"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Import bank receipts"},
 			{
 				Operation:   OpUpdate,
@@ -579,7 +579,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Trial balance, income statement, and balance sheet reporting",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View accounting reports"},
+			{Operation: OpRead, DisplayName: "View", Description: "View accounting reports"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export accounting reports"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -604,7 +604,7 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Reconciliation exception queue for bank receipts",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipt work queue"},
+			{Operation: OpRead, DisplayName: "View", Description: "View bank receipt work queue"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",

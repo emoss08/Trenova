@@ -138,6 +138,19 @@ var capabilityBundles = []Bundle{
 		},
 	},
 	{
+		ID:          "billing.detention",
+		Module:      "Billing",
+		Label:       "Detention",
+		Description: "Work the detention desk: approve, waive and dispute detention, and send notices.",
+		Grants: []BundleGrant{
+			{Resource: ResourceDetention, Operations: []Operation{OpRead, OpUpdate}},
+			{Resource: ResourceDetentionPolicy, Operations: []Operation{OpRead}},
+			{Resource: ResourceShipment, Operations: []Operation{OpRead}},
+			{Resource: ResourceCustomer, Operations: []Operation{OpRead}},
+			{Resource: ResourceLocation, Operations: []Operation{OpRead}},
+		},
+	},
+	{
 		ID:          "billing.rates",
 		Module:      "Billing",
 		Label:       "Rates and agreements",
@@ -403,6 +416,18 @@ var capabilityBundles = []Bundle{
 		},
 	},
 	{
+		ID:          "edi.exchange",
+		Module:      "EDI",
+		Label:       "EDI",
+		Description: "Watch EDI traffic, retry and correct messages, and keep partners and mappings current.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourceEDI,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpImport, OpExport},
+			},
+		},
+	},
+	{
 		ID:          "customers.records",
 		Module:      "Customers",
 		Label:       "Customers and locations",
@@ -440,14 +465,51 @@ var capabilityBundles = []Bundle{
 	},
 	{
 		ID:          "platform.assistant",
-		Module:      "Platform",
-		Label:       "Assistant",
-		Description: "Work with the assistant, briefings and insights.",
+		Module:      "Desk",
+		Label:       "Desk",
+		Description: "Talk with the agents on the Desk, and read briefings and insights.",
 		Grants: []BundleGrant{
 			{Resource: ResourceAssistant, Operations: []Operation{OpRead, OpCreate, OpDelete}},
 			{Resource: ResourceBriefing, Operations: []Operation{OpRead}},
 			{Resource: ResourceInsight, Operations: []Operation{OpRead}},
 			{Resource: ResourceWebResearch, Operations: []Operation{OpRead}},
+		},
+	},
+	{
+		ID:          "desk.decisions",
+		Module:      "Desk",
+		Label:       "Decisions",
+		Description: "Approve or decline what the agents propose, and work the watchtower's exceptions.",
+		Grants: []BundleGrant{
+			{Resource: ResourceAgentProposal, Operations: []Operation{OpRead, OpUpdate}},
+			{Resource: ResourceWatchtower, Operations: []Operation{OpRead, OpUpdate}},
+		},
+	},
+	{
+		ID:          "desk.triage",
+		Module:      "Desk",
+		Label:       "Triage",
+		Description: "Work the messages that arrive from connected sources: link them to records, reply, hand them off and mark them handled.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourceInboundMessage,
+				Operations: []Operation{OpRead, OpUpdate, OpAssign},
+			},
+			{Resource: ResourceDocument, Operations: []Operation{OpRead}},
+		},
+	},
+	{
+		ID:          "desk.intake",
+		Module:      "Desk",
+		Label:       "Intake",
+		Description: "Scan and print into Trenova, and file what arrives onto its records.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourceCaptureBatch,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
+			{Resource: ResourceCaptureDevice, Operations: []Operation{OpRead}},
+			{Resource: ResourceDocument, Operations: []Operation{OpRead, OpCreate}},
 		},
 	},
 	{
@@ -526,6 +588,7 @@ var jobTemplates = []JobTemplate{
 			"dispatch.board",
 			"dispatch.shipments",
 			"dispatch.exceptions",
+			"desk.triage",
 			"platform.assistant",
 		},
 		MaxSensitivity: SensitivityInternal,
@@ -541,6 +604,8 @@ var jobTemplates = []JobTemplate{
 			"dispatch.carriers",
 			"customers.records",
 			"reporting.reports",
+			"desk.triage",
+			"desk.decisions",
 			"platform.assistant",
 		},
 		MaxSensitivity: SensitivityRestricted,
@@ -553,10 +618,15 @@ var jobTemplates = []JobTemplate{
 		MaxSensitivity: SensitivityInternal,
 	},
 	{
-		ID:             "billing_clerk",
-		Label:          "Billing clerk",
-		Description:    "Prepares invoices and applies payments.",
-		Bundles:        []string{"billing.queue", "billing.receivables", "platform.assistant"},
+		ID:          "billing_clerk",
+		Label:       "Billing clerk",
+		Description: "Prepares invoices and applies payments.",
+		Bundles: []string{
+			"billing.queue",
+			"billing.receivables",
+			"desk.intake",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityInternal,
 	},
 	{
@@ -568,6 +638,9 @@ var jobTemplates = []JobTemplate{
 			"billing.post_invoices",
 			"billing.rates",
 			"billing.receivables",
+			"billing.detention",
+			"desk.intake",
+			"desk.decisions",
 			"reporting.reports",
 			"platform.assistant",
 		},

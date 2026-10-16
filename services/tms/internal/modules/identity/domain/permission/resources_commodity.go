@@ -5,7 +5,7 @@ func (r *Registry) registerCommodityResources() {
 		Resource:           ResourceCommodity.String(),
 		DisplayName:        "Commodity",
 		Description:        "Commodity definitions",
-		Category:           "Commodities",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -14,7 +14,7 @@ func (r *Registry) registerCommodityResources() {
 		Resource:           ResourceHazardousMaterial.String(),
 		DisplayName:        "Hazardous Material",
 		Description:        "Hazardous material definitions",
-		Category:           "Commodities",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
@@ -51,7 +51,7 @@ func (r *Registry) registerCommodityResources() {
 		Resource:           ResourceHazmatSegregationRule.String(),
 		DisplayName:        "Hazmat Segregation Rule",
 		Description:        "Hazmat segregation rule definitions",
-		Category:           "Commodities",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})

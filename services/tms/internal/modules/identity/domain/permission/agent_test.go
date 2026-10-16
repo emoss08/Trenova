@@ -81,7 +81,7 @@ func TestCommunicationResourcesAreRegisteredAsSendOnly(t *testing.T) {
 	} {
 		def, ok := registry.Get(resource.String())
 		require.True(t, ok, "%s must be registered", resource)
-		assert.Equal(t, "Communications", def.Category)
+		assert.Contains(t, []string{"Dispatch", "Triage"}, def.Category)
 
 		operations := make([]permission.Operation, 0, len(def.Operations))
 		for _, op := range def.Operations {

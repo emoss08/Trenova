@@ -5,7 +5,7 @@ func (r *Registry) registerReferenceDataResources() {
 		Resource:           ResourceServiceType.String(),
 		DisplayName:        "Service Type",
 		Description:        "Service type definitions",
-		Category:           "Reference Data",
+		Category:           "Shipments",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

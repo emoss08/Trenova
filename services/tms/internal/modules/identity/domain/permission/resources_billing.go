@@ -13,7 +13,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Consolidated invoice batch preview and commit",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View invoice runs"},
+			{Operation: OpRead, DisplayName: "View", Description: "View invoice runs"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -42,7 +42,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Dispute cases raised against posted invoices",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View invoice disputes"},
+			{Operation: OpRead, DisplayName: "View", Description: "View invoice disputes"},
 			{Operation: OpCreate, DisplayName: "Open", Description: "Open a dispute on an invoice"},
 			{Operation: OpApprove, DisplayName: "Resolve", Description: "Resolve an open dispute"},
 			{Operation: OpCancel, DisplayName: "Withdraw", Description: "Withdraw an open dispute"},
@@ -56,7 +56,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Invoice management",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View invoices"},
+			{Operation: OpRead, DisplayName: "View", Description: "View invoices"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create invoices"},
 			{
 				Operation:   OpUpdate,
@@ -202,7 +202,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Billing queue review and approval",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View billing queue items"},
+			{Operation: OpRead, DisplayName: "View", Description: "View billing queue items"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -251,9 +251,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentRun.String(),
 		DisplayName: "Agent Run",
 		Description: "Billing exception agent runs",
-		Category:    "Billing",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View agent runs"},
+			{Operation: OpRead, DisplayName: "View", Description: "View agent runs"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Start agent runs"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -261,11 +261,11 @@ func (r *Registry) registerBillingResources() {
 
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentProposal.String(),
-		DisplayName: "Agent Proposal",
-		Description: "Agent-proposed resolutions awaiting human decision",
-		Category:    "Billing",
+		DisplayName: "Decisions",
+		Description: "What the agents propose and ask a person to approve or decline",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View agent proposals"},
+			{Operation: OpRead, DisplayName: "View", Description: "View agent proposals"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
@@ -279,9 +279,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentException.String(),
 		DisplayName: "Agent Exception",
 		Description: "Agent exceptions raised for human review",
-		Category:    "Billing",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View agent exceptions"},
+			{Operation: OpRead, DisplayName: "View", Description: "View agent exceptions"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Raise agent exceptions"},
 			{
 				Operation:   OpUpdate,
@@ -296,11 +296,11 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentControl.String(),
 		DisplayName: "Agent Control",
 		Description: "Per-organization agent autonomy configuration",
-		Category:    "Billing",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View agent control settings, and dismiss or restore provider failure notices",
 			},
 			{
@@ -322,9 +322,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentMemory.String(),
 		DisplayName: "Agent Memory",
 		Description: "Standing instructions, facts, corrections and profile guidance kept for agents between runs",
-		Category:    "Administration",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View what agents remember"},
+			{Operation: OpRead, DisplayName: "View", Description: "View what agents remember"},
 			{
 				Operation:   OpManage,
 				DisplayName: operationDefinitions[OpManage].DisplayName,
@@ -338,11 +338,11 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentEvalSuite.String(),
 		DisplayName: "Agent Evaluation Suite",
 		Description: "Evaluation cases agents are replayed against and scored on",
-		Category:    "Administration",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View evaluation cases and scores",
 			},
 			{
@@ -363,11 +363,11 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentFeedback.String(),
 		DisplayName: "Agent Feedback",
 		Description: "Everyone's ratings of AI output, with what they saw and why they rated it",
-		Category:    "Administration",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View everyone's ratings of AI output and each agent's satisfaction",
 			},
 		},
@@ -383,11 +383,11 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAIAuditTrail.String(),
 		DisplayName: "AI Audit Trail",
 		Description: "The tamper-evident record of what agents did, for whom, and who decided",
-		Category:    "Administration",
+		Category:    "Users & security",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View the AI audit trail and verify its chain",
 			},
 			{
@@ -404,9 +404,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentDefinition.String(),
 		DisplayName: "Agent Definition",
 		Description: "Per-organization agent configurations and their tool access",
-		Category:    "Administration",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View configured agents"},
+			{Operation: OpRead, DisplayName: "View", Description: "View configured agents"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add an agent"},
 			{
 				Operation:   OpUpdate,
@@ -424,13 +424,13 @@ func (r *Registry) registerBillingResources() {
 	// which tools an agent holds.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAssistant.String(),
-		DisplayName: "Assistant",
-		Description: "Conversations with configured agents",
-		Category:    "Platform",
+		DisplayName: "Desk",
+		Description: "Conversations with the agents and what they produce",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View own conversations and pin artifacts in them",
 			},
 			{
@@ -452,9 +452,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceInsight.String(),
 		DisplayName: "Insight",
 		Description: "Operational findings surfaced on the home screen",
-		Category:    "Platform",
+		Category:    "Reports",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View operational insights"},
+			{Operation: OpRead, DisplayName: "View", Description: "View operational insights"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
@@ -471,9 +471,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceWatchtower.String(),
 		DisplayName: "Watchtower",
 		Description: "The live feed of what needs attention across the operation",
-		Category:    "Platform",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View the watchtower feed"},
+			{Operation: OpRead, DisplayName: "View", Description: "View the watchtower feed"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
@@ -490,9 +490,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceBriefing.String(),
 		DisplayName: "Briefing",
 		Description: "The daily briefing written for a role from the day's figures",
-		Category:    "Platform",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "Read the daily briefing"},
+			{Operation: OpRead, DisplayName: "View", Description: "Read the daily briefing"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -509,9 +509,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAgentExtension.String(),
 		DisplayName: "Agent Extension",
 		Description: "Capabilities turned on for agents only, such as web research, and their credentials",
-		Category:    "Administration",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View the extension marketplace"},
+			{Operation: OpRead, DisplayName: "View", Description: "View the extension marketplace"},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
@@ -525,11 +525,11 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceWebResearch.String(),
 		DisplayName: "Web Research",
 		Description: "Agents searching and reading public web pages on a person's behalf, through an enabled extension",
-		Category:    "Platform",
+		Category:    "Desk",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "Let agents search and read the web for this person",
 			},
 		},
@@ -540,9 +540,9 @@ func (r *Registry) registerBillingResources() {
 		Resource:    ResourceAIProvider.String(),
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",
-		Category:    "Administration",
+		Category:    "AI & agents",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View AI providers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View AI providers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add an AI provider"},
 			{
 				Operation:   OpUpdate,
@@ -620,7 +620,7 @@ func (r *Registry) registerBillingResources() {
 		Resource:           ResourceFuelSurchargeProgram.String(),
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
-		Category:           "Billing",
+		Category:           "Fuel & tax",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -628,14 +628,34 @@ func (r *Registry) registerBillingResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceDetentionPolicy.String(),
 		DisplayName: "Detention Policy",
-		Description: "Contractual detention terms, rate tiers, notice requirements, and per-stop occurrences",
-		Category:    "Billing",
+		Description: "Contractual detention terms, rate tiers and notice requirements",
+		Category:    "Detention",
 		Operations: relabel(
 			standardOpsWithDelete,
 			OpUpdate,
 			"Update",
-			"Modify detention policies, and approve, dispute, waive and send notices for occurrences",
+			"Modify detention policies and the terms they apply",
 		),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDetention.String(),
+		DisplayName: "Detention",
+		Description: "Detention at stops: the detention desk, its occurrences and the intelligence over them",
+		Category:    "Detention",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "View",
+				Description: "View the detention desk, occurrences, dispute packets and detention intelligence",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Review",
+				Description: "Approve, waive and dispute occurrences, and send detention notices",
+			},
+		},
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -647,7 +667,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Advance, reserve, fee and recourse terms agreed with a factor",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View factoring agreements"},
+			{Operation: OpRead, DisplayName: "View", Description: "View factoring agreements"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Draft factoring agreements"},
 			{
 				Operation:   OpUpdate,
@@ -669,7 +689,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Notices telling customers to pay a factor instead",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View notices of assignment"},
+			{Operation: OpRead, DisplayName: "View", Description: "View notices of assignment"},
 			{Operation: OpCreate, DisplayName: "Draft", Description: "Draft notices of assignment"},
 			{
 				Operation:   OpUpdate,
@@ -691,7 +711,7 @@ func (r *Registry) registerBillingResources() {
 		Description: "Schedules of accounts sent to a factor, with each invoice's expected funding",
 		Category:    "Billing",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View factoring schedules"},
+			{Operation: OpRead, DisplayName: "View", Description: "View factoring schedules"},
 			{
 				Operation:   OpSubmit,
 				DisplayName: "Submit",
@@ -724,7 +744,7 @@ func (r *Registry) registerBillingResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View factor funding, reserve balances and chargebacks",
 			},
 			{
@@ -750,7 +770,7 @@ func (r *Registry) registerBillingResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View remittances and their lines",
 			},
 			{

@@ -66,7 +66,7 @@ func TestEscalateDetention_HandsOverWithoutTouchingTheCharge(t *testing.T) {
 	}}
 	tool := NewEscalateDetentionTool(stub)
 
-	require.Equal(t, permission.ResourceDetentionPolicy, tool.Policy().Resource)
+	require.Equal(t, permission.ResourceDetention, tool.Policy().Resource)
 	require.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 	require.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
 	require.True(t, tool.Policy().Reversible)
