@@ -17,6 +17,10 @@ type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
 
+type WatchtowerAgentWorkResolver struct{ *Deps }
+
 type WatchtowerItemEventResolver struct{ *Deps }
 
 type WatchtowerItemResolver struct{ *Deps }
+
+type WatchtowerRecordResolver struct{ *Deps }

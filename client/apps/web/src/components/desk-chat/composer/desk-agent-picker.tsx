@@ -179,7 +179,7 @@ export function DeskAgentPicker({
         size="bare"
         ref={buttonRef}
         className={cn(
-          "h-7 max-w-55 gap-1.75 rounded-full pr-1.75 pl-1 text-sm text-dsk-fg2 transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          "h-7 max-w-55 gap-1.75 rounded-badge pr-1.75 pl-1 text-sm text-dsk-fg2 transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
           open && "bg-dsk-hover text-dsk-fg",
         )}
         disabled={disabled}

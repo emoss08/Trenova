@@ -107,7 +107,7 @@ function BasicsSkeleton() {
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="flex h-5 items-center gap-2">
                 <Skeleton className={cn("h-3.5", BASIC_LABEL_WIDTHS[index])} />
-                {index === 0 ? <Skeleton className="h-4 w-14 rounded-full" /> : null}
+                {index === 0 ? <Skeleton className="h-4 w-14 rounded-badge" /> : null}
               </span>
               <span className="bg-muted flex h-1.5 w-full max-w-md overflow-hidden rounded-full">
                 <Skeleton className={cn("h-full rounded-full", BASIC_BAR_WIDTHS[index])} />
@@ -203,7 +203,7 @@ function RankListSkeleton({ label }: { label: string }) {
             </span>
             <span className="flex items-center gap-2">
               <Skeleton className="h-3 w-8" />
-              <Skeleton className="h-4 w-14 rounded-full" />
+              <Skeleton className="h-4 w-14 rounded-badge" />
             </span>
           </li>
         ))}

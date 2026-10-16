@@ -1,4 +1,5 @@
 import {
+  AccountingBriefingDocument,
   ArAgingSummaryDocument,
   ArAgingTrendDocument,
   ArCashFlowForecastDocument,
@@ -17,6 +18,7 @@ import {
   LateChargePreviewDocument,
   type LateChargeAssessmentInput,
   type LateChargeAssessmentResultFieldsFragment,
+  type AccountingBriefingQuery,
   type ArAgingSummaryQuery,
   type ArAgingTrendQuery,
   type ArCashFlowForecastQuery,
@@ -42,6 +44,9 @@ export type ARLedgerEntry = ArCustomerLedgerQuery["arCustomerLedger"][number];
 export type ARCustomerStatement = ArCustomerStatementQuery["arCustomerStatement"];
 export type ARStatementTransaction = ARCustomerStatement["transactions"][number];
 export type ARDashboardKpis = ArDashboardKpisQuery["arDashboardKpis"];
+export type AccountingBriefing = AccountingBriefingQuery["accountingBriefing"];
+export type AccountingBriefingSegment = AccountingBriefing["segments"][number];
+export type AccountingBriefingAction = AccountingBriefing["actions"][number];
 export type ARDsoTrendPoint = ArDsoTrendQuery["arDsoTrend"][number];
 export type ARAgingTrendPoint = ArAgingTrendQuery["arAgingTrend"][number];
 export type ARCashFlowPoint = ArCashFlowForecastQuery["arCashFlowForecast"][number];
@@ -107,6 +112,16 @@ export async function fetchArCustomerStatement(
     signal: requestOptions?.signal,
   });
   return data.arCustomerStatement;
+}
+
+export async function fetchAccountingBriefing(options?: { signal?: AbortSignal }) {
+  const data = await requestGraphQL({
+    document: AccountingBriefingDocument,
+    operationName: "AccountingBriefing",
+    variables: {},
+    signal: options?.signal,
+  });
+  return data.accountingBriefing;
 }
 
 export async function fetchArDashboardKpis(options?: { signal?: AbortSignal }) {

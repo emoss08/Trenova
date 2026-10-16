@@ -213,7 +213,7 @@ export function StopTimeline({
                   disabled={checkIn.isPending}
                   onClick={() => checkIn.mutate(stopTap(stop.id, action))}
                   className={cn(
-                    "mt-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
+                    "mt-1 rounded-badge px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
                     action === "Arrive"
                       ? "bg-primary text-primary-foreground"
                       : "bg-success text-foreground-on-solid",
@@ -232,7 +232,7 @@ export function StopTimeline({
                   target="_blank"
                   rel="noreferrer"
                   onClick={(event) => event.stopPropagation()}
-                  className="mt-1 shrink-0 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  className="mt-1 shrink-0 rounded-badge border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
                 >
                   {t("Directions")}
                 </a>

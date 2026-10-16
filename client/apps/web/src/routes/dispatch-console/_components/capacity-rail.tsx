@@ -250,7 +250,7 @@ export function CapacityRail({
                 type="button"
                 onClick={() => setCapacityFilter(option.id)}
                 className={cn(
-                  "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+                  "rounded-badge border px-2 py-0.5 text-xs font-medium transition-colors",
                   filter === option.id
                     ? "border-primary bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted",

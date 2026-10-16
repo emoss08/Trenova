@@ -413,7 +413,10 @@ export class AssistantService {
     return safeParse(conversationScheduleListSchema, response, "Conversation Schedule");
   }
 
-  /** Every request the person scheduled, across their conversations, newest first. */
+  /**
+   * Every request the person scheduled, across their conversations, with each
+   * one's conversation title: the ones that run soonest first, paused ones after.
+   */
   public async listSchedules(options?: { signal?: AbortSignal; limit?: number; offset?: number }) {
     const response = await api.get(
       `/assistant/schedules/?limit=${options?.limit ?? 25}&offset=${options?.offset ?? 0}`,
@@ -429,6 +432,19 @@ export class AssistantService {
   public async createSchedule(threadId: AssistantThread["id"], content: string) {
     const response = await api.post(`/assistant/threads/${threadId}/schedules/`, { content });
     return safeParse(createdScheduleSchema, response, "Conversation Schedule");
+  }
+
+  /**
+   * Changes what a schedule asks, how often and when: `repeat` is "day",
+   * "weekday" or a day of the week, `time` a 24-hour "HH:MM" on the
+   * schedule's own clock. The server answers with the schedule as saved.
+   */
+  public async editSchedule(
+    id: ConversationSchedule["id"],
+    edit: { prompt: string; repeat: string; time: string },
+  ) {
+    const response = await api.patch(`/assistant/schedules/${id}/`, edit);
+    return safeParse(conversationScheduleSchema, response, "Conversation Schedule");
   }
 
   /** Pauses or resumes a schedule. */

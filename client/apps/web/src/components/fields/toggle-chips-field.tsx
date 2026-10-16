@@ -61,7 +61,7 @@ export function ToggleChipsField<T extends FieldValues, TValue extends string>({
                     aria-pressed={on}
                     disabled={disabled}
                     className={cn(
-                      "ui-focus-ring inline-flex h-6 items-center gap-1.5 rounded-full border pr-2.5 pl-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                      "ui-focus-ring inline-flex h-6 items-center gap-1.5 rounded-badge border pr-2.5 pl-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60",
                       on
                         ? CHECKED_TONE[checkedTone]
                         : "border-border-strong text-muted-foreground hover:border-foreground hover:text-foreground border-dashed",

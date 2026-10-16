@@ -521,7 +521,7 @@ function ResourceRow({
                   type="button"
                   onClick={() => onToggleOperation(opDef.operation)}
                   className={cn(
-                    "flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
+                    "flex items-center gap-1 rounded-badge border px-2 py-0.5 text-xs transition-colors",
                     isChecked
                       ? "border-primary/50 bg-primary/10 text-primary"
                       : "border-border bg-muted/50 text-muted-foreground hover:bg-muted",

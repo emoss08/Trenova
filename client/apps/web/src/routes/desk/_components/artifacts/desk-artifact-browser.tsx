@@ -22,7 +22,7 @@ const PAGE = 60;
 
 function filterChipClass(on: boolean): string {
   return cn(
-    "h-6.5 flex-none gap-1.25 rounded-full px-2.25 text-xs text-dsk-muted ring-1 ring-dsk-b-sub ring-inset transition-all duration-120 hover:text-dsk-fg hover:ring-dsk-b [&_i]:font-plex-mono [&_i]:text-xs [&_i]:text-dsk-faint [&_i]:not-italic",
+    "h-6.5 flex-none gap-1.25 rounded-badge px-2.25 text-xs text-dsk-muted ring-1 ring-dsk-b-sub ring-inset transition-all duration-120 hover:text-dsk-fg hover:ring-dsk-b [&_i]:font-plex-mono [&_i]:text-xs [&_i]:text-dsk-faint [&_i]:not-italic",
     on && "bg-dsk-ink text-dsk-ink-fg ring-0 hover:text-dsk-ink-fg [&_i]:text-dsk-ink-fg",
   );
 }

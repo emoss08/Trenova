@@ -156,7 +156,7 @@ function SectionHeader({
       <Icon className="text-muted-foreground size-3.5 shrink-0" />
       <h3 className="text-sm font-semibold">{title}</h3>
       {count != null && (
-        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums">
+        <span className="bg-muted text-muted-foreground rounded-badge px-1.5 py-0.5 text-2xs font-medium tabular-nums">
           {count}
         </span>
       )}
@@ -296,7 +296,7 @@ function StatusPipeline({ doc }: { doc: Document }) {
           {i > 0 && <div className="bg-border h-px w-4" />}
           <Tooltip>
             <TooltipTrigger
-              render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
+              render={<div className="flex items-center gap-1.5 rounded-badge border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
               <span className="text-xs font-medium">{t(stage.label)}</span>

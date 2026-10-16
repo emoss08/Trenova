@@ -286,7 +286,7 @@ function CountBadge({ count }: { count: number }) {
       initial={{ scale: 1.35 }}
       animate={{ scale: 1 }}
       transition={{ type: "spring", stiffness: 600, damping: 18 }}
-      className="inline-flex h-4 shrink-0 items-center rounded-full bg-muted px-1.5 font-mono text-2xs tabular-nums ring-1 ring-foreground/10"
+      className="inline-flex h-4 shrink-0 items-center rounded-badge bg-muted px-1.5 font-mono text-2xs tabular-nums ring-1 ring-foreground/10"
     >
       ×{count}
     </m.span>

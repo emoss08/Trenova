@@ -1515,7 +1515,7 @@ export function DataTable<TData extends Record<string, any>>({
                     )}
                     // The vertical track starts below the sticky column header, so the
                     // scrollbar runs beside the rows and never over the header.
-                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!"
+                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[65vh] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!"
                     ref={tableElementRef}
                   >
                     <TableHeader className="sticky top-0 z-20">

@@ -210,7 +210,7 @@ export function DeskModelPicker({
         size="bare"
         ref={buttonRef}
         className={cn(
-          "dk-mp2-b h-7 max-w-50 gap-1.75 rounded-full pr-2 pl-1.75 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          "dk-mp2-b h-7 max-w-50 gap-1.75 rounded-badge pr-2 pl-1.75 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
           open && "dk-on bg-dsk-hover text-dsk-fg",
           !selected && "dk-auto relative isolate text-dsk-fg2 hover:text-dsk-fg2",
         )}

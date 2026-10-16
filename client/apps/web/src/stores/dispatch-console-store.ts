@@ -1,5 +1,4 @@
 import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
-import { createSelectors } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -37,7 +36,7 @@ interface DispatchConsoleState {
  * re-rendering the whole grid to hand a label down three levels of props. Nothing here is
  * persisted or serialized to the URL — a drag in flight is not a place anyone returns to.
  */
-const baseStore = create<DispatchConsoleState>()(
+export const useDispatchConsoleStore = create<DispatchConsoleState>()(
   devtools(
     (set) => ({
       dragPreview: null,
@@ -67,5 +66,3 @@ const baseStore = create<DispatchConsoleState>()(
     { name: "dispatch-console" },
   ),
 );
-
-export const useDispatchConsoleStore = createSelectors(baseStore);

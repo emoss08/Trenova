@@ -118,6 +118,26 @@ describe("MemoryTab", () => {
     expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("tab")).toBe("retrieval");
   });
 
+  it("draws no line above the profile while memories embed and learning is on", async () => {
+    const { container } = renderTab();
+
+    await screen.findByRole("region", { name: "Memory table" });
+    await vi.waitFor(() => expect(api.fetchAgentControl).toHaveBeenCalled());
+    await vi.waitFor(() => expect(api.fetchAIRetrievalStatus).toHaveBeenCalled());
+    expect(container.querySelector(".lead")).toBeNull();
+    expect(screen.queryByText(/Agents read these before they answer/)).not.toBeInTheDocument();
+  });
+
+  it("names memories, not a pronoun, when it says they are found by their words", async () => {
+    api.fetchAIRetrievalStatus.mockResolvedValue(retrieval(null));
+    const { container } = renderTab();
+
+    await screen.findByRole("button", { name: "search by meaning" });
+    expect(container.querySelector(".lead")).toHaveTextContent(
+      "Memories are found by their words until search by meaning is on.",
+    );
+  });
+
   it("does not mention search by meaning once memories are embedded", async () => {
     renderTab();
 

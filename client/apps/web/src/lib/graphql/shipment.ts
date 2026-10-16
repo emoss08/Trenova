@@ -27,7 +27,6 @@ import {
   ShipmentPageAnalyticsDocument,
   ShipmentPreviousRatesDocument,
   ShipmentProfitabilityDocument,
-  ShipmentTrackingEventsDocument,
   ShipmentUiPolicyDocument,
   TransferShipmentOwnershipDocument,
   TransferShipmentToBillingDocument,
@@ -52,8 +51,6 @@ import {
   type ShipmentMoveInput,
   type ShipmentPreviousRatesInput,
   type ShipmentQuickFilterInput,
-  type ShipmentTrackingEventsQuery,
-  type ShipmentTrackingEventsQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import {
   hasAnyAllocations,
@@ -251,22 +248,6 @@ export async function getShipmentProfitabilityGraphQL(shipmentId: Shipment["id"]
     variables: { shipmentId },
   });
   return data.shipmentProfitability;
-}
-
-export async function listShipmentTrackingEventsGraphQL(
-  shipmentId: NonNullable<Shipment["id"]>,
-  options?: { signal?: AbortSignal },
-): Promise<ShipmentTrackingEventsQuery["shipmentTrackingEvents"]> {
-  const data = await requestGraphQL<
-    ShipmentTrackingEventsQuery,
-    ShipmentTrackingEventsQueryVariables
-  >({
-    document: ShipmentTrackingEventsDocument,
-    operationName: "ShipmentTrackingEvents",
-    variables: { shipmentId },
-    signal: options?.signal,
-  });
-  return data.shipmentTrackingEvents;
 }
 
 export async function getShipmentPageAnalyticsGraphQL(req: {

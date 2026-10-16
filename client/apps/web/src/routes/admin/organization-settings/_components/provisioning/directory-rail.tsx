@@ -3,19 +3,18 @@ import { useSecurityAccess } from "../security-access/use-security-access";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { organization } from "@/lib/queries/organization";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { listSCIMDirectoriesGraphQL } from "@/lib/graphql/scim-directory";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef } from "react";
-import { EmptyState, ErrorState } from "../security-access/shared";
+import { EmptyState, ErrorState, RowSkeleton, SecuritySection } from "../security-access/shared";
 
 const directoryPageSize = 20;
 
@@ -37,25 +36,17 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
     queryKey: [
       ...organization.scimDirectories(organizationId).queryKey,
       "rail",
-      { limit: directoryPageSize },
+      { first: directoryPageSize },
     ],
-    queryFn: async ({ pageParam }) =>
-      apiService.organizationService.listSCIMDirectories(organizationId, {
-        limit: directoryPageSize,
-        offset: pageParam,
-      }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === directoryPageSize) {
-        return lastPageParam + directoryPageSize;
-      }
-      return undefined;
-    },
+    queryFn: async ({ pageParam, signal }) =>
+      listSCIMDirectoriesGraphQL({ first: directoryPageSize, after: pageParam }, { signal }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.endCursor : undefined),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
   const directories = useMemo(
-    () => directoriesQuery.data?.pages.flatMap((page) => page.results) ?? [],
+    () => directoriesQuery.data?.pages.flatMap((page) => page.directories) ?? [],
     [directoriesQuery.data?.pages],
   );
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = directoriesQuery;
@@ -88,29 +79,27 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <div className="bg-background flex h-full min-h-0 flex-col rounded-lg border">
-      <div className="flex shrink-0 items-center justify-between border-b p-3">
-        <div>
-          <div className="text-sm font-medium">{t("SCIM directories")}</div>
-          <div className="text-muted-foreground text-xs">{t("Directory sync tenants")}</div>
-        </div>
-        {access.scimDirectories.create ? (
+    <SecuritySection
+      title={t("SCIM directories")}
+      icon={<Users01Icon />}
+      count={directories.length}
+      className="h-full min-h-0"
+      action={
+        access.scimDirectories.create ? (
           <Button size="sm" onClick={onAdd}>
             <PlusIcon />
-            {t("Add")}
+            {t("New directory")}
           </Button>
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
       {directoriesQuery.isLoading ? (
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </div>
+        <RowSkeleton rows={2} label={t("Loading SCIM directories")} />
       ) : directoriesQuery.isError ? (
-        <ErrorState label={t("SCIM directories could not be loaded.")} compact />
+        <ErrorState label={t("SCIM directories could not be loaded.")} />
       ) : directories.length > 0 ? (
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0" maskHeight={18}>
-          <div className="divide-y">
+          <div className="flex flex-col gap-px py-1">
             {directories.map((directory) => (
               <DirectoryRailItem
                 key={directory.id}
@@ -134,10 +123,9 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
           icon={<Users01Icon />}
           label={t("No directories")}
           description={t("Create a SCIM directory before issuing tokens or mapping groups.")}
-          compact
         />
       )}
-    </div>
+    </SecuritySection>
   );
 }
 
@@ -155,9 +143,10 @@ function DirectoryRailItem({
   return (
     <button
       type="button"
+      aria-pressed={selected}
       className={cn(
-        "hover:bg-muted/40 flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors",
-        selected && "bg-muted/60",
+        "ui-focus-ring hover:bg-surface-hover flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left transition-colors",
+        selected && "bg-surface-selected hover:bg-surface-selected",
       )}
       onClick={() => onSelect(directory.id)}
     >
@@ -167,7 +156,7 @@ function DirectoryRailItem({
           {t("Updated {0}", formatUnixDateTimeOrDash(directory.updatedAt || directory.createdAt))}
         </div>
       </div>
-      <Badge variant={directory.enabled ? "success" : "danger"}>
+      <Badge variant={directory.enabled ? "success" : "neutral"}>
         {directory.enabled ? t("Enabled") : t("Disabled")}
       </Badge>
     </button>

@@ -87,7 +87,7 @@ func (h *Handler) activeTurns(c *gin.Context) {
 		agentports.ListLiveAssistantTurnsRequest{
 			UserID:         authCtx.UserID,
 			TenantInfo:     tenantFromAuthContext(authCtx),
-			ExcludeOrigins: conversation.PageBoundOrigins(),
+			ExcludeOrigins: conversation.AnsweredInPlaceOrigins(),
 		},
 	)
 	if err != nil {

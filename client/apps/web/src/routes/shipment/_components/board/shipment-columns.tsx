@@ -57,6 +57,8 @@ export type ShipmentColumnsParams = {
 /**
  * Records a shipment points at that have no column of their own, offered in the
  * filter builder after the columns: each is picked by name and matched by ID.
+ * The pickup and delivery locations are the shipper and consignee stops — the
+ * first pickup and the last delivery, the two ends the lane draws.
  */
 export function getShipmentFilterFields(t: TranslateFn): DataTableFilterField[] {
   const record = (
@@ -71,6 +73,8 @@ export function getShipmentFilterFields(t: TranslateFn): DataTableFilterField[] 
   });
   return [
     record("billToCustomerId", t("Bill-to customer"), "CUSTOMER"),
+    record("shipperStop.locationId", t("Pickup location"), "LOCATION"),
+    record("consigneeStop.locationId", t("Delivery location"), "LOCATION"),
     record("shipmentTypeId", t("Shipment type"), "SHIPMENT_TYPE"),
     record("serviceTypeId", t("Service type"), "SERVICE_TYPE"),
     record("tractorTypeId", t("Tractor type"), "EQUIPMENT_TYPE"),

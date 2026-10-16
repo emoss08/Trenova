@@ -107,7 +107,7 @@ function SummaryCardSkeleton() {
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-2">
             <Skeleton className="h-3.5 w-44" />
-            <Skeleton className="h-4 w-12 rounded-full" />
+            <Skeleton className="h-4 w-12 rounded-badge" />
           </span>
           <Skeleton className="h-3 w-64" />
         </div>

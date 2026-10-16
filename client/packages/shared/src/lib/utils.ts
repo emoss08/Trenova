@@ -3,7 +3,6 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import type { Location } from "@trenova/shared/types/location";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { StoreApi, UseBoundStore } from "zustand";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -136,6 +135,33 @@ export function limitCodePoints(text: string, max: number): string {
   }
   const points = Array.from(text);
   return points.length <= max ? text : points.slice(0, max).join("");
+}
+
+const utf8 = new TextEncoder();
+
+/**
+ * The longest start of `text` that fits in `maxBytes` of UTF-8, cut only between
+ * code points, for a bound the server checks as Go's `len` (bytes) rather than
+ * as runes. Accented and CJK text takes two to four bytes a character.
+ */
+export function limitUtf8Bytes(text: string, maxBytes: number): string {
+  if (maxBytes <= 0) {
+    return "";
+  }
+  if (text.length * 3 <= maxBytes || utf8.encode(text).length <= maxBytes) {
+    return text;
+  }
+  let bytes = 0;
+  let out = "";
+  for (const point of text) {
+    const size = utf8.encode(point).length;
+    if (bytes + size > maxBytes) {
+      break;
+    }
+    bytes += size;
+    out += point;
+  }
+  return out;
 }
 
 /** A share between 0 and 1; anything that is not a number reads as 0. */
@@ -341,20 +367,6 @@ export function findDuplicateIds<T>(
   }
   return dupes;
 }
-
-type WithSelectors<S> = S extends { getState: () => infer T }
-  ? S & { use: { [K in keyof T]: () => T[K] } }
-  : never;
-
-export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(_store: S) => {
-  const store = _store as WithSelectors<typeof _store>;
-  store.use = {};
-  for (const k of Object.keys(store.getState())) {
-    (store.use as any)[k] = () => store((s) => s[k as keyof typeof s]);
-  }
-
-  return store;
-};
 
 /**
  * Saves an in-memory blob to the user's downloads. Generated files (a

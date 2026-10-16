@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
@@ -55,41 +55,34 @@ export function PageInsightsCard({
   }
 
   return (
-    <Card className={cn("gap-0 p-0", className)}>
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="flex items-center gap-1.5 text-sm font-medium">
-          <AssistMark className="text-muted-foreground size-3.5" />
-          {title ?? t("Insights")}
-          {insights.length > 0 ? (
-            <span className="bg-muted text-muted-foreground ml-1 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
-              {insights.length}
-            </span>
-          ) : null}
-        </CardTitle>
-        <Link
-          to="/insights"
-          className="text-muted-foreground hover:text-foreground text-xs hover:underline"
-        >
-          {t("All insights")}
-        </Link>
-      </CardHeader>
-      <CardContent className="p-2">
-        {isLoading ? (
-          <div className="space-y-2 p-2">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : insights.length === 0 ? (
-          <div className="text-muted-foreground flex h-32 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircleIcon className="size-5 text-success-foreground" />
-            {t("Nothing needs attention right now")}
-          </div>
-        ) : (
-          <PageInsightRows insights={insights} />
-        )}
-      </CardContent>
-    </Card>
+    <SectionPanel
+      title={title ?? t("Insights")}
+      icon={<AssistMark />}
+      count={insights.length}
+      action={<SectionPanelLink to="/insights">{t("All insights")}</SectionPanelLink>}
+      className={className}
+    >
+      {isLoading ? (
+        <div className="divide-border-subtle divide-y" aria-busy aria-label={t("Loading insights")}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="flex items-start gap-3 px-3 py-2.5" aria-hidden>
+              <Skeleton className="h-5 w-16 shrink-0" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <Skeleton className="h-2.5 w-3/5" />
+                <Skeleton className="h-2 w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : insights.length === 0 ? (
+        <div className="text-muted-foreground flex h-32 flex-col items-center justify-center gap-2 text-sm">
+          <CheckCircleIcon className="text-success-foreground size-5" />
+          {t("Nothing needs attention right now")}
+        </div>
+      ) : (
+        <PageInsightRows insights={insights} />
+      )}
+    </SectionPanel>
   );
 }
 
@@ -100,13 +93,13 @@ export function PageInsightsCard({
  */
 export function PageInsightRows({ insights }: { insights: readonly Insight[] }) {
   return (
-    <div className="divide-y">
+    <ul className="divide-border-subtle divide-y">
       {insights.map((insight) => (
-        <div key={insight.id}>
+        <li key={insight.id}>
           <InsightRow insight={insight} />
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -118,11 +111,11 @@ function InsightRow({ insight }: { insight: Insight }) {
   return (
     <Link
       to={insightHref(insight)}
-      className="hover:bg-muted/50 flex items-start gap-3 rounded-md px-2 py-2 transition-colors"
+      className="hover:bg-surface-hover ui-focus-ring flex items-start gap-3 px-3 py-2 transition-colors"
     >
       <span
         className={cn(
-          "mt-0.5 inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
+          "mt-0.5 inline-flex w-16 shrink-0 justify-center rounded-badge px-1.5 py-0.5 text-xs font-medium",
           SEVERITY_STYLES[insight.severity],
         )}
       >

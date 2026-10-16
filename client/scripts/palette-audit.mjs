@@ -13,9 +13,9 @@
  *   - hairlines are actually visible against the surface they divide
  *   - every value is inside sRGB, so a browser does not gamut-map it somewhere
  *     other than where it was placed
- *   - the blue arc (info, sky, brand, indigo) and the warm arc (danger, warning,
+ *   - the blue arc (sky, brand, indigo) and the warm arc (danger, warning,
  *     amber) each stay far enough apart in hue that a link cannot be mistaken
- *     for a status, or a warning for a destructive action
+ *     for a category, or a warning for a destructive action
  *
  * There is no build step: tokens.css stays the file people edit, and this reads
  * what they wrote.
@@ -187,16 +187,15 @@ function auditTheme(theme, p) {
 /**
  * Two arcs are crowded, and in each the colour has to carry the difference.
  *
- * The brand blue lives in the blue arc with the info tone and the sky and indigo
- * categories. A link and an "In transit" badge share a row in nearly every
- * table, so brand keeps 30 degrees from info and 20 from each category.
+ * The brand blue lives in the blue arc with the sky and indigo categories, so
+ * brand keeps 20 degrees from each. Info is Geist blue itself, as it is on
+ * Vercel, and is written against --hue-brand rather than held apart from it.
  *
  * The warm arc holds the destructive action, the warning tone and the amber
  * category. Without a floor they converge into one orange.
  */
 function auditHueSeparation(p, hues) {
   const floors = [
-    ["info", hues["--hue-info"], "brand", hues["--hue-brand"], 30],
     ["the sky category accent", hues["--hue-sky"], "brand", hues["--hue-brand"], 20],
     ["brand", hues["--hue-brand"], "the indigo category accent", hues["--hue-indigo"], 20],
     ["danger", p.danger?.[2], "warning", p.warning?.[2], 20],

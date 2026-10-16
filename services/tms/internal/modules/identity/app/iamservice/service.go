@@ -535,6 +535,41 @@ func (s *service) ListSCIMGroupRoleMappingsConnection(
 	return s.repo.ListSCIMGroupRoleMappingsConnection(ctx, req)
 }
 
+func (s *service) ListAuthEventsConnection(
+	ctx context.Context,
+	req *iamports.ListIAMConnectionRequest,
+) (*pagination.CursorListResult[*iam.AuthEvent], error) {
+	return s.repo.ListAuthEventsConnection(ctx, req)
+}
+
+func (s *service) ListRiskDecisionsConnection(
+	ctx context.Context,
+	req *iamports.ListIAMConnectionRequest,
+) (*pagination.CursorListResult[*iam.RiskDecision], error) {
+	return s.repo.ListRiskDecisionsConnection(ctx, req)
+}
+
+func (s *service) ListExternalIdentitiesConnection(
+	ctx context.Context,
+	req *iamports.ListIAMConnectionRequest,
+) (*pagination.CursorListResult[*iam.ExternalIdentity], error) {
+	return s.repo.ListExternalIdentitiesConnection(ctx, req)
+}
+
+func (s *service) ListMFAAuthenticatorsConnection(
+	ctx context.Context,
+	req *iamports.ListIAMConnectionRequest,
+) (*pagination.CursorListResult[*iam.MFAAuthenticator], error) {
+	return s.repo.ListMFAAuthenticatorsConnection(ctx, req)
+}
+
+func (s *service) ListSCIMDirectoriesConnection(
+	ctx context.Context,
+	req *iamports.ListIAMConnectionRequest,
+) (*pagination.CursorListResult[*iam.SCIMDirectory], error) {
+	return s.repo.ListSCIMDirectoriesConnection(ctx, req)
+}
+
 func (s *service) CreateSCIMGroupRoleMapping(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

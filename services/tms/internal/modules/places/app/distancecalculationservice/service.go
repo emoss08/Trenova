@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/app/pcmilerruntime"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/settlement/jobs/iftajobs/iftacontract"
@@ -76,6 +78,8 @@ type Params struct {
 	StoredMileageBuffer  storedmileageports.StoredMileageBufferRepository
 	JurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
 	ShipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	LocationRepo         locationports.LocationRepository
+	StateRepo            usstateports.UsStateRepository
 	WorkflowStarter      kernelports.WorkflowStarter
 	IntegrationService   *integrationservice.Service
 }
@@ -91,6 +95,8 @@ type Service struct {
 	storedMileageBuffer  storedmileageports.StoredMileageBufferRepository
 	jurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
 	shipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	locationRepo         locationports.LocationRepository
+	stateRepo            usstateports.UsStateRepository
 	workflowStarter      kernelports.WorkflowStarter
 	integrationService   *integrationservice.Service
 }
@@ -107,6 +113,8 @@ func New(p Params) shipmentports.DistanceCalculationService {
 		storedMileageBuffer:  p.StoredMileageBuffer,
 		jurisdictionMileRepo: p.JurisdictionMileRepo,
 		shipmentMoveRepo:     p.ShipmentMoveRepo,
+		locationRepo:         p.LocationRepo,
+		stateRepo:            p.StateRepo,
 		workflowStarter:      p.WorkflowStarter,
 		integrationService:   p.IntegrationService,
 	}
@@ -126,6 +134,10 @@ func (s *Service) resolveForShipment(
 ) (*shipmentports.DistanceCalculationResponse, error) {
 	if entity == nil {
 		return nil, errortypes.NewBusinessError("shipment is required")
+	}
+
+	if err := s.loadStopLocations(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	resp := &shipmentports.DistanceCalculationResponse{

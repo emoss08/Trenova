@@ -333,7 +333,7 @@ export function ProposalCard({
               <span className="text-foreground-muted">
                 {t(variable.type)} = {formatStudioValue(variable.defaultValue)}
               </span>
-              <span className="bg-success-subtle text-success-subtle-foreground rounded-full px-1.5 text-2xs">
+              <span className="bg-success-subtle text-success-subtle-foreground rounded-badge px-1.5 text-2xs">
                 {t("new input")}
               </span>
             </span>

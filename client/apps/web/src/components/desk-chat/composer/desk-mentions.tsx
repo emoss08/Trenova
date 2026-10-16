@@ -324,7 +324,7 @@ function MentionTabs({
             size="bare"
             data-on={tab === kind || undefined}
             className={cn(
-              "h-6 flex-none rounded-full px-2.25 text-xs text-dsk-muted transition-colors duration-100 hover:bg-dsk-hover hover:text-dsk-fg",
+              "h-6 flex-none rounded-badge px-2.25 text-xs text-dsk-muted transition-colors duration-100 hover:bg-dsk-hover hover:text-dsk-fg",
               tab === kind && "bg-dsk-ink text-dsk-ink-fg hover:bg-dsk-ink hover:text-dsk-ink-fg",
             )}
             onClick={() => onChange(kind)}

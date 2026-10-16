@@ -408,7 +408,7 @@ function DimensionTile({ row }: { row: DimensionRow }) {
         <span className="text-2xs text-muted-foreground font-medium">{t(row.label)}</span>
         {row.headroom !== null &&
           (row.exceeded ? (
-            <span className="bg-danger-subtle text-2xs text-danger-subtle-foreground border-danger-border rounded-full border px-1.5 py-px font-medium tabular-nums">
+            <span className="bg-danger-subtle text-2xs text-danger-subtle-foreground border-danger-border rounded-badge border px-1.5 py-px font-medium tabular-nums">
               {t("{0} over", formatMeasurement(Math.abs(row.headroom), row.unit))}
             </span>
           ) : (

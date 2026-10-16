@@ -87,6 +87,7 @@ type FactoryParams struct {
 	AgentMemoryByID                           *AgentMemoryByIDLoaderFactory
 	AgentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	SuggestedAgentByEventKind                 *SuggestedAgentByEventKindLoaderFactory
 	ThreadAgentByID                           *ThreadAgentByIDLoaderFactory
 	UsableAgentByID                           *UsableAgentByIDLoaderFactory
 	AccessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
@@ -172,6 +173,7 @@ type Factory struct {
 	agentMemoryByID                           *AgentMemoryByIDLoaderFactory
 	agentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	suggestedAgentByEventKind                 *SuggestedAgentByEventKindLoaderFactory
 	threadAgentByID                           *ThreadAgentByIDLoaderFactory
 	usableAgentByID                           *UsableAgentByIDLoaderFactory
 	accessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
@@ -257,6 +259,7 @@ type set struct {
 	agentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
 	agentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
 	agentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
+	suggestedAgentByEventKind                 *dataloadgen.Loader[string, *agentdefinition.Definition]
 	threadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	usableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
 	accessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
@@ -349,6 +352,7 @@ func NewFactory(p FactoryParams) *Factory {
 		agentMemoryByID:                           p.AgentMemoryByID,
 		agentMemoryReplacement:                    p.AgentMemoryReplacement,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
+		suggestedAgentByEventKind:                 p.SuggestedAgentByEventKind,
 		threadAgentByID:                           p.ThreadAgentByID,
 		usableAgentByID:                           p.UsableAgentByID,
 		accessRolesByAgentID:                      p.AccessRolesByAgentID,
@@ -483,7 +487,11 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		agentRunTranscriptByID: newAgentRunTranscriptByIDLoader(f.agentRunTranscriptByID,
 			tenantInfo,
 		),
-		agentDefinitionByID:  newAgentDefinitionByIDLoader(f.agentDefinitionByID, tenantInfo),
+		agentDefinitionByID: newAgentDefinitionByIDLoader(f.agentDefinitionByID, tenantInfo),
+		suggestedAgentByEventKind: newSuggestedAgentByEventKindLoader(
+			f.suggestedAgentByEventKind,
+			tenantInfo,
+		),
 		threadAgentByID:      newThreadAgentByIDLoader(f.threadAgentByID, tenantInfo),
 		usableAgentByID:      newUsableAgentByIDLoader(f.usableAgentByID, tenantInfo),
 		accessRolesByAgentID: newAccessRolesByAgentIDLoader(f.accessRolesByAgentID, tenantInfo),

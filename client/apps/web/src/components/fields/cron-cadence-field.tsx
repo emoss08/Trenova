@@ -59,7 +59,8 @@ const TIME_OPTIONS: { value: string; label: string }[] = Array.from(
   },
 );
 
-const pillTrigger =
+/** The borderless select a cadence sentence is built from: "Run [every week] at [8:00 AM]". */
+export const cadencePillTrigger =
   "h-7 w-auto gap-1 border-transparent bg-transparent px-1.5 font-medium text-foreground hover:bg-muted data-popup-open:bg-muted";
 
 function timeOptions(hour: number, minute: number): { value: string; label: string }[] {
@@ -70,7 +71,8 @@ function timeOptions(hour: number, minute: number): { value: string; label: stri
   );
 }
 
-function TimeSelect({
+/** A time of day in a cadence sentence, offered every half hour plus the one already chosen. */
+export function CadenceTimeSelect({
   hour,
   minute,
   onChange,
@@ -93,7 +95,7 @@ function TimeSelect({
         onChange({ hour: Math.floor(total / 60), minute: total % 60 });
       }}
     >
-      <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Time of day")}>
+      <SelectTrigger size="sm" className={cadencePillTrigger} aria-label={t("Time of day")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-64" alignItemWithTrigger={false}>
@@ -184,7 +186,7 @@ export function CronCadenceField<T extends FieldValues>({
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm">
         <span className="text-muted-foreground">{verb}</span>
         <Select items={FREQUENCY_OPTIONS} value={tab} onValueChange={handleFrequencyChange}>
-          <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Frequency")}>
+          <SelectTrigger size="sm" className={cadencePillTrigger} aria-label={t("Frequency")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -207,7 +209,11 @@ export function CronCadenceField<T extends FieldValues>({
                 applyParts({ ...parts, dayOfMonth: Number(value) });
               }}
             >
-              <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Day of month")}>
+              <SelectTrigger
+                size="sm"
+                className={cadencePillTrigger}
+                aria-label={t("Day of month")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-64" alignItemWithTrigger={false}>
@@ -224,7 +230,7 @@ export function CronCadenceField<T extends FieldValues>({
         {tab !== "custom" && (
           <>
             <span className="text-muted-foreground">at</span>
-            <TimeSelect
+            <CadenceTimeSelect
               hour={parts.hour}
               minute={parts.minute}
               onChange={({ hour, minute }) => applyParts({ ...parts, hour, minute })}

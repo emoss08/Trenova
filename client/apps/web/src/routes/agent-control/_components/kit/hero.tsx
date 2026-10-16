@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { KeyboardEvent, ReactNode } from "react";
@@ -22,7 +23,7 @@ export function Hero({ context, working = false, sentenceKey, control, children 
     <section className="hero rh">
       <div className="hero-s">
         <span className="who">
-          <span className={cn("dm", working && "spin")} />
+          <NovaBadge size="lg" spin={working ? "always" : "none"} />
           <b>{t("Nova")}</b>
           <span>{context}</span>
         </span>

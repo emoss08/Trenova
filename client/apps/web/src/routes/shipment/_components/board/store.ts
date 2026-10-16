@@ -1,4 +1,3 @@
-import { createSelectors } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 
 /**
@@ -10,9 +9,7 @@ interface ShipmentBoardState {
   setHighlightId: (id: string | null) => void;
 }
 
-const baseStore = create<ShipmentBoardState>()((set) => ({
+export const useShipmentBoardStore = create<ShipmentBoardState>()((set) => ({
   highlightId: null,
   setHighlightId: (id) => set({ highlightId: id }),
 }));
-
-export const useShipmentBoardStore = createSelectors(baseStore);

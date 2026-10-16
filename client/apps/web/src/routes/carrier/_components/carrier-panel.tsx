@@ -1,11 +1,11 @@
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { CarrierRow } from "@/lib/graphql/carrier-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { carrierSchema, type Carrier } from "@trenova/shared/types/carrier";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CarrierTabbedForm } from "./carrier-tabbed-form";
 

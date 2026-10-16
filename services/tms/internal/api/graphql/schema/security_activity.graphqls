@@ -1,0 +1,141 @@
+"A sign-in, sign-out, password reset or other authentication step, and what came of it."
+type AuthEvent {
+  id: ID!
+  "Null for an attempt that never matched an account."
+  userId: ID
+  "Set when the attempt went through a federated identity provider."
+  identityProviderId: ID
+  "How the person authenticated (password, mfa, an identity provider) or what the event records (session.logout, password_reset.request)."
+  provider: String!
+  "success, challenge, denied or failed."
+  outcome: String!
+  ipAddress: String!
+  userAgent: String!
+  authenticatorAal: Int!
+  federationFal: Int!
+  mfaState: String!
+  "allow, challenge or deny."
+  riskOutcome: String!
+  riskSignals: [String!]!
+  errorCode: String!
+  occurredAt: Timestamp!
+  createdAt: Timestamp!
+  user: User
+}
+
+type AuthEventEdge {
+  node: AuthEvent!
+  cursor: String!
+}
+
+type AuthEventConnection {
+  edges: [AuthEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"What the risk checks decided about a sign-in."
+type RiskDecision {
+  id: ID!
+  "Null when the decision was reached before the account was known."
+  userId: ID
+  "allow, challenge or deny."
+  outcome: String!
+  signals: [String!]!
+  reason: String!
+  createdAt: Timestamp!
+  user: User
+}
+
+type RiskDecisionEdge {
+  node: RiskDecision!
+  cursor: String!
+}
+
+type RiskDecisionConnection {
+  edges: [RiskDecisionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"An account at an identity provider linked to a person here."
+type ExternalIdentity {
+  id: ID!
+  userId: ID!
+  identityProviderId: ID!
+  externalSubject: String!
+  externalUsername: String!
+  externalEmail: String!
+  "Zero until the person first signs in through the provider."
+  lastLoginAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  user: User
+}
+
+type ExternalIdentityEdge {
+  node: ExternalIdentity!
+  cursor: String!
+}
+
+type ExternalIdentityConnection {
+  edges: [ExternalIdentityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A second factor a person has enrolled. Its secret never leaves the server."
+type MFAAuthenticator {
+  id: ID!
+  userId: ID!
+  "totp or webauthn."
+  type: String!
+  name: String!
+  enabled: Boolean!
+  "Zero while the enrolment is still pending."
+  verifiedAt: Timestamp!
+  lastUsedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  user: User
+}
+
+type MFAAuthenticatorEdge {
+  node: MFAAuthenticator!
+  cursor: String!
+}
+
+type MFAAuthenticatorConnection {
+  edges: [MFAAuthenticatorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SCIMDirectory {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  tenantSlug: String!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type SCIMDirectoryEdge {
+  node: SCIMDirectory!
+  cursor: String!
+}
+
+type SCIMDirectoryConnection {
+  edges: [SCIMDirectoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  authEvents(input: DataTableConnectionInput!): AuthEventConnection!
+  riskDecisions(input: DataTableConnectionInput!): RiskDecisionConnection!
+  externalIdentities(input: DataTableConnectionInput!): ExternalIdentityConnection!
+  mfaAuthenticators(input: DataTableConnectionInput!): MFAAuthenticatorConnection!
+  scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
+}

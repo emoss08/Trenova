@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
@@ -79,7 +80,7 @@ export function ExtensionDemo({ agentName }: ExtensionDemoProps) {
       </div>
       <div className={cn("da", working && "in")}>
         <span className="who">
-          <span className={cn("dm", working && !answered && "busy")} />
+          <NovaBadge size="md" spin={working && !answered ? "always" : "none"} />
           <b>{agentName}</b>
           <span className="dtg">
             <Ic n="search" s={10} />
@@ -143,9 +144,7 @@ function SourceMark({ letter, hue, size }: { letter: string; hue: number; size: 
   return (
     <span
       className="wf"
-      style={
-        { "--wh": hue, width: size, height: size, fontSize: size * 0.58 } as CSSProperties
-      }
+      style={{ "--wh": hue, width: size, height: size, fontSize: size * 0.58 } as CSSProperties}
     >
       {letter}
     </span>

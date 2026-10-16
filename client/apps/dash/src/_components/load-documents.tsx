@@ -115,7 +115,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
                     setDocumentTypeId((current) => (current === type.id ? null : type.id))
                   }
                   className={cn(
-                    "rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors",
+                    "rounded-badge border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors",
                     documentTypeId === type.id &&
                       "border-primary bg-primary text-primary-foreground",
                   )}

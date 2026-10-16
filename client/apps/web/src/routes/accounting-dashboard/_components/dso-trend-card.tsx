@@ -1,19 +1,19 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { SectionPanel } from "@/components/section-panel";
 import { AR_DSO_TARGET_DAYS } from "@/lib/accounting-constants";
 import { ar } from "@/lib/queries/ar";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
-import { RangeToggle } from "./range-toggle";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { ChartBodySkeleton, PanelChartBody, PanelQuiet } from "./dashboard-panel";
+import { DEFAULT_TREND_RANGE, RangeToggle, type TrendRangeWeeks } from "./range-toggle";
 
 const dsoChartConfig = {
   dso: {
@@ -25,7 +25,7 @@ const dsoChartConfig = {
 export function DsoTrendCard() {
   const t = useT();
 
-  const [range, setRange] = useState<number>(13);
+  const [range, setRange] = useState<TrendRangeWeeks>(DEFAULT_TREND_RANGE);
   const { data: trend, isLoading } = useQuery(ar.dsoTrend(range));
 
   const chartData = useMemo(
@@ -39,20 +39,21 @@ export function DsoTrendCard() {
   );
 
   return (
-    <Card className="gap-0 p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{t("DSO trend")}</CardTitle>
-        <RangeToggle value={range} onChange={setRange} />
-      </CardHeader>
-      <CardContent className="p-4">
-        {isLoading ? (
-          <Skeleton className="h-56 w-full" />
-        ) : chartData.length === 0 ? (
-          <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-            {t("No billing activity yet")}
-          </div>
-        ) : (
-          <ChartContainer config={dsoChartConfig} className="h-56 w-full">
+    <SectionPanel
+      title={t("Days sales outstanding")}
+      hint={t("target {0}d", AR_DSO_TARGET_DAYS)}
+      help={t(
+        "How many days of billing are still owed, worked out each week from the open balance and the credit sales behind it. Lower is faster cash.",
+      )}
+      action={<RangeToggle value={range} onChange={setRange} />}
+    >
+      {isLoading ? (
+        <ChartBodySkeleton label={t("Loading the DSO trend")} />
+      ) : chartData.length === 0 ? (
+        <PanelQuiet>{t("No billing activity yet")}</PanelQuiet>
+      ) : (
+        <PanelChartBody>
+          <ChartContainer config={dsoChartConfig} className="h-full w-full">
             <LineChart data={chartData} margin={{ left: 4, right: 12, top: 8 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
@@ -68,7 +69,7 @@ export function DsoTrendCard() {
                 tickMargin={8}
                 width={40}
                 domain={[0, "auto"]}
-                tickFormatter={(value: number) => `${value}d`}
+                tickFormatter={(value: number) => t("{0}d", value)}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
               <ReferenceLine
@@ -76,12 +77,6 @@ export function DsoTrendCard() {
                 stroke="var(--muted-foreground)"
                 strokeDasharray="4 4"
                 strokeOpacity={0.5}
-                label={{
-                  value: t("target {0}d", AR_DSO_TARGET_DAYS),
-                  position: "insideTopRight",
-                  fontSize: 10,
-                  fill: "var(--muted-foreground)",
-                }}
               />
               <Line
                 dataKey="dso"
@@ -93,8 +88,8 @@ export function DsoTrendCard() {
               />
             </LineChart>
           </ChartContainer>
-        )}
-      </CardContent>
-    </Card>
+        </PanelChartBody>
+      )}
+    </SectionPanel>
   );
 }

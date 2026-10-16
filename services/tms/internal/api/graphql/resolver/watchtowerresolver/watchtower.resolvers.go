@@ -10,8 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -400,4 +402,127 @@ func (r *WatchtowerItemResolver) ResolvedByID(ctx context.Context, obj *watchtow
 
 func (r *WatchtowerItemResolver) ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error) {
 	return optionalUser(ctx, obj.ResolvedByID)
+}
+
+func (r *MutationResolver) MarkWatchtowerItemSeen(ctx context.Context, id string) (*watchtower.Item, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerService.MarkItemSeen(ctx, watchtowerports.GetWatchtowerItemRequest{
+		ID:         itemID,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) WakeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, expectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.UnsnoozeException(ctx, &watchtowerports.UnsnoozeExceptionRequest{
+		ExceptionTarget: target,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) WatchtowerCleared(ctx context.Context, since int) (int, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead)
+	if err != nil {
+		return 0, err
+	}
+
+	return r.WatchtowerService.Cleared(
+		ctx,
+		base.TenantInfo(authCtx),
+		actorutil.FromAuthContext(authCtx),
+		int64(since),
+	)
+}
+
+func (r *QueryResolver) WatchtowerHandOffAgents(ctx context.Context) ([]*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerService.HandOffAgents(
+		ctx,
+		base.TenantInfo(authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *WatchtowerAgentWorkResolver) Agent(ctx context.Context, obj *watchtower.AgentWork) (*agentdefinition.Definition, error) {
+	return optionalAgent(ctx, obj.AgentID)
+}
+
+func (r *WatchtowerAgentWorkResolver) HandedByID(ctx context.Context, obj *watchtower.AgentWork) (*string, error) {
+	return base.IDPtr(obj.HandedByID), nil
+}
+
+func (r *WatchtowerAgentWorkResolver) HandedBy(ctx context.Context, obj *watchtower.AgentWork) (*tenant.User, error) {
+	return optionalUser(ctx, obj.HandedByID)
+}
+
+func (r *WatchtowerItemResolver) DueLabel(ctx context.Context, obj *watchtower.Item) (*string, error) {
+	return stringutils.NilIfEmpty(obj.DueLabel), nil
+}
+
+func (r *WatchtowerItemResolver) DueSource(ctx context.Context, obj *watchtower.Item) (*watchtower.DueSource, error) {
+	return stringutils.NilIfEmpty(obj.DueSource), nil
+}
+
+func (r *WatchtowerItemResolver) Record(ctx context.Context, obj *watchtower.Item) (*watchtower.RecordRef, error) {
+	return recordModel(obj), nil
+}
+
+func (r *WatchtowerItemResolver) Facts(ctx context.Context, obj *watchtower.Item) ([]*gqlmodel.WatchtowerFact, error) {
+	return factsModel(obj.Facts), nil
+}
+
+func (r *WatchtowerItemResolver) Trail(ctx context.Context, obj *watchtower.Item) ([]*gqlmodel.WatchtowerTrailEvent, error) {
+	return trailModel(obj.Trail), nil
+}
+
+func (r *WatchtowerItemResolver) SuggestedAgentID(ctx context.Context, obj *watchtower.Item) (*string, error) {
+	definition, err := suggestedAgent(ctx, obj)
+	if err != nil || definition == nil {
+		return nil, err
+	}
+
+	return base.IDPtr(definition.ID), nil
+}
+
+func (r *WatchtowerItemResolver) SuggestedAgent(ctx context.Context, obj *watchtower.Item) (*agentdefinition.Definition, error) {
+	return suggestedAgent(ctx, obj)
+}
+
+func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.Item) (*watchtower.AgentWork, error) {
+	if !obj.HasAgent() {
+		return nil, nil
+	}
+	run, err := base.OptionalMatch(loaders.AgentRunByID(ctx, obj.AgentRunID.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	return obj.AgentWorkFrom(run), nil
+}
+
+func (r *WatchtowerRecordResolver) Kind(ctx context.Context, obj *watchtower.RecordRef) (string, error) {
+	return string(obj.Kind), nil
+}
+
+func (r *WatchtowerRecordResolver) Noun(ctx context.Context, obj *watchtower.RecordRef) (string, error) {
+	if obj.Kind == "" {
+		return "", nil
+	}
+
+	return stringutils.CapitalizeFirst(obj.Kind.Noun()), nil
 }

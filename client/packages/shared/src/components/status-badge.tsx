@@ -452,7 +452,7 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -517,7 +517,7 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -545,7 +545,7 @@ export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPa
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -577,7 +577,7 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -603,7 +603,7 @@ export function PlainInvoiceDisputeBadge({
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
+    <span className="inline-flex items-center rounded-badge bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
       {t("Disputed")}
     </span>
   );
@@ -681,7 +681,7 @@ export function PlainInvoiceSplitBadge({
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
+    <span className="inline-flex items-center rounded-badge bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
       {t("Split bill")}
     </span>
   );
@@ -725,7 +725,7 @@ export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
         scopeAttributes[scope].className,
       )}
     >

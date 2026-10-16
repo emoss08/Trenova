@@ -732,6 +732,39 @@ func TestQueryBuilder_ShipmentEndStopsGroupTheBoardByDay(t *testing.T) {
 	assert.Contains(t, sql, "IS NULL")
 }
 
+func TestQueryBuilder_FiltersShipmentsByShipperAndConsigneeLocation(t *testing.T) {
+	t.Parallel()
+
+	ClearCaches()
+
+	db := newAdditionalTestDB()
+	entity := &shipment.Shipment{}
+	fieldConfig := GetFieldConfiguration(entity)
+
+	query := db.NewSelect().Model((*shipment.Shipment)(nil)).ModelTableExpr("shipments AS sp")
+	qb := NewWithPostgresSearch(query, "sp", fieldConfig, entity).WithTraversalSupport(true)
+	qb.ApplyFilters([]domaintypes.FieldFilter{
+		{Field: "shipperStop.locationId", Operator: dbtype.OpEqual, Value: "loc_pickup"},
+		{
+			Field:    "consigneeStop.locationId",
+			Operator: dbtype.OpIn,
+			Value:    []any{"loc_delivery_a", "loc_delivery_b"},
+		},
+	})
+
+	sql := qb.GetQuery().String()
+	assert.Equal(t, 1, strings.Count(sql, "LEFT JOIN stops AS shipper_stop"))
+	assert.Equal(t, 1, strings.Count(sql, "LEFT JOIN stops AS consignee_stop"))
+	assert.Contains(t, sql, `"shipper_stop"."location_id" = 'loc_pickup'`)
+	assert.Contains(
+		t,
+		sql,
+		`"consignee_stop"."location_id" IN ('loc_delivery_a', 'loc_delivery_b')`,
+	)
+	assert.NotContains(t, sql, "shipment_moves AS sm_orig")
+	assert.NotContains(t, sql, "shipment_moves AS sm_dest")
+}
+
 func TestQueryBuilder_ResolveBelongsToRelationship(t *testing.T) {
 	t.Parallel()
 

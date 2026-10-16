@@ -89,7 +89,7 @@ export function RouteRibbon({
             className="st-puck absolute top-12 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
             style={{ left: `${journey.progress * 100}%` }}
           >
-            <span className="absolute bottom-full mb-3 rounded-full bg-background px-2.5 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-foreground/10">
+            <span className="absolute bottom-full mb-3 rounded-badge bg-background px-2.5 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-foreground/10">
               {whereNow}
             </span>
             <span className="relative flex size-9 items-center justify-center">

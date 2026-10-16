@@ -381,7 +381,7 @@ export function BillingQueueSidebar({
                   <FilterFunnel01Icon className="size-3" />
                   <span className="text-xs">{t("Filters")}</span>
                   {activeFilterCount > 0 && (
-                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-2xs font-medium">
+                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-badge text-2xs font-medium">
                       {activeFilterCount}
                     </span>
                   )}

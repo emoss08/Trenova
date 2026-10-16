@@ -70,7 +70,7 @@ function PresenceChip({ messageId }: { messageId: string }) {
     <span
       role="status"
       title={text}
-      className="bg-surface-hover text-foreground-muted animate-rise mr-1 inline-flex h-7 items-center gap-1.5 rounded-full pr-2.5 pl-1 text-sm"
+      className="bg-surface-hover text-foreground-muted animate-rise mr-1 inline-flex h-7 items-center gap-1.5 rounded-badge pr-2.5 pl-1 text-sm"
     >
       <PersonAvatar name={first.name} present />
       <span className="truncate @max-[820px]/reader:sr-only">{text}</span>
@@ -277,7 +277,7 @@ export function ReaderToolbar({
           variant="bare"
           aria-haspopup="menu"
           aria-label={owner === null ? t("Assign") : t("Assigned to {0}", owner.name)}
-          className="text-foreground-muted hover:bg-surface-hover hover:text-foreground ui-press mr-0.5 inline-flex h-7 items-center gap-1.5 rounded-full pr-2.5 pl-1 text-sm"
+          className="text-foreground-muted hover:bg-surface-hover hover:text-foreground ui-press mr-0.5 inline-flex h-7 items-center gap-1.5 rounded-badge pr-2.5 pl-1 text-sm"
           onClick={(event) => openOwner(event.currentTarget)}
         >
           {owner === null ? (

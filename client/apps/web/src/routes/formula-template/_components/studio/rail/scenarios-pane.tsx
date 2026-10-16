@@ -15,7 +15,7 @@ import {
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -180,7 +180,7 @@ function ScenarioRow({ scenario, onDelete }: { scenario: StudioScenario; onDelet
                     className="fs-nova-btn gap-1"
                     aria-label={t("Why did {0} break?", scenario.name)}
                   >
-                    <NovaMark className="fs-nova-ring size-2.75" />
+                    <NovaBadge size="xs" className="fs-nova-badge" />
                     {t("Why?")}
                   </Button>
                 }

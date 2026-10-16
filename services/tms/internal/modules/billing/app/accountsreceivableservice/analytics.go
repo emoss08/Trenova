@@ -92,6 +92,14 @@ func (s *Service) GetPaymentStats(
 	return s.analyticsRepo.GetPaymentStats(ctx, req)
 }
 
+func (s *Service) GetDraftInvoices(
+	ctx context.Context,
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARDraftInvoices, error) {
+	req.AsOfDate = normalizeAsOf(req.AsOfDate)
+	return s.analyticsRepo.GetDraftInvoices(ctx, req)
+}
+
 func (s *Service) GetDSOTrend(
 	ctx context.Context,
 	req customerledgerports.ListARSeriesRequest,

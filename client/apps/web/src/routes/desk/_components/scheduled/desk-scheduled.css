@@ -1,0 +1,189 @@
+/* The Desk's Scheduled page: every request the person scheduled, grouped
+   into what is coming up and what is paused. The row reads like the
+   schedule card in a conversation (.dk-sch-*), with the conversation it
+   posts into and its last run beneath. */
+
+/* ---- groups ---- */
+.dk-sd-g {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.dk-sd-g > h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-sd-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--dsk-card);
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  overflow: hidden;
+}
+
+/* ---- row ---- */
+.dk-sd-r {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 10px 12px 14px;
+  border-top: 1px solid var(--dsk-b-sub);
+  transition: opacity 200ms;
+}
+.dk-sd-r:first-child {
+  border-top: 0;
+}
+.dk-sd-r > .dk-sch-i {
+  margin-top: 2px;
+}
+.dk-sd-r[aria-busy="true"] {
+  opacity: 0.6;
+}
+.dk-sd-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dk-sd-t > b {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--dsk-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-sd-t > em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--dsk-muted);
+}
+.dk-sd-r.dk-off .dk-sd-t > b,
+.dk-sd-r.dk-off .dk-sd-t > em {
+  color: var(--dsk-subtle);
+}
+.dk-sd-m {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-sd-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: 6px;
+  color: var(--dsk-muted);
+  text-decoration: none;
+  transition: color 140ms;
+}
+.dk-sd-c:hover {
+  color: var(--dsk-fg);
+}
+.dk-sd-c > svg {
+  flex: none;
+}
+
+/* ---- actions ---- */
+.dk-sd-acts {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.dk-sd-q {
+  margin-right: 4px;
+  font-size: 12.5px;
+  color: var(--dsk-muted);
+}
+
+/* ---- empty and failed ---- */
+.dk-sd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 28px;
+  border-radius: 14px;
+  background: var(--dsk-card);
+  box-shadow: 0 0 0 1px var(--dsk-b);
+  text-align: center;
+}
+.dk-sd-empty > b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-sd-empty > p {
+  margin: 0;
+  max-width: 48ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsk-muted);
+  text-wrap: pretty;
+}
+.dk-sd-empty-i {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  color: var(--dsk-muted);
+}
+.dk-sd-more {
+  height: 1px;
+}
+
+/* ---- skeleton ---- */
+.dk-sd-sk-h {
+  width: 72px;
+  height: 11px;
+}
+.dk-sd-sk-i {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 50%;
+}
+.dk-sd-sk-p {
+  width: 62%;
+  height: 12px;
+  margin: 3px 0;
+}
+.dk-sd-sk-w {
+  width: 44%;
+  height: 10px;
+  margin: 2px 0;
+}
+.dk-sd-sk-m {
+  width: 30%;
+  height: 9px;
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .dk-sd-r {
+    flex-wrap: wrap;
+  }
+  .dk-sd-acts {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

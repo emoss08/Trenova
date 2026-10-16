@@ -26,7 +26,7 @@ export function InvoiceDetailSkeleton() {
             <div className="flex items-center gap-2 text-lg">
               <Skeleton className="inline-block h-4 w-28 align-middle" />
               {BADGE_WIDTHS.map((width, index) => (
-                <Skeleton key={index} className={cn("h-5 rounded-full", width)} />
+                <Skeleton key={index} className={cn("h-5 rounded-badge", width)} />
               ))}
             </div>
             <div className="flex items-center gap-2">

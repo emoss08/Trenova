@@ -1,6 +1,7 @@
 import { InfoPopover } from "@/components/info-popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
+import { Link } from "react-router";
 
 type SectionPanelProps = {
   title: string;
@@ -61,4 +62,16 @@ export function SectionPanel({
 /** One quiet line for a panel with nothing to list. */
 export function SectionPanelQuiet({ children }: { children: ReactNode }) {
   return <p className="text-muted-foreground px-3 py-3 text-xs">{children}</p>;
+}
+
+/** The page a panel's figures come from, as a quiet link in the header's `action`. */
+export function SectionPanelLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="text-muted-foreground hover:text-foreground ui-focus-ring rounded-sm text-xs transition-colors hover:underline"
+    >
+      {children}
+    </Link>
+  );
 }

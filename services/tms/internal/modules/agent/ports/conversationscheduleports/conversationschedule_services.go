@@ -52,3 +52,29 @@ type ConversationScheduleRunner interface {
 		req FireConversationScheduleRequest,
 	) (*FireConversationScheduleResult, error)
 }
+
+// ThreadSchedulesRequest names one person's conversation.
+type ThreadSchedulesRequest struct {
+	ThreadID   pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+// ConversationThreadSchedules settles the schedules of a conversation being
+// deleted. Their rows go with the conversation's, by cascade; this reads them
+// first and, once the conversation is gone, takes their Temporal schedules
+// off the scheduler and tells the owner's tabs, so none fires again and no
+// open list keeps showing one.
+type ConversationThreadSchedules interface {
+	// OfThread reads every schedule the conversation keeps. It is called
+	// before the conversation is deleted, while there is still something to
+	// read.
+	OfThread(
+		ctx context.Context,
+		req ThreadSchedulesRequest,
+	) ([]*conversationschedule.Schedule, error)
+	// Forget removes the Temporal schedules of schedules deleted with their
+	// conversation and announces each one gone. Like the syncer it never
+	// fails the delete: what it could not remove the next reconcile does.
+	Forget(ctx context.Context, schedules []*conversationschedule.Schedule)
+}

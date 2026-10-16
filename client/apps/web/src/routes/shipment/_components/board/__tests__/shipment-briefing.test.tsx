@@ -83,6 +83,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   authState.user = { name: "Marcus Rivera" };
+  briefing.current = { ...briefing.current, narrated: false };
 });
 
 describe("ShipmentBriefing", () => {
@@ -94,6 +95,16 @@ describe("ShipmentBriefing", () => {
       "Hello Marcus. 3 loads are late. 2 loads still need a driver.",
     );
     expect(screen.getByText(/^Brief as of /)).toBeTruthy();
+    expect(screen.queryByText(/Written by Nova/)).toBeNull();
+  });
+
+  it("signs the brief with Nova's badge when Nova wrote the wording", () => {
+    briefing.current = { ...briefing.current, narrated: true };
+    render(<ShipmentBriefing />);
+
+    const signature = screen.getByText(/^Written by Nova · as of /);
+    expect(signature.querySelector('[data-slot="nova-badge"]')).toBeTruthy();
+    expect(screen.queryByText(/^Brief as of /)).toBeNull();
   });
 
   it("greets without a name when the session does not know one", () => {

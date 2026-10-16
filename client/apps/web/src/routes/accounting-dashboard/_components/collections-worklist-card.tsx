@@ -1,113 +1,114 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import type { BadgeVariant } from "@trenova/shared/types/badge";
+import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
 import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
+import { PANEL_LIST_HEIGHT, PanelQuiet, RowsBodySkeleton } from "./dashboard-panel";
 
-const SEVERITY_STYLES: Record<string, string> = {
-  Critical: "bg-danger-subtle text-danger-foreground",
-  Warning: "bg-warning-subtle text-warning-foreground",
-  Watch: "bg-info-subtle text-info-foreground",
+const WORKLIST_LIMIT = 25;
+
+type WorklistSeverity = "Critical" | "Warning" | "Watch";
+
+const SEVERITY_LABELS = defineLabels({
+  Critical: "Critical",
+  Warning: "Warning",
+  Watch: "Watch",
+} as const);
+
+const SEVERITY_TONE: Record<WorklistSeverity, BadgeVariant> = {
+  Critical: "danger",
+  Warning: "warning",
+  Watch: "info",
 };
 
-export function CollectionsWorklistCard() {
+function severityOf(value: string): WorklistSeverity {
+  return value === "Critical" || value === "Warning" ? value : "Watch";
+}
+
+export function CollectionsWorklistCard({ className }: { className?: string }) {
   const t = useT();
 
-  const { data: items, isLoading } = useQuery(ar.collectionsWorklist(25));
+  const { data: items, isLoading } = useQuery(ar.collectionsWorklist(WORKLIST_LIMIT));
 
   const rows = items ?? [];
 
   return (
-    <Card className="gap-0 p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">
-          {t("Collections worklist")}
-          {rows.length > 0 ? (
-            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
-              {rows.length}
-            </span>
-          ) : null}
-        </CardTitle>
-        <Link
-          to="/accounting/ar/collections"
-          className="text-muted-foreground hover:text-foreground text-xs hover:underline"
+    <SectionPanel
+      title={t("Collections worklist")}
+      count={rows.length}
+      help={t(
+        "The open invoices most worth a call, ordered by how far past due they are and how much is at stake. Disputes and short payments are marked.",
+      )}
+      action={
+        <SectionPanelLink to="/accounting/ar/collections">{t("Open collections")}</SectionPanelLink>
+      }
+      className={className}
+    >
+      {isLoading ? (
+        <RowsBodySkeleton label={t("Loading the collections worklist")} />
+      ) : rows.length === 0 ? (
+        <PanelQuiet
+          height={PANEL_LIST_HEIGHT}
+          icon={<CheckCircleIcon className="text-success-foreground size-5" />}
         >
-          {t("Open collections")}
-        </Link>
-      </CardHeader>
-      <CardContent className="p-2">
-        {isLoading ? (
-          <div className="space-y-2 p-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="text-muted-foreground flex h-56 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircleIcon className="size-5 text-success-foreground" />
-            {t("Nothing needs attention right now")}
-          </div>
-        ) : (
-          <div className="max-h-80 divide-y overflow-y-auto">
-            {rows.map((item) => (
-              <WorklistRow key={item.invoiceId} item={item} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {t("Nothing needs attention right now")}
+        </PanelQuiet>
+      ) : (
+        <ul className={cn("divide-border-subtle divide-y overflow-y-auto", PANEL_LIST_HEIGHT)}>
+          {rows.map((item) => (
+            <li key={item.invoiceId}>
+              <WorklistRow item={item} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionPanel>
   );
+}
+
+function disputeLabel(item: ARWorklistItem, t: TranslateFn): string {
+  const reason = item.openDisputeReasonCode;
+  const amount = item.disputedAmountMinor > 0 ? formatCurrency(item.disputedAmountMinor / 100) : "";
+
+  if (reason !== "" && amount !== "") return t("Disputed · {0} · {1}", reason, amount);
+  if (reason !== "") return t("Disputed · {0}", reason);
+  if (amount !== "") return t("Disputed · {0}", amount);
+  return t("Disputed");
 }
 
 function WorklistRow({ item }: { item: ARWorklistItem }) {
   const t = useT();
+  const severity = severityOf(item.severity);
 
   return (
     <Link
-      to={`/accounting/ar/collections?customerId=${item.customerId}`}
-      className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
+      to={`/accounting/ar/collections?customerId=${encodeURIComponent(item.customerId)}`}
+      className="hover:bg-surface-hover ui-focus-ring flex items-center gap-3 px-3 py-2 transition-colors"
     >
-      <span
-        className={cn(
-          "inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
-          SEVERITY_STYLES[item.severity] ?? SEVERITY_STYLES.Watch,
-        )}
-      >
-        {item.severity}
-      </span>
+      <Badge variant={SEVERITY_TONE[severity]} className="w-16">
+        {SEVERITY_LABELS[severity]}
+      </Badge>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <span className="truncate text-xs">
-            <span className="font-mono font-medium">{item.invoiceNumber}</span>
+            <span className="font-mono">{item.invoiceNumber}</span>
             <span className="text-muted-foreground ml-1.5">{item.customerName}</span>
           </span>
-          <span className="shrink-0 text-xs font-semibold tabular-nums">
+          <span className="shrink-0 font-mono text-xs tabular-nums">
             {formatCurrency(item.openAmountMinor / 100)}
           </span>
         </div>
         <div className="mt-0.5 flex items-center gap-1.5">
-          {item.daysPastDue > 0 ? (
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0}d past due", item.daysPastDue)}
-            </span>
-          ) : (
-            <span className="text-muted-foreground text-xs">{t("not yet due")}</span>
-          )}
-          {item.isDisputed ? (
-            <Badge variant="warning">
-              {item.openDisputeReasonCode
-                ? t("Disputed · {0}", item.openDisputeReasonCode)
-                : t("Disputed")}
-              {item.disputedAmountMinor > 0
-                ? ` ${formatCurrency(item.disputedAmountMinor / 100)}`
-                : ""}
-            </Badge>
-          ) : null}
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {item.daysPastDue > 0 ? t("{0}d past due", item.daysPastDue) : t("not yet due")}
+          </span>
+          {item.isDisputed ? <Badge variant="warning">{disputeLabel(item, t)}</Badge> : null}
           {item.hasShortPay ? <Badge variant="danger">{t("Short-paid")}</Badge> : null}
         </div>
       </div>

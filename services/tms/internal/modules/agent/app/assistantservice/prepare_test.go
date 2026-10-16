@@ -170,3 +170,40 @@ func TestPrepareTurn_ReadsAttachedFilesTogether(t *testing.T) {
 	assert.Equal(t, "rate-con.pdf", plan.Attachments[0].FileName)
 	assert.Equal(t, "bol.pdf", plan.Attachments[1].FileName)
 }
+
+// A palette question's answer is read with nothing beside it, so its turn is
+// prepared inline and keeps nothing as an artifact. Once kept for the Desk it
+// is a conversation like any other.
+func TestPrepareTurn_AnswersAPaletteQuestionInline(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		origin conversation.ThreadOrigin
+		inline bool
+	}{
+		{origin: conversation.ThreadOriginAsk, inline: true},
+		{origin: conversation.ThreadOriginDesk, inline: false},
+		{origin: conversation.ThreadOriginPanel, inline: false},
+	} {
+		svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
+		conversations.thread.Origin = tc.origin
+		actor := testActor()
+
+		plan, runReq, err := svc.prepareTurn(t.Context(), &agentports.SendMessageRequest{
+			ThreadID:   conversations.thread.ID,
+			Content:    "What shipment types do we have?",
+			TenantInfo: actor.TenantInfo(),
+		}, actor)
+
+		require.NoError(t, err, string(tc.origin))
+		require.NotNil(t, runReq, string(tc.origin))
+		assert.Equal(t, tc.inline, runReq.Inline, string(tc.origin))
+		assert.Equal(t, tc.inline, plan.Inline, string(tc.origin))
+		assert.Equal(t, tc.inline, plan.RunRequest(actor).Inline,
+			"the workflow rebuilds the run from the plan, so the plan carries it: %s", tc.origin)
+		if tc.inline {
+			assert.False(t, runReq.Publishes, string(tc.origin))
+			assert.False(t, runReq.KeepsDocuments(), string(tc.origin))
+		}
+	}
+}

@@ -24,8 +24,8 @@ export function useMapUIState() {
     "shipment-map-weather",
     "precipitation",
   );
-  const isFullscreen = useShipmentMapStore.use.isFullscreen();
-  const setIsFullscreen = useShipmentMapStore.use.setIsFullscreen();
+  const isFullscreen = useShipmentMapStore((s) => s.isFullscreen);
+  const setIsFullscreen = useShipmentMapStore((s) => s.setIsFullscreen);
 
   const toggleOverlay = useCallback(
     (id: OverlayId) => {

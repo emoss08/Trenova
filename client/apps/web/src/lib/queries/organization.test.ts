@@ -9,12 +9,9 @@ const organizationServiceMocks = vi.hoisted(() => ({
   getTenantLoginMetadata: vi.fn(),
   listAccessPolicies: vi.fn(),
   listAuthEvents: vi.fn(),
-  listExternalIdentities: vi.fn(),
   listIdentityProviders: vi.fn(),
-  listMFAAuthenticators: vi.fn(),
   listProvisioningAudit: vi.fn(),
   listRiskDecisions: vi.fn(),
-  listSCIMDirectories: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/organization", () => ({

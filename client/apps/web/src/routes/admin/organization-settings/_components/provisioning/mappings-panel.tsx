@@ -3,7 +3,7 @@ import { DataTableLazyComponent } from "@trenova/shared/components/error-boundar
 import { Button } from "@trenova/shared/components/ui/button";
 import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { lazy, memo, useCallback, useState } from "react";
-import { EmptyState, PanelHeader } from "../security-access/shared";
+import { EmptyState, SecuritySection } from "../security-access/shared";
 import { useSecurityAccess } from "../security-access/use-security-access";
 import { SCIMGroupMappingCreatePanel } from "./mapping-panel";
 
@@ -61,34 +61,30 @@ const MappingsPanel = memo(function MappingsPanel({
   const canManage = useSecurityAccess().scimDirectories.update;
 
   return (
-    <div className="bg-background rounded-lg border">
-      <PanelHeader
-        icon={<Users01Icon />}
-        title={t("Group role mappings")}
-        description={t("Resolve external directory groups into application roles.")}
-        action={
-          canManage ? (
-            <Button size="sm" onClick={onAdd} disabled={disabled}>
-              <PlusIcon />
-              {t("Add mapping")}
-            </Button>
-          ) : undefined
-        }
-      />
-      <div className="px-2 pb-2">
-        {directoryId ? (
-          <DataTableLazyComponent rowCount={3} columnCount={5}>
-            <SCIMGroupRoleMappingsTable organizationId={organizationId} directoryId={directoryId} />
-          </DataTableLazyComponent>
-        ) : (
-          <EmptyState
-            icon={<Users01Icon />}
-            label={t("Select a directory")}
-            description={t("Choose a SCIM directory before loading group mappings.")}
-            compact
-          />
-        )}
-      </div>
-    </div>
+    <SecuritySection
+      title={t("Group role mappings")}
+      icon={<Users01Icon />}
+      help={t("Each mapping gives the members of a directory group a role here.")}
+      action={
+        canManage ? (
+          <Button size="sm" onClick={onAdd} disabled={disabled}>
+            <PlusIcon />
+            {t("New mapping")}
+          </Button>
+        ) : undefined
+      }
+    >
+      {directoryId ? (
+        <DataTableLazyComponent rowCount={3} columnCount={5}>
+          <SCIMGroupRoleMappingsTable organizationId={organizationId} directoryId={directoryId} />
+        </DataTableLazyComponent>
+      ) : (
+        <EmptyState
+          icon={<Users01Icon />}
+          label={t("Select a directory")}
+          description={t("Choose a SCIM directory before loading group mappings.")}
+        />
+      )}
+    </SecuritySection>
   );
 });

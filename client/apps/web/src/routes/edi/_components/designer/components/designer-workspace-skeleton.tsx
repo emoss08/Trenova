@@ -136,7 +136,7 @@ function VersionAndSegmentRailSkeleton() {
         {Array.from({ length: VERSION_ROW_COUNT }, (_, index) => (
           <div key={index} className="flex items-center justify-between gap-2 border-b px-3 py-2">
             <SkeletonLine className="w-6" />
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-badge" />
           </div>
         ))}
       </div>

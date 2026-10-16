@@ -16,6 +16,7 @@ import {
 import type { PersistQueryClientOptions, Persister } from "@tanstack/react-query-persist-client";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
+import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 
 // What draws the app's frame and its first screen, written to the browser's disk so a
 // returning session paints them before the network answers. Nothing else is ever written:
@@ -157,6 +158,7 @@ export const sessionPersistence = createSessionPersistence(
  */
 export async function clearSessionCache(): Promise<void> {
   queryClient.clear();
+  useDeskAttachedPageStore.getState().clear();
   try {
     await sessionPersistence.forgetAll();
   } catch (error) {

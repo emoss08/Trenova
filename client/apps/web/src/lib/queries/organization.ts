@@ -1,6 +1,10 @@
 import { apiService } from "@/services/api";
 import { getOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
+import { listSCIMDirectoriesGraphQL } from "@/lib/graphql/scim-directory";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+
+/** The most directories one read of the list asks for; the server serves at most 100 a page. */
+const SCIM_DIRECTORY_FIRST_PAGE = 100;
 
 export const organization = createQueryKeys("organization", {
   detail: (organizationId: string) => ({
@@ -33,11 +37,8 @@ export const organization = createQueryKeys("organization", {
   }),
   scimDirectories: (organizationId: string) => ({
     queryKey: ["scim-directories", organizationId],
-    queryFn: async () =>
-      apiService.organizationService.listSCIMDirectories(organizationId, {
-        limit: 100,
-        offset: 0,
-      }),
+    queryFn: async ({ signal }) =>
+      listSCIMDirectoriesGraphQL({ first: SCIM_DIRECTORY_FIRST_PAGE }, { signal }),
   }),
   provisioningAudit: (organizationId: string) => ({
     queryKey: ["provisioning-audit", organizationId],
@@ -55,12 +56,9 @@ export const organization = createQueryKeys("organization", {
     queryKey: ["risk-decisions", organizationId],
     queryFn: async () => apiService.organizationService.listRiskDecisions(organizationId),
   }),
-  externalIdentities: (organizationId: string) => ({
-    queryKey: ["external-identities", organizationId],
-    queryFn: async () => apiService.organizationService.listExternalIdentities(organizationId),
-  }),
-  mfaAuthenticators: (organizationId: string) => ({
-    queryKey: ["mfa-authenticators", organizationId],
-    queryFn: async () => apiService.organizationService.listMFAAuthenticators(organizationId),
+  securityBriefing: (organizationId: string) => ({
+    queryKey: ["security-briefing", organizationId],
+    queryFn: async ({ signal }) =>
+      apiService.organizationService.getSecurityBriefing(organizationId, { signal }),
   }),
 });

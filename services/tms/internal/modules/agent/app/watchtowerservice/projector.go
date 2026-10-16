@@ -68,8 +68,8 @@ func NewProjector(p ProjectorParams) *Projector {
 // AsProjector is the face fx hands to every source.
 func AsProjector(p *Projector) watchtowerports.WatchtowerProjector { return p }
 
-// itemFromInput builds the stored shape from what a source said.
-func itemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
+// ItemFromInput builds the stored shape from what a source said.
+func ItemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 	occurredAt := input.OccurredAt
 	if occurredAt <= 0 {
 		occurredAt = timeutils.NowUnix()
@@ -87,7 +87,15 @@ func itemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 		EventKind:      input.EventKind,
 		Path:           input.Path,
 		OccurredAt:     occurredAt,
+		Facts:          input.Facts,
+		Impact:         input.Impact,
+		Trail:          input.Trail,
 	}
+	if input.Record != nil {
+		item.RecordKind = input.Record.Kind
+		item.RecordLabel = input.Record.Label
+	}
+	item.ApplyDeadline(input.Deadline)
 	item.Normalize()
 
 	return item
@@ -109,7 +117,7 @@ func (p *Projector) upsert(
 	ctx context.Context,
 	input watchtowerports.WatchtowerItemInput,
 ) error {
-	item := itemFromInput(input)
+	item := ItemFromInput(input)
 	multiErr := errortypes.NewMultiError()
 	item.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -123,6 +131,9 @@ func (p *Projector) upsert(
 	}
 
 	saved = p.route(ctx, saved, input.OwnerID, inserted)
+	if saved.Unchanged {
+		return nil
+	}
 
 	action := agentports.ActivityUpdated
 	if inserted {
@@ -180,6 +191,23 @@ func (p *Projector) publish(ctx context.Context, item *watchtower.Item, action s
 	}); err != nil {
 		p.l.Warn("watchtower invalidation lost",
 			zap.String("item", item.ID.String()), zap.Error(err))
+	}
+}
+
+func (p *Projector) publishBulk(ctx context.Context, tenant pagination.TenantInfo, action string) {
+	if p.realtime == nil {
+		return
+	}
+
+	if err := realtimeinvalidation.Publish(ctx, p.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ActorType:      permissionports.PrincipalTypeSystem,
+		Resource:       RealtimeResource,
+		Action:         action,
+	}); err != nil {
+		p.l.Warn("watchtower bulk invalidation lost",
+			zap.String("organization", tenant.OrgID.String()), zap.Error(err))
 	}
 }
 

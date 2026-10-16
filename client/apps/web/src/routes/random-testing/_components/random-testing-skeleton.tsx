@@ -97,8 +97,8 @@ function PoolsSkeleton() {
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="flex h-5 items-center gap-1.5">
                 <Skeleton className={cn("h-3.5", pool.name)} />
-                <Skeleton className="h-4 w-10 rounded-full" />
-                {index === 0 ? <Skeleton className="h-4 w-14 rounded-full" /> : null}
+                <Skeleton className="h-4 w-10 rounded-badge" />
+                {index === 0 ? <Skeleton className="h-4 w-14 rounded-badge" /> : null}
               </span>
               <Skeleton className="h-3 w-56 max-w-full" />
             </div>
@@ -155,12 +155,12 @@ function RoundsSkeleton() {
               </td>
               <td className="px-2 py-2">
                 <span className="flex items-center gap-1.5">
-                  <Skeleton className="h-4 w-10 rounded-full" />
+                  <Skeleton className="h-4 w-10 rounded-badge" />
                   <Skeleton className={cn("h-3", ROUND_POOL_WIDTHS[index])} />
                 </span>
               </td>
               <td className="px-2 py-2">
-                <Skeleton className="h-4 w-14 rounded-full" />
+                <Skeleton className="h-4 w-14 rounded-badge" />
               </td>
               <td className="px-2 py-2">
                 <span className="flex items-center gap-2">

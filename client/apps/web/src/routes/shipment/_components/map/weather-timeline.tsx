@@ -121,8 +121,8 @@ export function WeatherTimeline({
   const trackRef = useRef<HTMLDivElement>(null);
   const currentFrame = frames[currentIndex];
   const isLive = currentIndex === frames.length - 1;
-  const weatherLayerOpen = useShipmentMapStore.use.weatherLayerOpen();
-  const setWeatherLayerOpen = useShipmentMapStore.use.setWeatherLayerOpen();
+  const weatherLayerOpen = useShipmentMapStore((s) => s.weatherLayerOpen);
+  const setWeatherLayerOpen = useShipmentMapStore((s) => s.setWeatherLayerOpen);
 
   const activeOption = WEATHER_OPTIONS.find((o) => o.id === weatherLayer) ?? WEATHER_OPTIONS[0];
 

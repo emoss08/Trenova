@@ -223,7 +223,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                             onClick={() => setDays(preset.mask)}
                             aria-pressed={daysOfWeek === preset.mask}
                             className={cn(
-                              "text-muted-foreground hover:text-foreground hover:bg-muted rounded-full border border-transparent px-2 py-0.5 text-xs transition-colors",
+                              "text-muted-foreground hover:text-foreground hover:bg-muted rounded-badge border border-transparent px-2 py-0.5 text-xs transition-colors",
                               daysOfWeek === preset.mask &&
                                 "border-border bg-muted text-foreground",
                             )}

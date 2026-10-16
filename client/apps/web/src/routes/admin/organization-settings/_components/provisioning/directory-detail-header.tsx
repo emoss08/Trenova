@@ -35,20 +35,20 @@ export function DirectoryDetailHeader({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
-    <div className="bg-background rounded-lg border p-3">
+    <div>
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-base font-semibold tracking-tight">
+            <h3 className="truncate text-base font-semibold">
               {directory?.tenantSlug || t("Select a directory")}
             </h3>
             {directory && (
-              <Badge variant={directory.enabled ? "success" : "danger"}>
+              <Badge variant={directory.enabled ? "success" : "neutral"}>
                 {directory.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs">
             {t("Manage SCIM tokens, group-to-role mappings, and provisioning audit events.")}
           </p>
         </div>

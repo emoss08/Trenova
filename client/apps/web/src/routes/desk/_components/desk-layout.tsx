@@ -34,6 +34,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useStartConversation } from "@/components/assistant/use-start-conversation";
+import { forgetThreadSchedules } from "@/components/assistant/thread-schedules";
 import type { DeskPlace } from "./desk-rail";
 import { DeskRailThreads } from "./desk-rail-threads";
 import { DeskSearchPalette } from "./desk-search";
@@ -139,6 +140,9 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   }
   if (pathname.startsWith("/desk/memory")) {
     return "memory";
+  }
+  if (pathname.startsWith("/desk/scheduled")) {
+    return "scheduled";
   }
   if (agentPageId(pathname) !== null) {
     return "agent";
@@ -249,10 +253,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const unlistedQuery = useQuery({
     ...assistant.thread(activeThreadId ?? ""),
     enabled:
-      activeThreadId !== null &&
-      threadsQuery.isSuccess &&
-      listedThread === null &&
-      !activeDeleting,
+      activeThreadId !== null && threadsQuery.isSuccess && listedThread === null && !activeDeleting,
     placeholderData: () => findCachedThread(queryClient, activeThreadId) ?? undefined,
     retry: false,
   });
@@ -351,6 +352,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       // A read that crossed the delete may have put it back.
       removeCachedThread(queryClient, thread.id);
       queryClient.removeQueries({ queryKey: assistant.thread(thread.id).queryKey, exact: true });
+      // Its schedules were deleted with it.
+      forgetThreadSchedules(queryClient, thread.id);
     },
     onError: (_error, _thread, context) => context?.restore(),
     onSettled: refreshThreads,
@@ -623,7 +626,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           activeThreadId={activeThreadId}
           canWatch={canWatch}
           canDecide={canDecide}
-          watchtowerCount={watchtowerCounts?.unresolved ?? 0}
+          watchtowerCount={watchtowerCounts?.active ?? 0}
           decisionsCount={attention?.agentDecisions ?? 0}
           decisionsWaitHere={pendingHere}
           onSearch={() => {

@@ -1,6 +1,6 @@
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { PaperclipIcon } from "@trenova/shared/components/icons";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
@@ -39,7 +39,7 @@ function SentReply({ reply }: { reply: Reply }) {
         )}
         {reply.draftedByNova && (
           <span className="text-accent-violet ml-auto inline-flex items-center gap-1 text-xs">
-            <NovaMark className="size-3" />
+            <NovaBadge size="xs" />
             {t("drafted by Nova")}
           </span>
         )}
@@ -59,7 +59,7 @@ function SentReply({ reply }: { reply: Reply }) {
               role="listitem"
               key={file.documentId}
               title={file.fileName}
-              className="bg-surface-hover text-foreground-muted inline-flex h-5.5 max-w-60 min-w-0 items-center gap-1.5 rounded-full px-2 text-xs"
+              className="bg-surface-hover text-foreground-muted inline-flex h-5.5 max-w-60 min-w-0 items-center gap-1.5 rounded-badge px-2 text-xs"
             >
               <PaperclipIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
               <span className="truncate">{file.fileName}</span>

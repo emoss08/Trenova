@@ -54,3 +54,28 @@ scenarios:
           rubric: >
             Answers about the customer itself: its standing, open shipments or what is owed,
             from its records, not from agent activity.
+
+  - name: palette-list-answered-inline
+    description: >
+      A quick question from the command palette whose answer is a list. Asked for the shipment
+      types, Nova replied "The full table is in [Shipment types](artifact:…)", a link the palette
+      cannot open: the list tool's result was kept as an artifact beside a conversation the
+      palette never shows. A palette turn keeps nothing beside its answer, so the rows are written
+      into the reply as a markdown table.
+    palette: true
+    steps:
+      - say: "what shipment types do we have?"
+        page: { path: /, title: Home }
+        expect:
+          calls: ["list_shipment_types"]
+          noCalls: [publish_artifact]
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["/\\|\\s*-{3,}/"]
+          replyExcludes: ["artifact:", "full table is in", "attached"]
+          facts:
+            - sql: select code from shipment_types
+              note: every shipment type's code
+          rubric: >
+            Gives the count and a markdown table of every shipment type, written into the reply,
+            without pointing to a table, card or document.

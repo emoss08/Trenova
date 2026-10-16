@@ -1,10 +1,13 @@
 package conversationschedule
 
 import (
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/cronutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -434,5 +437,139 @@ func TestParseRequestRefusesWhatItCannotRunInEveryLanguage(t *testing.T) {
 	} {
 		_, err := ParseRequest(text)
 		require.Error(t, err, text)
+	}
+}
+
+/*
+Editing a schedule changes what it asks, how often and when, from the fields
+the editor sends. Each cadence the editor offers is one a message can ask for,
+so the label and cron match what typing it would have made.
+*/
+func TestChange_TakesTheRequestAndCadenceAnEditGives(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		edit    Edit
+		cadence string
+		cron    string
+		prompt  string
+	}{
+		{
+			name:    "one day of the week",
+			edit:    Edit{Prompt: "  send me delivered shipments ", Repeat: "friday", Time: "10:15"},
+			cadence: "Every Friday · 10:15 AM",
+			cron:    "15 10 * * 5",
+			prompt:  "Send me delivered shipments",
+		},
+		{
+			name:    "every weekday in the afternoon",
+			edit:    Edit{Prompt: "Unbilled loads", Repeat: "Weekday", Time: "17:05"},
+			cadence: "Every weekday · 5:05 PM",
+			cron:    "5 17 * * 1-5",
+			prompt:  "Unbilled loads",
+		},
+		{
+			name:    "every day at midnight",
+			edit:    Edit{Prompt: "Yesterday's exceptions", Repeat: "day", Time: "00:00"},
+			cadence: "Every day · 12:00 AM",
+			cron:    "0 0 * * *",
+			prompt:  "Yesterday's exceptions",
+		},
+		{
+			name:    "a single-digit hour",
+			edit:    Edit{Prompt: "Dock schedule", Repeat: "sunday", Time: "7:30"},
+			cadence: "Every Sunday · 7:30 AM",
+			cron:    "30 7 * * 0",
+			prompt:  "Dock schedule",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			schedule := editable()
+			multiErr := errortypes.NewMultiError()
+			schedule.Change(tt.edit, multiErr)
+
+			require.False(t, multiErr.HasErrors(), multiErr.Error())
+			assert.Equal(t, tt.prompt, schedule.Prompt)
+			assert.Equal(t, tt.cadence, schedule.Cadence)
+			assert.Equal(t, tt.cron, schedule.CronExpression)
+			assert.Equal(t, "America/Chicago", schedule.Timezone, "the schedule keeps its clock")
+		})
+	}
+}
+
+/*
+An edit that cannot be kept changes nothing, and says which field is wrong.
+*/
+func TestChange_RefusesWhatItCannotKeep(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name  string
+		edit  Edit
+		field string
+	}{
+		{
+			name:  "no request",
+			edit:  Edit{Prompt: "   ", Repeat: "day", Time: "08:00"},
+			field: "prompt",
+		},
+		{
+			name:  "a request too long",
+			edit:  Edit{Prompt: strings.Repeat("a", MaxPromptLength+1), Repeat: "day", Time: "08:00"},
+			field: "prompt",
+		},
+		{
+			name:  "a cadence it does not offer",
+			edit:  Edit{Prompt: "x", Repeat: "monthly", Time: "08:00"},
+			field: "repeat",
+		},
+		{
+			name:  "an hour past the day",
+			edit:  Edit{Prompt: "x", Repeat: "day", Time: "24:00"},
+			field: "time",
+		},
+		{
+			name:  "minutes past the hour",
+			edit:  Edit{Prompt: "x", Repeat: "day", Time: "08:60"},
+			field: "time",
+		},
+		{
+			name:  "a time as words",
+			edit:  Edit{Prompt: "x", Repeat: "day", Time: "8am"},
+			field: "time",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			schedule := editable()
+			before := *schedule
+			multiErr := errortypes.NewMultiError()
+			schedule.Change(tt.edit, multiErr)
+
+			require.Len(t, multiErr.Errors, 1)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, before.Prompt, schedule.Prompt)
+			assert.Equal(t, before.Cadence, schedule.Cadence)
+			assert.Equal(t, before.CronExpression, schedule.CronExpression)
+		})
+	}
+}
+
+func editable() *Schedule {
+	return &Schedule{
+		ID:             pulid.MustNew("csch_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		ThreadID:       pulid.MustNew("athr_"),
+		UserID:         pulid.MustNew("usr_"),
+		Prompt:         "Send me invoices more than 60 days past due",
+		Cadence:        "Every Monday · 8:00 AM",
+		CronExpression: "0 8 * * 1",
+		Timezone:       "America/Chicago",
+		Enabled:        true,
 	}
 }

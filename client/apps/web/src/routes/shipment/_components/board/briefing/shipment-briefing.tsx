@@ -1,3 +1,4 @@
+import { BriefAsOf } from "@/components/brief-as-of";
 import { StreamedText, type StreamedSegment } from "@/components/streamed-text";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { firstNameOf } from "@/lib/onboarding-copy";
@@ -6,7 +7,6 @@ import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { quickFilterLabel } from "@/lib/shipment-board/quick-filters";
 import type { ShipmentQuickFilter } from "@trenova/graphql/generated/graphql";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -19,8 +19,9 @@ const BRIEFING_STALE_MS = 60_000;
 /**
  * The day's brief about the board, written for the organization before the
  * workday and again once everything it flagged is cleared, then streamed in
- * behind a greeting. The phrases that name a set of loads filter the table to
- * them, and hovering one lists the first few.
+ * behind a greeting and signed with Nova's badge when Nova wrote the wording.
+ * The phrases that name a set of loads filter the table to them, and hovering
+ * one lists the first few.
  */
 export function ShipmentBriefing() {
   const t = useT();
@@ -64,11 +65,6 @@ export function ShipmentBriefing() {
   }
 
   const firstName = firstNameOf(userName);
-  const asOf = formatToUserTimezone(data.generatedAt, {
-    showDate: false,
-    showTimeZone: false,
-    showSeconds: false,
-  });
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -78,7 +74,7 @@ export function ShipmentBriefing() {
         segments={segments}
         className="text-foreground text-lg leading-relaxed text-pretty"
       />
-      <span className="text-muted-foreground text-xs">{t("Brief as of {0}", asOf)}</span>
+      <BriefAsOf generatedAt={data.generatedAt} narrated={data.narrated} />
     </div>
   );
 }

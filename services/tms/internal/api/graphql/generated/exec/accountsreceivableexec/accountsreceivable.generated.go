@@ -8,6 +8,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -36,6 +38,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "ARPaymentStats", Implementors: []string{"ARPaymentStats"}},
 		{Name: "ARStatementTransaction", Implementors: []string{"ARStatementTransaction"}},
 		{Name: "ARTopOverdueCustomer", Implementors: []string{"ARTopOverdueCustomer"}},
+		{Name: "AccountingBriefing", Implementors: []string{"AccountingBriefing"}},
+		{Name: "AccountingBriefingAction", Implementors: []string{"AccountingBriefingAction"}},
+		{Name: "AccountingBriefingSegment", Implementors: []string{"AccountingBriefingSegment"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "ARAgingBucketTotals", Fields: []*gqlexec.Field{
@@ -1629,7 +1634,153 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
+		{Object: "AccountingBriefing", Fields: []*gqlexec.Field{
+			{
+				Name:      "segments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AccountingBriefingSegment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefing)
+					return obj.Segments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingBriefingSegment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingSegmentᚄ),
+			},
+			{
+				Name:      "actions",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AccountingBriefingAction",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefing)
+					return obj.Actions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingBriefingAction2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingActionᚄ),
+			},
+			{
+				Name:     "narrated",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefing)
+					return obj.Narrated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "generatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefing)
+					return obj.GeneratedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "generation",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefing)
+					return obj.Generation, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AccountingBriefingAction", Fields: []*gqlexec.Field{
+			{
+				Name:     "link",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingAction)
+					return obj.Link, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingBriefingLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaccountingbriefᚐLink),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingAction)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "amountMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingAction)
+					return obj.AmountMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "customerId",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingAction)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "customerName",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingAction)
+					return obj.CustomerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+		}},
+		{Object: "AccountingBriefingSegment", Fields: []*gqlexec.Field{
+			{
+				Name:     "text",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingSegment)
+					return obj.Text, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "link",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingSegment)
+					return obj.Link, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAccountingBriefingLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaccountingbriefᚐLink),
+			},
+			{
+				Name:     "customerId",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingbriefports.AccountingBriefingSegment)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
+			{
+				Name:       "accountingBriefing",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AccountingBriefing",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingBriefing(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefing),
+			},
 			{
 				Name:       "arAgingSummary",
 				NonNull:    true,
@@ -1816,6 +1967,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverQuery interface {
+	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
 	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
@@ -1838,6 +1990,7 @@ var (
 	errNoChild3 = errors.New("field of type Boolean does not have child fields")
 	errNoChild4 = errors.New("field of type ID does not have child fields")
 	errNoChild5 = errors.New("field of type String does not have child fields")
+	errNoChild6 = errors.New("field of type AccountingBriefingLink does not have child fields")
 )
 
 func field_Query_arAgingSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2280,6 +2433,46 @@ func marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "ARTopOverdueCustomer", v)
 }
 
+func marshalNAccountingBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingbriefports.AccountingBriefing) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AccountingBriefing", v)
+}
+
+func marshalNAccountingBriefingAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingbriefports.AccountingBriefingAction) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AccountingBriefingAction", &v)
+}
+
+func marshalNAccountingBriefingAction2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingActionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingbriefports.AccountingBriefingAction) graphql.Marshaler {
+	return gqlexec.List[accountingbriefports.AccountingBriefingAction]{
+		Elem:        marshalNAccountingBriefingAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingAction,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAccountingBriefingLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaccountingbriefᚐLink(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingbrief.Link) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAccountingBriefingSegment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingSegment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingbriefports.AccountingBriefingSegment) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AccountingBriefingSegment", &v)
+}
+
+func marshalNAccountingBriefingSegment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingSegmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingbriefports.AccountingBriefingSegment) graphql.Marshaler {
+	return gqlexec.List[accountingbriefports.AccountingBriefingSegment]{
+		Elem:        marshalNAccountingBriefingSegment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaccountingbriefportsᚐAccountingBriefingSegment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -2336,8 +2529,29 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOAccountingBriefingLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaccountingbriefᚐLink(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingbrief.Link) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	return res
 }
 

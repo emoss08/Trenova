@@ -423,6 +423,42 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
   {
+    id: "watchtower",
+    label: "Watchtower",
+    keybinds: [
+      {
+        id: "watchtower-next",
+        label: "Next item",
+        keys: ["J"],
+        description: "Move to the next item in the queue; the down arrow does the same",
+      },
+      {
+        id: "watchtower-previous",
+        label: "Previous item",
+        keys: ["K"],
+        description: "Move to the previous item in the queue; the up arrow does the same",
+      },
+      {
+        id: "watchtower-hand-off",
+        label: "Hand off",
+        keys: ["H"],
+        description: "Hand the item to the agent best placed to take it, when no agent has it",
+      },
+      {
+        id: "watchtower-done",
+        label: "Done",
+        keys: ["E"],
+        description: "Mark the item done; Undo brings it back",
+      },
+      {
+        id: "watchtower-snooze",
+        label: "Snooze",
+        keys: ["S"],
+        description: "Set the item aside until tomorrow morning; Undo brings it back",
+      },
+    ],
+  },
+  {
     id: "shipments",
     label: "Shipments",
     keybinds: [

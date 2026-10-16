@@ -688,7 +688,7 @@ export function DataTableBody<TData extends Record<string, any>>({
       onClickCapture={handleClickCapture}
       // REMINDER: avoids scroll (skipping the table header) when using skip to content
       style={{
-        scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
+        scrollMarginTop: 40,
       }}
     >
       {pinnedRows.length ||

@@ -174,8 +174,14 @@ export const carrierSchema = z
     ),
     externalId: nullableStringSchema,
     notes: nullableStringSchema,
-    contacts: z.array(carrierContactSchema).optional(),
-    insurancePolicies: z.array(carrierInsurancePolicySchema).optional(),
+    contacts: z
+      .array(carrierContactSchema)
+      .nullish()
+      .transform((value) => value ?? []),
+    insurancePolicies: z
+      .array(carrierInsurancePolicySchema)
+      .nullish()
+      .transform((value) => value ?? []),
   })
   .superRefine((data, ctx) => {
     if (data.complianceStatus === "Disqualified" && !data.disqualifiedReason) {

@@ -1,7 +1,7 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -104,7 +104,7 @@ export function ScenarioWhy({
   return (
     <div className="flex w-full flex-col gap-2.5">
       <div className="flex items-center gap-2">
-        <NovaMark spin={why.isFetching ? "always" : "none"} className="size-3.5" />
+        <NovaBadge size="sm" spin={why.isFetching ? "always" : "none"} />
         {verdict ? (
           <span
             className={cn(

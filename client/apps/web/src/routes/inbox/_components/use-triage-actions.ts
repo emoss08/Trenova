@@ -88,7 +88,7 @@ import { createContext, useContext, useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { classificationLabel } from "./classification";
 import { nextAfterLeaving } from "./keys";
-import { tomorrowMorning } from "./snooze-times";
+import { tomorrowMorning } from "@/lib/snooze-presets";
 import { useTriageNavigation } from "./triage-navigation";
 
 /** How long a row takes to leave the list before the cache lets it go. */

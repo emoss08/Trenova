@@ -29,7 +29,7 @@ function BellTrigger({
         className={cn("size-3 transition-colors", open && "text-foreground", iconClassName)}
       />
       {unreadCount > 0 && (
-        <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 leading-none font-semibold tabular-nums">
+        <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-badge px-0.5 leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}

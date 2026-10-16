@@ -29,6 +29,8 @@ const organizationConcurrency = 4
 
 const shipmentBriefChange = "daily-briefing-shipment-brief"
 
+const accountingBriefChange = "daily-briefing-accounting-brief"
+
 // briefingActivityOptions serve only sweeps started before the sweep fanned
 // out: one activity walking every tenant, generous and heartbeating.
 var briefingActivityOptions = workflow.ActivityOptions{
@@ -166,6 +168,20 @@ func WriteOrganizationBriefingWorkflow(
 		Get(ctx, &brief); err != nil {
 		workflow.GetLogger(ctx).Warn(
 			"Shipment board brief failed; the board writes one when it is first opened",
+			"error", err,
+		)
+	}
+
+	if workflow.GetVersion(ctx, accountingBriefChange, workflow.DefaultVersion, 1) ==
+		workflow.DefaultVersion {
+		return &result, nil
+	}
+
+	var accounting AccountingBriefResult
+	if err := workflow.ExecuteActivity(ctx, a.WriteAccountingBriefActivity, input).
+		Get(ctx, &accounting); err != nil {
+		workflow.GetLogger(ctx).Warn(
+			"Accounting brief failed; the dashboard writes one when it is first opened",
 			"error", err,
 		)
 	}

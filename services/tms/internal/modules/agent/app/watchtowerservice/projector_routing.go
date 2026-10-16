@@ -23,7 +23,7 @@ func (p *Projector) route(
 	if saved == nil || saved.IsResolved() {
 		return saved
 	}
-	needsDue := saved.DueAt == nil
+	needsDue := saved.DueAt == nil && saved.DueSource != watchtower.DueSourcePerson
 	needsAssignee := saved.AssigneeID.IsNil() && (inserted || saved.Reopened)
 	if !needsDue && !needsAssignee {
 		return saved
@@ -38,6 +38,8 @@ func (p *Projector) route(
 	if needsDue {
 		due := DueAt(policy, routed.Severity, now)
 		routed.DueAt = &due
+		routed.DueLabel = ""
+		routed.DueSource = watchtower.DueSourcePolicy
 		events = append(events, watchtower.NewEvent(&routed, watchtower.EventDueChanged, pulid.Nil).
 			WithChange("", strconv.FormatInt(due, 10)))
 	}

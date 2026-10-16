@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
@@ -38,40 +40,46 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger    *zap.Logger
-	Briefings briefingports.BriefingService
-	Repo      briefingports.BriefingRepository
-	Board     shipmentbriefports.ShipmentBriefWriter
-	BoardRepo shipmentbriefports.ShipmentBriefRepository
-	Controls  tenantports.AgentControlRepository
-	Tenants   tenantports.TenantSyncRepository
-	Orgs      tenantports.OrganizationRepository
-	Plans     platformplanports.PlanService `optional:"true"`
+	Logger         *zap.Logger
+	Briefings      briefingports.BriefingService
+	Repo           briefingports.BriefingRepository
+	Board          shipmentbriefports.ShipmentBriefWriter
+	BoardRepo      shipmentbriefports.ShipmentBriefRepository
+	Accounting     accountingbriefports.AccountingBriefWriter
+	AccountingRepo accountingbriefports.AccountingBriefRepository
+	Controls       tenantports.AgentControlRepository
+	Tenants        tenantports.TenantSyncRepository
+	Orgs           tenantports.OrganizationRepository
+	Plans          platformplanports.PlanService `optional:"true"`
 }
 
 type Activities struct {
-	l         *zap.Logger
-	briefings briefingports.BriefingService
-	repo      briefingports.BriefingRepository
-	board     shipmentbriefports.ShipmentBriefWriter
-	boardRepo shipmentbriefports.ShipmentBriefRepository
-	controls  tenantports.AgentControlRepository
-	tenants   tenantports.TenantSyncRepository
-	orgs      tenantports.OrganizationRepository
-	plans     platformplanports.PlanService
+	l              *zap.Logger
+	briefings      briefingports.BriefingService
+	repo           briefingports.BriefingRepository
+	board          shipmentbriefports.ShipmentBriefWriter
+	boardRepo      shipmentbriefports.ShipmentBriefRepository
+	accounting     accountingbriefports.AccountingBriefWriter
+	accountingRepo accountingbriefports.AccountingBriefRepository
+	controls       tenantports.AgentControlRepository
+	tenants        tenantports.TenantSyncRepository
+	orgs           tenantports.OrganizationRepository
+	plans          platformplanports.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		l:         p.Logger.Named("job.daily-briefing"),
-		briefings: p.Briefings,
-		repo:      p.Repo,
-		board:     p.Board,
-		boardRepo: p.BoardRepo,
-		controls:  p.Controls,
-		tenants:   p.Tenants,
-		orgs:      p.Orgs,
-		plans:     p.Plans,
+		l:              p.Logger.Named("job.daily-briefing"),
+		briefings:      p.Briefings,
+		repo:           p.Repo,
+		board:          p.Board,
+		boardRepo:      p.BoardRepo,
+		accounting:     p.Accounting,
+		accountingRepo: p.AccountingRepo,
+		controls:       p.Controls,
+		tenants:        p.Tenants,
+		orgs:           p.Orgs,
+		plans:          p.Plans,
 	}
 }
 
@@ -218,6 +226,24 @@ func (a *Activities) WriteShipmentBriefActivity(
 	return &ShipmentBriefResult{Generation: brief.Generation, Narrated: brief.Narrated}, nil
 }
 
+func (a *Activities) WriteAccountingBriefActivity(
+	ctx context.Context,
+	input *OrganizationBriefingInput,
+) (*AccountingBriefResult, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	brief, err := a.accounting.WriteBrief(ctx, &accountingbriefports.WriteAccountingBriefRequest{
+		TenantInfo: input.TenantInfo(),
+		Trigger:    accountingbrief.TriggerScheduled,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("write the accounting brief: %w", err)
+	}
+
+	return &AccountingBriefResult{Generation: brief.Generation, Narrated: brief.Narrated}, nil
+}
+
 // BriefingRetentionActivity removes briefings older than the window a reader can
 // page back through.
 func (a *Activities) BriefingRetentionActivity(
@@ -264,9 +290,29 @@ func (a *Activities) BriefingRetentionActivity(
 		}
 	}
 
+	for pass := range retentionPasses {
+		activity.RecordHeartbeat(ctx, pass)
+
+		deleted, err := a.accountingRepo.DeleteBefore(
+			ctx,
+			&accountingbriefports.DeleteAccountingBriefsBeforeRequest{
+				BeforeDate: cutoff,
+				Limit:      retentionBatch,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("delete accounting briefs: %w", err)
+		}
+		result.DeletedAccountingBriefs += deleted
+		if deleted < retentionBatch {
+			break
+		}
+	}
+
 	a.l.Info("briefing retention sweep complete",
 		zap.Int("deleted", result.Deleted),
 		zap.Int("deletedBoardBriefs", result.DeletedBoardBriefs),
+		zap.Int("deletedAccountingBriefs", result.DeletedAccountingBriefs),
 	)
 
 	return result, nil

@@ -96,11 +96,11 @@
   animation: fs-angle 4s linear infinite;
 }
 
-.fs-nova-btn:hover:not(:disabled) .fs-nova-ring {
+.fs-nova-btn:hover:not(:disabled) .fs-nova-badge {
   animation: nova-turn 1.4s cubic-bezier(0.45, 0.05, 0.35, 1) 1;
 }
 
-.fs-nova-tab:hover .fs-nova-ring {
+.fs-nova-tab:hover .fs-nova-badge {
   animation: nova-turn 1.1s cubic-bezier(0.45, 0.05, 0.35, 1) 1;
 }
 

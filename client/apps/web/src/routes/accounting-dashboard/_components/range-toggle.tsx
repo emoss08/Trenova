@@ -1,35 +1,34 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 
-export const TREND_RANGE_OPTIONS = [
-  { label: "13w", value: 13 },
-  { label: "26w", value: 26 },
-  { label: "52w", value: 52 },
-] as const;
+export const TREND_RANGE_WEEKS = [13, 26, 52] as const;
+
+export type TrendRangeWeeks = (typeof TREND_RANGE_WEEKS)[number];
+
+export const DEFAULT_TREND_RANGE: TrendRangeWeeks = 13;
+
+function toRange(value: string): TrendRangeWeeks {
+  return TREND_RANGE_WEEKS.find((weeks) => String(weeks) === value) ?? DEFAULT_TREND_RANGE;
+}
 
 export function RangeToggle({
   value,
   onChange,
 }: {
-  value: number;
-  onChange: (value: number) => void;
+  value: TrendRangeWeeks;
+  onChange: (value: TrendRangeWeeks) => void;
 }) {
   const t = useT();
 
   return (
-    <div className="flex gap-1">
-      {TREND_RANGE_OPTIONS.map((option) => (
-        <Button
-          key={option.value}
-          type="button"
-          size="sm"
-          variant={value === option.value ? "secondary" : "ghost"}
-          onClick={() => onChange(option.value)}
-          className="h-7 px-2 text-xs"
-        >
-          {t(option.label)}
-        </Button>
-      ))}
-    </div>
+    <SegmentedControl
+      aria-label={t("Trend range")}
+      value={String(value)}
+      onValueChange={(next) => onChange(toRange(next))}
+      items={TREND_RANGE_WEEKS.map((weeks) => ({
+        value: String(weeks),
+        label: t("{0}w", weeks),
+      }))}
+    />
   );
 }

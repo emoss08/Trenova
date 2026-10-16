@@ -403,7 +403,7 @@ function DayPillButton({
       onClick={onSelect}
       aria-pressed={isSelected}
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+        "flex shrink-0 items-center gap-1.5 rounded-badge border px-3 py-1 text-xs font-medium transition-colors",
         isSelected
           ? "bg-primary text-primary-foreground border-transparent"
           : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -714,7 +714,7 @@ function DailyLogsSkeleton() {
     <div className="flex flex-col gap-2">
       <div className="flex gap-1.5">
         {Array.from({ length: DAILY_LOG_DAYS }, (_, index) => (
-          <Skeleton key={index} className="h-6 w-16 rounded-full" />
+          <Skeleton key={index} className="h-6 w-16 rounded-badge" />
         ))}
       </div>
       <Skeleton className="h-40 w-full rounded-lg" />

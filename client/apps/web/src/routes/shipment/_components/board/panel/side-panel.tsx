@@ -42,7 +42,7 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
             <TabsTab value="brief">
               {ai ? t("Brief") : t("Overview")}
               {openCount > 0 ? (
-                <span className="bg-danger text-foreground-on-solid ml-1 rounded-full px-1.5 font-mono text-2xs tabular-nums">
+                <span className="bg-danger text-foreground-on-solid ml-1 rounded-badge px-1.5 font-mono text-2xs tabular-nums">
                   {openCount}
                 </span>
               ) : null}

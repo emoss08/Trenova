@@ -22,7 +22,8 @@ export type ScrollAreaMaskVariant =
   | "muted"
   | "popover"
   | "raised"
-  | "sidebar";
+  | "sidebar"
+  | "warning";
 
 export type ScrollAreaContextProps = {
   isTouch: boolean;
@@ -42,6 +43,7 @@ const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   popover: "before:from-popover after:from-popover",
   raised: "before:from-raised after:from-raised",
   sidebar: "before:from-sidebar after:from-sidebar",
+  warning: "before:from-warning-subtle after:from-warning-subtle",
 };
 
 /*

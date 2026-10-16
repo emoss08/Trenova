@@ -10,7 +10,7 @@ const VIEWPORT_MARGIN_RATIO = 0.1;
 
 export function useHighlightPan(mapInstanceId: string, enabled = true) {
   const map = useMap(mapInstanceId);
-  const highlightId = useShipmentBoardStore.use.highlightId();
+  const highlightId = useShipmentBoardStore((s) => s.highlightId);
   const { data } = useMapShipments(enabled);
 
   const highlightedPoint = useMemo(() => {

@@ -227,7 +227,7 @@ export function RateTrace({ className }: { className?: string }) {
             <Truck01Icon className="size-3.5 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{loadLabel}</span>
             {edited > 0 && (
-              <span className="bg-warning-subtle text-warning-subtle-foreground shrink-0 rounded-full px-1.5 text-2xs">
+              <span className="bg-warning-subtle text-warning-subtle-foreground shrink-0 rounded-badge px-1.5 text-2xs">
                 {t("{0} edited", edited)}
               </span>
             )}
@@ -301,7 +301,7 @@ export function RateTrace({ className }: { className?: string }) {
             title={t("Charge policy")}
             tag={
               ok && amounts?.bound ? (
-                <span className="bg-warning-subtle text-warning-subtle-foreground rounded-full px-1.5 text-2xs">
+                <span className="bg-warning-subtle text-warning-subtle-foreground rounded-badge px-1.5 text-2xs">
                   {amounts.bound === "min" ? t("minimum") : t("maximum")}
                 </span>
               ) : undefined

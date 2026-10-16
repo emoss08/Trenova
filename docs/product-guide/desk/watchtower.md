@@ -1,6 +1,6 @@
 ---
 path: /desk/watchtower
-aliases: [watchtower, watch tower, alerts feed, exceptions feed, exception feed, notifications, things to look at, operational alerts, AI monitoring, failed agent runs, agent exceptions, quarantined EDI]
+aliases: [watchtower, watch tower, alerts feed, exceptions feed, exception feed, exception queue, notifications, things to look at, operational alerts, AI monitoring, failed agent runs, agent exceptions, quarantined EDI, deadlines]
 related:
   - /desk
   - /desk/decisions
@@ -9,54 +9,65 @@ related:
 ---
 
 ## What it's for
-Watchtower is a live feed on the Desk of everything across the operation that is worth a look, newest first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, truck arrivals and departures that could not be recorded on their stop, and accounting sync problems.
+Watchtower is the Desk's queue of everything across the operation that needs someone, worked one item at a time, soonest deadline first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, late or missed stops, missing PODs, exhausted tenders, missing check calls, truck arrivals and departures that could not be recorded on their stop, accounting sync problems and factoring.
 
-Each item shows a coloured dot for its severity (Critical, Warning or Info), a title, a short summary, what kind of event it is and how long ago it happened. Items that arrived since your last visit have their titles in heavier text. You only see the kinds of items whose records you are allowed to open. An item leaves the feed when the problem behind it is resolved, or when someone dismisses it. The number next to **Watchtower** in the Desk sidebar is how many open items you can see.
+The queue down the left is grouped by how long is left before each item's deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** (more than a day out) and **For your information** (no deadline). Each row shows the kind of item on a tile coloured by severity (red for Critical, amber for Warning), its title, the record it is about, and the countdown when the deadline is less than a day away. A blue dot marks an item you have not opened yet. When an agent is working an item, the row shows the agent instead and says it is on it, or that it needs you. Across the top, the bar shows how many items you have cleared today out of all of them, and **On it** shows a ring for each agent at work; select a ring to open that item.
+
+The middle of the page is the item in front of you: a clock counting down to its deadline and what happens then (such as "Minneapolis dock closes in"), what kind of item it is and when it was raised, its title and summary, **At stake** (the loads, money or customers involved), a button that opens the record it is about with its key facts, the events that led to it, and either the agent working it with its progress or the agent best placed to take it.
+
+You only see the kinds of items whose records you are allowed to open. An item leaves the queue when you mark it done, when you snooze it, or when the problem behind it clears. The number next to **Watchtower** in the Desk sidebar is how many items are in the queue.
 
 ## Tasks
 
-### Review what needs attention
-Keywords: check alerts, what went wrong, exceptions today, open alerts
+### Work through the queue
+Keywords: check alerts, what went wrong, exceptions today, open alerts, next item, keyboard
 1. Open the [Desk](/desk) and select **Watchtower** in the sidebar, or go straight to [Watchtower](/desk/watchtower).
-2. Read down the list. The newest items are at the top, and new ones since your last visit have their titles in heavier text.
-3. Opening Watchtower marks everything in it as seen, so those items are no longer counted as new the next time you come back.
+2. The queue opens on the item with the soonest deadline. Select any row to open it instead.
+3. Use the arrows under the card, or press J (or the down arrow) for the next item and K (or the up arrow) for the previous one.
+4. Opening an item marks it as seen, so its blue dot goes away.
 
-### Filter by severity or kind of event
-Keywords: show only critical, filter alerts, critical alerts, by event type
-1. Open [Watchtower](/desk/watchtower).
-2. In the row of chips across the top, select **Critical**, **Warning** or **Info** to show only items of that severity. You can turn on more than one.
-3. After the severity chips come one chip per kind of event that has open items, each with its count, such as service failures, EDI quarantined or credentials expiring. Select one or more to narrow the list to those kinds.
-4. Select a chip again to turn it off. With every chip off, the feed shows everything.
+### Mark an item done
+Keywords: clear alert, resolve, close alert, finished, remove from queue
+1. Open [Watchtower](/desk/watchtower) on the item.
+2. Select **Done**, or press E. The card slides away, the next item takes its place and the cleared count goes up.
+3. If the item changed while you had it open, it comes back as it is now. Look at it again and select **Done** if it still is.
 
-### Open the record behind an item
-Keywords: go to the shipment, view the source, jump to record
-1. Open [Watchtower](/desk/watchtower) and hover the item.
-2. Select the arrow (**Open the record**) to go to the page of the record the item is about. Items that have no record don't show the arrow.
-
-### Ask an agent about an item
-Keywords: investigate alert, explain this exception, ask AI about alert
-1. Open [Watchtower](/desk/watchtower) and hover the item.
-2. Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the record behind the item. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet.
+### Snooze an item
+Keywords: later, put aside, remind me tomorrow, hide until tomorrow
+1. Open [Watchtower](/desk/watchtower) on the item.
+2. Select **Snooze**, or press S. The item leaves the queue until eight tomorrow morning in your time zone, then comes back on its own.
 
 ### Hand an item to an agent
 Keywords: delegate to AI, let the agent handle it, assign to agent
-1. Open [Watchtower](/desk/watchtower) and hover the item.
-2. Select **Hand off**. This button appears only on items about a record an agent can work on.
-3. A message tells you what happened. If agents are set up to handle that kind of event, the item goes to them and the message names them. If none is, the message says **No agent subscribes to this yet** and names an agent that could take it. If no agent at all can take it, you see **No agent can take this one yet**.
+1. Open [Watchtower](/desk/watchtower) on the item.
+2. Select **Hand off**, or press H, to give it to the agent the card suggests. To choose another agent, select the arrow beside **Hand off** and pick one from the list.
+3. The agent starts at once. The item stays in the queue, now showing the agent and a bar of its steps: reading the record, working out what to do, and asking you to approve.
+4. **Hand off** appears only on items about a record an agent can work on, and only while no agent is working the item.
 
-### Dismiss an item
-Keywords: clear alert, hide item, remove from feed, close alert
-1. Open [Watchtower](/desk/watchtower) and hover the item.
-2. Select the X (**Dismiss**). The item comes off Watchtower for everyone in your organization. The record behind it doesn't change: a dismissed service failure is still a service failure on its own page.
+### Approve what an agent drafted
+Keywords: agent needs me, review agent work, approve agent change
+1. Open [Watchtower](/desk/watchtower) on an item whose agent needs you; its row says so.
+2. Select **Review & approve** in the agent's panel. [Decisions](/desk/decisions) opens on the change the agent proposed.
+3. If the agent's run stopped before it finished, the panel says why and offers **See the run** instead.
 
-### Rate an item raised by an agent
-Keywords: thumbs up, thumbs down, agent feedback, rate insight
-1. Open [Watchtower](/desk/watchtower) and hover an item raised by an agent's work: an insight, proposal, plan, failed agent run or agent exception.
-2. Select the thumbs up (**Helpful**) or thumbs down (**Not helpful**). The rating is saved right away, and a small box opens where you can say why. You can close it without answering.
-3. Select the same thumb again to take the rating back.
+### Ask an agent about an item
+Keywords: investigate alert, explain this exception, ask AI about alert
+1. Open [Watchtower](/desk/watchtower) on the item.
+2. Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the item: the agent sees the record behind it, its deadline, its facts and what is at stake. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet.
+
+### Open the record behind an item
+Keywords: go to the shipment, view the source, jump to record
+1. Open [Watchtower](/desk/watchtower) on the item.
+2. Select the record button under **At stake**. It names the record and its key facts, and opens the record's page.
+
+### See the critical items
+Keywords: show only critical, critical alerts, what is on fire
+1. On the Desk's **Today** page, select the link that says how many items are critical in Watchtower, or the **Critical** block of the morning briefing.
+2. Watchtower opens on the first critical item in the queue.
 
 ## Notes
 - You need read access to the assistant to open the Desk, and read access to Watchtower to open this page. Inside it, you only see each kind of item if you can read that kind of record. For example, EDI items need EDI access and credential items need driver access.
-- Dismissing, handing off and marking items seen need update access to Watchtower.
-- **Ask about this** appears only when you have at least one agent available. **Hand off** appears only on items about a record an agent can work on.
-- When nothing is open, the page says **Nothing is asking for you**.
+- Marking items done, snoozing them and handing them off need update access to Watchtower. With read access only, the bar says you can read the items but not act on them.
+- A deadline the record reports itself, such as a dock closing or a certificate lapsing, is the item's deadline. Otherwise the deadline comes from the due times for each severity in dispatch controls.
+- **Ask about this** needs at least one agent available to you.
+- When nothing is left, the page says **All clear** and how many items you cleared today.

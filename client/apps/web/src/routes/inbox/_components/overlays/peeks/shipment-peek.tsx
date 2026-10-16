@@ -238,7 +238,7 @@ function ShipmentBody({
             {shipment.documentsOnFile.map((document) => (
               <li
                 key={document}
-                className="bg-surface-hover text-foreground-muted inline-flex h-5.5 items-center gap-1.25 rounded-full px-2 text-xs"
+                className="bg-surface-hover text-foreground-muted inline-flex h-5.5 items-center gap-1.25 rounded-badge px-2 text-xs"
               >
                 <CheckIcon aria-hidden className="text-success size-2.5" strokeWidth={2.6} />
                 {document}

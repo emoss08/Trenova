@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -45,14 +44,9 @@ type replyNotifications interface {
 }
 
 // replyThreads is what telling someone their reply is ready needs of their
-// conversations: reading the one the reply is in, and keeping it.
+// conversations: reading the one the reply is in.
 type replyThreads interface {
 	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
-	UpdateThread(
-		ctx context.Context,
-		req *agentports.UpdateThreadRequest,
-		actor *permissionports.RequestActor,
-	) (*conversation.Thread, error)
 }
 
 // notifiesUnseen reports the endings worth telling someone about when they
@@ -76,9 +70,10 @@ func notifiesUnseen(status conversation.AssistantTurnStatus) bool {
 // while nobody was reading it.
 //
 // A retried attempt finds the notification an earlier one created and stops
-// there, so nobody is told twice. A quick question's hidden conversation is
-// kept first, so the notification leads somewhere the sweep of unkept quick
-// questions will not delete.
+// there, so nobody is told twice. A reply answered in place — an unkept quick
+// question from the palette, or a conversation on an import or formula page —
+// is read where it was asked, so it is neither announced nor turned into a
+// Desk conversation.
 func (a *Activities) NotifyUnseenTurnActivity(
 	ctx context.Context,
 	in *NotifyUnseenTurnInput,
@@ -127,24 +122,13 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return fmt.Errorf("read the conversation this reply is in: %w", err)
 	}
 
-	if thread.Origin.PageBound() {
-		a.logger.Info("not announcing a reply that waits on the page it was asked from",
+	if thread.Origin.AnsweredInPlace() {
+		a.logger.Info("not announcing a reply that is read where it was asked",
 			zap.String("turn", correlation),
 			zap.String("origin", string(thread.Origin)),
 		)
 
 		return nil
-	}
-
-	if thread.Origin.Keepable() {
-		thread, err = a.threads.UpdateThread(ctx, &agentports.UpdateThreadRequest{
-			ThreadID:   thread.ID,
-			TenantInfo: tenant,
-			Keep:       true,
-		}, &payload.Actor)
-		if err != nil {
-			return fmt.Errorf("keep the conversation this reply is in: %w", err)
-		}
 	}
 
 	if _, err = a.notifications.Create(ctx, replyReadyNotification(in, thread)); err != nil {

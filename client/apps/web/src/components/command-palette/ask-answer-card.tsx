@@ -7,7 +7,7 @@ import { turnCitedRecords, type TurnState } from "@/components/assistant/turn-st
 import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
 import { MarkdownLinkContext, type MarkdownLinkRenderer } from "@/components/elements/ai-markdown";
 import type { AssistantEntityRef } from "@/types/assistant";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -153,7 +153,7 @@ export function AskAnswerCard({
       )}
     >
       <header className="flex h-5 items-center gap-1.5 text-sm">
-        <NovaMark spin={busy ? "always" : "none"} className="size-3.5 shrink-0 translate-y-px" />
+        <NovaBadge size="sm" spin={busy ? "always" : "none"} className="shrink-0 translate-y-px" />
         <span className="text-foreground font-semibold">{t("Nova")}</span>
         <span className="text-foreground-subtle truncate">{status}</span>
         <span className="flex-1" />

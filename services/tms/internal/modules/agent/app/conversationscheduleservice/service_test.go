@@ -3,6 +3,8 @@ package conversationscheduleservice
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -30,6 +32,8 @@ type fakeSchedules struct {
 	conversationscheduleports.ConversationScheduleRepository
 
 	rows     map[pulid.ID]*conversationschedule.Schedule
+	titles   []string
+	pageCap  int
 	messages []conversation.Message
 	runs     []conversationscheduleports.RecordConversationScheduleRunRequest
 }
@@ -50,6 +54,7 @@ func (f *fakeSchedules) Create(
 	message.ThreadID = saved.ThreadID
 	message.ScheduleID = saved.ID
 	f.messages = append(f.messages, message)
+	f.titles = append(f.titles, req.ThreadTitle)
 
 	return &saved, &message, nil
 }
@@ -79,6 +84,39 @@ func (f *fakeSchedules) Count(
 	}
 
 	return count, nil
+}
+
+// List pages through one person's schedules in id order. pageCap, when set,
+// caps a page below what was asked, the way the repository caps a limit.
+func (f *fakeSchedules) List(
+	_ context.Context,
+	req conversationscheduleports.ListConversationSchedulesRequest,
+) (*pagination.ListResult[*conversationscheduleports.ListedConversationSchedule], error) {
+	matched := make([]*conversationschedule.Schedule, 0, len(f.rows))
+	for _, row := range f.rows {
+		if row.UserID == req.UserID && (req.ThreadID.IsNil() || row.ThreadID == req.ThreadID) {
+			matched = append(matched, row)
+		}
+	}
+	slices.SortFunc(matched, func(a, b *conversationschedule.Schedule) int {
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
+
+	limit := req.Limit
+	if f.pageCap > 0 {
+		limit = min(limit, f.pageCap)
+	}
+	start := min(req.Offset, len(matched))
+	end := min(start+limit, len(matched))
+	items := make([]*conversationscheduleports.ListedConversationSchedule, 0, end-start)
+	for _, row := range matched[start:end] {
+		items = append(items, &conversationscheduleports.ListedConversationSchedule{Schedule: *row})
+	}
+
+	return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
+		Items: items,
+		Total: len(matched),
+	}, nil
 }
 
 func (f *fakeSchedules) UpdateState(
@@ -376,6 +414,28 @@ func TestCreate_KeepsTheScheduleItsCardAndItsTemporalSchedule(t *testing.T) {
 	assert.Equal(t, f.thread.UserID, f.realtime.published[0].AudienceUserID)
 }
 
+/*
+A conversation opened with "/schedule every Friday at 10:15, …" gets no reply
+to be named from until the schedule first runs, so it stayed "Untitled
+conversation". It is named for the request it was opened with; one that
+already has a name keeps it, which the repository decides as it saves.
+*/
+func TestCreate_NamesTheConversationForItsRequest(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.create(t, "/schedule every Friday at 10:15, send me a list of delivered shipments")
+	f.create(
+		t,
+		"every weekday at 7:30am, list every shipment that is still waiting on a proof of delivery from the carrier",
+	)
+
+	assert.Equal(t, []string{
+		"Send me a list of delivered shipments",
+		"List every shipment that is still waiting on a proof of deli…",
+	}, f.schedules.titles)
+}
+
 func TestCreate_FallsBackToTheOrganizationsClockThenUTC(t *testing.T) {
 	t.Parallel()
 
@@ -469,6 +529,104 @@ func TestPauseResumeAndDeleteFollowTheTemporalSchedule(t *testing.T) {
 	assert.Len(t, f.schedules.messages, 1, "the card stays and says it was deleted")
 }
 
+/*
+Deleting a conversation deletes its schedules with it. Before it goes, every
+schedule it keeps is read, past a single page if a race let it keep more than
+one page holds, and none of another conversation's or another person's.
+Once it is gone each one's Temporal schedule is removed and its owner's tabs
+are told, so nothing fires into a conversation that no longer exists and no
+open list keeps showing one.
+*/
+func TestOfThreadAndForget_SettleADeletedConversationsSchedules(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.schedules.pageCap = 2
+	first := f.create(t, "every monday at 8am, summarize detention").Schedule
+	second := f.create(t, "every weekday at 7:30am, list shipments not yet dispatched").Schedule
+	third := f.create(t, "every friday at 4pm, list unbilled shipments").Schedule
+
+	elsewhere := *first
+	elsewhere.ID = pulid.MustNew("csch_")
+	elsewhere.ThreadID = pulid.MustNew("athr_")
+	f.schedules.rows[elsewhere.ID] = &elsewhere
+	someoneElses := *first
+	someoneElses.ID = pulid.MustNew("csch_")
+	someoneElses.UserID = pulid.MustNew("usr_")
+	f.schedules.rows[someoneElses.ID] = &someoneElses
+
+	held, err := f.service.OfThread(t.Context(), conversationscheduleports.ThreadSchedulesRequest{
+		ThreadID:   f.thread.ID,
+		UserID:     f.thread.UserID,
+		TenantInfo: tenantOf(f.owner),
+	})
+	require.NoError(t, err)
+	heldIDs := make([]pulid.ID, 0, len(held))
+	for _, schedule := range held {
+		heldIDs = append(heldIDs, schedule.ID)
+	}
+	assert.ElementsMatch(t, []pulid.ID{first.ID, second.ID, third.ID}, heldIDs,
+		"every one of the conversation's schedules, read across pages, and nobody else's")
+
+	f.realtime.published = nil
+	f.service.Forget(t.Context(), held)
+
+	assert.ElementsMatch(t, heldIDs, f.syncer.removed, "each Temporal schedule is removed now")
+	require.Len(t, f.realtime.published, 3)
+	for _, announced := range f.realtime.published {
+		assert.Equal(t, conversationscheduleports.ConversationSchedulesResource, announced.Resource)
+		assert.Equal(t, actionDeleted, announced.Action)
+		assert.Equal(t, f.thread.UserID, announced.AudienceUserID, "only the owner's tabs hear it")
+		assert.Contains(t, heldIDs, announced.RecordID)
+	}
+}
+
+/*
+Editing a schedule changes what it asks, how often and when, works its next
+slot out again from the new cadence on the schedule's own clock, and hands
+the change to Temporal and the owner's tabs. An edit it cannot keep changes
+nothing and reaches neither.
+*/
+func TestEdit_ChangesTheRequestAndCadenceAndFollowsTheTemporalSchedule(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	created := f.create(t, "every monday at 8am, summarize detention").Schedule
+	f.realtime.published = nil
+
+	edited, err := f.service.Edit(t.Context(), f.request(created.ID), conversationschedule.Edit{
+		Prompt: "send me a list of delivered shipments",
+		Repeat: "friday",
+		Time:   "10:15",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "Send me a list of delivered shipments", edited.Prompt)
+	assert.Equal(t, "Every Friday · 10:15 AM", edited.Cadence)
+	assert.Equal(t, "15 10 * * 5", edited.CronExpression)
+	assert.Equal(t, "America/Chicago", edited.Timezone)
+	require.NotNil(t, edited.NextRunAt)
+	// Friday 9 October, 10:15 in Chicago is 15:15 UTC.
+	assert.Equal(t, int64(1791558900), *edited.NextRunAt)
+
+	require.Len(t, f.syncer.synced, 2)
+	assert.Equal(t, "15 10 * * 5", f.syncer.synced[1].CronExpression,
+		"Temporal fires on the new cadence")
+	require.Len(t, f.realtime.published, 1)
+	assert.Equal(t, actionUpdated, f.realtime.published[0].Action)
+
+	_, err = f.service.Edit(t.Context(), f.request(created.ID), conversationschedule.Edit{
+		Prompt: "send me a list of delivered shipments",
+		Repeat: "monthly",
+		Time:   "10:15",
+	})
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "repeat", multiErr.Errors[0].Field)
+	assert.Len(t, f.syncer.synced, 2, "a refused edit reaches no Temporal schedule")
+	assert.Equal(t, "15 10 * * 5", f.schedules.rows[created.ID].CronExpression)
+}
+
 func TestScheduleRoutesAreTheOwnersOnly(t *testing.T) {
 	t.Parallel()
 
@@ -479,6 +637,12 @@ func TestScheduleRoutesAreTheOwnersOnly(t *testing.T) {
 	request := ScheduleRequest{ScheduleID: created.ID, Actor: stranger}
 
 	_, err := f.service.SetEnabled(t.Context(), request, false)
+	assert.True(t, errortypes.IsNotFoundError(err))
+	_, err = f.service.Edit(t.Context(), request, conversationschedule.Edit{
+		Prompt: "someone else's words",
+		Repeat: "day",
+		Time:   "09:00",
+	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.True(t, errortypes.IsNotFoundError(f.service.Delete(t.Context(), request)))
 	_, err = f.service.RunNow(t.Context(), request)

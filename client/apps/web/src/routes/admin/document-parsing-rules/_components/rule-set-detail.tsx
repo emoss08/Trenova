@@ -47,8 +47,8 @@ function RuleSetDetailSkeleton() {
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-3">
           <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-5 w-24 rounded-badge" />
+          <Skeleton className="h-5 w-20 rounded-badge" />
         </div>
         <Skeleton className="size-8 rounded-md" />
       </div>

@@ -84,9 +84,9 @@ export function PolicyCardsSkeleton() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <Skeleton className="h-5 w-10 rounded-full" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-18 rounded-full" />
+            <Skeleton className="h-5 w-10 rounded-badge" />
+            <Skeleton className="h-5 w-16 rounded-badge" />
+            <Skeleton className="h-5 w-18 rounded-badge" />
           </div>
           <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
             <Skeleton className="h-6 w-28 rounded-md" />

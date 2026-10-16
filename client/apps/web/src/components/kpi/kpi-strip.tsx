@@ -33,6 +33,11 @@ const TONE_TEXT: Record<Tone, string> = {
 type KpiStripProps = {
   children: React.ReactNode;
   minItemWidth?: string;
+  /**
+   * Draws the strip between two hairlines with no box around it, for a page whose sections are
+   * open rather than carded (a briefing). The first figure then lines up with the text above it.
+   */
+  bare?: boolean;
   className?: string;
   "aria-label"?: string;
 };
@@ -68,6 +73,7 @@ export function usePageKpi(label: React.ReactNode, value: React.ReactNode, sub?:
 export function KpiStrip({
   children,
   minItemWidth = "10rem",
+  bare = false,
   className,
   "aria-label": ariaLabel,
 }: KpiStripProps) {
@@ -77,10 +83,14 @@ export function KpiStrip({
         data-slot="kpi-strip"
         role="group"
         aria-label={ariaLabel}
-        className={cn("border-border bg-card overflow-hidden rounded-lg border", className)}
+        className={cn(
+          "border-border overflow-hidden",
+          bare ? "border-y" : "bg-card rounded-lg border",
+          className,
+        )}
       >
         <div
-          className="-mr-px -mb-px grid"
+          className={cn("-mr-px -mb-px grid", bare && "[&>*:first-child]:pl-0")}
           style={{
             gridTemplateColumns: `repeat(auto-fit, minmax(min(${minItemWidth}, 100%), 1fr))`,
           }}

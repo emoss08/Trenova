@@ -26,8 +26,8 @@ export type RunTurnOptions = {
    * after it was aborted is stopped rather than followed.
    *
    * Given separately when letting go of the reader must not cost the answer —
-   * a palette closed while its question is on the way has not asked for the
-   * question to be taken back, and the answer arrives as a notification.
+   * signing out releases every reader, and a question on its way when it does
+   * has not been taken back.
    */
   withdrawSignal?: AbortSignal;
   /** Called once a worker has the question, before any of the answer. */

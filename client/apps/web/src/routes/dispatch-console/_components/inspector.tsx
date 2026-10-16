@@ -123,8 +123,8 @@ function CandidateRow({
 function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
   const t = useT();
 
-  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
-  const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
+  const openCarrierAssign = useDispatchConsoleStore((s) => s.openCarrierAssign);
+  const openCarrierCancel = useDispatchConsoleStore((s) => s.openCarrierCancel);
   const [verifyOpen, setVerifyOpen] = useState(false);
 
   return (
@@ -204,7 +204,7 @@ function TenderCoverageCard({
   move: DispatchBoardMove;
   actions: DispatchActions;
 }) {
-  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openCarrierAssign = useDispatchConsoleStore((s) => s.openCarrierAssign);
 
   const { data: liveTender, isLoading } = useQuery({
     ...dispatchConsoleQueries.liveTender(move.moveId),
@@ -251,8 +251,8 @@ function MoveInspector({
   const t = useT();
 
   const [includeBlocked, setIncludeBlocked] = useState(false);
-  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
-  const openTender = useDispatchConsoleStore.use.openTender();
+  const openCarrierAssign = useDispatchConsoleStore((s) => s.openCarrierAssign);
+  const openTender = useDispatchConsoleStore((s) => s.openTender);
   const capabilities = useOrgCapabilities();
   // Ranking drivers is the whole point of this pane, and an organization that
   // employs none has nothing to rank — the ranking is withheld rather than shown

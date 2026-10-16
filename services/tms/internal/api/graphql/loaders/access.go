@@ -645,6 +645,28 @@ func (f *AgentDefinitionByIDLoaderFactory) Attach(
 	})
 }
 
+func SuggestedAgentByEventKind(
+	ctx context.Context,
+	eventKind string,
+) (*agentdefinition.Definition, error) {
+	return load(
+		ctx,
+		eventKind,
+		func(s *set) *dataloadgen.Loader[string, *agentdefinition.Definition] {
+			return s.suggestedAgentByEventKind
+		},
+	)
+}
+
+func (f *SuggestedAgentByEventKindLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.suggestedAgentByEventKind = newSuggestedAgentByEventKindLoader(f, tenantInfo)
+	})
+}
+
 func ThreadAgentByID(ctx context.Context, key string) (*conversation.Thread, error) {
 	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *conversation.Thread] {
 		return s.threadAgentByID

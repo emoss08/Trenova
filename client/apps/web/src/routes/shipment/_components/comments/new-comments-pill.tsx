@@ -16,12 +16,12 @@ export function NewCommentsPill({ count, onClick }: { count: number; onClick: ()
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2"
         >
-          <div className="border-border bg-popover rounded-full border p-0.5">
+          <div className="border-border bg-popover rounded-badge border p-0.5">
             <Button
               type="button"
               variant="ghost"
               size="xs"
-              className="h-6 gap-1.5 rounded-full px-2.5 text-xs"
+              className="h-6 gap-1.5 rounded-badge px-2.5 text-xs"
               onClick={onClick}
             >
               <ArrowDownIcon className="size-3" />

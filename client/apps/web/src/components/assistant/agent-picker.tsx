@@ -93,7 +93,7 @@ export function AgentPicker({
                 agent ? t("Asking {0}. Choose another agent", agent.name) : t("Choose an agent")
               }
               className={cn(
-                "text-foreground data-popup-open:bg-surface-active h-7 max-w-60 gap-1.5 rounded-full pr-2 pl-1",
+                "text-foreground data-popup-open:bg-surface-active h-7 max-w-60 gap-1.5 rounded-badge pr-2 pl-1",
                 className,
               )}
             />

@@ -36,7 +36,7 @@ export function OrganizationSettingsSkeleton() {
   const t = useT();
 
   return (
-    <SkeletonRegion label={t("Loading settings")} className="flex flex-col gap-1 px-4">
+    <SkeletonRegion label={t("Loading settings")} className="flex flex-col gap-4">
       <div className="flex w-fit items-center gap-x-0.5 py-1">
         {Array.from({ length: tabCount }, (_, tab) => (
           <div key={tab} className="flex h-9 items-center gap-1.5 px-2.5 sm:h-8">

@@ -3,11 +3,11 @@
 version: "3"
 
 vars:
-  ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
+  REPO_DIR: "{{.TASKFILE_DIR}}/../.."
   APP_NAME: samsara-sim
   BUILD_DIR: ./build
   BIN_PATH: "{{.BUILD_DIR}}/{{.APP_NAME}}"
-  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/dev/compose.yml"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.REPO_DIR}}/dev/compose.yml"
 
 tasks:
   default:

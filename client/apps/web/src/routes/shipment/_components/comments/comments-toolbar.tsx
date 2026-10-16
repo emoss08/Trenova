@@ -169,7 +169,7 @@ export function CommentsToolbar({
                 <FilterLinesIcon className="size-3.5" />
                 {t("Filter")}
                 {activeCount > 0 && (
-                  <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-foreground-on-solid">
+                  <span className="bg-brand text-2xs rounded-badge px-1.5 font-medium text-foreground-on-solid">
                     {activeCount}
                   </span>
                 )}
@@ -240,7 +240,7 @@ export function CommentsToolbar({
             <button
               key={pill.key}
               type="button"
-              className="border-border bg-muted text-2xs hover:bg-accent flex items-center gap-1 rounded-full border px-2 py-0.5 transition-colors"
+              className="border-border bg-muted text-2xs hover:bg-accent flex items-center gap-1 rounded-badge border px-2 py-0.5 transition-colors"
               onClick={pill.onRemove}
             >
               {t(pill.label)}

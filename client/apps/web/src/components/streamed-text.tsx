@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
 import { cn } from "@trenova/shared/lib/utils";
+import { briefPhraseClass, type BriefPhraseTone } from "./brief-phrase";
 import { useReducedMotion } from "motion/react";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -21,16 +22,8 @@ export type StreamedSegment = {
   /** A figure or name the eye should land on, set in the foreground. */
   emphasis?: boolean;
   /** Colours an actionable segment for a warning or a failure. */
-  tone?: "warning" | "danger";
+  tone?: BriefPhraseTone;
 };
-
-const SEGMENT_ACTION_CLASS =
-  "ui-focus-ring decoration-border-strong hover:bg-brand/20 rounded-sm underline decoration-1 underline-offset-4 transition-colors";
-
-const SEGMENT_TONE_CLASS = {
-  warning: "text-warning decoration-warning/60 hover:bg-warning/20",
-  danger: "text-danger decoration-danger/60 hover:bg-danger/20",
-} as const;
 
 type Word = { text: string; start: number };
 
@@ -50,11 +43,7 @@ function SegmentAction({ segment, children }: { segment: StreamedSegment; childr
       type="button"
       aria-label={segment.label}
       onClick={segment.onActivate}
-      className={cn(
-        SEGMENT_ACTION_CLASS,
-        segment.emphasis && "text-foreground font-medium",
-        segment.tone && SEGMENT_TONE_CLASS[segment.tone],
-      )}
+      className={briefPhraseClass(segment.tone, segment.emphasis)}
     >
       {children}
     </button>

@@ -1,4 +1,4 @@
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -69,7 +69,7 @@ export function PreviewFrame({
               onMouseDown={keepFocus}
               onClick={() => onRun(ask.intent)}
             >
-              <NovaMark className="size-3.5" />
+              <NovaBadge size="sm" />
               {t("Ask")}
             </Button>
           )}
@@ -153,7 +153,7 @@ export function PreviewSource({
 
 export function StatePill({ label, state = "neutral" }: { label: string; state?: StatusState }) {
   return (
-    <span className="bg-sunken text-foreground inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium">
+    <span className="bg-sunken text-foreground inline-flex h-6 shrink-0 items-center gap-1.5 rounded-badge px-2.5 text-sm font-medium">
       <StatusDot state={state} className="size-1.5" />
       {label}
     </span>

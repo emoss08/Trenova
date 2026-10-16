@@ -121,7 +121,7 @@ export function FirstDay({
                 <li
                   key={kind}
                   className={cn(
-                    "bg-surface-hover inline-flex h-7 items-center gap-2 rounded-full px-2.5 text-sm transition-opacity duration-300",
+                    "bg-surface-hover inline-flex h-7 items-center gap-2 rounded-badge px-2.5 text-sm transition-opacity duration-300",
                     count === 0 && "opacity-35",
                   )}
                 >

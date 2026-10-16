@@ -98,7 +98,7 @@ export const MessageBody = memo(function MessageBody({
             type="button"
             aria-expanded={showQuoted}
             onClick={() => setShowQuoted((value) => !value)}
-            className="bg-surface-hover text-foreground-subtle hover:text-foreground ui-focus-ring inline-flex h-5.5 w-fit items-center rounded-full px-2 text-sm"
+            className="bg-surface-hover text-foreground-subtle hover:text-foreground ui-focus-ring inline-flex h-5.5 w-fit items-center rounded-badge px-2 text-sm"
           >
             {showQuoted ? t("Hide earlier thread") : t("··· Earlier thread")}
           </button>

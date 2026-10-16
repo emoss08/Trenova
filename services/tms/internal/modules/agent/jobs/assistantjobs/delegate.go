@@ -30,6 +30,7 @@ func (o *delegateOpener) OpenDelegate(
 		StepOwner: run.StepOwner,
 		Call:      call,
 		Records:   run.Records,
+		Inline:    run.Inline,
 	})
 	if err != nil {
 		if refusal, ok := assistantservice.IsDelegateDeclined(err); ok {

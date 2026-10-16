@@ -1,17 +1,13 @@
-import { cn } from "@trenova/shared/lib/utils";
-import { Beaker02Icon } from "@trenova/shared/components/icons";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
-type BetaTagProps = {
-  label?: string;
-  includeIcon?: boolean;
-  className?: string;
-};
+import { cn } from "@trenova/shared/lib/utils";
 
-export function BetaTag({ label = "BETA", includeIcon = true, className }: BetaTagProps) {
+export function BetaTag({ className }: { className?: string }) {
+  const t = useT();
+
   return (
-    <Badge tabIndex={0} variant="info" className={cn("ml-auto h-4 px-1 text-xs", className)}>
-      {includeIcon && <Beaker02Icon />}
-      {label}
+    <Badge tabIndex={0} variant="neutral" className={cn("uppercase", className)}>
+      {t("Beta")}
     </Badge>
   );
 }

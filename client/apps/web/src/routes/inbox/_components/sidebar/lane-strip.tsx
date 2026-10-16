@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@trenova/shared/components/ui/sheet";
 import { Menu01Icon } from "@trenova/shared/components/icons";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
@@ -28,7 +28,7 @@ export function LaneStrip({
   const [open, setOpen] = useState(false);
   const chip = (active: boolean) =>
     cn(
-      "ui-focus-ring flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm transition-colors",
+      "ui-focus-ring flex h-7 shrink-0 items-center gap-1.5 rounded-badge px-3 text-sm transition-colors",
       active
         ? "bg-nav-active text-foreground font-medium"
         : "text-foreground-muted ring-foreground/10 ring-1 hover:text-foreground",
@@ -51,7 +51,7 @@ export function LaneStrip({
           onClick={() => onSelect(BRIEFING)}
           className={chip(folder.kind === "briefing")}
         >
-          <NovaMark className="size-3" />
+          <NovaBadge size="xs" />
           {t("Briefing")}
         </button>
         {visibleLanes(counts).map((lane) => {
@@ -68,7 +68,7 @@ export function LaneStrip({
             >
               {laneLabel(t, lane)}
               {lane === "waiting" && count > 0 && (
-                <span className="bg-warning text-warning-on-solid rounded-full px-1.5 font-mono text-2xs font-semibold tabular-nums">
+                <span className="bg-warning text-warning-on-solid rounded-badge px-1.5 font-mono text-2xs font-semibold tabular-nums">
                   {count}
                 </span>
               )}

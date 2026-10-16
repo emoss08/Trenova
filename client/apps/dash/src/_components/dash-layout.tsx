@@ -50,7 +50,7 @@ function NotificationBell() {
     >
       <Bell01Icon className="size-4" />
       {count > 0 ? (
-        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">
+        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-badge bg-primary px-1 text-2xs font-semibold text-primary-foreground">
           {count > 99 ? "99+" : count}
         </span>
       ) : null}

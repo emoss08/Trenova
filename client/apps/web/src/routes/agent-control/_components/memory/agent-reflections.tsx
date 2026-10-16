@@ -10,6 +10,7 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Ic } from "../kit/ic";
+import { ScrollBox } from "../kit/layout";
 import { reflectionSignalLabel } from "./reflection-signals";
 
 export const agentReflectionsQueryKey = [AGENT_REFLECTIONS_KEY] as const;
@@ -55,9 +56,11 @@ export function AgentReflections() {
         <span className="sp" />
         <span className="sh2-n">{t("Each lesson kept is a memory in the list below")}</span>
       </header>
-      {reflections.map((reflection) => (
-        <ReflectionRow key={reflection.id} reflection={reflection} />
-      ))}
+      <ScrollBox label={t("What agents learned")}>
+        {reflections.map((reflection) => (
+          <ReflectionRow key={reflection.id} reflection={reflection} />
+        ))}
+      </ScrollBox>
     </section>
   );
 }

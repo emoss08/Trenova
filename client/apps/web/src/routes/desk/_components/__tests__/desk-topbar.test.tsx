@@ -236,4 +236,31 @@ describe("DeskTopBar rename", () => {
     fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
     expect(field()).toHaveAttribute("maxLength", "200");
   });
+
+  it("names the Scheduled page and offers none of a conversation's controls there", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <DeskTopBar
+            place="scheduled"
+            thread={null}
+            agent={null}
+            agents={[agent]}
+            onOpenAgent={vi.fn()}
+            workspaceOpen={false}
+            artifactCount={0}
+            newArtifact={false}
+            pending={false}
+            onToggleWorkspace={vi.fn()}
+            onSetPinned={vi.fn()}
+            onDownload={vi.fn()}
+            onRename={vi.fn()}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText("Scheduled")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+  });
 });

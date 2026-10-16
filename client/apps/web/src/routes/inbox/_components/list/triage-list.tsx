@@ -60,7 +60,7 @@ function SortToggle({ sort, onSort }: { sort: TriageSort; onSort: (sort: FolderS
           aria-pressed={sort === server}
           onClick={() => onSort(value)}
           className={cn(
-            "ui-focus-ring h-5.5 rounded-full px-2 text-xs transition-colors",
+            "ui-focus-ring h-5.5 rounded-badge px-2 text-xs transition-colors",
             sort === server
               ? "bg-surface-hover text-foreground"
               : "text-foreground-subtle hover:text-foreground",

@@ -54,6 +54,7 @@ func (s *Exceptions) SweepAttention(
 		Now:                now,
 		Limit:              attentionBatch,
 		BelowEscalationCap: policy.MaxEscalations,
+		EscalateEvery:      int64(policy.EscalationMinutes) * 60,
 	})
 	if err != nil {
 		return nil, err
@@ -111,8 +112,10 @@ func (s *Exceptions) escalate(
 	escalated.EscalationLevel++
 	escalated.LastEscalatedAt = &now
 	escalated.Severity = item.Severity.Raised()
-	due := now + int64(policy.EscalationMinutes)*60
-	escalated.DueAt = &due
+	if item.DueSource != watchtower.DueSourceSource {
+		due := now + int64(policy.EscalationMinutes)*60
+		escalated.DueAt = &due
+	}
 
 	saved, err := s.repo.UpdateWorkflow(ctx, &watchtowerports.UpdateWatchtowerWorkflowRequest{
 		Item:            &escalated,

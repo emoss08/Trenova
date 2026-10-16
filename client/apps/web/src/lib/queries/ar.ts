@@ -1,4 +1,5 @@
 import {
+  fetchAccountingBriefing,
   fetchArAgingSummary,
   fetchArAgingTrend,
   fetchArCashFlowForecast,
@@ -33,6 +34,10 @@ export const ar = createQueryKeys("ar", {
   customerStatement: (customerId: string, options?: { startDate?: number; asOfDate?: number }) => ({
     queryKey: ["customerStatement", customerId, options],
     queryFn: async ({ signal }) => fetchArCustomerStatement(customerId, options, { signal }),
+  }),
+  briefing: () => ({
+    queryKey: ["briefing"],
+    queryFn: ({ signal }) => fetchAccountingBriefing({ signal }),
   }),
   dashboardKpis: () => ({
     queryKey: ["dashboardKpis"],

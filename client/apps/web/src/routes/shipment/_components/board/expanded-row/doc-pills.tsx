@@ -52,7 +52,7 @@ export function DocPills({ shipment }: { shipment: Shipment }) {
               key={requirement.documentTypeId}
               title={t(requirement.documentTypeName)}
               className={cn(
-                "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-xs font-medium",
+                "inline-flex h-5 items-center gap-1 rounded-badge border px-2 text-xs font-medium",
                 STATE_CLASS[state],
               )}
             >
@@ -70,7 +70,7 @@ export function DocPills({ shipment }: { shipment: Shipment }) {
       )}
       <button
         type="button"
-        className="ui-focus-ring border-border text-muted-foreground hover:text-foreground hover:border-border-strong inline-flex h-5 items-center gap-1 rounded-full border border-dashed px-2 text-xs"
+        className="ui-focus-ring border-border text-muted-foreground hover:text-foreground hover:border-border-strong inline-flex h-5 items-center gap-1 rounded-badge border border-dashed px-2 text-xs"
         onClick={() =>
           uploadDocument(
             shipment,

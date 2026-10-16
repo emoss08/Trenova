@@ -84,12 +84,12 @@ export function BillingQueueItemCard({
                 <div className="flex items-center gap-1.5">
                   <PlainBillingQueueStatusBadge status={item.status} />
                   {item.isAdjustmentOrigin ? (
-                    <span className="inline-flex items-center rounded-full bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
+                    <span className="inline-flex items-center rounded-badge bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
                       {t("Rebill")}
                     </span>
                   ) : null}
                   {isPartial ? (
-                    <span className="inline-flex items-center rounded-full bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
+                    <span className="inline-flex items-center rounded-badge bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
                       {t("Split")}
                     </span>
                   ) : null}

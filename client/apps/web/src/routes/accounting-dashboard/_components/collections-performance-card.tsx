@@ -1,11 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { SectionPanel } from "@/components/section-panel";
 import { AR_CEI_HEALTHY_THRESHOLD, AR_CEI_WARNING_THRESHOLD } from "@/lib/accounting-constants";
 import type { ARCollectionPerformance } from "@/lib/graphql/accounts-receivable";
 import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { PANEL_CHART_HEIGHT } from "./dashboard-panel";
+import { CollectionsPerformanceBodySkeleton } from "./collections-performance-skeleton";
 
 export function CollectionsPerformanceCard() {
   const t = useT();
@@ -13,14 +14,18 @@ export function CollectionsPerformanceCard() {
   const { data: performance, isLoading } = useQuery(ar.collectionPerformance());
 
   return (
-    <SectionPanel title={t("Collections performance")} hint={t("trailing 91 days")}>
-      <div className="p-4">
-        {isLoading || !performance ? (
-          <Skeleton className="h-56 w-full" />
-        ) : (
-          <PerformanceBody performance={performance} />
-        )}
-      </div>
+    <SectionPanel
+      title={t("Collections performance")}
+      hint={t("trailing 91 days")}
+      help={t(
+        "Collection effectiveness is the share of what could have been collected in the period that was. Write-offs are short-paid amounts written off against invoices.",
+      )}
+    >
+      {isLoading || !performance ? (
+        <CollectionsPerformanceBodySkeleton />
+      ) : (
+        <PerformanceBody performance={performance} />
+      )}
     </SectionPanel>
   );
 }
@@ -47,7 +52,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
         : "bg-danger";
 
   return (
-    <div className="flex h-56 flex-col justify-between">
+    <div className={cn("flex flex-col justify-between gap-3 p-3", PANEL_CHART_HEIGHT)}>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-muted-foreground text-xs font-medium">
@@ -69,7 +74,10 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
             {t("{0}d", totals.avgDaysToPay.toFixed(1))}
           </p>
           <p className="text-muted-foreground mt-2 text-xs tabular-nums">
-            {t("{0} applications in period", totals.applicationCount)}
+            {t(
+              "{0, plural, one {# application in period} other {# applications in period}}",
+              totals.applicationCount,
+            )}
           </p>
         </div>
       </div>
@@ -77,9 +85,12 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
       <div>
         <div className="flex items-baseline justify-between text-xs">
           <span className="text-muted-foreground">{t("Collected vs invoiced")}</span>
-          <span className="font-medium tabular-nums">
-            {formatCurrency(totals.collectedMinor / 100)} /{" "}
-            {formatCurrency(totals.creditSalesMinor / 100)}
+          <span className="tabular-nums">
+            {t(
+              "{0} of {1}",
+              formatCurrency(totals.collectedMinor / 100),
+              formatCurrency(totals.creditSalesMinor / 100),
+            )}
           </span>
         </div>
         <div className="bg-muted mt-1.5 h-1.5 w-full overflow-hidden rounded-full">
@@ -87,7 +98,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
         </div>
       </div>
 
-      <div className="bg-muted/30 grid grid-cols-3 divide-x rounded-md border">
+      <div className="bg-sunken divide-border-subtle grid grid-cols-3 divide-x rounded-md border">
         <RateStat
           label={t("Write-off")}
           value={`${(performance.writeOffRatio * 100).toFixed(1)}%`}

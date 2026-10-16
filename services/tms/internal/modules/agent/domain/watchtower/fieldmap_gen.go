@@ -24,3 +24,10 @@ func (e *Event) GetStaticFieldMap() map[string]string {
 func (e *Item) GetStaticFieldMap() map[string]string {
 	return watchtowercol.ItemFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Read].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [watchtowercol.ReadFieldMap] instead of parsing struct tags via reflection.
+func (e *Read) GetStaticFieldMap() map[string]string {
+	return watchtowercol.ReadFieldMap
+}

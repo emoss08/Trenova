@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/accountingbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentactivityrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentdecisionqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentdecisionrepository"
@@ -51,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/watchtowerrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/app/accountingbriefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentactivityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentactivitysummaryservice"
@@ -250,6 +252,7 @@ func SharedOptions() fx.Option {
 			agentprofilecontract.NewScheduler,
 			shipmentimportchatrepository.New,
 			shipmentbriefrepository.New,
+			accountingbriefrepository.New,
 			agentextensionrepository.New,
 			agentextensionrepository.NewUsageRepository,
 			agentrunservice.NewValidator,
@@ -355,6 +358,9 @@ func SharedOptions() fx.Option {
 			shipmentbriefingservice.New,
 			shipmentbriefingservice.NewReader,
 			shipmentbriefingservice.NewWriter,
+			accountingbriefingservice.New,
+			accountingbriefingservice.NewReader,
+			accountingbriefingservice.NewWriter,
 			aidocumentservice.New,
 			shipmentimportassistantservice.New,
 			func(s *shipmentimportassistantservice.Service) shipmentports.ShipmentImportAssistantService {

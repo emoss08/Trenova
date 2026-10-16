@@ -67,11 +67,7 @@ import { DeskWorldChange } from "./conversation/desk-world-change";
 import { DeskContextMeter } from "./composer/desk-context-meter";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
-import {
-  DeskDropOverlay,
-  DeskMessageAttachments,
-  useDeskDrop,
-} from "./composer/desk-uploads";
+import { DeskDropOverlay, DeskMessageAttachments, useDeskDrop } from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
 import { DeskAskDock, deskAskPlaceholder } from "./conversation/desk-ask";
 import { DeskCompactMark } from "./conversation/desk-compact-mark";
@@ -332,7 +328,7 @@ export function DeskThread({
   const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
   const compact = density === "compact";
 
-  const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
+  const deskPage = useDeskPage({ onScreen: pageSource === "screen", threadId: thread.id });
   const askable = useAskableAgent({ threads });
   const composerContext = useComposerContext(thread.id);
   const scans = useDeskScans(thread.id);
@@ -1434,7 +1430,7 @@ export function DeskThread({
                   <Button
                     variant="bare"
                     size="bare"
-                    className="dk-jump-b h-8 gap-2 rounded-full bg-dsk-raised pr-3 pl-3.25 text-sm font-medium text-dsk-fg transition-[translate,scale,box-shadow] duration-160 ease-(--dk-spring) in-[.dk-dense]:h-7 hover:-translate-y-px active:translate-y-0 active:scale-96 [&_svg]:text-dsk-subtle"
+                    className="dk-jump-b h-8 gap-2 rounded-badge bg-dsk-raised pr-3 pl-3.25 text-sm font-medium text-dsk-fg transition-[translate,scale,box-shadow] duration-160 ease-(--dk-spring) in-[.dk-dense]:h-7 hover:-translate-y-px active:translate-y-0 active:scale-96 [&_svg]:text-dsk-subtle"
                     onClick={jumpToLatest}
                     tabIndex={jumping ? 0 : -1}
                   >

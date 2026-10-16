@@ -193,8 +193,8 @@ func (b *Builder) attention(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	facts.set("watchtower.open", counts.Unresolved)
-	facts.set("watchtower.critical", counts.Critical)
+	facts.set("watchtower.open", counts.Active)
+	facts.set("watchtower.critical", counts.ActiveCritical)
 
 	items := make([]briefing.Item, 0, len(counts.ByKind))
 	for _, kind := range watchtower.AllSourceKinds() {
@@ -212,10 +212,10 @@ func (b *Builder) attention(ctx context.Context, req Request, facts *Facts) {
 	}
 
 	summary := "Nothing is waiting on the tower."
-	if counts.Unresolved > 0 {
-		summary = plural(counts.Unresolved, "item", "items") + " open"
-		if counts.Critical > 0 {
-			summary += ", " + strconv.Itoa(counts.Critical) + " critical"
+	if counts.Active > 0 {
+		summary = plural(counts.Active, "item", "items") + " open"
+		if counts.ActiveCritical > 0 {
+			summary += ", " + strconv.Itoa(counts.ActiveCritical) + " critical"
 		}
 		summary += "."
 	}
@@ -227,7 +227,7 @@ func (b *Builder) attention(ctx context.Context, req Request, facts *Facts) {
 		Items:   items,
 		Path:    watchtowerPath,
 	})
-	facts.addExceptions(items, counts.Critical)
+	facts.addExceptions(items, counts.ActiveCritical)
 }
 
 func (b *Builder) decisions(ctx context.Context, req Request, facts *Facts) {

@@ -335,13 +335,13 @@ func (a *Activities) PublishArtifactActivity(
 
 // observing is the observer for one activity, with where what it keeps is
 // collected and a function that flushes what it published. A run with nothing
-// beside it, a desk's most often, has no observer.
+// beside it, a desk's most often or a palette question, has no observer.
 func (a *Activities) observing(
 	ctx context.Context,
 	run *RunContext,
 ) (agentports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
-	if a.observer == nil || run.ThreadID.IsNil() {
+	if a.observer == nil || run.ThreadID.IsNil() || run.Inline {
 		return nil, kept, func() {}
 	}
 

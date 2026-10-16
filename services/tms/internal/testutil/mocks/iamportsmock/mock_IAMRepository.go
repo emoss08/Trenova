@@ -1553,6 +1553,346 @@ func (_c *MockIAMRepository_ListSCIMGroupRoleMappings_Call) RunAndReturn(run fun
 	return _c
 }
 
+// ListAuthEventsConnection provides a mock function for the type MockIAMRepository
+func (_mock *MockIAMRepository) ListAuthEventsConnection(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.AuthEvent], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAuthEventsConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*iam.AuthEvent]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.AuthEvent], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) *pagination.CursorListResult[*iam.AuthEvent]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*iam.AuthEvent])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *iamports.ListIAMConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIAMRepository_ListAuthEventsConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAuthEventsConnection'
+type MockIAMRepository_ListAuthEventsConnection_Call struct {
+	*mock.Call
+}
+
+// ListAuthEventsConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *iamports.ListIAMConnectionRequest
+func (_e *MockIAMRepository_Expecter) ListAuthEventsConnection(ctx any, req any) *MockIAMRepository_ListAuthEventsConnection_Call {
+	return &MockIAMRepository_ListAuthEventsConnection_Call{Call: _e.mock.On("ListAuthEventsConnection", ctx, req)}
+}
+
+func (_c *MockIAMRepository_ListAuthEventsConnection_Call) Run(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest)) *MockIAMRepository_ListAuthEventsConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *iamports.ListIAMConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*iamports.ListIAMConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAMRepository_ListAuthEventsConnection_Call) Return(cursorListResult *pagination.CursorListResult[*iam.AuthEvent], err error) *MockIAMRepository_ListAuthEventsConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockIAMRepository_ListAuthEventsConnection_Call) RunAndReturn(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.AuthEvent], error)) *MockIAMRepository_ListAuthEventsConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListRiskDecisionsConnection provides a mock function for the type MockIAMRepository
+func (_mock *MockIAMRepository) ListRiskDecisionsConnection(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.RiskDecision], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRiskDecisionsConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*iam.RiskDecision]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.RiskDecision], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) *pagination.CursorListResult[*iam.RiskDecision]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*iam.RiskDecision])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *iamports.ListIAMConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIAMRepository_ListRiskDecisionsConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRiskDecisionsConnection'
+type MockIAMRepository_ListRiskDecisionsConnection_Call struct {
+	*mock.Call
+}
+
+// ListRiskDecisionsConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *iamports.ListIAMConnectionRequest
+func (_e *MockIAMRepository_Expecter) ListRiskDecisionsConnection(ctx any, req any) *MockIAMRepository_ListRiskDecisionsConnection_Call {
+	return &MockIAMRepository_ListRiskDecisionsConnection_Call{Call: _e.mock.On("ListRiskDecisionsConnection", ctx, req)}
+}
+
+func (_c *MockIAMRepository_ListRiskDecisionsConnection_Call) Run(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest)) *MockIAMRepository_ListRiskDecisionsConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *iamports.ListIAMConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*iamports.ListIAMConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAMRepository_ListRiskDecisionsConnection_Call) Return(cursorListResult *pagination.CursorListResult[*iam.RiskDecision], err error) *MockIAMRepository_ListRiskDecisionsConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockIAMRepository_ListRiskDecisionsConnection_Call) RunAndReturn(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.RiskDecision], error)) *MockIAMRepository_ListRiskDecisionsConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListExternalIdentitiesConnection provides a mock function for the type MockIAMRepository
+func (_mock *MockIAMRepository) ListExternalIdentitiesConnection(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.ExternalIdentity], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListExternalIdentitiesConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*iam.ExternalIdentity]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.ExternalIdentity], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) *pagination.CursorListResult[*iam.ExternalIdentity]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*iam.ExternalIdentity])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *iamports.ListIAMConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIAMRepository_ListExternalIdentitiesConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListExternalIdentitiesConnection'
+type MockIAMRepository_ListExternalIdentitiesConnection_Call struct {
+	*mock.Call
+}
+
+// ListExternalIdentitiesConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *iamports.ListIAMConnectionRequest
+func (_e *MockIAMRepository_Expecter) ListExternalIdentitiesConnection(ctx any, req any) *MockIAMRepository_ListExternalIdentitiesConnection_Call {
+	return &MockIAMRepository_ListExternalIdentitiesConnection_Call{Call: _e.mock.On("ListExternalIdentitiesConnection", ctx, req)}
+}
+
+func (_c *MockIAMRepository_ListExternalIdentitiesConnection_Call) Run(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest)) *MockIAMRepository_ListExternalIdentitiesConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *iamports.ListIAMConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*iamports.ListIAMConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAMRepository_ListExternalIdentitiesConnection_Call) Return(cursorListResult *pagination.CursorListResult[*iam.ExternalIdentity], err error) *MockIAMRepository_ListExternalIdentitiesConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockIAMRepository_ListExternalIdentitiesConnection_Call) RunAndReturn(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.ExternalIdentity], error)) *MockIAMRepository_ListExternalIdentitiesConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListMFAAuthenticatorsConnection provides a mock function for the type MockIAMRepository
+func (_mock *MockIAMRepository) ListMFAAuthenticatorsConnection(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.MFAAuthenticator], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMFAAuthenticatorsConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*iam.MFAAuthenticator]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.MFAAuthenticator], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) *pagination.CursorListResult[*iam.MFAAuthenticator]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*iam.MFAAuthenticator])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *iamports.ListIAMConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIAMRepository_ListMFAAuthenticatorsConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMFAAuthenticatorsConnection'
+type MockIAMRepository_ListMFAAuthenticatorsConnection_Call struct {
+	*mock.Call
+}
+
+// ListMFAAuthenticatorsConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *iamports.ListIAMConnectionRequest
+func (_e *MockIAMRepository_Expecter) ListMFAAuthenticatorsConnection(ctx any, req any) *MockIAMRepository_ListMFAAuthenticatorsConnection_Call {
+	return &MockIAMRepository_ListMFAAuthenticatorsConnection_Call{Call: _e.mock.On("ListMFAAuthenticatorsConnection", ctx, req)}
+}
+
+func (_c *MockIAMRepository_ListMFAAuthenticatorsConnection_Call) Run(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest)) *MockIAMRepository_ListMFAAuthenticatorsConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *iamports.ListIAMConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*iamports.ListIAMConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAMRepository_ListMFAAuthenticatorsConnection_Call) Return(cursorListResult *pagination.CursorListResult[*iam.MFAAuthenticator], err error) *MockIAMRepository_ListMFAAuthenticatorsConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockIAMRepository_ListMFAAuthenticatorsConnection_Call) RunAndReturn(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.MFAAuthenticator], error)) *MockIAMRepository_ListMFAAuthenticatorsConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListSCIMDirectoriesConnection provides a mock function for the type MockIAMRepository
+func (_mock *MockIAMRepository) ListSCIMDirectoriesConnection(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.SCIMDirectory], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSCIMDirectoriesConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*iam.SCIMDirectory]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.SCIMDirectory], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *iamports.ListIAMConnectionRequest) *pagination.CursorListResult[*iam.SCIMDirectory]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*iam.SCIMDirectory])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *iamports.ListIAMConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIAMRepository_ListSCIMDirectoriesConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSCIMDirectoriesConnection'
+type MockIAMRepository_ListSCIMDirectoriesConnection_Call struct {
+	*mock.Call
+}
+
+// ListSCIMDirectoriesConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *iamports.ListIAMConnectionRequest
+func (_e *MockIAMRepository_Expecter) ListSCIMDirectoriesConnection(ctx any, req any) *MockIAMRepository_ListSCIMDirectoriesConnection_Call {
+	return &MockIAMRepository_ListSCIMDirectoriesConnection_Call{Call: _e.mock.On("ListSCIMDirectoriesConnection", ctx, req)}
+}
+
+func (_c *MockIAMRepository_ListSCIMDirectoriesConnection_Call) Run(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest)) *MockIAMRepository_ListSCIMDirectoriesConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *iamports.ListIAMConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*iamports.ListIAMConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIAMRepository_ListSCIMDirectoriesConnection_Call) Return(cursorListResult *pagination.CursorListResult[*iam.SCIMDirectory], err error) *MockIAMRepository_ListSCIMDirectoriesConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockIAMRepository_ListSCIMDirectoriesConnection_Call) RunAndReturn(run func(ctx context.Context, req *iamports.ListIAMConnectionRequest) (*pagination.CursorListResult[*iam.SCIMDirectory], error)) *MockIAMRepository_ListSCIMDirectoriesConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListSCIMGroupRoleMappingsConnection provides a mock function for the type MockIAMRepository
 func (_mock *MockIAMRepository) ListSCIMGroupRoleMappingsConnection(ctx context.Context, req *iamports.ListSCIMGroupRoleMappingConnectionRequest) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
 	ret := _mock.Called(ctx, req)

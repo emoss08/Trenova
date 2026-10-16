@@ -40,6 +40,9 @@ type OpenDelegateRequest struct {
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
 	Records []agent.EntityRef
+	// Inline says the parent's reply is read with nothing beside it, so the
+	// delegate keeps nothing beside it either.
+	Inline bool
 }
 
 // DelegateOpening is the delegate's turn, ready to drive.
@@ -128,7 +131,8 @@ func (s *Service) OpenDelegate(
 		// that is already waiting on the person.
 		Proposals: s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant),
 		// A document it publishes is kept beside the same conversation.
-		Publishes: s.artifacts != nil,
+		Publishes: s.artifacts != nil && !req.Inline,
+		Inline:    req.Inline,
 		StepOwner: req.StepOwner,
 		Delegation: &agentports.Delegation{
 			ParentAgentID:   parent.ID,

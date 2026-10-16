@@ -4,8 +4,10 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,6 +28,10 @@ var (
 	_ bun.BeforeAppendModelHook          = (*ProvisioningAuditRecord)(nil)
 	_ bun.BeforeAppendModelHook          = (*AccessPolicy)(nil)
 	_ validationframework.TenantedEntity = (*AccessPolicy)(nil)
+	_ domaintypes.PostgresSearchable     = (*AuthEvent)(nil)
+	_ domaintypes.PostgresSearchable     = (*RiskDecision)(nil)
+	_ domaintypes.PostgresSearchable     = (*ExternalIdentity)(nil)
+	_ domaintypes.PostgresSearchable     = (*MFAAuthenticator)(nil)
 )
 
 type IdentityProvider struct {
@@ -110,6 +116,8 @@ func defaultIdentityProviderOIDCScopes() []string {
 type ExternalIdentity struct {
 	bun.BaseModel `bun:"table:external_identities,alias:extid" json:"-"`
 
+	pagination.CursorValueSet `bun:",embed" json:"-"`
+
 	ID                 pulid.ID          `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
 	UserID             pulid.ID          `json:"userId"             bun:"user_id,type:VARCHAR(100),notnull"`
 	OrganizationID     pulid.ID          `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull"`
@@ -141,6 +149,8 @@ func (e *ExternalIdentity) BeforeAppendModel(_ context.Context, q bun.Query) err
 type MFAAuthenticator struct {
 	bun.BaseModel `bun:"table:mfa_authenticators,alias:mfa" json:"-"`
 
+	pagination.CursorValueSet `bun:",embed" json:"-"`
+
 	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
@@ -169,6 +179,8 @@ func (a *MFAAuthenticator) BeforeAppendModel(_ context.Context, q bun.Query) err
 
 type AuthEvent struct {
 	bun.BaseModel `bun:"table:auth_events,alias:ae" json:"-"`
+
+	pagination.CursorValueSet `bun:",embed" json:"-"`
 
 	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
 	UserID             pulid.ID         `json:"userId"             bun:"user_id,type:VARCHAR(100)"`
@@ -208,6 +220,8 @@ func (e *AuthEvent) BeforeAppendModel(_ context.Context, q bun.Query) error {
 type RiskDecision struct {
 	bun.BaseModel `bun:"table:risk_decisions,alias:rd" json:"-"`
 
+	pagination.CursorValueSet `bun:",embed" json:"-"`
+
 	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	UserID         pulid.ID    `json:"userId"         bun:"user_id,type:VARCHAR(100)"`
 	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,type:VARCHAR(100)"`
@@ -233,6 +247,8 @@ func (d *RiskDecision) BeforeAppendModel(_ context.Context, q bun.Query) error {
 
 type SCIMDirectory struct {
 	bun.BaseModel `bun:"table:scim_directories,alias:sd" json:"-"`
+
+	pagination.CursorValueSet `bun:",embed" json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`

@@ -1,6 +1,6 @@
 import type { AgentProfile } from "@/lib/graphql/agent-profile";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OrganizationProfile } from "../organization-profile";
@@ -93,6 +93,19 @@ describe("OrganizationProfile", () => {
     expect(
       screen.getByText(/From Avery Lane in a conversation, written down by an agent/),
     ).toBeInTheDocument();
+  });
+
+  it("scrolls a long write-up and long guidance in place, leaving the box to add a line below them", async () => {
+    renderProfile({ canManage: true });
+
+    const writeUp = await screen.findByRole("region", { name: "Profile write-up" });
+    expect(
+      within(writeUp).getByText("Acme Freight runs a regional fleet out of Dallas."),
+    ).toBeInTheDocument();
+    const guidance = screen.getByRole("region", { name: "Guidance" });
+    expect(within(guidance).getByText("The Laredo lane is seasonal.")).toBeInTheDocument();
+    expect(within(guidance).queryByRole("textbox", { name: "Guidance" })).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Guidance" })).toBeInTheDocument();
   });
 
   it("lets someone who does not manage agent memory offer guidance but change nothing", async () => {

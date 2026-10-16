@@ -17,6 +17,7 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { AgentProfileTrigger } from "@trenova/graphql/generated/graphql";
 import { useState, type FormEvent } from "react";
 import { Ic } from "../kit/ic";
+import { ScrollBox } from "../kit/layout";
 
 const TRIGGER_LABEL: Record<AgentProfileTrigger, string> = defineLabels({
   Scheduled: "Nightly",
@@ -105,7 +106,9 @@ export function OrganizationProfile({ canManage }: { canManage: boolean }) {
 
       <div className="sgm">
         {current?.content ? (
-          <p className="sgm-c whitespace-pre-line">{current.content}</p>
+          <ScrollBox label={t("Profile write-up")} size="sm">
+            <p className="sgm-c whitespace-pre-line">{current.content}</p>
+          </ScrollBox>
         ) : (
           <p className="sgm-c">
             {t(
@@ -124,13 +127,15 @@ export function OrganizationProfile({ canManage }: { canManage: boolean }) {
         {current && current.facts.length > 0 && (
           <details>
             <summary className="sgm-e cursor-pointer">{t("What it was written from")}</summary>
-            <ul className="rf-l" aria-label={t("Facts from the records")}>
-              {current.facts.map((fact) => (
-                <li key={fact.key} className="sgm-e">
-                  {fact.text}
-                </li>
-              ))}
-            </ul>
+            <ScrollBox label={t("What it was written from")} size="sm">
+              <ul className="rf-l" aria-label={t("Facts from the records")}>
+                {current.facts.map((fact) => (
+                  <li key={fact.key} className="sgm-e">
+                    {fact.text}
+                  </li>
+                ))}
+              </ul>
+            </ScrollBox>
           </details>
         )}
       </div>
@@ -147,16 +152,18 @@ export function OrganizationProfile({ canManage }: { canManage: boolean }) {
                 : t("Waiting for an administrator; agents read none of it until then")}
             </span>
           </header>
-          {offered.map((line) => (
-            <OfferedGuidanceRow
-              key={line.id}
-              line={line}
-              canDecide={canManage}
-              busy={approveGuidance.isPending || dismissGuidance.isPending}
-              onApprove={() => approveGuidance.mutate(line.id)}
-              onDismiss={() => dismissGuidance.mutate(line.id)}
-            />
-          ))}
+          <ScrollBox label={t("Offered guidance")}>
+            {offered.map((line) => (
+              <OfferedGuidanceRow
+                key={line.id}
+                line={line}
+                canDecide={canManage}
+                busy={approveGuidance.isPending || dismissGuidance.isPending}
+                onApprove={() => approveGuidance.mutate(line.id)}
+                onDismiss={() => dismissGuidance.mutate(line.id)}
+              />
+            ))}
+          </ScrollBox>
         </>
       )}
 
@@ -168,15 +175,19 @@ export function OrganizationProfile({ canManage }: { canManage: boolean }) {
           {t("What the records can't show, such as a seasonal lane or a customer winding down")}
         </span>
       </header>
-      {active.map((line) => (
-        <GuidanceRow
-          key={line.id}
-          line={line}
-          canRetire={canManage}
-          busy={retireGuidance.isPending}
-          onRetire={() => retireGuidance.mutate(line.id)}
-        />
-      ))}
+      {active.length > 0 && (
+        <ScrollBox label={t("Guidance")}>
+          {active.map((line) => (
+            <GuidanceRow
+              key={line.id}
+              line={line}
+              canRetire={canManage}
+              busy={retireGuidance.isPending}
+              onRetire={() => retireGuidance.mutate(line.id)}
+            />
+          ))}
+        </ScrollBox>
+      )}
       <form
         className="sgm"
         onSubmit={submit}
@@ -350,11 +361,13 @@ function ProfileHistory() {
   }
 
   return (
-    <ul className="rf-l" aria-label={t("Earlier versions")}>
-      {versions.map((version) => (
-        <VersionRow key={version.id} version={version} />
-      ))}
-    </ul>
+    <ScrollBox label={t("Earlier versions")} size="lg">
+      <ul className="rf-l" aria-label={t("Earlier versions")}>
+        {versions.map((version) => (
+          <VersionRow key={version.id} version={version} />
+        ))}
+      </ul>
+    </ScrollBox>
   );
 }
 

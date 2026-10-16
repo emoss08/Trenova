@@ -123,6 +123,10 @@ type RunContext struct {
 	// to reads their memories too. A run recorded before they were kept has
 	// none, and its delegates read the memories of no record.
 	Records []agent.EntityRef `json:"records,omitempty"`
+	// Inline says the reply is read with nothing beside it, so no tool result
+	// is kept as an artifact. A run recorded before it existed reads false and
+	// keeps its artifacts as it always did.
+	Inline bool `json:"inline,omitempty"`
 }
 
 // Scope is how the run's events are tagged for its reader: empty for the
@@ -155,6 +159,7 @@ func NewRunContext(req *agentports.RunRequest, priorityKey int) RunContext {
 		PriorityKey:         priorityKey,
 		Delegation:          req.Delegation,
 		Records:             req.Records,
+		Inline:              req.Inline,
 	}
 }
 
@@ -176,6 +181,7 @@ func (rc *RunContext) request() *agentports.RunRequest {
 		PinProvider:         rc.PinProvider,
 		Delegation:          rc.Delegation,
 		Records:             rc.Records,
+		Inline:              rc.Inline,
 	}
 }
 

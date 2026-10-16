@@ -1,0 +1,132 @@
+fragment SecurityActivityUserFields on User {
+  id
+  name
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+
+fragment AuthEventTableRowFields on AuthEvent {
+  id
+  userId
+  identityProviderId
+  provider
+  outcome
+  ipAddress
+  userAgent
+  authenticatorAal
+  federationFal
+  mfaState
+  riskOutcome
+  riskSignals
+  errorCode
+  occurredAt
+  createdAt
+  user {
+    ...SecurityActivityUserFields
+  }
+}
+
+query AuthEventsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  authEvents(input: $input) {
+    edges {
+      node {
+        ...AuthEventTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+fragment RiskDecisionTableRowFields on RiskDecision {
+  id
+  userId
+  outcome
+  signals
+  reason
+  createdAt
+  user {
+    ...SecurityActivityUserFields
+  }
+}
+
+query RiskDecisionsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  riskDecisions(input: $input) {
+    edges {
+      node {
+        ...RiskDecisionTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+fragment ExternalIdentityTableRowFields on ExternalIdentity {
+  id
+  userId
+  identityProviderId
+  externalSubject
+  externalUsername
+  externalEmail
+  lastLoginAt
+  createdAt
+  updatedAt
+  user {
+    ...SecurityActivityUserFields
+  }
+}
+
+query ExternalIdentitiesTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  externalIdentities(input: $input) {
+    edges {
+      node {
+        ...ExternalIdentityTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+fragment MFAAuthenticatorTableRowFields on MFAAuthenticator {
+  id
+  userId
+  type
+  name
+  enabled
+  verifiedAt
+  lastUsedAt
+  createdAt
+  updatedAt
+  user {
+    ...SecurityActivityUserFields
+  }
+}
+
+query MFAAuthenticatorsTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  mfaAuthenticators(input: $input) {
+    edges {
+      node {
+        ...MFAAuthenticatorTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

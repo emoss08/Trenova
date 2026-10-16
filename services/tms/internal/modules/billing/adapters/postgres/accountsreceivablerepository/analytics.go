@@ -172,6 +172,47 @@ func (r *repository) GetPaymentStats(
 	)
 }
 
+type draftInvoicesRecord struct {
+	Count           int   `bun:"draft_count"`
+	AmountMinor     int64 `bun:"draft_amount_minor"`
+	OldestCreatedAt int64 `bun:"oldest_created_at"`
+}
+
+func (r *repository) GetDraftInvoices(
+	ctx context.Context,
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARDraftInvoices, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*customerledgerports.ARDraftInvoices, error) {
+			rec := new(draftInvoicesRecord)
+			err := r.db.DBForContext(ctx).NewRaw(`
+		SELECT
+			COUNT(*) AS draft_count,
+			COALESCE(SUM(inv.total_amount_minor), 0) AS draft_amount_minor,
+			COALESCE(MIN(inv.created_at), 0) AS oldest_created_at
+		FROM invoices inv
+		WHERE inv.organization_id = ?
+		  AND inv.business_unit_id = ?
+		  AND inv.status = 'Draft'
+		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
+		  AND inv.created_at <= ?`,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate,
+			).Scan(ctx, rec)
+			if err != nil {
+				return nil, fmt.Errorf("get ar draft invoices: %w", err)
+			}
+
+			return &customerledgerports.ARDraftInvoices{
+				Count:           rec.Count,
+				AmountMinor:     rec.AmountMinor,
+				OldestCreatedAt: rec.OldestCreatedAt,
+			}, nil
+		},
+	)
+}
+
 type balancePointRecord struct {
 	PeriodEnd      int64 `bun:"period_end"`
 	ARBalanceMinor int64 `bun:"ar_balance_minor"`

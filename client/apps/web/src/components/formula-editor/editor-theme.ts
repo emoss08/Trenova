@@ -438,7 +438,7 @@ export const languageServiceTheme = EditorView.theme({
     alignItems: "center",
     height: "16px",
     padding: "0 6px",
-    borderRadius: "999px",
+    borderRadius: "var(--radius-label)",
     backgroundColor: "color-mix(in oklab, var(--muted-foreground) 14%, transparent)",
     color: "var(--muted-foreground)",
     fontSize: "10.5px",
@@ -510,7 +510,7 @@ export const languageServiceTheme = EditorView.theme({
   ".cm-expr-inline-value": {
     marginLeft: "14px",
     padding: "0 6px",
-    borderRadius: "999px",
+    borderRadius: "var(--radius-label)",
     fontFamily: "'Geist Mono', monospace",
     fontSize: "11px",
     fontVariantNumeric: "tabular-nums",

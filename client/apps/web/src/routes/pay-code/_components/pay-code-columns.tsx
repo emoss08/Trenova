@@ -54,7 +54,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
       cell: ({ row }) => (
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+            "inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-medium",
             row.original.direction === "Earning"
               ? "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground"
               : "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",

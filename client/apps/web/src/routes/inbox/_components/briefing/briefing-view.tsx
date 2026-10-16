@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import "../../_styles/triage-briefing.css";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { TriageBriefing, TriageRuleInput } from "@/lib/graphql/inbox";
@@ -252,6 +253,7 @@ function BriefingMain({
         />
         <div className="min-w-0 flex-1">
           <div className="text-foreground-subtle flex items-center gap-2 text-sm">
+            <NovaBadge size="sm" spin={ready ? "none" : "always"} />
             <b className="text-foreground font-medium">{t("Nova")}</b>
             <span className="text-2xs font-mono tabular-nums">{formatUnixTime(now)}</span>
           </div>

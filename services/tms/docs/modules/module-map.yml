@@ -752,6 +752,7 @@ modules:
   agent:
     level: 10
     domain:
+      - accountingbrief
       - agent
       - agentdefinition
       - agentdryrun
@@ -781,6 +782,7 @@ modules:
       - shipmentimportchat
       - watchtower
     service:
+      - accountingbriefingservice
       - agentaccessservice
       - agentactivityservice
       - agentactivitysummaryservice
@@ -893,6 +895,7 @@ modules:
       - retrievaljobs
       - watchtowerjobs
     repository:
+      - accountingbriefrepository
       - agentactivityrepository
       - agentdecisionqueuerepository
       - agentdecisionrepository

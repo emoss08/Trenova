@@ -24,23 +24,26 @@ type Params struct {
 
 	Service              iamports.IAMService
 	AccessSettings       iamports.AccessSettingsService
+	SecurityBriefing     iamports.SecurityBriefingService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service iamports.IAMService
-	access  iamports.AccessSettingsService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service  iamports.IAMService
+	access   iamports.AccessSettingsService
+	briefing iamports.SecurityBriefingService
+	eh       *helpers.ErrorHandler
+	pm       *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		access:  p.AccessSettings,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:  p.Service,
+		access:   p.AccessSettings,
+		briefing: p.SecurityBriefing,
+		eh:       p.ErrorHandler,
+		pm:       p.PermissionMiddleware,
 	}
 }
 
@@ -58,6 +61,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"access-settings",
 		h.pm.RequirePermission(permission.ResourceAccessPolicy.String(), permission.OpUpdate),
 		h.updateAccessSettings,
+	)
+
+	api.GET(
+		"security-briefing",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
+		h.getSecurityBriefing,
 	)
 
 	api.GET(
@@ -598,6 +607,21 @@ func (h *Handler) deleteAccessPolicy(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) getSecurityBriefing(c *gin.Context) {
+	if _, ok := h.tenantInfo(c); !ok {
+		return
+	}
+	resp, err := h.briefing.Get(
+		c.Request.Context(),
+		actorutil.FromAuthContext(authctx.GetAuthContext(c)),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) listAuthEvents(c *gin.Context) {

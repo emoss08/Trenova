@@ -84,7 +84,7 @@ export function CapacityRailSkeleton() {
           {CAPACITY_FILTERS.map((filter, index) => (
             <Skeleton
               key={filter.id}
-              className={`h-5 rounded-full ${RAIL_CHIP_WIDTHS[index] ?? "w-14"}`}
+              className={`h-5 rounded-badge ${RAIL_CHIP_WIDTHS[index] ?? "w-14"}`}
             />
           ))}
         </div>

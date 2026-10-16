@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import {
   AGENT_MEMORY_LIST_KEY,
   AGENT_MEMORY_SUGGESTIONS_KEY,
@@ -16,6 +17,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { MEMORY_SUGGESTION_PARAM, memorySuggestionParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
+import { ScrollBox } from "../kit/layout";
 import { Modal } from "../kit/modal";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { MEMORY_CONTENT_LIMIT } from "./memory-form-schema";
@@ -52,25 +54,27 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
   return (
     <section className="sec sg-s">
       <header className="sh2">
-        <span className="dm" />
+        <NovaBadge size="md" className="self-center" />
         <h3>{t("Waiting for approval")}</h3>
         <em className="mono">{suggestions.length}</em>
         <span className="sp" />
         <span className="sh2-n">{t("Agents read none of these until you approve")}</span>
       </header>
-      {suggestions.map((suggestion) => (
-        <SuggestionCard
-          key={suggestion.id}
-          suggestion={suggestion}
-          canDecide={canDecide}
-          busy={settle.isPending}
-          onDismiss={() => settle.mutate({ kind: "dismiss", suggestion })}
-          onEdit={() => void setEditingId(suggestion.id)}
-          onApprove={() =>
-            settle.mutate({ kind: "approve", suggestion, content: suggestion.content })
-          }
-        />
-      ))}
+      <ScrollBox label={t("Waiting for approval")} size="lg">
+        {suggestions.map((suggestion) => (
+          <SuggestionCard
+            key={suggestion.id}
+            suggestion={suggestion}
+            canDecide={canDecide}
+            busy={settle.isPending}
+            onDismiss={() => settle.mutate({ kind: "dismiss", suggestion })}
+            onEdit={() => void setEditingId(suggestion.id)}
+            onApprove={() =>
+              settle.mutate({ kind: "approve", suggestion, content: suggestion.content })
+            }
+          />
+        ))}
+      </ScrollBox>
       {editing && (
         <ApproveEdited
           key={editing.id}

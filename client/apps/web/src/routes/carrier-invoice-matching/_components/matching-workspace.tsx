@@ -420,7 +420,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+        "rounded-badge border px-2 py-0.5 text-xs font-medium transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "text-muted-foreground hover:bg-muted",
@@ -490,7 +490,7 @@ function InvoiceList({
                   {t("Repeat")}
                 </Badge>
               )}
-              <span className="rounded-full border px-2 py-0.5 text-2xs uppercase">
+              <span className="rounded-badge border px-2 py-0.5 text-2xs uppercase">
                 {invoice.reconciliationStatus}
               </span>
             </span>

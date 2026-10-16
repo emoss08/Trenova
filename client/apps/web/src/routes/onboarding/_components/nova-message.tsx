@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { segmentsText, type NovaSegment } from "@/lib/onboarding-copy";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -37,7 +38,7 @@ export function NovaMessage({
   return (
     <div>
       <div className="nv-who">
-        <span className="nv-mark" data-busy={thinking || typing} aria-hidden="true" />
+        <NovaBadge size="lg" spin={thinking || typing ? "always" : "none"} />
         <b>{t("Nova")}</b>
         <span>{t("Setup guide")}</span>
       </div>

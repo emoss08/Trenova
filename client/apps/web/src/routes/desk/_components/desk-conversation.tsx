@@ -17,7 +17,7 @@ import type { AssistantEntityRef, AssistantMessage, AssistantThread } from "@/ty
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
 import { DeskCaseCard } from "./case/desk-case-card";
@@ -30,6 +30,7 @@ import {
   isScheduleRequest,
   useCreateSchedule,
   useScheduleActions,
+  useScheduleClock,
 } from "./conversation/desk-schedules";
 import { useDesk } from "./desk-layout";
 import { DeskHandoffCard } from "./handoff/desk-handoff-card";
@@ -234,14 +235,8 @@ export function DeskConversation({
 function useDeskSchedules(threadId: string, timezone: string): DeskThreadSchedules {
   const scheduling = useCreateSchedule(threadId);
   const schedulesQuery = useQuery(assistant.schedules(threadId));
-  const actions = useScheduleActions(threadId);
-  const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
-  useEffect(() => {
-    // "Today" and "Tomorrow" on a schedule's next run move at midnight; a
-    // minute is close enough for a label.
-    const timer = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
+  const actions = useScheduleActions();
+  const clock = useScheduleClock();
   const byId = useMemo(
     () => new Map((schedulesQuery.data?.items ?? []).map((item) => [item.id, item])),
     [schedulesQuery.data],

@@ -4,12 +4,13 @@ import (
 	"context"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,8 +36,6 @@ const (
 	// one. Every message past the model's history window is history the
 	// client still has to render.
 	maxThreadMessages = 400
-	// maxTitleRunes bounds a title derived from the first message.
-	maxTitleRunes = 60
 )
 
 func (s *Service) StartThread(
@@ -415,16 +414,50 @@ func (s *Service) UpdateThread(
 // DeleteThread removes a conversation and withdraws what its turns proposed
 // and nobody decided. Left pending, those stayed in the decisions inbox, and
 // approving one followed up into a conversation that no longer existed.
+//
+// The requests scheduled in it go with it. Their rows are deleted with the
+// conversation's, so they are read first, and once it is gone their Temporal
+// schedules are removed and their owner's tabs told, rather than waiting for
+// a slot or the hourly reconcile to find them missing.
 func (s *Service) DeleteThread(
 	ctx context.Context,
 	req agentports.GetThreadRequest,
 ) error {
+	schedules := s.threadSchedules(ctx, req)
 	if err := s.conversations.DeleteThread(ctx, req); err != nil {
 		return err
 	}
 	s.withdrawPending(ctx, req.ID, req.TenantInfo)
+	if len(schedules) > 0 {
+		s.schedules.Forget(ctx, schedules)
+	}
 
 	return nil
+}
+
+// threadSchedules reads the requests scheduled in a conversation about to be
+// deleted. A failed read does not stop the delete: the schedules still go
+// with the conversation, and a slot or the reconcile removes what is left.
+func (s *Service) threadSchedules(
+	ctx context.Context,
+	req agentports.GetThreadRequest,
+) []*conversationschedule.Schedule {
+	if s.schedules == nil {
+		return nil
+	}
+
+	schedules, err := s.schedules.OfThread(ctx, conversationscheduleports.ThreadSchedulesRequest{
+		ThreadID:   req.ID,
+		UserID:     req.UserID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		s.logger.Warn("could not read a deleted conversation's schedules",
+			zap.String("thread", req.ID.String()), zap.Error(err))
+		return nil
+	}
+
+	return schedules
 }
 
 // withdrawPending runs after the conversation is gone, so a failure is logged
@@ -464,21 +497,10 @@ func (s *Service) titleIfUnnamed(
 		return
 	}
 
-	thread.Title = truncateRunes(firstMessage, maxTitleRunes)
+	thread.Title = conversation.TitleFrom(firstMessage)
 	if _, err := s.conversations.UpdateThread(ctx, thread); err != nil {
 		// A missing title is cosmetic, so it must not fail a turn that otherwise
 		// succeeded and is already saved.
 		s.logger.Warn("failed to title thread", zap.Error(err))
 	}
-}
-
-func truncateRunes(s string, limit int) string {
-	s = strings.TrimSpace(s)
-	if utf8.RuneCountInString(s) <= limit {
-		return s
-	}
-
-	runes := []rune(s)
-
-	return strings.TrimSpace(string(runes[:limit])) + "…"
 }

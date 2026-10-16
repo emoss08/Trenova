@@ -99,7 +99,7 @@
     gap: 7px;
     height: 28px;
     padding: 0 10px 0 9px;
-    border-radius: 999px;
+    border-radius: var(--radius-label);
     border: 1px solid color-mix(in oklab, var(--b-strong) calc(var(--an-hot, 0) * 100%), var(--b));
     background: var(--card);
     font-size: 12px;
@@ -240,7 +240,7 @@
     gap: 4px;
     height: 20px;
     padding: 0 7px;
-    border-radius: 999px;
+    border-radius: var(--radius-label);
     background: var(--hov);
     font-size: 10.5px;
     color: var(--subtle);

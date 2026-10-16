@@ -44,6 +44,7 @@ import {
 } from "@/lib/case-realtime";
 import { cachedThreadLists } from "@/lib/thread-list";
 import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
+import { createWatchtowerPatcher, isWatchtowerEvent } from "@/lib/watchtower-realtime";
 import { useTriageStore } from "@/stores/triage-store";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
@@ -107,6 +108,10 @@ export function useRealtimeConnection() {
         triage.markArrival(message.id);
       },
     });
+
+    // A watchtower item that changed is read once and put where it now
+    // belongs in the queue, and a run that moved redraws the rows it works.
+    const watchtowerItems = createWatchtowerPatcher({ queryClient });
 
     // Refetches every pending root not refetched within the last
     // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
@@ -319,6 +324,12 @@ export function useRealtimeConnection() {
         return;
       }
 
+      if (isWatchtowerEvent(evt)) {
+        watchtowerItems.handle(evt);
+        return;
+      }
+      watchtowerItems.handleRun(evt);
+
       if (isShipmentCommentEvent(evt)) {
         handleShipmentCommentEvent(queryClient, evt, user.id);
         return;
@@ -371,6 +382,7 @@ export function useRealtimeConnection() {
     return () => {
       disposed = true;
       inboundMessages.dispose();
+      watchtowerItems.dispose();
       offState();
       offResource();
       offReset();

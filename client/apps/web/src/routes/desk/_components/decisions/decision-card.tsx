@@ -46,6 +46,8 @@ import {
   type PendingProposalNode,
 } from "./use-pending-decisions";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { QueueCard } from "../queue/queue";
+import type { QueueLeave } from "../queue/use-queue-cursor";
 
 /** The most record rows the card lists before it says how many more there are. */
 const SHOWN_ROWS = 5;
@@ -66,7 +68,7 @@ export type CardGate = {
 
 export type CardProps = {
   node: PendingDecisionNode;
-  leaving: "ok" | "no" | null;
+  leaving: QueueLeave | null;
   /** The card underneath: the like-batch line and anything else the queue adds. */
   footer?: ReactNode;
   onGate: (gate: CardGate) => void;
@@ -269,7 +271,7 @@ function ProposalCard({
   const run = preview ? dryRun(preview, t) : null;
 
   return (
-    <div className={cn("dk-dc2-card", leaving && `dk-out-${leaving}`)}>
+    <QueueCard leaving={leaving}>
       <Who node={node} />
       <h1>
         {view.title}
@@ -337,7 +339,7 @@ function ProposalCard({
 
       <RawArguments value={{ tool: node.toolName, ...proposal.arguments }} />
       {footer}
-    </div>
+    </QueueCard>
   );
 }
 
@@ -391,7 +393,7 @@ function PlanCard({
   };
 
   return (
-    <div className={cn("dk-dc2-card", leaving && `dk-out-${leaving}`)}>
+    <QueueCard leaving={leaving}>
       <Who node={node} />
       <h1>
         {node.title}
@@ -420,6 +422,6 @@ function PlanCard({
         {t("Decided as one: every step runs in order, or none does.")}
       </div>
       {footer}
-    </div>
+    </QueueCard>
   );
 }

@@ -1,4 +1,4 @@
-import { keybindGroups } from "@/config/keybinds.config";
+import { isEditableTarget, keymapFromConfig, normalizedKey } from "@/lib/keymap";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useEffect } from "react";
 
@@ -57,26 +57,12 @@ const ALIASES: Readonly<Record<string, TriageCommand>> = {
   ArrowUp: "previous",
 };
 
-function eventKeyOf(configKey: string): string {
-  if (configKey === "Esc") {
-    return "Escape";
-  }
-
-  return configKey.length === 1 ? configKey.toLowerCase() : configKey;
-}
-
 /** event.key → what it does, read from the keybinds config. */
-export const TRIAGE_KEYMAP: ReadonlyMap<string, TriageCommand | "escape"> = new Map([
-  ...(keybindGroups.find((group) => group.id === "triage")?.keybinds ?? []).flatMap(
-    (keybind): Array<[string, TriageCommand | "escape"]> => {
-      const command = KEYBIND_COMMAND[keybind.id];
-      return command === undefined || keybind.keys.length !== 1
-        ? []
-        : [[eventKeyOf(keybind.keys[0]), command]];
-    },
-  ),
-  ...Object.entries(ALIASES),
-]);
+export const TRIAGE_KEYMAP: ReadonlyMap<string, TriageCommand | "escape"> = keymapFromConfig(
+  "triage",
+  KEYBIND_COMMAND,
+  ALIASES,
+);
 
 /** Commands that act on the open message, or on the selection when there is one. */
 const ON_SELECTION: ReadonlySet<TriageCommand> = new Set([
@@ -123,7 +109,7 @@ export function resolveTriageKey(press: KeyPress, context: KeyContext): TriageCo
   if (press.metaKey || press.ctrlKey || press.altKey || press.editable || context.overlayOpen) {
     return null;
   }
-  const mapped = TRIAGE_KEYMAP.get(press.key.length === 1 ? press.key.toLowerCase() : press.key);
+  const mapped = TRIAGE_KEYMAP.get(normalizedKey(press.key));
   if (mapped === undefined) {
     return null;
   }
@@ -253,19 +239,6 @@ export function nextAfterLeaving(
   return null;
 }
 
-function isEditable(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  return (
-    target.isContentEditable ||
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  );
-}
-
 /**
  * Listens on the document while Triage is mounted and hands each command to
  * `dispatch`. `context` is read when a key is pressed, so it may change on
@@ -293,7 +266,7 @@ export function useTriageKeys({
       if (event.defaultPrevented) {
         return;
       }
-      const editable = isEditable(event.target);
+      const editable = isEditableTarget(event.target);
       if (editable && event.key === "Escape" && event.target instanceof HTMLElement) {
         event.target.blur();
         return;

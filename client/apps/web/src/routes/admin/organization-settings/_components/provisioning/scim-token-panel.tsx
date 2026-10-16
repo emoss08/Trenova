@@ -17,7 +17,7 @@ import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { memo, useEffect, useState } from "react";
-import { EmptyState, PanelHeader, RowSkeleton } from "../security-access/shared";
+import { EmptyState, RowSkeleton, SecuritySection } from "../security-access/shared";
 import { useSecurityAccess } from "../security-access/use-security-access";
 
 type SCIMTokenPanelProps = {
@@ -67,31 +67,36 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   const createDisabled = !directoryId || isCreatingToken;
 
   return (
-    <div className="bg-background rounded-lg border">
-      <PanelHeader
-        icon={<Key01Icon />}
-        title={t("SCIM tokens")}
-        description={t("Issue bearer tokens for directory synchronization.")}
-      />
-      <div className="space-y-3">
+    <SecuritySection
+      title={t("SCIM tokens")}
+      icon={<Key01Icon />}
+      count={tokens.length}
+      help={t(
+        "Your directory sync application sends this bearer token with every request. Each token is shown once, when it is created.",
+      )}
+    >
+      <div className="flex flex-col gap-3 pt-3">
         {canManage ? (
-          <div className="flex w-full flex-col gap-2 sm:flex-row">
-            <div className="flex w-full flex-row justify-between gap-1 px-2 pt-2">
-              <Input
-                value={tokenName}
-                placeholder={t("Token name")}
-                onChange={(event) => setTokenName(event.target.value)}
-              />
-              <Button
-                size="sm"
-                onClick={() => createToken()}
-                disabled={createDisabled || tokenName.trim() === ""}
-              >
-                <PlusIcon />
-                {t("Create token")}
-              </Button>
-            </div>
-          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!createDisabled && tokenName.trim() !== "") {
+                createToken();
+              }
+            }}
+          >
+            <Input
+              value={tokenName}
+              placeholder={t("Token name")}
+              aria-label={t("Token name")}
+              onChange={(event) => setTokenName(event.target.value)}
+            />
+            <Button type="submit" size="sm" disabled={createDisabled || tokenName.trim() === ""}>
+              <PlusIcon />
+              {t("New token")}
+            </Button>
+          </form>
         ) : null}
         {createdToken && (
           <CopyableSecret
@@ -99,13 +104,12 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
             value={createdToken}
             title={t("Copy this token now")}
             description={t("The plaintext token is only shown once.")}
-            className="mx-2"
           />
         )}
         {tokensQuery.isLoading ? (
-          <RowSkeleton rows={2} />
+          <RowSkeleton rows={2} label={t("Loading SCIM tokens")} />
         ) : tokens.length > 0 ? (
-          <div className="border-border overflow-x-auto border-t">
+          <div className="border-border-subtle overflow-x-auto border-t">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -155,10 +159,9 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
             icon={<Key01Icon />}
             label={t("No SCIM tokens")}
             description={t("Create a token and copy it into your directory sync application.")}
-            compact
           />
         )}
       </div>
-    </div>
+    </SecuritySection>
   );
 });

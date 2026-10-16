@@ -561,7 +561,6 @@ const billingModule: NavModule = {
       label: "Rate agreements",
       path: "/billing/rate-agreements",
       resource: Resource.RateAgreement,
-      includeBetaTag: true,
     },
     {
       id: "billing-config-group",
@@ -587,14 +586,12 @@ const billingModule: NavModule = {
           label: "Rate zones",
           path: "/billing/configuration-files/rate-zones",
           resource: Resource.RateZone,
-          includeBetaTag: true,
         },
         {
           id: "rate-matrices",
           label: "Rate matrices",
           path: "/billing/configuration-files/rate-matrices",
           resource: Resource.RateMatrix,
-          includeBetaTag: true,
         },
         {
           id: "customers",

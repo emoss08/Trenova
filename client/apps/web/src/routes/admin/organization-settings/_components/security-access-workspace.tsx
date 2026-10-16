@@ -1,189 +1,98 @@
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { AuthEvent, RiskDecision } from "@trenova/shared/types/iam";
+import { useResetTableSearchParams } from "@/hooks/data-table/use-reset-table-search-params";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import {
   securityTabParser,
   securityTabValues,
   type SecurityTabValue,
 } from "@/hooks/use-organization-setting-state";
-import { organization } from "@/lib/queries/organization";
-import { formatIdentityProviderName } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
-import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,
   type IconComponent,
   Key01Icon,
   ShieldTickIcon,
+  Shield01Icon,
   Users01Icon,
 } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
 import { ActivityTab } from "./security-access/activity-tab";
-import { OuterSection } from "./security-access/layout";
-import { SecurityOverview } from "./security-access/overview";
+import { SecurityBriefing } from "./security-access/briefing/security-briefing";
 import { PoliciesTab } from "./security-access/policies-tab";
 import { SignInTab } from "./security-access/sign-in-tab";
 import { firstAllowed, useSecurityAccess } from "./security-access/use-security-access";
-import { identityProviderQueryKey } from "./security-access/utils";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const securityTabs: Array<{
-  value: SecurityTabValue;
-  label: string;
-  Icon: IconComponent;
-}> = [
-  { value: "sign-in", label: "Sign-in", Icon: Key01Icon },
-  { value: "provisioning", label: "Provisioning", Icon: Users01Icon },
-  { value: "policies", label: "Policies", Icon: ShieldTickIcon },
-  { value: "activity", label: "Activity", Icon: ActivityIcon },
-];
+const SECURITY_TAB_LABELS = defineLabels({
+  overview: "Overview",
+  "sign-in": "Sign-in",
+  provisioning: "Provisioning",
+  policies: "Policies",
+  activity: "Activity",
+} as const);
+
+const SECURITY_TAB_ICONS: Record<SecurityTabValue, IconComponent> = {
+  overview: Shield01Icon,
+  "sign-in": Key01Icon,
+  provisioning: Users01Icon,
+  policies: ShieldTickIcon,
+  activity: ActivityIcon,
+};
 
 export function SecurityAccessWorkspace({ organizationId }: { organizationId: string }) {
-  return (
-    <OuterSection>
-      <SecurityOverviewSection organizationId={organizationId} />
-      <SecurityAccessTabs organizationId={organizationId} />
-    </OuterSection>
-  );
-}
-
-function signInActivityLabel(t: TranslateFn, event: AuthEvent): string {
-  const provider = formatIdentityProviderName(event.provider);
-  switch (event.outcome) {
-    case "success":
-      return t("{0} sign-in success", provider);
-    case "challenge":
-      return t("{0} sign-in challenge", provider);
-    case "denied":
-      return t("{0} sign-in denied", provider);
-    case "failed":
-      return t("{0} sign-in failed", provider);
-  }
-}
-
-function riskDecisionLabel(t: TranslateFn, outcome: RiskDecision["outcome"]): string {
-  switch (outcome) {
-    case "allow":
-      return t("Risk decision: allow");
-    case "challenge":
-      return t("Risk decision: challenge");
-    case "deny":
-      return t("Risk decision: deny");
-  }
-}
-
-function SecurityOverviewSection({ organizationId }: { organizationId: string }) {
-  const t = useT();
-  const access = useSecurityAccess();
-  const providersQuery = useQuery({
-    queryKey: [identityProviderQueryKey(organizationId)],
-    queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
-    enabled: access.identityProviders.read,
-  });
-  const directoriesQuery = useQuery({
-    ...organization.scimDirectories(organizationId),
-    enabled: access.scimDirectories.read,
-  });
-  const policiesQuery = useQuery({
-    ...organization.accessPolicies(organizationId),
-    enabled: access.accessPolicies.read,
-  });
-  const authEventsQuery = useQuery({
-    ...organization.authEvents(organizationId),
-    enabled: access.activity.auth,
-  });
-  const riskQuery = useQuery({
-    ...organization.riskDecisions(organizationId),
-    enabled: access.activity.risk,
-  });
-
-  const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
-  const directories = useMemo(
-    () => directoriesQuery.data?.results ?? [],
-    [directoriesQuery.data?.results],
-  );
-  const policies = useMemo(() => policiesQuery.data ?? [], [policiesQuery.data]);
-  const authEvents = useMemo(() => authEventsQuery.data ?? [], [authEventsQuery.data]);
-  const riskDecisions = useMemo(() => riskQuery.data ?? [], [riskQuery.data]);
-
-  const recentActivity = useMemo(
-    () =>
-      [
-        ...authEvents.map((event) => ({
-          id: event.id,
-          label: signInActivityLabel(t, event),
-          detail: event.ipAddress || event.errorCode || t("Authentication event"),
-          status: event.riskOutcome,
-          occurredAt: event.occurredAt,
-        })),
-        ...riskDecisions.map((decision) => ({
-          id: decision.id,
-          label: riskDecisionLabel(t, decision.outcome),
-          detail: decision.reason || decision.signals.join(", ") || t("No additional signals"),
-          status: decision.outcome,
-          occurredAt: decision.createdAt,
-        })),
-      ]
-        .sort((left, right) => right.occurredAt - left.occurredAt)
-        .slice(0, 4),
-    [authEvents, riskDecisions, t],
-  );
-
-  const overviewLoading =
-    providersQuery.isLoading ||
-    directoriesQuery.isLoading ||
-    policiesQuery.isLoading ||
-    authEventsQuery.isLoading ||
-    riskQuery.isLoading;
-  const enforcedProvider = providers.find((provider) => provider.enabled && provider.enforceSso);
-  const activeDirectory = directories.find((directory) => directory.enabled);
-  const activePolicyCount = policies.filter((policy) => policy.enabled).length;
-
-  return (
-    <SecurityOverview
-      isLoading={overviewLoading}
-      providerCount={providers.filter((provider) => provider.enabled).length}
-      enforcedProviderName={
-        enforcedProvider ? formatIdentityProviderName(enforcedProvider.name) : ""
-      }
-      directoryStatus={activeDirectory ? activeDirectory.tenantSlug : ""}
-      activePolicyCount={activePolicyCount}
-      recentActivity={recentActivity}
-    />
-  );
-}
-
-function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
   const t = useT();
   const access = useSecurityAccess();
   const [requestedTab, setSecurityTab] = useQueryState("securityTab", securityTabParser);
   const securityTab = firstAllowed(requestedTab, securityTabValues, access.tabs);
   const visibleTabs = useMemo(
-    () => securityTabs.filter(({ value }) => access.tabs[value]),
+    () => securityTabValues.filter((value) => access.tabs[value]),
     [access.tabs],
   );
-  const handleTabChange = useCallback(
-    (value: string) => {
-      void setSecurityTab(value as SecurityTabValue);
+  const resetTable = useResetTableSearchParams();
+  const openTab = useCallback(
+    (value: SecurityTabValue) => {
+      if (value === securityTab) {
+        return;
+      }
+      resetTable();
+      void setSecurityTab(value);
     },
-    [setSecurityTab],
+    [resetTable, securityTab, setSecurityTab],
   );
 
   if (!securityTab) {
-    return null;
+    return (
+      <p className="text-muted-foreground py-8 text-sm">
+        {t("You don't have access to any of this organization's security settings.")}
+      </p>
+    );
   }
 
   return (
-    <Tabs value={securityTab} onValueChange={handleTabChange}>
-      <TabsList variant="underline">
-        {visibleTabs.map(({ value, label, Icon }) => (
-          <TabsTab key={value} value={value}>
-            <Icon size={16} />
-            {t(label)}
-          </TabsTab>
-        ))}
+    <Tabs
+      value={securityTab}
+      onValueChange={(value) => openTab(value as SecurityTabValue)}
+      className="gap-4 pb-10"
+    >
+      <TabsList aria-label={t("Security sections")} className="max-w-full overflow-x-auto">
+        {visibleTabs.map((value) => {
+          const Icon = SECURITY_TAB_ICONS[value];
+          return (
+            <TabsTab key={value} value={value} className="grow-0">
+              <Icon size={16} />
+              {SECURITY_TAB_LABELS[value]}
+            </TabsTab>
+          );
+        })}
       </TabsList>
+      {access.tabs.overview ? (
+        <TabsContent value="overview">
+          <Activity mode={securityTab === "overview" ? "visible" : "hidden"}>
+            <SecurityBriefing organizationId={organizationId} />
+          </Activity>
+        </TabsContent>
+      ) : null}
       {access.tabs["sign-in"] ? (
         <TabsContent value="sign-in" keepMounted>
           <Activity mode={securityTab === "sign-in" ? "visible" : "hidden"}>
@@ -211,7 +120,7 @@ function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
       {access.tabs.activity ? (
         <TabsContent value="activity" keepMounted>
           <Activity mode={securityTab === "activity" ? "visible" : "hidden"}>
-            <ActivityTab organizationId={organizationId} />
+            <ActivityTab />
           </Activity>
         </TabsContent>
       ) : null}

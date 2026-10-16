@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -84,6 +85,9 @@ type Params struct {
 	Quota    platformplanports.QuotaGuard  `optional:"true"`
 	// Waits reads a wait whose ending a turn picks up.
 	Waits agentwaitports.AgentWaitRepository `optional:"true"`
+	// Schedules settles the requests scheduled in a conversation being
+	// deleted, so none fires again and no open list keeps showing one.
+	Schedules conversationscheduleports.ConversationThreadSchedules `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -136,6 +140,7 @@ type Service struct {
 	memories      agentports.AgentMemoryService
 	quota         platformplanports.QuotaGuard
 	waits         agentwaitports.AgentWaitRepository
+	schedules     conversationscheduleports.ConversationThreadSchedules
 }
 
 func New(p Params) *Service {
@@ -166,6 +171,7 @@ func New(p Params) *Service {
 		cases:         p.Cases,
 		runs:          p.Runs,
 		waits:         p.Waits,
+		schedules:     p.Schedules,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
 		agentControls: p.AgentControls,

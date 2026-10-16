@@ -16,8 +16,9 @@ type FindMentions = (signal: AbortSignal) => Promise<readonly AssistantEntityRef
 
 /**
  * The records a question is about: named outright, or found while it is on
- * its way. Finding them is part of asking, so only Stop cancels it, and a
- * search that fails sends the question without them rather than losing it.
+ * its way. Finding them is part of asking, so it is cancelled with the
+ * question, and a search that fails sends the question without them rather
+ * than losing it.
  */
 export type AskQuestionOptions = { context?: AssistantPageContext | null } & (
   | { mentions?: readonly AssistantEntityRef[]; findMentions?: never }
@@ -45,15 +46,16 @@ async function questionMentions(
 }
 
 /**
- * One quick question at a time, from anywhere. The answer streams into a
+ * One quick question at a time, from the palette. The answer streams into a
  * TurnState like a thread's turn does, and the thread it was answered on is
- * kept so the question can be opened in the Desk and continued.
+ * kept only when the person opens it in the Desk to continue.
  *
- * Only Stop takes a question back. Closing the palette, moving to another
- * page or asking something else lets go of the reader and nothing more: the
- * answer is written to the end on the server and arrives as a notification
- * that opens it. A question lost because the palette closed a moment too
- * soon is the one thing this must never do.
+ * The answer is read in the palette and nowhere else: the server neither
+ * announces it nor lists it in the Desk. So closing the palette or asking
+ * something else takes the question back — a question on its way is
+ * withdrawn and a turn under way is stopped — rather than leaving a worker to
+ * write an answer nobody will see. A kept question is a Desk conversation, and
+ * its turn runs on there.
  */
 export function useAsk() {
   const t = useT();
@@ -67,16 +69,25 @@ export function useAsk() {
   // reader leaves the turn running and billing.
   const turnIdRef = useRef<string | null>(null);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
+  // Takes back whatever question is out: the turn a worker is answering is
+  // stopped, a question on its way is withdrawn, and the reader lets go.
+  const withdrawQuestion = useCallback(() => {
+    const running = turnIdRef.current;
+    turnIdRef.current = null;
+    if (running !== null) {
+      stopTurnQuietly(running);
+    }
+    withdrawRef.current?.abort();
+    withdrawRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
 
-  const refreshActiveTurns = useCallback(
-    () => void queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
-    [queryClient],
-  );
+  useEffect(() => withdrawQuestion, [withdrawQuestion]);
 
   const ask = useCallback(
     async (content: string, options: AskQuestionOptions = {}) => {
-      abortRef.current?.abort();
+      withdrawQuestion();
       const controller = new AbortController();
       abortRef.current = controller;
       const withdraw = new AbortController();
@@ -105,15 +116,11 @@ export function useAsk() {
             if (options.findMentions) {
               setTurn((state) => (state ? { ...state, mentions: [...mentions] } : state));
             }
-            const started = await apiService.assistantService.startAsk(
+            return apiService.assistantService.startAsk(
               content,
               { context: options.context, mentions },
               { signal },
             );
-            // Counted as under way even when the palette has already closed
-            // on it: the launcher is then the only place that says so.
-            refreshActiveTurns();
-            return started;
           },
           {
             signal: controller.signal,
@@ -134,7 +141,6 @@ export function useAsk() {
           return;
         }
         unregister();
-        refreshActiveTurns();
         const detail = turnFailureDetail(error, t("The connection to the assistant was lost."));
         setTurn((state) => (state ? { ...state, status: "error", error: detail } : state));
         return;
@@ -143,47 +149,38 @@ export function useAsk() {
         return;
       }
       unregister();
-      refreshActiveTurns();
-      if (!terminal) {
-        setTurn((state) =>
-          state && isTurnActive(state)
-            ? { ...state, status: "error", error: t("The reply was cut off before it finished.") }
-            : state,
-        );
+      if (terminal) {
+        // Nothing is left to stop once the answer has ended.
+        turnIdRef.current = null;
+        return;
       }
+      setTurn((state) =>
+        state && isTurnActive(state)
+          ? { ...state, status: "error", error: t("The reply was cut off before it finished.") }
+          : state,
+      );
     },
-    [refreshActiveTurns, t],
+    [t, withdrawQuestion],
   );
 
   const stop = useCallback(() => {
-    const running = turnIdRef.current;
-    if (running !== null) {
-      turnIdRef.current = null;
-      stopTurnQuietly(running);
-    }
-    withdrawRef.current?.abort();
-    withdrawRef.current = null;
-    abortRef.current?.abort();
-    abortRef.current = null;
-    refreshActiveTurns();
+    withdrawQuestion();
     setTurn((state) =>
       state && isTurnActive(state) ? { ...state, status: "error", error: t("Stopped.") } : state,
     );
-  }, [refreshActiveTurns, t]);
+  }, [t, withdrawQuestion]);
 
-  // Lets go of the answer without taking the question back. A question on its
-  // way is still asked, and a turn under way is still written to its end.
+  // Puts the question away when the palette closes or moves on from it.
   const reset = useCallback(() => {
-    turnIdRef.current = null;
-    withdrawRef.current = null;
-    abortRef.current?.abort();
-    abortRef.current = null;
+    withdrawQuestion();
     setTurn(null);
-  }, []);
+  }, [withdrawQuestion]);
 
   /**
    * Lists the question as a conversation and says where it is. The thread
-   * exists already; keeping it is what makes the rail show it.
+   * exists already; keeping it is what makes the rail show it, and from then
+   * on its turn belongs to the Desk, so putting the palette away no longer
+   * stops it.
    */
   const keep = useCallback(async (): Promise<string | null> => {
     const threadId = turn?.thread?.id ?? turn?.result?.thread.id ?? null;
@@ -191,7 +188,12 @@ export function useAsk() {
       return null;
     }
     await apiService.assistantService.updateThread(threadId, { keep: true });
-    await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
+    turnIdRef.current = null;
+    withdrawRef.current = null;
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
+    ]);
 
     return threadId;
   }, [queryClient, turn?.result?.thread.id, turn?.thread?.id]);

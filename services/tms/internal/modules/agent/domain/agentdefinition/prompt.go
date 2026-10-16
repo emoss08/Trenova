@@ -172,6 +172,10 @@ type RuntimeContext struct {
 	// Artifacts says the conversation keeps what the turn produces beside it:
 	// lists as tables, records as cards, and documents the model publishes.
 	Artifacts bool
+	// Inline says the reply is read on its own with nothing beside it — a
+	// quick question in the command palette — so everything it shows is
+	// written into it.
+	Inline bool
 	// PageGuide is what the product guide says about the page in Page: its
 	// name, where it sits and what it is for. A raw path tells the model
 	// nothing about what the person is looking at.
@@ -319,7 +323,7 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 	if delegator := strings.TrimSpace(rc.DelegatedBy); delegator != "" {
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
-		section(&stable, d.buildOutputSection())
+		section(&stable, d.buildOutputSection(rc.Inline))
 		if d.OutputMode != OutputReport && d.HasContextProvider(ContextMemory) {
 			section(&stable, rememberingSection)
 		}
@@ -1235,26 +1239,30 @@ func buildToolNotes(tools []ToolSummary, disclosed bool) string {
 	return builder.String()
 }
 
-func (d *Definition) buildOutputSection() string {
+func (d *Definition) buildOutputSection(inline bool) string {
 	if d.OutputMode == OutputReport {
 		return "## Output\nNobody is reading this as a conversation. Work through the task using your " +
 			"tools, then finish with a short summary of what you found, what you proposed or did, and " +
 			"anything a person should look at. That summary is stored as the run's record."
 	}
 
+	tables, naming := besideTables, besideNaming
+	if inline {
+		tables, naming = inlineTables, inlineNaming
+	}
+
 	return "## Output\nAnswer in concise markdown. The people you talk to are busy: give them " +
 		"the answer first and the detail under it. Use **bold** for the record or number that " +
 		"matters. When the answer is several records with two or more facts each, use a " +
-		"markdown table with a header row rather than a bulleted list, up to about a dozen " +
-		"rows; past that, or when you rank or compare the rows a tool returned, point to the " +
-		"table the tool result names. A fenced block is only for data to copy, labelled csv " +
+		"markdown table with a header row rather than a bulleted list" + tables +
+		" A fenced block is only for data to copy, labelled csv " +
 		"or text; never write code or label a block with a programming or query language, " +
 		"since such a block is removed from the reply. Cite the record you used — a " +
 		"shipment number, a load number, a worker name — so the person can verify you. " +
 		"Never show the person a record's internal id, the kind that starts with letters " +
 		"and an underscore such as " +
-		"shp_01… or inv_01…, nor a proposal's: name a record by its number or name, or point " +
-		"to its card. Ids are for your tool calls. Answer in the language the person writes " +
+		"shp_01… or inv_01…, nor a proposal's: name a record by its number or name" + naming +
+		" Ids are for your tool calls. Answer in the language the person writes " +
 		"in, keeping record numbers, names and the labels Trenova shows exactly as they are; " +
 		"the values you send to tools stay as each tool declares them.\nKeep your working " +
 		"to yourself. Do not narrate which tool you are about to call, think through " +
@@ -1262,6 +1270,20 @@ func (d *Definition) buildOutputSection() string {
 		"write out the records you are weighing up. The person wants the answer, not the " +
 		"process that produced it."
 }
+
+// How the Output section has a table shown. Beside a conversation a long list
+// is pointed to, since the tool's own table is open beside the reply; with
+// nothing beside the reply, a pointer leads nowhere, so the rows go in it.
+const (
+	besideTables = ", up to about a dozen rows; past that, or when you rank or compare the " +
+		"rows a tool returned, point to the table the tool result names."
+	besideNaming = ", or point to its card."
+	inlineTables = ". Nothing is kept beside this reply — no table, card or document the " +
+		"person can open — so everything they asked for goes in it: write every row up to " +
+		"about 30, and past that the count, the 30 that matter most and how many are left " +
+		"out. Never point to an artifact or say a table is attached."
+	inlineNaming = "."
+)
 
 const maxPendingProposalRationaleChars = 200
 

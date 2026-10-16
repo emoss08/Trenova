@@ -1,5 +1,5 @@
 import type { StartedTurn } from "@/services/assistant";
-import type { AssistantStreamEvent } from "@/types/assistant";
+import { assistantThreadSchema, type AssistantStreamEvent } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -22,6 +22,7 @@ type Attach = (
 const startAsk = vi.hoisted(() => vi.fn<StartAsk>());
 const attachTurn = vi.hoisted(() => vi.fn<Attach>());
 const stopTurn = vi.hoisted(() => vi.fn(async (_turnId: string) => undefined));
+const updateThread = vi.hoisted(() => vi.fn(async (_threadId: string, _patch: unknown) => ({})));
 
 vi.mock("@/services/api", () => ({
   apiService: {
@@ -29,6 +30,7 @@ vi.mock("@/services/api", () => ({
       startAsk: (...args: Parameters<StartAsk>) => startAsk(...args),
       attachTurn: (...args: Parameters<Attach>) => attachTurn(...args),
       stopTurn: (turnId: string) => stopTurn(turnId),
+      updateThread: (threadId: string, patch: unknown) => updateThread(threadId, patch),
     },
   },
 }));
@@ -39,6 +41,18 @@ const started: StartedTurn = {
   streamUrl: "/api/v1/assistant/turns/atrn_1/stream/",
   status: "Running",
 };
+
+const askThread = assistantThreadSchema.parse({
+  id: "athr_1",
+  businessUnitId: "bu_1",
+  organizationId: "org_1",
+  userId: "usr_1",
+  agentDefinitionId: "agdef_1",
+  status: "Active",
+  origin: "Ask",
+  createdAt: 1,
+  updatedAt: 1,
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -62,18 +76,18 @@ afterEach(() => {
   startAsk.mockReset();
   attachTurn.mockReset();
   stopTurn.mockClear();
+  updateThread.mockClear();
 });
 
 /**
- * Closing the palette resets the ask. It used to abort the one signal the
- * question and its reader shared, so a palette closed while the question was
- * on its way withdrew it, and one closed just after stopped the turn the
- * server had already begun. Either way the question was lost. Now only Stop
- * takes a question back; a reset lets go of the reader and the answer is
- * written to the end, to arrive as a notification.
+ * A palette answer is read in the palette and nowhere else: the server
+ * neither announces it nor lists it in the Desk. So closing the palette, or
+ * asking something else, takes the question back rather than leaving a worker
+ * to write an answer nobody will see. A question kept for the Desk is a Desk
+ * conversation, and closing the palette leaves its turn running there.
  */
 describe("useAsk reset", () => {
-  it("leaves a question on its way asked, and never stops the turn it becomes", async () => {
+  it("withdraws a question still on its way, and stops the turn it becomes", async () => {
     const pending = deferred<StartedTurn>();
     startAsk.mockReturnValue(pending.promise);
     const { result } = renderAsk();
@@ -86,18 +100,18 @@ describe("useAsk reset", () => {
 
     act(() => result.current.reset());
 
-    expect(request.signal?.aborted).toBe(false);
+    expect(request.signal?.aborted).toBe(true);
 
     await act(async () => {
       pending.resolve(started);
     });
 
-    expect(stopTurn).not.toHaveBeenCalled();
+    expect(stopTurn).toHaveBeenCalledWith("atrn_1");
     expect(attachTurn).not.toHaveBeenCalled();
     expect(result.current.turn).toBeNull();
   });
 
-  it("lets go of an answer being read without stopping it", async () => {
+  it("stops an answer being read", async () => {
     startAsk.mockResolvedValue(started);
     let readerSignal: AbortSignal | undefined;
     attachTurn.mockImplementation(
@@ -116,6 +130,82 @@ describe("useAsk reset", () => {
 
     act(() => result.current.reset());
 
+    expect(readerSignal?.aborted).toBe(true);
+    expect(stopTurn).toHaveBeenCalledTimes(1);
+    expect(stopTurn).toHaveBeenCalledWith("atrn_1");
+    expect(result.current.turn).toBeNull();
+  });
+
+  it("stops the answer to the last question when another is asked", async () => {
+    startAsk.mockResolvedValueOnce(started).mockResolvedValueOnce({
+      ...started,
+      turnId: "atrn_2",
+      threadId: "athr_2",
+    });
+    attachTurn.mockImplementation(
+      (_turnId, _onEvent, options) =>
+        new Promise<void>((resolve) => {
+          options.signal?.addEventListener("abort", () => resolve(), { once: true });
+        }),
+    );
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Where is S1?");
+    });
+    await waitFor(() => expect(attachTurn).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      void result.current.ask("Where is S2?");
+    });
+    await waitFor(() => expect(attachTurn).toHaveBeenCalledTimes(2));
+
+    expect(stopTurn).toHaveBeenCalledTimes(1);
+    expect(stopTurn).toHaveBeenCalledWith("atrn_1");
+    expect(attachTurn.mock.calls[1][0]).toBe("atrn_2");
+  });
+
+  it("stops nothing once the answer has ended", async () => {
+    startAsk.mockResolvedValue(started);
+    attachTurn.mockImplementation(async (_turnId, onEvent) => {
+      onEvent({ event: "done", data: null }, "1-0");
+    });
+    const { result } = renderAsk();
+
+    await act(async () => {
+      await result.current.ask("Where is S1?");
+    });
+
+    act(() => result.current.reset());
+
+    expect(stopTurn).not.toHaveBeenCalled();
+  });
+
+  it("leaves a kept question's turn running when the palette closes", async () => {
+    startAsk.mockResolvedValue({ ...started, thread: askThread });
+    let readerSignal: AbortSignal | undefined;
+    attachTurn.mockImplementation(
+      (_turnId, _onEvent, options) =>
+        new Promise<void>((resolve) => {
+          readerSignal = options.signal;
+          options.signal?.addEventListener("abort", () => resolve(), { once: true });
+        }),
+    );
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Where is S1?");
+    });
+    await waitFor(() => expect(attachTurn).toHaveBeenCalledTimes(1));
+
+    let kept: string | null = null;
+    await act(async () => {
+      kept = await result.current.keep();
+    });
+    act(() => result.current.reset());
+
+    expect(kept).toBe("athr_1");
+    expect(updateThread).toHaveBeenCalledWith("athr_1", { keep: true });
     expect(readerSignal?.aborted).toBe(true);
     expect(stopTurn).not.toHaveBeenCalled();
   });
@@ -194,8 +284,8 @@ describe("useAsk and sign-out", () => {
 
 /**
  * A question from the palette carries the records its search found that it
- * names. Finding them is part of asking: closing the palette does not cancel
- * it, a search that fails still asks the question, and only Stop withdraws it.
+ * names. Finding them is part of asking: a search that fails still asks the
+ * question, and Stop or closing the palette withdraws it.
  */
 describe("useAsk found mentions", () => {
   const shipment = { type: "shipment", id: "shp_1", label: "SEED-PAY-002" };
@@ -233,8 +323,7 @@ describe("useAsk found mentions", () => {
     expect(startAsk.mock.calls[0][1]).toEqual({ context: undefined, mentions: [] });
   });
 
-  it("still asks when the palette closes while the records are being found", async () => {
-    startAsk.mockResolvedValue(started);
+  it("never asks a question the palette closed on while its records were being found", async () => {
     const found = deferred<(typeof shipment)[]>();
     const { result } = renderAsk();
 
@@ -248,8 +337,8 @@ describe("useAsk found mentions", () => {
       found.resolve([shipment]);
     });
 
-    await waitFor(() => expect(startAsk).toHaveBeenCalledTimes(1));
-    expect(startAsk.mock.calls[0][1]).toEqual({ context: undefined, mentions: [shipment] });
+    expect(startAsk).not.toHaveBeenCalled();
+    expect(stopTurn).not.toHaveBeenCalled();
   });
 
   it("never asks a question stopped while its records were being found", async () => {

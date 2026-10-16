@@ -665,7 +665,7 @@ export function DeskDocBody({
               key={heading.id}
               variant="bare"
               size="bare"
-              className="h-6 rounded-full bg-dsk-sunken px-2.25 text-xs text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
+              className="h-6 rounded-badge bg-dsk-sunken px-2.25 text-xs text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
               onClick={() => scrollTo(heading.id)}
             >
               {plainText(heading.text ?? "")}

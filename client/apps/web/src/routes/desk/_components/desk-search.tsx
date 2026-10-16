@@ -323,7 +323,7 @@ export function DeskSearchPalette({
                     key={recent}
                     variant="bare"
                     size="bare"
-                    className="h-6.5 gap-1.5 rounded-full pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-all duration-150 ring-inset hover:text-dsk-fg hover:ring-dsk-b"
+                    className="h-6.5 gap-1.5 rounded-badge pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-all duration-150 ring-inset hover:text-dsk-fg hover:ring-dsk-b"
                     onClick={() => setText(recent)}
                   >
                     <DeskIcon name="replay" size={11} />

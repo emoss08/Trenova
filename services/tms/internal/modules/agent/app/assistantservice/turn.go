@@ -53,6 +53,10 @@ type TurnPlan struct {
 	// Records are the records the question is about, so an agent the turn
 	// hands a task to reads their memories too.
 	Records []agent.EntityRef `json:"records,omitempty"`
+	// Inline says the answer is read with nothing beside it, so the turn's
+	// activities keep no tool result as an artifact. A plan recorded before it
+	// existed reads false and keeps its artifacts.
+	Inline bool `json:"inline,omitempty"`
 	// Turn is the runtime turn, empty when the guard refused the question.
 	Turn agentruntime.TurnState `json:"turn"`
 }
@@ -96,6 +100,7 @@ func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentports.R
 		ThreadID:    p.ThreadID,
 		Proposals:   p.Proposals,
 		Records:     p.Records,
+		Inline:      p.Inline,
 	}
 }
 
@@ -237,8 +242,12 @@ func (s *Service) prepareTurn(
 	}
 	if runReq != nil {
 		// A conversation keeps what the turn publishes beside it, in the
-		// activity that runs the publish rather than on this request.
-		runReq.Publishes = s.artifacts != nil
+		// activity that runs the publish rather than on this request. The
+		// palette has nothing beside its answer, so there the reply holds
+		// everything.
+		runReq.Inline = thread.Origin.AnswersInline()
+		runReq.Publishes = s.artifacts != nil && !runReq.Inline
+		plan.Inline = runReq.Inline
 		runReq.Directed = checks.directed
 		plan.Timezone = runReq.Context.Timezone
 		plan.Records = runReq.Records

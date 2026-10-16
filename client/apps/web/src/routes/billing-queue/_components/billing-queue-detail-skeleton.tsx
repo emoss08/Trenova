@@ -32,7 +32,7 @@ export function BillingQueueDetailSkeleton() {
         <div className="shrink-0 space-y-3 border-b px-4 py-4">
           <div className="flex items-center gap-2 text-lg">
             <Skeleton className="inline-block h-4 w-28 align-middle" />
-            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-badge" />
           </div>
           <div className="flex h-5 items-center">
             <Skeleton className="h-5 w-32" />

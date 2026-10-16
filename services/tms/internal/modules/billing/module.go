@@ -54,6 +54,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -77,6 +78,9 @@ func SharedOptions() fx.Option {
 			costingrepository.NewActuals,
 			costingservice.NewValidator,
 			accountsreceivableservice.New,
+			func(s *accountsreceivableservice.Service) customerledgerports.ARSnapshotReader {
+				return s
+			},
 			detentionbillingservice.New,
 			invoiceshareservice.New,
 			func(s *invoiceshareservice.Service) invoiceports.InvoiceShareService { return s },

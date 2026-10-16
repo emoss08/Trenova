@@ -12,12 +12,23 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
 const maxTitleLength = 200
+
+// DerivedTitleRunes bounds a title worked out from what a conversation was
+// opened with, so the rail shows a name rather than a paragraph.
+const DerivedTitleRunes = 60
+
+// TitleFrom names a conversation from what it was opened with: the first
+// question asked in it, or the request first scheduled in it.
+func TitleFrom(text string) string {
+	return stringutils.Ellipsize(text, DerivedTitleRunes)
+}
 
 // Thread is one person's conversation with one agent.
 //

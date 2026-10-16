@@ -404,7 +404,8 @@ export const Radius: Story = {
             { cls: "rounded-lg", note: "surface" },
             { cls: "rounded-xl", note: "surface" },
             { cls: "rounded-2xl", note: "surface" },
-            { cls: "rounded-full", note: "pill" },
+            { cls: "rounded-badge", note: "label" },
+            { cls: "rounded-full", note: "round" },
           ].map(({ cls, note }) => (
             <div key={cls} className="flex flex-col items-center gap-1.5">
               <div className={`bg-sunken border-border size-16 border ${cls}`} />

@@ -10,7 +10,7 @@ import {
   type IconComponent,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
@@ -210,7 +210,7 @@ const DeckCard = memo(function DeckCard({
           className={cn("flex size-8.5 items-center justify-center rounded-md", look.tile)}
         >
           {Icon === null ? (
-            <NovaMark spin={working ? "always" : "none"} className="size-4" />
+            <NovaBadge size="md" spin={working ? "always" : "none"} />
           ) : (
             <Icon className="size-4" />
           )}
@@ -381,7 +381,7 @@ export function DeckChips({
           disabled={chip.busy}
           onClick={() => onOpen(chip)}
           className={cn(
-            "ui-focus-ring animate-confirm inline-flex h-6.5 items-center gap-1.5 rounded-full px-2.5 text-sm",
+            "ui-focus-ring animate-confirm inline-flex h-6.5 items-center gap-1.5 rounded-badge px-2.5 text-sm",
             chip.busy
               ? "bg-surface-hover text-foreground-muted"
               : "bg-success-subtle text-success-subtle-foreground hover:border-success-border border border-transparent",

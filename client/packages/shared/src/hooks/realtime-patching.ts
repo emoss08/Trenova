@@ -140,8 +140,11 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     ["assistant", "threads"],
   ],
   // A schedule made, paused, resumed, deleted or run: its card's state and
-  // next run move.
-  conversation_schedules: [["assistant", "schedules"]],
+  // next run move, and so does its row on the Desk's Scheduled page.
+  conversation_schedules: [
+    ["assistant", "schedules"],
+    ["assistant", "allSchedules"],
+  ],
   // A message queued, edited, reordered, removed, read by the reply under way
   // or sent as the next one: the conversation's waiting list moves.
   assistant_queue: [["assistant", "queue"]],

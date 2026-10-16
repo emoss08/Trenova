@@ -156,8 +156,8 @@ export function ProgramCardsSkeleton() {
             <Skeleton className="h-2.5 w-12" />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <Skeleton className="h-5 w-20 rounded-full" />
-            <Skeleton className="h-5 w-18 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-badge" />
+            <Skeleton className="h-5 w-18 rounded-badge" />
           </div>
         </div>
       ))}
@@ -216,7 +216,7 @@ export function IndexTableSkeleton() {
                 <Skeleton className="h-3 w-12" />
               </td>
               <td className="px-4 py-2.5">
-                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-badge" />
               </td>
               <td className="px-4 py-2.5">
                 <Skeleton className="h-3 w-12" />
@@ -225,7 +225,7 @@ export function IndexTableSkeleton() {
                 <Skeleton className="h-3 w-16" />
               </td>
               <td className="px-4 py-2.5">
-                <Skeleton className="h-5 w-14 rounded-full" />
+                <Skeleton className="h-5 w-14 rounded-badge" />
               </td>
               <td className="px-4 py-2.5">
                 <div className="flex justify-end gap-1">

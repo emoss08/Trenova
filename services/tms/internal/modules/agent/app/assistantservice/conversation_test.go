@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -385,4 +387,92 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 	}
 	require.Error(t, svc.DeleteThread(t.Context(), agentports.GetThreadRequest{ID: threadID}))
 	assert.Empty(t, refused.expiredThreads, "a delete that did not happen withdraws nothing")
+}
+
+// heldSchedules stands in for the schedule service: the schedules a
+// conversation keeps, whether they were read before it was deleted, and what
+// was forgotten.
+type heldSchedules struct {
+	held       []*conversationschedule.Schedule
+	readErr    error
+	asked      []conversationscheduleports.ThreadSchedulesRequest
+	readBefore bool
+	forgot     []*conversationschedule.Schedule
+	deleted    *bool
+}
+
+func (h *heldSchedules) OfThread(
+	_ context.Context,
+	req conversationscheduleports.ThreadSchedulesRequest,
+) ([]*conversationschedule.Schedule, error) {
+	h.asked = append(h.asked, req)
+	h.readBefore = !*h.deleted
+
+	return h.held, h.readErr
+}
+
+func (h *heldSchedules) Forget(_ context.Context, schedules []*conversationschedule.Schedule) {
+	h.forgot = append(h.forgot, schedules...)
+}
+
+type recordingDelete struct {
+	agentports.ConversationRepository
+
+	err     error
+	deleted bool
+}
+
+func (d *recordingDelete) DeleteThread(context.Context, agentports.GetThreadRequest) error {
+	if d.err != nil {
+		return d.err
+	}
+	d.deleted = true
+
+	return nil
+}
+
+/*
+The requests scheduled in a conversation are deleted with it, by cascade, so
+they are read while there is still something to read, and once the
+conversation is gone their Temporal schedules are removed and their owner's
+tabs told. A delete that did not happen forgets nothing, and one whose
+schedules could not be read still goes through: the reconcile removes what
+is left.
+*/
+func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
+	t.Parallel()
+
+	req := agentports.GetThreadRequest{ID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_")}
+	held := []*conversationschedule.Schedule{
+		{ID: pulid.MustNew("csch_")},
+		{ID: pulid.MustNew("csch_")},
+	}
+
+	conversations := &recordingDelete{}
+	schedules := &heldSchedules{held: held, deleted: &conversations.deleted}
+	svc := &Service{logger: zap.NewNop(), conversations: conversations, schedules: schedules}
+	require.NoError(t, svc.DeleteThread(t.Context(), req))
+	assert.True(t, schedules.readBefore, "the schedules are read before the cascade takes them")
+	require.Len(t, schedules.asked, 1)
+	assert.Equal(t, req.ID, schedules.asked[0].ThreadID)
+	assert.Equal(t, req.UserID, schedules.asked[0].UserID)
+	assert.Equal(t, held, schedules.forgot)
+
+	refused := &recordingDelete{err: errors.New("not yours")}
+	kept := &heldSchedules{held: held, deleted: &refused.deleted}
+	svc = &Service{logger: zap.NewNop(), conversations: refused, schedules: kept}
+	require.Error(t, svc.DeleteThread(t.Context(), req))
+	assert.Empty(t, kept.forgot, "a delete that did not happen forgets no schedule")
+
+	unread := &recordingDelete{}
+	failing := &heldSchedules{readErr: errors.New("unavailable"), deleted: &unread.deleted}
+	svc = &Service{logger: zap.NewNop(), conversations: unread, schedules: failing}
+	require.NoError(t, svc.DeleteThread(t.Context(), req))
+	assert.True(t, unread.deleted, "a failed read does not stop the delete")
+	assert.Empty(t, failing.forgot)
+
+	plain := &recordingDelete{}
+	svc = &Service{logger: zap.NewNop(), conversations: plain}
+	require.NoError(t, svc.DeleteThread(t.Context(), req), "without the schedule service it deletes")
+	assert.True(t, plain.deleted)
 }

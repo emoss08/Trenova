@@ -2,9 +2,11 @@ package watchtower
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,6 +68,20 @@ type Item struct {
 	EscalationLevel int16          `json:"escalationLevel" bun:"escalation_level,type:SMALLINT,notnull,default:0"`
 	LastEscalatedAt *int64         `json:"lastEscalatedAt" bun:"last_escalated_at,type:BIGINT,nullzero"`
 
+	DueLabel  string    `json:"dueLabel"  bun:"due_label,type:VARCHAR(120),nullzero"`
+	DueSource DueSource `json:"dueSource" bun:"due_source,type:VARCHAR(20),nullzero"`
+
+	RecordKind  permission.RecordKind `json:"recordKind"  bun:"record_kind,type:VARCHAR(60),nullzero"`
+	RecordLabel string                `json:"recordLabel" bun:"record_label,type:VARCHAR(200),nullzero"`
+	Facts       []Fact                `json:"facts"       bun:"facts,type:JSONB,notnull,default:'[]'::jsonb"`
+	Impact      []string              `json:"impact"      bun:"impact,type:JSONB,notnull,default:'[]'::jsonb"`
+	Trail       []TrailEvent          `json:"trail"       bun:"trail,type:JSONB,notnull,default:'[]'::jsonb"`
+
+	AgentDefinitionID pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
+	AgentRunID        pulid.ID `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`
+	AgentHandedAt     *int64   `json:"agentHandedAt"     bun:"agent_handed_at,type:BIGINT,nullzero"`
+	AgentHandedByID   pulid.ID `json:"agentHandedById"   bun:"agent_handed_by_id,type:VARCHAR(100),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -75,9 +91,10 @@ type Item struct {
 	Seen bool `json:"seen" bun:"-"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-" bun:"inserted,scanonly"`
+	Inserted bool `json:"-"    bun:"inserted,scanonly"`
 	// Reopened is set by an upsert that brought a resolved item back.
-	Reopened bool `json:"-" bun:"reopened,scanonly"`
+	Reopened  bool `json:"-"    bun:"reopened,scanonly"`
+	Unchanged bool `json:"-"    bun:"-"`
 }
 
 func (i *Item) GetID() pulid.ID { return i.ID }
@@ -111,6 +128,52 @@ func (i *Item) Normalize() {
 	i.Summary = stringutils.Ellipsize(i.Summary, maxSummaryLength)
 	i.SourceID = strings.TrimSpace(i.SourceID)
 	i.Path = strings.TrimSpace(i.Path)
+	i.DueLabel = NormalizeDueLabel(i.DueLabel)
+	i.RecordLabel = NormalizeRecordLabel(i.RecordLabel)
+	i.Facts = NormalizeFacts(i.Facts)
+	i.Impact = NormalizeImpact(i.Impact)
+	i.Trail = NormalizeTrail(i.Trail)
+}
+
+func (i *Item) ApplyDeadline(deadline *Deadline) {
+	if deadline == nil || deadline.At <= 0 {
+		return
+	}
+	at := deadline.At
+	i.DueAt = &at
+	i.DueLabel = NormalizeDueLabel(deadline.Label)
+	i.DueSource = DueSourceSource
+}
+
+func (i *Item) SameDescription(other *Item) bool {
+	return i.Title == other.Title &&
+		i.Summary == other.Summary &&
+		i.SubjectType == other.SubjectType &&
+		i.SubjectID == other.SubjectID &&
+		i.EventKind == other.EventKind &&
+		i.Path == other.Path &&
+		i.RecordKind == other.RecordKind &&
+		i.RecordLabel == other.RecordLabel &&
+		slices.Equal(i.Facts, other.Facts) &&
+		slices.Equal(i.Impact, other.Impact) &&
+		slices.Equal(i.Trail, other.Trail)
+}
+
+func (i *Item) SameDeadline(other *Item) bool {
+	return i.DueLabel == other.DueLabel &&
+		i.DueSource == other.DueSource &&
+		((i.DueAt == nil && other.DueAt == nil) ||
+			(i.DueAt != nil && other.DueAt != nil && *i.DueAt == *other.DueAt))
+}
+
+func (i *Item) ResolvedRecordKind() permission.RecordKind {
+	if i.RecordKind != "" {
+		return i.RecordKind
+	}
+	if kind, ok := i.SubjectType.RecordKind(); ok {
+		return kind
+	}
+	return ""
 }
 
 func (i *Item) Validate(multiErr *errortypes.MultiError) {
@@ -164,6 +227,19 @@ func (i *Item) Validate(multiErr *errortypes.MultiError) {
 	if i.ResolutionCode != "" && !i.ResolutionCode.IsValid() {
 		multiErr.Add("resolutionCode", errortypes.ErrInvalid, "Resolution code is invalid")
 	}
+	if i.DueSource != "" && !i.DueSource.IsValid() {
+		multiErr.Add("dueSource", errortypes.ErrInvalid, "Due source is invalid")
+	}
+	if i.DueLabel != "" && i.DueSource != DueSourceSource {
+		multiErr.Add(
+			"dueLabel",
+			errortypes.ErrInvalid,
+			"Only a deadline the source reports carries a label",
+		)
+	}
+	if i.RecordKind != "" && !i.RecordKind.Known() {
+		multiErr.Add("recordKind", errortypes.ErrInvalid, "Record kind is invalid")
+	}
 }
 
 // Cursor is where one reader's eye last was: items that occurred after
@@ -182,4 +258,14 @@ func (c *Cursor) BeforeAppendModel(_ context.Context, _ bun.Query) error {
 	c.UpdatedAt = timeutils.NowUnix()
 
 	return nil
+}
+
+type Read struct {
+	bun.BaseModel `bun:"table:watchtower_item_reads,alias:wtr" json:"-"`
+
+	ItemID         pulid.ID `json:"itemId"         bun:"item_id,pk,type:VARCHAR(100),notnull"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	SeenAt         int64    `json:"seenAt"         bun:"seen_at,type:BIGINT,notnull"`
 }

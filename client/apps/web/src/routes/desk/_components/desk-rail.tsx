@@ -1,5 +1,7 @@
 "use no memo";
 import logo from "@/assets/logo.webp";
+import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
+import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
@@ -8,6 +10,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useMemo, useState } from "react";
@@ -26,7 +29,14 @@ import { DeskRailList } from "./desk-rail-list";
 import { DeskRailThreadRow, type DeskRailRowActions } from "./desk-rail-row";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
-export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread" | "agent";
+export type DeskPlace =
+  | "today"
+  | "watchtower"
+  | "decisions"
+  | "scheduled"
+  | "memory"
+  | "thread"
+  | "agent";
 
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
@@ -66,13 +76,13 @@ export type DeskRailProps = {
 
 /**
  * The Desk's rail: the logo, search and a new conversation across the top,
- * the three places, then every conversation shelved by when it was last
+ * the Desk's places, then every conversation shelved by when it was last
  * touched. Each shelf folds away from its heading, and a folded shelf reads
  * nothing more. Each conversation is one line
  * with a dot that says what it is waiting on, and the current place sits on
  * a raised card that slides to whatever is chosen. Pin and delete come
- * forward on hover in place of the time; delete asks once more, inline,
- * before it acts.
+ * forward on hover in place of the time; delete asks first, in a dialog, only
+ * for a conversation with scheduled requests, which go with it.
  *
  * Only the rows near the viewport are mounted, and each open shelf's next
  * page is read as the reader nears the end of what is loaded, so a rail of
@@ -103,7 +113,6 @@ export function DeskRail({
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(NO_IDS);
 
   const toggleShelf = useDeskSettingsStore((state) => state.toggleShelf);
@@ -133,11 +142,21 @@ export function DeskRail({
         ? "n:watch"
         : place === "decisions"
           ? "n:dec"
-          : place === "memory"
-            ? "n:memory"
-            : place === "agent"
-              ? "n:agent"
-              : "n:today";
+          : place === "scheduled"
+            ? "n:sched"
+            : place === "memory"
+              ? "n:memory"
+              : place === "agent"
+                ? "n:agent"
+                : "n:today";
+
+  // A conversation with schedules asks before it goes; any other slides out
+  // at once.
+  const deletion = useDeleteConversation((thread) => {
+    setLeaving((current) => new Set(current).add(thread.id));
+    window.setTimeout(() => onDelete(thread), ROW_LEAVE_MS);
+  });
+  const askDelete = useLatestCallback(deletion.ask);
 
   // One object for every row, kept while what it calls stays the same, so a
   // row re-renders only when its own conversation or state changes.
@@ -145,15 +164,9 @@ export function DeskRail({
     () => ({
       open: (thread) => void navigate(conversationPath(thread.id)),
       setPinned: onSetPinned,
-      confirmDelete: setConfirming,
-      cancelDelete: () => setConfirming(null),
-      remove: (thread) => {
-        setConfirming(null);
-        setLeaving((current) => new Set(current).add(thread.id));
-        window.setTimeout(() => onDelete(thread), ROW_LEAVE_MS);
-      },
+      askDelete,
     }),
-    [navigate, onDelete, onSetPinned],
+    [askDelete, navigate, onSetPinned],
   );
 
   const renderRow = (row: DeskRailRow) => {
@@ -180,7 +193,6 @@ export function DeskRail({
             agentName={agentsById.get(thread.agentDefinitionId)?.name ?? null}
             live={liveThreadIds.has(thread.id)}
             active={thread.id === activeThreadId && place === "thread"}
-            confirming={confirming === thread.id}
             leaving={leaving.has(thread.id)}
             today={today}
             timezone={timezone}
@@ -292,6 +304,16 @@ export function DeskRail({
             <Button
               variant="bare"
               size="bare"
+              data-k="n:sched"
+              className={cn(NAV_ITEM_CLASS, activeKey === "n:sched" && NAV_ITEM_ON_CLASS)}
+              onClick={() => void navigate("/desk/scheduled")}
+            >
+              <DeskIcon name="clock" size={14} />
+              <span className={NAV_LABEL_CLASS}>{t("Scheduled")}</span>
+            </Button>
+            <Button
+              variant="bare"
+              size="bare"
               data-k="n:memory"
               className={cn(NAV_ITEM_CLASS, activeKey === "n:memory" && NAV_ITEM_ON_CLASS)}
               onClick={() => void navigate("/desk/memory")}
@@ -345,6 +367,11 @@ export function DeskRail({
           <img className="dk-sb-bk-l" src={logo} alt="" />
         </Button>
       </div>
+      <DeleteConversationCard
+        thread={deletion.asking}
+        onConfirm={deletion.confirm}
+        onClose={deletion.cancel}
+      />
     </aside>
   );
 }

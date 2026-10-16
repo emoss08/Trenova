@@ -62,6 +62,7 @@ type CountWatchtowerItemsRequest struct {
 	Kinds      []watchtower.SourceKind
 	SeenAt     int64
 	AssigneeID pulid.ID
+	ReaderID   pulid.ID
 	Now        int64
 }
 
@@ -73,6 +74,8 @@ type WatchtowerKindCount struct {
 type WatchtowerCountsRow struct {
 	Unresolved     int
 	Critical       int
+	Active         int
+	ActiveCritical int
 	UnseenCritical int
 	Unseen         int
 	Overdue        int
@@ -99,6 +102,7 @@ type ListAttentionWatchtowerItemsRequest struct {
 	Now                int64
 	Limit              int
 	BelowEscalationCap int16
+	EscalateEvery      int64
 }
 
 type GetWatchtowerItemRequest struct {
@@ -113,6 +117,19 @@ type GetWatchtowerCursorRequest struct {
 
 // DeleteResolvedWatchtowerItemsRequest removes items resolved before a
 // cut-off, a batch at a time, across every tenant.
+type ListWatchtowerReadsRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	ItemIDs    []pulid.ID
+}
+
+type CountClearedWatchtowerItemsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Kinds      []watchtower.SourceKind
+	UserID     pulid.ID
+	Since      int64
+}
+
 type DeleteResolvedWatchtowerItemsRequest struct {
 	Before int64
 	Limit  int
@@ -143,6 +160,12 @@ type WatchtowerRepository interface {
 	List(ctx context.Context, req ListWatchtowerItemsQuery) ([]*watchtower.Item, error)
 	Counts(ctx context.Context, req CountWatchtowerItemsRequest) (*WatchtowerCountsRow, error)
 	GetCursor(ctx context.Context, req GetWatchtowerCursorRequest) (*watchtower.Cursor, error)
+	MarkRead(ctx context.Context, read *watchtower.Read) error
+	ListReadItemIDs(
+		ctx context.Context,
+		req ListWatchtowerReadsRequest,
+	) (map[pulid.ID]struct{}, error)
+	CountCleared(ctx context.Context, req CountClearedWatchtowerItemsRequest) (int, error)
 	SetCursor(ctx context.Context, cursor *watchtower.Cursor) (*watchtower.Cursor, error)
 	DeleteResolvedBefore(ctx context.Context, req DeleteResolvedWatchtowerItemsRequest) (int, error)
 }

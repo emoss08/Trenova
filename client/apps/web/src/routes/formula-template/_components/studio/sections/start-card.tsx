@@ -1,7 +1,7 @@
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -156,7 +156,7 @@ export function StartCard() {
         )}
         disabled={novaBusy}
         className="h-9 pr-22 pl-8"
-        leftElement={<NovaMark spin={novaBusy ? "always" : "none"} className="size-4" />}
+        leftElement={<NovaBadge size="md" spin={novaBusy ? "always" : "none"} />}
         rightElement={
           <Button type="button" size="sm" disabled={!question.trim() || novaBusy} onClick={draft}>
             {t("Draft it")}

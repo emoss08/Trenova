@@ -3142,6 +3142,11 @@ writes:
   "mutation markWatchtowerSeen":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation markWatchtowerItemSeen":
+    exempt: user-preference
+    reason: "Records that a person opened an item so it stops showing as new to them; it changes nothing anyone else sees."
+  "mutation wakeWatchtowerItem":
+    pending: "Bring a snoozed exception back before its time, the counterpart of snooze_exception."
 
   # worker
   "POST /api/v1/workers/":

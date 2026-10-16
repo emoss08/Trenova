@@ -42,6 +42,11 @@ type ListAgentDefinitionsByTriggerRequest struct {
 	EventKind  agent.EventKind
 }
 
+type ListAgentDefinitionsForEventsRequest struct {
+	TenantInfo pagination.TenantInfo
+	EventKinds []agent.EventKind
+}
+
 type ListDueAgentDefinitionsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Now        int64
@@ -127,6 +132,10 @@ type AgentDefinitionRepository interface {
 		ctx context.Context,
 		req ListAgentDefinitionsByTriggerRequest,
 	) ([]*agentdefinition.Definition, error)
+	ListEnabledForEvents(
+		ctx context.Context,
+		req ListAgentDefinitionsForEventsRequest,
+	) ([]*agentdefinition.Definition, error)
 	ListDue(
 		ctx context.Context,
 		req ListDueAgentDefinitionsRequest,
@@ -148,7 +157,11 @@ type AgentDefinitionRepository interface {
 	SetToolTier(ctx context.Context, req SetAgentDefinitionToolTierRequest) error
 	SetAccessMode(ctx context.Context, req SetAgentDefinitionAccessModeRequest) error
 	SetUnattendedRole(ctx context.Context, req SetAgentDefinitionUnattendedRoleRequest) error
-	UnattendedRoleID(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (pulid.ID, error)
+	UnattendedRoleID(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		id pulid.ID,
+	) (pulid.ID, error)
 	Delete(ctx context.Context, req DeleteAgentDefinitionRequest) error
 	StatsByIDs(
 		ctx context.Context,

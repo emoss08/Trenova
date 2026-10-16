@@ -10,6 +10,7 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
+import { watchtower } from "@/lib/queries/watchtower";
 import type { AssistantThread } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
@@ -22,6 +23,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
 export type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
@@ -51,6 +53,9 @@ function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string
  * The Desk's front page: the date, a greeting, one line on what the day holds,
  * and the box you talk into, centred in the room and nothing else.
  *
+ * Under the box, when anything on the Watchtower is critical, one quiet link
+ * says how many and lands on the first of them.
+ *
  * The line under the greeting is the morning briefing's headline when one was
  * written — every figure in it was checked against the facts it was written
  * from — and otherwise a sentence composed from counts, never from a model.
@@ -67,6 +72,9 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     Operation.Read,
   );
   const { data: attention } = useAttentionSummary();
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
+  const watchtowerCounts = useQuery({ ...watchtower.counts(), enabled: canWatch });
+  const critical = watchtowerCounts.data?.activeCritical ?? 0;
   const briefingQuery = useQuery({ ...briefingQueries.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
@@ -116,6 +124,18 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
             pending={headlinePending}
           />
           <DeskHomeComposer ask={ask} isStarting={isStarting} />
+          {canWatch && critical > 0 && (
+            <Link
+              to="/desk/watchtower?severities=Critical"
+              className="ui-focus-ring mx-auto mt-4 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-dsk-muted transition-colors hover:text-dsk-fg"
+            >
+              <span aria-hidden className="size-1.5 rounded-full bg-danger" />
+              {t(
+                "{0, plural, one {# critical in Watchtower} other {# critical in Watchtower}}",
+                critical,
+              )}
+            </Link>
+          )}
         </div>
       </div>
     </div>

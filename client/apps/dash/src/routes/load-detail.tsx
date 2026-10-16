@@ -43,7 +43,7 @@ function CopyChip({ label, value }: { label: string; value: string }) {
     <button
       type="button"
       onClick={() => void handleCopy()}
-      className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
+      className="flex items-center gap-1.5 rounded-badge border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
     >
       {copied ? (
         <CheckIcon className="size-3 text-success-foreground" />
@@ -162,7 +162,7 @@ export function DashLoadDetailPage() {
               href={directionsUrl(nextStop)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
+              className="flex items-center gap-1.5 rounded-badge bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
             >
               <NavigationPointer01Icon className="size-3" />
               {t("Next stop")}

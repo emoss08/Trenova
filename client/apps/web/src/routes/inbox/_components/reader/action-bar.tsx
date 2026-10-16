@@ -26,7 +26,7 @@ import { novaButtonClass } from "@trenova/shared/lib/variants/nova";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { USER_FORMATTERS, actionCopy, ruleActionPhrase } from "../action-copy";
-import { tomorrowMorning } from "../snooze-times";
+import { tomorrowMorning } from "@/lib/snooze-presets";
 import { useTriageActions } from "../use-triage-actions";
 import {
   actionBarMode,
@@ -396,7 +396,7 @@ export function ActionBar({
       <>
         <span
           className={cn(
-            "bg-surface-hover text-foreground-muted inline-flex h-5.5 shrink-0 items-baseline rounded-full px-1.75 font-mono text-xs leading-5.5 tabular-nums",
+            "bg-surface-hover text-foreground-muted inline-flex h-5.5 shrink-0 items-baseline rounded-badge px-1.75 font-mono text-xs leading-5.5 tabular-nums",
             mode.busy && "animate-breathe",
           )}
         >

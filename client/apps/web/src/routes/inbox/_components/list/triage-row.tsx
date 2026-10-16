@@ -347,7 +347,7 @@ export const TriageRow = memo(function TriageRow({
             </Badge>
           )}
           {message.threadCount > 1 && (
-            <span className="bg-surface-hover text-foreground-subtle shrink-0 rounded-full px-1.5 font-mono text-2xs tabular-nums">
+            <span className="bg-surface-hover text-foreground-subtle shrink-0 rounded-badge px-1.5 font-mono text-2xs tabular-nums">
               {message.threadCount}
             </span>
           )}

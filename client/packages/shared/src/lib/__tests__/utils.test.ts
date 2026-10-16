@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chunk,
+  limitUtf8Bytes,
   downloadJsonFile,
   downloadTextFile,
   filenameFromDisposition,
@@ -409,5 +410,16 @@ describe("filenameFromDisposition", () => {
     expect(filenameFromDisposition(null, "fallback.pdf")).toBe("fallback.pdf");
     expect(filenameFromDisposition("attachment", "fallback.pdf")).toBe("fallback.pdf");
     expect(filenameFromDisposition("attachment; filename*=utf-8''%E0%A4%A", "f.pdf")).toBe("f.pdf");
+  });
+});
+
+describe("limitUtf8Bytes", () => {
+  it("keeps text that fits and cuts the rest between whole characters", () => {
+    expect(limitUtf8Bytes("Northline Foods", 80)).toBe("Northline Foods");
+    expect(limitUtf8Bytes("abcdef", 4)).toBe("abcd");
+    expect(limitUtf8Bytes("瞭望台佇列", 7)).toBe("瞭望");
+    expect(new TextEncoder().encode(limitUtf8Bytes("é".repeat(100), 61)).length).toBe(60);
+    expect(limitUtf8Bytes("a😀b", 4)).toBe("a");
+    expect(limitUtf8Bytes("abc", 0)).toBe("");
   });
 });

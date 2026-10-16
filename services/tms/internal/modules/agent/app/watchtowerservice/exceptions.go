@@ -404,6 +404,27 @@ func (s *Exceptions) ReopenException(
 	})
 }
 
+func (s *Exceptions) UnsnoozeException(
+	ctx context.Context,
+	req *watchtowerports.UnsnoozeExceptionRequest,
+	actor *permissionports.RequestActor,
+) (*watchtower.Item, error) {
+	return s.applyException(ctx, &exceptionChange{
+		target: &req.ExceptionTarget,
+		actor:  actor,
+		mutate: func(item *watchtower.Item, _ int64) ([]*watchtower.Event, error) {
+			until := formatOptionalTime(item.SnoozedUntil)
+			if err := item.Unsnooze(); err != nil {
+				return nil, err
+			}
+			return []*watchtower.Event{
+				watchtower.NewEvent(item, watchtower.EventWoke, actorUserID(actor)).
+					WithChange(until, item.Status.String()),
+			}, nil
+		},
+	})
+}
+
 func (s *Exceptions) ExceptionHistory(
 	ctx context.Context,
 	req *watchtowerports.ExceptionHistoryRequest,
@@ -483,6 +504,9 @@ func exceptionState(item *watchtower.Item) map[string]any {
 		"resolvedById":    item.ResolvedByID,
 		"resolvedAt":      item.ResolvedAt,
 		"escalationLevel": item.EscalationLevel,
+		"dueSource":       item.DueSource,
+		"agentId":         item.AgentDefinitionID,
+		"agentRunId":      item.AgentRunID,
 	})
 }
 
@@ -498,8 +522,13 @@ func (s *Exceptions) applyDuePolicy(ctx context.Context, item *watchtower.Item, 
 		OrgID: item.OrganizationID,
 		BuID:  item.BusinessUnitID,
 	})
+	if item.DueSource == watchtower.DueSourceSource && item.DueAt != nil {
+		return
+	}
 	due := DueAt(policy, item.Severity, now)
 	item.DueAt = &due
+	item.DueLabel = ""
+	item.DueSource = watchtower.DueSourcePolicy
 }
 
 func (s *Exceptions) notifyAssignee(

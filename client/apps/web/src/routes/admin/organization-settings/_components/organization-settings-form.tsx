@@ -139,7 +139,7 @@ function OrganizationSettingsTabs({ organizationId }: { organizationId: string }
     <Tabs
       value={tab}
       onValueChange={(value) => void setTab(value as OrganizationSettingsTabValue)}
-      className="gap-1 px-4"
+      className="gap-4"
     >
       <TabsList variant="underline">
         <TabsTab value="general">

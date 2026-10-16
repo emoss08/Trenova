@@ -281,7 +281,7 @@ export function AdvancedSection({ index }: SectionProps) {
               </div>
               <div className="flex items-center gap-2">
                 {enabledCount > 0 ? (
-                  <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+                  <span className="bg-muted text-foreground rounded-badge px-2 py-0.5 text-xs font-medium">
                     {t("{0} enabled", enabledCount)}
                   </span>
                 ) : null}

@@ -86,7 +86,7 @@ export function ByAgentSkeleton() {
       <div className="tb" aria-hidden>
         <div className="pk">
           {CHIP_WIDTHS.slice(0, picked).map((width, index) => (
-            <SkBlock key={index} w={width} h={28} r="full" />
+            <SkBlock key={index} w={width} h={28} r={4} />
           ))}
           {picked < MAX_COMPARED_AGENTS && <SkBlock w={picked > 0 ? 132 : 112} h={28} />}
         </div>

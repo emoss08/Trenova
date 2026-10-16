@@ -25,8 +25,8 @@ const STATUS_TONE: Record<ShipmentStatus, PinTone | null> = {
 
 export function ShipmentRouteOverlay({ enabled = true }: { enabled?: boolean }) {
   const { data } = useMapShipments(enabled);
-  const highlightId = useShipmentBoardStore.use.highlightId();
-  const setHighlightId = useShipmentBoardStore.use.setHighlightId();
+  const highlightId = useShipmentBoardStore((s) => s.highlightId);
+  const setHighlightId = useShipmentBoardStore((s) => s.setHighlightId);
   const [, setUrl] = useShipmentBoardUrl();
 
   const shipments = data?.results ?? [];

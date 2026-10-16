@@ -107,7 +107,7 @@ function ReasonForm({
               aria-pressed={chosen}
               onClick={() => setReasons((current) => toggleReason(current, option.value))}
               className={cn(
-                "ui-focus-ring ui-press border-border text-foreground-muted flex h-6 items-center rounded-full border px-2.5 text-xs transition-colors",
+                "ui-focus-ring ui-press border-border text-foreground-muted flex h-6 items-center rounded-badge border px-2.5 text-xs transition-colors",
                 "hover:bg-surface-hover hover:text-foreground",
                 "aria-pressed:border-border-strong aria-pressed:bg-surface-selected aria-pressed:text-foreground",
               )}

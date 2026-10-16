@@ -9,6 +9,19 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/graphql/accounts-receivable", () => ({
+  fetchAccountingBriefing: vi.fn().mockResolvedValue({
+    segments: [
+      {
+        text: "Nothing is owed to you and no cash is waiting to be applied.",
+        link: null,
+        customerId: null,
+      },
+    ],
+    actions: [],
+    narrated: false,
+    generatedAt: 1_757_000_000,
+    generation: 1,
+  }),
   fetchArDashboardKpis: mocks.fetchArDashboardKpis,
   fetchArDsoTrend: mocks.fetchArDsoTrend,
   fetchArAgingTrend: vi.fn().mockResolvedValue([]),
@@ -91,6 +104,22 @@ describe("accounting dashboard empty state", () => {
 
     expect(await screen.findByText("AR outstanding")).toBeInTheDocument();
     expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
+  });
+
+  it("leads a dashboard with history with the day's brief", async () => {
+    mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(
+      await screen.findByText(/Nothing is owed to you and no cash is waiting to be applied\./),
+    ).toBeInTheDocument();
+  });
+
+  it("does not brief a book that has never invoiced", async () => {
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Accounting brief" })).not.toBeInTheDocument();
   });
 
   it("keeps the dashboard while an invoice is open", async () => {

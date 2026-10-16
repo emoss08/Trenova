@@ -42,7 +42,7 @@ function replyTime(t: TranslateFn, minutes: number): string {
 
 function Chip({ children }: { children: string }) {
   return (
-    <span className="bg-surface-hover text-foreground-muted inline-flex h-5.5 items-center rounded-full px-2 text-xs">
+    <span className="bg-surface-hover text-foreground-muted inline-flex h-5.5 items-center rounded-badge px-2 text-xs">
       {children}
     </span>
   );

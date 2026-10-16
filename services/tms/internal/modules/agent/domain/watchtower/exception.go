@@ -170,15 +170,26 @@ const (
 	EventReopened       = EventKind("Reopened")
 	EventSourceResolved = EventKind("SourceResolved")
 	EventSourceReopened = EventKind("SourceReopened")
+	EventHandedOff      = EventKind("HandedOff")
 )
 
 func (k EventKind) String() string { return string(k) }
+
+func AllEventKinds() []EventKind {
+	return []EventKind{
+		EventCreated, EventAssigned, EventUnassigned, EventAcknowledged, EventStarted,
+		EventSnoozed, EventWoke, EventDueChanged, EventCommented, EventEscalated,
+		EventResolved, EventReopened, EventSourceResolved, EventSourceReopened,
+		EventHandedOff,
+	}
+}
 
 func (k EventKind) IsValid() bool {
 	switch k {
 	case EventCreated, EventAssigned, EventUnassigned, EventAcknowledged, EventStarted,
 		EventSnoozed, EventWoke, EventDueChanged, EventCommented, EventEscalated,
-		EventResolved, EventReopened, EventSourceResolved, EventSourceReopened:
+		EventResolved, EventReopened, EventSourceResolved, EventSourceReopened,
+		EventHandedOff:
 		return true
 	default:
 		return false
@@ -323,6 +334,16 @@ func (i *Item) Wake() bool {
 	return true
 }
 
+func (i *Item) Unsnooze() error {
+	if err := i.requireOpen(); err != nil {
+		return err
+	}
+	if !i.Wake() {
+		return errortypes.NewBusinessError("This exception is not snoozed")
+	}
+	return nil
+}
+
 func (i *Item) SetDue(dueAt *int64, now int64) error {
 	if err := i.requireOpen(); err != nil {
 		return err
@@ -344,6 +365,8 @@ func (i *Item) SetDue(dueAt *int64, now int64) error {
 		}
 	}
 	i.DueAt = dueAt
+	i.DueLabel = ""
+	i.DueSource = DueSourcePerson
 	return nil
 }
 

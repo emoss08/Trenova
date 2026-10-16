@@ -22,12 +22,12 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute top-2 left-1/2 z-30 -translate-x-1/2"
         >
-          <div className="border-border bg-popover flex items-center gap-0.5 rounded-full border py-0.5 pr-0.5 pl-1">
+          <div className="border-border bg-popover flex items-center gap-0.5 rounded-badge border py-0.5 pr-0.5 pl-1">
             <Button
               type="button"
               variant="ghost"
               size="xs"
-              className="h-6 gap-1.5 rounded-full px-2 text-xs"
+              className="h-6 gap-1.5 rounded-badge px-2 text-xs"
               onClick={onRefresh}
             >
               <RefreshCw02Icon className="size-3" />

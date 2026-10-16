@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -8,13 +7,14 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { SectionPanel } from "@/components/section-panel";
 import { ar } from "@/lib/queries/ar";
 import { formatCompactCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { ChartBodySkeleton, PanelChartBody, PanelQuiet } from "./dashboard-panel";
 
 const cashFlowChartConfig = {
   actual: {
@@ -65,20 +65,20 @@ export function CashFlowForecastCard() {
   }, [points]);
 
   return (
-    <Card className="gap-0 p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{t("Cash-flow forecast — 90 days")}</CardTitle>
-        <span className="text-muted-foreground text-xs">{t("weekly, collected vs due")}</span>
-      </CardHeader>
-      <CardContent className="p-4">
-        {isLoading ? (
-          <Skeleton className="h-56 w-full" />
-        ) : chartData.length === 0 ? (
-          <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-            {t("No receivables activity yet")}
-          </div>
-        ) : (
-          <ChartContainer config={cashFlowChartConfig} className="h-56 w-full">
+    <SectionPanel
+      title={t("Cash-flow forecast")}
+      hint={t("90 days, weekly")}
+      help={t(
+        "Collected cash against what fell due each week, then the open balance by the week it is due. Factor advances and reserve releases appear once a factor holds any of it.",
+      )}
+    >
+      {isLoading ? (
+        <ChartBodySkeleton label={t("Loading the cash-flow forecast")} />
+      ) : chartData.length === 0 ? (
+        <PanelQuiet>{t("No receivables activity yet")}</PanelQuiet>
+      ) : (
+        <PanelChartBody>
+          <ChartContainer config={cashFlowChartConfig} className="h-full w-full">
             <AreaChart data={chartData} margin={{ left: 4, right: 12, top: 8 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
@@ -103,7 +103,7 @@ export function CashFlowForecastCard() {
                   strokeDasharray="4 4"
                   strokeOpacity={0.5}
                   label={{
-                    value: "now",
+                    value: t("now"),
                     position: "insideTopLeft",
                     fontSize: 10,
                     fill: "var(--muted-foreground)",
@@ -160,8 +160,8 @@ export function CashFlowForecastCard() {
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
           </ChartContainer>
-        )}
-      </CardContent>
-    </Card>
+        </PanelChartBody>
+      )}
+    </SectionPanel>
   );
 }

@@ -139,7 +139,8 @@ of sight, a bulk outcome, or a result that carries its next step (Undo, Download
   declares a lifecycle phase and the tone follows.
 - Sentence-case labels, no uppercase tracking. Weights mean something: 400 body, 500 label,
   600 heading; a value in a cell takes no weight class.
-- Icons from `@trenova/shared/components/icons` only. Machine suggestions wear `AssistMark`.
+- Icons from `@trenova/shared/components/icons` only. Machine suggestions wear `AssistMark`;
+  anything that names Nova wears `NovaBadge` with a `size`, never a hand-drawn ring.
 - Figures are `KpiStrip`, titled blocks `SectionPanel`, read-only detail `DescriptionList`,
   callouts `<Alert size="sm">`.
 - Code is shown with `HighlightedCode`, markdown with `AiMarkdown`, PDFs with `PdfFrame`.
@@ -168,6 +169,11 @@ rest of the app stays fast only if each page brings only what it uses.
   speed. A component that reads a mutable external object (TanStack Virtual, a store mutated
   in place) starts with `"use no memo"`. Tests whose behaviour depends on the compiler are
   named `*.compiled.test.tsx`.
+- A hook is called by a name the compiler reads as a hook (`useX(...)`, `X.useY(...)`,
+  `X.use(...)`). A zustand store is read as `useXStore((s) => s.field)`; a hook reached
+  through any other property name (the old `createSelectors` `store.use.field()`) is cached
+  as a plain call, runs only on the first render, and shifts every hook after it — the
+  dispatch console crashed with "reading 'next'" on its second render.
 - Side effects live in effects, not in render or `useMemo`. Object URLs come from
   `useObjectUrl`, which survives StrictMode's double mount; a `useMemo` that creates one and an
   effect that revokes it leaves a revoked URL in use.
