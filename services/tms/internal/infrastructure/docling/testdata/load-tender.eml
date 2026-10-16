@@ -1,0 +1,37 @@
+From: Dana Whitfield <dana@northwind-freight.example>
+To: dispatch@blueridge-transport.example
+Subject: Load tender RC-48213 Fresno CA to Reno NV
+Date: Tue, 20 Oct 2026 15:30:00 +0000
+Message-ID: <tender-rc48213@northwind-freight.example>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7273624124845048789=="
+
+--===============7273624124845048789==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hi team,
+
+Please confirm load RC-48213.
+
+Pickup: Harvest Foods DC, Fresno, CA on 10/21/2026 08:00-12:00
+Delivery: Valley Grocers #14, Reno, NV on 10/22/2026 06:00-10:00
+Rate: $2,062.75 all in
+
+Thanks,
+Dana
+
+--===============7273624124845048789==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hi team,</p><p>Please confirm load <b>RC-48213</b>.</p><table =
+border=3D'1'><tr><th>Stop</th><th>Location</th><th>Date</th><th>Window</th></=
+tr><tr><td>Pickup</td><td>Harvest Foods DC, Fresno, CA</td><td>10/21/2026</td=
+><td>08:00-12:00</td></tr><tr><td>Delivery</td><td>Valley Grocers #14, Reno, =
+NV</td><td>10/22/2026</td><td>06:00-10:00</td></tr></table><p>Rate: $2,062.75=
+ all in</p><p>Thanks,<br>Dana</p></body></html>
+
+--===============7273624124845048789==--

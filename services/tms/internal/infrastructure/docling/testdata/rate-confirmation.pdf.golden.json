@@ -1,0 +1,460 @@
+[
+  {
+    "Number": 1,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 612,
+    "Height": 792,
+    "Text": "Northwind Freight Brokerage LLC\nLoad # RC-48213\nMC 900123 | 1200 Harbor Way, Oakland, CA 94607\nPage 1 of 2\nCarrier Rate Confirmation\nCarrier: Blue Ridge Transport Inc. (MC 711204, DOT 2290431)\nDispatcher: Dana Whitfield, (555) 014-2290\nEquipment: 53' Dry Van | Weight: 38,450 lbs | Commodity: Packaged snacks\nStops\n#   Type   Facility   Address   Date   Window   Ref\n1   Pickup   Harvest Foods DC   4410 Industrial Pkwy, Fresno, CA 93725   10/21/2026   08:00-12:00   PU 77120\n2   Delivery   Valley Grocers #14   88 Commerce Dr, Reno, NV 89502   10/22/2026   06:00-10:00   PO 55318\nCharges\nDescription   Qty   Rate   Amount\nLine haul   1   $1,850.00\nFuel surcharge   1   $212.75\nDetention (after 2 hrs)   0   $50.00/hr   $0.00\nTotal   $2,062.75\nTerms and conditions\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nCarrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is",
+    "Markdown": "\u003c!-- page header --\u003e\nNorthwind Freight Brokerage LLC\nLoad # RC-48213\nMC 900123 | 1200 Harbor Way, Oakland, CA 94607\nPage 1 of 2\n\n## Carrier Rate Confirmation\n\nCarrier: Blue Ridge Transport Inc. (MC 711204, DOT 2290431)\n\nDispatcher: Dana Whitfield, (555) 014-2290\n\nEquipment: 53' Dry Van | Weight: 38,450 lbs | Commodity: Packaged snacks\n\n## Stops\n\n| # | Type | Facility | Address | Date | Window | Ref |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | Pickup | Harvest Foods DC | 4410 Industrial Pkwy, Fresno, CA 93725 | 10/21/2026 | 08:00-12:00 | PU 77120 |\n| 2 | Delivery | Valley Grocers #14 | 88 Commerce Dr, Reno, NV 89502 | 10/22/2026 | 06:00-10:00 | PO 55318 |\n\n## Charges\n\n| Description | Qty | Rate | Amount |\n| --- | --- | --- | --- |\n| Line haul | 1 | $1,850.00 | $1,850.00 |\n| Fuel surcharge | 1 | $212.75 | $212.75 |\n| Detention (after 2 hrs) | 0 | $50.00/hr | $0.00 |\n| Total |  |  | $2,062.75 |\n\n## Terms and conditions\n\n1. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n2. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n3. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n4. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n5. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n6. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is",
+    "Lines": [
+      {
+        "Text": "#",
+        "X": 0.098,
+        "Y": 0.2374,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "Type",
+        "X": 0.1333,
+        "Y": 0.2374,
+        "W": 0.0305,
+        "H": 0.0093
+      },
+      {
+        "Text": "Facility",
+        "X": 0.2157,
+        "Y": 0.2374,
+        "W": 0.045,
+        "H": 0.0093
+      },
+      {
+        "Text": "Address",
+        "X": 0.3686,
+        "Y": 0.2374,
+        "W": 0.0523,
+        "H": 0.0093
+      },
+      {
+        "Text": "Date",
+        "X": 0.6275,
+        "Y": 0.2374,
+        "W": 0.0283,
+        "H": 0.0093
+      },
+      {
+        "Text": "Window",
+        "X": 0.7216,
+        "Y": 0.2374,
+        "W": 0.0501,
+        "H": 0.0093
+      },
+      {
+        "Text": "Ref",
+        "X": 0.8275,
+        "Y": 0.2374,
+        "W": 0.0211,
+        "H": 0.0093
+      },
+      {
+        "Text": "1",
+        "X": 0.098,
+        "Y": 0.2602,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "Pickup",
+        "X": 0.1333,
+        "Y": 0.2602,
+        "W": 0.0392,
+        "H": 0.0093
+      },
+      {
+        "Text": "Harvest Foods DC",
+        "X": 0.2157,
+        "Y": 0.2602,
+        "W": 0.1075,
+        "H": 0.0093
+      },
+      {
+        "Text": "4410 Industrial Pkwy, Fresno, CA 93725",
+        "X": 0.3686,
+        "Y": 0.2602,
+        "W": 0.2339,
+        "H": 0.0093
+      },
+      {
+        "Text": "10/21/2026",
+        "X": 0.6275,
+        "Y": 0.2602,
+        "W": 0.0654,
+        "H": 0.0093
+      },
+      {
+        "Text": "08:00-12:00",
+        "X": 0.7216,
+        "Y": 0.2602,
+        "W": 0.0698,
+        "H": 0.0093
+      },
+      {
+        "Text": "PU 77120",
+        "X": 0.8275,
+        "Y": 0.2602,
+        "W": 0.0581,
+        "H": 0.0093
+      },
+      {
+        "Text": "2",
+        "X": 0.098,
+        "Y": 0.2829,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "Delivery",
+        "X": 0.1333,
+        "Y": 0.2829,
+        "W": 0.0472,
+        "H": 0.0093
+      },
+      {
+        "Text": "Valley Grocers #14",
+        "X": 0.2157,
+        "Y": 0.2829,
+        "W": 0.1112,
+        "H": 0.0093
+      },
+      {
+        "Text": "88 Commerce Dr, Reno, NV 89502",
+        "X": 0.3686,
+        "Y": 0.2829,
+        "W": 0.2034,
+        "H": 0.0093
+      },
+      {
+        "Text": "10/22/2026",
+        "X": 0.6275,
+        "Y": 0.2829,
+        "W": 0.0654,
+        "H": 0.0093
+      },
+      {
+        "Text": "06:00-10:00",
+        "X": 0.7216,
+        "Y": 0.2829,
+        "W": 0.0698,
+        "H": 0.0093
+      },
+      {
+        "Text": "PO 55318",
+        "X": 0.8275,
+        "Y": 0.2829,
+        "W": 0.0589,
+        "H": 0.0093
+      },
+      {
+        "Text": "Description",
+        "X": 0.1804,
+        "Y": 0.3662,
+        "W": 0.0719,
+        "H": 0.0093
+      },
+      {
+        "Text": "Qty",
+        "X": 0.4863,
+        "Y": 0.3662,
+        "W": 0.0218,
+        "H": 0.0093
+      },
+      {
+        "Text": "Rate",
+        "X": 0.5569,
+        "Y": 0.3662,
+        "W": 0.0283,
+        "H": 0.0093
+      },
+      {
+        "Text": "Amount",
+        "X": 0.698,
+        "Y": 0.3662,
+        "W": 0.0494,
+        "H": 0.0093
+      },
+      {
+        "Text": "Line haul",
+        "X": 0.1804,
+        "Y": 0.389,
+        "W": 0.053,
+        "H": 0.0093
+      },
+      {
+        "Text": "1",
+        "X": 0.4863,
+        "Y": 0.389,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "$1,850.00",
+        "X": 0.5569,
+        "Y": 0.389,
+        "W": 0.0581,
+        "H": 0.0093
+      },
+      {
+        "Text": "$1,850.00",
+        "X": 0.698,
+        "Y": 0.389,
+        "W": 0.0581,
+        "H": 0.0093
+      },
+      {
+        "Text": "Fuel surcharge",
+        "X": 0.1804,
+        "Y": 0.4117,
+        "W": 0.0872,
+        "H": 0.0093
+      },
+      {
+        "Text": "1",
+        "X": 0.4863,
+        "Y": 0.4117,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "$212.75",
+        "X": 0.5569,
+        "Y": 0.4117,
+        "W": 0.0472,
+        "H": 0.0093
+      },
+      {
+        "Text": "$212.75",
+        "X": 0.698,
+        "Y": 0.4117,
+        "W": 0.0472,
+        "H": 0.0093
+      },
+      {
+        "Text": "Detention (after 2 hrs)",
+        "X": 0.1804,
+        "Y": 0.4344,
+        "W": 0.1271,
+        "H": 0.0093
+      },
+      {
+        "Text": "0",
+        "X": 0.4863,
+        "Y": 0.4344,
+        "W": 0.0073,
+        "H": 0.0093
+      },
+      {
+        "Text": "$50.00/hr",
+        "X": 0.5569,
+        "Y": 0.4344,
+        "W": 0.0552,
+        "H": 0.0093
+      },
+      {
+        "Text": "$0.00",
+        "X": 0.698,
+        "Y": 0.4344,
+        "W": 0.0327,
+        "H": 0.0093
+      },
+      {
+        "Text": "Total",
+        "X": 0.1804,
+        "Y": 0.4571,
+        "W": 0.0291,
+        "H": 0.0093
+      },
+      {
+        "Text": "$2,062.75",
+        "X": 0.698,
+        "Y": 0.4571,
+        "W": 0.0581,
+        "H": 0.0093
+      },
+      {
+        "Text": "Stops",
+        "X": 0.098,
+        "Y": 0.2055,
+        "W": 0.0635,
+        "H": 0.0164
+      },
+      {
+        "Text": "Charges",
+        "X": 0.098,
+        "Y": 0.3343,
+        "W": 0.0915,
+        "H": 0.0164
+      },
+      {
+        "Text": "Page 1 of 2",
+        "X": 0.8449,
+        "Y": 0.9473,
+        "W": 0.0669,
+        "H": 0.0093
+      },
+      {
+        "Text": "Load # RC-48213",
+        "X": 0.7933,
+        "Y": 0.0327,
+        "W": 0.1185,
+        "H": 0.0105
+      },
+      {
+        "Text": "Terms and conditions",
+        "X": 0.098,
+        "Y": 0.5161,
+        "W": 0.2377,
+        "H": 0.0164
+      },
+      {
+        "Text": "Carrier Rate Confirmation",
+        "X": 0.3202,
+        "Y": 0.0958,
+        "W": 0.3595,
+        "H": 0.021
+      },
+      {
+        "Text": "Northwind Freight Brokerage LLC",
+        "X": 0.0882,
+        "Y": 0.0327,
+        "W": 0.2361,
+        "H": 0.0105
+      },
+      {
+        "Text": "Dispatcher: Dana Whitfield, (555) 014-2290",
+        "X": 0.098,
+        "Y": 0.1435,
+        "W": 0.3142,
+        "H": 0.0117
+      },
+      {
+        "Text": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607",
+        "X": 0.0882,
+        "Y": 0.9473,
+        "W": 0.302,
+        "H": 0.0093
+      },
+      {
+        "Text": "Carrier: Blue Ridge Transport Inc. (MC 711204, DOT 2290431)",
+        "X": 0.098,
+        "Y": 0.1283,
+        "W": 0.4559,
+        "H": 0.0117
+      },
+      {
+        "Text": "Equipment: 53' Dry Van | Weight: 38,450 lbs | Commodity: Packaged snacks",
+        "X": 0.098,
+        "Y": 0.1586,
+        "W": 0.5543,
+        "H": 0.0117
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.545,
+        "W": 0.7638,
+        "H": 0.0571
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.6132,
+        "W": 0.7638,
+        "H": 0.0571
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.6813,
+        "W": 0.7638,
+        "H": 0.0571
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.7495,
+        "W": 0.7638,
+        "H": 0.0571
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.8177,
+        "W": 0.7638,
+        "H": 0.0571
+      },
+      {
+        "Text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill",
+        "X": 0.098,
+        "Y": 0.8859,
+        "W": 0.7465,
+        "H": 0.0268
+      }
+    ]
+  },
+  {
+    "Number": 2,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 612,
+    "Height": 792,
+    "Text": "Northwind Freight Brokerage LLC\nLoad # RC-48213\nMC 900123 | 1200 Harbor Way, Oakland, CA 94607\nPage 2 of 2\navailable at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\nAccepted by carrier: ______________________ Date: __________",
+    "Markdown": "\u003c!-- page header --\u003e\nNorthwind Freight Brokerage LLC\nLoad # RC-48213\nMC 900123 | 1200 Harbor Way, Oakland, CA 94607\nPage 2 of 2\n\navailable at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.\n\nAccepted by carrier: ______________________ Date: __________",
+    "Lines": [
+      {
+        "Text": "Page 2 of 2",
+        "X": 0.8449,
+        "Y": 0.9473,
+        "W": 0.0669,
+        "H": 0.0093
+      },
+      {
+        "Text": "Load # RC-48213",
+        "X": 0.7933,
+        "Y": 0.0327,
+        "W": 0.1185,
+        "H": 0.0105
+      },
+      {
+        "Text": "Northwind Freight Brokerage LLC",
+        "X": 0.0882,
+        "Y": 0.0327,
+        "W": 0.2361,
+        "H": 0.0105
+      },
+      {
+        "Text": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607",
+        "X": 0.0882,
+        "Y": 0.9473,
+        "W": 0.302,
+        "H": 0.0093
+      },
+      {
+        "Text": "Accepted by carrier: ______________________ Date: __________",
+        "X": 0.098,
+        "Y": 0.1536,
+        "W": 0.4887,
+        "H": 0.0117
+      },
+      {
+        "Text": "available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited",
+        "X": 0.098,
+        "Y": 0.093,
+        "W": 0.7638,
+        "H": 0.0268
+      }
+    ]
+  }
+]

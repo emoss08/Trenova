@@ -1,0 +1,13 @@
+[
+  {
+    "Number": 1,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 0,
+    "Height": 0,
+    "Text": "Load tender RC-48213 Fresno CA to Reno NV\nFrom: Dana Whitfield \u003cdana@northwind-freight.example\u003e\nTo: dispatch@blueridge-transport.example\nDate: 2026-10-20T15:30:00+00:00\nHi team,\nPlease confirm load RC-48213.\nPickup: Harvest Foods DC, Fresno, CA on 10/21/2026 08:00-12:00\nDelivery: Valley Grocers #14, Reno, NV on 10/22/2026 06:00-10:00\nRate: $2,062.75 all in\nThanks,\nDana",
+    "Markdown": "# Load tender RC-48213 Fresno CA to Reno NV\n\nFrom: Dana Whitfield \u003cdana@northwind-freight.example\u003e\n\nTo: dispatch@blueridge-transport.example\n\nDate: 2026-10-20T15:30:00+00:00\n\nHi team,\n\nPlease confirm load RC-48213.\n\nPickup: Harvest Foods DC, Fresno, CA on 10/21/2026 08:00-12:00\nDelivery: Valley Grocers #14, Reno, NV on 10/22/2026 06:00-10:00\nRate: $2,062.75 all in\n\nThanks,\nDana",
+    "Lines": []
+  }
+]
