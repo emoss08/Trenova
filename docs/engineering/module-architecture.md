@@ -383,6 +383,22 @@ when the first row took the column default ([uptrace/bun#1394](https://github.co
 `github.com/uptrace/bun` module with the fork at one commit; the Bun modules are separate Go
 modules, so a new fork commit moves all of the `replace` lines together, never one of them.
 
+go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
+about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
+`cmdable`, the stand-in type the compiler builds for that instantiation carries every promoted
+command method, so each of those packages compiled about 1,480 wrapper functions. Several
+`sync.Map` fields reachable from the client added the hash trie on top. Only `redis.Cmdable` stays
+clear of both. Trenova builds against
+[`emoss08/go-redis`](https://github.com/emoss08/go-redis), whose `master` is upstream `master`
+plus a change that holds the weak reference and the maps behind types whose method signatures
+name no generic type. A package holding a `*redis.Client` now compiles 114 functions in about
+66 ms instead of 1,722 in about 690 ms. The core module, `extra/redisotel` and `extra/rediscmd`
+are replaced at one commit, under the same rule as Bun's modules.
+
+These measurements come from probe packages: a package that imports one dependency and mentions
+one of its types in a function signature, compiled on its own. A probe that compiles thousands of
+functions for a type it only passes along is a dependency worth looking into.
+
 To check a package, count the generic functions its object file defines:
 
 ```bash
