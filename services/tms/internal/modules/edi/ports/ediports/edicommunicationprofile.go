@@ -33,6 +33,11 @@ type GetActiveEDICommunicationProfileByPartnerRequest struct {
 	Methods    []edi.ConnectionMethod `json:"methods"`
 }
 
+type ListEDICommunicationProfilesByPartnerRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+}
+
 type GetActiveAS2ProfileByIdentifiersRequest struct {
 	LocalAS2ID   string `json:"localAs2Id"`
 	PartnerAS2ID string `json:"partnerAs2Id"`
@@ -71,6 +76,10 @@ type EDICommunicationProfileRepository interface {
 		ctx context.Context,
 		req GetActiveEDICommunicationProfileByPartnerRequest,
 	) (*edi.EDICommunicationProfile, error)
+	ListProfilesByPartner(
+		ctx context.Context,
+		req ListEDICommunicationProfilesByPartnerRequest,
+	) ([]*edi.EDICommunicationProfile, error)
 	ListInboundPollingProfiles(
 		ctx context.Context,
 	) ([]*edi.EDICommunicationProfile, error)

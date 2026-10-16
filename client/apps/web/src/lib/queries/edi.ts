@@ -4,11 +4,13 @@ import {
   EdiVolumeSeriesDocument,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { fetchDeskEdiPartner, fetchEdiPartnerMessages } from "@/lib/graphql/edi-partner-card";
 import { listEdiTemplatesGraphQL, type ListEdiTemplatesParams } from "@/lib/graphql/edi-templates";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { EDI_TRANSACTION_SET_OPTIONS_LIMIT } from "@/lib/edi-transaction-set-options";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 
 export type EDITemplateListFilters = Omit<ListEdiTemplatesParams, "first" | "after"> & {
   limit?: number;
@@ -94,6 +96,14 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["messages", query],
     queryFn: async () => apiService.ediService.listMessages(query),
   }),
+  partnerCard: (partnerId: string) => ({
+    queryKey: ["partner-card", partnerId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      fetchDeskEdiPartner(partnerId, { signal }),
+  }),
+  partnerMessages: (partnerId: string) => ({
+    queryKey: ["partner-messages", partnerId],
+  }),
   message: (messageId: string) => ({
     queryKey: ["message", messageId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
@@ -143,3 +153,14 @@ export const edi = createQueryKeys("edi", {
       }),
   }),
 });
+
+/** A partner's messages both ways, newest first, a page at a time. */
+export function ediPartnerMessagesQuery(partnerId: string, pageSize: number) {
+  return infiniteQueryOptions({
+    queryKey: [...edi.partnerMessages(partnerId).queryKey, pageSize],
+    queryFn: ({ pageParam, signal }) =>
+      fetchEdiPartnerMessages(partnerId, { first: pageSize, after: pageParam }, { signal }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => (last.hasNextPage && last.endCursor ? last.endCursor : undefined),
+  });
+}

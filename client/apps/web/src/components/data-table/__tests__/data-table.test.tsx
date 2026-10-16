@@ -42,6 +42,13 @@ const { useDataTableQueryMock, defaultQueryResult } = vi.hoisted(() => {
 
 const presence = vi.hoisted(() => ({ resources: [] as string[] }));
 
+const { fetchDataTablePageMock } = vi.hoisted(() => ({
+  fetchDataTablePageMock: vi.fn(async (..._args: unknown[]): Promise<unknown> => ({
+    results: [],
+    count: 0,
+  })),
+}));
+
 vi.mock("@/components/presence/data-table-viewers", () => ({
   DataTableViewers: ({ resource }: { resource: string }) => {
     presence.resources.push(resource);
@@ -69,6 +76,7 @@ vi.mock("@/hooks/use-permission", () => ({
 vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
+  fetchDataTablePage: (...args: unknown[]) => fetchDataTablePageMock(...args),
 }));
 
 vi.mock("@/lib/queries/bulk-edit", async () => ({
@@ -678,6 +686,97 @@ describe("DataTableProvider memoization", () => {
     expect(contextValues.length).toBeGreaterThanOrEqual(2);
     expect((contextValues[0] as any).isLoading).toBe(false);
     expect((contextValues[contextValues.length - 1] as any).isLoading).toBe(false);
+  });
+});
+
+/*
+A link to a record (`?panelType=edit&panelEntityId=…`, which every record link and
+the Desk's "Open" buttons build) used to open the panel only when the record sat
+on the first page the table loaded, so a partner past the first fifty rows opened
+nothing. The table now fetches a linked record it does not have by ID, under only
+the filters its host imposes, and opens it.
+*/
+describe("DataTable linked record", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function RowPanel({ open, row }: { open: boolean; row: TestRow | null }) {
+    return open ? (
+      <p data-testid="panel">{row ? `Editing ${row.name}` : "Nothing to edit"}</p>
+    ) : null;
+  }
+
+  function renderLinked(
+    id: string,
+    props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>,
+  ) {
+    const queryClient = createQueryClient();
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory searchParams={{ panelType: "edit", panelEntityId: id }}>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            TablePanel={RowPanel}
+            {...props}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+  }
+
+  it("opens a linked record that is not on the page by fetching it by ID", async () => {
+    fetchDataTablePageMock.mockResolvedValueOnce({
+      results: [{ id: "edip_far", name: "Kroger" }],
+      count: 1,
+    });
+
+    renderLinked("edip_far");
+
+    expect(await screen.findByText("Editing Kroger")).toBeInTheDocument();
+    expect(fetchDataTablePageMock).toHaveBeenCalledTimes(1);
+    expect(fetchDataTablePageMock.mock.calls[0]?.[0]).toMatchObject({
+      pageSize: 1,
+      options: { fieldFilters: [{ field: "id", operator: "eq", value: "edip_far" }] },
+      graphql: testGraphQLConfig,
+    });
+  });
+
+  it("keeps the host's filters on the fetch, so a link cannot open a record the table would not list", async () => {
+    const scopeFilters = [{ field: "direction", operator: "eq" as const, value: "Inbound" }];
+
+    renderLinked("edip_far", { scopeFilters });
+
+    await vi.waitFor(() => expect(fetchDataTablePageMock).toHaveBeenCalledTimes(1));
+    expect(fetchDataTablePageMock.mock.calls[0]?.[0]).toMatchObject({
+      options: {
+        fieldFilters: [...scopeFilters, { field: "id", operator: "eq", value: "edip_far" }],
+      },
+    });
+    expect(screen.getByTestId("panel")).toHaveTextContent("Nothing to edit");
+  });
+
+  it("opens a linked record on the page from its row, without fetching it again", () => {
+    renderLinked("2");
+
+    expect(screen.getByTestId("panel")).toHaveTextContent("Editing Bob");
+    expect(fetchDataTablePageMock).not.toHaveBeenCalled();
+  });
+
+  it("never opens a fetched row whose ID is not the one linked", async () => {
+    fetchDataTablePageMock.mockResolvedValueOnce({
+      results: [{ id: "edip_other", name: "Someone else" }],
+      count: 1,
+    });
+
+    renderLinked("edip_far");
+
+    await vi.waitFor(() => expect(fetchDataTablePageMock).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(screen.getByTestId("panel")).toHaveTextContent("Nothing to edit");
   });
 });
 

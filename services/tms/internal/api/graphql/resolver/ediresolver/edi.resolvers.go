@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -362,4 +362,35 @@ func (r *QueryResolver) EDIVolumeSeries(ctx context.Context, sinceHours *int) ([
 		return nil, err
 	}
 	return ediVolumeSeriesToModel(series), nil
+}
+
+func (r *EdiAcknowledgmentConfigResolver) Type(ctx context.Context, obj *edi.AcknowledgmentConfig) (string, error) {
+	return string(obj.Type), nil
+}
+
+func (r *QueryResolver) EDIPartnerCard(ctx context.Context, id string) (*gqlmodel.EDIPartnerCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	partnerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	card, err := r.EdiService.GetPartnerCard(ctx, &ediservice.GetEDIPartnerCardRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		PartnerID:  partnerID,
+		IncludeCarriers: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceCarrier,
+			permission.OpRead,
+		),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ediPartnerCardToModel(card), nil
 }

@@ -3,7 +3,7 @@ import { Mail01Icon, Phone01Icon } from "@trenova/shared/components/icons";
 import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, telHref } from "@trenova/shared/lib/utils";
 import { worstFirst, type DueCheck } from "../../record-card/card-due";
 import {
   CardIcon,
@@ -113,7 +113,7 @@ export function WorkerReach({
     <div className="dk-wk-reach">
       <div className="dk-wk-ways">
         {phone ? (
-          <a className="dk-wk-way" href={`tel:${phone.replace(/[^\d+]/gu, "")}`}>
+          <a className="dk-wk-way" href={telHref(phone)}>
             <Phone01Icon className="size-3.5" aria-hidden />
             <span>
               <em>{t("Call")}</em>

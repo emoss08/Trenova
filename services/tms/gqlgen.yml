@@ -4354,6 +4354,18 @@ models:
   EdiMappingEntityType:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MappingEntityType
+  EdiDocumentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.DocumentStatus
+  EdiConnectionCapabilities:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.ConnectionCapabilities
+  EdiX12Envelope:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.X12EnvelopeSettings
+  EdiAcknowledgmentConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.AcknowledgmentConfig
   EdiConnection:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIConnection

@@ -21,6 +21,7 @@ import { DeskServiceFailureSkeleton } from "./service-failure/service-failure-sk
 import { DeskEdiMessageSkeleton } from "./edi-message/edi-message-skeleton";
 import { DeskEdiInboundFileSkeleton } from "./edi-inbound-file/edi-inbound-file-skeleton";
 import { DeskEdiTransferSkeleton } from "./edi-transfer/edi-transfer-skeleton";
+import { DeskEdiPartnerSkeleton } from "./edi-partner/edi-partner-skeleton";
 import { DeskInvoiceSkeleton } from "./invoice/invoice-skeleton";
 import { DeskDriverSettlementSkeleton } from "./driver-settlement/driver-settlement-skeleton";
 import { DeskCarrierSettlementSkeleton } from "./carrier-settlement/carrier-settlement-skeleton";
@@ -80,6 +81,7 @@ const loadServiceFailure = preloadable(() => import("./service-failure/desk-serv
 const loadEdiMessage = preloadable(() => import("./edi-message/desk-edi-message"));
 const loadEdiInboundFile = preloadable(() => import("./edi-inbound-file/desk-edi-inbound-file"));
 const loadEdiTransfer = preloadable(() => import("./edi-transfer/desk-edi-transfer"));
+const loadEdiPartner = preloadable(() => import("./edi-partner/desk-edi-partner"));
 const loadInvoice = preloadable(() => import("./invoice/desk-invoice"));
 const loadDriverSettlement = preloadable(
   () => import("./driver-settlement/desk-driver-settlement"),
@@ -181,6 +183,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskEdiTransferSkeleton,
     inPlace: lazyComponent(loadEdiTransfer, (module) => module.DeskEdiTransfer),
     artifact: lazyComponent(loadEdiTransfer, (module) => module.DeskEdiTransferArtifact),
+  },
+  edi_partner: {
+    resource: Resource.EDI,
+    Skeleton: DeskEdiPartnerSkeleton,
+    inPlace: lazyComponent(loadEdiPartner, (module) => module.DeskEdiPartner),
+    artifact: lazyComponent(loadEdiPartner, (module) => module.DeskEdiPartnerArtifact),
   },
   invoice: {
     resource: Resource.Invoice,

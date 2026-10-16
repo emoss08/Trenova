@@ -1,0 +1,487 @@
+{
+  "now": 1790000000,
+  "card": {
+    "partner": {
+      "id": "edip_tyson",
+      "kind": "External",
+      "status": "Active",
+      "code": "TYSON",
+      "name": "Tyson Foods",
+      "description": "Tenders loads to us and takes status updates and invoices back",
+      "customerId": "cus_tyson",
+      "internalOrganizationId": null,
+      "country": "US",
+      "timezone": "America/Chicago",
+      "contactName": "Maria Perez",
+      "contactEmail": "edi-support@tyson.example",
+      "contactPhone": "(479) 555-0142",
+      "enabledForInbound": true,
+      "enabledForOutbound": true,
+      "updatedAt": 1788272000,
+      "internalOrganization": null,
+      "connection": null
+    },
+    "customer": {
+      "id": "cus_tyson",
+      "name": "Tyson Foods",
+      "code": "TYSON"
+    },
+    "documentProfiles": [
+      {
+        "id": "edidp_tyson_214",
+        "name": "Tyson 214 status",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "214",
+        "functionalGroupId": "QM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TYSONFOODS     ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "TYSONFOODS",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 240
+        }
+      },
+      {
+        "id": "edidp_tyson_210",
+        "name": "Tyson 210 invoice",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "210",
+        "functionalGroupId": "IM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TYSONFOODS     ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "TYSONFOODS",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 1440
+        }
+      },
+      {
+        "id": "edidp_tyson_990",
+        "name": "Tyson 990 response",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "990",
+        "functionalGroupId": "GF",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TYSONFOODS     ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "TYSONFOODS",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": false,
+          "type": "None",
+          "slaInMinutes": 0
+        }
+      },
+      {
+        "id": "edidp_tyson_204",
+        "name": "Tyson 204 tender",
+        "status": "Active",
+        "direction": "Inbound",
+        "transactionSet": "204",
+        "functionalGroupId": "SM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TYSONFOODS     ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TRENOVA        ",
+          "applicationSenderCode": "TYSONFOODS",
+          "applicationReceiverCode": "TRENOVA",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 0
+        }
+      }
+    ],
+    "transports": [
+      {
+        "profile": {
+          "id": "edicp_tyson_as2",
+          "name": "Tyson AS2 production",
+          "method": "AS2",
+          "status": "Active",
+          "config": {
+            "localAS2Id": "TRENOVA-AS2",
+            "partnerAS2Id": "TYSONFOODS-PROD",
+            "endpointUrl": "https://edi.tyson.example/as2",
+            "mdnMode": "sync",
+            "signingAlgorithm": "sha256",
+            "encryptionAlgorithm": "aes256-cbc",
+            "retryMaxAttempts": 5,
+            "retryInitialIntervalSeconds": 60,
+            "retryMaxIntervalSeconds": 1800,
+            "partnerEncryptionCertificate": "-----BEGIN CERTIFICATE-----\u2026",
+            "partnerSigningCertificate": "-----BEGIN CERTIFICATE-----\u2026",
+            "localCertificate": "-----BEGIN CERTIFICATE-----\u2026"
+          }
+        },
+        "lastPollAttemptAt": null,
+        "lastPollSuccessAt": null,
+        "lastPollError": null,
+        "credentials": [
+          {
+            "key": "partnerSigningCertificate",
+            "secret": false,
+            "required": false,
+            "onFile": true
+          },
+          {
+            "key": "partnerEncryptionCertificate",
+            "secret": false,
+            "required": false,
+            "onFile": true
+          },
+          {
+            "key": "localCertificate",
+            "secret": false,
+            "required": false,
+            "onFile": true
+          },
+          {
+            "key": "privateKey",
+            "secret": true,
+            "required": true,
+            "onFile": true
+          },
+          {
+            "key": "basicAuthPassword",
+            "secret": true,
+            "required": false,
+            "onFile": true
+          }
+        ],
+        "certificates": [
+          {
+            "role": "PartnerEncryption",
+            "readable": true,
+            "subject": "CN=edi.tyson.example,O=Tyson Foods",
+            "issuer": "CN=Sectigo RSA Organization Validation",
+            "notBefore": 1776176000,
+            "notAfter": 1809872000,
+            "expired": false
+          },
+          {
+            "role": "PartnerSigning",
+            "readable": true,
+            "subject": "CN=edi.tyson.example,O=Tyson Foods",
+            "issuer": "CN=Sectigo RSA Organization Validation",
+            "notBefore": 1776176000,
+            "notAfter": 1809872000,
+            "expired": false
+          },
+          {
+            "role": "Local",
+            "readable": true,
+            "subject": "CN=as2.trenova.example",
+            "issuer": "CN=as2.trenova.example",
+            "notBefore": 1760624000,
+            "notAfter": 1818512000,
+            "expired": false
+          }
+        ]
+      }
+    ],
+    "readiness": {
+      "ready": true,
+      "completedCount": 6,
+      "totalCount": 6,
+      "items": [
+        {
+          "key": "details",
+          "complete": true
+        },
+        {
+          "key": "communication-profile",
+          "complete": true
+        },
+        {
+          "key": "mappings",
+          "complete": true
+        },
+        {
+          "key": "inbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "outbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "test-case",
+          "complete": true
+        }
+      ]
+    },
+    "mappings": {
+      "profileId": "edimp_tyson",
+      "updatedAt": 1789740800,
+      "counts": [
+        {
+          "entityType": "AccessorialCharge",
+          "count": 12
+        },
+        {
+          "entityType": "Commodity",
+          "count": 6
+        },
+        {
+          "entityType": "Customer",
+          "count": 2
+        },
+        {
+          "entityType": "Location",
+          "count": 41
+        },
+        {
+          "entityType": "ServiceFailureReasonCode",
+          "count": 9
+        },
+        {
+          "entityType": "ServiceType",
+          "count": 3
+        }
+      ]
+    },
+    "activity": {
+      "since": 1789395200,
+      "seriesSince": 1788790400,
+      "scorecard": {
+        "outboundTotal": 1425,
+        "sentCount": 1422,
+        "failedCount": 3,
+        "deadLetteredCount": 0,
+        "receivedCount": 1446,
+        "deliverySuccessRate": 0.9979,
+        "avgAckSeconds": 372.0,
+        "p95AckSeconds": 2460.0,
+        "overdueAckCount": 0
+      },
+      "ackStatusCounts": [
+        {
+          "status": "Accepted",
+          "count": 1399
+        },
+        {
+          "status": "AcceptedWithErrors",
+          "count": 3
+        },
+        {
+          "status": "Pending",
+          "count": 12
+        }
+      ],
+      "sets": [
+        {
+          "transactionSet": "210",
+          "direction": "Outbound",
+          "count": 96,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789978400
+        },
+        {
+          "transactionSet": "214",
+          "direction": "Outbound",
+          "count": 1284,
+          "failedCount": 3,
+          "deadLetteredCount": 0,
+          "lastAt": 1789999760
+        },
+        {
+          "transactionSet": "990",
+          "direction": "Outbound",
+          "count": 42,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789997000
+        },
+        {
+          "transactionSet": "204",
+          "direction": "Inbound",
+          "count": 44,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789996760
+        },
+        {
+          "transactionSet": "997",
+          "direction": "Inbound",
+          "count": 1402,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789999460
+        }
+      ],
+      "series": [
+        {
+          "bucketStart": 1788854400,
+          "bucketSeconds": 3600,
+          "outboundCount": 180,
+          "sentCount": 180,
+          "failedCount": 0,
+          "receivedCount": 190
+        },
+        {
+          "bucketStart": 1788940800,
+          "bucketSeconds": 3600,
+          "outboundCount": 176,
+          "sentCount": 175,
+          "failedCount": 1,
+          "receivedCount": 188
+        },
+        {
+          "bucketStart": 1789027200,
+          "bucketSeconds": 3600,
+          "outboundCount": 190,
+          "sentCount": 190,
+          "failedCount": 0,
+          "receivedCount": 196
+        },
+        {
+          "bucketStart": 1789113600,
+          "bucketSeconds": 3600,
+          "outboundCount": 40,
+          "sentCount": 40,
+          "failedCount": 0,
+          "receivedCount": 44
+        },
+        {
+          "bucketStart": 1789200000,
+          "bucketSeconds": 3600,
+          "outboundCount": 22,
+          "sentCount": 22,
+          "failedCount": 0,
+          "receivedCount": 26
+        },
+        {
+          "bucketStart": 1789286400,
+          "bucketSeconds": 3600,
+          "outboundCount": 188,
+          "sentCount": 188,
+          "failedCount": 0,
+          "receivedCount": 201
+        },
+        {
+          "bucketStart": 1789372800,
+          "bucketSeconds": 3600,
+          "outboundCount": 192,
+          "sentCount": 192,
+          "failedCount": 0,
+          "receivedCount": 199
+        },
+        {
+          "bucketStart": 1789459200,
+          "bucketSeconds": 3600,
+          "outboundCount": 184,
+          "sentCount": 184,
+          "failedCount": 0,
+          "receivedCount": 190
+        },
+        {
+          "bucketStart": 1789545600,
+          "bucketSeconds": 3600,
+          "outboundCount": 196,
+          "sentCount": 194,
+          "failedCount": 2,
+          "receivedCount": 204
+        },
+        {
+          "bucketStart": 1789632000,
+          "bucketSeconds": 3600,
+          "outboundCount": 190,
+          "sentCount": 190,
+          "failedCount": 0,
+          "receivedCount": 198
+        },
+        {
+          "bucketStart": 1789718400,
+          "bucketSeconds": 3600,
+          "outboundCount": 44,
+          "sentCount": 44,
+          "failedCount": 0,
+          "receivedCount": 41
+        },
+        {
+          "bucketStart": 1789804800,
+          "bucketSeconds": 3600,
+          "outboundCount": 20,
+          "sentCount": 20,
+          "failedCount": 0,
+          "receivedCount": 24
+        },
+        {
+          "bucketStart": 1789891200,
+          "bucketSeconds": 3600,
+          "outboundCount": 186,
+          "sentCount": 186,
+          "failedCount": 0,
+          "receivedCount": 199
+        },
+        {
+          "bucketStart": 1789992000,
+          "bucketSeconds": 3600,
+          "outboundCount": 118,
+          "sentCount": 118,
+          "failedCount": 0,
+          "receivedCount": 124
+        }
+      ]
+    },
+    "attention": {
+      "overdueAckAgeSeconds": 14400,
+      "overdueAckCount": 0,
+      "oldestOverdueAt": null,
+      "overdueAcks": [],
+      "deadLettered": [],
+      "quarantinedFiles": []
+    },
+    "carriers": [
+      {
+        "carrierId": "car_redriver",
+        "carrierName": "Red River Freight",
+        "carrierCode": "RRF",
+        "scac": "RRFT",
+        "isDefault": true
+      }
+    ]
+  }
+}

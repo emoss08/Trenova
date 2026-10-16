@@ -97,6 +97,12 @@ const ICONS = {
       <path d="M12 9v4l2.75 1.75M10 3.5h4" />
     </>
   ),
+  partner: (
+    <>
+      <path d="M4 5.5h16v13H4z" />
+      <path d="M9 9v6.5M6.75 13.25 9 15.5l2.25-2.25M15 15.5V9M12.75 11.25 15 9l2.25 2.25" />
+    </>
+  ),
   tender: (
     <>
       <path d="M4.5 6.5h15v3a2.5 2.5 0 0 0 0 5v3h-15v-3a2.5 2.5 0 0 0 0-5z" />
@@ -298,6 +304,7 @@ export type DeskArtKind =
   | "edi"
   | "inbound"
   | "tender"
+  | "partner"
   | "invoice"
   | "pay"
   | "payable"
@@ -330,6 +337,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   edi: "EDI message",
   inbound: "EDI inbound file",
   tender: "Load tender",
+  partner: "EDI partner",
   invoice: "Invoice",
   pay: "Worker settlement",
   payable: "Carrier settlement",
@@ -350,7 +358,8 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * analyst holds freight to, an EDI message as the document an EDI coordinator
  * follows to and from a trading partner, an EDI inbound file as the delivery
  * a trading partner sent that the coordinator traces into messages, an EDI
- * transfer as the load tender a coordinator accepts or declines, an invoice as
+ * transfer as the load tender a coordinator accepts or declines, an EDI partner
+ * as the trading partner a coordinator keeps trading, an invoice as
  * the bill a biller sends and a collector follows to paid, a worker settlement
  * as the pay stub a payroll clerk approves and pays, a carrier settlement as
  * the payable an AP clerk checks against the carrier's invoices and pays, a
@@ -373,6 +382,7 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   edi_message: "edi",
   edi_inbound_file: "inbound",
   edi_transfer: "tender",
+  edi_partner: "partner",
   invoice: "invoice",
   driver_settlement: "pay",
   carrier_settlement: "payable",
@@ -477,6 +487,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("EDI inbound file");
     case "tender":
       return t("Load tender");
+    case "partner":
+      return t("EDI partner");
     case "invoice":
       return t("Invoice");
     case "pay":

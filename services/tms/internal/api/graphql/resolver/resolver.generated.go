@@ -252,6 +252,7 @@ type Resolver struct {
 	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
 	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
+	ediAcknowledgmentConfig            *ediresolver.EdiAcknowledgmentConfigResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
 	ediPartnerDocumentProfile          *ediresolver.EdiPartnerDocumentProfileResolver
@@ -1241,6 +1242,7 @@ func FromServices(s *Services) *Resolver {
 		driverSettlementLine:         &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps},
 		driverSettlementLineGroup:    &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps},
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
+		ediAcknowledgmentConfig:      &ediresolver.EdiAcknowledgmentConfigResolver{Deps: ediDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
 		ediPartnerDocumentProfile:    &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps},
@@ -2100,6 +2102,10 @@ func (r *Resolver) DriverSettlementLineGroup() generated.DriverSettlementLineGro
 
 func (r *Resolver) DrugAlcoholStanding() generated.DrugAlcoholStandingResolver {
 	return r.drugAlcoholStanding
+}
+
+func (r *Resolver) EdiAcknowledgmentConfig() generated.EdiAcknowledgmentConfigResolver {
+	return r.ediAcknowledgmentConfig
 }
 
 func (r *Resolver) EdiCarrierInvoice() generated.EdiCarrierInvoiceResolver {

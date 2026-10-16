@@ -62,6 +62,23 @@ type DeleteMappingProfileItemRequest struct {
 	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEDIMappingSummaryRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+}
+
+type EDIMappingEntityCount struct {
+	EntityType edi.MappingEntityType `bun:"entity_type"`
+	Count      int64                 `bun:"count"`
+	UpdatedAt  int64                 `bun:"updated_at"`
+}
+
+type EDIMappingSummary struct {
+	ProfileID pulid.ID
+	UpdatedAt int64
+	Counts    []*EDIMappingEntityCount
+}
+
 type EDIMappingProfileRepository interface {
 	GetMappingProfile(
 		ctx context.Context,
@@ -95,6 +112,10 @@ type EDIMappingProfileRepository interface {
 		ctx context.Context,
 		req GetMappingItemsRequest,
 	) ([]*edi.EDIMappingProfileItem, error)
+	GetMappingSummary(
+		ctx context.Context,
+		req GetEDIMappingSummaryRequest,
+	) (*EDIMappingSummary, error)
 	DeleteMappingItem(ctx context.Context, req DeleteMappingItemRequest) error
 	DeleteMappingProfileItem(ctx context.Context, req DeleteMappingProfileItemRequest) error
 }

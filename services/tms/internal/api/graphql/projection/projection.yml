@@ -543,6 +543,7 @@ gates:
 
 
 modelOverrides:
+  EdiPartnerCustomer: github.com/emoss08/trenova/internal/modules/parties/domain/customer.Customer
   EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
   CarrierInvoiceMatchList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
   ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event

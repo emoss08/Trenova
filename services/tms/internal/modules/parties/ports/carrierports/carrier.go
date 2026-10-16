@@ -60,6 +60,11 @@ type GetCarrierEDIChannelRequest struct {
 	CarrierID  pulid.ID              `json:"carrierId"`
 }
 
+type ListCarrierEDIChannelsByPartnerRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	EDIPartnerID pulid.ID              `json:"ediPartnerId"`
+}
+
 type CarrierRepository interface {
 	FindByIdentity(
 		ctx context.Context,
@@ -100,6 +105,10 @@ type CarrierRepository interface {
 	ListEDIChannels(
 		ctx context.Context,
 		req GetCarrierEDIChannelRequest,
+	) ([]*carrier.CarrierEDIChannel, error)
+	ListEDIChannelsByPartner(
+		ctx context.Context,
+		req ListCarrierEDIChannelsByPartnerRequest,
 	) ([]*carrier.CarrierEDIChannel, error)
 	GetDefaultEDIChannel(
 		ctx context.Context,

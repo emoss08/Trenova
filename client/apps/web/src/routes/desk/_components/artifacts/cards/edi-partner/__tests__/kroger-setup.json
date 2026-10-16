@@ -1,0 +1,148 @@
+{
+  "now": 1790000000,
+  "card": {
+    "partner": {
+      "id": "edip_kroger",
+      "kind": "External",
+      "status": "Active",
+      "code": "KROGER",
+      "name": "Kroger",
+      "description": null,
+      "customerId": "cus_kroger",
+      "internalOrganizationId": null,
+      "country": "US",
+      "timezone": "America/New_York",
+      "contactName": "Sam Keller",
+      "contactEmail": "carrier-edi@kroger.example",
+      "contactPhone": null,
+      "enabledForInbound": true,
+      "enabledForOutbound": true,
+      "updatedAt": 1788272000,
+      "internalOrganization": null,
+      "connection": null
+    },
+    "customer": {
+      "id": "cus_kroger",
+      "name": "The Kroger Co.",
+      "code": "KROGER"
+    },
+    "documentProfiles": [
+      {
+        "id": "edidp_kroger_214",
+        "name": "Kroger 214 status",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "214",
+        "functionalGroupId": "QM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "KROGERTMS      ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "KROGERTMS",
+          "interchangeUsageIndicator": "T",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 120
+        }
+      },
+      {
+        "id": "edidp_kroger_204",
+        "name": "Kroger 204 tender",
+        "status": "Active",
+        "direction": "Inbound",
+        "transactionSet": "204",
+        "functionalGroupId": "SM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "KROGERTMS      ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TRENOVA        ",
+          "applicationSenderCode": "KROGERTMS",
+          "applicationReceiverCode": "TRENOVA",
+          "interchangeUsageIndicator": "T",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 0
+        }
+      }
+    ],
+    "transports": [],
+    "readiness": {
+      "ready": false,
+      "completedCount": 3,
+      "totalCount": 6,
+      "items": [
+        {
+          "key": "details",
+          "complete": true
+        },
+        {
+          "key": "communication-profile",
+          "complete": false
+        },
+        {
+          "key": "mappings",
+          "complete": false
+        },
+        {
+          "key": "inbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "outbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "test-case",
+          "complete": false
+        }
+      ]
+    },
+    "mappings": {
+      "profileId": null,
+      "updatedAt": null,
+      "counts": []
+    },
+    "activity": {
+      "since": 1789395200,
+      "seriesSince": 1788790400,
+      "scorecard": {
+        "outboundTotal": 0,
+        "sentCount": 0,
+        "failedCount": 0,
+        "deadLetteredCount": 0,
+        "receivedCount": 0,
+        "deliverySuccessRate": null,
+        "avgAckSeconds": null,
+        "p95AckSeconds": null,
+        "overdueAckCount": 0
+      },
+      "ackStatusCounts": [],
+      "sets": [],
+      "series": []
+    },
+    "attention": {
+      "overdueAckAgeSeconds": 14400,
+      "overdueAckCount": 0,
+      "oldestOverdueAt": null,
+      "overdueAcks": [],
+      "deadLettered": [],
+      "quarantinedFiles": []
+    },
+    "carriers": null
+  }
+}

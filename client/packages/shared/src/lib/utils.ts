@@ -185,6 +185,11 @@ export function formatPercent(value: number, digits: number = 1): string {
   }).format(value / 100);
 }
 
+/** A phone number as a `tel:` link: its digits and a leading plus, whatever it was written with. */
+export function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/gu, "")}`;
+}
+
 const METERS_PER_MILE = 1609.344;
 
 export function metersToMiles(meters: number): number {

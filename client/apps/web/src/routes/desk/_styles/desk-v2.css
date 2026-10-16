@@ -13311,6 +13311,1069 @@ button.dk-dtn-ref:hover {
   }
 }
 
+/* The EDI partner card */
+.dk-edp {
+  container: dkedp / inline-size;
+}
+.dk-edp .dk-rec-sh > .dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-edp .dk-rec-sh > .dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-edp .dk-rec-sh > .dk-bad {
+  color: var(--dsk-error);
+}
+.dk-edp .dk-rec-amt > b.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-hrow > .dk-edp-port + .dk-rec-who {
+  flex: 1;
+}
+/* the port: two ways, in and out, each lit when documents travel that way */
+.dk-edp-port {
+  flex: none;
+  align-self: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border-radius: var(--radius-surface);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-edp-port > i {
+  display: grid;
+  place-items: center;
+  color: var(--dsk-fg);
+}
+.dk-edp-port > i + i {
+  border-left: 1px solid var(--dsk-b);
+}
+.dk-edp-port > i.dk-shut {
+  color: var(--dsk-faint);
+}
+.dk-edp-port.dk-edp-port-sk {
+  display: block;
+  box-shadow: none;
+}
+/* what we trade: our end, a lane each way, their end */
+.dk-edp-x {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) 132px;
+  align-items: stretch;
+}
+.dk-edp-end {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
+}
+.dk-edp-end > b {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-edp-end > code {
+  font: 11px var(--dk-plex);
+  color: var(--dsk-fg2);
+  overflow-wrap: anywhere;
+}
+.dk-edp-end.dk-them {
+  align-items: flex-end;
+  text-align: right;
+}
+.dk-edp-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 12px;
+}
+.dk-edp-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-edp-wire {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 14px;
+}
+.dk-edp-wire::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: -12px;
+  right: -12px;
+  border-top: 1.5px solid var(--dsk-b-strong);
+}
+.dk-edp-wire::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+}
+.dk-edp-lane.dk-out .dk-edp-wire::after {
+  right: -12px;
+  border-left: 7px solid var(--dsk-b-strong);
+}
+.dk-edp-lane.dk-in .dk-edp-wire::after {
+  left: -12px;
+  border-right: 7px solid var(--dsk-b-strong);
+}
+.dk-edp-wire > span {
+  position: relative;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+}
+.dk-edp-lane ul {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
+}
+.dk-edp-lane li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+}
+.dk-edp-lane li + li {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-edp-lane li.dk-off {
+  opacity: 0.6;
+}
+.dk-edp-lane .dk-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-edp-lane .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-lane .dk-what > span {
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-lane li.dk-warn .dk-what > span {
+  color: var(--dsk-warn-fg);
+}
+.dk-edp-lane li.dk-bad .dk-what > span {
+  color: var(--dsk-error);
+}
+.dk-edp-lane .dk-n {
+  font: 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edp-off {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--dsk-b);
+  border-radius: var(--radius-surface);
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-stamp {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border-radius: var(--radius-control);
+  outline: 1px dashed var(--dsk-b-strong);
+  outline-offset: -3px;
+  background: var(--dsk-sunken);
+}
+.dk-edp-stamp > b {
+  font: 600 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edp-stamp > em {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  font: 600 8.5px var(--dk-plex);
+  font-style: normal;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-edp-xnote {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+/* how it's going: the window's figures, a pair of columns a day, the acknowledgments' ruler */
+.dk-edp-pulse {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dk-edp-figs,
+.dk-edp-acks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+.dk-edp-acks {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.dk-edp-figs > div,
+.dk-edp-acks > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+}
+.dk-edp-figs > div:first-child,
+.dk-edp-acks > div:first-child {
+  padding-left: 0;
+}
+.dk-edp-figs > div + div,
+.dk-edp-acks > div + div {
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-edp-figs dt,
+.dk-edp-acks dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-figs dd {
+  margin: 0;
+  font: 16px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edp-acks dd {
+  margin: 0;
+  font: 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edp-figs .dk-warn dd,
+.dk-edp-acks .dk-warn dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-edp-figs .dk-bad dd,
+.dk-edp-acks .dk-bad dd {
+  color: var(--dsk-error);
+}
+.dk-edp-acks .dk-ok dd {
+  color: var(--dsk-success-fg);
+}
+.dk-edp-cols {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 4px;
+  height: 76px;
+  padding-top: 4px;
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-edp-day {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-edp-day > span {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+.dk-edp-day i {
+  position: relative;
+  display: block;
+  width: 38%;
+  max-width: 9px;
+  overflow: hidden;
+  border-radius: 2px 2px 0 0;
+}
+.dk-edp-day i.dk-o {
+  background: var(--dsk-fg2);
+}
+.dk-edp-day i.dk-i {
+  background: color-mix(in oklch, var(--dsk-fg2) 35%, var(--dsk-sunken));
+}
+.dk-edp-day i.dk-sk {
+  background: var(--dsk-sunken);
+}
+.dk-edp-day i.dk-o > em {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--dsk-error);
+}
+.dk-edp-key {
+  display: flex;
+  gap: 14px;
+  margin-top: -6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dk-edp-key > span::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.dk-edp-key > .dk-o::before {
+  background: var(--dsk-fg2);
+}
+.dk-edp-key > .dk-i::before {
+  background: color-mix(in oklch, var(--dsk-fg2) 35%, var(--dsk-sunken));
+}
+.dk-edp-key > .dk-f::before {
+  background: var(--dsk-error);
+}
+.dk-edp-ack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-edp-ack-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.dk-edp-ack-h > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-ack-h > span {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-ackrule {
+  position: relative;
+  display: block;
+  height: 8px;
+  margin: 18px 0;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-edp-ackrule > .dk-span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--dsk-fg2) 28%, var(--dsk-sunken));
+}
+.dk-edp-ackrule > .dk-pin {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--dsk-fg);
+}
+.dk-edp-ackrule > .dk-pin.dk-p95 {
+  background: var(--dsk-fg2);
+}
+.dk-edp-ackrule > .dk-pin > span {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 11px var(--dk-plex);
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-edp-ackrule > .dk-pin.dk-lead > span {
+  left: 0;
+  transform: none;
+}
+.dk-edp-ackrule > .dk-pin.dk-p95 > span {
+  top: 13px;
+}
+.dk-edp-ackrule > .dk-sla {
+  position: absolute;
+  top: -18px;
+  bottom: -4px;
+  border-left: 1.5px dashed var(--dsk-warn);
+}
+.dk-edp-ackrule > .dk-sla > span {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--dsk-warn-fg);
+}
+/* needs a look: each thing on its tone's fill, with what it is about beneath */
+.dk-edp-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edp-needs > li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-surface);
+  background: var(--dsk-warn-sub);
+}
+.dk-edp-needs > li.dk-bad {
+  background: color-mix(in oklch, var(--dsk-error) 9%, var(--dsk-card));
+}
+.dk-edp-need-h {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.dk-edp-need-h > svg {
+  margin-top: 2px;
+  color: var(--dsk-warn-fg);
+}
+.dk-edp-needs > li.dk-bad .dk-edp-need-h > svg {
+  color: var(--dsk-error);
+}
+.dk-edp-need-h .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-edp-need-h .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-need-h .dk-what > span {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-need-h .dk-when {
+  font: 11.5px var(--dk-plex);
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-edp-needs blockquote {
+  margin: 0 0 0 23px;
+  padding: 6px 8px;
+  border-radius: var(--radius-control);
+  background: var(--dsk-card);
+}
+.dk-edp-needs blockquote code {
+  font: 11.5px/1.5 var(--dk-plex);
+  color: var(--dsk-fg);
+  word-break: break-word;
+}
+.dk-edp-needs .dk-rec-list {
+  margin-left: 23px;
+  border-radius: var(--radius-control);
+  background: var(--dsk-card);
+}
+.dk-edp .dk-rec-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.dk-edp-msgs .dk-rec-row {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.dk-edp .dk-rec-sub.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-edp .dk-rec-sub.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-edp .dk-rec-sub.dk-bad {
+  color: var(--dsk-error);
+}
+.dk-edp-mini {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-control);
+  font: 600 10.5px var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-edp-dir {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  color: var(--dsk-subtle);
+}
+/* how we reach them: each line as a patch */
+.dk-edp-patches {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dk-edp-patch {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dk-edp-patch-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dk-edp-meth {
+  padding: 2px 7px;
+  border-radius: var(--radius-control);
+  font: 600 11px var(--dk-plex);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+}
+.dk-edp-patch-h > b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-last {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-last.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-edp-last.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-edp-ends {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-surface);
+  background: var(--dsk-sunken);
+}
+.dk-edp-ends.dk-edp-ends-sk {
+  display: block;
+  height: 52px;
+}
+.dk-edp-ends > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-edp-ends > div:last-child {
+  text-align: right;
+}
+.dk-edp-ends span {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-ends code {
+  font: 12.5px var(--dk-plex);
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-edp-ends > i {
+  color: var(--dsk-subtle);
+}
+.dk-edp-cert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 96px auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
+  color: var(--dsk-fg2);
+}
+.dk-edp-cert.dk-warn {
+  border-color: transparent;
+  background: var(--dsk-warn-sub);
+}
+.dk-edp-cert.dk-bad {
+  border-color: transparent;
+  background: color-mix(in oklch, var(--dsk-error) 9%, var(--dsk-card));
+}
+.dk-edp-cert .dk-what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-edp-cert .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-cert .dk-what > span {
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+  overflow-wrap: anywhere;
+}
+.dk-edp-life {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--dsk-sunken);
+}
+.dk-edp-life > i {
+  display: block;
+  height: 100%;
+  background: var(--dsk-success);
+}
+.dk-edp-cert.dk-warn .dk-edp-life > i {
+  background: var(--dsk-warn);
+}
+.dk-edp-cert.dk-bad .dk-edp-life > i {
+  background: var(--dsk-error);
+}
+.dk-edp-cert .dk-when {
+  font: 12px var(--dk-plex);
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-edp-creds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edp-creds > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-edp-creds > li > b {
+  font-weight: 500;
+}
+.dk-edp-creds > li.dk-ok > b {
+  color: var(--dsk-success-fg);
+}
+.dk-edp-creds > li.dk-warn {
+  background: var(--dsk-warn-sub);
+}
+.dk-edp-creds > li.dk-warn > b {
+  color: var(--dsk-warn-fg);
+}
+/* how it's addressed: the routing label */
+.dk-edp-label {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--dsk-b);
+  border-radius: var(--radius-surface);
+}
+.dk-edp-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+.dk-edp-route.dk-gs {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  border-top: 1px dashed var(--dsk-b);
+}
+.dk-edp-route > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-edp-route span {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-route code {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font: 600 14px var(--dk-plex);
+  letter-spacing: 0.01em;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-edp-route.dk-gs code {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dk-edp-route code > em {
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-edp-route > i {
+  color: var(--dsk-subtle);
+}
+.dk-edp-usage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 3px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.dk-edp-usage > b {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font: 600 11px var(--dk-plex);
+}
+.dk-edp-usage.dk-prod {
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-edp-usage.dk-prod > b {
+  color: var(--dsk-on-solid);
+  background: var(--dsk-success);
+}
+.dk-edp-usage.dk-test {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-edp-usage.dk-test > b {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-card);
+}
+.dk-edp-seps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 9px 12px;
+  list-style: none;
+  border-top: 1px dashed var(--dsk-b);
+  background: var(--dsk-sunken);
+}
+.dk-edp-seps > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-seps kbd {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--radius-control);
+  font: 600 12px var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-edp-differs {
+  margin: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+/* ready to trade */
+.dk-edp-allready {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-allready > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--dsk-success-fg);
+}
+.dk-edp-allready b {
+  margin-right: 6px;
+  font-weight: 500;
+  color: var(--dsk-success-fg);
+}
+.dk-edp-ready {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-edp-readybar {
+  display: grid;
+  gap: 3px;
+}
+.dk-edp-readybar > i {
+  height: 6px;
+  border-radius: 2px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-edp-readybar > i.dk-done {
+  background: var(--dsk-fg);
+  box-shadow: none;
+}
+.dk-edp-ready ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edp-ready li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+}
+.dk-edp-ready .dk-tick {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 999px;
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-fg);
+}
+.dk-edp-ready li.dk-miss .dk-tick {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-edp-ready .dk-what {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-edp-ready .dk-what > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-ready li.dk-done .dk-what > b {
+  font-weight: 400;
+  color: var(--dsk-fg2);
+}
+.dk-edp-ready .dk-what > span {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+/* their codes we know */
+.dk-edp-maps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edp-maps > li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-control);
+  background: var(--dsk-sunken);
+}
+.dk-edp-maps > li {
+  font-size: 12px;
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+/* who it's for, who to call */
+.dk-edp-refs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.dk-edp-ref {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 26px 10px 12px;
+  border-radius: var(--radius-surface);
+  text-align: left;
+  background: var(--dsk-sunken);
+}
+.dk-edp-ref:hover {
+  background: var(--dsk-hover);
+}
+.dk-edp-ref > .dk-k {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-ref > b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-ref > span:not(.dk-k) {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-ref > svg {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  color: var(--dsk-subtle);
+}
+.dk-edp-who {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+}
+.dk-edp-who > .dk-rec-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-edp-who > .dk-rec-main > b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edp-reach {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.dk-edp-reach > a,
+.dk-edp-reach > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edp-reach > a {
+  color: var(--dsk-blue-fg);
+  text-decoration: none;
+}
+.dk-edp-reach > a:hover {
+  text-decoration: underline;
+}
+/* a pane too narrow for the hint beside the partner's steps keeps the steps */
+@container dkedp (max-width: 640px) {
+  .dk-rec-bar:has(button) .dk-rec-bh {
+    visibility: hidden;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+@container dkedp (max-width: 560px) {
+  .dk-edp-x {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 10px;
+  }
+  .dk-edp-lanes {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0;
+  }
+  .dk-edp-wire::before {
+    left: 0;
+    right: 0;
+  }
+  .dk-edp-lane.dk-out .dk-edp-wire::after {
+    right: 0;
+  }
+  .dk-edp-lane.dk-in .dk-edp-wire::after {
+    left: 0;
+  }
+  .dk-edp-figs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 10px;
+  }
+  .dk-edp-figs > div:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .dk-edp-acks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 10px;
+  }
+  .dk-edp-acks > div:nth-child(4) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .dk-edp-route {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .dk-edp-route > .dk-edp-usage {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .dk-edp-cert {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .dk-edp-cert .dk-edp-life {
+    display: none;
+  }
+  .dk-edp-ready ul,
+  .dk-edp-refs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* an EDI connection drafted from a partner's guide: each setting with the page it came from */
 .dk-ecd {
   container: dkecd / inline-size;
