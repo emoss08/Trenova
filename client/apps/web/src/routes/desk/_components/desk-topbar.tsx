@@ -42,7 +42,7 @@ export function DeskTopBar({
   newArtifact,
   pending,
   onToggleWorkspace,
-  onTogglePin,
+  onSetPinned,
   onDownload,
   onRename,
   onOpenRail,
@@ -62,7 +62,8 @@ export function DeskTopBar({
   /** A change in this conversation waits for the person. */
   pending: boolean;
   onToggleWorkspace: () => void;
-  onTogglePin: () => void;
+  /** Pins or unpins the open conversation. */
+  onSetPinned: (pinned: boolean) => void;
   onDownload: () => void;
   /** Renames the open conversation; the name in the bar is where it is edited. */
   onRename: (title: string) => void;
@@ -152,7 +153,7 @@ export function DeskTopBar({
               <DropdownMenuItem
                 title={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
                 startContent={<DeskIcon name="pin" size={14} />}
-                onClick={onTogglePin}
+                onClick={() => onSetPinned(!thread.pinned)}
               />
               <DropdownMenuItem
                 title={t("Download transcript")}

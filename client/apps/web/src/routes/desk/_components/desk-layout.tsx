@@ -5,7 +5,14 @@ import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { watchtower } from "@/lib/queries/watchtower";
-import { findCachedThread, removeCachedThread, updateCachedThread } from "@/lib/thread-list";
+import {
+  cachedThread,
+  countCachedThread,
+  findCachedThread,
+  patchCachedThread,
+  removeCachedThread,
+  takeCachedThread,
+} from "@/lib/thread-list";
 import { useDeskThreads } from "./use-desk-threads";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
@@ -18,14 +25,13 @@ import {
   type AssistantArtifactEvent,
   type AssistantThread,
 } from "@/types/assistant";
-import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { hashKey, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
-import { toast } from "sonner";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useStartConversation } from "@/components/assistant/use-start-conversation";
 import type { DeskPlace } from "./desk-rail";
@@ -60,7 +66,9 @@ export type DeskContextValue = {
   /** Opens a conversation, optionally with the question that prompted it. */
   start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
   remove: (thread: AssistantThread) => void;
-  togglePin: (thread: AssistantThread) => void;
+  /** The open conversation is being deleted, and the Desk is moving off it. */
+  deletingActive: boolean;
+  setPinned: (thread: AssistantThread, pinned: boolean) => void;
   /** Told while a turn is running, so the room can light up for it. */
   setWorking: (working: boolean) => void;
   working: boolean;
@@ -96,6 +104,16 @@ export type LiveArtifacts = {
 };
 
 const NO_LIVE_ARTIFACTS: LiveArtifacts = { ids: [], revision: 0 };
+
+/** Every delete of a conversation from the Desk, so the frame knows which are on their way out. */
+const DELETE_THREAD_KEY = ["assistant-thread-delete"];
+
+/**
+ * Pins and renames go to the server one at a time, in the order they were
+ * asked for, so a quick second toggle can never land before the first.
+ */
+const PIN_THREAD_SCOPE = { id: "assistant-thread-pin" };
+const RENAME_THREAD_SCOPE = { id: "assistant-thread-rename" };
 
 /** How long a finished turn's lookups stay hidden if the artifacts are not read again. */
 const LOOKUP_SETTLE_MS = 15_000;
@@ -216,21 +234,34 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
+  // A conversation being deleted leaves the lists before the Desk has moved
+  // off it; it is neither read on its own nor drawn as open meanwhile.
+  const deletingIds = useMutationState({
+    filters: { mutationKey: DELETE_THREAD_KEY, status: "pending" },
+    select: (mutation) => (mutation.state.variables as AssistantThread | undefined)?.id,
+  });
+  const activeDeleting = activeThreadId !== null && deletingIds.includes(activeThreadId);
+
   // The list's first page leaves out older conversations, which the rail's
   // shelves read on their own, and quick questions nobody kept, which a
   // finished answer's notice links to. Read on its own only once the list has
   // said it does not have it, drawn meanwhile from whichever shelf holds it.
   const unlistedQuery = useQuery({
     ...assistant.thread(activeThreadId ?? ""),
-    enabled: activeThreadId !== null && threadsQuery.isSuccess && listedThread === null,
+    enabled:
+      activeThreadId !== null &&
+      threadsQuery.isSuccess &&
+      listedThread === null &&
+      !activeDeleting,
     placeholderData: () => findCachedThread(queryClient, activeThreadId) ?? undefined,
     retry: false,
   });
-  const activeThread =
-    listedThread ??
-    (activeThreadId !== null && unlistedQuery.data?.id === activeThreadId
-      ? unlistedQuery.data
-      : null);
+  const activeThread = activeDeleting
+    ? null
+    : (listedThread ??
+      (activeThreadId !== null && unlistedQuery.data?.id === activeThreadId
+        ? unlistedQuery.data
+        : null));
   const activeAgent = activeThread
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
@@ -281,39 +312,68 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     onStarted: (thread) => void navigate(conversationPath(thread.id)),
   });
 
+  // Every change to a conversation shows the moment it is asked for: reads
+  // under way are stopped first so none of them writes the old state back,
+  // and a refused change is taken out again. A stopped read puts its query
+  // back as it was there and then, so the change is written straight after,
+  // in the same task as the click: awaiting the stop would draw the old state
+  // for a frame first.
+  const holdThreadReads = useCallback(
+    (threadId: string) => {
+      void queryClient.cancelQueries({ queryKey: assistant.threads().queryKey });
+      void queryClient.cancelQueries({ queryKey: assistant.thread(threadId).queryKey });
+    },
+    [queryClient],
+  );
+
   const deleteMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
-    onSuccess: async (_result, id) => {
-      toast.success(t("Conversation deleted"));
-      // Out of every page at once: a refresh reads only the pages in view, and
-      // the conversation must not linger in one that is not.
-      removeCachedThread(queryClient, id);
-      await refreshThreads();
-      if (activeThreadId === id) {
+    mutationKey: DELETE_THREAD_KEY,
+    mutationFn: (thread: AssistantThread) => apiService.assistantService.deleteThread(thread.id),
+    onMutate: (thread) => {
+      if (activeThreadId === thread.id) {
         void navigate("/desk");
       }
+      holdThreadReads(thread.id);
+      // Out of every page at once: a refresh reads only the pages in view, and
+      // the conversation must not linger in one that is not.
+      const taken = takeCachedThread(queryClient, thread.id);
+      const counted = taken.thread ?? thread;
+      countCachedThread(queryClient, counted, -1);
+
+      return {
+        restore: () => {
+          taken.restore();
+          countCachedThread(queryClient, counted, 1);
+        },
+      };
     },
+    onSuccess: (_result, thread) => {
+      // A read that crossed the delete may have put it back.
+      removeCachedThread(queryClient, thread.id);
+      queryClient.removeQueries({ queryKey: assistant.thread(thread.id).queryKey, exact: true });
+    },
+    onError: (_error, _thread, context) => context?.restore(),
+    onSettled: refreshThreads,
     resourceName: "Conversation",
   });
 
   // A new name moves nothing in the list, so it is written into the cached
   // conversation as it is sent rather than read back with every page.
-  const retitleCached = useCallback(
-    (threadId: string, changes: Partial<AssistantThread>) => {
-      const retitle = (cached: AssistantThread): AssistantThread => ({ ...cached, ...changes });
-      updateCachedThread(queryClient, threadId, retitle);
-      queryClient.setQueryData<AssistantThread>(assistant.thread(threadId).queryKey, (cached) =>
-        cached ? retitle(cached) : cached,
-      );
-    },
-    [queryClient],
-  );
   const renameMutation = useApiMutation({
+    scope: RENAME_THREAD_SCOPE,
     mutationFn: ({ thread, title }: { thread: AssistantThread; title: string }) =>
       apiService.assistantService.updateThread(thread.id, { title }),
-    onMutate: ({ thread, title }) => retitleCached(thread.id, { title }),
-    onSuccess: (updated) => {
-      retitleCached(updated.id, {
+    onMutate: ({ thread, title }) => {
+      holdThreadReads(thread.id);
+      return { undo: patchCachedThread(queryClient, thread.id, { title }) };
+    },
+    onSuccess: (updated, { title }) => {
+      // A later rename already on its way is what the person sees, and its
+      // own answer is written when it comes.
+      if (cachedThread(queryClient, updated.id)?.title !== title) {
+        return;
+      }
+      patchCachedThread(queryClient, updated.id, {
         title: updated.title,
         version: updated.version,
         updatedAt: updated.updatedAt,
@@ -324,14 +384,54 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         void queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
       }
     },
-    onError: () => void refreshThreads(),
+    onError: (_error, _variables, context) => {
+      context?.undo();
+      void refreshThreads();
+    },
     resourceName: "Conversation",
   });
 
+  // A pin moves the conversation between the pinned shelf and its dated one
+  // at once; the shelves and their counts are read again once it settles.
+  // Each pin names the state it asks for rather than flipping the one it was
+  // given, so a second click made before the first reaches every reader
+  // still undoes it.
   const pinMutation = useApiMutation({
-    mutationFn: (thread: AssistantThread) =>
-      apiService.assistantService.updateThread(thread.id, { pinned: !thread.pinned }),
-    onSuccess: refreshThreads,
+    scope: PIN_THREAD_SCOPE,
+    mutationFn: ({ thread, pinned }: { thread: AssistantThread; pinned: boolean }) =>
+      apiService.assistantService.updateThread(thread.id, { pinned }),
+    onMutate: ({ thread, pinned }) => {
+      holdThreadReads(thread.id);
+      const before = cachedThread(queryClient, thread.id) ?? thread;
+      if (before.pinned === pinned) {
+        return { undo: () => undefined };
+      }
+      const moved = { ...before, pinned };
+      const undo = patchCachedThread(queryClient, thread.id, { pinned });
+      countCachedThread(queryClient, before, -1);
+      countCachedThread(queryClient, moved, 1);
+
+      return {
+        undo: () => {
+          undo();
+          countCachedThread(queryClient, moved, -1);
+          countCachedThread(queryClient, before, 1);
+        },
+      };
+    },
+    onSuccess: (updated, { pinned }) => {
+      // A second click already on its way is what the person sees.
+      if (cachedThread(queryClient, updated.id)?.pinned !== pinned) {
+        return;
+      }
+      patchCachedThread(queryClient, updated.id, {
+        pinned: updated.pinned,
+        version: updated.version,
+        updatedAt: updated.updatedAt,
+      });
+    },
+    onError: (_error, _variables, context) => context?.undo(),
+    onSettled: refreshThreads,
     resourceName: "Conversation",
   });
 
@@ -468,8 +568,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
       isStarting: startConversation.isStarting,
       start: startConversation.start,
-      remove: (thread) => deleteMutation.mutate(thread.id),
-      togglePin: (thread) => pinMutation.mutate(thread),
+      remove: (thread) => deleteMutation.mutate(thread),
+      deletingActive: activeDeleting,
+      setPinned: (thread, pinned) => pinMutation.mutate({ thread, pinned }),
       setWorking,
       working,
       noteLiveArtifacts,
@@ -483,6 +584,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       openSettings: () => setSettingsOpen(true),
     }),
     [
+      activeDeleting,
       activeThread,
       agents,
       agentsById,
@@ -532,8 +634,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             setRailOpen(false);
             setSettingsOpen(true);
           }}
-          onTogglePin={(thread) => pinMutation.mutate(thread)}
-          onDelete={(thread) => deleteMutation.mutate(thread.id)}
+          onSetPinned={(thread, pinned) => pinMutation.mutate({ thread, pinned })}
+          onDelete={(thread) => deleteMutation.mutate(thread)}
           activeThread={activeThread}
         />
         {railOpen && (
@@ -564,7 +666,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             newArtifact={newArtifact}
             pending={pendingHere}
             onToggleWorkspace={() => setWorkspaceOpen(!workspaceOpen)}
-            onTogglePin={() => activeThread && pinMutation.mutate(activeThread)}
+            onSetPinned={(pinned) =>
+              activeThread && pinMutation.mutate({ thread: activeThread, pinned })
+            }
             onDownload={() => activeThread && downloadAssistantTranscript(activeThread.id)}
             onRename={(title) =>
               activeThread && renameMutation.mutate({ thread: activeThread, title })

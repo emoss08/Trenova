@@ -28,6 +28,7 @@ const reportWindow: ThreadAskRequest = {
   ],
   allowOther: true,
   otherHint: "Number of days",
+  suggestion: "",
   input: { type: "text" },
   fields: [],
 };
@@ -257,6 +258,58 @@ describe("DeskAskRecord", () => {
     render(<DeskAskRecord ask={{ request: reportWindow, answer: null }} docked={false} />);
 
     expect(screen.getByText("Not answered yet")).toBeInTheDocument();
+  });
+
+  // The answer is read under its question from the moment it is sent, so
+  // nothing moves when it is saved.
+  it("records the answer the person has just sent, before it is saved", () => {
+    const sent = { callId: reportWindow.callId, content: "30", mentions: [] };
+    render(
+      <DeskAskRecord ask={{ request: reportWindow, answer: null }} docked={false} sent={sent} />,
+    );
+
+    expect(screen.getByText("30 days")).toBeInTheDocument();
+    expect(screen.queryByText("Not answered yet")).toBeNull();
+  });
+
+  it("records the saved answer over the one being sent", () => {
+    const sent = { callId: reportWindow.callId, content: "7", mentions: [] };
+    render(
+      <DeskAskRecord
+        ask={{ request: reportWindow, answer: said("30") }}
+        docked={false}
+        sent={sent}
+      />,
+    );
+
+    expect(screen.getByText("30 days")).toBeInTheDocument();
+    expect(screen.queryByText("7 days")).toBeNull();
+  });
+});
+
+describe("DeskAskDock with a suggested answer", () => {
+  const partnerCode: ThreadAskRequest = {
+    ...reportWindow,
+    question: "What partner code should Meritor have in Trenova?",
+    options: [],
+    otherHint: "A short code, such as MERITOR",
+    suggestion: "MERITOR",
+  };
+
+  it("says the suggestion is a key away in the composer", () => {
+    dock(partnerCode);
+
+    expect(screen.getByRole("region", { name: "Question from the agent" })).toHaveTextContent(
+      "Press Tab to use the suggested answer, or type your own below.",
+    );
+  });
+
+  it("says only to type when there is no suggestion", () => {
+    dock({ ...partnerCode, suggestion: "" });
+
+    expect(screen.getByRole("region", { name: "Question from the agent" })).toHaveTextContent(
+      "Type your answer below.",
+    );
   });
 });
 

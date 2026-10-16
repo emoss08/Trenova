@@ -4,6 +4,7 @@ import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
 import { RailDot, railTime, stateLabel } from "@/components/desk-chat/rail/rail-parts";
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
+import { usePendingValue } from "@trenova/shared/hooks/use-pending-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, type KeyboardEvent } from "react";
@@ -17,7 +18,7 @@ const ROW_ACTION_CLASS =
  */
 export type DeskRailRowActions = {
   open: (thread: AssistantThread) => void;
-  togglePin: (thread: AssistantThread) => void;
+  setPinned: (thread: AssistantThread, pinned: boolean) => void;
   /** Asks once more before deleting: the row turns its actions into a Delete button. */
   confirmDelete: (threadId: string) => void;
   cancelDelete: () => void;
@@ -58,6 +59,13 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
   actions,
 }: DeskRailThreadRowProps) {
   const t = useT();
+  // The pin shows its new state from the click, not the old one until the
+  // conversation carries it, and a second click undoes what the first asked.
+  const [pinned, setShownPinned] = usePendingValue(thread.pinned);
+  const togglePin = () => {
+    setShownPinned(!pinned);
+    actions.setPinned(thread, !pinned);
+  };
   const state = deskThreadState(thread, { live, active });
   const title = thread.title || t("Untitled conversation");
   const openOnKey = (event: KeyboardEvent) => {
@@ -110,11 +118,11 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
             <Button
               variant="bare"
               size="bare"
-              className={cn(ROW_ACTION_CLASS, thread.pinned && "text-dsk-fg [&_svg_path]:fill-current")}
-              data-tip={thread.pinned ? t("Unpin") : t("Pin")}
-              aria-label={thread.pinned ? t("Unpin conversation") : t("Pin conversation")}
-              aria-pressed={thread.pinned}
-              onClick={() => actions.togglePin(thread)}
+              className={cn(ROW_ACTION_CLASS, pinned && "text-dsk-fg [&_svg_path]:fill-current")}
+              data-tip={pinned ? t("Unpin") : t("Pin")}
+              aria-label={pinned ? t("Unpin conversation") : t("Pin conversation")}
+              aria-pressed={pinned}
+              onClick={togglePin}
             >
               <DeskIcon name="pin" size={13} />
             </Button>

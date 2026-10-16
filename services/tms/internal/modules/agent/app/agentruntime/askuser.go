@@ -36,6 +36,10 @@ const (
 	// maxOpenQuestionSeparators is the most commas and semicolons such a
 	// question may hold. A second one is a list of the things being asked for.
 	maxOpenQuestionSeparators = 1
+	// maxAskSuggestionRunes bounds the answer a model offers for a typed
+	// value. A suggestion is one value the person accepts with a key, not a
+	// paragraph they would have to read before taking it.
+	maxAskSuggestionRunes = 120
 )
 
 // changeUnshownAsk is the loop treating an ask_user call the runtime refused
@@ -86,7 +90,11 @@ const askUserDescription = "Ask the person for one value you need and cannot saf
 	"shown as buttons; the person can also type their own value unless you set " +
 	"allowOther false. For a typed value, set input to its type: a number, a date, a " +
 	"date and time, or a record such as a customer or a location, which the person " +
-	"picks from a search. To create or change a record, do not collect its details " +
+	"picks from a search. When the person types text, propose the answer in suggestion " +
+	"whenever you can work one out: a code or name from the record's name, a value the " +
+	"conversation or the records imply, a usual default. They accept it with one key or " +
+	"type over it, so proposing is not choosing for them. To create or change a record, " +
+	"do not collect its details " +
 	"first: call the write tool with what you know, and only when it is refused for " +
 	"missing values, ask for exactly those with fields, as one form. Never use fields " +
 	"as an intake form up front. Ask once, then stop and wait: never guess a value " +
@@ -224,6 +232,17 @@ func askUserSpec() kernelports.ToolSpec {
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyDescription: "What a typed value should look like, shown in the " +
 						"box. \"Number of days\".",
+				},
+				"suggestion": map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "With a typed text value and no options: the " +
+						"answer you propose, exactly as you would use it, such as \"MERITOR\" " +
+						"for the partner code of Meritor. Offer one whenever you can work out " +
+						"a sensible value, even one the person's team might write differently: " +
+						"it waits in their box, one key accepts it and typing replaces it. " +
+						"Never a description or an example sentence, and never left only in " +
+						"otherHint. Leave it out only when nothing points to any value, such " +
+						"as a PO number only the person knows.",
 				},
 				"input":  askInputSchema(),
 				"fields": askFieldsSchema(),
@@ -363,6 +382,7 @@ type askRequest struct {
 	Options    []askOption `json:"options"`
 	AllowOther bool        `json:"allowOther"`
 	OtherHint  string      `json:"otherHint,omitempty"`
+	Suggestion string      `json:"suggestion,omitempty"`
 	Input      *askInput   `json:"input,omitempty"`
 	Fields     []askField  `json:"fields,omitempty"`
 	Note       string      `json:"note"`
@@ -446,6 +466,9 @@ func askRequestFrom(
 		OtherHint:  strings.TrimSpace(stringArg(arguments, "otherHint")),
 		Input:      input,
 	}
+	if allowOther && len(options) == 0 && input == nil {
+		request.Suggestion = askSuggestionFrom(arguments)
+	}
 	request.Note = askNote(request)
 	if len(past) > 0 && schedulingQuestion(question) {
 		request.Note += pastDateNote(past)
@@ -475,6 +498,9 @@ func askNote(request *askRequest) string {
 		}
 		if request.AllowOther {
 			b.WriteString(" and a box for their own value")
+		}
+		if request.Suggestion != "" {
+			b.WriteString(", holding your suggestion for them to accept or replace")
 		}
 		b.WriteString(", pinned above their message box. Their answer arrives as their ")
 		b.WriteString("next message. ")
@@ -580,6 +606,18 @@ func askFieldsFrom(raw []any) []askField {
 	}
 
 	return fields
+}
+
+// askSuggestionFrom reads the answer a model offers for a typed text value,
+// on one line. One too long to take at a glance is dropped rather than cut,
+// because a cut value accepted with a key is a wrong value.
+func askSuggestionFrom(arguments map[string]any) string {
+	suggestion := strings.Join(strings.Fields(stringArg(arguments, "suggestion")), " ")
+	if utf8.RuneCountInString(suggestion) > maxAskSuggestionRunes {
+		return ""
+	}
+
+	return suggestion
 }
 
 // askInputFrom reads the type of the person's own value. Plain text, a type

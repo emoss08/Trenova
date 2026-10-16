@@ -115,7 +115,7 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
           decisionsWaitHere={false}
           onSearch={vi.fn()}
           onSettings={vi.fn()}
-          onTogglePin={vi.fn()}
+          onSetPinned={vi.fn()}
           onDelete={vi.fn()}
           {...props}
         />

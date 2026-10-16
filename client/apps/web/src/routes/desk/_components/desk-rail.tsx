@@ -31,6 +31,8 @@ export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "threa
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
 
+const NO_IDS: ReadonlySet<string> = new Set();
+
 const NAV_ITEM_CLASS =
   "relative z-1 flex h-7.5 w-full gap-2.5 rounded-lg pr-2 pl-2.5 text-left text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-fg/4 hover:text-dsk-fg";
 const NAV_ITEM_ON_CLASS = "text-dsk-fg hover:bg-transparent";
@@ -58,7 +60,7 @@ export type DeskRailProps = {
   decisionsWaitHere: boolean;
   onSearch: () => void;
   onSettings: () => void;
-  onTogglePin: (thread: AssistantThread) => void;
+  onSetPinned: (thread: AssistantThread, pinned: boolean) => void;
   onDelete: (thread: AssistantThread) => void;
 };
 
@@ -92,7 +94,7 @@ export function DeskRail({
   decisionsWaitHere,
   onSearch,
   onSettings,
-  onTogglePin,
+  onSetPinned,
   onDelete,
 }: DeskRailProps) {
   const t = useT();
@@ -102,11 +104,27 @@ export function DeskRail({
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
   const [confirming, setConfirming] = useState<string | null>(null);
-  const [leaving, setLeaving] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState<ReadonlySet<string>>(NO_IDS);
 
   const toggleShelf = useDeskSettingsStore((state) => state.toggleShelf);
   const openThreadId = place === "thread" ? activeThreadId : null;
   const rows = useMemo(() => deskRailRows(shelves, openThreadId), [openThreadId, shelves]);
+
+  // A deleted row stays slid out until the rail is given shelves without it.
+  // The cache drops it as the delete is sent, but the rail hears of that a
+  // task later and would draw the row again in between. Once it has left, a
+  // refused delete that puts it back shows it as it was.
+  if (leaving.size > 0) {
+    const listed = new Set<string>();
+    for (const row of rows) {
+      if (row.kind === "thread" && leaving.has(row.thread.id)) {
+        listed.add(row.thread.id);
+      }
+    }
+    if (listed.size !== leaving.size) {
+      setLeaving(listed.size === 0 ? NO_IDS : listed);
+    }
+  }
 
   const activeKey =
     place === "thread" && activeThreadId
@@ -126,19 +144,16 @@ export function DeskRail({
   const actions = useMemo<DeskRailRowActions>(
     () => ({
       open: (thread) => void navigate(conversationPath(thread.id)),
-      togglePin: onTogglePin,
+      setPinned: onSetPinned,
       confirmDelete: setConfirming,
       cancelDelete: () => setConfirming(null),
       remove: (thread) => {
         setConfirming(null);
-        setLeaving(thread.id);
-        window.setTimeout(() => {
-          setLeaving(null);
-          onDelete(thread);
-        }, ROW_LEAVE_MS);
+        setLeaving((current) => new Set(current).add(thread.id));
+        window.setTimeout(() => onDelete(thread), ROW_LEAVE_MS);
       },
     }),
-    [navigate, onDelete, onTogglePin],
+    [navigate, onDelete, onSetPinned],
   );
 
   const renderRow = (row: DeskRailRow) => {
@@ -178,7 +193,7 @@ export function DeskRail({
             live={liveThreadIds.has(thread.id)}
             active={thread.id === activeThreadId && place === "thread"}
             confirming={confirming === thread.id}
-            leaving={leaving === thread.id}
+            leaving={leaving.has(thread.id)}
             today={today}
             timezone={timezone}
             actions={actions}

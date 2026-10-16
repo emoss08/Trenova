@@ -19,7 +19,7 @@ import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { DeskMemoryRecall, DeskMemorySavedList } from "../memory/desk-memory-notes";
 import { citeSteps, withCitations } from "./citations";
-import { DeskAskRecord } from "./desk-ask";
+import { DeskAskRecord, type AskAnswerSent } from "./desk-ask";
 import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
 import { DeskStepFailures } from "./desk-tool-failures";
@@ -162,6 +162,7 @@ export const DeskReply = memo(function DeskReply({
   threadArtifacts,
   asks = NO_ASKS,
   dockedAskId = null,
+  sentAnswer = null,
   chapter,
   closesTurn = false,
   onTogglePin,
@@ -176,6 +177,8 @@ export const DeskReply = memo(function DeskReply({
   asks?: readonly ThreadAsk[];
   /** The reply's question that waits above the composer, if one of its questions does. */
   dockedAskId?: string | null;
+  /** The answer just sent to one of the reply's questions, before it is saved. */
+  sentAnswer?: AskAnswerSent | null;
   chapter: number;
   /**
    * The reply is the last of its turn, so it says which of the turn's steps
@@ -227,7 +230,11 @@ export const DeskReply = memo(function DeskReply({
       ))}
       {asks.map((ask) => (
         <div key={ask.request.callId} className="dk-extra">
-          <DeskAskRecord ask={ask} docked={ask.request.callId === dockedAskId} />
+          <DeskAskRecord
+            ask={ask}
+            docked={ask.request.callId === dockedAskId}
+            sent={sentAnswer?.callId === ask.request.callId ? sentAnswer : null}
+          />
         </div>
       ))}
       {closesTurn && (

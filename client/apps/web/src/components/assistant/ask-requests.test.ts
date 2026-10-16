@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AssistantMessage } from "@/types/assistant";
 import {
   answersInComposer,
+  askAnswerIds,
   askRequestsFrom,
   liveAskRequest,
   threadAsks,
@@ -65,6 +66,7 @@ describe("askRequestsFrom", () => {
         ],
         allowOther: true,
         otherHint: "Number of days",
+        suggestion: "",
         input: { type: "text" },
         fields: [],
       },
@@ -111,6 +113,52 @@ describe("askRequestsFrom", () => {
 
   it("ignores every other tool", () => {
     expect(askRequestsFrom([exchange("list_reports", fenced({ results: [] }))])).toEqual([]);
+  });
+});
+
+describe("askRequestsFrom, the agent's suggested answer", () => {
+  const partnerCode = {
+    question: "What partner code should Meritor have in Trenova?",
+    options: [],
+    allowOther: true,
+    otherHint: "A short code, such as MERITOR",
+    suggestion: "MERITOR",
+    note: "The person has been shown this question…",
+  };
+  const suggestionOf = (payload: object) =>
+    askRequestsFrom([exchange("ask_user", fenced(payload))])[0].suggestion;
+
+  it("reads the value the agent would use for a value in words", () => {
+    expect(suggestionOf(partnerCode)).toBe("MERITOR");
+  });
+
+  it("is empty when the agent offered none", () => {
+    expect(suggestionOf({ ...partnerCode, suggestion: undefined })).toBe("");
+    expect(suggestionOf({ ...partnerCode, suggestion: null })).toBe("");
+    expect(suggestionOf({ ...partnerCode, suggestion: 42 })).toBe("");
+    expect(suggestionOf({ ...partnerCode, suggestion: " \n " })).toBe("");
+  });
+
+  it("folds it onto one line", () => {
+    expect(suggestionOf({ ...partnerCode, suggestion: "  Chicago\n  to\tDallas " })).toBe(
+      "Chicago to Dallas",
+    );
+  });
+
+  it("drops one longer than the contract allows rather than cutting it", () => {
+    expect(suggestionOf({ ...partnerCode, suggestion: "é".repeat(120) })).toBe("é".repeat(120));
+    expect(suggestionOf({ ...partnerCode, suggestion: "a".repeat(121) })).toBe("");
+  });
+
+  it("offers none beside choices, a value in a shape or a form", () => {
+    expect(suggestionOf({ ...partnerCode, options: [{ value: "MER", label: "MER" }] })).toBe("");
+    expect(suggestionOf({ ...partnerCode, input: { type: "number" } })).toBe("");
+    expect(
+      suggestionOf({
+        ...partnerCode,
+        fields: [{ key: "code", label: "Partner code", type: "text" }],
+      }),
+    ).toBe("");
   });
 });
 
@@ -355,6 +403,18 @@ describe("threadAsks", () => {
     expect(threadAsks(entries).open?.callId).toBe("call_3");
   });
 
+  it("names the messages that answered a question, and no other", () => {
+    const entries = [
+      person("q1", 1, "Run the late report"),
+      asking("r1", 3),
+      person("q2", 4, "30"),
+      person("q3", 5, "And for last month?"),
+      asking("r2", 7, { ...window, question: "Which customer?" }),
+    ];
+
+    expect([...askAnswerIds(threadAsks(entries))]).toEqual(["q2"]);
+  });
+
   it("holds nothing for a thread that asked nothing", () => {
     const { byReply, open } = threadAsks([person("q1", 1, "Hello")]);
 
@@ -400,6 +460,7 @@ describe("answersInComposer", () => {
     options: [],
     allowOther: true,
     otherHint: "",
+    suggestion: "",
     input: { type: "text" },
     fields: [],
   };

@@ -21,18 +21,25 @@ const REPLY_LINES = [
   [94, 88, 52],
 ] as const;
 
+type AnnounceProps = {
+  /** Says what is loading to assistive technology; off where a frame around it already does. */
+  announce?: boolean;
+};
+
 /**
  * A conversation while its messages are first read: two turns, each a
  * question over the agent's reply, laid out on the transcript's own grid.
  */
-export function DeskTranscriptSkeleton() {
+export function DeskTranscriptSkeleton({ announce = true }: AnnounceProps) {
   const t = useT();
 
   return (
     <>
-      <span role="status" className="sr-only">
-        {t("Reading the conversation…")}
-      </span>
+      {announce && (
+        <span role="status" className="sr-only">
+          {t("Reading the conversation…")}
+        </span>
+      )}
       {QUESTION_WIDTHS.map((questionWidth, turn) => (
         // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
         <div key={turn} className={cn("dk-r dk-skt", turn === 0 && "dk-first")} aria-hidden>
@@ -51,6 +58,35 @@ export function DeskTranscriptSkeleton() {
         </div>
       ))}
     </>
+  );
+}
+
+/**
+ * A conversation before anything about it is known, as the room draws it: the
+ * transcript's outline in the scrolling column, and the composer docked under
+ * it with the line beneath, so the conversation lands without moving.
+ */
+export function DeskConversationSkeleton({ announce = true }: AnnounceProps) {
+  return (
+    <div className="dk-stage" aria-busy>
+      <div className="dk-room">
+        <div className="dk-scroll">
+          <div className="dk-grid dk-flow">
+            <DeskTranscriptSkeleton announce={announce} />
+          </div>
+        </div>
+        <div className="dk-dock" aria-hidden>
+          <div className="dk-grid">
+            <div className="dk-g" />
+            <div className="dk-c">
+              <i className="dk-sk dk-sk-cmp" />
+              <i className="dk-sk dk-sk-hint" />
+            </div>
+            <div className="dk-m" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

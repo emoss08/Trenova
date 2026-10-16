@@ -98,14 +98,14 @@ DROP POLICY IF EXISTS read_scope ON public.workers;
 CREATE POLICY read_scope ON public.workers AS RESTRICTIVE FOR SELECT TO trenova_tenant
     USING (
         (SELECT trenova_rls.read_scope('worker')) <> 'team'
-        OR manager_id = ANY ((SELECT trenova_rls.read_scope_ids('worker')))
+        OR manager_id = ANY ((SELECT trenova_rls.read_scope_ids('worker'))::text[])
         OR EXISTS (
             SELECT 1
             FROM public.fleet_codes fc
             WHERE fc.id = workers.fleet_code_id
                 AND fc.organization_id = workers.organization_id
                 AND fc.business_unit_id = workers.business_unit_id
-                AND fc.manager_id = ANY ((SELECT trenova_rls.read_scope_ids('worker')))
+                AND fc.manager_id = ANY ((SELECT trenova_rls.read_scope_ids('worker'))::text[])
         )
     );
 

@@ -1365,12 +1365,19 @@ above the person's message box. A call asks for one value in one of three shapes
   A record is picked from a search of one kind, and the kind is held to the
   permission registry (`agent.IsKnownPageEntityType`); an unknown type, or a record
   of no known kind, falls back to text. `otherHint` is the box's placeholder.
+  A plain text value typed in the composer (no options, no `input`) may carry a
+  `suggestion`: the value the model would use, which waits in the empty composer as
+  ghost text that Tab or → accepts. The schema asks for one whenever a value can be
+  worked out, and to leave it out only when nothing points to any: told to leave it out
+  "when you would only be guessing", a model proposed a partner's name but not a code
+  derived from it, because a code is the team's convention. A suggestion is folded onto one line and dropped,
+  never cut, past 120 characters; beside options, a typed box or a form it is dropped.
 - **A form:** `fields` (`key`, `label`, `type`, `recordKind`, `hint`, `optional`; at
   most 8), the values a write tool refused for as missing, which together complete
   that one write. A form has no options, no box of its own and no `input`.
 
-The stored result is `{question, options, allowOther, otherHint?, input?, fields?,
-note}`, with `options` always a list. Malformed options and fields are dropped one
+The stored result is `{question, options, allowOther, otherHint?, suggestion?, input?,
+fields?, note}`, with `options` always a list. Malformed options and fields are dropped one
 by one. The loop refuses, telling the model what to do instead: no question;
 nothing to answer with; options and fields together; fields none of which can be
 shown; and a typed-text question that asks for several values, which is one over

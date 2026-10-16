@@ -197,26 +197,6 @@
   background: var(--dsk-agent-sub);
   color: var(--dsk-agent-on);
 }
-/* stage */
-.dk-stage {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 0px;
-  grid-template-rows: minmax(0, 1fr);
-  min-height: 0;
-  transition: grid-template-columns 520ms var(--dk-settle);
-}
-.dk-stage.dk-open {
-  grid-template-columns: minmax(0, 1fr) 520px;
-}
-.dk-room {
-  position: relative;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
 .dk-room::before {
   content: "";
   position: absolute;
@@ -237,88 +217,14 @@
 .dk-room.dk-lit::before {
   opacity: 1;
 }
-.dk-scroll {
-  position: relative;
-  overflow: auto;
-  min-height: 0;
-  outline: none;
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: scrollbar-color 300ms;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 28px,
-    #000 calc(100% - 40px),
-    transparent
-  );
-}
-.dk-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 168px) minmax(0, 640px) minmax(0, 168px);
-  column-gap: clamp(12px, 3vw, 48px);
-  justify-content: center;
-  padding: 0 32px;
-  transition: grid-template-columns 520ms var(--dk-settle);
-}
-.dk-open .dk-grid {
-  grid-template-columns: 0px minmax(0, 600px) 0px;
-  column-gap: 0;
-}
-.dk-open .dk-g {
-  visibility: hidden;
-}
-.dk-flow {
-  padding-top: 44px;
-  padding-bottom: 56px;
-}
-.dk-r {
-  display: contents;
-}
-.dk-r > .dk-g,
-.dk-r > .dk-c,
-.dk-r > .dk-m {
-  margin-top: 52px;
-}
-.dk-r.dk-a > .dk-g,
-.dk-r.dk-a > .dk-c,
-.dk-r.dk-a > .dk-m {
-  margin-top: 18px;
-}
-.dk-r.dk-ev > * {
-  margin-top: 36px;
-}
-.dk-r.dk-first > * {
-  margin-top: 0;
-}
-.dk-g {
-  grid-column: 1;
-  text-align: right;
-  min-width: 0;
-}
-.dk-c {
-  grid-column: 2;
-  min-width: 0;
-}
-.dk-m {
-  grid-column: 3;
-  min-width: 0;
-  height: 0;
-  overflow: visible;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dk-open .dk-m {
-  display: none;
-}
 .dk-time {
   display: block;
   font: 11px/20px var(--font-mono);
   color: var(--dsk-faint);
 }
+/* The person's own line breaks hold, and a pasted EDI interchange, URL or ID,
+   which has no spaces to wrap at, breaks where it must rather than running
+   out of the column. */
 .dk-q {
   font-size: 20px;
   line-height: 1.38;
@@ -326,6 +232,8 @@
   letter-spacing: -0.018em;
   color: var(--dsk-fg);
   text-wrap: balance;
+  white-space: pre-line;
+  overflow-wrap: break-word;
   animation: dk-qin 520ms var(--dk-settle) both;
 }
 .dk-who {
@@ -346,6 +254,7 @@
   line-height: 1.7;
   color: var(--dsk-fg2);
   text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 .dk-prose p {
   margin: 0;
@@ -620,19 +529,6 @@
 .dk-evl b {
   font-weight: 500;
   color: var(--dsk-fg2);
-}
-/* dock */
-.dk-dock {
-  position: relative;
-  padding: 0 0 22px;
-}
-.dk-dock .dk-c {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dk-dock .dk-grid {
-  padding-top: 0;
 }
 @property --dk-ang {
   syntax: "<angle>";
@@ -1682,9 +1578,6 @@
     transform: none;
   }
 }
-.dk-mainc > .dk-stage {
-  min-width: 0;
-}
 .dk-sb-new {
   box-shadow: var(--dsk-lift);
 }
@@ -1905,26 +1798,6 @@
   animation: dk-badge 520ms var(--dk-spring) both;
 }
 
-.dk-room {
-  container-type: inline-size;
-  container-name: room;
-}
-@container room (max-width:980px) {
-  .dk-grid,
-  .dk-open .dk-grid {
-    grid-template-columns: 0px minmax(0, 640px) 0px;
-    column-gap: 0;
-    padding-inline: 24px;
-  }
-  .dk-g {
-    display: none;
-  }
-}
-@media (max-height: 720px) {
-  .dk-flow {
-    padding-top: 28px;
-  }
-}
 
 /* Vercel-style neutral palette */
 .dark :is(.dsk, .dk-chat) .dk-rail {
@@ -2333,6 +2206,17 @@
   align-items: center;
   gap: 5px;
   animation: dk-qin 300ms var(--dk-settle) both;
+}
+/* The agent's proposed answer: its value gives way before the hint that takes it. */
+.dk-tw-offer-v {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-tw-use {
+  flex-shrink: 0;
+  pointer-events: auto;
+  cursor: pointer;
 }
 .dk-pre-i {
   display: flex;
@@ -5168,7 +5052,8 @@
   font-size: 11.5px;
   color: var(--dsk-subtle);
 }
-.dk-ec-queued svg {
+/* A question waiting to send turns its arrow back; an upload has a spinner of its own. */
+.dk-ec-queued .dk-ec-wait {
   animation: dk-spin 1.6s linear infinite reverse;
 }
 .dk-ec-cell:has(.dk-ec-steps) .dk-ec-frame {
@@ -5508,8 +5393,9 @@
     transform: scale(0.6);
   }
 }
-/* file icon */
+/* file icon: a badge of its own size, never squeezed by the name beside it */
 .dk-fi {
+  flex: none;
   position: relative;
   display: grid;
   place-items: center;
@@ -7914,6 +7800,38 @@
 .dk-ec-dockcard {
   margin: 0 0 10px;
 }
+/* why dictation stopped: one line above the composer, as wide as its words */
+.dk-dnote-w {
+  display: flex;
+  justify-content: center;
+  align-self: stretch;
+}
+.dk-home .dk-dnote-w {
+  margin-bottom: 10px;
+}
+.dk-dnote {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 4px 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--dsk-muted);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  animation: dk-qin 300ms var(--dk-settle) both;
+}
+.dk-dnote > svg {
+  color: var(--dsk-subtle);
+}
+.dk-dnote > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 /* a question the agent asked: its choices and its form in the dock, and the
    quiet record it leaves in the conversation */
 .dk-ask-opts {
@@ -8075,8 +7993,11 @@
   font-size: 12px;
   color: var(--dsk-subtle);
 }
+/* The arrow keeps its size beside a long answer: a stretched row would grow
+   it to the answer's height, since a Desk icon is sized by its attributes. */
 .dk-ask-rec-a {
   display: flex;
+  align-items: flex-start;
   gap: 7px;
   color: var(--dsk-fg);
 }
@@ -9925,27 +9846,6 @@
 }
 
 /* skeletons: the outline of what is loading, in the Desk's own palette (desk-skeletons.tsx) */
-.dsk.dk-calm .dk-sk {
-  animation: none;
-}
-.dk-skt .dk-sk-time {
-  width: 34px;
-  height: 9px;
-  margin: 6px 0 0 auto;
-}
-.dk-skt .dk-sk-q {
-  height: 18px;
-  border-radius: 7px;
-}
-.dk-skt .dk-sk-who {
-  width: 132px;
-  height: 10px;
-  margin-top: 22px;
-}
-.dk-skt .dk-sk-ln {
-  height: 10px;
-  margin-top: 13px;
-}
 .dk-skb {
   padding: 8px 16px 20px;
 }

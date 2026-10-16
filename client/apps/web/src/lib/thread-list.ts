@@ -1,7 +1,12 @@
+import { threadTouchedAt } from "@/components/desk-chat/rail/desk-threads";
 import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { ThreadListFilter } from "@/services/assistant";
-import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
+import type {
+  AssistantThread,
+  AssistantThreadPage,
+  AssistantThreadShelfCounts,
+} from "@/types/assistant";
 import {
   hashKey,
   infiniteQueryOptions,
@@ -414,4 +419,172 @@ export function updateCachedThread(
 
     return changed ? { ...cached, pages } : cached;
   });
+}
+
+/** One conversation as this tab holds it, in any list or read on its own, without asking for it. */
+export function cachedThread(queryClient: QueryClient, threadId: string): AssistantThread | null {
+  return (
+    findCachedThread(queryClient, threadId) ??
+    queryClient.getQueryData<AssistantThread>(assistant.thread(threadId).queryKey) ??
+    null
+  );
+}
+
+/**
+ * Writes changes into one conversation wherever this tab holds it, in every
+ * list and read on its own, as soon as they are asked for, and hands back
+ * what takes them out again if the server refuses them. Taking them out
+ * leaves alone a field a later change has rewritten since.
+ */
+export function patchCachedThread(
+  queryClient: QueryClient,
+  threadId: string,
+  changes: Partial<AssistantThread>,
+): () => void {
+  const before = cachedThread(queryClient, threadId);
+  writeThread(queryClient, threadId, (thread) => ({ ...thread, ...changes }));
+  if (!before) {
+    return () => undefined;
+  }
+
+  const keys = Object.keys(changes) as (keyof AssistantThread)[];
+  const undo = Object.fromEntries(
+    keys.map((key) => [key, before[key]]),
+  ) as Partial<AssistantThread>;
+
+  return () =>
+    writeThread(queryClient, threadId, (thread) =>
+      keys.every((key) => Object.is(thread[key], changes[key])) ? { ...thread, ...undo } : thread,
+    );
+}
+
+function writeThread(
+  queryClient: QueryClient,
+  threadId: string,
+  update: (thread: AssistantThread) => AssistantThread,
+): void {
+  updateCachedThread(queryClient, threadId, update);
+  queryClient.setQueryData<AssistantThread>(assistant.thread(threadId).queryKey, (cached) =>
+    cached ? update(cached) : cached,
+  );
+}
+
+/** Where a conversation sat in one cached list, so it can be put back there. */
+type CachedPlace = {
+  queryKey: QueryKey;
+  pageParam: string;
+  index: number;
+};
+
+/** A conversation taken out of every cached list, and what puts it back. */
+export type TakenThread = {
+  /** The conversation as the lists held it; null when none did. */
+  thread: AssistantThread | null;
+  /** Puts it back where each list held it, unless that list holds it again already. */
+  restore: () => void;
+};
+
+/**
+ * Takes a conversation out of every cached page of every list the moment it
+ * is deleted, remembering where each held it so a refused delete puts it back
+ * in the same place rather than waiting for the list to be read again.
+ */
+export function takeCachedThread(queryClient: QueryClient, threadId: string): TakenThread {
+  let taken: AssistantThread | null = null;
+  const places: CachedPlace[] = [];
+  for (const query of queryClient.getQueryCache().findAll(THREAD_LISTS)) {
+    const data = query.state.data;
+    if (!isThreadPages(data)) {
+      continue;
+    }
+    for (const [pageIndex, page] of data.pages.entries()) {
+      const index = page.items.findIndex((thread) => thread.id === threadId);
+      if (index < 0) {
+        continue;
+      }
+      taken ??= page.items[index];
+      places.push({ queryKey: query.queryKey, pageParam: data.pageParams[pageIndex], index });
+    }
+  }
+  removeCachedThread(queryClient, threadId);
+
+  const thread = taken;
+  const restore = () => {
+    if (thread === null) {
+      return;
+    }
+    for (const place of places) {
+      queryClient.setQueryData<ThreadPages>(place.queryKey, (cached) =>
+        cached ? putBack(cached, thread, place) : cached,
+      );
+    }
+  };
+
+  return { thread, restore };
+}
+
+function putBack(cached: ThreadPages, thread: AssistantThread, place: CachedPlace): ThreadPages {
+  const pageIndex = cached.pageParams.indexOf(place.pageParam);
+  if (pageIndex < 0 || threadsOf(cached).some((item) => item.id === thread.id)) {
+    return cached;
+  }
+  const page = cached.pages[pageIndex];
+  const items = [...page.items];
+  items.splice(Math.min(place.index, items.length), 0, thread);
+  const pages = [...cached.pages];
+  pages[pageIndex] = { ...page, items };
+
+  return { ...cached, pages };
+}
+
+function isShelfCounts(data: unknown): data is AssistantThreadShelfCounts {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    typeof (data as Partial<AssistantThreadShelfCounts>).pinned === "number" &&
+    Array.isArray((data as Partial<AssistantThreadShelfCounts>).bands)
+  );
+}
+
+/** The edges a cache entry of shelf counts was read for: the last part of its key. */
+function shelfCountEdges(queryKey: QueryKey): readonly number[] | null {
+  const edges = queryKey.at(-1);
+  return Array.isArray(edges) && edges.every((edge) => typeof edge === "number") ? edges : null;
+}
+
+/**
+ * Counts a conversation onto (1) or off (-1) the shelf it sits on, in every
+ * set of shelf counts this tab holds, so the rail's numbers follow a pin or a
+ * delete before the counts are read again: the pinned shelf when it is
+ * pinned, else the band its last touch falls in.
+ */
+export function countCachedThread(
+  queryClient: QueryClient,
+  thread: AssistantThread,
+  delta: 1 | -1,
+): void {
+  for (const query of queryClient.getQueryCache().findAll({ queryKey: threadListRoot() })) {
+    const edges = shelfCountEdges(query.queryKey);
+    if (edges === null || !isShelfCounts(query.state.data)) {
+      continue;
+    }
+    queryClient.setQueryData<AssistantThreadShelfCounts>(query.queryKey, (counts) => {
+      if (!counts) {
+        return counts;
+      }
+      if (thread.pinned) {
+        return { ...counts, pinned: Math.max(0, counts.pinned + delta) };
+      }
+      const touched = threadTouchedAt(thread);
+      const band = edges.findIndex((edge) => touched >= edge);
+      const at = band < 0 ? edges.length : band;
+      if (at >= counts.bands.length) {
+        return counts;
+      }
+      const bands = [...counts.bands];
+      bands[at] = Math.max(0, bands[at] + delta);
+
+      return { ...counts, bands };
+    });
+  }
 }

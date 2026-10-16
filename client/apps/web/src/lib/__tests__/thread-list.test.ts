@@ -5,11 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import type { ThreadListFilter } from "@/services/assistant";
 import {
+  cachedThread,
   cachedThreadLists,
   cachedThreads,
+  countCachedThread,
   findCachedThread,
   noteThreadsInView,
+  patchCachedThread,
   removeCachedThread,
+  takeCachedThread,
   THREAD_PAGE_SIZE,
   threadListQuery,
   threadShelfCountsQuery,
@@ -400,5 +404,141 @@ describe("shelves", () => {
       ),
     );
     stop();
+  });
+});
+
+/**
+ * A rename, a pin or a delete shows in every list the moment it is asked for,
+ * and a refused one is taken back out without reading the lists again.
+ */
+describe("optimistic changes", () => {
+  const today: ThreadListFilter = { pinned: false, touchedFrom: 1_000 };
+  const pinnedShelf: ThreadListFilter = { pinned: true };
+  const shelfKey = (filter: ThreadListFilter) => assistant.threads()._ctx.shelf(filter).queryKey;
+  const countsKey = (edges: number[]) => assistant.threads()._ctx.shelfCounts(edges).queryKey;
+  const ids = (key: readonly unknown[]) =>
+    threadsOf(queryClient.getQueryData<ThreadPages>(key)).map((item) => item.id);
+
+  it("patches a conversation in every list and read on its own, and takes the patch back", () => {
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("a", { title: "old" })]));
+    queryClient.setQueryData(shelfKey(today), pages([thread("a", { title: "old" })]));
+    queryClient.setQueryData(assistant.thread("a").queryKey, thread("a", { title: "old" }));
+
+    const undo = patchCachedThread(queryClient, "a", { title: "new" });
+
+    expect(threadsOf(queryClient.getQueryData(assistant.threads().queryKey))[0].title).toBe("new");
+    expect(threadsOf(queryClient.getQueryData(shelfKey(today)))[0].title).toBe("new");
+    expect(queryClient.getQueryData<AssistantThread>(assistant.thread("a").queryKey)?.title).toBe(
+      "new",
+    );
+
+    undo();
+
+    expect(threadsOf(queryClient.getQueryData(assistant.threads().queryKey))[0].title).toBe("old");
+    expect(threadsOf(queryClient.getQueryData(shelfKey(today)))[0].title).toBe("old");
+    expect(queryClient.getQueryData<AssistantThread>(assistant.thread("a").queryKey)?.title).toBe(
+      "old",
+    );
+  });
+
+  it("leaves a later change in place when an earlier one is taken back", () => {
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("a", { pinned: false })]));
+
+    const undoFirst = patchCachedThread(queryClient, "a", { pinned: true });
+    patchCachedThread(queryClient, "a", { pinned: false });
+    undoFirst();
+
+    expect(cachedThread(queryClient, "a")?.pinned).toBe(false);
+
+    const undoTitle = patchCachedThread(queryClient, "a", { title: "first" });
+    patchCachedThread(queryClient, "a", { title: "second" });
+    undoTitle();
+
+    expect(cachedThread(queryClient, "a")?.title).toBe("second");
+  });
+
+  it("reads a conversation from a list, else on its own, else null", () => {
+    queryClient.setQueryData(assistant.thread("solo").queryKey, thread("solo", { title: "alone" }));
+    queryClient.setQueryData(
+      assistant.threads().queryKey,
+      pages([thread("a", { title: "listed" })]),
+    );
+
+    expect(cachedThread(queryClient, "a")?.title).toBe("listed");
+    expect(cachedThread(queryClient, "solo")?.title).toBe("alone");
+    expect(cachedThread(queryClient, "missing")).toBeNull();
+  });
+
+  it("takes a conversation out of every list and puts it back where each held it", () => {
+    queryClient.setQueryData(
+      assistant.threads().queryKey,
+      pages([thread("a"), thread("b", { title: "held" }), thread("c")], [thread("d")]),
+    );
+    queryClient.setQueryData(shelfKey(today), pages([thread("x")], [thread("y"), thread("b")]));
+
+    const taken = takeCachedThread(queryClient, "b");
+
+    expect(taken.thread?.title).toBe("held");
+    expect(ids(assistant.threads().queryKey)).toEqual(["a", "c", "d"]);
+    expect(ids(shelfKey(today))).toEqual(["x", "y"]);
+
+    taken.restore();
+
+    const whole = queryClient.getQueryData<ThreadPages>(assistant.threads().queryKey);
+    expect(whole?.pages.map((page) => page.items.map((t) => t.id))).toEqual([
+      ["a", "b", "c"],
+      ["d"],
+    ]);
+    const shelf = queryClient.getQueryData<ThreadPages>(shelfKey(today));
+    expect(shelf?.pages.map((page) => page.items.map((t) => t.id))).toEqual([["x"], ["y", "b"]]);
+  });
+
+  it("does not put a conversation back into a list that holds it again", () => {
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("a"), thread("b")]));
+    const taken = takeCachedThread(queryClient, "b");
+    queryClient.setQueryData(assistant.threads().queryKey, pages([thread("b"), thread("a")]));
+
+    taken.restore();
+
+    expect(ids(assistant.threads().queryKey)).toEqual(["b", "a"]);
+  });
+
+  it("hands back nothing to restore when no list holds the conversation", () => {
+    const data = pages([thread("a")]);
+    queryClient.setQueryData(assistant.threads().queryKey, data);
+
+    const taken = takeCachedThread(queryClient, "missing");
+    taken.restore();
+
+    expect(taken.thread).toBeNull();
+    expect(queryClient.getQueryData(assistant.threads().queryKey)).toBe(data);
+  });
+
+  it("counts a conversation on and off the shelf its pin or last touch puts it on", () => {
+    queryClient.setQueryData(countsKey([300, 200]), { pinned: 1, bands: [4, 5, 6] });
+    queryClient.setQueryData(shelfKey(pinnedShelf), pages([thread("p", { pinned: true })]));
+
+    countCachedThread(queryClient, thread("t", { lastMessageAt: 350 }), -1);
+    countCachedThread(queryClient, thread("y", { lastMessageAt: 250 }), -1);
+    countCachedThread(queryClient, thread("o", { lastMessageAt: 100, createdAt: 50 }), 1);
+    countCachedThread(queryClient, thread("p", { pinned: true }), 1);
+
+    expect(queryClient.getQueryData(countsKey([300, 200]))).toEqual({
+      pinned: 2,
+      bands: [3, 4, 7],
+    });
+    expect(ids(shelfKey(pinnedShelf))).toEqual(["p"]);
+  });
+
+  it("never counts a shelf below nothing", () => {
+    queryClient.setQueryData(countsKey([300, 200]), { pinned: 0, bands: [0, 0, 0] });
+
+    countCachedThread(queryClient, thread("p", { pinned: true }), -1);
+    countCachedThread(queryClient, thread("t", { lastMessageAt: 350 }), -1);
+
+    expect(queryClient.getQueryData(countsKey([300, 200]))).toEqual({
+      pinned: 0,
+      bands: [0, 0, 0],
+    });
   });
 });
