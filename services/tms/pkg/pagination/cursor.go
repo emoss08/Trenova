@@ -189,24 +189,17 @@ func (r *CursorListResult[T]) WithCursorSort(sort []CursorSortField) *CursorList
 }
 
 func (r *CursorListResult[T]) WithCursorValues(values [][]any) error {
-	if len(values) < len(r.Items) {
-		return errors.New("cursor values do not match result items")
+	copied, err := copyCursorValues(values, len(r.Items))
+	if err != nil {
+		return err
 	}
 
-	r.CursorValues = make([][]any, len(r.Items))
-	for i := range r.Items {
-		r.CursorValues[i] = append([]any(nil), values[i]...)
-	}
-
+	r.CursorValues = copied
 	return nil
 }
 
 func (r *CursorListResult[T]) CursorValuesAt(index int) ([]any, bool) {
-	if index < 0 || index >= len(r.CursorValues) {
-		return nil, false
-	}
-
-	return r.CursorValues[index], true
+	return cursorValuesAt(r.CursorValues, index)
 }
 
 func (r *CursorListResult[T]) NextCursor() (string, error) {
@@ -215,18 +208,47 @@ func (r *CursorListResult[T]) NextCursor() (string, error) {
 	}
 
 	last := len(r.Items) - 1
-	item := r.Items[last]
-	if len(r.CursorSort) == 0 {
-		return EncodeCursorFromEntity(item)
-	}
-	if values, ok := r.CursorValuesAt(last); ok {
-		return EncodeCursorFromEntityWithValues(item, r.CursorSort, values)
-	}
-
-	return EncodeCursorFromEntityWithSort(item, r.CursorSort)
+	return encodeItemCursor(r.Items[last], r.CursorSort, r.CursorValues, last)
 }
 
-func EncodeCursorFromEntity[T any](item T) (string, error) {
+func copyCursorValues(values [][]any, count int) ([][]any, error) {
+	if len(values) < count {
+		return nil, errors.New("cursor values do not match result items")
+	}
+
+	copied := make([][]any, count)
+	for i := range count {
+		copied[i] = append([]any(nil), values[i]...)
+	}
+
+	return copied, nil
+}
+
+func cursorValuesAt(values [][]any, index int) ([]any, bool) {
+	if index < 0 || index >= len(values) {
+		return nil, false
+	}
+
+	return values[index], true
+}
+
+func encodeItemCursor(
+	item any,
+	sort []CursorSortField,
+	values [][]any,
+	index int,
+) (string, error) {
+	if len(sort) == 0 {
+		return EncodeCursorFromEntity(item)
+	}
+	if itemValues, ok := cursorValuesAt(values, index); ok {
+		return EncodeCursorFromEntityWithValues(item, sort, itemValues)
+	}
+
+	return EncodeCursorFromEntityWithSort(item, sort)
+}
+
+func EncodeCursorFromEntity(item any) (string, error) {
 	id, err := cursorEntityID(item)
 	if err != nil {
 		return "", err
@@ -242,8 +264,8 @@ func EncodeCursorFromEntity[T any](item T) (string, error) {
 	})
 }
 
-func EncodeCursorFromEntityWithSort[T any](
-	item T,
+func EncodeCursorFromEntityWithSort(
+	item any,
 	sort []CursorSortField,
 ) (string, error) {
 	values, err := ExtractCursorValues(item, sort)
@@ -267,8 +289,8 @@ func EncodeCursorFromEntityWithSort[T any](
 	})
 }
 
-func EncodeCursorFromEntityWithValues[T any](
-	item T,
+func EncodeCursorFromEntityWithValues(
+	item any,
 	sort []CursorSortField,
 	values []any,
 ) (string, error) {
@@ -301,7 +323,7 @@ func EncodeCursorFromEntityWithValues[T any](
 	})
 }
 
-func ExtractCursorValues[T any](item T, sort []CursorSortField) ([]any, error) {
+func ExtractCursorValues(item any, sort []CursorSortField) ([]any, error) {
 	values := make([]any, 0, len(sort))
 	for _, field := range sort {
 		if field.Field == "id" {

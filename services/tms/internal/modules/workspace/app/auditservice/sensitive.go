@@ -37,8 +37,10 @@ const (
 )
 
 type SensitiveDataManager struct {
-	fields                sync.Map // map[permission.Resource]map[string]SensitiveFieldConfig
-	patternCache          sync.Map // map[string]*regexp.Regexp
+	fieldsMu              sync.RWMutex
+	fields                map[permission.Resource]map[string]SensitiveFieldConfig
+	patternCacheMu        sync.RWMutex
+	patternCache          map[string]*regexp.Regexp
 	autoDetect            atomic.Bool
 	strategy              atomic.Int32
 	compiledFieldPatterns []*regexp.Regexp
@@ -97,6 +99,8 @@ var sensitiveFieldPatterns = []string{
 
 func NewSensitiveDataManager(cfg config.EncryptionConfig) *SensitiveDataManager {
 	sdm := &SensitiveDataManager{
+		fields:                make(map[permission.Resource]map[string]SensitiveFieldConfig),
+		patternCache:          make(map[string]*regexp.Regexp),
 		compiledFieldPatterns: make([]*regexp.Regexp, 0, len(sensitiveFieldPatterns)),
 	}
 	sdm.autoDetect.Store(true)
@@ -131,12 +135,10 @@ func (s *SensitiveDataManager) RegisterSensitiveFields(
 		return nil
 	}
 
-	existingFieldsInterface, _ := s.fields.LoadOrStore(
-		resource,
-		make(map[string]SensitiveFieldConfig),
-	)
-	existingFields, _ := existingFieldsInterface.(map[string]SensitiveFieldConfig)
+	s.fieldsMu.Lock()
+	defer s.fieldsMu.Unlock()
 
+	existingFields := s.fields[resource]
 	newFields := make(map[string]SensitiveFieldConfig, len(existingFields)+len(fields))
 	maps.Copy(newFields, existingFields)
 
@@ -153,9 +155,19 @@ func (s *SensitiveDataManager) RegisterSensitiveFields(
 		}
 	}
 
-	s.fields.Store(resource, newFields)
+	s.fields[resource] = newFields
 
 	return nil
+}
+
+func (s *SensitiveDataManager) registeredFields(
+	resource permission.Resource,
+) (map[string]SensitiveFieldConfig, bool) {
+	s.fieldsMu.RLock()
+	defer s.fieldsMu.RUnlock()
+
+	fields, ok := s.fields[resource]
+	return fields, ok
 }
 
 // SanitizeEntry sanitizes sensitive data in an audit entry
@@ -164,10 +176,7 @@ func (s *SensitiveDataManager) SanitizeEntry(entry *audit.Entry) error {
 		return nil
 	}
 
-	var registeredFields map[string]SensitiveFieldConfig
-	if fieldsInterface, ok := s.fields.Load(entry.Resource); ok {
-		registeredFields, _ = fieldsInterface.(map[string]SensitiveFieldConfig)
-	}
+	registeredFields, _ := s.registeredFields(entry.Resource)
 
 	if entry.CurrentState != nil {
 		s.sanitizeMap(entry.CurrentState, registeredFields, "")
@@ -501,11 +510,10 @@ func (s *SensitiveDataManager) containsSensitivePattern(value string) bool {
 }
 
 func (s *SensitiveDataManager) getCompiledPattern(pattern string) (*regexp.Regexp, error) {
-	if compiled, ok := s.patternCache.Load(pattern); ok {
-		compiled, cOk := compiled.(*regexp.Regexp)
-		if !cOk {
-			return nil, ErrCompiledPatternNotRegexp
-		}
+	s.patternCacheMu.RLock()
+	compiled, ok := s.patternCache[pattern]
+	s.patternCacheMu.RUnlock()
+	if ok {
 		return compiled, nil
 	}
 
@@ -514,7 +522,9 @@ func (s *SensitiveDataManager) getCompiledPattern(pattern string) (*regexp.Regex
 		return nil, err
 	}
 
-	s.patternCache.Store(pattern, regex)
+	s.patternCacheMu.Lock()
+	s.patternCache[pattern] = regex
+	s.patternCacheMu.Unlock()
 	return regex, nil
 }
 
@@ -646,10 +656,9 @@ func (s *SensitiveDataManager) SetMaskStrategy(strategy MaskStrategy) {
 }
 
 func (s *SensitiveDataManager) ClearCache() {
-	s.patternCache.Range(func(key, _ any) bool {
-		s.patternCache.Delete(key)
-		return true
-	})
+	s.patternCacheMu.Lock()
+	clear(s.patternCache)
+	s.patternCacheMu.Unlock()
 }
 
 func (s *SensitiveDataManager) AddCustomPattern(name, pattern string) error {
@@ -669,7 +678,10 @@ func (s *SensitiveDataManager) RemoveCustomPattern(name string) {
 	pattern := sensitivePatterns[name]
 	delete(sensitivePatterns, name)
 	sensitivePatternsMu.Unlock()
-	s.patternCache.Delete(pattern)
+
+	s.patternCacheMu.Lock()
+	delete(s.patternCache, pattern)
+	s.patternCacheMu.Unlock()
 }
 
 func (s *SensitiveDataManager) applyHashStrategy(value any) any {
