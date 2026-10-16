@@ -202,7 +202,7 @@ describe("DataTable", () => {
     expect(graphqlCall).toEqual([
       "test",
       graphql,
-      { pageIndex: 0, pageSize: 10 },
+      { pageIndex: 0, pageSize: 50 },
       expect.objectContaining({
         query: "",
         fieldFilters: [],
@@ -299,7 +299,7 @@ const firstPage: CursorPage = {
     { id: "1", name: "Alice" },
     { id: "2", name: "Bob" },
   ],
-  totalCount: 30,
+  totalCount: 150,
   endCursor: "cursor-page-2",
 };
 
@@ -326,7 +326,7 @@ describe("DataTable cursor total count", () => {
 
     const { container } = renderDataTable();
 
-    expect(container).toHaveTextContent("Showing 1 to 2 of 30 results");
+    expect(container).toHaveTextContent("Showing 1 to 2 of 150 results");
     expect(container).toHaveTextContent(/Page\s*1\s*of\s*3/);
 
     act(() => {
@@ -334,7 +334,7 @@ describe("DataTable cursor total count", () => {
     });
 
     expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
-    expect(container).toHaveTextContent("Showing 11 to 12 of 30 results");
+    expect(container).toHaveTextContent("Showing 51 to 52 of 150 results");
     expect(container).toHaveTextContent(/Page\s*2\s*of\s*3/);
     expect(screen.getByLabelText("Go to next page")).not.toBeDisabled();
   });
@@ -353,7 +353,7 @@ describe("DataTable cursor total count", () => {
       fireEvent.click(screen.getByLabelText("Select all"));
     });
 
-    expect(screen.getByText("Select all 30 matching")).toBeInTheDocument();
+    expect(screen.getByText("Select all 150 matching")).toBeInTheDocument();
   });
 
   it("keeps the remembered total when returning to a first page that omits it", async () => {
@@ -376,7 +376,7 @@ describe("DataTable cursor total count", () => {
     });
 
     expect(await screen.findAllByText("Alice")).not.toHaveLength(0);
-    expect(container).toHaveTextContent("Showing 1 to 2 of 30 results");
+    expect(container).toHaveTextContent("Showing 1 to 2 of 150 results");
   });
 
   it("forgets the remembered total when the query scope changes", async () => {
@@ -401,7 +401,7 @@ describe("DataTable cursor total count", () => {
       fireEvent.click(screen.getByLabelText("Go to next page"));
     });
     expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
-    expect(container).toHaveTextContent("of 30");
+    expect(container).toHaveTextContent("of 150");
 
     mockCursorPages({
       "": { results: [{ id: "9", name: "Zed" }], totalCount: null, endCursor: null },
@@ -412,7 +412,7 @@ describe("DataTable cursor total count", () => {
 
     expect(await screen.findAllByText("Zed")).not.toHaveLength(0);
     expect(container).toHaveTextContent("Showing 1 to 1 results");
-    expect(container).not.toHaveTextContent("of 30");
+    expect(container).not.toHaveTextContent("of 150");
   });
 });
 
@@ -493,7 +493,7 @@ describe("DataTable scope filters", () => {
     rerender(tree(30));
 
     expect(await screen.findAllByText("Zed")).not.toHaveLength(0);
-    expect(container).not.toHaveTextContent("of 30");
+    expect(container).not.toHaveTextContent("of 150");
     useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
   });
 
@@ -507,6 +507,70 @@ describe("DataTable scope filters", () => {
     renderDataTable({ resource: "test_resource", enableExport: false });
 
     expect(screen.queryByLabelText("Export, print or schedule")).not.toBeInTheDocument();
+  });
+
+  const exportJson = { id: "export", label: "Export JSON", onClick: vi.fn() };
+
+  it("adds a CSV export of the selection beside the table's own dock actions", () => {
+    renderDataTable({
+      resource: "test_resource",
+      enableRowSelection: true,
+      dockActions: [exportJson],
+    });
+    fireEvent.click(screen.getByLabelText("Select all"));
+
+    expect(screen.getByRole("button", { name: "Export JSON" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
+  });
+
+  it("leaves only the table's own export in the dock when the selection export is off", () => {
+    renderDataTable({
+      resource: "test_resource",
+      enableRowSelection: true,
+      enableSelectionExport: false,
+      dockActions: [exportJson],
+    });
+    fireEvent.click(screen.getByLabelText("Select all"));
+
+    expect(screen.getByRole("button", { name: "Export JSON" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Export" })).not.toBeInTheDocument();
+  });
+});
+
+// ── The add-record menu ───────────────────────────────────────────────
+
+describe("DataTable add-record menu", () => {
+  it("puts the new-record action first, set apart from the other ways to add", async () => {
+    renderDataTable({
+      resource: "test_resource",
+      onAddRecord: vi.fn(),
+      addRecordActions: [
+        { id: "import", label: "Import tests", description: "From a file.", onClick: vi.fn() },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "New test-table" }));
+
+    const items = await screen.findAllByRole("menuitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "New test-tableCreate a new record from scratch.",
+      "Import testsFrom a file.",
+    ]);
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+  });
+
+  it("uses the table's own new-record action in place of the default", async () => {
+    renderDataTable({
+      resource: "test_resource",
+      onAddRecord: vi.fn(),
+      addRecordActions: [
+        { id: "default-create", label: "New test", description: "Blank.", onClick: vi.fn() },
+        { id: "import", label: "Import tests", onClick: vi.fn() },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "New test-table" }));
+
+    const items = await screen.findAllByRole("menuitem");
+    expect(items.map((item) => item.textContent)).toEqual(["New testBlank.", "Import tests"]);
   });
 });
 

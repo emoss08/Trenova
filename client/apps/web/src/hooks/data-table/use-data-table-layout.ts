@@ -30,7 +30,7 @@ type UseDataTableLayoutOptions<TData extends RowData> = {
   formatRules: TableFormatRule[];
   activeViewId: string | null;
   pinnedRowsCollapsed: boolean;
-  hideChangesSinceLastVisit: boolean;
+  markChangesSinceLastVisit: boolean;
   hideTotals: boolean;
   virtualized: boolean;
 };
@@ -75,7 +75,7 @@ export function useDataTableLayout<TData extends RowData>({
   formatRules,
   activeViewId,
   pinnedRowsCollapsed,
-  hideChangesSinceLastVisit,
+  markChangesSinceLastVisit,
   hideTotals,
   virtualized,
 }: UseDataTableLayoutOptions<TData>): DataTableLayoutState {
@@ -115,7 +115,7 @@ export function useDataTableLayout<TData extends RowData>({
       pinnedRowIds: atoms.rowPinning.get().top ?? [],
       pinnedRowsCollapsed,
       lastSeenAt: lastSeenAtRef.current,
-      hideChangesSinceLastVisit,
+      markChangesSinceLastVisit,
       hideTotals,
       virtualized,
     };
@@ -178,7 +178,7 @@ export function useDataTableLayout<TData extends RowData>({
     formatRules,
     activeViewId,
     pinnedRowsCollapsed,
-    hideChangesSinceLastVisit,
+    markChangesSinceLastVisit,
     hideTotals,
     virtualized,
     schedule,

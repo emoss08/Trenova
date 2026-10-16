@@ -51,7 +51,15 @@ const DENSITY_OPTIONS: { value: TableDensity; label: string; icon: typeof Rows02
 /** Past this many columns the list gets a search box. */
 const COLUMN_SEARCH_THRESHOLD = 8;
 
-function Section({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
+function Section({
+  title,
+  aside,
+  children,
+}: {
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="border-border flex flex-col gap-2 border-t px-3 py-3 first:border-t-0">
       <div className="flex h-5 items-center justify-between gap-2">
@@ -78,9 +86,7 @@ function SwitchRow({
     <label className="hover:bg-muted/60 -mx-1.5 flex cursor-pointer items-center gap-3 rounded-md px-1.5 py-1.5">
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm">{label}</span>
-        {description ? (
-          <span className="text-muted-foreground text-xs">{description}</span>
-        ) : null}
+        {description ? <span className="text-muted-foreground text-xs">{description}</span> : null}
       </span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </label>
@@ -124,7 +130,7 @@ export default function DataTableDisplayMenu({
   hasSavedLayout = false,
   onResetLayout,
   onFitColumns,
-  highlightChanges = true,
+  highlightChanges = false,
   onHighlightChangesChange,
   showTotals = true,
   onShowTotalsChange,

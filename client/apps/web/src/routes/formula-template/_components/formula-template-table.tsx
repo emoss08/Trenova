@@ -1,6 +1,7 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
+import { DEFAULT_CREATE_ACTION_ID } from "@/lib/data-table";
 import { DuplicateAlertDialog } from "@/components/duplicate-alert-dialog";
 import {
   formulaTemplateTableGraphQLConfig,
@@ -24,13 +25,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
+import type { AddRecordAction, DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
+  BookOpen01Icon,
   Copy01Icon,
   Dataflow04Icon,
   Download01Icon,
+  FilePlus02Icon,
+  FileUploadIcon,
   GitBranch02Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
@@ -318,6 +322,33 @@ export default function FormulaTemplatesDataTable() {
     [handleBulkExport, handleBulkDuplicate, requestArchive, t],
   );
 
+  const addRecordActions = useMemo<AddRecordAction[]>(
+    () => [
+      {
+        id: DEFAULT_CREATE_ACTION_ID,
+        label: t("New formula template"),
+        description: t("Write a rating formula from a blank template in the studio."),
+        icon: FilePlus02Icon,
+        onClick: () => void navigate(formulaTemplateRoutes.new),
+      },
+      {
+        id: "install-standards",
+        label: t("Install standard templates"),
+        description: t("Add Trenova's vetted rating library, from per mile to per CWT, as drafts."),
+        icon: BookOpen01Icon,
+        onClick: () => setInstallDialogOpen(true),
+      },
+      {
+        id: "import-templates",
+        label: t("Import templates"),
+        description: t("Bring in templates from a JSON file exported from Trenova."),
+        icon: FileUploadIcon,
+        onClick: () => setImportDialogOpen(true),
+      },
+    ],
+    [navigate, t],
+  );
+
   const archiveCount = pendingArchiveRows.length;
 
   return (
@@ -329,26 +360,14 @@ export default function FormulaTemplatesDataTable() {
         graphql={formulaTemplateTableGraphQLConfig}
         columns={columns}
         enableRowSelection
+        enableSelectionExport={false}
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
         onAddRecord={() => void navigate(formulaTemplateRoutes.new)}
         onRowClick={(row) => {
           if (row.original.id) void navigate(formulaTemplateRoutes.edit(row.original.id));
         }}
-        addRecordActions={[
-          {
-            id: "install-standards",
-            label: t("Install standard templates"),
-            description: t("Add the vetted standard rating library (per mile, per CWT, ...)."),
-            onClick: () => setInstallDialogOpen(true),
-          },
-          {
-            id: "import-templates",
-            label: t("Import templates"),
-            description: t("Import templates from an exported JSON file."),
-            onClick: () => setImportDialogOpen(true),
-          },
-        ]}
+        addRecordActions={addRecordActions}
       />
       <AlertDialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
         <AlertDialogContent>

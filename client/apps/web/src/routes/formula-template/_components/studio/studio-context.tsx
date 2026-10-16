@@ -5,6 +5,7 @@ import {
 } from "@/components/formula-editor/breakdown-reconcile";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { hasMaterialChange } from "@/lib/formula-template-material";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -40,6 +41,7 @@ import {
 import { studioReadiness } from "./model/readiness";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
 import { useStudioScenarios, type StudioScenariosState } from "./use-studio-scenarios";
+import { useStudioRail } from "./use-studio-rail";
 
 export type StudioMode = "create" | "edit";
 export type StudioTab = "preview" | "scenarios" | "reference" | "nova";
@@ -84,6 +86,10 @@ type StudioStateValue = {
   /** The unsaved changes alter what the template computes, so saving demotes it. */
   material: boolean;
   tab: StudioTab;
+  /** The screen is too narrow for the panel beside the form, so it floats over it. */
+  stacked: boolean;
+  /** The floating panel of preview, scenarios, reference and Nova is showing. */
+  railOpen: boolean;
   novaRequest: PageRequest | null;
   /** Nova is writing a reply in the rail. */
   novaBusy: boolean;
@@ -98,7 +104,9 @@ type StudioStateValue = {
  * for a keystroke in the editor.
  */
 type StudioActionsValue = StudioProps & {
+  /** Shows a pane, opening the floating panel when it is closed. */
   setTab: (tab: StudioTab) => void;
+  setRailOpen: (open: boolean) => void;
   /** Sends a question to Nova in the rail; without text it only opens the tab. */
   askNova: (text?: string) => void;
   clearNovaRequest: (key: string) => void;
@@ -279,15 +287,27 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     ],
   );
 
-  const [tab, setTab] = useState<StudioTab>("preview");
+  const stacked = useMediaQuery("(max-width: 899px)");
+  const [railOpen, setRailOpen] = useStudioRail(stacked);
+  const [tab, setTabState] = useState<StudioTab>("preview");
+  const setTab = useCallback(
+    (next: StudioTab) => {
+      setTabState(next);
+      setRailOpen(true);
+    },
+    [setRailOpen],
+  );
   const [novaRequest, setNovaRequest] = useState<PageRequest | null>(null);
-  const askNova = useCallback((text?: string) => {
-    setTab("nova");
-    const question = text?.trim();
-    if (question) {
-      setNovaRequest({ key: nanoid(), text: question });
-    }
-  }, []);
+  const askNova = useCallback(
+    (text?: string) => {
+      setTab("nova");
+      const question = text?.trim();
+      if (question) {
+        setNovaRequest({ key: nanoid(), text: question });
+      }
+    },
+    [setTab],
+  );
   const clearNovaRequest = useCallback((key: string) => {
     setNovaRequest((current) => (current?.key === key ? null : current));
   }, []);
@@ -375,6 +395,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       onSave,
       onTemplateChanged,
       setTab,
+      setRailOpen,
       askNova,
       clearNovaRequest,
       setNovaBusy,
@@ -393,6 +414,8 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       isSubmitting,
       onSave,
       onTemplateChanged,
+      setTab,
+      setRailOpen,
       askNova,
       clearNovaRequest,
       jumpTo,
@@ -417,6 +440,8 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       dirty: isDirty,
       material,
       tab,
+      stacked,
+      railOpen,
       novaRequest,
       novaBusy,
       activeSection,
@@ -434,6 +459,8 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       isDirty,
       material,
       tab,
+      stacked,
+      railOpen,
       novaRequest,
       novaBusy,
       activeSection,

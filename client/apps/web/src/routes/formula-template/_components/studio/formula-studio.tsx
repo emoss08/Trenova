@@ -2,7 +2,6 @@ import { ActiveEditorProvider } from "@/components/formula-editor/active-editor"
 import { PreviewValuesProvider } from "@/components/formula-editor/preview-values";
 import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   buildTemplateExport,
   downloadJson,
@@ -10,6 +9,8 @@ import {
 } from "@/lib/formula-template-export";
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { apiService } from "@/services/api";
+import { XCloseIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
 import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -138,7 +139,8 @@ function warmStudioModules(): () => void {
 
 /**
  * The formula template's create and edit form: a top bar over the rate
- * trace, the form, and a rail of preview, scenarios, reference and Nova.
+ * trace, the form, and a floating panel of preview, scenarios, reference and
+ * Nova that sits beside the form, or over it on a narrow screen.
  */
 export function FormulaStudio(props: StudioProps) {
   return (
@@ -159,7 +161,7 @@ function useOnceOpened(open: boolean): boolean {
 
 function RailTabs() {
   const t = useT();
-  const { tab, setTab, scenarios, novaBusy } = useStudio();
+  const { tab, setTab, setRailOpen, scenarios, novaBusy } = useStudio();
   const tabs: { value: StudioTab; label: string }[] = [
     { value: "preview", label: t("Preview") },
     { value: "scenarios", label: t("Scenarios") },
@@ -176,47 +178,58 @@ function RailTabs() {
     );
 
   return (
-    <div
-      role="tablist"
-      aria-label={t("Studio panes")}
-      className="flex shrink-0 items-center gap-1 border-b px-2"
-    >
-      {tabs.map((item) => (
+    <div className="flex shrink-0 items-center gap-1 border-b pr-1.5 pl-2">
+      <div
+        role="tablist"
+        aria-label={t("Studio panes")}
+        className="flex min-w-0 flex-1 items-center gap-1"
+      >
+        {tabs.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.value}
+            onClick={() => setTab(item.value)}
+            className={tabClass(tab === item.value)}
+          >
+            {item.label}
+            {item.value === "scenarios" && scenarios.total > 0 && (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 font-mono text-2xs tabular-nums",
+                  allPass
+                    ? "bg-success-subtle text-success-subtle-foreground"
+                    : "bg-danger-subtle text-danger-subtle-foreground",
+                )}
+              >
+                {scenarios.passed}/{scenarios.total}
+              </span>
+            )}
+          </button>
+        ))}
+        <span className="flex-1" />
         <button
-          key={item.value}
           type="button"
           role="tab"
-          aria-selected={tab === item.value}
-          onClick={() => setTab(item.value)}
-          className={tabClass(tab === item.value)}
+          aria-selected={tab === "nova"}
+          onClick={() => setTab("nova")}
+          className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
         >
-          {item.label}
-          {item.value === "scenarios" && scenarios.total > 0 && (
-            <span
-              className={cn(
-                "rounded-full px-1.5 font-mono text-2xs tabular-nums",
-                allPass
-                  ? "bg-success-subtle text-success-subtle-foreground"
-                  : "bg-danger-subtle text-danger-subtle-foreground",
-              )}
-            >
-              {scenarios.passed}/{scenarios.total}
-            </span>
-          )}
+          <NovaMark className="fs-nova-ring size-3" />
+          {t("Nova")}
+          {novaBusy && <Spinner className="size-3" />}
         </button>
-      ))}
-      <span className="flex-1" />
-      <button
+      </div>
+      <Button
         type="button"
-        role="tab"
-        aria-selected={tab === "nova"}
-        onClick={() => setTab("nova")}
-        className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("Close panel")}
+        onClick={() => setRailOpen(false)}
       >
-        <NovaMark className="fs-nova-ring size-3" />
-        {t("Nova")}
-        {novaBusy && <Spinner className="size-3" />}
-      </button>
+        <XCloseIcon className="size-4" />
+      </Button>
     </div>
   );
 }
@@ -315,10 +328,11 @@ function StudioLayout() {
     preview,
     formViewport,
     onTemplateChanged,
+    stacked,
+    railOpen,
   } = studio;
   const form = useFormContext<FormulaTemplateFormValues>();
   const expression = useWatch({ control: form.control, name: "expression" }) ?? "";
-  const stacked = useMediaQuery("(max-width: 899px)");
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -336,6 +350,7 @@ function StudioLayout() {
   const importOpened = useOnceOpened(importOpen);
   const backtestOpened = useOnceOpened(backtestOpen);
   const backtestDetailsOpened = useOnceOpened(backtestDetailsOpen);
+  const railOpened = useOnceOpened(railOpen);
 
   useSectionSpy();
   useEffect(() => warmStudioModules(), []);
@@ -370,9 +385,9 @@ function StudioLayout() {
       },
       preview: () => setTab("preview"),
       scenarios: () => setTab("scenarios"),
-      nova: () => setTab(studio.tab === "nova" ? "preview" : "nova"),
+      nova: () => setTab(studio.tab === "nova" && railOpen ? "preview" : "nova"),
     }),
-    [isSubmitting, mode, dirty, save, preview.runNow, setTab, studio.tab],
+    [isSubmitting, mode, dirty, save, preview.runNow, setTab, studio.tab, railOpen],
   );
   useStudioShortcuts(shortcuts);
 
@@ -391,10 +406,16 @@ function StudioLayout() {
     }
   }, [template, t]);
 
-  const rail = (
+  // Kept mounted once opened and only hidden when closed, so Nova's
+  // conversation and a reply under way survive closing the panel.
+  const rail = railOpened && (
     <aside
       aria-label={t("Studio rail")}
-      className={cn("bg-card flex min-h-0 flex-col", stacked ? "h-[720px] border-t" : "border-l")}
+      className={cn(
+        "bg-card border-border-strong animate-panel-in flex min-h-0 flex-col overflow-hidden rounded-lg border",
+        stacked ? "ui-lift absolute inset-x-2 top-2 bottom-2 z-30" : "my-2 mr-2",
+        !railOpen && "hidden",
+      )}
     >
       <RailTabs />
       <RailBody />
@@ -417,17 +438,24 @@ function StudioLayout() {
         />
 
         {stacked ? (
-          <ScrollArea
-            maskVariant="background"
-            viewportRef={formViewport}
-            className="min-h-0 flex-1"
-          >
-            <FormColumn />
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            <ScrollArea
+              maskVariant="background"
+              viewportRef={formViewport}
+              className="min-h-0 flex-1"
+            >
+              <FormColumn />
+            </ScrollArea>
             {rail}
-          </ScrollArea>
+          </div>
         ) : (
           <div
-            className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]"
+            className={cn(
+              "grid min-h-0 flex-1",
+              railOpen
+                ? "grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]"
+                : "grid-cols-[minmax(0,1fr)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)]",
+            )}
           >
             <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />
             <ScrollArea maskVariant="background" viewportRef={formViewport} className="min-h-0">

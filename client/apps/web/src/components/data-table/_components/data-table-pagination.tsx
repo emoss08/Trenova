@@ -11,6 +11,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import type { Table } from "@trenova/shared/types/data-table";
 import type { ReactNode } from "react";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/hooks/data-table/use-data-table-state";
 import {
   ChevronLeftDoubleIcon,
   ChevronLeftIcon,
@@ -30,8 +31,6 @@ type DataTablePaginationProps<TData extends RowData> = {
   /** Placed before the result count, such as a keyboard-shortcuts button. */
   leading?: ReactNode;
 };
-
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
 
 export function DataTablePagination<TData extends RowData>({
   table,

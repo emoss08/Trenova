@@ -35,6 +35,7 @@ import {
   Download01Icon,
   FileUploadIcon,
   GitBranch02Icon,
+  LayoutRightIcon,
   MessageAlertSquareIcon,
   Send01Icon,
   XCloseIcon,
@@ -302,8 +303,9 @@ export type StudioTopBarProps = {
 
 /**
  * The studio's one bar: back, the template's name, where it is in review,
- * then what can be done to it now and the save state. Save carries the state
- * itself, quiet once everything is saved.
+ * then what can be done to it now and the save state, and last the toggle for
+ * the floating panel. Save carries the state itself, quiet once everything is
+ * saved.
  */
 export function StudioTopBar({
   onApprovalAction,
@@ -317,7 +319,7 @@ export function StudioTopBar({
 }: StudioTopBarProps) {
   const t = useT();
   const navigate = useNavigate();
-  const { mode, template, dirty, readiness } = useStudio();
+  const { mode, template, dirty, readiness, railOpen, setRailOpen } = useStudio();
   const { control } = useFormContext();
   const name = (useWatch({ control, name: "name" }) as string | undefined)?.trim() ?? "";
   const { allowed: canSubmit } = usePermission(Resource.FormulaTemplate, Operation.Submit);
@@ -470,6 +472,25 @@ export function StudioTopBar({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("Toggle side panel")}
+              aria-expanded={railOpen}
+              onClick={() => setRailOpen(!railOpen)}
+              className="aria-expanded:bg-surface-active"
+            >
+              <LayoutRightIcon className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent>{railOpen ? t("Hide panel") : t("Show panel")}</TooltipContent>
+      </Tooltip>
     </header>
   );
 }

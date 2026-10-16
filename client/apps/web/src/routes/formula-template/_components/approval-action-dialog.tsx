@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -216,7 +217,7 @@ export function ApprovalActionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size={compact ? "sm" : "lg"}
-        className={compact ? undefined : "flex max-h-[85vh] flex-col overflow-y-auto"}
+        className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto]"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -227,68 +228,72 @@ export function ApprovalActionDialog({
           <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
 
-        {gated && open && template?.id && (
-          <ReadinessPanel templateId={template.id} step={action} onReadinessChange={setReady} />
-        )}
+        <ScrollArea className="-mx-4 min-h-0">
+          <div className="space-y-4 px-4">
+            {gated && open && template?.id && (
+              <ReadinessPanel templateId={template.id} step={action} onReadinessChange={setReady} />
+            )}
 
-        {gated && open && template?.id && <ReviewDiffPanel templateId={template.id} />}
+            {gated && open && template?.id && <ReviewDiffPanel templateId={template.id} />}
 
-        {action === "approve" && open && template?.id && (
-          <ApprovalImpactPanel templateId={template.id} />
-        )}
+            {action === "approve" && open && template?.id && (
+              <ApprovalImpactPanel templateId={template.id} />
+            )}
 
-        {gated && open && template?.id && <ReviewHistory templateId={template.id} />}
+            {gated && open && template?.id && <ReviewHistory templateId={template.id} />}
 
-        {action === "approve" && (
-          <div className="space-y-1.5">
-            <label htmlFor="approval-effective-from" className="text-xs font-medium">
-              {t("Start billing on (optional)")}
-            </label>
-            <DateTimePicker
-              id="approval-effective-from"
-              dateTime={effectiveFrom}
-              setDateTime={setEffectiveFrom}
-              placeholder={t("Now")}
-              clearable
-            />
-            <p className="text-2xs text-muted-foreground">
-              {t(
-                "Leave empty to bill with it as soon as it is approved. With a date, the approved content in force today keeps billing until then.",
+            {action === "approve" && (
+              <div className="space-y-1.5">
+                <label htmlFor="approval-effective-from" className="text-xs font-medium">
+                  {t("Start billing on (optional)")}
+                </label>
+                <DateTimePicker
+                  id="approval-effective-from"
+                  dateTime={effectiveFrom}
+                  setDateTime={setEffectiveFrom}
+                  placeholder={t("Now")}
+                  clearable
+                />
+                <p className="text-2xs text-muted-foreground">
+                  {t(
+                    "Leave empty to bill with it as soon as it is approved. With a date, the approved content in force today keeps billing until then.",
+                  )}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-1.5 py-2">
+              <label htmlFor="approval-comment" className="text-xs font-medium">
+                {copy.commentLabel}
+              </label>
+              <Textarea
+                id="approval-comment"
+                value={comment}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  setShowCommentError(false);
+                }}
+                placeholder={copy.commentPlaceholder}
+                minRows={3}
+                maxRows={6}
+                isInvalid={commentInvalid}
+              />
+              {commentInvalid && (
+                <p className="text-2xs text-destructive">
+                  {action === "reject"
+                    ? t("A comment is required to reject")
+                    : t("Say what needs to change before sending it back")}
+                </p>
               )}
-            </p>
+            </div>
+
+            {serverError && (
+              <Alert variant="destructive" size="sm">
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
           </div>
-        )}
-
-        <div className="space-y-1.5 py-2">
-          <label htmlFor="approval-comment" className="text-xs font-medium">
-            {copy.commentLabel}
-          </label>
-          <Textarea
-            id="approval-comment"
-            value={comment}
-            onChange={(e) => {
-              setComment(e.target.value);
-              setShowCommentError(false);
-            }}
-            placeholder={copy.commentPlaceholder}
-            minRows={3}
-            maxRows={6}
-            isInvalid={commentInvalid}
-          />
-          {commentInvalid && (
-            <p className="text-2xs text-destructive">
-              {action === "reject"
-                ? t("A comment is required to reject")
-                : t("Say what needs to change before sending it back")}
-            </p>
-          )}
-        </div>
-
-        {serverError && (
-          <Alert variant="destructive" size="sm">
-            <AlertDescription>{serverError}</AlertDescription>
-          </Alert>
-        )}
+        </ScrollArea>
 
         <DialogFooter>
           <Button

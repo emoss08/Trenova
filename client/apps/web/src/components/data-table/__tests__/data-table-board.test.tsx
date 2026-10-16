@@ -796,15 +796,22 @@ describe("DataTable page sizes", () => {
     expect(lastPagination().pageSize).toBe(25);
   });
 
-  it("keeps ten rows for a table that does not name its sizes", () => {
+  it("opens at fifty rows for a table that does not name its sizes", () => {
     renderDataTable();
 
-    expect(lastPagination().pageSize).toBe(10);
+    expect(lastPagination()).toEqual({ pageIndex: 0, pageSize: 50 });
+    expect(screen.getByRole("combobox").textContent).toContain("50");
   });
 
-  it("keeps any size from the link for a table that does not name its sizes", () => {
+  it("keeps a default size from the link for a table that does not name its sizes", () => {
+    renderDataTable(undefined, "?pageSize=100");
+
+    expect(lastPagination().pageSize).toBe(100);
+  });
+
+  it("opens at fifty rows for a link asking for a size the default picker no longer offers", () => {
     renderDataTable(undefined, "?pageSize=40");
 
-    expect(lastPagination().pageSize).toBe(40);
+    expect(lastPagination().pageSize).toBe(50);
   });
 });

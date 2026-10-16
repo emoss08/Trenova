@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useDataTable } from "@/contexts/data-table-context";
@@ -28,14 +29,14 @@ import type {
   TableViewSource,
 } from "@/types/table-configuration";
 import { ChevronDownIcon, Download01Icon, PlusIcon } from "@trenova/shared/components/icons";
-import { lazy, Suspense, useState } from "react";
+import { Fragment, lazy, Suspense, useState } from "react";
 import { DataTableViewers } from "@/components/presence/data-table-viewers";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
-import type { FilterableField } from "@/lib/data-table";
+import { DEFAULT_CREATE_ACTION_ID, type FilterableField } from "@/lib/data-table";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -291,15 +292,25 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                 {resource ? t("New {0}", toSentenceFragment(resource)) : t("New record")}
                 <ChevronDownIcon className="size-3.5" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-72">
-                {addRecordActions.map((action) => (
-                  <DropdownMenuItem
-                    key={action.id}
-                    title={t(action.label)}
-                    description={t(action.description)}
-                    onClick={action.onClick}
-                    startContent={action.icon ? <action.icon className="size-4" /> : undefined}
-                  />
+              <DropdownMenuContent align="end" className="w-80">
+                {addRecordActions.map((action, index) => (
+                  <Fragment key={action.id}>
+                    {addRecordActions[index - 1]?.id === DEFAULT_CREATE_ACTION_ID && (
+                      <DropdownMenuSeparator />
+                    )}
+                    <DropdownMenuItem
+                      title={t(action.label)}
+                      description={action.description ? t(action.description) : undefined}
+                      onClick={action.onClick}
+                      className="items-start py-1.5"
+                      descriptionClassProps="text-pretty"
+                      startContent={
+                        action.icon ? (
+                          <action.icon className="text-muted-foreground mt-0.5 size-4" />
+                        ) : undefined
+                      }
+                    />
+                  </Fragment>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>

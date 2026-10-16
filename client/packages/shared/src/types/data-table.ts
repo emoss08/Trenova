@@ -209,6 +209,12 @@ export type DataTableProps<TData extends Record<string, any>> = {
    * own, such as an audited, signed file.
    */
   enableExport?: boolean;
+  /**
+   * Adds a CSV export of the selected rows to the selection dock, beside the
+   * table's own dock actions. Off for a table whose dock already exports its
+   * rows in a form of its own, so the dock never offers two Exports.
+   */
+  enableSelectionExport?: boolean;
   grouping?: DataTableGrouping<TData>;
   expansion?: DataTableExpansion<TData>;
   keyboard?: DataTableKeyboard<TData>;

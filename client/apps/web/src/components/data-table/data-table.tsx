@@ -29,6 +29,7 @@ import {
   type FilterableField,
   isColumnResizable,
   measureColumnFits,
+  DEFAULT_CREATE_ACTION_ID,
   isTableConfigEqual,
   toColumnPinningState,
   updateSortField,
@@ -41,7 +42,7 @@ import {
   exportFilename,
   fetchAllRows,
 } from "@/lib/data-table-export";
-import { Download01Icon, Edit05Icon } from "@trenova/shared/components/icons";
+import { Download01Icon, Edit05Icon, FilePlus02Icon } from "@trenova/shared/components/icons";
 import { BulkEditDialog } from "./bulk-edit/bulk-edit-dialog";
 import { BulkEditProgress } from "./bulk-edit/bulk-edit-progress";
 import type { BulkEditJob } from "@/lib/graphql/bulk-edit";
@@ -171,6 +172,7 @@ export function DataTable<TData extends Record<string, any>>({
   emptyTitle,
   scopeFilters: ownScopeFilters = NO_SCOPE_FILTERS,
   enableExport = true,
+  enableSelectionExport = true,
   pageSizeOptions,
   getRowClassName,
   grouping,
@@ -210,7 +212,7 @@ export function DataTable<TData extends Record<string, any>>({
   // Rows changed after this moment (the person's last visit) are marked, until
   // they open one or mark them all seen. Zero marks nothing: a first visit.
   const [changesSince, setChangesSince] = useState(0);
-  const [hideChangesSinceLastVisit, setHideChangesSinceLastVisit] = useState(false);
+  const [markChangesSinceLastVisit, setMarkChangesSinceLastVisit] = useState(false);
   const [seenRowIds, setSeenRowIds] = useState<ReadonlySet<string>>(NO_SEEN_ROWS);
   const [hideTotals, setHideTotals] = useState(false);
   const [virtualized, setVirtualized] = useState(false);
@@ -236,11 +238,12 @@ export function DataTable<TData extends Record<string, any>>({
     const actions = [...addRecordActions];
     const defaultOnClick = onAddRecordProp ?? (hasPanel ? openPanelCreate : undefined);
 
-    if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
+    if (defaultOnClick && !actions.some((action) => action.id === DEFAULT_CREATE_ACTION_ID)) {
       actions.unshift({
-        id: "default-create",
+        id: DEFAULT_CREATE_ACTION_ID,
         label: t("New {0}", toSentenceFragment(name)),
         description: t("Create a new record from scratch."),
+        icon: FilePlus02Icon,
         onClick: defaultOnClick,
       });
     }
@@ -822,7 +825,7 @@ export function DataTable<TData extends Record<string, any>>({
   }, [table, visibleLeafColumns]);
   const showTotalsRow = !hideTotals && hasTotals;
 
-  const showChanges = changesSince > 0 && !hideChangesSinceLastVisit;
+  const showChanges = changesSince > 0 && markChangesSinceLastVisit;
   const unseenCount = useMemo(() => {
     if (!showChanges) return 0;
     let count = 0;
@@ -989,7 +992,7 @@ export function DataTable<TData extends Record<string, any>>({
     formatRules,
     activeViewId: activeView?.id ?? null,
     pinnedRowsCollapsed,
-    hideChangesSinceLastVisit,
+    markChangesSinceLastVisit,
     hideTotals,
     virtualized,
   });
@@ -1018,7 +1021,7 @@ export function DataTable<TData extends Record<string, any>>({
     table.setRowPinning({ top: saved.pinnedRowIds, bottom: [] });
     setPinnedRowsCollapsed(saved.pinnedRowsCollapsed);
     setChangesSince(saved.lastSeenAt);
-    setHideChangesSinceLastVisit(saved.hideChangesSinceLastVisit);
+    setMarkChangesSinceLastVisit(saved.markChangesSinceLastVisit);
     setHideTotals(saved.hideTotals);
     setVirtualized(saved.virtualized);
     if (!saved.activeViewId) {
@@ -1075,7 +1078,7 @@ export function DataTable<TData extends Record<string, any>>({
       setFormatRules([]);
       table.setRowPinning({ top: [], bottom: [] });
       setPinnedRowsCollapsed(false);
-      setHideChangesSinceLastVisit(false);
+      setMarkChangesSinceLastVisit(false);
       setHideTotals(false);
       setVirtualized(false);
       setActiveView(null);
@@ -1196,7 +1199,7 @@ export function DataTable<TData extends Record<string, any>>({
         onClick: () => editSelectedRows(),
       });
     }
-    if (canExport && dockActions.length > 0) {
+    if (canExport && enableSelectionExport && dockActions.length > 0) {
       actions.push({
         id: "export-selected",
         label: t("Export"),
@@ -1209,7 +1212,16 @@ export function DataTable<TData extends Record<string, any>>({
       });
     }
     return actions;
-  }, [canBulkEdit, canExport, dockActions, editSelectedRows, name, t, table]);
+  }, [
+    canBulkEdit,
+    canExport,
+    enableSelectionExport,
+    dockActions,
+    editSelectedRows,
+    name,
+    t,
+    table,
+  ]);
 
   const hasActiveFilters = filterItems.length > 0 || query !== "";
   const handleClearFilters = useCallback(() => {
@@ -1340,7 +1352,9 @@ export function DataTable<TData extends Record<string, any>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [table, liveColumnVisibility, liveColumnOrder],
   );
-  const defaultCreate = resolvedAddRecordActions.find((action) => action.id === "default-create");
+  const defaultCreate = resolvedAddRecordActions.find(
+    (action) => action.id === DEFAULT_CREATE_ACTION_ID,
+  );
 
   return (
     <DataTableProvider
@@ -1404,16 +1418,14 @@ export function DataTable<TData extends Record<string, any>>({
               density={density}
               onDensityChange={setDensity}
               hasSavedLayout={layout.hasSavedLayout}
-              highlightChanges={!hideChangesSinceLastVisit}
+              highlightChanges={markChangesSinceLastVisit}
               showTotals={!hideTotals}
               virtualized={virtualized}
               onVirtualizedChange={name && !grouping ? setVirtualized : undefined}
               onShowTotalsChange={
                 name && hasTotals ? (on: boolean) => setHideTotals(!on) : undefined
               }
-              onHighlightChangesChange={
-                name ? (on: boolean) => setHideChangesSinceLastVisit(!on) : undefined
-              }
+              onHighlightChangesChange={name ? setMarkChangesSinceLastVisit : undefined}
               onFitColumns={fitColumns}
               onResetLayout={name ? handleResetLayout : undefined}
               exportContext={{
