@@ -18,7 +18,6 @@ import { Upload01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import { EMPTY_LINE, ImportBatchForm, type ImportBatchFormValues } from "./import-batch-form";
 
 function toUnixTimestamp(dateStr: string): number {
@@ -67,7 +66,6 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     form,
     resourceName: "Import Batch",
     onSuccess: (result) => {
-      toast.success(t("Import batch created"));
       void queryClient.invalidateQueries({ queryKey: ["bankReceiptBatch"] });
       onOpenChange(false);
       reset();

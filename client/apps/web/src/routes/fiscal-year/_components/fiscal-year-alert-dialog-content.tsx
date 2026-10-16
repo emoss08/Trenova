@@ -27,7 +27,6 @@ import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
 export type FiscalYearActionRecord = Pick<FiscalYearRow, "id" | "year" | "endDate">;
 
@@ -100,9 +99,6 @@ export function FiscalYearActivateAlertDialogContent({
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.activate(id),
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
-      toast.success(t("Activated successfully"), {
-        description: t("Fiscal year {0} is now current", record.year),
-      });
       onCompleted?.(updated);
       invalidate();
       onClose();
@@ -153,9 +149,6 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.close(id),
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
-      toast.success(t("Closed successfully"), {
-        description: t("Fiscal year {0} is now closed", record.year),
-      });
       onCompleted?.(updated);
       invalidate();
       onClose();
@@ -225,12 +218,6 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose, onComplete
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
       onCompleted?.(updated);
-      toast.success(t("Reopened successfully"), {
-        description: t(
-          "Fiscal year {0} is open again and its closing entries were reversed",
-          record.year,
-        ),
-      });
       invalidate();
       onClose();
     },

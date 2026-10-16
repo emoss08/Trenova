@@ -21,7 +21,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -71,7 +70,6 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-filter-presets"] });
-      toast.success(t("Filter preset saved"));
     },
   });
 

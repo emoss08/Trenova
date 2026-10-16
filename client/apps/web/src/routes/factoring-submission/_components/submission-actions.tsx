@@ -43,11 +43,8 @@ export function RetryFactoringSubmissionButton({
   const queryClient = useQueryClient();
   const retry = useMutation({
     mutationFn: () => retryFactoringSubmission({ id: submission.id, version: submission.version }),
-    onSuccess: (sent) => {
+    onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Schedule {0} is being sent again", sent.number), {
-        description: t("To {0}", sent.transportTarget),
-      });
     },
     onError: (error) => {
       invalidateFactoringQueries(queryClient);
@@ -117,14 +114,8 @@ export function CancelFactoringSubmissionDialog({
         reason: values.reason.trim(),
       });
     },
-    onSuccess: (cancelled) => {
+    onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Schedule {0} cancelled", cancelled.number), {
-        description: t(
-          "{0, plural, one {# invoice is} other {# invoices are}} back in the queue.",
-          cancelled.invoiceCount,
-        ),
-      });
       onOpenChange(false);
     },
   });

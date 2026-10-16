@@ -16,7 +16,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 
 type DeleteFuelPurchaseDialogProps = {
   open: boolean;
@@ -39,9 +38,6 @@ export function DeleteFuelPurchaseDialog({
       return deleteFuelPurchase(purchase.id, purchase.version);
     },
     onSuccess: async () => {
-      toast.success(t("Purchase deleted"), {
-        description: t("Recompute the quarter's return to take it out of the figures."),
-      });
       await onDeleted();
       onOpenChange(false);
     },

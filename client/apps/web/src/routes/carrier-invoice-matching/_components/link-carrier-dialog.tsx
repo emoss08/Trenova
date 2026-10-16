@@ -55,7 +55,6 @@ export function LinkCarrierDialog({
     mutationFn: (values: LinkCarrierFormValues) =>
       linkEdiCarrierInvoiceToCarrier(invoiceId, values.carrierId),
     onSuccess: () => {
-      toast.success(t("Invoice linked to carrier"));
       onOpenChange(false);
       onLinked();
     },

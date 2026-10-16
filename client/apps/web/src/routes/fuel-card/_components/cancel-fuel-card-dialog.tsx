@@ -19,7 +19,6 @@ import { cancelFuelCardSchema, type CancelFuelCardValues } from "@trenova/shared
 import { SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { maskedCardNumber } from "./fuel-card-columns";
 
 type CancelFuelCardDialogProps = {
@@ -60,9 +59,6 @@ export function CancelFuelCardDialog({
       return cancelFuelCard({ id: card.id, version: card.version, reason: values.reason.trim() });
     },
     onSuccess: async () => {
-      toast.success(t("Card cancelled"), {
-        description: t("It stays on file for the purchases already made with it."),
-      });
       await onCancelled();
       onOpenChange(false);
     },

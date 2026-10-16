@@ -147,7 +147,6 @@ export function BankReceiptQueuePage() {
       apiService.bankReceiptWorkItemService.assign(id, userId),
     onSuccess: () => {
       invalidateAll();
-      toast.success(t("Work item assigned"));
     },
     onError: () => toast.error(t("Failed to assign work item")),
   });
@@ -156,7 +155,6 @@ export function BankReceiptQueuePage() {
     mutationFn: async (id: string) => apiService.bankReceiptWorkItemService.startReview(id),
     onSuccess: () => {
       invalidateAll();
-      toast.success(t("Review started"));
     },
     onError: () => toast.error(t("Failed to start review")),
   });
@@ -173,7 +171,6 @@ export function BankReceiptQueuePage() {
     }) => apiService.bankReceiptWorkItemService.resolve(id, { resolutionType, resolutionNote }),
     onSuccess: () => {
       invalidateAll();
-      toast.success(t("Work item resolved"));
     },
     onError: () => toast.error(t("Failed to resolve work item")),
   });
@@ -183,7 +180,6 @@ export function BankReceiptQueuePage() {
       apiService.bankReceiptWorkItemService.dismiss(id, { resolutionNote }),
     onSuccess: () => {
       invalidateAll();
-      toast.success(t("Work item dismissed"));
     },
     onError: () => toast.error(t("Failed to dismiss work item")),
   });

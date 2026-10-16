@@ -222,9 +222,7 @@ describe("factoring schedule page", () => {
     await waitFor(() =>
       expect(mocks.retryFactoringSubmission).toHaveBeenCalledWith({ id: "facsub_1", version: 4 }),
     );
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Schedule FS2610-00007 is being sent again", {
-      description: "To trenova@sftp.rtsfinancial.com:/incoming",
-    });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("will not cancel a schedule without a reason, then sends the reason it was given", async () => {
@@ -253,9 +251,7 @@ describe("factoring schedule page", () => {
         reason: "Factor closed the account",
       }),
     );
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Schedule FS2610-00007 cancelled", {
-      description: "2 invoices are back in the queue.",
-    });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 });
 
@@ -394,9 +390,7 @@ describe("factoring schedule funding", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Record funding" }));
 
     await waitFor(() => expect(mocks.recordFactoringFunding).toHaveBeenCalledWith(fundingInput));
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Funding recorded on schedule FS2610-00007", {
-      description: "Funded",
-    });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("offers no funding to someone who may not book factoring, nor on a failed schedule", async () => {
@@ -509,7 +503,7 @@ describe("factoring schedule funding", () => {
     await waitFor(() =>
       expect(mocks.bookFactoringReserveMovement).toHaveBeenCalledWith("release", input),
     );
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Reserve released on invoice INV-1");
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("offers no chargeback under a non-recourse agreement", async () => {

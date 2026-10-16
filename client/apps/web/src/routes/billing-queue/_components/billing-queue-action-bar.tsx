@@ -1,4 +1,4 @@
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -10,7 +10,6 @@ import { shipment } from "@/lib/queries/shipment";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
   BillingQueueItem,
-  BillingQueueStatus,
   BillingQueueUpdateStatusInput,
 } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
@@ -23,32 +22,8 @@ import {
   Send01Icon,
   UserPlus01Icon,
 } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { BillingQueueExceptionPopover } from "./billing-queue-exception-popover";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
-
-function statusUpdatedMessage(t: TranslateFn, status: BillingQueueStatus): string {
-  switch (status) {
-    case "ReadyForReview":
-      return t("Status updated to ready for review");
-    case "InReview":
-      return t("Returned to review");
-    case "Approved":
-      return t("Status updated to approved");
-    case "OnHold":
-      return t("Status updated to on hold");
-    case "SentBackToOps":
-      return t("Status updated to sent back to ops");
-    case "Exception":
-      return t("Status updated to exception");
-    case "Canceled":
-      return t("Status updated to canceled");
-    case "Posted":
-      return t("Status updated to posted");
-    default:
-      return t("Status updated");
-  }
-}
 
 export function BillingQueueActionBar({
   item,
@@ -79,7 +54,6 @@ export function BillingQueueActionBar({
     resourceName: "BillingQueueItem",
     onSuccess: (_, input) => {
       invalidate();
-      toast.success(statusUpdatedMessage(t, input.status));
       if (input.status === "Approved" && onAutoAdvance) {
         onAutoAdvance();
       }
@@ -91,7 +65,6 @@ export function BillingQueueActionBar({
     resourceName: "BillingQueueItem",
     onSuccess: () => {
       invalidate();
-      toast.success(t("Review started"));
     },
   });
 
@@ -165,7 +138,6 @@ export function BillingQueueActionBar({
             icon={<AlertTriangleIcon className="size-3.5" />}
             variant="destructive"
             disabled={isPending}
-            successMessage={t("Marked as exception")}
             onSuccess={invalidate}
           />
           <BillingQueueExceptionPopover
@@ -175,7 +147,6 @@ export function BillingQueueActionBar({
             icon={<Send01Icon className="size-3.5" />}
             variant="outline"
             disabled={isPending}
-            successMessage={t("Sent back to ops")}
             onSuccess={invalidate}
           />
           <Button

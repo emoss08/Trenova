@@ -62,7 +62,6 @@ import {
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { ApplyUnappliedForm } from "./apply-unapplied-form";
 
 export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClose: () => void }) {
@@ -466,9 +465,6 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
         reason: values.reason || undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Payment reversed"), {
-        description: t("The cash receipt and invoice applications were backed out."),
-      });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
         queryKey: customerPayment.detail(payment.id).queryKey,

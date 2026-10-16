@@ -17,7 +17,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
 
@@ -67,7 +66,6 @@ type BillingQueueExceptionPopoverProps = {
   icon: React.ReactNode;
   variant?: "outline" | "destructive";
   disabled?: boolean;
-  successMessage: string;
   onSuccess: () => void;
 };
 
@@ -78,7 +76,6 @@ export function BillingQueueExceptionPopover({
   icon,
   variant = "outline",
   disabled,
-  successMessage,
   onSuccess,
 }: BillingQueueExceptionPopoverProps) {
   const t = useT();
@@ -113,7 +110,6 @@ export function BillingQueueExceptionPopover({
     form,
     onSuccess: () => {
       onSuccess();
-      toast.success(successMessage);
     },
   });
 

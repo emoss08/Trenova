@@ -16,7 +16,6 @@ import { useQuery } from "@tanstack/react-query";
 import { RulerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 type MatrixRow = {
@@ -220,16 +219,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
     setValue("tableRows", conversionRows, { shouldDirty: true });
     setValue("method", "TablePerMile", { shouldDirty: true });
     setConvertOpen(false);
-    toast.success(
-      t(
-        "{0, plural, one {# price band created} other {# price bands created}}",
-        conversionRows.length,
-      ),
-      {
-        description: t("Adjust any band's range or rate, then save the program."),
-      },
-    );
-  }, [conversionRows, setValue, t]);
+  }, [conversionRows, setValue]);
 
   if (rows.length === 0) {
     return null;

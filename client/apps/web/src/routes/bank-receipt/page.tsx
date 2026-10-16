@@ -301,7 +301,6 @@ function ReceiptDetail({
       apiService.bankReceiptService.match(receipt.id!, customerPaymentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["bankReceipt"] });
-      toast.success(t("Receipt matched to payment"));
     },
     onError: () => toast.error(t("Failed to match receipt")),
   });

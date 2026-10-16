@@ -225,9 +225,7 @@ describe("submit to factor dialog", () => {
       factoringCompanyId: "fac_rts",
       invoiceIds: ["inv_1", "inv_2"],
     });
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Schedule FS2610-00001 is on its way", {
-      description: "2 invoices are being sent to RTS Financial.",
-    });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

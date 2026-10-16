@@ -18,7 +18,6 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect, useId, useState } from "react";
 import { NumericFormat } from "react-number-format";
-import { toast } from "sonner";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export type GenerateValueMeta = {
@@ -170,12 +169,6 @@ export function GenerateTableDialog({
     if (!preview || preview.length === 0) return;
     onApply(preview);
     onOpenChange(false);
-    toast.success(
-      t("{0, plural, one {# price band created} other {# price bands created}}", preview.length),
-      {
-        description: t("Every band is editable — adjust any range or value before saving."),
-      },
-    );
   };
 
   const formatValue = (value: string) => {

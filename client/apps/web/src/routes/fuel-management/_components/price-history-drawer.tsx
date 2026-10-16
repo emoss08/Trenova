@@ -66,7 +66,6 @@ export function PriceHistoryDrawer({
     mutationFn: () =>
       addFuelIndexPrice({ fuelIndexId: indexId, priceDate: newDate, price: newPrice }),
     onSuccess: () => {
-      toast.success(t("Weekly price added"));
       setNewPrice("");
       invalidate();
     },
@@ -80,7 +79,6 @@ export function PriceHistoryDrawer({
   const { mutate: removePrice } = useMutation({
     mutationFn: (id: string) => deleteFuelIndexPrice(id),
     onSuccess: () => {
-      toast.success(t("Price removed"));
       invalidate();
     },
     onError: () => {

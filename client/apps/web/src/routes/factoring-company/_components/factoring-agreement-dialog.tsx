@@ -47,7 +47,6 @@ import {
   type Control,
   type Resolver,
 } from "react-hook-form";
-import { toast } from "sonner";
 import {
   agreementFormToInput,
   agreementToFormValues,
@@ -116,11 +115,6 @@ export function FactoringAgreementDialog({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(agreement ? t("Agreement updated") : t("Agreement drafted"), {
-        description: agreement
-          ? undefined
-          : t("Activate it when the contract is signed so invoices start using its terms."),
-      });
       onOpenChange(false);
     },
   });
