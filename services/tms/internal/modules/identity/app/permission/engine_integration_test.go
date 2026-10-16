@@ -339,7 +339,36 @@ func (p *testPermCacheRepo) Get(
 	if err := json.Unmarshal(data, &perms); err != nil {
 		return nil, err
 	}
+	epoch, err := p.client.Get(ctx, p.epochKey(key.OrgID)).Int64()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if perms.Epoch != epoch {
+		return nil, nil
+	}
 	return &perms, nil
+}
+
+func (p *testPermCacheRepo) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+	key := p.epochKey(orgID)
+	epoch, err := p.client.Get(ctx, key).Int64()
+	if err == nil {
+		return epoch, nil
+	}
+	if err != redis.Nil {
+		return 0, err
+	}
+	if err = p.client.SetNX(ctx, key, time.Now().UnixNano(), 0).Err(); err != nil {
+		return 0, err
+	}
+	return p.client.Get(ctx, key).Int64()
+}
+
+func (p *testPermCacheRepo) epochKey(orgID pulid.ID) string {
+	return "perms:epoch:" + orgID.String()
 }
 
 func (p *testPermCacheRepo) Set(
@@ -382,15 +411,7 @@ func (p *testPermCacheRepo) InvalidateByRole(
 }
 
 func (p *testPermCacheRepo) InvalidateOrganization(ctx context.Context, orgID pulid.ID) error {
-	pattern := "perms:*:" + orgID.String()
-	keys, err := p.client.Keys(ctx, pattern).Result()
-	if err != nil {
-		return err
-	}
-	if len(keys) > 0 {
-		return p.client.Del(ctx, keys...).Err()
-	}
-	return nil
+	return p.client.Incr(ctx, p.epochKey(orgID)).Err()
 }
 
 func createIntegrationSchema(t *testing.T, db *bun.DB) {

@@ -1,5 +1,6 @@
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId } from "react";
 import { Link } from "react-router";
@@ -44,9 +45,9 @@ export function DeskMissingConversation({ onSearch }: { onSearch: () => void }) 
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button size="sm" nativeButton={false} render={<Link to="/desk" />}>
+        <Link to="/desk" data-slot="button" className={buttonVariants({ size: "sm" })}>
           {t("Back to the desk")}
-        </Button>
+        </Link>
         <Button size="sm" variant="outline" onClick={onSearch}>
           <DeskIcon name="search" size={13} />
           {t("Search conversations")}

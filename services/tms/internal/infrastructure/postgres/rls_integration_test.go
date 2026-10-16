@@ -411,7 +411,7 @@ func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
 
 	var policies []string
 	require.NoError(t, f.admin.NewRaw(`
-		SELECT c.relname || ':' || p.polcmd || ':' || p.polpermissive::text
+		SELECT c.relname || ':' || p.polcmd::text || ':' || p.polpermissive::text
 		FROM pg_policy p
 		JOIN pg_class c ON c.oid = p.polrelid
 		WHERE p.polname = 'read_scope'
