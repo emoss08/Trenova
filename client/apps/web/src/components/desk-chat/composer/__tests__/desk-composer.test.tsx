@@ -33,8 +33,12 @@ function Harness({
   onSend,
   onStop,
   onSteer,
+  suggestedAnswer,
+  disabled,
 }: {
   busy?: boolean;
+  suggestedAnswer?: string;
+  disabled?: boolean;
   files?: ComposerAttachment[];
   mentions?: AssistantEntityRef[];
   initial?: string;
@@ -59,6 +63,8 @@ function Harness({
       onSteer={onSteer}
       agent={null}
       busy={busy}
+      disabled={disabled}
+      suggestedAnswer={suggestedAnswer}
       attachments={attachments}
       mentions={mentions}
       onMentionsChange={() => undefined}
@@ -253,6 +259,88 @@ describe("DeskComposer sending", () => {
  * person reading Spanish sees the command described in Spanish and sends the
  * Spanish question.
  */
+/**
+ * The agent asked for a value in words and proposed one: it waits in the
+ * empty box, and one key puts it there to send or edit, rather than the
+ * person retyping what the agent already worked out.
+ */
+describe("DeskComposer with the agent's suggested answer", () => {
+  it("shows the suggestion in the empty box and says how to take it", () => {
+    const box = renderComposer({ suggestedAnswer: "MERITOR", onSend: vi.fn() });
+
+    expect(box).toHaveAttribute("placeholder", "");
+    expect(box).toHaveAccessibleDescription("Suggested answer: MERITOR. Press Tab to use it.");
+    expect(box).toHaveAttribute("aria-keyshortcuts", "Tab ArrowRight");
+    expect(screen.getByRole("button", { name: "Use the suggested answer" })).toBeInTheDocument();
+    expect(box).toHaveValue("");
+  });
+
+  it("puts it in the box on Tab, without sending it", () => {
+    const onSend = vi.fn();
+    const box = renderComposer({ suggestedAnswer: "MERITOR", onSend });
+
+    fireEvent.keyDown(box, { key: "Tab" });
+
+    expect(box).toHaveValue("MERITOR");
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("puts it in the box on the right arrow, and Enter then sends it", () => {
+    const onSend = vi.fn();
+    const box = renderComposer({ suggestedAnswer: "MERITOR", onSend });
+
+    fireEvent.keyDown(box, { key: "ArrowRight" });
+    fireEvent.keyDown(box, { key: "Enter" });
+
+    expect(onSend).toHaveBeenCalledWith("MERITOR", { attachments: [], mentions: [] });
+  });
+
+  it("puts it in the box from the hint, for a pointer", () => {
+    const box = renderComposer({ suggestedAnswer: "MERITOR", onSend: vi.fn() });
+
+    fireEvent.click(screen.getByRole("button", { name: "Use the suggested answer" }));
+
+    expect(box).toHaveValue("MERITOR");
+  });
+
+  it("leaves Shift+Tab and a modified arrow to the browser", () => {
+    const box = renderComposer({ suggestedAnswer: "MERITOR", onSend: vi.fn() });
+
+    expect(fireEvent.keyDown(box, { key: "Tab", shiftKey: true })).toBe(true);
+    expect(fireEvent.keyDown(box, { key: "ArrowRight", altKey: true })).toBe(true);
+    expect(fireEvent.keyDown(box, { key: "ArrowRight", metaKey: true })).toBe(true);
+    expect(box).toHaveValue("");
+  });
+
+  it("gives way once the person types their own answer", () => {
+    const box = renderComposer({ suggestedAnswer: "MERITOR", initial: "MER", onSend: vi.fn() });
+
+    expect(fireEvent.keyDown(box, { key: "Tab" })).toBe(true);
+    expect(fireEvent.keyDown(box, { key: "ArrowRight" })).toBe(true);
+    expect(box).toHaveValue("MER");
+    expect(box).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByRole("button", { name: "Use the suggested answer" })).toBeNull();
+  });
+
+  it("is not offered while nothing can be sent", () => {
+    renderComposer({ suggestedAnswer: "MERITOR", busy: true, onSend: vi.fn() });
+    expect(screen.queryByRole("button", { name: "Use the suggested answer" })).toBeNull();
+    cleanup();
+
+    const box = renderComposer({ suggestedAnswer: "MERITOR", disabled: true, onSend: vi.fn() });
+    expect(screen.queryByRole("button", { name: "Use the suggested answer" })).toBeNull();
+    expect(box).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("offers nothing when the agent proposed nothing", () => {
+    const box = renderComposer({ onSend: vi.fn() });
+
+    expect(fireEvent.keyDown(box, { key: "ArrowRight" })).toBe(true);
+    expect(box).toHaveValue("");
+    expect(box).toHaveAttribute("placeholder", "Ask the Desk anything…");
+  });
+});
+
 describe("DeskComposer slash commands in another language", () => {
   beforeAll(async () => {
     await registerCatalogSource({

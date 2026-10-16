@@ -641,6 +641,107 @@ func TestResolveAsk_ShowsAQuestionAboutOneValue(t *testing.T) {
 	}
 }
 
+// A typed answer the model can work out, such as a partner code from the
+// partner's name, waits in the person's box. Before, it was only an example
+// in the placeholder, and the person retyped it.
+func TestResolveAsk_OffersTheModelsSuggestionForATypedValue(t *testing.T) {
+	t.Parallel()
+
+	request := decodeAsk(t, askContent(askNow, map[string]any{
+		"question":   "What partner code should Meritor have in Trenova?",
+		"otherHint":  "A short code, such as MERITOR",
+		"suggestion": "  MERITOR\n",
+	}))
+
+	assert.Equal(t, "MERITOR", request.Suggestion)
+	assert.Equal(t, "A short code, such as MERITOR", request.OtherHint)
+	assert.Contains(t, request.Note, "holding your suggestion for them to accept or replace")
+	assert.Contains(t, request.Note, "Do not choose for them")
+}
+
+func TestResolveAsk_KeepsASuggestionOnlyForATypedTextValue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		arguments map[string]any
+		want      string
+	}{
+		{
+			name: "spacing inside it is folded onto one line",
+			arguments: map[string]any{
+				"question":   "What should the lane be called?",
+				"suggestion": "Chicago\n  to   Dallas",
+			},
+			want: "Chicago to Dallas",
+		},
+		{
+			name: "choices are already best first",
+			arguments: map[string]any{
+				"question":   "Which window should the report cover?",
+				"options":    []any{map[string]any{"value": "7", "label": "7 days"}},
+				"suggestion": "30",
+			},
+		},
+		{
+			name: "a value of another type has its own box",
+			arguments: map[string]any{
+				"question":   "How many days should the report cover?",
+				"input":      map[string]any{"type": "number"},
+				"suggestion": "30",
+			},
+		},
+		{
+			name: "a form has no box of its own",
+			arguments: map[string]any{
+				"question": "What else does the shipment need?",
+				"fields": []any{
+					map[string]any{"key": "weight", "label": "Weight", "type": "number"},
+				},
+				"suggestion": "42000",
+			},
+		},
+		{
+			name: "one too long to take at a glance is dropped, not cut",
+			arguments: map[string]any{
+				"question":   "What should the note say?",
+				"suggestion": strings.Repeat("a", maxAskSuggestionRunes+1),
+			},
+		},
+		{
+			name: "one of exactly the bound is kept",
+			arguments: map[string]any{
+				"question":   "What should the note say?",
+				"suggestion": strings.Repeat("é", maxAskSuggestionRunes),
+			},
+			want: strings.Repeat("é", maxAskSuggestionRunes),
+		},
+		{
+			name: "only spacing is no suggestion",
+			arguments: map[string]any{
+				"question":   "What partner code should Meritor have?",
+				"suggestion": " \n ",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			content, shown := resolveAsk(askNow, tt.arguments)
+			require.True(t, shown, content)
+
+			request := decodeAsk(t, content)
+			assert.Equal(t, tt.want, request.Suggestion)
+			if tt.want == "" {
+				assert.NotContains(t, askBody(t, content), `"suggestion"`)
+				assert.NotContains(t, request.Note, "suggestion")
+			}
+		})
+	}
+}
+
 // Options are no longer required: a question answered only by typing sends
 // none, and a strict provider must not demand them.
 func TestAskUserSpec_RequiresOnlyTheQuestion(t *testing.T) {

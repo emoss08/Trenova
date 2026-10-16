@@ -35,16 +35,17 @@ function renderBar(overrides: Partial<AssistantThread> = {}) {
   const handlers = {
     onOpenAgent: vi.fn(),
     onToggleWorkspace: vi.fn(),
-    onTogglePin: vi.fn(),
+    onSetPinned: vi.fn(),
     onDownload: vi.fn(),
     onRename: vi.fn(),
   };
-  render(
-    <QueryClientProvider client={new QueryClient()}>
+  const queryClient = new QueryClient();
+  const bar = (changes: Partial<AssistantThread>) => (
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <DeskTopBar
           place="thread"
-          thread={thread(overrides)}
+          thread={thread(changes)}
           agent={agent}
           agents={[agent]}
           workspaceOpen={false}
@@ -54,10 +55,11 @@ function renderBar(overrides: Partial<AssistantThread> = {}) {
           {...handlers}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const { rerender } = render(bar(overrides));
 
-  return handlers;
+  return { ...handlers, rerender: (changes: Partial<AssistantThread>) => rerender(bar(changes)) };
 }
 
 /**
@@ -82,7 +84,8 @@ describe("DeskTopBar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "More actions" }));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Unpin conversation" }));
-    expect(handlers.onTogglePin).toHaveBeenCalledTimes(1);
+    expect(handlers.onSetPinned).toHaveBeenCalledTimes(1);
+    expect(handlers.onSetPinned).toHaveBeenCalledWith(false);
 
     fireEvent.click(screen.getByRole("button", { name: "More actions" }));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Download transcript" }));
@@ -175,12 +178,49 @@ describe("DeskTopBar rename", () => {
     fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
     fireEvent.change(field(), { target: { value: "First" } });
     fireEvent.keyDown(field(), { key: "Enter" });
-    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.click(screen.getByRole("button", { name: "First" }));
+    expect(field()).toHaveValue("First");
     fireEvent.change(field(), { target: { value: "Second" } });
     fireEvent.keyDown(field(), { key: "Enter" });
 
     expect(handlers.onRename).toHaveBeenNthCalledWith(1, "First");
     expect(handlers.onRename).toHaveBeenNthCalledWith(2, "Second");
+  });
+
+  // The conversation the bar is given takes the new name a moment after the
+  // field closes; the old name must not show in between.
+  it("shows the new name as soon as Enter is pressed, before the conversation carries it", () => {
+    renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "Detention claims" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+
+    expect(screen.getByRole("button", { name: "Detention claims" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Late loads" })).not.toBeInTheDocument();
+  });
+
+  it("shows the name the conversation carries once it changes", () => {
+    const bar = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "detention claims " } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    bar.rerender({ title: "Detention claims" });
+
+    expect(screen.getByRole("button", { name: "Detention claims" })).toBeInTheDocument();
+  });
+
+  it("goes back to the old name when the rename is refused", () => {
+    const bar = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "Detention claims" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    bar.rerender({ title: "Detention claims" });
+    bar.rerender({ title: "Late loads" });
+
+    expect(screen.getByRole("button", { name: "Late loads" })).toBeInTheDocument();
   });
 
   it("names an untitled conversation and still offers to rename it", () => {

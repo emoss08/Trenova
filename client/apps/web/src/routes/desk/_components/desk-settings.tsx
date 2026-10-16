@@ -1,5 +1,6 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { capture } from "@/lib/queries/capture";
+import { clearSpeechServiceMissing, useSpeechServiceMissing } from "@/lib/speech-service";
 import { useDeskSettingsStore, type DeskSettings } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { useQuery } from "@tanstack/react-query";
@@ -132,6 +133,7 @@ export function DeskSettingsDialog({
   const settings = useDeskSettingsStore((state) => state.settings);
   const set = useDeskSettingsStore((state) => state.set);
   const reset = useDeskSettingsStore((state) => state.reset);
+  const speechServiceMissing = useSpeechServiceMissing();
   const setSharePage = useDeskStore((state) => state.setSharePage);
   const checklistAccess = usePermissions(Resource.BillingControl);
   const [chosen, setSection] = useState<Section>(initialSection);
@@ -501,11 +503,27 @@ export function DeskSettingsDialog({
                     ]}
                   />
                 </Row>
-                <Row title={t("Dictation")} detail={t("Show the microphone in the composer.")}>
+                <Row
+                  title={t("Dictation")}
+                  detail={
+                    speechServiceMissing && settings.mic === "on"
+                      ? t(
+                          "This browser has no speech service, so the microphone is hidden here. Hide and show it to try again.",
+                        )
+                      : t("Show the microphone in the composer.")
+                  }
+                >
                   <Seg
                     label={t("Dictation")}
                     value={settings.mic}
-                    onChange={(value) => set("mic", value)}
+                    onChange={(value) => {
+                      // Showing it again is the way back for a browser whose
+                      // missing speech service was remembered.
+                      if (value === "on") {
+                        clearSpeechServiceMissing();
+                      }
+                      set("mic", value);
+                    }}
                     options={[
                       ["on", t("Show")],
                       ["off", t("Hide")],

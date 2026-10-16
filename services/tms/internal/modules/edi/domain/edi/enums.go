@@ -430,6 +430,17 @@ func (s EDIStandard) IsValid() bool {
 	}
 }
 
+func (t TransactionSet) IsAcknowledgment() bool {
+	switch t {
+	case TransactionSet997, TransactionSet999:
+		return true
+	case TransactionSet204, TransactionSet210, TransactionSet214, TransactionSet990:
+		return false
+	default:
+		return false
+	}
+}
+
 func (t TransactionSet) IsValid() bool {
 	switch t {
 	case TransactionSet204,

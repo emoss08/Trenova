@@ -1,8 +1,10 @@
 package deskbench
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -70,9 +72,11 @@ type StepResult struct {
 }
 
 type plannedCase struct {
-	scenario *Scenario
-	provider string
-	repeat   int
+	scenario      *Scenario
+	provider      string
+	repeat        int
+	scenarioOrder int
+	providerOrder int
 }
 
 func (p plannedCase) label() string {
@@ -93,17 +97,20 @@ func (b *Bench) Run(ctx context.Context, opts RunOptions) ([]*CaseResult, error)
 	}
 
 	planned := make([]plannedCase, 0, len(opts.Scenarios)*len(providers)*repeat)
-	for _, scenario := range opts.Scenarios {
-		for _, provider := range providers {
+	for scenarioOrder, scenario := range opts.Scenarios {
+		for providerOrder, provider := range providers {
 			chosen := provider
 			if chosen == "" {
 				chosen = scenario.Provider
 			}
 			for rep := 1; rep <= repeat; rep++ {
-				planned = append(
-					planned,
-					plannedCase{scenario: scenario, provider: chosen, repeat: rep},
-				)
+				planned = append(planned, plannedCase{
+					scenario:      scenario,
+					provider:      chosen,
+					repeat:        rep,
+					scenarioOrder: scenarioOrder,
+					providerOrder: providerOrder,
+				})
 			}
 		}
 	}
@@ -112,19 +119,24 @@ func (b *Bench) Run(ctx context.Context, opts RunOptions) ([]*CaseResult, error)
 	var progressMu sync.Mutex
 	var wg sync.WaitGroup
 	slots := make(chan struct{}, parallel)
-	for idx := range planned {
+	for _, unit := range runUnits(planned) {
 		if ctx.Err() != nil {
 			break
 		}
 		slots <- struct{}{}
 		wg.Go(func() {
 			defer func() { <-slots }()
-			result := b.runCase(ctx, &opts, planned[idx])
-			results[idx] = result
-			if opts.Progress != nil {
-				progressMu.Lock()
-				opts.Progress(result)
-				progressMu.Unlock()
+			for _, idx := range unit {
+				if ctx.Err() != nil {
+					return
+				}
+				result := b.runCase(ctx, &opts, planned[idx])
+				results[idx] = result
+				if opts.Progress != nil {
+					progressMu.Lock()
+					opts.Progress(result)
+					progressMu.Unlock()
+				}
 			}
 		})
 	}
@@ -138,6 +150,35 @@ func (b *Bench) Run(ctx context.Context, opts RunOptions) ([]*CaseResult, error)
 	}
 
 	return finished, ctx.Err()
+}
+
+func runUnits(planned []plannedCase) [][]int {
+	units := make([][]int, 0, len(planned))
+	chains := make(map[string]int)
+	for idx := range planned {
+		key := strings.ToLower(strings.TrimSpace(planned[idx].scenario.Exclusive))
+		if key == "" {
+			units = append(units, []int{idx})
+			continue
+		}
+		if at, ok := chains[key]; ok {
+			units[at] = append(units[at], idx)
+			continue
+		}
+		chains[key] = len(units)
+		units = append(units, []int{idx})
+	}
+	for _, unit := range units {
+		slices.SortStableFunc(unit, func(a, b int) int {
+			return cmp.Or(
+				cmp.Compare(planned[a].providerOrder, planned[b].providerOrder),
+				cmp.Compare(planned[a].repeat, planned[b].repeat),
+				cmp.Compare(planned[a].scenarioOrder, planned[b].scenarioOrder),
+			)
+		})
+	}
+
+	return units
 }
 
 func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCase) *CaseResult {

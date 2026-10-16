@@ -41,24 +41,27 @@ func resolved214(t *testing.T, bol string) *resolvedDocumentContext {
 	payload := edi.DocumentPayload{
 		TransactionSet: edi.TransactionSet214,
 		ShipmentStatus: &edi.ShipmentStatusPayload{
-			ShipmentID:   pulid.MustNew("shp_"),
-			BOL:          bol,
-			ProNumber:    "PRO-88",
-			StatusCode:   "X3",
-			EventDate:    1_790_000_000,
-			EventTime:    1_790_000_000,
-			StopSequence: 1,
-			LocationName: "Acme DC",
-			City:         "Dallas",
-			StateCode:    "TX",
-			PostalCode:   "75201",
-			CountryCode:  "US",
+			ShipmentID:       pulid.MustNew("shp_"),
+			BOL:              bol,
+			ShipperReference: bol,
+			ProNumber:        "PRO-88",
+			StatusCode:       "X3",
+			EventDate:        1_790_000_000,
+			EventTime:        1_790_000_000,
+			StopSequence:     1,
+			LocationName:     "Acme DC",
+			City:             "Dallas",
+			StateCode:        "TX",
+			PostalCode:       "75201",
+			CountryCode:      "US",
 		},
 	}
 	payload.Normalize()
 	for _, segment := range version.Segments {
-		if segment.SegmentID == "B10" {
-			segment.Elements[0].Validation.Required = true
+		for idx := range segment.Elements {
+			if segment.Elements[idx].FieldPath == "shipmentStatus.shipperReference" {
+				segment.Elements[idx].Validation.Required = true
+			}
 		}
 	}
 

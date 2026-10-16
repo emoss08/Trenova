@@ -440,6 +440,9 @@ func (r *repository) GetAckStatusCounts(
 			if req.PartnerID.IsNotNil() {
 				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
 			}
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+			}
 			if err := query.Scan(ctx, &rows); err != nil {
 				return nil, err
 			}
@@ -486,6 +489,9 @@ func (r *repository) GetAckStatusCountsByPartner(
 			}
 			if req.PartnerID.IsNotNil() {
 				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 			}
 			if err := query.Scan(ctx, &rows); err != nil {
 				return nil, err
@@ -609,6 +615,7 @@ func (r *repository) GetOverdueAckCount(
 			req.TenantInfo,
 			req.PendingSince,
 			req.PartnerID,
+			req.TransactionSet,
 		))
 	})
 }
@@ -628,6 +635,7 @@ func (r *repository) ListOverdueAcks(
 			req.TenantInfo,
 			req.PendingSince,
 			req.PartnerID,
+			req.TransactionSet,
 		).
 			ColumnExpr(cols.EDIPartnerID.Qualified()).
 			ColumnExpr(buncolgen.Max(partner.Name, "partner_name")).
@@ -662,6 +670,7 @@ func (r *repository) ListOverdueAcks(
 			req.TenantInfo,
 			req.PendingSince,
 			req.PartnerID,
+			req.TransactionSet,
 		).
 			ExcludeColumn(cols.RawX12.String(), cols.PayloadSnapshot.String()).
 			Relation(edicol.EDIMessageRelations.Partner).
@@ -680,6 +689,7 @@ func whereOverdueAck(
 	tenantInfo pagination.TenantInfo,
 	pendingSince int64,
 	partnerID pulid.ID,
+	set edi.TransactionSet,
 ) *bun.SelectQuery {
 	cols := edicol.EDIMessageColumns
 	q = q.Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
@@ -687,6 +697,9 @@ func whereOverdueAck(
 		Apply(edicol.EDIMessageApplyTenant(tenantInfo))
 	if partnerID.IsNotNil() {
 		q = q.Where(cols.EDIPartnerID.Eq(), partnerID)
+	}
+	if set != "" {
+		q = q.Where(cols.TransactionSet.Eq(), set)
 	}
 
 	return q
@@ -712,6 +725,9 @@ func (r *repository) ListRecentDeadLettered(
 			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo))
 		if req.PartnerID.IsNotNil() {
 			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+		}
+		if req.TransactionSet != "" {
+			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 		}
 		if err := query.
 			Order(cols.UpdatedAt.OrderDesc()).

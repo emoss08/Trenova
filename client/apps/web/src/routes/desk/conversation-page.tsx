@@ -1,14 +1,11 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { Button } from "@trenova/shared/components/ui/button";
-import { DeskTranscriptSkeleton } from "@/components/desk-chat/desk-skeletons";
+import { DeskConversationSkeleton } from "@/components/desk-chat/desk-skeletons";
 import { useEffect } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { DeskConversation } from "./_components/desk-conversation";
+import { DeskMissingConversation } from "./_components/desk-missing-conversation";
 import { useDesk } from "./_components/desk-layout";
 
 export function DeskConversationPage() {
-  const t = useT();
   const { threadId } = useParams<{ threadId: string }>();
   const desk = useDesk();
   const thread = desk.activeThread?.id === threadId ? desk.activeThread : null;
@@ -30,32 +27,17 @@ export function DeskConversationPage() {
   }, [linkedArtifact, openArtifact, setSearch, thread]);
 
   if (desk.isLoading) {
-    return (
-      <div className="dk-grid dk-flow" aria-busy>
-        <DeskTranscriptSkeleton />
-      </div>
-    );
+    return <DeskConversationSkeleton />;
+  }
+
+  // Deleted from here, it is on its way out rather than missing: the page
+  // stays blank while the Desk moves off it.
+  if (desk.deletingActive) {
+    return null;
   }
 
   if (thread === null) {
-    return (
-      <EmptySheet
-        className="my-auto"
-        title={t("This conversation is not here")}
-        description={t("It may have been deleted, or it belongs to someone else.")}
-        action={
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link to="/desk" />}>
-            {t("Back to the desk")}
-          </Button>
-        }
-        sketch={
-          <div className="flex flex-col gap-3">
-            <GhostLine className="w-2/3" />
-            <GhostLine className="w-1/2" />
-          </div>
-        }
-      />
-    );
+    return <DeskMissingConversation onSearch={desk.openSearch} />;
   }
 
   const agent = desk.agentsById.get(thread.agentDefinitionId) ?? null;

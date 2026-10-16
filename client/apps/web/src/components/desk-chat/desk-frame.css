@@ -24,15 +24,16 @@
 :is(.dsk, .dk-chat) *::after {
   box-sizing: border-box;
 }
-:is(.dsk, .dk-chat) :where(a) {
-  color: var(--dsk-blue);
-  text-decoration: none;
-}
 /* The Desk's resets sit in the base layer, under Tailwind's utilities: unlayered,
    they outranked every utility class, so a shared <Button> inside the Desk lost
-   its fill, padding and type to "background: none; padding: 0". The Desk's own
-   classes are unlayered and still win where they set a property. */
+   its fill, padding and type to "background: none; padding: 0", and one drawn
+   as a link lost its text colour to the link blue. The Desk's own classes are
+   unlayered and still win where they set a property. */
 @layer base {
+  :is(.dsk, .dk-chat) :where(a) {
+    color: var(--dsk-blue);
+    text-decoration: none;
+  }
   :is(.dsk, .dk-chat) :where(button) {
     font: inherit;
     color: inherit;
@@ -179,6 +180,142 @@
   margin-top: -70px;
 }
 
+/* The room a conversation is read in: the stage beside the workspace, the
+   transcript's three-column grid and the dock under it. Here rather than in
+   desk-chat.css so the loading screen draws a conversation on the same grid
+   as the one that replaces it. The glow a running turn lights stays there. */
+.dk-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0px;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  transition: grid-template-columns 520ms var(--dk-settle);
+}
+.dk-stage.dk-open {
+  grid-template-columns: minmax(0, 1fr) 520px;
+}
+.dk-room {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.dk-scroll {
+  position: relative;
+  overflow: auto;
+  min-height: 0;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 300ms;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 28px,
+    #000 calc(100% - 40px),
+    transparent
+  );
+}
+.dk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 168px) minmax(0, 640px) minmax(0, 168px);
+  column-gap: clamp(12px, 3vw, 48px);
+  justify-content: center;
+  padding: 0 32px;
+  transition: grid-template-columns 520ms var(--dk-settle);
+}
+.dk-open .dk-grid {
+  grid-template-columns: 0px minmax(0, 600px) 0px;
+  column-gap: 0;
+}
+.dk-open .dk-g {
+  visibility: hidden;
+}
+.dk-flow {
+  padding-top: 44px;
+  padding-bottom: 56px;
+}
+.dk-r {
+  display: contents;
+}
+.dk-r > .dk-g,
+.dk-r > .dk-c,
+.dk-r > .dk-m {
+  margin-top: 52px;
+}
+.dk-r.dk-a > .dk-g,
+.dk-r.dk-a > .dk-c,
+.dk-r.dk-a > .dk-m {
+  margin-top: 18px;
+}
+.dk-r.dk-ev > * {
+  margin-top: 36px;
+}
+.dk-r.dk-first > * {
+  margin-top: 0;
+}
+.dk-g {
+  grid-column: 1;
+  text-align: right;
+  min-width: 0;
+}
+.dk-c {
+  grid-column: 2;
+  min-width: 0;
+}
+.dk-m {
+  grid-column: 3;
+  min-width: 0;
+  height: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-open .dk-m {
+  display: none;
+}
+.dk-dock {
+  position: relative;
+  padding: 0 0 22px;
+}
+.dk-dock .dk-c {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-dock .dk-grid {
+  padding-top: 0;
+}
+.dk-mainc > .dk-stage {
+  min-width: 0;
+}
+.dk-room {
+  container-type: inline-size;
+  container-name: room;
+}
+@container room (max-width:980px) {
+  .dk-grid,
+  .dk-open .dk-grid {
+    grid-template-columns: 0px minmax(0, 640px) 0px;
+    column-gap: 0;
+    padding-inline: 24px;
+  }
+  .dk-g {
+    display: none;
+  }
+}
+@media (max-height: 720px) {
+  .dk-flow {
+    padding-top: 28px;
+  }
+}
+
 /* skeletons: the outline of what is loading, in the Desk's own palette */
 .dk-sk {
   display: block;
@@ -200,31 +337,153 @@
     background-position: -100% 0;
   }
 }
+.dsk.dk-calm .dk-sk {
+  animation: none;
+}
+.dk-skt .dk-sk-time {
+  width: 34px;
+  height: 9px;
+  margin: 6px 0 0 auto;
+}
+.dk-skt .dk-sk-q {
+  height: 18px;
+  border-radius: 7px;
+}
+.dk-skt .dk-sk-who {
+  width: 132px;
+  height: 10px;
+  margin-top: 22px;
+}
+.dk-skt .dk-sk-ln {
+  height: 10px;
+  margin-top: 13px;
+}
+
+/* The Desk while it first opens (desk-loading-screen.tsx), each piece at the
+   size of the one that replaces it: a rail row is .dk-sb-i, a shelf heading
+   .dk-sb-gh and the person's row .dk-sb-me (desk-chat.css). */
 .dk-sk-logo {
   width: 26px;
   height: 26px;
   border-radius: 7px;
 }
-.dk-sk-row {
-  height: 22px;
-  margin: 4px 2px;
+.dk-sk-ic {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.dk-sk-sp {
+  flex: 1;
+}
+.dk-skr-list {
+  overflow: hidden;
+}
+.dk-skr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 30px;
+  padding: 0 8px 0 10px;
+}
+.dk-sk-glyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+.dk-sk-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 4px;
+  border-radius: 50%;
+}
+.dk-sk-label {
+  height: 8px;
+  border-radius: 4px;
+}
+.dk-skr-gh {
+  padding: 18px 10px 8px;
+}
+.dk-skr-gh > .dk-sk {
+  width: 52px;
+  height: 8px;
+  border-radius: 4px;
+}
+.dk-skr-me {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 52px;
+  padding: 0 8px 0 12px;
+}
+.dk-sk-me {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  border-radius: 50%;
+}
+.dk-sk-name {
+  width: 84px;
+  height: 9px;
+  border-radius: 4px;
+}
+.dk-sk-tile {
+  flex: none;
+  width: 20px;
+  height: 20px;
   border-radius: 6px;
 }
-.dk-sk-gh {
-  width: 60px;
+.dk-sk-agent {
+  width: 96px;
   height: 10px;
-  margin: 22px 10px 10px;
   border-radius: 4px;
 }
 .dk-sk-title {
-  width: 240px;
+  width: 168px;
+  height: 12px;
+  border-radius: 5px;
+}
+.dk-sk-place {
+  width: 72px;
+  height: 12px;
+  border-radius: 5px;
+}
+.dk-sk-ws {
+  flex: none;
+  width: 108px;
+  height: 32px;
+  border-radius: 8px;
+}
+.dk-sk-date {
+  width: 148px;
+  height: 10px;
+  border-radius: 4px;
+}
+.dk-sk-greet {
+  width: min(400px, 80%);
+  height: 40px;
+  margin-top: 20px;
+  border-radius: 8px;
+}
+.dk-sk-headline {
+  width: min(420px, 80%);
   height: 14px;
+  margin: 16px 0 34px;
   border-radius: 5px;
 }
 .dk-sk-cmp {
   width: 100%;
   height: 96px;
   border-radius: 16px;
+}
+.dk-sk-hint {
+  width: min(300px, 60%);
+  height: 8px;
+  margin: 3px auto;
+  border-radius: 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {

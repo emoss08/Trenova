@@ -105,7 +105,7 @@ func summarizeDocument(
 	summary.FailureMessage = content.FailureMessage
 	summary.Findings = content.Findings()
 
-	text := strings.TrimSpace(content.ContentText)
+	text := content.PagedText()
 	if window.page > 0 {
 		pageText, found := pageTextOf(content, window.page)
 		if !found {

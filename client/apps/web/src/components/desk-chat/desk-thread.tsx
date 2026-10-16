@@ -2,7 +2,7 @@ import { AssistantAgentProvider } from "@/components/agent-identity/agent-contex
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
-import { liveAskRequest } from "@/components/assistant/ask-requests";
+import { askAnswerIds, liveAskRequest } from "@/components/assistant/ask-requests";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { readyAttachments } from "@/components/assistant/composer-types";
 import { meterView } from "@/components/assistant/compaction";
@@ -30,6 +30,7 @@ import { useDeskStore } from "@/stores/desk-store";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
+  AssistantEntityRef,
   AssistantMessage,
   AssistantProposal,
   AssistantSurface,
@@ -37,6 +38,7 @@ import type {
 } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -65,7 +67,11 @@ import { DeskWorldChange } from "./conversation/desk-world-change";
 import { DeskContextMeter } from "./composer/desk-context-meter";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
-import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
+import {
+  DeskDropOverlay,
+  DeskMessageAttachments,
+  useDeskDrop,
+} from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
 import { DeskAskDock, deskAskPlaceholder } from "./conversation/desk-ask";
 import { DeskCompactMark } from "./conversation/desk-compact-mark";
@@ -232,6 +238,7 @@ export type DeskThreadProps = {
 };
 
 const NO_STEPS: ToolStep[] = [];
+const NO_MENTIONS: readonly AssistantEntityRef[] = [];
 const NO_OP = () => {};
 
 /** How long a confetti burst lasts. */
@@ -851,6 +858,21 @@ export function DeskThread({
     answerAsk === undefined ? null : (liveAsk ?? (answeringAsk ? null : model.asks.open));
   const askBlocked = isActive || !online || rateLimited !== null;
   const replyAsks = useSharedMap(model.asks.byReply);
+  const answerIds = askAnswerIds(model.asks);
+  // A turn answering the waiting question reads under that question as soon
+  // as it is sent, as it will once saved, rather than as a new question that
+  // gives way to it. One refused before it reached the agent answered nothing.
+  const openAsk = model.asks.open;
+  const sentContent =
+    turn !== null && answeringAsk && turn.status !== "refused" ? turn.userContent : null;
+  const sentMentions = turn?.mentions ?? NO_MENTIONS;
+  const sentAnswer = useMemo(
+    () =>
+      openAsk === null || sentContent === null
+        ? null
+        : { callId: openAsk.callId, content: sentContent, mentions: sentMentions },
+    [openAsk, sentContent, sentMentions],
+  );
 
   // Each reply's steps and artifacts are worked out from the whole list, and
   // stay the same arrays while they are equal (useSharedMap), so a reply's
@@ -977,6 +999,16 @@ export function DeskThread({
                             <DeskCompactMark message={entry.message} />
                           </DeskRow>
                         );
+                      }
+                      if (entry.kind === "user" && answerIds.has(entry.message.id)) {
+                        // An answer reads under its question's record; only
+                        // the files it carried are drawn here.
+                        const attachments = entry.message.attachments ?? [];
+                        return attachments.length > 0 ? (
+                          <DeskRow key={entry.message.id} kind="continued">
+                            <DeskMessageAttachments attachments={attachments} />
+                          </DeskRow>
+                        ) : null;
                       }
                       if (entry.kind === "user") {
                         return (
@@ -1186,6 +1218,14 @@ export function DeskThread({
                             threadArtifacts={artifacts}
                             asks={replyAsks.get(entry.message.id)}
                             dockedAskId={dockedAsk?.callId ?? null}
+                            sentAnswer={
+                              sentAnswer !== null &&
+                              replyAsks
+                                .get(entry.message.id)
+                                ?.some((replyAsk) => replyAsk.request.callId === sentAnswer.callId)
+                                ? sentAnswer
+                                : null
+                            }
                             chapter={chapterOf(entry.message.id)}
                             closesTurn={lastOfTurn.has(entry.message.id)}
                             onTogglePin={chapters?.toggle}
@@ -1239,7 +1279,13 @@ export function DeskThread({
                         </DeskRow>
                       );
                     })}
-                    {turn &&
+                    {sentAnswer !== null && turn && turn.attachments.length > 0 && (
+                      <DeskRow kind="continued">
+                        <DeskMessageAttachments attachments={turn.attachments} />
+                      </DeskRow>
+                    )}
+                    {sentAnswer === null &&
+                      turn &&
                       !turn.followUp &&
                       turn.userContent !== "" &&
                       turn.rateLimited === null && (
@@ -1350,7 +1396,7 @@ export function DeskThread({
                           mentions={handoff?.mentions}
                         />
                         <div className="dk-ec-queued dk-ec-queued-row">
-                          <DeskIcon name="up" size={11} stroke={2.2} />
+                          <Spinner size={12} />
                           {t(
                             "{0, plural, one {Uploading # file} other {Uploading # files}}",
                             Math.max(waitingFiles.length, handoff?.files.length ?? 0),
@@ -1367,7 +1413,7 @@ export function DeskThread({
                       <DeskRow kind="question" first={entries.length === 0}>
                         <DeskQuestion text={queued.content} />
                         <div className="dk-ec-queued dk-ec-queued-row">
-                          <DeskIcon name="undo" size={11} stroke={2.2} />
+                          <DeskIcon name="undo" size={11} stroke={2.2} className="dk-ec-wait" />
                           {t("Waiting to send")}
                         </div>
                       </DeskRow>
@@ -1616,6 +1662,11 @@ export function DeskThread({
                                   : lastIsRefusal
                                     ? t("Rephrase, or ask another agent…")
                                     : undefined
+                        }
+                        suggestedAnswer={
+                          dockedAsk && !suggestion.routing && !suggestion.handingOff && !showCard
+                            ? dockedAsk.suggestion
+                            : undefined
                         }
                         lock={lock}
                         note={composerLock?.note}

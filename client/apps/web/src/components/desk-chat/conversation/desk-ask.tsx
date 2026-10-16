@@ -147,7 +147,9 @@ export function DeskAskDock({
       : answersInComposer(request)
         ? options.length > 0
           ? t("Pick one, or type your own answer below.")
-          : t("Type your answer below.")
+          : request.suggestion !== ""
+            ? t("Press Tab to use the suggested answer, or type your own below.")
+            : t("Type your answer below.")
         : undefined;
 
   return (
@@ -201,9 +203,16 @@ export function DeskAskDock({
   );
 }
 
+/** What the person sent in answer to a question, while the reply to it is worked out. */
+export type AskAnswerSent = {
+  callId: string;
+  content: string;
+  mentions: readonly AssistantEntityRef[];
+};
+
 /** What the person answered, as they would know it: the choice's label when they picked one. */
-function answerText(ask: ThreadAsk): string {
-  const content = ask.answer?.content.trim() ?? "";
+function answerText(ask: ThreadAsk, said: string): string {
+  const content = said.trim();
   return ask.request.options.find((option) => option.value === content)?.label ?? content;
 }
 
@@ -217,13 +226,21 @@ function answerText(ask: ThreadAsk): string {
 export function DeskAskRecord({
   ask,
   docked,
+  sent = null,
 }: {
   ask: ThreadAsk;
   /** The question waits above the composer. */
   docked: boolean;
+  /**
+   * The answer the person has just sent, read here from the moment it is
+   * sent rather than as a new question until it is saved.
+   */
+  sent?: AskAnswerSent | null;
 }) {
   const t = useT();
-  const { request, answer } = ask;
+  const { request } = ask;
+  const answer =
+    ask.answer ?? (sent === null ? null : { content: sent.content, mentions: sent.mentions });
 
   return (
     <div className="dk-ask-rec">
@@ -242,7 +259,7 @@ export function DeskAskRecord({
               {answer.mentions && answer.mentions.length > 0 ? (
                 <DeskMentionText text={answer.content} mentions={answer.mentions} />
               ) : (
-                answerText(ask)
+                answerText(ask, answer.content)
               )}
             </span>
           </span>

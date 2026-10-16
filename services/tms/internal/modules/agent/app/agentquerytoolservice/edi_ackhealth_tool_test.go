@@ -133,7 +133,7 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{
 			PartnerID: acme.ID.String(), Partner: "Acme Retail", PartnerCode: "ACME",
 			Acknowledged: 10, Awaiting: 3,
-			Answer: "10 of 13 acknowledged (9 accepted, 1 rejected); 3 awaiting",
+			Answer: "10 of 13 came back with a 997 or 999 (9 accepted, 1 rejected); 3 still awaiting one",
 			AckCounts: []ackCountRow{
 				{Status: "Pending", Count: 3},
 				{Status: "Accepted", Count: 9},
@@ -143,7 +143,7 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 		{
 			PartnerID: bolt.ID.String(), Partner: "Bolt", PartnerCode: "BOLT",
 			Awaiting:  1,
-			Answer:    "0 of 1 acknowledged; 1 awaiting",
+			Answer:    "0 of 1 came back with a 997 or 999; 1 still awaiting one",
 			AckCounts: []ackCountRow{{Status: "Pending", Count: 1}},
 		},
 	}, view.AckCountsByPartner, "each partner's own counts, so one call answers for one partner")
@@ -189,6 +189,7 @@ func TestGetEDIAckHealth_PassesThePartnerAgeAndWindowAsked(t *testing.T) {
 	}}
 	params := agentParams(map[string]any{
 		paramPartnerID:           partnerID.String(),
+		paramTransactionSet:      "214",
 		paramOverdueAfterSeconds: float64(7200),
 		paramWindowHours:         float64(168),
 	}, "")
@@ -199,6 +200,7 @@ func TestGetEDIAckHealth_PassesThePartnerAgeAndWindowAsked(t *testing.T) {
 	after := timeutils.NowUnix()
 
 	assert.Equal(t, partnerID, fake.request.PartnerID)
+	assert.Equal(t, edi.TransactionSet214, fake.request.TransactionSet)
 	assert.EqualValues(t, 7200, fake.request.OverdueAckAge)
 	assert.GreaterOrEqual(t, fake.request.Since, before-168*60*60)
 	assert.LessOrEqual(t, fake.request.Since, after-168*60*60)
@@ -232,17 +234,34 @@ func TestGetEDIAckHealth_RefusesAnAgeOrWindowOutOfBounds(t *testing.T) {
 func TestAckAnswer_SaysWhatCameBackOutOfWhatWasSent(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "1 of 4 acknowledged (1 rejected); 3 awaiting", ackAnswer(
+	assert.Equal(t, "1 of 4 came back with a 997 or 999 (1 rejected); 3 still awaiting one", ackAnswer(
 		map[edi.MessageAcknowledgmentStatus]int{
 			edi.MessageAcknowledgmentStatusRejected:    1,
 			edi.MessageAcknowledgmentStatusPending:     3,
 			edi.MessageAcknowledgmentStatusNotExpected: 1,
 		}))
-	assert.Equal(t, "2 of 2 acknowledged (1 accepted, 1 accepted with errors)", ackAnswer(
+	assert.Equal(t, "2 of 2 came back with a 997 or 999 (1 accepted, 1 accepted with errors)", ackAnswer(
 		map[edi.MessageAcknowledgmentStatus]int{
 			edi.MessageAcknowledgmentStatusAccepted:           1,
 			edi.MessageAcknowledgmentStatusAcceptedWithErrors: 1,
 		}))
 	assert.Equal(t, "nothing sent in this window expects an acknowledgment", ackAnswer(
 		map[edi.MessageAcknowledgmentStatus]int{edi.MessageAcknowledgmentStatusNotExpected: 2}))
+}
+
+func TestGetEDIAckHealth_ReadsA997AsEverySetItAnswers(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeAckHealth{health: &ediservice.EDIAckHealth{
+		AckStatusCounts:  map[edi.MessageAcknowledgmentStatus]int{},
+		OverdueByPartner: []*ediservice.EDIOverduePartner{},
+	}}
+
+	result, err := newGetEDIAckHealthTool(fake).Query(t.Context(),
+		agentParams(map[string]any{paramTransactionSet: "997"}, ""))
+	require.NoError(t, err)
+
+	assert.Empty(t, fake.request.TransactionSet, "who is behind on 997s asks about every set")
+	assert.Contains(t, result.(*ediAckHealthView).Note,
+		"997s and 999s are the acknowledgments themselves")
 }

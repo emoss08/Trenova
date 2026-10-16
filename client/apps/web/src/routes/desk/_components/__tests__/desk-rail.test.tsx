@@ -2,7 +2,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -91,7 +91,7 @@ function RailHarness({
   ...props
 }: RailOptions & {
   onLoadMore: DeskRailProps["onLoadMore"];
-  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onTogglePin" | "onDelete">;
+  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onSetPinned" | "onDelete">;
 }) {
   const collapsed = useDeskSettingsStore((store) => store.collapsedShelves);
   const edges = deskShelfEdges(HARNESS_NOW, "UTC");
@@ -133,7 +133,7 @@ function renderRail(options: RailOptions = {}) {
   const handlers = {
     onSearch: vi.fn(),
     onSettings: vi.fn(),
-    onTogglePin: vi.fn(),
+    onSetPinned: vi.fn(),
     onDelete: vi.fn(),
   };
   const onLoadMore = vi.fn<(shelf: DeskShelfKey) => void>();
@@ -197,13 +197,13 @@ describe("DeskRail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Today", expanded: true }));
 
     expect(
-      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+      screen.getByRole("button", { name: "Today", expanded: false }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
     expect(screen.getByText("Old question")).toBeInTheDocument();
     expect(useDeskSettingsStore.getState().collapsedShelves).toEqual(["today"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }));
+    fireEvent.click(screen.getByRole("button", { name: "Today", expanded: false }));
 
     expect(screen.getByText("Today's question")).toBeInTheDocument();
     expect(useDeskSettingsStore.getState().collapsedShelves).toEqual([]);
@@ -214,7 +214,7 @@ describe("DeskRail", () => {
     renderRail({ threads: [thread({ id: "a", title: "Today's question" })] });
 
     expect(
-      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+      screen.getByRole("button", { name: "Today", expanded: false }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
   });
@@ -336,7 +336,7 @@ describe("DeskRail", () => {
     const { handlers } = renderRail({ threads: [subject] });
 
     fireEvent.click(screen.getByRole("button", { name: "Pin conversation" }));
-    expect(handlers.onTogglePin).toHaveBeenCalledWith(subject);
+    expect(handlers.onSetPinned).toHaveBeenCalledWith(subject, true);
 
     fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
     expect(handlers.onDelete).not.toHaveBeenCalled();
@@ -345,6 +345,82 @@ describe("DeskRail", () => {
       vi.advanceTimersByTime(300);
     });
     expect(handlers.onDelete).toHaveBeenCalledWith(subject);
+  });
+
+  // The rail is given the conversation with its new pin a task after the
+  // click; the button must not show the old state in between, and a second
+  // click must undo the first rather than ask for it again.
+  it("shows a pin from the click, and a second click unpins before the rail is told", () => {
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const { handlers } = renderRail({ threads: [subject] });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pin conversation" }));
+    const pin = screen.getByRole("button", { name: "Unpin conversation" });
+    expect(pin).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(pin);
+
+    expect(handlers.onSetPinned).toHaveBeenNthCalledWith(1, subject, true);
+    expect(handlers.onSetPinned).toHaveBeenNthCalledWith(2, subject, false);
+    expect(screen.getByRole("button", { name: "Pin conversation" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  it("shows the pin the conversation carries once the rail is told", () => {
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const { update } = renderRail({ threads: [subject] });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pin conversation" }));
+    update({ threads: [{ ...subject, pinned: true }] });
+    update({ threads: [subject] });
+
+    expect(screen.getByRole("button", { name: "Pin conversation" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  // The rail is given shelves without a deleted conversation a task after the
+  // delete is sent; the row must not come back in between.
+  it("keeps a deleted row slid out until the shelves drop it", () => {
+    vi.useFakeTimers();
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const other = thread({ id: "b", title: "Late loads" });
+    const { handlers, update } = renderRail({ threads: [subject, other] });
+    const row = () => screen.queryByText("Blocked invoices")?.closest(".dk-sb-c");
+
+    const ask = within(row() as HTMLElement).getByRole("button", { name: "Delete conversation" });
+    fireEvent.click(ask);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    update({ threads: [subject, other] });
+
+    expect(handlers.onDelete).toHaveBeenCalledWith(subject);
+    expect(row()).toHaveClass("dk-out");
+
+    update({ threads: [other] });
+
+    expect(row()).toBeUndefined();
+  });
+
+  it("shows a deleted row again when a refused delete brings it back", () => {
+    vi.useFakeTimers();
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const { update } = renderRail({ threads: [subject] });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    update({ threads: [] });
+    update({ threads: [subject] });
+
+    expect(screen.getByText("Blocked invoices").closest(".dk-sb-c")).not.toHaveClass("dk-out");
   });
 
   it("drops the delete question when the pointer leaves the row", () => {
@@ -495,26 +571,17 @@ describe("DeskRail paging", () => {
 
 /**
  * The server counts every shelf, so the rail knows which shelves hold
- * anything without reading them, and a folded one says how much it holds.
+ * anything without reading them. A heading names its shelf and nothing more:
+ * the count decides whether it is drawn, not what it says.
  */
 describe("DeskRail shelf counts", () => {
-  it("shows how many a folded shelf holds", () => {
+  it("draws a folded shelf's heading by its name alone", () => {
     useDeskSettingsStore.setState({ collapsedShelves: ["month"] });
     renderRail({ counts: { month: 42 } });
 
-    const heading = screen.getByRole("button", {
-      name: "Previous 30 days, 42 conversations",
-      expanded: false,
-    });
-    expect(heading.querySelector(".dk-sb-ct")).toHaveTextContent("42");
-  });
-
-  it("leaves the count off an open shelf", () => {
-    renderRail({ threads: many(2), counts: { today: 2 } });
-
-    expect(
-      screen.getByRole("button", { name: "Today", expanded: true }).querySelector(".dk-sb-ct"),
-    ).toBeNull();
+    const heading = screen.getByRole("button", { name: "Previous 30 days", expanded: false });
+    expect(heading).toHaveTextContent(/^Previous 30 days$/);
+    expect(heading.querySelector(".dk-sb-ct")).toBeNull();
   });
 
   it("leaves out a shelf counted empty", () => {
