@@ -346,6 +346,13 @@ pickup fails with a dead letter, overdue acknowledgments and a file set aside, o
 up, and a Trenova-to-Trenova partner), its times moved to the scenario's anchor; testing Acme's line
 fails at sign-in, picking up stages one file, and a partner the fixture does not hold answers not
 found.
+The journal entry and manual journal cards read `fixtures/desk-journals.mjs`, the same fixtures the
+cards' unit tests read, moved by whole days so each booking day stays the first second of a UTC day
+(an invoice's entry posted, a worker settlement's entry waiting on approval, an entry reversed and
+its reversal, a posted write-off; a journal waiting on approval, a draft out of balance asked for in
+a closed month, a posted one and a rejected one). Approving or posting an entry, each step of a
+manual journal and asking for a reversal answer as the server does, and a record the fixture does
+not hold answers not found.
 
 The Desk home suggesting the agent with the tools for a question has its own walkthrough:
 

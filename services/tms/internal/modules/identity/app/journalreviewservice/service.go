@@ -332,20 +332,11 @@ func isRefusal(err error) bool {
 		errortypes.IsError(err)
 }
 
-type localizedError interface {
-	LocalizedMessage() (message string, args []any)
-}
-
 func refusalMessage(ctx context.Context, err error) string {
 	if errors.Is(err, errEntryNotFound) {
 		return i18n.T(ctx, "Journal entry not found")
 	}
-	var localized localizedError
-	if errors.As(err, &localized) {
-		message, args := localized.LocalizedMessage()
-		return i18n.T(ctx, message, args...)
-	}
-	return err.Error()
+	return errortypes.LocalizedText(ctx, err)
 }
 
 func (s *Service) record(

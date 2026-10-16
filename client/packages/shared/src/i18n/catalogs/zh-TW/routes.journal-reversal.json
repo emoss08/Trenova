@@ -1,5 +1,6 @@
 {
   "A detailed explanation that will be recorded in the audit trail.": "將記錄於稽核軌跡中的詳細說明。",
+  "A mirror entry posts on this date and takes back everything {0} booked": "一筆反向分錄將於此日期過帳，沖回 {0} 記錄的所有內容",
   "A short classification code for the reversal reason.": "沖銷原因的簡短分類代碼。",
   "Cancel reversal": "取消沖銷",
   "Create a new journal entry reversal request.": "建立新的分錄沖銷申請。",
@@ -11,10 +12,10 @@
   "Original entry": "原始分錄",
   "Original journal entry": "原始分錄",
   "Original journal entry ID": "原始分錄 ID",
-  "Post": "過帳",
   "Provide a detailed reason for the reversal request": "請詳細說明此沖銷申請的原因",
   "Provide a reason for cancellation": "請說明取消原因",
   "Provide a reason for rejection": "請說明拒絕原因",
+  "Request a reversal of {0}": "申請沖銷 {0}",
   "Request and manage journal entry reversals.": "申請並管理分錄沖銷。",
   "Requested accounting date": "所要求的會計日期",
   "Reversal approved": "沖銷已核准",
@@ -24,9 +25,12 @@
   "Reversal posted": "沖銷已過帳",
   "Reversal rejected": "沖銷已拒絕",
   "Reversal request created": "沖銷申請已建立",
+  "Reversal requested": "已申請沖銷",
   "Reversal target": "沖銷對象",
   "Specify the journal entry to reverse and the desired posting date": "指定要沖銷的分錄，以及希望的過帳日期",
   "The ID of the posted journal entry you want to reverse.": "您要沖銷的已過帳分錄 ID。",
   "The date the reversal should be posted to the general ledger.": "此沖銷應過帳至總帳的日期。",
-  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "例如：ERROR、DUPLICATE、ADJUSTMENT"
+  "The entry stays in the ledger as it was posted; the reversal takes it back.": "分錄會依原過帳內容保留在帳簿中；沖銷會將其沖回。",
+  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "例如：ERROR、DUPLICATE、ADJUSTMENT",
+  "{0} is reversed once someone approves and posts the request.": "有人核准並過帳此申請後，{0} 即會沖銷。"
 }

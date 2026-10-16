@@ -19,8 +19,9 @@ type GetGLAccountByIDRequest struct {
 }
 
 type GetGLAccountsByIDsRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	GLAccountIDs []pulid.ID            `json:"glAccountIds"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	GLAccountIDs       []pulid.ID            `json:"glAccountIds"`
+	IncludeAccountType bool                  `json:"-"`
 }
 
 type BulkUpdateGLAccountStatusRequest struct {

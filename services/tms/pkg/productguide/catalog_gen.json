@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5d42819de5ae6413d272b3dc16f5af3402aa46bbc5cf9efe2ef4470edb3dabcc",
+  "version": "sha256:9a99065e6731581ae6bd587b5ba744e59cdd6e8f93d56e50ecc6ed3dd96eb999",
   "modules": [
     {
       "id": "home",
@@ -18250,7 +18250,8 @@
       "entity": "journal_entry",
       "label": "Journal entry",
       "path": "/accounting/journal-entries/{id}",
-      "params": {}
+      "params": {},
+      "deskCard": true
     },
     {
       "entity": "journal_reversal",
@@ -18278,7 +18279,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "order",

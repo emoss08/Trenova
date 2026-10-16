@@ -25,6 +25,7 @@ import { deskInvoices } from "../fixtures/desk-invoices.mjs";
 import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-settlements.mjs";
 import { deskDetentions } from "../fixtures/desk-detention.mjs";
 import { deskEdiPartners } from "../fixtures/desk-edi-partners.mjs";
+import { deskJournalEntries, deskManualJournals } from "../fixtures/desk-journals.mjs";
 import { hash } from "../state.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { userSelectOptions } from "./settings.mjs";
@@ -509,6 +510,27 @@ export const DESK_CARD_HANDLERS = {
     const rows = fixture && !empty(state) ? fixture.messages : [];
     return { ediMessages: connectionPage(rows, variables.input, variables.includeTotalCount) };
   },
+  DeskJournalEntryCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const card = deskJournalEntries(state.anchor)[variables.id];
+    if (!card) {
+      throw new TriageError("JournalEntry not found", { code: "NOT_FOUND", type: "not-found" });
+    }
+    return { journalEntryCard: card };
+  },
+  DeskManualJournalCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const card = deskManualJournals(state.anchor)[variables.id];
+    if (!card) {
+      throw new TriageError("ManualJournalRequest not found", {
+        code: "NOT_FOUND",
+        type: "not-found",
+      });
+    }
+    return { manualJournalCard: card };
+  },
+  ApproveJournalEntries: (state, variables) => journalReview(state, variables, "Approved"),
+  PostJournalEntries: (state, variables) => journalReview(state, variables, "Posted"),
   DeskDetentionCard: (state, variables) => {
     if (held(state)) return HOLD;
     const fixture = deskDetentions(state.anchor)[variables.id];
@@ -703,7 +725,61 @@ function emailAttempt(fixture) {
   };
 }
 
+/** The journal review's answer for each entry asked about: moved to `status`, or refused when unknown. */
+function journalReview(state, variables, status) {
+  const entries = deskJournalEntries(state.anchor);
+  const outcomes = variables.input.entryIds.map((entryId) => {
+    const card = entries[entryId];
+    return card
+      ? { entryId, entryNumber: card.entry.entryNumber, status, changed: true, error: "" }
+      : { entryId, entryNumber: "", status: "", changed: false, error: "Journal entry not found" };
+  });
+  const result = {
+    outcomes,
+    changed: outcomes.filter((outcome) => outcome.changed).length,
+    failed: outcomes.filter((outcome) => !outcome.changed).length,
+  };
+  return status === "Approved" ? { approveJournalEntries: result } : { postJournalEntries: result };
+}
+
+const MANUAL_JOURNAL_STEPS = {
+  submit: "PendingApproval",
+  approve: "Approved",
+  post: "Posted",
+  reject: "Rejected",
+  cancel: "Cancelled",
+};
+
+/** A manual journal moved by one of its steps, as the REST route answers it. */
+function manualJournalStep(state, path) {
+  const [, id, step] = path.match(/manual-journals\/([a-z0-9_]+)\/([a-z]+)\/?$/) ?? [];
+  const card = deskManualJournals(state.anchor)[id];
+  if (!card)
+    return { __status: 404, body: { title: "Not found", detail: "Manual journal not found" } };
+  return { ...card.journal, status: MANUAL_JOURNAL_STEPS[step] ?? card.journal.status, lines: [] };
+}
+
 export const DESK_CARD_ROUTES = [
+  [
+    "POST",
+    /^\/api\/v1\/accounting\/manual-journals\/[a-z0-9_]+\/(submit|approve|post|reject|cancel)\/?$/,
+    (state, path) => (held(state) ? HOLD : manualJournalStep(state, path)),
+  ],
+  [
+    "POST",
+    /^\/api\/v1\/accounting\/journal-reversals\/?$/,
+    (state, _path, body) => {
+      if (held(state)) return HOLD;
+      return {
+        id: "jrev_new",
+        status: "Requested",
+        originalJournalEntryId: body?.originalJournalEntryId ?? "",
+        requestedAccountingDate: body?.requestedAccountingDate ?? state.anchor,
+        reasonCode: body?.reasonCode ?? "",
+        reasonText: body?.reasonText ?? "",
+      };
+    },
+  ],
   [
     "POST",
     /^\/api\/v1\/edi\/communication-profiles\/[a-z0-9_]+\/test-connection\/?$/,

@@ -206,6 +206,36 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) ListByJournalEntry(
+	ctx context.Context,
+	req journalreversalports.ListJournalReversalsByEntryRequest,
+) ([]*journalreversal.Reversal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalreversal.Reversal, error) {
+		cols := journalreversalcol.ReversalColumns
+		records := make([]*reversalRecord, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&records).
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.OriginalJournalEntryID.Eq(), req.JournalEntryID).
+					WhereOr(cols.ReversalJournalEntryID.Eq(), req.JournalEntryID)
+			}).
+			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		reversals := make([]*journalreversal.Reversal, 0, len(records))
+		for _, rec := range records {
+			reversals = append(reversals, mapReversal(rec))
+		}
+		return reversals, nil
+	})
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *journalreversal.Reversal,

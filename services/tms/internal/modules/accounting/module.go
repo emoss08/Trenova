@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/glaccountservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/glbalanceservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
@@ -81,6 +82,7 @@ func SharedOptions() fx.Option {
 			accountingsyncservice.New,
 			func(s *accountingsyncservice.Service) accountingsyncports.AccountingSyncService { return s },
 			journalentryservice.New,
+			journalcardservice.New,
 			journalreversalservice.New,
 			manualjournalservice.New,
 		),

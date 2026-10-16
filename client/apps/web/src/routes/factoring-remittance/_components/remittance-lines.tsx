@@ -36,7 +36,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { Link } from "react-router";
 import { MatchItemDialog } from "./match-item-dialog";
-import { ReasonDialog } from "./reason-dialog";
+import { ReasonDialog } from "@/components/reason-dialog";
 import { useLineUpdate } from "./use-line-update";
 
 const LINE_KINDS: FactoringRemittanceLineKind[] = [

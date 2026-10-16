@@ -3,6 +3,7 @@ import {
   fetchJournalEntry,
   fetchJournalSourceByObject,
 } from "@/lib/graphql/journal-entry";
+import { fetchDeskJournalEntry } from "@/lib/graphql/journal-cards";
 import { fetchJournalReviewSummary } from "@/lib/graphql/journal-review";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -10,6 +11,10 @@ export const journalEntry = createQueryKeys("journalEntry", {
   get: (id: string) => ({
     queryKey: ["get", id],
     queryFn: async ({ signal }) => fetchJournalEntry(id, { signal }),
+  }),
+  card: (id: string) => ({
+    queryKey: ["card", id],
+    queryFn: async ({ signal }) => fetchDeskJournalEntry(id, { signal }),
   }),
   bySource: (sourceType: string, sourceId: string) => ({
     queryKey: ["bySource", sourceType, sourceId],

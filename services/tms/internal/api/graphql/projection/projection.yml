@@ -143,6 +143,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  JournalSourceInfo:
+    - batchNumber
   FactoringRemittanceLine:
     - matchedInvoiceNumber
     - matchedSubmissionId

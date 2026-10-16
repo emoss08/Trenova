@@ -99,6 +99,56 @@ type JournalSourceInfo {
   sourceEventType: String!
   sourceDocumentNumber: String!
   status: String!
+  "The number of the batch the source's entries were written in, when it could be read."
+  batchNumber: String
+}
+
+"One line of a journal as the Desk card draws it: the account it books to and the side of the accounting equation that account sits on."
+type JournalCardLine {
+  lineNumber: Int!
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  "Null when the account or its type could not be read."
+  category: AccountCategory
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  "Null when the line names no customer or the reader may not read customers."
+  customerId: ID
+  customerName: String!
+  "Null when the line names no location or the reader may not read locations."
+  locationId: ID
+  locationName: String!
+}
+
+"Where a journal not yet posted would land if it posted now, under the organization's closed-period policy."
+type JournalCardPosting {
+  "Null when it cannot post as things stand."
+  period: FiscalPeriod
+  accountingDate: Timestamp
+  "Why it cannot post as things stand; empty when it can."
+  refusal: String!
+}
+
+type JournalEntryCard {
+  entry: JournalEntry!
+  lines: [JournalCardLine!]!
+  period: FiscalPeriod
+  "Where it will post; null once it is posted, reversed, rejected or void."
+  posting: JournalCardPosting
+  source: JournalSourceInfo
+  createdBy: User
+  approvedBy: User
+  postedBy: User
+  rejectedBy: User
+  "The entry this one reverses."
+  reversalOf: JournalEntry
+  "The entry that reversed this one."
+  reversedBy: JournalEntry
+  "The reversal request that stands against this entry or made it; null to someone who may not read journal reversals."
+  reversal: JournalReversal
+  reversalRequestedBy: User
 }
 
 extend type Query {
@@ -108,6 +158,8 @@ extend type Query {
   "Journal entries waiting to be approved or posted, oldest first."
   journalReviewTable(input: DataTableConnectionInput!): JournalEntryConnection!
   journalReviewSummary: JournalReviewSummary!
+  "A journal entry as the Desk card draws it, read in one pass."
+  journalEntryCard(id: ID!): JournalEntryCard!
 }
 
 extend type Mutation {

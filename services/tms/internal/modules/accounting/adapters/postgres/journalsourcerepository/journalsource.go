@@ -3,11 +3,16 @@ package journalsourcerepository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -112,6 +117,52 @@ func (r *repository) getByObjectQuery(
 			return nil, dberror.HandleNotFoundError(err, "JournalSource")
 		}
 		return mapSourceRecord(rec), nil
+	})
+}
+
+func (r *repository) GetByJournalEntry(
+	ctx context.Context,
+	req journalsourceports.GetJournalSourceByEntryRequest,
+) (*journalsource.Source, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalsource.Source, error) {
+		cols := journalsourcecol.SourceColumns
+		rec := new(sourceRecord)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(rec).
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Where(cols.JournalEntryID.Eq(), req.JournalEntryID).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "JournalSource")
+		}
+
+		source := mapSourceRecord(rec)
+		if source.JournalBatchID.IsNil() {
+			return source, nil
+		}
+
+		batchCols := journalentrycol.JournalBatchColumns
+		batch := new(journalentry.JournalBatch)
+		err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(batch).
+			Column(batchCols.ID.Bare(), batchCols.BatchNumber.Bare(), batchCols.BatchType.Bare()).
+			Where(batchCols.ID.Eq(), source.JournalBatchID).
+			Where(batchCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(batchCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Scan(ctx)
+		switch {
+		case err == nil:
+			source.JournalBatch = batch
+		case !errors.Is(err, sql.ErrNoRows):
+			return nil, err
+		}
+
+		return source, nil
 	})
 }
 

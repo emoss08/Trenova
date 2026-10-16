@@ -38,7 +38,6 @@
   "Row {0} ({1}) pays which invoice on the factor's schedules?": "第 {0} 行（{1}）支付的是保理公司清单上的哪张发票？",
   "Row {0}: {1} of invoice {2}": "第 {0} 行：发票 {2} 的 {1}",
   "Say which column of {0} holds each field. Leave a field out when the file has no such column.": "请指定 {0} 中哪一列包含各个字段。如果文件中没有对应的列，请留空该字段。",
-  "Say why": "请说明原因",
   "Select a schedule": "选择清单",
   "Select an invoice": "选择发票",
   "Such as: a duplicate of yesterday's report": "例如：与昨天的报告重复",

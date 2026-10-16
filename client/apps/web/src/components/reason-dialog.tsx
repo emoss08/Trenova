@@ -16,18 +16,20 @@ import { useEffect, useId } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
-export const MAX_REMITTANCE_REASON = 500;
+export const MAX_REASON_LENGTH = 500;
 
-const reasonSchema = z.object({
-  reason: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("Say why") })
-    .max(MAX_REMITTANCE_REASON, {
-      error: () => translate("Keep the reason under 500 characters"),
-    }),
-});
-type ReasonValues = z.infer<typeof reasonSchema>;
+function reasonSchema(maxLength: number) {
+  return z.object({
+    reason: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Say why") })
+      .max(maxLength, {
+        error: () => translate("Keep the reason under {0} characters", maxLength),
+      }),
+  });
+}
+type ReasonValues = z.infer<ReturnType<typeof reasonSchema>>;
 
 type ReasonDialogProps = {
   open: boolean;
@@ -36,12 +38,17 @@ type ReasonDialogProps = {
   placeholder: string;
   confirmLabel: string;
   destructive?: boolean;
+  /** The longest reason the server keeps; 500 characters unless the record allows another. */
+  maxLength?: number;
   pending: boolean;
   onConfirm: (reason: string) => void;
   onOpenChange: (open: boolean) => void;
 };
 
-/** Asks why before a line is ignored or a remittance discarded. */
+/**
+ * Asks why before a step that needs a reason: a remittance line ignored, a
+ * manual journal rejected or cancelled.
+ */
 export function ReasonDialog({
   open,
   title,
@@ -49,6 +56,7 @@ export function ReasonDialog({
   placeholder,
   confirmLabel,
   destructive = false,
+  maxLength = MAX_REASON_LENGTH,
   pending,
   onConfirm,
   onOpenChange,
@@ -56,7 +64,7 @@ export function ReasonDialog({
   const t = useT();
   const formId = useId();
   const form = useForm<ReasonValues>({
-    resolver: zodResolver(reasonSchema) as Resolver<ReasonValues>,
+    resolver: zodResolver(reasonSchema(maxLength)) as Resolver<ReasonValues>,
     defaultValues: { reason: "" },
   });
   const { reset } = form;

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
@@ -170,4 +172,55 @@ func (r *QueryResolver) JournalReviewSummary(ctx context.Context) (*journalentry
 	}
 
 	return r.JournalReview.Summary(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *JournalCardLineResolver) Category(ctx context.Context, obj *journalcardservice.Line) (*accounttype.Category, error) {
+	if !obj.Category.IsValid() {
+		return nil, nil //nolint:nilnil // an unread account type renders as null
+	}
+	category := obj.Category
+	return &category, nil
+}
+
+func (r *JournalCardPostingResolver) AccountingDate(ctx context.Context, obj *journalcardservice.Posting) (*int, error) {
+	if obj.Period == nil {
+		return nil, nil //nolint:nilnil // a refused posting has no date
+	}
+	date := int(obj.AccountingDate)
+	return &date, nil
+}
+
+func (r *JournalSourceInfoResolver) BatchNumber(ctx context.Context, obj *journalsource.Source) (*string, error) {
+	if obj.JournalBatch == nil || obj.JournalBatch.BatchNumber == "" {
+		return nil, nil //nolint:nilnil // an unread batch renders as null
+	}
+	number := obj.JournalBatch.BatchNumber
+	return &number, nil
+}
+
+func (r *QueryResolver) JournalEntryCard(ctx context.Context, id string) (*journalcardservice.JournalEntryCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	entryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid journal entry")
+	}
+
+	return r.JournalCards.GetJournalEntryCard(ctx, &journalcardservice.GetJournalEntryCardRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		EntryID:    entryID,
+		Parties: journalcardservice.Parties{
+			IncludeCustomers: r.HasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead),
+			IncludeLocations: r.HasPermission(ctx, authCtx, permission.ResourceLocation, permission.OpRead),
+		},
+		IncludeReversals: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceJournalReversal,
+			permission.OpRead,
+		),
+	})
 }

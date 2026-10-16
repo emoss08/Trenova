@@ -13,7 +13,6 @@
   "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.": "请从列表中选择一笔调整，以了解其需要批准的原因与变更内容，并进行批准或拒绝。",
   "Policy-controlled": "由政策管控",
   "Policy: {0}": "政策：{0}",
-  "Reconciliation": "核对",
   "Reconciliation exception": "核对例外",
   "Review policy-controlled invoice adjustments awaiting finance approval.": "审查受政策管控、待财务批准的发票调整。",
   "Search invoice, customer, reason...": "搜索发票、客户、原因...",
