@@ -126,7 +126,7 @@ describe("WorkerReviewsTab", () => {
     expect(closed.getByText("Closed")).toBeInTheDocument();
   });
 
-  it("submits a draft and reports what happens next", async () => {
+  it("submits a draft", async () => {
     fetchWorkerPerformanceReviews.mockResolvedValue([review("prev_open")]);
     fetchActivePerformanceReviewTemplates.mockResolvedValue([template]);
     submitPerformanceReview.mockResolvedValue(
@@ -138,10 +138,7 @@ describe("WorkerReviewsTab", () => {
     await waitFor(() =>
       expect(submitPerformanceReview).toHaveBeenCalledWith({ id: "prev_open", version: 1 }),
     );
-    expect(toast.success).toHaveBeenCalledWith(
-      "Review submitted",
-      expect.objectContaining({ description: expect.stringContaining("sign off") }),
-    );
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("offers Close once the worker has signed and shows their comment", async () => {

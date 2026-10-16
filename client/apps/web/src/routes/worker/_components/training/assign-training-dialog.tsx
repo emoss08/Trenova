@@ -25,9 +25,7 @@ import {
 } from "@trenova/shared/types/worker-training";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTrainingInvalidation } from "./use-training-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const DAY = 86_400;
 
@@ -98,17 +96,7 @@ export function AssignTrainingDialog({
         dueAt: values.dueAt ?? undefined,
         notes: values.notes ?? undefined,
       }),
-    onSuccess: (record) => {
-      toast.success(
-        record.course?.name
-          ? translate("{0} assigned", record.course.name)
-          : translate("Course assigned"),
-        {
-          description: record.dueAt
-            ? translate("The driver will see it in Dash with the due date.")
-            : translate("The driver will see it in Dash."),
-        },
-      );
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

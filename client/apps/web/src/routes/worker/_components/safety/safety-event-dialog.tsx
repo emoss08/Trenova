@@ -40,7 +40,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useFormState, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
 
@@ -196,16 +195,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
           })
         : createWorkerSafetyEvent({ ...shared, workerId, points: values.points });
     },
-    onSuccess: (saved) => {
-      toast.success(isEdit ? t("Safety event updated") : t("Safety event recorded"), {
-        description:
-          saved.activePoints > 0
-            ? t(
-                "{0, plural, one {# point} other {# points}} added to the scorecard.",
-                saved.activePoints,
-              )
-            : t("No points added to the scorecard."),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

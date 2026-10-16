@@ -115,9 +115,6 @@ export function AssignPolicyDialog({
         toast.error(t("Policy not assigned"), { description: failure.error });
         return;
       }
-      toast.success(t("Policy assigned"), {
-        description: t("Accruals start from the effective date on the next nightly run."),
-      });
       onAssigned?.();
       onOpenChange(false);
     },

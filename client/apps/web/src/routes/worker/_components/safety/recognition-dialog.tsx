@@ -26,10 +26,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const KIND_OPTIONS = recognitionKindSchema.options.map((value) => ({
   value,
@@ -88,12 +86,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
         occurredAt: values.occurredAt,
         visibleToWorker: values.visibleToWorker,
       }),
-    onSuccess: (saved) => {
-      toast.success(t("Recognition recorded"), {
-        description: saved.visibleToWorker
-          ? translate("The driver will see it in Dash.")
-          : translate("Kept internal — the driver will not see it."),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

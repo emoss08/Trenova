@@ -27,7 +27,6 @@ import {
 } from "@trenova/shared/types/org-structure";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 const SCOPE_OPTIONS = approvalScopeSchema.options.map((value) => ({
   value,
@@ -84,11 +83,6 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
         reason: values.reason ?? undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Cover arranged"), {
-        description: t(
-          "They can now approve what you can approve, for the people you manage — and nothing beyond that.",
-        ),
-      });
       void queryClient.invalidateQueries({ queryKey: [APPROVAL_DELEGATIONS_KEY] });
       onOpenChange(false);
     },

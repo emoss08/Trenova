@@ -77,7 +77,6 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const revoke = useMutation({
     mutationFn: () => revokeWorkerPortalAccess(workerId),
     onSuccess: async () => {
-      toast.success(t("Portal access revoked"));
       setConfirmRevoke(false);
       setInviteUrl(null);
       await invalidate();

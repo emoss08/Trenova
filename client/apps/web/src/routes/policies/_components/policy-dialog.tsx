@@ -168,7 +168,6 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
     onSuccess: (document, file) => {
       setValue("documentId", document.id, { shouldDirty: true, shouldValidate: true });
       setAttachedName(file.name);
-      toast.success(t("Document attached"));
     },
     onError: (error: Error) =>
       toast.error(error.message || translate("Could not attach the document")),
@@ -198,7 +197,6 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
       return policy ? updateWorkerPolicy(policy.id, input) : createWorkerPolicy(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? translate("Policy updated") : translate("Policy published"));
       void queryClient.invalidateQueries({ queryKey: [WORKER_POLICIES_KEY] });
       close();
     },

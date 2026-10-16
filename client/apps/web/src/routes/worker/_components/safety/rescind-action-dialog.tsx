@@ -23,7 +23,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
 
 export type RescindActionDialogProps = {
@@ -69,9 +68,6 @@ export function RescindActionDialog({
       });
     },
     onSuccess: () => {
-      toast.success(t("Action rescinded"), {
-        description: t("It comes off the ladder but stays in the record with your reason."),
-      });
       void invalidate();
       onOpenChange(false);
     },

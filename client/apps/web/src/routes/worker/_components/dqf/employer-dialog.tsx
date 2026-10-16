@@ -32,9 +32,7 @@ import {
 } from "@trenova/shared/types/worker-dqf";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useDqfInvalidation } from "./use-dqf-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const STATUS_OPTIONS = employmentVerificationStatusSchema.options.map((value) => ({
   value,
@@ -168,7 +166,6 @@ export function EmployerDialog({
         : recordEmploymentVerification({ ...shared, workerId });
     },
     onSuccess: () => {
-      toast.success(isEdit ? translate("Employer updated") : translate("Employer recorded"));
       void invalidate();
       onOpenChange(false);
     },

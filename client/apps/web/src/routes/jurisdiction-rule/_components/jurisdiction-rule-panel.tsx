@@ -137,11 +137,13 @@ function JurisdictionRuleEditPanel({
       const clearedVerification =
         row?.verificationState !== "Unverified" && updated?.verificationState === "Unverified";
 
-      toast.success(t("Changes have been saved"), {
-        description: clearedVerification
-          ? translate("A limit changed, so this rule is unverified again and needs re-checking.")
-          : translate("Jurisdiction rule updated successfully"),
-      });
+      if (clearedVerification) {
+        toast.success(t("Changes have been saved"), {
+          description: translate(
+            "A limit changed, so this rule is unverified again and needs re-checking.",
+          ),
+        });
+      }
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
     form,

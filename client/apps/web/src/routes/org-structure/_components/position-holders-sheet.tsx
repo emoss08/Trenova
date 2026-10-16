@@ -88,8 +88,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
       driving
         ? assignWorkerPosition(holderId, positionId)
         : assignUserPosition(holderId, positionId),
-    onSuccess: (_data, { positionId }) => {
-      toast.success(positionId ? t("Put on the position") : t("Taken off the position"));
+    onSuccess: () => {
       form.reset({ holderId: "" });
       invalidate();
     },

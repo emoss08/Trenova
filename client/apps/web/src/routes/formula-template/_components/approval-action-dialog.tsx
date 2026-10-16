@@ -176,9 +176,6 @@ export function ApprovalActionDialog({
       }
     },
     onSuccess: () => {
-      if (action === "requestChanges") {
-        toast.success(t("Changes requested; the author has been notified"));
-      }
       void invalidateFormulaTemplate(queryClient);
       onOpenChange(false);
     },

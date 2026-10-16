@@ -20,9 +20,7 @@ import { getTodayDate } from "@trenova/shared/lib/date";
 import { leaveDayFormSchema, type LeaveDayFormValues } from "@trenova/shared/types/worker-leave";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useLeaveInvalidation } from "./use-leave-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export type LeaveDayDialogProps = {
   open: boolean;
@@ -67,14 +65,7 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
         notes: values.notes ?? undefined,
       });
     },
-    onSuccess: (saved) => {
-      toast.success(t("Day recorded"), {
-        description: saved.countsAgainstEntitlement
-          ? translate("Drawn against the FMLA entitlement.")
-          : translate(
-              "Recorded, but not drawn against the entitlement — the case is not designated.",
-            ),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

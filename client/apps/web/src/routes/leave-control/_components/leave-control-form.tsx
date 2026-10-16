@@ -27,7 +27,6 @@ import {
 } from "@trenova/shared/types/worker-leave";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 const METHOD_OPTIONS = leaveMeasurementMethodSchema.options.map((value) => ({
   value,
@@ -70,11 +69,6 @@ export default function LeaveControlForm() {
         certificationDueDays: values.certificationDueDays,
       }),
     onSuccess: (_, values) => {
-      toast.success(t("Leave settings updated"), {
-        description: t(
-          "Every balance is derived on read, so the change applies to existing cases as well as new ones.",
-        ),
-      });
       reset(values);
       void queryClient.invalidateQueries({ queryKey: [LEAVE_CONTROL_KEY] });
       void queryClient.invalidateQueries({ queryKey: ["worker-leave"] });

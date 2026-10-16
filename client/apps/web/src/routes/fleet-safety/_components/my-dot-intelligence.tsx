@@ -25,7 +25,6 @@ import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Building07Icon, PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { MyDotSkeleton } from "./my-dot-skeleton";
 
 export const MY_DOT_PROFILE_SECTIONS = [
@@ -81,11 +80,6 @@ export function MyDotIntelligence() {
     mutationFn: () => fetchMyCarrierIntelligence(true),
     onSuccess: (result) => {
       queryClient.setQueryData([MY_CARRIER_INTELLIGENCE_KEY], result);
-      toast.success(t("DOT profile refreshed"), {
-        description: result.snapshot
-          ? t("Pulled from {0}.", carrierIntelProviderLabel(result.snapshot.provider))
-          : undefined,
-      });
     },
   });
 

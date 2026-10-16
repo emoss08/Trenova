@@ -66,7 +66,6 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
   const requested = useMutation({
     mutationFn: (id: string) => markEmploymentVerificationRequested(id),
     onSuccess: () => {
-      toast.success(t("Request recorded"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -74,13 +73,7 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
   });
   const followUp = useMutation({
     mutationFn: (id: string) => recordEmploymentVerificationFollowUp(id),
-    onSuccess: (updated) => {
-      toast.success(t("Follow-up recorded"), {
-        description: t(
-          "{0, plural, one {# chase} other {# chases}} on file as evidence of good-faith effort.",
-          updated.followUpCount,
-        ),
-      });
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>
@@ -89,7 +82,6 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
   const remove = useMutation({
     mutationFn: (id: string) => deleteEmploymentVerification(id),
     onSuccess: () => {
-      toast.success(t("Employer removed"));
       void invalidate();
     },
     onError: (error: Error) =>

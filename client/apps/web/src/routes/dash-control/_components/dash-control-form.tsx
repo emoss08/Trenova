@@ -22,7 +22,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 const CADENCE_OPTIONS = (["Immediate", "Daily", "Weekly"] as const).map((value) => ({
   value,
@@ -76,7 +75,6 @@ export default function DashControlForm() {
         driverDigestWeekday: Number(values.driverDigestWeekday),
       }),
     onSuccess: (_, values) => {
-      toast.success(t("Dash control updated — drivers see the change immediately"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["dash-control"] });
     },

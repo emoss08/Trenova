@@ -233,15 +233,12 @@ export function PTOReasonDialog({
                 skipped,
               },
         );
-      } else {
+      } else if (skipped > 0) {
         toast.success(mode === "reject" ? t("PTO rejected") : t("PTO cancelled"), {
-          description:
-            skipped > 0
-              ? t(
-                  "The worker has been notified. {0, plural, one {# ineligible skipped.} other {# ineligible skipped.}}",
-                  skipped,
-                )
-              : t("The worker has been notified."),
+          description: t(
+            "The worker has been notified. {0, plural, one {# ineligible skipped.} other {# ineligible skipped.}}",
+            skipped,
+          ),
         });
       }
       void invalidate();

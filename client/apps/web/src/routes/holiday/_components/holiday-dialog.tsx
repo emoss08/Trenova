@@ -28,7 +28,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = orgHolidayKindSchema.options.map((value) => ({
@@ -110,11 +109,6 @@ export function HolidayDialog({
       return entry ? updateOrgHoliday(entry.id, input) : createOrgHoliday(input);
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? t("{0} updated", saved.name) : t("{0} added", saved.name), {
-        description: saved.recursAnnually
-          ? t("Every {0}.", formatUtcDate(saved.holidayDate, { year: undefined }))
-          : formatUtcDate(saved.holidayDate, { weekday: "short" }),
-      });
       onSaved?.(saved);
       onOpenChange(false);
     },

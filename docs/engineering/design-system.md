@@ -518,7 +518,9 @@ Toast when:
   failed write; do not add a second error toast in `onError` for the same failure.
 - **Work finished out of sight**: a background job, a file ready to download, an email
   or EDI message a worker sent, a bulk action with skips or failures
-  (`lib/bulk-outcome.ts`), something sent to another person (an invitation, a reset link).
+  (`lib/bulk-outcome.ts`), or a send that is the whole action (an invitation, a reset
+  link, a statement emailed). A status change that also notifies someone is not a send:
+  "Approved; the worker has been notified" restates what the screen shows.
 - **The outcome carries the next step**: Undo, Download, Open, View report.
 - **The person asked a question the screen has no place to answer**: a connection test,
   a dry run.

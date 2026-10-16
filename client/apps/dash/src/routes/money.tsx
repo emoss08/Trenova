@@ -185,7 +185,6 @@ function DisputeItem({ dispute }: DisputeItemProps) {
     setPending(true);
     try {
       await withdrawSettlementDispute(dispute.id);
-      toast.success(t("Dispute withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-disputes"] });
     } catch (error) {
       toast.error(

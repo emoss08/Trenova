@@ -48,7 +48,6 @@ import {
 import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
 import { resolveWorkerPanelTab, type EmploymentView } from "./worker-panel-tabs";
 
@@ -200,9 +199,6 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
       return { previousRecord, newValues };
     },
     onSuccess: () => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Worker updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: ["worker-list"] });
 
       const action = pendingActionRef.current;

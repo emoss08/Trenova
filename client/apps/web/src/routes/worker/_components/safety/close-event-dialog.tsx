@@ -19,7 +19,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
 
 export type CloseEventDialogProps = {
@@ -60,9 +59,6 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
       });
     },
     onSuccess: () => {
-      toast.success(t("Safety event closed"), {
-        description: t("The resolution stays on the record and in the audit log."),
-      });
       void invalidate();
       onOpenChange(false);
     },

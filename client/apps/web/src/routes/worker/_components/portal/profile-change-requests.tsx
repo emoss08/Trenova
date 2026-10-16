@@ -38,8 +38,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 type FieldChange = ProfileChangeRequestRow["changes"][number];
 
@@ -213,12 +211,7 @@ function DecideDialog({
         approve: values.approve,
         note: values.note ?? undefined,
       }),
-    onSuccess: (_result, values) => {
-      toast.success(
-        values.approve
-          ? translate("Change applied to the record")
-          : translate("Request turned down"),
-      );
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [PROFILE_CHANGE_REQUESTS_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: ["worker"] });
       onOpenChange(false);

@@ -36,9 +36,7 @@ import {
 } from "@trenova/shared/types/worker-drug-alcohol";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTestingInvalidation } from "./use-testing-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const TYPE_OPTIONS = clearinghouseQueryTypeSchema.options.map((value) => ({
   value,
@@ -103,9 +101,6 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
         notes: values.notes ?? undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Query logged"), {
-        description: t("Record the answer here once the Clearinghouse responds."),
-      });
       void invalidate();
       onOpenChange(false);
     },
@@ -271,13 +266,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
         notes: values.notes ?? undefined,
       });
     },
-    onSuccess: (saved) => {
-      toast.success(t("Answer recorded"), {
-        description:
-          saved.result === "ViolationsFound" || saved.result === "ConsentDenied"
-            ? translate("The driver is prohibited from safety-sensitive duty.")
-            : translate("The twelve-month clock restarts from today."),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

@@ -505,9 +505,6 @@ function AmendSheet({
         version: event.version,
       }),
     onSuccess: (saved) => {
-      toast.success(t("Event amended"), {
-        description: t("The correction is kept alongside the original record."),
-      });
       void invalidate();
       onSaved?.(saved);
       onOpenChange(false);

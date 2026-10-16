@@ -79,24 +79,6 @@ export default function RandomTestingConsole() {
   const drawMutation = useMutation({
     mutationFn: (id: string) => runDotRandomDraw({ poolId: id }),
     onSuccess: (draw) => {
-      const short =
-        draw.drugSelected < draw.drugTarget || draw.alcoholSelected < draw.alcoholTarget;
-      toast.success(t("Drew {0}", draw.periodKey), {
-        description: short
-          ? t(
-              "The pool is smaller than the target: {0} of {1} drug and {2} of {3} alcohol.",
-              draw.drugSelected,
-              draw.drugTarget,
-              draw.alcoholSelected,
-              draw.alcoholTarget,
-            )
-          : t(
-              "{0} for drug testing and {1} for alcohol, from {2, plural, one {# driver} other {# drivers}}.",
-              draw.drugSelected,
-              draw.alcoholSelected,
-              draw.poolSize,
-            ),
-      });
       void invalidate();
       setOpenDrawId(draw.id);
     },
@@ -107,9 +89,6 @@ export default function RandomTestingConsole() {
   const finaliseMutation = useMutation({
     mutationFn: (id: string) => finalizeDotRandomDraw(id),
     onSuccess: () => {
-      toast.success(t("Round finalised"), {
-        description: t("The names are now the record. Correcting one means voiding the round."),
-      });
       setRoundAction(null);
       void invalidate();
     },
@@ -120,7 +99,6 @@ export default function RandomTestingConsole() {
   const voidMutation = useMutation({
     mutationFn: (id: string) => cancelDotRandomDraw(id, "Voided from the random testing console"),
     onSuccess: () => {
-      toast.success(t("Round voided"), { description: t("The period can be drawn again.") });
       setRoundAction(null);
       void invalidate();
     },

@@ -324,7 +324,6 @@ function EndAssignmentDialog({
   const mutation = useMutation({
     mutationFn: () => endWorkerPayAssignment({ assignmentId, endDate: getTodayDate() }),
     onSuccess: () => {
-      toast.success(t("Pay assignment ended"));
       onOpenChange(false);
       onEnded();
     },

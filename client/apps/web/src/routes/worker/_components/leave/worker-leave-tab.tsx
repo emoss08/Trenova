@@ -66,20 +66,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       approve: boolean;
       designate: boolean;
     }) => decideLeaveCase({ caseId, approve, designate }),
-    onSuccess: (saved) => {
-      const title =
-        saved.status === "Approved"
-          ? t("Leave case approved")
-          : saved.status === "Denied"
-            ? t("Leave case denied")
-            : saved.status === "Closed"
-              ? t("Leave case closed")
-              : t("Leave case awaiting a decision");
-      toast.success(title, {
-        description: saved.fmlaDesignated
-          ? t("Designated as FMLA, so days recorded against it draw the entitlement down.")
-          : t("Not designated as FMLA, so days recorded against it draw nothing down."),
-      });
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>
@@ -89,9 +76,6 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
   const close = useMutation({
     mutationFn: (id: string) => closeLeaveCase(id),
     onSuccess: () => {
-      toast.success(t("Leave case closed"), {
-        description: t("The days recorded against it stay drawn down; they were taken."),
-      });
       void invalidate();
     },
     onError: (error: Error) =>
@@ -100,12 +84,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
 
   const requestCert = useMutation({
     mutationFn: (id: string) => requestLeaveCertification(id),
-    onSuccess: (saved) => {
-      toast.success(t("Certification requested"), {
-        description: saved.certificationDueAt
-          ? t("Due {0}.", formatUnixDate(saved.certificationDueAt))
-          : undefined,
-      });
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>
@@ -115,7 +94,6 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
   const receiveCert = useMutation({
     mutationFn: (id: string) => recordLeaveCertification({ caseId: id, status: "Received" }),
     onSuccess: () => {
-      toast.success(t("Certification received"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -125,7 +103,6 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
   const removeDay = useMutation({
     mutationFn: (id: string) => deleteLeaveDay(id),
     onSuccess: () => {
-      toast.success(t("Day removed"), { description: t("The hours go back to the entitlement.") });
       void invalidate();
     },
     onError: (error: Error) =>

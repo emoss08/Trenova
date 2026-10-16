@@ -117,7 +117,7 @@ describe("HolidayCalendar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove Peak freeze" }));
     fireEvent.click(await screen.findByRole("button", { name: "Remove" }));
     await waitFor(() => expect(deleteOrgHoliday).toHaveBeenCalledWith("ohol_2"));
-    expect(toast.success).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   // While a year is read the months are drawn as their outline, under the

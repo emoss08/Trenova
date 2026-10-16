@@ -62,7 +62,6 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
   const { mutateAsync: approvePTO, isPending: approving } = useMutation({
     mutationFn: () => approveWorkerPTO(pto.id ?? ""),
     onSuccess: () => {
-      toast.success(t("PTO approved"), { description: t("The worker has been notified.") });
       setApproveDialogOpen(false);
       void invalidate();
     },

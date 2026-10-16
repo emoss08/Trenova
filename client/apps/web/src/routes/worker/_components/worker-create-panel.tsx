@@ -19,7 +19,6 @@ import {
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
 
 const GENERAL_FIELDS = [
@@ -107,7 +106,6 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
       return await apiService.workerService.create(values);
     },
     onSuccess: () => {
-      toast.success(t("Worker created successfully"));
       void queryClient.invalidateQueries({ queryKey: ["worker-list"] });
       reset();
       onOpenChange(false);

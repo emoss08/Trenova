@@ -21,7 +21,6 @@ import { toast } from "sonner";
 import { ReviewCard, type ReviewPermissions } from "./reviews/review-card";
 import { ReviewEditorDialog } from "./reviews/review-editor-dialog";
 import { useReviewInvalidation } from "./reviews/use-review-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
   const t = useT();
@@ -55,9 +54,6 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
     mutationFn: (review: PerformanceReviewRow) =>
       submitPerformanceReview({ id: review.id, version: review.version }),
     onSuccess: () => {
-      toast.success(t("Review submitted"), {
-        description: t("The worker has been asked to read it and sign off in Dash."),
-      });
       void invalidate();
     },
     onError: (error: Error) =>
@@ -67,7 +63,6 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
     mutationFn: (review: PerformanceReviewRow) =>
       reopenPerformanceReview({ id: review.id, version: review.version }),
     onSuccess: () => {
-      toast.success(t("Review reopened as a draft"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -76,12 +71,7 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
   const close = useMutation({
     mutationFn: (review: PerformanceReviewRow) =>
       closePerformanceReview({ id: review.id, version: review.version }),
-    onSuccess: (review) => {
-      toast.success(t("Review closed"), {
-        description: review.nextReviewAt
-          ? translate("The next review is scheduled from the template cadence.")
-          : translate("Filed on the worker's record."),
-      });
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>
@@ -90,7 +80,6 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
   const remove = useMutation({
     mutationFn: (review: PerformanceReviewRow) => deletePerformanceReview(review.id),
     onSuccess: () => {
-      toast.success(t("Draft deleted"));
       void invalidate();
     },
     onError: (error: Error) =>

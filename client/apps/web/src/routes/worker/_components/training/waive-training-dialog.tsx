@@ -19,7 +19,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTrainingInvalidation } from "./use-training-invalidation";
 
 export type WaiveTrainingDialogProps = {
@@ -60,10 +59,7 @@ export function WaiveTrainingDialog({
       if (!record) throw new Error("Nothing to waive");
       return waiveWorkerTraining({ id: record.id, reason: values.reason, version: record.version });
     },
-    onSuccess: (saved) => {
-      toast.success(saved.course?.name ? t("{0} waived", saved.course.name) : t("Course waived"), {
-        description: t("It counts as satisfied; the reason stays on the record."),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

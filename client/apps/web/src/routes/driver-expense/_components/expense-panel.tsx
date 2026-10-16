@@ -168,11 +168,6 @@ function ReviewForm({
         note: note.trim() || undefined,
       }),
     onSuccess: async () => {
-      toast.success(
-        approve
-          ? translate("Expense approved — reimbursement applied")
-          : translate("Expense rejected"),
-      );
       await onDone();
       onClose();
     },

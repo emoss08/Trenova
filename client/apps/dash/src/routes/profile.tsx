@@ -175,14 +175,7 @@ function PushNotificationsCard() {
       }
       return enable;
     },
-    onSuccess: async (enabled) => {
-      toast.success(
-        enabled
-          ? translate(
-              "Push notifications are on — you'll hear about loads and pay even with Dash closed.",
-            )
-          : translate("Push notifications turned off."),
-      );
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["dash-push-subscription"] });
     },
     onError: (error: Error) =>

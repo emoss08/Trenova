@@ -154,14 +154,7 @@ export function TimesheetQueue({ now }: { now: number }) {
   const { mutate: decide, isPending } = useMutation({
     mutationFn: (input: { id: string; status: "Submitted" | "Approved" | "Rejected" }) =>
       transitionTimesheet(input),
-    onSuccess: (_data, input) => {
-      toast.success(
-        input.status === "Approved"
-          ? translate("Week approved")
-          : input.status === "Rejected"
-            ? translate("Week sent back")
-            : translate("Week handed over"),
-      );
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEET_KEY] });
     },

@@ -12,7 +12,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import {
   DATA_RETENTION_FORM_DEFAULTS,
   dataRetentionFormSchema,
@@ -49,7 +48,6 @@ export function DataRetentionPage() {
     form,
     resourceName: "Data Retention",
     onSuccess: async () => {
-      toast.success(t("Data retention settings saved"));
       await queryClient.invalidateQueries({ queryKey: ["data-retention"] });
     },
   });

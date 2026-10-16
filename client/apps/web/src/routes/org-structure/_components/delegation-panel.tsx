@@ -65,9 +65,6 @@ export function DelegationPanel() {
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeApprovalDelegation(id),
     onSuccess: () => {
-      toast.success(t("Delegation called back"), {
-        description: t("It is kept on the list so approvals made under it can still be explained."),
-      });
       void queryClient.invalidateQueries({ queryKey: [APPROVAL_DELEGATIONS_KEY] });
     },
     onError: (error: Error) =>

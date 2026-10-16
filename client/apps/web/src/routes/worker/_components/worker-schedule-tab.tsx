@@ -93,7 +93,6 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
   const { mutate: endAssignment, isPending: endingAssignment } = useMutation({
     mutationFn: (id: string) => endWorkerShiftAssignment(id, getTodayDate()),
     onSuccess: () => {
-      toast.success(t("Assignment ended"));
       invalidate();
     },
     onError: (error: Error) => toast.error(error.message),

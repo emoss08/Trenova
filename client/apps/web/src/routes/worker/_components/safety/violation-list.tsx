@@ -45,7 +45,6 @@ export function ViolationList({
   const removeMutation = useMutation({
     mutationFn: (id: string) => deleteSafetyViolation(id),
     onSuccess: () => {
-      toast.success(t("Violation removed"));
       void queryClient.invalidateQueries({ queryKey: [SAFETY_VIOLATIONS_KEY, safetyEventId] });
       void queryClient.invalidateQueries({ queryKey: ["fleet-safety"] });
     },

@@ -17,14 +17,12 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { dotViolationStatusLabel } from "@trenova/shared/lib/drug-alcohol";
 import {
   violationProgressFormSchema,
   type ViolationProgressFormValues,
 } from "@trenova/shared/types/worker-drug-alcohol";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTestingInvalidation } from "./use-testing-invalidation";
 
 export type ViolationProgressDialogProps = {
@@ -87,10 +85,7 @@ export function ViolationProgressDialog({
         notes: values.notes ?? undefined,
       });
     },
-    onSuccess: (saved) => {
-      toast.success(t("Return-to-duty record updated"), {
-        description: t("Now at: {0}.", t(dotViolationStatusLabel(saved.status))),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

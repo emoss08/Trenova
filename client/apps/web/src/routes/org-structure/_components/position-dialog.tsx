@@ -30,8 +30,6 @@ import {
 } from "@trenova/shared/types/org-structure";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const DEPARTMENT_OPTIONS = JOB_DEPARTMENT_ORDER.map((value) => ({
   value,
@@ -137,7 +135,6 @@ export function PositionDialog({
         : createJobPosition(shared);
     },
     onSuccess: () => {
-      toast.success(isEdit ? translate("Position updated") : translate("Position added"));
       void queryClient.invalidateQueries({ queryKey: [JOB_POSITIONS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [HEADCOUNT_KEY] });
       onOpenChange(false);
