@@ -312,11 +312,11 @@ replace github.com/emoss08/trenova/shared => ../../shared
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241118233622-e639e219e697
 
 replace (
-	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016003150-aa362ff3c06d
-	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016003150-aa362ff3c06d
-	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016003150-aa362ff3c06d
-	github.com/uptrace/bun/extra/bundebug => github.com/emoss08/bun/extra/bundebug v0.0.0-20261016003150-aa362ff3c06d
-	github.com/uptrace/bun/extra/bunotel => github.com/emoss08/bun/extra/bunotel v0.0.0-20261016003150-aa362ff3c06d
+	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8
+	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8
+	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8
+	github.com/uptrace/bun/extra/bundebug => github.com/emoss08/bun/extra/bundebug v0.0.0-20261016005222-2580fd217ad8
+	github.com/uptrace/bun/extra/bunotel => github.com/emoss08/bun/extra/bunotel v0.0.0-20261016005222-2580fd217ad8
 )
 
 tool (
