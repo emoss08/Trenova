@@ -20,7 +20,9 @@ vi.mock("@/services/api", () => ({
     invoiceRunService: { getStatement: mocks.getStatement },
   },
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
   return { ...actual, api: { ...actual.api, download: mocks.download } };

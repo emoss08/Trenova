@@ -38,7 +38,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 interface SectionDraft {
   key: string;

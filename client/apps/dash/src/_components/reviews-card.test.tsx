@@ -14,7 +14,7 @@ vi.mock("@trenova/shared/lib/graphql/driver-portal", () => ({
   acknowledgeMyReview,
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 function review(id: string, overrides: Record<string, unknown> = {}) {
   return {

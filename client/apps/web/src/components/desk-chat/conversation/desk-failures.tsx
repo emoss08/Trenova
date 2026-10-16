@@ -1,6 +1,6 @@
 import type { FailedProvider } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskBrandMark, VENDOR_NAMES } from "../composer/desk-brand-mark";
 import { DeskErrorButton, DeskErrorCard } from "../desk-error-card";
 import { DeskIcon } from "../desk-icons";

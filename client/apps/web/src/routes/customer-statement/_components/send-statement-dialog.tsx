@@ -16,7 +16,7 @@ import { apiService } from "@/services/api";
 import type { StatementRange } from "@/types/customer-statement";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const MAX_NOTE = 2000;
 

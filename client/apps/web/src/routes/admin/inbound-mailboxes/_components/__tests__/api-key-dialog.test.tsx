@@ -13,7 +13,9 @@ vi.mock("@/lib/graphql/inbox", () => ({
   setInboundMailboxApiKey: mocks.setInboundMailboxApiKey,
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 function mailbox(id: string, name: string): InboundMailbox {
   return {

@@ -11,7 +11,9 @@ const mocks = vi.hoisted(() => ({
   fetchCarrierSettlementControl: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
+}));
 vi.mock("./link-carrier-dialog", () => ({ LinkCarrierDialog: () => null }));
 vi.mock("@/lib/graphql/carrier-settlement", () => ({
   fetchEdiCarrierInvoices: mocks.fetchEdiCarrierInvoices,

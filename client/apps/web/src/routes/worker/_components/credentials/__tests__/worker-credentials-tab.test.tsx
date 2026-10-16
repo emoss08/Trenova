@@ -48,7 +48,7 @@ vi.mock("../credential-form-dialog", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 

@@ -33,7 +33,9 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 function definition(name: string, overrides: Record<string, unknown> = {}) {
   return {

@@ -30,7 +30,7 @@ import {
   PlayIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { PayrollRunsEmpty } from "./time-attendance-empty";
 import { VoidExportDialog } from "./void-export-dialog";
 

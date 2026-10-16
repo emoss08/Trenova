@@ -33,7 +33,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
 import { CalendarClockIcon, PlusIcon, Repeat01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AssignShiftDialog } from "./scheduling/assign-shift-dialog";
 
 type PreferenceChoice = AvailabilityPreferenceValue | "None";

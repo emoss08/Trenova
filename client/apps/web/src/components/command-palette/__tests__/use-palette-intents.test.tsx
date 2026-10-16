@@ -15,7 +15,9 @@ const { copy, toastSuccess, toastError, signOut, navigate } = vi.hoisted(() => (
   navigate: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: toastSuccess, error: toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: toastSuccess, error: toastError },
+}));
 vi.mock("@/hooks/use-copy-to-clipboard", () => ({
   useCopyToClipboard: () => ({ copy, text: null, isCopied: false }),
 }));

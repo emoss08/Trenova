@@ -15,7 +15,9 @@ vi.mock("@/lib/graphql/carrier-intelligence", async (importOriginal) => ({
   acknowledgeCarrierIntelEvents: mocks.acknowledge,
 }));
 
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: vi.fn() },
+}));
 
 afterEach(() => {
   vi.clearAllMocks();

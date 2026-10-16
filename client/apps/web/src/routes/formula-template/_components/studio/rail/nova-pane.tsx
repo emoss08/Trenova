@@ -13,7 +13,7 @@ import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-te
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { applyProposal, formulaDraftFromEditor, type ProposalTarget } from "../ai/formula-draft";
 import { ProposalCard, proposalTargetOf, type ProposalState } from "../ai/proposal-card";
 import { useStudio } from "../studio-context";

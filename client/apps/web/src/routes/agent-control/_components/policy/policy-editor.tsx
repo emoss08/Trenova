@@ -14,7 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { Controller, useForm, useWatch, type Control } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { personAllowanceOptions, promotionThresholdOptions } from "../agent-control-options";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";

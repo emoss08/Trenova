@@ -31,7 +31,7 @@ import {
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   OffCycleInvoiceDialog,
   offCycleWarningFrom,

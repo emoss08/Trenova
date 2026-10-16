@@ -29,7 +29,7 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const MetadataTab = lazy(() => import("./tabs/metadata-tab"));
 const VersionsTab = lazy(() => import("./tabs/versions-tab"));

@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useFormState } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { FormulaStudio, type StudioSaveExtras } from "../_components/studio/formula-studio";
 
 export const prefetch: RoutePrefetch = () => [formulaTemplate.schema("shipment")];

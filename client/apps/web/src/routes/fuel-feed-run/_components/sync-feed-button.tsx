@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Reads a connected feed now instead of waiting for the hourly schedule. Useful

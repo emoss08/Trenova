@@ -17,7 +17,9 @@ vi.mock("@/lib/graphql/invoice", () => ({
   unapplyCreditMemoApplication: mocks.unapply,
   applyCreditMemo: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));

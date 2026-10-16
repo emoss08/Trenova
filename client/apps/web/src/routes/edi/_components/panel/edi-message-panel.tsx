@@ -17,7 +17,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMessageDeliveryStatus } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { invalidateEDIMessages } from "./edi-panel-invalidation";
 import { DetailField, DetailSection, EDIPartnerRef, EDIRawContent } from "./edi-panel-primitives";
 

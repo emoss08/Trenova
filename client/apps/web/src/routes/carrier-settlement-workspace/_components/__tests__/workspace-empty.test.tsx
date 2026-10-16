@@ -23,7 +23,9 @@ vi.mock("@/lib/graphql/carrier-settlement", () => ({
   markCarrierSettlementPaid: vi.fn(),
   voidCarrierSettlement: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
+}));
 vi.mock("@/routes/carrier-settlement/_components/settlement-detail", () => ({
   CarrierSettlementDetail: () => <div data-testid="settlement-detail" />,
 }));

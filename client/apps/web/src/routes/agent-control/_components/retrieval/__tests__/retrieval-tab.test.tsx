@@ -6,7 +6,9 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RetrievalTab from "../retrieval-tab";
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 const permissions = vi.hoisted(() => ({ allowed: true }));
 vi.mock("@/hooks/use-permission", () => ({

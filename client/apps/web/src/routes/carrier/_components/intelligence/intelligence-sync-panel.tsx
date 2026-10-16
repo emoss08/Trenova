@@ -19,7 +19,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type IntelligenceSyncPanelProps = {
   carrierId: string;

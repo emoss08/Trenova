@@ -2,7 +2,7 @@ import type { ApiRequestError } from "@trenova/shared/lib/api";
 import type { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { handleMutationError, type MutationFormTarget } from "./use-api-mutation";
 
 type MutationError = ApiRequestError | GraphQLRequestError;

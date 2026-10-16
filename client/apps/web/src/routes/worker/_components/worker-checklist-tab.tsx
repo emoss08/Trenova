@@ -38,7 +38,7 @@ import {
   PlayIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ChecklistCard } from "./checklist/checklist-card";
 import {
   buildEmploymentCycles,

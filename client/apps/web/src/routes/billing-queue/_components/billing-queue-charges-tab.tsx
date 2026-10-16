@@ -54,7 +54,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueChargeDialog, type ChargeDialogResult } from "./billing-queue-charge-dialog";
 import { BillingQueueReassignChargeDialog } from "./billing-queue-reassign-charge-dialog";
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";

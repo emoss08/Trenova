@@ -48,7 +48,10 @@ func TestAPerMileCeilingIsSpreadOverTheDistance(t *testing.T) {
 	require.True(t, ceiling.Valid)
 	assert.Equal(t, "3.6", ceiling.Decimal.String())
 
-	assert.False(t, tender.RateCeiling(decimal.NewFromInt(2000), decimal.NewFromInt(10), true, nil).Valid)
+	assert.False(
+		t,
+		tender.RateCeiling(decimal.NewFromInt(2000), decimal.NewFromInt(10), true, nil).Valid,
+	)
 }
 
 func TestEscalationGoesBackToEveryCarrierButABouncer(t *testing.T) {

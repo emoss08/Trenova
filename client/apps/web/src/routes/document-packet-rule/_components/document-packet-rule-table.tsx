@@ -23,7 +23,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./document-packet-rule-columns";
 import { DocumentPacketRulePanel } from "./document-packet-rule-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

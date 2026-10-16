@@ -40,7 +40,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { useEffect, useRef, useState } from "react";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 
 /** Scheduled exports run at seven in the morning, in the scheduler's time zone. */

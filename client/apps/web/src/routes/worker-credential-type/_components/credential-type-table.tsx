@@ -15,7 +15,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./credential-type-columns";
 import { CredentialTypePanel } from "./credential-type-panel";
 

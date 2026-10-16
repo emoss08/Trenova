@@ -10,7 +10,7 @@ vi.mock("@trenova/shared/lib/api", () => ({
 
 const toastError = vi.hoisted(() => vi.fn());
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: toastError },
 }));
 

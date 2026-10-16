@@ -20,7 +20,7 @@ import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-te
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { ApprovalAction } from "../approval-action-dialog";
 import "./formula-studio.css";
 import { RateTrace } from "./rate-trace";

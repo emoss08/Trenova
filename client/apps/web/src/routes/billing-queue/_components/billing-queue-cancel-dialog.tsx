@@ -14,7 +14,7 @@ import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outco
 import type { BillingQueueTarget } from "./billing-queue-assign-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function BillingQueueCancelDialog({
   open,

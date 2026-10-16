@@ -23,7 +23,7 @@ vi.mock("@/lib/graphql/factoring", async (importOriginal) => ({
   fetchFactoringSubmissionPlan: mocks.fetchFactoringSubmissionPlan,
   submitInvoicesToFactor: mocks.submitInvoicesToFactor,
 }));
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError, info: vi.fn() },
 }));
 

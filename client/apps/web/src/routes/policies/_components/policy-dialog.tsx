@@ -43,7 +43,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 type Source = "text" | "document";

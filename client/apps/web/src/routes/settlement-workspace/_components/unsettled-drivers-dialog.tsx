@@ -25,7 +25,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PauseCircleIcon, ZapIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { InstantPayDialog } from "./instant-pay-dialog";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 

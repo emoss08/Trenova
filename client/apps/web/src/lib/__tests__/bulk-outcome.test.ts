@@ -8,7 +8,7 @@ const { success, warning, error } = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success, warning, error },
 }));
 

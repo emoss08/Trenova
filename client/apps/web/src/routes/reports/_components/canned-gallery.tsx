@@ -10,7 +10,7 @@ import { parseReportIR, type ReportParameterDef } from "@/types/report";
 import { PlayIcon, RulerIcon, TableIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   compareReportsBySort,
   groupByReportCategory,

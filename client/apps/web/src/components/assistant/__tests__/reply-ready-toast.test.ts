@@ -26,7 +26,7 @@ const toastMock = vi.hoisted(() => {
   });
 });
 
-vi.mock("sonner", () => ({ toast: toastMock }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: toastMock }));
 
 const markRead = vi.hoisted(() => vi.fn(async (_ids: string[]) => undefined));
 const getThread = vi.hoisted(() => vi.fn<(id: string) => Promise<AssistantThread>>());

@@ -28,7 +28,9 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
   fetchAccountingSyncStatus: mocks.fetchAccountingSyncStatus,
 }));
 
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: vi.fn() },
+}));
 
 const QUICKBOOKS_CALLBACK = "/admin/integrations/quickbooks/callback";
 const XERO_CALLBACK = "/admin/integrations/xero/callback";

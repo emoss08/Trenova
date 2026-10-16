@@ -38,7 +38,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { JsonEditor } from "./json-editor";
 import { MatchConfigEditor } from "./match-config-editor";
 import { RuleBuilder } from "./rule-builder";

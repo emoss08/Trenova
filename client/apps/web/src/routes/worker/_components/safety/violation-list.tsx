@@ -13,7 +13,7 @@ import { csaBasicLabel } from "@trenova/shared/lib/csa";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ViolationDialog } from "./violation-dialog";
 
 /**

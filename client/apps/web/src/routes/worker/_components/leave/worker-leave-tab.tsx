@@ -31,7 +31,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { LeaveCaseDialog } from "./leave-case-dialog";
 import { LeaveDayDialog } from "./leave-day-dialog";
 import { useLeaveInvalidation } from "./use-leave-invalidation";

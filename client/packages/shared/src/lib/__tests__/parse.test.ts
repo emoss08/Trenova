@@ -3,7 +3,9 @@ import { z } from "zod";
 import { safeParse } from "@trenova/shared/lib/parse";
 
 const toastError = vi.hoisted(() => vi.fn());
-vi.mock("sonner", () => ({ toast: { error: toastError, success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: toastError, success: vi.fn() },
+}));
 
 const schema = z.object({ id: z.string(), count: z.number() });
 

@@ -59,7 +59,7 @@ import {
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useController, useForm, useWatch, type Control } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 type ScheduleFormValues = {

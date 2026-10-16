@@ -22,7 +22,7 @@ vi.mock("@/lib/graphql/factoring", async (importOriginal) => ({
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError, info: vi.fn() },
 }));
 

@@ -11,7 +11,7 @@ import type {
 } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { ComposerPayload } from "./composer-types";
 import { turnFailureDetail } from "./follow-turn";
 

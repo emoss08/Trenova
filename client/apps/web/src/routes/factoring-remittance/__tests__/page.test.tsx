@@ -59,7 +59,7 @@ vi.mock("@/components/navigation/sidebar-layout", () => ({
     </main>
   ),
 }));
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError, info: vi.fn() },
 }));
 

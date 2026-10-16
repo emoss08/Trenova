@@ -52,7 +52,7 @@ vi.mock("@/hooks/use-permission", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 

@@ -6,7 +6,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantLiveTurnList, AssistantThread } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { isViewingThread, type ReplyReady, type ViewingState } from "./reply-ready";
 
 export type AnnounceReplyReadyOptions = {

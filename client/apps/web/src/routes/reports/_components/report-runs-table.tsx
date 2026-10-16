@@ -13,7 +13,7 @@ import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Download01Icon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getReportRunColumns } from "./report-run-columns";
 
 function isDownloadable(run: ReportRun): boolean {

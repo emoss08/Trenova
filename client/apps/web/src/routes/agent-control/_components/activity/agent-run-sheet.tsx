@@ -8,7 +8,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDurationFromSeconds, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Callout } from "../edit/callout";
 import { Ic } from "../kit/ic";

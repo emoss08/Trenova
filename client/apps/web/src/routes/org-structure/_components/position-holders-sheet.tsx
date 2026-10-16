@@ -31,7 +31,7 @@ import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { workerRecordHref } from "@/lib/route-utils";
 
 type PickerValues = { holderId: string };

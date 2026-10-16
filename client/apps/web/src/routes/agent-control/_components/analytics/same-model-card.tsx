@@ -7,7 +7,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { memo, type CSSProperties } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Ic } from "../kit/ic";
 import { Mark } from "../kit/marks";
 import { BOLD, display, moveAhead, type SameModelPair, type SeriesColors } from "./analytics-model";

@@ -18,7 +18,7 @@ import {
   ShippingContainerIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { COMMODITY_PALETTE } from "./constants";
 import { LinearFeetBar } from "./linear-feet-bar";
 import { LoadingRecommendations } from "./loading-recommendations";

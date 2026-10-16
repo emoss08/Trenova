@@ -20,7 +20,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./escrow-columns";
 import { EscrowPanel } from "./escrow-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

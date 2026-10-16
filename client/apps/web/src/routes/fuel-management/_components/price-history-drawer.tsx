@@ -20,7 +20,7 @@ import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 function mostRecentMonday(): string {
   const now = new Date();

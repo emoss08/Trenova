@@ -23,7 +23,7 @@ vi.mock("@/lib/graphql/factoring", async (importOriginal) => ({
   requestMissingFactoringDocuments: mocks.requestMissingFactoringDocuments,
   listFactoringReserveEntries: mocks.listFactoringReserveEntries,
 }));
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError, info: vi.fn() },
 }));
 vi.mock("@/hooks/use-permission", () => ({

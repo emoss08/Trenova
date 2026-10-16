@@ -13,7 +13,7 @@ import { nanoid } from "nanoid";
 import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { importAssistantConversationKey } from "./import-draft";
 import { ProcessingPhase } from "./processing-phase";
 import { ReconciliationWorkspaceSkeleton } from "./reconciliation-workspace-skeleton";

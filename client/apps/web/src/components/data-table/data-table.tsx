@@ -105,7 +105,7 @@ import { useDataTableCellWrites } from "@/hooks/data-table/use-data-table-cell-w
 import { RecordPresence } from "@/components/presence/data-table-viewers";
 import { parseAsInteger, useQueryStates } from "nuqs";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableChangesBanner } from "./data-table-changes-banner";

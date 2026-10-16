@@ -24,7 +24,7 @@ vi.mock("@trenova/shared/lib/graphql/driver-portal", () => ({
   acknowledgeMyDisciplinaryAction,
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 const scorecard = {
   workerId: "wrk_1",

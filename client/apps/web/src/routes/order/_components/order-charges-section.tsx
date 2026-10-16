@@ -27,7 +27,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AddChargeDialog } from "./add-charge-dialog";
 import { useOrderInvalidation } from "./use-order-invalidation";
 

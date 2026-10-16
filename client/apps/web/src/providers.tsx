@@ -158,12 +158,12 @@ export function Providers({ children }: { children: ReactNode }) {
           <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
             <MotionPreferenceProvider>
               <LocalizedApp>{children}</LocalizedApp>
+              <Toaster position="top-right" />
             </MotionPreferenceProvider>
             {/*<ReactQueryDevtools
               buttonPosition="bottom-left"
               initialIsOpen={false}
             />*/}
-            <Toaster position="top-right" />
           </ThemeProvider>
         </NuqsAdapter>
       </AppQueryProvider>

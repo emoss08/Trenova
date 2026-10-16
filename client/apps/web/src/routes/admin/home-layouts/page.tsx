@@ -28,7 +28,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useRoleOptions } from "./_components/use-role-options";
 import { useRichT } from "@trenova/shared/i18n/rich";
 

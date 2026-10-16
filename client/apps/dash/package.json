@@ -19,7 +19,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:",
-    "sonner": "catalog:",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

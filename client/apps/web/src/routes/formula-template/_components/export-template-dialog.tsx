@@ -18,7 +18,7 @@ import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { Download01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 type ExportTemplateDialogProps = {
   open: boolean;

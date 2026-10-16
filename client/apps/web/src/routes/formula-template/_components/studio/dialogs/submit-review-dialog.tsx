@@ -21,7 +21,7 @@ import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { CheckIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ReadinessPanel } from "../../readiness-panel";
 import { NovaButton } from "../ai/nova-button";
 import { ImpactSummary } from "./impact-summary";

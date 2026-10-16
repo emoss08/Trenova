@@ -10,7 +10,7 @@ import type { Notification } from "@trenova/shared/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckDoubleIcon, CheckIcon, Inbox01Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { NotificationListSkeleton } from "./notification-list-skeleton";
 
 function NotificationRow({

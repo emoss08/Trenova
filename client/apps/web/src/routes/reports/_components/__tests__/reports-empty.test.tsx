@@ -35,7 +35,9 @@ vi.mock("@/hooks/use-permission", () => ({
 vi.mock("../use-create-dashboard-action", () => ({
   useCreateDashboardAction: () => ({ create: mocks.createDashboard, isPending: false }),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 function renderWithin(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -16,7 +16,7 @@ import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-o
 import { useMutation } from "@tanstack/react-query";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useOrderInvalidation } from "./use-order-invalidation";
 
 type AddLegDialogProps = {

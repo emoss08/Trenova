@@ -7,7 +7,7 @@ import { realtimeClient } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { invoiceDeliveryOutcome, type InvoiceDeliveryState } from "@/lib/invoice-delivery-realtime";
 
 type DeliveryInvoice = Pick<Invoice, "id" | "sendStatus" | "pdfDocumentId">;

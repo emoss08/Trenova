@@ -32,7 +32,7 @@ import {
   XCircleIcon,
 } from "@trenova/shared/components/icons";
 import { type ReactNode, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   ServiceFailureStopContext,
   serviceFailureStopSummaryFromEvaluation,

@@ -8,7 +8,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { memo, useState, type CSSProperties } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Ic } from "../kit/ic";
 import { ConfirmDialog } from "../kit/modal";
 import { completionIntensity, percent, type SeriesColors } from "./analytics-model";

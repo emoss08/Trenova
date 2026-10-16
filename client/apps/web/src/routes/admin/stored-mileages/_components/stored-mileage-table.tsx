@@ -21,7 +21,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./stored-mileage-columns";
 import { translate } from "@trenova/shared/i18n/runtime";
 

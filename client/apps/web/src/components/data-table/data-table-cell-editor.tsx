@@ -15,7 +15,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Cell, FilterVariant } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { useCallback, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { columnHeaderLabel } from "@/lib/data-table";
 

@@ -29,7 +29,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useOrderInvalidation } from "./use-order-invalidation";
 import { translate } from "@trenova/shared/i18n/runtime";
 

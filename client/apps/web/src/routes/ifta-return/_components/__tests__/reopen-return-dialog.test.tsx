@@ -17,7 +17,7 @@ vi.mock("@/lib/graphql/ifta-return", () => ({
   reopenIftaReturn,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: toastSuccess, error: vi.fn(), warning: vi.fn(), info: vi.fn() },
 }));
 

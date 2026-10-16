@@ -25,7 +25,7 @@ import { downloadTextFile } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   AccountingCompanyChoice,
   type AccountingCompanyChoiceOffer,

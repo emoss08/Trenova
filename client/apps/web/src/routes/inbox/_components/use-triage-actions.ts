@@ -85,7 +85,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { createContext, useContext, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { classificationLabel } from "./classification";
 import { nextAfterLeaving } from "./keys";
 import { tomorrowMorning } from "./snooze-times";

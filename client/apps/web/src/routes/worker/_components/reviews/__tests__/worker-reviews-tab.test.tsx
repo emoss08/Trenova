@@ -26,7 +26,7 @@ vi.mock("@/lib/graphql/performance-review", () => ({
   REVIEW_TEMPLATES_KEY: "review-templates",
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

@@ -12,7 +12,7 @@ import {
 } from "@/lib/edi/document-source";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
 import { PreviewPane, parsePayload } from "./designer-shared";
 import type { SelectOption } from "@/lib/graphql/select-options";

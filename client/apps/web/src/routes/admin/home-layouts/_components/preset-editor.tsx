@@ -25,7 +25,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { EyeIcon, EyeOffIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { HomeCanvas } from "@/routes/home/_components/home-canvas";
 import { useHomeData } from "@/routes/home/_components/use-home-data";
 import { ConfigNumberField } from "@/routes/home/_components/widget-config-dialog";

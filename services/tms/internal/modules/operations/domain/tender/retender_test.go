@@ -135,8 +135,15 @@ func TestASecondBounceNeitherRepeatsReoffersNorReturnsToABouncer(t *testing.T) {
 	)
 	firstB := entity.Offers[1].ID
 	firstC := entity.Offers[2].ID
-	second, _ := buildTender(tender.StatusAccepted,
-		offerSpec{carrier: "x", rank: 2, status: tender.OfferStatusAccepted, sent: true, from: &firstB},
+	second, _ := buildTender(
+		tender.StatusAccepted,
+		offerSpec{
+			carrier: "x",
+			rank:    2,
+			status:  tender.OfferStatusAccepted,
+			sent:    true,
+			from:    &firstB,
+		},
 		offerSpec{carrier: "y", rank: 3, status: tender.OfferStatusSkipped, from: &firstC},
 	)
 	second.Offers[0].CarrierID = carriers["b"]

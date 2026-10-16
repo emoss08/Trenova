@@ -27,7 +27,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { invalidateStatements, statementDetailQuery } from "../../statement-queries";
 import { BillStatementDialog } from "./bill-statement-dialog";
 import { StatementDetailSkeleton, StatementDetailUnselected } from "./statement-detail-skeleton";

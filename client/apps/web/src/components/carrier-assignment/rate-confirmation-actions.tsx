@@ -28,7 +28,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export function rateConfirmationQueryKey(moveId: string) {

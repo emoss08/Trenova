@@ -22,7 +22,7 @@ import { entryTally } from "@/lib/random-testing";
 import { randomEntryStatusLabel } from "@trenova/shared/lib/drug-alcohol";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type DrawDetailSheetProps = {
   drawId: string | null;

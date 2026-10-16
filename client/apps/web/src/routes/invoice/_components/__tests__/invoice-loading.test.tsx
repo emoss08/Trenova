@@ -12,7 +12,9 @@ vi.mock("@/hooks/use-post-invoice", () => ({
   usePostInvoice: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/services/api", () => ({ apiService: { invoiceService: { getById: mocks.getById } } }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("@/components/audit-tab", () => ({ default: () => null }));
 vi.mock("../../../billing-queue/_components/billing-queue-documents-tab", () => ({
   BillingQueueDocumentsTab: () => null,

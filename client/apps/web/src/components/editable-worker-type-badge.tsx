@@ -6,7 +6,7 @@ import type { WorkerType } from "@trenova/shared/types/worker";
 import { Briefcase01Icon, ChevronDownIcon, User01Icon } from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import {

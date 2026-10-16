@@ -10,7 +10,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Beaker02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { FixtureDetail } from "../fixture-detail/fixture-detail";
 import { translate } from "@trenova/shared/i18n/runtime";
 

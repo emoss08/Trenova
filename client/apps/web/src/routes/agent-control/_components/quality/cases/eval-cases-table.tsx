@@ -22,7 +22,7 @@ import {
   PlayIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getEvalCaseColumns } from "./eval-case-columns";
 import { nextStatuses } from "./eval-case-model";
 import { EvalCasePanel } from "./eval-case-panel";

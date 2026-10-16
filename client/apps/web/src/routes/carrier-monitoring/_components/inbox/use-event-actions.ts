@@ -11,7 +11,7 @@ import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function acknowledgeableEventIds(
   events: readonly Pick<CarrierIntelEvent, "id" | "status">[],

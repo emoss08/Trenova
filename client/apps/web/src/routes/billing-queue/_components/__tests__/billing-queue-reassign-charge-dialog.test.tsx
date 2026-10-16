@@ -16,7 +16,9 @@ const { reassignCharge, toastSuccess } = vi.hoisted(() => ({
 vi.mock("@/services/api", () => ({
   apiService: { billingQueueService: { reassignCharge } },
 }));
-vi.mock("sonner", () => ({ toast: { success: toastSuccess, error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: toastSuccess, error: vi.fn() },
+}));
 
 const CUSTOMERS = [
   { id: "cus_acme", label: "Acme Manufacturing", description: null, meta: { code: "ACME" } },

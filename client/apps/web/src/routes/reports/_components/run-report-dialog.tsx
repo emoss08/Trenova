@@ -21,7 +21,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { REPORT_FORMAT_CHOICES, type ReportParameterDef } from "@/types/report";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   ParameterField,
   defaultParamValues,

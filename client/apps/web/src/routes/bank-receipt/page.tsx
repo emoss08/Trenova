@@ -31,7 +31,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const bankReceiptSearchParams = {
   item: parseAsString,

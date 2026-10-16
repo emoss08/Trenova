@@ -14,7 +14,7 @@ import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function useAccountingMappingActions(system: AccountingSystem, providerName: string) {
   const t = useT();

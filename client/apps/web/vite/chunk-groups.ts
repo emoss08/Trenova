@@ -95,7 +95,6 @@ export const chunkGroups: Group[] = [
   ),
   group("motion", "motion", "motion-dom", "motion-utils", "framer-motion"),
   group("zod", "zod"),
-  group("toast", "sonner"),
   // Shared by @codemirror/view and prosemirror-view. Ungrouped they land in the CodeMirror
   // chunk, which then makes opening the comment editor download all of CodeMirror as well.
   group("editor-dom-utils", "w3c-keyname", "style-mod", "crelt"),

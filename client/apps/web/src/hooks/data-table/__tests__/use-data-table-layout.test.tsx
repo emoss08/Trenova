@@ -23,7 +23,7 @@ vi.mock("@trenova/shared/lib/graphql", () => ({
   requestGraphQL: requestMock,
 }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: { error: vi.fn() } }));
 
 type Row = { id: string; name: string; status: string };
 

@@ -14,7 +14,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera01Icon, IdCardIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useDashFeatures } from "./use-dash-features";
 import { translate } from "@trenova/shared/i18n/runtime";
 

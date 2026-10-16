@@ -17,7 +17,7 @@ import {
   type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const FEED_PAGE_SIZE = 30;

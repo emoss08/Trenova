@@ -16,7 +16,7 @@ import {
   PlusIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { VersionDetail } from "../version-detail/version-detail";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { defineLabels } from "@trenova/shared/i18n/labels";

@@ -28,7 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const TARGET_KIND = {
   shipmentField: "ShipmentField",

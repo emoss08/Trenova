@@ -22,7 +22,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlayIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useEditorTheme } from "../designer/components/designer-shared";
 import type { InspectorTab } from "../designer/inspector/components/inspector-tabs";
 import PreviewInspectorSheet from "../designer/inspector/preview-inspector-sheet";

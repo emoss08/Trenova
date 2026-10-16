@@ -29,7 +29,7 @@ import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircleIcon, DotsHorizontalIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { canApplyPTOAction } from "./pto-actions";
 import { PTOReasonDialog, type PTOReasonDialogMode } from "./pto-reason-dialog";
 import { usePTOInvalidation } from "./use-pto-invalidation";

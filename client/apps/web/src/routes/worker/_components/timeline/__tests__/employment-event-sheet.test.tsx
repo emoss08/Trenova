@@ -17,7 +17,7 @@ vi.mock("@/lib/graphql/worker-employment", () => ({
   WORKER_EMPLOYMENT_EVENTS_KEY: "worker-employment-events",
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/components/autocomplete-fields", () => ({
   FleetCodeAutocompleteField: ({ control, name }: { control: Control; name: string }) => {

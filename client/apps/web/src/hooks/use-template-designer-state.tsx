@@ -18,7 +18,7 @@ import {
 import type { EDIDiagnostic, EDITemplate, EDITemplateVersion } from "@trenova/shared/types/edi";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const emptyTemplates: EDITemplate[] = [];
 const emptyVersions: EDITemplateVersion[] = [];

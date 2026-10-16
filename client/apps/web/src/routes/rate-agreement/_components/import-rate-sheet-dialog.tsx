@@ -47,7 +47,7 @@ import {
 import { AlertCircleIcon, Download01Icon, FileUploadIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useLaneKeyLabels } from "@/hooks/use-lane-scope-labels";
 
 const TONE_CLASS: Record<ChangeTone, string> = {

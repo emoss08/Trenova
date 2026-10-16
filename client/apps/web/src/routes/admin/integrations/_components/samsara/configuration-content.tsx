@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SamsaraFormMappingSection } from "./form-mapping-section";
 import { SamsaraSyncHealthSection } from "./sync-health-section";
 

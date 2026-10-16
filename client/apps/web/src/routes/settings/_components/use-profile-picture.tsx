@@ -9,7 +9,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
 import { useCallback, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useSettingsFeedback } from "./settings-feedback";
 
 export type ProfilePictureControls = {

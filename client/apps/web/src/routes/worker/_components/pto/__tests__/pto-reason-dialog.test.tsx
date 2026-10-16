@@ -29,7 +29,7 @@ vi.mock("@/lib/queries/worker", async (importOriginal) => ({
   },
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: toastSuccess, warning: toastWarning, error: vi.fn(), info: vi.fn() },
 }));
 

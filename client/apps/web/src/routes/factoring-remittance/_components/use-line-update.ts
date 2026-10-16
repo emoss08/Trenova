@@ -10,7 +10,7 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type LineUpdate = {
   lineId: string;
