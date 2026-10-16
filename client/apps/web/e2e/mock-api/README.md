@@ -395,6 +395,22 @@ once. Refusals carry the server's problem details (`type`, `title`, `status`, `d
 conversation the mock serves, ordered and banded by when each was last touched, as
 `conversationrepository` does.
 
+An EDI connection drafted from a trading partner's implementation guide has its own walkthrough:
+
+```bash
+node e2e/mock-api/desk-edi-draft-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/t/athr_desk_edi_guide` (`handlers/deskedidraft.mjs`), a conversation with the EDI
+agent about Acme Retail Group's guide (the deskbench guide, `edi-guide.html`), at the stage the
+`ediDraft` scenario field names: `held` (the first draft, its AS2 endpoint held between the guide's
+production and test URLs), `ready` (drafted again with the person's answer), `proposed` (the save
+waiting on its approval, with `AgentProposalPreview` answered) or `revised` (version 4.0 of the
+guide, a change set against the saved partner). The drafts are in `fixtures/desk-edi-draft.mjs`,
+shaped as `connectionDraftArtifact` stores them. It shoots each stage in light and dark, a value's
+page quote on hover, the document types, the approval and the revised control numbers, and writes
+to `e2e/mock-api/screenshots/desk-edi-draft` by default.
+
 Settings has its own walkthrough, the same way:
 
 ```bash
@@ -435,6 +451,7 @@ fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
 fixtures/aianalytics.mjs  A month of work units, tool calls and provider hours for AI control's Analytics
 fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
+fixtures/desk-edi-draft.mjs  The EDI connection drafts from Acme Retail Group's guide, version 3.2 and 4.0
 fixtures/desk-edi.mjs    The EDI messages the EDI message card draws: X12, inspections, conversations
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/palette.mjs  The command palette's customers, workers, shipments, documents and pins
@@ -448,6 +465,7 @@ handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
 handlers/aianalytics.mjs  AI control's Analytics query and tool-failure sheet, ported from the Go service
 handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
 handlers/deskcase.mjs   A Desk case and a reply under way: case, waits, queue, turns and checklist settings
+handlers/deskedidraft.mjs  An EDI connection drafted from a partner's guide, at each stage, and its approval
 handlers/deskthreads.mjs  The Desk rail: the conversation list and its shelf counts
 handlers/settings.mjs   Settings' REST routes and the user select options
 handlers/palette.mjs   Global search, documents, pins, Nova's ask stream and the palette's previews
@@ -459,6 +477,7 @@ screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
 desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
 desk-case-screenshots.mjs   Playwright walkthrough of a Desk case and a reply under way
+desk-edi-draft-screenshots.mjs  Playwright walkthrough of an EDI connection drafted from a guide
 settings-screenshots.mjs    Playwright walkthrough of Settings
 palette-screenshots.mjs     Playwright walkthrough of the command palette
 triage-screenshots.mjs  Playwright walkthrough of Triage
