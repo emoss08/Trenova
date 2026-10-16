@@ -1,4 +1,5 @@
 import { act, cleanup, render, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthStage, AuthStageCanvas } from "./auth-stage";
 import { useAuthStage, type AuthStageControls } from "./auth-stage-context";
@@ -43,17 +44,19 @@ function Probe({ onControls }: { onControls: (controls: AuthStageControls) => vo
   return null;
 }
 
-function renderStage() {
+function renderStage(path = "/login") {
   const captured: { controls?: AuthStageControls } = {};
   const view = render(
-    <AuthStage>
-      <Probe
-        onControls={(controls) => {
-          captured.controls = controls;
-        }}
-      />
-      <AuthStageCanvas />
-    </AuthStage>,
+    <MemoryRouter initialEntries={[path]}>
+      <AuthStage>
+        <Probe
+          onControls={(controls) => {
+            captured.controls = controls;
+          }}
+        />
+        <AuthStageCanvas />
+      </AuthStage>
+    </MemoryRouter>,
   );
   return { ...view, controls: () => captured.controls as AuthStageControls };
 }
@@ -96,6 +99,17 @@ describe("AuthStage", () => {
 
     unmount();
     expect(field.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["17", ["#8f7d1d", "#bc3a6a", "#8d4bc5", "#016dea"]],
+    ["6:00", ["#bc3a6a", "#958325", "#8d4bc5", "#016dea"]],
+  ])("draws the palette of the hour pinned by ?hour=%s in development", async (hour, palette) => {
+    mocks.create.mockReturnValue(fakeField());
+    renderStage(`/login?hour=${hour}`);
+
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+    expect(mocks.create.mock.calls[0][1].palette).toEqual(palette);
   });
 
   it("pauses the loop while the tab is hidden and resumes when it returns", async () => {

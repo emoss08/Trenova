@@ -103,13 +103,26 @@ export function srgbToHex(color: Srgb): string {
     .join("")}`;
 }
 
-/** Mixes two gamma-encoded colours channel by channel; `t` 0 is `from`, 1 is `to`. */
-export function mixSrgb(from: Srgb, to: Srgb, t: number): Srgb {
-  return [
-    from[0] + (to[0] - from[0]) * t,
-    from[1] + (to[1] - from[1]) * t,
-    from[2] + (to[2] - from[2]) * t,
-  ];
+/** The signed turn from hue `from` to hue `to` the shorter way round, in -180–180. */
+function hueTurn(from: number, to: number): number {
+  return ((((to - from) % 360) + 540) % 360) - 180;
+}
+
+/**
+ * Mixes two colours in OKLCH; `t` 0 is `from`, 1 is `to`. Lightness and chroma move
+ * linearly and the hue the shorter way round, so the colours between two saturated ends
+ * stay saturated where a channel-by-channel sRGB mix greys out. A colour with no chroma
+ * has no hue of its own and takes the other end's.
+ */
+export function mixOklch(from: Oklch, to: Oklch, t: number): Oklch {
+  const fromHue = from.c === 0 ? to.h : from.h;
+  const toHue = to.c === 0 ? from.h : to.h;
+  const hue = (fromHue + hueTurn(fromHue, toHue) * t) % 360;
+  return {
+    l: from.l + (to.l - from.l) * t,
+    c: from.c + (to.c - from.c) * t,
+    h: hue < 0 ? hue + 360 : hue,
+  };
 }
 
 /**
