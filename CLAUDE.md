@@ -273,6 +273,11 @@ names the token to use instead.
   Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
   label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
   `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
+- Toasts are for news the screen cannot show: a failure with nowhere else to go, work that
+  finished out of sight, a bulk outcome, or a result with a next step (Undo, Download, Open).
+  A save, delete, toggle or approval the person watches happen takes no success toast, and a
+  realtime notification toasts only when urgent or when it delivers what the person asked
+  for. See "Toasts" in the design-system doc.
 - Loading states are the layout of what loads. `DataTableLazyComponent` wraps only components
   that render `DataTable`; everything else is `LazyComponent` with a required `fallback` that is
   its own `<name>-skeleton.tsx`, and the component's own data-loading state draws the same

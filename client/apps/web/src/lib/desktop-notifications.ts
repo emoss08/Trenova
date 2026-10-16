@@ -1,4 +1,4 @@
-type DeliveryDecision = { desktop: boolean; sound: boolean };
+type DeliveryDecision = { urgent: boolean; desktop: boolean; sound: boolean };
 
 type IncomingNotification = {
   id?: string;
@@ -15,16 +15,20 @@ type IncomingNotification = {
 export function deliveryDecision(notification: IncomingNotification): DeliveryDecision {
   const delivery = notification.data?.delivery;
   if (!delivery || typeof delivery !== "object") {
-    return { desktop: false, sound: false };
+    return { urgent: false, desktop: false, sound: false };
   }
   const record = delivery as Record<string, unknown>;
-  return { desktop: record.desktop === true, sound: record.sound === true };
+  return {
+    urgent: record.urgent === true,
+    desktop: record.desktop === true,
+    sound: record.sound === true,
+  };
 }
 
 /**
  * A desktop notification is shown only when the server allowed it, the browser was
- * given permission, and the person is not already looking at Trenova: the in-app toast
- * covers a visible tab.
+ * given permission, and the person is not already looking at Trenova: a visible tab has
+ * the notification bell, and a toast for what `shouldToastNotification` lets through.
  */
 export function shouldShowDesktop(
   notification: IncomingNotification,

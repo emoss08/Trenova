@@ -1,17 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { deliveryDecision, shouldShowDesktop } from "../desktop-notifications";
 
-const allowed = { data: { delivery: { desktop: true, sound: true, email: "none" } }, title: "A" };
+const allowed = {
+  data: { delivery: { urgent: false, desktop: true, sound: true, email: "none" } },
+  title: "A",
+};
 
 describe("deliveryDecision", () => {
   it("reads the server's decision and treats a missing one as bell-only", () => {
-    expect(deliveryDecision(allowed)).toEqual({ desktop: true, sound: true });
-    expect(deliveryDecision({ data: null })).toEqual({ desktop: false, sound: false });
-    expect(deliveryDecision({ data: { delivery: "yes" } })).toEqual({
+    expect(deliveryDecision(allowed)).toEqual({ urgent: false, desktop: true, sound: true });
+    expect(
+      deliveryDecision({
+        data: { delivery: { urgent: true, desktop: false, sound: false, email: "now" } },
+      }),
+    ).toEqual({ urgent: true, desktop: false, sound: false });
+    expect(deliveryDecision({ data: null })).toEqual({
+      urgent: false,
       desktop: false,
       sound: false,
     });
-    expect(deliveryDecision({ data: { delivery: { desktop: "true" } } })).toEqual({
+    expect(deliveryDecision({ data: { delivery: "yes" } })).toEqual({
+      urgent: false,
+      desktop: false,
+      sound: false,
+    });
+    expect(deliveryDecision({ data: { delivery: { urgent: "true", desktop: "true" } } })).toEqual({
+      urgent: false,
       desktop: false,
       sound: false,
     });

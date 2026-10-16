@@ -504,6 +504,41 @@ hyphen.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 
+### Toasts
+
+A toast is for news the screen cannot show. Seven hundred success toasts had made
+every click announce itself, and a weather warning toasted every dispatcher who
+could read shipments; a person stops reading toasts long before that. Before writing
+one, ask whether the person can already see the outcome where they are. If they can,
+say nothing.
+
+Toast when:
+
+- **Something failed and has no field to land on.** `useApiMutation` already reports a
+  failed write; do not add a second error toast in `onError` for the same failure.
+- **Work finished out of sight**: a background job, a file ready to download, an email
+  or EDI message a worker sent, a bulk action with skips or failures
+  (`lib/bulk-outcome.ts`), something sent to another person (an invitation, a reset link).
+- **The outcome carries the next step**: Undo, Download, Open, View report.
+- **The person asked a question the screen has no place to answer**: a connection test,
+  a dry run.
+- **A copy to the clipboard**, unless the control shows the copied state in place.
+
+No toast when:
+
+- A save, create, update, delete, archive, enable, disable, assign or reorder is visible
+  where the person is: the panel closes and the row changes, the badge flips, the item
+  leaves the list, the save dock settles. `FormCreatePanel`, `FormEditPanel` and the
+  modals do not toast; a create that has something to say passes `successToast`.
+- The page already shows the work running ("Sync started", "Run queued").
+- It restates the button the person just pressed ("Approved", "Template rejected").
+- There was nothing to do ("No changes to save"): disable the action instead.
+
+A realtime notification lands in the notification bell. It toasts only when the server
+stamped it urgent (`data.delivery.urgent`) or when it delivers what the person asked for
+(a report run, a billing transfer run, an AI audit export), so watchtower items, tender
+updates and reminders stay in the bell and the watchtower feed.
+
 ### Loading states
 
 A page's first paint is its Suspense fallback: the chunk is still on the wire, or a

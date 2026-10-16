@@ -30,7 +30,6 @@ import {
   type LazyExoticComponent,
 } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { FormCopyButton } from "./form-copy-button";
 import {
@@ -204,9 +203,6 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       return { previousRecord, newValues };
     },
     onSuccess: () => {
-      toast.success(t("Changes have been saved"), {
-        description: t("{0} updated successfully", title),
-      });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       const action = pendingActionRef.current;
