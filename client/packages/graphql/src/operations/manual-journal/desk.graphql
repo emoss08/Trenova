@@ -1,0 +1,50 @@
+query DeskManualJournalCard($id: ID!) {
+  manualJournalCard(id: $id) {
+    journal {
+      id
+      requestNumber
+      status
+      description
+      reason
+      accountingDate
+      currencyCode
+      totalDebit
+      totalCredit
+      approvedAt
+      rejectedAt
+      rejectionReason
+      cancelledAt
+      cancelReason
+      createdAt
+      updatedAt
+    }
+    lines {
+      ...DeskJournalCardLineFields
+    }
+    requestedPeriod {
+      ...DeskJournalCardPeriodFields
+    }
+    posting {
+      ...DeskJournalCardPostingFields
+    }
+    createdBy {
+      ...DeskJournalCardPersonFields
+    }
+    approvedBy {
+      ...DeskJournalCardPersonFields
+    }
+    rejectedBy {
+      ...DeskJournalCardPersonFields
+    }
+    cancelledBy {
+      ...DeskJournalCardPersonFields
+    }
+    postedBy {
+      ...DeskJournalCardPersonFields
+    }
+    postedAt
+    entries {
+      ...DeskJournalCardEntryFields
+    }
+  }
+}

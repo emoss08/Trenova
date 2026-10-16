@@ -97,6 +97,18 @@ const ICONS = {
       <path d="M12 9v4l2.75 1.75M10 3.5h4" />
     </>
   ),
+  journal: (
+    <>
+      <path d="M4.5 4.5h15v15h-15z" />
+      <path d="M12 4.5v15M7 8.5h3M7 12h3M14 12h3M14 15.5h3" />
+    </>
+  ),
+  manual: (
+    <>
+      <path d="M5 4.5h11v15H5z" />
+      <path d="M8 8.5h5M8 12h3M13.5 17.25l5.25-5.25 1.75 1.75-5.25 5.25H13.5z" />
+    </>
+  ),
   partner: (
     <>
       <path d="M4 5.5h16v13H4z" />
@@ -308,7 +320,9 @@ export type DeskArtKind =
   | "invoice"
   | "pay"
   | "payable"
-  | "detention";
+  | "detention"
+  | "journal"
+  | "manual";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -342,6 +356,8 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   pay: "Worker settlement",
   payable: "Carrier settlement",
   detention: "Detention charge",
+  journal: "Journal entry",
+  manual: "Manual journal",
 });
 
 /**
@@ -364,7 +380,9 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * as the pay stub a payroll clerk approves and pays, a carrier settlement as
  * the payable an AP clerk checks against the carrier's invoices and pays, a
  * detention occurrence as the charge a biller approves for a stop that ran
- * past its free time.
+ * past its free time, a journal entry as the posting an accountant reviews in
+ * the general ledger, a manual journal as the entry a controller approves
+ * before it is booked by hand.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -387,6 +405,8 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   driver_settlement: "pay",
   carrier_settlement: "payable",
   detention_occurrence: "detention",
+  journal_entry: "journal",
+  manual_journal: "manual",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -497,6 +517,10 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Carrier settlement");
     case "detention":
       return t("Detention charge");
+    case "journal":
+      return t("Journal entry");
+    case "manual":
+      return t("Manual journal");
   }
 }
 

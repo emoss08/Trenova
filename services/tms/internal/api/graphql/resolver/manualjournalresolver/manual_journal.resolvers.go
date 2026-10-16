@@ -10,9 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -56,5 +58,27 @@ func (r *QueryResolver) ManualJournal(ctx context.Context, id string) (*manualjo
 	return r.ManualJournalService.Get(ctx, &manualjournalports.GetManualJournalRequest{
 		RequestID:  requestID,
 		TenantInfo: base.TenantInfo(authCtx),
+	})
+}
+
+func (r *QueryResolver) ManualJournalCard(ctx context.Context, id string) (*journalcardservice.ManualJournalCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	journalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid manual journal")
+	}
+
+	return r.JournalCards.GetManualJournalCard(ctx, &journalcardservice.GetManualJournalCardRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		JournalID:  journalID,
+		Parties: journalcardservice.Parties{
+			IncludeCustomers: r.HasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead),
+			IncludeLocations: r.HasPermission(ctx, authCtx, permission.ResourceLocation, permission.OpRead),
+		},
+		IncludeEntries: r.HasPermission(ctx, authCtx, permission.ResourceJournalEntry, permission.OpRead),
 	})
 }

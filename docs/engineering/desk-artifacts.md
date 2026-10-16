@@ -85,7 +85,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner; the parts the two settlement cards share are `dk-rec-*` in `record-card/`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -134,6 +134,8 @@ ask what the record looks like to the person who reads it, and draw that:
 | Carrier settlement | an AP stub beside the carrier and its MC number; the figure is the net payable with its terms; the carrier's invoices reconciled move by move (`CarrierSettlement.moveInvoices`, each move's standing invoice read through its carrier assignment, since a match names a settlement only once its variance is accepted) as a strip of cells (matched, off the buy rate, waiting to be accepted, not invoiced yet) keyed underneath, with only the moves that need someone listed, each invoice against the buy rate; the costs summed by kind over the adjustments (`costSummary`) down to the net payable; where the money goes (the remit-to address, the method, and the terms); and each load with its share |
 | EDI partner | a port of its ways in (AS2, SFTP, VAN, or Trenova to Trenova) before its code, kind and standing; the figure is the share of what we sent in the last seven days that was delivered; what the two sides trade as two lanes between our end and theirs, each transaction set a stamp with what it waits on and the week's count, its failures and dead letters marked (a Trenova-to-Trenova partner's lanes count nothing, since no envelope goes over a line); what needs a look first, worst first (a pickup failing, a message dead-lettered, acknowledgments overdue past their window, files set aside), each opening its message or file in place; the fortnight's traffic as a pair of columns a day in the reader's own days, with the acknowledgments' ruler and how long they take against what was promised; each line we reach them over as a patch between our end and theirs, its credentials named as on file or missing and never shown, its certificates as tiles read for expiry, its last pickup and why the last one failed with secrets redacted (`EDIPartnerTransport`); a Trenova-to-Trenova partner shows its connection instead; how the envelope is addressed both ways with the sets addressed differently counted; what it still lacks before it can trade, first while it lacks something; their codes we have matched by kind of record; the latest messages a page at a time; the customer and the carriers that send through it (read only under permission to read carriers); and who to call, with their local time. It is read in one query, `ediPartnerCard`, so the card never reads a partner's credentials |
 | Detention charge | a DET stub beside the facility, the customer and the appointment; the figure is the charge to bill with its rounded time and rate, a running clock priced as of now (`DetentionOccurrenceDetail.currentlyBillable`, the engine's price for an open clock, since the stored amount is zero until the truck leaves), struck through once waived; the charge's way from the dock to the invoice, struck off when waived, disputed or not billable, with who approved it (`approvedBy`); the stop's clock as one ruler from the appointment or the arrival to the departure or now (before the clock hatched, free time, billable time, the notice flagged above it, every other crowded moment a row lower); the calculation trace as a receipt in the engine's own words, the worker's detention pay left to the split beside it; what the customer is billed against the worker's pay and what is kept; the notice the policy asks for, warned when overdue with when it must go; the collectability score with what each short factor needs, and the evidence chain; the load (`{ kind: "shipment", id }`) and the facility (`location`, read only under permission to read locations) and customer, each opened in place; and why a waived or disputed charge stands as it does (`waivedBy`) |
+| Journal entry | a JE stub beside what it booked, its type and whether Trenova or a person booked it; the figure is what each side comes to, struck through once reversed or void; when it is reversed, the entry and its reversal bracketed together to what they leave in the books (nothing), with the request's reason code and words, and a reversal asked for and not yet posted, or refused, as a slip naming who asked and what became of it; its way to the ledger (recorded, approved where the organization reviews entries, posted) with its batch; the lines written into the book with debits first and credits indented under them; what it does to each term of the accounting equation; and the record that made it (an invoice, a settlement, a manual journal, the entry it reverses), opened in place where it has a card |
+| Manual journal | an MJ stub beside what it books and who asked for it; the figure is what each side comes to, or how far it is off while the lines do not balance, struck through once rejected or cancelled; the requester's reason in their own words; why it was rejected or cancelled; its way to the ledger (draft, submitted, approved, posted) with who signed each step; the lines and the equation as the entry draws them; where it will post as a calendar leaf, or the shut period it asked for beside the first open day it moves to under the organization's policy, or why it cannot post at all (`posting.refusal`, the server's own words); and the journal entries it became, each opened in place |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. `CardStatus` takes `danger` with an `x` mark only for a state that is final and failed
@@ -221,8 +223,8 @@ A record's lifecycle in a fixed order of steps, drawn across the card as segment
 `CardTrack` (`record-card/card-track.tsx`, with `CardTrackSkeleton`): the steps behind it
 ticked, the one it stands at in ink, those ahead open, and the whole track struck off
 (`off`) once the record is voided or canceled, with a note under it saying who moved it last
-and what comes next. The order, both settlement cards and the detention card draw their
-lifecycles with it.
+and what comes next. The order, both settlement cards, the detention card and both journal
+cards draw their lifecycles with it.
 
 The two settlement cards share their frame in `record-card/card-settlement.tsx` and
 `record-card/settlement-values.ts`: the stub, the track's steps and note (`settlementTrack`,
@@ -232,6 +234,19 @@ bar of the settlement's own steps (`SettlementBar`). Each kind draws what only i
 worker's waterfall, flags and disputes, the carrier's invoices and remittance, in its own
 folder.
 
+The journal entry and manual journal cards share theirs in `record-card/card-journal.tsx` and
+`record-card/journal-values.ts`: the lines written into the book (`CardJournal`), whether they
+balance (`JournalSeal`), what they do to `Assets = Liabilities + Equity + Revenue − Expenses`
+(`CardEquation`, each line moving its account's balance by the side its account type sits on,
+cost of revenue counted as an expense, and a line whose account type could not be read left out
+and counted), a row for a related record (`JournalRefRow`) and a fiscal period with its state
+(`PeriodChip`). Both are read by one query each (`journalEntryCard`, `manualJournalCard`),
+assembled on the server by `journalcardservice`, which also works out where an unposted journal
+would post today under the organization's closed-period policy. A journal's accounting date is the
+first second of its day in UTC, so the cards write it with `accountingDay` and `accountingLeaf`,
+which read it in UTC; reading it in the reader's own timezone would give the day before west of
+UTC.
+
 ## Actions on a card
 
 A card's buttons are the record's own steps, taken by the person and never by the agent,
@@ -240,7 +255,11 @@ each shown only to someone holding the permission the server checks for it
 the detention card reads detention policy update once, the permission the server checks for
 approving, sending the notice, recording a dispute and waiving; the EDI partner card reads EDI
 update once, for testing a line and picking up its files now, and offers neither for a
-Trenova-to-Trenova partner, which has no line).
+Trenova-to-Trenova partner, which has no line; the journal entry card reads journal entry approve
+for approving an entry waiting on approval and posting an approved one, and journal reversal
+create for asking for a posted entry to be reversed; the manual journal card reads manual journal
+submit, approve, reject and cancel, and approves and posts a submitted journal in one step,
+reading the journal again when the approval holds but the post does not).
 `CardActionButton` (`record-card/card-action.tsx`) draws each: when something stands in the
 way (an invoice that has not been posted cannot be sent by EDI) it stays where it is,
 disabled, and says why on hover and to a screen reader, rather than vanishing. A step that
@@ -248,7 +267,11 @@ needs more from the person (a reason to send back or void, how a settlement was 
 the dialog its page already uses, imported from the page, so the card and the page cannot ask
 for different things; when that dialog lives in a larger component, it moves to a module of its
 own first (the detention desk's waive and dispute dialogs are `occurrence-action-dialogs.tsx`), so
-the card does not bring the page's sheet with it. After a step the card reads its record again through the module's own
+the card does not bring the page's sheet with it A dialog more than one route uses lives in
+`src/components/` (`reason-dialog.tsx` asks why a manual journal is rejected or cancelled and why
+a remittance line is ignored), and a dialog that asks for what a page's form asks for draws that
+form (the journal entry card's `request-reversal-dialog.tsx` draws the reversals page's
+`JournalReversalForm` with the entry fixed, and both send `reversalRequestBody`). After a step the card reads its record again through the module's own
 invalidation (`invalidateDriverWorkspace`, `invalidateCarrierWorkspace`), whose prefixes
 include the card's query keys (`useInvalidateDetention` invalidates every detention query,
 the card's among them). What takes a form of its own (adding pay by hand, accepting an

@@ -4796,6 +4796,27 @@ models:
   JournalSourceInfo:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource.Source
+    fields:
+      batchNumber:
+        resolver: true
+  JournalCardLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice.Line
+    fields:
+      category:
+        resolver: true
+  JournalCardPosting:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice.Posting
+    fields:
+      accountingDate:
+        resolver: true
+  JournalEntryCard:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice.JournalEntryCard
+  ManualJournalCard:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice.ManualJournalCard
   JournalReversalStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal.Status

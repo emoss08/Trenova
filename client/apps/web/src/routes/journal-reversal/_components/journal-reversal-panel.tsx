@@ -15,13 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { JournalReversalForm } from "./journal-reversal-form";
-
-type CreateReversalForm = {
-  originalJournalEntryId: string;
-  requestedAccountingDate: string;
-  reasonCode: string;
-  reasonText: string;
-};
+import { reversalRequestBody, type ReversalRequestValues } from "./journal-reversal-request";
 
 const CANCELLABLE_STATUSES: JournalReversalStatus[] = ["Requested", "PendingApproval", "Approved"];
 
@@ -33,7 +27,7 @@ function CreateReversalPanel({
 
   const queryClient = useQueryClient();
 
-  const form = useForm<CreateReversalForm>({
+  const form = useForm<ReversalRequestValues>({
     defaultValues: {
       originalJournalEntryId: "",
       requestedAccountingDate: "",
@@ -55,13 +49,8 @@ function CreateReversalPanel({
   }, [open, reset]);
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (values: CreateReversalForm) => {
-      return apiService.journalReversalService.create({
-        originalJournalEntryId: values.originalJournalEntryId,
-        requestedAccountingDate: new Date(values.requestedAccountingDate).getTime() / 1000,
-        reasonCode: values.reasonCode,
-        reasonText: values.reasonText,
-      });
+    mutationFn: async (values: ReversalRequestValues) => {
+      return apiService.journalReversalService.create(reversalRequestBody(values));
     },
     onSuccess: () => {
       toast.success(t("Reversal request created"));

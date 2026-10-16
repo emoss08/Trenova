@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { CARD_DOCUMENT_SECTIONS, useCardAccess } from "../record-card/card-access";
 
 /*
@@ -461,5 +461,87 @@ export function SettlementStatementSkeleton({ rows }: { rows: readonly number[] 
         ))}
       </tbody>
     </table>
+  );
+}
+
+/**
+ * A journal written into the book while it is read: the sheet's head, each
+ * line's account over its note with a figure in one money column, debits
+ * first and credits indented, and the totals over the double rule.
+ */
+export function CardJournalSkeleton({
+  lines,
+}: {
+  lines: readonly (readonly [number, "dr" | "cr"])[];
+}) {
+  return (
+    <table className="dk-rec-jrnl" aria-hidden>
+      <thead>
+        <tr>
+          <th className="dk-n" />
+          <th>
+            <SkeletonBar w="56px" className="dk-rec-sk-label" />
+          </th>
+          <th className="dk-jm">
+            <SkeletonBar w="40px" className="dk-rec-sk-label" />
+          </th>
+          <th className="dk-jm">
+            <SkeletonBar w="40px" className="dk-rec-sk-label" />
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {lines.map(([width, side], index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+          <tr key={index} className={side === "cr" ? "dk-credit" : "dk-debit"}>
+            <td className="dk-n" />
+            <td className="dk-acct">
+              <SkeletonBar w={`${width}%`} className="dk-rec-sk-line" />
+              <SkeletonBar w={`${Math.round(width * 0.7)}%`} className="dk-rec-sk-label" />
+            </td>
+            <td className="dk-jm">
+              {side === "dr" && <SkeletonBar w="64px" className="dk-rec-sk-line" />}
+            </td>
+            <td className="dk-jm">
+              {side === "cr" && <SkeletonBar w="64px" className="dk-rec-sk-line" />}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td />
+          <td>
+            <SkeletonBar w="48px" className="dk-rec-sk-line" />
+          </td>
+          <td className="dk-jm">
+            <SkeletonBar w="72px" className="dk-rec-sk-line" />
+          </td>
+          <td className="dk-jm">
+            <SkeletonBar w="72px" className="dk-rec-sk-line" />
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
+/** The accounting equation while a journal is read: five terms in their places, and the line under them. */
+export function CardEquationSkeleton() {
+  return (
+    <>
+      <div className="dk-rec-eqn" aria-hidden>
+        {[0, 1, 2, 3, 4].map((index) => (
+          <Fragment key={index}>
+            <div>
+              <SkeletonBar w="52%" className="dk-rec-sk-label" />
+              <SkeletonBar w="70%" className="dk-rec-sk-line" />
+            </div>
+            {index < 4 && <i />}
+          </Fragment>
+        ))}
+      </div>
+      <SkeletonBar w="58%" className="dk-rec-sk-label dk-rec-eqn-note" />
+    </>
   );
 }

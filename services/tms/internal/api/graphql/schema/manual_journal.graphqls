@@ -48,7 +48,25 @@ type ManualJournalConnection {
   totalCount: Int
 }
 
+type ManualJournalCard {
+  journal: ManualJournal!
+  lines: [JournalCardLine!]!
+  requestedPeriod: FiscalPeriod
+  "Where it will post; null once it is posted, rejected or cancelled."
+  posting: JournalCardPosting
+  createdBy: User
+  approvedBy: User
+  rejectedBy: User
+  cancelledBy: User
+  postedBy: User
+  postedAt: Timestamp
+  "The journal entries it became; empty before it posts or to someone who may not read journal entries."
+  entries: [JournalEntry!]!
+}
+
 extend type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   manualJournal(id: ID!): ManualJournal
+  "A manual journal as the Desk card draws it, read in one pass."
+  manualJournalCard(id: ID!): ManualJournalCard!
 }

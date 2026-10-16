@@ -19171,6 +19171,10 @@ func init() {
 				Name:        "status",
 				FieldMapKey: "status",
 			},
+			{
+				Name:    "batchNumber",
+				Special: "batchNumber",
+			},
 		},
 	}
 

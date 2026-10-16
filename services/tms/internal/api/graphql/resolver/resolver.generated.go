@@ -318,9 +318,12 @@ type Resolver struct {
 	invoiceDispute                     *invoicedisputeresolver.InvoiceDisputeResolver
 	invoiceLine                        *invoiceresolver.InvoiceLineResolver
 	jobPosition                        *orgstructureresolver.JobPositionResolver
+	journalCardLine                    *journalentryresolver.JournalCardLineResolver
+	journalCardPosting                 *journalentryresolver.JournalCardPostingResolver
 	journalEntry                       *journalentryresolver.JournalEntryResolver
 	journalEntryLine                   *journalentryresolver.JournalEntryLineResolver
 	journalReviewSummary               *journalentryresolver.JournalReviewSummaryResolver
+	journalSourceInfo                  *journalentryresolver.JournalSourceInfoResolver
 	jurisdictionRule                   *jurisdictionruleresolver.JurisdictionRuleResolver
 	lateChargeAssessment               *latechargeresolver.LateChargeAssessmentResolver
 	lateChargeLine                     *latechargeresolver.LateChargeLineResolver
@@ -822,6 +825,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                s.Core,
 		GlAccountRepo:       s.GlAccountRepo,
 		JournalEntryService: s.JournalEntryService,
+		JournalCards:        s.JournalCards,
 		JournalReview:       s.JournalReview,
 	}
 	journalreversalDeps := &journalreversalresolver.Deps{
@@ -848,6 +852,7 @@ func FromServices(s *Services) *Resolver {
 	manualjournalDeps := &manualjournalresolver.Deps{
 		Core:                 s.Core,
 		ManualJournalService: s.ManualJournalService,
+		JournalCards:         s.JournalCards,
 	}
 	notificationDeps := &notificationresolver.Deps{
 		Core:                s.Core,
@@ -1320,9 +1325,12 @@ func FromServices(s *Services) *Resolver {
 		invoiceDispute:                     &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps},
 		invoiceLine:                        &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps},
 		jobPosition:                        &orgstructureresolver.JobPositionResolver{Deps: orgstructureDeps},
+		journalCardLine:                    &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps},
+		journalCardPosting:                 &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps},
 		journalEntry:                       &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps},
 		journalEntryLine:                   &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps},
 		journalReviewSummary:               &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps},
+		journalSourceInfo:                  &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps},
 		jurisdictionRule:                   &jurisdictionruleresolver.JurisdictionRuleResolver{Deps: jurisdictionruleDeps},
 		lateChargeAssessment:               &latechargeresolver.LateChargeAssessmentResolver{Deps: latechargeDeps},
 		lateChargeLine:                     &latechargeresolver.LateChargeLineResolver{Deps: latechargeDeps},
@@ -2386,6 +2394,14 @@ func (r *Resolver) JobPosition() generated.JobPositionResolver {
 	return r.jobPosition
 }
 
+func (r *Resolver) JournalCardLine() generated.JournalCardLineResolver {
+	return r.journalCardLine
+}
+
+func (r *Resolver) JournalCardPosting() generated.JournalCardPostingResolver {
+	return r.journalCardPosting
+}
+
 func (r *Resolver) JournalEntry() generated.JournalEntryResolver {
 	return r.journalEntry
 }
@@ -2396,6 +2412,10 @@ func (r *Resolver) JournalEntryLine() generated.JournalEntryLineResolver {
 
 func (r *Resolver) JournalReviewSummary() generated.JournalReviewSummaryResolver {
 	return r.journalReviewSummary
+}
+
+func (r *Resolver) JournalSourceInfo() generated.JournalSourceInfoResolver {
+	return r.journalSourceInfo
 }
 
 func (r *Resolver) JurisdictionRule() generated.JurisdictionRuleResolver {

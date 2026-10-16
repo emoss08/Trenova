@@ -1,0 +1,76 @@
+{
+  "now": 1792162800,
+  "card": {
+    "journal": {
+      "id": "mjr_2610_0005",
+      "requestNumber": "MJ-2610-0005",
+      "status": "Rejected",
+      "description": "Write off Acme detention dispute",
+      "reason": "Acme disputes the 2h detention at Plant 2; write it off to keep the account current.",
+      "accountingDate": 1791590400,
+      "currencyCode": "USD",
+      "totalDebit": 25000,
+      "totalCredit": 25000,
+      "approvedAt": null,
+      "rejectedAt": 1791733500,
+      "rejectionReason": "Waive it under the detention policy instead of a manual write-off, so the stop's record shows why.",
+      "cancelledAt": null,
+      "cancelReason": null,
+      "createdAt": 1791622800,
+      "updatedAt": 1791733500
+    },
+    "lines": [
+      {
+        "lineNumber": 1,
+        "glAccountId": "gla_6900",
+        "accountCode": "6900",
+        "accountName": "Bad debt expense",
+        "category": "Expense",
+        "description": "Detention write-off",
+        "debitAmount": 25000,
+        "creditAmount": 0,
+        "customerId": "cus_acme",
+        "customerName": "Acme Foods",
+        "locationId": null,
+        "locationName": ""
+      },
+      {
+        "lineNumber": 2,
+        "glAccountId": "gla_1200",
+        "accountCode": "1200",
+        "accountName": "Accounts receivable",
+        "category": "Asset",
+        "description": "INV-2610-0042 detention",
+        "debitAmount": 0,
+        "creditAmount": 25000,
+        "customerId": "cus_acme",
+        "customerName": "Acme Foods",
+        "locationId": null,
+        "locationName": ""
+      }
+    ],
+    "requestedPeriod": {
+      "id": "fp_2026_10",
+      "name": "October 2026",
+      "periodNumber": 10,
+      "status": "Open",
+      "startDate": 1790812800,
+      "endDate": 1793491199,
+      "closedAt": null
+    },
+    "posting": null,
+    "createdBy": {
+      "id": "usr_dana",
+      "name": "Dana Ruiz"
+    },
+    "approvedBy": null,
+    "rejectedBy": {
+      "id": "usr_priya",
+      "name": "Priya Shah"
+    },
+    "cancelledBy": null,
+    "postedBy": null,
+    "postedAt": null,
+    "entries": []
+  }
+}

@@ -38,7 +38,6 @@
   "Row {0} ({1}) pays which invoice on the factor's schedules?": "¿Qué factura de las relaciones de la empresa de factoraje paga la fila {0} ({1})?",
   "Row {0}: {1} of invoice {2}": "Fila {0}: {1} de la factura {2}",
   "Say which column of {0} holds each field. Leave a field out when the file has no such column.": "Indique qué columna de {0} contiene cada campo. Omita un campo cuando el archivo no tenga esa columna.",
-  "Say why": "Indique el motivo",
   "Select a schedule": "Seleccione una relación",
   "Select an invoice": "Seleccione una factura",
   "Such as: a duplicate of yesterday's report": "Por ejemplo: un duplicado del informe de ayer",

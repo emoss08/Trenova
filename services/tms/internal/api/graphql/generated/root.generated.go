@@ -145,6 +145,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -464,9 +465,12 @@ type ResolverRoot interface {
 	InvoiceDispute() InvoiceDisputeResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
+	JournalCardLine() JournalCardLineResolver
+	JournalCardPosting() JournalCardPostingResolver
 	JournalEntry() JournalEntryResolver
 	JournalEntryLine() JournalEntryLineResolver
 	JournalReviewSummary() JournalReviewSummaryResolver
+	JournalSourceInfo() JournalSourceInfoResolver
 	JurisdictionRule() JurisdictionRuleResolver
 	LateChargeAssessment() LateChargeAssessmentResolver
 	LateChargeLine() LateChargeLineResolver
@@ -1752,6 +1756,14 @@ type JobPositionResolver interface {
 	ReportsToPositionID(ctx context.Context, obj *worker.JobPosition) (*string, error)
 }
 
+type JournalCardLineResolver interface {
+	Category(ctx context.Context, obj *journalcardservice.Line) (*accounttype.Category, error)
+}
+
+type JournalCardPostingResolver interface {
+	AccountingDate(ctx context.Context, obj *journalcardservice.Posting) (*int, error)
+}
+
 type JournalEntryResolver interface {
 	EntryType(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
 	Status(ctx context.Context, obj *journalentry.JournalEntry) (string, error)
@@ -1763,6 +1775,10 @@ type JournalEntryLineResolver interface {
 
 type JournalReviewSummaryResolver interface {
 	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
+}
+
+type JournalSourceInfoResolver interface {
+	BatchNumber(ctx context.Context, obj *journalsource.Source) (*string, error)
 }
 
 type JurisdictionRuleResolver interface {
@@ -3017,6 +3033,7 @@ type QueryResolver interface {
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error)
+	JournalEntryCard(ctx context.Context, id string) (*journalcardservice.JournalEntryCard, error)
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
 	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
@@ -3029,6 +3046,7 @@ type QueryResolver interface {
 	LocationCategory(ctx context.Context, id string) (*locationcategory.LocationCategory, error)
 	ManualJournals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ManualJournalConnection, error)
 	ManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
+	ManualJournalCard(ctx context.Context, id string) (*journalcardservice.ManualJournalCard, error)
 	Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
 	NotificationUnreadCount(ctx context.Context) (int, error)
 	Orders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.OrderConnection, error)
@@ -4011,9 +4029,12 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"InvoiceDispute":                     func() any { return r.InvoiceDispute() },
 			"InvoiceLine":                        func() any { return r.InvoiceLine() },
 			"JobPosition":                        func() any { return r.JobPosition() },
+			"JournalCardLine":                    func() any { return r.JournalCardLine() },
+			"JournalCardPosting":                 func() any { return r.JournalCardPosting() },
 			"JournalEntry":                       func() any { return r.JournalEntry() },
 			"JournalEntryLine":                   func() any { return r.JournalEntryLine() },
 			"JournalReviewSummary":               func() any { return r.JournalReviewSummary() },
+			"JournalSourceInfo":                  func() any { return r.JournalSourceInfo() },
 			"JurisdictionRule":                   func() any { return r.JurisdictionRule() },
 			"LateChargeAssessment":               func() any { return r.LateChargeAssessment() },
 			"LateChargeLine":                     func() any { return r.LateChargeLine() },
@@ -25989,6 +26010,56 @@ type JournalSourceInfo {
   sourceEventType: String!
   sourceDocumentNumber: String!
   status: String!
+  "The number of the batch the source's entries were written in, when it could be read."
+  batchNumber: String
+}
+
+"One line of a journal as the Desk card draws it: the account it books to and the side of the accounting equation that account sits on."
+type JournalCardLine {
+  lineNumber: Int!
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  "Null when the account or its type could not be read."
+  category: AccountCategory
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  "Null when the line names no customer or the reader may not read customers."
+  customerId: ID
+  customerName: String!
+  "Null when the line names no location or the reader may not read locations."
+  locationId: ID
+  locationName: String!
+}
+
+"Where a journal not yet posted would land if it posted now, under the organization's closed-period policy."
+type JournalCardPosting {
+  "Null when it cannot post as things stand."
+  period: FiscalPeriod
+  accountingDate: Timestamp
+  "Why it cannot post as things stand; empty when it can."
+  refusal: String!
+}
+
+type JournalEntryCard {
+  entry: JournalEntry!
+  lines: [JournalCardLine!]!
+  period: FiscalPeriod
+  "Where it will post; null once it is posted, reversed, rejected or void."
+  posting: JournalCardPosting
+  source: JournalSourceInfo
+  createdBy: User
+  approvedBy: User
+  postedBy: User
+  rejectedBy: User
+  "The entry this one reverses."
+  reversalOf: JournalEntry
+  "The entry that reversed this one."
+  reversedBy: JournalEntry
+  "The reversal request that stands against this entry or made it; null to someone who may not read journal reversals."
+  reversal: JournalReversal
+  reversalRequestedBy: User
 }
 
 extend type Query {
@@ -25998,6 +26069,8 @@ extend type Query {
   "Journal entries waiting to be approved or posted, oldest first."
   journalReviewTable(input: DataTableConnectionInput!): JournalEntryConnection!
   journalReviewSummary: JournalReviewSummary!
+  "A journal entry as the Desk card draws it, read in one pass."
+  journalEntryCard(id: ID!): JournalEntryCard!
 }
 
 extend type Mutation {
@@ -26458,9 +26531,27 @@ type ManualJournalConnection {
   totalCount: Int
 }
 
+type ManualJournalCard {
+  journal: ManualJournal!
+  lines: [JournalCardLine!]!
+  requestedPeriod: FiscalPeriod
+  "Where it will post; null once it is posted, rejected or cancelled."
+  posting: JournalCardPosting
+  createdBy: User
+  approvedBy: User
+  rejectedBy: User
+  cancelledBy: User
+  postedBy: User
+  postedAt: Timestamp
+  "The journal entries it became; empty before it posts or to someone who may not read journal entries."
+  entries: [JournalEntry!]!
+}
+
 extend type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   manualJournal(id: ID!): ManualJournal
+  "A manual journal as the Desk card draws it, read in one pass."
+  manualJournalCard(id: ID!): ManualJournalCard!
 }
 `, BuiltIn: false},
 	{Name: "../schema/notification.graphqls", Input: `enum NotificationPriority {

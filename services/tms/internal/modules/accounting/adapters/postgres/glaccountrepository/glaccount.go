@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -218,15 +219,18 @@ func (r *repository) GetByIDs(
 		)
 
 		entities := make([]*glaccount.GLAccount, 0, len(req.GLAccountIDs))
-		err := r.db.DBForContext(ctx).
+		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Where("gla.organization_id = ?", req.TenantInfo.OrgID).
 					Where("gla.business_unit_id = ?", req.TenantInfo.BuID).
 					Where("gla.id IN (?)", bun.List(req.GLAccountIDs))
-			}).
-			Scan(ctx)
+			})
+		if req.IncludeAccountType {
+			query = query.Relation(glaccountcol.GLAccountRelations.AccountType)
+		}
+		err := query.Scan(ctx)
 		if err != nil {
 			log.Error("failed to get gl accounts", zap.Error(err))
 			return nil, dberror.HandleNotFoundError(err, "GLAccount")

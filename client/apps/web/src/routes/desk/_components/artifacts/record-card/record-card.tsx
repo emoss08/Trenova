@@ -51,6 +51,8 @@ const CARD_PATHS = {
   undo: <path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" />,
   back: <path d="M15 6l-6 6 6 6" />,
   forward: <path d="M9 6l6 6-6 6" />,
+  rise: <path d="M12 19V5m0 0l-6 6m6-6l6 6" />,
+  fall: <path d="M12 5v14m0 0l-6-6m6 6l6-6" />,
   copy: (
     <>
       <rect x="8.5" y="8.5" width="11" height="11" rx="2" />

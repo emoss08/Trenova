@@ -19478,6 +19478,42 @@ input JobPositionInput {
   title: String!
 }
 
+"""
+One line of a journal as the Desk card draws it: the account it books to and the side of the accounting equation that account sits on.
+"""
+type JournalCardLine {
+  accountCode: String!
+  accountName: String!
+  """Null when the account or its type could not be read."""
+  category: AccountCategory
+  creditAmount: Int!
+  """
+  Null when the line names no customer or the reader may not read customers.
+  """
+  customerId: ID
+  customerName: String!
+  debitAmount: Int!
+  description: String!
+  glAccountId: ID!
+  lineNumber: Int!
+  """
+  Null when the line names no location or the reader may not read locations.
+  """
+  locationId: ID
+  locationName: String!
+}
+
+"""
+Where a journal not yet posted would land if it posted now, under the organization's closed-period policy.
+"""
+type JournalCardPosting {
+  accountingDate: Timestamp
+  """Null when it cannot post as things stand."""
+  period: FiscalPeriod
+  """Why it cannot post as things stand; empty when it can."""
+  refusal: String!
+}
+
 type JournalEntry {
   accountingDate: Timestamp!
   approvedAt: Timestamp
@@ -19512,6 +19548,30 @@ type JournalEntry {
   totalCredit: Int!
   totalDebit: Int!
   version: Int!
+}
+
+type JournalEntryCard {
+  approvedBy: User
+  createdBy: User
+  entry: JournalEntry!
+  lines: [JournalCardLine!]!
+  period: FiscalPeriod
+  postedBy: User
+  """
+  Where it will post; null once it is posted, reversed, rejected or void.
+  """
+  posting: JournalCardPosting
+  rejectedBy: User
+  """
+  The reversal request that stands against this entry or made it; null to someone who may not read journal reversals.
+  """
+  reversal: JournalReversal
+  """The entry this one reverses."""
+  reversalOf: JournalEntry
+  reversalRequestedBy: User
+  """The entry that reversed this one."""
+  reversedBy: JournalEntry
+  source: JournalSourceInfo
 }
 
 type JournalEntryConnection {
@@ -19624,6 +19684,10 @@ type JournalReviewSummary {
 }
 
 type JournalSourceInfo {
+  """
+  The number of the batch the source's entries were written in, when it could be read.
+  """
+  batchNumber: String
   id: ID!
   sourceDocumentNumber: String!
   sourceEventType: String!
@@ -20113,6 +20177,24 @@ type ManualJournal {
   updatedAt: Timestamp!
   updatedById: ID
   version: Int!
+}
+
+type ManualJournalCard {
+  approvedBy: User
+  cancelledBy: User
+  createdBy: User
+  """
+  The journal entries it became; empty before it posts or to someone who may not read journal entries.
+  """
+  entries: [JournalEntry!]!
+  journal: ManualJournal!
+  lines: [JournalCardLine!]!
+  postedAt: Timestamp
+  postedBy: User
+  """Where it will post; null once it is posted, rejected or cancelled."""
+  posting: JournalCardPosting
+  rejectedBy: User
+  requestedPeriod: FiscalPeriod
 }
 
 type ManualJournalConnection {
@@ -23845,6 +23927,8 @@ type Query {
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
   journalEntry(id: ID!): JournalEntry
+  """A journal entry as the Desk card draws it, read in one pass."""
+  journalEntryCard(id: ID!): JournalEntryCard!
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalReviewSummary: JournalReviewSummary!
@@ -23870,6 +23954,8 @@ type Query {
   locationCategory(id: ID!): LocationCategory
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
+  """A manual journal as the Desk card draws it, read in one pass."""
+  manualJournalCard(id: ID!): ManualJournalCard!
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
   """The caller's own ratings of the targets named."""

@@ -1,0 +1,85 @@
+{
+  "now": 1792162800,
+  "card": {
+    "journal": {
+      "id": "mjr_2610_0009",
+      "requestNumber": "MJ-2610-0009",
+      "status": "Draft",
+      "description": "Reclassify September tolls to repairs",
+      "reason": "Two tolls on unit 214 were coded as tolls but were the tire shop's road-service call.",
+      "accountingDate": 1790726400,
+      "currencyCode": "USD",
+      "totalDebit": 126000,
+      "totalCredit": 122000,
+      "approvedAt": null,
+      "rejectedAt": null,
+      "rejectionReason": null,
+      "cancelledAt": null,
+      "cancelReason": null,
+      "createdAt": 1792062120,
+      "updatedAt": 1792063200
+    },
+    "lines": [
+      {
+        "lineNumber": 1,
+        "glAccountId": "gla_5400",
+        "accountCode": "5400",
+        "accountName": "Repairs and maintenance",
+        "category": "Expense",
+        "description": "Unit 214 road service",
+        "debitAmount": 126000,
+        "creditAmount": 0,
+        "customerId": null,
+        "customerName": "",
+        "locationId": null,
+        "locationName": ""
+      },
+      {
+        "lineNumber": 2,
+        "glAccountId": "gla_5350",
+        "accountCode": "5350",
+        "accountName": "Tolls",
+        "category": "Expense",
+        "description": "Reclassified from September",
+        "debitAmount": 0,
+        "creditAmount": 122000,
+        "customerId": null,
+        "customerName": "",
+        "locationId": null,
+        "locationName": ""
+      }
+    ],
+    "requestedPeriod": {
+      "id": "fp_2026_09",
+      "name": "September 2026",
+      "periodNumber": 9,
+      "status": "Closed",
+      "startDate": 1788220800,
+      "endDate": 1790812799,
+      "closedAt": 1791479100
+    },
+    "posting": {
+      "period": {
+        "id": "fp_2026_10",
+        "name": "October 2026",
+        "periodNumber": 10,
+        "status": "Open",
+        "startDate": 1790812800,
+        "endDate": 1793491199,
+        "closedAt": null
+      },
+      "accountingDate": 1790812800,
+      "refusal": ""
+    },
+    "createdBy": {
+      "id": "usr_dana",
+      "name": "Dana Ruiz"
+    },
+    "approvedBy": null,
+    "rejectedBy": null,
+    "cancelledBy": null,
+    "postedBy": null,
+    "postedAt": null,
+    "entries": []
+  }
+}

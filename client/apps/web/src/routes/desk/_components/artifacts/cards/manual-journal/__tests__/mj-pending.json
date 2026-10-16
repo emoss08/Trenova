@@ -1,0 +1,99 @@
+{
+  "now": 1792162800,
+  "card": {
+    "journal": {
+      "id": "mjr_2610_0007",
+      "requestNumber": "MJ-2610-0007",
+      "status": "PendingApproval",
+      "description": "Accrue October fuel not yet invoiced",
+      "reason": "Pilot and Love's send October's statements after month end. Accrue the estimate so October's fuel expense is complete; it reverses when the statements post.",
+      "accountingDate": 1793404800,
+      "currencyCode": "USD",
+      "totalDebit": 2453550,
+      "totalCredit": 2453550,
+      "approvedAt": null,
+      "rejectedAt": null,
+      "rejectionReason": null,
+      "cancelledAt": null,
+      "cancelReason": null,
+      "createdAt": 1792080720,
+      "updatedAt": 1792082400
+    },
+    "lines": [
+      {
+        "lineNumber": 1,
+        "glAccountId": "gla_5300",
+        "accountCode": "5300",
+        "accountName": "Fuel expense",
+        "category": "Expense",
+        "description": "Pilot Flying J estimate",
+        "debitAmount": 1842000,
+        "creditAmount": 0,
+        "customerId": null,
+        "customerName": "",
+        "locationId": null,
+        "locationName": ""
+      },
+      {
+        "lineNumber": 2,
+        "glAccountId": "gla_5300",
+        "accountCode": "5300",
+        "accountName": "Fuel expense",
+        "category": "Expense",
+        "description": "Love's estimate",
+        "debitAmount": 611550,
+        "creditAmount": 0,
+        "customerId": null,
+        "customerName": "",
+        "locationId": null,
+        "locationName": ""
+      },
+      {
+        "lineNumber": 3,
+        "glAccountId": "gla_2200",
+        "accountCode": "2200",
+        "accountName": "Accrued expenses",
+        "category": "Liability",
+        "description": "October fuel accrual",
+        "debitAmount": 0,
+        "creditAmount": 2453550,
+        "customerId": null,
+        "customerName": "",
+        "locationId": null,
+        "locationName": ""
+      }
+    ],
+    "requestedPeriod": {
+      "id": "fp_2026_10",
+      "name": "October 2026",
+      "periodNumber": 10,
+      "status": "Open",
+      "startDate": 1790812800,
+      "endDate": 1793491199,
+      "closedAt": null
+    },
+    "posting": {
+      "period": {
+        "id": "fp_2026_10",
+        "name": "October 2026",
+        "periodNumber": 10,
+        "status": "Open",
+        "startDate": 1790812800,
+        "endDate": 1793491199,
+        "closedAt": null
+      },
+      "accountingDate": 1793404800,
+      "refusal": ""
+    },
+    "createdBy": {
+      "id": "usr_dana",
+      "name": "Dana Ruiz"
+    },
+    "approvedBy": null,
+    "rejectedBy": null,
+    "cancelledBy": null,
+    "postedBy": null,
+    "postedAt": null,
+    "entries": []
+  }
+}

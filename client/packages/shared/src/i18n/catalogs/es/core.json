@@ -487,6 +487,7 @@
   "Exhausted": "Agotado",
   "Expected amount cannot be negative": "El importe esperado no puede ser negativo",
   "Expense claims only. Time off stays with the manager.": "Solo reclamaciones de gastos. El tiempo libre queda en manos del gerente.",
+  "Expenses": "Gastos",
   "Expenses only": "Solo gastos",
   "Expiration date is required": "La fecha de vencimiento es obligatoria",
   "Expiration date must be after the effective date": "La fecha de vencimiento debe ser posterior a la de vigencia",
