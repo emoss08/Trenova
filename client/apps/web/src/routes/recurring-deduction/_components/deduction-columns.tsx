@@ -9,8 +9,6 @@ import {
 import type { RecurringDeductionStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export function deductionStatusInput(row: RecurringDeductionRow, status: RecurringDeductionStatus) {
   return {
@@ -48,9 +46,6 @@ function StatusCell({ row }: { row: RecurringDeductionRow }) {
       onStatusChange={async (status) => {
         await updateRecurringDeduction(deductionStatusInput(row, status));
         await queryClient.invalidateQueries({ queryKey: ["recurring-deduction-list"] });
-        toast.success(
-          status === "Paused" ? translate("Deduction paused") : translate("Deduction resumed"),
-        );
       }}
     />
   );

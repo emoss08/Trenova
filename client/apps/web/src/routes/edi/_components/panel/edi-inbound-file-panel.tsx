@@ -46,7 +46,6 @@ export function InboundFilePanel({
   const reprocessMutation = useApiMutation({
     mutationFn: (fileId: string) => apiService.ediService.reprocessInboundFile(fileId),
     onSuccess: async () => {
-      toast.success(t("Inbound file reprocessed"));
       await invalidateEDIInboundFiles(queryClient, row?.id);
     },
     onError: () => toast.error(t("Failed to reprocess inbound file")),

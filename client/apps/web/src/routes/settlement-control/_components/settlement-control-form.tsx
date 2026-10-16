@@ -26,7 +26,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export default function SettlementControlForm() {
   const t = useT();
@@ -76,7 +75,6 @@ export default function SettlementControlForm() {
         escrowInterestFrequencyMonths: values.escrowInterestFrequencyMonths,
       }),
     onSuccess: (_, values) => {
-      toast.success(t("Settlement control updated"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["settlement-control"] });
     },

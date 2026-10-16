@@ -273,7 +273,6 @@ describe("TenderLivePanel counter-offers", () => {
       expect(onRecordResponse).toHaveBeenCalledWith({
         offerId: "tof_01",
         payload: { action: "Accept", declineReason: "", counterRate: "", counterNote: "" },
-        counterDecision: true,
       }),
     );
   });
@@ -316,7 +315,6 @@ describe("TenderLivePanel counter-offers", () => {
           counterRate: "",
           counterNote: "",
         },
-        counterDecision: true,
       }),
     );
   });

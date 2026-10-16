@@ -132,7 +132,6 @@ export function InvoiceApprovalPage() {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success(t("Adjustment approved"));
       setShowRejectForm(false);
     },
     onError: () => toast.error(t("Failed to approve invoice adjustment")),
@@ -146,7 +145,6 @@ export function InvoiceApprovalPage() {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       rejectForm.reset();
       setShowRejectForm(false);
-      toast.success(t("Adjustment rejected"));
     },
   });
 

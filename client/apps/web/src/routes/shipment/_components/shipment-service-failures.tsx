@@ -124,7 +124,6 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       });
     },
     onSuccess: () => {
-      toast.success(t("Service failure updated"));
       void queryClient.invalidateQueries({ queryKey: ["serviceFailure"] });
       void queryClient.invalidateQueries(serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });

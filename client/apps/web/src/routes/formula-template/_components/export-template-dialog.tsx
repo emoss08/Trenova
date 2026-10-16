@@ -49,10 +49,6 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
         const exportData = buildTemplateExport(fullTemplate, { versions, testCases });
         const filename = getExportFilename(fullTemplate, includeVersionHistory);
         downloadJson(exportData, filename);
-
-        toast.success(t("Template exported successfully"), {
-          description: filename,
-        });
         onOpenChange(false);
       })
       .catch(() => {

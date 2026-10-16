@@ -69,7 +69,6 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
   const startReview = useMutation({
     mutationFn: () => startSettlementDisputeReview(disputeId),
     onSuccess: async () => {
-      toast.success(t("Dispute moved to review"));
       await invalidate();
     },
     onError: (error: Error) => toast.error(error.message || translate("Failed to start review")),
@@ -215,7 +214,6 @@ function ResolveForm({
             : undefined,
       }),
     onSuccess: async () => {
-      toast.success(approve ? translate("Dispute resolved") : translate("Dispute denied"));
       await onDone();
       onClose();
     },

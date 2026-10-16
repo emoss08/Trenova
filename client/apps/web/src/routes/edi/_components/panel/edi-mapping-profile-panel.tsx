@@ -57,7 +57,6 @@ export function MappingProfilePanel({
         ? apiService.ediService.saveMappingProfileItems(data.id, [item])
         : apiService.ediService.saveMappingProfile(partnerId, [item]),
     onSuccess: async () => {
-      toast.success(t("Mapping saved"));
       setDraft((current) => ({ ...emptyDraft, entityType: current.entityType }));
       await Promise.all([
         queryClient.invalidateQueries({
@@ -74,7 +73,6 @@ export function MappingProfilePanel({
         ? apiService.ediService.deleteMappingProfileItem(data.id, itemId)
         : apiService.ediService.deleteMappingItem(partnerId, itemId),
     onSuccess: async () => {
-      toast.success(t("Mapping deleted"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: edi.mappingProfile(partnerId).queryKey,

@@ -68,9 +68,6 @@ export function OrderLegsSection() {
     mutationFn: (shipmentId: string) => detachOrderShipment(orderId!, shipmentId),
     onSuccess: () => {
       invalidateOrders();
-      toast.success(t("Leg removed"), {
-        description: t("The shipment has been moved onto its own order."),
-      });
     },
     onError: (error) =>
       toast.error(t("Failed to remove leg"), {

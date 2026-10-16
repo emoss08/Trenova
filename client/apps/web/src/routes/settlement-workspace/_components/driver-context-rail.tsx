@@ -148,7 +148,6 @@ function UnsettledPaySection({
         payEventIds: [payEventId],
       }),
     onSuccess: () => {
-      toast.success(t("Pay event added to the settlement"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Failed to add pay event")),
@@ -157,7 +156,6 @@ function UnsettledPaySection({
   const releaseMutation = useMutation({
     mutationFn: (payEventId: string) => releaseDriverPayEvent(payEventId),
     onSuccess: () => {
-      toast.success(t("Hold released — the event will settle normally"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Failed to release hold")),
@@ -279,7 +277,6 @@ function HoldDialog({
     mutationFn: () =>
       holdDriverPayEvent({ payEventId: event?.id as string, reason: reason.trim() }),
     onSuccess: () => {
-      toast.success(t("Pay event held — it will skip settlements until released"));
       setReason("");
       onOpenChange(false);
       onChanged();
@@ -343,12 +340,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
         startDate: earning.startDate,
         endDate: earning.endDate ?? undefined,
       }),
-    onSuccess: (_updated, earning) => {
-      toast.success(
-        earning.status === "Paused"
-          ? translate("Earning resumed")
-          : translate("Earning paused — upcoming settlements will skip it"),
-      );
+    onSuccess: () => {
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Failed to update earning")),
@@ -444,12 +436,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
         startDate: deduction.startDate,
         endDate: deduction.endDate ?? undefined,
       }),
-    onSuccess: (_updated, deduction) => {
-      toast.success(
-        deduction.status === "Paused"
-          ? translate("Deduction resumed")
-          : translate("Deduction paused — upcoming settlements will skip it"),
-      );
+    onSuccess: () => {
       onChanged();
     },
     onError: (error: Error) =>

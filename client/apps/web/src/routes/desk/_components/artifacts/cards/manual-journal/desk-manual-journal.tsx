@@ -13,7 +13,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { CardActionButton } from "../../record-card/card-action";
 import {
   CardEquation,
@@ -168,12 +167,7 @@ function ManualJournalCard({
   };
   const submit = useApiMutation<ManualJournal, undefined>({
     mutationFn: () => apiService.manualJournalService.submit(id),
-    onSuccess: (saved) => {
-      toast.success(
-        saved.status === "Approved"
-          ? t("{0} submitted and approved", number)
-          : t("{0} submitted for approval", number),
-      );
+    onSuccess: () => {
       invalidate();
     },
     resourceName: "Manual Journal",
@@ -189,7 +183,6 @@ function ManualJournalCard({
       }
     },
     onSuccess: () => {
-      toast.success(t("{0} approved and posted", number));
       invalidate();
     },
     resourceName: "Manual Journal",
@@ -197,7 +190,6 @@ function ManualJournalCard({
   const post = useApiMutation<ManualJournal, undefined>({
     mutationFn: () => apiService.manualJournalService.post(id),
     onSuccess: () => {
-      toast.success(t("{0} is posted", number));
       invalidate();
     },
     resourceName: "Manual Journal",
@@ -205,7 +197,6 @@ function ManualJournalCard({
   const reject = useApiMutation<ManualJournal, string>({
     mutationFn: (reason) => apiService.manualJournalService.reject(id, reason),
     onSuccess: () => {
-      toast.success(t("{0} is rejected", number));
       setAsking(null);
       invalidate();
     },
@@ -214,7 +205,6 @@ function ManualJournalCard({
   const cancel = useApiMutation<ManualJournal, string>({
     mutationFn: (reason) => apiService.manualJournalService.cancel(id, reason),
     onSuccess: () => {
-      toast.success(t("{0} is cancelled", number));
       setAsking(null);
       invalidate();
     },

@@ -21,7 +21,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { DocumentTypeForm } from "./document-type-form";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -116,9 +115,6 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Document Type updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: ["document-type-list"] });
 
       const action = variables.action;

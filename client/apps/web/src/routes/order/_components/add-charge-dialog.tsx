@@ -126,7 +126,6 @@ export function AddChargeDialog({
     },
     onSuccess: () => {
       invalidateOrders();
-      toast.success(isEditing ? translate("Charge updated") : translate("Charge added"));
       onOpenChange(false);
     },
     onError: (error) =>

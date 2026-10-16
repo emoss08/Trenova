@@ -15,7 +15,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { PlayIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { integrationSettingsPath, monitoringHealth } from "./monitoring-health";
 
 export type ProviderStatusProps = {
@@ -36,9 +35,6 @@ export function ProviderStatus({ status, canManage }: ProviderStatusProps) {
     mutationFn: resumeCarrierIntelMonitoring,
     resourceName: "Carrier monitoring",
     onSuccess: async () => {
-      toast.success(t("Monitoring resumed"), {
-        description: t("Paused feeds poll again on their next scheduled run."),
-      });
       await queryClient.invalidateQueries({
         queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       });

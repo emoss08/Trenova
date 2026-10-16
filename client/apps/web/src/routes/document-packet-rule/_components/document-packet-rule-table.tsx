@@ -56,7 +56,6 @@ export default function DocumentPacketRuleTable() {
       await service.delete(id);
     },
     onSuccess: () => {
-      toast.success(t("Document packet rule deleted"));
       void queryClient.invalidateQueries({
         queryKey: ["document-packet-rule-list"],
       });

@@ -21,7 +21,6 @@ import {
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { Lock01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { handleIftaReturnError, invalidateIftaReturn } from "./queries";
 
 type FinalizeReturnDialogProps = {
@@ -45,9 +44,6 @@ export function FinalizeReturnDialog({
   const { mutate, isPending } = useMutation({
     mutationFn: () => finalizeIftaReturn(ret.id, ret.version),
     onSuccess: async () => {
-      toast.success(t("Return finalized"), {
-        description: t("The worksheet is locked. Reopening it takes a reason, which is audited."),
-      });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
     },

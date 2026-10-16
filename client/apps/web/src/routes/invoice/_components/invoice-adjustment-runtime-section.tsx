@@ -204,9 +204,7 @@ function InvoiceAdjustmentLatestCard({
         toast.error(t("The adjustment still cannot run"), {
           description: adjustment.executionError || undefined,
         });
-        return;
       }
-      toast.success(isRetry ? t("Adjustment ran") : t("Adjustment approved"));
     },
     onError: () => toast.error(t("Failed to approve invoice adjustment")),
   });
@@ -224,7 +222,6 @@ function InvoiceAdjustmentLatestCard({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
-      toast.success(isRetry ? t("Adjustment closed without changes") : t("Adjustment rejected"));
       approvalForm.reset();
       setShowRejectForm(false);
     },

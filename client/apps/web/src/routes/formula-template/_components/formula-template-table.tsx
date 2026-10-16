@@ -167,11 +167,6 @@ export default function FormulaTemplatesDataTable() {
         confirmInUse: archiveInUse !== null,
       })
       .then(() => {
-        toast.success(
-          ids.length === 1
-            ? translate("Formula template archived")
-            : translate("Formula templates archived"),
-        );
         closeArchiveDialog();
       })
       .catch((error: unknown) => {
@@ -251,12 +246,6 @@ export default function FormulaTemplatesDataTable() {
         const exportData = buildBulkExport(templates, testCasesByTemplateId);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
-        toast.success(
-          t("{0, plural, one {Exported # template} other {Exported # templates}}", rows.length),
-          {
-            description: filename,
-          },
-        );
       } catch {
         toast.error(t("Export failed"), {
           description: t("Could not export the selected templates. Please try again."),
@@ -279,7 +268,6 @@ export default function FormulaTemplatesDataTable() {
         templateIds: ids,
       })
       .then(() => {
-        toast.success(t("Templates duplicated successfully"));
         setIsDuplicateDialogOpen(false);
         setPendingDuplicateRows([]);
       })

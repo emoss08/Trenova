@@ -47,7 +47,6 @@ const ACTION_CONFIG: Record<
       description: string;
       confirmLabel: string;
       loadingLabel: string;
-      successMessage: string;
       failureTitle: string;
       failureFallback: string;
       commentLabel: string;
@@ -63,7 +62,6 @@ const ACTION_CONFIG: Record<
       description: "Send this template to a reviewer for approval before it can be activated.",
       confirmLabel: "Submit for review",
       loadingLabel: "Submitting...",
-      successMessage: "Template submitted for review",
       failureTitle: "Could not submit template",
       failureFallback: "Failed to submit the template.",
       commentLabel: "Comment (optional)",
@@ -79,7 +77,6 @@ const ACTION_CONFIG: Record<
         "Approving makes this content the one that rates shipments, from now or from the date you choose.",
       confirmLabel: "Approve",
       loadingLabel: "Approving...",
-      successMessage: "Template approved and activated",
       failureTitle: "Could not approve template",
       failureFallback: "Failed to approve the template.",
       commentLabel: "Comment (optional)",
@@ -95,7 +92,6 @@ const ACTION_CONFIG: Record<
         "Rejecting closes this review round. A template that was approved before returns to draft and its approved content keeps billing; one that never was is archived. Use Request Changes to send it back to the author instead.",
       confirmLabel: "Reject",
       loadingLabel: "Rejecting...",
-      successMessage: "Template rejected",
       failureTitle: "Could not reject template",
       failureFallback: "Failed to reject the template.",
       commentLabel: "Comment (required)",
@@ -111,7 +107,6 @@ const ACTION_CONFIG: Record<
         "Send the template back to its author with what needs fixing. The round stays open, so their resubmission continues this review.",
       confirmLabel: "Request changes",
       loadingLabel: "Sending...",
-      successMessage: "Changes requested; the author has been notified",
       failureTitle: "Could not request changes on template",
       failureFallback: "Failed to request changes on the template.",
       commentLabel: "What needs to change (required)",
@@ -181,7 +176,9 @@ export function ApprovalActionDialog({
       }
     },
     onSuccess: () => {
-      toast.success(copy.successMessage);
+      if (action === "requestChanges") {
+        toast.success(t("Changes requested; the author has been notified"));
+      }
       void invalidateFormulaTemplate(queryClient);
       onOpenChange(false);
     },

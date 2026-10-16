@@ -235,24 +235,24 @@ function InvoiceCard({
 
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<"post" | "void" | null>(null);
-  const settle = (done: string) => {
-    invalidateInvoiceQueries(queryClient);
-    toast.success(done);
-  };
+  const settle = () => invalidateInvoiceQueries(queryClient);
   const sendEmail = useApiMutation({
     resourceName: "invoice",
     mutationFn: () => apiService.invoiceService.send(id),
-    onSuccess: () => settle(t("{0} send attempted", record.number)),
+    onSuccess: () => settle(),
   });
   const makePdf = useApiMutation({
     resourceName: "invoice PDF",
     mutationFn: () => apiService.invoiceService.generatePdf(id),
-    onSuccess: () => settle(t("{0} PDF generation started", record.number)),
+    onSuccess: () => {
+      settle();
+      toast.success(t("{0} PDF generation started", record.number));
+    },
   });
   const sendEdi = useApiMutation({
     resourceName: "invoice EDI",
     mutationFn: () => sendInvoiceEdi(id, record.ediSendPlan.status === "Sent"),
-    onSuccess: () => settle(t("EDI 210 for {0} queued", record.number)),
+    onSuccess: () => settle(),
   });
   const busy = sendEmail.isPending || makePdf.isPending || sendEdi.isPending;
 

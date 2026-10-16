@@ -43,7 +43,6 @@ export function ScriptLibraryEditor() {
 
   const saveScriptsMutation = useSaveEDITemplateScriptsMutation({
     onSuccess: async () => {
-      toast.success(t("Script libraries saved"));
       clearScriptsDirty();
       await invalidateTemplateQueries();
     },

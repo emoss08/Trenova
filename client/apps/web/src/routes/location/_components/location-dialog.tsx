@@ -30,7 +30,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import type { z } from "zod";
 import { LocationForm } from "./location-form";
 import { LocationGeofenceMap } from "./location-geofence-editor";
@@ -122,9 +121,6 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
   >({
     mutationFn: async ({ values }) => api.post<Location>(URL, values),
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved."), {
-        description: t("Location created successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
       if (isPopout) {
@@ -252,9 +248,6 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Location updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
       if (isPopout) {

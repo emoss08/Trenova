@@ -44,7 +44,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 const OPEN_FORM_ID = "invoice-dispute-open-form";
 const RESOLVE_FORM_ID = "invoice-dispute-resolve-form";
@@ -268,7 +267,6 @@ function OpenDisputeDialog({
       }),
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("Dispute opened on {0}", invoice.number));
       onOpenChange(false);
     },
   });
@@ -381,7 +379,6 @@ function ResolveDisputeDialog({
       }),
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("Dispute resolved"));
       onOpenChange(false);
     },
   });
@@ -468,7 +465,6 @@ function WithdrawDisputeDialog({
       withdrawInvoiceDispute({ disputeId: dispute.id, notes: notes.trim() || null }),
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("Dispute withdrawn"));
       onOpenChange(false);
     },
   });

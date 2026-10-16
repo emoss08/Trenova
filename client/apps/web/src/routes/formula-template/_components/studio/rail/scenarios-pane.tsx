@@ -120,7 +120,6 @@ function ScenarioRow({ scenario, onDelete }: { scenario: StudioScenario; onDelet
     setWhyOpen(false);
     try {
       await scenarios.accept(scenario.id, amount);
-      toast(t("“{0}” now expects {1}", scenario.name, formatMoney(amount)));
     } catch (error) {
       toast.error(t("Could not update the scenario"), { description: describeApiError(error) });
     }
@@ -270,7 +269,6 @@ export function ScenariosPane() {
   const remove = useMutation({
     mutationFn: (scenario: StudioScenario) => scenarios.remove(scenario.id),
     onSuccess: () => {
-      toast(t("Scenario deleted"));
       setPendingDelete(null);
     },
     onError: (error) =>

@@ -378,7 +378,6 @@ function InvoiceDeliveryTab({
     mutationFn: () => apiService.invoiceService.generatePdf(invoice.id),
     onSuccess: () => {
       invalidateInvoiceDelivery();
-      toast.success(t("{0} PDF generation started", invoice.number));
     },
     onError: () => toast.error(t("Failed to generate invoice PDF")),
   });
@@ -391,7 +390,6 @@ function InvoiceDeliveryTab({
       void queryClient.invalidateQueries({
         queryKey: invoiceQueries.emailAttempts(invoice.id).queryKey,
       });
-      toast.success(t("{0} send attempted", invoice.number));
     },
     onError: (error) =>
       toast.error(error instanceof ApiRequestError ? error.message : t("Failed to send invoice")),

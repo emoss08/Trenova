@@ -80,7 +80,6 @@ function CreatePartnerPanel({
     form: externalForm,
     resourceName: "EDI Partner",
     onSuccess: async () => {
-      toast.success(t("External EDI partner created"));
       externalForm.reset(getPartnerFormDefaults());
       onOpenChange(false);
       await invalidateEDIPartners(queryClient);
@@ -305,7 +304,6 @@ function PartnerEditPanel({
     form,
     resourceName: "EDI Partner",
     onSuccess: async () => {
-      toast.success(t("EDI partner updated"));
       await invalidateEDIPartners(queryClient);
     },
   });

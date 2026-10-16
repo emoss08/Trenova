@@ -196,7 +196,6 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
   const writeOffMutation = useMutation({
     mutationFn: () => writeOffPayAdvance({ advanceId: row.id, reason }),
     onSuccess: () => {
-      toast.success(t("Advance written off"));
       void queryClient.invalidateQueries({ queryKey: ["pay-advance-list"] });
       setWriteOffOpen(false);
       onClose();

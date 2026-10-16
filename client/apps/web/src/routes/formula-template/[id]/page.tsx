@@ -21,7 +21,6 @@ import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
-import { toast } from "sonner";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 import { StudioSkeleton } from "../_components/studio/studio-skeletons";
@@ -82,17 +81,6 @@ export function FormulaStudioEditPage() {
       return api.put<FormulaTemplate>(`/formula-templates/${id}/`, values);
     },
     onSuccess: async (updated) => {
-      if (template && updated.status !== template.status && updated.status === "Draft") {
-        toast(t("Saved as v{0} · back to Draft", updated.currentVersionNumber ?? 1), {
-          description: t("The approved version keeps rating shipments until this one is approved."),
-        });
-      } else {
-        toast(
-          template && updated.currentVersionNumber !== template.currentVersionNumber
-            ? t("Saved as v{0}", updated.currentVersionNumber ?? 1)
-            : t("Changes saved"),
-        );
-      }
       // Reseat the form on the saved record right away so the dirty flag —
       // and with it the unsaved-changes guard — clears without waiting for
       // the query refetch.

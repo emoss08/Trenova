@@ -28,7 +28,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
 type SplitMoveDialogProps = {
   open: boolean;
@@ -289,7 +288,6 @@ export function SplitMoveDialog({
     onSuccess: (data: SplitMoveResponse) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onSplit(data);
-      toast.success(t("Move split successfully"));
     },
   });
 

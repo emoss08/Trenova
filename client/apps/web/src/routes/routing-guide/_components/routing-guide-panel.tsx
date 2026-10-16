@@ -28,7 +28,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { RoutingGuideForm } from "./routing-guide-form";
 
 const QUERY_KEY = "routing-guide-list";
@@ -41,7 +40,6 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
   const deleteMutation = useMutation({
     mutationFn: (guideId: string) => apiService.routingGuideService.delete(guideId),
     onSuccess: () => {
-      toast.success(t("Routing guide deleted"));
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onDeleted();
     },

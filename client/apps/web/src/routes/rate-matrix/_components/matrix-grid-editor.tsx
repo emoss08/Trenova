@@ -149,7 +149,6 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
     mutationFn: () => apiService.rateMatrixService.replaceCells(rateMatrixId as string, cells),
     onSuccess: async () => {
       setDirty(false);
-      toast.success(t("Rates saved"));
       await queryClient.invalidateQueries({ queryKey: ["rate-matrix-cells", rateMatrixId] });
     },
     onError: () => toast.error(t("Could not save the rates")),

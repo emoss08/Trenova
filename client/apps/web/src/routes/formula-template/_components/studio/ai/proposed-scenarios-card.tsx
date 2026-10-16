@@ -30,7 +30,7 @@ export function ProposedScenariosCard({ scenarios: proposed }: { scenarios: Pric
   const add = async (list: PricedScenario[]) => {
     setBusy(true);
     try {
-      const count = await scenarios.add(
+      await scenarios.add(
         list.map((scenario) => ({
           name: scenario.name,
           description: scenario.description,
@@ -39,11 +39,6 @@ export function ProposedScenariosCard({ scenarios: proposed }: { scenarios: Pric
         })),
       );
       setAdded((previous) => new Set([...previous, ...list.map((scenario) => scenario.name)]));
-      toast(
-        count > 1
-          ? t("{0} scenarios added", count)
-          : t("Scenario “{0}” added", list[0]?.name ?? ""),
-      );
     } catch (error) {
       toast.error(t("Could not add the scenario"), {
         description: error instanceof Error ? error.message : undefined,

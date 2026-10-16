@@ -47,14 +47,6 @@ const MAX_UNDO_DEPTH = 25;
 
 function describeResult(result: DispatchBulkAssignResult, action: "assigned" | "unassigned"): void {
   if (result.failed === 0) {
-    toast.success(
-      action === "assigned"
-        ? translate("{0, plural, one {Assigned # move} other {Assigned # moves}}", result.succeeded)
-        : translate(
-            "{0, plural, one {Unassigned # move} other {Unassigned # moves}}",
-            result.succeeded,
-          ),
-    );
     return;
   }
 
@@ -70,25 +62,7 @@ function describeResult(result: DispatchBulkAssignResult, action: "assigned" | "
 export type RecordOfferResponseParams = {
   offerId: string;
   payload: RecordTenderResponsePayloadInput;
-  /** The offer is a carrier's counter, so Accept takes it and Decline refuses it. */
-  counterDecision?: boolean;
 };
-
-export function describeRecordedResponse(params: RecordOfferResponseParams): string {
-  if (params.counterDecision) {
-    return params.payload.action === "Accept"
-      ? translate("Counter-offer taken")
-      : translate("Counter-offer refused");
-  }
-  switch (params.payload.action) {
-    case "Accept":
-      return translate("Acceptance recorded");
-    case "Decline":
-      return translate("Decline recorded");
-    case "Counter":
-      return translate("Counter-offer recorded");
-  }
-}
 
 const MAX_TENDER_ERROR_MESSAGES = 3;
 
@@ -177,10 +151,7 @@ export function useDispatchActions() {
   const carrierAssignMutation = useMutation({
     mutationFn: (input: DispatchAssignMoveToCarrierInput) =>
       assignDispatchMoveToCarrierGraphQL(input),
-    onSuccess: (assignment) => {
-      toast.success(t("Move assigned to carrier"), {
-        description: assignment.carrier?.name ?? undefined,
-      });
+    onSuccess: () => {
       invalidateBoard();
     },
     onError: (error: Error) =>
@@ -191,7 +162,6 @@ export function useDispatchActions() {
     mutationFn: (params: { moveId: string; reason: string }) =>
       cancelDispatchCarrierAssignmentGraphQL(params.moveId, params.reason),
     onSuccess: () => {
-      toast.success(t("Carrier assignment canceled"));
       invalidateBoard();
     },
     onError: (error: Error) =>
@@ -261,9 +231,6 @@ export function useDispatchActions() {
     mutationFn: (params: { tenderId: string; reason: string }) =>
       apiService.tenderService.cancel(params.tenderId, params.reason),
     onSuccess: () => {
-      toast.success(t("Tender canceled"), {
-        description: t("Outstanding offers have been withdrawn."),
-      });
       invalidateTenders();
     },
     onError: (error: unknown) => describeTenderError("Could not cancel the tender", error),
@@ -272,8 +239,7 @@ export function useDispatchActions() {
   const recordOfferResponseMutation = useMutation({
     mutationFn: (params: RecordOfferResponseParams) =>
       apiService.tenderService.recordResponse(params.offerId, params.payload),
-    onSuccess: (_data, params) => {
-      toast.success(describeRecordedResponse(params));
+    onSuccess: () => {
       invalidateTenders();
     },
     onError: (error: unknown) => describeTenderError("Could not record the response", error),

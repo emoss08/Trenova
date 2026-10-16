@@ -94,7 +94,7 @@ describe("DeleteIftaMileageEntryDialog", () => {
     await waitFor(() => {
       expect(onDeleted).toHaveBeenCalledTimes(1);
     });
-    expect(toastSuccess).toHaveBeenCalledTimes(1);
+    expect(toastSuccess).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 

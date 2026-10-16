@@ -21,7 +21,6 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type FieldErrors } from "react-hook-form";
-import { toast } from "sonner";
 import { ChecklistReorder } from "./checklist-reorder";
 import { ChecklistStepRow } from "./checklist-step-row";
 import {
@@ -192,11 +191,6 @@ export function ChecklistEditor({
     mutationFn: () => apiService.caseChecklistService.remove(template.id),
     resourceName: "Case Checklist",
     onSuccess: async () => {
-      toast.success(
-        isCustomer
-          ? t("{0} now uses your organization's checklist", customerName)
-          : t("Your organization uses Trenova's default checklist again"),
-      );
       await refresh();
       if (isCustomer) {
         onLeave();

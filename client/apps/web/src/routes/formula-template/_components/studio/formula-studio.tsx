@@ -383,7 +383,6 @@ function StudioLayout() {
       const exportData = buildTemplateExport(template, { testCases });
       const filename = getExportFilename(template, false);
       downloadJson(exportData, filename);
-      toast(t("Template exported"), { description: filename });
     } catch {
       toast.error(t("Export failed"), {
         description: t("Could not export the template. Please try again."),
@@ -426,9 +425,7 @@ function StudioLayout() {
             {rail}
           </ScrollArea>
         ) : (
-          <div
-            className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]"
-          >
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
             <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />
             <ScrollArea maskVariant="background" viewportRef={formViewport} className="min-h-0">
               <FormColumn />

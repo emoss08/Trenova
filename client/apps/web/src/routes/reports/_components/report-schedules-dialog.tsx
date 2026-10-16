@@ -918,7 +918,6 @@ export function ReportSchedulesDialog({
 
     const callbacks = {
       onSuccess: () => {
-        toast.success(t("Schedule saved"));
         closeForm();
       },
       onError: (error: unknown) =>
@@ -937,8 +936,6 @@ export function ReportSchedulesDialog({
     updateSchedule.mutate(
       { ...scheduleToInput(schedule), enabled, id: schedule.id, version: schedule.version },
       {
-        onSuccess: () =>
-          toast.success(enabled ? translate("Schedule enabled") : translate("Schedule disabled")),
         onError: (error) =>
           toast.error(graphQLErrorMessage(error, "Failed to update the schedule")),
         onSettled: () => setTogglingId(null),
@@ -949,7 +946,6 @@ export function ReportSchedulesDialog({
   const handleDelete = (schedule: ReportSchedule) => {
     setDeletingId(schedule.id);
     deleteSchedule.mutate(schedule.id, {
-      onSuccess: () => toast.success(t("Schedule deleted")),
       onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to delete the schedule")),
       onSettled: () => setDeletingId(null),
     });

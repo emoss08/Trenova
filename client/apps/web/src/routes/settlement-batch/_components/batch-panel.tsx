@@ -181,7 +181,6 @@ function BatchDetail({ batchId }: { batchId: string }) {
       anchor.download = `settlement-batch-${batchId}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast.success(t("Payroll CSV downloaded"));
     },
     onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });

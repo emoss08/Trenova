@@ -138,12 +138,6 @@ function DriverSummary({
     );
     setTendered(result.tendered.length);
     void setUrl({ capacity: "Carrier" });
-    toast.success(
-      t(
-        "Tendered {0, plural, one {# load} other {# loads}} to your carrier network",
-        result.tendered.length,
-      ),
-    );
   };
 
   return (
@@ -336,15 +330,10 @@ function CapacityDock({
     if (unit.kind === "Driver") {
       actions.assign.mutate(
         [{ moveId: match.moveId, workerId: unit.id, tractorId: unit.tractorId }],
-        {
-          onSuccess: () =>
-            toast.success(t("{0} assigned to {1}", unit.name, match.proNumber ?? "")),
-          onSettled: done,
-        },
+        { onSettled: done },
       );
     } else {
       actions.tender.mutate([{ shipmentId: match.shipmentId, carrierId: unit.id }], {
-        onSuccess: () => toast.success(t("Tendered {0} to {1}", match.proNumber ?? "", unit.name)),
         onSettled: done,
       });
     }

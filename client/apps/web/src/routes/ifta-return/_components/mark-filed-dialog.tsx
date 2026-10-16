@@ -20,7 +20,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { getEndOfDay, getTodayDate } from "@trenova/shared/lib/date";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { invalidateIftaReturn, invalidateOnVersionMismatch } from "./queries";
 
@@ -103,11 +102,6 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
         filingReference: values.filingReference,
       }),
     onSuccess: async () => {
-      toast.success(t("Return marked filed"), {
-        description: t(
-          "It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed.",
-        ),
-      });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
     },

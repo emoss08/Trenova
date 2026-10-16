@@ -64,10 +64,8 @@ export default function ShipmentTypeTable() {
         queryKey: ["shipment-type-list"],
         refetchType: "all",
       });
-
-      toast.success(t("Shipment Type updated"));
     },
-    [queryClient, t],
+    [queryClient],
   );
 
   const dockActions = useMemo<DockAction<ShipmentTypeRow>[]>(

@@ -76,7 +76,7 @@ describe("InvoiceVoidDialog", () => {
       }),
     );
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
-    expect(mocks.toastSuccess).toHaveBeenCalled();
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("keeps the dialog open and says so when the reversal awaits an approver", async () => {

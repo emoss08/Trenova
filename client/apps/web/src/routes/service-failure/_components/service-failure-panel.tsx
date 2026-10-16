@@ -21,7 +21,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { ServiceFailureForm } from "./service-failure-form";
 import {
   ServiceFailureStopContext,
@@ -131,7 +130,6 @@ export function ServiceFailurePanel({
   >({
     mutationFn: async ({ values }) => apiService.serviceFailureService.update(values.id, values),
     onSuccess: (_data, variables) => {
-      toast.success(t("Service failure updated"));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({
         queryKey: ["serviceFailure", "list-by-shipment", row?.shipmentId],

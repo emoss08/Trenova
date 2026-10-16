@@ -110,7 +110,6 @@ function TemplateDesignerHeader() {
 
   const createDraftMutation = useCreateEDITemplateDraftMutation({
     onSuccess: async (version) => {
-      toast.success(t("Draft version created"));
       resetDraftState();
       patchTemplateUrlState({ versionId: version.id });
       await invalidateTemplateQueries();
@@ -121,7 +120,6 @@ function TemplateDesignerHeader() {
   const certifyMutation = useValidateAndCertifyEDITemplateMutation({
     onSuccess: async ({ validation }) => {
       setDiagnostics(validation.diagnostics);
-      toast.success(t("Template version certified"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },
@@ -130,7 +128,6 @@ function TemplateDesignerHeader() {
 
   const activateMutation = useActivateEDITemplateMutation({
     onSuccess: async () => {
-      toast.success(t("Template version activated"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },
@@ -283,7 +280,6 @@ function TemplateDesignerTabBar() {
 
   const saveMetadataMutation = useSaveEDITemplateMetadataMutation({
     onSuccess: async () => {
-      toast.success(t("Version metadata saved"));
       clearMetadataDirty();
       await invalidateTemplateQueries();
     },
@@ -292,7 +288,6 @@ function TemplateDesignerTabBar() {
 
   const saveSegmentsMutation = useSaveEDITemplateSegmentsMutation({
     onSuccess: async () => {
-      toast.success(t("Draft segments saved"));
       clearSegmentsDirty();
       await invalidateTemplateQueries();
     },
@@ -364,7 +359,6 @@ function TemplateDesignerFooter() {
 
   const archiveMutation = useArchiveEDITemplateMutation({
     onSuccess: async () => {
-      toast.success(t("Template version archived"));
       clearDirtyState();
       await invalidateTemplateQueries();
     },

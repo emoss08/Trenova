@@ -20,7 +20,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 type ShipmentTransferOwnershipDialogProps = {
   open: boolean;
@@ -58,9 +57,6 @@ export function ShipmentTransferOwnershipDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Ownership transferred"), {
-        description: t("The shipment has been transferred to the new owner."),
-      });
     },
   });
 

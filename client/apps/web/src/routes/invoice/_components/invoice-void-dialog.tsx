@@ -26,7 +26,6 @@ import {
 import { ClockIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 const VOID_FORM_ID = "invoice-void-form";
 
@@ -84,10 +83,8 @@ export function InvoiceVoidDialog({
       onVoided?.(result);
       if (result.pendingApproval) {
         setPending(result);
-        toast.success(t("Void of {0} requested; awaiting reversal approval", invoice.number));
         return;
       }
-      toast.success(t("{0} voided", invoice.number));
       onOpenChange(false);
     },
   });

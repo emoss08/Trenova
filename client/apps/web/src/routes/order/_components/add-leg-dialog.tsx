@@ -63,9 +63,6 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
       ),
     onSuccess: () => {
       invalidateOrders();
-      toast.success(t("{0, plural, one {Leg added} other {# legs added}}", selected.length), {
-        description: t("The shipments have been attached to this order."),
-      });
       handleClose();
     },
     onError: (error) => {

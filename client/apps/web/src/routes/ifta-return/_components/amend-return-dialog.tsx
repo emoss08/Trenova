@@ -17,7 +17,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { invalidateIftaReturn, invalidateOnVersionMismatch } from "./queries";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -67,12 +66,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
     form,
     resourceName: "IFTA Return",
     mutationFn: (values) => amendIftaReturn({ id: ret.id, reason: values.reason.trim() }),
-    onSuccess: async (created) => {
-      toast.success(t("Amendment {0} opened", created.amendmentNumber), {
-        description: t(
-          "It is a fresh draft for the same quarter. The filed return is left exactly as it was.",
-        ),
-      });
+    onSuccess: async () => {
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
     },

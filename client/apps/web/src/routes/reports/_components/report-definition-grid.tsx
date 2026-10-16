@@ -415,7 +415,6 @@ export function ReportDefinitionGrid({
               onClick={() => {
                 if (!deleteTarget) return;
                 deleteDefinition.mutate(deleteTarget.id, {
-                  onSuccess: () => toast.success(t("Report deleted")),
                   onError: (error) =>
                     toast.error(graphQLErrorMessage(error, "Failed to delete the report")),
                 });

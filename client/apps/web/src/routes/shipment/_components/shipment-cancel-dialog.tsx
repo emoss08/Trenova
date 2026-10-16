@@ -15,7 +15,6 @@ import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 type CancelFormValues = {
   cancelReason: string;
@@ -56,9 +55,6 @@ export function ShipmentCancelDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Shipment canceled"), {
-        description: t("The shipment has been canceled."),
-      });
     },
   });
 

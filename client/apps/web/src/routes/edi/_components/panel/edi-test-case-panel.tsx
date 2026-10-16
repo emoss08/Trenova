@@ -69,7 +69,6 @@ function CreateTestCasePanel({
     form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
-      toast.success(t("EDI test case created"));
       form.reset(getTestCaseFormDefaults());
       onOpenChange(false);
       await invalidateEDITestCases(queryClient);
@@ -168,7 +167,6 @@ function TestCaseEditPanel({
     form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
-      toast.success(t("EDI test case updated"));
       await invalidateEDITestCases(queryClient, testCaseId ?? undefined);
     },
   });
@@ -198,7 +196,6 @@ function TestCaseEditPanel({
       return apiService.ediService.deleteTestCase(testCaseId);
     },
     onSuccess: async () => {
-      toast.success(t("EDI test case deleted"));
       onOpenChange(false);
       await invalidateEDITestCases(queryClient, testCaseId ?? undefined);
     },

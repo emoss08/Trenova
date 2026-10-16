@@ -144,11 +144,8 @@ export function VersionHistoryPanel({
       const exportData = buildVersionExport(template, version);
       const filename = getVersionExportFilename(template, version.versionNumber);
       downloadJson(exportData, filename);
-      toast.success(t("Version exported"), {
-        description: t("Downloaded v{0} as JSON", version.versionNumber),
-      });
     },
-    [template, t],
+    [template],
   );
 
   const handleRollbackClick = (version: FormulaTemplateVersion) => {
@@ -169,10 +166,6 @@ export function VersionHistoryPanel({
         changeMessage: `Rolled back to version ${pendingRollbackVersion.versionNumber}`,
       })
       .then((updatedTemplate) => {
-        toast.success(t("Rollback successful"), {
-          description: t("Restored to version {0}", pendingRollbackVersion.versionNumber),
-        });
-
         void invalidateFormulaTemplate(queryClient);
         setRollbackDialogOpen(false);
         setPendingRollbackVersion(null);
@@ -436,14 +429,8 @@ function VersionItem({
         version.versionNumber,
         effectiveFrom,
       ),
-    onSuccess: (_data, effectiveFrom) => {
+    onSuccess: () => {
       void invalidateFormulaTemplate(queryClient);
-      toast.success(effectiveFrom === null ? t("Schedule cleared") : t("Activation scheduled"), {
-        description:
-          effectiveFrom === null
-            ? t("v{0} bills from now", version.versionNumber)
-            : t("v{0} activates {1}", version.versionNumber, formatToUserTimezone(effectiveFrom)),
-      });
       setScheduleDialogOpen(false);
     },
     onError: (error) => {
@@ -470,7 +457,6 @@ function VersionItem({
       apiService.formulaTemplateService.updateVersionTags(templateId, version.versionNumber, tags),
     onSuccess: () => {
       void invalidateFormulaTemplate(queryClient);
-      toast.success(t("Tags updated"));
       setTagsDialogOpen(false);
     },
     onError: () => {

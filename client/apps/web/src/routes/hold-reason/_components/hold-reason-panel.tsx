@@ -19,7 +19,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { HoldReasonForm } from "./hold-reason-form";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -119,9 +118,6 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Hold Reason updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: ["hold-reason-list"] });
 
       const action = variables.action;

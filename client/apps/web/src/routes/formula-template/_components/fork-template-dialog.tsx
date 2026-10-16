@@ -84,10 +84,6 @@ export function ForkTemplateDialog({
     await apiService.formulaTemplateService
       .fork(template.id, values)
       .then((forkedTemplate) => {
-        toast.success(t("Template forked successfully"), {
-          description: t('Created "{0}"', forkedTemplate.name),
-        });
-
         void invalidateFormulaTemplate(queryClient);
         handleClose();
         onForkSuccess?.(forkedTemplate);

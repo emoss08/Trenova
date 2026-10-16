@@ -177,10 +177,7 @@ export function ExpressionSection() {
   // would lose what the parser could not place, and a comment would be dropped.
   const formatted = useCallback(
     (outcome: FormatResult) => {
-      if (outcome.ok) {
-        if (!outcome.changed) toast(t("Already formatted"));
-        return;
-      }
+      if (outcome.ok) return;
       if (outcome.reason === "syntax") {
         toast.warning(t("Fix the syntax first, then format"));
       } else if (outcome.reason === "comments") {

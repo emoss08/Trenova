@@ -65,7 +65,6 @@ export function EDITransferReviewPanel({
         mappings: Object.values(inlineMappings),
       }),
     onSuccess: async () => {
-      toast.success(t("EDI transfer approval started."));
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
     },
@@ -75,7 +74,6 @@ export function EDITransferReviewPanel({
   const rejectMutation = useApiMutation({
     mutationFn: (reason: string) => apiService.ediService.rejectTransfer(transfer!.id, { reason }),
     onSuccess: async () => {
-      toast.success(t("EDI transfer rejected"));
       setRejectDialogOpen(false);
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
@@ -86,7 +84,6 @@ export function EDITransferReviewPanel({
   const cancelMutation = useApiMutation({
     mutationFn: () => apiService.ediService.cancelTransfer(transfer!.id),
     onSuccess: async () => {
-      toast.success(t("EDI transfer canceled"));
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);
     },

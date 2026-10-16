@@ -33,7 +33,6 @@ import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { CalculationReceipt } from "./calculation-receipt";
 import { DisputeDialog, WaiveDialog } from "./occurrence-action-dialogs";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
@@ -278,9 +277,6 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   const approve = useApiMutation<DetentionOccurrence, undefined>({
     mutationFn: () => apiService.detentionService.approve(occurrence.id),
     onSuccess: () => {
-      toast.success(t("Charge approved"), {
-        description: t("The detention charge will post to the shipment."),
-      });
       onDone();
     },
     resourceName: "Detention Occurrence",
@@ -292,13 +288,6 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
     mutationFn: async () => {
       const packet = await apiService.detentionService.disputePacket(occurrence.id);
       return copy(JSON.stringify(packet, null, 2));
-    },
-    onSuccess: () => {
-      toast.success(t("Dispute packet copied"), {
-        description: t(
-          "The full claim file — receipt, evidence, and notices — is on your clipboard.",
-        ),
-      });
     },
     resourceName: "Dispute Packet",
   });

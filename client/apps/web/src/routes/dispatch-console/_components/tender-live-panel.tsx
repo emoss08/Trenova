@@ -580,7 +580,7 @@ export function TenderLivePanel({
   const handleDecideCounter = useCallback(
     (payload: RecordTenderResponsePayload) => {
       if (!deciding) return;
-      void onRecordResponse({ offerId: deciding.offer.id, payload, counterDecision: true })
+      void onRecordResponse({ offerId: deciding.offer.id, payload })
         .then(() => setDeciding(null))
         .catch(() => {
           // handled by the mutation's onError; the dialog stays open for a retry

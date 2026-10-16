@@ -23,7 +23,6 @@ import { ArrowRightIcon, CheckIcon, XCloseIcon } from "@trenova/shared/component
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SwapsEmpty } from "./scheduling-empty";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 type Scope = "open" | "all";
 
@@ -48,10 +47,7 @@ export function SwapQueue() {
   const { mutate: decide, isPending } = useMutation({
     mutationFn: (input: { id: string; status: "Approved" | "Rejected" }) =>
       transitionShiftSwap(input),
-    onSuccess: (_data, input) => {
-      toast.success(
-        input.status === "Approved" ? translate("Swap approved") : translate("Swap rejected"),
-      );
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [SHIFT_SWAPS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [ROTA_KEY] });
     },

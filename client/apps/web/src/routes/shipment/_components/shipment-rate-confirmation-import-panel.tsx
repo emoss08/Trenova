@@ -282,7 +282,6 @@ export function ShipmentRateConfirmationImportPanel({
           queryKey: ["shipment-import-draft", uploadedDocumentId],
         });
       }
-      toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
       toast.error(t("Failed to restart extraction: {0}", error.message));

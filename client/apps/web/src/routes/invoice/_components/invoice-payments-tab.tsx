@@ -32,7 +32,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CoinsHandIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { ApplyCreditMemoDialog } from "./apply-credit-memo-dialog";
 
 function formatDate(unix: number | null | undefined): string {
@@ -65,7 +64,6 @@ export function InvoicePaymentsTab({
       unapplyCreditMemoApplication({ applicationId, reason: null }),
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("Credit unapplied"));
     },
   });
 

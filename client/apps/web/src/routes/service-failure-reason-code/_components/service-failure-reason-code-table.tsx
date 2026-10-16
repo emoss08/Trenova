@@ -10,7 +10,6 @@ import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, RefreshCcw01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { getColumns } from "./service-failure-reason-code-columns";
 import { ServiceFailureReasonCodePanel } from "./service-failure-reason-code-panel";
 
@@ -28,13 +27,11 @@ export default function ServiceFailureReasonCodeTable() {
 
   const handleArchive = async (row: Row<ServiceFailureReasonCodeRow>) => {
     await apiService.serviceFailureReasonCodeService.archive(row.original.id);
-    toast.success(t("Reason code archived"));
     invalidate();
   };
 
   const handleActivate = async (row: Row<ServiceFailureReasonCodeRow>) => {
     await apiService.serviceFailureReasonCodeService.activate(row.original.id);
-    toast.success(t("Reason code activated"));
     invalidate();
   };
 

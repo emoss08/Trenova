@@ -40,7 +40,6 @@ export default function DistanceOverrideTable() {
       await distanceOverrideService.delete(id);
     },
     onSuccess: () => {
-      toast.success(t("Distance override deleted"));
       void queryClient.invalidateQueries({
         queryKey: ["distance-override-list"],
       });

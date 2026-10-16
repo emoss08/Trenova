@@ -34,7 +34,6 @@ import { AlertTriangleIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { LateChargePreviewTable } from "./_components/late-charge-preview-table";
 
 type FilterValues = {
@@ -132,13 +131,6 @@ export function LateChargesPage() {
       setConfirming(false);
       invalidateInvoiceQueries(queryClient);
       void queryClient.invalidateQueries({ queryKey: ar.lateChargePreview._def });
-      toast.success(
-        t(
-          "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}",
-          run.memosCreated,
-          formatCurrency(run.totalChargeMinor / 100),
-        ),
-      );
     },
   });
 

@@ -1,12 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableDateField } from "@/components/editable-date-field";
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
-import { generateDateOnlyString, toDateFromUnixSeconds } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
 import type { Location } from "@trenova/shared/types/location";
 import type { TrailerRow } from "@/lib/graphql/equipment-table";
@@ -14,11 +12,8 @@ import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 function StatusCell({ row }: { row: TrailerRow }) {
-  const t = useT();
-
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -31,10 +26,8 @@ function StatusCell({ row }: { row: TrailerRow }) {
       await queryClient.invalidateQueries({
         queryKey: ["trailer-list"],
       });
-
-      toast.success(t("Trailer status updated successfully"));
     },
-    [row.id, queryClient, t],
+    [row.id, queryClient],
   );
 
   return (
@@ -47,7 +40,6 @@ function StatusCell({ row }: { row: TrailerRow }) {
 }
 
 function LastInspectionDateCell({ row }: { row: TrailerRow }) {
-  const t = useT();
   const queryClient = useQueryClient();
 
   const handleDateChange = useCallback(
@@ -60,15 +52,8 @@ function LastInspectionDateCell({ row }: { row: TrailerRow }) {
       await queryClient.invalidateQueries({
         queryKey: ["trailer-list"],
       });
-
-      toast.success(
-        t(
-          "Updated last inspection date to {0}",
-          generateDateOnlyString(toDateFromUnixSeconds(newDate)),
-        ),
-      );
     },
-    [row.id, queryClient, t],
+    [row.id, queryClient],
   );
 
   return <EditableDateField date={row.lastInspectionDate} onDateChange={handleDateChange} />;
