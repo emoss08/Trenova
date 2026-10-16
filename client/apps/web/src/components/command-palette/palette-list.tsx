@@ -56,17 +56,39 @@ function SkeletonRows({ rows }: { rows: number }) {
   );
 }
 
+function rowFor(list: HTMLElement, key: string): HTMLElement | null {
+  for (const row of list.querySelectorAll<HTMLElement>("[data-palette-row]")) {
+    if (row.dataset.paletteKey === key) {
+      return row;
+    }
+  }
+  return null;
+}
+
 /**
  * Keeps one fill under whichever row is selected and slides it there, rather
  * than painting each row, so moving through the list reads as one thing
- * moving. It follows the row through anything that moves it: a section
- * loading above, an answer streaming in.
+ * moving. It slides only when the selection moves through a list that stayed
+ * put; when the list itself changes (a key typed, a scope picked, a section
+ * loading above, an answer streaming in) the fill lands under its row at once,
+ * since a slide there would be the fill chasing rows that moved without it.
+ *
+ * The row is found by its key rather than by cmdk's selected mark, which cmdk
+ * writes after this effect runs in the commit that changes the selection.
  */
 function useSelectionFill(
   listRef: React.RefObject<HTMLDivElement | null>,
   fillRef: React.RefObject<HTMLDivElement | null>,
   selectedKey: string,
+  sections: readonly PaletteSection[],
 ) {
+  const placed = useRef<{
+    sections: readonly PaletteSection[] | null;
+    key: string;
+    top: number;
+    height: number;
+  }>({ sections: null, key: "", top: Number.NaN, height: Number.NaN });
+
   useLayoutEffect(() => {
     const list = listRef.current;
     const fill = fillRef.current;
@@ -74,28 +96,48 @@ function useSelectionFill(
       return;
     }
 
-    const place = () => {
-      const row = list.querySelector<HTMLElement>('[cmdk-item][data-selected="true"]');
+    const place = (slide: boolean) => {
+      const last = placed.current;
+      const row = rowFor(list, selectedKey);
       if (!row) {
         fill.style.opacity = "0";
+        placed.current = { sections, key: selectedKey, top: Number.NaN, height: Number.NaN };
         return;
       }
       const listBox = list.getBoundingClientRect();
       const rowBox = row.getBoundingClientRect();
+      const top = rowBox.top - listBox.top;
+      if (fill.style.opacity === "1" && top === last.top && rowBox.height === last.height) {
+        return;
+      }
+      if (!slide) {
+        fill.style.transition = "none";
+      }
       fill.style.opacity = "1";
-      fill.style.transform = `translateY(${rowBox.top - listBox.top}px)`;
+      fill.style.transform = `translateY(${top}px)`;
       fill.style.height = `${rowBox.height}px`;
+      if (!slide) {
+        void fill.offsetHeight;
+        fill.style.transition = "";
+      }
+      placed.current = { sections, key: selectedKey, top, height: rowBox.height };
     };
 
-    place();
-    const observer = new ResizeObserver(place);
+    const listChanged = placed.current.sections !== sections;
+    const keyChanged = placed.current.key !== selectedKey;
+    place(!listChanged && keyChanged);
+    if (listChanged && keyChanged) {
+      rowFor(list, selectedKey)?.scrollIntoView?.({ block: "nearest" });
+    }
+
+    const observer = new ResizeObserver(() => place(false));
     observer.observe(list);
     const sizer = list.firstElementChild;
     if (sizer) {
       observer.observe(sizer);
     }
     return () => observer.disconnect();
-  }, [fillRef, listRef, selectedKey]);
+  }, [fillRef, listRef, sections, selectedKey]);
 }
 
 /**
@@ -121,7 +163,7 @@ export function PaletteList({
   const t = useT();
   const listRef = useRef<HTMLDivElement | null>(null);
   const fillRef = useRef<HTMLDivElement | null>(null);
-  useSelectionFill(listRef, fillRef, selectedKey);
+  useSelectionFill(listRef, fillRef, selectedKey, sections);
 
   return (
     <ScrollArea className="min-h-0 flex-1" maskHeight={0}>

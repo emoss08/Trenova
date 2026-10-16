@@ -199,6 +199,17 @@ describe("recordsFromGroups", () => {
     expect(shipments?.records[1]?.subtitle).toBeUndefined();
   });
 
+  it("gives the same records for the same answer, so rows rebuilt per key keep their record", () => {
+    const groups = [SHIPMENT_GROUP];
+
+    expect(recordsFromGroups(groups).get("shipment")?.records[0]).toBe(
+      recordsFromGroups(groups).get("shipment")?.records[0],
+    );
+    expect(recordsFromGroups([SHIPMENT_GROUP]).get("shipment")?.records[0]).not.toBe(
+      recordsFromGroups(groups).get("shipment")?.records[0],
+    );
+  });
+
   it("takes the index's total when it is larger than the hits it returned", () => {
     expect(recordsFromGroups([SHIPMENT_GROUP]).get("shipment")?.total).toBe(7);
   });

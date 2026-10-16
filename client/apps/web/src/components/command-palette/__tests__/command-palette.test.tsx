@@ -3,6 +3,7 @@ import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import { Profiler } from "react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,13 +11,24 @@ import type { PaletteIntent } from "../palette-model";
 import type { HomeInput, RemoteState } from "../palette-sections";
 import { command, page, record } from "./palette-test-fixtures";
 
-const { runIntent, remoteState, homeState, remoteArgs, ask, globalSearch } = vi.hoisted(() => ({
+const {
+  runIntent,
+  remoteState,
+  remoteFoundFor,
+  homeState,
+  remoteArgs,
+  previewKeys,
+  ask,
+  globalSearch,
+} = vi.hoisted(() => ({
   runIntent: vi.fn<(intent: PaletteIntent) => void>(),
   ask: vi.fn(),
   globalSearch: vi.fn(),
   remoteArgs: [] as { enabled: boolean; query: string; scope: string }[],
   remoteState: { current: null as null | RemoteState },
+  remoteFoundFor: { current: null as null | string },
   homeState: { current: null as null | HomeInput },
+  previewKeys: [] as string[],
 }));
 
 vi.mock("../use-palette-intents", () => ({
@@ -36,9 +48,10 @@ vi.mock("@/components/assistant/use-page-context", () => ({
 }));
 
 vi.mock("../_components/preview/palette-preview", () => ({
-  PalettePreview: ({ item }: { item: { key: string } | null }) => (
-    <div data-testid="preview">{item?.key ?? "tips"}</div>
-  ),
+  PalettePreview: ({ item }: { item: { key: string } | null }) => {
+    previewKeys.push(item?.key ?? "tips");
+    return <div data-testid="preview">{item?.key ?? "tips"}</div>;
+  },
 }));
 
 vi.mock("../_components/preview/preview-queries", () => ({
@@ -78,7 +91,12 @@ vi.mock("../use-palette-data", async (importOriginal) => ({
   usePaletteHome: () => homeState.current,
   usePaletteRemoteSearch: (args: { enabled: boolean; query: string; scope: string }) => {
     remoteArgs.push(args);
-    return { ...remoteState.current, retry: vi.fn() };
+    return {
+      ...remoteState.current,
+      query: remoteFoundFor.current ?? args.query,
+      refreshing: false,
+      retry: vi.fn(),
+    };
   },
 }));
 
@@ -87,15 +105,22 @@ const { CommandPalette } = await import("../command-palette");
 const SHIPMENT = record({ title: "PRO-1001", metadata: { proNumber: "PRO-1001" } });
 const VISITED_AT = 1_700_000_000_000;
 
-function renderPalette() {
+function renderPalette(onCommit: () => void = () => undefined) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={["/billing/invoices"]}>
-        <CommandPalette />
+        <Profiler id="palette" onRender={onCommit}>
+          <CommandPalette />
+        </Profiler>
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+/** Distinct values in the order they came, with repeats in a row folded into one. */
+function sequence(values: readonly string[]): string[] {
+  return values.filter((value, index) => value !== values[index - 1]);
 }
 
 function input(): HTMLInputElement {
@@ -111,6 +136,8 @@ beforeEach(() => {
   ask.mockReset();
   globalSearch.mockReset();
   remoteArgs.length = 0;
+  previewKeys.length = 0;
+  remoteFoundFor.current = null;
   remoteState.current = { groups: [], loading: false, error: false, ready: false };
   homeState.current = {
     recentRecords: [{ record: SHIPMENT, visitedAt: VISITED_AT }],
@@ -412,5 +439,87 @@ describe("CommandPalette", () => {
       type: "ask-about",
       subject: { type: "shipment", id: "shp_1", label: "PRO-1001" },
     });
+  });
+
+  it("keeps the chosen row until the new list is drawn, and starts that list on its first row", async () => {
+    remoteState.current = {
+      groups: [
+        {
+          entityType: "shipment",
+          label: "Shipments",
+          hits: [{ id: "shp_2", entityType: "shipment", title: "PRO-2002", href: "/shp_2" }],
+        },
+      ],
+      loading: false,
+      error: false,
+      ready: true,
+    };
+    const commits: { first: string | undefined; primary: string }[] = [];
+    const user = userEvent.setup();
+    renderPalette(() => {
+      const first = document.querySelector<HTMLElement>("[data-palette-row]");
+      commits.push({
+        first: first?.dataset.paletteKey,
+        primary: screen.queryByText("Run", { exact: true }) ? "Run" : "Open",
+      });
+    });
+
+    await user.type(input(), "{ArrowDown}");
+    expect(screen.getByRole("option", { name: /New shipment/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    commits.length = 0;
+
+    await user.type(input(), "s");
+
+    const newList = commits.filter(({ first }) => first === "record:shipment:shp_2");
+    expect(newList.length).toBeGreaterThan(0);
+    expect(newList.map(({ primary }) => primary)).not.toContain("Run");
+    expect(
+      commits.filter(({ first }) => first === "recent-record:shipment:shp_1").map((c) => c.primary),
+    ).not.toContain("Open");
+    expect(screen.getByRole("option", { name: /PRO-2002/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("holds the preview while the person types and shows the row the list lands on", async () => {
+    const user = userEvent.setup({ delay: 120 });
+    renderPalette();
+
+    await user.type(input(), "w{Backspace}i");
+
+    await waitFor(() =>
+      expect(screen.getByTestId("preview")).toHaveTextContent("page:/billing/invoices"),
+    );
+    expect(sequence(previewKeys)).toEqual([
+      "recent-record:shipment:shp_1",
+      "page:/billing/invoices",
+    ]);
+  });
+
+  it("marks found records for the words that found them while the next search is on its way", async () => {
+    remoteFoundFor.current = "acme";
+    remoteState.current = {
+      groups: [
+        {
+          entityType: "customer",
+          label: "Customers",
+          hits: [{ id: "cus_1", entityType: "customer", title: "Acme Freight", href: "/cus_1" }],
+        },
+      ],
+      loading: false,
+      error: false,
+      ready: true,
+    };
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "acme fr");
+
+    const row = screen.getByRole("option", { name: /Acme Freight/ });
+    expect([...row.querySelectorAll("mark")].map((mark) => mark.textContent)).toEqual(["Acme"]);
   });
 });
