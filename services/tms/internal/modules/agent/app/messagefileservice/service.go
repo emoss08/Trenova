@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	lruexpirable "github.com/hashicorp/golang-lru/v2/expirable"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,7 +40,7 @@ type Service struct {
 	logger *zap.Logger
 	files  documentports.ConversationFileReader
 	pdfs   kernelports.PDFReader
-	cache  *lruexpirable.LRU[string, *agentports.MessageFileContent]
+	cache  lrucache.Cache[string, *agentports.MessageFileContent]
 }
 
 func New(p Params) agentports.MessageFileReader {
@@ -48,8 +48,9 @@ func New(p Params) agentports.MessageFileReader {
 		logger: p.Logger.Named("message-files"),
 		files:  p.Files,
 		pdfs:   p.PDFs,
-		cache: lruexpirable.NewLRU[string, *agentports.MessageFileContent](
-			cachedFiles, nil, cachedFileTTL,
+		cache: lrucache.NewExpirable[string, *agentports.MessageFileContent](
+			cachedFiles,
+			cachedFileTTL,
 		),
 	}
 }

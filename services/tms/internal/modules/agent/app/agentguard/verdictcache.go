@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/pulid"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"go.uber.org/zap"
 )
 
@@ -49,7 +49,7 @@ The key includes the organization. Verdicts do not currently vary by tenant,
 but the cache would be the wrong place to discover that they had started to.
 */
 type verdictCache struct {
-	entries *lru.Cache[string, ClassifierResult]
+	entries lrucache.Cache[string, ClassifierResult]
 	shared  agentports.ScopeVerdictCacheRepository
 	ttl     time.Duration
 	logger  *zap.Logger
@@ -64,7 +64,7 @@ func newVerdictCache(
 		logger = zap.NewNop()
 	}
 	cache := &verdictCache{shared: shared, ttl: ttl, logger: logger}
-	entries, err := lru.New[string, ClassifierResult](verdictCacheSize)
+	entries, err := lrucache.New[string, ClassifierResult](verdictCacheSize)
 	if err != nil {
 		// Only a non-positive size can fail, and the size is a constant above.
 		return cache

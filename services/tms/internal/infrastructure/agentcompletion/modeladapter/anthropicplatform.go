@@ -20,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"golang.org/x/oauth2"
@@ -61,13 +61,13 @@ identity is a different digest, so a rotated credential is never served from
 here.
 */
 type platformCredentials struct {
-	tokens *lru.Cache[string, oauth2.TokenSource]
-	aws    *lru.Cache[string, aws.CredentialsProvider]
+	tokens lrucache.Cache[string, oauth2.TokenSource]
+	aws    lrucache.Cache[string, aws.CredentialsProvider]
 }
 
 func newPlatformCredentials() *platformCredentials {
-	tokens, _ := lru.New[string, oauth2.TokenSource](platformCredentialSlots)
-	awsCreds, _ := lru.New[string, aws.CredentialsProvider](platformCredentialSlots)
+	tokens, _ := lrucache.New[string, oauth2.TokenSource](platformCredentialSlots)
+	awsCreds, _ := lrucache.New[string, aws.CredentialsProvider](platformCredentialSlots)
 
 	return &platformCredentials{tokens: tokens, aws: awsCreds}
 }
