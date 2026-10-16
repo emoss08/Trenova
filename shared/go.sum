@@ -55,6 +55,8 @@ github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8 h1:B
 github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8/go.mod h1:kP5HGEpAX8iJCqj3WHm04XnoeBPacdCN1P2HiwMtHpg=
 github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8 h1:K5uk6VTaaTbbSIwbK5BbicvmW4ajSWqZzi/0Pn7XgUA=
 github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8/go.mod h1:dARxa/PXsaP0bbvQHQxGy4wiMK409XFNrCvWF5HKX/8=
+github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd h1:czVtU38p6zeQImwwXB37konNd45hFBytdCtYo+UICx8=
+github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:P+AahU/A8xicUEwF20voqpQB1GC9z6XeSbxBPtnxMOI=
 github.com/felixge/httpsnoop v1.1.0 h1:3YtUj32ZZkqZtt3sZZsClsymw/QDuVfpNhoA31zeORc=
 github.com/felixge/httpsnoop v1.1.0/go.mod h1:Zqxgdd+1Rkcz8euOqdr7lqgCRJztwr5hp9vDSi5UZCE=
 github.com/gabriel-vasile/mimetype v1.4.15 h1:05iP/CYtZ/w455R/KZM6rZ5ieAdh99UPtd+d3YzLmaI=
@@ -177,8 +179,6 @@ github.com/quic-go/qpack v0.6.0 h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=
 github.com/quic-go/qpack v0.6.0/go.mod h1:lUpLKChi8njB4ty2bFLX2x4gzDqXwUpaO1DP9qMDZII=
 github.com/quic-go/quic-go v0.63.0 h1:LIFGHI4PFUhhw2dDD1ARHdCff143ffMHwZtbnbuJ78A=
 github.com/quic-go/quic-go v0.63.0/go.mod h1:RAro2j2yN9a9EiPACLHT9IB2NXCvGQmmo/alT0yYI0w=
-github.com/redis/go-redis/v9 v9.23.0 h1:/TTVdJa8BRNsybwwGGnmiYktHNlUXtbOQxlWpHBPL3s=
-github.com/redis/go-redis/v9 v9.23.0/go.mod h1:EWP2UUk+XDaI1s5nQB5mablZN6vccXlmBQTyfnF87D0=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rs/xid v1.6.0 h1:fV591PaemRlL6JfRxGDEPl69wICngIQ3shQtzfy2gxU=
