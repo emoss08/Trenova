@@ -195,6 +195,65 @@ services:
             timeout: 5s
             retries: 5
 
+    # Document extraction reads uploaded files here: PDFs, scans, phone photos,
+    # Office files and email become one DoclingDocument, which the worker turns
+    # into Markdown, plain text and highlight boxes. Locked down like Gotenberg,
+    # because it parses files nobody vetted:
+    #
+    #   - Pinned by digest. We depend on the request schema, and a release has
+    #     silently ignored OCR options before (docling-serve issue 567). The
+    #     docling adapter's tests read this line and fail if it drifts from the
+    #     image they were run against.
+    #   - The models are baked into the image (DOCLING_SERVE_ARTIFACTS_PATH), so
+    #     nothing is downloaded at runtime and it never needs the internet.
+    #   - Every request needs DOCLING_SERVE_API_KEY as X-Api-Key, matching
+    #     documentConversion.apiKey in config.example.yaml. The UI and the API
+    #     docs are off: the docs are otherwise served without the key.
+    #   - Read-only root, scratch on tmpfs, no capabilities, no new privileges.
+    #   - The file and page limits match documentConversion.maxFileBytes and
+    #     maxPages, so either side can refuse first.
+    #
+    # The published port exists only because the API and worker run on the host
+    # under `air` in local development; it binds to loopback.
+    docling:
+        image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+        container_name: docling
+        environment:
+            DOCLING_SERVE_API_KEY: 4vjNhTqOgkoNd4L2EH2qGed6Uw7rPNZZjsjJCkZpEC8
+            DOCLING_SERVE_ENABLE_UI: "false"
+            DOCLING_SERVE_ENABLE_API_DOCS: "false"
+            DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+            DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS: "false"
+            DOCLING_SERVE_MAX_FILE_SIZE: "52428800"
+            DOCLING_SERVE_MAX_NUM_PAGES: "50"
+            DOCLING_SERVE_ENG_KIND: local
+            DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "2"
+            DOCLING_SERVE_LOAD_MODELS_AT_BOOT: "true"
+            DOCLING_SERVE_SINGLE_USE_RESULTS: "true"
+            DOCLING_SERVE_SCRATCH_PATH: /tmp/docling
+        ports:
+            - "127.0.0.1:5001:5001"
+        read_only: true
+        tmpfs:
+            - /tmp:size=1g
+        cap_drop:
+            - ALL
+        security_opt:
+            - "no-new-privileges:true"
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 4G
+                    cpus: "4"
+                    pids: 512
+        healthcheck:
+            test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5001/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+            start_period: 60s
+
     temporal:
         # Every AI feature runs here: each assistant reply, every desk, and the
         # sweeps that narrate insights and write briefings.

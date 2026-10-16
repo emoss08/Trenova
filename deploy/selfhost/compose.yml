@@ -8,7 +8,8 @@
 # service is reachable only on Docker networks:
 #
 #   data    internal (no route off the host): the databases, queues, search,
-#           storage, Temporal, Gotenberg and GTC, and the TMS processes.
+#           storage, Temporal, Gotenberg, docling-serve and GTC, and the TMS
+#           processes.
 #   edge    Caddy, and the two services it proxies to: tms-api and minio.
 #   egress  outbound internet for the TMS processes (AI providers, email,
 #           integrations, release checks). Nothing listens on it.
@@ -50,6 +51,7 @@ x-tms-environment: &tms-environment
   TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET:?set TRENOVA_SECURITY_SESSION_SECRET in .env}
   TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY:?set TRENOVA_SECURITY_ENCRYPTION_KEY in .env}
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD:?set TRENOVA_SYSTEM_SYSTEMUSERPASSWORD in .env}
+  TRENOVA_DOCUMENTCONVERSION_APIKEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}
   TRENOVA_AI_AUDIT_CHAIN_KEYS: ${TRENOVA_AI_AUDIT_CHAIN_KEYS:-}
   TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID: ${TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID:-}
   TRENOVA_PUSH_VAPIDPUBLICKEY: ${TRENOVA_PUSH_VAPIDPUBLICKEY:-}
@@ -243,6 +245,129 @@ services:
     logging: *logging
     networks: [data]
 
+  # Reads uploaded files for document extraction: PDFs, scans, photos,
+  # Office files and email. It parses files nobody vetted, so it is locked
+  # down like Gotenberg: the data network only (no route off the host), no
+  # published port, no route through Caddy, read-only root with scratch on
+  # tmpfs, no capabilities. The image carries its models, so it never
+  # downloads anything. Every request needs the API key; the UI and the API
+  # docs are off. The file and page limits match documentConversion in
+  # config/config.yaml. The image is pinned by digest because the worker
+  # depends on its request schema. Without an AI provider no organization
+  # needs it: remove this service and the tms-worker dependency below, and
+  # leave documentConversion.doclingUrl empty.
+  docling:
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+    environment: &docling-environment
+      DOCLING_SERVE_API_KEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:?set TRENOVA_DOCUMENTCONVERSION_APIKEY in .env}
+      DOCLING_SERVE_ENABLE_UI: "false"
+      DOCLING_SERVE_ENABLE_API_DOCS: "false"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+      DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS: "false"
+      DOCLING_SERVE_MAX_FILE_SIZE: "52428800"
+      DOCLING_SERVE_MAX_NUM_PAGES: "50"
+      DOCLING_SERVE_ENG_KIND: local
+      DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "2"
+      DOCLING_SERVE_LOAD_MODELS_AT_BOOT: "true"
+      DOCLING_SERVE_SINGLE_USE_RESULTS: "true"
+      DOCLING_SERVE_SCRATCH_PATH: /tmp/docling
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 512
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  # Optional: `docker compose --profile gpu up -d` adds a CUDA build of
+  # docling-serve and a vision model that reads each page image, for heavy
+  # scanned volumes on a host with an NVIDIA GPU and the container toolkit.
+  # Point documentConversion.doclingUrl at http://docling-gpu:5001 and
+  # documentConversion.vlmEndpoint at http://docling-vlm:8000. Only this
+  # profile lets docling-serve call another service, and that service stays
+  # on the internal network. The vision model's weights are read from the
+  # docling_vlm_models volume, which you fill once (it cannot download).
+  docling-gpu:
+    profiles: [gpu]
+    image: ghcr.io/docling-project/docling-serve-cu128:v1.36.0@sha256:68f9c77470225a154622b7a05c2660a22ab74ac12ccf3efee1a92588d0213b41
+    environment:
+      <<: *docling-environment
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
+    read_only: true
+    tmpfs:
+      - /tmp:size=2g
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          pids: 512
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  docling-vlm:
+    profiles: [gpu]
+    image: vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90
+    command:
+      - --model=/models/granite-docling-258M
+      - --served-model-name=ibm-granite/granite-docling-258M
+      - --port=8000
+    environment:
+      HF_HUB_OFFLINE: "1"
+      VLLM_NO_USAGE_STATS: "1"
+    volumes:
+      - docling_vlm_models:/models:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    shm_size: 2gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
   # One-shot: migrations, then the base seeds (reference data, roles and
   # permissions; never an account). Both are idempotent and run on every
   # start, so an upgrade applies new migrations and any seed a release adds;
@@ -383,6 +508,8 @@ services:
         condition: service_healthy
       gotenberg:
         condition: service_healthy
+      docling:
+        condition: service_healthy
     restart: unless-stopped
     networks: [data, egress]
 
@@ -462,6 +589,7 @@ volumes:
   meili_data:
   caddy_data:
   caddy_config:
+  docling_vlm_models:
 
 networks:
   data:
