@@ -21,7 +21,6 @@ import { XCloseIcon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import {
   FormPanelFooter,
   PanelDirtyTracker,
@@ -142,9 +141,6 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
       return api.post<T>(url, values);
     },
     onSuccess: () => {
-      toast.success(t("Changes have been saved"), {
-        description: t("{0} created successfully", title),
-      });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       const action = pendingActionRef.current;

@@ -14,7 +14,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { CardActionButton } from "../../record-card/card-action";
 import {
   CardEquation,
@@ -182,7 +181,6 @@ function JournalEntryCard({
     mutationFn: async () =>
       reviewed(await approveJournalEntries([id]), t("The entry could not be approved")),
     onSuccess: () => {
-      toast.success(t("{0} is approved", entry.entryNumber));
       invalidate();
     },
     resourceName: "Journal Entry",
@@ -191,7 +189,6 @@ function JournalEntryCard({
     mutationFn: async () =>
       reviewed(await postJournalEntries([id]), t("The entry could not be posted")),
     onSuccess: () => {
-      toast.success(t("{0} is posted", entry.entryNumber));
       invalidate();
     },
     resourceName: "Journal Entry",

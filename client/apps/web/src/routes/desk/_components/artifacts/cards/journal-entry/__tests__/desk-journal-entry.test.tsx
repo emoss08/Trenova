@@ -339,7 +339,7 @@ describe("DeskJournalEntry", () => {
 
     await vi.waitFor(() => expect(fetchers.approve).toHaveBeenCalledWith(["je_2610_00431"]));
     await vi.waitFor(() => expect(fetchers.entry).toHaveBeenCalledTimes(2));
-    expect(toast.success).toHaveBeenCalledWith("JE-2610-00431 is approved");
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("says why the review refused the entry instead of claiming it changed", async () => {

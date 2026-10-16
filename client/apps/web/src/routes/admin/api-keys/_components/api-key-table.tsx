@@ -21,7 +21,6 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldAlertIcon, ShieldOffIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { getColumns } from "./api-key-columns";
 import { APIKeyPanel } from "./api-key-panel";
 
@@ -35,7 +34,6 @@ export default function APIKeyTable() {
   const revokeMutation = useApiMutation({
     mutationFn: async (id: ApiKeyRow["id"]) => apiService.apiKeyService.revoke(id),
     onSuccess: async () => {
-      toast.success(t("API key revoked"));
       setRevokeDialogOpen(false);
       setSelectedKey(null);
       await queryClient.invalidateQueries({ queryKey: ["api-key-list"] });

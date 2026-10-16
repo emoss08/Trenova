@@ -25,7 +25,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 function settingsOf(profile: CustomerTrackingProfile): CustomerTrackingSettings {
   return {
@@ -105,7 +104,6 @@ function CustomerTrackingSettingsForm({
     onSuccess: (saved) => {
       queryClient.setQueryData(customer.trackingProfile(customerId).queryKey, saved);
       reset(settingsOf(saved));
-      toast.success(t("Tracking settings saved"));
     },
   });
 

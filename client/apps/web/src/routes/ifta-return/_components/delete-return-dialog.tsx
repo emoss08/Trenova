@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { handleIftaReturnError, invalidateIftaReturn } from "./queries";
 
 type DeleteReturnDialogProps = {
@@ -33,11 +32,6 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
   const { mutate, isPending } = useMutation({
     mutationFn: () => deleteIftaReturn(ret.id, ret.version),
     onSuccess: async () => {
-      toast.success(t("Draft deleted"), {
-        description: t(
-          "Nothing else changed: the miles, fuel and rates it was built from are kept.",
-        ),
-      });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
     },

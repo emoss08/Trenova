@@ -119,7 +119,6 @@ export function ImportWorkspace() {
         });
       }
       setReconciliationInitialized(false);
-      toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
       toast.error(t("Failed to restart extraction: {0}", error.message));
@@ -229,8 +228,6 @@ export function ImportWorkspace() {
 
       if (attachError) {
         toast.warning(t("Shipment created, but document could not be attached"));
-      } else {
-        toast.success(t("Shipment created from rate confirmation"));
       }
     },
     onError: (error) => {

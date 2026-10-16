@@ -24,7 +24,6 @@ import {
 } from "@trenova/shared/types/pto-policy";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type AdjustBalanceDialogProps = {
   open: boolean;
@@ -90,16 +89,7 @@ export function AdjustBalanceDialog({
         effectiveAt: values.effectiveAt,
         note: values.note,
       }),
-    onSuccess: (entry) => {
-      toast.success(t("Balance adjusted"), {
-        description: t(
-          "{0} balance is now {1, plural, one {# day} other {# days}}.",
-          t(
-            ptoTypeChoices.find((choice) => choice.value === entry.ptoType)?.label ?? entry.ptoType,
-          ),
-          entry.balanceAfterDays,
-        ),
-      });
+    onSuccess: () => {
       onAdjusted?.();
       onOpenChange(false);
     },

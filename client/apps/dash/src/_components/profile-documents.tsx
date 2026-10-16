@@ -43,7 +43,6 @@ export function ProfileDocuments() {
   const upload = useMutation({
     mutationFn: (file: File) => uploadMyProfileDocument(file, documentTypeId ?? undefined),
     onSuccess: async () => {
-      toast.success(t("Document uploaded — your carrier will see it in your file."));
       setPendingFile(null);
       setDocumentTypeId(null);
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-documents"] });

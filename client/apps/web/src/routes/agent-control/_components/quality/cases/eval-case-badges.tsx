@@ -36,13 +36,6 @@ export const CASE_STATUS_ACTION: Record<AgentEvalCaseStatus, string> = defineLab
   Retired: "Retire",
 });
 
-export const CASE_STATUS_MOVED: Record<AgentEvalCaseStatus, string> = defineLabels({
-  Candidate: "Case moved back to candidates",
-  Active: "Case activated",
-  Quarantined: "Case quarantined",
-  Retired: "Case retired",
-});
-
 export function EvalCaseStatusBadge({ value, t }: { value: AgentEvalCaseStatus; t: TranslateFn }) {
   const attrs = CASE_STATUS[value];
 

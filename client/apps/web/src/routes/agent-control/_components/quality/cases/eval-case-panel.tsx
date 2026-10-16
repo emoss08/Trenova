@@ -26,7 +26,7 @@ import { PlayIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { CASE_STATUS_ACTION, CASE_STATUS_MOVED } from "./eval-case-badges";
+import { CASE_STATUS_ACTION } from "./eval-case-badges";
 import { EvalCaseEditor } from "./eval-case-editor";
 import {
   evalCaseFormDefaults,
@@ -117,8 +117,6 @@ export function EvalCasePanel({
         toast.info(t("A case already asks exactly this"), {
           description: t("The existing case was kept instead of adding a second one."),
         });
-      } else {
-        toast.success(creating ? t("Case added") : t("Changes have been saved"));
       }
       if (creating) {
         reset(evalCaseFormDefaults);
@@ -136,7 +134,6 @@ export function EvalCasePanel({
     onSuccess: async (evalCase) => {
       await refresh(evalCase);
       reset(toFormValues(evalCase));
-      toast.success(CASE_STATUS_MOVED[evalCase.status]);
     },
     resourceName: t("Evaluation case"),
   });

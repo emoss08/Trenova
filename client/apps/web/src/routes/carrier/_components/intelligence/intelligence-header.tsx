@@ -15,7 +15,6 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId } from "react";
-import { toast } from "sonner";
 
 export type IntelligenceHeaderProps = {
   carrierId: string;
@@ -51,15 +50,7 @@ export function IntelligenceHeader({
   const monitoring = useApiMutation<number, boolean>({
     resourceName: "Carrier monitoring",
     mutationFn: (enabled) => setCarrierMonitoring([carrierId], enabled),
-    onSuccess: (_count, enabled) => {
-      toast.success(enabled ? t("Monitoring enabled") : t("Monitoring disabled"), {
-        description: enabled
-          ? t(
-              "Changes at {0} will be picked up automatically.",
-              carrierIntelProviderLabel(provider),
-            )
-          : t("This carrier is no longer watched for changes."),
-      });
+    onSuccess: () => {
       onChanged();
     },
   });

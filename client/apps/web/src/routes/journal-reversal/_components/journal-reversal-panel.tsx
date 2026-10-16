@@ -13,7 +13,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Send01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { JournalReversalForm } from "./journal-reversal-form";
 import { reversalRequestBody, type ReversalRequestValues } from "./journal-reversal-request";
 
@@ -53,7 +52,6 @@ function CreateReversalPanel({
       return apiService.journalReversalService.create(reversalRequestBody(values));
     },
     onSuccess: () => {
-      toast.success(t("Reversal request created"));
       void queryClient.invalidateQueries({ queryKey: ["journal-reversal-list"] });
       onOpenChange(false);
       reset();
@@ -125,7 +123,6 @@ function ReversalDetailPanel({
   const { mutateAsync: approve, isPending: isApproving } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.approve(reversal!.id!),
     onSuccess: () => {
-      toast.success(t("Reversal approved"));
       void invalidate();
     },
     resourceName: "Journal Reversal",
@@ -134,7 +131,6 @@ function ReversalDetailPanel({
   const { mutateAsync: postReversal, isPending: isPosting } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.post(reversal!.id!),
     onSuccess: () => {
-      toast.success(t("Reversal posted"));
       void invalidate();
     },
     resourceName: "Journal Reversal",
@@ -143,7 +139,6 @@ function ReversalDetailPanel({
   const { mutateAsync: reject, isPending: isRejecting } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.reject(reversal!.id!, rejectionReason),
     onSuccess: () => {
-      toast.success(t("Reversal rejected"));
       setShowRejectInput(false);
       setRejectionReason("");
       void invalidate();
@@ -154,7 +149,6 @@ function ReversalDetailPanel({
   const { mutateAsync: cancel, isPending: isCancelling } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.cancel(reversal!.id!, cancelReason),
     onSuccess: () => {
-      toast.success(t("Reversal cancelled"));
       setShowCancelInput(false);
       setCancelReason("");
       void invalidate();

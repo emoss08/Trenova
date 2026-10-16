@@ -18,7 +18,6 @@
   "How often drivers are settled — weekly is the industry norm for asset carriers.": "Con qué frecuencia se liquidan los conductores: la norma del sector para transportistas con flota propia es semanal.",
   "Lookback (settlements)": "Retrospectiva (liquidaciones)",
   "Number of prior settlements used to compute the trailing average.": "Número de liquidaciones anteriores usadas para calcular el promedio móvil.",
-  "Settlement control updated": "Control de liquidaciones actualizado",
   "Settlements deviating from a driver's recent history are flagged for review.": "Las liquidaciones que se desvían del historial reciente de un conductor se marcan para revisión.",
   "Settlements without exceptions skip manual review and go straight to approved.": "Las liquidaciones sin excepciones omiten la revisión manual y pasan directamente a aprobadas.",
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": "El hito en el que se devenga el pago del conductor. «Tramo completado» paga a cada conductor en cuanto termina su propio tramo, la opción más precisa cuando los conductores se reparten una carga.",

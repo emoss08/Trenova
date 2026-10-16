@@ -49,9 +49,6 @@ export function InjuryList({ workerId }: { workerId: string }) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWorkerInjury(id),
     onSuccess: () => {
-      toast.success(t("Case deleted"), {
-        description: t("The case number is not reused — two case 4s cannot be told apart."),
-      });
       void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: ["osha-log"] });
     },

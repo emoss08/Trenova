@@ -64,9 +64,8 @@ export default function EquipmentTypeTable() {
         queryKey: ["service-type-list"],
         refetchType: "all",
       });
-      toast.success(t("Service type updated"));
     },
-    [queryClient, t],
+    [queryClient],
   );
 
   const dockActions = useMemo<DockAction<ServiceTypeRow>[]>(

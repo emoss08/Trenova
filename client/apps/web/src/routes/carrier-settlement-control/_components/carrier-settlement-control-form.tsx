@@ -30,7 +30,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export default function CarrierSettlementControlForm() {
   const t = useT();
@@ -81,7 +80,6 @@ export default function CarrierSettlementControlForm() {
           values.defaultPurchasedTransportationAccountId || undefined,
       }),
     onSuccess: (_, values) => {
-      toast.success(t("Carrier settlement control updated"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["carrier-settlement-control"] });
     },

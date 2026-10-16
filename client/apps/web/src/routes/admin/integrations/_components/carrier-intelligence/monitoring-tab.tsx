@@ -30,7 +30,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import {
   enrollmentPolicyChoices,
   type CarrierIntelSettingsFormValues,
@@ -262,7 +261,6 @@ function MonitoringFeedStatus({ open, canManage }: { open: boolean; canManage: b
     mutationFn: resumeCarrierIntelMonitoring,
     resourceName: "Carrier monitoring",
     onSuccess: async () => {
-      toast.success(t("Monitoring resumed"));
       await queryClient.invalidateQueries({
         queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       });

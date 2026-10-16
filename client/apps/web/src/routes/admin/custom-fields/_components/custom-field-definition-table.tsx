@@ -36,16 +36,7 @@ export default function CustomFieldDefinitionTable() {
     }) => {
       return customFieldService.patch(id, { isActive });
     },
-    onSuccess: (_, variables) => {
-      if (variables.isActive) {
-        toast.success(t("Custom field activated"), {
-          description: t("The custom field has been activated successfully."),
-        });
-      } else {
-        toast.success(t("Custom field deactivated"), {
-          description: t("The custom field has been deactivated successfully."),
-        });
-      }
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["custom-field-definition-list"],
       });

@@ -10,17 +10,11 @@ import { useQueryState } from "nuqs";
 import { lazy, useCallback } from "react";
 import { REINDEX_PARAM, reindexParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
-import { formatUsd } from "@/lib/ai-usage-format";
 import { Ic } from "../kit/ic";
 import { ReindexDialog } from "./reindex-dialog";
 import { RetrievalFigures } from "./retrieval-figures";
 import { RetrievalHero } from "./retrieval-hero";
-import {
-  RETRIEVAL_STALE_MS,
-  SOURCE_LABEL,
-  SOURCE_SETTING,
-  retrievalRefetchInterval,
-} from "./retrieval-model";
+import { RETRIEVAL_STALE_MS, SOURCE_SETTING, retrievalRefetchInterval } from "./retrieval-model";
 import { RetrievalNotice } from "./retrieval-notice";
 import { FAILED_ENTRY_COLUMNS, RetrievalTabSkeleton } from "./retrieval-skeleton";
 import { RetrievalSettingsPanel } from "./retrieval-settings";
@@ -87,11 +81,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   }
 
   const data = status.data;
-  const pause = (paused: boolean) =>
-    patch.mutate({
-      patch: { paused },
-      done: paused ? t("Indexing paused") : t("Indexing resumed"),
-    });
+  const pause = (paused: boolean) => patch.mutate({ paused });
 
   return (
     <div className="tabp">
@@ -115,12 +105,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
             onReindex={openReindex}
             onShowFailures={showFailures}
             onToggle={(sourceType, enabled) =>
-              patch.mutate({
-                patch: { [SOURCE_SETTING[sourceType]]: enabled },
-                done: enabled
-                  ? t("{0} will be indexed", t(SOURCE_LABEL[sourceType].label))
-                  : t("{0} found by their words only", t(SOURCE_LABEL[sourceType].label)),
-              })
+              patch.mutate({ [SOURCE_SETTING[sourceType]]: enabled })
             }
           />
           <section className="sec" id={FAILED_SECTION_ID}>
@@ -135,12 +120,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
             canUpdate={canUpdate}
             busy={patch.isPending}
             onPause={pause}
-            onBudget={(budgetUsd) =>
-              patch.mutate({
-                patch: { monthlyIndexingBudgetUsd: budgetUsd },
-                done: t("Budget set to {0}", formatUsd(budgetUsd) ?? budgetUsd),
-              })
-            }
+            onBudget={(budgetUsd) => patch.mutate({ monthlyIndexingBudgetUsd: budgetUsd })}
           />
         </aside>
       </div>

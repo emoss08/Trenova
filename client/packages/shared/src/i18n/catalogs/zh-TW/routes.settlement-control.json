@@ -18,7 +18,6 @@
   "How often drivers are settled — weekly is the industry norm for asset carriers.": "駕駛員的結算頻率 — 自有車隊業者的業界慣例為每週結算。",
   "Lookback (settlements)": "回溯筆數（結算）",
   "Number of prior settlements used to compute the trailing average.": "用以計算移動平均的先前結算筆數。",
-  "Settlement control updated": "結算控制項已更新",
   "Settlements deviating from a driver's recent history are flagged for review.": "與駕駛員近期紀錄有偏離的結算會被標記待審。",
   "Settlements without exceptions skip manual review and go straight to approved.": "沒有例外的結算會略過人工審查，直接轉為已核准。",
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": "駕駛員薪酬計提的里程碑。「運程完成」會在各駕駛員自己的運程結束時即給付 — 當多位駕駛員分擔同一趟貨載時，這是最精確的選項。",

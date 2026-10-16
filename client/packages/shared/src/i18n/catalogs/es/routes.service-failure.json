@@ -21,9 +21,6 @@
   "Review unresolved pickup and delivery service failures": "Revise los fallos de servicio de recogida y entrega sin resolver",
   "Reviewed · {0, plural, one {# minute after grace} other {# minutes after grace}}": "Revisado · {0, plural, one {# minuto después del período de gracia} other {# minutos después del período de gracia}}",
   "Select reason code": "Seleccione el código de motivo",
-  "Service failure resolved": "Fallo de servicio resuelto",
-  "Service failure reviewed": "Fallo de servicio revisado",
-  "Service failure voided": "Fallo de servicio anulado",
   "Voided · {0, plural, one {# minute after grace} other {# minutes after grace}}": "Anulado · {0, plural, one {# minuto después del período de gracia} other {# minutos después del período de gracia}}",
   "{0, plural, one {# diagnostic item; payload copied.} other {# diagnostic items; payload copied.}}": "{0, plural, one {# elemento de diagnóstico; contenido copiado.} other {# elementos de diagnóstico; contenido copiado.}}",
   "{0} · {1, plural, one {# minute after grace} other {# minutes after grace}}": "{0} · {1, plural, one {# minuto después del período de gracia} other {# minutos después del período de gracia}}"

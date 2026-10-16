@@ -53,9 +53,6 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
   const endMutation = useMutation({
     mutationFn: (id: string) => endBenefitEnrollment({ id }),
     onSuccess: () => {
-      toast.success(t("Cover ended"), {
-        description: t("The contribution stops with it; the record of the cover stays."),
-      });
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_ENROLLMENTS_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: [TOTAL_COMPENSATION_KEY, workerId] });
     },

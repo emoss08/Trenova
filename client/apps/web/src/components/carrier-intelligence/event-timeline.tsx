@@ -9,7 +9,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import { RelativeTime } from "./relative-time";
 import { ResolveEventDialog } from "./resolve-event-dialog";
 import { StatusDot, severityTone } from "./status-dot";
@@ -149,8 +148,7 @@ export function EventTimeline({
   const acknowledge = useApiMutation<number, string[]>({
     resourceName: "Carrier intelligence event",
     mutationFn: (ids) => acknowledgeCarrierIntelEvents(ids),
-    onSuccess: (count) => {
-      toast.success(count > 0 ? t("Event acknowledged") : t("The event was already acknowledged"));
+    onSuccess: () => {
       onChanged?.();
     },
     onSettled: () => setAcknowledgingId(null),

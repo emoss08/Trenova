@@ -21,7 +21,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { StopCircleIcon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { formatShare, formatUsd } from "../quality-model";
 import { RunStatusBadge } from "./extraction-badges";
 import { ACTIVE_RUN_POLL_MS, accuracyTone, isRunActive } from "./extraction-model";
@@ -58,9 +57,6 @@ export function RunPanel({ open, onOpenChange, row }: DataTablePanelProps<Extrac
   const cancel = useApiMutation({
     mutationFn: () => cancelExtractionEvalRun(id ?? ""),
     onSuccess: async () => {
-      toast.success(t("Evaluation canceled"), {
-        description: t("Cases already scored are kept; the rest are skipped."),
-      });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_EVAL_RUN_DETAIL_KEY, id] }),
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_EVAL_RESULT_LIST_KEY, id] }),

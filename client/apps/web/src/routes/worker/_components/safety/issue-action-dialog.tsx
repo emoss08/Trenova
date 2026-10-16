@@ -29,10 +29,8 @@ import {
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const LEVEL_OPTIONS = disciplinaryLevelSchema.options.map((value) => ({
   value,
@@ -48,23 +46,6 @@ export type IssueActionDialogProps = {
   /** Pre-links the action to the event it came from. */
   safetyEventId?: string | null;
 };
-
-function issuedMessage(level: DisciplinaryLevel): string {
-  switch (level) {
-    case "Coaching":
-      return translate("Coaching issued");
-    case "VerbalWarning":
-      return translate("Verbal warning issued");
-    case "WrittenWarning":
-      return translate("Written warning issued");
-    case "FinalWarning":
-      return translate("Final warning issued");
-    case "Suspension":
-      return translate("Suspension issued");
-    case "Termination":
-      return translate("Termination issued");
-  }
-}
 
 export function IssueActionDialog({
   open,
@@ -134,12 +115,7 @@ export function IssueActionDialog({
         safetyEventId: values.safetyEventId ?? undefined,
         recordEmploymentEvent: movesEmployment && values.recordEmploymentEvent,
       }),
-    onSuccess: (result) => {
-      toast.success(issuedMessage(level), {
-        description: result.employmentEvent
-          ? translate("The timeline was updated and the driver has been notified.")
-          : translate("The driver has been notified and can acknowledge it in Dash."),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

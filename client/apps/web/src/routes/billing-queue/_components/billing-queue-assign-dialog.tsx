@@ -21,7 +21,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 /** One queue item to assign, with the label a failure is reported under. */
 export type BillingQueueTarget = {
@@ -79,9 +78,6 @@ export function BillingQueueAssignDialog({
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
       if (!result) {
-        toast.success(t("Biller assigned"), {
-          description: t("The billing queue item has been assigned."),
-        });
         return;
       }
       notifyBulkOutcome(result, {

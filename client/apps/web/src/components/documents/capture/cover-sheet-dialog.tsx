@@ -99,18 +99,14 @@ export function CoverSheetDialog({
       });
     },
     onSuccess: (bytes, values) => {
-      const how = openCoverSheetsForPrinting(bytes, `cover-sheets-${kind}.pdf`);
-      toast.success(
-        how === "opened"
-          ? t(
-              "{0, plural, one {Cover sheet ready to print} other {# cover sheets ready to print}}",
-              values.copies,
-            )
-          : t(
-              "{0, plural, one {Cover sheet downloaded; open it to print} other {# cover sheets downloaded; open them to print}}",
-              values.copies,
-            ),
-      );
+      if (openCoverSheetsForPrinting(bytes, `cover-sheets-${kind}.pdf`) !== "opened") {
+        toast.success(
+          t(
+            "{0, plural, one {Cover sheet downloaded; open it to print} other {# cover sheets downloaded; open them to print}}",
+            values.copies,
+          ),
+        );
+      }
       onOpenChange(false);
     },
   });

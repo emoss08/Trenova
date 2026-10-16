@@ -44,7 +44,6 @@ export const SameModelCard = memo(function SameModelCard({
   const reorder = useMutation({
     mutationFn: (ids: string[]) => reorderAIProviders(ids),
     onSuccess: async () => {
-      toast.success(t("{0} now goes ahead of {1}", left.label, right.label));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: aiProvider._def }),
         queryClient.invalidateQueries({ queryKey: aiAnalytics._def }),

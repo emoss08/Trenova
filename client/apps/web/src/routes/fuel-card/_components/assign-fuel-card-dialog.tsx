@@ -17,7 +17,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { maskedCardNumber } from "./fuel-card-columns";
 
 /**
@@ -86,9 +85,6 @@ export function AssignFuelCardDialog({
       });
     },
     onSuccess: async () => {
-      toast.success(t("Card assigned"), {
-        description: t("Purchases on this card will match to what it is assigned to."),
-      });
       onOpenChange(false);
       await onAssigned();
     },

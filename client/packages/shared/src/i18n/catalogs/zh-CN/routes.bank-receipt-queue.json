@@ -20,8 +20,5 @@
   "Search reference, ID...": "搜索引用编号、ID...",
   "Select resolution type": "选择处理类型",
   "This work item has been {0}. No further actions available.": "此工作项目已{0}。没有其他可执行的操作。",
-  "Work item assigned": "工作项目已指派",
-  "Work item dismissed": "工作项目已关闭",
-  "Work item resolved": "工作项目已处理",
   "Work queue totals": "工作队列合计"
 }

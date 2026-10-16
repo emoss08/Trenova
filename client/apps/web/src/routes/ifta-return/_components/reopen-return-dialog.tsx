@@ -17,7 +17,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { invalidateIftaReturn, invalidateOnVersionMismatch } from "./queries";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -70,11 +69,6 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
     mutationFn: (values) =>
       reopenIftaReturn({ id: ret.id, version: ret.version, reason: values.reason.trim() }),
     onSuccess: async () => {
-      toast.success(t("Return reopened"), {
-        description: t(
-          "It is a draft again and recomputes with the data on file. The reason is kept with the return.",
-        ),
-      });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
     },

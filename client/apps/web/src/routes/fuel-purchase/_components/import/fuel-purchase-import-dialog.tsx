@@ -242,12 +242,6 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
       commitFuelPurchaseImport(current.id, current.version),
     onSuccess: async (committed) => {
       setBatch(committed);
-      toast.success(t("Statement imported"), {
-        description: t(
-          "{0, plural, one {# purchase recorded.} other {# purchases recorded.}}",
-          committed.committedCount,
-        ),
-      });
       await queryClient.invalidateQueries({ queryKey: [FUEL_PURCHASE_LIST_KEY] });
     },
     onError: (error) => handleMutationError({ error, resourceName: "Statement import" }),

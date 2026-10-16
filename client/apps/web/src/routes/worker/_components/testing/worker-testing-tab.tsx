@@ -64,9 +64,6 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
   const cancelMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => cancelDotTest(id, reason),
     onSuccess: () => {
-      toast.success(t("Collection voided"), {
-        description: t("The record stays on file with the reason it was voided."),
-      });
       void invalidate();
     },
     onError: (error: Error) =>

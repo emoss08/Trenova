@@ -162,7 +162,6 @@ function BatchDetail({ batchId }: { batchId: string }) {
       anchor.download = `carrier-settlement-batch-${batchId}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast.success(t("Remittance CSV downloaded"));
     },
     onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });

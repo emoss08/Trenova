@@ -110,7 +110,6 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
     mutationFn: () => apiService.rateImportService.commit(batch?.id as string),
     onSuccess: async (applied) => {
       setBatch(applied);
-      toast.success(t("Rates applied to the agreement"));
       await queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
       await queryClient.invalidateQueries({ queryKey: ["rate-imports", applied.rateAgreementId] });
     },

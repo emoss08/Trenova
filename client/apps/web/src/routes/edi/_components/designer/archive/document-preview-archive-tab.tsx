@@ -239,7 +239,6 @@ export function DocumentPreviewArchiveTab() {
 
   const saveProfileMutation = useSaveEDIDocumentProfileMutation({
     onSuccess: async (profile) => {
-      toast.success(t("Document profile saved"));
       setProfileId(profile.id);
       setSelectedProfile(profile);
       await invalidateDocumentProfiles(profile);
@@ -253,7 +252,6 @@ export function DocumentPreviewArchiveTab() {
 
   const generateMutation = useGenerateEDIDocumentMutation({
     onSuccess: async (message) => {
-      toast.success(t("EDI message generated and archived"));
       void setInspectorMessageId(message.id);
       await invalidateMessageArchive();
     },

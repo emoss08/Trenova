@@ -22,7 +22,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { z } from "zod";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useChecklistInvalidation } from "./use-checklist-invalidation";
 
 export type ItemNoteMode = "skip" | "notApplicable";
@@ -99,9 +98,6 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
         : markWorkerChecklistItemNotApplicable(input);
     },
     onSuccess: () => {
-      toast.success(
-        mode === "skip" ? translate("Item skipped") : translate("Item marked not applicable"),
-      );
       void invalidate();
       onOpenChange(false);
     },

@@ -121,15 +121,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
   const complete = useMutation({
     mutationFn: (item: WorkerChecklistItemRow) =>
       completeWorkerChecklistItem({ id: item.id, version: item.version }),
-    onSuccess: (checklist) => {
-      toast.success(
-        checklist.status === "Completed"
-          ? translate("Checklist complete")
-          : translate("Item completed"),
-        checklist.status === "Completed"
-          ? { description: t("Every required item is settled.") }
-          : undefined,
-      );
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>
@@ -138,7 +130,6 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
   const reopen = useMutation({
     mutationFn: (item: WorkerChecklistItemRow) => reopenWorkerChecklistItem(item.id, item.version),
     onSuccess: () => {
-      toast.success(t("Item reopened"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -148,7 +139,6 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
     mutationFn: (checklist: WorkerChecklistRow) =>
       cancelWorkerChecklist({ id: checklist.id, version: checklist.version }),
     onSuccess: () => {
-      toast.success(t("Checklist cancelled"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -156,8 +146,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
   });
   const start = useMutation({
     mutationFn: (id: string) => startWorkerChecklist({ workerId, templateId: id }),
-    onSuccess: (checklist) => {
-      toast.success(t("{0} started", checklist.name));
+    onSuccess: () => {
       setTemplateId("");
       void invalidate();
     },

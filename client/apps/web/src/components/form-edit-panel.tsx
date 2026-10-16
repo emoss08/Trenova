@@ -18,7 +18,6 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import {
   FormPanelFooter,
@@ -159,9 +158,6 @@ export function FormEditPanel<
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("{0} updated successfully", title),
-      });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       if (isPopout) {

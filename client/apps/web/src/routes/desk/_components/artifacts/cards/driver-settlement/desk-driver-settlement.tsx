@@ -20,7 +20,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import {
@@ -206,16 +205,8 @@ function DriverSettlementCard({
           return recalculateDriverSettlement(input);
       }
     },
-    onSuccess: (_result, action) => {
+    onSuccess: () => {
       changed();
-      toast.success(
-        {
-          submit: t("{0} submitted for approval", record.settlementNumber),
-          approve: t("{0} approved", record.settlementNumber),
-          post: t("{0} posted to the ledger", record.settlementNumber),
-          recalculate: t("{0} recalculated from its pay events", record.settlementNumber),
-        }[action],
-      );
     },
   });
 

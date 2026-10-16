@@ -212,7 +212,6 @@ function DeleteProgramDialog({
   const { mutate: remove, isPending } = useMutation({
     mutationFn: (id: string) => deleteFuelSurchargeProgram(id),
     onSuccess: () => {
-      toast.success(t("Fuel surcharge program deleted"));
       void queryClient.invalidateQueries({
         queryKey: fuelSurcharge.currentRates().queryKey,
       });

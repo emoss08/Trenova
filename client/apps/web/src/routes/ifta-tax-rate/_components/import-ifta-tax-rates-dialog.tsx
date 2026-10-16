@@ -47,7 +47,6 @@ import type { IftaQuarter } from "@trenova/shared/types/fuel-ifta-enums";
 import { AlertCircleIcon, Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { mostRecentCompletedQuarter, type IftaPeriod } from "./ifta-tax-rate-panel";
 
 type ImportIftaTaxRatesDialogProps = {
@@ -93,15 +92,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
 
   const { mutate: importRates, isPending } = useMutation({
     mutationFn: (rates: IftaTaxRateInput[]) => upsertIftaTaxRates(rates),
-    onSuccess: async (saved) => {
-      toast.success(t("Rates imported"), {
-        description: t(
-          "{0, plural, one {# rate published} other {# rates published}} for Q{1} {2}.",
-          saved.length,
-          quarter,
-          year,
-        ),
-      });
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [IFTA_TAX_RATE_LIST_KEY] });
       onOpenChange(false);
     },

@@ -5,7 +5,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useSecurityAccess } from "./use-security-access";
 
 export function RoleActivationSetting({ organizationId }: { organizationId: string }) {
@@ -20,12 +19,7 @@ export function RoleActivationSetting({ organizationId }: { organizationId: stri
         requireRoleActivation,
         version: settingsQuery.data?.version ?? 0,
       }),
-    onSuccess: async (saved) => {
-      toast.success(
-        saved.requireRoleActivation
-          ? t("People now choose their roles when they sign in")
-          : t("Every role a person holds is now in force when they sign in"),
-      );
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: organization.accessSettings(organizationId).queryKey,
       });

@@ -31,7 +31,6 @@ import {
 } from "@trenova/shared/types/scheduling";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type AssignShiftDialogProps = {
   open: boolean;
@@ -122,7 +121,6 @@ export function AssignShiftDialog({
         notes: values.notes ?? undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Put on the shift"));
       onAssigned();
       onOpenChange(false);
     },

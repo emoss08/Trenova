@@ -88,13 +88,6 @@ export function SubmitToFactorDialog({
       }),
     onSuccess: (submission) => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Schedule {0} is on its way", submission.number), {
-        description: t(
-          "{0, plural, one {# invoice is} other {# invoices are}} being sent to {1}.",
-          submission.invoiceCount,
-          submission.factoringCompany?.name ?? group!.name,
-        ),
-      });
       onOpenChange(false);
       void navigate(recordPath("factoring_submission", submission.id));
     },

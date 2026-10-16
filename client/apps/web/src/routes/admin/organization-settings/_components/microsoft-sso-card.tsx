@@ -32,7 +32,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 type MicrosoftSSOFormValues = MicrosoftSSOConfig & {
@@ -150,7 +149,6 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
       await queryClient.invalidateQueries({
         queryKey: organization.microsoftSSO(organizationId).queryKey,
       });
-      toast.success(t("Microsoft Entra ID SSO settings updated"));
     },
   });
 

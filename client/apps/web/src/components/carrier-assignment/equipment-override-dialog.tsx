@@ -23,7 +23,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 export function EquipmentOverrideDialog({
   verification,
@@ -65,9 +64,6 @@ export function EquipmentOverrideDialog({
       return overrideCarrierEquipmentVerification(verification.id, values.reason.trim());
     },
     onSuccess: (updated) => {
-      toast.success(t("Verification overridden"), {
-        description: t("The equipment is cleared for this assignment."),
-      });
       onOverridden(updated);
       onOpenChange(false);
     },

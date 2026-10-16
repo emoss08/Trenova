@@ -43,7 +43,6 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
   const retryMutation = useApiMutation({
     mutationFn: (messageId: string) => apiService.ediService.retryMessageDelivery(messageId),
     onSuccess: async () => {
-      toast.success(t("Delivery retry queued"));
       await invalidateEDIMessages(queryClient, row?.id);
     },
     onError: () => toast.error(t("Failed to queue delivery retry")),
@@ -52,7 +51,6 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
   const replayMutation = useApiMutation({
     mutationFn: (messageId: string) => apiService.ediService.replayMessageDelivery(messageId),
     onSuccess: async () => {
-      toast.success(t("Replay queued — the document will be re-delivered to the partner"));
       await invalidateEDIMessages(queryClient, row?.id);
     },
     onError: () => toast.error(t("Failed to queue the replay")),

@@ -13,7 +13,6 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 
 /**
  * Sets the key a Resend mailbox reads message content with. Resend's webhook
@@ -45,7 +44,6 @@ export function ApiKeyDialog({
     mutationFn: ({ id, value }: { id: string; value: string }) =>
       setInboundMailboxApiKey(id, value),
     onSuccess: async () => {
-      toast.success(t("API key saved"));
       await onSaved();
     },
     resourceName: "Mailbox",

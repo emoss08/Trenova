@@ -223,16 +223,9 @@ export default function ProvidersTab() {
   });
 
   const patch = useApiMutation({
-    mutationFn: ({
-      provider,
-      input,
-    }: {
-      provider: AIProviderRow;
-      input: AIProviderPatch;
-      message?: string;
-    }) => patchAIProvider(provider, input),
-    onSuccess: async (_saved, { message }) => {
-      if (message) toast.success(message);
+    mutationFn: ({ provider, input }: { provider: AIProviderRow; input: AIProviderPatch }) =>
+      patchAIProvider(provider, input),
+    onSuccess: async () => {
       await refresh();
     },
     onError: () => void refresh(),
@@ -255,7 +248,6 @@ export default function ProvidersTab() {
   const remove = useApiMutation({
     mutationFn: (provider: AIProviderRow) => apiService.aiProviderService.remove(provider.id),
     onSuccess: async (_result, provider) => {
-      toast.success(t("{0} removed", provider.name));
       setRemoving(null);
       void setAddress((current) =>
         current.panelEntityId === provider.id || current[PROVIDER_EDITOR_PARAM] === provider.id
@@ -320,9 +312,8 @@ export default function ProvidersTab() {
       patch.mutate({
         provider,
         input: { enabled },
-        message: enabled ? t("{0} is on", provider.name) : t("{0} is off", provider.name),
       }),
-    [patch, t],
+    [patch],
   );
   const commitOrder = useCallback(
     (ids: string[]) => {
@@ -750,7 +741,6 @@ export default function ProvidersTab() {
                       ? {}
                       : { cacheWriteCostPerMillion: prices.cacheWrite }),
                   },
-                  message: t("Prices saved"),
                 })
               }
               onEdit={() => editProvider(open)}

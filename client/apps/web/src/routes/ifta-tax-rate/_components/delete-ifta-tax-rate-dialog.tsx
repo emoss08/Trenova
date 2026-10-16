@@ -16,7 +16,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { periodLabel } from "./ifta-tax-rate-columns";
 
 type DeleteIftaTaxRateDialogProps = {
@@ -40,9 +39,6 @@ export function DeleteIftaTaxRateDialog({
       return deleteIftaTaxRate(rate.id, rate.version);
     },
     onSuccess: async () => {
-      toast.success(t("Rate deleted"), {
-        description: t("Returns for the quarter will flag the missing rate when recomputed."),
-      });
       await onDeleted();
       onOpenChange(false);
     },

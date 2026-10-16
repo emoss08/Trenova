@@ -24,7 +24,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type RevokeOverrideDialogProps = {
   override: CarrierIntelOverride | null;
@@ -72,7 +71,6 @@ export function RevokeOverrideDialog({
       return revokeCarrierIntelOverride(override.id, values.reason);
     },
     onSuccess: (revoked) => {
-      toast.success(t("Override revoked"));
       onRevoked?.(revoked);
       onOpenChange(false);
     },

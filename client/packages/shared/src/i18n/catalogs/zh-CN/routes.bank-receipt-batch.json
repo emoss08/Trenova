@@ -14,7 +14,6 @@
   "Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched.": "导入银行入账文件后，会在此形成一个批次，内含其所载的每笔入账，以及其中匹配成功的笔数。",
   "Import bank receipts": "导入银行入账",
   "Import batch": "导入批次",
-  "Import batch created": "导入批次已创建",
   "Import batch summary": "导入批次摘要",
   "Individual bank receipts to import in this batch": "此批次中要导入的各笔银行入账",
   "Must be greater than 0": "必须大于 0",

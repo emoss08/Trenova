@@ -44,7 +44,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { APIKeyForm } from "./api-key-form";
 import { APIKeyPermissionsEditor } from "./api-key-permissions-editor";
@@ -106,7 +105,6 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
     mutationFn: async (values: ApiKeyPanelFormValues) =>
       apiService.apiKeyService.create(toRequestPayload(values)),
     onSuccess: async (result) => {
-      toast.success(t("API key created"));
       await queryClient.invalidateQueries({ queryKey: ["api-key-list"] });
       reset(getDefaultValues());
       onOpenChange(false);
@@ -240,7 +238,6 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
     mutationFn: async (values: ApiKeyPanelFormValues) =>
       apiService.apiKeyService.update(row.id, toRequestPayload(values)),
     onSuccess: async () => {
-      toast.success(t("API key updated"));
       await invalidateData();
       reset(getDefaultValues());
       onOpenChange(false);
@@ -252,7 +249,6 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   const rotateMutation = useApiMutation({
     mutationFn: async () => apiService.apiKeyService.rotate(row.id),
     onSuccess: async (result) => {
-      toast.success(t("API key rotated"));
       await invalidateData();
       onOpenChange(false);
       setSuccessToken(result.token);
@@ -264,7 +260,6 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   const revokeMutation = useApiMutation({
     mutationFn: async () => apiService.apiKeyService.revoke(row.id),
     onSuccess: async () => {
-      toast.success(t("API key revoked"));
       setRevokeDialogOpen(false);
       await invalidateData();
       onOpenChange(false);

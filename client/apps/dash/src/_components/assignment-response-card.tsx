@@ -32,12 +32,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
         accept,
         reason: accept ? undefined : reason.trim(),
       }),
-    onSuccess: async (_, accept) => {
-      toast.success(
-        accept
-          ? translate("You're on it — dispatch can see you accepted.")
-          : translate("Dispatch has been notified so they can replan."),
-      );
+    onSuccess: async () => {
       setDeclineOpen(false);
       setReason("");
       await queryClient.invalidateQueries({ queryKey: ["dash-loads"] });

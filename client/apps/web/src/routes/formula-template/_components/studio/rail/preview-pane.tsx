@@ -204,7 +204,6 @@ export function PreviewPane() {
       ]);
       setPinnedKey(pinKey);
       setTab("scenarios");
-      toast(t("Scenario “{0}” added", name));
     } catch (error) {
       toast.error(t("Could not pin the scenario"), {
         description: error instanceof Error ? error.message : undefined,

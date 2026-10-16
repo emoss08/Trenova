@@ -23,7 +23,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 const STATE_CHOICES = [
   { value: "Verified", label: "Verified — matches the issuing state" },
@@ -67,9 +66,6 @@ export function JurisdictionRuleVerifyDialog({
     mutationFn: async (values: VerifyJurisdictionRuleInput) =>
       api.post(`/jurisdiction-rules/${rule?.id}/verify/`, values),
     onSuccess: () => {
-      toast.success(t("Verification recorded"), {
-        description: t("This rule now shows who confirmed it and when."),
-      });
       void queryClient.invalidateQueries({ queryKey: ["jurisdiction-rule-list"] });
       onOpenChange(false);
     },

@@ -21,9 +21,6 @@
   "Review unresolved pickup and delivery service failures": "审查未处理的取货与交货服务失误",
   "Reviewed · {0, plural, one {# minute after grace} other {# minutes after grace}}": "已审核 · {0, plural, other {超出宽限期 # 分钟}}",
   "Select reason code": "选择原因代码",
-  "Service failure resolved": "服务失误已处理",
-  "Service failure reviewed": "服务失误已审查",
-  "Service failure voided": "服务失误已作废",
   "Voided · {0, plural, one {# minute after grace} other {# minutes after grace}}": "已作废 · {0, plural, other {超出宽限期 # 分钟}}",
   "{0, plural, one {# diagnostic item; payload copied.} other {# diagnostic items; payload copied.}}": "{0, plural, other {# 个诊断项目；负载已复制。}}",
   "{0} · {1, plural, one {# minute after grace} other {# minutes after grace}}": "{0} · {1, plural, other {超出宽限期 # 分钟}}"

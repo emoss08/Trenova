@@ -212,14 +212,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const { mutate: saveCharges, isPending } = useMutation({
     mutationFn: (payload: BillingQueueUpdateChargesInput) =>
       apiService.billingQueueService.updateCharges(item.id, payload),
-    onSuccess: (_updated, payload) => {
+    onSuccess: () => {
       setStaleSplit(null);
       invalidate();
-      toast.success(
-        payload.convertAmountSplitsToPercent
-          ? t("Charges updated and amount splits converted to percentages")
-          : t("Charges updated"),
-      );
     },
     onError: (error, payload) => {
       const messages = staleAmountSplitMessages(error);

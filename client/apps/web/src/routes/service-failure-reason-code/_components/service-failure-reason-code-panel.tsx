@@ -24,7 +24,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { ServiceFailureReasonCodeForm } from "./service-failure-reason-code-form";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -135,9 +134,6 @@ function ServiceFailureReasonCodeEditPanel({
     mutationFn: async ({ values }) =>
       api.put<ServiceFailureReasonCode>(`/service-failure-reason-codes/${row?.id}/`, values),
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Service failure reason code updated successfully"),
-      });
       void queryClient.invalidateQueries({
         queryKey: ["service-failure-reason-code-list"],
       });

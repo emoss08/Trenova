@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -11,11 +10,8 @@ import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 function StatusCell({ row }: { row: TractorRow }) {
-  const t = useT();
-
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -28,10 +24,8 @@ function StatusCell({ row }: { row: TractorRow }) {
       await queryClient.invalidateQueries({
         queryKey: ["tractor-list"],
       });
-
-      toast.success(t("Tractor status updated successfully"));
     },
-    [row.id, queryClient, t],
+    [row.id, queryClient],
   );
 
   return (

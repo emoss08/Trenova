@@ -13,7 +13,6 @@ import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Edit02Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { ProposalEditor, type ProposalEditorRequest } from "@/components/assistant/proposal-editor";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import type { AssistantProposal } from "@/types/assistant";
@@ -31,8 +30,7 @@ export default function AgentProposalTable() {
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
 
-  const afterDecision = async (message: string) => {
-    toast.success(message);
+  const afterDecision = async () => {
     await Promise.all([
       invalidateProposalViews(queryClient),
       invalidateAIControlCounts(queryClient),
@@ -73,7 +71,7 @@ export default function AgentProposalTable() {
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
           previewDigest,
         });
-        await afterDecision(accepting ? t("Change approved") : t("Change rejected"));
+        await afterDecision();
       },
     });
   };
@@ -99,7 +97,7 @@ export default function AgentProposalTable() {
           reasonCode: reason || "modified_from_activity",
           previewDigest,
         });
-        await afterDecision(t("Change approved with your values"));
+        await afterDecision();
       },
     });
   };

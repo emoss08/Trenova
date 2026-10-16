@@ -54,7 +54,6 @@ export default function EmailProfileTable() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [emailProfileQueryKey] });
       await queryClient.invalidateQueries({ queryKey: ["email", "assignments"] });
-      toast.success(t("Email profile deleted"));
       setDeleteDialogOpen(false);
       setSelectedProfile(null);
     },

@@ -53,7 +53,6 @@ export function OrderChargesSection() {
     mutationFn: (chargeId: string) => removeOrderCharge(orderId!, chargeId),
     onSuccess: () => {
       invalidateOrders();
-      toast.success(t("Charge removed"));
     },
     onError: (error) =>
       toast.error(t("Failed to remove charge"), {

@@ -41,7 +41,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 
 const OVERRIDE_FORM_ID = "invoice-factoring-override-form";
@@ -237,14 +236,9 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
         override: values.override,
         reason: values.override === "Exclude" ? values.reason.trim() : null,
       }),
-    onSuccess: (_state, values) => {
+    onSuccess: () => {
       invalidateFactoringQueries(queryClient);
       invalidateInvoiceQueries(queryClient);
-      toast.success(
-        values.override === "Exclude"
-          ? t("{0} is kept out of factoring", factoring.number)
-          : t("{0} follows the customer's factoring again", factoring.number),
-      );
     },
   });
 

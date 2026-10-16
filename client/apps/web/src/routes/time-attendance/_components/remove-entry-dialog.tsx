@@ -22,7 +22,6 @@ import {
 } from "@trenova/shared/types/timesheet";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type RemovableTimeEntry = {
   id: string;
@@ -65,7 +64,6 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
     resourceName: "Entry",
     mutationFn: (values) => deleteTimeEntry({ id: entry?.id ?? "", reason: values.reason }),
     onSuccess: () => {
-      toast.success(t("Entry removed"));
       onRemoved();
       onOpenChange(false);
     },

@@ -12,7 +12,6 @@ import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertTriangleIcon, Signal01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 
 /**
@@ -41,7 +40,6 @@ export function InvoiceEdiDeliveryCard({
     mutationFn: () => sendInvoiceEdi(invoice.id, sent),
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("EDI 210 for {0} queued", invoice.number));
     },
   });
 

@@ -239,9 +239,8 @@ function LogoForm({
         file,
       );
       await onLogoUpdated(updatedOrganization);
-      toast.success(t("Organization logo updated"));
     },
-    [onLogoUpdated, organizationId, t],
+    [onLogoUpdated, organizationId],
   );
 
   const handleRemoveLogo = useCallback(async () => {
@@ -253,7 +252,6 @@ function LogoForm({
     try {
       const updated = await apiService.organizationService.deleteLogo(organizationId);
       await onLogoUpdated(updated);
-      toast.success(t("Organization logo removed"));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to remove logo";
       toast.error(t("Failed to remove logo"), { description: message });

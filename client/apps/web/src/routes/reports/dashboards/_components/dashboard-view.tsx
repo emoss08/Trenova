@@ -410,7 +410,6 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
       {
         onSuccess: () => {
           setEditing(false);
-          toast.success(t("Dashboard saved"));
         },
         onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to save the dashboard")),
       },
@@ -420,7 +419,6 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   const handleDelete = () => {
     deleteDashboard.mutate(dashboard.id, {
       onSuccess: () => {
-        toast.success(t("Dashboard deleted"));
         void navigate("/reports?tab=dashboards");
       },
       onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to delete the dashboard")),

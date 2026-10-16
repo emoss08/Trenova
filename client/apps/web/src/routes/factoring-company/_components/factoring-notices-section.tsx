@@ -45,7 +45,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 
 /**
@@ -293,7 +292,6 @@ function DraftNoticeDialog({
       }),
     onSuccess: (noa) => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Notice drafted"));
       onOpenChange(false);
       onDrafted(noa);
     },

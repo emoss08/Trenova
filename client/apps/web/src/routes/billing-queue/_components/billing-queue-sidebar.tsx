@@ -153,7 +153,6 @@ export function BillingQueueSidebar({
         queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY],
       });
       void setSearchParams({ preset: null });
-      toast.success(t("Filter preset deleted"));
     },
     onError: () => {
       toast.error(t("Failed to delete filter preset"));

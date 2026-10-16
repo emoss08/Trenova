@@ -57,11 +57,9 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
     switch (action) {
       case "review":
         await apiService.serviceFailureService.review(entity.id, payload);
-        toast.success(t("Service failure reviewed"));
         break;
       case "resolve":
         await apiService.serviceFailureService.resolve(entity.id, payload);
-        toast.success(t("Service failure resolved"));
         break;
       case "void": {
         const notes = window.prompt("Enter a void reason");
@@ -70,7 +68,6 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
           ...payload,
           notes: notes.trim(),
         });
-        toast.success(t("Service failure voided"));
         break;
       }
     }

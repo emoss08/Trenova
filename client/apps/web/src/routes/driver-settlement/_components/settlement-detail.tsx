@@ -318,15 +318,7 @@ function SettlementActions({
           throw new Error(`Unknown action ${action}`);
       }
     },
-    onSuccess: (_data, action) => {
-      toast.success(
-        {
-          submit: translate("Settlement submitted for approval"),
-          approve: translate("Settlement approved"),
-          post: translate("Settlement posted to the general ledger"),
-          recalculate: translate("Settlement recalculated from current pay events"),
-        }[action] ?? translate("Settlement updated"),
-      );
+    onSuccess: () => {
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Settlement action failed")),
@@ -460,9 +452,6 @@ export function ReasonDialog({
         ? rejectDriverSettlement({ settlementId, reason })
         : voidDriverSettlement({ settlementId, reason }),
     onSuccess: () => {
-      toast.success(
-        action === "reject" ? translate("Settlement rejected") : translate("Settlement voided"),
-      );
       setReason("");
       onOpenChange(false);
       onChanged();
@@ -527,7 +516,6 @@ export function MarkPaidDialog({
   const mutation = useMutation({
     mutationFn: () => markDriverSettlementPaid({ settlementId, paymentMethod, paymentReference }),
     onSuccess: () => {
-      toast.success(t("Settlement marked paid"));
       onOpenChange(false);
       onChanged();
     },
@@ -619,7 +607,6 @@ function AddAdjustmentDialog({
         payCodeId: payCodeId || undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Adjustment added"));
       setDescription("");
       setAmount("");
       setPayCodeId("");
@@ -712,7 +699,6 @@ function SettlementLines({
     mutationFn: (lineId: string) =>
       removeDriverSettlementAdjustment({ settlementId: settlement.id, lineId }),
     onSuccess: () => {
-      toast.success(t("Adjustment removed"));
       onChanged();
     },
     onError: (error: Error) =>
@@ -723,7 +709,6 @@ function SettlementLines({
     mutationFn: (payEventId: string) =>
       detachPayEventFromSettlement({ settlementId: settlement.id, payEventId }),
     onSuccess: () => {
-      toast.success(t("Pay event returned to the unsettled pool"));
       onChanged();
     },
     onError: (error: Error) =>

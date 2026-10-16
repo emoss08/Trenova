@@ -17,10 +17,8 @@ import {
   Star01Icon,
 } from "@trenova/shared/components/icons";
 import { useLocation } from "react-router";
-import { toast } from "sonner";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export function HistoryNavigation() {
   const t = useT();
@@ -90,11 +88,6 @@ export function FavoriteToggle({ className }: { className?: string }) {
     resourceName: "Page Favorite",
     invalidateQueries: [pageFavorite.all._def, pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,
-    onSuccess: (result) => {
-      toast.success(
-        result.favorited ? translate("Added to favorites") : translate("Removed from favorites"),
-      );
-    },
   });
 
   const handleToggle = () => {

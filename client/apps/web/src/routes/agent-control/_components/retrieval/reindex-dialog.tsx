@@ -28,7 +28,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { SOURCE_LABEL, estimateExceedsBudget } from "./retrieval-model";
 
 type ReindexDialogProps = {
@@ -76,7 +75,6 @@ function ReindexConfirm({
     onSuccess: async (status) => {
       queryClient.setQueryData(aiRetrieval.status().queryKey, status);
       await queryClient.invalidateQueries({ queryKey: [AI_RETRIEVAL_FAILED_LIST_KEY] });
-      toast.success(t("Re-indexing {0}", label));
       onClose();
     },
     resourceName: t("Re-index"),

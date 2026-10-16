@@ -95,7 +95,6 @@ export default function MemoryTab() {
 
   const setStatus = async (row: Row<AgentMemoryRow>, status: AgentMemoryRow["status"]) => {
     await setAgentMemoryStatus(row.original.id, status);
-    toast.success(status === "Retired" ? t("Memory retired") : t("Memory restored"));
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
       invalidateAIControlCounts(queryClient),
@@ -105,7 +104,6 @@ export default function MemoryTab() {
   const review = async (row: Row<AgentMemoryRow>) => {
     try {
       await reviewAgentMemory(row.original.id, row.original.version);
-      toast.success(t("Memory reviewed; turns that read it can write on their own again"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
         invalidateAIControlCounts(queryClient),

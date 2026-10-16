@@ -63,7 +63,6 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
     form,
     resourceName: "PC*Miler configuration",
     onSuccess: async () => {
-      toast.success(t("PC*Miler integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config(INTEGRATION_TYPE).queryKey,

@@ -193,15 +193,14 @@ export function AccountingCertificateConnect({
   const { control, handleSubmit } = form;
   const { connect, refresh } = useAccountingCertificateActions(vendor, { connect: form });
 
-  const connected = async (connection: AccountingConnection) => {
+  const connected = async () => {
     await refresh();
-    toast.success(t("{0} connected", connection.externalCompanyName || vendor.name));
     void navigate(`${accountingSetupPath(vendor.system)}&setup=connected`, { replace: true });
   };
 
   const onResult = (result: AccountingAuthorizationResult) => {
     if (result.kind === "connected") {
-      void connected(result.connection);
+      void connected();
       return;
     }
     if (result.kind === "choose") {
@@ -216,7 +215,7 @@ export function AccountingCertificateConnect({
       <AccountingCompanyChoice
         vendor={vendor}
         choice={choice}
-        onConnected={(connection) => void connected(connection)}
+        onConnected={() => void connected()}
         cancelAction={
           <Button type="button" variant="outline" onClick={() => setChoice(null)}>
             {t("Back")}

@@ -99,7 +99,10 @@ export function useDataTableCellWrites<TData extends Record<string, any>>({
         return;
       }
       if (plan.writes.length === 0) {
-        toast.info(t("Nothing to change"), { description: skippedNote(plan) });
+        const skipped = skippedNote(plan);
+        if (skipped) {
+          toast.info(t("Nothing to change"), { description: skipped });
+        }
         return;
       }
       if (plan.writes.length > MAX_CELL_WRITES) {
@@ -134,7 +137,10 @@ export function useDataTableCellWrites<TData extends Record<string, any>>({
                 label: t("Undo"),
                 onClick: () =>
                   void write(
-                    { writes: invertWrites(outcome.applied), skipped: { "read-only": 0, unreadable: 0 } },
+                    {
+                      writes: invertWrites(outcome.applied),
+                      skipped: { "read-only": 0, unreadable: 0 },
+                    },
                     "undo",
                   ),
               }

@@ -40,8 +40,6 @@ import {
 } from "@trenova/shared/types/worker-drug-alcohol";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const PERIOD_OPTIONS = randomPeriodSchema.options.map((value) => ({
   value,
@@ -131,7 +129,6 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
       return pool ? updateDotRandomPool(pool.id, pool.version, input) : createDotRandomPool(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? translate("Pool updated") : translate("Pool created"));
       void queryClient.invalidateQueries({ queryKey: [DOT_RANDOM_POOLS_KEY] });
       onOpenChange(false);
     },

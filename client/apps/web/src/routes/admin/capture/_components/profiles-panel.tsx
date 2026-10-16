@@ -26,7 +26,6 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Edit02Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import { ProfilePanel, type ProfilePanelMode } from "./profile-panel";
 
 function ProfileSummary({ profile }: { profile: CaptureProfile }) {
@@ -138,7 +137,6 @@ export function ProfilesPanel() {
   const remove = useMutation({
     mutationFn: (profile: CaptureProfile) => deleteCaptureProfile(profile.id),
     onSuccess: async () => {
-      toast.success(t("Profile deleted"));
       setDeleteOpen(false);
       await refresh();
     },

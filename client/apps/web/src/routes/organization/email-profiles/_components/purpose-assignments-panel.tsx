@@ -73,7 +73,6 @@ export function PurposeAssignmentsPanel() {
       apiService.emailService.updateAssignments(toPayload(values)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: email.assignments().queryKey });
-      toast.success(t("Purpose assignments updated"));
     },
     onError: (error) => {
       toast.error(t("Failed to update purpose assignments"), {

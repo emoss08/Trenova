@@ -15,7 +15,6 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { memorySourceLabel } from "../activity/agent-badges";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
 import type { EditFields } from "../edit/change-review";
@@ -89,9 +88,6 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
         ? await updateAgentMemory(row.id, toMemoryInput(values))
         : await createAgentMemory(toMemoryInput(values));
       await refresh();
-      toast.success(
-        row ? t("Memory saved") : t("Memory saved; agents read it from their next run"),
-      );
       return memoryValuesFromRow(saved);
     },
   });
@@ -102,7 +98,6 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
     try {
       await setAgentMemoryStatus(row.id, row.status === "Retired" ? "Active" : "Retired");
       await refresh();
-      toast.success(row.status === "Retired" ? t("Memory restored") : t("Memory retired"));
       onClose();
     } finally {
       setRetiring(false);
@@ -116,7 +111,6 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
     try {
       await reviewAgentMemory(row.id, row.version);
       await refresh();
-      toast.success(t("Memory reviewed; turns that read it can write on their own again"));
       onClose();
     } catch (error) {
       setReviewError(error instanceof Error ? error.message : t("That didn't go through"));

@@ -47,7 +47,6 @@
   "None of these rows are carriers": "Ninguna de estas filas corresponde a transportistas",
   "Nothing awaiting review": "Nada en espera de revisión",
   "Only open events can be acknowledged.": "Solo puede acusarse recibo de los eventos abiertos.",
-  "Paused feeds poll again on their next scheduled run.": "Las fuentes en pausa vuelven a sondear en su próxima ejecución programada.",
   "Paused since {0}": "En pausa desde {0}",
   "Paused: {0}": "En pausa: {0}",
   "Provider spend is restricted": "El gasto en proveedores está restringido",

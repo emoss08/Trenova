@@ -7,7 +7,6 @@ import {
 import { aiControl } from "@/lib/queries/ai-control";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { controlInput } from "../agent-control-options";
 
 /** Pauses every agent (true) or resumes them (false), organization-wide. */
@@ -23,14 +22,9 @@ export function usePauseAgents(control: AgentControl | undefined) {
       return updateAgentControl(controlInput(control, { shadowMode }));
     },
     resourceName: t("Organization-wide settings"),
-    onSuccess: async (saved, shadowMode) => {
+    onSuccess: async (saved) => {
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
       await queryClient.invalidateQueries({ queryKey: aiControl._def });
-      toast.success(
-        shadowMode
-          ? t("All agents paused · they keep running in shadow")
-          : t("Agents resumed · held proposals are back in Desk"),
-      );
     },
   });
 }

@@ -18,7 +18,6 @@ import {
   type CredentialArchiveValues,
 } from "@trenova/shared/types/worker-credential";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useCredentialInvalidation } from "./use-credential-invalidation";
 
 type CredentialArchiveDialogProps = {
@@ -60,9 +59,6 @@ export function CredentialArchiveDialog({
       });
     },
     onSuccess: () => {
-      toast.success(t("Credential archived"), {
-        description: t("It stays in the worker's history and no longer counts toward compliance."),
-      });
       void invalidate();
       reset({ reason: null });
       onOpenChange(false);

@@ -26,7 +26,6 @@ import {
 } from "@trenova/shared/types/timesheet";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type VoidExportDialogProps = {
   run: PayrollExportRow | null;
@@ -61,7 +60,6 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
     resourceName: "Payroll run",
     mutationFn: (values) => voidPayrollExport({ id: run?.id ?? "", reason: values.reason }),
     onSuccess: () => {
-      toast.success(t("Run voided — the weeks in it are back to approved"));
       void queryClient.invalidateQueries({ queryKey: [PAYROLL_EXPORTS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
       onOpenChange(false);

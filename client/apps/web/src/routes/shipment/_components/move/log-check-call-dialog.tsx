@@ -125,9 +125,7 @@ export function LogCheckCallDialog({
           description:
             result.outcomeReason ?? t("The stop's times were not changed by this report."),
         });
-        return;
       }
-      toast.success(t("Check call logged"));
     },
   });
 

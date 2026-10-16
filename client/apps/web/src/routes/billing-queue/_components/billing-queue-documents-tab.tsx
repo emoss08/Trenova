@@ -100,7 +100,6 @@ export function BillingQueueDocumentsTab({
     mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       invalidateAll();
-      toast.success(t("Document deleted"));
     },
     onError: () => {
       toast.error(t("Failed to delete document"));

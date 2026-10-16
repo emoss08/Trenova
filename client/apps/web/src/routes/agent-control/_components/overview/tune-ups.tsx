@@ -161,7 +161,6 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
     onSuccess: () =>
       fold(() => {
         void refresh();
-        toast.success(copy.applied);
       }),
   });
 

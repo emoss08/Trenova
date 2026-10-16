@@ -28,7 +28,6 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { DEFAULT_CASE_LIMIT, MAX_CASE_LIMIT } from "./extraction-model";
 
 type NewRunDialogProps = {
@@ -78,12 +77,6 @@ export function NewRunDialog({ open, onOpenChange, activeCases, onStarted }: New
   const start = useApiMutation({
     mutationFn: () => startExtractionEvalRun({ providerId: selectedId, caseLimit: limit }),
     onSuccess: async (run) => {
-      toast.success(t("Evaluation started"), {
-        description: t(
-          "{0, plural, one {# case is being scored} other {# cases are being scored}}",
-          run.casesTotal,
-        ),
-      });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_EVAL_RUN_LIST_KEY] }),
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_ACCURACY_KEY] }),

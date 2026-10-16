@@ -38,7 +38,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
 const resendLogoDark = "/integrations/logos/resend_logo_dark.svg";
 const resendLogoLight = "/integrations/logos/resend_logo_light.svg";
@@ -104,7 +103,6 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
     form,
     resourceName: "Resend configuration",
     onSuccess: async () => {
-      toast.success(t("Resend integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config("Resend").queryKey,

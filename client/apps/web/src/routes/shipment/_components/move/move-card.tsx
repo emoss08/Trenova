@@ -55,7 +55,6 @@ import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
 import { StopEtaLine } from "./stop-eta";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export function MoveCard({
   moveIndex,
@@ -129,9 +128,6 @@ export function MoveCard({
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Move unassigned"), {
-        description: t("The assignment has been removed from this move."),
-      });
     },
     onError: () => {
       toast.error(t("Failed to unassign move"));
@@ -146,9 +142,6 @@ export function MoveCard({
       setValue(`moves.${moveIndex}.status`, "New");
       setCancelCarrierOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Carrier assignment canceled"), {
-        description: t("The move is uncovered again."),
-      });
     },
     onError: (error: Error) => {
       toast.error(t("Failed to cancel carrier assignment"), { description: error.message });
@@ -173,7 +166,7 @@ export function MoveCard({
         }),
       );
     },
-    onSuccess: (updatedMove: ShipmentMove, variables) => {
+    onSuccess: (updatedMove: ShipmentMove) => {
       setValue(`moves.${moveIndex}.status`, updatedMove.status);
       setValue(`moves.${moveIndex}.stops`, updatedMove.stops);
       setStopActualTarget(null);
@@ -184,14 +177,6 @@ export function MoveCard({
           queryKey: shipment.trackingEvents(move.shipmentId).queryKey,
         });
       }
-      toast.success(
-        variables.action === "Arrive"
-          ? translate("Arrival recorded")
-          : translate("Departure recorded"),
-        {
-          description: t("The stop actuals and move status have been updated."),
-        },
-      );
     },
     onError: (error: Error) => {
       toast.error(t("Failed to record stop actual"), { description: error.message });

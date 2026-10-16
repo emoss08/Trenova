@@ -40,7 +40,6 @@ import { dateToUnixTimestamp, formatUnixDateMedium } from "@trenova/shared/lib/d
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import {
   reserveActionNeedsReason,
   reserveActionTakesCash,
@@ -124,7 +123,6 @@ function movementCopy(target: ReserveMovementTarget, t: ReturnType<typeof useT>)
         cashToggle: t("The factor paid a different amount"),
         cashLabel: t("Amount the factor paid"),
         reasonLabel: t("Memo"),
-        success: t("Reserve released on invoice {0}", invoice),
       };
     case "chargeback":
       return {
@@ -137,7 +135,6 @@ function movementCopy(target: ReserveMovementTarget, t: ReturnType<typeof useT>)
         cashToggle: t("A different amount was repaid"),
         cashLabel: t("Amount repaid to the factor"),
         reasonLabel: t("Why the factor charged it back"),
-        success: t("Chargeback recorded on invoice {0}", invoice),
       };
     case "reverse":
       return {
@@ -150,7 +147,6 @@ function movementCopy(target: ReserveMovementTarget, t: ReturnType<typeof useT>)
         cashToggle: "",
         cashLabel: "",
         reasonLabel: t("Why the chargeback is reversed"),
-        success: t("Chargeback reversed on invoice {0}", invoice),
       };
   }
 }
@@ -223,7 +219,6 @@ function MovementForm({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(copy.success);
       onDone();
     },
     onError: () => {

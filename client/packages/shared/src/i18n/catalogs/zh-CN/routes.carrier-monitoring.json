@@ -47,7 +47,6 @@
   "None of these rows are carriers": "这些数据行中没有一行是承运商",
   "Nothing awaiting review": "没有等待审查的项目",
   "Only open events can be acknowledged.": "仅未结事件可标记为已确认。",
-  "Paused feeds poll again on their next scheduled run.": "已暂停的数据源会在下次计划运行时重新轮询。",
   "Paused since {0}": "自 {0} 起暂停",
   "Paused: {0}": "已暂停：{0}",
   "Provider spend is restricted": "供应商支出受限",

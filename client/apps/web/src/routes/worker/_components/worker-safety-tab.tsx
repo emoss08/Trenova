@@ -102,7 +102,6 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
     mutationFn: (event: WorkerSafetyEventRow) =>
       reviewWorkerSafetyEvent({ id: event.id, version: event.version }),
     onSuccess: () => {
-      toast.success(t("Marked under review"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -112,7 +111,6 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
     mutationFn: (event: WorkerSafetyEventRow) =>
       reopenWorkerSafetyEvent({ id: event.id, version: event.version }),
     onSuccess: () => {
-      toast.success(t("Event reopened"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -121,7 +119,6 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
   const remove = useMutation({
     mutationFn: (event: WorkerSafetyEventRow) => deleteWorkerSafetyEvent(event.id),
     onSuccess: () => {
-      toast.success(t("Event deleted"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -130,7 +127,6 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
   const removeRecognition = useMutation({
     mutationFn: (recognition: WorkerRecognitionRow) => deleteWorkerRecognition(recognition.id),
     onSuccess: () => {
-      toast.success(t("Recognition removed"));
       void invalidate();
     },
     onError: (error: Error) =>
@@ -183,9 +179,7 @@ export default function WorkerSafetyTab({ workerId }: { workerId: string }) {
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-muted-foreground text-xs font-semibold">
-            {t("Events")}
-          </h4>
+          <h4 className="text-muted-foreground text-xs font-semibold">{t("Events")}</h4>
           <p className="text-muted-foreground truncate text-xs">
             {t("Accidents, incidents, near misses, citations and inspections. Open ones first.")}
           </p>

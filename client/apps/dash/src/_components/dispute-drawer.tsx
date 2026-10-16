@@ -60,7 +60,6 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
         category,
         description: description.trim(),
       });
-      toast.success(t("Sent to your carrier. You'll see updates under Money → Disputes."));
       await queryClient.invalidateQueries({ queryKey: ["dash-disputes"] });
       reset();
       onOpenChange(false);

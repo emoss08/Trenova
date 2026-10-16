@@ -110,7 +110,6 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
       void queryClient.invalidateQueries({
         queryKey: documentParsingRule.list._def,
       });
-      toast.success(t("Version published successfully"));
     },
     onError: () => {
       toast.error(t("Failed to publish version"));

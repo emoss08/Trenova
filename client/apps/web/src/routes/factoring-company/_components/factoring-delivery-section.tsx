@@ -353,9 +353,6 @@ function DeliveryDialog({
       });
     },
     onSuccess: () => {
-      toast.success(t("Delivery settings saved"), {
-        description: t("Test the connection before the next schedule goes out."),
-      });
       onSaved();
     },
   });

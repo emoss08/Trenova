@@ -52,7 +52,7 @@ type FormCreatePanelProps<
   /** More at the left of the footer, such as a test button. */
   footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues) => Promise<TMutationData>;
-  /** Replaces the generic "created" toast, for a save whose outcome needs saying. */
+  /** A toast for a create whose outcome needs saying; a plain create shows nothing. */
   successToast?: (
     data: TMutationData,
     values: TSubmitValues,
@@ -142,9 +142,9 @@ export function FormCreatePanel<
       },
       onSuccess: (data, variables) => {
         const custom = successToast?.(data, variables.values);
-        toast.success(custom?.title ?? t("Changes have been saved."), {
-          description: custom ? custom.description : t("{0} created successfully", title),
-        });
+        if (custom) {
+          toast.success(custom.title, { description: custom.description });
+        }
         void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
         if (isPopout) {

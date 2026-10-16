@@ -19,7 +19,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { FactoringCompanyForm } from "./factoring-company-form";
 import { FactoringAgreementsSection } from "./factoring-agreements-section";
 import { FactoringDeliverySection } from "./factoring-delivery-section";
@@ -159,9 +158,6 @@ function FactoringCompanyEditPanel({
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Factoring company updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: ["factoring-company-list"] });
 
       const action = variables.action;

@@ -117,7 +117,6 @@ export default function NotificationList() {
     try {
       await apiService.notificationService.markAllRead();
       invalidate();
-      toast.success(t("All notifications marked as read"));
     } catch {
       toast.error(t("Failed to mark all as read"));
     }

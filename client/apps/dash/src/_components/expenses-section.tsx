@@ -44,7 +44,6 @@ export function ExpensesSection() {
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyExpense(id),
     onSuccess: async () => {
-      toast.success(t("Expense cancelled."));
       await queryClient.invalidateQueries({ queryKey: ["dash-expenses"] });
     },
     onError: (error: Error) =>
@@ -161,7 +160,6 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
       return expense;
     },
     onSuccess: async () => {
-      toast.success(t("Expense sent — payroll will review it."));
       await queryClient.invalidateQueries({ queryKey: ["dash-expenses"] });
       reset();
       onOpenChange(false);

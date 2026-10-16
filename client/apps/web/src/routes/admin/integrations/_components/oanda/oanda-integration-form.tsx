@@ -95,7 +95,6 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
     form,
     resourceName: "OANDA exchange-rate configuration",
     onSuccess: async () => {
-      toast.success(t("OANDA exchange-rate integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config(INTEGRATION_TYPE).queryKey,

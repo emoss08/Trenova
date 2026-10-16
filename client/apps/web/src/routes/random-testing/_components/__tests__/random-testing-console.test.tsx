@@ -293,7 +293,7 @@ describe("RandomTestingConsole", () => {
 
     await user.click(within(dialog).getByRole("button", { name: "Finalise" }));
     await waitFor(() => expect(mocks.finalizeDotRandomDraw).toHaveBeenCalledWith("draw_3"));
-    expect(mocks.toast.success).toHaveBeenCalledWith("Round finalised", expect.anything());
+    expect(mocks.toast.success).not.toHaveBeenCalled();
   });
 
   it("asks before voiding a draft round, then voids it", async () => {

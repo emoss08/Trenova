@@ -154,7 +154,6 @@ export function CannedGallery({
       { cannedKey: report.key },
       {
         onSuccess: (definition) => {
-          toast.success(t('"{0}" copied to your reports', report.name));
           void navigate(`/reports/builder/${definition.id}`);
         },
         onError: (error) =>

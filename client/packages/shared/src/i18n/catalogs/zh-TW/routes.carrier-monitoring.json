@@ -47,7 +47,6 @@
   "None of these rows are carriers": "這些資料列中沒有一筆是承運業者",
   "Nothing awaiting review": "沒有等待審查的項目",
   "Only open events can be acknowledged.": "僅未結事件可標示為已簽認。",
-  "Paused feeds poll again on their next scheduled run.": "已暫停的資料來源會於下次排定執行時重新輪詢。",
   "Paused since {0}": "自 {0} 起暫停",
   "Paused: {0}": "已暫停：{0}",
   "Provider spend is restricted": "供應商支出受限",

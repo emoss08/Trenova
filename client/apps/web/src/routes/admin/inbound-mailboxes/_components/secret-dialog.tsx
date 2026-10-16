@@ -14,7 +14,6 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
-import { toast } from "sonner";
 import { generatePostmarkCredentials, postmarkSecret, type BasicCredentials } from "./webhook-url";
 
 /**
@@ -42,7 +41,6 @@ export function SecretDialog({
     mutationFn: ({ id, value }: { id: string; value: string }) =>
       setInboundMailboxSigningSecret(id, value),
     onSuccess: async () => {
-      toast.success(t("Signing secret saved"));
       await onSaved();
     },
     resourceName: "Mailbox",

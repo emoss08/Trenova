@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { clearSessionCache } from "@/lib/session-cache";
 import { apiService } from "@/services/api";
@@ -9,11 +8,8 @@ import type {
   SwitchOrganizationResponse,
 } from "@trenova/shared/types/organization";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 export function useSwitchOrganization() {
-  const t = useT();
-
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
 
@@ -35,10 +31,6 @@ export function useSwitchOrganization() {
       await clearSessionCache();
 
       void navigate("/");
-
-      toast.success(t("Organization switched"), {
-        description: t("You are now working in a different organization."),
-      });
     },
   });
 }

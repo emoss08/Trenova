@@ -14,7 +14,6 @@
   "Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched.": "Importe un archivo de recibos bancarios y se convertirá aquí en un lote, con todos los recibos que contenía y cuántos de ellos se emparejaron.",
   "Import bank receipts": "Importar recibos bancarios",
   "Import batch": "Lote de importación",
-  "Import batch created": "Lote de importación creado",
   "Import batch summary": "Resumen del lote de importación",
   "Individual bank receipts to import in this batch": "Recibos bancarios individuales a importar en este lote",
   "Must be greater than 0": "Debe ser mayor que 0",

@@ -45,7 +45,6 @@ export function PtoSection() {
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyPto(id),
     onSuccess: async () => {
-      toast.success(t("Request cancelled."));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
@@ -158,7 +157,6 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
       });
     },
     onSuccess: async () => {
-      toast.success(t("Request sent — you'll get a notification when it's reviewed."));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-pto"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),

@@ -23,7 +23,6 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
 import { AmendReturnDialog } from "./amend-return-dialog";
 import { DeleteReturnDialog } from "./delete-return-dialog";
 import { FinalizeReturnDialog } from "./finalize-return-dialog";
@@ -57,11 +56,6 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
       buildCsv(iftaReturnCsvRows(ret), IFTA_RETURN_CSV_COLUMNS),
       iftaReturnCsvFilename(ret),
     );
-    toast.success(t("Worksheet exported"), {
-      description: t(
-        "Every line, each fuel type's subtotal and the grand total, as the form reads.",
-      ),
-    });
   };
 
   return (

@@ -114,7 +114,6 @@ export function SavedViewField({
             params: (view.params as Record<string, unknown> | null) ?? {},
             format: view.format ?? format,
           });
-          toast.success(t('Saved "{0}"', view.name));
         },
         onError: (error) => {
           toast.error(graphQLErrorMessage(error, t("Failed to save the view")));
@@ -128,7 +127,6 @@ export function SavedViewField({
     deleteView.mutate(selected.id, {
       onSuccess: () => {
         onSelect(null);
-        toast.success(t('Deleted "{0}"', selected.name));
       },
       onError: (error) => {
         toast.error(graphQLErrorMessage(error, t("Failed to delete the view")));

@@ -51,7 +51,6 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
     setPending(true);
     try {
       await releaseDriverPayEvent(row.id);
-      toast.success(t("Hold released — the event will settle normally"));
       invalidatePayEventQueries(queryClient);
     } catch (error) {
       toast.error((error as Error).message || translate("Failed to release hold"));
@@ -64,7 +63,6 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
     setPending(true);
     try {
       await holdDriverPayEvent({ payEventId: row.id, reason: reason.trim() });
-      toast.success(t("Pay event held — it will skip settlement generation until released"));
       setDialogOpen(false);
       setReason("");
       invalidatePayEventQueries(queryClient);

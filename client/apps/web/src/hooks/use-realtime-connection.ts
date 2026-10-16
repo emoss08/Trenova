@@ -2,6 +2,11 @@ import { deliverToDesktop } from "@/lib/desktop-notifications";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
+import {
+  billingTransferRunIdOf,
+  reportRunIdOf,
+  shouldToastNotification,
+} from "@/lib/notification-toast";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { notification } from "@trenova/shared/lib/queries/notification";
@@ -39,7 +44,6 @@ import {
 } from "@/lib/case-realtime";
 import { cachedThreadLists } from "@/lib/thread-list";
 import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
-import { senderName } from "@/lib/triage/message-state";
 import { useTriageStore } from "@/stores/triage-store";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
@@ -90,9 +94,8 @@ export function useRealtimeConnection() {
     const lastFlushedAt = new Map<string, number>();
     let disposed = false;
 
-    // A message that arrives while Triage is open joins its folder with an
-    // entry of its own and a word about who it is from; anywhere else it only
-    // moves the counts.
+    // A message that arrives while Triage is open joins its folder marked as
+    // new; anywhere else it only moves the counts.
     const inboundMessages = createInboundMessagePatcher({
       queryClient,
       meId: user.id,
@@ -102,7 +105,6 @@ export function useRealtimeConnection() {
           return;
         }
         triage.markArrival(message.id);
-        toast(t("New from {0}", senderName(message)));
       },
     });
 
@@ -234,66 +236,57 @@ export function useRealtimeConnection() {
               }
             });
 
-            const runId =
-              notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
-                ? notif.data.runId
-                : null;
+            if (shouldToastNotification(notif)) {
+              const runId = reportRunIdOf(notif);
+              const transferRunId = billingTransferRunIdOf(notif);
 
-            // A bulk billing transfer runs unattended, so its result has to
-            // come back to whoever started it with a way into the report —
-            // the shipments that did not transfer are their next piece of work.
-            const transferRunId =
-              notif.eventType?.startsWith("billing_transfer_run_") &&
-              typeof notif.data?.runId === "string"
-                ? notif.data.runId
-                : null;
+              // An AI audit export is only ever downloaded by the person who
+              // asked for it, which is who this notice is addressed to, so the
+              // toast downloads it directly; a failed one opens the exports.
+              const auditExport = aiAuditExportNotice(notif);
+              const noticeLink =
+                typeof notif.data?.link === "string" && notif.data.link.startsWith("/")
+                  ? notif.data.link
+                  : null;
 
-            // An AI audit export is only ever downloaded by the person who
-            // asked for it, which is who this notice is addressed to, so the
-            // toast downloads it directly; a failed one opens the exports.
-            const auditExport = aiAuditExportNotice(notif);
-            const noticeLink =
-              typeof notif.data?.link === "string" && notif.data.link.startsWith("/")
-                ? notif.data.link
-                : null;
-
-            toast.info(notif.title, {
-              description: notif.message,
-              action: runId
-                ? {
-                    label: t("Download"),
-                    onClick: () => downloadReportRun({ id: runId }),
-                  }
-                : transferRunId
+              toast.info(notif.title, {
+                description: notif.message,
+                action: runId
                   ? {
-                      label: t("View report"),
-                      onClick: () =>
-                        navigateRef.current(
-                          `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
-                        ),
+                      label: t("Download"),
+                      onClick: () => downloadReportRun({ id: runId }),
                     }
-                  : auditExport?.kind === "download"
+                  : transferRunId
                     ? {
-                        label: t("Download"),
+                        label: t("View report"),
                         onClick: () =>
-                          void downloadAIAuditExport(auditExport.exportId).catch((error) => {
-                            toast.error(t("The file could not be downloaded"), {
-                              description: graphQLErrorMessage(error, t("Try again shortly.")),
-                            });
-                          }),
+                          navigateRef.current(
+                            `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
+                          ),
                       }
-                    : auditExport
+                    : auditExport?.kind === "download"
                       ? {
-                          label: t("View exports"),
-                          onClick: () => navigateRef.current(auditExport.link),
+                          label: t("Download"),
+                          onClick: () =>
+                            void downloadAIAuditExport(auditExport.exportId).catch((error) => {
+                              toast.error(t("The file could not be downloaded"), {
+                                description: graphQLErrorMessage(error, t("Try again shortly.")),
+                              });
+                            }),
                         }
-                      : noticeLink
+                      : auditExport
                         ? {
-                            label: t("Open"),
-                            onClick: () => navigateRef.current(noticeLink),
+                            label: t("View exports"),
+                            onClick: () => navigateRef.current(auditExport.link),
                           }
-                        : undefined,
-            });
+                        : noticeLink
+                          ? {
+                              label: t("Open"),
+                              onClick: () => navigateRef.current(noticeLink),
+                            }
+                          : undefined,
+              });
+            }
           }
         }
 

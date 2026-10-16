@@ -146,7 +146,6 @@ export function TimeClockPanel({
     resourceName: "Punch",
     mutationFn: () => clockIn({ workerId }),
     onSuccess: () => {
-      toast.success(t("Clocked in"));
       invalidate();
     },
   });
@@ -161,7 +160,6 @@ export function TimeClockPanel({
     resourceName: "Punch",
     mutationFn: () => clockOut({ workerId }),
     onSuccess: () => {
-      toast.success(t("Clocked out"));
       invalidate();
     },
   });
@@ -171,7 +169,6 @@ export function TimeClockPanel({
   const boardPunchOut = useMutation({
     mutationFn: (id: string) => clockOut({ workerId: id }),
     onSuccess: (_data, id) => {
-      toast.success(t("Clocked out"));
       invalidateWorker(id);
     },
     onError: (error: Error) =>

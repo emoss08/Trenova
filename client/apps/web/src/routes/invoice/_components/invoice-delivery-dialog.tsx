@@ -20,7 +20,6 @@ import { invalidEmailAddresses, splitEmailList } from "@trenova/shared/lib/email
 import type { Invoice, InvoiceSendPlan } from "@trenova/shared/types/invoice";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 const DELIVERY_FORM_ID = "invoice-delivery-form";
@@ -122,7 +121,6 @@ export function InvoiceDeliveryDialog({
     onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
       void queryClient.invalidateQueries(invoiceQueries.sendPlan(invoice.id));
-      toast.success(t("Delivery for {0} updated", invoice.number));
       onOpenChange(false);
     },
   });

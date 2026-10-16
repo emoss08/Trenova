@@ -63,7 +63,6 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
         await queryClient.invalidateQueries({
           queryKey: ["user-role-assignments", userId],
         });
-        toast.success(t("Role unassigned"));
       } catch (error) {
         toast.error(t("Failed to unassign role"), {
           description: describeApiError(error),
@@ -251,7 +250,6 @@ function AssignRoleDialog({
       await queryClient.invalidateQueries({
         queryKey: ["user-role-assignments", userId],
       });
-      toast.success(t("Role assigned"));
     },
   });
 

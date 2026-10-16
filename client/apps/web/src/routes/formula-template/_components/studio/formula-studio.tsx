@@ -398,7 +398,6 @@ function StudioLayout() {
       const exportData = buildTemplateExport(template, { testCases });
       const filename = getExportFilename(template, false);
       downloadJson(exportData, filename);
-      toast(t("Template exported"), { description: filename });
     } catch {
       toast.error(t("Export failed"), {
         description: t("Could not export the template. Please try again."),

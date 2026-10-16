@@ -158,7 +158,6 @@ function RemittanceDetail({
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
       setDiscarding(false);
-      toast.success(t("Remittance discarded"));
     },
     onError: (error) => {
       const described = describeError(error);

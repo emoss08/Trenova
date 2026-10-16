@@ -14,7 +14,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Key01Icon, Monitor01Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
-import { toast } from "sonner";
 
 export const prefetch: RoutePrefetch = () => [
   capture.myDevices(null),
@@ -71,8 +70,7 @@ export function CaptureDevicesPage() {
   const revoke = useMutation({
     mutationFn: ({ device, reason }: RevokeVariables) =>
       revokeMyCaptureDevice(device.id, reason === "" ? null : reason),
-    onSuccess: async (device) => {
-      toast.success(t("{0} is revoked", device.name));
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: capture.myDevices._def });
     },
   });

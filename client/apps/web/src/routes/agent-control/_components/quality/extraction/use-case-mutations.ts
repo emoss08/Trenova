@@ -6,14 +6,9 @@ import {
   EXTRACTION_EVAL_CASE_LIST_KEY,
   updateExtractionEvalCase,
 } from "@/lib/graphql/extraction-eval";
-import type {
-  ExtractionEvalCaseStatus,
-  UpdateExtractionEvalCaseInput,
-} from "@trenova/graphql/generated/graphql";
+import type { UpdateExtractionEvalCaseInput } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
-import { CASE_STATUS_MOVED } from "./extraction-model";
 
 export type CaseUpdate = { id: string; input: UpdateExtractionEvalCaseInput };
 
@@ -32,12 +27,7 @@ export function useCaseMutations() {
 
   const update = useApiMutation({
     mutationFn: ({ id, input }: CaseUpdate) => updateExtractionEvalCase(id, input),
-    onSuccess: async (updated, { input }) => {
-      toast.success(
-        input.status
-          ? CASE_STATUS_MOVED[input.status as ExtractionEvalCaseStatus]
-          : t("Changes have been saved"),
-      );
+    onSuccess: async (updated) => {
       await refresh(updated.id);
     },
     resourceName: t("Evaluation case"),
@@ -46,9 +36,6 @@ export function useCaseMutations() {
   const remove = useApiMutation({
     mutationFn: (id: string) => deleteExtractionEvalCase(id),
     onSuccess: async (_deleted, id) => {
-      toast.success(t("Case deleted"), {
-        description: t("Its frozen document text and every result that scored it are gone."),
-      });
       await refresh(id);
     },
     resourceName: t("Evaluation case"),

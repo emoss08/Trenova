@@ -30,7 +30,6 @@ import {
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import {
   MAX_ACCURACY_DROP_POINTS,
   MAX_REJECTION_INCREASE_POINTS,
@@ -134,9 +133,6 @@ export function RolloutSettingsDialog({ open, onOpenChange, rollout }: RolloutSe
       return updateExtractionRollout(input);
     },
     onSuccess: async (saved) => {
-      toast.success(
-        saved.serving ? t("The candidate is serving its share") : t("The rollout is off"),
-      );
       queryClient.setQueryData([EXTRACTION_ROLLOUT_KEY], saved);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_ROLLOUT_KEY] }),

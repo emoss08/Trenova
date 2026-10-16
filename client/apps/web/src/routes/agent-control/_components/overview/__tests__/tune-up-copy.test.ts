@@ -63,7 +63,12 @@ describe("tuneUpCopy", () => {
       tuneUp({
         kind: "RaiseToolTier",
         toolName: "assign_move",
-        evidence: { ...tuneUp({}).evidence, toTier: "AutoExecute", streak: 12, approvalsPerWeek: 6.4 },
+        evidence: {
+          ...tuneUp({}).evidence,
+          toTier: "AutoExecute",
+          streak: 12,
+          approvalsPerWeek: 6.4,
+        },
       }),
       t,
       labels,
@@ -78,7 +83,12 @@ describe("tuneUpCopy", () => {
       tuneUp({
         kind: "RaiseToolTier",
         toolName: "assign_move",
-        evidence: { ...tuneUp({}).evidence, toTier: "ActWithApproval", rejections: 3, approvalsPerWeek: 0.4 },
+        evidence: {
+          ...tuneUp({}).evidence,
+          toTier: "ActWithApproval",
+          rejections: 3,
+          approvalsPerWeek: 0.4,
+        },
       }),
       t,
       labels,
@@ -95,7 +105,12 @@ describe("tuneUpCopy", () => {
         agent: null,
         provider: { id: "aip_o", name: "Local Ollama", kind: "Ollama" },
         otherProvider: { id: "aip_v", name: "Workstation vLLM", kind: "OpenAIChat" },
-        evidence: { ...tuneUp({}).evidence, failed: 24, rescued: 22, tasks: ["General", "DailyBriefing"] },
+        evidence: {
+          ...tuneUp({}).evidence,
+          failed: 24,
+          rescued: 22,
+          tasks: ["General", "DailyBriefing"],
+        },
       }),
       t,
       labels,
@@ -159,7 +174,6 @@ describe("tuneUpCopy", () => {
       "Nothing handles it, so search matches words only. Local Ollama already serves nomic-embed-text",
     );
     expect(copy.gain).toBe("Search by meaning");
-    expect(copy.applied).toBe("Embedding now goes to Local Ollama");
 
     const other = tuneUpCopy(
       tuneUp({
@@ -179,7 +193,12 @@ describe("tuneUpCopy", () => {
     const idle = tuneUpCopy(
       tuneUp({
         kind: "TurnOffIdleAgent",
-        evidence: { ...tuneUp({}).evidence, lastRunAt: NOW - 15 * DAY, idleSince: NOW - 15 * DAY, tools: 55 },
+        evidence: {
+          ...tuneUp({}).evidence,
+          lastRunAt: NOW - 15 * DAY,
+          idleSince: NOW - 15 * DAY,
+          tools: 55,
+        },
       }),
       t,
       labels,

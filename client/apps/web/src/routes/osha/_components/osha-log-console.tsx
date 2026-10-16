@@ -113,9 +113,6 @@ export default function OshaLogConsole() {
   const certifyMutation = useMutation({
     mutationFn: () => certifyOshaSummary(year),
     onSuccess: () => {
-      toast.success(t("Summary certified"), {
-        description: t("Post it where employees can see it, from February 1 to April 30."),
-      });
       void invalidate();
     },
     onError: (error: Error) =>
@@ -125,9 +122,6 @@ export default function OshaLogConsole() {
   const uncertifyMutation = useMutation({
     mutationFn: () => uncertifyOshaSummary(year),
     onSuccess: () => {
-      toast.success(t("Summary reopened"), {
-        description: t("The certification has been cleared so the figures can be corrected."),
-      });
       void invalidate();
     },
     onError: (error: Error) =>
@@ -137,9 +131,6 @@ export default function OshaLogConsole() {
   const deleteMutation = useMutation({
     mutationFn: (entry: OshaLogCase) => deleteWorkerInjury(entry.id),
     onSuccess: (_, entry) => {
-      toast.success(t("Case {0} deleted", caseLabel(entry)), {
-        description: t("The case number is not reused, so two cases can never share one."),
-      });
       setDeleting(null);
       if (openCaseId === entry.id) setOpenCaseId(null);
       void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, entry.workerId] });

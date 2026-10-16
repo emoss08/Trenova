@@ -28,7 +28,6 @@ import { usePermission } from "@/hooks/use-permission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
-import { toast } from "sonner";
 import { RolePageLayout } from "../../_components/role-builder-layout";
 import { RoleAgentsSection } from "../../_components/role-agents-section";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
@@ -96,7 +95,6 @@ export function RoleEditPage() {
       return response;
     },
     onSuccess: () => {
-      toast.success(t("Role updated successfully"));
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void queryClient.invalidateQueries({ queryKey: ["role", id] });
       void navigate("/admin/roles");

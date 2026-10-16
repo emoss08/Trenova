@@ -29,11 +29,8 @@ import type { DriverType, WorkerType } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 function WorkerTypeCell({ row }: { row: WorkerRow }) {
-  const t = useT();
-
   const queryClient = useQueryClient();
 
   const handleTypeChange = useCallback(
@@ -46,10 +43,8 @@ function WorkerTypeCell({ row }: { row: WorkerRow }) {
       await queryClient.invalidateQueries({
         queryKey: ["worker-list"],
       });
-
-      toast.success(t("Worker type updated successfully"));
     },
-    [row.id, queryClient, t],
+    [row.id, queryClient],
   );
 
   return (
@@ -62,8 +57,6 @@ function WorkerTypeCell({ row }: { row: WorkerRow }) {
 }
 
 function DriverTypeCell({ row }: { row: WorkerRow }) {
-  const t = useT();
-
   const queryClient = useQueryClient();
 
   const handleDriverTypeChange = useCallback(
@@ -76,10 +69,8 @@ function DriverTypeCell({ row }: { row: WorkerRow }) {
       await queryClient.invalidateQueries({
         queryKey: ["worker-list"],
       });
-
-      toast.success(t("Driver type updated successfully"));
     },
-    [row.id, queryClient, t],
+    [row.id, queryClient],
   );
 
   return (

@@ -67,7 +67,6 @@ const ACTION_CONFIG: Record<
     description: string;
     confirmLabel: string;
     loadingLabel: string;
-    successMessage: string;
     commentLabel: string;
     commentPlaceholder: string;
     commentRequired: boolean;
@@ -80,7 +79,6 @@ const ACTION_CONFIG: Record<
     description: "Send this agreement to a reviewer for approval before it can price shipments.",
     confirmLabel: "Submit for review",
     loadingLabel: "Submitting...",
-    successMessage: "Agreement submitted for review",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Describe what changed and why it needs review",
     commentRequired: false,
@@ -93,7 +91,6 @@ const ACTION_CONFIG: Record<
       "Approving activates this agreement, and shipments on its lanes start pricing against it.",
     confirmLabel: "Approve",
     loadingLabel: "Approving...",
-    successMessage: "Agreement approved and activated",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Add an approval note",
     commentRequired: false,
@@ -105,7 +102,6 @@ const ACTION_CONFIG: Record<
     description: "Rejecting returns this agreement to draft so the author can make changes.",
     confirmLabel: "Reject",
     loadingLabel: "Rejecting...",
-    successMessage: "Agreement rejected and returned to draft",
     commentLabel: "Comment (required)",
     commentPlaceholder: "Explain why this agreement is being rejected",
     commentRequired: true,
@@ -118,7 +114,6 @@ const ACTION_CONFIG: Record<
       "A suspended agreement stops pricing shipments immediately, and can be resumed without another review.",
     confirmLabel: "Suspend",
     loadingLabel: "Suspending...",
-    successMessage: "Agreement suspended",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Why pricing is being paused",
     commentRequired: false,
@@ -130,7 +125,6 @@ const ACTION_CONFIG: Record<
     description: "The agreement returns to active and its lanes price shipments again.",
     confirmLabel: "Resume",
     loadingLabel: "Resuming...",
-    successMessage: "Agreement resumed",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Add a note",
     commentRequired: false,
@@ -143,7 +137,6 @@ const ACTION_CONFIG: Record<
       "Archiving is permanent. The agreement stops pricing and is kept only because quotes point at it.",
     confirmLabel: "Archive",
     loadingLabel: "Archiving...",
-    successMessage: "Agreement archived",
     commentLabel: "Comment (optional)",
     commentPlaceholder: "Why this agreement is being retired",
     commentRequired: false,
@@ -184,7 +177,6 @@ export function ReviewActionDialog({
     mutationFn: (trimmedComment: string) =>
       apiService.rateAgreementService.review(agreement?.id ?? "", action, trimmedComment),
     onSuccess: () => {
-      toast.success(config.successMessage);
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement"] });
       onOpenChange(false);

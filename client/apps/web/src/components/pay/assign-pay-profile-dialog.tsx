@@ -28,7 +28,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export function AssignPayProfileDialog({
   open,
@@ -103,7 +102,6 @@ export function AssignPayProfileDialog({
         notes: values.notes || undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Pay profile assigned"));
       void queryClient.invalidateQueries({ queryKey: ["worker-pay"] });
       void queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
       void queryClient.invalidateQueries({ queryKey: ["pay-profile-assignments"] });

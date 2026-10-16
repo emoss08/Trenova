@@ -72,15 +72,7 @@ export default function OrgStructureConsole() {
         reportsToPositionId: reportsToPositionId ?? undefined,
         status: position.status === "Active" ? "Active" : "Inactive",
       }),
-    onSuccess: (_data, { position, reportsToPositionId }) => {
-      const parent = reportsToPositionId
-        ? positionsResult.data?.find((row) => row.id === reportsToPositionId)?.title
-        : null;
-      toast.success(
-        parent
-          ? t("{0} now reports to {1}", position.title, parent)
-          : t("{0} is now top level", position.title),
-      );
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [JOB_POSITIONS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [HEADCOUNT_KEY] });
     },

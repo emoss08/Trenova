@@ -101,13 +101,7 @@ export function PayrollPanel() {
 
   const { mutate: generate, isPending: generating } = useMutation({
     mutationFn: () => generatePayrollExport({ periodStart, periodEnd }),
-    onSuccess: (run) => {
-      toast.success(
-        t(
-          "{0, plural, one {Run created over # timesheet} other {Run created over # timesheets}}",
-          run.timesheetCount,
-        ),
-      );
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [PAYROLL_EXPORTS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
     },

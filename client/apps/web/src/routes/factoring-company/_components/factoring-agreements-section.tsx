@@ -52,7 +52,6 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { FactoringAgreementDialog } from "./factoring-agreement-dialog";
 
@@ -312,9 +311,6 @@ function ActivateAgreementDialog({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Agreement activated"), {
-        description: t("Invoices assigned to this factor are checked against its terms now."),
-      });
       onOpenChange(false);
     },
     onError: (error) => handleMutationError({ error, resourceName: "factoring agreement" }),
@@ -379,7 +375,6 @@ function EndAgreementDialog({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Agreement ended"));
       onOpenChange(false);
     },
   });

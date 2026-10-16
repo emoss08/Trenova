@@ -16,7 +16,6 @@ import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { type FieldValues, FormProvider, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 
 type FormCreateModalProps<T extends FieldValues, TResponse = unknown> = TableSheetProps & {
   url: API_ENDPOINTS;
@@ -69,9 +68,6 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
       return api.post<TResponse>(url, values);
     },
     onSuccess: async (data, values) => {
-      toast.success(t("Changes have been saved."), {
-        description: t("{0} created successfully", title),
-      });
       onOpenChange(false);
       reset();
       await onSuccess?.(data, values);

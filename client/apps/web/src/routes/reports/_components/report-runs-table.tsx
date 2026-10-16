@@ -49,10 +49,11 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
         variant: "destructive",
         hidden: (row) => !isReportRunActive(row.original.status),
         onClick: (row) =>
-          cancelRun.mutateAsync(row.original.id).then(
-            () => toast.success(t("Report run canceled")),
-            (error) => toast.error(graphQLErrorMessage(error, t("Failed to cancel the run"))),
-          ),
+          cancelRun
+            .mutateAsync(row.original.id)
+            .catch((error) =>
+              toast.error(graphQLErrorMessage(error, t("Failed to cancel the run"))),
+            ),
       },
     ],
     [canExport, cancelRun, t],

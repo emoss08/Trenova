@@ -153,12 +153,7 @@ export function StopTimeline({
   const queryClient = useQueryClient();
   const checkIn = useMutation({
     mutationFn: (tap: StopTap) => recordMyStopAction({ moveId: moveId ?? "", ...tap }),
-    onSuccess: async (_, variables) => {
-      toast.success(
-        variables.action === "Arrive"
-          ? translate("Arrival recorded")
-          : translate("Departure recorded"),
-      );
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-loads"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-period-summary"] }),

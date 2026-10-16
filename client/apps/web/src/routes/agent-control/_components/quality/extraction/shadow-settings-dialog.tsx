@@ -30,7 +30,6 @@ import {
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, useMemo, useState } from "react";
-import { toast } from "sonner";
 import {
   hasProblems,
   MAX_DAILY_LIMIT,
@@ -105,7 +104,6 @@ export function ShadowSettingsDialog({ open, onOpenChange, settings }: ShadowSet
         version: settings.version,
       }),
     onSuccess: async (saved) => {
-      toast.success(saved.enabled ? t("Shadow traffic is on") : t("Shadow traffic is off"));
       queryClient.setQueryData([EXTRACTION_SHADOW_SETTINGS_KEY], saved);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_SHADOW_SETTINGS_KEY] }),

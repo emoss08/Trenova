@@ -6,7 +6,6 @@
   "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.": "差异在容差范围内且已自动比对的发票，会直接纳入承运商的结算池而免经审查。需启用自动比对。",
   "Automate the routine AP run so reviewers focus on exceptions.": "将例行的应付账款作业自动化，让审查人员专注于例外情形。",
   "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": "承运商发票会与议定采购运价比对；差距超出容差时会标记为差异。",
-  "Carrier settlement control updated": "承运商结算控制项已更新",
   "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "设置承运商的薪资期间、成本计提触发条件、批次自动化、发票比对容差，以及应付账款过账科目",
   "Defines the carrier settlement cycle and when purchased-transportation cost accrues.": "定义承运商的结算周期，以及外购运力成本的计提时点。",
   "GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.": "承运商结算过账的总账默认值 — 过账时借记外购运力、贷记应付账款；留空则沿用会计控制的默认值。",

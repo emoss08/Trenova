@@ -14,7 +14,6 @@ import { contactActivityKinds, type ContactActivityKind } from "@/types/collecti
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 export const logActivitySchema = z
@@ -98,7 +97,6 @@ export function LogActivityForm({ customerId }: { customerId: string }) {
       queryClient.setQueryData(["collection", "account", customerId], view);
       void queryClient.invalidateQueries({ queryKey: ["collection"] });
       form.reset({ ...EMPTY, kind: form.getValues("kind") });
-      toast.success(isPromise ? t("Promise recorded") : t("Logged"));
     },
   });
 

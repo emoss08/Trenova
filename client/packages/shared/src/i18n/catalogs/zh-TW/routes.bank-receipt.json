@@ -9,7 +9,6 @@
   "Payment ID": "付款 ID",
   "Pick a receipt from the list to see its details and the payments it could be matched to.": "請自清單中選擇一筆入帳紀錄，以檢視其明細與可比對的付款。",
   "Receipt details": "入帳明細",
-  "Receipt matched to payment": "入帳紀錄已與付款比對",
   "Search reference, memo...": "搜尋參考編號、備註...",
   "{0} found": "找到 {0} 筆"
 }

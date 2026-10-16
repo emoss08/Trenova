@@ -129,9 +129,6 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
     mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Shipment uncanceled"), {
-        description: t("The shipment has been restored."),
-      });
     },
     onError: () => {
       toast.error(t("Failed to uncancel shipment"));
@@ -155,7 +152,6 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
       void queryClient.invalidateQueries({
         queryKey: uploadBillingReadinessQuery.queryKey,
       });
-      toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
       toast.error(t("Upload failed: {0}", error.message));

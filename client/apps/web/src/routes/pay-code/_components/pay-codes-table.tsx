@@ -12,7 +12,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
-import { toast } from "sonner";
 import { getColumns, payCodeStatusInput } from "./pay-code-columns";
 import { PayCodePanel } from "./pay-code-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -27,7 +26,6 @@ export default function PayCodesTable() {
     async (rows: PayCodeRow[], status: string) => {
       const eligible = rows.filter((row) => row.status !== status);
       if (eligible.length === 0) {
-        toast.info(t("Every selected pay code already has that status."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -76,7 +74,7 @@ export default function PayCodesTable() {
       await queryClient.invalidateQueries({ queryKey: ["pay-code-list"] });
       await queryClient.invalidateQueries(selectOptionsQueryFilter("PAY_CODE"));
     },
-    [queryClient, t],
+    [queryClient],
   );
 
   const dockActions = useMemo<DockAction<PayCodeRow>[]>(

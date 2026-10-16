@@ -23,7 +23,6 @@ import { ChevronDownIcon, ChevronUpIcon, XCloseIcon } from "@trenova/shared/comp
 import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Form } from "@trenova/shared/components/ui/form";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
@@ -290,10 +289,6 @@ export function FormEditModal<T extends FieldValues>({
       return { previousRecord, newValues };
     },
     onSuccess: async (newValues, values) => {
-      toast.success(t("Changes have been saved"), {
-        description: t("{0} updated successfully", title),
-      });
-
       if (isFetchedRecord) {
         void queryClient.invalidateQueries({
           queryKey: [queryKey, "single", searchParams.entityId, url],

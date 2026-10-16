@@ -23,7 +23,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
-import { CASE_STATUS_MOVED } from "./eval-case-badges";
 import { getEvalCaseColumns } from "./eval-case-columns";
 import { nextStatuses } from "./eval-case-model";
 import { EvalCasePanel } from "./eval-case-panel";
@@ -45,8 +44,7 @@ export function EvalCasesTable() {
 
   const move = useApiMutation<unknown, StatusMove>({
     mutationFn: ({ id, status }) => setAgentEvalCaseStatus(id, status),
-    onSuccess: async (_data, { status }) => {
-      toast.success(CASE_STATUS_MOVED[status]);
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [AGENT_EVAL_CASE_LIST_KEY] });
     },
     resourceName: t("Evaluation case"),

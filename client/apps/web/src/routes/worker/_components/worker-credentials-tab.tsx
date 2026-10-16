@@ -57,12 +57,7 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
   const verify = useMutation({
     mutationFn: (credential: WorkerCredentialRow) =>
       verifyWorkerCredential(credential.id, credential.version),
-    onSuccess: (saved) => {
-      toast.success(t("Credential verified"), {
-        description: saved.credentialType?.name
-          ? t("{0} is marked as checked against its document.", saved.credentialType.name)
-          : t("The credential is marked as checked against its document."),
-      });
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) => {

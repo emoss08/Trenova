@@ -71,13 +71,13 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
         queryClient.invalidateQueries({ queryKey: aiControl._def }),
         queryClient.invalidateQueries({ queryKey: assistant._def }),
       ]);
-      toast.success(
-        moved > 0
-          ? moved === 1
+      if (moved > 0) {
+        toast.success(
+          moved === 1
             ? t("Saved · 1 tool moved up a tier")
-            : t("Saved · {0} tools moved up a tier", moved)
-          : t("Saved"),
-      );
+            : t("Saved · {0} tools moved up a tier", moved),
+        );
+      }
       return toPolicyForm(saved);
     },
     [control.shadowMode, form.formState.defaultValues, preview.data?.length, queryClient, t],

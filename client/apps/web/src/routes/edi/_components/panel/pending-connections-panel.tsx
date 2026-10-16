@@ -42,7 +42,6 @@ export function PendingConnectionsPanel() {
   const acceptMutation = useApiMutation({
     mutationFn: (connectionId: string) => apiService.ediService.acceptConnection(connectionId),
     onSuccess: async () => {
-      toast.success(t("EDI connection accepted"));
       await invalidateEDIConnections(queryClient);
     },
     onError: () => toast.error(t("Failed to accept EDI connection")),
@@ -51,7 +50,6 @@ export function PendingConnectionsPanel() {
     mutationFn: ({ connection, reason }: { connection: EDIConnection; reason: string }) =>
       apiService.ediService.rejectConnection(connection.id, { reason }),
     onSuccess: async () => {
-      toast.success(t("EDI connection rejected"));
       setRejecting(null);
       await invalidateEDIConnections(queryClient);
     },

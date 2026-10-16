@@ -39,7 +39,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { AssertionsEditor } from "./assertions-editor";
 
 type FixtureDetailProps = {
@@ -109,7 +108,6 @@ function FixtureForm({
       void queryClient.invalidateQueries({
         queryKey: documentParsingRule.fixtures._def,
       });
-      toast.success(t("Fixture deleted"));
       onDeleted();
     },
   });

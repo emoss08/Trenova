@@ -29,7 +29,6 @@ import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 const TARGET_KIND = {
   shipmentField: "ShipmentField",
@@ -246,9 +245,6 @@ function MappingEditor({
     mutationFn: (values: MappingFormValues) =>
       saveTelematicsFormMappingGraphQL(toSaveInput(values)),
     onSuccess: async () => {
-      toast.success(
-        initial.id ? translate("Form mapping updated") : translate("Form mapping created"),
-      );
       await queryClient.invalidateQueries({
         queryKey: telematics.formMappings().queryKey,
       });
@@ -424,8 +420,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
       saveTelematicsFormMappingGraphQL(
         toSaveInput({ ...toFormValues(mapping), enabled: !mapping.enabled }),
       ),
-    onSuccess: async (_data, mapping) => {
-      toast.success(mapping.enabled ? translate("Mapping disabled") : translate("Mapping enabled"));
+    onSuccess: async () => {
       await invalidate();
     },
     onError: (error) => {
@@ -438,7 +433,6 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTelematicsFormMappingGraphQL(id),
     onSuccess: async () => {
-      toast.success(t("Form mapping deleted"));
       setPendingDelete(null);
       await invalidate();
     },

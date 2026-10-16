@@ -11,7 +11,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { toast } from "sonner";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Callout } from "../edit/callout";
 import { Ic } from "../kit/ic";
@@ -107,9 +106,6 @@ function AgentQualityBody({
   const run = useApiMutation<AgentSuiteRun, string>({
     mutationFn: (agentDefinitionId) => runAgentSuite(agentDefinitionId),
     onSuccess: async () => {
-      toast.success(t("Running {0}'s suite", detail.agentName), {
-        description: t("The agent answers its cases with every write simulated."),
-      });
       await queryClient.invalidateQueries({ queryKey: agentQuality._def });
     },
     resourceName: t("Suite run"),

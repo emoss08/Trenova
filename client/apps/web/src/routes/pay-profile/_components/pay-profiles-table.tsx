@@ -11,7 +11,6 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
 import { getColumns, payProfileStatusInput } from "./pay-profile-columns";
 import { PayProfilePanel } from "./pay-profile-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -26,7 +25,6 @@ export default function PayProfilesTable() {
     async (rows: PayProfileRow[], status: string) => {
       const eligible = rows.filter((row) => row.status !== status);
       if (eligible.length === 0) {
-        toast.info(t("Every selected pay profile already has that status."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -74,7 +72,7 @@ export default function PayProfilesTable() {
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
     },
-    [queryClient, t],
+    [queryClient],
   );
 
   const dockActions = useMemo<DockAction<PayProfileRow>[]>(

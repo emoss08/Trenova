@@ -251,15 +251,7 @@ function SettlementActions({
           throw new Error(`Unknown action ${action}`);
       }
     },
-    onSuccess: (_data, action) => {
-      toast.success(
-        {
-          submit: translate("Settlement submitted for approval"),
-          approve: translate("Settlement approved"),
-          post: translate("Settlement posted to the general ledger"),
-          recalculate: translate("Settlement recalculated from current cost events"),
-        }[action] ?? translate("Settlement updated"),
-      );
+    onSuccess: () => {
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Settlement action failed")),
@@ -386,7 +378,6 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
       anchor.download = `carrier-settlement-batch-${batchId}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast.success(t("Remittance CSV downloaded"));
     },
     onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });
@@ -426,9 +417,6 @@ export function ReasonDialog({
         ? rejectCarrierSettlement({ settlementId, reason })
         : voidCarrierSettlement({ settlementId, reason }),
     onSuccess: () => {
-      toast.success(
-        action === "reject" ? translate("Settlement rejected") : translate("Settlement voided"),
-      );
       setReason("");
       onOpenChange(false);
       onChanged();
@@ -502,7 +490,6 @@ export function MarkPaidDialog({
         paymentReference: paymentReference || undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Settlement marked paid — cash journal and ledger payment recorded"));
       onOpenChange(false);
       onChanged();
     },
@@ -596,7 +583,6 @@ function AddAdjustmentDialog({
         amountMinor: Math.round(parsedAmount * 100),
       }),
     onSuccess: () => {
-      toast.success(t("Adjustment added"));
       setDescription("");
       setAmount("");
       onOpenChange(false);
@@ -682,7 +668,6 @@ function SettlementLines({
     mutationFn: (lineId: string) =>
       removeCarrierSettlementAdjustment({ settlementId: settlement.id, lineId }),
     onSuccess: () => {
-      toast.success(t("Adjustment removed"));
       onChanged();
     },
     onError: (error: Error) =>

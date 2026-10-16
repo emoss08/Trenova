@@ -44,7 +44,6 @@ import {
   useWatch,
   type Resolver,
 } from "react-hook-form";
-import { toast } from "sonner";
 import { useReviewInvalidation } from "./use-review-invalidation";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
 
@@ -119,13 +118,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
         periodStart: values.periodStart,
         periodEnd: values.periodEnd,
       }),
-    onSuccess: (saved) => {
-      toast.success(t("Review started"), {
-        description: t(
-          "{0, plural, one {# item} other {# items}} to rate. It stays a draft until you submit it.",
-          saved.ratings.length,
-        ),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },
@@ -296,9 +289,6 @@ function EditDraft({
         version: review.version,
       }),
     onSuccess: () => {
-      toast.success(t("Draft saved"), {
-        description: t("Submit it when you are ready for the worker to sign off."),
-      });
       void invalidate();
       onOpenChange(false);
     },

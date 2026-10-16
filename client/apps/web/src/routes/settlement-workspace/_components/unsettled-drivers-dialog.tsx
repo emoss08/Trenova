@@ -91,13 +91,6 @@ export function UnsettledDriversDialog({
         );
         return;
       }
-      toast.success(
-        t(
-          "Draft {0} created for {1} — pay date set to today",
-          settlement.settlementNumber,
-          worker.workerName,
-        ),
-      );
       void refetch();
       onChanged();
     },

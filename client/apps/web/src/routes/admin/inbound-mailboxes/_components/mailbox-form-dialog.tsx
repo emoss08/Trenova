@@ -130,7 +130,6 @@ export function MailboxFormDialog({
       return { credentials: { ...credentials, mailbox: updated }, postmark };
     },
     onSuccess: async (created) => {
-      toast.success(t("Mailbox created"));
       clearCredentials();
       onCreated(created);
       await onSaved();
@@ -147,13 +146,13 @@ export function MailboxFormDialog({
       return updateInboundMailbox(mailbox.id, mailbox.version, mailboxInput(values));
     },
     onSuccess: async (updated) => {
-      toast.success(
-        mailbox !== null && updated.provider !== mailbox.provider
-          ? t(
-              "Saved. Set the new provider's signing secret, and for Resend its API key, before mail is read.",
-            )
-          : t("Mailbox saved"),
-      );
+      if (mailbox !== null && updated.provider !== mailbox.provider) {
+        toast.success(
+          t(
+            "Saved. Set the new provider's signing secret, and for Resend its API key, before mail is read.",
+          ),
+        );
+      }
       close();
       await onSaved();
     },

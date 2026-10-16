@@ -141,7 +141,6 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   const saveMutation = useApiMutation({
     mutationFn: () => editCaptureItems(batch.id, toEditInput(layout, saved, batch.version)),
     onSuccess: async (next) => {
-      toast.success(t("Split saved"));
       await refresh(next);
     },
     resourceName: "Capture batch",
@@ -167,7 +166,6 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
       setFailures((current) =>
         Object.fromEntries(Object.entries(current).filter(([itemId]) => itemId !== filed.id)),
       );
-      toast.success(t("Filing the document"));
       await refresh();
     },
     resourceName: "Document",
@@ -206,15 +204,7 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   // and says there why one failed, so they report nothing on their own.
   const discardItemMutation = useMutation({
     mutationFn: (item: CaptureItem) => discardCaptureItem(item.id, item.version),
-    onSuccess: async (settled) => {
-      toast.success(t("Document discarded"), {
-        description:
-          settled.status === "Discarded"
-            ? t("It was the last document in the stack, so the stack is discarded too.")
-            : settled.status === "Filed"
-              ? t("It was the last document left to file, so the stack is done.")
-              : t("Its pages are under Set aside, where you can drag them into another document."),
-      });
+    onSuccess: async () => {
       await refresh();
     },
   });
@@ -222,9 +212,6 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   const discardBatchMutation = useMutation({
     mutationFn: () => discardCaptureBatch(batch.id, batch.version),
     onSuccess: async () => {
-      toast.success(t("Stack discarded"), {
-        description: t("Its unfiled pages are deleted. Filed documents stay on their records."),
-      });
       await refresh();
     },
   });

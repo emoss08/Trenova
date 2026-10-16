@@ -60,17 +60,7 @@ export function FormulaStudioCreatePage() {
         ...(values as FormulaTemplate),
         testCases: extras.testCases,
       }),
-    onSuccess: async (created, { extras }) => {
-      toast(
-        extras.testCases.length > 0
-          ? t(
-              "Created “{0}” as a draft with {1, plural, one {# scenario} other {# scenarios}}",
-              created.name,
-              extras.testCases.length,
-            )
-          : t("Created “{0}” as a draft", created.name),
-        { description: t("Submit it for review when it is ready.") },
-      );
+    onSuccess: async (created) => {
       await invalidateFormulaTemplate(queryClient);
       // Reset onto the saved record, then leave once the form has reported
       // itself clean: navigating in the same tick found the unsaved-changes

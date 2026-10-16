@@ -24,7 +24,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useCarrierIntelLabels } from "./use-carrier-intel-labels";
 
 export type ResolveEventDialogProps = {
@@ -91,7 +90,6 @@ export function ResolveEventDialog({
       });
     },
     onSuccess: (resolved) => {
-      toast.success(t("Event resolved"));
       onResolved?.(resolved);
       onOpenChange(false);
     },

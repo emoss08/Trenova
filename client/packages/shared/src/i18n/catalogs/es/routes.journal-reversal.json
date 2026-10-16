@@ -18,19 +18,12 @@
   "Request a reversal of {0}": "Solicitar la reversión de {0}",
   "Request and manage journal entry reversals.": "Solicite y gestione reversiones de asientos.",
   "Requested accounting date": "Fecha contable solicitada",
-  "Reversal approved": "Reversión aprobada",
-  "Reversal cancelled": "Reversión cancelada",
   "Reversal entry": "Asiento de reversión",
   "Reversal for entry {0}": "Reversión del asiento {0}",
-  "Reversal posted": "Reversión contabilizada",
-  "Reversal rejected": "Reversión rechazada",
-  "Reversal request created": "Solicitud de reversión creada",
-  "Reversal requested": "Reversión solicitada",
   "Reversal target": "Objetivo de la reversión",
   "Specify the journal entry to reverse and the desired posting date": "Indique el asiento que se va a revertir y la fecha de contabilización deseada",
   "The ID of the posted journal entry you want to reverse.": "El ID del asiento contabilizado que desea revertir.",
   "The date the reversal should be posted to the general ledger.": "La fecha en que la reversión debe contabilizarse en el libro mayor.",
   "The entry stays in the ledger as it was posted; the reversal takes it back.": "El asiento permanece en el libro tal como se contabilizó; la reversión lo anula.",
-  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "p. ej., ERROR, DUPLICATE, ADJUSTMENT",
-  "{0} is reversed once someone approves and posts the request.": "{0} se revertirá cuando alguien apruebe y contabilice la solicitud."
+  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "p. ej., ERROR, DUPLICATE, ADJUSTMENT"
 }

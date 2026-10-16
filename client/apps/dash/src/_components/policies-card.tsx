@@ -173,9 +173,6 @@ function PolicyDrawer({
         signatureName: needsSignature ? signature.trim() : undefined,
       }),
     onSuccess: async () => {
-      toast.success(
-        needsSignature ? translate("Signed — thank you.") : translate("Marked as read."),
-      );
       setSignature("");
       setAgreed(false);
       await queryClient.invalidateQueries({ queryKey: ["dash-policies"] });

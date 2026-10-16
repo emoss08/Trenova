@@ -15,8 +15,6 @@
   "Dollars, not cents; positive deposits into escrow, negative applies funds out.": "单位为美元而非美分；正值为存入履约保证，负值则为动支款项。",
   "Escrow Account": "履约保证账户",
   "Escrow account": "履约保证账户",
-  "Escrow account closed; remaining balance refunded": "履约保证账户已关闭；剩余余额已退还",
-  "Escrow adjustment recorded": "履约保证调整已记录",
   "Escrow — {0}": "履约保证 — {0}",
   "Every selected escrow account is already closed.": "所选的履约保证账户皆已关闭。",
   "Funding target": "提缴目标",

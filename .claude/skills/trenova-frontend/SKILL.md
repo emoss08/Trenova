@@ -110,6 +110,11 @@ field components from `apps/web/src/components/fields/`; table panels through
 primary. Dialogs take `size`, never an arbitrary max-width. Settings pages are stacked
 `Card`s with a `FormSaveDock`.
 
+A toast is for news the screen cannot show (design-system.md → "Toasts"). A save, delete,
+toggle or approval the person can see happen takes no success toast, and `useApiMutation`
+already reports a failure. Toast a failure with nowhere else to go, work that finished out
+of sight, a bulk outcome, or a result that carries its next step (Undo, Download, Open).
+
 ## Text and i18n
 
 - Every string a person reads goes through `t()` from `useT()` inside a component, or

@@ -128,7 +128,7 @@ describe("SafetyCard", () => {
     await waitFor(() =>
       expect(acknowledgeMyDisciplinaryAction).toHaveBeenCalledWith("wdac_1", "Understood"),
     );
-    expect(toast.success).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("does not ask again once an action is acknowledged", async () => {

@@ -115,10 +115,7 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
   const cancel = useMutation({
     mutationFn: (record: WorkerTrainingRecordRow) =>
       cancelWorkerTraining({ id: record.id, version: record.version }),
-    onSuccess: (record) => {
-      toast.success(
-        record.course?.name ? t("{0} cancelled", record.course.name) : t("Assignment cancelled"),
-      );
+    onSuccess: () => {
       void invalidate();
     },
     onError: (error: Error) =>

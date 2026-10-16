@@ -36,10 +36,8 @@ import {
 } from "@trenova/shared/types/worker";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { ptoDecision, type PTODecisionSource } from "./pto-columns";
 import { usePTOInvalidation } from "./use-pto-invalidation";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export type PTOFormDialogRecord = PTODecisionSource & {
   id?: string | null;
@@ -265,11 +263,6 @@ export function PTOFormDialog({
       });
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? translate("PTO updated") : translate("PTO requested"), {
-        description: isEdit
-          ? translate("The request has been updated.")
-          : translate("The request is waiting for approval."),
-      });
       void invalidate();
       onSaved?.(saved);
       onOpenChange(false);

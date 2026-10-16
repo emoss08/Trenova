@@ -21,7 +21,6 @@ import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { CardActionButton } from "../../record-card/card-action";
 import { useCardAccess } from "../../record-card/card-access";
 import { SettlementStub } from "../../record-card/card-settlement";
@@ -182,9 +181,6 @@ function DetentionOccurrenceCard({
   const approve = useApiMutation<DetentionOccurrence, undefined>({
     mutationFn: () => apiService.detentionService.approve(id),
     onSuccess: () => {
-      toast.success(t("Charge approved"), {
-        description: t("The detention charge will post to {0}.", occurrence.shipmentProNumber),
-      });
       invalidate();
     },
     resourceName: "Detention Occurrence",

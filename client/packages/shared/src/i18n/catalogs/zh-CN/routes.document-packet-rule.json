@@ -6,7 +6,6 @@
   "Days before expiration to flag as expiring soon": "到期前多少天标记为即将到期",
   "Delete document packet rule": "删除文档封包规则",
   "Document packet rule": "文档封包规则",
-  "Document packet rule deleted": "文档封包规则已删除",
   "Document packet rules": "文档封包规则",
   "Documents must include an expiration date": "文档必须包含到期日",
   "Expiration req.": "须填到期日",

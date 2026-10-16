@@ -13,7 +13,6 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useId } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { JournalReversalForm } from "./journal-reversal-form";
 import {
   reversalRequestBody,
@@ -66,9 +65,6 @@ export function RequestReversalDialog({
     mutationFn: async (values: ReversalRequestValues) =>
       apiService.journalReversalService.create(reversalRequestBody(values)),
     onSuccess: () => {
-      toast.success(t("Reversal requested"), {
-        description: t("{0} is reversed once someone approves and posts the request.", entryNumber),
-      });
       onOpenChange(false);
       onDone();
     },

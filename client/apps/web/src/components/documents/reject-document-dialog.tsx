@@ -21,7 +21,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import type { Document } from "@trenova/shared/types/document";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type RejectDocumentDialogProps = {
   document: Document | null;
@@ -67,7 +66,6 @@ export function RejectDocumentDialog({
       return apiService.documentService.reject(document.id, values.reason);
     },
     onSuccess: (rejected) => {
-      toast.success(t("Document rejected"));
       onRejected?.(rejected);
       onOpenChange(false);
     },
@@ -104,7 +102,9 @@ export function RejectDocumentDialog({
                   control={control}
                   name="reason"
                   label={t("Reason")}
-                  placeholder={t("What is wrong with it, such as an illegible signature or the wrong load")}
+                  placeholder={t(
+                    "What is wrong with it, such as an illegible signature or the wrong load",
+                  )}
                   rules={{ required: true }}
                   maxLength={DOCUMENT_REJECTION_REASON_MAX_LENGTH}
                 />

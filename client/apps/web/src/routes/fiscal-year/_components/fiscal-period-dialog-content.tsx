@@ -20,7 +20,6 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
 
 type FiscalPeriodActionDialogProps = {
   open: boolean;
@@ -59,8 +58,6 @@ type ActionCopy = {
   effects: string[];
   confirm: string;
   pending: string;
-  success: string;
-  successDescription: string;
   destructive: boolean;
 };
 
@@ -77,8 +74,6 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
         ],
         confirm: t("Open period"),
         pending: t("Opening..."),
-        success: t("Period opened"),
-        successDescription: t("{0} is now open", period.name),
         destructive: false,
       };
     case "lock":
@@ -93,8 +88,6 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
         ],
         confirm: t("Lock period"),
         pending: t("Locking..."),
-        success: t("Period locked"),
-        successDescription: t("{0} is now locked", period.name),
         destructive: false,
       };
     case "unlock":
@@ -105,8 +98,6 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
         effects: [t("Return the period to Open"), t("Accept subledger postings again")],
         confirm: t("Unlock period"),
         pending: t("Unlocking..."),
-        success: t("Period unlocked"),
-        successDescription: t("{0} is open again", period.name),
         destructive: false,
       };
     case "close":
@@ -120,8 +111,6 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
         ],
         confirm: t("Close period"),
         pending: t("Closing..."),
-        success: t("Period closed"),
-        successDescription: t("{0} is now closed", period.name),
         destructive: true,
       };
     case "reopen":
@@ -136,8 +125,6 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
         ],
         confirm: t("Reopen period"),
         pending: t("Reopening..."),
-        success: t("Period reopened"),
-        successDescription: t("{0} is open again", period.name),
         destructive: true,
       };
   }
@@ -191,7 +178,6 @@ function FiscalPeriodActionDialogContent({
     mutationFn: () => runAction(action, period.id, reason),
     resourceName: "Fiscal Period",
     onSuccess: (updated: FiscalPeriod) => {
-      toast.success(copy.success, { description: copy.successDescription });
       onCompleted({ ...period, ...updated });
       void queryClient.invalidateQueries({ queryKey: ["fiscal-year-list"] });
       void queryClient.invalidateQueries({ queryKey: ["fiscal-year-close-preview"] });

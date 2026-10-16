@@ -40,7 +40,6 @@ export default function StoredMileageTable() {
       await storedMileageService.delete(id);
     },
     onSuccess: () => {
-      toast.success(t("Stored mileage deactivated"));
       void queryClient.invalidateQueries({ queryKey: ["stored-mileage-list"] });
       setDeleteDialogOpen(false);
       selectedMileageRef.current = null;

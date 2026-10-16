@@ -256,23 +256,15 @@ export function AgentBuilder({
         savedAccess.current = access;
         const reloaded = await fetchAgentDefinition(agent.id);
         await refresh();
-        toast.success(t("{0} saved", next.name.trim()));
         return reloaded ? formValuesOf(reloaded) : next;
       }
-      const created = await apiService.agentDefinitionService.create(
+      await apiService.agentDefinitionService.create(
         toSaveRequest(next, accessToSave(access, NEW_AGENT_ACCESS)),
       );
       await refresh();
-      toast.success(
-        next.simulationMode
-          ? t("{0} created in simulation", created.name)
-          : next.shadowMode
-            ? t("{0} created in shadow", created.name)
-            : t("{0} created", created.name),
-      );
       return next;
     },
-    [agent, refresh, t],
+    [agent, refresh],
   );
 
   const flow = useEditFlow({
@@ -391,7 +383,6 @@ export function AgentBuilder({
           if (key === "version") continue;
           set(key as keyof AgentFormValues, value as never);
         }
-        toast.success(t("Loaded v{0} into the draft · save to restore it", version));
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("That version could not be loaded"));
       } finally {
@@ -409,7 +400,6 @@ export function AgentBuilder({
       ),
     );
     await refresh();
-    toast.success(t("Duplicated as “{0}” · opening it", copy.name));
     onOpened?.(copy.id);
   }, [onOpened, refresh, t, values]);
 
@@ -417,7 +407,6 @@ export function AgentBuilder({
     if (!agent) return;
     await apiService.agentDefinitionService.remove(agent.id);
     await refresh();
-    toast.success(t("{0} removed", agent.name));
     setRemoving(false);
     onClose();
   };

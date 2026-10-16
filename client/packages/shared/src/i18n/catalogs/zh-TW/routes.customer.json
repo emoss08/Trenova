@@ -183,7 +183,6 @@
   "This customer could not be found. It may have been removed.": "找不到此客戶，可能已被移除。",
   "This customer is billed": "此客戶的計費方式為",
   "Tracking": "追蹤",
-  "Tracking settings saved": "追蹤設定已儲存",
   "Turn on Vet as a broker on the General tab and save to check this customer's broker authority, surety bond and insurance.": "請於「一般」分頁開啟「審核為貨運經紀」並儲存，以查核此客戶的經紀許可、保證金與保險。",
   "Turning this off stops every link already shared for this customer's shipments.": "關閉後，此客戶運單已分享的所有連結都會停用。",
   "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.": "為此客戶啟用信用控管：'Hold' 或 'Suspended' 狀態會停止為其預訂新貨件。",

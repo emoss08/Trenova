@@ -21,7 +21,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
 
 type StatusFilter = "Active" | "Revoked" | "all";
 
@@ -86,8 +85,7 @@ export function FleetPanel() {
   const revoke = useMutation({
     mutationFn: ({ device, reason }: { device: CaptureDevice; reason: string }) =>
       revokeCaptureDevice(device.id, reason === "" ? null : reason),
-    onSuccess: async (device) => {
-      toast.success(t("{0} is revoked", device.name));
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: capture.devices._def }),
         queryClient.invalidateQueries({ queryKey: capture.myDevices._def }),

@@ -14,7 +14,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
 import { useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import {
   IntegrationEnabledSwitch,
   SpecIntegrationFields,
@@ -91,7 +90,6 @@ export function CarrierIntelConnectionTab({
     mutationFn: () => switchCarrierIntelProvider(vendor.integrationType),
     resourceName: "Carrier intelligence provider",
     onSuccess: async () => {
-      toast.success(t("{0} is now the primary carrier intelligence provider", vendor.name));
       await Promise.all([
         invalidateIntel(),
         queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),

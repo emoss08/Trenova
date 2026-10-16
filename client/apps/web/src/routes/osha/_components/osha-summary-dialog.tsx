@@ -24,7 +24,6 @@ import {
 } from "@trenova/shared/types/worker-injury";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type OshaSummaryDialogProps = {
   open: boolean;
@@ -84,7 +83,6 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
         notes: values.notes ?? undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Summary saved"));
       void queryClient.invalidateQueries({ queryKey: [OSHA_LOG_KEY] });
       onOpenChange(false);
     },

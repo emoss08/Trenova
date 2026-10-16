@@ -15,7 +15,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { JurisdictionRuleOverrideForm } from "./jurisdiction-rule-override-form";
 
 const QUERY_KEY = "jurisdiction-rule-override-list";
@@ -96,9 +95,6 @@ function OverrideEditPanel({
     mutationFn: async (values) =>
       api.put<JurisdictionRuleOverride>(`/jurisdiction-rule-overrides/${row?.id}/`, values),
     onSuccess: () => {
-      toast.success(t("Changes have been saved"), {
-        description: t("Carrier override updated successfully"),
-      });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
     form,
@@ -108,9 +104,6 @@ function OverrideEditPanel({
   const removeMutation = useApiMutation({
     mutationFn: async () => api.delete(`/jurisdiction-rule-overrides/${row?.id}/`),
     onSuccess: () => {
-      toast.success(t("Override removed"), {
-        description: t("This jurisdiction reverts to its statutory limits."),
-      });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onOpenChange(false);
     },

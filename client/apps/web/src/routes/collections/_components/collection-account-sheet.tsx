@@ -217,9 +217,6 @@ function AssignmentPanel({
     form,
     onSuccess: (next) => {
       settle(next);
-      toast.success(
-        next.row.collectorName ? t("Assigned to {0}", next.row.collectorName) : t("Unassigned"),
-      );
     },
   });
   const schedule = useApiMutation({
@@ -229,11 +226,6 @@ function AssignmentPanel({
     form,
     onSuccess: (next) => {
       settle(next);
-      toast.success(
-        next.row.nextFollowUpOn
-          ? t("Follow-up set for {0}", formatUnixDateMedium(next.row.nextFollowUpOn))
-          : t("Follow-up cleared"),
-      );
     },
   });
 

@@ -46,9 +46,6 @@ export function CarrierTrackingLink({
   const revokeMutation = useMutation({
     mutationFn: () => revokeCarrierTrackingLink(moveId),
     onSuccess: () => {
-      toast.success(t("Tracking link revoked"), {
-        description: t("The carrier can no longer post check calls through it."),
-      });
       void queryClient.invalidateQueries({ queryKey: linkQuery.queryKey });
     },
     onError: (error: Error) =>

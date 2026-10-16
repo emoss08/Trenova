@@ -13,7 +13,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Send01Icon, StampIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { ManualJournalForm } from "./manual-journal-form";
 
 type JournalFormValues = {
@@ -67,7 +66,6 @@ function CreatePanel({
     form,
     resourceName: "manual journal",
     onSuccess: () => {
-      toast.success(t("Draft created"));
       void queryClient.invalidateQueries({ queryKey: ["manual-journal-list"] });
       onOpenChange(false);
       form.reset();
@@ -161,7 +159,6 @@ function EditPanel({
       resourceName: "manual journal",
       onSuccess: () => {
         invalidateQueries();
-        toast.success(t("Draft updated"));
       },
     },
   );
@@ -171,7 +168,6 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success(t("Journal submitted for approval"));
     },
   });
 
@@ -180,7 +176,6 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success(t("Journal approved"));
     },
   });
 
@@ -189,7 +184,6 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success(t("Journal posted"));
     },
   });
 
@@ -199,7 +193,6 @@ function EditPanel({
     onSuccess: () => {
       invalidateQueries();
       setShowRejectInput(false);
-      toast.success(t("Journal rejected"));
     },
   });
 
@@ -209,7 +202,6 @@ function EditPanel({
     onSuccess: () => {
       invalidateQueries();
       setShowCancelInput(false);
-      toast.success(t("Journal cancelled"));
     },
   });
 

@@ -13,7 +13,6 @@ import {
   Send01Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
 
 export type ShipmentBillingAction = {
   id: string;
@@ -58,20 +57,12 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
         status: "ReadyToInvoice",
       });
     },
-    onSuccess: () => {
-      toast.success(t("Shipment marked ready to bill"));
-    },
     onSettled: (_data, _error, shipmentId) => invalidateShipment(shipmentId),
     resourceName: "Shipment",
   });
 
   const { mutateAsync: transferToBilling } = useApiMutation({
     mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
-    onSuccess: () => {
-      toast.success(t("Transferred to billing"), {
-        description: t("The shipment has been added to the billing queue."),
-      });
-    },
     onSettled: (_data, _error, shipmentId) => invalidateShipment(shipmentId),
     resourceName: "Shipment",
   });

@@ -18,19 +18,12 @@
   "Request a reversal of {0}": "申請沖銷 {0}",
   "Request and manage journal entry reversals.": "申請並管理分錄沖銷。",
   "Requested accounting date": "所要求的會計日期",
-  "Reversal approved": "沖銷已核准",
-  "Reversal cancelled": "沖銷已取消",
   "Reversal entry": "沖銷分錄",
   "Reversal for entry {0}": "分錄 {0} 的沖銷",
-  "Reversal posted": "沖銷已過帳",
-  "Reversal rejected": "沖銷已拒絕",
-  "Reversal request created": "沖銷申請已建立",
-  "Reversal requested": "已申請沖銷",
   "Reversal target": "沖銷對象",
   "Specify the journal entry to reverse and the desired posting date": "指定要沖銷的分錄，以及希望的過帳日期",
   "The ID of the posted journal entry you want to reverse.": "您要沖銷的已過帳分錄 ID。",
   "The date the reversal should be posted to the general ledger.": "此沖銷應過帳至總帳的日期。",
   "The entry stays in the ledger as it was posted; the reversal takes it back.": "分錄會依原過帳內容保留在帳簿中；沖銷會將其沖回。",
-  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "例如：ERROR、DUPLICATE、ADJUSTMENT",
-  "{0} is reversed once someone approves and posts the request.": "有人核准並過帳此申請後，{0} 即會沖銷。"
+  "e.g., ERROR, DUPLICATE, ADJUSTMENT": "例如：ERROR、DUPLICATE、ADJUSTMENT"
 }

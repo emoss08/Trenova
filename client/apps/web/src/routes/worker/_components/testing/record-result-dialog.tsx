@@ -26,7 +26,6 @@ import {
 } from "@trenova/shared/types/worker-drug-alcohol";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTestingInvalidation } from "./use-testing-invalidation";
 
 // Pending is what the record starts as, not something anyone reports back.
@@ -100,17 +99,7 @@ export function RecordResultDialog({
         notes: values.notes ?? undefined,
       });
     },
-    onSuccess: (saved) => {
-      const violation = ["Positive", "Refusal", "Adulterated", "Substituted"].includes(
-        saved.result,
-      );
-      toast.success(t("Result recorded"), {
-        description: violation
-          ? t(
-              "A violation has been opened. The driver is prohibited from safety-sensitive duty until the return-to-duty process is complete.",
-            )
-          : t("Filed as {0}.", t(dotTestResultLabel(saved.result))),
-      });
+    onSuccess: () => {
       void invalidate();
       onOpenChange(false);
     },

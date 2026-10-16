@@ -188,7 +188,6 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
         description: adjustDescription.trim(),
       }),
     onSuccess: () => {
-      toast.success(t("Escrow adjustment recorded"));
       setAdjustOpen(false);
       setAdjustAmount("");
       setAdjustDescription("");
@@ -200,7 +199,6 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
   const closeMutation = useMutation({
     mutationFn: () => closeEscrowAccount(accountId),
     onSuccess: () => {
-      toast.success(t("Escrow account closed; remaining balance refunded"));
       setCloseOpen(false);
       invalidate();
       onClose();

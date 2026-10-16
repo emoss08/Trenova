@@ -39,7 +39,6 @@ import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import {
   fundingFormDefaults,
   fundingFormSchema,
@@ -145,11 +144,8 @@ function FundingForm({
       if (!input) throw new Error("Mark at least one invoice funded or rejected");
       return recordFactoringFunding(input);
     },
-    onSuccess: (recorded) => {
+    onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Funding recorded on schedule {0}", recorded.number), {
-        description: FACTORING_SUBMISSION_STATUS_LABELS[recorded.status],
-      });
       onDone();
     },
     onError: () => {

@@ -22,7 +22,6 @@ import { formatDecimalString } from "@trenova/shared/types/decimal";
 import { IFTA_MILEAGE_SOURCE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { IFTA_MILES_SCALE } from "@trenova/shared/types/ifta-jurisdiction-mileage";
 import { Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 
 type DeleteIftaMileageEntryDialogProps = {
   open: boolean;
@@ -45,9 +44,6 @@ export function DeleteIftaMileageEntryDialog({
       return deleteIftaMileageEntry(entry.id, entry.version);
     },
     onSuccess: async () => {
-      toast.success(t("Entry deleted"), {
-        description: t("Recompute the quarter's return to take these miles out of the figures."),
-      });
       await onDeleted();
       onOpenChange(false);
     },

@@ -182,7 +182,7 @@ describe("DeskManualJournal", () => {
       fetchers.post.mock.invocationCallOrder[0]!,
     );
     await vi.waitFor(() => expect(fetchers.journal).toHaveBeenCalledTimes(2));
-    expect(toast.success).toHaveBeenCalledWith("MJ-2610-0007 approved and posted");
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("reads the journal again when it was approved but could not post", async () => {
@@ -275,7 +275,7 @@ describe("DeskManualJournal", () => {
       ),
     );
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(toast.success).toHaveBeenCalledWith("MJ-2610-0007 is rejected");
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("refuses a reason longer than the server keeps", async () => {
@@ -324,7 +324,7 @@ describe("DeskManualJournal", () => {
     expect(bar(container)).toHaveTextContent("Balance the lines on its page");
   });
 
-  it("submits a balanced draft and says when it went straight to approved", async () => {
+  it("submits a balanced draft and reads it again", async () => {
     grant(Operation.Submit);
     fetchers.journal.mockImplementation(async () => {
       const read = card(draftFixture);
@@ -337,9 +337,8 @@ describe("DeskManualJournal", () => {
 
     fireEvent.click(within(bar(container)).getByRole("button", { name: "Submit for approval" }));
     await vi.waitFor(() => expect(fetchers.submit).toHaveBeenCalledWith("mjr_2610_0009"));
-    await vi.waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith("MJ-2610-0009 submitted and approved"),
-    );
+    await vi.waitFor(() => expect(fetchers.journal).toHaveBeenCalledTimes(2));
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("names the entry a posted journal became and opens it in place", async () => {

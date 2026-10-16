@@ -21,7 +21,6 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
-import { toast } from "sonner";
 import {
   createContext,
   useCallback,
@@ -367,16 +366,11 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
           ],
           { shouldDirty: true, shouldValidate: true },
         );
-        toast(t("Added {0} as an input", name), {
-          description: t(
-            "Give it a default under Inputs; lanes and rate agreements can override it.",
-          ),
-        });
       }
       setFocusInput(name);
       jumpTo("inputs");
     },
-    [form, jumpTo, t],
+    [form, jumpTo],
   );
 
   const heldForCreate = scenarios.heldForCreate;

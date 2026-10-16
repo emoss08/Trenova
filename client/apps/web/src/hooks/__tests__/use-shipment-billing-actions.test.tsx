@@ -81,7 +81,7 @@ describe("useShipmentBillingActions", () => {
       status: "ReadyToInvoice",
     });
     expect(shipmentService.transferToBilling).not.toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith("Shipment marked ready to bill");
+    expect(toast.success).not.toHaveBeenCalled();
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["shipment-list"] });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["shipment", "get", SHIPMENT_ID],

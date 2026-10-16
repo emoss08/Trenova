@@ -18,7 +18,6 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { waiverReasonSchema, type DetentionOccurrence } from "@trenova/shared/types/detention";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 /*
@@ -62,9 +61,6 @@ export function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: Action
   >({
     mutationFn: (values) => apiService.detentionService.waive(occurrenceId, values),
     onSuccess: () => {
-      toast.success(t("Detention waived"), {
-        description: t("The charge was forgiven and the reason recorded as evidence."),
-      });
       reset();
       onOpenChange(false);
       onDone();
@@ -146,9 +142,6 @@ export function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: Acti
   >({
     mutationFn: (values) => apiService.detentionService.dispute(occurrenceId, values),
     onSuccess: () => {
-      toast.success(t("Dispute recorded"), {
-        description: t("The original computation is preserved for the claim file."),
-      });
       reset();
       onOpenChange(false);
       onDone();

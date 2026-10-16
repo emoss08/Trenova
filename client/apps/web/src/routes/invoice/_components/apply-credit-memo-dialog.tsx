@@ -30,7 +30,6 @@ import { toMinorUnits } from "@trenova/shared/lib/charge-split";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 type Allocation = { checked: boolean; amount: string };
 
@@ -91,15 +90,8 @@ export function ApplyCreditMemoDialog({
           appliedAmountMinor: toMinorUnits(Number(row.allocation.amount)),
         })),
       }),
-    onSuccess: (applied) => {
+    onSuccess: () => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(
-        t(
-          "{0} applied to {1, plural, one {# invoice} other {# invoices}}",
-          creditMemo.number,
-          applied.length,
-        ),
-      );
       onOpenChange(false);
     },
   });

@@ -88,9 +88,6 @@ export function ApplyUnappliedForm({
       });
     },
     onSuccess: () => {
-      toast.success(t("Unapplied cash applied"), {
-        description: t("Invoice balances and the GL were updated."),
-      });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
         queryKey: customerPayment.detail(payment.id).queryKey,

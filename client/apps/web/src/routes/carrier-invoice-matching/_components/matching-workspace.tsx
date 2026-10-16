@@ -651,15 +651,6 @@ function InvoiceDetail({
         return;
       }
       setSuggestedCarrierId(carrier.id);
-      toast.success(
-        carrier.scac
-          ? t(
-              "Suggested carrier: {0} ({1}) — confirm the link to proceed",
-              carrier.name,
-              carrier.scac,
-            )
-          : t("Suggested carrier: {0} — confirm the link to proceed", carrier.name),
-      );
       setLinkOpen(true);
     },
     onError: (error: Error) => toast.error(error.message || t("Failed to suggest a carrier")),
@@ -804,7 +795,6 @@ function MatchDetail({
   const acceptMutation = useMutation({
     mutationFn: () => acceptCarrierInvoiceMatch({ matchId: match.id }),
     onSuccess: () => {
-      toast.success(t("Match accepted — the invoice is reconciled"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || translate("Failed to accept match")),
@@ -1045,7 +1035,6 @@ function RejectMatchDialog({
   const mutation = useMutation({
     mutationFn: () => rejectCarrierInvoiceMatch({ matchId, note: note.trim() }),
     onSuccess: () => {
-      toast.success(t("Match rejected"));
       setNote("");
       onOpenChange(false);
       onChanged();

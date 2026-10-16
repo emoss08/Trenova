@@ -177,7 +177,6 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         {
           onSuccess: () => {
             setSaveOpen(false);
-            toast.success(t("Report saved"));
           },
           onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to save the report")),
         },
@@ -186,7 +185,6 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       createDefinition.mutate(input, {
         onSuccess: (created) => {
           setSaveOpen(false);
-          toast.success(t("Report created"));
           void navigate(`/reports/builder/${created.id}`, { replace: true });
         },
         onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to create the report")),

@@ -154,7 +154,7 @@ describe("AccountingAuthorizationCallback", () => {
       state: "s1",
       realmId: "9130348",
     });
-    expect(mocks.toastSuccess).toHaveBeenCalledTimes(1);
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("says the person declined and sends nothing when the provider reports access_denied", async () => {

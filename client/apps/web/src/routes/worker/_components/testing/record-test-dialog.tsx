@@ -27,7 +27,6 @@ import {
 } from "@trenova/shared/types/worker-drug-alcohol";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { useTestingInvalidation } from "./use-testing-invalidation";
 
 const TYPE_OPTIONS = dotTestTypeSchema.options.map((value) => ({
@@ -115,9 +114,6 @@ export function RecordTestDialog({
         drawEntryId: values.drawEntryId ?? undefined,
       }),
     onSuccess: () => {
-      toast.success(t("Test recorded"), {
-        description: t("Record the result here once the laboratory or MRO reports back."),
-      });
       void invalidate();
       onOpenChange(false);
     },

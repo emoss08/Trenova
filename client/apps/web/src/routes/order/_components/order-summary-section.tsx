@@ -54,9 +54,6 @@ export function OrderSummarySection() {
     mutationFn: () => closeOrder(orderId!),
     onSuccess: () => {
       invalidateOrders();
-      toast.success(t("Order closed"), {
-        description: t("The order has been settled and closed."),
-      });
     },
     onError: (error) =>
       toast.error(t("Failed to close order"), {
@@ -70,9 +67,6 @@ export function OrderSummarySection() {
       invalidateOrders();
       setCancelOpen(false);
       setCancelReason("");
-      toast.success(t("Order canceled"), {
-        description: t("Every remaining leg has been canceled."),
-      });
     },
     onError: (error) =>
       toast.error(t("Failed to cancel order"), {
