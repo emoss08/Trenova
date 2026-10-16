@@ -375,8 +375,11 @@ package with a `BeforeAppendModel(ctx, bun.Query)` hook: `schema.Table` holds a 
 is about 180 functions (24 KB) in each of about 1,500 packages, close to half of all the generic
 code the API's first-party packages compile. Hiding the two maps behind unexported interfaces in
 Bun cut a cold API build by 15% and a rebuild after an exported edit to `domain/shipment` by
-about 20% on a 4-core machine; the change belongs upstream in `uptrace/bun`, since nothing on
-this side of the import can stop it.
+about 20% on a 4-core machine. Nothing on this side of the import can stop it, so the fix lives
+in Trenova's fork of Bun, [`emoss08/bun`](https://github.com/emoss08/bun), whose `master` is
+upstream `master` plus that change. `services/tms/go.mod` and `shared/go.mod` replace every
+`github.com/uptrace/bun` module with the fork at one commit; the Bun modules are separate Go
+modules, so a new fork commit moves all of the `replace` lines together, never one of them.
 
 To check a package, count the generic functions its object file defines:
 

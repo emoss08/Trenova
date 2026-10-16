@@ -130,3 +130,9 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )
+
+replace (
+	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016003150-aa362ff3c06d
+	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016003150-aa362ff3c06d
+	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016003150-aa362ff3c06d
+)
