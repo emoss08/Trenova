@@ -240,7 +240,6 @@ function CreateRuleSetDialog({
       onOpenChange(false);
       setName("");
       if (data.id) onCreated(data.id);
-      toast.success(t("Rule set created"));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : translate("Failed to create rule set"));

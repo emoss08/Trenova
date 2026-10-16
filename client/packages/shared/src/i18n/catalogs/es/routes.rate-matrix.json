@@ -25,7 +25,6 @@
   "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell": "Tarifique una tarifa tal como se publicó, como una cuadrícula de zonas, tramos de peso y clases, en lugar de una ruta por celda",
   "Rates are": "Las tarifas son",
   "Rates save on their own, separately from the rest of this form.": "Las tarifas se guardan por su cuenta, aparte del resto de este formulario.",
-  "Rates saved": "Tarifas guardadas",
   "Save rates": "Guardar las tarifas",
   "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.": "Guarde primero la matriz. Las tarifas necesitan algo a lo que pertenecer, y los ejes de arriba deciden la forma de la cuadrícula.",
   "Select dimension": "Seleccione la dimensión",

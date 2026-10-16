@@ -1,9 +1,6 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { accountingSetupPath, readAccountingCallback } from "@/lib/accounting-sync";
-import {
-  finishAccountingAuthorization,
-  type AccountingConnection,
-} from "@/lib/graphql/accounting-sync";
+import { finishAccountingAuthorization } from "@/lib/graphql/accounting-sync";
 import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { CompleteAccountingAuthorizationInput } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -13,7 +10,6 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { toast } from "sonner";
 import { AccountingCompanyChoice } from "./accounting-company-choice";
 import type { AccountingVendor } from "./accounting-vendors";
 
@@ -35,8 +31,7 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
     ? readAccountingCallback(params, { requireCompany: profile.callbackCarriesCompany })
     : returned;
 
-  const connected = (connection: AccountingConnection) => {
-    toast.success(t("{0} connected", connection.externalCompanyName || vendor.name));
+  const connected = () => {
     void navigate(`${setupPath}&setup=connected`, { replace: true });
   };
 
@@ -45,7 +40,7 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
       finishAccountingAuthorization(input),
     onSuccess: (result) => {
       if (result.kind === "connected") {
-        connected(result.connection);
+        connected();
       }
     },
   });

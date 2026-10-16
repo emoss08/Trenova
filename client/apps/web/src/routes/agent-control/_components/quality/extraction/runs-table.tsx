@@ -14,7 +14,6 @@ import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { StopCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { toast } from "sonner";
 import { isRunActive } from "./extraction-model";
 import { getRunColumns } from "./run-columns";
 import { RunPanel } from "./run-panel";
@@ -29,7 +28,6 @@ export function RunsTable() {
   const cancel = useApiMutation({
     mutationFn: (id: string) => cancelExtractionEvalRun(id),
     onSuccess: async () => {
-      toast.success(t("Evaluation canceled"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_EVAL_RUN_LIST_KEY] }),
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_ACCURACY_KEY] }),

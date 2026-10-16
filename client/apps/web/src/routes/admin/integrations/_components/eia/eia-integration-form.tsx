@@ -74,7 +74,6 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
     form,
     resourceName: "EIA fuel price configuration",
     onSuccess: async () => {
-      toast.success(t("EIA fuel price integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config(INTEGRATION_TYPE).queryKey,

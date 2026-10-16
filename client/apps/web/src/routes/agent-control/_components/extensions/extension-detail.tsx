@@ -18,7 +18,6 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { toAgentPanelRow, toSaveRequest } from "../agents/agent-form-schema";
 import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "../kit/ic";
@@ -58,7 +57,7 @@ type TestState = { state: "run" } | { state: "ok" | "fail"; message: string; lat
 export type ExtensionControl = {
   config: AgentExtensionConfigResponse | undefined;
   saving: boolean;
-  save: (patch: ConfigPatch, message?: string, onSaved?: () => void) => void;
+  save: (patch: ConfigPatch, onSaved?: () => void) => void;
 };
 
 /** An extension's saved settings and the one way to change them, shared by its sheet. */
@@ -70,7 +69,7 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
   const config = configQuery.data;
 
   const mutation = useApiMutation({
-    mutationFn: ({ patch }: { patch: ConfigPatch; message?: string; onSaved?: () => void }) => {
+    mutationFn: ({ patch }: { patch: ConfigPatch; onSaved?: () => void }) => {
       if (!config) throw new Error(t("The settings have not loaded yet"));
       return apiService.agentExtensionService.updateConfig(type, {
         enabled: patch.enabled ?? config.enabled,
@@ -79,8 +78,7 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
         version: config.version,
       });
     },
-    onSuccess: async (_saved, { message, onSaved }) => {
-      if (message) toast.success(message);
+    onSuccess: async (_saved, { onSaved }) => {
       onSaved?.();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentExtension._def }),
@@ -93,7 +91,7 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
   return {
     config,
     saving: mutation.isPending,
-    save: (patch, message, onSaved) => mutation.mutate({ patch, message, onSaved }),
+    save: (patch, onSaved) => mutation.mutate({ patch, onSaved }),
   };
 }
 
@@ -141,12 +139,7 @@ export function ExtensionDetail({
           toolNames: withExtensionTools(agent.toolNames, item.tools, !holds),
         }),
       ),
-    onSuccess: async (_saved, { agent, holds }) => {
-      toast.success(
-        holds
-          ? t("{0} no longer has {1}", agent.name, item.name)
-          : t("{0} now has {1}", agent.name, item.name),
-      );
+    onSuccess: async () => {
       await refresh();
     },
     resourceName: t("Agent"),
@@ -170,19 +163,9 @@ export function ExtensionDetail({
     }
   };
 
-  const holders = agents.filter((agent) => holdsExtension(agent.toolNames, item.tools));
   const turnOn = () => {
     const configuration = keyField && key.trim() ? { [keyField.key]: key.trim() } : undefined;
-    const count = availability === "AllAgents" ? null : holders.length;
-    control.save(
-      { enabled: true, configuration },
-      count === null
-        ? t("{0} is on for every agent", item.name)
-        : count === 1
-          ? t("{0} is on for 1 agent", item.name)
-          : t("{0} is on for {1} agents", item.name, count),
-      keySaved,
-    );
+    control.save({ enabled: true, configuration }, keySaved);
   };
 
   const depthField = config?.spec.find((field) => field.key === "searchType") ?? null;
@@ -246,11 +229,7 @@ export function ExtensionDetail({
                 event.preventDefault();
                 if (!key.trim() || busy) return;
                 if (on || stored) {
-                  control.save(
-                    { configuration: { [keyField.key]: key.trim() } },
-                    t("{0} key saved", item.vendor),
-                    keySaved,
-                  );
+                  control.save({ configuration: { [keyField.key]: key.trim() } }, keySaved);
                 } else {
                   turnOn();
                 }
@@ -372,7 +351,7 @@ export function ExtensionDetail({
               type="button"
               className="xa d"
               disabled={busy}
-              onClick={() => control.save({ enabled: false }, t("{0} is off", item.name))}
+              onClick={() => control.save({ enabled: false })}
             >
               <Ic n="ban" s={13} />
               {t("Turn off")}

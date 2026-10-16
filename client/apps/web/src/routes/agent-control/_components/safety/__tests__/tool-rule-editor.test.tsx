@@ -189,7 +189,7 @@ describe("Tool rule editor", () => {
         reason: null,
       }),
     );
-    expect(toast.success).toHaveBeenCalledWith("Release billing hold rule saved");
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("shows the organization's own rule and why it was set", async () => {

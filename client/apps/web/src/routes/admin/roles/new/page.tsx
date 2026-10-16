@@ -18,7 +18,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import { RolePageLayout } from "../_components/role-builder-layout";
 import { RoleForm } from "../_components/role-form";
 import { RolePermissionMatrix } from "../_components/role-permission-matrix";
@@ -58,7 +57,6 @@ export function RoleCreatePage() {
       return response;
     },
     onSuccess: () => {
-      toast.success(t("Role created successfully"));
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void navigate("/admin/roles");
     },

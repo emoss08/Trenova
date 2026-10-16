@@ -32,7 +32,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 type OktaSSOFormValues = OktaSSOConfig & {
@@ -154,7 +153,6 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
       await queryClient.invalidateQueries({
         queryKey: organization.oktaSSO(organizationId).queryKey,
       });
-      toast.success(t("Okta SSO settings updated"));
     },
   });
 

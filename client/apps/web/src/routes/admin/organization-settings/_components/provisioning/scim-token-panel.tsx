@@ -17,7 +17,6 @@ import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { memo, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { EmptyState, PanelHeader, RowSkeleton } from "../security-access/shared";
 import { useSecurityAccess } from "../security-access/use-security-access";
 
@@ -54,7 +53,6 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     onSuccess: async (response) => {
       setCreatedToken(response.token);
       setTokenName("");
-      toast.success(t("SCIM token created"));
       await onProvisioningChange();
     },
   });
@@ -62,7 +60,6 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
     mutationFn: async (tokenId: string) =>
       apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
     onSuccess: async () => {
-      toast.success(t("SCIM token revoked"));
       await onProvisioningChange();
     },
   });

@@ -1,6 +1,5 @@
 {
   "A friendly name to identify this subscription.": "用以識別此訂閱的易讀名稱。",
-  "All notifications marked as read": "已將所有通知標示為已讀",
   "Available: {{table}}, {{operation}}, {{record_id}}, {{new.field}}, {{old.field}}, {{changed_fields}}": "可用：{{table}}、{{operation}}、{{record_id}}、{{new.field}}、{{old.field}}、{{changed_fields}}",
   "Changed from": "原值",
   "Changed to": "新值",

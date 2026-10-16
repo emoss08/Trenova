@@ -17,7 +17,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState } from "react";
 import { FormProvider, useForm, type FieldErrors, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import {
   buildControlPatch,
   buildSettingsSchema,
@@ -127,7 +126,6 @@ export function CarrierIntelSettingsForm({
         (previous) => (previous ? { ...previous, carrierIntelControl: control } : previous),
       );
       reset(toSettingsFormValues(control, catalog));
-      toast.success(t("Carrier intelligence settings saved"));
       await queryClient.invalidateQueries({ queryKey: carrierIntelSettings._def });
     },
     onError: (error, variables) => {
@@ -148,7 +146,6 @@ export function CarrierIntelSettingsForm({
   const onValid = async (values: CarrierIntelSettingsFormValues) => {
     const input = buildControlPatch({ values, original: defaultValues, catalog, storedCodes });
     if (!input) {
-      toast.info(t("There are no changes to save"));
       return;
     }
     if (requiresCostConfirmation(values, defaultValues)) {

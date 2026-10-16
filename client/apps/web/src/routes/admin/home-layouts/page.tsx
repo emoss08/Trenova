@@ -52,7 +52,6 @@ export function HomeLayoutsPage() {
   const remove = async (preset: HomeLayoutPreset) => {
     try {
       await deletePreset.mutateAsync(preset.id);
-      toast.success(t("Deleted {0}", preset.name));
       setConfirming(null);
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not delete that home screen"));

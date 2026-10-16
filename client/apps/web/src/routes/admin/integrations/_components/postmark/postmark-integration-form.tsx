@@ -37,7 +37,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
 const postmarkLogo = "/integrations/logos/postmark_all.png";
 const postmarkWebhookEvents = ["Delivery", "Bounce", "SpamComplaint", "Open", "Click"];
@@ -96,7 +95,6 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
     form,
     resourceName: "Postmark configuration",
     onSuccess: async () => {
-      toast.success(t("Postmark integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config("Postmark").queryKey,

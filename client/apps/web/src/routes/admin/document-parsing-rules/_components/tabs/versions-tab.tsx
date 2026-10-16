@@ -101,7 +101,6 @@ function VersionList({
       void queryClient.invalidateQueries({
         queryKey: documentParsingRule.versions._def,
       });
-      toast.success(t("Draft version created (auto-numbered by server)"));
       if (data.id) onSelectVersion(data.id);
     },
     onError: (error) => {

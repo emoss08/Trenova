@@ -21,7 +21,6 @@ import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
@@ -65,7 +64,6 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
     form,
     resourceName: "Google Maps configuration",
     onSuccess: async () => {
-      toast.success(t("Google Maps integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config("GoogleMaps").queryKey,

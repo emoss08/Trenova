@@ -41,7 +41,6 @@ export default function DistanceProfileTable() {
       await distanceProfileService.delete(id);
     },
     onSuccess: () => {
-      toast.success(t("Distance profile deleted"));
       void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
       setDeleteDialogOpen(false);
       selectedProfileRef.current = null;
@@ -57,7 +56,6 @@ export default function DistanceProfileTable() {
   const setDefaultMutation = useMutation({
     mutationFn: (id: string) => distanceProfileService.setDefault(id),
     onSuccess: () => {
-      toast.success(t("Default distance profile updated"));
       void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
     },
     onError: (error) => {

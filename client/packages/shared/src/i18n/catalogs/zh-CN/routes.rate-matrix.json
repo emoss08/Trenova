@@ -25,7 +25,6 @@
   "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell": "依费率公布的形式定价 — 以区域、重量级距与等级构成的表格 — 而非每个单元格一条线路",
   "Rates are": "费率为",
   "Rates save on their own, separately from the rest of this form.": "费率会独立保存，与此表单的其余部分分开。",
-  "Rates saved": "费率已保存",
   "Save rates": "保存费率",
   "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.": "请先保存矩阵。费率需要有所归属，而上方的轴决定了表格的形状。",
   "Select dimension": "选择维度",

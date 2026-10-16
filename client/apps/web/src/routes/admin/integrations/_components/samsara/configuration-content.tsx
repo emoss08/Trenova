@@ -92,7 +92,6 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     onSuccess: async () => {
       setValue("configuration.token", "");
       setValue("configuration.webhookSecret", "");
-      toast.success(t("Samsara integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config("Samsara").queryKey,
@@ -127,7 +126,6 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     }
     await navigator.clipboard.writeText(webhookUrl);
     setCopied(true);
-    toast.success(t("Webhook URL copied to clipboard"));
     setTimeout(() => setCopied(false), 1500);
   };
 

@@ -18,7 +18,6 @@
   "How often drivers are settled — weekly is the industry norm for asset carriers.": "司机的结算频率 — 自有车队业者的业界惯例为每周结算。",
   "Lookback (settlements)": "回溯笔数（结算）",
   "Number of prior settlements used to compute the trailing average.": "用以计算移动平均的先前结算笔数。",
-  "Settlement control updated": "结算控制项已更新",
   "Settlements deviating from a driver's recent history are flagged for review.": "与司机近期记录有偏离的结算会被标记待审。",
   "Settlements without exceptions skip manual review and go straight to approved.": "没有例外的结算会跳过人工审查，直接转为已批准。",
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": "司机薪酬计提的里程碑。“运程完成”会在各司机自己的运程结束时即支付 — 当多位司机分担同一趟货载时，这是最精确的选项。",

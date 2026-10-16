@@ -25,7 +25,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, Sliders01Icon, XOctagonIcon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 import { formatShare } from "../quality-model";
 import { RolloutStateBadge } from "./extraction-badges";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
@@ -196,7 +195,6 @@ export function RolloutView() {
       return updateExtractionRollout(input);
     },
     onSuccess: async (saved) => {
-      toast.success(t("The rollout is off; every document is read by production"));
       queryClient.setQueryData([EXTRACTION_ROLLOUT_KEY], saved);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_ROLLOUT_KEY] }),

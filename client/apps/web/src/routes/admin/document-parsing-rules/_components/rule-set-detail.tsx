@@ -108,7 +108,6 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
       void queryClient.invalidateQueries({
         queryKey: documentParsingRule.list._def,
       });
-      toast.success(t("Rule set deleted"));
       onDeleted();
     },
     onError: () => {

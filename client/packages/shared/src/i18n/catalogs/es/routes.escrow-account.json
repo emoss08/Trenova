@@ -15,8 +15,6 @@
   "Dollars, not cents; positive deposits into escrow, negative applies funds out.": "Dólares, no centavos; un valor positivo deposita en el depósito en garantía y uno negativo aplica fondos hacia fuera.",
   "Escrow Account": "Cuenta de depósito en garantía",
   "Escrow account": "Cuenta de depósito en garantía",
-  "Escrow account closed; remaining balance refunded": "Cuenta de depósito en garantía cerrada; saldo restante reembolsado",
-  "Escrow adjustment recorded": "Ajuste del depósito en garantía registrado",
   "Escrow — {0}": "Depósito en garantía — {0}",
   "Every selected escrow account is already closed.": "Todas las cuentas de depósito en garantía seleccionadas ya están cerradas.",
   "Funding target": "Objetivo de financiación",

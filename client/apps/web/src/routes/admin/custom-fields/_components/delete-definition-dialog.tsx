@@ -52,9 +52,6 @@ export function DeleteDefinitionDialog({
       await customFieldService.delete(definition.id);
     },
     onSuccess: () => {
-      toast.success(t("Custom field deleted"), {
-        description: t('"{0}" has been deleted successfully.', definition?.label ?? ""),
-      });
       void queryClient.invalidateQueries({
         queryKey: ["custom-field-definition-list"],
       });

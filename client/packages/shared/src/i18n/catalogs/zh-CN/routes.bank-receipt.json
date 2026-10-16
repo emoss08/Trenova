@@ -9,7 +9,6 @@
   "Payment ID": "付款 ID",
   "Pick a receipt from the list to see its details and the payments it could be matched to.": "请从列表中选择一笔入账记录，以查看其明细与可匹配的付款。",
   "Receipt details": "入账明细",
-  "Receipt matched to payment": "入账记录已与付款匹配",
   "Search reference, memo...": "搜索引用编号、备注...",
   "{0} found": "找到 {0} 笔"
 }

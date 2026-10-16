@@ -21,7 +21,6 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { memo, useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { effectFilterOptions } from "./policies/constants";
 import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy-panel";
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
@@ -89,7 +88,6 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
     mutationFn: async (policyId: string) =>
       apiService.organizationService.deleteAccessPolicy(organizationId, policyId),
     onSuccess: async () => {
-      toast.success(t("Access policy removed"));
       await invalidateAccessPolicies();
     },
   });

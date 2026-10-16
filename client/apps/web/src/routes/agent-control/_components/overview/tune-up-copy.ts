@@ -24,8 +24,6 @@ export type TuneUpCopy = {
   gain: string;
   tone: TuneUpTone;
   action: string;
-  /** What the toast says once it is applied. */
-  applied: string;
 };
 
 export type TuneUpLabels = {
@@ -78,7 +76,10 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
           evidence.rejections === 0
             ? t("Approved unchanged {0} times in a row · never rejected", evidence.streak)
             : evidence.rejections === 1
-              ? t("Approved unchanged {0} times in a row · 1 rejection before that", evidence.streak)
+              ? t(
+                  "Approved unchanged {0} times in a row · 1 rejection before that",
+                  evidence.streak,
+                )
               : t(
                   "Approved unchanged {0} times in a row · {1} rejections before that",
                   evidence.streak,
@@ -92,7 +93,6 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
             : t("Fewer approvals to make"),
         tone: "ok",
         action: t("Raise it"),
-        applied: t("{0} moved up a tier for {1}", tool, agentName),
       };
     }
     case "ReorderProviders": {
@@ -114,7 +114,6 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
             : t("Fewer retries on {0} tasks", tasks),
         tone: "warn",
         action: t("Reorder"),
-        applied: t("{0} now goes before {1}", providerName, otherName),
       };
     }
     case "LeaveShadow":
@@ -137,7 +136,6 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
         gain: t("Proposals start reaching Desk"),
         tone: "brand",
         action: t("Go live"),
-        applied: t("{0} is live", agentName),
       };
     case "AssignTask": {
       const task = labels.task(tuneUp.task ?? "");
@@ -154,7 +152,6 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
         gain: embedding ? t("Search by meaning") : t("{0} starts working", task),
         tone: "warn",
         action: t("Assign"),
-        applied: t("{0} now goes to {1}", task, providerName),
       };
     }
     case "TurnOffIdleAgent": {
@@ -168,11 +165,14 @@ export function tuneUpCopy(tuneUp: AITuneUp, t: TranslateFn, labels: TuneUpLabel
         evidence:
           evidence.tools === 1
             ? t("Nobody has asked it anything since {0} · it holds 1 tool", since)
-            : t("Nobody has asked it anything since {0} · it holds {1} tools", since, evidence.tools),
+            : t(
+                "Nobody has asked it anything since {0} · it holds {1} tools",
+                since,
+                evidence.tools,
+              ),
         gain: t("Fewer agents to choose from in Desk"),
         tone: "neutral",
         action: t("Turn off"),
-        applied: t("{0} is off", agentName),
       };
     }
   }

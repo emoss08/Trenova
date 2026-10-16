@@ -22,7 +22,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import { ApiKeyDialog } from "./_components/api-key-dialog";
 import { CredentialsDialog } from "./_components/credentials-dialog";
 import { MailboxCard } from "./_components/mailbox-card";
@@ -63,7 +62,6 @@ export function InboundMailboxesPage() {
   const rotateMutation = useApiMutation({
     mutationFn: (id: string) => rotateInboundMailboxToken(id),
     onSuccess: async (credentials) => {
-      toast.success(t("A new webhook URL is ready"));
       setRotating(null);
       setShown({ credentials });
       await refresh();

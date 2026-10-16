@@ -191,14 +191,12 @@ export default function AgentsTab() {
     }: {
       agent: AgentDefinitionRow;
       patch: { enabled?: boolean; shadowMode?: boolean; simulationMode?: boolean };
-      message: string;
     }) =>
       apiService.agentDefinitionService.update(agent.id, {
         ...toSaveRequest(toAgentPanelRow(agent)),
         ...patch,
       }),
-    onSuccess: async (_saved, { message }) => {
-      toast.success(message);
+    onSuccess: async () => {
       await refresh();
     },
     resourceName: t("Agent"),
@@ -216,8 +214,7 @@ export default function AgentsTab() {
 
   const remove = useApiMutation({
     mutationFn: (agent: AgentDefinitionRow) => apiService.agentDefinitionService.remove(agent.id),
-    onSuccess: async (_result, agent) => {
-      toast.success(t("{0} removed", agent.name));
+    onSuccess: async () => {
       setRemoving(null);
       void setOpenId(null);
       await refresh();
@@ -234,7 +231,6 @@ export default function AgentsTab() {
     },
     onSuccess: async (saved) => {
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
-      toast.success(t("Earned autonomy is on"));
       await refresh();
     },
     resourceName: t("Organization-wide settings"),
@@ -247,23 +243,16 @@ export default function AgentsTab() {
       save.mutate({
         agent,
         patch: { enabled },
-        message: enabled ? t("{0} is on", agent.name) : t("{0} is off", agent.name),
       }),
-    [save, t],
+    [save],
   );
   const setMode = useCallback(
     (agent: AgentDefinitionRow, mode: AgentMode) =>
       save.mutate({
         agent,
         patch: modeFlags(mode),
-        message:
-          mode === "live"
-            ? t("{0} is live", agent.name)
-            : mode === "shadow"
-              ? t("{0} runs in shadow", agent.name)
-              : t("{0} runs in simulation", agent.name),
       }),
-    [save, t],
+    [save],
   );
   const ask = useCallback(
     (agent: AgentDefinitionRow) => void navigate(`/desk/agents/${encodeURIComponent(agent.id)}`),

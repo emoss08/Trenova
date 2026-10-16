@@ -56,7 +56,6 @@ export function useSpecIntegrationConfig({
     // i18n-ignore: resource name only appears in console error logs
     resourceName: `${name} configuration`,
     onSuccess: async () => {
-      toast.success(t("{0} integration updated", name));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: integration.config(integrationType).queryKey,

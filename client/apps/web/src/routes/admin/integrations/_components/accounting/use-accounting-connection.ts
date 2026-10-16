@@ -89,7 +89,6 @@ export function useAccountingConnectionActions(vendor: AccountingVendor) {
     resourceName: vendor.name,
     onSuccess: async () => {
       await refresh();
-      toast.success(t("{0} disconnected", vendor.name));
     },
   });
 
@@ -125,9 +124,6 @@ export function useAccountingAppActions(
     resourceName: t("{0} keys", vendor.appName),
     onSuccess: async (status) => {
       await applyStatus(status);
-      toast.success(t("{0} keys saved", vendor.appName), {
-        description: t("{0} accepted the client ID and secret.", vendor.name),
-      });
     },
   });
 
@@ -136,7 +132,6 @@ export function useAccountingAppActions(
     resourceName: t("{0} keys", vendor.appName),
     onSuccess: async (status) => {
       await applyStatus(status);
-      toast.success(t("{0} keys removed", vendor.appName));
     },
   });
 
@@ -147,7 +142,6 @@ export function useAccountingSyncSetupActions(
   vendor: AccountingVendor,
   form?: UseFormReturn<AccountingStartDateValues>,
 ) {
-  const t = useT();
   const queryClient = useQueryClient();
 
   const enable = useApiMutation({
@@ -172,7 +166,6 @@ export function useAccountingSyncSetupActions(
         }),
         queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]);
-      toast.success(t("Sending to {0} is on", vendor.name));
     },
   });
 
@@ -184,7 +177,6 @@ export function useAccountingModeAction(
   ledgerAvailable: boolean,
   form?: UseFormReturn<AccountingModeValues>,
 ) {
-  const t = useT();
   const queryClient = useQueryClient();
 
   return useApiMutation({
@@ -195,7 +187,7 @@ export function useAccountingModeAction(
       }),
     form,
     resourceName: vendor.name,
-    onSuccess: async (connection) => {
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: accountingSync.status(vendor.system).queryKey,
@@ -204,11 +196,6 @@ export function useAccountingModeAction(
           queryKey: accountingSync.mappingSummary(vendor.system).queryKey,
         }),
       ]);
-      toast.success(
-        connection.syncMode === "Ledger"
-          ? t("Journal entries will be sent to {0}", vendor.name)
-          : t("Documents will be sent to {0}", vendor.name),
-      );
     },
   });
 }
@@ -217,7 +204,6 @@ export function useAccountingSyncSettingsAction(
   vendor: AccountingVendor,
   settingsForm: UseFormReturn<AccountingSyncSettingsValues>,
 ) {
-  const t = useT();
   const queryClient = useQueryClient();
 
   return useApiMutation({
@@ -247,7 +233,6 @@ export function useAccountingSyncSettingsAction(
           queryKey: accountingSync.inboundOverview(vendor.system).queryKey,
         }),
       ]);
-      toast.success(t("Sync settings saved"));
     },
   });
 }
@@ -280,9 +265,6 @@ export function useAccountingCertificateActions(
     resourceName: t("{0} certificate", vendor.name),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Certificate generated"), {
-        description: t("Download it and upload it to {0}.", vendor.name),
-      });
     },
   });
 
@@ -313,9 +295,6 @@ export function useAccountingCertificateActions(
     resourceName: t("{0} certificate", vendor.name),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Certificate renewed"), {
-        description: t("{0} accepted the new certificate.", vendor.name),
-      });
     },
   });
 

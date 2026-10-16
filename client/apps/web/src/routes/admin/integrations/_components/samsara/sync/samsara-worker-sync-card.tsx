@@ -337,9 +337,6 @@ export function SamsaraWorkerSyncCard({
         "sync",
         t("Workflow started: {0} ({1})", response.workflowId, response.runId),
       );
-      toast.success(t("Samsara worker sync started"), {
-        description: t("Monitoring the workflow run now."),
-      });
     },
     onError: (error) => {
       if (error instanceof ApiRequestError && error.isConflictError()) {
@@ -361,9 +358,6 @@ export function SamsaraWorkerSyncCard({
             "sync",
             t("Workflow already running, attached to {0}", parsedUsageStats.data.workflowId),
           );
-          toast.info(t("Sync already running"), {
-            description: t("Switched to monitoring the existing workflow run."),
-          });
           return;
         }
       }
@@ -398,7 +392,6 @@ export function SamsaraWorkerSyncCard({
           response.totalDrifts,
         ),
       );
-      toast.success(t("Worker drift detection complete"));
       await queryClient.invalidateQueries({
         queryKey: integration.samsaraWorkerSyncDrift().queryKey,
       });
@@ -487,9 +480,6 @@ export function SamsaraWorkerSyncCard({
         });
       } else {
         appendLog("success", "retry", t("Queued worker {0} for resync", workerID));
-        toast.success(t("Worker retry queued"), {
-          description: t("The worker mapping was repaired and will be picked up on next sync."),
-        });
       }
 
       await Promise.all([

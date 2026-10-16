@@ -31,6 +31,7 @@
   "Retry these": "重试这些项",
   "Say why this document is not sent": "说明不发送此单据的原因",
   "Send on first open day": "以第一个开放日的日期发送",
+  "Sending to {0} is paused": "向 {0} 发送已暂停",
   "Sent dated": "发送日期",
   "Skip document": "跳过单据",
   "Skipped by": "跳过人",

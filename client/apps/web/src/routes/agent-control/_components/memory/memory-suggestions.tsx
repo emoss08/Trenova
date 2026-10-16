@@ -105,12 +105,7 @@ function useSettleSuggestion() {
             version: settlement.suggestion.version,
           })
         : dismissAgentMemorySuggestion(settlement.suggestion.id, settlement.suggestion.version),
-    onSuccess: async (_memory, settlement) => {
-      toast.success(
-        settlement.kind === "approve"
-          ? t("Memory approved; agents read it from their next run")
-          : t("Suggestion dismissed"),
-      );
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: agentMemorySuggestionsQueryKey }),
         queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),

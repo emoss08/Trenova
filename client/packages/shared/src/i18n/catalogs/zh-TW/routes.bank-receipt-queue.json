@@ -20,8 +20,5 @@
   "Search reference, ID...": "搜尋參考編號、ID...",
   "Select resolution type": "選擇處理類型",
   "This work item has been {0}. No further actions available.": "此工作項目已{0}。沒有其他可執行的操作。",
-  "Work item assigned": "工作項目已指派",
-  "Work item dismissed": "工作項目已關閉",
-  "Work item resolved": "工作項目已處理",
   "Work queue totals": "工作佇列合計"
 }

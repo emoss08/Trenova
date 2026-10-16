@@ -13,7 +13,6 @@
   "Copy payment ID": "复制付款 ID",
   "GL postings": "总账过账",
   "Invalid application": "冲抵无效",
-  "Invoice balances and the GL were updated.": "已更新发票余额与总账。",
   "Loading open invoices…": "正在加载未结发票…",
   "NSF check, posted to wrong customer, ...": "存款不足支票、过账至错误客户等等",
   "No customer payments yet": "尚无客户付款",
@@ -43,17 +42,14 @@
   "The GL date. It must fall within an open fiscal period.": "总账日期。必须落在开放的财务期间内。",
   "The applied total exceeds the payment amount.": "冲抵总额超过付款金额。",
   "The applied total exceeds the unapplied cash on this payment.": "冲抵总额超过此付款的未冲抵款项。",
-  "The cash receipt and invoice applications were backed out.": "已回冲此笔收款与发票冲抵记录。",
   "The date the funds were received.": "收到款项的日期。",
   "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.": "此操作会回冲 {0} 的款项、重新打开已冲抵的发票，并过账一笔冲销分录。此操作无法撤销。",
   "This customer has no open invoices to apply against.": "此客户没有可供冲抵的未结发票。",
   "This customer has no open invoices — the full amount will post as unapplied cash.": "此客户没有未结发票 — 全额将以未冲抵款项过账。",
-  "Unapplied cash applied": "已冲抵未冲抵款项",
   "Unapplied cash available:": "可用的未冲抵款项：",
   "Unapplied · {0}": "未冲抵 · {0}",
   "exceeds open amount": "超过未结金额",
   "{0, plural, one {# payment} other {# payments}} with remainder": "{0, plural, other {# 笔付款}}有余额",
   "{0} payment": "{0} 付款",
-  "{0} payment from {1}": "来自 {1} 的 {0} 付款",
-  "{0} received — {1} applied, {2} unapplied.": "已收到 {0} — 已核销 {1}，未核销 {2}。"
+  "{0} payment from {1}": "来自 {1} 的 {0} 付款"
 }

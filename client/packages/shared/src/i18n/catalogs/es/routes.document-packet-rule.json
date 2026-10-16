@@ -6,7 +6,6 @@
   "Days before expiration to flag as expiring soon": "Días antes del vencimiento para marcarlo como próximo a vencer",
   "Delete document packet rule": "Eliminar la regla del paquete de documentos",
   "Document packet rule": "Regla del paquete de documentos",
-  "Document packet rule deleted": "Regla del paquete de documentos eliminada",
   "Document packet rules": "Reglas del paquete de documentos",
   "Documents must include an expiration date": "Los documentos deben incluir una fecha de vencimiento",
   "Expiration req.": "Venc. oblig.",

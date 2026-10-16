@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
 
 type DeleteRoleDialogProps = {
   open: boolean;
@@ -43,7 +42,6 @@ export function DeleteRoleDialog({
   const { mutate, isPending } = useMutation({
     mutationFn: () => deleteRole(roleId, { force: holderCount > 0 }),
     onSuccess: async () => {
-      toast.success(t("Role deleted"));
       await onDeleted();
       onOpenChange(false);
     },

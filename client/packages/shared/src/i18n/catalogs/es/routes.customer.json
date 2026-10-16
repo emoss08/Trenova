@@ -183,7 +183,6 @@
   "This customer could not be found. It may have been removed.": "No se pudo encontrar este cliente. Es posible que se haya eliminado.",
   "This customer is billed": "Este cliente se factura",
   "Tracking": "Seguimiento",
-  "Tracking settings saved": "Configuración de seguimiento guardada",
   "Turn on Vet as a broker on the General tab and save to check this customer's broker authority, surety bond and insurance.": "Active Evaluar como agente de carga en la pestaña General y guarde para verificar la autoridad de agente de carga, la fianza de garantía y el seguro de este cliente.",
   "Turning this off stops every link already shared for this customer's shipments.": "Desactivarlo detiene todos los enlaces ya compartidos para los envíos de este cliente.",
   "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.": "Activa el control de crédito para este cliente: un estado 'Hold' o 'Suspended' impide reservar nuevos envíos para él.",

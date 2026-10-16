@@ -284,7 +284,7 @@ export default function ExtensionsTab() {
                   on
                   label={t("Turn off")}
                   disabled={control.saving}
-                  onChange={() => control.save({ enabled: false }, t("{0} is off", open.name))}
+                  onChange={() => control.save({ enabled: false })}
                 />
               )}
             </>

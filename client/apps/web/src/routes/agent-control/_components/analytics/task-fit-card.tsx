@@ -43,8 +43,7 @@ export const TaskFitCard = memo(function TaskFitCard({
   const route = useMutation({
     mutationFn: (row: AIAnalyticsTaskRow) =>
       routeAITask(row.task, row.suggestion?.provider.id ?? ""),
-    onSuccess: async (_, row) => {
-      toast.success(t("{0} now goes to {1}", labelOf(row), row.suggestion?.provider.name ?? ""));
+    onSuccess: async () => {
       setConfirming(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: aiAnalytics._def }),

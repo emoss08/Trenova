@@ -20,8 +20,5 @@
   "Search reference, ID...": "Buscar referencia, ID...",
   "Select resolution type": "Seleccione el tipo de resolución",
   "This work item has been {0}. No further actions available.": "Este elemento de trabajo se ha {0}. No hay más acciones disponibles.",
-  "Work item assigned": "Elemento de trabajo asignado",
-  "Work item dismissed": "Elemento de trabajo descartado",
-  "Work item resolved": "Elemento de trabajo resuelto",
   "Work queue totals": "Totales de la cola de trabajo"
 }

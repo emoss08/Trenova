@@ -91,15 +91,15 @@ export function ToolRuleEditor({ open, policy, holders, onClose, onSaved }: Tool
         queryClient.invalidateQueries({ queryKey: [AGENT_TOOL_RULE_LIST_KEY] }),
         queryClient.invalidateQueries({ queryKey: [AGENT_TOOL_SAFETY_LIST_KEY] }),
       ]);
-      toast.success(
-        saved.affected.length > 0
-          ? t(
-              "{0} rule saved · {1, plural, one {# agent changed} other {# agents changed}}",
-              policy.title,
-              saved.affected.length,
-            )
-          : t("{0} rule saved", policy.title),
-      );
+      if (saved.affected.length > 0) {
+        toast.success(
+          t(
+            "{0} rule saved · {1, plural, one {# agent changed} other {# agents changed}}",
+            policy.title,
+            saved.affected.length,
+          ),
+        );
+      }
       return toToolRuleForm(saved.tool);
     },
     [onSaved, policy.name, policy.title, queryClient, t],

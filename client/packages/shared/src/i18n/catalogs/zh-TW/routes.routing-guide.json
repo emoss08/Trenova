@@ -36,7 +36,6 @@
   "Ranked carriers with the rate, offer expiry, and channel each is tendered on": "已排序的承運業者，含各自的費率、要約到期時間與發出通道",
   "Requires a default EDI channel on the carrier": "承運業者須設有預設的 EDI 通道",
   "Routing guide": "路線指引",
-  "Routing guide deleted": "路線指引已刪除",
   "Select destination facility": "選擇目的地場站",
   "Select origin facility": "選擇起點場站",
   "Shown wherever a tender references this guide.": "凡要約參照此指引之處均會顯示。",

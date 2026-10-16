@@ -16,7 +16,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { toast } from "sonner";
 
 const CEILING_ONLY = "ceiling";
 
@@ -53,7 +52,6 @@ export function AgentUnattendedRole({
   const save = useApiMutation({
     mutationFn: (roleId: string | null) => setAgentUnattendedRole(agent.id, roleId),
     onSuccess: async () => {
-      toast.success(t("{0} now runs on its own under the role you chose", agent.name));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: assistant._def }),
         queryClient.invalidateQueries({ queryKey: aiControl._def }),

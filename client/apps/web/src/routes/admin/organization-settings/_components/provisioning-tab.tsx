@@ -7,7 +7,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users01Icon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { AuditTimeline } from "./provisioning/audit-timeline";
 import { emptyDirectory } from "./provisioning/constants";
 import { DirectoryDetailHeader } from "./provisioning/directory-detail-header";
@@ -87,7 +86,6 @@ export function ProvisioningTab({
     mutationFn: async (directoryId: string) =>
       apiService.organizationService.deleteSCIMDirectory(organizationId, directoryId),
     onSuccess: async (_data, deletedDirectoryId) => {
-      toast.success(t("SCIM directory removed"));
       await handleDirectoryDeleted(deletedDirectoryId);
     },
   });

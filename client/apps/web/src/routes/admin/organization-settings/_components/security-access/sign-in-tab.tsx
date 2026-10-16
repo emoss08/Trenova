@@ -27,7 +27,6 @@ import { Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/ico
 import { useQueryState, useQueryStates } from "nuqs";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
-import { toast } from "sonner";
 import {
   ChipArrayField,
   ConsoleToolbar,
@@ -148,7 +147,6 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
     mutationFn: async (providerId: string) =>
       apiService.organizationService.deleteIdentityProvider(organizationId, providerId),
     onSuccess: async () => {
-      toast.success(t("Identity provider removed"));
       await queryClient.invalidateQueries({
         queryKey: [identityProviderQueryKey(organizationId)],
       });

@@ -13,7 +13,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useMemo } from "react";
 import { Controller, useForm, useWatch, type Control, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { withPresets } from "../agent-control-options";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
@@ -76,10 +75,9 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
       const saved = await updateAgentQualityControl(toUpdateInput(next));
       queryClient.setQueryData(agentQuality.control().queryKey, saved);
       await queryClient.invalidateQueries({ queryKey: agentQuality.overview().queryKey });
-      toast.success(t("Sweep settings saved"));
       return toFormValues(saved);
     },
-    [queryClient, t],
+    [queryClient],
   );
 
   const flow = useEditFlow({

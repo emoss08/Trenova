@@ -81,7 +81,6 @@ function FixtureList({
       void queryClient.invalidateQueries({
         queryKey: documentParsingRule.fixtures._def,
       });
-      toast.success(t("Fixture created"));
       if (data.id) onSelectFixture(data.id);
     },
     onError: (error) => {

@@ -12,7 +12,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, EyeIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { getExceptionColumns } from "./agent-exception-columns";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { ExceptionActionsContext, ExceptionPanel } from "./exception-sheet";
@@ -26,25 +25,12 @@ export default function AgentExceptionTable() {
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
 
   const transition = (exception: AgentExceptionRow, state: AgentResolutionState) => {
-    const copy: Record<AgentResolutionState, { title: string; confirm: string; message: string }> =
-      {
-        Open: { title: t("Reopen this case?"), confirm: t("Reopen"), message: t("Case reopened") },
-        InReview: {
-          title: t("Take this case?"),
-          confirm: t("Mark in review"),
-          message: t("Case marked in review"),
-        },
-        Resolved: {
-          title: t("Resolve this case?"),
-          confirm: t("Resolve"),
-          message: t("Case resolved"),
-        },
-        Dismissed: {
-          title: t("Dismiss this case?"),
-          confirm: t("Dismiss"),
-          message: t("Case dismissed"),
-        },
-      };
+    const copy: Record<AgentResolutionState, { title: string; confirm: string }> = {
+      Open: { title: t("Reopen this case?"), confirm: t("Reopen") },
+      InReview: { title: t("Take this case?"), confirm: t("Mark in review") },
+      Resolved: { title: t("Resolve this case?"), confirm: t("Resolve") },
+      Dismissed: { title: t("Dismiss this case?"), confirm: t("Dismiss") },
+    };
 
     setDialog({
       title: copy[state].title,
@@ -60,7 +46,6 @@ export default function AgentExceptionTable() {
           resolutionState: state,
           resolutionNotes: notes || undefined,
         });
-        toast.success(copy[state].message);
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["agent-exception-list"] }),
           invalidateAIControlCounts(queryClient),

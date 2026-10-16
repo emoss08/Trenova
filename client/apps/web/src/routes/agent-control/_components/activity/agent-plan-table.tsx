@@ -13,7 +13,6 @@ import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { getPlanColumns } from "./agent-plan-columns";
 import { ReasonDialog, type ReasonDialogRequest } from "./reason-dialog";
 
@@ -29,8 +28,7 @@ export default function AgentPlanTable() {
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
 
-  const afterDecision = async (message: string) => {
-    toast.success(message);
+  const afterDecision = async () => {
     await Promise.all([
       invalidateProposalViews(queryClient),
       invalidateAIControlCounts(queryClient),
@@ -71,7 +69,7 @@ export default function AgentPlanTable() {
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
           previewDigest,
         });
-        await afterDecision(accepting ? t("Plan approved") : t("Plan rejected"));
+        await afterDecision();
       },
     });
   };

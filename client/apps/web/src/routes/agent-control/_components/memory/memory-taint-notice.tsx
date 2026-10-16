@@ -11,7 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
 import { memorySourceLabel } from "../activity/agent-badges";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 
@@ -39,12 +38,7 @@ export function MemoryTaintNotice({ canDecide }: { canDecide: boolean }) {
       }
       await setAgentMemoryStatus(memory.id, "Retired");
     },
-    onSuccess: async (_, { action }) => {
-      toast.success(
-        action === "review"
-          ? t("Memory reviewed; turns that read it can write on their own again")
-          : t("Memory retired"),
-      );
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
         invalidateAIControlCounts(queryClient),

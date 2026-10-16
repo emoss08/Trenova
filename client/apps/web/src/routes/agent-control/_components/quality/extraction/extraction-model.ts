@@ -71,12 +71,6 @@ export const CASE_STATUS_ACTION: Record<ExtractionEvalCaseStatus, string> = defi
   Retired: "Retire",
 });
 
-export const CASE_STATUS_MOVED: Record<ExtractionEvalCaseStatus, string> = defineLabels({
-  Candidate: "Case moved back to candidates",
-  Active: "Case activated",
-  Retired: "Case retired",
-});
-
 const NEXT_CASE_STATUSES: Record<ExtractionEvalCaseStatus, ExtractionEvalCaseStatus[]> = {
   Candidate: ["Active", "Retired"],
   Active: ["Retired"],
