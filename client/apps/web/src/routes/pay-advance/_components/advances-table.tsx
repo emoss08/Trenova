@@ -21,7 +21,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./advance-columns";
 import { AdvancePanel } from "./advance-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

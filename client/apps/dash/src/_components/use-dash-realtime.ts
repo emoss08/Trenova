@@ -7,7 +7,7 @@ import { realtimeClient } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const DASH_RESOURCE_QUERY_KEYS: Record<string, string[]> = {
   shipments: ["dash-loads"],

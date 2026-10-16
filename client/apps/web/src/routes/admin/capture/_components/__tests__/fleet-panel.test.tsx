@@ -35,7 +35,9 @@ vi.mock("@/components/capture/device-list", () => ({
   ),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}));
 
 const dispatchPc = {
   id: "cdev_1",

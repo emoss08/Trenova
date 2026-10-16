@@ -26,7 +26,7 @@ import {
 } from "@trenova/shared/types/pto-policy";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type AssignPolicyDialogProps = {
   open: boolean;

@@ -16,7 +16,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
 import { aicFieldTrigger } from "../edit/field-trigger";

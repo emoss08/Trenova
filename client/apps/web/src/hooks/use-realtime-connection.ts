@@ -16,7 +16,7 @@ import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   CORE_QUERY_KEYS,
   RESOURCE_EVENT_NAME,

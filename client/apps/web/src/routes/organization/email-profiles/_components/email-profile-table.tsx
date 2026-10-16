@@ -29,7 +29,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send01Icon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./email-profile-columns";
 import { emailProfileQueryKey } from "./email-profile-constants";
 import { EmailProfilePanel } from "./email-profile-panel";

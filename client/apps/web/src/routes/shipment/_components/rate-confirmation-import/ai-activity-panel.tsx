@@ -13,7 +13,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { ChevronRightIcon, ClockRewindIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { earlierConversation, type EarlierConversation } from "./earlier-conversation";
 import {
   applyImportDraftEdit,

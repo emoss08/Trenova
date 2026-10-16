@@ -51,7 +51,7 @@ import { describeError } from "@trenova/shared/lib/error-presentation";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 
 const MAX_PORT = 65_535;

@@ -36,7 +36,7 @@ vi.mock("@/lib/graphql/worker-safety", () => ({
   WORKER_RECOGNITIONS_KEY: "worker-recognitions",
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

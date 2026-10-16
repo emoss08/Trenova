@@ -29,7 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { NovaButton } from "../ai/nova-button";
 import { ProposedScenariosCard, scenarioInputsLine } from "../ai/proposed-scenarios-card";
 import { formatMoney, previewAmounts } from "../model/format";

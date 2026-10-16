@@ -18,7 +18,7 @@ import {
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { disputeCategoryLabels, SettlementDisputeStatusBadge } from "./dispute-columns";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { translate } from "@trenova/shared/i18n/runtime";

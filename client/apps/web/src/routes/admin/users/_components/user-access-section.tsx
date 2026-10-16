@@ -4,7 +4,7 @@ import { FormControl, FormSection } from "@trenova/shared/components/ui/form";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { resetUserMFA, resetUserPassword } from "@/lib/user-api";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function UserAccessSection({
   userId,

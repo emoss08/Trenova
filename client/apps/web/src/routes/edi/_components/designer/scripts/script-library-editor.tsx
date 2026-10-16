@@ -10,7 +10,7 @@ import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { PlusIcon, Save01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   getEDIScriptPresetsByCategory,
   insertScriptPresetCode,

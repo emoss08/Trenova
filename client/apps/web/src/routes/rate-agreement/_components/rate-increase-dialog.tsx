@@ -41,7 +41,7 @@ import type { RateIncreasePlan, RatePartyType } from "@trenova/shared/types/rate
 import { AlertCircleIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 type IncreaseScope = "selected" | "customer" | "carrier" | "party";
 type AdjustmentKind = "percent" | "flat";

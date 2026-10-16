@@ -21,7 +21,7 @@ import { initials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SwapsEmpty } from "./scheduling-empty";
 
 type Scope = "open" | "all";

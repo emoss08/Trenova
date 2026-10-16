@@ -18,7 +18,7 @@ vi.mock("@/lib/graphql/org-holiday", () => ({
   ORG_HOLIDAYS_KEY: "org-holidays",
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

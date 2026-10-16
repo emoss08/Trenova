@@ -9,7 +9,9 @@ import { FormEditPanel } from "@/components/form-edit-panel";
 // Runs under the React Compiler, as the app is built: the panels' save dock and change
 // count must follow the form as it is edited.
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 type ChargeForm = {
   code: string;

@@ -27,7 +27,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   CARRIER_CODE_MAX_LENGTH,
   importSourcedCarrierSchema,

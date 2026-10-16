@@ -14,7 +14,7 @@ import {
   User01Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { BulkAssignTrainingDialog } from "./bulk-assign-training-dialog";
 import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";

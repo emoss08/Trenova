@@ -7,7 +7,7 @@ vi.mock("@/lib/graphql/shipment", () => ({
   listShipmentEventsGraphQL: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn() },
 }));
 

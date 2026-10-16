@@ -13,7 +13,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CapturePairPage } from "../page";
 
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 const PREVIEW = {
   userCode: "ABCD-EFGH",

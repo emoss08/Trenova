@@ -33,7 +33,7 @@ import {
   RefreshCcw02Icon,
 } from "@trenova/shared/components/icons";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 import { LastSuccessfulSyncCard } from "./last-successful-sync-card";
 import { RunConsoleLoadingState } from "./run-console-state";

@@ -16,7 +16,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const NO_THREADS: AssistantThread[] = [];
 import { DeskThread, type DeskThreadProps } from "@/components/desk-chat/desk-thread";

@@ -541,6 +541,44 @@ stamped it urgent (`data.delivery.urgent`) or when it delivers what the person a
 (a report run, a billing transfer run, an AI audit export), so watchtower items, tender
 updates and reminders stay in the bell and the watchtower feed.
 
+#### The toaster
+
+Toasts are Trenova's own, in `@trenova/shared/components/ui/`: `toast` (the call, from
+`toast.ts`), `Toaster` (where they appear), the card and the stack layout. The calls kept
+sonner's shapes when it was retired: `toast(title, options)`, `toast.success/error/warning/
+info/loading`, `toast.promise(work, { loading, success, error, finally })`,
+`toast.custom(render)` and `toast.dismiss(id?)`. Import `toast` only from
+`@trenova/shared/components/ui/toast`, which holds nothing but the store, so the four
+hundred modules that raise toasts never pull the Toaster into their chunk. Tests mock that
+module.
+
+- **One toast per piece of news.** Calling again with the same `id` changes the toast in
+  place: a loading toast becomes its result, Undo becomes "Restored". A
+  `toast.promise` outcome can be a whole toast (`{ title, description, action }`) rather than
+  a string. Never dismiss one toast and raise another for the next step of the same work.
+- **Repeats fold.** Plain news that is already up (same type, title and description, no
+  action) counts up (×3) and restarts its clock instead of stacking. A toast with an action
+  never folds, because two Undo toasts undo two different things.
+- **The clock reads the content.** Unset, a toast stays long enough to read its words and
+  at least eight seconds when it offers something to press; loading toasts stay until they
+  change. Time left is a hairline along the bottom, and every clock in the stack stops while
+  the person hovers it, has focus in it, or has left the tab. Pass `duration` only for a
+  reason the content cannot show.
+- **Evidence goes behind Details.** `details: [{ label, value, monospace }]` puts the facts
+  support asks for (a trace reference, the record) behind a Details button with Copy, out of
+  the sentence. `errorReferenceDetails(traceId)` in `lib/error-presentation.ts` builds the
+  reference line; `useApiMutation` attaches it to every server failure it reports.
+- **It is drawn dark in both themes,** like menus and popovers, so it never reads as part
+  of the page; the card sets `dark` itself. A `toast.custom` render draws its own surface in
+  the page's theme.
+- **One unnamed `Toaster` per app.** A page that wants its toasts somewhere else mounts a
+  named one (`<Toaster id="user-settings" />`) and addresses it with `toasterId`; once that
+  page is gone, its toasts land in the app's Toaster rather than vanishing.
+- **Keyboard and assistive technology:** Alt+T focuses the newest toast, Tab reaches its
+  actions, Escape dismisses it and returns focus to where it was. Errors and `urgent` toasts
+  are announced assertively, everything else politely, and each change in place is
+  announced again.
+
 ### Loading states
 
 A page's first paint is its Suspense fallback: the chunk is still on the wire, or a

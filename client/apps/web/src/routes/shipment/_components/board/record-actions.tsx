@@ -23,7 +23,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { buildShipmentRowActions } from "./row-actions";
 import { ShipmentCancelDialog } from "../shipment-cancel-dialog";
 import { ShipmentDuplicateDialog } from "../shipment-duplicate-dialog";

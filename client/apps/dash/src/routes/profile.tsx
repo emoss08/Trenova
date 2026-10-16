@@ -19,7 +19,7 @@ import {
   SunIcon,
 } from "@trenova/shared/components/icons";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ComplianceCard } from "../_components/compliance-card";
 import { LeaveCard } from "../_components/leave-card";
 import { PoliciesCard } from "../_components/policies-card";

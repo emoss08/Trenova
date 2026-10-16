@@ -36,7 +36,7 @@ import {
   UserPlus01Icon,
 } from "@trenova/shared/components/icons";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const STATUS_LABELS: Record<WorkItemStatus, string> = defineLabels({

@@ -52,7 +52,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { activeQueueQuery, paidQueueQuery } from "./queries";
 import { TimesheetsEmpty } from "./time-attendance-empty";
 import { defineLabels } from "@trenova/shared/i18n/labels";

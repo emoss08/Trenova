@@ -20,7 +20,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { PTOBulkAction } from "@trenova/shared/types/worker";
 import { CheckCircleIcon, SlashCircle01Icon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   PTO_ACTION_LABELS,
   bulkPayloadToOutcome,

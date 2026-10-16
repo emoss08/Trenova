@@ -32,7 +32,9 @@ vi.mock("@/services/api", () => ({
     },
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
 vi.mock("@/components/resolved-user-avatar", () => ({ ResolvedUserAvatar: () => null }));
 
 const ORIGIN = window.location.origin;

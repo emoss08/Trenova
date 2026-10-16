@@ -8,7 +8,7 @@ import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, MarkerPin01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { equipmentTableGraphQLConfigs, type TrailerRow } from "@/lib/graphql/equipment-table";
 import { LocateTrailerDialog } from "./locate-trailer-dialog";
 import { getColumns } from "./trailer-columns";

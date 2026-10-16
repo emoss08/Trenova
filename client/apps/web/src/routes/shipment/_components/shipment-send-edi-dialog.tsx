@@ -12,7 +12,7 @@ import {
 import { apiService } from "@/services/api";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 type ShipmentSendEDIDialogProps = {

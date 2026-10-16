@@ -29,7 +29,7 @@ import { AlertCircleIcon, CheckCircleIcon, SpinnerIcon } from "@trenova/shared/c
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 

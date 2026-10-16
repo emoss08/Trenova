@@ -11,7 +11,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
 import { InvoiceShareDialog } from "../invoice-share-dialog";
 
-// Shared by the share dialog's suites. Each suite mocks @/services/api, sonner and the
+// Shared by the share dialog's suites. Each suite mocks @/services/api, the toast module and the
 // avatar itself, since vi.mock applies only to the file that calls it.
 
 export const invoice = {

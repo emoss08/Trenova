@@ -13,7 +13,7 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { applyTemplateValues, copyValuesFrom, starterValuesFrom } from "../starter-values";
 import { useStudio } from "../studio-context";
 

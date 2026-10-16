@@ -2,6 +2,7 @@ import "@trenova/shared/styles/app.css";
 
 import type { Decorator, Preview } from "@storybook/react-vite";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LazyMotion, domMax } from "motion/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useMemo } from "react";
 
@@ -28,20 +29,22 @@ const withAppProviders: Decorator = (Story, context) => {
     );
 
     return (
-      <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
-          <ThemeProvider
-            key={theme}
-            defaultTheme={theme}
-            storageKey={`trenova-storybook-theme-${theme}`}
-          >
-            <div className="bg-background text-foreground min-h-screen p-6">
-              <Story />
-            </div>
-            <Toaster position="top-center" />
-          </ThemeProvider>
-        </NuqsTestingAdapter>
-      </QueryClientProvider>
+      <LazyMotion features={domMax}>
+        <QueryClientProvider client={queryClient}>
+          <NuqsTestingAdapter hasMemory>
+            <ThemeProvider
+              key={theme}
+              defaultTheme={theme}
+              storageKey={`trenova-storybook-theme-${theme}`}
+            >
+              <div className="bg-background text-foreground min-h-screen p-6">
+                <Story />
+              </div>
+              <Toaster position="top-center" />
+            </ThemeProvider>
+          </NuqsTestingAdapter>
+        </QueryClientProvider>
+      </LazyMotion>
     );
   }
 

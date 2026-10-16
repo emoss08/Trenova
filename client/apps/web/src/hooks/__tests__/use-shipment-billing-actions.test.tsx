@@ -15,7 +15,7 @@ const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
 vi.mock("@/services/api", () => ({ apiService: { shipmentService } }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/lib/queries/shipment", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/shipment")>()),

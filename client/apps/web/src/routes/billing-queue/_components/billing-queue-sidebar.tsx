@@ -53,7 +53,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import type { FieldValues } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   BILLING_QUEUE_FILTER_PRESETS_KEY,
   BILLING_QUEUE_LIST_KEY,

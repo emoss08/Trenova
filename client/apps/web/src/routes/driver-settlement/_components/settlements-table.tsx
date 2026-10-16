@@ -13,7 +13,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, CurrencyDollarCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./settlement-columns";
 import { SettlementHistoryEmpty } from "./settlement-history-empty";
 import { SettlementPanel } from "./settlement-panel";

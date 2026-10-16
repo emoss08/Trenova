@@ -32,7 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
 import { AlertTriangleIcon, Download01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { translate } from "@trenova/shared/i18n/runtime";
 

@@ -12,7 +12,7 @@ import { capture } from "@/lib/queries/capture";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   destinationKey,
   filingEntry,

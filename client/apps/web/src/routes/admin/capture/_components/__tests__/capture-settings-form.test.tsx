@@ -28,7 +28,9 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}));
 
 const saved: DocumentControl = {
   id: "dc_1",

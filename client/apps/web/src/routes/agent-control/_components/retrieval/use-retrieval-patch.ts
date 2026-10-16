@@ -6,7 +6,7 @@ import {
 import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Saves one retrieval setting the moment it changes. Only the field changed is sent, so

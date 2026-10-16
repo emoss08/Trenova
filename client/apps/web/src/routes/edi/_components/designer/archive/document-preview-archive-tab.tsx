@@ -47,7 +47,7 @@ import {
   ShieldTickIcon,
 } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnix } from "../../edi-display-utils";
 import { ControlledSelectField } from "../components/designer-fields";
 import {

@@ -33,7 +33,7 @@ import {
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const STATUS_BADGE_VARIANT: Record<InvoiceAdjustmentStatus, string> = {
   Draft: "neutral",

@@ -3,7 +3,7 @@ import type { AssistantThread, ThreadBudget } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 import { useCallback, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskErrorLink } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
 import { useRichT } from "@trenova/shared/i18n/rich";

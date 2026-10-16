@@ -17,7 +17,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useDashFeatures } from "./use-dash-features";
 import { translate } from "@trenova/shared/i18n/runtime";
 

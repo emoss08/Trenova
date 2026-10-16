@@ -6,7 +6,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import type { WorkerSyncLogLevel } from "@/types/samsara";
 import { Copy01Icon, TerminalIcon, Trash01Icon } from "@trenova/shared/components/icons";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 
 function getLogLevelStyles(level: WorkerSyncLogLevel): string {

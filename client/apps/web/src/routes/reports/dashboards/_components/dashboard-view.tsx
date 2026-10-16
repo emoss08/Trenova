@@ -38,7 +38,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { downloadBlob } from "@trenova/shared/lib/utils";
 import { exportDashboard } from "@/lib/graphql/reports";
 import { ParameterField, defaultParamValues } from "../../_components/report-parameter-field";

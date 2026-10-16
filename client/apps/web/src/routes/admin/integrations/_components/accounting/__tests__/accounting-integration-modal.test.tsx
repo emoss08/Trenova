@@ -76,7 +76,7 @@ vi.mock("@/components/image", () => ({
   LazyImage: ({ alt }: { alt: string }) => <span>{alt}</span>,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 

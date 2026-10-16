@@ -24,7 +24,7 @@ import type { RateMatrix, RateMatrixCell, RateMatrixDimension } from "@trenova/s
 import { AlertCircleIcon, Save01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 type MatrixGridEditorProps = {
   /** Absent while the matrix is being created — there is nothing to hang cells off yet. */

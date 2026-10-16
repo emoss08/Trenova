@@ -61,7 +61,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export type ReasonAction = "reject" | "void";

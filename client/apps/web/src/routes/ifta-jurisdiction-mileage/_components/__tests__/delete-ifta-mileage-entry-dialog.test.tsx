@@ -17,7 +17,7 @@ vi.mock("@/lib/graphql/ifta-jurisdiction-mileage", () => ({
 
 vi.mock("@/hooks/use-api-mutation", () => ({ handleMutationError }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: toastSuccess, error: vi.fn(), info: vi.fn() },
 }));
 

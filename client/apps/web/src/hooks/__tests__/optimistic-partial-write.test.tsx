@@ -8,7 +8,9 @@ import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 const JOURNAL_KEY = ["manualJournal", "mj_1"] as const;
 const COMMITTED = { id: "mj_1", reason: "Original reason" };

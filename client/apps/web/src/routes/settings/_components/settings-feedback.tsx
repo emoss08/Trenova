@@ -1,6 +1,5 @@
-import { Button } from "@trenova/shared/components/ui/button";
-import { CheckIcon, ReverseLeftIcon } from "@trenova/shared/components/icons";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { toast } from "@trenova/shared/components/ui/toast";
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   createContext,
   useCallback,
@@ -11,7 +10,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
 
 export const SETTINGS_TOASTER_ID = "user-settings";
 export const SETTINGS_PREVIEW_TOASTER_ID = "user-settings-preview";
@@ -34,45 +32,6 @@ type SettingsFeedback = {
 
 const SettingsFeedbackContext = createContext<SettingsFeedback | null>(null);
 
-function InkToast({ children }: { children: ReactNode }) {
-  return (
-    <div
-      role="status"
-      className="bg-ink text-ink-foreground ui-lift flex h-10 items-center gap-3 rounded-lg pr-1.5 pl-3.5 text-sm"
-    >
-      {children}
-    </div>
-  );
-}
-
-function SavedToast({ toastId, onUndo }: { toastId: string | number; onUndo?: UndoAction }) {
-  const t = useT();
-
-  return (
-    <InkToast>
-      <span className="flex items-center gap-1.5">
-        <CheckIcon className="size-3.5" />
-        {t("Saved")}
-      </span>
-      {onUndo ? (
-        <Button
-          type="button"
-          variant="bare"
-          size="xs"
-          className="hover:bg-ink-hover text-ink-foreground rounded-md px-2.5 opacity-80 hover:opacity-100"
-          onClick={() => {
-            toast.dismiss(toastId);
-            void onUndo();
-          }}
-        >
-          <ReverseLeftIcon className="size-3" />
-          {t("Undo")}
-        </Button>
-      ) : null}
-    </InkToast>
-  );
-}
-
 export function SettingsFeedbackProvider({ children }: { children: ReactNode }) {
   const [pulsing, setPulsing] = useState(false);
   const pulseTimer = useRef<number | undefined>(undefined);
@@ -83,18 +42,20 @@ export function SettingsFeedbackProvider({ children }: { children: ReactNode }) 
     setPulsing(true);
     window.clearTimeout(pulseTimer.current);
     pulseTimer.current = window.setTimeout(() => setPulsing(false), SAVED_PULSE_MS);
-    toast.custom((id) => <SavedToast toastId={id} onUndo={undo} />, {
+    toast.success(translate("Saved"), {
       id: SAVED_TOAST_ID,
       toasterId: SETTINGS_TOASTER_ID,
       duration: SAVED_TOAST_MS,
+      action: undo ? { label: translate("Undo"), onClick: () => void undo() } : undefined,
     });
   }, []);
 
   const message = useCallback((text: string) => {
-    toast.custom(() => <InkToast>{text}</InkToast>, {
+    toast(text, {
       id: SAVED_TOAST_ID,
       toasterId: SETTINGS_TOASTER_ID,
       duration: MESSAGE_TOAST_MS,
+      action: undefined,
     });
   }, []);
 

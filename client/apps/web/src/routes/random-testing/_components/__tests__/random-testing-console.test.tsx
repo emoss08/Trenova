@@ -34,7 +34,7 @@ vi.mock("../random-pool-dialog", () => ({
     open ? <div role="dialog" aria-label="Pool dialog" /> : null,
 }));
 
-vi.mock("sonner", () => ({ toast: mocks.toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: mocks.toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

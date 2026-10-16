@@ -20,7 +20,7 @@ import type {
 } from "@trenova/shared/types/edi";
 import { AlertTriangleIcon, Copy06Icon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { type ReactNode, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import PreviewInspectorSheet from "../inspector/preview-inspector-sheet";
 import type { InspectorTab } from "../inspector/components/inspector-tabs";
 import { diagnosticKey } from "../utils/edi-designer-utils";

@@ -1,6 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type BulkOutcomeFailure = {
   id: string;

@@ -100,7 +100,9 @@ vi.mock("@/lib/graphql/agent-eval-cases", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-eval-cases")>()),
   createAgentEvalCase: (...args: unknown[]) => createAgentEvalCase(...args),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 vi.mock("@/lib/graphql/agent-quality", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/graphql/agent-quality")>();

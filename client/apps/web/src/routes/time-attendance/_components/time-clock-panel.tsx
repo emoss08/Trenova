@@ -40,7 +40,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ClockBoard } from "./clock-board";
 import { workerWeekQuery } from "./queries";
 import { RecordEntryDialog, type EditableTimeEntry } from "./record-entry-dialog";

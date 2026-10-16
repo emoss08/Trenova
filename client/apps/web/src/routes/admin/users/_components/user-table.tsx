@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, LayersTwo01Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./user-columns";
 import { UserPanel } from "./user-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

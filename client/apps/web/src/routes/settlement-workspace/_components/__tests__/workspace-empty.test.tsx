@@ -23,7 +23,9 @@ vi.mock("@/lib/graphql/driver-settlement", () => ({
   markDriverSettlementPaid: vi.fn(),
   voidDriverSettlement: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
+}));
 vi.mock("@/routes/driver-settlement/_components/settlement-detail", () => ({
   SettlementDetail: () => <div data-testid="settlement-detail" />,
 }));

@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { PauseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { translate } from "@trenova/shared/i18n/runtime";
 

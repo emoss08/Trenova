@@ -22,7 +22,7 @@ import {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Edit02Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { InjuryDialog } from "./injury-dialog";
 
 /**

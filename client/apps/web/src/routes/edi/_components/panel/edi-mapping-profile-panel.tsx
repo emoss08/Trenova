@@ -26,7 +26,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { mappingEntityTypes } from "../edi-schemas";
 import { TargetLookup } from "../edi-target-lookup";
 import { EDIEmptyState } from "./edi-panel-primitives";

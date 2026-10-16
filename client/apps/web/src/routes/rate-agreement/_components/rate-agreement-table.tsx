@@ -8,7 +8,7 @@ import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/typ
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Copy01Icon, FileUploadIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ImportRateSheetDialog } from "./import-rate-sheet-dialog";
 import { getColumns } from "./rate-agreement-columns";
 import { RateAgreementPanel } from "./rate-agreement-panel";

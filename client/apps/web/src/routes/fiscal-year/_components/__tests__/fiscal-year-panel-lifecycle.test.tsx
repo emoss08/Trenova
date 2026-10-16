@@ -15,7 +15,9 @@ const mocks = vi.hoisted(() => ({
   denied: new Set<number>(),
 }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 vi.mock("react-lazy-load-image-component", () => ({
   LazyLoadComponent: ({ children }: { children: ReactNode }) => children,

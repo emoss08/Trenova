@@ -27,7 +27,7 @@ import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { NovaButton } from "../ai/nova-button";
 import { engineErrorText } from "@/components/formula-editor/expr-check";
 import { formatMoney, formatStudioValue, numericAmount } from "../model/format";

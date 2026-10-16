@@ -4,7 +4,9 @@ import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { FormEditPanel } from "@/components/form-edit-panel";
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 type CarrierForm = { name: string };
 

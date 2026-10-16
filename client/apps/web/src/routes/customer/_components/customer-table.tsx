@@ -9,7 +9,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { CUSTOMER_HIDDEN_COLUMNS, getColumns } from "./customer-columns";
 import { CustomerPanel } from "./customer-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

@@ -10,7 +10,9 @@ const { logActivity } = vi.hoisted(() => ({ logActivity: vi.fn() }));
 vi.mock("@/services/api", () => ({
   apiService: { collectionService: { logActivity } },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 vi.mock("@/components/fields/date-field/date-field", () => ({
   AutoCompleteDateField: ({
     control,

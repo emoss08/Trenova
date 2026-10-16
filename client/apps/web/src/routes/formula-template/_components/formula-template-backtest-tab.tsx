@@ -51,7 +51,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { backtestCsv, describeVersionOption } from "./backtest-export";
 import { BacktestTruncatedNote } from "./backtest-truncated-note";
 

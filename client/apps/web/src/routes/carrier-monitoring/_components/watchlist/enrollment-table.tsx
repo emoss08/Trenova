@@ -21,7 +21,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { EyeIcon, EyeOffIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getEnrollmentColumns } from "./enrollment-columns";
 import { monitorableCarrierIds } from "./enrollment-filter";
 

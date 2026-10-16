@@ -29,7 +29,9 @@ vi.mock("../../billing-queue-queries", () => ({
 vi.mock("@/services/api", () => ({
   apiService: { billingQueueService: { updateStatus: vi.fn(), deleteFilterPreset: vi.fn() } },
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("@/components/fields/multi-select-field", () => ({
   MultiSelectAutocomplete: () => null,
 }));

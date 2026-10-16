@@ -18,7 +18,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarSyncIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const MATCH_DEBOUNCE_MS = 600;

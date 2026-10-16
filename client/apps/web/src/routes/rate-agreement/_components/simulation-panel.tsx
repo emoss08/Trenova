@@ -35,7 +35,7 @@ import type { RateAgreement, RateSimulation } from "@trenova/shared/types/rate";
 import { ArrowRightIcon, Beaker02Icon, PlayIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useLaneKeyLabels } from "@/hooks/use-lane-scope-labels";
 
 /** How often a running simulation is asked how it is getting on. */

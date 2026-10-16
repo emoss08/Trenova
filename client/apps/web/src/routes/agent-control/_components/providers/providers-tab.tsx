@@ -21,7 +21,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { PROVIDER_EDITOR_PARAM, providerEditorParser } from "../../ai-control-tabs";
 import { Search, useSlashFocus } from "../kit/controls";

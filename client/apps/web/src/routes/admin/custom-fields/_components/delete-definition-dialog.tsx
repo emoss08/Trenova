@@ -17,7 +17,7 @@ import type { DefinitionUsageStats } from "@/types/custom-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
 type DeleteDefinitionDialogProps = {

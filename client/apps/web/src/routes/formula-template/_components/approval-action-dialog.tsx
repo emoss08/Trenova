@@ -25,7 +25,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
 import { ReviewDiffPanel } from "./review-diff-panel";

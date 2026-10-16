@@ -5,7 +5,7 @@ import type { AssistantThread, CaseParty, CaseSubjectType, SnoozeAnchor } from "
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 type CaseAction =
   | { kind: "bind"; subjectType: CaseSubjectType; subjectId: string }

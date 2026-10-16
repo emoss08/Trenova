@@ -10,7 +10,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Power01Icon, PowerOffIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./custom-field-definition-columns";
 import { CustomFieldDefinitionPanel } from "./custom-field-definition-panel";
 import { DeleteDefinitionDialog } from "./delete-definition-dialog";

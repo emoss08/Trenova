@@ -24,7 +24,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { DisciplinaryLevel } from "@trenova/shared/types/worker-safety";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { CloseEventDialog } from "./safety/close-event-dialog";
 import { DisciplineLadder } from "./safety/discipline-ladder";
 import { IssueActionDialog } from "./safety/issue-action-dialog";

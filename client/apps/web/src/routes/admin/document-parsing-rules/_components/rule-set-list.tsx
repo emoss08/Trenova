@@ -26,7 +26,7 @@ import {
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { RuleSetListSkeleton } from "../skeleton";
 

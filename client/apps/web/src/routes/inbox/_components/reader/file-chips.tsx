@@ -24,7 +24,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { cn, formatFileSize, toSentenceFragment } from "@trenova/shared/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useTriageActions, type TriageActions } from "../use-triage-actions";
 import { useTriageDocumentTypes } from "../use-triage-data";
 import { FileBadge } from "./file-badge";

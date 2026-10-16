@@ -24,7 +24,7 @@ import {
   Tag01Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, useState, type DragEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   fetchAllEntityRefCandidates,
   fetchMentionCandidates,

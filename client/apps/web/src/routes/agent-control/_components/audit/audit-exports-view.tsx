@@ -13,7 +13,7 @@ import type { DataTableEmptyStateRenderProps, RowAction } from "@trenova/shared/
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AUDIT_EXPORT_PARAM, auditExportParser } from "../../ai-control-tabs";
 import { useAddressedFlag } from "../../use-addressed-flag";
 import { Ic } from "../kit/ic";

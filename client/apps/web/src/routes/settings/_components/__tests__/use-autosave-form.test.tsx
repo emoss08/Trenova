@@ -1,20 +1,21 @@
 import { InputField } from "@/components/fields/input-field";
 import { SegmentedField } from "@/components/fields/segmented-field";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactElement } from "react";
+import type { ToastOptions } from "@trenova/shared/components/ui/toast";
+import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsFeedbackProvider } from "../settings-feedback";
 import { useAutosaveForm } from "../use-autosave-form";
 
 const toasts = vi.hoisted(() => ({
-  custom: vi.fn(),
+  success: vi.fn(),
   dismiss: vi.fn(),
   error: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({ toast: toasts }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: toasts }));
 
 type Values = { title: string; mode: "off" | "all" };
 
@@ -51,18 +52,20 @@ function renderHarness(save: (next: Values, previous: Values) => Promise<void>) 
   );
 }
 
-/** Renders the most recent Saved toast and returns its Undo button. */
-async function lastUndo() {
-  const call = toasts.custom.mock.calls.at(-1);
-  expect(call).toBeDefined();
-  const renderToast = call?.[0] as (id: string) => ReactElement;
-  render(renderToast("toast"));
-  return screen.findByRole("button", { name: "Undo" });
+/** Presses Undo on the most recent Saved toast. */
+async function pressLastUndo() {
+  const call = toasts.success.mock.calls.at(-1);
+  expect(call?.[0]).toBe("Saved");
+  const action = (call?.[1] as ToastOptions | undefined)?.action;
+  expect(action?.label).toBe("Undo");
+  await act(async () => {
+    action?.onClick({} as MouseEvent<HTMLButtonElement>);
+  });
 }
 
 describe("useAutosaveForm", () => {
   beforeEach(() => {
-    toasts.custom.mockReset();
+    toasts.success.mockReset();
     toasts.dismiss.mockReset();
     toasts.error.mockReset();
   });
@@ -82,7 +85,7 @@ describe("useAutosaveForm", () => {
       { title: "Dispatcher", mode: "all" },
       { title: "Dispatcher", mode: "off" },
     );
-    expect(toasts.custom).toHaveBeenCalledTimes(1);
+    expect(toasts.success).toHaveBeenCalledTimes(1);
   });
 
   it("saves a text field when it loses focus, not on every keystroke", async () => {
@@ -117,7 +120,7 @@ describe("useAutosaveForm", () => {
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
 
-    await userEvent.click(await lastUndo());
+    await pressLastUndo();
 
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
     expect(save.mock.calls[1]).toEqual([

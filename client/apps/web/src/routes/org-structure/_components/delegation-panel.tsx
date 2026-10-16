@@ -25,7 +25,7 @@ import {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, HandshakeIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DelegationDialog } from "./delegation-dialog";
 import { delegationsGivenQuery, delegationsReceivedQuery } from "./queries";
 

@@ -27,7 +27,7 @@ import {
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const NOT_IN_FILE = "none";
 

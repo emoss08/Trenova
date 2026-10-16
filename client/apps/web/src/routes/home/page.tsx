@@ -19,7 +19,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { FlipBackwardIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { BriefingBar } from "./_components/briefing-bar";
 import { HomeCanvas } from "./_components/home-canvas";
 import { useHomeData } from "./_components/use-home-data";

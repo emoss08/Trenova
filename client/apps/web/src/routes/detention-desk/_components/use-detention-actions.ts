@@ -5,7 +5,7 @@ import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Sending a notice writes evidence, changes the occurrence, and moves the stop

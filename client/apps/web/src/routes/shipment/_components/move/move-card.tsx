@@ -50,7 +50,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { createElement, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";

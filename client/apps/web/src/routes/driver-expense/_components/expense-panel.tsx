@@ -16,7 +16,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DriverExpenseStatusBadge } from "./expense-columns";
 import { translate } from "@trenova/shared/i18n/runtime";
 

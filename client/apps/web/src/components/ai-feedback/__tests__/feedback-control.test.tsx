@@ -13,7 +13,9 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({ toast: { error: mocks.toastError, success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: mocks.toastError, success: vi.fn() },
+}));
 
 vi.mock("@/lib/graphql/ai-feedback", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/graphql/ai-feedback")>();

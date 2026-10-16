@@ -29,7 +29,7 @@ vi.mock("@/lib/graphql/worker-training", () => ({
   TRAINING_COURSES_KEY: "training-courses",
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

@@ -14,7 +14,7 @@ import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import {
   FormPanelFooter,

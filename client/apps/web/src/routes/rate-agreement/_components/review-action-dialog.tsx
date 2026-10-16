@@ -22,7 +22,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 // One whole sentence per action: the action's wire value is not a word a reader's language
 // can be built around.

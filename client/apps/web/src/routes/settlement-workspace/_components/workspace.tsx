@@ -13,7 +13,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 import { RefreshCcw02Icon, ZapIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SettlementDetail } from "@/routes/driver-settlement/_components/settlement-detail";
 import { DriverContextRail } from "./driver-context-rail";
 import { WorkspaceSkeleton } from "./workspace-skeleton";

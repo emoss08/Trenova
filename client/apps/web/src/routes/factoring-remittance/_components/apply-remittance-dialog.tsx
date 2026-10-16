@@ -20,7 +20,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Shows the journal every matched line would book, then books them all in one

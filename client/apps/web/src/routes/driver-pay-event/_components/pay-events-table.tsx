@@ -22,7 +22,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { PauseIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns, invalidatePayEventQueries } from "./pay-event-columns";
 import { PayEventPanel } from "./pay-event-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

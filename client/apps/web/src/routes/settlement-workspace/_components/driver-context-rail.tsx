@@ -40,7 +40,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatSettlementMonthDay } from "@trenova/shared/lib/date";
 import { translate } from "@trenova/shared/i18n/runtime";
 

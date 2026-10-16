@@ -25,7 +25,7 @@ import type { PortalPtoType } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDateIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { PtoStatusBadge, ptoTypeLabels } from "./portal-badges";
 import { PtoBalanceStrip, useMyPtoBalances } from "./pto-balance-strip";
 import { useDashFeatures } from "./use-dash-features";

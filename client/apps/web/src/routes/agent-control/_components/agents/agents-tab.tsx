@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   AGENT_EDIT_PARAM,
   AGENT_FILTER_PARAM,

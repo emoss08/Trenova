@@ -15,7 +15,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { trainingHealthMeta } from "@trenova/shared/lib/training";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AssignTrainingDialog } from "./training/assign-training-dialog";
 import { CompleteTrainingDialog } from "./training/complete-training-dialog";
 import { TrainingHistory } from "./training/training-history";

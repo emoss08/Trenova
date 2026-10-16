@@ -24,7 +24,7 @@ import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import {
   MEMORY_STARTER_PARAM,

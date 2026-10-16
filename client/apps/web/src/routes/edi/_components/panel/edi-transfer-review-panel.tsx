@@ -19,7 +19,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { mappingKey } from "../edi-display-utils";
 import { invalidateEDITransfers } from "./edi-panel-invalidation";
 import { EDIReasonDialog } from "./edi-reason-dialog";

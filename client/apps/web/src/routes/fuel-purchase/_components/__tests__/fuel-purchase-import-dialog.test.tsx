@@ -119,7 +119,7 @@ vi.mock("@/components/fields/select-field", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

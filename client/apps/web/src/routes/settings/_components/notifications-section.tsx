@@ -34,7 +34,7 @@ import type {
 import type { TimeFormatType } from "@trenova/shared/types/user";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SETTINGS_PREVIEW_TOASTER_ID, useSettingsFeedback } from "./settings-feedback";
 import { SettingsCard, SettingsRow } from "./settings-layout";
 import { useAutosaveForm } from "./use-autosave-form";

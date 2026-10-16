@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskManualJournal } from "../desk-manual-journal";
 import draftFixture from "./mj-draft.json";
@@ -36,7 +36,9 @@ vi.mock("@/services/api", () => ({
     },
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 vi.mock("../../journal-entry/desk-journal-entry", () => ({
   DeskJournalEntry: ({ recordId, backLabel }: { recordId: string; backLabel?: string }) => (
     <p>

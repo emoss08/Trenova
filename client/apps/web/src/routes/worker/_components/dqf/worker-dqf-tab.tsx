@@ -27,7 +27,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowUpRightIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DQFFileHeader } from "./dqf-file-header";
 import { DQFNextSteps } from "./dqf-next-steps";
 import { EmployerDialog } from "./employer-dialog";

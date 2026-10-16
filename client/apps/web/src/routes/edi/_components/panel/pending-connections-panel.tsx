@@ -19,7 +19,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnix } from "../edi-display-utils";
 import { invalidateEDIConnections } from "./edi-panel-invalidation";
 import { EDIReasonDialog } from "./edi-reason-dialog";

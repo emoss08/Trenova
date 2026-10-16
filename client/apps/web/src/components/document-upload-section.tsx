@@ -9,7 +9,7 @@ import {
   UploadCloud02Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { formatUnixDate } from "@trenova/shared/lib/date";

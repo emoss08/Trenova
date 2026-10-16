@@ -22,7 +22,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type EligibilityTone = "blocker" | "warning" | "advisory";
 
