@@ -19,7 +19,13 @@ function touchedAt(thread) {
 function threads(state) {
   const cards = deskThread(state.anchor, state.scenario.deskSlug ?? "tractor-t-101").thread;
   const triage = [...(state.triage?.assistantThreads?.values() ?? [])];
-  return [cards, ...deskCaseThreads(state), ...ediDraftThreads(state), ...triage, ...formulaThreads(state)]
+  return [
+    cards,
+    ...deskCaseThreads(state),
+    ...ediDraftThreads(state),
+    ...triage,
+    ...formulaThreads(state),
+  ]
     .filter((thread) => thread.id !== undefined && !UNLISTED_ORIGINS.has(thread.origin))
     .sort(
       (a, b) =>

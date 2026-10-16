@@ -326,9 +326,9 @@ function proposals(state) {
       arguments: {
         documentId: EDI_GUIDES.original.documentId,
         customerId: "cus_acme_retail",
-        values: new Array(31).fill(null).map((_, index) => ({ field: `field_${index}` })),
-        requirements: new Array(14).fill(null).map((_, index) => ({ segment: `seg_${index}` })),
-        mappings: new Array(4).fill(null).map((_, index) => ({ sourceId: `code_${index}` })),
+        values: Array.from({ length: 31 }, (_, index) => ({ field: `field_${index}` })),
+        requirements: Array.from({ length: 14 }, (_, index) => ({ segment: `seg_${index}` })),
+        mappings: Array.from({ length: 4 }, (_, index) => ({ sourceId: `code_${index}` })),
         gaps: [{ kind: "Ambiguous" }],
         resolutions: [{ field: "as2.endpointUrl", source: "Candidate" }],
         documentDigest: EDI_GUIDES.original.digest,

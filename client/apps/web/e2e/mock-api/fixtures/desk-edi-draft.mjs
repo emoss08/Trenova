@@ -30,10 +30,6 @@ function doc(page, quote, section = "") {
   return { kind: "Document", page, quote, section, note: "" };
 }
 
-function sample(page, quote) {
-  return { kind: "Sample", page, quote, section: "ISA", note: "" };
-}
-
 function value(field, label, val, source, extra = {}) {
   return {
     field,
