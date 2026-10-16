@@ -1,7 +1,7 @@
 import type { AppDialog } from "@/stores/app-dialogs-store";
 import type { GlobalSearchEntityType } from "@/services/global-search";
 import type { AssistantEntityRef } from "@/types/assistant";
-import type { FieldsMatch } from "@trenova/shared/lib/fuzzy-score";
+import { sameFieldsMatch, type FieldsMatch } from "@trenova/shared/lib/fuzzy-score";
 import type { PageGlanceKey } from "./route-command-data";
 
 export type PaletteIcon = React.ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -169,6 +169,50 @@ export function recordItemKey(entityType: GlobalSearchEntityType, id: string): s
 /** The record a row stands for, whether it was found or remembered. */
 export function itemRecord(item: PaletteItem | null): PaletteRecord | null {
   return item?.kind === "record" ? item.record : null;
+}
+
+/** Whether two references name the same record. */
+export function sameSubject(a: AssistantEntityRef | null, b: AssistantEntityRef | null): boolean {
+  return a === b || (a !== null && b !== null && a.type === b.type && a.id === b.id);
+}
+
+/**
+ * Whether two rows would draw the same thing. The lists are rebuilt on every
+ * key, so a row compares what it shows rather than which object it was handed:
+ * the record, page or command it stands for, and the characters its match marks.
+ */
+export function samePaletteItem(a: PaletteItem, b: PaletteItem): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a.key !== b.key) {
+    return false;
+  }
+  switch (a.kind) {
+    case "record":
+      return (
+        b.kind === "record" &&
+        a.record === b.record &&
+        a.recent === b.recent &&
+        a.visitedAt === b.visitedAt &&
+        sameFieldsMatch(a.match, b.match)
+      );
+    case "page":
+      return (
+        b.kind === "page" &&
+        a.page === b.page &&
+        a.pinned === b.pinned &&
+        sameFieldsMatch(a.match, b.match)
+      );
+    case "command":
+      return b.kind === "command" && a.command === b.command && sameFieldsMatch(a.match, b.match);
+    case "attention":
+      return b.kind === "attention" && a.attention === b.attention;
+    case "ask":
+      return b.kind === "ask" && a.question === b.question && sameSubject(a.subject, b.subject);
+    case "widen":
+      return b.kind === "widen" && a.query === b.query;
+  }
 }
 
 export function itemTitle(item: PaletteItem): string {

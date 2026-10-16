@@ -20,7 +20,12 @@ import {
   TRAIL_SEPARATOR,
   workerRole,
 } from "./palette-fields";
-import type { PaletteItem, PaletteMatch, PaletteRecord } from "./palette-model";
+import {
+  samePaletteItem,
+  type PaletteItem,
+  type PaletteMatch,
+  type PaletteRecord,
+} from "./palette-model";
 import {
   ContextLine,
   CountChip,
@@ -375,27 +380,35 @@ function isSingleLine(item: PaletteItem): boolean {
  * list that mixes records, pages and commands still reads as one list. The
  * selection is drawn by the list as one sliding fill, so a row draws no
  * selected background or bar of its own.
+ *
+ * The list is rebuilt on every key, so a row redraws only when what it shows
+ * changed, not whenever it is handed a new object describing the same thing.
  */
-export const PaletteRow = memo(function PaletteRow({
-  item,
-  onSelect,
-}: {
-  item: PaletteItem;
-  onSelect: (item: PaletteItem) => void;
-}) {
-  return (
-    <CommandItem
-      value={item.key}
-      onSelect={() => onSelect(item)}
-      data-kind={item.kind}
-      data-palette-row=""
-      className={cn(
-        "group/row rounded-surface relative z-1 h-auto scroll-mt-9 scroll-mb-2 gap-3 px-2.5 text-base",
-        "data-[selected=true]:bg-transparent",
-        isSingleLine(item) ? "min-h-9 py-1" : "min-h-11.5 py-1.5",
-      )}
-    >
-      <RowBody item={item} />
-    </CommandItem>
-  );
-});
+export const PaletteRow = memo(
+  function PaletteRow({
+    item,
+    onSelect,
+  }: {
+    item: PaletteItem;
+    onSelect: (item: PaletteItem) => void;
+  }) {
+    return (
+      <CommandItem
+        value={item.key}
+        onSelect={() => onSelect(item)}
+        data-kind={item.kind}
+        data-palette-row=""
+        data-palette-key={item.key}
+        className={cn(
+          "group/row rounded-surface relative z-1 h-auto scroll-mt-9 scroll-mb-2 gap-3 px-2.5 text-base",
+          "data-[selected=true]:bg-transparent",
+          isSingleLine(item) ? "min-h-9 py-1" : "min-h-11.5 py-1.5",
+        )}
+      >
+        <RowBody item={item} />
+      </CommandItem>
+    );
+  },
+  (previous, next) =>
+    previous.onSelect === next.onSelect && samePaletteItem(previous.item, next.item),
+);

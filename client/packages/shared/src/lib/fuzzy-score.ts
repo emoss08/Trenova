@@ -262,6 +262,51 @@ export function matchFields<K extends string>(
   };
 }
 
+function sameRanges(a: readonly MatchRange[], b: readonly MatchRange[]): boolean {
+  return (
+    a === b ||
+    (a.length === b.length &&
+      a.every((range, i) => range[0] === b[i]?.[0] && range[1] === b[i]?.[1]))
+  );
+}
+
+/**
+ * Whether two matches mark the same characters through the same field. The
+ * score is left out: a row draws what a match marks, not how well it ranked,
+ * so a list re-ranked for a longer query redraws only the rows whose marks moved.
+ */
+export function sameFieldsMatch<K extends string>(
+  a: FieldsMatch<K> | null | undefined,
+  b: FieldsMatch<K> | null | undefined,
+): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  const keys = Object.keys(a.highlights) as K[];
+  if (keys.length !== Object.keys(b.highlights).length) {
+    return false;
+  }
+  for (const key of keys) {
+    const other = b.highlights[key];
+    if (!other || !sameRanges(a.highlights[key] ?? [], other)) {
+      return false;
+    }
+  }
+  if (a.via === b.via) {
+    return true;
+  }
+  return (
+    a.via !== null &&
+    b.via !== null &&
+    a.via.label === b.via.label &&
+    a.via.text === b.via.text &&
+    sameRanges(a.via.ranges, b.via.ranges)
+  );
+}
+
 export interface RankedMatch<T, K extends string = string> {
   entry: T;
   match: FieldsMatch<K>;

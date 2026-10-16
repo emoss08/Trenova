@@ -6,6 +6,7 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { pageFavorite } from "@/lib/queries/page-favorite";
 import { apiService } from "@/services/api";
+import type { GlobalSearchGroup } from "@/services/global-search";
 import { useRecentRecords } from "@/stores/recent-records-store";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
@@ -326,16 +327,35 @@ export function paletteSearchQuery(query: string, scope: PaletteScope) {
 
   return queryOptions({
     queryKey: ["global-search", trimmed, scope, limit, entityTypes] as const,
-    queryFn: ({ signal }) =>
-      apiService.globalSearchService.search(trimmed, limit, entityTypes, { signal }),
+    queryFn: async ({ signal }) => {
+      const found = await apiService.globalSearchService.search(trimmed, limit, entityTypes, {
+        signal,
+      });
+      return { ...found, query: trimmed };
+    },
     staleTime: REMOTE_STALE_TIME,
   });
 }
 
+const NO_GROUPS: readonly GlobalSearchGroup[] = [];
+
+export interface PaletteRemoteSearch extends RemoteState {
+  /**
+   * What the answer on screen was searched for. It trails the query while a
+   * newer search is in flight, so the answer is ranked and marked for the
+   * words that found it rather than reshuffled on every key.
+   */
+  query: string;
+  /** A newer search is in flight and the answer on screen is the last one that landed. */
+  refreshing: boolean;
+  retry: () => void;
+}
+
 /**
  * Record search against the global index. A superseded query is cancelled
- * rather than left to land late, and what was last found stays on screen
- * while the next query is in flight so the list does not blink per key. A
+ * rather than left to land late, and what was last found stays on screen,
+ * counted and not marked as loading, while the next query is in flight, so
+ * the list, its empty state and the scope counts do not blink per key. A
  * record scope with nothing typed browses that kind of record.
  */
 export function usePaletteRemoteSearch({
@@ -348,11 +368,11 @@ export function usePaletteRemoteSearch({
   /** What to search records for: what was typed, or a question's search words. */
   query: string;
   scope: PaletteScope;
-}): RemoteState & { retry: () => void } {
+}): PaletteRemoteSearch {
   const trimmed = query.trim();
   const ready = enabled && isRemoteSearchable(trimmed, scope);
 
-  const result = useQuery({
+  const { data, isPending, isError, isPlaceholderData, refetch } = useQuery({
     ...paletteSearchQuery(trimmed, scope),
     enabled: ready,
     placeholderData: (previous, previousQuery) =>
@@ -361,11 +381,15 @@ export function usePaletteRemoteSearch({
         : undefined,
   });
 
-  return {
-    groups: ready ? (result.data?.groups ?? []) : [],
-    loading: ready && result.isFetching,
-    error: ready && result.isError,
-    ready,
-    retry: () => void result.refetch(),
-  };
+  const groups = (ready && data?.groups) || NO_GROUPS;
+  const foundFor = (ready && data?.query) || "";
+  const loading = ready && isPending;
+  const error = ready && isError;
+  const refreshing = ready && isPlaceholderData;
+  const retry = useCallback(() => void refetch(), [refetch]);
+
+  return useMemo(
+    () => ({ groups, query: foundFor, loading, error, refreshing, ready, retry }),
+    [error, foundFor, groups, loading, ready, refreshing, retry],
+  );
 }
