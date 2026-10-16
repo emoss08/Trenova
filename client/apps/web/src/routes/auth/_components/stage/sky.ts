@@ -1,11 +1,4 @@
-import {
-  mixSrgb,
-  oklchToSrgb,
-  parseCssColor,
-  srgbToHex,
-  type Oklch,
-  type Srgb,
-} from "@/lib/oklch";
+import { mixOklch, oklchToSrgb, parseCssColor, srgbToHex, type Oklch } from "@/lib/oklch";
 
 export type SkyTheme = "light" | "dark";
 
@@ -37,9 +30,9 @@ const NIGHT: SkyStops = [
 ];
 
 /**
- * The ribbon's palette by local hour. A keyframe's stops hold from its hour and blend
- * into the next keyframe's; 22:00 and 24:00 repeat midnight so the night holds across
- * the wrap rather than blending back through dusk.
+ * The ribbon's palette by local hour. A keyframe's stops arrive at its hour and hold
+ * until the crossfade into the next keyframe's; 22:00 and 24:00 repeat midnight so the
+ * night holds from 22:00 across the wrap until the crossfade into dawn.
  */
 export const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
   { hour: 0, phase: "night", stops: NIGHT },
@@ -97,6 +90,9 @@ export const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
   { hour: 24, phase: "night", stops: NIGHT },
 ];
 
+/** How long the ribbon takes to cross from one keyframe's palette into the next. */
+export const SKY_CROSSFADE_HOURS = 0.75;
+
 /** Dark tokens already sit high on the lightness axis, so offsets move them less. */
 const DARK_OFFSET_SCALE = 0.6;
 
@@ -117,10 +113,10 @@ function wrapHour(hour: number): number {
   return ((hour % 24) + 24) % 24;
 }
 
-function resolveStop([token, deltaL]: SkyStop, theme: SkyTheme, tokens: SkyTokens): Srgb {
+function resolveStop([token, deltaL]: SkyStop, theme: SkyTheme, tokens: SkyTokens): Oklch {
   const base = tokens[token];
   const offset = theme === "dark" ? deltaL * DARK_OFFSET_SCALE : deltaL;
-  return oklchToSrgb({ l: Math.min(1, Math.max(0, base.l + offset)), c: base.c, h: base.h });
+  return { l: Math.min(1, Math.max(0, base.l + offset)), c: base.c, h: base.h };
 }
 
 function keyframeSpan(hour: number): [SkyKeyframe, SkyKeyframe] {
@@ -133,22 +129,26 @@ function keyframeSpan(hour: number): [SkyKeyframe, SkyKeyframe] {
 
 /**
  * The ribbon's palette at `hour` (local, fractional; any value wraps into 0–24). Each
- * stop is its token's own OKLCH colour moved by the keyframe's lightness offset, and
- * consecutive keyframes are blended in sRGB along a smoothstep, so the colour lingers
- * at a keyframe and moves fastest between two.
+ * stop is its token's own OKLCH colour moved by the keyframe's lightness offset. A
+ * keyframe's palette holds until `SKY_CROSSFADE_HOURS` before the next keyframe, then
+ * crosses into it along a smoothstep, arriving exactly on the next keyframe's hour. The
+ * crossing is mixed in OKLCH, so the colours between two palettes keep their chroma.
  */
 export function skyAt(hour: number, theme: SkyTheme, tokens: SkyTokens): SkyFrame {
   const wrapped = wrapHour(hour);
   const [from, to] = keyframeSpan(wrapped);
-  const progress = Math.min(1, Math.max(0, (wrapped - from.hour) / (to.hour - from.hour)));
+  const fadeStart = to.hour - SKY_CROSSFADE_HOURS;
+  const progress = Math.min(1, Math.max(0, (wrapped - fadeStart) / SKY_CROSSFADE_HOURS));
   const eased = smoothstep(progress);
 
   const stops = from.stops.map((stop, index) =>
     srgbToHex(
-      mixSrgb(
-        resolveStop(stop, theme, tokens),
-        resolveStop(to.stops[index], theme, tokens),
-        eased,
+      oklchToSrgb(
+        mixOklch(
+          resolveStop(stop, theme, tokens),
+          resolveStop(to.stops[index], theme, tokens),
+          eased,
+        ),
       ),
     ),
   ) as SkyFrame["stops"];
@@ -161,7 +161,9 @@ export function skyAt(hour: number, theme: SkyTheme, tokens: SkyTokens): SkyFram
  * `getComputedStyle(document.documentElement)`, so the result follows the active theme.
  * Null when any of them is missing or in a form the parser does not read.
  */
-export function readSkyTokens(style: Pick<CSSStyleDeclaration, "getPropertyValue">): SkyTokens | null {
+export function readSkyTokens(
+  style: Pick<CSSStyleDeclaration, "getPropertyValue">,
+): SkyTokens | null {
   const tokens: Partial<Record<SkyToken, Oklch>> = {};
   for (const [token, property] of Object.entries(SKY_TOKEN_PROPERTIES) as [SkyToken, string][]) {
     const color = parseCssColor(style.getPropertyValue(property));

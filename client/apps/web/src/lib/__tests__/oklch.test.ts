@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hexToSrgb,
-  mixSrgb,
-  oklchToSrgb,
-  parseCssColor,
-  srgbToHex,
-  srgbToOklch,
-} from "../oklch";
+import { hexToSrgb, mixOklch, oklchToSrgb, parseCssColor, srgbToHex, srgbToOklch } from "../oklch";
 
 describe("oklchToSrgb", () => {
   it("matches the design's precomputed token colours", () => {
@@ -73,9 +66,50 @@ describe("hex helpers", () => {
     expect(srgbToHex(hexToSrgb("#0af") ?? [0, 0, 0])).toBe("#00aaff");
     expect(srgbToHex(hexToSrgb("#016dea") ?? [0, 0, 0])).toBe("#016dea");
   });
+});
 
-  it("mixes channel by channel", () => {
-    expect(srgbToHex(mixSrgb([0, 0, 0], [1, 1, 1], 0.5))).toBe("#808080");
-    expect(mixSrgb([0.2, 0.4, 0.6], [0.4, 0.4, 0.4], 0)).toEqual([0.2, 0.4, 0.6]);
+describe("mixOklch", () => {
+  it("returns each end exactly at t 0 and 1", () => {
+    const rose = { l: 0.55, c: 0.17, h: 2 };
+    const brand = { l: 0.56, c: 0.207, h: 258 };
+
+    expect(mixOklch(rose, brand, 0)).toEqual(rose);
+    expect(mixOklch(rose, brand, 1)).toEqual(brand);
+  });
+
+  it("moves lightness and chroma linearly", () => {
+    const mixed = mixOklch({ l: 0.4, c: 0.1, h: 100 }, { l: 0.6, c: 0.2, h: 140 }, 0.25);
+
+    expect(mixed.l).toBeCloseTo(0.45, 10);
+    expect(mixed.c).toBeCloseTo(0.125, 10);
+    expect(mixed.h).toBeCloseTo(110, 10);
+  });
+
+  it.each([
+    [350, 10, 0],
+    [10, 350, 0],
+    [258, 2, 310],
+    [2, 258, 310],
+    [98, 306, 22],
+    [182, 258, 220],
+  ])("turns hue %d toward %d the shorter way, through %d at the midpoint", (from, to, mid) => {
+    const mixed = mixOklch({ l: 0.5, c: 0.1, h: from }, { l: 0.5, c: 0.1, h: to }, 0.5);
+
+    expect(mixed.h).toBeCloseTo(mid, 10);
+  });
+
+  it("keeps the chroma between two complementary ends, where an sRGB mix greys out", () => {
+    const teal = { l: 0.55, c: 0.093, h: 182 };
+    const rose = { l: 0.55, c: 0.17, h: 2 };
+
+    expect(mixOklch(teal, rose, 0.5).c).toBeCloseTo(0.1315, 10);
+  });
+
+  it("takes the other end's hue when one end has no chroma", () => {
+    const grey = { l: 0.5, c: 0, h: 0 };
+    const brand = { l: 0.56, c: 0.207, h: 258 };
+
+    expect(mixOklch(grey, brand, 0.5).h).toBe(258);
+    expect(mixOklch(brand, grey, 0.5).h).toBe(258);
   });
 });
