@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"net/url"
 	"slices"
 	"strings"
@@ -81,6 +82,7 @@ type Service struct {
 	activation iamports.RoleActivationPolicy
 	enc        *encryptionservice.Service
 	cfg        *config.Config
+	policy     session.Policy
 	l          *zap.Logger
 }
 
@@ -105,11 +107,18 @@ func New(p Params) tenantports.AuthService {
 		activation: p.RoleActivation,
 		enc:        p.Encryption,
 		cfg:        p.Config,
-		l:          p.Logger.Named("service.auth"),
+		policy: session.Policy{
+			MaxAge:      p.Config.Security.Session.MaxAge,
+			IdleTimeout: p.Config.Security.Session.IdleTimeout,
+		},
+		l: p.Logger.Named("service.auth"),
 	}
 }
 
 var errInvalidCredentials = errortypes.NewAuthenticationError("Invalid email or password")
+var errSessionEnded = errortypes.NewAuthenticationError(
+	"Session has expired. Please login again.",
+)
 var errSSORequired = errortypes.NewAuthenticationError(
 	"Password login is disabled for this organization. Use SSO to sign in.",
 )
@@ -605,6 +614,9 @@ func (s *Service) ValidateSession(
 ) (*session.Session, error) {
 	sess, err := s.sr.Get(ctx, sessionID)
 	if err != nil {
+		if errors.Is(err, sessionports.ErrSessionNotFound) {
+			return nil, errSessionEnded
+		}
 		return nil, err
 	}
 
@@ -612,7 +624,7 @@ func (s *Service) ValidateSession(
 		if delErr := s.sr.Delete(ctx, sessionID); delErr != nil {
 			s.l.Error("failed to delete expired session", zap.Error(delErr))
 		}
-		return nil, errortypes.NewAuthenticationError("Session has expired. Please login again.")
+		return nil, errSessionEnded
 	}
 
 	return sess, nil
@@ -647,6 +659,28 @@ func (s *Service) AuthenticateSession(
 		}
 	}
 	sess.RoleActivationRequired = s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID)
+
+	return sess, nil
+}
+
+func (s *Service) KeepSessionAlive(
+	ctx context.Context,
+	token string,
+) (*session.Session, error) {
+	sess, err := s.AuthenticateSession(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	now := timeutils.NowUnix()
+	if sess.LastAccessedAt >= now {
+		return sess, nil
+	}
+
+	if err = s.sr.Touch(ctx, sess.ID, now); err != nil {
+		return nil, err
+	}
+	sess.LastAccessedAt = now
 
 	return sess, nil
 }
@@ -868,7 +902,7 @@ func (s *Service) createSession(
 	user *tenant.User,
 	authn loginSessionContext,
 ) (*session.Session, string, error) {
-	expiresAt := timeutils.NowUnix() + int64(session.DefaultTTL.Seconds())
+	expiresAt := s.policy.ExpiresAt(timeutils.NowUnix())
 
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  user.CurrentOrganizationID,

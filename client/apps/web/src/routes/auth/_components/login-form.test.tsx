@@ -93,14 +93,14 @@ function loginResponse() {
   };
 }
 
-function renderLoginForm(ui: ReactNode) {
+function renderLoginForm(ui: ReactNode, initialEntry = "/login") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -138,6 +138,49 @@ describe("LoginForm", () => {
     expect(screen.getByTestId("edition-login-prompt")).toHaveTextContent(
       "Sign in with the account your organization set up for you.",
     );
+  });
+
+  it("tells someone signed out for inactivity why they are back at sign-in", () => {
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+      "/login?signed_out=idle",
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "You were signed out after a period of inactivity. Sign in again to continue.",
+    );
+  });
+
+  it("tells someone whose session the server ended that it has ended", () => {
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+      "/login?signed_out=expired",
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your session has ended. Sign in again to continue.",
+    );
+  });
+
+  it("shows no sign-out notice to someone who opened sign-in themselves", () => {
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+      "/login?signed_out=somewhere-else",
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("offers no signup link where accounts are made by an administrator", () => {

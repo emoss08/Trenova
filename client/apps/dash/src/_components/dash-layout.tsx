@@ -13,6 +13,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { NavLink, Outlet, useLocation, Link } from "react-router";
+import { DashIdleTimeout } from "./dash-idle-timeout";
 import { useDashRealtime } from "./use-dash-realtime";
 
 const tabs = [
@@ -144,6 +145,7 @@ export function DashLayout() {
           ))}
         </div>
       </nav>
+      <DashIdleTimeout />
     </div>
   );
 }

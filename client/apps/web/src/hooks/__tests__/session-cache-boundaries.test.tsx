@@ -82,6 +82,29 @@ describe("ending or changing a session", () => {
     expect(calls).toEqual(["logout", "clear cache", "navigate /login"]);
   });
 
+  it("signing out for inactivity tells the sign-in page why", async () => {
+    const { result } = renderHook(() => useSignOut(), { wrapper });
+
+    await act(() => result.current({ notice: "idle" }));
+
+    expect(calls).toEqual(["logout", "clear cache", "navigate /login?signed_out=idle"]);
+  });
+
+  it("signing out still clears the device when the server cannot be told", async () => {
+    const refused = new Error("Session has expired");
+    mocks.logout.mockImplementation(async () => {
+      calls.push("logout");
+      throw refused;
+    });
+    const { result } = renderHook(() => useSignOut(), { wrapper });
+
+    await act(async () => {
+      await expect(result.current({ notice: "expired" })).rejects.toBe(refused);
+    });
+
+    expect(calls).toEqual(["logout", "clear cache", "navigate /login?signed_out=expired"]);
+  });
+
   it("switching organization clears the cache before opening the new organization", async () => {
     const { result } = renderHook(() => useSwitchOrganization(), { wrapper });
 

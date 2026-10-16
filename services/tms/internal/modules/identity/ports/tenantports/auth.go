@@ -171,6 +171,7 @@ type AuthService interface {
 	GetSSOLoginState(ctx context.Context, state string) (*SSOLoginState, error)
 	ValidateSession(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
 	AuthenticateSession(ctx context.Context, token string) (*session.Session, error)
+	KeepSessionAlive(ctx context.Context, token string) (*session.Session, error)
 	ListAuthorizedSessionRoles(
 		ctx context.Context,
 		sessionID pulid.ID,

@@ -3,9 +3,11 @@ package publicconfighandler
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -66,6 +68,7 @@ func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) 
 	resp := &kernelports.PublicConfig{
 		PlatformMode: string(h.cfg.Platform.GetMode()),
 		FreePlan:     kernelports.PublicFreePlanSummary{Limits: map[string]int64{}},
+		Session:      publicSessionPolicy(&h.cfg.Security.Session),
 	}
 
 	for _, contributor := range h.contributors {
@@ -82,4 +85,16 @@ func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) 
 	}
 
 	return resp, nil
+}
+
+func publicSessionPolicy(cfg *config.SessionConfig) kernelports.PublicSessionPolicy {
+	if !cfg.IdleTimeoutEnabled() {
+		return kernelports.PublicSessionPolicy{}
+	}
+
+	return kernelports.PublicSessionPolicy{
+		IdleTimeoutSeconds: int64(cfg.IdleTimeout / time.Second),
+		IdleWarningSeconds: int64(cfg.IdleWarning / time.Second),
+		KeepAliveSeconds:   int64(session.KeepAliveInterval / time.Second),
+	}
 }

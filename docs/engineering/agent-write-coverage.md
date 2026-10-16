@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 86 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 54 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1158 writes: 640 GraphQL mutations and 518 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1159 writes: 640 GraphQL mutations and 519 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 425 |
-| Exempt | 699 |
-| — Security | 86 |
+| Exempt | 700 |
+| — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 39 |
 | — Infrastructure | 54 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1158 |
+| Total | 1159 |
 
 Of the 459 writes an agent should be able to make, 425 have a tool (92%).
 
@@ -183,7 +183,7 @@ The writes no tool performs yet, and what the tool would do.
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 32 | 2 | 30 | 0 |
-| auth | 7 | 0 | 7 | 0 |
+| auth | 8 | 0 | 8 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
@@ -618,6 +618,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/auth/logout`<br>authhandler.logout | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/mfa/verify`<br>authhandler.verifyMFA | Exempt, security: Answering a sign-in's second-factor challenge is a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/reset-password`<br>authhandler.resetPassword | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
+| `POST /api/v1/auth/session/keepalive`<br>authhandler.keepSessionAlive | Exempt, security: Keeping a sign-in alive is the person proving they are still at the screen; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/session/roles/activate`<br>authhandler.activateSessionRoles | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/validate-session`<br>authhandler.validateSession | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 

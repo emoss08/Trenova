@@ -33,6 +33,38 @@ const urlOrEmptySchema = z
   .pipe(z.union([z.url({ protocol: /^https?$/ }), z.literal("")]))
   .catch("");
 
+const secondsSchema = z.number().int().nonnegative().catch(0).default(0);
+
+export const SESSION_IDLE_POLICY_OFF = {
+  idleTimeoutSeconds: 0,
+  idleWarningSeconds: 0,
+  keepAliveSeconds: 0,
+} as const satisfies Record<string, number>;
+
+/**
+ * How long a signed-in browser may sit untouched before it signs the person out, how long
+ * before that it warns them, and how often it tells the server they are still there. The
+ * server ends an idle session on its own as well; these only let the browser end it first,
+ * with a warning, instead of leaving the next request to find it gone. Any value that
+ * cannot describe a working timer turns the browser's half off rather than guessing.
+ */
+export const sessionIdlePolicySchema = z
+  .object({
+    idleTimeoutSeconds: secondsSchema,
+    idleWarningSeconds: secondsSchema,
+    keepAliveSeconds: secondsSchema,
+  })
+  .transform((policy) =>
+    policy.idleTimeoutSeconds > 0 &&
+    policy.idleWarningSeconds > 0 &&
+    policy.idleWarningSeconds < policy.idleTimeoutSeconds &&
+    policy.keepAliveSeconds > 0
+      ? policy
+      : { ...SESSION_IDLE_POLICY_OFF },
+  );
+
+export type SessionIdlePolicy = z.infer<typeof sessionIdlePolicySchema>;
+
 export const publicConfigSchema = z.object({
   platformMode: platformModeSchema.default("self_hosted"),
   signupEnabled: z.boolean().catch(false).default(false),
@@ -44,6 +76,10 @@ export const publicConfigSchema = z.object({
   termsUrl: urlOrEmptySchema,
   privacyUrl: urlOrEmptySchema,
   freePlan: freePlanSummarySchema.nullish().transform((value) => value ?? { limits: {} }),
+  session: sessionIdlePolicySchema
+    .nullish()
+    .catch(null)
+    .transform((value) => value ?? { ...SESSION_IDLE_POLICY_OFF }),
 });
 
 export type PublicConfig = z.infer<typeof publicConfigSchema>;
@@ -55,6 +91,7 @@ export const SELF_HOSTED_PUBLIC_CONFIG: Readonly<PublicConfig> = {
   termsUrl: "",
   privacyUrl: "",
   freePlan: { limits: {} },
+  session: { ...SESSION_IDLE_POLICY_OFF },
 };
 
 export function isCloudPlatform(config: Pick<PublicConfig, "platformMode"> | undefined): boolean {

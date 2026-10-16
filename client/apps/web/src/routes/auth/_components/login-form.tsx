@@ -5,8 +5,10 @@ import { emailSchema } from "@/lib/auth-validation";
 import { edition } from "@/lib/edition";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
+import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { isMFAChallenge, type MFAChallenge } from "@trenova/shared/types/mfa";
@@ -51,6 +53,7 @@ export function LoginForm({
 
   const [searchParams, setSearchParams] = useSearchParams();
   const ssoError = searchParams.get("sso_error");
+  const signOutNotice = signOutNoticeFrom(searchParams);
   const setUser = useAuthStore((state) => state.setUser);
 
   const providerQuery = useQuery({
@@ -135,6 +138,8 @@ export function LoginForm({
       </AuthHeading>
 
       <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmit(onSubmit)}>
+        {signOutNotice && <SignOutNoticeAlert notice={signOutNotice} />}
+
         {ssoError && (
           <button
             type="button"

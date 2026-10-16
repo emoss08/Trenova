@@ -1,4 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
+import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -6,12 +8,14 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { MFAChallenge } from "@trenova/shared/types/mfa";
 import { m } from "motion/react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 export function DashLoginPage() {
   const t = useT();
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const signOutNotice = signOutNoticeFrom(searchParams);
   const login = useAuthStore((state) => state.login);
   const verifyMFA = useAuthStore((state) => state.verifyMFA);
   const [emailAddress, setEmailAddress] = useState("");
@@ -80,6 +84,12 @@ export function DashLoginPage() {
             {t("Your loads, settlements, and pay — in one place.")}
           </p>
         </div>
+
+        {signOutNotice && !challenge ? (
+          <div className="mb-4">
+            <SignOutNoticeAlert notice={signOutNotice} />
+          </div>
+        ) : null}
 
         {challenge ? (
           <form onSubmit={handleVerify} className="flex flex-col gap-4" noValidate>

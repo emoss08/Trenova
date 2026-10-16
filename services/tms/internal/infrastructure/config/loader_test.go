@@ -129,11 +129,13 @@ func newValidConfig() *Config {
 		},
 		Security: SecurityConfig{
 			Session: SessionConfig{
-				Secret:   "a-very-long-secret-that-is-at-least-32-chars",
-				Name:     "trv-session-id",
-				MaxAge:   24 * time.Hour,
-				SameSite: "lax",
-				Path:     "/",
+				Secret:      "a-very-long-secret-that-is-at-least-32-chars",
+				Name:        "trv-session-id",
+				MaxAge:      12 * time.Hour,
+				IdleTimeout: 30 * time.Minute,
+				IdleWarning: 2 * time.Minute,
+				SameSite:    "lax",
+				Path:        "/",
 			},
 			CSRF: CSRFConfig{
 				TokenName:  "csrf_token",
@@ -272,6 +274,72 @@ func TestValidateConfig(t *testing.T) {
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrCredentialedWildcardCORS)
+	})
+
+	t.Run("idle timeout longer than the session lifetime fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.MaxAge = time.Hour
+		cfg.Security.Session.IdleTimeout = 2 * time.Hour
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrSessionIdleTimeoutExceedsMaxAge)
+	})
+
+	t.Run("idle warning as long as the idle timeout fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.IdleTimeout = 10 * time.Minute
+		cfg.Security.Session.IdleWarning = 10 * time.Minute
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrSessionIdleWarningOutOfRange)
+	})
+
+	t.Run("idle timeout without a warning fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.IdleWarning = 0
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrSessionIdleWarningOutOfRange)
+	})
+
+	t.Run("idle timeout below five minutes fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.IdleTimeout = 4 * time.Minute
+		cfg.Security.Session.IdleWarning = time.Minute
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "security.session.idletimeout must be at least 5m")
+	})
+
+	t.Run("a disabled idle timeout needs no warning", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.IdleTimeout = 0
+		cfg.Security.Session.IdleWarning = 0
+
+		require.NoError(t, l.validateConfig(cfg))
 	})
 
 	t.Run("invalid host prefix cookie settings fail validation", func(t *testing.T) {
@@ -565,7 +633,9 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, "trv-session-id", l.viper.GetString("security.session.name"))
-		assert.Equal(t, "24h", l.viper.GetString("security.session.maxAge"))
+		assert.Equal(t, "12h", l.viper.GetString("security.session.maxAge"))
+		assert.Equal(t, "30m", l.viper.GetString("security.session.idleTimeout"))
+		assert.Equal(t, "2m", l.viper.GetString("security.session.idleWarning"))
 		assert.Equal(t, true, l.viper.GetBool("security.session.httpOnly"))
 		assert.Equal(t, false, l.viper.GetBool("security.session.secure"))
 		assert.Equal(t, "lax", l.viper.GetString("security.session.sameSite"))

@@ -62,6 +62,9 @@ cache:
 security:
   session:
     name: __Host-trenova_session
+    maxAge: 12h # A session ends this long after sign-in, however active
+    idleTimeout: 30m # Signed out after this long without activity; 0 turns it off
+    idleWarning: 2m # How long before the idle sign-out the warning dialog opens
     secure: true # Force HTTPS cookies in production
     httpOnly: true
     sameSite: strict # Stricter CSRF protection

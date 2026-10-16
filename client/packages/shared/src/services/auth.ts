@@ -48,6 +48,12 @@ export const authService = {
     }
   },
 
+  // Restarts the session's idle timeout on the server. The browser sends it while the
+  // person is working, so a session in use is never ended for want of a request.
+  keepAlive: async () => {
+    await api.post("/auth/session/keepalive");
+  },
+
   listAuthorizedSessionRoles: async () => {
     return api.get<{
       roleIds: string[];

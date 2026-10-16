@@ -522,6 +522,12 @@ export function formatClockDurationMs(durationInMs: number): string {
   return `${hours}:${String(minutes).padStart(2, "0")}`;
 }
 
+/** A countdown as a clock reads it: whole minutes and zero-padded seconds ("1:05", "0:09"). */
+export function formatCountdownClock(seconds: number): string {
+  const total = Number.isFinite(seconds) ? Math.max(0, Math.ceil(seconds)) : 0;
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
 const MS_PER_DAY = 86_400_000;
 
 export const daysUntil = (unixSeconds: number, timezone?: string) => {

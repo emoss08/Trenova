@@ -219,7 +219,9 @@ security:
   session:
     secret: super-secret-key 
     name: trenova_session # Cookie name for session
-    maxAge: 24h # Session max age in seconds (24 hours)
+    maxAge: 12h # A session ends this long after sign-in, however active
+    idleTimeout: 30m # Signed out after this long without activity; 0 turns it off
+    idleWarning: 2m # How long before the idle sign-out the warning dialog opens
     httpOnly: true # HttpOnly flag for cookies
     secure: false # Secure flag (true for HTTPS only)
     sameSite: lax # SameSite policy: strict, lax, none
