@@ -226,7 +226,7 @@ describe("AuthForm", () => {
 
     await waitFor(() => expect(screen.getByText("Opening Alpha Logistics")).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Welcome back, Test." })).toBeInTheDocument();
-    expect(screen.getByText("1 role · 214 permissions")).toBeInTheDocument();
+    expect(screen.queryByText(/\brole|permission/i)).toBeNull();
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true }), {
       timeout: 4000,
     });
