@@ -562,6 +562,9 @@ func (r *repository) GetPartnerScorecards(
 			if req.Since > 0 {
 				query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
 			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(edicol.EDIMessageColumns.EDIPartnerID.Eq(), req.PartnerID)
+			}
 			if err := query.Scan(ctx, &rows); err != nil {
 				return nil, err
 			}
@@ -598,11 +601,56 @@ func (r *repository) GetVolumeSeries(
 		if req.Since > 0 {
 			query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
 		}
+		if req.PartnerID.IsNotNil() {
+			query = query.Where(edicol.EDIMessageColumns.EDIPartnerID.Eq(), req.PartnerID)
+		}
 		if err := query.Scan(ctx, &points); err != nil {
 			return nil, err
 		}
 		return points, nil
 	})
+}
+
+func (r *repository) GetPartnerSetActivity(
+	ctx context.Context,
+	req *ediports.GetEDIPartnerSetActivityRequest,
+) ([]*ediports.EDIPartnerSetActivityRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ediports.EDIPartnerSetActivityRow, error) {
+			cols := edicol.EDIMessageColumns
+			outbound := cols.Direction.Expr("{} = '" + string(edi.DocumentDirectionOutbound) + "'")
+			rows := make([]*ediports.EDIPartnerSetActivityRow, 0, 8)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*edi.EDIMessage)(nil)).
+				ColumnExpr(cols.TransactionSet.As("transaction_set")).
+				ColumnExpr(cols.Direction.As("direction")).
+				ColumnExpr(buncolgen.Count("count")).
+				ColumnExpr(
+					buncolgen.CountFilter("failed_count", outbound, cols.DeliveryStatus.Eq()),
+					edi.MessageDeliveryStatusFailed,
+				).
+				ColumnExpr(
+					buncolgen.CountFilter("dead_lettered_count", outbound, cols.DeliveryStatus.Eq()),
+					edi.MessageDeliveryStatusDeadLettered,
+				).
+				ColumnExpr(buncolgen.Max(cols.GeneratedAt, "last_at")).
+				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
+				Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+				GroupExpr(cols.TransactionSet.Qualified()).
+				GroupExpr(cols.Direction.Qualified()).
+				Order(cols.Direction.OrderDesc(), cols.TransactionSet.OrderAsc())
+			if req.Since > 0 {
+				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
+			}
+			if err := query.Scan(ctx, &rows); err != nil {
+				return nil, err
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) GetOverdueAckCount(
@@ -728,6 +776,9 @@ func (r *repository) ListRecentDeadLettered(
 		}
 		if req.TransactionSet != "" {
 			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+		}
+		if req.Since > 0 {
+			query = query.Where(cols.UpdatedAt.Gte(), req.Since)
 		}
 		if err := query.
 			Order(cols.UpdatedAt.OrderDesc()).

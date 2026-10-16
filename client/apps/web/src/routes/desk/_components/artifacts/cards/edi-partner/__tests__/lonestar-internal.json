@@ -1,0 +1,128 @@
+{
+  "now": 1790000000,
+  "card": {
+    "partner": {
+      "id": "edip_lonestar_link",
+      "kind": "Internal",
+      "status": "Active",
+      "code": "LONESTAR",
+      "name": "Lone Star Logistics",
+      "description": null,
+      "customerId": null,
+      "internalOrganizationId": "org_lonestar",
+      "country": "US",
+      "timezone": "America/Chicago",
+      "contactName": "Luis Ortega",
+      "contactEmail": "ops@lonestar.example",
+      "contactPhone": "(512) 555-0110",
+      "enabledForInbound": true,
+      "enabledForOutbound": true,
+      "updatedAt": 1788272000,
+      "internalOrganization": {
+        "id": "org_lonestar",
+        "name": "Lone Star Logistics"
+      },
+      "connection": {
+        "id": "edic_lonestar",
+        "method": "Internal",
+        "status": "Active",
+        "capabilities": {
+          "loadTenderOutbound": true,
+          "loadTenderInbound": true,
+          "shipmentStatus": true,
+          "invoice": true
+        },
+        "requestedAt": 1770473600,
+        "acceptedAt": 1770560000,
+        "rejectedAt": null,
+        "rejectionReason": null,
+        "suspendedAt": null,
+        "revokedAt": null
+      }
+    },
+    "customer": null,
+    "documentProfiles": [],
+    "transports": [
+      {
+        "profile": {
+          "id": "edicp_lonestar_internal",
+          "name": "Lone Star connection",
+          "method": "Internal",
+          "status": "Active",
+          "config": {
+            "connectedOrganizationId": "org_lonestar"
+          }
+        },
+        "lastPollAttemptAt": null,
+        "lastPollSuccessAt": null,
+        "lastPollError": null,
+        "credentials": [],
+        "certificates": []
+      }
+    ],
+    "readiness": {
+      "ready": true,
+      "completedCount": 5,
+      "totalCount": 5,
+      "items": [
+        {
+          "key": "details",
+          "complete": true
+        },
+        {
+          "key": "communication-profile",
+          "complete": true
+        },
+        {
+          "key": "mappings",
+          "complete": true
+        },
+        {
+          "key": "inbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "outbound-document-profile",
+          "complete": true
+        }
+      ]
+    },
+    "mappings": {
+      "profileId": "edimp_lonestar",
+      "updatedAt": 1786544000,
+      "counts": [
+        {
+          "entityType": "Location",
+          "count": 4
+        }
+      ]
+    },
+    "activity": {
+      "since": 1789395200,
+      "seriesSince": 1788790400,
+      "scorecard": {
+        "outboundTotal": 0,
+        "sentCount": 0,
+        "failedCount": 0,
+        "deadLetteredCount": 0,
+        "receivedCount": 0,
+        "deliverySuccessRate": null,
+        "avgAckSeconds": null,
+        "p95AckSeconds": null,
+        "overdueAckCount": 0
+      },
+      "ackStatusCounts": [],
+      "sets": [],
+      "series": []
+    },
+    "attention": {
+      "overdueAckAgeSeconds": 14400,
+      "overdueAckCount": 0,
+      "oldestOverdueAt": null,
+      "overdueAcks": [],
+      "deadLettered": [],
+      "quarantinedFiles": []
+    },
+    "carriers": []
+  }
+}

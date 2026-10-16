@@ -1,5 +1,5 @@
 {
-  "version": "sha256:28540fee6a130e7d18b5b41f5daa85c514f0357984b9b8e96b2d78563cf33a34",
+  "version": "sha256:ebe43895d17f1494e812d4e44b0c8c9aa3d08e14f21d74b94b519a50d2d68dc2",
   "modules": [
     {
       "id": "home",
@@ -18101,7 +18101,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "edi_transfer",

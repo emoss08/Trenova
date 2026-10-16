@@ -363,6 +363,8 @@ var EdiMessageSpec TypeSpec
 
 var EdiPartnerSpec TypeSpec
 
+var EdiPartnerCustomerSpec TypeSpec
+
 var EdiPartnerDocumentProfileSpec TypeSpec
 
 var EdiTemplateSpec TypeSpec
@@ -12260,6 +12262,34 @@ func init() {
 				Name:        "status",
 				FieldMapKey: "status",
 			},
+			{
+				Name:        "capabilities",
+				FieldMapKey: "capabilities",
+			},
+			{
+				Name:        "requestedAt",
+				FieldMapKey: "requestedAt",
+			},
+			{
+				Name:        "acceptedAt",
+				FieldMapKey: "acceptedAt",
+			},
+			{
+				Name:        "rejectedAt",
+				FieldMapKey: "rejectedAt",
+			},
+			{
+				Name:        "rejectionReason",
+				FieldMapKey: "rejectionReason",
+			},
+			{
+				Name:        "suspendedAt",
+				FieldMapKey: "suspendedAt",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
 		},
 	}
 
@@ -12766,6 +12796,29 @@ func init() {
 		},
 	}
 
+	EdiPartnerCustomerSpec = TypeSpec{
+		TypeName: "EdiPartnerCustomer",
+		FieldMap: customercol.CustomerFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+		},
+	}
+
 	EdiPartnerDocumentProfileSpec = TypeSpec{
 		TypeName: "EdiPartnerDocumentProfile",
 		FieldMap: edicol.EDIPartnerDocumentProfileFieldMap,
@@ -12787,12 +12840,32 @@ func init() {
 				FieldMapKey: "name",
 			},
 			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
 				Name:        "direction",
 				FieldMapKey: "direction",
 			},
 			{
 				Name:        "transactionSet",
 				FieldMapKey: "transactionSet",
+			},
+			{
+				Name:        "functionalGroupId",
+				FieldMapKey: "functionalGroupId",
+			},
+			{
+				Name:        "x12VersionOverride",
+				FieldMapKey: "x12VersionOverride",
+			},
+			{
+				Name:        "envelope",
+				FieldMapKey: "envelope",
+			},
+			{
+				Name:        "acknowledgment",
+				FieldMapKey: "acknowledgment",
 			},
 			{
 				Name:        "partner",

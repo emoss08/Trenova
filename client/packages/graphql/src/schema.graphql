@@ -13408,6 +13408,13 @@ type EIASeriesOption {
   seriesId: String!
 }
 
+type EdiAcknowledgmentConfig {
+  expected: Boolean!
+  slaInMinutes: Int!
+  """None, 997 or 999."""
+  type: String!
+}
+
 """An inbound EDI 210 carrier freight invoice awaiting reconciliation."""
 type EdiCarrierInvoice {
   billToName: String!
@@ -13480,9 +13487,23 @@ type EdiCommunicationProfileSecretState {
 }
 
 type EdiConnection {
+  acceptedAt: Timestamp
+  capabilities: EdiConnectionCapabilities!
   id: ID!
   method: EdiConnectionMethod!
+  rejectedAt: Timestamp
+  rejectionReason: String
+  requestedAt: Timestamp!
+  revokedAt: Timestamp
   status: EdiConnectionStatus!
+  suspendedAt: Timestamp
+}
+
+type EdiConnectionCapabilities {
+  invoice: Boolean!
+  loadTenderInbound: Boolean!
+  loadTenderOutbound: Boolean!
+  shipmentStatus: Boolean!
 }
 
 enum EdiConnectionMethod {
@@ -13503,6 +13524,11 @@ enum EdiConnectionStatus {
 enum EdiDocumentDirection {
   Inbound
   Outbound
+}
+
+enum EdiDocumentStatus {
+  Active
+  Inactive
 }
 
 type EdiInboundFile {
@@ -13550,6 +13576,11 @@ enum EdiInboundFileStatus {
   Processed
   Quarantined
   Received
+}
+
+type EdiMappingCount {
+  count: Int!
+  entityType: EdiMappingEntityType!
 }
 
 enum EdiMappingEntityType {
@@ -13702,19 +13733,90 @@ type EdiPartner {
   version: Int!
 }
 
+type EdiPartnerActivity {
+  ackStatusCounts: [EdiSummaryStatusCount!]!
+  scorecard: EdiPartnerScorecard!
+  series: [EdiVolumePoint!]!
+  """Start of the series, which is longer than the window."""
+  seriesSince: Timestamp!
+  sets: [EdiPartnerSetActivity!]!
+  """Start of the window the figures, ack counts and sets are counted over."""
+  since: Timestamp!
+}
+
+type EdiPartnerAttention {
+  """Messages dead-lettered within the activity window, newest first."""
+  deadLettered: [EdiMessage!]!
+  oldestOverdueAt: Timestamp
+  overdueAckAgeSeconds: Int!
+  overdueAckCount: Int!
+  """The oldest overdue messages, a few at most."""
+  overdueAcks: [EdiMessage!]!
+  """
+  Files from the partner set aside within the activity window, newest first.
+  """
+  quarantinedFiles: [EdiInboundFile!]!
+}
+
+"""
+Everything the Desk's EDI partner card draws about one partner, read in one request.
+Credentials are named and said to be on file or not; no secret value or private key is
+ever returned.
+"""
+type EdiPartnerCard {
+  activity: EdiPartnerActivity!
+  attention: EdiPartnerAttention!
+  """
+  The carriers reached through the partner; null for someone who may not read carriers.
+  """
+  carriers: [EdiPartnerCarrier!]
+  customer: EdiPartnerCustomer
+  documentProfiles: [EdiPartnerDocumentProfile!]!
+  mappings: EdiPartnerMappingSummary!
+  partner: EdiPartner!
+  readiness: EdiPartnerCardReadiness!
+  transports: [EdiPartnerTransport!]!
+}
+
+type EdiPartnerCardReadiness {
+  completedCount: Int!
+  items: [EdiPartnerReadinessItem!]!
+  ready: Boolean!
+  totalCount: Int!
+}
+
+type EdiPartnerCarrier {
+  carrierCode: String
+  carrierId: ID!
+  carrierName: String!
+  isDefault: Boolean!
+  scac: String
+}
+
 type EdiPartnerConnection {
   edges: [EdiPartnerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
 }
 
+type EdiPartnerCustomer {
+  code: String!
+  id: ID!
+  name: String!
+}
+
 type EdiPartnerDocumentProfile {
+  acknowledgment: EdiAcknowledgmentConfig!
   direction: EdiDocumentDirection!
   ediPartnerId: ID!
+  envelope: EdiX12Envelope!
+  functionalGroupId: String!
   id: ID!
   name: String!
   partner: EdiPartner
+  status: EdiDocumentStatus!
   transactionSet: String!
+  x12VersionOverride: String
 }
 
 type EdiPartnerEdge {
@@ -13725,6 +13827,17 @@ type EdiPartnerEdge {
 enum EdiPartnerKind {
   External
   Internal
+}
+
+type EdiPartnerMappingSummary {
+  counts: [EdiMappingCount!]!
+  profileId: ID
+  updatedAt: Timestamp
+}
+
+type EdiPartnerReadinessItem {
+  complete: Boolean!
+  key: String!
 }
 
 type EdiPartnerReadinessState {
@@ -13750,6 +13863,27 @@ type EdiPartnerScorecard {
   pendingOver24hCount: Int!
   receivedCount: Int!
   sentCount: Int!
+}
+
+type EdiPartnerSetActivity {
+  count: Int!
+  deadLetteredCount: Int!
+  direction: EdiDocumentDirection!
+  failedCount: Int!
+  lastAt: Timestamp
+  transactionSet: String!
+}
+
+type EdiPartnerTransport {
+  certificates: [EdiTransportCertificate!]!
+  credentials: [EdiTransportCredential!]!
+  lastPollAttemptAt: Timestamp
+  """
+  The last pickup's error, with anything that looks like a secret masked.
+  """
+  lastPollError: String
+  lastPollSuccessAt: Timestamp
+  profile: EdiCommunicationProfile!
 }
 
 enum EdiStandard {
@@ -13930,6 +14064,33 @@ enum EdiTransferStatus {
   Submitted
 }
 
+type EdiTransportCertificate {
+  expired: Boolean!
+  issuer: String
+  notAfter: Timestamp
+  notBefore: Timestamp
+  """False when the stored PEM could not be read as a certificate."""
+  readable: Boolean!
+  role: EdiTransportCertificateRole!
+  subject: String
+}
+
+enum EdiTransportCertificateRole {
+  Local
+  PartnerEncryption
+  PartnerSigning
+}
+
+type EdiTransportCredential {
+  """
+  The setting or secret key the credential is stored under; never its value.
+  """
+  key: String!
+  onFile: Boolean!
+  required: Boolean!
+  secret: Boolean!
+}
+
 type EdiVolumePoint {
   bucketSeconds: Int!
   bucketStart: Timestamp!
@@ -13937,6 +14098,25 @@ type EdiVolumePoint {
   outboundCount: Int!
   receivedCount: Int!
   sentCount: Int!
+}
+
+"""
+The ISA and GS identities and separators every interchange of a document profile is
+written with.
+"""
+type EdiX12Envelope {
+  applicationReceiverCode: String!
+  applicationSenderCode: String!
+  componentSeparator: String!
+  elementSeparator: String!
+  interchangeReceiverId: String!
+  interchangeReceiverQualifier: String!
+  interchangeSenderId: String!
+  interchangeSenderQualifier: String!
+  """T for test, P for production."""
+  interchangeUsageIndicator: String!
+  repetitionSeparator: String!
+  segmentTerminator: String!
 }
 
 input EditCaptureItemsInput {
@@ -23507,6 +23687,7 @@ type Query {
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartnerCard(id: ID!): EdiPartnerCard!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!

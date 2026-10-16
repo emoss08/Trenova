@@ -909,6 +909,18 @@ export const ediConnectionTestResultSchema = z.object({
 
 export type EDIConnectionTestResult = z.infer<typeof ediConnectionTestResultSchema>;
 
+/** What a pickup asked for by hand found: the files it staged and how many it skipped as already read. */
+export const ediPollResultSchema = z.object({
+  profileId: z.string(),
+  stagedFileIds: z
+    .array(z.string())
+    .nullish()
+    .transform((ids) => ids ?? []),
+  skippedFiles: z.number(),
+});
+
+export type EDIPollResult = z.infer<typeof ediPollResultSchema>;
+
 export const ediCertificateSummarySchema = z.object({
   subject: z.string(),
   issuer: z.string(),

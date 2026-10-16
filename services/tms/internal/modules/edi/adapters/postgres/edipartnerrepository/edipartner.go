@@ -160,13 +160,19 @@ func (r *repository) GetByID(
 		entity := new(edi.EDIPartner)
 		cols := edicol.EDIPartnerColumns
 
-		err := r.db.DBForContext(ctx).
+		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-			Scan(ctx)
-		if err != nil {
+			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo))
+		if req.IncludeLinks {
+			rel := edicol.EDIPartnerRelations
+			query = query.
+				Relation(rel.Customer).
+				Relation(rel.InternalOrganization).
+				Relation(rel.Connection)
+		}
+		if err := query.Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
 		}
 

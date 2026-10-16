@@ -18,8 +18,9 @@ type ListEDIPartnersRequest struct {
 }
 
 type GetEDIPartnerByIDRequest struct {
-	ID         pulid.ID              `json:"id"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ID           pulid.ID              `json:"id"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	IncludeLinks bool                  `json:"-"`
 }
 
 type EDIPartnerSelectOptionsRequest struct {

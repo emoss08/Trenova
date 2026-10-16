@@ -341,6 +341,11 @@ The detention card reads `fixtures/desk-detention.mjs` (a charge waiting on appr
 clock with its notice overdue, a stop that left inside its free time, a disputed and a waived
 charge), each stop given a load from the board so the card's shipment and its pro number agree;
 a charge the fixture does not hold answers not found.
+The EDI partner card reads `fixtures/desk-edi-partners.mjs` (a partner trading cleanly, one whose
+pickup fails with a dead letter, overdue acknowledgments and a file set aside, one still being set
+up, and a Trenova-to-Trenova partner), its times moved to the scenario's anchor; testing Acme's line
+fails at sign-in, picking up stages one file, and a partner the fixture does not hold answers not
+found.
 
 The Desk home suggesting the agent with the tools for a question has its own walkthrough:
 

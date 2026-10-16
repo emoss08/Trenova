@@ -103,6 +103,7 @@ type GetEDIMessageStatusCountsRequest struct {
 type GetEDIPartnerScorecardsRequest struct {
 	TenantInfo             pagination.TenantInfo
 	Since                  int64
+	PartnerID              pulid.ID
 	OverdueAckPendingSince int64
 	PendingOver4hBefore    int64
 	PendingOver24hBefore   int64
@@ -129,6 +130,22 @@ type GetEDIVolumeSeriesRequest struct {
 	TenantInfo    pagination.TenantInfo
 	Since         int64
 	BucketSeconds int64
+	PartnerID     pulid.ID
+}
+
+type GetEDIPartnerSetActivityRequest struct {
+	TenantInfo pagination.TenantInfo
+	PartnerID  pulid.ID
+	Since      int64
+}
+
+type EDIPartnerSetActivityRow struct {
+	TransactionSet    edi.TransactionSet    `bun:"transaction_set"`
+	Direction         edi.DocumentDirection `bun:"direction"`
+	Count             int64                 `bun:"count"`
+	FailedCount       int64                 `bun:"failed_count"`
+	DeadLetteredCount int64                 `bun:"dead_lettered_count"`
+	LastAt            int64                 `bun:"last_at"`
 }
 
 type EDIVolumePoint struct {
@@ -179,6 +196,7 @@ type ListRecentEDIMessageFailuresRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
 	PartnerID      pulid.ID              `json:"partnerId"`
 	TransactionSet edi.TransactionSet    `json:"transactionSet,omitempty"`
+	Since          int64                 `json:"since"`
 	Limit          int                   `json:"limit"`
 }
 
@@ -240,6 +258,10 @@ type EDIMessageRepository interface {
 		req *GetEDIPartnerScorecardsRequest,
 	) ([]*EDIPartnerScorecardRow, error)
 	GetVolumeSeries(ctx context.Context, req GetEDIVolumeSeriesRequest) ([]*EDIVolumePoint, error)
+	GetPartnerSetActivity(
+		ctx context.Context,
+		req *GetEDIPartnerSetActivityRequest,
+	) ([]*EDIPartnerSetActivityRow, error)
 	PurgeRawX12Before(ctx context.Context, req PurgeEDIRawPayloadsRequest) (int64, error)
 	GetOutboundMessageForAck(
 		ctx context.Context,

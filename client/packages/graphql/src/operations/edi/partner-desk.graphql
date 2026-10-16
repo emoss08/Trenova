@@ -1,0 +1,220 @@
+# The Desk's EDI partner card: who the partner is, what it trades with us, how
+# the last week went, what needs a look, how we reach it and how it is
+# addressed. Credentials are named and said to be on file or not; no secret is
+# ever read.
+query DeskEdiPartnerCard($id: ID!) {
+  ediPartnerCard(id: $id) {
+    partner {
+      id
+      kind
+      status
+      code
+      name
+      description
+      customerId
+      internalOrganizationId
+      country
+      timezone
+      contactName
+      contactEmail
+      contactPhone
+      enabledForInbound
+      enabledForOutbound
+      updatedAt
+      internalOrganization {
+        id
+        name
+      }
+      connection {
+        id
+        method
+        status
+        capabilities {
+          loadTenderOutbound
+          loadTenderInbound
+          shipmentStatus
+          invoice
+        }
+        requestedAt
+        acceptedAt
+        rejectedAt
+        rejectionReason
+        suspendedAt
+        revokedAt
+      }
+    }
+    customer {
+      id
+      name
+      code
+    }
+    documentProfiles {
+      id
+      name
+      status
+      direction
+      transactionSet
+      functionalGroupId
+      envelope {
+        interchangeSenderQualifier
+        interchangeSenderId
+        interchangeReceiverQualifier
+        interchangeReceiverId
+        applicationSenderCode
+        applicationReceiverCode
+        interchangeUsageIndicator
+        elementSeparator
+        segmentTerminator
+        componentSeparator
+        repetitionSeparator
+      }
+      acknowledgment {
+        expected
+        type
+        slaInMinutes
+      }
+    }
+    transports {
+      profile {
+        id
+        name
+        method
+        status
+        config
+      }
+      lastPollAttemptAt
+      lastPollSuccessAt
+      lastPollError
+      credentials {
+        key
+        secret
+        required
+        onFile
+      }
+      certificates {
+        role
+        readable
+        subject
+        issuer
+        notBefore
+        notAfter
+        expired
+      }
+    }
+    readiness {
+      ready
+      completedCount
+      totalCount
+      items {
+        key
+        complete
+      }
+    }
+    mappings {
+      profileId
+      updatedAt
+      counts {
+        entityType
+        count
+      }
+    }
+    activity {
+      since
+      seriesSince
+      scorecard {
+        outboundTotal
+        sentCount
+        failedCount
+        deadLetteredCount
+        receivedCount
+        deliverySuccessRate
+        avgAckSeconds
+        p95AckSeconds
+        overdueAckCount
+      }
+      ackStatusCounts {
+        status
+        count
+      }
+      sets {
+        transactionSet
+        direction
+        count
+        failedCount
+        deadLetteredCount
+        lastAt
+      }
+      series {
+        bucketStart
+        bucketSeconds
+        outboundCount
+        sentCount
+        failedCount
+        receivedCount
+      }
+    }
+    attention {
+      overdueAckAgeSeconds
+      overdueAckCount
+      oldestOverdueAt
+      overdueAcks {
+        ...DeskEdiPartnerMessageFields
+      }
+      deadLettered {
+        ...DeskEdiPartnerMessageFields
+      }
+      quarantinedFiles {
+        id
+        fileName
+        remotePath
+        sizeBytes
+        failureReason
+        receivedAt
+      }
+    }
+    carriers {
+      carrierId
+      carrierName
+      carrierCode
+      scac
+      isDefault
+    }
+  }
+}
+
+fragment DeskEdiPartnerMessageFields on EdiMessage {
+  id
+  direction
+  transactionSet
+  interchangeControlNumber
+  status
+  deliveryStatus
+  deliveryAttempts
+  deliveryLastAttemptAt
+  deliveryLastError
+  deliverySentAt
+  ackStatus
+  ackReceivedAt
+  ackLastError
+  generatedAt
+}
+
+# The partner's messages both ways, newest first, a page at a time.
+query DeskEdiPartnerMessages(
+  $partnerId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean!
+) {
+  ediMessages(input: $input, partnerId: $partnerId) {
+    edges {
+      node {
+        ...DeskEdiPartnerMessageFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

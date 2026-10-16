@@ -415,6 +415,55 @@ func (r *repository) GetMappingItems(
 	})
 }
 
+func (r *repository) GetMappingSummary(
+	ctx context.Context,
+	req ediports.GetEDIMappingSummaryRequest,
+) (*ediports.EDIMappingSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.EDIMappingSummary, error) {
+		dba := r.db.DBForContext(ctx)
+		summary := &ediports.EDIMappingSummary{
+			Counts: make([]*ediports.EDIMappingEntityCount, 0, 8),
+		}
+
+		profile := new(edi.EDIMappingProfile)
+		profileCols := edicol.EDIMappingProfileColumns
+		err := dba.NewSelect().
+			Model(profile).
+			Column(profileCols.ID.Bare(), profileCols.UpdatedAt.Bare()).
+			Apply(edicol.EDIMappingProfileApplyTenant(req.TenantInfo)).
+			Where(profileCols.EDIPartnerID.Eq(), req.PartnerID).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return summary, nil
+			}
+			return nil, err
+		}
+		summary.ProfileID = profile.ID
+		summary.UpdatedAt = profile.UpdatedAt
+
+		cols := edicol.EDIMappingProfileItemColumns
+		if err = dba.NewSelect().
+			Model((*edi.EDIMappingProfileItem)(nil)).
+			ColumnExpr(cols.EntityType.As("entity_type")).
+			ColumnExpr(buncolgen.Count("count")).
+			ColumnExpr(buncolgen.Max(cols.UpdatedAt, "updated_at")).
+			Apply(edicol.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
+			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+			GroupExpr(cols.EntityType.Qualified()).
+			Order(cols.EntityType.OrderAsc()).
+			Scan(ctx, &summary.Counts); err != nil {
+			return nil, err
+		}
+		for _, count := range summary.Counts {
+			summary.UpdatedAt = max(summary.UpdatedAt, count.UpdatedAt)
+		}
+
+		return summary, nil
+	})
+}
+
 func (r *repository) ensureMappingProfile(
 	ctx context.Context,
 	partner *edi.EDIPartner,

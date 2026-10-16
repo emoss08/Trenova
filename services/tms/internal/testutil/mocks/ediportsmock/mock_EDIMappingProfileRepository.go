@@ -290,6 +290,74 @@ func (_c *MockEDIMappingProfileRepository_GetMappingProfile_Call) RunAndReturn(r
 	return _c
 }
 
+// GetMappingSummary provides a mock function for the type MockEDIMappingProfileRepository
+func (_mock *MockEDIMappingProfileRepository) GetMappingSummary(ctx context.Context, req ediports.GetEDIMappingSummaryRequest) (*ediports.EDIMappingSummary, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMappingSummary")
+	}
+
+	var r0 *ediports.EDIMappingSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDIMappingSummaryRequest) (*ediports.EDIMappingSummary, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDIMappingSummaryRequest) *ediports.EDIMappingSummary); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ediports.EDIMappingSummary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.GetEDIMappingSummaryRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMappingProfileRepository_GetMappingSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMappingSummary'
+type MockEDIMappingProfileRepository_GetMappingSummary_Call struct {
+	*mock.Call
+}
+
+// GetMappingSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetMappingSummaryRequest
+func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingSummary(ctx any, req any) *MockEDIMappingProfileRepository_GetMappingSummary_Call {
+	return &MockEDIMappingProfileRepository_GetMappingSummary_Call{Call: _e.mock.On("GetMappingSummary", ctx, req)}
+}
+
+func (_c *MockEDIMappingProfileRepository_GetMappingSummary_Call) Run(run func(ctx context.Context, req ediports.GetEDIMappingSummaryRequest)) *MockEDIMappingProfileRepository_GetMappingSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ediports.GetEDIMappingSummaryRequest
+		if args[1] != nil {
+			arg1 = args[1].(ediports.GetEDIMappingSummaryRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMappingProfileRepository_GetMappingSummary_Call) Return(eDIMappingProfile *ediports.EDIMappingSummary, err error) *MockEDIMappingProfileRepository_GetMappingSummary_Call {
+	_c.Call.Return(eDIMappingProfile, err)
+	return _c
+}
+
+func (_c *MockEDIMappingProfileRepository_GetMappingSummary_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetEDIMappingSummaryRequest) (*ediports.EDIMappingSummary, error)) *MockEDIMappingProfileRepository_GetMappingSummary_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMappingProfileByID provides a mock function for the type MockEDIMappingProfileRepository
 func (_mock *MockEDIMappingProfileRepository) GetMappingProfileByID(ctx context.Context, req ediports.GetMappingProfileByIDRequest) (*edi.EDIMappingProfile, error) {
 	ret := _mock.Called(ctx, req)

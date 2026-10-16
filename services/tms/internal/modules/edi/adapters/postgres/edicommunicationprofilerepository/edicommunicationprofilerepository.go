@@ -179,6 +179,27 @@ func applyCommunicationProfileSearch(query *bun.SelectQuery, search string) *bun
 	})
 }
 
+func (r *repository) ListProfilesByPartner(
+	ctx context.Context,
+	req ediports.ListEDICommunicationProfilesByPartnerRequest,
+) ([]*edi.EDICommunicationProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
+		cols := edicol.EDICommunicationProfileColumns
+		entities := make([]*edi.EDICommunicationProfile, 0, 2)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
+			Order(cols.Status.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetActiveProfileByPartner(
 	ctx context.Context,
 	req ediports.GetActiveEDICommunicationProfileByPartnerRequest,

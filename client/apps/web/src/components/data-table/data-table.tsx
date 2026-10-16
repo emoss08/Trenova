@@ -1196,7 +1196,37 @@ export function DataTable<TData extends Record<string, any>>({
     return results.find((row: TData) => (row as { id?: string }).id === panelEntityId) ?? null;
   }, [panelEntityId, panelMode, tableData]);
 
-  const panelRow = listRow;
+  // A link to a record opens it whatever page, filter or search the table shows:
+  // when the record is not among the rows on screen, it is fetched by ID under
+  // only the filters the table's host imposes.
+  const linkedRowId =
+    panelMode === "edit" && panelEntityId && !listRow && !isLoadingPage ? panelEntityId : null;
+  // oxlint-disable-next-line @tanstack/query/exhaustive-deps
+  const linkedQuery = useQuery({
+    queryKey: [queryKey, "linked", graphql.operationName, ownScopeFilters, linkedRowId],
+    queryFn: ({ signal }) =>
+      fetchDataTablePage<TData>({
+        pageSize: 1,
+        options: {
+          fieldFilters: [...ownScopeFilters, { field: "id", operator: "eq", value: linkedRowId }],
+        },
+        graphql,
+        signal,
+      }),
+    enabled: initialStateApplied && linkedRowId !== null,
+    staleTime: 30_000,
+  });
+  const linkedRow = useMemo(
+    () =>
+      linkedRowId
+        ? (linkedQuery.data?.results.find(
+            (row: TData) => (row as { id?: string }).id === linkedRowId,
+          ) ?? null)
+        : null,
+    [linkedQuery.data, linkedRowId],
+  );
+
+  const panelRow = listRow ?? linkedRow;
 
   // Column widths and pinned offsets are written onto the table element as CSS
   // variables rather than rendered, so a resize drag moves every cell without a
