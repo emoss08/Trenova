@@ -104,7 +104,8 @@ func (r *rlsRuntime) connector(
 type scopeLogReporter struct {
 	logger   *observability.ContextLogger
 	metrics  *metrics.Registry
-	seen     sync.Map
+	mu       sync.Mutex
+	seen     map[string]struct{}
 	distinct atomic.Int64
 }
 
@@ -112,7 +113,11 @@ func newScopeLogReporter(
 	logger *observability.ContextLogger,
 	registry *metrics.Registry,
 ) *scopeLogReporter {
-	return &scopeLogReporter{logger: logger, metrics: registry}
+	return &scopeLogReporter{
+		logger:  logger,
+		metrics: registry,
+		seen:    make(map[string]struct{}),
+	}
 }
 
 func (r *scopeLogReporter) Report(ctx context.Context, event *scopeEvent) {
@@ -165,9 +170,13 @@ func (r *scopeLogReporter) firstSighting(event *scopeEvent) bool {
 	key := string(
 		event.Pool,
 	) + "|" + event.Event + "|" + event.Outcome + "|" + event.Reason + "|" + event.Caller
-	if _, loaded := r.seen.LoadOrStore(key, struct{}{}); loaded {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, loaded := r.seen[key]; loaded {
 		return false
 	}
+	r.seen[key] = struct{}{}
 
 	r.distinct.Add(1)
 

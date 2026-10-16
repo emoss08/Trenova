@@ -37,10 +37,7 @@ func TestRegisterSensitiveFields(t *testing.T) {
 	err := sdm.RegisterSensitiveFields(permission.Resource("test_resource"), fields)
 	require.NoError(t, err)
 
-	stored, ok := sdm.fields.Load(permission.Resource("test_resource"))
-	require.True(t, ok)
-
-	storedMap, ok := stored.(map[string]SensitiveFieldConfig)
+	storedMap, ok := sdm.registeredFields(permission.Resource("test_resource"))
 	require.True(t, ok)
 	assert.Len(t, storedMap, 2)
 	assert.Contains(t, storedMap, "user.ssn")

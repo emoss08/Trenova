@@ -1247,9 +1247,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		concrete := svc.(*service)
 
-		fieldsInterface, ok := concrete.sdm.fields.Load(permission.ResourceUser)
-		require.True(t, ok)
-		fields, ok := fieldsInterface.(map[string]SensitiveFieldConfig)
+		fields, ok := concrete.sdm.registeredFields(permission.ResourceUser)
 		require.True(t, ok)
 
 		passwordCfg, exists := fields["password"]
@@ -1295,9 +1293,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		concrete := svc.(*service)
 
-		fieldsInterface, ok := concrete.sdm.fields.Load(permission.ResourceOrganization)
-		require.True(t, ok)
-		fields, ok := fieldsInterface.(map[string]SensitiveFieldConfig)
+		fields, ok := concrete.sdm.registeredFields(permission.ResourceOrganization)
 		require.True(t, ok)
 
 		logoCfg, exists := fields["logoUrl"]
@@ -1335,9 +1331,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		concrete := svc.(*service)
 
-		fieldsInterface, ok := concrete.sdm.fields.Load(permission.ResourceWorker)
-		require.True(t, ok)
-		fields, ok := fieldsInterface.(map[string]SensitiveFieldConfig)
+		fields, ok := concrete.sdm.registeredFields(permission.ResourceWorker)
 		require.True(t, ok)
 
 		licenseCfg, exists := fields["licenseNumber"]

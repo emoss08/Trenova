@@ -245,19 +245,6 @@ func TestGetCompiledPattern_InvalidPattern(t *testing.T) {
 	assert.Nil(t, regex)
 }
 
-func TestGetCompiledPattern_CacheWithInvalidType(t *testing.T) {
-	t.Parallel()
-
-	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
-
-	sdm.patternCache.Store("bad-pattern", "not-a-regexp")
-
-	regex, err := sdm.getCompiledPattern("bad-pattern")
-	assert.Error(t, err)
-	assert.Nil(t, regex)
-	assert.Equal(t, ErrCompiledPatternNotRegexp, err)
-}
-
 func TestApplyEncryptStrategy_Float(t *testing.T) {
 	t.Parallel()
 

@@ -347,16 +347,36 @@ so `buncolgen.ShipmentColumns` in overlay code becomes `shipmentcol.ShipmentColu
 Go compiles the methods of an instantiated generic type in every package that can see the
 type, and the linker throws the copies away afterwards. A package "sees" a type when anything it
 reads from another package mentions it: an exported struct's fields, even unexported ones, and
-the signatures of an exported type's methods, even unexported ones. Plain package-level
-functions and interface types are not followed this way, so they stop the spread.
+the signatures of an exported type's methods, even unexported ones. The search is transitive:
+a pointer to an unexported struct is followed into that struct, and an interface's method
+signatures are followed into the types they name. Plain package-level functions are not
+followed, and neither is an interface whose methods never mention the generic type, so those
+stop the spread.
 
-Three designs did this at scale before they were changed:
+`sync.Map` is generic underneath: since Go 1.24 it wraps `internal/sync.HashTrieMap[any, any]`,
+so a package that can reach a `sync.Map` field compiles about 130 functions (roughly 15 KB of
+machine code and 60 ms of compile time) whether or not it touches the map. Keep `sync.Map` out
+of any type that many packages can reach, including through unexported fields; a plain map
+behind a `sync.Mutex` or `sync.RWMutex` costs nothing outside its own package.
+
+These designs did this at scale before they were changed:
 
 | Source | What every importer compiled | Fix |
 |---|---|---|
 | `twilio-go` | about 15,000 functions per package that reached its client | replaced with a direct call to Twilio's Messages API (`internal/infrastructure/sms`) |
 | `loaders.Loaders` | about 1,000 functions in each of 40 resolver packages | loaders reached through typed accessors; the set and its builders are unexported (`loaders/access.go`) |
 | service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `validationframework.TenantedEntityValidator[T]` / `ScopedEntityValidator[T]` |
+| `pagination.EncodeCursorFromEntity*`, `ExtractCursorValues` | four generic encoders, called by `CursorListResult[T].NextCursor`, in each of the 707 packages that mention a `CursorListResult` | the encoders take `any`; they only ever used reflection and type assertions on the item |
+| `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
+
+Bun does the same to every package that mentions any Bun type, which includes every domain
+package with a `BeforeAppendModel(ctx, bun.Query)` hook: `schema.Table` holds a `sync.Map` and
+`schema.Tables` an `xsync.MapOf`, both reachable from `bun.Query` through `schema.Dialect`. That
+is about 180 functions (24 KB) in each of about 1,500 packages, close to half of all the generic
+code the API's first-party packages compile. Hiding the two maps behind unexported interfaces in
+Bun cut a cold API build by 15% and a rebuild after an exported edit to `domain/shipment` by
+about 20% on a 4-core machine; the change belongs upstream in `uptrace/bun`, since nothing on
+this side of the import can stop it.
 
 To check a package, count the generic functions its object file defines:
 
