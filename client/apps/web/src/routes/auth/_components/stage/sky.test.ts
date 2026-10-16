@@ -1,6 +1,6 @@
-import { hexToSrgb } from "@/lib/oklch";
+import { hexToSrgb, oklchToSrgb, type Oklch } from "@/lib/oklch";
 import { describe, expect, it } from "vitest";
-import { readSkyTokens, skyAt, SKY_KEYFRAMES, type SkyTokens } from "./sky";
+import { readSkyTokens, skyAt, SKY_CROSSFADE_HOURS, SKY_KEYFRAMES, type SkyTokens } from "./sky";
 
 // The token values from tokens.css, light and dark.
 const LIGHT: SkyTokens = {
@@ -56,12 +56,8 @@ function expectNear(actual: readonly string[], expected: readonly number[][]) {
   });
 }
 
-function midpoint(from: readonly string[], to: readonly string[]): number[][] {
-  return from.map((hex, index) => {
-    const a = channels(hex);
-    const b = channels(to[index]);
-    return a.map((value, channel) => (value + b[channel]) / 2);
-  });
+function fromOklch(colors: readonly Oklch[]): number[][] {
+  return colors.map((color) => oklchToSrgb(color).map((channel) => channel * 255));
 }
 
 describe("skyAt", () => {
@@ -88,13 +84,14 @@ describe("skyAt", () => {
     expect(skyAt(0, "dark", DARK).stops[0]).toBe("#518de6");
   });
 
-  it("holds the night across midnight: 22:00 → 24:00 → 0:00 is one palette", () => {
+  it("holds the night across midnight and through the small hours until dawn's crossfade", () => {
     const midnight = skyAt(0, "light", LIGHT).stops;
 
-    for (const hour of [22, 22.5, 23, 23.99, 24, -1, -0.01]) {
+    for (const hour of [22, 22.5, 23, 23.99, 24, -1, -0.01, 1, 3, 5, 5.25]) {
       expect(skyAt(hour, "light", LIGHT)).toEqual({ phase: "night", stops: midnight });
     }
     expect(skyAt(23.5, "dark", DARK).stops).toEqual(DESIGN.dark.night);
+    expect(skyAt(4, "dark", DARK).stops).toEqual(DESIGN.dark.night);
   });
 
   it("wraps any hour into the day", () => {
@@ -102,36 +99,64 @@ describe("skyAt", () => {
     expect(skyAt(-11, "dark", DARK)).toEqual(skyAt(13, "dark", DARK));
   });
 
-  it("is halfway between two keyframes at the midpoint of their span", () => {
+  it("holds each keyframe's palette until the crossfade into the next begins", () => {
+    for (const hour of [6, 7, 8, 8.25]) {
+      expect(skyAt(hour, "light", LIGHT).stops).toEqual(DESIGN.light.dawn);
+    }
+    for (const hour of [13, 14, 15, 16, 16.25]) {
+      expect(skyAt(hour, "light", LIGHT).stops).toEqual(DESIGN.light.midday);
+      expect(skyAt(hour, "dark", DARK).stops).toEqual(DESIGN.dark.midday);
+    }
+    for (const hour of [19.5, 20.5, 21.25]) {
+      expect(skyAt(hour, "light", LIGHT).stops).toEqual(DESIGN.light.dusk);
+    }
+  });
+
+  it("crosses fully into the next palette over the 45 minutes before its keyframe", () => {
+    expect(SKY_CROSSFADE_HOURS).toBe(0.75);
+    expect(skyAt(16.5, "light", LIGHT).stops).not.toEqual(DESIGN.light.midday);
+    expect(skyAt(16.5, "light", LIGHT).stops).not.toEqual(DESIGN.light.goldenHour);
+    expect(skyAt(17, "light", LIGHT).stops).toEqual(DESIGN.light.goldenHour);
+  });
+
+  it("mixes in OKLCH at the crossfade's midpoint, turning each hue the shorter way round", () => {
+    // 5:37.5 is halfway through night → dawn. Night's outer stop is the brand at
+    // L .44 (hue 258) and dawn's is rose (hue 2): the short way runs up through 310.
     expectNear(
-      skyAt(7.5, "light", LIGHT).stops,
-      midpoint(DESIGN.light.dawn, DESIGN.light.morning),
-    );
-    expectNear(
-      skyAt(15, "dark", DARK).stops,
-      midpoint(DESIGN.dark.midday, DESIGN.dark.goldenHour),
-    );
-    expectNear(
-      skyAt(20.75, "light", LIGHT).stops,
-      midpoint(DESIGN.light.dusk, DESIGN.light.night),
+      skyAt(5.625, "light", LIGHT).stops,
+      fromOklch([
+        { l: 0.495, c: 0.1885, h: 310 },
+        { l: 0.55, c: 0.1485, h: 22 },
+        { l: 0.555, c: 0.196, h: 282 },
+        { l: 0.535, c: 0.15, h: 220 },
+      ]),
     );
   });
 
-  it("eases along a smoothstep: a quarter of the span moves less than a quarter of the way", () => {
-    // 6:45 is a quarter of dawn → morning; smoothstep(.25) is .15625.
-    const quarter = skyAt(6.75, "light", LIGHT).stops;
-    const dawn = DESIGN.light.dawn.map(channels);
-    const morning = DESIGN.light.morning.map(channels);
-    const expected = dawn.map((from, index) =>
-      from.map((value, channel) => value + (morning[index][channel] - value) * 0.15625),
+  it("eases along a smoothstep: a quarter of the crossfade moves less than a quarter of the way", () => {
+    // 8:26:15 is a quarter of the way through dawn → morning, which starts at 8:15;
+    // smoothstep(.25) is .15625. The outer stop turns from rose (2) back to brand (258).
+    expectNear(
+      [skyAt(8.4375, "light", LIGHT).stops[0]],
+      fromOklch([{ l: 0.5515625, c: 0.17578125, h: 345.75 }]),
     );
-    expectNear(quarter, expected);
   });
 
-  it("names the nearer keyframe's phase", () => {
-    expect(skyAt(7.4, "light", LIGHT).phase).toBe("dawn");
-    expect(skyAt(7.6, "light", LIGHT).phase).toBe("morning");
-    expect(skyAt(21.9, "light", LIGHT).phase).toBe("night");
+  it("names the palette the crossfade is nearer to", () => {
+    expect(skyAt(3, "light", LIGHT).phase).toBe("night");
+    expect(skyAt(5.6, "light", LIGHT).phase).toBe("night");
+    expect(skyAt(5.65, "light", LIGHT).phase).toBe("dawn");
+    expect(skyAt(8.6, "light", LIGHT).phase).toBe("dawn");
+    expect(skyAt(8.65, "light", LIGHT).phase).toBe("morning");
+    expect(skyAt(21.6, "light", LIGHT).phase).toBe("dusk");
+    expect(skyAt(21.65, "light", LIGHT).phase).toBe("night");
+  });
+
+  it("gives every keyframe a hold longer than the crossfade", () => {
+    for (let index = 1; index < SKY_KEYFRAMES.length; index += 1) {
+      const span = SKY_KEYFRAMES[index].hour - SKY_KEYFRAMES[index - 1].hour;
+      expect(span).toBeGreaterThan(SKY_CROSSFADE_HOURS);
+    }
   });
 
   it("keeps the table in hour order, ending on a midnight that repeats the start", () => {

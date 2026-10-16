@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -9,15 +9,17 @@ related:
 ---
 
 ## What it's for
-AI control is the one place for everything AI in the organization. A rail down the left side
-holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
-**Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the
+AI control is the one place for everything AI in the organization. Tabs across the top hold
+eleven sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
+**Retrieval**, **Safety**, **Quality**, **Analytics**, **Activity** and **Audit trail**; the
+number keys 1 to 9 open the first nine. Providers say where AI work goes (the
 model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do
 (their instructions, tools, autonomy and trigger), extensions add abilities that work only for
 agents, such as searching the web, using the organization's own account with the vendor, memory
 holds the standing instructions and facts agents read, retrieval shows whether agents find
 memories, documents and inbound email by meaning and what indexing them costs, safety shows what
-each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did:
+each tool and agent can do without a person, quality says how well each agent does its work, analytics compares the models and providers
+doing that work so you can see which should do which job, activity shows what agents did:
 their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit
 trail keeps a signed record of every run, model call, tool call and decision for compliance to
 read, check and export.
@@ -124,7 +126,7 @@ Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of se
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
 1. Set up an embedding provider first (see the task above). Until one is routed, agents search by
    keywords only.
-2. Open [AI control](/admin/agent-control) and select **Retrieval** in the rail.
+2. Open [AI control](/admin/agent-control) and select **Retrieval**.
 3. Read Nova's sentence at the top. It says whether agents search by meaning or by keyword
    only, how much is left to index, and what failed. Beside it, **Route Embedding** goes to
    Providers when nothing handles the Embedding task, and **Pause indexing** or
@@ -147,9 +149,12 @@ Keywords: semantic search, search by meaning, retrieval, vector search, embeddin
 Keywords: new agent, build agent, automation, scheduled agent, agent template, data access, agent sees amounts, agent pay access, restricted fields, draft agent with AI
 1. Open [AI control](/admin/agent-control) and select **Agents**.
 2. Select **New agent** (or press N) and pick where to start: **Desk agent**, **Scheduled report**,
-   **Event watcher** or **Start blank**. The builder opens on **What should it do?**.
-3. Describe the job in a sentence or two and select **Draft it** to have Nova fill in the name,
-   instructions, trigger and tools, or pick one of the starts under it to set it up yourself. Drafting is offered only while a provider takes the assistant's work.
+   **Event watcher** or **Start blank**. The first three open the builder on the agent, already
+   set up for that kind of work. **Start blank** opens on **What should it do?**.
+3. On **What should it do?**, describe the job in a sentence or two and select **Draft it** to have
+   Nova fill in the name, instructions, trigger and tools, or pick one of the starts under it,
+   such as **Set it up yourself**. Drafting is offered only while a provider takes the
+   assistant's work.
 4. Under **Identity**, name the agent and say what it does in one line. Select its tile to change
    the icon and color.
 5. Under **Instructions**, brief it the way you would a new hire. Add hard lines it must not cross
@@ -168,8 +173,11 @@ Keywords: new agent, build agent, automation, scheduled agent, agent template, d
    **Budget and model**.
 9. Select **Try it** to ask the unsaved draft something against live records. Nothing is written,
    sent or offered to anyone, and each step says what it would have come to.
-10. A new agent starts in **Shadow**. Select **Create in shadow**, or switch the mode beside its
-    name to **Live** first.
+10. A new agent starts **Live**: its proposals are offered to people and its **Automatic** tools
+    run. Select **Create**. To watch it first, switch the mode beside its name to **Shadow**
+    (it runs for real but only records what it would propose) or **Simulation** (every write is
+    previewed, never made); the button then reads **Create in shadow** or
+    **Create in simulation**.
 
 ### Let an agent hand work to another agent
 Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
@@ -205,6 +213,53 @@ Keywords: disable agent, enable agent, start run, delete agent, shadow mode, sim
 5. To delete one, select **Remove**, type its name and confirm with **Remove agent**. Its runs and
    audit trail are kept and its open proposals are withdrawn. System agents cannot be removed.
 
+### Compare the models and providers doing the work
+Keywords: AI analytics, model comparison, leaderboard, which model is best, compare providers, model performance, cost per run, run time, slow model, model getting worse, export analytics
+1. Open [AI control](/admin/agent-control) and select **Analytics**. Nova's sentence at the top
+   says what stands out over the window, such as the model that completes the most of its runs,
+   the same model doing better on one provider than another, or a model that gets tool calls
+   wrong more often than the rest.
+2. Above the figures, choose the **Window** (**24 hours**, **7 days** or **30 days**), **Compare by**
+   **Model** or **Provider**, and narrow to one **Agent** or one **Task** with **Every agent** and
+   **Every task**.
+3. Read **The scope in figures**: **Runs**, **Completed**, **Median run**, **Tool calls failed** and
+   **Spend**. The chips under them name every model or provider being compared; select one to
+   take it out of the charts (**Hide from charts**) and again to bring it back
+   (**Show in charts**). Each keeps its colour under every filter.
+4. **Leaderboard** ranks them on **Completed**, **Median run time**, **Tool calls that failed**,
+   **Cost per completed run**, **Approved as proposed** and **Time to first token**. One with too
+   few runs to judge is shown, marked as too few, and is not ranked. **Trade-offs** plots quality
+   (**Up**) against cost or speed (**Across**); the shaded **Best here** corner is where you want
+   one to be.
+5. When the same model runs on two providers, **Same model, different provider** sets them side by
+   side: the model is the same, so every gap comes from the connection. The button under it puts
+   the better provider first in the chain.
+6. **Run time** shows **How long runs take** by **Outcome**. **Over time** charts one **Measure**
+   day by day, with marks where a provider was turned off or on, switched model, stopped
+   answering, lost access or recovered, to catch a model or provider getting worse after a
+   change.
+7. Under **Tool calls**, **Where tool calls fail** shows the share of each tool's calls that failed
+   for each model or provider; select a cell to read real failed calls with **Why** and
+   **Recent failures**. **Whose mistake was it** splits failures between **The model** (wrong
+   arguments, a tool it doesn't hold, the same call repeated) and **The tool or a rule**.
+8. Select a model or provider's name to open it: **Run time by outcome**, **Tools it gets wrong
+   most** and **Its runs**. **Export** downloads the figures as a CSV file.
+
+### Route a task to the provider that does it best
+Keywords: suggested route, better provider, routing suggestion, reroute task, which provider for extraction, task fit
+1. Open [AI control](/admin/agent-control) and select **Analytics**.
+2. Under **Routing and judgment**, **Which model fits which task** shows how often each model
+   completed each task, counting only the tasks it was routed to. **Goes here now** outlines where
+   each task goes today, and **Best for the task** marks the one that does it best.
+3. A task that another provider does clearly better shows a suggestion under its name, such as
+   "Use Bedrock +25". Select it, check the change, and confirm with **Route it**. The task is
+   assigned to that provider, and the suggestion disappears once it is taken.
+4. Read the rest of the section before changing routing: **Agent suggestions** shows how often
+   people took the agent the Desk suggested for their question, **What people did with its
+   proposals** shows how many were **Approved as proposed**, approved **With changes** or
+   **Rejected**, and **Provider health** counts each provider's **Errors** and how often work
+   **Fell to next**.
+
 ### See which tools an agent's calls fail on
 Keywords: tool failures, tool errors, refused tool calls, not accepted, not permitted, agent keeps failing, bad arguments, tool call breakdown, why did the tool fail
 1. Open [AI control](/admin/agent-control) and select **Agents**.
@@ -220,7 +275,7 @@ Keywords: tool failures, tool errors, refused tool calls, not accepted, not perm
 
 ### Approve or reject what an agent proposed
 Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change
-1. Open [AI control](/admin/agent-control) and select **Activity** in the rail. The sentence at
+1. Open [AI control](/admin/agent-control) and select **Activity**. The sentence at
    the top says how many runs there were today and how many failed, how many proposals wait on a
    person, and how many exceptions are still open; select any of them to open the runs, proposals
    or exceptions narrowed to it. The figures show **Runs today**, **Failed**,
@@ -268,7 +323,7 @@ Keywords: tune-ups, suggestions, recommendations, improve AI setup, reorder prov
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
-1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. The sentence at the
+1. Open [AI control](/admin/agent-control) and select **Safety**. The sentence at the
    top says how many tools run without a person, how many send outside the organization (every
    one waits for approval), and how many agents everyone can use hold them. Select the count of
    tools that run to narrow the rules to them. When open agents hold sensitive tools, select
@@ -301,7 +356,7 @@ Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, appr
 
 ### Check how well an agent is doing
 Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse
-1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. The sentence at the
+1. Open [AI control](/admin/agent-control) and select **Quality**. The sentence at the
    top says how the agents score against their golden sets, how many of the answers people rated
    they liked, and which agent fell furthest after its last change. Select its name, or the
    button beside the sentence, to open that agent.
@@ -341,7 +396,7 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
 Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compare extraction models, A/B test extraction, new extraction provider, model rollout
 1. Register the new model as an AI provider assigned to **Document extraction**, with a
    priority after the provider that extracts documents today, so nothing is routed to it.
-2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+2. Open [AI control](/admin/agent-control), select **Quality**, then **Document
    extraction**, and choose **Shadow**.
 3. Select **Edit settings**, turn on **Shadow production extraction**, choose the **Candidate
    provider**, and set the **Share of extractions (%)** and the **Most per 24 hours**. Select
@@ -362,7 +417,7 @@ Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compa
 Keywords: gradual rollout, canary, promote extraction model, serve new model, fine-tuned model in production, stop rollout, rollout guard, rollback extraction model
 1. Try the model first under **Shadow** (see above), and roll it out only once it reads at least
    as well as production there.
-2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+2. Open [AI control](/admin/agent-control), select **Quality**, then **Document
    extraction**, and choose **Rollout**. Changing the rollout needs permission to update AI
    providers.
 3. Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**,
@@ -388,7 +443,7 @@ Keywords: gradual rollout, canary, promote extraction model, serve new model, fi
 
 ### Check whether a document extraction model is getting worse
 Keywords: extraction accuracy over time, model drift, accuracy dropped, provider accuracy trend, weekly accuracy, extraction getting worse, accuracy alert
-1. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+1. Open [AI control](/admin/agent-control), select **Quality**, then **Document
    extraction**, and choose **Accuracy**.
 2. Scroll to **Accuracy by provider over time**. Each AI provider that read documents in the
    last 12 weeks has a row: its **Weekly accuracy** line, **Last week**, the four weeks
@@ -402,7 +457,7 @@ Keywords: extraction accuracy over time, model drift, accuracy dropped, provider
 
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
-1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**
+1. Open [AI control](/admin/agent-control) and select **Audit trail**, then **Trail**
    under **View**.
 2. The sentence at the top says whether every agent action is written to a signed chain, when it
    was last checked and what that found, and how many of the newest rows wait to be sealed. The
@@ -425,7 +480,7 @@ Keywords: AI audit trail, agent audit log, who approved, what did the agent do, 
 
 ### Check that the audit trail has not been changed
 Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, signing key
-1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Audit trail**.
 2. Select **Verify now** beside the sentence. The check runs in the background; the button shows
    **Verifying…** until its result is stored, and the trail is also checked every night on its own.
 3. Read **Last verified**: **Verified** means every row still matches its chain, **Mismatch**
@@ -434,7 +489,7 @@ Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, sign
 
 ### Export the AI audit trail
 Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance export, SHA-256
-1. Open [AI control](/admin/agent-control), select **Audit trail** in the rail and narrow the
+1. Open [AI control](/admin/agent-control), select **Audit trail** and narrow the
    trail if you want to export part of it.
 2. Select **Export trail** above the table. On **Exports**, **Export trail** exports the whole
    trail without the trail's filters.
@@ -450,7 +505,7 @@ Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance 
 
 ### Read or download what an agent run did
 Keywords: run transcript, agent run log, what did the agent say, download transcript, background run, scheduled run
-1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Runs**.
+1. Open [AI control](/admin/agent-control), select **Activity** and then **Runs**.
 2. Select a run to open it: why it failed if it did, the **Agent**, what it was **Started by**,
    the **Model** and how long it **Took**.
 3. Under **What it did**, read what the agent said and thought and each tool it called, with what
@@ -466,7 +521,7 @@ Keywords: run transcript, agent run log, what did the agent say, download transc
 
 ### Find the trace of an agent's work
 Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
-1. Open [AI control](/admin/agent-control) and select **Activity** in the rail, then **Runs** or
+1. Open [AI control](/admin/agent-control) and select **Activity**, then **Runs** or
    **Proposals**; or open **Audit trail**.
 2. The **Trace** column shows the start of the trace id. Select the copy button beside it to copy
    the whole id; where a tracing backend is configured, the id is a link that opens the trace.
@@ -474,7 +529,7 @@ Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
 
 ### Record something every agent should know
 Keywords: agent memory, standing instruction, fact, correction, retire memory
-1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Memory**.
 2. Select **New memory**.
 3. Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the
    **Memory**, and optionally set **Until**.
@@ -489,7 +544,7 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 
 ### Review a memory an agent wrote after reading outside content
 Keywords: tainted memory, outside content, writes waiting for approval, review memory, why every proposal needs approval
-1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Memory**.
 2. When a notice says memories hold every write of the turns that read them, read each one it
    lists. An agent wrote it after reading text from outside the organization, so until a person
    reviews it, every turn that reads it waits for approval before any money, customer-visible or
@@ -500,7 +555,7 @@ Keywords: tainted memory, outside content, writes waiting for approval, review m
 
 ### See and steer what agents know about the organization
 Keywords: organization profile, what agents know about us, business profile, agents assume, steer the agents, guidance
-1. Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.
+1. Open [AI control](/admin/agent-control) and select **Memory**. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.
 2. Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.
 3. Under **Guidance**, type what the records cannot show, such as "The Laredo lane is seasonal; it runs from October to March", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it. If you don't manage agent memory the button reads **Offer guidance**, and the line waits under **Offered guidance** until an administrator keeps it.
 4. Under **Offered guidance**, a line someone offered, or an agent wrote down from a conversation, waits with who offered it; select **Keep** to add it (the note is written again with it) or **Dismiss** to turn it down.
@@ -513,7 +568,7 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.
 2. To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on
    or off, then select **Save**.
-3. Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked
+3. Select **Memory**. **What agents learned** lists the latest times an agent looked
    back over its work: what made it look (a tool that worked after failing, a person correcting
    it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation)
    and each lesson it kept, offered or turned down, with the reason.
@@ -579,9 +634,9 @@ the server's own credentials is off unless the server's operator turns it on, be
 server shared by several organizations it would spend the operator's cloud account; choosing it
 removes any credential the provider had saved.
 
-Opening the page needs read access to AI control. Each section in the rail appears only for
+Opening the page needs read access to AI control. Each tab appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
-agent memory); a section someone cannot open is left out. **Safety** appears for people who may
+agent memory); a tab someone cannot open is left out. **Safety** appears for people who may
 read agents, and **Quality** for people who may read the evaluation suite. **Worst rated**
 and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set**
 need create access to the evaluation suite, and changing **Sweep settings** needs update access to
@@ -636,6 +691,13 @@ read the audit log. Arguments show only what the reader may see on that record; 
 reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a
 minute of happening. How long they are kept is set on
 [Data retention](/organization/data-retention).
+
+**Analytics** appears for people who may read agent runs. Routing a task from it, or putting a
+provider first, needs update access to AI providers. Its figures are worked out from runs every
+few minutes. A model or provider with too few runs, or a tool cell with too few calls, is shown
+but never ranked or suggested, and a route is suggested only when another provider is well ahead
+on that task. Spend is counted from the prices set on each provider, so a model with no price,
+such as one on your own hardware, counts as costing nothing.
 
 Removing a provider stops any task routed only to it until another provider is assigned.
 Removing an agent keeps its existing conversations but they cannot be continued, and its schedule

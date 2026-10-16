@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/vectorutils"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -38,7 +38,7 @@ type CatalogIndex struct {
 	l           *zap.Logger
 	repo        agentports.AIRetrievalRepository
 	embeddings  aiusageports.EmbeddingService
-	entries     *lru.Cache[catalogKey, *catalogVectors]
+	entries     lrucache.Cache[catalogKey, *catalogVectors]
 	flights     singleflight.Group
 	now         func() time.Time
 	waitTimeout time.Duration
@@ -71,7 +71,7 @@ type catalogLoad struct {
 }
 
 func NewCatalogIndex(p CatalogParams) *CatalogIndex {
-	entries, err := lru.New[catalogKey, *catalogVectors](catalogCacheSize)
+	entries, err := lrucache.New[catalogKey, *catalogVectors](catalogCacheSize)
 	if err != nil {
 		panic(fmt.Sprintf("catalog vector cache: %v", err))
 	}

@@ -8,6 +8,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.4.1
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/oklog/ulid/v2 v2.1.2
@@ -135,4 +136,5 @@ replace (
 	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8
 	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8
 	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8
+	github.com/redis/go-redis/v9 => github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd
 )

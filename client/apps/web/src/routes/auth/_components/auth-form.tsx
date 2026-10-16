@@ -27,17 +27,6 @@ function manifestOrganizationName(manifest: PermissionManifest): string | undefi
   return manifest.availableOrgs.find((org) => org.id === manifest.organizationId)?.name;
 }
 
-// Undefined is not zero: a manifest rehydrated from localStorage, or one from a server
-// that predates the count, carries no permissionCount at all. Summing those as zero
-// would report "0 permissions" for a role that has hundreds, so an unknown count
-// suppresses the clause instead (see AuthHandoff).
-function countPermissions(roles: RoleSummary[]): number | undefined {
-  if (roles.some((role) => role.permissionCount === undefined)) {
-    return undefined;
-  }
-  return roles.reduce((total, role) => total + (role.permissionCount ?? 0), 0);
-}
-
 /**
  * Owns the sign-in flow: login → organization → active roles → handoff.
  *
@@ -66,7 +55,6 @@ export function AuthForm({
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
   const [organizationName, setOrganizationName] = useState<string>();
   const [authorizedRoles, setAuthorizedRoles] = useState<RoleSummary[]>([]);
-  const [activeRoles, setActiveRoles] = useState<RoleSummary[]>([]);
   const [orgStepUsed, setOrgStepUsed] = useState(false);
   // A tenant login page is already scoped to one organization, so that step can never
   // appear; everywhere else three is the honest upper bound until the server answers.
@@ -86,7 +74,6 @@ export function AuthForm({
     setOrganizations([]);
     setOrganizationName(undefined);
     setAuthorizedRoles([]);
-    setActiveRoles([]);
     setOrgStepUsed(false);
     setTotalSteps(organizationSlug ? 2 : 3);
     setStep("login");
@@ -109,7 +96,6 @@ export function AuthForm({
         return;
       }
 
-      setActiveRoles(manifest.activeRoles);
       setStep("done");
     },
     [fetchManifest],
@@ -155,8 +141,7 @@ export function AuthForm({
     [enterWorkspace],
   );
 
-  const handleRolesActivated = useCallback(async (activated: RoleSummary[]) => {
-    setActiveRoles(activated);
+  const handleRolesActivated = useCallback(() => {
     setStep("done");
   }, []);
 
@@ -213,8 +198,6 @@ export function AuthForm({
           <AuthHandoff
             userName={userName}
             organizationName={organizationName}
-            roleCount={activeRoles.length}
-            permissionCount={countPermissions(activeRoles)}
             onComplete={handleHandoff}
           />
         )}

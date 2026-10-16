@@ -856,6 +856,7 @@ func TestIntegration_AssignRole_Success(t *testing.T) {
 		"User",
 		orgID.String(),
 	)
+	seedActorRole(t, db, orgID, actorID, permission.SensitivityInternal)
 
 	now := timeutils.NowUnix()
 	sharedtestutil.MustExec(

@@ -8,6 +8,7 @@ import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -90,15 +91,14 @@ export function CaptureDevicesPage() {
         // not said twice.
         actions:
           devices.length > 0 ? (
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={<Link to="/capture/pair" />}
+            <Link
+              to="/capture/pair"
+              data-slot="button"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               <Key01Icon className="size-3.5" aria-hidden />
               {t("Enter a pairing code")}
-            </Button>
+            </Link>
           ) : undefined,
       }}
     >
@@ -140,9 +140,13 @@ export function CaptureDevicesPage() {
               "Install Trenova Capture on the computer your scanner is plugged into, choose Sign in from its tray icon, and approve the code it shows.",
             )}
             action={
-              <Button size="sm" nativeButton={false} render={<Link to="/capture/pair" />}>
+              <Link
+                to="/capture/pair"
+                data-slot="button"
+                className={buttonVariants({ size: "sm" })}
+              >
                 {t("Enter a pairing code")}
-              </Button>
+              </Link>
             }
             sketch={
               <div className="flex flex-col gap-3 px-6">

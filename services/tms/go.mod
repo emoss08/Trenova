@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/gen2brain/webp v0.6.4
-	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/klippa-app/go-pdfium v1.21.3
 	github.com/makiuchi-d/gozxing v0.1.1
 	github.com/pdfcpu/pdfcpu v0.16.1
@@ -137,6 +136,7 @@ require (
 	github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hhrutter/tiff v1.0.7 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
 	github.com/jolestar/go-commons-pool/v2 v2.1.2 // indirect
@@ -312,6 +312,9 @@ replace github.com/emoss08/trenova/shared => ../../shared
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241118233622-e639e219e697
 
 replace (
+	github.com/redis/go-redis/extra/rediscmd/v9 => github.com/emoss08/go-redis/extra/rediscmd/v9 v9.0.0-20261016021426-01e29e5f58fd
+	github.com/redis/go-redis/extra/redisotel/v9 => github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58fd
+	github.com/redis/go-redis/v9 => github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd
 	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8
 	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8
 	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8

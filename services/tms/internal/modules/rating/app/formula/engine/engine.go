@@ -25,10 +25,10 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"golang.org/x/sync/semaphore"
@@ -84,7 +84,7 @@ type Engine struct {
 	registry    *schema.Registry
 	resolver    *resolver.Resolver
 	envBuilder  *EnvironmentBuilder
-	cache       *lru.Cache[string, *CompiledExpression]
+	cache       lrucache.Cache[string, *CompiledExpression]
 	exprOptions []expr.Option
 	slots       *semaphore.Weighted
 	metrics     *metrics.Formula
@@ -95,7 +95,7 @@ func NewEngine(p Params) (*Engine, error) {
 	if size <= 0 {
 		size = compileCacheSize
 	}
-	cache, err := lru.New[string, *CompiledExpression](size)
+	cache, err := lrucache.New[string, *CompiledExpression](size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compile cache: %w", err)
 	}

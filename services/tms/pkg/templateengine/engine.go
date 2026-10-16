@@ -22,7 +22,7 @@ import (
 	texttemplate "text/template"
 	"text/template/parse"
 
-	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/emoss08/trenova/shared/lrucache"
 
 	"github.com/emoss08/trenova/shared/i18n"
 )
@@ -62,7 +62,7 @@ func (c Config) withDefaults() Config {
 // Engine compiles and renders templates.
 type Engine struct {
 	cfg   Config
-	cache *lru.Cache[string, *Compiled]
+	cache lrucache.Cache[string, *Compiled]
 }
 
 // New builds an engine. It only fails if the cache size is unusable, which the
@@ -70,7 +70,7 @@ type Engine struct {
 func New(cfg Config) (*Engine, error) {
 	cfg = cfg.withDefaults()
 
-	cache, err := lru.New[string, *Compiled](cfg.CacheSize)
+	cache, err := lrucache.New[string, *Compiled](cfg.CacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("create template cache: %w", err)
 	}

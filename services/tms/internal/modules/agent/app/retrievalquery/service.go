@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,7 +40,7 @@ type Service struct {
 	repo       agentports.AIRetrievalRepository
 	embeddings aiusageports.EmbeddingService
 	shared     agentports.QueryVectorCache
-	vectors    *expirable.LRU[queryKey, agentports.QueryVector]
+	vectors    lrucache.Cache[queryKey, agentports.QueryVector]
 }
 
 type queryKey struct {
@@ -56,9 +56,8 @@ func New(p Params) *Service {
 		repo:       p.Repository,
 		embeddings: p.Embeddings,
 		shared:     p.Shared,
-		vectors: expirable.NewLRU[queryKey, agentports.QueryVector](
+		vectors: lrucache.NewExpirable[queryKey, agentports.QueryVector](
 			queryCacheSize,
-			nil,
 			queryCacheTTL,
 		),
 	}

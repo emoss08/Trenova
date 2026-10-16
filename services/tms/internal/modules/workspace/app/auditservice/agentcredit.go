@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.uber.org/zap"
 )
 
@@ -36,16 +36,15 @@ type agentNameKey struct {
 
 type agentCredits struct {
 	definitions agentDefinitionReader
-	names       *expirable.LRU[agentNameKey, string]
+	names       lrucache.Cache[agentNameKey, string]
 	logger      *zap.Logger
 }
 
 func newAgentCredits(definitions agentDefinitionReader, logger *zap.Logger) *agentCredits {
 	return &agentCredits{
 		definitions: definitions,
-		names: expirable.NewLRU[agentNameKey, string](
+		names: lrucache.NewExpirable[agentNameKey, string](
 			agentNameCacheSize,
-			nil,
 			agentNameCacheTTL,
 		),
 		logger: logger,
