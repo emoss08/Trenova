@@ -4,7 +4,13 @@ import type {
   DataTableGroupScope,
   SortField,
 } from "@trenova/shared/types/data-table";
-import { buildGroupedBody, groupedScope, groupedSort } from "../data-table-grouping";
+import {
+  buildGroupedBody,
+  groupedScope,
+  groupedSort,
+  groupScopedQuery,
+  toggleGroupKey,
+} from "../data-table-grouping";
 
 type TestRow = { id: string; stage: number };
 
@@ -20,11 +26,16 @@ const row = (id: string, stage: number): TestRow => ({ id, stage });
 const getKey = (r: TestRow) => r.stage;
 
 function shape(items: ReturnType<typeof buildGroupedBody<TestRow>>) {
-  return items.map((item) =>
-    item.kind === "group"
-      ? `group:${item.group.key}${item.collapsed ? ":collapsed" : ""}`
-      : `row:${item.row.id}@${item.index}`,
-  );
+  return items.map((item) => {
+    switch (item.kind) {
+      case "group":
+        return `group:${item.group.key}${item.collapsed ? ":collapsed" : ""}`;
+      case "row":
+        return `row:${item.row.id}@${item.index}`;
+      case "pending":
+        return `pending:${item.key}x${item.count}`;
+    }
+  });
 }
 
 describe("groupedSort", () => {
@@ -129,6 +140,7 @@ describe("buildGroupedBody", () => {
       rows: [row("a", 1), row("b", 1), row("c", 3)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [],
       isFirstPage: true,
       isLastPage: true,
@@ -141,6 +153,7 @@ describe("buildGroupedBody", () => {
       rows: [row("d", 3), row("e", 4)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [],
       isFirstPage: false,
       isLastPage: false,
@@ -153,6 +166,7 @@ describe("buildGroupedBody", () => {
       rows: [row("a", 1), row("c", 3)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [2],
       isFirstPage: false,
       isLastPage: false,
@@ -165,6 +179,7 @@ describe("buildGroupedBody", () => {
       rows: [row("c", 3)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [1, 2],
       isLastPage: false,
     };
@@ -185,6 +200,7 @@ describe("buildGroupedBody", () => {
       rows: [row("a", 1)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [4, 5],
       isFirstPage: false,
     };
@@ -202,6 +218,7 @@ describe("buildGroupedBody", () => {
       rows: [],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [5, 1],
       isFirstPage: true,
       isLastPage: true,
@@ -214,6 +231,7 @@ describe("buildGroupedBody", () => {
       rows: [row("a", 1), row("z", 9)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [],
       isFirstPage: true,
       isLastPage: true,
@@ -228,6 +246,7 @@ describe("buildGroupedBody while the next page loads", () => {
       rows: [row("a", 1), row("b", 1), row("c", 3)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [1],
       isFirstPage: true,
       isLastPage: true,
@@ -240,11 +259,139 @@ describe("buildGroupedBody while the next page loads", () => {
       rows: [row("c", 3)],
       groups: GROUPS,
       getGroupKey: getKey,
+      pageSize: 25,
       collapsedKeys: [],
       loadingKeys: [2],
       isFirstPage: true,
       isLastPage: true,
     });
-    expect(shape(items)).toEqual(["group:2", "group:3", "row:c@0"]);
+    expect(shape(items)).toEqual(["group:2", "pending:group:2x25", "group:3", "row:c@0"]);
+  });
+
+  it("holds open as many rows as a just-opened group has under its header", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("c", 3)],
+      groups: GROUPS.map((group) => (group.key === 2 ? { ...group, count: 3 } : group)),
+      getGroupKey: getKey,
+      pageSize: 25,
+      collapsedKeys: [],
+      loadingKeys: [2],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual([
+      "group:1",
+      "row:a@0",
+      "group:2",
+      "pending:group:2x3",
+      "group:3",
+      "row:c@1",
+    ]);
+  });
+
+  it("holds open no more rows for a just-opened group than the page has room for", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 3)],
+      groups: GROUPS.map((group) => (group.key === 2 ? { ...group, count: 40 } : group)),
+      getGroupKey: getKey,
+      pageSize: 3,
+      collapsedKeys: [],
+      loadingKeys: [2],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual([
+      "group:1",
+      "row:a@0",
+      "row:b@1",
+      "group:2",
+      "pending:group:2x1",
+      "group:3",
+      "row:c@2",
+    ]);
+  });
+
+  it("holds the foot of the page open for the rows that move up after a group collapses", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      pageSize: 3,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:c@2", "pending:backfillx2"]);
+  });
+
+  it("holds nothing open after a collapse on the last page, where no rows are left to move up", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      pageSize: 3,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: true,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:c@2"]);
+  });
+});
+
+describe("toggleGroupKey", () => {
+  it("adds a group that was open to the end of the collapsed keys", () => {
+    expect(toggleGroupKey([3, 1], 2)).toEqual([3, 1, 2]);
+  });
+
+  it("removes a group that was collapsed, keeping the others in order", () => {
+    expect(toggleGroupKey([3, 2, 1], 2)).toEqual([3, 1]);
+  });
+});
+
+describe("groupScopedQuery", () => {
+  const ownScopeFilters = [{ field: "status", operator: "eq" as const, value: "Open" }];
+  const fieldFilters = [{ field: "customerId", operator: "eq" as const, value: "cus_1" }];
+  const filterGroups = [
+    { filters: [{ field: "proNumber", operator: "contains" as const, value: "S" }] },
+  ];
+  const sort: SortField[] = [{ field: "stage", direction: "asc" }];
+
+  it("puts the host's scope, then the collapsed groups' filters, ahead of the person's filters", () => {
+    const groupScope: DataTableGroupScope = {
+      fieldFilters: [{ field: "stage", operator: "notin", value: [1] }],
+      filterGroups: [{ filters: [{ field: "shipDate", operator: "isnull", value: null }] }],
+    };
+    expect(
+      groupScopedQuery({
+        query: "acme",
+        ownScopeFilters,
+        fieldFilters,
+        filterGroups,
+        sort,
+        groupScope,
+      }),
+    ).toEqual({
+      scopeFilters: [...ownScopeFilters, ...groupScope.fieldFilters],
+      filterGroups: [...groupScope.filterGroups, ...filterGroups],
+      options: {
+        query: "acme",
+        fieldFilters: [...ownScopeFilters, ...groupScope.fieldFilters, ...fieldFilters],
+        filterGroups: [...groupScope.filterGroups, ...filterGroups],
+        sort,
+      },
+    });
+  });
+
+  it("passes the person's filters through untouched when nothing is collapsed", () => {
+    const result = groupScopedQuery({
+      ownScopeFilters: [],
+      fieldFilters,
+      filterGroups,
+      sort,
+      groupScope: { fieldFilters: [], filterGroups: [] },
+    });
+    expect(result.scopeFilters).toEqual([]);
+    expect(result.options.fieldFilters).toBe(fieldFilters);
+    expect(result.options.filterGroups).toBe(filterGroups);
   });
 });

@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { hashKey, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { DataTable } from "../data-table";
+import { GROUP_TOGGLE_INTENT_DELAY_MS } from "../data-table-group-header";
+import { buildDataTableQueryKey } from "@/hooks/data-table/use-data-table-query";
 import type {
   ColumnDef,
   DataTableGroupKey,
@@ -115,8 +117,8 @@ function createQueryClient() {
 function renderDataTable(
   props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>,
   searchParams?: string,
+  queryClient: QueryClient = createQueryClient(),
 ) {
-  const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <NuqsTestingAdapter hasMemory searchParams={searchParams}>
@@ -144,6 +146,16 @@ function lastQueryOptions() {
 function lastPagination() {
   const calls = useDataTableQueryMock.mock.calls as unknown[][];
   return calls[calls.length - 1][2] as { pageIndex: number; pageSize: number };
+}
+
+/** The body's rows top to bottom: group headers, data rows by name, and placeholder rows. */
+function bodyRowShape() {
+  return Array.from(document.querySelectorAll("tbody > tr")).map((tr) => {
+    const key = tr.getAttribute("data-group-key");
+    if (key !== null) return `group:${key}${tr.hasAttribute("data-collapsed") ? ":collapsed" : ""}`;
+    if (tr.getAttribute("aria-busy") === "true") return "busy";
+    return `row:${tr.textContent}`;
+  });
 }
 
 function grouping(overrides: Partial<DataTableGrouping<TestRow>> = {}): DataTableGrouping<TestRow> {
@@ -311,6 +323,141 @@ describe("DataTable grouping", () => {
     expect(opened?.getAttribute("data-collapsed")).toBeNull();
     expect(screen.getByText("Cara")).toBeTruthy();
     useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("draws placeholder rows under a just-opened group, as many as it has, while they load", () => {
+    const { rerender } = renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
+    const loading = {
+      data: {
+        results: [
+          { id: "1", name: "Alice", stage: 1 },
+          { id: "3", name: "Cara", stage: 3 },
+        ],
+        count: 2,
+      },
+      isLoading: false,
+      isPlaceholderData: true,
+      isError: false,
+      error: null,
+    };
+    useDataTableQueryMock.mockImplementation(() => loading);
+
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={grouping({ collapsedKeys: [] })}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    expect(bodyRowShape()).toEqual([
+      "group:1",
+      "row:Alice",
+      "group:2",
+      "busy",
+      "busy",
+      "busy",
+      "busy",
+      "group:3",
+      "row:Cara",
+    ]);
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("draws placeholder rows at the foot of the page for the rows that move up after a group collapses", () => {
+    const page = {
+      data: {
+        ...defaultQueryResult.data,
+        pageInfo: { mode: "cursor", hasNextPage: true, endCursor: "c3", totalCount: 46 },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+    useDataTableQueryMock.mockImplementation(() => page);
+    const { rerender } = renderDataTable({ grouping: grouping() });
+    expect(bodyRowShape()).toEqual(["group:1", "row:Alice", "row:Bob", "group:3", "row:Cara"]);
+
+    const placeholder = { ...page, isPlaceholderData: true };
+    useDataTableQueryMock.mockImplementation(() => placeholder);
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={grouping({ collapsedKeys: [1] })}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    expect(bodyRowShape()).toEqual(["group:1:collapsed", "group:3", "row:Cara", "busy", "busy"]);
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("warms exactly the page a group's toggle will request once its toggle takes focus", () => {
+    const queryClient = createQueryClient();
+    const prefetch = vi.spyOn(queryClient, "prefetchQuery").mockResolvedValue(undefined);
+    const { rerender } = renderDataTable({ grouping: grouping() }, undefined, queryClient);
+
+    fireEvent.focus(screen.getByRole("button", { name: "Collapse Late" }));
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    const warmed = prefetch.mock.calls[0][0].queryKey;
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={grouping({ collapsedKeys: [1] })}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+    const calls = useDataTableQueryMock.mock.calls as unknown[][];
+    const [queryKey, graphql, pagination, options] = calls[calls.length - 1] as Parameters<
+      typeof buildDataTableQueryKey<TestRow>
+    >;
+    expect(lastQueryOptions().fieldFilters).toEqual([
+      { field: "stage", operator: "notin", value: [1] },
+    ]);
+    expect(hashKey(warmed)).toBe(
+      hashKey(buildDataTableQueryKey(queryKey, graphql, pagination, options)),
+    );
+  });
+
+  it("warms a group's toggle once the pointer rests on its header, not as it passes over", () => {
+    const queryClient = createQueryClient();
+    const prefetch = vi.spyOn(queryClient, "prefetchQuery").mockResolvedValue(undefined);
+    renderDataTable({ grouping: grouping() }, undefined, queryClient);
+    const header = document.querySelector('tr[data-group-key="3"]')!;
+
+    vi.useFakeTimers();
+    try {
+      fireEvent.pointerEnter(header);
+      act(() => vi.advanceTimersByTime(GROUP_TOGGLE_INTENT_DELAY_MS - 1));
+      fireEvent.pointerLeave(header);
+      act(() => vi.advanceTimersByTime(GROUP_TOGGLE_INTENT_DELAY_MS * 4));
+      expect(prefetch).not.toHaveBeenCalled();
+
+      fireEvent.pointerEnter(header);
+      act(() => vi.advanceTimersByTime(GROUP_TOGGLE_INTENT_DELAY_MS));
+      expect(prefetch).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("does not lay the old page out under a new grouping's headers while it loads", () => {
