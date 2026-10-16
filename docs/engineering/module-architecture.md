@@ -377,7 +377,8 @@ code the API's first-party packages compile. Hiding the two maps behind unexport
 Bun cut a cold API build by 15% and a rebuild after an exported edit to `domain/shipment` by
 about 20% on a 4-core machine. Nothing on this side of the import can stop it, so the fix lives
 in Trenova's fork of Bun, [`emoss08/bun`](https://github.com/emoss08/bun), whose `master` is
-upstream `master` plus that change. `services/tms/go.mod` and `shared/go.mod` replace every
+upstream `master` plus that change and a fix for slice inserts that dropped a later row's value
+when the first row took the column default ([uptrace/bun#1394](https://github.com/uptrace/bun/issues/1394)). `services/tms/go.mod` and `shared/go.mod` replace every
 `github.com/uptrace/bun` module with the fork at one commit; the Bun modules are separate Go
 modules, so a new fork commit moves all of the `replace` lines together, never one of them.
 
