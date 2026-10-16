@@ -85,6 +85,41 @@ describe("CaptureDevicesPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("links to pairing from the empty state when no computer is paired", async () => {
+    stubGraphQL({
+      MyCaptureAccess: access(),
+      CaptureAgentRelease: noRelease,
+      MyCaptureDevices: () => json({ data: { myCaptureDevices: [] } }),
+    });
+
+    renderWithClient(<CaptureDevicesPage />);
+
+    expect(await screen.findByRole("link", { name: "Enter a pairing code" })).toHaveAttribute(
+      "href",
+      "/capture/pair",
+    );
+    expect(screen.getAllByRole("link", { name: "Enter a pairing code" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Enter a pairing code" })).not.toBeInTheDocument();
+  });
+
+  it("links to pairing from the header once a computer is paired", async () => {
+    stubGraphQL({
+      MyCaptureAccess: access(),
+      CaptureAgentRelease: noRelease,
+      MyCaptureDevices: () =>
+        json({ data: { myCaptureDevices: [captureDevice({ name: "Front desk" })] } }),
+    });
+
+    renderWithClient(<CaptureDevicesPage />);
+
+    expect(await screen.findByText("Front desk")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Enter a pairing code" })).toHaveAttribute(
+      "href",
+      "/capture/pair",
+    );
+    expect(screen.queryByRole("button", { name: "Enter a pairing code" })).not.toBeInTheDocument();
+  });
+
   it("lists the computers under a titled panel", async () => {
     stubGraphQL({
       MyCaptureAccess: access(),
