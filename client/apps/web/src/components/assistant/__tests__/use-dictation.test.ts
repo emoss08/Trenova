@@ -1,9 +1,12 @@
+import { clearSpeechServiceMissing, speechServiceMissing } from "@/lib/speech-service";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useComposerDictation } from "../use-composer-dictation";
 import {
+  afterRecognitionEnds,
   dictationAvailability,
   issueFromMediaError,
+  meansNoSpeechService,
   issueFromRecognitionError,
   joinSpoken,
   useDictation,
@@ -17,9 +20,20 @@ import {
 
 beforeEach(() => {
   FakeRecognition.instances = [];
+  vi.useFakeTimers({ toFake: ["Date"] });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  clearSpeechServiceMissing();
+});
+
+/** Moves the clock on, as time passes while the recogniser listens. */
+function later(ms: number) {
+  vi.setSystemTime(Date.now() + ms);
+}
 
 /**
  * The page used to decide only whether the constructor existed. A browser
@@ -45,6 +59,20 @@ describe("dictationAvailability", () => {
     expect(dictationAvailability(dictationScope({ policyAllowsMicrophone: null }))).toBe(
       "available",
     );
+  });
+
+  it("has no service where an attempt found none behind the speech API", () => {
+    expect(dictationAvailability(dictationScope(), true)).toBe("no-service");
+    expect(dictationAvailability(dictationScope({ recognition: null }), true)).toBe(
+      "unsupported",
+    );
+  });
+
+  it("counts a refused or missing speech service as none, and nothing else", () => {
+    expect(meansNoSpeechService("no-service")).toBe(true);
+    expect(meansNoSpeechService("service")).toBe(true);
+    expect(meansNoSpeechService("network")).toBe(false);
+    expect(meansNoSpeechService(null)).toBe(false);
   });
 });
 
@@ -100,7 +128,7 @@ describe("joinSpoken", () => {
 });
 
 describe("useDictation", () => {
-  it("asks for the microphone before it starts listening, and lets it go when listening ends", async () => {
+  it("asks for the microphone before it listens, and lets it go when they stop", async () => {
     const microphone = openMicrophone();
     const scope = dictationScope({ getUserMedia: microphone.getUserMedia });
     const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
@@ -115,6 +143,7 @@ describe("useDictation", () => {
     expect(result.current.phase).toBe("listening");
     expect(result.current.stream).not.toBeNull();
 
+    act(() => result.current.stop());
     act(() => FakeRecognition.latest().emitEnd());
     expect(result.current.phase).toBe("idle");
     expect(result.current.stream).toBeNull();
@@ -145,12 +174,172 @@ describe("useDictation", () => {
 
     act(() => result.current.start());
     act(() => {
+      FakeRecognition.latest().emitError("audio-capture");
+      FakeRecognition.latest().emitEnd();
+    });
+
+    expect(result.current.issue).toBe("no-microphone");
+    expect(result.current.phase).toBe("idle");
+    expect(FakeRecognition.instances).toHaveLength(1);
+  });
+
+  /**
+   * The bug: browsers end a continuous recogniser on their own, after a
+   * pause, at a time limit or on a dropped connection, and every end was
+   * taken as the end of dictation, so it stopped mid-thought.
+   */
+  it("listens again when the browser ends the recogniser on its own", () => {
+    const scope = dictationScope();
+    const onTranscript = vi.fn();
+    const onEnd = vi.fn();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript, onEnd }));
+
+    act(() => result.current.start());
+    later(55_000);
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "first", isFinal: true }]));
+    later(5_000);
+    act(() => FakeRecognition.latest().emitEnd());
+
+    expect(FakeRecognition.instances).toHaveLength(2);
+    expect(FakeRecognition.latest().start).toHaveBeenCalled();
+    expect(result.current.phase).toBe("listening");
+    expect(onEnd).not.toHaveBeenCalled();
+
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "second", isFinal: true }]));
+
+    expect(onTranscript.mock.calls).toEqual([["first"], ["second"]]);
+  });
+
+  it("listens again after a dropped connection mid-session", () => {
+    const scope = dictationScope();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+
+    act(() => result.current.start());
+    later(20_000);
+    act(() => {
+      FakeRecognition.latest().emitResults([{ transcript: "load", isFinal: true }]);
       FakeRecognition.latest().emitError("network");
       FakeRecognition.latest().emitEnd();
     });
 
-    expect(result.current.issue).toBe("network");
+    expect(FakeRecognition.instances).toHaveLength(2);
+    expect(result.current.phase).toBe("listening");
+    expect(result.current.issue).toBeNull();
+  });
+
+  // Chromium builds without Google's speech service (Helium, Brave, Arc)
+  // fail every start with "network"; that is a browser that cannot listen,
+  // not a blip, and it is remembered so the microphone is hidden there.
+  it("finds no speech service behind a recogniser that fails as it starts, online", () => {
+    const scope = dictationScope();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+
+    act(() => result.current.start());
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      act(() => {
+        FakeRecognition.latest().emitError("network");
+        FakeRecognition.latest().emitEnd();
+      });
+    }
+
+    expect(FakeRecognition.instances).toHaveLength(3);
     expect(result.current.phase).toBe("idle");
+    expect(result.current.issue).toBe("no-service");
+    expect(result.current.availability).toBe("no-service");
+    expect(result.current.supported).toBe(false);
+    expect(speechServiceMissing()).toBe(true);
+  });
+
+  it("reads the same failures while offline as a lost connection, and remembers nothing", () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const scope = dictationScope();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+
+    act(() => result.current.start());
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      act(() => {
+        FakeRecognition.latest().emitError("network");
+        FakeRecognition.latest().emitEnd();
+      });
+    }
+
+    expect(result.current.issue).toBe("network");
+    expect(result.current.supported).toBe(true);
+    expect(speechServiceMissing()).toBe(false);
+  });
+
+  it("remembers a browser that refuses speech recognition outright", () => {
+    const scope = dictationScope();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+
+    act(() => result.current.start());
+    act(() => {
+      FakeRecognition.latest().emitError("service-not-allowed");
+      FakeRecognition.latest().emitEnd();
+    });
+
+    expect(result.current.issue).toBe("service");
+    expect(result.current.availability).toBe("no-service");
+    expect(speechServiceMissing()).toBe(true);
+  });
+
+  it("does not start where this browser was found to have no speech service", () => {
+    const scope = dictationScope();
+    const first = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+    act(() => first.result.current.start());
+    act(() => {
+      FakeRecognition.latest().emitError("service-not-allowed");
+      FakeRecognition.latest().emitEnd();
+    });
+    first.unmount();
+
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+    act(() => result.current.start());
+
+    expect(result.current.phase).toBe("idle");
+    expect(FakeRecognition.instances).toHaveLength(1);
+  });
+
+  it("lets the microphone go after a long silence, and not after a short one", () => {
+    const scope = dictationScope();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript: () => {} }));
+
+    act(() => result.current.start());
+    later(8_000);
+    act(() => {
+      FakeRecognition.latest().emitError("no-speech");
+      FakeRecognition.latest().emitEnd();
+    });
+    expect(result.current.phase).toBe("listening");
+
+    later(23_000);
+    act(() => {
+      FakeRecognition.latest().emitError("no-speech");
+      FakeRecognition.latest().emitEnd();
+    });
+
+    expect(result.current.phase).toBe("idle");
+    expect(result.current.issue).toBe("no-speech");
+    expect(FakeRecognition.instances).toHaveLength(2);
+  });
+
+  it("ignores what a recogniser it has moved on from says", () => {
+    const scope = dictationScope();
+    const onTranscript = vi.fn();
+    const { result } = renderHook(() => useDictation({ scope, onTranscript }));
+
+    act(() => result.current.start());
+    const first = FakeRecognition.latest();
+    later(10_000);
+    act(() => first.emitEnd());
+    act(() => {
+      first.emitResults([{ transcript: "stale", isFinal: true }]);
+      first.emitEnd();
+    });
+
+    expect(onTranscript).not.toHaveBeenCalled();
+    expect(FakeRecognition.instances).toHaveLength(2);
+    expect(result.current.phase).toBe("listening");
   });
 
   it("does not start at all where the policy blocks the microphone", () => {
@@ -271,6 +460,7 @@ describe("useComposerDictation", () => {
     const view = renderComposerDictation("typed   ");
 
     act(() => view.result.current.toggleFromDraft());
+    later(31_000);
     act(() => {
       FakeRecognition.latest().emitError("no-speech");
       FakeRecognition.latest().emitEnd();
@@ -278,5 +468,70 @@ describe("useComposerDictation", () => {
 
     expect(view.drafts).toHaveLength(0);
     expect(view.result.current.issue).toBe("no-speech");
+  });
+
+  // A recogniser that ends on its own takes its unfinished guess with it;
+  // what the person saw in the box stays there.
+  it("keeps the guess on screen when the recogniser ends on its own, and goes on after it", () => {
+    const view = renderComposerDictation("");
+
+    act(() => view.result.current.toggleFromDraft());
+    later(55_000);
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "check load", isFinal: false }]));
+    later(5_000);
+    act(() => FakeRecognition.latest().emitEnd());
+    expect(view.current()).toBe("check load");
+
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "42", isFinal: true }]));
+
+    expect(view.current()).toBe("check load 42");
+    expect(view.result.current.phase).toBe("listening");
+  });
+});
+
+describe("afterRecognitionEnds", () => {
+  const ending = { issue: null, ranFor: 60_000, quickEnds: 0, silentFor: 2_000, online: true };
+
+  it("listens again after an end the browser chose, and counts nothing against it", () => {
+    expect(afterRecognitionEnds(ending)).toEqual({ resume: true, quickEnds: 0 });
+  });
+
+  it.each([
+    "denied",
+    "service",
+    "no-microphone",
+    "microphone-busy",
+    "language",
+    "interrupted",
+  ] as const)("stops on %s, which a fresh recogniser would not get past", (issue) => {
+    expect(afterRecognitionEnds({ ...ending, issue })).toEqual({ resume: false, issue });
+  });
+
+  it("counts quick ends and stops on the third", () => {
+    expect(afterRecognitionEnds({ ...ending, ranFor: 200, quickEnds: 1 })).toEqual({
+      resume: true,
+      quickEnds: 2,
+    });
+    expect(afterRecognitionEnds({ ...ending, ranFor: 200, quickEnds: 2 })).toEqual({
+      resume: false,
+      issue: "failed",
+    });
+  });
+
+  it("finds no service behind quick network failures online, a lost connection offline", () => {
+    const failing = { ...ending, issue: "network" as const, ranFor: 200, quickEnds: 2 };
+
+    expect(afterRecognitionEnds(failing)).toEqual({ resume: false, issue: "no-service" });
+    expect(afterRecognitionEnds({ ...failing, online: false })).toEqual({
+      resume: false,
+      issue: "network",
+    });
+  });
+
+  it("stops after thirty seconds with nothing heard", () => {
+    expect(afterRecognitionEnds({ ...ending, issue: "no-speech", silentFor: 30_000 })).toEqual({
+      resume: false,
+      issue: "no-speech",
+    });
   });
 });

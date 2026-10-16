@@ -173,27 +173,28 @@ func Base214Segments(
 			"",
 			true,
 			[]edi.TemplateElement{
-				b.field(1, "Reference Identification", "shipmentStatus.bol", ""),
+				b.field(1, "Reference Identification", "shipmentStatus.proNumber", ""),
+				b.field(2, "Shipment Identification Number", "shipmentStatus.shipperReference", ""),
 				b.partner(3, "Standard Carrier Alpha Code", "carrier.scac"),
 			},
 		),
-		b.segment(
+		when("shipmentStatus.bol", b.segment(
 			50,
 			"L11",
 			"Business Instructions and Reference Number",
 			"",
 			false,
 			[]edi.TemplateElement{
-				b.field(1, "Reference Identification", "shipmentStatus.shipmentId", ""),
+				b.field(1, "Reference Identification", "shipmentStatus.bol", ""),
 				b.el(
 					2,
 					"Reference Identification Qualifier",
 					edi.TemplateElementSourceConstant,
-					"SI",
+					"BM",
 					false,
 				),
 			},
-		),
+		)),
 		b.segment(60, "LX", "Transaction Set Line Number", "", true, []edi.TemplateElement{
 			b.el(1, "Assigned Number", edi.TemplateElementSourceConstant, "1", true),
 		}),
@@ -226,7 +227,7 @@ func Base214Segments(
 				b.field(2, "Equipment Number", "shipmentStatus.equipmentNumber", ""),
 			},
 		),
-		b.segment(
+		when("shipmentStatus.weight", b.segment(
 			100,
 			"AT8",
 			"Shipment Weight Packaging and Quantity Data",
@@ -234,14 +235,23 @@ func Base214Segments(
 			false,
 			[]edi.TemplateElement{
 				b.el(1, "Weight Qualifier", edi.TemplateElementSourceConstant, "G"),
+				b.el(2, "Weight Unit Code", edi.TemplateElementSourceConstant, "L"),
+				b.field(3, "Weight", "shipmentStatus.weight", ""),
+				b.field(4, "Lading Quantity", "shipmentStatus.pieces", ""),
 			},
-		),
+		)),
 		b.segment(110, "Q7", "Lading Exception Code", "", false, []edi.TemplateElement{
 			b.field(1, "Lading Exception Code", "shipmentStatus.exceptionCode", ""),
 		}),
 	)
 	segments = append(segments, x12Trailers(b, 120)...)
 	return segments
+}
+
+func when(condition string, segment *edi.EDITemplateSegment) *edi.EDITemplateSegment {
+	segment.Condition = condition
+
+	return segment
 }
 
 func Base990Segments(

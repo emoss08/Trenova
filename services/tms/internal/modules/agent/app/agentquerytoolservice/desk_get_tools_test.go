@@ -138,7 +138,7 @@ func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 
 	assert.Equal(
 		t,
-		permission.ResourceDetentionPolicy,
+		permission.ResourceDetention,
 		newGetDetentionOccurrenceTool(nil, nil, nil).Policy().Resource,
 	)
 	assert.Equal(

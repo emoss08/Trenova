@@ -305,9 +305,9 @@ var lookups = map[permission.Resource]lookup{
 			version: versionOf(func(entity *report.ReportRun) int64 { return entity.Version }),
 		},
 	}},
-	// The detention tools act on an occurrence under the detention policy
-	// resource, which is the permission a person needs to act on one.
-	permission.ResourceDetentionPolicy: {
+	// The detention tools act on an occurrence under the detention resource,
+	// which is the permission a person needs to act on one.
+	permission.ResourceDetention: {
 		model: func() versioned { return new(detention.DetentionOccurrence) },
 		scope: detentioncol.DetentionOccurrenceScopeTenant,
 		idEq:  detentioncol.DetentionOccurrenceColumns.ID.Eq(),

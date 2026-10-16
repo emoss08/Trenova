@@ -11,7 +11,7 @@ func (r *Registry) registerCarrierResources() {
 		Description: "External carrier management for brokered freight",
 		Category:    "Carriers",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View carriers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View carriers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create carriers"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify carriers"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export carrier data"},
@@ -37,7 +37,7 @@ func (r *Registry) registerCarrierResources() {
 		Category:       "Carriers",
 		ParentResource: ResourceCarrier.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View rate confirmations"},
+			{Operation: OpRead, DisplayName: "View", Description: "View rate confirmations"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -56,7 +56,7 @@ func (r *Registry) registerCarrierResources() {
 		Resource:    ResourceCarrierSettlement.String(),
 		DisplayName: "Carrier Settlement",
 		Description: "Carrier settlement statements, batches, and cost events",
-		Category:    "Carriers",
+		Category:    "Carrier settlements",
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpSubmit,
@@ -134,7 +134,7 @@ func (r *Registry) registerCarrierResources() {
 		Resource:           ResourceCarrierSettlementControl.String(),
 		DisplayName:        "Carrier Settlement Control",
 		Description:        "Carrier settlement pay period, trigger, and GL default configuration",
-		Category:           "Carriers",
+		Category:           "Carrier settlements",
 		ParentResource:     ResourceCarrierSettlement.String(),
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
@@ -144,7 +144,7 @@ func (r *Registry) registerCarrierResources() {
 		Resource:    ResourceCarrierInvoiceMatch.String(),
 		DisplayName: "Carrier Invoice Match",
 		Description: "Carrier invoice matching against negotiated buy rates",
-		Category:    "Carriers",
+		Category:    "Carrier settlements",
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpApprove,
@@ -167,7 +167,7 @@ func (r *Registry) registerCarrierResources() {
 		Description: "Ranked carrier lists per freight lane that drive waterfall tenders",
 		Category:    "Carriers",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View routing guides"},
+			{Operation: OpRead, DisplayName: "View", Description: "View routing guides"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create routing guides"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify routing guides"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete routing guides"},
@@ -182,7 +182,7 @@ func (r *Registry) registerCarrierResources() {
 		Description: "Waterfall and spot tender offers made to carriers for brokered moves",
 		Category:    "Carriers",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View tenders and offers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View tenders and offers"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",
@@ -216,7 +216,7 @@ func (r *Registry) registerCarrierResources() {
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View carrier intelligence, findings and monitoring events",
 			},
 			{
@@ -256,7 +256,7 @@ func (r *Registry) registerCarrierResources() {
 		Description: "Search carrier intelligence providers for new capacity and import prospects",
 		Category:    "Carriers",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "Search for carriers"},
+			{Operation: OpRead, DisplayName: "View", Description: "Search for carriers"},
 			{
 				Operation:   OpImport,
 				DisplayName: "Import",
@@ -273,7 +273,7 @@ func (r *Registry) registerCarrierResources() {
 		Description: "Driver-at-dock checks that arriving equipment belongs to the assigned carrier",
 		Category:    "Carriers",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View equipment verifications"},
+			{Operation: OpRead, DisplayName: "View", Description: "View equipment verifications"},
 			{
 				Operation:   OpCreate,
 				DisplayName: "Create",

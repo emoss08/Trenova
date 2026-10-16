@@ -1100,6 +1100,24 @@ func testSourceContextIndex() *sourceContextIndex {
 			edi.SourceContextFieldStatusActive,
 		),
 		sourceContextField(
+			"shipmentStatus.shipperReference",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.weight",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
+			"shipmentStatus.pieces",
+			"",
+			edi.SourceContextKindShipment,
+			edi.SourceContextFieldStatusActive,
+		),
+		sourceContextField(
 			"shipmentStatus.statusCode",
 			"",
 			edi.SourceContextKindShipment,

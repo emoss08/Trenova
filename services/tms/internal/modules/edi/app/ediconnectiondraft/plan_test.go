@@ -649,6 +649,46 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.True(t, draft.Ready, draft.Blockers)
 }
 
+func TestPlan_AnUnsureValueThatIsAlreadySavedChangesNothing(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness()
+	req := acmeRequest(t)
+	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(req)}
+	for idx := range req.Values {
+		if req.Values[idx].Field == "as2.endpointUrl" {
+			req.Values[idx].Confidence = 0.7
+		}
+	}
+
+	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
+	require.NoError(t, err)
+
+	endpoint := valueOf(t, draft.Transport.Fields, "as2.endpointUrl")
+	assert.Equal(t, ediports.ValueStatusKept, endpoint.Status)
+	assert.Equal(t, ediports.ChangeKindSame, endpoint.Change)
+	assert.Equal(t, "https://as2-test.acmeretail.example/as2/receive", endpoint.Value)
+	assert.Equal(t, 2, endpoint.Source.Page, "the guide's page still stands behind it")
+	for _, decision := range draft.Decisions {
+		assert.NotEqual(t, "as2.endpointUrl", decision.Field)
+	}
+	assert.NotContains(t, draft.Blockers, "Decide AS2 endpoint URL")
+
+	moved := acmeRequest(t)
+	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(moved)}
+	for idx := range moved.Values {
+		if moved.Values[idx].Field == "as2.endpointUrl" {
+			moved.Values[idx] = value("as2.endpointUrl", "https://as2.acmeretail.example/as2/receive",
+				2, "Production AS2 URL: https://as2.acmeretail.example/as2/receive")
+			moved.Values[idx].Confidence = 0.7
+		}
+	}
+	draft, err = h.service.PlanConnectionDraft(t.Context(), moved)
+	require.NoError(t, err)
+	assert.Contains(t, draft.Blockers, "Decide AS2 endpoint URL",
+		"an unsure value that would change what is saved is still the person's to decide")
+}
+
 func TestPlan_NeverPicksBetweenTwoMatchingPartners(t *testing.T) {
 	t.Parallel()
 

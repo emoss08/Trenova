@@ -904,6 +904,44 @@ func TestRenderX12_214AT7UsesPayloadStatusReasonAndFormatsDateTime(t *testing.T)
 	assert.Contains(t, result.RawX12, "AT7*SD*NS***20260516*1430~")
 }
 
+func TestRenderX12_Starter214NamesTheShipmentByReferencesThePartnerKnows(t *testing.T) {
+	t.Parallel()
+
+	weight, pieces := int64(40000), int64(24)
+	internalID := pulid.MustNew("shp_")
+	result := renderStarter214(t, edi.ValidationModeStrict, &edi.ShipmentStatusPayload{
+		ShipmentID:       internalID,
+		ProNumber:        "PRO-1042",
+		BOL:              "BOL-7781",
+		ShipperReference: "ACME-SHP-55",
+		StatusCode:       "X3",
+		Weight:           &weight,
+		Pieces:           &pieces,
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "B10*PRO-1042*ACME-SHP-55*TEST~")
+	assert.Contains(t, result.RawX12, "L11*BOL-7781*BM~")
+	assert.Contains(t, result.RawX12, "AT8*G*L*40000*24~")
+	assert.NotContains(t, result.RawX12, internalID.String(),
+		"a partner never reads Trenova's own record id")
+}
+
+func TestRenderX12_Starter214LeavesOutReferencesItDoesNotHave(t *testing.T) {
+	t.Parallel()
+
+	result := renderStarter214(t, edi.ValidationModeStrict, &edi.ShipmentStatusPayload{
+		ShipmentID: pulid.MustNew("shp_"),
+		ProNumber:  "PRO-1042",
+		StatusCode: "X3",
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "B10*PRO-1042**TEST~")
+	assert.NotContains(t, result.RawX12, "L11*")
+	assert.NotContains(t, result.RawX12, "AT8*", "no weight, no AT8 with a bare qualifier")
+}
+
 func TestRenderX12_214ServiceFailureStatusRequiresReasonCode(t *testing.T) {
 	t.Parallel()
 

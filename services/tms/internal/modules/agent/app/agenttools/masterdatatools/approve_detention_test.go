@@ -153,7 +153,7 @@ func TestApproveDetention_IsAMoneyWriteCappedAtPropose(t *testing.T) {
 
 	policy := NewApproveDetentionTool(&stubApprover{}).Policy()
 
-	assert.Equal(t, permission.ResourceDetentionPolicy, policy.Resource)
+	assert.Equal(t, permission.ResourceDetention, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.DefaultTier)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)

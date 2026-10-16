@@ -101,7 +101,7 @@ func (t *EscalateDetentionTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceDetentionPolicy,
+		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
@@ -189,7 +189,7 @@ func (t *EscalateDetentionTool) Execute(
 }
 
 func (t *EscalateDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
+	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
 type detentionApprover interface {
@@ -261,7 +261,7 @@ func (t *ApproveDetentionTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceDetentionPolicy,
+		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
@@ -380,7 +380,7 @@ func (t *ApproveDetentionTool) Execute(
 }
 
 func (t *ApproveDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
+	return common.TargetOf(params, "occurrenceId", permission.ResourceDetention)
 }
 
 type credentialActor interface {

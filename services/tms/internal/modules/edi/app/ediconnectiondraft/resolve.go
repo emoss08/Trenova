@@ -140,6 +140,16 @@ func resolveCandidates(out *ediports.DraftValue, candidates []*candidate) {
 		keepCurrent(out)
 	case len(values) == 1:
 		best := strongest(verified)
+		if best.status != ediports.ValueStatusAccepted && out.Current != "" &&
+			best.value == out.Current {
+			out.Value = out.Current
+			out.Status = ediports.ValueStatusKept
+			out.Confidence = best.confidence
+			out.Source = best.source
+			out.Reason = "The guide's value is the one already saved, so nothing changes"
+			out.Change = ediports.ChangeKindSame
+			return
+		}
 		if best.status != ediports.ValueStatusAccepted {
 			out.Status = ediports.ValueStatusHeld
 			out.Confidence = best.confidence

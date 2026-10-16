@@ -135,12 +135,13 @@ func (s *Service) GetEDISummary(
 }
 
 type GetEDIAckHealthRequest struct {
-	TenantInfo    pagination.TenantInfo
-	PartnerID     pulid.ID
-	Since         int64
-	OverdueAckAge int64
-	OverdueLimit  int
-	FeedLimit     int
+	TenantInfo     pagination.TenantInfo
+	PartnerID      pulid.ID
+	TransactionSet edi.TransactionSet
+	Since          int64
+	OverdueAckAge  int64
+	OverdueLimit   int
+	FeedLimit      int
 }
 
 type EDIOverduePartner struct {
@@ -194,9 +195,10 @@ func (s *Service) GetEDIAckHealth(
 	}
 
 	countsReq := ediports.GetEDIMessageStatusCountsRequest{
-		TenantInfo: req.TenantInfo,
-		Since:      health.Since,
-		PartnerID:  req.PartnerID,
+		TenantInfo:     req.TenantInfo,
+		Since:          health.Since,
+		PartnerID:      req.PartnerID,
+		TransactionSet: req.TransactionSet,
 	}
 	counts, err := s.messageRepo.GetAckStatusCounts(ctx, countsReq)
 	if err != nil {
@@ -213,9 +215,10 @@ func (s *Service) GetEDIAckHealth(
 	health.OverdueAckCount, err = s.messageRepo.GetOverdueAckCount(
 		ctx,
 		ediports.GetEDIOverdueAckCountRequest{
-			TenantInfo:   req.TenantInfo,
-			PendingSince: health.PendingSince,
-			PartnerID:    req.PartnerID,
+			TenantInfo:     req.TenantInfo,
+			PendingSince:   health.PendingSince,
+			PartnerID:      req.PartnerID,
+			TransactionSet: req.TransactionSet,
 		},
 	)
 	if err != nil {
@@ -223,10 +226,11 @@ func (s *Service) GetEDIAckHealth(
 	}
 
 	overdue, err := s.messageRepo.ListOverdueAcks(ctx, &ediports.ListOverdueEDIAcksRequest{
-		TenantInfo:   req.TenantInfo,
-		PendingSince: health.PendingSince,
-		PartnerID:    req.PartnerID,
-		Limit:        min(overdueLimit, MaxAckHealthOverdueLimit),
+		TenantInfo:     req.TenantInfo,
+		PendingSince:   health.PendingSince,
+		PartnerID:      req.PartnerID,
+		TransactionSet: req.TransactionSet,
+		Limit:          min(overdueLimit, MaxAckHealthOverdueLimit),
 	})
 	if err != nil {
 		return nil, err
@@ -236,9 +240,10 @@ func (s *Service) GetEDIAckHealth(
 	health.RecentDeadLettered, err = s.messageRepo.ListRecentDeadLettered(
 		ctx,
 		&ediports.ListRecentEDIMessageFailuresRequest{
-			TenantInfo: req.TenantInfo,
-			PartnerID:  req.PartnerID,
-			Limit:      feedLimit,
+			TenantInfo:     req.TenantInfo,
+			PartnerID:      req.PartnerID,
+			TransactionSet: req.TransactionSet,
+			Limit:          feedLimit,
 		},
 	)
 	if err != nil {

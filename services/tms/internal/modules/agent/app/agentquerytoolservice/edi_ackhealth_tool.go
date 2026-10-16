@@ -28,6 +28,15 @@ const (
 		"sends a dead-lettered or failed one again."
 )
 
+var ackedTransactionSets = agenttoolschema.Source("edi.ackedTransactionSet", []string{
+	string(edi.TransactionSet204),
+	string(edi.TransactionSet210),
+	string(edi.TransactionSet214),
+	string(edi.TransactionSet990),
+	string(edi.TransactionSet997),
+	string(edi.TransactionSet999),
+})
+
 var ackCountOrder = [...]edi.MessageAcknowledgmentStatus{
 	edi.MessageAcknowledgmentStatusPending,
 	edi.MessageAcknowledgmentStatusAccepted,
@@ -84,6 +93,10 @@ func (t *getEDIAckHealthTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramPartnerID: agenttoolschema.KindID("Only this partner, by id from "+
 			"list_edi_partners or a row of this tool.", permission.KindEDIPartner),
+		paramTransactionSet: enumParam("Only messages of this transaction set that were "+
+			"sent, such as 214 for \"has acme acked our 214s\". 997 or 999 asks about the "+
+			"acknowledgments themselves, so it counts every set they answer.",
+			ackedTransactionSets),
 		paramOverdueAfterSeconds: intParam(fmt.Sprintf(
 			"How long an acknowledgment may be pending before it is overdue, in seconds: "+
 				"%d unless you ask, between %d and %d.",
@@ -179,6 +192,14 @@ func (t *getEDIAckHealthTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	set, err := validEnum(params.Params, paramTransactionSet, ackedTransactionSets)
+	if err != nil {
+		return nil, err
+	}
+	acknowledgment := edi.TransactionSet(set).IsAcknowledgment()
+	if acknowledgment {
+		set = ""
+	}
 	overdueAge, err := optionalUnixSeconds(params.Params, paramOverdueAfterSeconds)
 	if err != nil {
 		return nil, err
@@ -200,11 +221,12 @@ func (t *getEDIAckHealthTool) Query(
 	clk := clockFor(params)
 	now := clk.Instant()
 	health, err := t.health.GetEDIAckHealth(ctx, &ediservice.GetEDIAckHealthRequest{
-		TenantInfo:    tenantOf(params),
-		PartnerID:     partnerID,
-		Since:         now - int64(windowHours)*60*60,
-		OverdueAckAge: overdueAge,
-		OverdueLimit:  ackHealthOverdueRows,
+		TenantInfo:     tenantOf(params),
+		PartnerID:      partnerID,
+		TransactionSet: edi.TransactionSet(set),
+		Since:          now - int64(windowHours)*60*60,
+		OverdueAckAge:  overdueAge,
+		OverdueLimit:   ackHealthOverdueRows,
 	})
 	if err != nil {
 		return nil, err
@@ -239,10 +261,14 @@ func (t *getEDIAckHealthTool) Query(
 		view.RecentDeadLettered = append(view.RecentDeadLettered, ediMessageListRowFrom(message))
 		view.outside = append(view.outside, ediMessageRef(message))
 	}
+	if acknowledgment {
+		view.Note = "997s and 999s are the acknowledgments themselves, so these counts cover " +
+			"every transaction set they answer."
+	}
 	if view.OverdueCount == 0 {
-		view.Note = fmt.Sprintf(
+		view.Note = strings.TrimSpace(view.Note + " " + fmt.Sprintf(
 			"Nothing is overdue: no outbound message has waited more than %s for its "+
-				"acknowledgment.", view.OverdueAfter)
+				"acknowledgment.", view.OverdueAfter))
 	}
 
 	return view, nil
@@ -325,12 +351,12 @@ func ackAnswer(counts map[edi.MessageAcknowledgmentStatus]int) string {
 			outcomes = append(outcomes, fmt.Sprintf("%d %s", count, outcome.word))
 		}
 	}
-	answer := fmt.Sprintf("%d of %d acknowledged", received, expected)
+	answer := fmt.Sprintf("%d of %d came back with a 997 or 999", received, expected)
 	if len(outcomes) > 0 {
 		answer += " (" + strings.Join(outcomes, ", ") + ")"
 	}
 	if awaiting > 0 {
-		answer += fmt.Sprintf("; %d awaiting", awaiting)
+		answer += fmt.Sprintf("; %d still awaiting one", awaiting)
 	}
 	if failed > 0 {
 		answer += fmt.Sprintf("; %d marked Failed", failed)

@@ -1,7 +1,11 @@
 package documentcontent
 
 import (
+	"cmp"
 	"context"
+	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -172,4 +176,27 @@ func (c *Content) PoorlyRead() bool {
 	}
 
 	return scanned > 0 && total/float64(scanned) < poorReadingConfidence
+}
+
+func (c *Content) PagedText() string {
+	pages := make([]*Page, 0, len(c.Pages))
+	for _, page := range c.Pages {
+		if page != nil && strings.TrimSpace(page.ExtractedText) != "" {
+			pages = append(pages, page)
+		}
+	}
+	if len(pages) < 2 {
+		return strings.TrimSpace(c.ContentText)
+	}
+	slices.SortFunc(pages, func(a, b *Page) int { return cmp.Compare(a.PageNumber, b.PageNumber) })
+
+	var b strings.Builder
+	for _, page := range pages {
+		if b.Len() > 0 {
+			b.WriteString("\n\n")
+		}
+		fmt.Fprintf(&b, "--- page %d ---\n%s", page.PageNumber, strings.TrimSpace(page.ExtractedText))
+	}
+
+	return b.String()
 }

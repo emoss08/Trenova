@@ -46,6 +46,16 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    A resource nothing checks is not declared: it only makes the role editor longer and a
    grant of it allows nothing. Retire one with a migration that deletes its
    `resource_permissions` and `api_key_permissions` rows.
+   Give it the name the app gives the feature and file it under the module it belongs
+   to. The role editor's Advanced tab groups resources by `Category`, in the order of
+   `categoryOrder` in `registry.go`, which follows the module rail (Desk, Triage, Intake,
+   Shipments, Dispatch, … Organization settings, Users & security, Protected fields);
+   a category not listed there fails `TestRegistry_EveryResourceSitsInACategoryTheRoleEditorOrders`.
+   A module's own settings resource (Billing control, Dispatch control) sits in that
+   module, not in Organization settings, so a role author finds everything that opens or
+   hides a module in one place. Names, descriptions, categories and operation labels are
+   translated by `GET /permissions/resources` and `GET /permissions/bundles` from the
+   request's locale; the client renders them as they arrive.
 2. Do not write a migration to grant it to administrators. `trenova db migrate` runs
    `ReconcileAdminRoles` after the migrations: every system role named
    "Organization Administrator" is given every registry resource and operation it lacks.
@@ -58,7 +68,7 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    (approve, cancel, archive…) or one whose display name or description on the resource
    names it, so a role author can find "post" or "send" in the editor
    (`permissionlint.TestEveryActionIsGatedByAPermissionThatNamesIt`). Posting an invoice is
-   `invoice` "Update and post"; sending one is "Submit and send". When an existing
+   its own operation, `invoice:post`; sending one is "Submit and send". When an existing
    operation already carries the action, say so in its description rather than adding a
    verb no role holds.
 
@@ -91,6 +101,13 @@ Advanced tab is the resource grid, where each row says which ticked bundles it c
 Taking a bundle away removes its operations except where another fully ticked bundle
 grants them. `TestBundles_GrantOnlyWhatTheRegistryDeclares` keeps every bundle grant
 declared and every bundle scope one its kind supports.
+
+Splitting a resource that gated two features (working detention, `detention`, from
+configuring it, `detention_policy`) moves every check, agent tool policy, record kind,
+watchtower source and audit entry for the split-off work onto the new resource, and a
+migration gives each role and API key the new resource with the operations it already
+held through the old one (`20261231009780_detention_work_permission`), so nobody loses
+access on upgrade.
 
 A role and all its grants are saved in one request and one transaction: `POST /roles/`
 creates both, and `PUT /roles/:id` replaces the grant set with the role's columns.

@@ -1,5 +1,6 @@
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
+import { usePendingValue } from "@trenova/shared/hooks/use-pending-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useRef, useState, type KeyboardEvent } from "react";
 
@@ -26,6 +27,9 @@ export function DeskThreadTitle({
   // Enter and Escape end the edit before the field loses focus; the blur
   // that follows must not end it a second time.
   const settled = useRef(false);
+  // The name just sent shows from the moment the field closes, not the old
+  // one until the conversation carries the new.
+  const [shown, setSent] = usePendingValue(thread.title);
 
   const finish = (value: string | null) => {
     if (settled.current) {
@@ -34,7 +38,8 @@ export function DeskThreadTitle({
     settled.current = true;
     setEditing(false);
     const title = value?.trim() ?? "";
-    if (title !== "" && title !== thread.title) {
+    if (title !== "" && title !== shown) {
+      setSent(title);
       onRename(title);
     }
   };
@@ -56,7 +61,7 @@ export function DeskThreadTitle({
         className="dk-ttl-in"
         // oxlint-disable-next-line jsx-a11y/no-autofocus -- the name turned into this field on purpose
         autoFocus
-        defaultValue={thread.title}
+        defaultValue={shown}
         maxLength={MAX_TITLE_LENGTH}
         aria-label={t("Conversation name")}
         onFocus={(event) => event.target.select()}
@@ -76,7 +81,7 @@ export function DeskThreadTitle({
         setEditing(true);
       }}
     >
-      <span>{thread.title || t("Untitled conversation")}</span>
+      <span>{shown || t("Untitled conversation")}</span>
     </Button>
   );
 }

@@ -470,7 +470,7 @@ func (r *MutationResolver) DecideInboundStops(ctx context.Context, messageID str
 	if err != nil {
 		return nil, err
 	}
-	if _, err = r.RequirePermission(ctx, permission.ResourceDetentionPolicy, permission.OpUpdate); err != nil {
+	if _, err = r.RequirePermission(ctx, permission.ResourceDetention, permission.OpUpdate); err != nil {
 		return nil, err
 	}
 

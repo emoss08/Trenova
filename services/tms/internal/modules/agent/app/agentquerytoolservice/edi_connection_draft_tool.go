@@ -73,13 +73,15 @@ func (t *draftEDIConnectionTool) SearchTerms() []string {
 
 func (t *draftEDIConnectionTool) Description() string {
 	return "Draft a whole EDI connection from the implementation guide the person attached, " +
-		"and check it. Read the whole guide first, from the file attached to the message or " +
-		"with read_attachment, then pass every setting it " +
+		"and check it. Read the whole guide once, from the file attached to the message or " +
+		"with read_attachment, whose text marks where each page begins; never page by page. " +
+		"Then pass every setting it " +
 		"states with the exact quote and page, plus the segment rules, code mappings and gaps " +
 		"you find. It checks each quote against its page, holds back what is uncertain or " +
 		"conflicting, matches an existing EDI partner rather than adding one, picks templates, " +
 		"runs the guide's sample X12, validates every record and lists the credentials the " +
-		"person must enter. A re-run on a revised guide shows only what changes. It writes nothing."
+		"person must enter. A re-run on a revised guide shows only what changes. It writes nothing, " +
+		"and it takes no documentDigest: it returns the one apply_edi_connection_draft needs."
 }
 
 func (t *draftEDIConnectionTool) ParamSchema() map[string]any {

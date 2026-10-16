@@ -33,8 +33,10 @@ function useElapsed(running: boolean): number {
 /**
  * The microphone beside send. While it listens it becomes a red pill with a
  * moving wave and the time so far; the words appear in the box as they are
- * heard, and a press stops it. Where the page cannot listen, the button says
- * why instead of doing nothing.
+ * heard, and a press stops it. A browser that cannot recognise speech at all
+ * shows no microphone: one without the speech API, and one found to have no
+ * speech service behind it. Where the page could listen but is not allowed
+ * to, the button stays and says so.
  */
 export function DeskDictate({
   dictation,
@@ -46,6 +48,13 @@ export function DeskDictate({
   const t = useT();
   const listening = dictation.phase !== "idle";
   const seconds = useElapsed(listening);
+
+  if (
+    !listening &&
+    (dictation.availability === "unsupported" || dictation.availability === "no-service")
+  ) {
+    return null;
+  }
 
   if (!listening) {
     const unavailable = !dictation.supported;

@@ -12,6 +12,8 @@ const conversation = vi.hoisted(() => ({
   asks: { byReply: new Map(), open: null } as ThreadAsks,
   answer: (() => undefined) as ((value: string) => void) | undefined,
   providersReady: true,
+  /** Entries the thread holds after the opening question and reply. */
+  more: [] as unknown[],
 }));
 
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
@@ -94,6 +96,7 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     entries: [
       { kind: "user", message: question },
       { kind: "assistant", message: { ...reply, content: conversation.reply }, tools: [] },
+      ...conversation.more,
     ],
     placements: new Map(),
     turn: null,
@@ -148,6 +151,7 @@ afterEach(() => {
   conversation.asks = { byReply: new Map(), open: null };
   conversation.answer = () => undefined;
   conversation.providersReady = true;
+  conversation.more = [];
 });
 
 const thread = {
@@ -272,6 +276,7 @@ describe("DeskThread's open question", () => {
     ],
     allowOther: true,
     otherHint: "Number of days",
+    suggestion: "",
     input: { type: "text" },
     fields: [],
   };
@@ -308,6 +313,28 @@ describe("DeskThread's open question", () => {
     );
   });
 
+  it("offers the agent's suggested answer in the composer", () => {
+    const partnerCode: ThreadAskRequest = {
+      ...request,
+      question: "What partner code should Meritor have in Trenova?",
+      options: [],
+      otherHint: "A short code, such as MERITOR",
+      suggestion: "MERITOR",
+    };
+    conversation.asks = {
+      byReply: new Map([["msg_a", [{ request: partnerCode, answer: null }]]]),
+      open: partnerCode,
+    };
+    conversation.providersReady = false;
+    renderThread();
+
+    const box = screen.getByRole("textbox", { name: "Message the Desk" });
+    expect(box).toHaveAccessibleDescription("Suggested answer: MERITOR. Press Tab to use it.");
+    expect(
+      screen.getByText("Press Tab to use the suggested answer, or type your own below."),
+    ).toBeInTheDocument();
+  });
+
   it("answers with the choice picked", () => {
     asked();
     const answer = vi.fn();
@@ -317,6 +344,39 @@ describe("DeskThread's open question", () => {
     fireEvent.click(screen.getByRole("button", { name: "30 days" }));
 
     expect(answer).toHaveBeenCalledWith("30");
+  });
+
+  // The record of the question shows what the person answered; the message
+  // that carried it is not drawn again as a new exchange.
+  it("reads an answer under its question rather than as a new heading", () => {
+    const answer = message({ id: "msg_ans", content: "Host: sftp.meritor.example", sequence: 4 });
+    conversation.more = [{ kind: "user", message: answer }];
+    conversation.asks = {
+      byReply: new Map([["msg_a", [{ request, answer }]]]),
+      open: null,
+    };
+    const { container } = renderThread();
+
+    expect(screen.getByText("Host: sftp.meritor.example").closest(".dk-ask-rec")).not.toBeNull();
+    expect(container.querySelectorAll(".dk-q")).toHaveLength(1);
+  });
+
+  it("keeps the files an answer carried, under its question", () => {
+    const answer = message({
+      id: "msg_ans",
+      content: "Here is the guide",
+      sequence: 4,
+      attachments: [{ documentId: "doc_1", fileName: "Meritor-EDI-204.pdf", fileSize: 2048 }],
+    });
+    conversation.more = [{ kind: "user", message: answer }];
+    conversation.asks = {
+      byReply: new Map([["msg_a", [{ request, answer }]]]),
+      open: null,
+    };
+    const { container } = renderThread();
+
+    expect(container.querySelectorAll(".dk-q")).toHaveLength(1);
+    expect(screen.getByText("Meritor-EDI-204.pdf").closest(".dk-ma")).not.toBeNull();
   });
 
   it("docks nothing in a conversation nobody can send to", () => {

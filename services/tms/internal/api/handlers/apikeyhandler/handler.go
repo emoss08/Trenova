@@ -321,7 +321,7 @@ func (h *Handler) revoke(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api-keys/allowed-resources [get]
 func (h *Handler) getAllowedResources(c *gin.Context) {
-	c.JSON(http.StatusOK, h.apiKeyService.GetAllowedResources())
+	c.JSON(http.StatusOK, h.apiKeyService.GetAllowedResources(c.Request.Context()))
 }
 
 func (h *Handler) isSessionPrincipal(authCtx *authctx.AuthContext) bool {

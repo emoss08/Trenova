@@ -37,7 +37,7 @@ export function RoleTemplateSelector({
   const items = useMemo(
     () => [
       { value: EMPTY_TEMPLATE, label: t("Start empty") },
-      ...templates.map((template) => ({ value: template.id, label: t(template.label) })),
+      ...templates.map((template) => ({ value: template.id, label: template.label })),
     ],
     [templates, t],
   );
@@ -76,8 +76,8 @@ export function RoleTemplateSelector({
         {templates.map((template) => (
           <SelectItem key={template.id} value={template.id}>
             <span className="flex flex-col">
-              <span>{t(template.label)}</span>
-              <span className="text-muted-foreground text-xs">{t(template.description)}</span>
+              <span>{template.label}</span>
+              <span className="text-muted-foreground text-xs">{template.description}</span>
             </span>
           </SelectItem>
         ))}

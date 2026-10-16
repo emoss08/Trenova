@@ -65,7 +65,8 @@ func (t *readAttachmentTool) Description() string {
 	return "Read a file the person attached to this conversation: its text in reading " +
 		"order and what was read from it. It says how many pages it has, what kind of " +
 		"document it looks like and the fields found. Leave documentId out to list every file attached to this conversation, " +
-		"newest first. Read one page, or the part past where a long text stops with " +
+		"newest first. The text of a file of more than one page marks where each page begins " +
+		"(--- page 2 ---). Read one page, or the part past where a long text stops with " +
 		"offset. A file still being read is waited for."
 }
 

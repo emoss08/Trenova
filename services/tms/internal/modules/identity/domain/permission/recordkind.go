@@ -106,7 +106,7 @@ var recordKinds = map[RecordKind]recordKindSpec{
 	KindCarrierAssignment:     {"casn_", ResourceShipmentMove, "carrier assignment"},
 	KindAdditionalCharge:      {"ac_", ResourceShipment, "additional charge"},
 	KindBillingTransferRun:    {"btr_", ResourceShipment, "billing transfer run"},
-	KindDetentionOccurrence:   {"dto_", ResourceDetentionPolicy, "detention occurrence"},
+	KindDetentionOccurrence:   {"dto_", ResourceDetention, "detention occurrence"},
 	KindTenderOffer:           {"tof_", ResourceTender, "tender offer"},
 	KindOrderCharge:           {"ordchg_", ResourceOrder, "order charge"},
 	KindBillingQueueItem:      {"bqi_", ResourceBillingQueue, "billing queue item"},

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"sync"
 )
 
@@ -205,6 +206,42 @@ func (r *Registry) GetByCategory(category string) []*ResourceDefinition {
 	return result
 }
 
+type categoryLabel struct {
+	Label string
+}
+
+var categoryOrder = []categoryLabel{
+	{Label: "Desk"},
+	{Label: "Triage"},
+	{Label: "Intake"},
+	{Label: "Shipments"},
+	{Label: "Dispatch"},
+	{Label: "Carriers"},
+	{Label: "Equipment"},
+	{Label: "Fuel & tax"},
+	{Label: "EDI"},
+	{Label: "Human resources"},
+	{Label: "Payroll"},
+	{Label: "Billing"},
+	{Label: "Detention"},
+	{Label: "Carrier settlements"},
+	{Label: "Accounting"},
+	{Label: "Reports"},
+	{Label: "Documents"},
+	{Label: "AI & agents"},
+	{Label: "Organization settings"},
+	{Label: "Users & security"},
+	{Label: "Protected fields"},
+}
+
+func CategoryOrder() []string {
+	order := make([]string, len(categoryOrder))
+	for i, category := range categoryOrder {
+		order[i] = category.Label
+	}
+	return order
+}
+
 func (r *Registry) GetCategories() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -217,10 +254,18 @@ func (r *Registry) GetCategories() []string {
 	}
 
 	result := make([]string, 0, len(categories))
-	for cat := range categories {
-		result = append(result, cat)
+	for _, category := range categoryOrder {
+		if categories[category.Label] {
+			result = append(result, category.Label)
+			delete(categories, category.Label)
+		}
 	}
-	return result
+	rest := make([]string, 0, len(categories))
+	for cat := range categories {
+		rest = append(rest, cat)
+	}
+	sort.Strings(rest)
+	return append(result, rest...)
 }
 
 // registerAll loads every resource the system knows about. Each call is the

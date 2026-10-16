@@ -25,7 +25,7 @@ var detentionEvidenceFields = []string{common.FieldKind, "source", "summary"}
 
 func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpreview.Record {
 	return toolpreview.Record{
-		Resource: permission.ResourceDetentionPolicy,
+		Resource: permission.ResourceDetention,
 		ID:       occurrence.ID,
 		Label:    fmt.Sprintf("Detention, %d billable minutes", occurrence.BillableMinutes),
 		Version:  common.PreviewVersion(occurrence.Version),
@@ -65,7 +65,7 @@ func (t *EscalateDetentionTool) Preview(
 		reason,
 	)
 	evidence, err := toolpreview.Create(toolpreview.Record{
-		Resource: permission.ResourceDetentionPolicy,
+		Resource: permission.ResourceDetention,
 		Label:    "Detention evidence",
 	}, detentionservice.EscalationEvidence(occurrence, reason, now),
 		toolpreview.Only(detentionEvidenceFields...),

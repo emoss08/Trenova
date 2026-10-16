@@ -88,6 +88,9 @@ type ShipmentStatusPayload struct {
 	ShipmentID                 pulid.ID              `json:"shipmentId,omitempty"`
 	BOL                        string                `json:"bol,omitempty"`
 	ProNumber                  string                `json:"proNumber,omitempty"`
+	ShipperReference           string                `json:"shipperReference,omitempty"`
+	Weight                     *int64                `json:"weight,omitempty"`
+	Pieces                     *int64                `json:"pieces,omitempty"`
 	StatusCode                 string                `json:"statusCode,omitempty"`
 	StatusReasonCode           string                `json:"statusReasonCode,omitempty"`
 	EventDate                  int64                 `json:"eventDate,omitempty"`

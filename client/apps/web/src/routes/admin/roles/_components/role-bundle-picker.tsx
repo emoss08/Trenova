@@ -10,7 +10,9 @@ import { useCallback, useMemo } from "react";
 import { RoleBundlePickerSkeleton } from "./role-bundle-picker-skeleton";
 
 const moduleLabels: Record<string, string> = defineLabels({
+  Desk: "Desk",
   Dispatch: "Dispatch",
+  EDI: "EDI",
   Billing: "Billing",
   Accounting: "Accounting",
   Settlements: "Settlements",
@@ -18,7 +20,6 @@ const moduleLabels: Record<string, string> = defineLabels({
   Workforce: "Workforce",
   Customers: "Customers",
   Reporting: "Reporting",
-  Platform: "Platform",
   Administration: "Administration",
 });
 
@@ -122,8 +123,8 @@ function BundleOption({
         className="mt-0.5"
       />
       <span className="min-w-0 space-y-0.5">
-        <span className="block text-sm font-medium">{t(bundle.label)}</span>
-        <span className="text-muted-foreground block text-xs">{t(bundle.description)}</span>
+        <span className="block text-sm font-medium">{bundle.label}</span>
+        <span className="text-muted-foreground block text-xs">{bundle.description}</span>
         <span className="text-muted-foreground/80 block truncate text-xs" title={summary}>
           {state === "partial" ? t("Partly granted: {0}", summary) : summary}
         </span>

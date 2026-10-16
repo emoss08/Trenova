@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -337,7 +338,7 @@ type AllowedResourceCategory struct {
 	Resources []*permission.ResourceDefinition `json:"resources"`
 }
 
-func (s *Service) GetAllowedResources() []AllowedResourceCategory {
+func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCategory {
 	categoryMap := make(map[string][]*permission.ResourceDefinition)
 
 	for resource, allowedOps := range runtimePolicy {
@@ -348,8 +349,8 @@ func (s *Service) GetAllowedResources() []AllowedResourceCategory {
 
 		filtered := &permission.ResourceDefinition{
 			Resource:           def.Resource,
-			DisplayName:        def.DisplayName,
-			Description:        def.Description,
+			DisplayName:        i18n.T(ctx, def.DisplayName),
+			Description:        i18n.T(ctx, def.Description),
 			Category:           def.Category,
 			ParentResource:     def.ParentResource,
 			DefaultSensitivity: def.DefaultSensitivity,
@@ -357,6 +358,8 @@ func (s *Service) GetAllowedResources() []AllowedResourceCategory {
 
 		for _, opDef := range def.Operations {
 			if slices.Contains(allowedOps, opDef.Operation) {
+				opDef.DisplayName = i18n.T(ctx, opDef.DisplayName)
+				opDef.Description = i18n.T(ctx, opDef.Description)
 				filtered.Operations = append(filtered.Operations, opDef)
 			}
 		}
@@ -365,10 +368,11 @@ func (s *Service) GetAllowedResources() []AllowedResourceCategory {
 	}
 
 	categories := make([]string, 0, len(categoryMap))
-	for cat := range categoryMap {
-		categories = append(categories, cat)
+	for _, cat := range s.registry.GetCategories() {
+		if _, ok := categoryMap[cat]; ok {
+			categories = append(categories, cat)
+		}
 	}
-	slices.Sort(categories)
 
 	result := make([]AllowedResourceCategory, 0, len(categories))
 	for _, cat := range categories {
@@ -377,7 +381,7 @@ func (s *Service) GetAllowedResources() []AllowedResourceCategory {
 			return strings.Compare(a.DisplayName, b.DisplayName)
 		})
 		result = append(result, AllowedResourceCategory{
-			Category:  cat,
+			Category:  i18n.T(ctx, cat),
 			Resources: resources,
 		})
 	}

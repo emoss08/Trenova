@@ -785,10 +785,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/detention/intelligence",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.DetentionPolicy),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Detention)),
             async lazy() {
               const { DetentionIntelligencePage } =
                 await import("@/routes/detention-intelligence/page");
@@ -797,10 +794,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/detention/desk",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.DetentionPolicy),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Detention)),
             async lazy() {
               const { DetentionDeskPage } = await import("@/routes/detention-desk/page");
               return { Component: DetentionDeskPage };

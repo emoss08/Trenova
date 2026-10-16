@@ -115,8 +115,9 @@ func ParamSchema(withDigest bool) map[string]any {
 			"from list_edi_partners. Leave it out and the draft matches one by code, ISA ID or "+
 			"AS2 ID, or plans a new partner.", permission.KindEDIPartner),
 		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"The customer this partner's documents are for, from list_customers, when the person "+
-				"says which."),
+			"The customer this partner's documents are for, by id from list_customers, only when "+
+				"the person names which customer. Leave it out otherwise, and never pass a name "+
+				"or guess one from the partner's."),
 		ParamValues: jsonschemautils.DescribedArray(
 			"Every setting the guide states, each with the quote that states it.",
 			jsonschemautils.Object(map[string]any{

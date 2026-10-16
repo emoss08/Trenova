@@ -67,7 +67,7 @@ func newGetDetentionOccurrenceTool(
 	return newGetTool(&getSpec{
 		name:     "get_detention_occurrence",
 		entity:   "detention occurrence",
-		resource: permission.ResourceDetentionPolicy,
+		resource: permission.ResourceDetention,
 		kinds:    []permission.RecordKind{permission.KindDetentionOccurrence},
 		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time, " +
 			"billable minutes, amounts, notice status, and the evidence and notices on file. " +

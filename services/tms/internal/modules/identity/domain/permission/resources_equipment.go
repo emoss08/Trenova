@@ -25,7 +25,7 @@ func (r *Registry) registerEquipmentResources() {
 		Description: "Trailer fleet management",
 		Category:    "Equipment",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View trailers"},
+			{Operation: OpRead, DisplayName: "View", Description: "View trailers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add new trailers"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify trailer information"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export trailer data"},
@@ -46,7 +46,7 @@ func (r *Registry) registerEquipmentResources() {
 		Description: "Tractor fleet management",
 		Category:    "Equipment",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View tractors"},
+			{Operation: OpRead, DisplayName: "View", Description: "View tractors"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add new tractors"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify tractor information"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export tractor data"},
@@ -65,7 +65,7 @@ func (r *Registry) registerEquipmentResources() {
 		Resource:           ResourceFleetCode.String(),
 		DisplayName:        "Fleet Code",
 		Description:        "Fleet code definitions",
-		Category:           "Equipment",
+		Category:           "Dispatch",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

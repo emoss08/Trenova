@@ -5,9 +5,9 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		Resource:    ResourceFuelCard.String(),
 		DisplayName: "Fuel Card",
 		Description: "Fuel cards issued by a card provider and assigned to a driver or tractor",
-		Category:    "Fuel & IFTA",
+		Category:    "Fuel & tax",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View fuel cards"},
+			{Operation: OpRead, DisplayName: "View", Description: "View fuel cards"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Register a fuel card"},
 			{
 				Operation:   OpUpdate,
@@ -31,9 +31,9 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		Resource:    ResourceFuelPurchase.String(),
 		DisplayName: "Fuel Purchase",
 		Description: "Fuel bought for a tractor, recorded by hand or imported from a card statement",
-		Category:    "Fuel & IFTA",
+		Category:    "Fuel & tax",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View fuel purchases"},
+			{Operation: OpRead, DisplayName: "View", Description: "View fuel purchases"},
 			{Operation: OpCreate, DisplayName: "Record", Description: "Record a fuel purchase"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Correct a fuel purchase"},
 			{
@@ -60,10 +60,10 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		Resource:       ResourceFuelPurchaseImport.String(),
 		DisplayName:    "Fuel Purchase Import",
 		Description:    "A fuel card statement staged for review before its rows become purchases",
-		Category:       "Fuel & IFTA",
+		Category:       "Fuel & tax",
 		ParentResource: ResourceFuelPurchase.String(),
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View staged statements"},
+			{Operation: OpRead, DisplayName: "View", Description: "View staged statements"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Open a statement import"},
 			{
 				Operation:   OpImport,
@@ -84,9 +84,9 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		DisplayName: "Jurisdiction Mileage",
 		Description: "Miles a tractor ran in a jurisdiction that routing did not capture, " +
 			"such as deadhead between shipments",
-		Category: "Fuel & IFTA",
+		Category: "Fuel & tax",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View mileage entries"},
+			{Operation: OpRead, DisplayName: "View", Description: "View mileage entries"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Record a mileage entry"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Correct a mileage entry"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove a mileage entry"},
@@ -99,11 +99,11 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		Resource:    ResourceIFTAReturn.String(),
 		DisplayName: "IFTA Return",
 		Description: "Quarterly fuel tax return built from jurisdiction miles and tax-paid gallons",
-		Category:    "Fuel & IFTA",
+		Category:    "Fuel & tax",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
-				DisplayName: "Read",
+				DisplayName: "View",
 				Description: "View returns, their lines and diagnostics",
 			},
 			{
@@ -150,9 +150,9 @@ func (r *Registry) registerFuelAndIFTAResources() {
 			"This data is global: it has no organization column and every tenant " +
 			"reads the same rows, so a change here alters what every organization's " +
 			"return owes.",
-		Category: "Fuel & IFTA",
+		Category: "Fuel & tax",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View tax rates"},
+			{Operation: OpRead, DisplayName: "View", Description: "View tax rates"},
 			{
 				Operation:   OpManage,
 				DisplayName: "Manage",

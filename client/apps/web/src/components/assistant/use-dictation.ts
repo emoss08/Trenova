@@ -1,11 +1,19 @@
+import { markSpeechServiceMissing, useSpeechServiceMissing } from "@/lib/speech-service";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Whether dictation can run here at all, and if not, which of the reasons a
  * person could be told about. Each has a different remedy, so they are not
- * folded into one "unsupported".
+ * folded into one "unsupported". "no-service" is a browser with the speech
+ * API and nothing behind it, found by an attempt that failed
+ * (lib/speech-service.ts).
  */
-export type DictationAvailability = "available" | "unsupported" | "insecure" | "blocked";
+export type DictationAvailability =
+  | "available"
+  | "unsupported"
+  | "insecure"
+  | "blocked"
+  | "no-service";
 
 /**
  * Why an attempt ended without the person ending it. Each maps to one
@@ -16,6 +24,7 @@ export type DictationIssue =
   | "denied"
   | "blocked"
   | "service"
+  | "no-service"
   | "no-microphone"
   | "microphone-busy"
   | "network"
@@ -64,6 +73,68 @@ export type DictationScope = {
 /** How long a stopped recogniser may take to hand back its last phrase before it is let go. */
 const STOP_GRACE_MS = 1500;
 
+/**
+ * A recogniser that ends this soon after it started did not end on a pause:
+ * it could not listen at all, as on a browser without a speech service.
+ */
+const QUICK_END_MS = 1000;
+
+/** How many quick ends in a row mean the recogniser cannot listen here, rather than a blip. */
+const MAX_QUICK_ENDS = 3;
+
+/** How long the microphone stays open with nothing heard before dictation lets it go. */
+const MAX_SILENCE_MS = 30_000;
+
+/**
+ * What a recogniser that ended without the person stopping it can be
+ * started again after. Browsers end a continuous session on their own after
+ * a pause, at a time limit, or on a dropped connection; the person is still
+ * dictating. Anything else, such as a refused or missing microphone, is the
+ * end of the session.
+ */
+const RESUMABLE: ReadonlySet<DictationIssue | null> = new Set([null, "no-speech", "network"]);
+
+/** How a recogniser that ended on its own was doing, for deciding whether to listen again. */
+export type RecognitionEnding = {
+  issue: DictationIssue | null;
+  /** How long it listened, in milliseconds. */
+  ranFor: number;
+  /** How many recognisers before it in a row ended quickly. */
+  quickEnds: number;
+  /** How long since anything was heard, in milliseconds. */
+  silentFor: number;
+  /** Whether the browser says it is online: a missing service, not a lost connection. */
+  online: boolean;
+};
+
+/**
+ * Whether dictation listens again after a recogniser ended without the
+ * person stopping it, or why it stops: what it ended on, unless that is one
+ * a fresh recogniser gets past; a recogniser that keeps ending as soon as it
+ * starts; or a microphone left open with nothing said. One that keeps failing
+ * on the network while the browser is online has no speech service behind
+ * it, as in Helium, Brave and Arc.
+ */
+export function afterRecognitionEnds(
+  ending: RecognitionEnding,
+): { resume: true; quickEnds: number } | { resume: false; issue: DictationIssue | null } {
+  if (!RESUMABLE.has(ending.issue)) {
+    return { resume: false, issue: ending.issue };
+  }
+  const quickEnds = ending.ranFor < QUICK_END_MS ? ending.quickEnds + 1 : 0;
+  if (quickEnds >= MAX_QUICK_ENDS) {
+    if (ending.issue === "network" && ending.online) {
+      return { resume: false, issue: "no-service" };
+    }
+    return { resume: false, issue: ending.issue ?? "failed" };
+  }
+  if (ending.silentFor >= MAX_SILENCE_MS) {
+    return { resume: false, issue: "no-speech" };
+  }
+
+  return { resume: true, quickEnds };
+}
+
 export function readDictationScope(): DictationScope {
   if (typeof window === "undefined") {
     return { recognition: null, secure: false, getUserMedia: null, policyAllowsMicrophone: null };
@@ -88,7 +159,10 @@ export function readDictationScope(): DictationScope {
   };
 }
 
-export function dictationAvailability(scope: DictationScope): DictationAvailability {
+export function dictationAvailability(
+  scope: DictationScope,
+  serviceMissing = false,
+): DictationAvailability {
   if (scope.recognition === null) {
     return "unsupported";
   }
@@ -99,7 +173,15 @@ export function dictationAvailability(scope: DictationScope): DictationAvailabil
     return "blocked";
   }
 
-  return "available";
+  return serviceMissing ? "no-service" : "available";
+}
+
+/**
+ * The issues that mean this browser cannot recognise speech at all, rather
+ * than that one attempt failed: the microphone is hidden here from then on.
+ */
+export function meansNoSpeechService(issue: DictationIssue | null): boolean {
+  return issue === "no-service" || issue === "service";
 }
 
 /**
@@ -184,6 +266,12 @@ type Session = {
   stoppedByPerson: boolean;
   issue: DictationIssue | null;
   graceTimer: number | null;
+  /** How many recognisers in a row ended as soon as they started. */
+  quickEnds: number;
+  /** When something was last heard, or the session began; epoch milliseconds. */
+  heardAt: number;
+  /** The guess in progress, kept if its recogniser ends before it is final. */
+  interim: string;
 };
 
 /**
@@ -195,6 +283,11 @@ type Session = {
  * the moment listening ends. `onTranscript` receives each finished phrase,
  * `onInterim` the guess in progress, and `onEnd` fires once when a session
  * the person did not abort lets go, after its last phrase has landed.
+ *
+ * A session lasts until the person stops it. Browsers end a continuous
+ * recogniser on their own, after a pause or a minute or a dropped
+ * connection; a fresh one takes over on the same microphone, so dictation
+ * does not stop mid-thought (afterRecognitionEnds).
  */
 export function useDictation({
   lang,
@@ -213,6 +306,7 @@ export function useDictation({
   const [phase, setPhase] = useState<DictationPhase>("idle");
   const [issue, setIssue] = useState<DictationIssue | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const serviceMissing = useSpeechServiceMissing();
   const sessionRef = useRef<Session | null>(null);
   const callbacksRef = useRef({ onTranscript, onInterim, onEnd });
   useEffect(() => {
@@ -222,7 +316,7 @@ export function useDictation({
   // What the page supports does not change while it is open, so it is read
   // once rather than on every render.
   const scope = useMemo(() => scopeOverride ?? readDictationScope(), [scopeOverride]);
-  const availability = dictationAvailability(scope);
+  const availability = dictationAvailability(scope, serviceMissing);
 
   const finish = useCallback(
     (session: Session, ending: { issue: DictationIssue | null; silent: boolean }) => {
@@ -239,6 +333,9 @@ export function useDictation({
       setPhase("idle");
       if (ending.issue !== null) {
         setIssue(ending.issue);
+      }
+      if (meansNoSpeechService(ending.issue)) {
+        markSpeechServiceMissing();
       }
       if (!ending.silent) {
         callbacksRef.current.onEnd?.();
@@ -283,57 +380,94 @@ export function useDictation({
 
   const begin = useCallback(
     (session: Session, Recognition: RecognitionConstructor) => {
-      if (sessionRef.current !== session) {
-        return;
-      }
-      const recognition = new Recognition();
-      recognition.lang = lang ?? (typeof navigator === "undefined" ? "en-US" : navigator.language);
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-      recognition.onstart = () => {
-        if (sessionRef.current === session && !session.stoppedByPerson) {
-          setPhase("listening");
-        }
-      };
-      recognition.onresult = (event) => {
+      const listen = () => {
         if (sessionRef.current !== session) {
           return;
         }
-        // Every final in one event is committed together: calling back once
-        // per final let a second phrase overwrite the first.
-        let finished = "";
-        let interim = "";
-        for (let index = event.resultIndex; index < event.results.length; index += 1) {
-          const result = event.results[index];
-          const transcript = result[0]?.transcript ?? "";
-          if (result.isFinal) {
-            finished = joinSpoken(finished, transcript);
-          } else {
-            interim += transcript;
+        const recognition = new Recognition();
+        recognition.lang =
+          lang ?? (typeof navigator === "undefined" ? "en-US" : navigator.language);
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        const startedAt = Date.now();
+        recognition.onstart = () => {
+          if (sessionRef.current === session && !session.stoppedByPerson) {
+            setPhase("listening");
           }
+        };
+        recognition.onresult = (event) => {
+          if (sessionRef.current !== session || session.recognition !== recognition) {
+            return;
+          }
+          // Every final in one event is committed together: calling back once
+          // per final let a second phrase overwrite the first.
+          let finished = "";
+          let interim = "";
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const result = event.results[index];
+            const transcript = result[0]?.transcript ?? "";
+            if (result.isFinal) {
+              finished = joinSpoken(finished, transcript);
+            } else {
+              interim += transcript;
+            }
+          }
+          if (finished !== "" || interim.trim() !== "") {
+            session.heardAt = Date.now();
+          }
+          session.interim = interim.trim();
+          if (finished !== "") {
+            callbacksRef.current.onTranscript(finished);
+          }
+          callbacksRef.current.onInterim?.(session.interim);
+        };
+        recognition.onerror = (event) => {
+          if (sessionRef.current !== session || session.recognition !== recognition) {
+            return;
+          }
+          session.issue = issueFromRecognitionError(event.error, session.stoppedByPerson);
+        };
+        recognition.onend = () => {
+          if (sessionRef.current !== session || session.recognition !== recognition) {
+            return;
+          }
+          if (session.stoppedByPerson) {
+            finish(session, { issue: session.issue, silent: false });
+            return;
+          }
+          const now = Date.now();
+          const next = afterRecognitionEnds({
+            issue: session.issue,
+            ranFor: now - startedAt,
+            quickEnds: session.quickEnds,
+            silentFor: now - session.heardAt,
+            online: typeof navigator === "undefined" || navigator.onLine !== false,
+          });
+          if (!next.resume) {
+            finish(session, { issue: next.issue, silent: false });
+            return;
+          }
+          // The guess it had not finished is kept as said: the recogniser
+          // that heard it is gone and will not finish it.
+          if (session.interim !== "") {
+            callbacksRef.current.onTranscript(session.interim);
+            callbacksRef.current.onInterim?.("");
+            session.interim = "";
+          }
+          session.quickEnds = next.quickEnds;
+          session.issue = null;
+          listen();
+        };
+        session.recognition = recognition;
+        try {
+          recognition.start();
+        } catch {
+          session.recognition = null;
+          finish(session, { issue: "failed", silent: false });
         }
-        if (finished !== "") {
-          callbacksRef.current.onTranscript(finished);
-        }
-        callbacksRef.current.onInterim?.(interim.trim());
       };
-      recognition.onerror = (event) => {
-        if (sessionRef.current !== session) {
-          return;
-        }
-        session.issue = issueFromRecognitionError(event.error, session.stoppedByPerson);
-      };
-      recognition.onend = () => {
-        finish(session, { issue: session.issue, silent: false });
-      };
-      session.recognition = recognition;
-      try {
-        recognition.start();
-      } catch {
-        session.recognition = null;
-        finish(session, { issue: "failed", silent: false });
-      }
+      listen();
     },
     [finish, lang],
   );
@@ -341,7 +475,7 @@ export function useDictation({
   const start = useCallback(() => {
     const current = scope;
     const Recognition = current.recognition;
-    if (dictationAvailability(current) !== "available" || Recognition === null) {
+    if (dictationAvailability(current, serviceMissing) !== "available" || Recognition === null) {
       return;
     }
     // A session still handing back its last phrase gives way to a new one.
@@ -357,6 +491,9 @@ export function useDictation({
       stoppedByPerson: false,
       issue: null,
       graceTimer: null,
+      quickEnds: 0,
+      heardAt: Date.now(),
+      interim: "",
     };
     sessionRef.current = session;
     setIssue(null);
@@ -380,7 +517,7 @@ export function useDictation({
         finish(session, { issue: issueFromMediaError(error), silent: false });
       },
     );
-  }, [begin, finish, scope]);
+  }, [begin, finish, scope, serviceMissing]);
 
   const toggle = useCallback(() => {
     if (sessionRef.current && phase !== "idle") {

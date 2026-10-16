@@ -101,7 +101,9 @@ again instead.
 - **Confidence.** A value whose confidence is below `0.8` is **held**. So is a field two citations
   give different values for, or a value the spec's own sample X12 contradicts. A held value is
   left unset, or at the partner's current value on a re-run, and the review lists it under *To
-  decide* with each candidate, its page and quote. The planner never picks between them.
+  decide* with each candidate, its page and quote. The planner never picks between them. A single
+  unsure value that is the one already saved is **kept** instead, citing its page: nothing changes
+  whichever way a person would answer, so a revised guide's draft is not held on it.
 - **Samples are evidence.** A sample's ISA/GS envelope is parsed rather than read by a model, so a
   value taken from it cites the sample's page and its ISA segment. A sample printed in a PDF reads
   back with its fixed-width padding squeezed and its long lines wrapped; the finder joins the

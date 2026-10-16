@@ -40,7 +40,8 @@ func New(p Params) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	resource := permission.ResourceDetentionPolicy.String()
+	resource := permission.ResourceDetention.String()
+	policy := permission.ResourceDetentionPolicy.String()
 
 	api := rg.Group("/detention")
 	api.GET("/desk/", h.pm.RequirePermission(resource, permission.OpRead), h.desk)
@@ -65,7 +66,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpUpdate),
 		h.approve,
 	)
-	api.POST("/backtest/", h.pm.RequirePermission(resource, permission.OpRead), h.backtest)
+	api.POST("/backtest/", h.pm.RequirePermission(policy, permission.OpRead), h.backtest)
 	api.GET("/facilities/", h.pm.RequirePermission(resource, permission.OpRead), h.facilities)
 	api.GET("/customers/", h.pm.RequirePermission(resource, permission.OpRead), h.customers)
 	api.GET("/waivers/", h.pm.RequirePermission(resource, permission.OpRead), h.waivers)

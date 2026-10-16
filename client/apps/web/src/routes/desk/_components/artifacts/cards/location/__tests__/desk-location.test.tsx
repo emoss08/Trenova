@@ -194,7 +194,7 @@ function section(title: string): HTMLElement {
 beforeEach(() => {
   seedPermissions({
     [Resource.Location]: Operation.Read,
-    [Resource.DetentionPolicy]: Operation.Read,
+    [Resource.Detention]: Operation.Read,
     [Resource.Shipment]: Operation.Read,
     [Resource.ServiceFailure]: Operation.Read,
   });
