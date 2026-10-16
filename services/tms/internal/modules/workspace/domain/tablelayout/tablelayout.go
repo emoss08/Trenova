@@ -50,7 +50,7 @@ type Layout struct {
 	PinnedRowIDs              []string                          `json:"pinnedRowIds"`
 	PinnedRowsCollapsed       bool                              `json:"pinnedRowsCollapsed"`
 	LastSeenAt                int64                             `json:"lastSeenAt"`
-	HideChangesSinceLastVisit bool                              `json:"hideChangesSinceLastVisit"`
+	MarkChangesSinceLastVisit bool                              `json:"markChangesSinceLastVisit"`
 	HideTotals                bool                              `json:"hideTotals"`
 	Virtualized               bool                              `json:"virtualized"`
 }

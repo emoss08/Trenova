@@ -44,6 +44,16 @@ const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   sidebar: "before:from-sidebar after:from-sidebar",
 };
 
+/*
+ * The viewport is the root's only child in flow (the scrollbar, corner and fades
+ * are positioned), so the root is a column it fills. A root given only a
+ * max-height then still bounds the viewport: a percentage height cannot resolve
+ * against a max-height, and a viewport sized `h-full` alone grew to its content
+ * while the root clipped it, leaving nothing to scroll.
+ */
+const SCROLL_AREA_ROOT_CLASS = "relative flex flex-col overflow-hidden";
+const SCROLL_AREA_VIEWPORT_CLASS = "size-full min-h-0 flex-1";
+
 /** How far a mouse must move before a press becomes a drag rather than a click. */
 const DRAG_THRESHOLD = 4;
 
@@ -243,11 +253,11 @@ const ScrollArea = React.forwardRef<
             role="group"
             data-slot="scroll-area"
             aria-roledescription="scroll area"
-            className={cn("relative overflow-hidden", className)}
+            className={cn(SCROLL_AREA_ROOT_CLASS, className)}
           >
             <div
               ref={setViewport}
-              className={cn("size-full overflow-auto", viewportClassName)}
+              className={cn(SCROLL_AREA_VIEWPORT_CLASS, "overflow-auto", viewportClassName)}
               tabIndex={0}
             >
               {children}
@@ -265,14 +275,15 @@ const ScrollArea = React.forwardRef<
           <ScrollAreaPrimitive.Root
             ref={ref}
             data-slot="scroll-area"
-            className={cn("relative overflow-hidden", viewportClassName, className)}
+            className={cn(SCROLL_AREA_ROOT_CLASS, viewportClassName, className)}
             {...props}
           >
             <ScrollAreaPrimitive.Viewport
               ref={setViewport}
               data-slot="scroll-area-viewport"
               className={cn(
-                "ui-focus-ring size-full rounded-[inherit]",
+                SCROLL_AREA_VIEWPORT_CLASS,
+                "ui-focus-ring rounded-[inherit]",
                 dragToScroll &&
                   "cursor-grab data-dragging:cursor-grabbing data-dragging:select-none",
                 viewportClassName,

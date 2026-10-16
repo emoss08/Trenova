@@ -152,8 +152,9 @@ export function StudioSkeleton({ className }: { className?: string }) {
         <span className="flex-1" />
         <Skeleton className="h-7 w-32" />
         <Skeleton className="h-7 w-20" />
+        <Skeleton className="size-7 rounded-md" />
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] min-[900px]:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
         <div className="hidden flex-col gap-4 border-r p-4 min-[1180px]:flex">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-3.5 w-40" />
@@ -161,7 +162,7 @@ export function StudioSkeleton({ className }: { className?: string }) {
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-20 w-full rounded-lg" />
         </div>
-        <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5">
+        <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5 max-[900px]:px-4">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-8 w-2/3" />
             <Skeleton className="h-4 w-full" />
@@ -170,7 +171,7 @@ export function StudioSkeleton({ className }: { className?: string }) {
           <ExpressionSectionSkeleton />
           <BreakdownSectionSkeleton />
         </div>
-        <div className="flex flex-col border-l">
+        <div className="bg-card border-border-strong my-2 mr-2 hidden flex-col overflow-hidden rounded-lg border min-[900px]:flex">
           <div className="flex h-10 items-center gap-3 border-b px-3">
             <Skeleton className="h-4 w-14" />
             <Skeleton className="h-4 w-16" />

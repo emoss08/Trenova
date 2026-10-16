@@ -130,7 +130,10 @@ export function SubmitReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="xl" className="flex max-h-[88vh] flex-col gap-0 p-0">
+      <DialogContent
+        size="xl"
+        className="max-h-[88vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0"
+      >
         <DialogHeader className="border-b px-5 pt-5 pb-4">
           <DialogTitle>{t("Submit for review")}</DialogTitle>
           <DialogDescription>
@@ -139,7 +142,7 @@ export function SubmitReviewDialog({
             )}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea maskVariant="card" className="min-h-0 flex-1">
+        <ScrollArea maskVariant="card" className="min-h-0">
           <div className="grid grid-cols-1 gap-5 px-5 py-4 md:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label>{t("Readiness")}</Label>

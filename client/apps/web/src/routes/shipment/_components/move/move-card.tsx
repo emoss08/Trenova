@@ -296,7 +296,7 @@ export function MoveCard({
         </DropdownMenu>
       </div>
 
-      <ScrollArea className="max-h-62.5 px-4 py-2">
+      <ScrollArea maskVariant="card" className="max-h-62.5 px-4 py-2">
         <div className="relative space-y-2 py-2">
           {stops.map((stop, stopIdx) => {
             const isLast = stopIdx === stops.length - 1;

@@ -34,6 +34,12 @@ export type UrlFilterState = {
   filterGroups: FilterGroup[];
 };
 
+/**
+ * The add-record menu's own "New …" action. A table that passes an action with
+ * this id replaces the default one, keeping its place at the top of the menu.
+ */
+export const DEFAULT_CREATE_ACTION_ID = "default-create";
+
 export function filterItemsToUrlFilterState(items: FilterItem[]): UrlFilterState {
   const fieldFilters: FieldFilter[] = [];
   const filterGroups: FilterGroup[] = [];
@@ -294,8 +300,7 @@ function toFilterableField(id: string, field: DataTableFilterField): FilterableF
     filterType: field.filterType,
     filterOptions: field.filterOptions,
     filterRecord: field.filterRecord,
-    defaultOperator:
-      field.defaultFilterOperator ?? getDefaultOperatorForVariant(field.filterType),
+    defaultOperator: field.defaultFilterOperator ?? getDefaultOperatorForVariant(field.filterType),
   };
 }
 

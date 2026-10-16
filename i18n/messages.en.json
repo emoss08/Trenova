@@ -15825,6 +15825,15 @@
       "go/other"
     ]
   },
+  "Add Trenova's vetted rating library, from per mile to per CWT, as drafts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Add US federal holidays": {
     "sites": 1,
     "scope": [
@@ -17771,15 +17780,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Add the vetted standard rating library (per mile, per CWT, ...).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Add the workspace ID": {
@@ -40271,6 +40271,15 @@
       "go/other"
     ]
   },
+  "Bring in templates from a JSON file exported from Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Bring it back at": {
     "sites": 1,
     "scope": [
@@ -53371,12 +53380,13 @@
     ]
   },
   "Close panel": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/formula-template",
       "routes/shipment",
       "routes/worker"
     ]
@@ -113942,6 +113952,15 @@
       "routes/formula-template"
     ]
   },
+  "Hide panel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Hide password": {
     "sites": 1,
     "scope": [
@@ -118325,15 +118344,6 @@
   },
   "Import templates": {
     "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Import templates from an exported JSON file.": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -149693,12 +149703,13 @@
     ]
   },
   "New formula template": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "routes/formula-template"
     ]
   },
   "New fuel surcharge program": {
@@ -233671,6 +233682,15 @@
       "routes/billing-queue"
     ]
   },
+  "Show panel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Show password": {
     "sites": 1,
     "scope": [
@@ -271111,11 +271131,12 @@
     ]
   },
   "Toggle side panel": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/shipment"
     ]
   },
@@ -296961,6 +296982,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Write a rating formula from a blank template in the studio.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Write a reply to the sender": {

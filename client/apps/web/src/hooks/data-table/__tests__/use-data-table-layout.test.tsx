@@ -39,7 +39,7 @@ type Props = {
   formatRules: TableFormatRule[];
   activeViewId: string | null;
   pinnedRowsCollapsed?: boolean;
-  hideChangesSinceLastVisit?: boolean;
+  markChangesSinceLastVisit?: boolean;
   hideTotals?: boolean;
   virtualized?: boolean;
 };
@@ -61,7 +61,7 @@ function setup(savedLayout: unknown) {
       formatRules,
       activeViewId,
       pinnedRowsCollapsed = false,
-      hideChangesSinceLastVisit = false,
+      markChangesSinceLastVisit = false,
       hideTotals = false,
       virtualized = false,
     }: Props) => {
@@ -81,7 +81,7 @@ function setup(savedLayout: unknown) {
         formatRules,
         activeViewId,
         pinnedRowsCollapsed,
-        hideChangesSinceLastVisit,
+        markChangesSinceLastVisit,
         hideTotals,
         virtualized,
       });
@@ -307,6 +307,42 @@ describe("useDataTableLayout", () => {
     expect(hook.result.current.layout.readSaved()).toMatchObject({ virtualized: false });
   });
 
+  it("keeps whether the person marks changes since their last visit, and reads it back", async () => {
+    const hook = setup(null);
+    await settle(hook);
+    await arm(hook);
+
+    hook.rerender({
+      density: "comfortable",
+      formatRules: NO_RULES,
+      activeViewId: null,
+      markChangesSinceLastVisit: true,
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(saveMock).toHaveBeenCalledWith(
+      "shipment",
+      expect.objectContaining({ markChangesSinceLastVisit: true }),
+    );
+
+    const restored = setup({ markChangesSinceLastVisit: true });
+    await settle(restored);
+    expect(restored.result.current.layout.readSaved()).toMatchObject({
+      markChangesSinceLastVisit: true,
+    });
+  });
+
+  it("reads a layout saved when marking changes was on by default as not marking them", async () => {
+    const hook = setup({ density: "compact", hideChangesSinceLastVisit: false });
+    await settle(hook);
+
+    expect(hook.result.current.layout.readSaved()).toMatchObject({
+      markChangesSinceLastVisit: false,
+    });
+  });
+
   it("reads back pinned rows saved earlier", async () => {
     const hook = setup({ pinnedRowIds: ["shp_1"], pinnedRowsCollapsed: true });
     await settle(hook);
@@ -328,7 +364,10 @@ describe("useDataTableLayout", () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
 
-    expect(saveMock).toHaveBeenCalledWith("shipment", expect.objectContaining({ lastSeenAt: 1000 }));
+    expect(saveMock).toHaveBeenCalledWith(
+      "shipment",
+      expect.objectContaining({ lastSeenAt: 1000 }),
+    );
   });
 
   it("moves the last visit to the moment the person leaves the table", async () => {
@@ -344,7 +383,10 @@ describe("useDataTableLayout", () => {
       await Promise.resolve();
     });
 
-    expect(saveMock).toHaveBeenCalledWith("shipment", expect.objectContaining({ lastSeenAt: 5000 }));
+    expect(saveMock).toHaveBeenCalledWith(
+      "shipment",
+      expect.objectContaining({ lastSeenAt: 5000 }),
+    );
   });
 
   it("sends a save that was waiting when the table goes away", async () => {

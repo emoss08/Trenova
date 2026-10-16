@@ -123,15 +123,31 @@ export const tableLayoutSchema = tableConfigSchema
       .nullish()
       .catch(null)
       .transform((v) => v ?? []),
-    pinnedRowsCollapsed: z.boolean().nullish().catch(null).transform((v) => v ?? false),
-    lastSeenAt: z.number().nullish().catch(null).transform((v) => v ?? 0),
-    hideChangesSinceLastVisit: z
+    pinnedRowsCollapsed: z
       .boolean()
       .nullish()
       .catch(null)
       .transform((v) => v ?? false),
-    hideTotals: z.boolean().nullish().catch(null).transform((v) => v ?? false),
-    virtualized: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+    lastSeenAt: z
+      .number()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? 0),
+    markChangesSinceLastVisit: z
+      .boolean()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? false),
+    hideTotals: z
+      .boolean()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? false),
+    virtualized: z
+      .boolean()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? false),
   });
 
 export type TableLayout = z.infer<typeof tableLayoutSchema>;
