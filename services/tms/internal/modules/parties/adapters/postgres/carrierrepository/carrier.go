@@ -713,6 +713,32 @@ func (r *repository) ListEDIChannels(
 	})
 }
 
+func (r *repository) ListEDIChannelsByPartner(
+	ctx context.Context,
+	req carrierports.ListCarrierEDIChannelsByPartnerRequest,
+) ([]*carrier.CarrierEDIChannel, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.CarrierEDIChannel, error) {
+		cols := carriercol.CarrierEDIChannelColumns
+		entities := make([]*carrier.CarrierEDIChannel, 0, 4)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation("Carrier").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
+					Where(cols.EDIPartnerID.Eq(), req.EDIPartnerID)
+			}).
+			Order(cols.IsDefault.OrderDesc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list carrier EDI channels by partner", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetDefaultEDIChannel(
 	ctx context.Context,
 	req carrierports.GetCarrierEDIChannelRequest,

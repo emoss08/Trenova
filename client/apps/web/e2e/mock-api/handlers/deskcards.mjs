@@ -24,6 +24,7 @@ import { DESK_EDI_FILE_TENDERS, deskEdiTransfers } from "../fixtures/desk-edi-tr
 import { deskInvoices } from "../fixtures/desk-invoices.mjs";
 import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-settlements.mjs";
 import { deskDetentions } from "../fixtures/desk-detention.mjs";
+import { deskEdiPartners } from "../fixtures/desk-edi-partners.mjs";
 import { hash } from "../state.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { userSelectOptions } from "./settings.mjs";
@@ -476,6 +477,38 @@ export const DESK_CARD_HANDLERS = {
         : record,
     };
   },
+  DeskEdiPartnerCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = deskEdiPartners(state.anchor)[variables.id];
+    if (!fixture) {
+      throw new TriageError("EDIPartner not found", { code: "NOT_FOUND", type: "not-found" });
+    }
+    if (!empty(state)) return { ediPartnerCard: fixture.card };
+    const card = fixture.card;
+    return {
+      ediPartnerCard: {
+        ...card,
+        transports: [],
+        mappings: { profileId: null, updatedAt: null, counts: [] },
+        activity: { ...card.activity, sets: [], series: [], ackStatusCounts: [] },
+        attention: {
+          ...card.attention,
+          overdueAckCount: 0,
+          oldestOverdueAt: null,
+          overdueAcks: [],
+          deadLettered: [],
+          quarantinedFiles: [],
+        },
+        carriers: card.carriers === null ? null : [],
+      },
+    };
+  },
+  DeskEdiPartnerMessages: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = deskEdiPartners(state.anchor)[variables.partnerId];
+    const rows = fixture && !empty(state) ? fixture.messages : [];
+    return { ediMessages: connectionPage(rows, variables.input, variables.includeTotalCount) };
+  },
   DeskDetentionCard: (state, variables) => {
     if (held(state)) return HOLD;
     const fixture = deskDetentions(state.anchor)[variables.id];
@@ -671,6 +704,52 @@ function emailAttempt(fixture) {
 }
 
 export const DESK_CARD_ROUTES = [
+  [
+    "POST",
+    /^\/api\/v1\/edi\/communication-profiles\/[a-z0-9_]+\/test-connection\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const failing = path.includes("edicp_acme_sftp");
+      return {
+        success: !failing,
+        checks: failing
+          ? [
+              {
+                name: "Host reachable",
+                status: "passed",
+                message: "sftp.acmefoods.example:22 answered",
+              },
+              { name: "Host key", status: "passed", message: "Matches the pinned ED25519 key" },
+              {
+                name: "Sign in",
+                status: "failed",
+                message: "ssh: unable to authenticate, attempted methods [none publickey]",
+              },
+            ]
+          : [
+              {
+                name: "Endpoint reachable",
+                status: "passed",
+                message: "https://edi.tyson.example/as2 answered 200",
+              },
+              {
+                name: "Certificates",
+                status: "passed",
+                message: "Every certificate is valid for 230 days or more",
+              },
+            ],
+      };
+    },
+  ],
+  [
+    "POST",
+    /^\/api\/v1\/edi\/communication-profiles\/[a-z0-9_]+\/poll\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const profileId = path.match(/communication-profiles\/([a-z0-9_]+)/)?.[1] ?? "";
+      return { profileId, stagedFileIds: [], skippedFiles: 0 };
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/billing\/invoices\/[a-z0-9_]+\/email-attempts\/?$/,

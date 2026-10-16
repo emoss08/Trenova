@@ -262,13 +262,20 @@ func (r *repository) ListRecentQuarantined(
 			limit = 10
 		}
 		entities := make([]*edi.EDIInboundFile, 0, limit)
-		if err := r.db.DBForContext(ctx).
+		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			ExcludeColumn("raw_content").
 			Relation("Partner").
 			Where(cols.Status.Eq(), edi.InboundFileStatusQuarantined).
-			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo))
+		if req.PartnerID.IsNotNil() {
+			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+		}
+		if req.Since > 0 {
+			query = query.Where(cols.ReceivedAt.Gte(), req.Since)
+		}
+		if err := query.
 			Order(cols.ReceivedAt.OrderDesc()).
 			Limit(int64(limit)).
 			Scan(ctx); err != nil {

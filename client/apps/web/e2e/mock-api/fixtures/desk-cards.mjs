@@ -5,6 +5,7 @@
 import { DESK_EDI_CONVERSATIONS } from "./desk-edi.mjs";
 import { DESK_EDI_FILE_CONVERSATIONS } from "./desk-edi-files.mjs";
 import { DESK_EDI_TRANSFER_CONVERSATIONS } from "./desk-edi-transfers.mjs";
+import { DESK_EDI_PARTNER_CONVERSATIONS } from "./desk-edi-partners.mjs";
 import { DESK_INVOICE_CONVERSATIONS } from "./desk-invoices.mjs";
 import {
   DESK_CARRIER_SETTLEMENT_CONVERSATIONS,
@@ -139,6 +140,12 @@ export function deskCardArtifacts(anchor) {
       Object.entries(DESK_EDI_TRANSFER_CONVERSATIONS).map(([slug, entry]) => [
         slug,
         artifact(slug, "edi_transfer", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_EDI_PARTNER_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "edi_partner", entry.recordId, entry.title),
       ]),
     ),
     ...Object.fromEntries(
@@ -2001,6 +2008,12 @@ const TURNS = {
   ),
   ...Object.fromEntries(
     Object.entries(DESK_EDI_TRANSFER_CONVERSATIONS).map(([slug, entry]) => [
+      slug,
+      [entry.question, entry.reply],
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(DESK_EDI_PARTNER_CONVERSATIONS).map(([slug, entry]) => [
       slug,
       [entry.question, entry.reply],
     ]),

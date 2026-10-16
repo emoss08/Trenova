@@ -1,0 +1,455 @@
+{
+  "now": 1790000000,
+  "card": {
+    "partner": {
+      "id": "edip_acme",
+      "kind": "External",
+      "status": "Active",
+      "code": "ACME",
+      "name": "Acme Foods",
+      "description": "Sends tenders by SFTP and takes invoices and status back",
+      "customerId": "cus_acme",
+      "internalOrganizationId": null,
+      "country": "US",
+      "timezone": "America/Chicago",
+      "contactName": "Jordan Webb",
+      "contactEmail": "edi@acmefoods.example",
+      "contactPhone": "(214) 555-0177",
+      "enabledForInbound": true,
+      "enabledForOutbound": true,
+      "updatedAt": 1788272000,
+      "internalOrganization": null,
+      "connection": null
+    },
+    "customer": {
+      "id": "cus_acme",
+      "name": "Acme Foods",
+      "code": "ACME"
+    },
+    "documentProfiles": [
+      {
+        "id": "edidp_acme_214",
+        "name": "Acme 214 status",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "214",
+        "functionalGroupId": "QM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "01",
+          "interchangeReceiverId": "078742193      ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "078742193",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 240
+        }
+      },
+      {
+        "id": "edidp_acme_210",
+        "name": "Acme 210 invoice",
+        "status": "Active",
+        "direction": "Outbound",
+        "transactionSet": "210",
+        "functionalGroupId": "IM",
+        "envelope": {
+          "interchangeSenderQualifier": "ZZ",
+          "interchangeSenderId": "TRENOVA        ",
+          "interchangeReceiverQualifier": "01",
+          "interchangeReceiverId": "078742193      ",
+          "applicationSenderCode": "TRENOVA",
+          "applicationReceiverCode": "078742193",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 1440
+        }
+      },
+      {
+        "id": "edidp_acme_204",
+        "name": "Acme 204 tender",
+        "status": "Active",
+        "direction": "Inbound",
+        "transactionSet": "204",
+        "functionalGroupId": "SM",
+        "envelope": {
+          "interchangeSenderQualifier": "01",
+          "interchangeSenderId": "078742193      ",
+          "interchangeReceiverQualifier": "ZZ",
+          "interchangeReceiverId": "TRENOVA        ",
+          "applicationSenderCode": "078742193",
+          "applicationReceiverCode": "TRENOVA",
+          "interchangeUsageIndicator": "P",
+          "elementSeparator": "*",
+          "segmentTerminator": "~",
+          "componentSeparator": ">",
+          "repetitionSeparator": "^"
+        },
+        "acknowledgment": {
+          "expected": true,
+          "type": "997",
+          "slaInMinutes": 0
+        }
+      }
+    ],
+    "transports": [
+      {
+        "profile": {
+          "id": "edicp_acme_sftp",
+          "name": "Acme mailbox",
+          "method": "SFTP",
+          "status": "Active",
+          "config": {
+            "host": "sftp.acmefoods.example",
+            "port": 22,
+            "username": "trenova",
+            "authMode": "privateKey",
+            "knownHostKey": "ssh-ed25519 AAAAC3Nz\u2026",
+            "outboundDirectory": "/inbound",
+            "inboundDirectory": "/outbound/tenders",
+            "archiveDirectory": "/outbound/archive",
+            "fileNamingPattern": "TRENOVA_{set}_{control}.edi"
+          }
+        },
+        "lastPollAttemptAt": 1789999820,
+        "lastPollSuccessAt": 1789990760,
+        "lastPollError": "ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain",
+        "credentials": [
+          {
+            "key": "knownHostKey",
+            "secret": false,
+            "required": true,
+            "onFile": true
+          },
+          {
+            "key": "password",
+            "secret": true,
+            "required": true,
+            "onFile": true
+          }
+        ],
+        "certificates": []
+      }
+    ],
+    "readiness": {
+      "ready": true,
+      "completedCount": 6,
+      "totalCount": 6,
+      "items": [
+        {
+          "key": "details",
+          "complete": true
+        },
+        {
+          "key": "communication-profile",
+          "complete": true
+        },
+        {
+          "key": "mappings",
+          "complete": true
+        },
+        {
+          "key": "inbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "outbound-document-profile",
+          "complete": true
+        },
+        {
+          "key": "test-case",
+          "complete": true
+        }
+      ]
+    },
+    "mappings": {
+      "profileId": "edimp_acme",
+      "updatedAt": 1789222400,
+      "counts": [
+        {
+          "entityType": "Location",
+          "count": 18
+        },
+        {
+          "entityType": "AccessorialCharge",
+          "count": 7
+        }
+      ]
+    },
+    "activity": {
+      "since": 1789395200,
+      "seriesSince": 1788790400,
+      "scorecard": {
+        "outboundTotal": 682,
+        "sentCount": 670,
+        "failedCount": 11,
+        "deadLetteredCount": 1,
+        "receivedCount": 641,
+        "deliverySuccessRate": 0.914,
+        "avgAckSeconds": 3120.0,
+        "p95AckSeconds": 16080.0,
+        "overdueAckCount": 0
+      },
+      "ackStatusCounts": [
+        {
+          "status": "Accepted",
+          "count": 601
+        },
+        {
+          "status": "AcceptedWithErrors",
+          "count": 3
+        },
+        {
+          "status": "Pending",
+          "count": 9
+        }
+      ],
+      "sets": [
+        {
+          "transactionSet": "210",
+          "direction": "Outbound",
+          "count": 58,
+          "failedCount": 0,
+          "deadLetteredCount": 1,
+          "lastAt": 1789989200
+        },
+        {
+          "transactionSet": "214",
+          "direction": "Outbound",
+          "count": 612,
+          "failedCount": 11,
+          "deadLetteredCount": 0,
+          "lastAt": 1789998500
+        },
+        {
+          "transactionSet": "204",
+          "direction": "Inbound",
+          "count": 37,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789990400
+        },
+        {
+          "transactionSet": "997",
+          "direction": "Inbound",
+          "count": 604,
+          "failedCount": 0,
+          "deadLetteredCount": 0,
+          "lastAt": 1789998140
+        }
+      ],
+      "series": [
+        {
+          "bucketStart": 1788854400,
+          "bucketSeconds": 3600,
+          "outboundCount": 90,
+          "sentCount": 90,
+          "failedCount": 0,
+          "receivedCount": 96
+        },
+        {
+          "bucketStart": 1788940800,
+          "bucketSeconds": 3600,
+          "outboundCount": 92,
+          "sentCount": 91,
+          "failedCount": 1,
+          "receivedCount": 94
+        },
+        {
+          "bucketStart": 1789027200,
+          "bucketSeconds": 3600,
+          "outboundCount": 88,
+          "sentCount": 88,
+          "failedCount": 0,
+          "receivedCount": 90
+        },
+        {
+          "bucketStart": 1789113600,
+          "bucketSeconds": 3600,
+          "outboundCount": 10,
+          "sentCount": 10,
+          "failedCount": 0,
+          "receivedCount": 12
+        },
+        {
+          "bucketStart": 1789200000,
+          "bucketSeconds": 3600,
+          "outboundCount": 6,
+          "sentCount": 6,
+          "failedCount": 0,
+          "receivedCount": 8
+        },
+        {
+          "bucketStart": 1789286400,
+          "bucketSeconds": 3600,
+          "outboundCount": 94,
+          "sentCount": 94,
+          "failedCount": 0,
+          "receivedCount": 96
+        },
+        {
+          "bucketStart": 1789372800,
+          "bucketSeconds": 3600,
+          "outboundCount": 96,
+          "sentCount": 94,
+          "failedCount": 2,
+          "receivedCount": 97
+        },
+        {
+          "bucketStart": 1789459200,
+          "bucketSeconds": 3600,
+          "outboundCount": 91,
+          "sentCount": 91,
+          "failedCount": 0,
+          "receivedCount": 95
+        },
+        {
+          "bucketStart": 1789545600,
+          "bucketSeconds": 3600,
+          "outboundCount": 98,
+          "sentCount": 98,
+          "failedCount": 0,
+          "receivedCount": 99
+        },
+        {
+          "bucketStart": 1789632000,
+          "bucketSeconds": 3600,
+          "outboundCount": 93,
+          "sentCount": 89,
+          "failedCount": 4,
+          "receivedCount": 91
+        },
+        {
+          "bucketStart": 1789718400,
+          "bucketSeconds": 3600,
+          "outboundCount": 12,
+          "sentCount": 12,
+          "failedCount": 0,
+          "receivedCount": 11
+        },
+        {
+          "bucketStart": 1789804800,
+          "bucketSeconds": 3600,
+          "outboundCount": 8,
+          "sentCount": 8,
+          "failedCount": 0,
+          "receivedCount": 6
+        },
+        {
+          "bucketStart": 1789891200,
+          "bucketSeconds": 3600,
+          "outboundCount": 92,
+          "sentCount": 89,
+          "failedCount": 3,
+          "receivedCount": 90
+        },
+        {
+          "bucketStart": 1789992000,
+          "bucketSeconds": 3600,
+          "outboundCount": 41,
+          "sentCount": 39,
+          "failedCount": 2,
+          "receivedCount": 9
+        }
+      ]
+    },
+    "attention": {
+      "overdueAckAgeSeconds": 14400,
+      "overdueAckCount": 3,
+      "oldestOverdueAt": 1789977680,
+      "overdueAcks": [
+        {
+          "id": "edimsg_acme_214_a",
+          "direction": "Outbound",
+          "transactionSet": "214",
+          "interchangeControlNumber": "000000611",
+          "status": "Generated",
+          "deliveryStatus": "Sent",
+          "deliveryAttempts": 1,
+          "deliveryLastAttemptAt": 1789977680,
+          "deliveryLastError": null,
+          "deliverySentAt": 1789977680,
+          "ackStatus": "Pending",
+          "ackReceivedAt": null,
+          "ackLastError": null,
+          "generatedAt": 1789977680
+        },
+        {
+          "id": "edimsg_acme_214_b",
+          "direction": "Outbound",
+          "transactionSet": "214",
+          "interchangeControlNumber": "000000612",
+          "status": "Generated",
+          "deliveryStatus": "Sent",
+          "deliveryAttempts": 1,
+          "deliveryLastAttemptAt": 1789979600,
+          "deliveryLastError": null,
+          "deliverySentAt": 1789979600,
+          "ackStatus": "Pending",
+          "ackReceivedAt": null,
+          "ackLastError": null,
+          "generatedAt": 1789979600
+        },
+        {
+          "id": "edimsg_acme_214_c",
+          "direction": "Outbound",
+          "transactionSet": "214",
+          "interchangeControlNumber": "000000615",
+          "status": "Generated",
+          "deliveryStatus": "Sent",
+          "deliveryAttempts": 1,
+          "deliveryLastAttemptAt": 1789984520,
+          "deliveryLastError": null,
+          "deliverySentAt": 1789984520,
+          "ackStatus": "Pending",
+          "ackReceivedAt": null,
+          "ackLastError": null,
+          "generatedAt": 1789984520
+        }
+      ],
+      "deadLettered": [
+        {
+          "id": "edimsg_acme_210_dl",
+          "direction": "Outbound",
+          "transactionSet": "210",
+          "interchangeControlNumber": "000000598",
+          "status": "Generated",
+          "deliveryStatus": "DeadLettered",
+          "deliveryAttempts": 5,
+          "deliveryLastAttemptAt": 1789971800,
+          "deliveryLastError": "550 Requested action not taken: mailbox unavailable",
+          "deliverySentAt": null,
+          "ackStatus": "NotExpected",
+          "ackReceivedAt": null,
+          "ackLastError": null,
+          "generatedAt": 1789967600
+        }
+      ],
+      "quarantinedFiles": [
+        {
+          "id": "ediinf_acme_csv",
+          "fileName": "acme_tenders_20261015_0731.csv",
+          "remotePath": "/outbound/tenders/acme_tenders_20261015_0731.csv",
+          "sizeBytes": 18432,
+          "failureReason": "The file does not begin with an ISA segment",
+          "receivedAt": 1789975820
+        }
+      ]
+    },
+    "carriers": []
+  }
+}

@@ -988,6 +988,74 @@ func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// GetPartnerSetActivity provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) GetPartnerSetActivity(ctx context.Context, req *ediports.GetEDIPartnerSetActivityRequest) ([]*ediports.EDIPartnerSetActivityRow, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPartnerSetActivity")
+	}
+
+	var r0 []*ediports.EDIPartnerSetActivityRow
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDIPartnerSetActivityRequest) ([]*ediports.EDIPartnerSetActivityRow, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDIPartnerSetActivityRequest) []*ediports.EDIPartnerSetActivityRow); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ediports.EDIPartnerSetActivityRow)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.GetEDIPartnerSetActivityRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_GetPartnerSetActivity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPartnerSetActivity'
+type MockEDIMessageRepository_GetPartnerSetActivity_Call struct {
+	*mock.Call
+}
+
+// GetPartnerSetActivity is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIVolumeSeriesRequest
+func (_e *MockEDIMessageRepository_Expecter) GetPartnerSetActivity(ctx any, req any) *MockEDIMessageRepository_GetPartnerSetActivity_Call {
+	return &MockEDIMessageRepository_GetPartnerSetActivity_Call{Call: _e.mock.On("GetPartnerSetActivity", ctx, req)}
+}
+
+func (_c *MockEDIMessageRepository_GetPartnerSetActivity_Call) Run(run func(ctx context.Context, req *ediports.GetEDIPartnerSetActivityRequest)) *MockEDIMessageRepository_GetPartnerSetActivity_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ediports.GetEDIPartnerSetActivityRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ediports.GetEDIPartnerSetActivityRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetPartnerSetActivity_Call) Return(eDIVolumePoints []*ediports.EDIPartnerSetActivityRow, err error) *MockEDIMessageRepository_GetPartnerSetActivity_Call {
+	_c.Call.Return(eDIVolumePoints, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetPartnerSetActivity_Call) RunAndReturn(run func(ctx context.Context, req *ediports.GetEDIPartnerSetActivityRequest) ([]*ediports.EDIPartnerSetActivityRow, error)) *MockEDIMessageRepository_GetPartnerSetActivity_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListMessages provides a mock function for the type MockEDIMessageRepository
 func (_mock *MockEDIMessageRepository) ListMessages(ctx context.Context, req *ediports.ListEDIMessagesRequest) (*pagination.ListResult[*edi.EDIMessage], error) {
 	ret := _mock.Called(ctx, req)

@@ -5,6 +5,7 @@ import {
   ediPartnerReadinessSchema,
   ediCertificateSummarySchema,
   ediConnectionTestResultSchema,
+  ediPollResultSchema,
   ediMappingPreviewSchema,
   ediMappingProfileItemSchema,
   ediMappingProfileSchema,
@@ -260,6 +261,11 @@ export class EDIService {
   public async testProfileConnection(profileId: string) {
     const response = await api.post(`/edi/communication-profiles/${profileId}/test-connection/`);
     return safeParse(ediConnectionTestResultSchema, response, "EDIConnectionTestResult");
+  }
+
+  public async pollProfile(profileId: string) {
+    const response = await api.post(`/edi/communication-profiles/${profileId}/poll/`);
+    return safeParse(ediPollResultSchema, response, "EDIPollResult");
   }
 
   public async inspectCertificate(certificate: string) {

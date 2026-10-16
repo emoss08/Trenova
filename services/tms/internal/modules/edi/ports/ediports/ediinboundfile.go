@@ -34,6 +34,8 @@ type GetEDIInboundFileStatusCountsRequest struct {
 
 type ListRecentQuarantinedEDIInboundFilesRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+	Since      int64                 `json:"since"`
 	Limit      int                   `json:"limit"`
 }
 

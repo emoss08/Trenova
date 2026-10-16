@@ -4140,6 +4140,11 @@ type EDIInboundFileEdge struct {
 	Cursor string              `json:"cursor"`
 }
 
+type EDIMappingCount struct {
+	EntityType edi.MappingEntityType `json:"entityType"`
+	Count      int                   `json:"count"`
+}
+
 type EDIMappingProfileConnection struct {
 	Edges      []*EDIMappingProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -4162,15 +4167,86 @@ type EDIMessageEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type EDIPartnerActivity struct {
+	// Start of the window the figures, ack counts and sets are counted over.
+	Since int `json:"since"`
+	// Start of the series, which is longer than the window.
+	SeriesSince     int                      `json:"seriesSince"`
+	Scorecard       *EDIPartnerScorecard     `json:"scorecard"`
+	AckStatusCounts []*EDISummaryStatusCount `json:"ackStatusCounts"`
+	Sets            []*EDIPartnerSetActivity `json:"sets"`
+	Series          []*EDIVolumePoint        `json:"series"`
+}
+
+type EDIPartnerAttention struct {
+	OverdueAckAgeSeconds int  `json:"overdueAckAgeSeconds"`
+	OverdueAckCount      int  `json:"overdueAckCount"`
+	OldestOverdueAt      *int `json:"oldestOverdueAt,omitempty"`
+	// The oldest overdue messages, a few at most.
+	OverdueAcks []*edi.EDIMessage `json:"overdueAcks"`
+	// Messages dead-lettered within the activity window, newest first.
+	DeadLettered []*edi.EDIMessage `json:"deadLettered"`
+	// Files from the partner set aside within the activity window, newest first.
+	QuarantinedFiles []*edi.EDIInboundFile `json:"quarantinedFiles"`
+}
+
+// Everything the Desk's EDI partner card draws about one partner, read in one request.
+// Credentials are named and said to be on file or not; no secret value or private key is
+// ever returned.
+type EDIPartnerCard struct {
+	Partner          *edi.EDIPartner                  `json:"partner"`
+	Customer         *EDIPartnerCustomer              `json:"customer,omitempty"`
+	DocumentProfiles []*edi.EDIPartnerDocumentProfile `json:"documentProfiles"`
+	Transports       []*EDIPartnerTransport           `json:"transports"`
+	Readiness        *EDIPartnerCardReadiness         `json:"readiness"`
+	Mappings         *EDIPartnerMappingSummary        `json:"mappings"`
+	Activity         *EDIPartnerActivity              `json:"activity"`
+	Attention        *EDIPartnerAttention             `json:"attention"`
+	// The carriers reached through the partner; null for someone who may not read carriers.
+	Carriers []*EDIPartnerCarrier `json:"carriers,omitempty"`
+}
+
+type EDIPartnerCardReadiness struct {
+	Ready          bool                       `json:"ready"`
+	CompletedCount int                        `json:"completedCount"`
+	TotalCount     int                        `json:"totalCount"`
+	Items          []*EDIPartnerReadinessItem `json:"items"`
+}
+
+type EDIPartnerCarrier struct {
+	CarrierID   string  `json:"carrierId"`
+	CarrierName string  `json:"carrierName"`
+	CarrierCode *string `json:"carrierCode,omitempty"`
+	SCAC        *string `json:"scac,omitempty"`
+	IsDefault   bool    `json:"isDefault"`
+}
+
 type EDIPartnerConnection struct {
 	Edges      []*EDIPartnerEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
 }
 
+type EDIPartnerCustomer struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
 type EDIPartnerEdge struct {
 	Node   *edi.EDIPartner `json:"node"`
 	Cursor string          `json:"cursor"`
+}
+
+type EDIPartnerMappingSummary struct {
+	ProfileID *string            `json:"profileId,omitempty"`
+	UpdatedAt *int               `json:"updatedAt,omitempty"`
+	Counts    []*EDIMappingCount `json:"counts"`
+}
+
+type EDIPartnerReadinessItem struct {
+	Key      string `json:"key"`
+	Complete bool   `json:"complete"`
 }
 
 type EDIPartnerReadinessState struct {
@@ -4196,6 +4272,25 @@ type EDIPartnerScorecard struct {
 	PendingOver4hCount      int      `json:"pendingOver4hCount"`
 	PendingOver24hCount     int      `json:"pendingOver24hCount"`
 	OldestPendingAgeSeconds *int     `json:"oldestPendingAgeSeconds,omitempty"`
+}
+
+type EDIPartnerSetActivity struct {
+	TransactionSet    string                `json:"transactionSet"`
+	Direction         edi.DocumentDirection `json:"direction"`
+	Count             int                   `json:"count"`
+	FailedCount       int                   `json:"failedCount"`
+	DeadLetteredCount int                   `json:"deadLetteredCount"`
+	LastAt            *int                  `json:"lastAt,omitempty"`
+}
+
+type EDIPartnerTransport struct {
+	Profile           *edi.EDICommunicationProfile `json:"profile"`
+	LastPollAttemptAt *int                         `json:"lastPollAttemptAt,omitempty"`
+	LastPollSuccessAt *int                         `json:"lastPollSuccessAt,omitempty"`
+	// The last pickup's error, with anything that looks like a secret masked.
+	LastPollError *string                    `json:"lastPollError,omitempty"`
+	Credentials   []*EDITransportCredential  `json:"credentials"`
+	Certificates  []*EDITransportCertificate `json:"certificates"`
 }
 
 type EDISummary struct {
@@ -4254,6 +4349,25 @@ type EDITransferConnection struct {
 type EDITransferEdge struct {
 	Node   *edi.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type EDITransportCertificate struct {
+	Role EDITransportCertificateRole `json:"role"`
+	// False when the stored PEM could not be read as a certificate.
+	Readable  bool    `json:"readable"`
+	Subject   *string `json:"subject,omitempty"`
+	Issuer    *string `json:"issuer,omitempty"`
+	NotBefore *int    `json:"notBefore,omitempty"`
+	NotAfter  *int    `json:"notAfter,omitempty"`
+	Expired   bool    `json:"expired"`
+}
+
+type EDITransportCredential struct {
+	// The setting or secret key the credential is stored under; never its value.
+	Key      string `json:"key"`
+	Secret   bool   `json:"secret"`
+	Required bool   `json:"required"`
+	OnFile   bool   `json:"onFile"`
 }
 
 type EDIVolumePoint struct {
@@ -12414,6 +12528,63 @@ func (e *EDITransferDirection) UnmarshalJSON(b []byte) error {
 }
 
 func (e EDITransferDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type EDITransportCertificateRole string
+
+const (
+	EDITransportCertificateRoleLocal             EDITransportCertificateRole = "Local"
+	EDITransportCertificateRolePartnerSigning    EDITransportCertificateRole = "PartnerSigning"
+	EDITransportCertificateRolePartnerEncryption EDITransportCertificateRole = "PartnerEncryption"
+)
+
+var AllEDITransportCertificateRole = []EDITransportCertificateRole{
+	EDITransportCertificateRoleLocal,
+	EDITransportCertificateRolePartnerSigning,
+	EDITransportCertificateRolePartnerEncryption,
+}
+
+func (e EDITransportCertificateRole) IsValid() bool {
+	switch e {
+	case EDITransportCertificateRoleLocal, EDITransportCertificateRolePartnerSigning, EDITransportCertificateRolePartnerEncryption:
+		return true
+	}
+	return false
+}
+
+func (e EDITransportCertificateRole) String() string {
+	return string(e)
+}
+
+func (e *EDITransportCertificateRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EDITransportCertificateRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EdiTransportCertificateRole", str)
+	}
+	return nil
+}
+
+func (e EDITransportCertificateRole) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EDITransportCertificateRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EDITransportCertificateRole) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

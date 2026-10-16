@@ -398,6 +398,7 @@ type ResolverRoot interface {
 	DriverSettlementLine() DriverSettlementLineResolver
 	DriverSettlementLineGroup() DriverSettlementLineGroupResolver
 	DrugAlcoholStanding() DrugAlcoholStandingResolver
+	EdiAcknowledgmentConfig() EdiAcknowledgmentConfigResolver
 	EdiCarrierInvoice() EdiCarrierInvoiceResolver
 	EdiMessage() EdiMessageResolver
 	EdiPartnerDocumentProfile() EdiPartnerDocumentProfileResolver
@@ -1237,6 +1238,10 @@ type DriverSettlementLineGroupResolver interface {
 type DrugAlcoholStandingResolver interface {
 	LastClearinghouseQueryAt(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error)
 	NextClearinghouseQueryDue(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error)
+}
+
+type EdiAcknowledgmentConfigResolver interface {
+	Type(ctx context.Context, obj *edi.AcknowledgmentConfig) (string, error)
 }
 
 type EdiCarrierInvoiceResolver interface {
@@ -2895,6 +2900,7 @@ type QueryResolver interface {
 	EDIPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIPartnerScorecard, error)
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)
 	EDIVolumeSeries(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIVolumePoint, error)
+	EDIPartnerCard(ctx context.Context, id string) (*gqlmodel.EDIPartnerCard, error)
 	EmailProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EmailProfileConnection, error)
 	EmailProfile(ctx context.Context, id string) (*email.Profile, error)
 	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
@@ -3939,6 +3945,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DriverSettlementLine":               func() any { return r.DriverSettlementLine() },
 			"DriverSettlementLineGroup":          func() any { return r.DriverSettlementLineGroup() },
 			"DrugAlcoholStanding":                func() any { return r.DrugAlcoholStanding() },
+			"EdiAcknowledgmentConfig":            func() any { return r.EdiAcknowledgmentConfig() },
 			"EdiCarrierInvoice":                  func() any { return r.EdiCarrierInvoice() },
 			"EdiMessage":                         func() any { return r.EdiMessage() },
 			"EdiPartnerDocumentProfile":          func() any { return r.EdiPartnerDocumentProfile() },
@@ -19340,10 +19347,29 @@ enum EdiMappingEntityType {
   ServiceFailureReasonCode
 }
 
+enum EdiDocumentStatus {
+  Active
+  Inactive
+}
+
+type EdiConnectionCapabilities {
+  loadTenderOutbound: Boolean!
+  loadTenderInbound: Boolean!
+  shipmentStatus: Boolean!
+  invoice: Boolean!
+}
+
 type EdiConnection {
   id: ID!
   method: EdiConnectionMethod!
   status: EdiConnectionStatus!
+  capabilities: EdiConnectionCapabilities!
+  requestedAt: Timestamp!
+  acceptedAt: Timestamp
+  rejectedAt: Timestamp
+  rejectionReason: String
+  suspendedAt: Timestamp
+  revokedAt: Timestamp
 }
 
 type EdiPartner {
@@ -19641,12 +19667,43 @@ type EdiMappingProfileConnection {
   totalCount: Int
 }
 
+"""
+The ISA and GS identities and separators every interchange of a document profile is
+written with.
+"""
+type EdiX12Envelope {
+  interchangeSenderQualifier: String!
+  interchangeSenderId: String!
+  interchangeReceiverQualifier: String!
+  interchangeReceiverId: String!
+  applicationSenderCode: String!
+  applicationReceiverCode: String!
+  "T for test, P for production."
+  interchangeUsageIndicator: String!
+  elementSeparator: String!
+  segmentTerminator: String!
+  componentSeparator: String!
+  repetitionSeparator: String!
+}
+
+type EdiAcknowledgmentConfig {
+  expected: Boolean!
+  "None, 997 or 999."
+  type: String!
+  slaInMinutes: Int!
+}
+
 type EdiPartnerDocumentProfile {
   id: ID!
   ediPartnerId: ID!
   name: String!
+  status: EdiDocumentStatus!
   direction: EdiDocumentDirection!
   transactionSet: String!
+  functionalGroupId: String!
+  x12VersionOverride: String
+  envelope: EdiX12Envelope!
+  acknowledgment: EdiAcknowledgmentConfig!
   partner: EdiPartner
 }
 
@@ -19729,6 +19786,128 @@ type EdiVolumePoint {
   receivedCount: Int!
 }
 
+type EdiPartnerCustomer {
+  id: ID!
+  name: String!
+  code: String!
+}
+
+type EdiTransportCredential {
+  "The setting or secret key the credential is stored under; never its value."
+  key: String!
+  secret: Boolean!
+  required: Boolean!
+  onFile: Boolean!
+}
+
+enum EdiTransportCertificateRole {
+  Local
+  PartnerSigning
+  PartnerEncryption
+}
+
+type EdiTransportCertificate {
+  role: EdiTransportCertificateRole!
+  "False when the stored PEM could not be read as a certificate."
+  readable: Boolean!
+  subject: String
+  issuer: String
+  notBefore: Timestamp
+  notAfter: Timestamp
+  expired: Boolean!
+}
+
+type EdiPartnerTransport {
+  profile: EdiCommunicationProfile!
+  lastPollAttemptAt: Timestamp
+  lastPollSuccessAt: Timestamp
+  "The last pickup's error, with anything that looks like a secret masked."
+  lastPollError: String
+  credentials: [EdiTransportCredential!]!
+  certificates: [EdiTransportCertificate!]!
+}
+
+type EdiPartnerReadinessItem {
+  key: String!
+  complete: Boolean!
+}
+
+type EdiPartnerCardReadiness {
+  ready: Boolean!
+  completedCount: Int!
+  totalCount: Int!
+  items: [EdiPartnerReadinessItem!]!
+}
+
+type EdiMappingCount {
+  entityType: EdiMappingEntityType!
+  count: Int!
+}
+
+type EdiPartnerMappingSummary {
+  profileId: ID
+  updatedAt: Timestamp
+  counts: [EdiMappingCount!]!
+}
+
+type EdiPartnerSetActivity {
+  transactionSet: String!
+  direction: EdiDocumentDirection!
+  count: Int!
+  failedCount: Int!
+  deadLetteredCount: Int!
+  lastAt: Timestamp
+}
+
+type EdiPartnerActivity {
+  "Start of the window the figures, ack counts and sets are counted over."
+  since: Timestamp!
+  "Start of the series, which is longer than the window."
+  seriesSince: Timestamp!
+  scorecard: EdiPartnerScorecard!
+  ackStatusCounts: [EdiSummaryStatusCount!]!
+  sets: [EdiPartnerSetActivity!]!
+  series: [EdiVolumePoint!]!
+}
+
+type EdiPartnerAttention {
+  overdueAckAgeSeconds: Int!
+  overdueAckCount: Int!
+  oldestOverdueAt: Timestamp
+  "The oldest overdue messages, a few at most."
+  overdueAcks: [EdiMessage!]!
+  "Messages dead-lettered within the activity window, newest first."
+  deadLettered: [EdiMessage!]!
+  "Files from the partner set aside within the activity window, newest first."
+  quarantinedFiles: [EdiInboundFile!]!
+}
+
+type EdiPartnerCarrier {
+  carrierId: ID!
+  carrierName: String!
+  carrierCode: String
+  scac: String
+  isDefault: Boolean!
+}
+
+"""
+Everything the Desk's EDI partner card draws about one partner, read in one request.
+Credentials are named and said to be on file or not; no secret value or private key is
+ever returned.
+"""
+type EdiPartnerCard {
+  partner: EdiPartner!
+  customer: EdiPartnerCustomer
+  documentProfiles: [EdiPartnerDocumentProfile!]!
+  transports: [EdiPartnerTransport!]!
+  readiness: EdiPartnerCardReadiness!
+  mappings: EdiPartnerMappingSummary!
+  activity: EdiPartnerActivity!
+  attention: EdiPartnerAttention!
+  "The carriers reached through the partner; null for someone who may not read carriers."
+  carriers: [EdiPartnerCarrier!]
+}
+
 type EdiTestCaseEdge {
   node: EdiTestCase!
   cursor: String!
@@ -19773,6 +19952,7 @@ extend type Query {
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
+  ediPartnerCard(id: ID!): EdiPartnerCard!
 }
 `, BuiltIn: false},
 	{Name: "../schema/email_profile.graphqls", Input: `enum EmailProvider {
