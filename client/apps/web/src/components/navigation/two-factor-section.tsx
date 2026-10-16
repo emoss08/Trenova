@@ -233,7 +233,6 @@ function SetupDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
     onSuccess: async (data) => {
       setCodes(data.recoveryCodes);
       await refresh();
-      toast.success(t("Two-factor authentication is on"));
     },
   });
 
@@ -355,7 +354,6 @@ function DisableDialog({ open, onClose }: { open: boolean; onClose: () => void }
     resourceName: "Two-factor authentication",
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Two-factor authentication is off"));
       form.reset();
       onClose();
     },

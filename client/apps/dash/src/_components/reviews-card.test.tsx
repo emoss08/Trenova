@@ -84,7 +84,7 @@ describe("ReviewsCard", () => {
     });
     fireEvent.click(card.getByRole("button", { name: "Sign off" }));
     await waitFor(() => expect(acknowledgeMyReview).toHaveBeenCalledWith("prev_1", "Fair review."));
-    expect(toast.success).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("stops asking once signed and says nothing when there are no reviews", async () => {

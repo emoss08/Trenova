@@ -30,7 +30,6 @@ import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 const MEMO_FORM_ID = "memo-form";
 
@@ -122,7 +121,6 @@ export function MemoDialog({
       }),
     onSuccess: (memo) => {
       invalidateInvoiceQueries(queryClient);
-      toast.success(t("{0} created", memo.number));
       onOpenChange(false);
       void navigate(invoicePanelPath(memo.id));
     },

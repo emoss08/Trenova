@@ -140,7 +140,6 @@ function PendingChangeNotice() {
   const withdraw = useMutation({
     mutationFn: (id: string) => withdrawMyProfileChange(id),
     onSuccess: async () => {
-      toast.success(t("Request withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
     },
     onError: (error: Error) => toast.error(error.message || translate("Could not withdraw it.")),
@@ -225,11 +224,6 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
       }),
     onSuccess: async () => {
-      toast.success(
-        requiresApproval
-          ? translate("Sent to your carrier — your record changes once they approve it.")
-          : translate("Contact details updated."),
-      );
       await queryClient.invalidateQueries({ queryKey: ["dash-compliance-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });

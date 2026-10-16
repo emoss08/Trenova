@@ -34,13 +34,8 @@ export function useAccountingDriftActions() {
     mutationFn: (params: { id: string; direction: AccountingDriftDirection }) =>
       resolveAccountingDrift(params),
     resourceName: t("Difference"),
-    onSuccess: async (finding) => {
+    onSuccess: async () => {
       await refresh();
-      toast.success(
-        finding.pushed
-          ? t("Trenova's value is on its way to the books")
-          : t("Trenova adjusted to match the books"),
-      );
     },
   });
 
@@ -49,7 +44,6 @@ export function useAccountingDriftActions() {
     resourceName: t("Difference"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Difference dismissed"));
     },
   });
 

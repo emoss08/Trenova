@@ -20,7 +20,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 
 export type MarkReviewedDialogProps = {
   carrierId: string;
@@ -63,7 +62,6 @@ export function MarkReviewedDialog({
     resourceName: "Carrier intelligence review",
     mutationFn: (values) => markCarrierIntelReviewed(carrierId, values.note),
     onSuccess: () => {
-      toast.success(t("Carrier marked reviewed"));
       onReviewed();
       onOpenChange(false);
     },

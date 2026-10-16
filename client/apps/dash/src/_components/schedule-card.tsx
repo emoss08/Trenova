@@ -80,7 +80,6 @@ export function ScheduleCard() {
   const { mutate: answerSwap, isPending: answeringSwap } = useMutation({
     mutationFn: respondToMyShiftSwap,
     onSuccess: () => {
-      toast.success(t("Sent to your carrier"));
       void queryClient.invalidateQueries({ queryKey: ["dash-shift-swaps"] });
       void queryClient.invalidateQueries({ queryKey: ["dash-schedule"] });
     },

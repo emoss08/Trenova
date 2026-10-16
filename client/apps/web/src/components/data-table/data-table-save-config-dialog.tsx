@@ -26,7 +26,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Globe02Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { SwitchField } from "../fields/switch-field";
 import { TextareaField } from "../fields/textarea-field";
 
@@ -123,10 +122,6 @@ export function DataTableSaveConfigDialog({
       });
 
       onSaved?.(created);
-
-      toast.success(t("View saved"), {
-        description: t('"{0}" has been saved.', created.name),
-      });
     },
   });
 

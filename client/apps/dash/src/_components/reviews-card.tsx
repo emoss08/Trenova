@@ -77,7 +77,6 @@ function ReviewRow({ review }: { review: PortalReview }) {
   const acknowledge = useMutation({
     mutationFn: () => acknowledgeMyReview(review.id, comment || undefined),
     onSuccess: async () => {
-      toast.success(t("Signed — thanks. Your manager can see your comment."));
       await queryClient.invalidateQueries({ queryKey: [DASH_REVIEWS_KEY] });
     },
     onError: (error: Error) => {

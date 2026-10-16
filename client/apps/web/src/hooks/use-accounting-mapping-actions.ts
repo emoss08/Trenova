@@ -45,7 +45,6 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
     resourceName: t("Mapping"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Proposal turned down"));
     },
   });
 
@@ -53,18 +52,16 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
     mutationFn: (input: { mappingId: string; externalId: string; reason?: string }) =>
       setAccountingMapping(input),
     resourceName: t("Mapping"),
-    onSuccess: async (row) => {
+    onSuccess: async () => {
       await refresh();
-      toast.success(t("{0} is mapped to {1}", row.targetLabel, row.externalName));
     },
   });
 
   const clear = useApiMutation({
     mutationFn: (id: string) => clearAccountingMapping(id),
     resourceName: t("Mapping"),
-    onSuccess: async (row) => {
+    onSuccess: async () => {
       await refresh();
-      toast.success(t("{0} is unmatched", row.targetLabel));
     },
   });
 
@@ -72,9 +69,8 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
     mutationFn: (input: { mappingId: string; name?: string }) =>
       createAccountingReferenceRecord(input),
     resourceName: providerName,
-    onSuccess: async (row) => {
+    onSuccess: async () => {
       await refresh();
-      toast.success(t("Created {0} in {1}", row.externalName, providerName));
     },
   });
 
@@ -83,9 +79,6 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
     resourceName: providerName,
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Reading {0} again", providerName), {
-        description: t("Proposals update when it finishes."),
-      });
     },
   });
 
@@ -94,7 +87,6 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
     resourceName: providerName,
     onSuccess: async () => {
       await refresh();
-      toast.success(t("{0} setup is finished", providerName));
     },
   });
 

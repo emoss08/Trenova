@@ -66,15 +66,7 @@ export function RateConfirmationActions({
 
   const generateMutation = useMutation({
     mutationFn: () => apiService.rateConfirmationService.generate(moveId),
-    onSuccess: (rateCon) => {
-      toast.success(
-        rateCon.revision > 1
-          ? t(
-              "Rate confirmation regenerated — revision {0} filed, prior revision voided",
-              rateCon.revision,
-            )
-          : t("Rate confirmation generated and filed"),
-      );
+    onSuccess: () => {
       invalidate();
     },
     onError: (error: Error) =>
@@ -253,7 +245,6 @@ function MarkConfirmedDialog({
     mutationFn: () =>
       apiService.rateConfirmationService.confirm(rateConfirmation.id, confirmedByName.trim()),
     onSuccess: () => {
-      toast.success(t("Rate confirmation marked confirmed"));
       setConfirmedByName("");
       onOpenChange(false);
       onChanged();
@@ -312,7 +303,6 @@ function VoidRateConfirmationDialog({
   const mutation = useMutation({
     mutationFn: () => apiService.rateConfirmationService.void(rateConfirmation.id, reason.trim()),
     onSuccess: () => {
-      toast.success(t("Rate confirmation voided"));
       setReason("");
       onOpenChange(false);
       onChanged();

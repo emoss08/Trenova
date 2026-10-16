@@ -181,7 +181,7 @@ describe("TrainingCard", () => {
     fireEvent.click(defensive.getByRole("button", { name: /I've completed Defensive Driving/ }));
     await waitFor(() => expect(acknowledgeMyTraining).toHaveBeenCalledWith("wtrn_defensive"));
     await waitFor(() => expect(fetchMyTraining).toHaveBeenCalledTimes(3));
-    expect(toast.success).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("says when everything is current", async () => {

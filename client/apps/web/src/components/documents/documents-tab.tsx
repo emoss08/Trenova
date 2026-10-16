@@ -243,7 +243,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         void queryClient.invalidateQueries({
           queryKey: shipmentDetailsQuery.queryKey,
         });
-        toast.success(t("Document uploaded successfully"));
       },
       onError: (error) => {
         toast.error(t("Upload failed: {0}", error.message));
@@ -264,7 +263,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           queryKey: shipmentDetailsQuery.queryKey,
         });
       }
-      toast.success(t("Document deleted"));
       setDeletingId(null);
     },
     onError: (error) => {
@@ -333,7 +331,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     mutationFn: (documentId: string) => apiService.documentService.approve(documentId),
     onSuccess: () => {
       invalidateDocumentState();
-      toast.success(t("Document approved"));
     },
     onError: (error) => {
       toast.error(t("Approval failed: {0}", error.message));
@@ -349,7 +346,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     mutationFn: (documentId: string) => apiService.documentService.restoreVersion(documentId),
     onSuccess: () => {
       invalidateDocumentState();
-      toast.success(t("Document version restored"));
     },
     onError: (error) => {
       toast.error(t("Restore failed: {0}", error.message));

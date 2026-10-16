@@ -114,12 +114,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
       if (!item.id) throw new Error("Nothing to confirm");
       return acknowledgeMyTraining(item.id);
     },
-    onSuccess: async (saved) => {
-      toast.success(
-        saved.status === "Completed"
-          ? t("{0} is done — nice work.", item.name)
-          : t("Thanks — your carrier will enter your {0} result.", item.name),
-      );
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [DASH_TRAINING_KEY] });
     },
     onError: (error: Error) => {

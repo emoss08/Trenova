@@ -9,7 +9,6 @@ import { accountingSync } from "@/lib/queries/accounting-sync";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 export function useAccountingInboundActions() {
   const t = useT();
@@ -30,7 +29,6 @@ export function useAccountingInboundActions() {
     resourceName: t("Payment"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Payment applied in Trenova"));
     },
   });
 
@@ -39,7 +37,6 @@ export function useAccountingInboundActions() {
     resourceName: t("Payment"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Payment ignored"));
     },
   });
 

@@ -23,7 +23,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import {
   AssistantFullHeader,
   AssistantHeader,
@@ -93,7 +92,6 @@ export function AssistantPanel({
   const deleteMutation = useApiMutation({
     mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
-      toast.success(t("Conversation deleted"));
       setDeleting(null);
       if (activeThread?.id === id) {
         setActiveThreadId(null);

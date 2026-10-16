@@ -218,7 +218,6 @@ export function AcknowledgeFactoringNoaDialog({
     onSuccess: (document) => {
       void queryClient.invalidateQueries({ queryKey: documentsQuery.queryKey });
       setValue("signedDocumentId", document.id, { shouldValidate: true, shouldDirty: true });
-      toast.success(t("Signed copy uploaded"));
     },
     onError: (error) =>
       toast.error(t("Upload failed"), {
@@ -241,9 +240,6 @@ export function AcknowledgeFactoringNoaDialog({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Acknowledgement recorded"), {
-        description: t("This customer's invoices for the factor are checked again."),
-      });
       onOpenChange(false);
     },
   });
@@ -395,7 +391,6 @@ export function ReleaseFactoringNoaDialog({
     },
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
-      toast.success(t("Notice released"));
       onOpenChange(false);
     },
   });

@@ -180,10 +180,8 @@ export function VerifyEquipmentDialog({
     onSuccess: (verification) => {
       setLatest(verification);
       invalidateHistory();
-      const meta = labels.result[verification.result];
-      if (verification.result === "Match") {
-        toast.success(t("Equipment verified"), { description: meta.description });
-      } else {
+      if (verification.result !== "Match") {
+        const meta = labels.result[verification.result];
         toast.warning(meta.label, {
           description: verification.mismatchReason ?? meta.description,
         });

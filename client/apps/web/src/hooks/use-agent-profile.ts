@@ -29,12 +29,7 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
 
   const addGuidance = useMutation({
     mutationFn: (content: string) => addAgentProfileGuidance(owner, content),
-    onSuccess: async (line) => {
-      toast.success(
-        line.status === "Suggested"
-          ? t("Guidance offered; an administrator decides whether the profile keeps it")
-          : t("Guidance added; the profile will be written again with it shortly"),
-      );
+    onSuccess: async () => {
       await refresh();
     },
     onError: (error) => {
@@ -45,7 +40,6 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
   const retireGuidance = useMutation({
     mutationFn: (id: string) => retireAgentProfileGuidance(owner, id),
     onSuccess: async () => {
-      toast.success(t("Guidance retired; the profile will be written again without it"));
       await refresh();
     },
     onError: (error) => {
@@ -56,7 +50,6 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
   const approveGuidance = useMutation({
     mutationFn: (id: string) => approveAgentProfileGuidance(id),
     onSuccess: async () => {
-      toast.success(t("Guidance kept; the profile will be written again with it shortly"));
       await refresh();
     },
     onError: (error) => {
@@ -67,7 +60,6 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
   const dismissGuidance = useMutation({
     mutationFn: (id: string) => dismissAgentProfileGuidance(id),
     onSuccess: async () => {
-      toast.success(t("Guidance dismissed"));
       await refresh();
     },
     onError: (error) => {

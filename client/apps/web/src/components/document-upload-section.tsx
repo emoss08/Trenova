@@ -107,7 +107,6 @@ export function DocumentUploadSection({
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
-      toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
       toast.error(t("Upload failed: {0}", error.message));
@@ -118,7 +117,6 @@ export function DocumentUploadSection({
     mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
-      toast.success(t("Document deleted successfully"));
       setDeletingId(null);
     },
     onError: (error) => {

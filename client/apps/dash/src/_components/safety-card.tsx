@@ -154,7 +154,6 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
   const acknowledge = useMutation({
     mutationFn: () => acknowledgeMyDisciplinaryAction(action.id, comment || undefined),
     onSuccess: async () => {
-      toast.success(t("Thanks — your carrier can see that you have read it."));
       await queryClient.invalidateQueries({ queryKey: [DASH_DISCIPLINE_KEY] });
     },
     onError: (error: Error) => {

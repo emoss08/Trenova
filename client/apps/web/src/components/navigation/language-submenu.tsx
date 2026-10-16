@@ -22,7 +22,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { UpdateMySettings, User } from "@trenova/shared/types/user";
 import { Translate01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 type PersistArgs = {
@@ -132,13 +131,10 @@ export function LanguageSubmenu() {
           // What the server renders - the report catalog, messages it composed - follows
           // the stored preference, so it is fetched again once the server holds the new one.
           void queryClient.invalidateQueries();
-          toast.success(t("Language updated"), {
-            description: t("Your emails and documents will use it too."),
-          });
         },
       });
     },
-    [active, pending, user, saveLocale, t, queryClient],
+    [active, pending, user, saveLocale, queryClient],
   );
 
   // Warming the catalog on hover turns the click into a cache hit in the common case, so

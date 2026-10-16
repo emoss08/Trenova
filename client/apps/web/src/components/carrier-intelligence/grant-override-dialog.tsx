@@ -29,7 +29,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { dateToUnixTimestamp, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
 import { FindingList } from "./finding-list";
 
 export type GrantOverrideDialogProps = {
@@ -110,9 +109,6 @@ export function GrantOverrideDialog({
       });
     },
     onSuccess: (override) => {
-      toast.success(t("Override granted"), {
-        description: t("Expires {0}", formatUnixDateTimeMedium(override.expiresAt)),
-      });
       onGranted?.(override);
       onOpenChange(false);
     },

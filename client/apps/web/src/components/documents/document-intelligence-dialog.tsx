@@ -757,7 +757,6 @@ export function DocumentIntelligenceDialog({
           queryKey: ["document-shipment-draft", document.id],
         });
       }
-      toast.success(t("Document re-extraction started"));
     },
     onError: (error) => {
       toast.error(t("Failed to re-extract document: {0}", error.message));

@@ -26,7 +26,6 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
 
 export function DataTableConfigItem({
   config,
@@ -69,9 +68,6 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: () => {
       onViewDeleted?.(config.id);
-      toast.success(t("View deleted"), {
-        description: t('"{0}" has been deleted.', config.name),
-      });
     },
     onSettled: refetchConfigurations,
   });
@@ -81,9 +77,6 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       onApplyConfig(updated.tableConfig, { id: updated.id, name: updated.name });
-      toast.success(t("Default view updated"), {
-        description: t('"{0}" is now your default view and has been applied.', updated.name),
-      });
     },
     onSettled: refetchConfigurations,
   });
@@ -92,16 +85,6 @@ export function DataTableConfigItem({
     mutationFn: (enabled: boolean) =>
       apiService.tableConfigurationService.setOrgDefault(config.id, enabled),
     resourceName: "Table Configuration",
-    onSuccess: (updated: TableConfiguration) => {
-      toast.success(
-        updated.isOrgDefault ? t("Organization default set") : t("Organization default removed"),
-        {
-          description: updated.isOrgDefault
-            ? t('"{0}" is now the default view for everyone in your organization.', updated.name)
-            : t('"{0}" is no longer the organization default.', updated.name),
-        },
-      );
-    },
     onSettled: refetchConfigurations,
   });
 
@@ -118,9 +101,6 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       onViewPersisted?.(updated);
-      toast.success(t("View updated"), {
-        description: t('"{0}" now matches the current table state.', updated.name),
-      });
     },
     onSettled: refetchConfigurations,
   });
@@ -128,11 +108,6 @@ export function DataTableConfigItem({
   const { mutateAsync: duplicateConfig, isPending: isDuplicating } = useApiMutation({
     mutationFn: () => apiService.tableConfigurationService.duplicate(config),
     resourceName: "Table Configuration",
-    onSuccess: (created: TableConfiguration) => {
-      toast.success(t("View duplicated"), {
-        description: t('"{0}" has been added to your views.', created.name),
-      });
-    },
     onSettled: refetchConfigurations,
   });
 

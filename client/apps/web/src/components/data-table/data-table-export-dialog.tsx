@@ -68,7 +68,10 @@ const exportFormSchema = z
       .max(MAX_RECIPIENTS, { error: () => translate("Send to at most 50 people") }),
   })
   .superRefine((values, ctx) => {
-    if ((values.destination === "report" || values.destination === "schedule") && values.name === "") {
+    if (
+      (values.destination === "report" || values.destination === "schedule") &&
+      values.name === ""
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["name"],
@@ -183,7 +186,8 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
         });
       } else {
         toast.success(t("Your export is being built"), {
-          description: skipped ?? t("You will be told when the file is ready. It is kept in Reports."),
+          description:
+            skipped ?? t("You will be told when the file is ready. It is kept in Reports."),
         });
       }
       onOpenChange(false);
@@ -241,12 +245,6 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
       }
 
       downloadCsv(buildCsv(rows, exportColumns), exportFilename(resource));
-      toast.success(t("Export complete"), {
-        description: t(
-          "{0, plural, one {Exported # row to CSV.} other {Exported # rows to CSV.}}",
-          rows.length,
-        ),
-      });
       onOpenChange(false);
     } catch (error) {
       setError("root", {

@@ -390,7 +390,6 @@ export default function CustomizeSidebarForm({
       },
       {
         onSuccess: () => {
-          toast.success(t("Sidebar preferences saved"));
           onSaved();
         },
         onError: (error) => {

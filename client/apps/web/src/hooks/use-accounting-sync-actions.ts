@@ -19,7 +19,6 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDate } from "@trenova/shared/lib/date";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -47,9 +46,6 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     resourceName: providerName,
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Sending to {0} is paused", providerName), {
-        description: t("Posted documents keep queueing and go out when you resume."),
-      });
     },
   });
 
@@ -58,7 +54,6 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     resourceName: providerName,
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Sending to {0} resumed", providerName));
     },
   });
 
@@ -93,20 +88,14 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     resourceName: t("Sync record"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Record skipped"));
     },
   });
 
   const redate = useApiMutation({
     mutationFn: (id: string) => redateAccountingSync(id),
     resourceName: t("Sync record"),
-    onSuccess: async (record) => {
+    onSuccess: async () => {
       await refresh();
-      toast.success(
-        record.redatedTo
-          ? t("Queued again, dated {0}", formatUnixDate(record.redatedTo))
-          : t("Queued again"),
-      );
     },
   });
 
@@ -121,7 +110,6 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     resourceName: t("Backfill"),
     onSuccess: async () => {
       await refresh();
-      toast.success(t("Backfill started"));
     },
   });
 

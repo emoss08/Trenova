@@ -44,7 +44,6 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
   const upload = useMutation({
     mutationFn: (file: File) => uploadMyLoadDocument(shipmentId, file, documentTypeId ?? undefined),
     onSuccess: async () => {
-      toast.success(t("Document uploaded"));
       setPendingFile(null);
       setDocumentTypeId(null);
       await queryClient.invalidateQueries({ queryKey: ["dash-load-documents", shipmentId] });
