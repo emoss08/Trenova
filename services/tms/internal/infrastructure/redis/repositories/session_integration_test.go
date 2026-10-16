@@ -8,9 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -53,6 +55,24 @@ func newIntegrationSession(
 	}
 }
 
+// seedSession stores a session the way Create does but without its check, so a test can
+// hold one that has already ended, as a session stored before the policy changed would be.
+func seedSession(t *testing.T, repo *sessionRepository, sess *session.Session) {
+	t.Helper()
+
+	require.NoError(t, redishelpers.SetJSON(
+		t.Context(),
+		repo.client,
+		repo.getSessionKey(sess.ID),
+		sess,
+		time.Hour,
+	))
+	require.NoError(t, repo.client.ZAdd(t.Context(), repo.getUserSessionsKey(sess.UserID), redis.Z{
+		Score:  float64(sess.CreatedAt),
+		Member: sess.ID.String(),
+	}).Err())
+}
+
 func TestSessionRepository_KeyLivesOnlyAsLongAsTheSession_Integration(t *testing.T) {
 	repo := setupSessionRepository(t)
 	now := timeutils.NowUnix()
@@ -72,7 +92,7 @@ func TestSessionRepository_GetEndsAnIdleSession_Integration(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	idleFor := integrationIdleFor
 	sess := newIntegrationSession(userID, now-idleFor, now-idleFor, now+60*60)
-	require.NoError(t, repo.Create(t.Context(), sess))
+	seedSession(t, repo, sess)
 
 	_, err := repo.Get(t.Context(), sess.ID)
 	require.ErrorIs(t, err, sessionports.ErrSessionNotFound)
@@ -98,6 +118,19 @@ func TestSessionRepository_GetCapsALongerLivedSession_Integration(t *testing.T) 
 	assert.Equal(t, integrationSessionPolicy.ExpiresAt(createdAt), got.ExpiresAt)
 }
 
+func TestSessionRepository_CreateRefusesASessionThatHasAlreadyEnded_Integration(t *testing.T) {
+	repo := setupSessionRepository(t)
+	now := timeutils.NowUnix()
+	idleFor := integrationIdleFor
+	sess := newIntegrationSession(pulid.MustNew("usr_"), now-idleFor, now-idleFor, now+60*60)
+
+	require.Error(t, repo.Create(t.Context(), sess))
+
+	exists, err := repo.client.Exists(t.Context(), repo.getSessionKey(sess.ID)).Result()
+	require.NoError(t, err)
+	assert.Zero(t, exists)
+}
+
 func TestSessionRepository_GetReportsAMissingSessionAsNotFound_Integration(t *testing.T) {
 	repo := setupSessionRepository(t)
 
@@ -116,7 +149,7 @@ func TestSessionRepository_ListForUserLeavesOutEndedSessions_Integration(t *test
 	active := newIntegrationSession(userID, now-60, now-60, activeExpiresAt)
 	idle := newIntegrationSession(userID, now-idleFor, now-idleFor, now+60*60)
 	require.NoError(t, repo.Create(t.Context(), active))
-	require.NoError(t, repo.Create(t.Context(), idle))
+	seedSession(t, repo, idle)
 
 	sessions, err := repo.ListForUser(t.Context(), userID)
 
