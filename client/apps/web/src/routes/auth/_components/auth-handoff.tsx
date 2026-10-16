@@ -10,20 +10,15 @@ const HANDOFF_REDUCED_MS = 200;
 /**
  * The last beat before the dashboard: the session is issued, and the bar is the
  * receipt for the manifest fetch that already completed. It holds long enough to read
- * what the session was scoped to, then hands off.
+ * which organization is opening, then hands off.
  */
 export function AuthHandoff({
   userName,
   organizationName,
-  roleCount,
-  permissionCount,
   onComplete,
 }: {
   userName?: string;
   organizationName?: string;
-  roleCount: number;
-  /** Undefined when the manifest carried no per-role counts; the clause is dropped. */
-  permissionCount?: number;
   onComplete: () => void;
 }) {
   const t = useT();
@@ -42,20 +37,8 @@ export function AuthHandoff({
       mark={<AuthCheckMark />}
       title={firstName ? t("Welcome back, {0}.", firstName) : t("Welcome back.")}
     >
-      <p className="text-muted-foreground m-0 flex flex-wrap gap-x-1.5 font-mono text-sm">
-        <span>
-          {organizationName ? t("Opening {0}", organizationName) : t("Opening Trenova")}
-        </span>
-        <span aria-hidden="true">·</span>
-        <span>
-          {t(
-            "{0, plural, one {# role} other {# roles}}{1}",
-            roleCount,
-            permissionCount === undefined
-              ? null
-              : ` ${t("· {0} {1, plural, one {permission} other {permissions}}", permissionCount.toLocaleString(), permissionCount)}`,
-          )}
-        </span>
+      <p className="text-muted-foreground m-0 font-mono text-sm">
+        {organizationName ? t("Opening {0}", organizationName) : t("Opening Trenova")}
       </p>
       <AuthProgress durationMs={duration} />
     </AuthSuccess>

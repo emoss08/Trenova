@@ -317292,15 +317292,6 @@
       "routes/desk"
     ]
   },
-  "{0, plural, one {# role} other {# roles}}{1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "{0, plural, one {# round} other {# rounds}}": {
     "sites": 1,
     "scope": [
@@ -333046,15 +333037,6 @@
     ],
     "areas": [
       "routes/random-testing"
-    ]
-  },
-  "· {0} {1, plural, one {permission} other {permissions}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "· {0}% confidence": {
