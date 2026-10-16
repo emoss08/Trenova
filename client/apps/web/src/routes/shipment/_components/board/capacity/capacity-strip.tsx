@@ -26,7 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigate } from "react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
 import { CapacityAvatar } from "./capacity-avatar";

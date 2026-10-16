@@ -38,7 +38,7 @@ import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   invoiceAdjustmentOperationsSummaryQuery,
   invoiceApprovalDetailQuery,

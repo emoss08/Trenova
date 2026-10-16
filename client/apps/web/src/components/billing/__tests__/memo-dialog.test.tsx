@@ -13,7 +13,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/graphql/invoice", () => ({ createMemo: mocks.createMemo }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
 vi.mock("react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router")>();
   return { ...actual, useNavigate: () => mocks.navigate };

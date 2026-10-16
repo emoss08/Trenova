@@ -39,7 +39,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { archiveRefusal } from "./archive-refusal";
 import { ExportTemplateDialog } from "./export-template-dialog";
 import { ForkLineageDialog } from "./fork-lineage-dialog";

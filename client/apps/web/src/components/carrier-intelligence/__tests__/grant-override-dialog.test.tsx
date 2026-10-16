@@ -19,7 +19,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/graphql/carrier-intelligence", () => ({
   grantCarrierIntelOverride: mocks.grantCarrierIntelOverride,
 }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
 
 afterEach(() => {
   vi.clearAllMocks();

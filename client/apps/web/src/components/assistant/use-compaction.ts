@@ -5,7 +5,7 @@ import type { AssistantStreamEvent, AssistantThread, ContextUsage } from "@/type
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { compactionReducer, IDLE, meterView } from "./compaction";
 import { followTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
 import { registerTurnReader } from "./turn-readers";

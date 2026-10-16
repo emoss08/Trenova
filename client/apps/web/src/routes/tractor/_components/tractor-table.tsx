@@ -8,7 +8,7 @@ import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { equipmentTableGraphQLConfigs, type TractorRow } from "@/lib/graphql/equipment-table";
 import { getColumns } from "./tractor-columns";
 import { TractorPanel } from "./tractor-panel";

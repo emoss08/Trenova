@@ -33,7 +33,7 @@ vi.mock("../employer-dialog", () => ({
     open ? <div data-testid="employer-dialog">{verification?.id ?? "new"}</div> : null,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 

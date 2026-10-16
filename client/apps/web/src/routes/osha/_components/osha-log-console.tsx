@@ -37,7 +37,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MilestoneIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { OshaCaseSheet } from "./osha-case-sheet";
 import { OshaCaseTable } from "./osha-case-table";
 import { OshaOverview } from "./osha-overview";

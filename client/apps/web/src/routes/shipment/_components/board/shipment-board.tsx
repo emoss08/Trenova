@@ -16,7 +16,7 @@ import type {
 import { Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { ShipmentExpandedRow } from "./expanded-row/shipment-expanded-row";
 import { useShipmentRecordActions } from "./record-actions";

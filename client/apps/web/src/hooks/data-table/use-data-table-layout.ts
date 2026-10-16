@@ -15,7 +15,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { Table } from "@trenova/shared/types/data-table";
 import type { RowData } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /** How long a table sits still before its arrangement is kept. */
 const SAVE_DELAY_MS = 1000;

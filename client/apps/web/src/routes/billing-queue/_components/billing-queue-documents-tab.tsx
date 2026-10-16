@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
 import { UnmetRequirementNote } from "@/components/documents/unmet-requirement-note";
 

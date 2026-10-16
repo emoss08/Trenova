@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCcw02Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { CarrierSettlementDetail } from "@/routes/carrier-settlement/_components/settlement-detail";
 import { CarrierContextRail } from "./carrier-context-rail";
 import { WorkspaceSkeleton } from "./workspace-skeleton";

@@ -1,7 +1,7 @@
 import { useCreateReportDashboard } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Creating a dashboard is offered from the toolbar and from the empty state,

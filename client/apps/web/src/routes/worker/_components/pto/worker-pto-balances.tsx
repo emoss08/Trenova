@@ -40,7 +40,7 @@ import {
   ShieldTickIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AdjustBalanceDialog } from "./adjust-balance-dialog";
 import { AssignPolicyDialog } from "./assign-policy-dialog";
 

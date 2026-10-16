@@ -20,7 +20,9 @@ vi.mock("@/lib/graphql/invoice", () => ({
   resolveInvoiceDispute: mocks.resolve,
   withdrawInvoiceDispute: mocks.withdraw,
 }));
-vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: mocks.toastError } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+}));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));

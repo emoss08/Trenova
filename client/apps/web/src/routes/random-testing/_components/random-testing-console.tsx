@@ -29,7 +29,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ConfirmRoundDialog, type RoundAction } from "./confirm-round-dialog";
 import { DrawDetailSheet } from "./draw-detail-sheet";
 import { PoolRow } from "./pool-row";

@@ -30,7 +30,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ApplyRemittanceDialog } from "./_components/apply-remittance-dialog";
 import { ReasonDialog } from "@/components/reason-dialog";
 import { RemittanceExceptions, RemittanceMatched } from "./_components/remittance-lines";

@@ -71,7 +71,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ImportReviewTable } from "./import-review-table";
 
 const STEPS = [

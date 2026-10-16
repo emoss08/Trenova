@@ -19,7 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { parseAsString, useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { PaymentDetail } from "./payment-detail";
 import { RecordPaymentForm } from "./record-payment-form";
 

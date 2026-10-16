@@ -32,7 +32,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AnswerQueryDialog, RecordQueryDialog } from "./clearinghouse-dialogs";
 import { RecordResultDialog } from "./record-result-dialog";
 import { RecordTestDialog } from "./record-test-dialog";

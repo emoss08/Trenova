@@ -13,7 +13,7 @@ import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./shipment-type-columns";
 import { ShipmentTypePanel } from "./shipment-type-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

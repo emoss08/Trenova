@@ -28,7 +28,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useTrainingInvalidation } from "./use-training-invalidation";
 import { translate } from "@trenova/shared/i18n/runtime";
 

@@ -40,7 +40,7 @@ import {
   XCircleIcon,
 } from "@trenova/shared/components/icons";
 import { type FormEvent, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
 

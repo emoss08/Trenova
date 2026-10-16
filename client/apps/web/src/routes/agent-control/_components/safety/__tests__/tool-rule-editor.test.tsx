@@ -4,7 +4,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolSheet } from "../tool-sheet";
 import { definition, policy } from "./fixtures";
@@ -30,7 +30,9 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 const holders = [definition("agdef_1", "Customer desk"), definition("agdef_2", "Dispatch desk")];
 

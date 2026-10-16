@@ -72,7 +72,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { RollbackConfirmDialog } from "./rollback-confirm-dialog";
 import { VersionCompareDialog } from "./version-compare-dialog";
 

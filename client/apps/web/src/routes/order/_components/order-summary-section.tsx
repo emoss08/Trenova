@@ -21,7 +21,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useOrderInvalidation } from "./use-order-invalidation";
 
 const CANCELABLE_STATUSES = new Set(["Draft", "Confirmed", "InProgress", "Completed"]);

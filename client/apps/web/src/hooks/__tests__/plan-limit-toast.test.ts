@@ -4,7 +4,9 @@ import { reportPlanLimit, setPlanLimitHandler } from "@trenova/shared/lib/plan-l
 import { handleMutationError } from "@/hooks/use-api-mutation";
 
 const toastError = vi.hoisted(() => vi.fn());
-vi.mock("sonner", () => ({ toast: { error: toastError, success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: toastError, success: vi.fn() },
+}));
 
 function readOnlyError() {
   return new ApiRequestError(403, {

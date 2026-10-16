@@ -10,7 +10,7 @@ import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { Upload01Icon } from "@trenova/shared/components/icons";
 import { useRef } from "react";
 import { useController, useWatch, type Control, type FieldPath } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 
 const CERTIFICATE_INSPECTION_DEBOUNCE_MS = 500;

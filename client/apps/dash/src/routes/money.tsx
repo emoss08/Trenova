@@ -13,7 +13,7 @@ import {
 } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ExpensesSection } from "../_components/expenses-section";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { DisputeStatusBadge, disputeCategoryLabels } from "../_components/portal-badges";

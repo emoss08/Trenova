@@ -12,7 +12,7 @@ const { sendReminder, success } = vi.hoisted(() => ({
 vi.mock("@/services/api", () => ({
   apiService: { collectionService: { sendReminder } },
 }));
-vi.mock("sonner", () => ({ toast: { success, error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: { success, error: vi.fn() } }));
 
 afterEach(() => {
   cleanup();

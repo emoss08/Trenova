@@ -63,7 +63,7 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
   useDebounce: <T,>(value: T): T => value,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, info: mocks.toastInfo, error: vi.fn() },
 }));
 

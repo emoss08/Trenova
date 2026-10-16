@@ -17,7 +17,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   communicationProfileFormSchema,
   type CommunicationProfileFormValues,

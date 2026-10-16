@@ -21,7 +21,9 @@ vi.mock("@/lib/graphql/fuel-surcharge", () => ({
   generateFuelSurchargeTable: vi.fn(),
   deleteFuelSurchargeProgram: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("../program-panel", () => ({
   ProgramPanel: ({ open, programId }: { open: boolean; programId: string | null }) =>
     open ? <div data-testid="program-panel" data-program={programId ?? ""} /> : null,

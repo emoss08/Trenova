@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { OrderLegsSection } from "../order-legs-section";
 
 const mocks = vi.hoisted(() => ({
@@ -36,7 +36,9 @@ function invoiceResult(...numbers: string[]) {
   }));
   return { invoices, primary: invoices[0] };
 }
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 vi.mock("../add-leg-dialog", () => ({ AddLegDialog: () => null }));
 vi.mock("../use-order-invalidation", () => ({
   useOrderInvalidation: () => vi.fn(),

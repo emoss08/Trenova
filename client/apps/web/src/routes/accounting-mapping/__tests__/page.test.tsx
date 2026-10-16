@@ -39,7 +39,7 @@ vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayou
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: mocks.canUpdate, isLoading: false }),
 }));
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 

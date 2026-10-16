@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { ZodSchema } from "zod";
 
 export async function safeParse<T>(

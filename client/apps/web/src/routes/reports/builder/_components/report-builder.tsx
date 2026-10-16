@@ -25,7 +25,7 @@ import {
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { RunReportDialog } from "../../_components/run-report-dialog";
 import {
   buildCatalogIndex,

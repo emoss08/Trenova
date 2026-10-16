@@ -52,7 +52,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { irToInput } from "../builder/_components/builder-state";
 import {
   compareReportsBySort,

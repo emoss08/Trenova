@@ -29,7 +29,7 @@ import {
   Save01Icon,
 } from "@trenova/shared/components/icons";
 import { lazy, Suspense, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ElementDesigner } from "../element/element-designer";
 import {
   useActivateEDITemplateMutation,

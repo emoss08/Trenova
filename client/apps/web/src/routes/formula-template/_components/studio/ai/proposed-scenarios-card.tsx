@@ -3,7 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Beaker02Icon, CheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatMoney, formatStudioValue } from "../model/format";
 import { useStudio } from "../studio-context";
 import { scenarioAmount } from "./proposed-scenarios";

@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckVerified01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { JurisdictionRuleForm } from "./jurisdiction-rule-form";
 import { JurisdictionRuleVerifyDialog } from "./jurisdiction-rule-verify-dialog";
 import { translate } from "@trenova/shared/i18n/runtime";

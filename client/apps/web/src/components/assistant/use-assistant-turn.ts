@@ -22,7 +22,7 @@ import { useRealtimeStore } from "@/stores/realtime-store";
 import type { AssistantLiveTurnList } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { listSaysQuiet } from "./active-turns";
 import { appendToHistory, continuesHistory, type ThreadHistory } from "./thread-history";
 import { registerTurnReader } from "./turn-readers";

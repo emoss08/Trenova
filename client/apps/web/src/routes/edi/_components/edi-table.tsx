@@ -22,7 +22,7 @@ import {
   XCircleIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { notifyEDIBulkOutcome } from "./edi-bulk-actions";
 import { getCommunicationProfileColumns } from "./edi-communication-profile-columns";
 import { DesignerWorkspace } from "./edi-designer-workspace";

@@ -4,7 +4,7 @@ import { apiService } from "@/services/api";
 import type { AgentWait, AgentWaitList } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { turnFailureDetail } from "./follow-turn";
 
 const NO_WAITS: AgentWait[] = [];

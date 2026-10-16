@@ -11,7 +11,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { EyeIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./dispute-columns";
 import { DisputePanel } from "./dispute-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

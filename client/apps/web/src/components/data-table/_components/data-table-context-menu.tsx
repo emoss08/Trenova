@@ -31,7 +31,7 @@ import {
   writeClipboardGrid,
   type ClipboardGrid,
 } from "@/lib/data-table-clipboard";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useState } from "react";
 import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
 

@@ -28,7 +28,9 @@ vi.mock("@/services/api", () => ({
     ediService: { testProfileConnection: fetchers.test, pollProfile: fetchers.poll },
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 // The EDI message card is its own chunk; here it stands in as what it was given,
 // with its way back.
 vi.mock("../../edi-message/desk-edi-message", () => ({

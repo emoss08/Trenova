@@ -21,7 +21,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { FuelProgramsEmpty } from "./fuel-management-empty";
 import { ProgramCardsSkeleton } from "./fuel-management-skeleton";
 import { ProgramPanel } from "./program-panel";

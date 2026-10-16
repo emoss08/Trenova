@@ -39,7 +39,7 @@ import {
   type FieldValues,
   type Resolver,
 } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 import { queueSelectionSearchParamsParser } from "../use-billing-queue-state";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";

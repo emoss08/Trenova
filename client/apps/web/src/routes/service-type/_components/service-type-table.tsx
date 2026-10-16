@@ -13,7 +13,7 @@ import type { ServiceType } from "@/types/service-type";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./service-type-columns";
 import { ServiceTypePanel } from "./service-type-panel";
 import { translate } from "@trenova/shared/i18n/runtime";

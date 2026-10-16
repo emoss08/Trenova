@@ -10,7 +10,7 @@ import { apiService } from "@/services/api";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Ic } from "../kit/ic";
 import { Mark } from "../kit/marks";
 import { Button } from "@trenova/shared/components/ui/button";

@@ -27,7 +27,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { useEffect, useRef } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const DEFAULT_VALUES: CoverSheetFormValues = { copies: 1, documentTypeId: "" };
 

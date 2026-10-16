@@ -45,7 +45,7 @@ import { describeError } from "@trenova/shared/lib/error-presentation";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * Sends the selected ready invoices to their factor on one schedule of

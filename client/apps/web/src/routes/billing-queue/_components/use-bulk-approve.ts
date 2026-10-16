@@ -4,7 +4,7 @@ import { apiService } from "@/services/api";
 import type { BillingQueueApprovalRun } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 const RUN_POLL_MS = 2000;

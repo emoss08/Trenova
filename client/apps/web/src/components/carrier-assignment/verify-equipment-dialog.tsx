@@ -45,7 +45,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ScanIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { EquipmentOverrideDialog } from "./equipment-override-dialog";
 import {
   EquipmentVerificationCard,

@@ -4,7 +4,7 @@ import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 import { fieldErrorMessages, refusedFieldMessages } from "@/lib/form-errors";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { editConflictOf } from "@trenova/shared/lib/edit-conflict";
 import type { EditConflict } from "@trenova/shared/types/errors";

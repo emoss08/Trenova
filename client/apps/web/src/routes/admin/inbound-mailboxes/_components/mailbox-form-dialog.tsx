@@ -25,7 +25,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import {
   MAILBOX_STATUSES,
   PROVIDERS,

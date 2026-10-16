@@ -22,7 +22,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award01Icon, CheckIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_SAFETY_KEY = "dash-safety";

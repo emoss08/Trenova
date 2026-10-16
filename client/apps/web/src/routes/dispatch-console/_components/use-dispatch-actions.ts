@@ -31,7 +31,7 @@ import type {
 } from "@trenova/shared/types/tender";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 /**

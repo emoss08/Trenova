@@ -27,7 +27,7 @@ import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function CarrierTrackingLink({
   moveId,

@@ -21,7 +21,7 @@ import type {
 import { Mail01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { UserAccessSection } from "./user-access-section";
 import { UserRolesEditor } from "./user-roles-editor";
 

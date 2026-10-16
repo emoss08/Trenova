@@ -11,7 +11,7 @@ import {
 import { agentProfileQueryOptions } from "@/lib/queries/agent-profile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
  * A profile agents are told, and what a person may do to it: give a line of guidance,

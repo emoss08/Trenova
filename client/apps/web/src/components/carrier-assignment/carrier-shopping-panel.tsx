@@ -26,7 +26,7 @@ import {
 import type { ShopOption, ShopResult, ShopStrategy } from "@trenova/shared/types/rate";
 import { AlertCircleIcon, SearchLgIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const STRATEGIES: ShopStrategy[] = ["LeastCost", "BestMargin", "GuideRank", "FastestAccept"];
 

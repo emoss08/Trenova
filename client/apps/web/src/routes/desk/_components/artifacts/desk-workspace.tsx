@@ -18,7 +18,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { LiveArtifacts } from "../desk-layout";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import {

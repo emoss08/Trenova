@@ -53,7 +53,7 @@ import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { Activity, useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
 import { translate } from "@trenova/shared/i18n/runtime";
 

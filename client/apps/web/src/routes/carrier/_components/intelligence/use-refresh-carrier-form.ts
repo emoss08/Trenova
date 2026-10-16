@@ -4,7 +4,7 @@ import type { Carrier } from "@trenova/shared/types/carrier";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function useRefreshCarrierForm(carrierId: string) {
   const t = useT();

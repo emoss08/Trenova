@@ -28,7 +28,7 @@ import type { WorkerRow } from "@/lib/graphql/worker-table";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 import { translate } from "@trenova/shared/i18n/runtime";
 

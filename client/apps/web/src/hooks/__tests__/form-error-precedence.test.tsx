@@ -8,7 +8,9 @@ import { isRegisteredLeaf, normalizeFieldPath } from "@/lib/form-errors";
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
 const toastError = vi.hoisted(() => vi.fn());
-vi.mock("sonner", () => ({ toast: { error: toastError, success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: toastError, success: vi.fn() },
+}));
 
 // Mirrors JournalFormValues in routes/manual-journal/_components/manual-journal-panel.tsx.
 // Deliberately has no `status` field — the Go validator emits one.

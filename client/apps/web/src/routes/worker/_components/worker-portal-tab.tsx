@@ -23,7 +23,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Copy01Icon, Phone01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { PolicyAcknowledgements } from "./portal/policy-acknowledgements";
 import { ProfileChangeRequests } from "./portal/profile-change-requests";

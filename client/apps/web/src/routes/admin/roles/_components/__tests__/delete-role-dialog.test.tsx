@@ -13,7 +13,9 @@ vi.mock("@/lib/role-api", () => ({
   deleteRole: (id: string, options?: { force?: boolean }) => deleteRole(id, options),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 afterEach(() => {
   cleanup();

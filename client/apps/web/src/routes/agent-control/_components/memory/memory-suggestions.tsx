@@ -13,7 +13,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { MEMORY_SUGGESTION_PARAM, memorySuggestionParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
 import { Modal } from "../kit/modal";

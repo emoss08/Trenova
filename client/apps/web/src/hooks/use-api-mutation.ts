@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import { errorReferenceDetails } from "@trenova/shared/lib/error-presentation";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { isExplainedPlanLimitError } from "@trenova/shared/lib/plan-limit";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@trenova/shared/types/errors";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { isRegisteredLeaf, normalizeFieldPath, type FieldRegistry } from "@/lib/form-errors";
 
 // Only the field registry and the error setter are needed, so the parameter asks for
@@ -126,6 +127,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isVersionMismatchError(normalized)) {
     toast.error(translate("Version mismatch"), {
       description: translate("The resource has been modified. Please refresh and try again."),
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -138,6 +140,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isBusinessError(normalized)) {
     toast.error(translate("Invalid operation"), {
       description: normalized.message,
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -145,6 +148,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isRateLimitError(normalized)) {
     toast.error(translate("Rate limit exceeded"), {
       description: translate("Please wait a moment and try again."),
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -152,6 +156,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isAuthenticationError(normalized)) {
     toast.error(normalized.title ?? translate("Authentication required"), {
       description: normalized.detail ?? normalized.message,
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -159,6 +164,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isAuthorizationError(normalized)) {
     toast.error(translate("Access denied"), {
       description: translate("You don't have permission to perform this action."),
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -166,6 +172,7 @@ export function handleMutationError<T extends FieldValues>({
   if (apiProblem.isNotFoundError(normalized)) {
     toast.error(translate("Not found"), {
       description: normalized.detail || translate("The requested resource was not found."),
+      details: errorReferenceDetails(normalized.traceId),
     });
     return;
   }
@@ -176,6 +183,7 @@ export function handleMutationError<T extends FieldValues>({
 
   toast.error(translate("Error"), {
     description: normalized.message,
+    details: errorReferenceDetails(normalized.traceId),
   });
 }
 

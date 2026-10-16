@@ -31,7 +31,7 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import { customerStatementPath } from "@/lib/ar-links";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Mail01Icon } from "@trenova/shared/components/icons";
 import { ActivityTimeline } from "./activity-timeline";
 import { SendReminderDialog } from "./send-reminder-dialog";

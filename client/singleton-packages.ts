@@ -25,6 +25,5 @@ export const singletonPackages = [
   "react-router",
   "react-hook-form",
   "react-error-boundary",
-  "sonner",
   "zustand",
 ] as const;

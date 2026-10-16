@@ -17,7 +17,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import type { PaletteCopyKind, PaletteIntent, PaletteTheme } from "./palette-model";
 
 interface IntentRunnerOptions {

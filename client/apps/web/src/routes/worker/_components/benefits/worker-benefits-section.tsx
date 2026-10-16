@@ -23,7 +23,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { EnrollDialog } from "./enroll-dialog";
 
 /**

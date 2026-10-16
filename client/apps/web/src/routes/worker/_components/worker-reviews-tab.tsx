@@ -17,7 +17,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ChevronDownIcon, ClipboardCheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { ReviewCard, type ReviewPermissions } from "./reviews/review-card";
 import { ReviewEditorDialog } from "./reviews/review-editor-dialog";
 import { useReviewInvalidation } from "./reviews/use-review-invalidation";

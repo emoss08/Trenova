@@ -34,7 +34,7 @@ import type { SelectOption } from "@trenova/shared/types/fields";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export type CheckCallStopOption = {
   id: string;

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -17,10 +18,14 @@ const (
 	SpecificityStatePair    = int16(1)
 )
 
-var _ bun.BeforeAppendModelHook = (*RoutingGuide)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*RoutingGuide)(nil)
+	_ pagination.CursorEntity   = (*RoutingGuide)(nil)
+)
 
 type RoutingGuide struct {
-	bun.BaseModel `bun:"table:routing_guides,alias:rgd" json:"-"`
+	bun.BaseModel             `bun:"table:routing_guides,alias:rgd" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                         json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`

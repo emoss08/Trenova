@@ -41,7 +41,7 @@ import {
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { employmentEventMeta, employmentSnapshot, recordableKinds } from "./employment-event-meta";
 import { useEmploymentInvalidation } from "./use-employment-invalidation";
 import { sourceLabels } from "@trenova/shared/i18n/labels";

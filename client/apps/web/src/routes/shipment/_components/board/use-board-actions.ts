@@ -21,7 +21,7 @@ import type {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { SHIPMENT_LIST_KEY } from "../shipment-queries";
 
 export type AssignDriverInput = {

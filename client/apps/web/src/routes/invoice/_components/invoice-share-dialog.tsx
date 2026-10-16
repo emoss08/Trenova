@@ -46,7 +46,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { useId, useState } from "react";
 import { FormProvider, useController, useForm, type Control, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { invoiceDetailTabSearchParamsParser } from "../use-invoice-state";
 
 const SHARE_FORM_ID = "invoice-share-form";

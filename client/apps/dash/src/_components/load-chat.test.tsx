@@ -31,7 +31,7 @@ vi.mock("@trenova/shared/components/ui/message-scroller", async (importOriginal)
   };
 });
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 const now = 1_800_000_000;
 

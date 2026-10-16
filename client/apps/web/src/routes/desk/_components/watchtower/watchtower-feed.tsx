@@ -23,7 +23,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { WatchtowerItemRow } from "./item-row";
 import { ALL_SEVERITIES, isUnseen, toggleFilter } from "./severity";
 import { EXCEPTION_VIEWS, exceptionViewFilter, type ExceptionView } from "./exception";

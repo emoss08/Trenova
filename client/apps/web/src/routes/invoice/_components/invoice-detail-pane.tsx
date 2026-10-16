@@ -58,7 +58,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef, useState } from "react";
 import { InvoicePostDialog } from "./invoice-post-dialog";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceActionsMenu } from "./invoice-actions-menu";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";

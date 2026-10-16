@@ -19,7 +19,7 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Table } from "@trenova/shared/types/data-table";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /** The most cells one paste or fill saves; more than this belongs in a bulk edit. */
 export const MAX_CELL_WRITES = 500;

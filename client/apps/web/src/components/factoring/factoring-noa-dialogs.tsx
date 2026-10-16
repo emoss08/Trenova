@@ -31,7 +31,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 
 /** The resource type a notice's own documents (its letter, the signed copy) are filed under. */

@@ -18,7 +18,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { AGENT_TRY_PARAM, agentTryParser } from "../../../ai-control-tabs";
 import { useAddressedFlag } from "../../../use-addressed-flag";
 import { ConflictBar } from "../../edit/conflict-bar";

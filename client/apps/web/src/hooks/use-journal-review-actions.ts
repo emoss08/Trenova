@@ -10,7 +10,7 @@ import { journalEntry } from "@/lib/queries/journal-entry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function useJournalReviewActions() {
   const t = useT();

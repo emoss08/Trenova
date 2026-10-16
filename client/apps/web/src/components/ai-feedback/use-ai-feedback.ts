@@ -13,7 +13,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export const AI_FEEDBACK_QUERY_ROOT = ["ai-feedback", "mine"] as const;
 

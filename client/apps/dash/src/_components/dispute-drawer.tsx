@@ -17,7 +17,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementDisputeCategory } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { disputeCategoryLabels } from "./portal-badges";
 import { translate } from "@trenova/shared/i18n/runtime";
 

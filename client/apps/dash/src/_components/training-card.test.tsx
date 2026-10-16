@@ -16,7 +16,7 @@ vi.mock("@trenova/shared/lib/graphql/driver-portal", () => ({
   acknowledgeMyTraining,
 }));
 
-vi.mock("sonner", () => ({ toast }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 const rows = [
   {

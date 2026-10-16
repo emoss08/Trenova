@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/types/mfa";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export const MFA_STATUS_QUERY_KEY = ["mfa", "status"] as const;
 

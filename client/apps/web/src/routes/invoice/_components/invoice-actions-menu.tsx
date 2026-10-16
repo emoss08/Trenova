@@ -21,7 +21,7 @@ import {
   SlashCircle01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { InvoiceVoidDialog } from "./invoice-void-dialog";
 
 /**

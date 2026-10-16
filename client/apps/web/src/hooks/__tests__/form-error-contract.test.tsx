@@ -8,7 +8,9 @@ import { handleMutationError, type MutationFormTarget } from "@/hooks/use-api-mu
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
 const toastError = vi.hoisted(() => vi.fn());
-vi.mock("sonner", () => ({ toast: { error: toastError, success: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { error: toastError, success: vi.fn() },
+}));
 
 type FieldError = { field: string; message: string; code?: string };
 

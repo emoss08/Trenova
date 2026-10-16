@@ -26,7 +26,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
 import { CalendarClockIcon, Repeat01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 type PreferenceChoice = AvailabilityPreferenceValue | "None";
 

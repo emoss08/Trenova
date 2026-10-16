@@ -39,7 +39,7 @@ vi.mock("@/lib/graphql/carrier-intelligence", () => ({
   overrideCarrierEquipmentVerification: mocks.overrideCarrierEquipmentVerification,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 

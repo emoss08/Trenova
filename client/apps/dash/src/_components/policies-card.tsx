@@ -37,7 +37,7 @@ import {
   LinkExternal01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useDashProfile } from "./dash-layout";
 import { translate } from "@trenova/shared/i18n/runtime";
 

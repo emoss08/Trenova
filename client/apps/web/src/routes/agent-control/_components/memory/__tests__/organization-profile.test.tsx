@@ -20,7 +20,9 @@ vi.mock("@/lib/graphql/agent-profile", async (importOriginal) => ({
   ...api,
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 function profile(overrides: Partial<AgentProfile> = {}): AgentProfile {
   return {

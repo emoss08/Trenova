@@ -22,7 +22,7 @@ import { PlusIcon, Trash01Icon, VariableIcon } from "@trenova/shared/components/
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { NovaButton } from "../ai/nova-button";
 import { sanitizeIdentifier } from "../model/expression-analysis";
 import { useStudio } from "../studio-context";

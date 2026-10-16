@@ -1,7 +1,7 @@
 // * CREDIT https://github.com/openstatusHQ/data-table-filters/blob/main/src/hooks/use-copy-to-clipboard.ts
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 export function useCopyToClipboard() {
   const t = useT();

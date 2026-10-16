@@ -15,7 +15,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { Ic } from "../kit/ic";
 import { SecH } from "../kit/layout";
 import { Mark, Tile } from "../kit/marks";

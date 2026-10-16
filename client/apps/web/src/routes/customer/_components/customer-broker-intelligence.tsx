@@ -31,7 +31,7 @@ import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 const BROKER_PROFILE_SECTIONS = [
   "company",

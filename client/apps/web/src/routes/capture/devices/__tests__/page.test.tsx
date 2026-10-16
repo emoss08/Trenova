@@ -13,7 +13,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CaptureDevicesPage } from "../page";
 
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 const NOW = 1_800_000_000;
 

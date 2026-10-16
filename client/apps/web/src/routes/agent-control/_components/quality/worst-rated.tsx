@@ -17,7 +17,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { QUALITY_AGENT_PARAM, qualityAgentParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { AgentScope } from "./agent-scope";

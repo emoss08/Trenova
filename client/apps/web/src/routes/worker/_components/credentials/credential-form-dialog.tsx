@@ -39,7 +39,7 @@ import {
 import { CheckCircleIcon, PaperclipIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useCredentialInvalidation } from "./use-credential-invalidation";
 
 export type CredentialFormMode = "create" | "renew" | "edit";

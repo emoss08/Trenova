@@ -42,7 +42,9 @@ vi.mock("@/hooks/use-permission", () => {
   };
 });
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
+vi.mock("@trenova/shared/components/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}));
 
 const paperwork: CaptureProfile = {
   id: "cprof_1",

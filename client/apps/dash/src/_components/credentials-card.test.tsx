@@ -21,7 +21,7 @@ vi.mock("./use-dash-features", () => ({
   useDashFeatures: () => ({ allowProfileDocumentUpload: features.allowProfileDocumentUpload }),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

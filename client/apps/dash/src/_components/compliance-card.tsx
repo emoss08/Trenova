@@ -23,7 +23,7 @@ import { changeRequestTone, describeChanges } from "@trenova/shared/lib/self-ser
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit02Icon, ShieldAlertIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useDashFeatures } from "./use-dash-features";
 import { translate } from "@trenova/shared/i18n/runtime";
 
