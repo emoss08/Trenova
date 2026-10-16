@@ -174,19 +174,12 @@ func writeCursorResponse[T any](
 		len(result.CursorValues) > 0
 	if shouldEncodeCursor && len(items) > 0 {
 		lastIndex := len(items) - 1
-		last := items[lastIndex]
-		encoded, encodeErr := EncodeCursorFromEntity(last)
-		if len(result.CursorSort) > 0 {
-			if values, ok := result.CursorValuesAt(lastIndex); ok {
-				encoded, encodeErr = EncodeCursorFromEntityWithValues(
-					last,
-					result.CursorSort,
-					values,
-				)
-			} else {
-				encoded, encodeErr = EncodeCursorFromEntityWithSort(last, result.CursorSort)
-			}
-		}
+		encoded, encodeErr := encodeItemCursor(
+			items[lastIndex],
+			result.CursorSort,
+			result.CursorValues,
+			lastIndex,
+		)
 		if encodeErr != nil {
 			eh.HandleError(c, encodeErr)
 			return

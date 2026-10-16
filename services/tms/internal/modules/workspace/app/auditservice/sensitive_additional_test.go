@@ -744,9 +744,8 @@ func TestRegisterSensitiveFields_NoPath(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, ok := sdm.fields.Load(permission.Resource("test"))
+	storedMap, ok := sdm.registeredFields(permission.Resource("test"))
 	require.True(t, ok)
-	storedMap := stored.(map[string]SensitiveFieldConfig)
 	assert.Contains(t, storedMap, "token")
 }
 
@@ -765,9 +764,8 @@ func TestRegisterSensitiveFields_MergesExisting(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, ok := sdm.fields.Load(permission.Resource("test"))
+	storedMap, ok := sdm.registeredFields(permission.Resource("test"))
 	require.True(t, ok)
-	storedMap := stored.(map[string]SensitiveFieldConfig)
 	assert.Contains(t, storedMap, "field1")
 	assert.Contains(t, storedMap, "field2")
 }
