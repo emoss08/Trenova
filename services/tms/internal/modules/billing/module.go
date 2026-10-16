@@ -195,6 +195,10 @@ func factoringOptions() fx.Option {
 				factoringservice.NewDocumentObserver,
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
+			fx.Annotate(
+				billingqueueservice.NewDocumentObserver,
+				fx.ResultTags(documentports.DocumentChangeObserverGroup),
+			),
 		),
 		fx.Decorate(factoringservice.WatchInvoices),
 	)

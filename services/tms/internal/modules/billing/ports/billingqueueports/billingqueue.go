@@ -57,6 +57,11 @@ type ReleaseForInvoiceRequest struct {
 
 // ListActiveInvoiceItemsRequest asks which shipments still have an invoice item
 // that has not posted or been canceled, keyed by shipment.
+type ListOpenShipmentIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"-"`
+}
+
 type ListActiveInvoiceItemsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	ShipmentIDs []pulid.ID            `json:"-"`
@@ -172,6 +177,7 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		req *ListActiveInvoiceItemsRequest,
 	) (map[pulid.ID][]*billingqueue.BillingQueueItem, error)
+	ListOpenShipmentIDs(ctx context.Context, req *ListOpenShipmentIDsRequest) ([]pulid.ID, error)
 	ReleaseForInvoice(
 		ctx context.Context,
 		req *ReleaseForInvoiceRequest,

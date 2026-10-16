@@ -38,6 +38,7 @@ import {
 } from "./use-billing-queue-state";
 import { BillingQueueViewSwitch } from "./_components/billing-queue-view-switch";
 import { BulkBillingTransferAction } from "./_components/bulk-transfer/bulk-billing-transfer-action";
+import { BillingQueueRedetectSignaturesAction } from "./_components/billing-queue-redetect-signatures-action";
 import { StatementKPIStrip } from "./_components/statements/statement-kpi-strip";
 import {
   StatementDetailSkeleton,
@@ -135,6 +136,7 @@ export function BillingQueuePage() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      <BillingQueueRedetectSignaturesAction />
       <BulkBillingTransferAction
         open={transferDialogOpen}
         onOpenChange={setTransferDialogOpen}

@@ -39,6 +39,7 @@ export const documentTypeSchema = z.object({
   documentClassification: documentClassificationSchema,
   documentCategory: documentCategorySchema,
   isSystem: z.boolean().optional(),
+  requiresSignature: z.boolean().optional(),
 });
 
 export type DocumentType = z.infer<typeof documentTypeSchema>;

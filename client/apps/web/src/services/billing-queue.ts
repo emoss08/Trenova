@@ -10,6 +10,7 @@ import {
   billingQueuePostResultSchema,
   billingQueueSummarySchema,
   billingQueueStatsSchema,
+  podSignatureRedetectResultSchema,
   reassignChargeResultSchema,
   type BillingQueueAssignInput,
   type BillingQueueFilterPreset,
@@ -23,6 +24,7 @@ import {
   type BillingQueueStats,
   type BillingQueueUpdateChargesInput,
   type BillingQueueUpdateStatusInput,
+  type PODSignatureRedetectResult,
   type ReassignChargeInput,
   type ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
@@ -129,6 +131,14 @@ export class BillingQueueService {
   public async post(id: string) {
     const response = await api.post<BillingQueuePostResult>(`/billing-queue/${id}/post/`, {});
     return safeParse(billingQueuePostResultSchema, response, "BillingQueuePostResult");
+  }
+
+  public async redetectPODSignatures() {
+    const response = await api.post<PODSignatureRedetectResult>(
+      "/billing-queue/pod-signatures/redetect/",
+      {},
+    );
+    return safeParse(podSignatureRedetectResultSchema, response, "PODSignatureRedetectResult");
   }
 
   /** Starts a bulk approval; the server waits out the undo window before it writes. */

@@ -223,6 +223,10 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   workers: ["worker-list", "dispatch-board", "shipmentBoard"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
+  // A document filed, replaced or marked signed: the lists that show it and the
+  // shipment's billing readiness, which counts it. Billing items reviewing that
+  // shipment are told separately, as billing_queue, by the server.
+  document: ["documents", ["shipment", "billingReadiness"]],
   // A bulk approval's progress: the run and the items it is approving.
   "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
   // Every change to an invoice: its own page (detail, send plan, email

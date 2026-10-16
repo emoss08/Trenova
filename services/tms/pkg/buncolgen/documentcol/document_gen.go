@@ -92,6 +92,9 @@ var DocumentColumns = struct {
 	DocumentTypeID        buncolgen.Column // "document_type_id" → qualified: "doc.document_type_id"
 	SignatureStatus       buncolgen.Column // "signature_status" → qualified: "doc.signature_status"
 	SignedAt              buncolgen.Column // "signed_at" → qualified: "doc.signed_at"
+	SignatureSource       buncolgen.Column // "signature_source" → qualified: "doc.signature_source"
+	SignatureUpdatedByID  buncolgen.Column // "signature_updated_by_id" → qualified: "doc.signature_updated_by_id"
+	SignatureUpdatedAt    buncolgen.Column // "signature_updated_at" → qualified: "doc.signature_updated_at"
 	SearchVector          buncolgen.Column // "search_vector" → qualified: "doc.search_vector"
 	Rank                  buncolgen.Column // "rank" → qualified: "doc.rank"
 	Version               buncolgen.Column // "version" → qualified: "doc.version"
@@ -140,6 +143,9 @@ var DocumentColumns = struct {
 	DocumentTypeID:        buncolgen.NewColumn("document_type_id", "doc"),
 	SignatureStatus:       buncolgen.NewColumn("signature_status", "doc"),
 	SignedAt:              buncolgen.NewColumn("signed_at", "doc"),
+	SignatureSource:       buncolgen.NewColumn("signature_source", "doc"),
+	SignatureUpdatedByID:  buncolgen.NewColumn("signature_updated_by_id", "doc"),
+	SignatureUpdatedAt:    buncolgen.NewColumn("signature_updated_at", "doc"),
 	SearchVector:          buncolgen.NewColumn("search_vector", "doc"),
 	Rank:                  buncolgen.NewColumn("rank", "doc"),
 	Version:               buncolgen.NewColumn("version", "doc"),
@@ -194,6 +200,9 @@ var DocumentFieldMap = map[string]string{
 	"documentTypeId":        "document_type_id",
 	"signatureStatus":       "signature_status",
 	"signedAt":              "signed_at",
+	"signatureSource":       "signature_source",
+	"signatureUpdatedById":  "signature_updated_by_id",
+	"signatureUpdatedAt":    "signature_updated_at",
 	"version":               "version",
 	"createdAt":             "created_at",
 	"updatedAt":             "updated_at",
@@ -244,6 +253,9 @@ var DocumentInsertableColumns = []string{
 	"document_type_id",
 	"signature_status",
 	"signed_at",
+	"signature_source",
+	"signature_updated_by_id",
+	"signature_updated_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -356,6 +368,9 @@ var DocumentFilter = struct {
 	DocumentTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
 	SignatureStatus       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signatureStatus" → DB: "signature_status"
 	SignedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signedAt" → DB: "signed_at"
+	SignatureSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signatureSource" → DB: "signature_source"
+	SignatureUpdatedByID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signatureUpdatedById" → DB: "signature_updated_by_id"
+	SignatureUpdatedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "signatureUpdatedAt" → DB: "signature_updated_at"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -485,6 +500,15 @@ var DocumentFilter = struct {
 	},
 	SignedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("signedAt", op, value)
+	},
+	SignatureSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("signatureSource", op, value)
+	},
+	SignatureUpdatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("signatureUpdatedById", op, value)
+	},
+	SignatureUpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("signatureUpdatedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
