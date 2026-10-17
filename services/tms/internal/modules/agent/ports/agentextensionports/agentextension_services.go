@@ -28,6 +28,9 @@ type AgentExtensionCatalogItem struct {
 	Description         string                      `json:"description"`
 	Category            agentextension.Category     `json:"category"`
 	CategoryLabel       string                      `json:"categoryLabel"`
+	Capability          agentextension.Capability   `json:"capability"`
+	CapabilityLabel     string                      `json:"capabilityLabel"`
+	CapabilityHeldBy    string                      `json:"capabilityHeldBy"`
 	BrandDomain         string                      `json:"brandDomain"`
 	DocsURL             string                      `json:"docsUrl"`
 	WebsiteURL          string                      `json:"websiteUrl"`
@@ -82,10 +85,37 @@ type AgentExtensionTestResponse struct {
 }
 
 type AgentExtensionGate interface {
-	ActiveExtensions(
+	ActiveCapabilities(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (map[agentextension.Type]agentextension.Availability, error)
+	) (agentextension.Active, error)
+}
+
+type ProviderFailureKind int
+
+const (
+	ProviderFailureUnknown ProviderFailureKind = iota
+	ProviderFailureUnauthorized
+	ProviderFailureOutOfCredits
+	ProviderFailureRateLimited
+	ProviderFailureInvalidRequest
+	ProviderFailureNotFound
+)
+
+type ProviderFailure struct {
+	Kind   ProviderFailureKind
+	Detail string
+}
+
+type ConnectorTestResult struct {
+	CostUSD decimal.Decimal
+	Note    string
+}
+
+type ExtensionConnector interface {
+	Type() agentextension.Type
+	Classify(err error) ProviderFailure
+	Test(ctx context.Context, settings map[string]string) (*ConnectorTestResult, error)
 }
 
 type WebSearchQuery struct {
@@ -143,9 +173,8 @@ type WebResearcher interface {
 }
 
 type WebSearchProviderRequest struct {
-	APIKey             string
+	Settings           map[string]string
 	Query              string
-	SearchType         string
 	NumResults         int
 	ExcludeDomains     []string
 	StartPublishedDate string
@@ -166,7 +195,7 @@ type WebSearchProviderResponse struct {
 }
 
 type WebPageProviderRequest struct {
-	APIKey        string
+	Settings      map[string]string
 	URL           string
 	MaxCharacters int
 }

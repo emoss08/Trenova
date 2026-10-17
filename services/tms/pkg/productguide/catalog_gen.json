@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b4b74e102955e1a16c95454d581e70c9cab1c720f8c4f8b0bd0274f87d12389d",
+  "version": "sha256:b36ad977fea294e7a7121a53e95d4b74d4ef1c78010d5a795d8dcf80f846058f",
   "modules": [
     {
       "id": "home",
@@ -2637,19 +2637,22 @@
             "web search",
             "internet",
             "Exa",
+            "Parallel",
             "look up regulations",
             "ELD rules",
             "hours of service",
             "current information",
-            "extension marketplace"
+            "extension marketplace",
+            "switch search provider"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Extensions**.",
-            "Open **Web search**, under **Featured** or from **All extensions**.",
-            "Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is stored encrypted and never shown again; select **Replace** to change it later.",
+            "Open **Web search** from Exa or from Parallel, under **Featured** or from **All extensions**. Both give agents the same web search tools; choose the vendor the organization has an account with.",
+            "Paste the organization's API key from that vendor under **Connection** and select **Turn on**. The key is stored encrypted and never shown again; select **Replace** to change it later.",
             "Select **Test connection** to check the key works.",
             "Under **Available to**, choose **Every agent** to give all agents, the assistant included, the web search tools, or **Agents you choose** and select the agents that get them.",
-            "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it."
+            "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it.",
+            "To move to the other vendor, open the one that is on and select **Turn off**, then turn on the other. Only one can be on at a time, and agents keep their web search tools, so no agent needs changing."
           ]
         },
         {
@@ -5711,7 +5714,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: four sub-tabs. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds priority-ordered access policies, and **Activity** shows authentication events, risk decisions, external identities and MFA authenticators.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the members without two-factor, failed sign-ins, API key hygiene, recent activity and the server's session limits. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds the **Access settings** and priority-ordered access policies, and **Activity** shows sign-ins, risk decisions, external identities and two-factor devices.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
       "requires": [
         {
           "resource": "organization",
@@ -5728,7 +5731,11 @@
         "SCIM",
         "logo",
         "DOT number",
-        "SCAC"
+        "SCAC",
+        "security briefing",
+        "two-factor coverage",
+        "MFA",
+        "session timeout"
       ],
       "tasks": [
         {
@@ -5775,6 +5782,26 @@
           ]
         },
         {
+          "title": "Review the organization's security",
+          "keywords": [
+            "security briefing",
+            "MFA",
+            "two-factor",
+            "dormant accounts",
+            "failed sign-ins",
+            "API keys",
+            "session timeout",
+            "idle sign-out"
+          ],
+          "steps": [
+            "Open [Organization settings](/admin/organization-settings) and select the **Security** tab. It opens on **Overview**.",
+            "Read **Recommendations**, worst first. Each one says what was found and offers the step that settles it, such as **Open users**, **Open policies** or **Review API keys**. Checks that hold are folded under a line that counts the checks passed.",
+            "**Without two-factor** lists the members who still sign in with a password alone. Each person turns two-factor on from their own security settings.",
+            "**Idle sign-out**, among the figures, shows how long an idle browser stays signed in and how long a session lasts. These come from the server's configuration and apply to every organization it hosts, so they are shown here but not changed.",
+            "Select **Check again** to run the checks once more after a change."
+          ]
+        },
+        {
           "title": "Set up single sign-on",
           "keywords": [
             "SSO",
@@ -5786,7 +5813,7 @@
           ],
           "steps": [
             "Open [Organization settings](/admin/organization-settings) and select the **Security** tab, then **Sign-in**.",
-            "Select **Add provider**. Under **Quick start**, pick a provider such as Entra ID or Okta to fill in common defaults.",
+            "Select **New provider**. Under **Quick start**, pick a provider such as Entra ID or Okta to fill in common defaults.",
             "Fill in the **OIDC application** values: **Issuer URL**, **Redirect URI**, **Client ID**, **Client secret** and **OIDC scopes**.",
             "Under **Access boundaries**, enter **Allowed domains** and turn on **Enabled**, and optionally **Enforce SSO**, **Auto-provision users** and **Trust federated MFA**.",
             "Select **Save**."
@@ -5802,13 +5829,13 @@
           ],
           "steps": [
             "Open [Organization settings](/admin/organization-settings) and select the **Security** tab, then **Provisioning**.",
-            "Under **SCIM directories**, select **Add**, enter the **Tenant slug**, turn on **Enabled** and select **Save**.",
-            "With the directory selected, enter a token name under **SCIM tokens** and select **Create token**. Copy the token straight away; it is only shown once.",
-            "Under **Group role mappings**, select **Add mapping** and map an **External group ID** to a **Role**, then select **Save**."
+            "Under **SCIM directories**, select **New directory**, enter the **Tenant slug**, turn on **Enabled** and select **Save**.",
+            "With the directory selected, enter a token name under **SCIM tokens** and select **New token**. Copy the token straight away; it is only shown once.",
+            "Under **Group role mappings**, select **New mapping** and map an **External group ID** to a **Role**, then select **Save**."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization; saving the **General** tab needs update access. The operating model only changes what appears in menus and navigation; it does not change permissions, API access or existing records. Revoke a SCIM token with **Revoke** in its row once it is no longer used.",
+      "notes": "Opening the page needs read access to the organization; saving the **General** tab needs update access. Each part of the security briefing appears only to people who can read what it is drawn from: member figures need users, two-factor coverage needs MFA authenticators, failed sign-ins need auth events and API key figures need API keys. The operating model only changes what appears in menus and navigation; it does not change permissions, API access or existing records. Revoke a SCIM token with **Revoke** in its row once it is no longer used.",
       "related": [
         "/admin/users",
         "/admin/roles",
@@ -8089,6 +8116,22 @@
           ]
         },
         {
+          "title": "Check or correct a POD's signature",
+          "keywords": [
+            "unsigned POD",
+            "signed proof of delivery",
+            "POD not signed",
+            "receiver signature",
+            "mark signed"
+          ],
+          "steps": [
+            "Open [Billing queue](/billing/queue), select the item and open the **Documents** tab. Each document whose type needs a signature shows whether it is **Signed**, **Unsigned** or not read yet.",
+            "To correct it, select **Record signature** on the document, choose **Signed**, **Unsigned** or **Signature not read**, and for a signed copy pick the date in **Signed on** if it can be read.",
+            "Select **Save**. The item's proof of delivery check updates straight away, and an unsigned POD raises an issue to ask the driver or bill without it.",
+            "To have document intelligence read the queued PODs nobody has checked yet, select **Read POD signatures** in the header, then **Read signatures**."
+          ]
+        },
+        {
           "title": "Correct charges before approval",
           "keywords": [
             "add accessorial",
@@ -8149,7 +8192,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nA detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
+      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nDocument intelligence reads the receiver's signature when it reads a delivery document, and marks it signed or unsigned only when it is sure; otherwise the signature stays unread. A signature a person records is final: reading the document again never changes it. Documents uploaded by hand from a shipment are not machine-read, so their signature is recorded with **Record signature**. Recording a signature needs permission to update documents.\n\nA detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
       "related": [
         "/billing/invoices",
         "/billing/configuration-files/customers",

@@ -111,16 +111,21 @@ Keywords: embeddings, embedding model, semantic search, search by meaning, vecto
    and fails when the model returns a different size; a provider that fails is saved off.
 
 ### Let agents search the web
-Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace
+Keywords: web search, internet, Exa, Parallel, look up regulations, ELD rules, hours of service, current information, extension marketplace, switch search provider
 1. Open [AI control](/admin/agent-control) and select **Extensions**.
-2. Open **Web search**, under **Featured** or from **All extensions**.
-3. Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is
-   stored encrypted and never shown again; select **Replace** to change it later.
+2. Open **Web search** from Exa or from Parallel, under **Featured** or from **All extensions**.
+   Both give agents the same web search tools; choose the vendor the organization has an
+   account with.
+3. Paste the organization's API key from that vendor under **Connection** and select **Turn on**.
+   The key is stored encrypted and never shown again; select **Replace** to change it later.
 4. Select **Test connection** to check the key works.
 5. Under **Available to**, choose **Every agent** to give all agents, the assistant included, the
    web search tools, or **Agents you choose** and select the agents that get them.
 6. Optionally change **Search depth**, **Daily request limit**, the results per search and the
    sites agents never receive results from. Each change is saved as you make it.
+7. To move to the other vendor, open the one that is on and select **Turn off**, then turn on the
+   other. Only one can be on at a time, and agents keep their web search tools, so no agent needs
+   changing.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only

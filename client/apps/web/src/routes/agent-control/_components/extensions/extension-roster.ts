@@ -8,6 +8,9 @@ export type ExtensionSort = (typeof extensionSorts)[number];
 
 export const ALL_CATEGORIES = "all";
 
+/** The capability the Desk demo shows: an agent searching the web and citing what it read. */
+export const WEB_RESEARCH = "WebResearch";
+
 export type ExtensionState = "on" | "needsSetup" | "off";
 
 export type ExtensionFilter = {
@@ -29,6 +32,15 @@ export function extensionState(item: AgentExtensionCatalogItem): ExtensionState 
     return "needsSetup";
   }
   return "off";
+}
+
+/**
+ * The other extension that already gives agents this one's capability, when this one is off:
+ * only one vendor serves a capability, so this one cannot be turned on until that one is off.
+ * Empty when nothing stands in the way.
+ */
+export function capabilityHolder(item: AgentExtensionCatalogItem): string {
+  return item.enabled ? "" : item.capabilityHeldBy;
 }
 
 function matchesQuery(item: AgentExtensionCatalogItem, query: string): boolean {

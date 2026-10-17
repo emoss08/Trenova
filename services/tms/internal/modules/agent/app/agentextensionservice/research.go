@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -14,9 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/exa"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -32,8 +31,6 @@ const (
 	PagePartCharacters   = 8000
 	MaxPageParts         = 6
 	MaxRecencyDays       = 3650
-	testQuery            = "Federal Motor Carrier Safety Administration hours of service"
-	providerExa          = "Exa"
 )
 
 const unknownRefMessage = "Only pages a web_search returned can be read, with the url and ref " +
@@ -42,8 +39,8 @@ const unknownRefMessage = "Only pages a web_search returned can be read, with th
 const unreadablePageMessage = "The page could not be retrieved. It may have moved, require a " +
 	"login, or block automated readers. Try another result."
 
-const invalidSettingsMessage = "The web search extension's settings are invalid. An " +
-	"administrator can correct them under AI Control, Extensions."
+const invalidSettingsFormat = "The %s extension's settings are invalid. An administrator can " +
+	"correct them under AI Control, Extensions."
 
 type settledCall struct {
 	day    int
@@ -61,10 +58,11 @@ func (s *Service) SearchWeb(
 		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error())}
 	}
 
-	settings, err := s.exaSettings(ctx, tenantInfo)
+	research, err := s.webResearch(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
+	settings := research.settings
 
 	numResults := settings.ResultsPerSearch
 	if query.ResultLimit > 0 {
@@ -72,9 +70,8 @@ func (s *Service) SearchWeb(
 	}
 
 	request := agentextensionports.WebSearchProviderRequest{
-		APIKey:         settings.APIKey,
+		Settings:       research.values,
 		Query:          text,
-		SearchType:     settings.SearchType,
 		NumResults:     numResults,
 		ExcludeDomains: settings.ExcludedDomains,
 		ExcerptCharacters: intutils.Clamp(
@@ -90,24 +87,20 @@ func (s *Service) SearchWeb(
 			AddDate(0, 0, -days).Format(time.RFC3339)
 	}
 
-	call := meteredCall{
-		tenant: tenantInfo,
-		typ:    agentextension.TypeExa,
-		limit:  settings.DailyRequestLimit,
-	}
+	call := research.metered(tenantInfo)
 	day, err := s.reserve(ctx, call)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := s.webSearch.Search(ctx, request)
+	resp, err := research.provider.Search(ctx, request)
 	settled := settledCall{day: day, failed: err != nil}
 	if resp != nil {
 		settled.cost = resp.CostUSD
 	}
 	s.settle(ctx, call, settled)
 	if err != nil {
-		return nil, s.providerError(err, "search the web")
+		return nil, s.providerError(research.failing(err, "search the web"))
 	}
 
 	key := refKey(settings.APIKey)
@@ -161,27 +154,23 @@ func (s *Service) ReadWebPage(
 			" parts of a page can be read. Search for the specific section instead."}
 	}
 
-	settings, err := s.exaSettings(ctx, tenantInfo)
+	research, err := s.webResearch(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	if !validRef(refKey(settings.APIKey), tenantInfo, target, query.Ref) {
+	if !validRef(refKey(research.settings.APIKey), tenantInfo, target, query.Ref) {
 		return nil, &ToolError{Message: unknownRefMessage}
 	}
 
-	call := meteredCall{
-		tenant: tenantInfo,
-		typ:    agentextension.TypeExa,
-		limit:  settings.DailyRequestLimit,
-	}
+	call := research.metered(tenantInfo)
 	day, err := s.reserve(ctx, call)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := s.webSearch.Read(ctx, agentextensionports.WebPageProviderRequest{
-		APIKey:        settings.APIKey,
+	resp, err := research.provider.Read(ctx, agentextensionports.WebPageProviderRequest{
+		Settings:      research.values,
 		URL:           target,
 		MaxCharacters: part*PagePartCharacters + 1,
 	})
@@ -191,10 +180,11 @@ func (s *Service) ReadWebPage(
 	}
 	s.settle(ctx, call, settled)
 	if err != nil {
-		if errors.Is(err, exa.ErrContentNotFound) {
+		failure := research.failing(err, "read the page")
+		if failure.failure.Kind == agentextensionports.ProviderFailureNotFound {
 			return nil, &ToolError{Message: unreadablePageMessage}
 		}
-		return nil, s.providerError(err, "read the page")
+		return nil, s.providerError(failure)
 	}
 
 	text, hasMore, inRange := pagePart(resp.Text, part)
@@ -235,17 +225,18 @@ func (s *Service) TestConnection(
 	if !spec.SupportsTestConnect {
 		return nil, errortypes.NewBusinessError("{0} cannot be tested", def.Name)
 	}
-	if err = s.requireWebSearch(ctx, tenantInfo); err != nil {
+	if err = s.requirePlan(ctx, tenantInfo, spec.Capability); err != nil {
 		return nil, err
 	}
 
-	runtime, err := s.runtime(ctx, tenantInfo, typ, false)
+	extension, err := s.settingsFor(ctx, tenantInfo, typ)
 	if err != nil {
 		return nil, asBusinessError(err)
 	}
-	settings, err := agentextension.ParseExaSettings(runtime.values)
-	if err != nil {
-		return nil, err
+	multiErr := errortypes.NewMultiError()
+	agentextension.ValidateSettings(typ, extension.values, multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
 	}
 
 	call := meteredCall{tenant: tenantInfo, typ: typ, limit: unlimitedRequests}
@@ -255,25 +246,20 @@ func (s *Service) TestConnection(
 	}
 
 	started := time.Now()
-	resp, err := s.webSearch.Search(ctx, agentextensionports.WebSearchProviderRequest{
-		APIKey:     settings.APIKey,
-		Query:      testQuery,
-		SearchType: agentextension.ExaSearchTypeFast,
-		NumResults: 1,
-	})
+	result, err := extension.connector.Test(ctx, extension.values)
 	latency := time.Since(started).Milliseconds()
 	settled := settledCall{day: day, failed: err != nil}
-	if resp != nil {
-		settled.cost = resp.CostUSD
+	if result != nil {
+		settled.cost = result.CostUSD
 	}
 	s.settle(ctx, call, settled)
 	if err != nil {
-		return nil, asBusinessError(s.providerError(err, "run a test search"))
+		return nil, asBusinessError(s.providerError(extension.failing(err, "run a test")))
 	}
 
 	message := def.Vendor + " answered in " + strconv.FormatInt(latency, 10) + " ms."
-	if len(resp.Results) == 0 {
-		message += " The test search returned no pages, which can happen; the key works."
+	if result != nil && result.Note != "" {
+		message += " " + result.Note
 	}
 
 	return &agentextensionports.AgentExtensionTestResponse{
@@ -285,49 +271,98 @@ func (s *Service) TestConnection(
 	}, nil
 }
 
-func (s *Service) exaSettings(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (agentextension.ExaSettings, error) {
-	runtime, err := s.runtime(ctx, tenantInfo, agentextension.TypeExa, true)
-	if err != nil {
-		return agentextension.ExaSettings{}, err
-	}
-
-	settings, err := agentextension.ParseExaSettings(runtime.values)
-	if err != nil {
-		s.l.Error("stored web search settings are invalid", zap.Error(err))
-		return agentextension.ExaSettings{}, &ToolError{Message: invalidSettingsMessage}
-	}
-
-	return settings, nil
+type webResearchCall struct {
+	*extensionSettings
+	settings agentextension.WebResearchSettings
+	provider agentextensionports.WebSearchProvider
 }
 
-func (s *Service) providerError(err error, action string) error {
+func (s *Service) webResearch(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*webResearchCall, error) {
+	extension, err := s.serving(ctx, tenantInfo, agentextension.CapabilityWebResearch)
+	if err != nil {
+		return nil, err
+	}
+
+	provider, ok := s.webSearch[extension.typ]
+	if !ok {
+		return nil, errortypes.NewBusinessError(
+			"the {0} extension cannot search the web", extension.typ.String(),
+		)
+	}
+
+	multiErr := errortypes.NewMultiError()
+	agentextension.ValidateSettings(extension.typ, extension.values, multiErr)
+	settings, err := agentextension.ParseWebResearchSettings(extension.values)
+	if multiErr.HasErrors() || err != nil {
+		s.l.Error("stored web research settings are invalid",
+			zap.String("type", extension.typ.String()), zap.Error(errors.Join(multiErr, err)))
+		return nil, &ToolError{Message: fmt.Sprintf(invalidSettingsFormat, extension.def.title())}
+	}
+
+	return &webResearchCall{
+		extensionSettings: extension,
+		settings:          settings,
+		provider:          provider,
+	}, nil
+}
+
+func (c *webResearchCall) metered(tenantInfo pagination.TenantInfo) meteredCall {
+	return meteredCall{
+		tenant: tenantInfo,
+		typ:    c.typ,
+		limit:  c.settings.DailyRequestLimit,
+	}
+}
+
+type providerFailure struct {
+	err     error
+	vendor  string
+	action  string
+	failure agentextensionports.ProviderFailure
+	spec    agentextension.CapabilitySpec
+}
+
+func (e *extensionSettings) failing(err error, action string) providerFailure {
+	spec, _ := agentextension.SpecFor(e.typ)
+	capability, _ := agentextension.CapabilitySpecFor(spec.Capability)
+
+	return providerFailure{
+		err:     err,
+		vendor:  e.def.Vendor,
+		action:  action,
+		failure: e.connector.Classify(err),
+		spec:    capability,
+	}
+}
+
+func (s *Service) providerError(f providerFailure) error {
 	var message string
 	switch {
-	case exa.IsUnauthorized(err):
-		message = providerExa + " rejected the organization's API key, so it could not " + action +
+	case f.failure.Kind == agentextensionports.ProviderFailureUnauthorized:
+		message = f.vendor + " rejected the organization's API key, so it could not " + f.action +
 			". An administrator can update the key under AI Control, Extensions."
-	case exa.IsOutOfCredits(err):
-		message = "The organization's " + providerExa + " account is out of credits, so it could not " +
-			action + ". An administrator can add credits in the " + providerExa + " dashboard."
-	case exa.IsRateLimited(err):
-		message = providerExa + " is limiting how fast requests can be made. Wait a minute before " +
+	case f.failure.Kind == agentextensionports.ProviderFailureOutOfCredits:
+		message = "The organization's " + f.vendor + " account is out of credits, so it could not " +
+			f.action + ". An administrator can add credits in the " + f.vendor + " dashboard."
+	case f.failure.Kind == agentextensionports.ProviderFailureRateLimited:
+		message = f.vendor + " is limiting how fast requests can be made. Wait a minute before " +
 			"trying again."
-	case exa.IsInvalidRequest(err):
-		message = providerExa + " could not " + action + " as asked"
-		var apiErr *restx.APIError
-		if errors.As(err, &apiErr) && apiErr.Message != "" {
-			message += ": " + apiErr.Message
+	case f.failure.Kind == agentextensionports.ProviderFailureInvalidRequest:
+		message = f.vendor + " could not " + f.action + " as asked"
+		if f.failure.Detail != "" {
+			message += ": " + f.failure.Detail
 		}
 		message += ". Rephrase the request."
-	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
-		message = providerExa + " took too long to " + action + ". Try again, or answer without it."
+	case errors.Is(f.err, context.DeadlineExceeded), errors.Is(f.err, context.Canceled):
+		message = f.vendor + " took too long to " + f.action + ". Try again, or answer without it."
 	default:
-		s.l.Warn("web research provider failed", zap.Error(err), zap.String("action", action))
-		message = providerExa + " could not be reached to " + action + ". Try again shortly, or " +
-			"answer without it and say that the web could not be checked."
+		s.l.Warn("extension provider failed", zap.Error(f.err),
+			zap.String("vendor", f.vendor), zap.String("action", f.action))
+		message = f.vendor + " could not be reached to " + f.action + ". Try again shortly, or " +
+			"answer without it and say that " + f.spec.Unchecked + "."
 	}
 
 	return &ToolError{Message: message}
@@ -342,10 +377,10 @@ func asBusinessError(err error) error {
 	return err
 }
 
-func dailyLimitMessage(limit int) string {
-	return "This organization has used its daily limit of " + strconv.Itoa(limit) +
-		" web requests. It resets at midnight UTC. Answer from what you already have and say " +
-		"that the web could not be checked again today."
+func dailyLimitMessage(spec agentextension.CapabilitySpec, limit int) string {
+	return "This organization has used its daily limit of " + strconv.Itoa(limit) + " " +
+		spec.RequestNoun + ". It resets at midnight UTC. Answer from what you already have and " +
+		"say that " + spec.Unchecked + " again today."
 }
 
 func refKey(apiKey string) []byte {

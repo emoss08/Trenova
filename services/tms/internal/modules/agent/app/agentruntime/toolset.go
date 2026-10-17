@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -123,7 +124,7 @@ type toolSetRequest struct {
 	decisions bool
 	// extensions is what the turn already read of the organization's
 	// extensions; nil reads them again.
-	extensions  *activeExtensions
+	extensions  *agentextension.Active
 	attachments bool
 }
 
@@ -696,7 +697,7 @@ func (s *Service) permittedWith(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	names []string,
-	extensions *activeExtensions,
+	extensions *agentextension.Active,
 ) []string {
 	// Never nil: the catalog reads nil as "everything", and a person who may
 	// use nothing must be offered nothing.

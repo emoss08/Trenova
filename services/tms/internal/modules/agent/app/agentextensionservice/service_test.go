@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentextension/exaconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -172,6 +173,7 @@ func (u *memoryUsage) Summarize(
 }
 
 type fakeWeb struct {
+	typ         agentextension.Type
 	mu          sync.Mutex
 	searches    []agentextensionports.WebSearchProviderRequest
 	reads       []agentextensionports.WebPageProviderRequest
@@ -182,6 +184,28 @@ type fakeWeb struct {
 	searchCost  decimal.Decimal
 	readCost    decimal.Decimal
 	missingPage bool
+}
+
+func (f *fakeWeb) Type() agentextension.Type { return f.typ }
+
+func (f *fakeWeb) Classify(err error) agentextensionports.ProviderFailure {
+	return exaconnector.New().Classify(err)
+}
+
+func (f *fakeWeb) Test(
+	ctx context.Context,
+	settings map[string]string,
+) (*agentextensionports.ConnectorTestResult, error) {
+	resp, err := f.Search(ctx, agentextensionports.WebSearchProviderRequest{
+		Settings:   settings,
+		Query:      "test",
+		NumResults: 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &agentextensionports.ConnectorTestResult{CostUSD: resp.CostUSD}, nil
 }
 
 func (f *fakeWeb) Search(
@@ -256,10 +280,11 @@ func (a *recordingAudit) RegisterSensitiveFields(permission.Resource, []auditpor
 }
 
 type fixture struct {
-	svc    *Service
-	repo   *memoryRepo
-	usage  *memoryUsage
-	web    *fakeWeb
+	svc      *Service
+	repo     *memoryRepo
+	usage    *memoryUsage
+	web      *fakeWeb
+	parallel *fakeWeb
 	audit  *recordingAudit
 	tenant pagination.TenantInfo
 }
@@ -270,7 +295,16 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{
 		repo:  newMemoryRepo(),
 		usage: &memoryUsage{cost: decimal.Zero},
-		web:   &fakeWeb{searchCost: decimal.RequireFromString("0.005"), readCost: decimal.RequireFromString("0.001")},
+		web: &fakeWeb{
+			typ:        agentextension.TypeExa,
+			searchCost: decimal.RequireFromString("0.005"),
+			readCost:   decimal.RequireFromString("0.001"),
+		},
+		parallel: &fakeWeb{
+			typ:        agentextension.TypeParallel,
+			searchCost: decimal.RequireFromString("0.001"),
+			readCost:   decimal.RequireFromString("0.001"),
+		},
 		audit: &recordingAudit{},
 		tenant: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
@@ -284,7 +318,7 @@ func newFixture(t *testing.T) *fixture {
 		Usage:        f.usage,
 		Encryption:   testEncryptionService(),
 		AuditService: f.audit,
-		WebSearch:    f.web,
+		Connectors:   []agentextensionports.ExtensionConnector{f.web, f.parallel},
 	})
 	f.svc.now = func() int64 { return testNow }
 
@@ -306,10 +340,20 @@ func testEncryptionService() *encryptionservice.Service {
 func (f *fixture) enable(t *testing.T, configuration map[string]string) *agentextensionports.AgentExtensionConfigResponse {
 	t.Helper()
 
-	current, err := f.svc.GetConfig(t.Context(), f.tenant, agentextension.TypeExa)
+	return f.enableType(t, agentextension.TypeExa, configuration)
+}
+
+func (f *fixture) enableType(
+	t *testing.T,
+	typ agentextension.Type,
+	configuration map[string]string,
+) *agentextensionports.AgentExtensionConfigResponse {
+	t.Helper()
+
+	current, err := f.svc.GetConfig(t.Context(), f.tenant, typ)
 	require.NoError(t, err)
 
-	resp, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
+	resp, err := f.svc.UpdateConfig(t.Context(), typ, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo:    f.tenant,
 		Enabled:       true,
 		Availability:  agentextension.AvailabilityAllAgents,
@@ -328,7 +372,7 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	catalog, err := f.svc.ListCatalog(t.Context(), f.tenant)
 	require.NoError(t, err)
 
-	require.Len(t, catalog.Items, 1)
+	require.Len(t, catalog.Items, len(agentextension.AllTypes()))
 	item := catalog.Items[0]
 	assert.Equal(t, agentextension.TypeExa, item.Type)
 	assert.False(t, item.Enabled)
@@ -336,6 +380,9 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	assert.Equal(t, agentextension.AvailabilitySelectedAgents, item.Availability)
 	assert.Equal(t, agentextension.DefaultDailyRequestLimit, item.DailyRequestLimit)
 	assert.Len(t, item.Tools, 2)
+	assert.Equal(t, agentextension.CapabilityWebResearch, item.Capability)
+	assert.Equal(t, "Web research", item.CapabilityLabel)
+	assert.Empty(t, item.CapabilityHeldBy)
 	assert.NotEmpty(t, item.DataNotice)
 	require.Len(t, catalog.Categories, 1)
 	assert.Equal(t, "Web research", catalog.Categories[0].Label)
@@ -451,18 +498,21 @@ func TestUnknownExtensionIsNotFound(t *testing.T) {
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
-func TestActiveExtensionsNeedsOnAndSetUp(t *testing.T) {
+func TestActiveCapabilitiesNeedOnAndSetUp(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	active, err := f.svc.ActiveExtensions(t.Context(), f.tenant)
+	active, err := f.svc.ActiveCapabilities(t.Context(), f.tenant)
 	require.NoError(t, err)
 	assert.Empty(t, active)
 
 	resp := f.enable(t, map[string]string{"apiKey": testAPIKey})
-	active, err = f.svc.ActiveExtensions(t.Context(), f.tenant)
+	active, err = f.svc.ActiveCapabilities(t.Context(), f.tenant)
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.AvailabilityAllAgents, active[agentextension.TypeExa])
+	assert.Equal(t, agentextension.ActiveExtension{
+		Type:         agentextension.TypeExa,
+		Availability: agentextension.AvailabilityAllAgents,
+	}, active[agentextension.CapabilityWebResearch])
 
 	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: f.tenant,
@@ -470,12 +520,12 @@ func TestActiveExtensionsNeedsOnAndSetUp(t *testing.T) {
 		Version:    resp.Version,
 	})
 	require.NoError(t, err)
-	active, err = f.svc.ActiveExtensions(t.Context(), f.tenant)
+	active, err = f.svc.ActiveCapabilities(t.Context(), f.tenant)
 	require.NoError(t, err)
 	assert.Empty(t, active)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	active, err = f.svc.ActiveExtensions(t.Context(), other)
+	active, err = f.svc.ActiveCapabilities(t.Context(), other)
 	require.NoError(t, err)
 	assert.Empty(t, active)
 }
@@ -507,7 +557,7 @@ func TestSearchRanksOfficialSitesFirstAndMeters(t *testing.T) {
 
 	require.Len(t, f.web.searches, 1)
 	sent := f.web.searches[0]
-	assert.Equal(t, testAPIKey, sent.APIKey)
+	assert.Equal(t, testAPIKey, sent.Settings[agentextension.ConfigKeyAPIKey])
 	assert.Equal(t, agentextension.DefaultResultsPerSearch, sent.NumResults)
 	assert.Equal(t, []string{"spam.example.com"}, sent.ExcludeDomains)
 	assert.Equal(t, "2025-09-23T00:00:00Z", sent.StartPublishedDate)
@@ -696,4 +746,108 @@ func TestConnectionTestNeedsAKey(t *testing.T) {
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 	assert.Contains(t, err.Error(), "not set up")
+}
+
+func TestOnlyOneVendorServesACapability(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enable(t, map[string]string{"apiKey": testAPIKey})
+
+	current, err := f.svc.GetConfig(t.Context(), f.tenant, agentextension.TypeParallel)
+	require.NoError(t, err)
+	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeParallel, &agentextensionports.UpdateAgentExtensionRequest{
+		TenantInfo:    f.tenant,
+		Enabled:       true,
+		Availability:  agentextension.AvailabilityAllAgents,
+		Configuration: map[string]string{"apiKey": "parallel-key"},
+		Version:       current.Version,
+	})
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "enabled", multiErr.Errors[0].Field)
+	assert.Equal(t,
+		"{0} is already on and gives agents the same tools. Turn it off before turning on {1}.",
+		multiErr.Errors[0].Message,
+	)
+	assert.Equal(t, []any{"Exa", "Parallel"}, multiErr.Errors[0].Args)
+
+	catalog, err := f.svc.ListCatalog(t.Context(), f.tenant)
+	require.NoError(t, err)
+	held := map[agentextension.Type]string{}
+	for _, item := range catalog.Items {
+		held[item.Type] = item.CapabilityHeldBy
+	}
+	assert.Empty(t, held[agentextension.TypeExa])
+	assert.Equal(t, "Exa", held[agentextension.TypeParallel])
+}
+
+func TestSwitchingVendorsKeepsTheToolsAndMovesTheCalls(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	exa := f.enable(t, map[string]string{"apiKey": testAPIKey})
+	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
+		TenantInfo: f.tenant,
+		Version:    exa.Version,
+	})
+	require.NoError(t, err)
+
+	f.enableType(t, agentextension.TypeParallel, map[string]string{
+		"apiKey":     "parallel-key",
+		"searchType": agentextension.ParallelModeFast,
+	})
+
+	active, err := f.svc.ActiveCapabilities(t.Context(), f.tenant)
+	require.NoError(t, err)
+	assert.Equal(t, agentextension.ActiveExtension{
+		Type:         agentextension.TypeParallel,
+		Availability: agentextension.AvailabilityAllAgents,
+	}, active[agentextension.CapabilityWebResearch])
+	assert.Equal(t,
+		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		active.Grants(),
+	)
+
+	f.parallel.results = []agentextensionports.WebSearchProviderResult{
+		{Title: "HOS", URL: "https://www.fmcsa.dot.gov/regulations/hours-of-service"},
+	}
+	outcome, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "hours of service"})
+	require.NoError(t, err)
+	require.Len(t, outcome.Hits, 1)
+
+	assert.Empty(t, f.web.searches)
+	require.Len(t, f.parallel.searches, 1)
+	assert.Equal(t, "parallel-key", f.parallel.searches[0].Settings[agentextension.ConfigKeyAPIKey])
+	assert.Equal(t, agentextension.ParallelModeFast, f.parallel.searches[0].Settings[agentextension.ConfigKeySearchType])
+
+	f.parallel.pageText = "page"
+	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{
+		URL: outcome.Hits[0].URL,
+		Ref: outcome.Hits[0].Ref,
+	})
+	require.NoError(t, err)
+	assert.Len(t, f.parallel.reads, 1)
+	assert.Empty(t, f.web.reads)
+}
+
+func TestParallelSettingsRefuseAnExaDepth(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	current, err := f.svc.GetConfig(t.Context(), f.tenant, agentextension.TypeParallel)
+	require.NoError(t, err)
+
+	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeParallel, &agentextensionports.UpdateAgentExtensionRequest{
+		TenantInfo:    f.tenant,
+		Enabled:       true,
+		Availability:  agentextension.AvailabilitySelectedAgents,
+		Configuration: map[string]string{"apiKey": "parallel-key", "searchType": agentextension.ExaSearchTypeDeep},
+		Version:       current.Version,
+	})
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field)
+	assert.Equal(t, "Search depth must be fast, basic or advanced", multiErr.Errors[0].Message)
 }
