@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -167,6 +167,58 @@ func TestRouteDocument_ShapesTheResult(t *testing.T) {
 	assert.Equal(t, "RateConfirmation", result.DocumentKind)
 	assert.InDelta(t, 0.91, result.Confidence, 0.001)
 	assert.Equal(t, "NeedsReview", result.ReviewStatus)
+}
+
+func TestRouteDocument_ReadsTheReceiversSignature(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		structured: &agentports.StructuredCompletionResult{
+			Text: `{"shouldExtract": false, "documentKind": "ProofOfDelivery",
+			        "confidence": 0.9, "reviewStatus": "ready",
+			        "signature": {"status": " Signed ", "confidence": 1.3,
+			                      "signedDate": " 2026-10-14 "}}`,
+		},
+	}
+	service := newTestService(t, completion)
+
+	result, err := service.RouteDocument(t.Context(), routeRequest())
+	require.NoError(t, err)
+
+	require.NotNil(t, result.Signature)
+	assert.Equal(t, "Signed", result.Signature.Status)
+	assert.InDelta(t, 1.0, result.Signature.Confidence, 0.001)
+	assert.Equal(t, "2026-10-14", result.Signature.SignedDate)
+}
+
+func TestRouteDocument_LeavesTheSignatureUnreadWhenTheReplyHasNone(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		structured: &agentports.StructuredCompletionResult{
+			Text: `{"shouldExtract": true, "documentKind": "RateConfirmation", "confidence": 0.9}`,
+		},
+	}
+	service := newTestService(t, completion)
+
+	result, err := service.RouteDocument(t.Context(), routeRequest())
+	require.NoError(t, err)
+
+	assert.Nil(t, result.Signature)
+}
+
+func TestRouteSchemaAsksForTheSignatureReading(t *testing.T) {
+	t.Parallel()
+
+	schema := buildRouteSchema()
+
+	assert.Contains(t, schema["required"], "signature")
+	properties, ok := schema["properties"].(map[string]any)
+	require.True(t, ok)
+	signature, ok := properties["signature"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, []string{"status", "confidence", "signedDate"}, signature["required"])
+	assert.Equal(t, false, signature["additionalProperties"])
 }
 
 /*

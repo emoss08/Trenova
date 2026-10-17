@@ -256,6 +256,9 @@ type Document struct {
 	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero"`
 	SignatureStatus       SignatureStatus     `json:"signatureStatus"       bun:"signature_status,type:VARCHAR(20),notnull,nullzero,default:'Unknown'"`
 	SignedAt              *int64              `json:"signedAt"              bun:"signed_at,type:BIGINT,nullzero"`
+	SignatureSource       SignatureSource     `json:"signatureSource"       bun:"signature_source,type:VARCHAR(20),nullzero"`
+	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById"  bun:"signature_updated_by_id,type:VARCHAR(100),nullzero"`
+	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt"    bun:"signature_updated_at,type:BIGINT,nullzero"`
 	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                  string              `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly"`
 	Version               int64               `json:"version"               bun:"version,type:BIGINT"`
@@ -436,6 +439,24 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.ShipmentDraftStatus,
 			domainvalidation.ValidEnum[ShipmentDraftStatus]("Shipment draft status is invalid"),
+		),
+		validation.Field(&d.SignatureStatus,
+			domainvalidation.ValidEnum[SignatureStatus]("Signature status is invalid"),
+		),
+		validation.Field(&d.SignatureSource,
+			domainvalidation.ValidEnum[SignatureSource]("Signature source is invalid"),
+		),
+		validation.Field(&d.SignedAt,
+			validation.When(
+				d.SignatureStatus != SignatureStatusSigned,
+				validation.Nil.Error("Only a signed document has a signing date"),
+			),
+		),
+		validation.Field(&d.SignatureUpdatedByID,
+			validation.When(
+				d.SignatureSource == SignatureSourcePerson,
+				validation.Required.Error("A signature a person recorded must name who recorded it"),
+			),
 		),
 		validation.Field(&d.PreviewStoragePath,
 			validation.Length(0, maxStoragePathLength).

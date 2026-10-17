@@ -1005,6 +1005,72 @@ func (_c *MockDocumentRepository_PromoteVersion_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// RecordDetectedSignature provides a mock function for the type MockDocumentRepository
+func (_mock *MockDocumentRepository) RecordDetectedSignature(ctx context.Context, req *documentports.RecordDetectedSignatureRequest) (bool, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordDetectedSignature")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentports.RecordDetectedSignatureRequest) (bool, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentports.RecordDetectedSignatureRequest) bool); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentports.RecordDetectedSignatureRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentRepository_RecordDetectedSignature_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordDetectedSignature'
+type MockDocumentRepository_RecordDetectedSignature_Call struct {
+	*mock.Call
+}
+
+// RecordDetectedSignature is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *documentports.RecordDetectedSignatureRequest
+func (_e *MockDocumentRepository_Expecter) RecordDetectedSignature(ctx any, req any) *MockDocumentRepository_RecordDetectedSignature_Call {
+	return &MockDocumentRepository_RecordDetectedSignature_Call{Call: _e.mock.On("RecordDetectedSignature", ctx, req)}
+}
+
+func (_c *MockDocumentRepository_RecordDetectedSignature_Call) Run(run func(ctx context.Context, req *documentports.RecordDetectedSignatureRequest)) *MockDocumentRepository_RecordDetectedSignature_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *documentports.RecordDetectedSignatureRequest
+		if args[1] != nil {
+			arg1 = args[1].(*documentports.RecordDetectedSignatureRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentRepository_RecordDetectedSignature_Call) Return(changed bool, err error) *MockDocumentRepository_RecordDetectedSignature_Call {
+	_c.Call.Return(changed, err)
+	return _c
+}
+
+func (_c *MockDocumentRepository_RecordDetectedSignature_Call) RunAndReturn(run func(ctx context.Context, req *documentports.RecordDetectedSignatureRequest) (bool, error)) *MockDocumentRepository_RecordDetectedSignature_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelectOptions provides a mock function for the type MockDocumentRepository
 func (_mock *MockDocumentRepository) SelectOptions(ctx context.Context, req *documentports.DocumentSelectOptionsRequest) (*pagination.ListResult[*document.Document], error) {
 	ret := _mock.Called(ctx, req)

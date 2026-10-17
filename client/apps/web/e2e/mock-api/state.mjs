@@ -32,6 +32,8 @@ export const SCENARIO_DEFAULTS = {
   deskSlug: process.env.MOCK_DESK_SLUG ?? "tractor-t-101",
   // the Desk home's agent suggestion: match | none (no agent fits) | hold (left open, the "finding" state)
   agentMatch: process.env.MOCK_AGENT_MATCH ?? "match",
+  // the EDI desk's guide conversation: held | ready | proposed | revised
+  ediDraft: process.env.MOCK_EDI_DRAFT ?? "ready",
   // the command palette's waiting counts in the sidebar and on the palette's home
   palette: process.env.MOCK_PALETTE === "1",
 };

@@ -45,6 +45,7 @@ import {
 import { formatFileSize, type RejectedFile } from "./document-upload-zone";
 import { getFileCategory } from "./document-utils";
 import { PacketCompletenessPanel } from "./packet-completeness-panel";
+import { DocumentSignatureDialog } from "./document-signature-dialog";
 import { RejectDocumentDialog } from "./reject-document-dialog";
 import { ShipmentBillingReadinessPanel } from "./shipment-billing-readiness-panel";
 import { UploadPanel } from "./upload-panel";
@@ -108,6 +109,8 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const [rejectingDocument, setRejectingDocument] = useState<Document | null>(null);
   const { allowed: canApproveDocuments } = usePermission(Resource.Document, Operation.Approve);
   const { allowed: canRejectDocuments } = usePermission(Resource.Document, Operation.Reject);
+  const [signatureDocument, setSignatureDocument] = useState<Document | null>(null);
+  const { allowed: canRecordSignatures } = usePermission(Resource.Document, Operation.Update);
   const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
@@ -581,6 +584,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         onVersions={handleOpenVersions}
         onApprove={canApproveDocuments ? handleApproveDocument : undefined}
         onReject={canRejectDocuments ? setRejectingDocument : undefined}
+        onRecordSignature={canRecordSignatures ? setSignatureDocument : undefined}
         deletingId={deletingId}
         reviewingId={isApprovingDocument ? approvingDocumentId : undefined}
         isLoading={isLoading}
@@ -649,6 +653,16 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         }}
         document={rejectingDocument}
         onRejected={invalidateDocumentState}
+      />
+      <DocumentSignatureDialog
+        open={!!signatureDocument}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setSignatureDocument(null);
+          }
+        }}
+        document={signatureDocument}
+        onSaved={invalidateDocumentState}
       />
       <DocumentVersionDialog
         open={!!versionDocument}

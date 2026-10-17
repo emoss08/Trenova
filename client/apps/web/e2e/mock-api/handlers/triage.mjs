@@ -720,6 +720,7 @@ export const TRIAGE_HANDLERS = {
 const AGENTS = [
   { id: "agdef_dispatch", name: "Dispatch", description: "Loads, tenders, carriers", template: "DispatchAssistant", icon: "truck", accent: "blue", toolNames: ["create_shipment", "tender_shipment", "search_carriers"], starters: [{ label: "Build a load", prompt: "Build the load this email describes." }] },
   { id: "agdef_billing", name: "Billing", description: "Invoices, detention, pay", template: "BillingAssistant", icon: "receipt", accent: "teal", toolNames: ["file_document", "waive_detention", "queue_carrier_pay"], starters: [{ label: "Check detention", prompt: "Check the stop times and tell me if the detention stands." }] },
+  { id: "agdef_edi", name: "EDI", description: "Trading partners, X12, acknowledgments", template: "EDIDesk", icon: "file", accent: "violet", toolNames: ["draft_edi_connection", "apply_edi_connection_draft", "inspect_x12"], starters: [{ label: "Set up a partner", prompt: "Set this trading partner up from their EDI guide." }] },
   { id: "agdef_cs", name: "Customer service", description: "Status, ETAs, replies", template: "CustomerAssistant", icon: "message", accent: "amber", toolNames: ["shipment_eta", "draft_reply"], starters: [{ label: "Send an ETA", prompt: "Draft the ETA reply for this customer." }] },
 ];
 

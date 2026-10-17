@@ -123,6 +123,26 @@ type BillingQueueReviewService interface {
 		req *ApproveIfReadyRequest,
 		actor *permissionports.RequestActor,
 	) (*ApproveIfReadyResult, error)
+	RedetectPODSignatures(
+		ctx context.Context,
+		req *RedetectPODSignaturesRequest,
+		actor *permissionports.RequestActor,
+	) (*RedetectPODSignaturesResult, error)
+}
+
+type RedetectPODSignaturesRequest struct {
+	TenantInfo pagination.TenantInfo
+}
+
+type RedetectPODSignaturesResult struct {
+	Shipments        int `json:"shipments"`
+	Documents        int `json:"documents"`
+	Queued           int `json:"queued"`
+	AlreadyRead      int `json:"alreadyRead"`
+	SetByPerson      int `json:"setByPerson"`
+	NotReadByMachine int `json:"notReadByMachine"`
+	Deferred         int `json:"deferred"`
+	Failed           int `json:"failed"`
 }
 
 // ApproveIfReadyRequest is one item of a bulk approval.
