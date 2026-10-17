@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -33,12 +34,21 @@ import (
 	"go.uber.org/zap"
 )
 
-const trackingLinkPath = "/carrier-tracking/"
+const (
+	trackingLinkPath = "/carrier-tracking/"
+	previewLinkToken = "LINK-MADE-WHEN-ISSUED"
+)
 
-func (s *Service) IssueLink(
+type linkIssue struct {
+	base       string
+	move       *shipment.ShipmentMove
+	assignment *shipment.CarrierAssignment
+}
+
+func (s *Service) planIssue(
 	ctx context.Context,
 	req *checkcallports.IssueTrackingLinkRequest,
-) (*checkcallports.IssuedTrackingLink, error) {
+) (*linkIssue, error) {
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
@@ -63,6 +73,19 @@ func (s *Service) IssueLink(
 		return nil, err
 	}
 
+	return &linkIssue{base: base, move: move, assignment: assignment}, nil
+}
+
+func (s *Service) IssueLink(
+	ctx context.Context,
+	req *checkcallports.IssueTrackingLinkRequest,
+) (*checkcallports.IssuedTrackingLink, error) {
+	plan, err := s.planIssue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	move := plan.move
+
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		return nil, err
@@ -74,7 +97,7 @@ func (s *Service) IssueLink(
 		BusinessUnitID: req.TenantInfo.BuID,
 		ShipmentID:     move.ShipmentID,
 		ShipmentMoveID: move.ID,
-		CarrierID:      assignment.CarrierID,
+		CarrierID:      plan.assignment.CarrierID,
 		TokenHash:      tokenHash,
 		RecipientEmail: req.RecipientEmail,
 		ExpiresAt:      now + checkcall.DefaultLinkTTLSeconds,
@@ -98,7 +121,7 @@ func (s *Service) IssueLink(
 
 	issued := &checkcallports.IssuedTrackingLink{
 		Link: link,
-		URL:  base + trackingLinkPath + url.PathEscape(token),
+		URL:  plan.base + trackingLinkPath + url.PathEscape(token),
 	}
 	s.logLinkAudit(&linkAuditParams{
 		tenant:    req.TenantInfo,
@@ -121,24 +144,69 @@ func (s *Service) IssueLink(
 	return issued, nil
 }
 
+func (s *Service) PreviewIssueLink(
+	ctx context.Context,
+	req *checkcallports.IssueTrackingLinkRequest,
+) (*checkcallports.TrackingLinkPreview, error) {
+	plan, err := s.planIssue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	move := plan.move
+	now := s.now()
+	active, err := s.links.GetActiveForMove(ctx, req.TenantInfo, move.ID, now)
+	if err != nil {
+		return nil, err
+	}
+
+	preview := &checkcallports.TrackingLinkPreview{
+		MoveID:            move.ID,
+		ShipmentID:        move.ShipmentID,
+		ShipmentProNumber: s.proNumber(ctx, req.TenantInfo, move.ShipmentID),
+		CarrierID:         plan.assignment.CarrierID,
+		CarrierName:       s.carrierName(ctx, req.TenantInfo, plan.assignment.CarrierID),
+		RecipientEmail:    req.RecipientEmail,
+		ExpiresAt:         now + checkcall.DefaultLinkTTLSeconds,
+		Replaces:          active,
+	}
+	if req.RecipientEmail == "" {
+		return preview, nil
+	}
+
+	rendered, err := s.renderLinkEmail(ctx, &linkEmail{
+		tenant:      req.TenantInfo,
+		move:        move,
+		carrierID:   plan.assignment.CarrierID,
+		referenceID: move.ID,
+		proNumber:   preview.ShipmentProNumber,
+		trackingURL: plan.base + trackingLinkPath + previewLinkToken,
+		expiresAt:   previewLinkExpiry(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	preview.Email = &emailports.PlannedEmail{
+		To:                []string{req.RecipientEmail},
+		Subject:           rendered.Subject,
+		Text:              rendered.Text,
+		TemplateVersionID: pulid.ConvertFromPtr(rendered.VersionID),
+	}
+	return preview, nil
+}
+
+func previewLinkExpiry() string {
+	return strconv.FormatInt(checkcall.DefaultLinkTTLSeconds/secondsPerDay, 10) +
+		" days after the link is issued"
+}
+
 func (s *Service) RevokeLink(
 	ctx context.Context,
 	req *checkcallports.RevokeTrackingLinkRequest,
 ) error {
-	if req == nil || req.MoveID.IsNil() {
-		return errortypes.NewValidationError(
-			"moveId",
-			errortypes.ErrRequired,
-			"Move ID is required",
-		)
-	}
 	now := s.now()
-	active, err := s.links.GetActiveForMove(ctx, req.TenantInfo, req.MoveID, now)
+	active, err := s.linkToRevoke(ctx, req, now)
 	if err != nil {
 		return err
-	}
-	if active == nil {
-		return errortypes.NewNotFoundError("This load has no active carrier tracking link")
 	}
 	if _, err = s.links.RevokeForMove(ctx, &checkcallports.RevokeTrackingLinksRequest{
 		TenantInfo: req.TenantInfo,
@@ -156,6 +224,35 @@ func (s *Service) RevokeLink(
 		comment:   "Revoked the carrier tracking link",
 	})
 	return nil
+}
+
+func (s *Service) PreviewRevokeLink(
+	ctx context.Context,
+	req *checkcallports.RevokeTrackingLinkRequest,
+) (*checkcall.TrackingLink, error) {
+	return s.linkToRevoke(ctx, req, s.now())
+}
+
+func (s *Service) linkToRevoke(
+	ctx context.Context,
+	req *checkcallports.RevokeTrackingLinkRequest,
+	now int64,
+) (*checkcall.TrackingLink, error) {
+	if req == nil || req.MoveID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"moveId",
+			errortypes.ErrRequired,
+			"Move ID is required",
+		)
+	}
+	active, err := s.links.GetActiveForMove(ctx, req.TenantInfo, req.MoveID, now)
+	if err != nil {
+		return nil, err
+	}
+	if active == nil {
+		return nil, errortypes.NewNotFoundError("This load has no active carrier tracking link")
+	}
+	return active, nil
 }
 
 func (s *Service) ActiveLink(
@@ -205,6 +302,16 @@ func (s *Service) trackableAssignment(
 	return assignment, nil
 }
 
+type linkEmail struct {
+	tenant      pagination.TenantInfo
+	move        *shipment.ShipmentMove
+	carrierID   pulid.ID
+	referenceID pulid.ID
+	proNumber   string
+	trackingURL string
+	expiresAt   string
+}
+
 func (s *Service) sendLinkEmail(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -212,39 +319,17 @@ func (s *Service) sendLinkEmail(
 	link *checkcall.TrackingLink,
 	trackingURL string,
 ) error {
-	data := documenttemplate.CarrierTrackingLinkEmailContext{
-		CarrierName: s.carrierName(ctx, tenantInfo, link.CarrierID),
-		CompanyName: s.companyName(ctx, tenantInfo),
-		//nolint:gosec // G203: an operator-configured base URL and a server-minted, path-escaped token
-		TrackingURL: template.URL(trackingURL),
-		ExpiresAt:   timeutils.WindowLabelUTC(link.ExpiresAt, nil),
-	}
-	if sh, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
-		ID:         move.ShipmentID,
-		TenantInfo: tenantInfo,
-	}); err == nil && sh != nil {
-		data.ShipmentProNumber = sh.ProNumber
-	}
-	for _, stop := range move.ActiveStopsBySequence() {
-		summary := stopPlace(stop)
-		window := timeutils.WindowLabelUTC(stop.ScheduledWindowStart, stop.ScheduledWindowEnd)
-		if stop.IsOriginStop() && data.OriginSummary == "" {
-			data.OriginSummary, data.PickupWindow = summary, window
-		}
-		if stop.IsDestinationStop() {
-			data.DestinationSummary, data.DeliveryWindow = summary, window
-		}
-	}
-
-	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo:        tenantInfo,
-		Kind:              documenttemplate.KindCarrierTrackingLinkEmail,
-		Data:              data,
-		ReferenceID:       link.ID,
-		FallbackToBuiltIn: true,
+	rendered, err := s.renderLinkEmail(ctx, &linkEmail{
+		tenant:      tenantInfo,
+		move:        move,
+		carrierID:   link.CarrierID,
+		referenceID: link.ID,
+		proNumber:   s.proNumber(ctx, tenantInfo, move.ShipmentID),
+		trackingURL: trackingURL,
+		expiresAt:   timeutils.WindowLabelUTC(link.ExpiresAt, nil),
 	})
 	if err != nil {
-		return fmt.Errorf("render carrier tracking link email: %w", err)
+		return err
 	}
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
@@ -258,6 +343,57 @@ func (s *Service) sendLinkEmail(
 		return fmt.Errorf("send carrier tracking link email: %w", err)
 	}
 	return nil
+}
+
+func (s *Service) renderLinkEmail(
+	ctx context.Context,
+	msg *linkEmail,
+) (*documenttemplateports.RenderedMessage, error) {
+	data := documenttemplate.CarrierTrackingLinkEmailContext{
+		CarrierName:       s.carrierName(ctx, msg.tenant, msg.carrierID),
+		CompanyName:       s.companyName(ctx, msg.tenant),
+		ShipmentProNumber: msg.proNumber,
+		//nolint:gosec // G203: an operator-configured base URL and a server-minted, path-escaped token
+		TrackingURL: template.URL(msg.trackingURL),
+		ExpiresAt:   msg.expiresAt,
+	}
+	for _, stop := range msg.move.ActiveStopsBySequence() {
+		summary := stopPlace(stop)
+		window := timeutils.WindowLabelUTC(stop.ScheduledWindowStart, stop.ScheduledWindowEnd)
+		if stop.IsOriginStop() && data.OriginSummary == "" {
+			data.OriginSummary, data.PickupWindow = summary, window
+		}
+		if stop.IsDestinationStop() {
+			data.DestinationSummary, data.DeliveryWindow = summary, window
+		}
+	}
+
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
+		TenantInfo:        msg.tenant,
+		Kind:              documenttemplate.KindCarrierTrackingLinkEmail,
+		Data:              data,
+		ReferenceID:       msg.referenceID,
+		FallbackToBuiltIn: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("render carrier tracking link email: %w", err)
+	}
+	return rendered, nil
+}
+
+func (s *Service) proNumber(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) string {
+	sh, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil || sh == nil {
+		return ""
+	}
+	return sh.ProNumber
 }
 
 func (s *Service) carrierName(

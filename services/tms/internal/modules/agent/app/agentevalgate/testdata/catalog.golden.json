@@ -223,7 +223,7 @@
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The finding id from get_carrier_intel_event.",
+            "description": "The finding id, from list_carrier_intel_events, get_carrier_intel_event or this run's subject. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
@@ -3197,6 +3197,56 @@
       }
     },
     {
+      "name": "assign_collector",
+      "description": "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId list_collections_worklist shows or the person who asked; leave it out only to leave the account with nobody.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "collectorId": {
+            "description": "The collector's user id: a collectorId list_collections_worklist shows, or the person who asked. Leave it out to take the account off whoever has it. Never guess one.",
+            "type": "string",
+            "x-recordOf": "user"
+          },
+          "customerId": {
+            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "collector",
+        "assign collections",
+        "who chases"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounts_receivable",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes who chases a customer inside Trenova and tells the new collector; nothing is sent to the customer and assigning someone else changes it back."
+      }
+    },
+    {
       "name": "assign_exception",
       "description": "Give an exception on the watchtower to a person, or to nobody, so someone owns getting it dealt with. The new owner must be able to see the record behind it; they are told it is theirs.",
       "parameters": {
@@ -5904,7 +5954,7 @@
             "type": "array"
           },
           "billingQueueItemId": {
-            "description": "The billing queue item whose charges are corrected: this run's subject or the record on the page. No tool lists queue items, so never guess one.",
+            "description": "The billing queue item whose charges are corrected, from list_billing_queue_items, get_billing_queue_item, this run's subject or the record on the page. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "billing_queue_item"
@@ -13341,7 +13391,7 @@
     },
     {
       "name": "get_billing_queue_item",
-      "description": "Open one billing queue item with its payer, shipment and the charges this payer is billed. It also shows the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Open one billing queue item with its payer, shipment and the charges this payer is billed. It also shows the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Its issues are the flagged checks, each with the issueId, whether it is Open or Settled, the options a biller settles it with by optionKey, and whether its settlement can be undone. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, release_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, cancel_billing_queue_item, resolve_billing_queue_issue or undo_billing_queue_issue. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13475,12 +13525,12 @@
     },
     {
       "name": "get_carrier_intel_event",
-      "description": "Retrieve one carrier intelligence event by id: what changed on the carrier's authority, insurance or safety record, and its severity. It also gives the prior and current values and whether anyone has acknowledged or resolved it. No tool lists these events; use get_carrier for the carrier itself.",
+      "description": "Retrieve one carrier intelligence event by id: what changed on the carrier's authority, insurance or safety record, and its severity. It also gives the prior and current values and whether anyone has acknowledged or resolved it. Use list_carrier_intel_events first when you do not have an id, and get_carrier for the carrier itself.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The carrier intelligence event's id, from the page you are on, this run's subject, or a mentioned record (no tool lists these events).",
+            "description": "The carrier intelligence event's id, from list_carrier_intel_events, the page you are on, this run's subject or a mentioned record.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
@@ -16146,6 +16196,60 @@
       }
     },
     {
+      "name": "issue_carrier_tracking_link",
+      "description": "Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in. Issuing replaces any live link on the move, which stops working. Send it to the address the carrier gave you or the email get_carrier shows for the carrier or its dispatch contact; never invent one. The link itself is never shown to you, so it cannot be pasted anywhere else.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "moveId": {
+            "description": "The move to track, from get_shipment (its moves). Only a move covered by an outside carrier has a carrier tracking link.",
+            "type": "string",
+            "x-recordOf": "shipment_move"
+          },
+          "recipientEmail": {
+            "description": "Where to email the link: the carrier's dispatch address they gave or get_carrier shows.",
+            "maxLength": 320,
+            "type": "string"
+          }
+        },
+        "required": [
+          "moveId",
+          "recipientEmail"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier tracking link",
+        "send tracking link",
+        "carrier check calls"
+      ],
+      "prerequisites": [
+        "get_shipment"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_move",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails a link outside the organization that lets the carrier post to the load, and ends any link the carrier holds now; revoke_carrier_tracking_link ends it."
+      }
+    },
+    {
       "name": "issue_pay_advance",
       "description": "Propose recording a cash or money-code advance a driver was given against future pay. It is recovered from their next settlements until repaid. A person always decides, and only for an advance that was actually handed over; give the code or receipt as the reference.",
       "parameters": {
@@ -17502,6 +17606,138 @@
       "policy": {
         "kind": "query",
         "resource": "carrier_capacity_posting",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_carrier_intel_events",
+      "description": "List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records. Each row gives the carrier, the category, the severity, what the rule did, the summary, when it was detected and whether anyone acknowledged or resolved it. Filter by status (openOnly for the ones not settled yet), severity, category such as Authority or Insurance, a carrier, or the days it was detected. Pass a row's id to get_carrier_intel_event for its prior and current values, or to acknowledge_carrier_intel_event or resolve_carrier_intel_event.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "Only this carrier's events, by id from list_carriers or get_carrier.",
+            "type": "string",
+            "x-recordOf": "carrier"
+          },
+          "category": {
+            "description": "Only events about these parts of a carrier's record, such as Authority or Insurance.",
+            "items": {
+              "description": "A category.",
+              "enum": [
+                "Identity",
+                "Authority",
+                "Insurance",
+                "Safety",
+                "Basics",
+                "Inspections",
+                "Crashes",
+                "Fleet",
+                "Equipment",
+                "Contacts",
+                "Operations",
+                "ChangeHistory",
+                "Network",
+                "Lanes",
+                "Benchmarks"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.category"
+            },
+            "maxItems": 15,
+            "type": "array"
+          },
+          "fromDate": {
+            "description": "Only events detected on or after this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many events to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "openOnly": {
+            "description": "Only events nobody has resolved or dismissed yet: Open and Acknowledged.",
+            "type": "boolean"
+          },
+          "query": {
+            "description": "Words to find in the carrier's name, its DOT number or the event's summary.",
+            "type": "string"
+          },
+          "severity": {
+            "description": "Only events of these severities.",
+            "items": {
+              "description": "A severity.",
+              "enum": [
+                "Critical",
+                "High",
+                "Medium",
+                "Low",
+                "Info"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.severity"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "status": {
+            "description": "Only events in these statuses. Open and Acknowledged ones are not settled yet.",
+            "items": {
+              "description": "A status.",
+              "enum": [
+                "Open",
+                "Acknowledged",
+                "Resolved",
+                "Dismissed"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.eventStatus"
+            },
+            "maxItems": 4,
+            "type": "array"
+          },
+          "toDate": {
+            "description": "Only events detected on or before this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier risk alerts",
+        "authority or insurance problems"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "carrier_intelligence",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -21360,7 +21596,7 @@
             "type": "integer"
           },
           "mailboxId": {
-            "description": "Optional: only messages to this mailbox, by id from the page you are on. No tool lists mailboxes, so leave it out otherwise.",
+            "description": "Optional: only messages to this mailbox, by the mailboxId a row of this tool or get_inbound_message shows, or by id from the page you are on.",
             "type": "string",
             "x-recordOf": "inbound_mailbox"
           },
@@ -25491,6 +25727,99 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Records a check call, and for an arrival or departure the stop's actual time; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "log_collection_activity",
+      "description": "Log a call, email, note or promise to pay against a customer's overdue receivables, so the next person chasing them knows what was said. Record what the customer said in their words; a promise to pay takes the amount and the date they gave, holds back payment reminders until then, and moves the follow-up to the day after unless you give one. Never infer a promise from a payment that has not arrived.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "contactName": {
+            "description": "Who you or the customer spoke to, if you know.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "followUpOn": {
+            "description": "When to chase the account next, today or later. Leave it out to keep the current follow-up, or for a promise, the day after it falls due. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The invoice it is about, when it is about one, from list_ar_open_items or get_customer_statement.",
+            "type": "string",
+            "x-recordOf": "invoice"
+          },
+          "kind": {
+            "description": "Call or Email for a contact with the customer, Note for anything else worth knowing, PromiseToPay when they said they would pay an amount by a date.",
+            "enum": [
+              "Note",
+              "Call",
+              "Email",
+              "PromiseToPay"
+            ],
+            "type": "string",
+            "x-enumOf": "collection.contactKind"
+          },
+          "promisedAmount": {
+            "description": "For a promise to pay: the amount promised as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "promisedOn": {
+            "description": "For a promise to pay: the day they said they would pay by. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "summary": {
+            "description": "What was said, in the customer's words where you have them. Required except for a promise to pay.",
+            "maxLength": 4000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "promise to pay",
+        "log a contact",
+        "dunning"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounts_receivable",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "What a customer said is what a collector acts on next, and a promise to pay holds back reminders and moves the follow-up, so a run that has read outside text proposes it rather than writing it.",
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds an entry to a customer's collections history inside Trenova; a promise moves the follow-up and holds back reminders until its date, and nothing is sent."
       }
     },
     {
@@ -30829,6 +31158,54 @@
       }
     },
     {
+      "name": "release_billing_queue_item",
+      "description": "Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. A hold was put on for a reason: read the item's review notes with get_billing_queue_item and release it only when the record shows that what it waited on has arrived, never because nothing looks wrong.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "billing_queue_item"
+            ]
+          }
+        },
+        "required": [
+          "billingQueueItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "release hold",
+        "take off hold",
+        "unhold billing"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "What the hold waited on is what outside text would claim has arrived, so a run that has read it proposes the release rather than making it.",
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves an item back into the review queue inside Trenova; it creates no money and hold_billing_queue_item puts it back on hold."
+      }
+    },
+    {
       "name": "release_driver_pay_event",
       "description": "Release a held driver pay event back into the pool the next settlement draws from. Where the settlement control attaches accruals to open drafts, it joins the driver's open draft at once. Release only once what the hold waited on is resolved.",
       "parameters": {
@@ -31006,7 +31383,7 @@
         "additionalProperties": false,
         "properties": {
           "holdId": {
-            "description": "The hold to release. No tool lists a shipment's holds, so it comes from the page or the event that started this run; never guess one.",
+            "description": "The hold to release, from the holds get_shipment lists, the page or the event that started this run. Never guess one.",
             "type": "string",
             "x-recordOf": "shipment_hold"
           },
@@ -32421,13 +32798,76 @@
       }
     },
     {
+      "name": "resolve_billing_queue_issue",
+      "description": "Propose settling one of a billing queue item's flagged checks with one of the choices that check offers. A choice bills a charge as it stands, takes it off, reprices it, bills without the paperwork, or asks the driver for a signed POD. get_billing_queue_item lists each check's issueId and its options with their optionKey; use them exactly. Settling can change what the customer is charged, so a person always decides, and asking the driver settles nothing until the paperwork arrives.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "billing_queue_item"
+            ]
+          },
+          "issueId": {
+            "description": "The check, by the id get_billing_queue_item lists under the item's issues. Never guess one.",
+            "type": "string"
+          },
+          "optionKey": {
+            "description": "The optionKey of the choice, exactly as get_billing_queue_item lists it under the check.",
+            "maxLength": 30,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "issueId",
+          "optionKey"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "settle check",
+        "billing issue",
+        "flagged charge",
+        "resolve issue"
+      ],
+      "prerequisites": [
+        "get_billing_queue_item"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money",
+          "driver_visible"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Decides what a customer is billed for a flagged charge, or messages the driver for paperwork, so only a person settles it; undo_billing_queue_issue takes it back."
+      }
+    },
+    {
       "name": "resolve_carrier_intel_event",
       "description": "Close a carrier finding, saying what came of it. The gate blocks a disqualified carrier on its own, so this is how the outcome is recorded: CarrierUpdated when the record now shows it fixed, CarrierBlocked when the carrier is not to be used, NoActionRequired when it never bore on eligibility, FalsePositive when the finding itself was wrong. Closing a finding that is still true hides it from the people who need it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The finding id from get_carrier_intel_event.",
+            "description": "The finding id, from list_carrier_intel_events, get_carrier_intel_event or this run's subject. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
@@ -34014,6 +34454,52 @@
       }
     },
     {
+      "name": "revoke_carrier_tracking_link",
+      "description": "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with issue_carrier_tracking_link if the carrier should keep posting.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "moveId": {
+            "description": "The move whose link to revoke, from get_shipment (its moves). Only a move covered by an outside carrier has a carrier tracking link.",
+            "type": "string",
+            "x-recordOf": "shipment_move"
+          }
+        },
+        "required": [
+          "moveId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "revoke tracking link",
+        "stop carrier link"
+      ],
+      "prerequisites": [
+        "get_shipment"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_move",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends a link someone outside the organization holds, so the carrier's page stops working; a new link can be issued later."
+      }
+    },
+    {
       "name": "revoke_customer_tracking_link",
       "description": "Stop every live customer tracking link on a shipment from working. Use it when a link reached the wrong person or the customer asks for access to end; share a new link afterwards if someone should keep following the load.",
       "parameters": {
@@ -34475,6 +34961,65 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization."
+      }
+    },
+    {
+      "name": "schedule_collection_follow_up",
+      "description": "Set the day a customer's overdue receivables are next chased, or clear the follow-up, with a note saying why. The account comes back up the worklist on that day. Leave followUpOn out only to clear it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "followUpOn": {
+            "description": "The day to chase the account next, today or later. Leave it out to clear the follow-up. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "note": {
+            "description": "Why then, kept in the account's history.",
+            "maxLength": 4000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "follow up",
+        "chase later",
+        "collections reminder date"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounts_receivable",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "What a customer said is what a collector acts on next, and a promise to pay holds back reminders and moves the follow-up, so a run that has read outside text proposes it rather than writing it.",
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes when a customer is next chased inside Trenova and notes why; nothing is sent and another follow-up replaces it."
       }
     },
     {
@@ -34979,6 +35524,72 @@
       }
     },
     {
+      "name": "send_customer_statement",
+      "description": "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with get_customer_statement first so you know what it says. The email is entered in the customer's collections history.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "asOfDate": {
+            "description": "The statement date, today or earlier. Leave it out for today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "note": {
+            "description": "A short note the customer reads in the email. Leave it out unless the person asked for one.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "startDate": {
+            "description": "The first day the statement covers. Leave it out to start from the account's first transaction. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "email statement",
+        "send statement",
+        "statement pdf"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounts_receivable",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails the customer its balance and open items, which cannot be called back; a person approves every statement and sees the recipients and the email first."
+      }
+    },
+    {
       "name": "send_detention_notice",
       "description": "Send the customer the detention notice for an occurrence on the desk. The notice is the organization's own template with the arrival, the free time and the rate; nothing is composed here. Send it when list_detention_desk shows the notice window open or overdue, because a charge with no notice inside the policy's window is often not collectable. An occurrence whose policy needs no notice is refused.",
       "parameters": {
@@ -35306,6 +35917,57 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving."
+      }
+    },
+    {
+      "name": "send_payment_reminder",
+      "description": "Email a customer a reminder of every overdue invoice it has that is not in dispute, with an optional note. It is one email per currency, to the invoice recipients on its email profile, and it goes whatever the reminder schedule says, so use it when a collector asks or a promise to pay was broken, never for a customer waiting on a promise that has not yet fallen due. The email is entered in the customer's collections history.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "note": {
+            "description": "A short note the customer reads above the list of invoices. Leave it out unless the person asked for one; never repeat the amounts the email already lists.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "payment reminder",
+        "dunning email",
+        "overdue reminder",
+        "chase payment"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounts_receivable",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails the customer about what it owes, which cannot be called back; a person approves every reminder and sees the recipients and the email first."
       }
     },
     {
@@ -37803,6 +38465,61 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Puts a canceled shipment back to New inside Trenova; nothing is sent, and canceling it again undoes it."
+      }
+    },
+    {
+      "name": "undo_billing_queue_issue",
+      "description": "Propose taking back how one of a billing queue item's checks was settled. The check is open again and any charge the settlement removed or repriced is put back as it was. get_billing_queue_item lists each check's issueId and whether its settlement can be undone; only a settled check on an item still in review can be. It can change what the customer is charged, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "billing_queue_item"
+            ]
+          },
+          "issueId": {
+            "description": "The check, by the id get_billing_queue_item lists under the item's issues. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "issueId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "undo settlement",
+        "reopen check",
+        "undo billing issue"
+      ],
+      "prerequisites": [
+        "get_billing_queue_item"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Puts back a charge a settlement removed or repriced, which changes what the customer is billed, so only a person decides."
       }
     },
     {
@@ -42853,6 +43570,52 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Gives up detention revenue the organization would otherwise bill; only a person approves it."
+      }
+    },
+    {
+      "name": "wake_exception",
+      "description": "Bring a snoozed exception back to the open queue now, before the time snooze_exception set, when whatever it was waiting for has happened early. Only a snoozed exception can be woken; list_watchtower_items shows which are snoozed and until when.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "wake exception",
+        "unsnooze",
+        "bring back"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Puts a snoozed exception back in the open queue inside Trenova; nothing outside changes and it can be snoozed again."
       }
     },
     {

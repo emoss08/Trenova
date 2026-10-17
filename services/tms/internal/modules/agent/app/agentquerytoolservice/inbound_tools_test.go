@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -217,6 +218,75 @@ func TestListInboundMessages_RowsCarryAPreviewNotTheBody(t *testing.T) {
 	assert.True(t, rows[0].NeedsReview)
 	assert.LessOrEqual(t, len([]rune(rows[0].Preview)), inboundPreviewChars+1)
 	assert.Contains(t, outcome.Columns, "subject")
+}
+
+func TestListInboundMessages_RowsHandOutTheMailboxAndNoneOfItsSecrets(t *testing.T) {
+	t.Parallel()
+
+	mailboxID := pulid.MustNew("imbx_")
+	messages := &fakeInboundMessages{items: []*inboundmessage.InboundMessage{{
+		ID:          pulid.MustNew("inm_"),
+		MailboxID:   mailboxID,
+		Status:      inboundmessage.StatusInReview,
+		FromAddress: "ap@broker.example",
+		Subject:     "Invoice 4471",
+		Mailbox: &inboundmessage.Mailbox{
+			ID:             mailboxID,
+			Address:        "billing@carrier.example",
+			TokenHash:      "stored-token-hash",
+			SigningSecret:  "provider-signing-secret",
+			ProviderAPIKey: "re_provider_key",
+			TestToken:      "mailbox-test-token",
+		},
+	}}}
+
+	result, err := newListInboundMessagesTool(
+		messages,
+	).Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+
+	outcome := result.(searchOutcome)
+	rows := outcome.Items.([]inboundMessageRow)
+	require.Len(t, rows, 1)
+	assert.Equal(t, mailboxID.String(), rows[0].MailboxID)
+	assert.Equal(t, "billing@carrier.example", rows[0].Mailbox)
+	assert.Contains(t, outcome.Columns, "mailboxId")
+
+	encoded, err := sonic.MarshalString(result)
+	require.NoError(t, err)
+	for _, secret := range []string{
+		"stored-token-hash", "provider-signing-secret", "re_provider_key", "mailbox-test-token",
+	} {
+		assert.NotContains(t, encoded, secret)
+	}
+}
+
+func TestGetInboundMessage_NamesTheMailboxIDTheListFiltersBy(t *testing.T) {
+	t.Parallel()
+
+	mailboxID := pulid.MustNew("imbx_")
+	messages := &fakeInboundMessages{message: &inboundmessage.InboundMessage{
+		ID:        pulid.MustNew("inm_"),
+		MailboxID: mailboxID,
+		Mailbox:   &inboundmessage.Mailbox{ID: mailboxID, Address: "loads@carrier.example"},
+	}}
+
+	result, err := newGetInboundMessageTool(messages).Query(
+		t.Context(),
+		testParams(map[string]any{"messageId": messages.message.ID.String()}),
+	)
+	require.NoError(t, err)
+
+	view := result.(inboundMessageView)
+	assert.Equal(t, mailboxID.String(), view.MailboxID)
+	assert.Equal(t, "loads@carrier.example", view.Mailbox)
+
+	schema := newListInboundMessagesTool(messages).ParamSchema()
+	properties, _ := schema["properties"].(map[string]any)
+	mailbox, _ := properties["mailboxId"].(map[string]any)
+	description, _ := mailbox["description"].(string)
+	assert.Contains(t, description, "get_inbound_message")
+	assert.NotContains(t, description, "No tool lists")
 }
 
 func TestListInboundMessages_RefusesAnUnknownFilterRatherThanDroppingIt(t *testing.T) {

@@ -316,8 +316,8 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 				"The shipment the hold is on, from the page, list_shipments or "+
 					"search_shipments."),
 			"holdId": agenttoolschema.RecordIDText(permission.ResourceShipmentHold,
-				"The hold to release. No tool lists a shipment's holds, so it comes from "+
-					"the page or the event that started this run; never guess one."),
+				"The hold to release, from the holds get_shipment lists, the page or the "+
+					"event that started this run. Never guess one."),
 		},
 		"required":             []string{common.ParamShipmentID, "holdId"},
 		"additionalProperties": false,

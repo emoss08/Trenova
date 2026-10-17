@@ -172,3 +172,27 @@ func TestRawPayloadInsertStoresAJSONDocumentNotAString(t *testing.T) {
 	assert.Contains(t, sql, `'{"dot_number":"265752","dba_flag":true}'`, sql)
 	assert.NotContains(t, sql, `\"dot_number\"`, sql)
 }
+
+func TestEventFiltersBoundTheDetectedWindowOnlyWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	repo := &eventRepository{}
+	bounded := repo.applyEventFilters(
+		renderDB().NewSelect().Model((*carrierintel.CarrierIntelEvent)(nil)),
+		&carrierintelports.ListCarrierIntelEventsRequest{
+			DetectedFrom: 1_790_000_000,
+			DetectedTo:   1_790_604_799,
+		},
+	).String()
+
+	assert.Contains(t, bounded, "cievt.detected_at >= 1790000000", bounded)
+	assert.Contains(t, bounded, "cievt.detected_at <= 1790604799", bounded)
+
+	open := repo.applyEventFilters(
+		renderDB().NewSelect().Model((*carrierintel.CarrierIntelEvent)(nil)),
+		&carrierintelports.ListCarrierIntelEventsRequest{},
+	).String()
+
+	assert.NotContains(t, open, "detected_at >=", open)
+	assert.NotContains(t, open, "detected_at <=", open)
+}

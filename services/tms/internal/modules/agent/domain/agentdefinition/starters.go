@@ -310,7 +310,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which carriers should I watch?",
 			"Which carriers have a recent change to their authority, insurance or safety record?",
-			"list_carriers", "get_carrier_intel_event",
+			toolListCarrierIntelEvents, "get_carrier_intel_event", "list_carriers",
 		),
 		ask(
 			"Look up a carrier",
@@ -741,7 +741,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which carriers should I watch?",
 			"Which carriers have a recent change to their authority, insurance or safety record?",
-			"get_carrier_intel_event",
+			toolListCarrierIntelEvents, "get_carrier_intel_event",
 		),
 		ask(
 			"Look up a carrier",

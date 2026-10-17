@@ -57,6 +57,8 @@ const (
 // finding goes away, such as a signed POD arriving.
 const ResolutionCleared = "cleared"
 
+const OptionKeyRequest = "request"
+
 // IssueEffect is what an option changes.
 type IssueEffect struct {
 	Kind     EffectKind          `json:"kind"`

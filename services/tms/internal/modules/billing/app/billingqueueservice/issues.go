@@ -25,6 +25,10 @@ import (
 // driver goes out as; asking for paperwork is one.
 const driverMessageEvent = "dash.dispatch_message"
 
+func errChecksUnavailable() error {
+	return errortypes.NewBusinessError("Billing checks are unavailable")
+}
+
 func errPersonDecides() error {
 	return errortypes.NewValidationError(
 		"actor",
@@ -57,42 +61,17 @@ func (s *service) ResolveIssue(
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if s.reviewRepo == nil {
-		return nil, errortypes.NewBusinessError("Billing checks are unavailable")
+		return nil, errChecksUnavailable()
 	}
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
 
-	item, err := s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
+	settle, err := s.settleableIssue(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if !billingqueue.IsReviewable(item.Status) {
-		return nil, errortypes.NewValidationError(
-			"status", errortypes.ErrInvalidOperation,
-			"This item is past review, so its checks can't change",
-		)
-	}
-
-	issue, err := s.reviewRepo.GetIssue(ctx, &billingqueueports.GetBillingQueueIssueRequest{
-		TenantInfo: req.TenantInfo,
-		ItemID:     req.ItemID,
-		IssueID:    req.IssueID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !issue.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"issueId", errortypes.ErrInvalidOperation, "This check is already settled",
-		)
-	}
-	option := issue.Option(req.OptionKey)
-	if option == nil {
-		return nil, errortypes.NewValidationError(
-			"optionKey", errortypes.ErrInvalid, "That isn't one of this check's choices",
-		)
-	}
+	item, issue, option := settle.item, settle.issue, settle.option
 
 	if option.Effect.Kind == billingqueue.EffectRequest {
 		return s.requestPaperwork(ctx, item, issue, actor, req.TenantInfo)
@@ -127,20 +106,89 @@ func (s *service) ResolveIssue(
 	return s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 }
 
-// UndoIssue takes a settlement back: the charge it removed or repriced is put
-// back as it was, and the issue is open again.
-func (s *service) UndoIssue(
+func (s *service) PlanResolveIssue(
 	ctx context.Context,
-	req *billingqueueports.UndoBillingQueueIssueRequest,
-	actor *permissionports.RequestActor,
-) (*billingqueue.BillingQueueItem, error) {
+	req *billingqueueports.ResolveBillingQueueIssueRequest,
+) (*billingqueueports.IssueSettlementPlan, error) {
 	if s.reviewRepo == nil {
-		return nil, errortypes.NewBusinessError("Billing checks are unavailable")
-	}
-	if actor.IsAgent() {
-		return nil, errPersonDecides()
+		return nil, errChecksUnavailable()
 	}
 
+	settle, err := s.settleableIssue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	plan := &billingqueueports.IssueSettlementPlan{
+		Item:   settle.item,
+		Issue:  settle.issue,
+		Option: settle.option,
+	}
+
+	switch settle.option.Effect.Kind { //nolint:exhaustive // keep and accept change no charge
+	case billingqueue.EffectRequest:
+		pod := podState(settle.item.Shipment, nil, nil)
+		plan.AsksDriver = s.drivers != nil && pod.DriverID.IsNotNil()
+		plan.DriverName = pod.DriverName
+		plan.DriverMessageTitle, plan.DriverMessage = paperworkRequest(settle.item)
+	case billingqueue.EffectDrop, billingqueue.EffectSet:
+		edit, editErr := planChargeEffect(settle.item, settle.option.Effect)
+		if editErr != nil {
+			return nil, editErr
+		}
+		plan.ChargeBefore, plan.ChargeAfter = edit.before, edit.after
+	}
+
+	return plan, nil
+}
+
+type issueSettlement struct {
+	item   *billingqueue.BillingQueueItem
+	issue  *billingqueue.Issue
+	option *billingqueue.IssueOption
+}
+
+func (s *service) settleableIssue(
+	ctx context.Context,
+	req *billingqueueports.ResolveBillingQueueIssueRequest,
+) (*issueSettlement, error) {
+	item, err := s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if !billingqueue.IsReviewable(item.Status) {
+		return nil, errortypes.NewValidationError(
+			"status", errortypes.ErrInvalidOperation,
+			"This item is past review, so its checks can't change",
+		)
+	}
+
+	issue, err := s.reviewRepo.GetIssue(ctx, &billingqueueports.GetBillingQueueIssueRequest{
+		TenantInfo: req.TenantInfo,
+		ItemID:     req.ItemID,
+		IssueID:    req.IssueID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !issue.IsOpen() {
+		return nil, errortypes.NewValidationError(
+			"issueId", errortypes.ErrInvalidOperation, "This check is already settled",
+		)
+	}
+	option := issue.Option(req.OptionKey)
+	if option == nil {
+		return nil, errortypes.NewValidationError(
+			"optionKey", errortypes.ErrInvalid, "That isn't one of this check's choices",
+		)
+	}
+
+	return &issueSettlement{item: item, issue: issue, option: option}, nil
+}
+
+func (s *service) undoableIssue(
+	ctx context.Context,
+	req *billingqueueports.UndoBillingQueueIssueRequest,
+) (*issueSettlement, error) {
 	item, err := s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -158,7 +206,29 @@ func (s *service) UndoIssue(
 			"issueId", errortypes.ErrInvalidOperation, "This can't be undone now",
 		)
 	}
-	option := issue.Option(*issue.ResolutionKey)
+
+	return &issueSettlement{item: item, issue: issue, option: issue.Option(*issue.ResolutionKey)}, nil
+}
+
+// UndoIssue takes a settlement back: the charge it removed or repriced is put
+// back as it was, and the issue is open again.
+func (s *service) UndoIssue(
+	ctx context.Context,
+	req *billingqueueports.UndoBillingQueueIssueRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueue.BillingQueueItem, error) {
+	if s.reviewRepo == nil {
+		return nil, errChecksUnavailable()
+	}
+	if actor.IsAgent() {
+		return nil, errPersonDecides()
+	}
+
+	undo, err := s.undoableIssue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	item, issue, option := undo.item, undo.issue, undo.option
 
 	if option != nil && issue.EffectSnapshot != nil && issue.EffectSnapshot.Charge != nil {
 		restoredID, restoreErr := s.restoreCharge(
@@ -174,8 +244,6 @@ func (s *service) UndoIssue(
 		}
 		if restoredID.IsNotNil() && issue.FlaggedChargeID != nil &&
 			restoredID != *issue.FlaggedChargeID {
-			// A removed charge comes back as a new row; the issue follows it,
-			// so the next check finds the same issue rather than a new one.
 			issue.FlaggedChargeID = &restoredID
 			if issue.SubjectKey != "" {
 				issue.SubjectKey = restoredID.String()
@@ -200,6 +268,37 @@ func (s *service) UndoIssue(
 	return s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 }
 
+func (s *service) PlanUndoIssue(
+	ctx context.Context,
+	req *billingqueueports.UndoBillingQueueIssueRequest,
+) (*billingqueueports.IssueSettlementPlan, error) {
+	if s.reviewRepo == nil {
+		return nil, errChecksUnavailable()
+	}
+
+	undo, err := s.undoableIssue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	plan := &billingqueueports.IssueSettlementPlan{
+		Item:   undo.item,
+		Issue:  undo.issue,
+		Option: undo.option,
+	}
+	snapshot := undo.issue.EffectSnapshot
+	if undo.option == nil || snapshot == nil || snapshot.Charge == nil {
+		return plan, nil
+	}
+
+	edit, err := planChargeRestore(undo.item, undo.option.Effect.Kind, snapshot.Charge)
+	if err != nil {
+		return nil, err
+	}
+	plan.ChargeBefore, plan.ChargeAfter = edit.before, edit.after
+
+	return plan, nil
+}
+
 // applyChargeEffect makes an option's charge edit through the same path a
 // biller's own charge edit takes, and returns the charge as it was so undo
 // can put it back.
@@ -210,42 +309,15 @@ func (s *service) applyChargeEffect(
 	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.EffectSnapshot, error) {
-	if item.Shipment == nil {
-		return nil, errortypes.NewBusinessError("The shipment's charges could not be read")
+	edit, err := planChargeEffect(item, effect)
+	if err != nil {
+		return nil, err
 	}
 
-	var target *shipment.AdditionalCharge
-	charges := make([]*shipment.AdditionalCharge, 0, len(item.Shipment.AdditionalCharges))
-	for _, charge := range item.Shipment.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-		clone := *charge
-		if charge.ID == effect.ChargeID {
-			target = &clone
-			if effect.Kind == billingqueue.EffectDrop {
-				continue
-			}
-			clone.Method = accessorialcharge.MethodFlat
-			clone.Amount = effect.Amount.Decimal
-			clone.Unit = 1
-		}
-		charges = append(charges, &clone)
-	}
-	if target == nil {
-		return nil, errortypes.NewValidationError(
-			"issueId", errortypes.ErrInvalidOperation,
-			"The charge this check is about is no longer on the shipment",
-		)
-	}
-	if effect.Kind == billingqueue.EffectSet && !effect.Amount.Valid {
-		return nil, errortypes.NewBusinessError("This choice has no amount to bill")
-	}
-
-	snapshot := &billingqueue.EffectSnapshot{Charge: chargeSnapshot(target, item)}
-	if _, err := s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
+	snapshot := &billingqueue.EffectSnapshot{Charge: chargeSnapshot(edit.before, item)}
+	if _, err = s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
-		AdditionalCharges: charges,
+		AdditionalCharges: edit.charges,
 		TenantInfo:        tenantInfo,
 	}, actor, true); err != nil {
 		return nil, err
@@ -265,48 +337,20 @@ func (s *service) restoreCharge(
 	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (pulid.ID, error) {
-	if item.Shipment == nil {
-		return pulid.Nil, errortypes.NewBusinessError("The shipment's charges could not be read")
-	}
-	snap := snapshot.Charge
-	before := make(map[pulid.ID]struct{}, len(item.Shipment.AdditionalCharges))
-	charges := make([]*shipment.AdditionalCharge, 0, len(item.Shipment.AdditionalCharges)+1)
-	found := false
-	for _, charge := range item.Shipment.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-		before[charge.ID] = struct{}{}
-		clone := *charge
-		if kind == billingqueue.EffectSet && charge.ID == snap.AdditionalChargeID {
-			clone.Method = accessorialMethod(snap.Method)
-			clone.Amount = snap.Amount
-			clone.Unit = snap.Unit
-			found = true
-		}
-		charges = append(charges, &clone)
-	}
-	if !found {
-		charges = append(charges, &shipment.AdditionalCharge{
-			OrganizationID:      item.OrganizationID,
-			BusinessUnitID:      item.BusinessUnitID,
-			ShipmentID:          item.ShipmentID,
-			AccessorialChargeID: snap.AccessorialChargeID,
-			Method:              accessorialMethod(snap.Method),
-			Amount:              snap.Amount,
-			Unit:                max(snap.Unit, 1),
-		})
+	edit, err := planChargeRestore(item, kind, snapshot.Charge)
+	if err != nil {
+		return pulid.Nil, err
 	}
 
-	if _, err := s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
+	if _, err = s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
-		AdditionalCharges: charges,
+		AdditionalCharges: edit.charges,
 		TenantInfo:        tenantInfo,
 	}, actor, true); err != nil {
 		return pulid.Nil, err
 	}
-	if found {
-		return snap.AdditionalChargeID, nil
+	if edit.before != nil {
+		return snapshot.Charge.AdditionalChargeID, nil
 	}
 
 	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
@@ -323,12 +367,108 @@ func (s *service) restoreCharge(
 		if charge == nil {
 			continue
 		}
-		if _, existed := before[charge.ID]; !existed {
+		if _, existed := edit.existing[charge.ID]; !existed {
 			return charge.ID, nil
 		}
 	}
 
 	return pulid.Nil, nil
+}
+
+type chargeEdit struct {
+	charges  []*shipment.AdditionalCharge
+	before   *shipment.AdditionalCharge
+	after    *shipment.AdditionalCharge
+	existing map[pulid.ID]struct{}
+}
+
+func planChargeEffect(
+	item *billingqueue.BillingQueueItem,
+	effect billingqueue.IssueEffect,
+) (*chargeEdit, error) {
+	if item.Shipment == nil {
+		return nil, errortypes.NewBusinessError("The shipment's charges could not be read")
+	}
+
+	edit := &chargeEdit{
+		charges: make([]*shipment.AdditionalCharge, 0, len(item.Shipment.AdditionalCharges)),
+	}
+	for _, charge := range item.Shipment.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		clone := *charge
+		if charge.ID == effect.ChargeID {
+			original := *charge
+			edit.before = &original
+			if effect.Kind == billingqueue.EffectDrop {
+				continue
+			}
+			clone.Method = accessorialcharge.MethodFlat
+			clone.Amount = effect.Amount.Decimal
+			clone.Unit = 1
+			edit.after = &clone
+		}
+		edit.charges = append(edit.charges, &clone)
+	}
+	if edit.before == nil {
+		return nil, errortypes.NewValidationError(
+			"issueId", errortypes.ErrInvalidOperation,
+			"The charge this check is about is no longer on the shipment",
+		)
+	}
+	if effect.Kind == billingqueue.EffectSet && !effect.Amount.Valid {
+		return nil, errortypes.NewBusinessError("This choice has no amount to bill")
+	}
+
+	return edit, nil
+}
+
+func planChargeRestore(
+	item *billingqueue.BillingQueueItem,
+	kind billingqueue.EffectKind,
+	snap *billingqueue.ChargeSnapshot,
+) (*chargeEdit, error) {
+	if item.Shipment == nil {
+		return nil, errortypes.NewBusinessError("The shipment's charges could not be read")
+	}
+
+	count := len(item.Shipment.AdditionalCharges)
+	edit := &chargeEdit{
+		charges:  make([]*shipment.AdditionalCharge, 0, count+1),
+		existing: make(map[pulid.ID]struct{}, count),
+	}
+	for _, charge := range item.Shipment.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		edit.existing[charge.ID] = struct{}{}
+		clone := *charge
+		if kind == billingqueue.EffectSet && charge.ID == snap.AdditionalChargeID {
+			original := *charge
+			edit.before = &original
+			clone.Method = accessorialMethod(snap.Method)
+			clone.Amount = snap.Amount
+			clone.Unit = snap.Unit
+			edit.after = &clone
+		}
+		edit.charges = append(edit.charges, &clone)
+	}
+	if edit.before == nil {
+		restored := &shipment.AdditionalCharge{
+			OrganizationID:      item.OrganizationID,
+			BusinessUnitID:      item.BusinessUnitID,
+			ShipmentID:          item.ShipmentID,
+			AccessorialChargeID: snap.AccessorialChargeID,
+			Method:              accessorialMethod(snap.Method),
+			Amount:              snap.Amount,
+			Unit:                max(snap.Unit, 1),
+		}
+		edit.after = restored
+		edit.charges = append(edit.charges, restored)
+	}
+
+	return edit, nil
 }
 
 func chargeSnapshot(
@@ -372,7 +512,7 @@ func (s *service) requestPaperwork(
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.BillingQueueItem, error) {
 	pod := podState(item.Shipment, nil, nil)
-	ref := shipmentRef(item.Shipment)
+	title, message := paperworkRequest(item)
 	if s.drivers != nil && pod.DriverID.IsNotNil() {
 		s.drivers.Notify(ctx, &drivernotificationservice.DriverNotification{
 			TenantInfo: tenantInfo,
@@ -380,8 +520,8 @@ func (s *service) requestPaperwork(
 			EventType:  driverMessageEvent,
 			Priority:   notification.PriorityHigh,
 			Context: documenttemplate.DriverNotificationContext{
-				AlertTitle:   "Signed POD needed for " + ref,
-				AlertMessage: "Billing needs the receiver's signed POD for " + ref + ". Please send it from the app.",
+				AlertTitle:   title,
+				AlertMessage: message,
 			},
 			RelatedEntities: map[string]any{"shipmentId": item.ShipmentID.String()},
 			Link:            "/loads/" + item.ShipmentID.String(),
@@ -409,6 +549,12 @@ func (s *service) requestPaperwork(
 	return s.reviewedItem(ctx, item.ID, tenantInfo)
 }
 
+func paperworkRequest(item *billingqueue.BillingQueueItem) (title, message string) {
+	ref := shipmentRef(item.Shipment)
+	return "Signed POD needed for " + ref,
+		"Billing needs the receiver's signed POD for " + ref + ". Please send it from the app."
+}
+
 // Release takes an item off hold and back to where the hold found it.
 func (s *service) Release(
 	ctx context.Context,
@@ -422,8 +568,21 @@ func (s *service) Release(
 	if err != nil {
 		return nil, err
 	}
+	target, err := ReleaseTarget(item)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
+		ItemID:     req.ItemID,
+		NewStatus:  target,
+		TenantInfo: req.TenantInfo,
+	}, actor)
+}
+
+func ReleaseTarget(item *billingqueue.BillingQueueItem) (billingqueue.Status, error) {
 	if item.Status != billingqueue.StatusOnHold {
-		return nil, errortypes.NewValidationError(
+		return "", errortypes.NewValidationError(
 			"status", errortypes.ErrInvalidOperation, "This item isn't on hold",
 		)
 	}
@@ -435,11 +594,7 @@ func (s *service) Release(
 		target = *before
 	}
 
-	return s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
-		ItemID:     req.ItemID,
-		NewStatus:  target,
-		TenantInfo: req.TenantInfo,
-	}, actor)
+	return target, nil
 }
 
 // Post posts the invoice approval made for the item, which sends it to the
