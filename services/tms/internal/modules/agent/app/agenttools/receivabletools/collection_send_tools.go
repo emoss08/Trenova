@@ -57,8 +57,9 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agentpor
 				toolSendPaymentReminder,
 			},
 			Description: "Email a customer a reminder of every overdue invoice it has that is " +
-				"not in dispute, one email per currency, to the invoice recipients on its email " +
-				"profile, with an optional note. It goes whatever the reminder schedule says, " +
+				"not in dispute, with an optional note. It is one email per currency, to the " +
+				"invoice recipients on its email profile, and it goes whatever the reminder " +
+				"schedule says, " +
 				"so use it when a collector asks or a promise to pay was broken, never for a " +
 				"customer waiting on a promise that has not yet fallen due. The email is entered " +
 				"in the customer's collections history.",
@@ -230,9 +231,9 @@ func NewSendCustomerStatementTool(statements customerstatementports.Service) age
 			},
 			Required: []string{common.ParamCustomerID},
 			SearchTerms: []string{
-				"statement of account",
+				"email statement",
 				"send statement",
-				"account statement email",
+				"statement pdf",
 			},
 		},
 		common.ReceivablePlan[

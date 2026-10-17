@@ -373,8 +373,9 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 			Recipe:        []string{toolGetBillingQueueItem, toolResolveBillingQueueIssue},
 			Prerequisites: []string{toolGetBillingQueueItem},
 			Description: "Propose settling one of a billing queue item's flagged checks with " +
-				"one of the choices that check offers: bill a charge as it stands, take it off, " +
-				"reprice it, bill without the paperwork, or ask the driver for a signed POD. " +
+				"one of the choices that check offers. A choice bills a charge as it stands, " +
+				"takes it off, reprices it, bills without the paperwork, or asks the driver for " +
+				"a signed POD. " +
 				"get_billing_queue_item lists each check's issueId and its options with their " +
 				"optionKey; use them exactly. Settling can change what the customer is charged, " +
 				"so a person always decides, and asking the driver settles nothing until the " +
@@ -550,7 +551,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
 			Recipe:        []string{toolGetBillingQueueItem, toolUndoBillingQueueIssue},
 			Prerequisites: []string{toolGetBillingQueueItem},
 			Description: "Propose taking back how one of a billing queue item's checks was " +
-				"settled: the check is open again and any charge the settlement removed or " +
+				"settled. The check is open again and any charge the settlement removed or " +
 				"repriced is put back as it was. get_billing_queue_item lists each check's " +
 				"issueId and whether its settlement can be undone; only a settled check on an " +
 				"item still in review can be. It can change what the customer is charged, so a " +

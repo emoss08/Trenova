@@ -280,7 +280,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 				),
 			},
 			Required:    []string{common.ParamCustomerID, paramCollectionKind},
-			SearchTerms: []string{"collections note", "promise to pay", "log a call", "dunning"},
+			SearchTerms: []string{"promise to pay", "log a contact", "dunning"},
 		},
 		common.ReceivablePlan[
 			*collectionports.LogActivityRequest,
