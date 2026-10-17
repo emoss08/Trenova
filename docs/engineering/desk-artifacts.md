@@ -121,10 +121,23 @@ and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
 ## The extraction card
 
-`extraction` is what document intelligence read off a file, drawn document first
-(`kinds/extraction/`): the file's own pages with a quiet box over every value found, beside the
-values grouped the way a dispatcher reads a load, a tally of what needs a person, and where the
+`extraction` is what document intelligence read off a file, drawn as the record it is about to
+become (`kinds/extraction/`, on the shared `record-card/` frame). The head names the load by its
+lane and leads with the rate as read; the readings a person must settle come first, each beside
+the bit of page it came from; then the load as the reading has it, route first; then the
+document itself, its pages with a quiet box over every value found; and the bar says where the
 shipment stands.
+
+**The head.** `extraction-summary.ts` works it out from the payload. The stub is the paper's
+abbreviation (`documentMark`: RC, BOL, POD, INV, LMP, SCL, DR, else DOC). The title is the lane,
+from the first stop's `place` to the last's (`laneOf`), and falls back to the kind of document
+when fewer than two stops name a place, as on a card saved before stops carried one. The figure
+is the rate exactly as the document gave it (`headFigure`): the fuel surcharge is named beside it
+and never added, because a document's rate line is as often its total as its linehaul; a rate the
+reading looked for and did not find says "Rate not read", and a document with no rate (a bill of
+lading) has no figure. The pill says how many readings need a person until there is a shipment
+to speak of, then where it stands (`headStanding`); beside it are what was not read and what was
+read clearly, and the classifier's confidence in the kind only when it is under 90%.
 
 **The page.** Each page is the server's drawing of it, `GET /documents/:id/pages/:page/image/`
 (a PDF page rendered by pdfium at 150 dpi, or the image itself as page 1, as WebP; read on
@@ -156,19 +169,36 @@ phone it scrolls sideways rather than shrinking past reading.
 
 **What was read.** `extraction-payload.ts` reads the payload, old and new. Each field carries
 `reason` (`conflict`, `review` or `low`) and, for a conflict, every `readings`; each stop is its
-`name`, `address` and `window` parts (`stop`, `role`, `part`, `appointment`); `missingFields`
-names what the document lacked with its key. A card saved before these were kept still reads:
-no sizes means a letter frame, a stop without parts is one row, a reason is inferred from the
-confidence, and a missing field is placed by its label. `extraction-groups.ts` owns the order
-(parties, the stops in sequence, references, equipment and freight, charges, then Other, which
-takes any key it does not know) and the labels; a pickup or delivery window read apart from its
-stop joins it, and is left out when it is settled and only repeats the stop's own window. A value
-read at 90% or more is settled and plain, one between 80% and 90% shows its figure, one that
-needs a look says why under it (a stop marked for review says it once, on the stop), and a
-missing one stands where it would have been read, saying it is not on the document. The tally
-counts a stop under review once. The list is a list box: the arrow keys, Home and End walk it and
-each step lights the box and turns to its page; each option's name says its value, its state and
-its confidence. Choosing a box chooses its field.
+`name`, `address` and `window` parts (`stop`, `role`, `part`, `appointment`, and `place`, the
+stop's "City, ST" from `stopPlace` in `extraction.go`); `missingFields` names what the document
+lacked with its key. A card saved before these were kept still reads: no sizes means a letter
+frame, a stop without parts is one row, a stop without a place leaves the lane out, a reason is
+inferred from the confidence, and a missing field is placed by its label.
+`extraction-groups.ts` owns the order (parties, the stops in sequence, references, equipment and
+freight, charges, then Other, which takes any key it does not know) and the labels; a pickup or
+delivery window read apart from its stop joins it, and is left out when it is settled and only
+repeats the stop's own window. A value read at 90% or more is settled and faintly tinted, one
+between 80% and 90% is underlined dotted, and one that needs a look is underlined amber. The
+tally counts a stop under review once.
+
+**Check, then the load.** `ExtractionCheck` lists what a person settles before the reading
+becomes a shipment: each doubtful field (a stop once, with its doubtful parts) with why, a
+conflict's readings side by side with the one used marked, and a snippet of the page beside it
+(`ExtractionSnippet`): the same cached page image, placed so only the region around the value's
+boxes shows through (`snippetRegion`, `regionImageStyle`), with the value outlined. Pressing the
+snippet chooses the value and scrolls the document into view. Then each field that was not found.
+Nothing is red: neither is a mistake yet. `ExtractionLoad` lays the load out as the shipment would
+be: the route as stops with their role, appointment and parts, then a panel per group. Every value
+is a toggle button whose name says its value, its state, its confidence and its page
+(`rowAnnouncement`); choosing one lights its box and turns to its page, pointing at one lights its
+box, and choosing a box chooses its value. The document's thumbnails (up to eight pages, else a
+pager) count the fields to check on each page.
+
+**The layout.** The card is a container (`dkex`): at 900px or wider the document stands on the
+left and stays in view (`position: sticky`) while the reading scrolls beside it; narrower, the
+reading comes first and the document follows. The artifact's own page widens to 1280px for this
+card, and its scrolling frames give way (`.dk-apage` visible, `.dk-apage-body` clip) so the page
+scrolls with the window and sticky has a scroller to stick in.
 
 **The shipment.** `shipment-stage.ts` works out where it stands from the server and the
 conversation, never from the component: the newest `create_shipment` proposal whose
@@ -176,9 +206,11 @@ conversation, never from the component: the newest `create_shipment` proposal wh
 with the server's reason, declined, expired, simulated), `attachedShipmentId`, the conversation's
 running turn (`assistant.activeTurns`), and what the card asked (`documentAsks` in the Desk
 store, kept for the session only). A create asked after the newest proposal is drafting while the
-conversation is on it and "not drafted" once the reply ends without one. Check names every field
-it will ask about, with why, and Create asks the agent to draft the shipment, which waits for
-approval like every other write; Review opens that approval's `decision_request` artifact. While
+conversation is on it and "not drafted" once the reply ends without one. The bar's check button
+names every field it will ask about, with why, in its title, and Create asks the agent to draft
+the shipment, which waits for approval like every other write; Review the draft opens that
+approval's `decision_request` artifact, and a created shipment is linked from the head and the
+bar. While
 the conversation replies to something else, the card asks nothing.
 
 The body is its own chunk (`lazyComponent` in `desk-workspace.tsx`), and `ExtractionSkeleton`,

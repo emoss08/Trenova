@@ -365,9 +365,13 @@ function extractionField(reading, pages) {
   return out;
 }
 
+/** The stop's city and state, as `stopPlace` names the route's ends. */
+function stopPlace(stop) {
+  return [stop.city, stop.state].filter(Boolean).join(", ");
+}
+
 function stopAddress(stop) {
-  let place = stop.city ?? "";
-  if (stop.state) place = place ? `${place}, ${stop.state}` : stop.state;
+  let place = stopPlace(stop);
   if (stop.postalCode) place = `${place} ${stop.postalCode}`.trim();
   return [stop.addressLine1, stop.addressLine2, place].filter(Boolean).join(", ");
 }
@@ -417,6 +421,7 @@ function draftReadings(draft) {
           stop: sequence,
           role: (stop.role ?? "").toLowerCase(),
           part,
+          ...(stopPlace(stop) ? { place: stopPlace(stop) } : {}),
           ...(stop.appointmentRequired && part === "window" ? { appointment: true } : {}),
         },
       });

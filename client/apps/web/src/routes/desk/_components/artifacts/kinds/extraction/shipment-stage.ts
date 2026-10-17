@@ -102,23 +102,6 @@ export function isChecking(input: Pick<ShipmentStageInput, "ask" | "askWaiting" 
   return input.ask?.intent === "check" && (input.askWaiting || input.replying);
 }
 
-/** The step of the head's line a stage stands on: not created, drafting, waiting, created. */
-export function stageStep(stage: ShipmentStage): 0 | 1 | 2 | 3 {
-  switch (stage.stage) {
-    case "drafting":
-      return 1;
-    case "waiting":
-    case "creating":
-    case "failed":
-      return 2;
-    case "created":
-    case "attached":
-      return 3;
-    default:
-      return 0;
-  }
-}
-
 /** Whether the card may ask the agent anything now. */
 export function canAsk(stage: ShipmentStage): boolean {
   switch (stage.stage) {

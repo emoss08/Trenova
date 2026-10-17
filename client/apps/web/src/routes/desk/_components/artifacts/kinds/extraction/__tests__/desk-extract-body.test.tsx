@@ -57,8 +57,16 @@ function renderBody({
   );
 }
 
-function option(name: RegExp) {
-  return screen.getByRole("option", { name });
+/** A value as the load lists it, found by what a screen reader hears for it. */
+function value(name: RegExp) {
+  return screen.getByRole("button", { name });
+}
+
+function section(title: string): HTMLElement {
+  const heading = screen.getByRole("heading", { name: title, level: 3 });
+  const found = heading.closest("section");
+  if (!found) throw new Error(`No section titled ${title}`);
+  return found;
 }
 
 async function drawnPage(page: number) {
@@ -66,6 +74,21 @@ async function drawnPage(page: number) {
   fireEvent.load(image);
   return image;
 }
+
+const created = {
+  id: "aprop_1",
+  toolName: "create_shipment",
+  arguments: { sourceDocumentId: DOCUMENT },
+  status: "Executed",
+  createdAt: 10,
+  executionResult: {
+    action: "Created",
+    kind: "shipment",
+    name: "S-104260",
+    ids: {},
+    record: { entityType: "shipment", id: "shp_1" },
+  },
+} as Partial<AssistantProposal>;
 
 beforeEach(() => {
   mocks.download.mockImplementation(async (endpoint: string) => ({
@@ -88,7 +111,127 @@ afterEach(() => {
 });
 
 describe("DeskExtractBody", () => {
-  it("fetches the page through the app's request helper and boxes each value once it is drawn", async () => {
+  it("names the load by its lane and leads with the rate exactly as read", () => {
+    const { container } = renderBody();
+
+    expect(
+      screen.getByRole("heading", { name: "Memphis, TN → Fort Worth, TX", level: 2 }),
+    ).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-who")).toHaveTextContent(
+      "Load NL-482913 · Northline Logistics · 3 stops",
+    );
+    expect(container.querySelector(".dk-rec-stub")).toHaveTextContent("RC");
+    expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("$2,465.00rate as read");
+    expect(container.querySelector(".dk-rec-kick")).toHaveTextContent(
+      "Rate confirmationNorthline_RateCon.pdf2 pages",
+    );
+  });
+
+  it("counts what needs a person, what was not read and what was read clearly", () => {
+    const { container } = renderBody();
+
+    expect(container.querySelector(".dk-rec-st")).toHaveTextContent("4 to check");
+    expect(container.querySelector(".dk-rec-q")).toHaveTextContent("3 not read·7 read clearly");
+    expect(container.querySelector(".dk-rec-q")).not.toHaveTextContent("sure of the kind");
+  });
+
+  it("says how sure it was of the kind only when it was not sure", () => {
+    const { container } = renderBody({ payload: currentPayload({ kindConfidence: 0.62 }) });
+
+    expect(container.querySelector(".dk-rec-q")).toHaveTextContent("62% sure of the kind");
+  });
+
+  it("lists what to check with why, beside the bit of page it was read from", async () => {
+    renderBody();
+    const check = section("Check before it becomes a shipment");
+
+    expect(within(check).getByText("4 to check · 3 not read")).toBeInTheDocument();
+    const items = within(check).getAllByRole("listitem");
+    expect(items.map((item) => item.querySelector(".dk-ex-ck-l")?.textContent)).toEqual([
+      "Bill to",
+      "Delivery · stop 2",
+      "Delivery · stop 3",
+      "Commodity",
+      "Pro #",
+      "Pieces",
+      "Temperature",
+    ]);
+    expect(items[0]).toHaveTextContent("Northline LogisticsMarked for review · 71%");
+    expect(items[1]).toHaveTextContent(
+      "Delivery window10/21/2026used10/22/2026Two readings disagree",
+    );
+    expect(items[2]).toHaveTextContent("NameAnyco Clothes #612Marked for review · 74%");
+    expect(items[3]).toHaveTextContent("Paper productsLow confidence · 78%");
+    expect(items[4]).toHaveTextContent("Pro #Not readNot found on any page that was read");
+
+    expect(
+      await within(items[0]).findByRole("button", { name: "Show Bill to on page 1" }),
+    ).toBeInTheDocument();
+    expect(
+      within(items[2]).getByRole("button", { name: "Show Delivery · stop 3 on page 2" }),
+    ).toBeInTheDocument();
+    expect(within(items[3]).queryByRole("button", { name: /^Show/ })).toBeNull();
+  });
+
+  it("draws the snippet from the page image, with the value outlined where it was read", async () => {
+    renderBody();
+    const snippet = await screen.findByRole("button", { name: "Show Bill to on page 1" });
+
+    await waitFor(() => expect(snippet.querySelector("img")).not.toBeNull());
+    const image = snippet.querySelector("img") as HTMLImageElement;
+    const box = snippet.querySelector<HTMLElement>(".dk-ex-snip-box.dk-warn");
+    expect(image.style.width).not.toBe("");
+    expect(box).not.toBeNull();
+    expect(parseFloat(box?.style.left ?? "")).toBeGreaterThan(0);
+    expect(mocks.download).toHaveBeenCalledWith(
+      documentPageImageEndpoint(DOCUMENT, 1),
+      "page.webp",
+      { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  it("lays the load out as the shipment would be: the route, then the facts", () => {
+    renderBody();
+    const load = section("The load as read");
+
+    const stops = within(within(load).getByRole("list", { name: "Stops" })).getAllByRole(
+      "listitem",
+    );
+    expect(stops.map((stop) => stop.textContent)).toEqual([
+      "1PickupAppointmentRidgefield Paper Co.10/20/2026 08:00-12:00",
+      "2DeliveryAnyco Clothes DC #425Delivery window10/21/2026",
+      "3DeliveryAnyco Clothes #612",
+    ]);
+    expect(stops[1]).toHaveClass("dk-warn");
+    expect(
+      [...load.querySelectorAll(".dk-ex-panel h4")].map((heading) => heading.textContent),
+    ).toEqual(["Parties", "References", "Equipment and freight", "Charges", "Other"]);
+    expect(value(/^Rate: 2465.00/)).toHaveTextContent("$2,465.00");
+    expect(value(/^Rate: 2465.00/)).toHaveClass("dk-fair");
+    expect(
+      value(/^Bill to: Northline Logistics, needs a look, 71 percent confident, page 1$/),
+    ).toHaveClass("dk-doubtful");
+    expect(within(load).getAllByText("Not read")).toHaveLength(3);
+  });
+
+  it("turns to the page a chosen value was read from and marks its thumbnail", async () => {
+    renderBody();
+    await drawnPage(1);
+
+    fireEvent.click(value(/^Name: Anyco Clothes #612/));
+
+    await drawnPage(2);
+    expect(screen.getByRole("button", { name: "Page 2, 1 field to check" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("button", { name: "Page 1, 2 fields to check" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    expect(value(/^Name: Anyco Clothes #612/)).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("boxes each value once the page is drawn, at the fractions of the page it was read at", async () => {
     const { container } = renderBody();
 
     await waitFor(() =>
@@ -98,7 +241,7 @@ describe("DeskExtractBody", () => {
         { signal: expect.any(AbortSignal) },
       ),
     );
-    expect(container.querySelectorAll(".dk-ex-box")).toHaveLength(0);
+    expect(container.querySelectorAll(".dk-ex-sheet .dk-ex-box")).toHaveLength(0);
 
     await drawnPage(1);
 
@@ -108,47 +251,12 @@ describe("DeskExtractBody", () => {
     expect(load?.style.top).toBe("8.5%");
     expect(load?.style.width).toBe("11.25%");
     expect(load?.style.height).toBe("1.4%");
-  });
-
-  it("counts what to check, what the document lacked and what was read", () => {
-    renderBody();
-
-    expect(screen.getByRole("button", { name: "4 to check" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "3 not on the document" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "7 read" })).toBeInTheDocument();
-  });
-
-  it("says why a field needs a look, and where a missing one would have been", () => {
-    renderBody();
-
-    expect(
-      option(/^Bill to: Northline Logistics, needs a look, 71 percent confident, page 1$/),
-    ).toHaveTextContent("Marked for review · 71%");
-    expect(option(/^Delivery window:/)).toHaveTextContent(
-      "Two readings disagree10/21/202610/22/2026",
+    expect(container.querySelector('.dk-ex-box[title="Bill to: Northline Logistics"]')).toHaveClass(
+      "dk-warn",
     );
-    expect(option(/^Pro #: not on the document$/)).toHaveTextContent("Not found");
-    expect(option(/^Load #: NL-482913, read with 97 percent confidence/)).not.toHaveTextContent(
-      "%",
-    );
-    expect(option(/^Rate: 2465.00, read with 86 percent confidence/)).toHaveTextContent("86%");
   });
 
-  it("turns to the page a chosen field was read from", async () => {
-    renderBody();
-    await drawnPage(1);
-
-    fireEvent.click(option(/^Name: Anyco Clothes #612/));
-
-    await drawnPage(2);
-    expect(screen.getByRole("button", { name: "Page 2, with fields to check" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(option(/^Name: Anyco Clothes #612/)).toHaveAttribute("aria-selected", "true");
-  });
-
-  it("chooses a field when its box is pressed, and lights the box when its field is chosen", async () => {
+  it("chooses a value when its box is pressed, and lights the box when its value is pointed at", async () => {
     const { container } = renderBody();
     await drawnPage(1);
 
@@ -157,38 +265,33 @@ describe("DeskExtractBody", () => {
     );
     fireEvent.click(box as HTMLElement);
 
-    expect(option(/^Bill to:/)).toHaveAttribute("aria-selected", "true");
+    expect(value(/^Bill to:/)).toHaveAttribute("aria-pressed", "true");
     expect(box).toHaveClass("dk-on");
     expect(container.querySelector(".dk-ex-flag")).toHaveTextContent("Bill to");
+    expect(container.querySelector(".dk-ex-ck.dk-on")).toHaveTextContent("Bill to");
 
-    fireEvent.mouseEnter(option(/^Load #:/));
+    fireEvent.mouseEnter(value(/^Load #:/));
     expect(container.querySelector('.dk-ex-box[title="Load #: NL-482913"]')).toHaveClass("dk-hot");
+
+    fireEvent.click(value(/^Bill to:/));
+    expect(value(/^Bill to:/)).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("walks the list with the arrow keys and lets go with Escape", async () => {
-    renderBody();
-    const list = screen.getByRole("listbox", { name: "What was read" });
-
-    fireEvent.keyDown(list, { key: "ArrowDown" });
-    expect(option(/^Shipper:/)).toHaveAttribute("aria-selected", "true");
-    expect(list.getAttribute("aria-activedescendant")).toBe(option(/^Shipper:/).id);
-
-    fireEvent.keyDown(list, { key: "End" });
-    expect(option(/^Temperature:/)).toHaveAttribute("aria-selected", "true");
-
-    fireEvent.keyDown(list, { key: "Escape" });
-    expect(list).not.toHaveAttribute("aria-activedescendant");
-  });
-
-  it("chooses the first field to check from the tally", () => {
+  it("brings the document into view when a value is found from its snippet", async () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
     renderBody();
 
-    fireEvent.click(screen.getByRole("button", { name: "4 to check" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Show Delivery · stop 3 on page 2" }),
+    );
 
-    expect(option(/^Bill to:/)).toHaveAttribute("aria-selected", "true");
+    expect(value(/^Name: Anyco Clothes #612/)).toHaveAttribute("aria-pressed", "true");
+    expect(scroll).toHaveBeenCalled();
+    expect(scroll.mock.contexts.at(-1)).toHaveClass("dk-ex-doc");
   });
 
-  it("says so when a page cannot be drawn, and the fields still read", async () => {
+  it("says so when a page cannot be drawn, and the reading still stands", async () => {
     mocks.download.mockRejectedValue(new Error("unavailable"));
     renderBody();
 
@@ -197,11 +300,13 @@ describe("DeskExtractBody", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Open file" })).toHaveLength(2);
-    expect(option(/^Load #:/)).toBeInTheDocument();
+    expect(value(/^Load #:/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("button", { name: /^Show / })).toBeNull());
+    expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
   });
 
   it("asks the agent to draft the shipment, and is drafting until it proposes one", () => {
-    renderBody();
+    const { container } = renderBody();
 
     fireEvent.click(screen.getByRole("button", { name: "Create shipment" }));
 
@@ -212,36 +317,39 @@ describe("DeskExtractBody", () => {
       threadId: THREAD,
       intent: "create",
     });
-    expect(screen.getByText("Drafting the shipment")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Create shipment" })).toBeDisabled();
+    expect(container.querySelector(".dk-rec-bar")).toHaveTextContent("Drafting the shipment");
+    expect(container.querySelector(".dk-rec-st")).toHaveTextContent("Drafting the shipment");
+    expect(screen.getByRole("button", { name: "Create shipment" })).toBeDisabled();
   });
 
   it("asks the agent to check the fields it names", () => {
-    renderBody();
+    const { container } = renderBody();
+    const check = screen.getByRole("button", { name: "Ask the agent to check 7" });
 
-    expect(
-      screen.getByText(
-        "Check asks the agent to look again at Bill to, Delivery · stop 2, Delivery · stop 3, and Commodity, and to look for Pro #, Pieces, and Temperature.",
-      ),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Check 7 fields" }));
+    expect(check).toHaveAttribute(
+      "title",
+      "Check asks the agent to look again at Bill to, Delivery · stop 2, Delivery · stop 3, and Commodity, and to look for Pro #, Pieces, and Temperature.",
+    );
+    fireEvent.click(check);
 
     expect(useDeskStore.getState().asks[THREAD]).toContain(
       `On Northline_RateCon.pdf (document ${DOCUMENT}), check these fields`,
     );
-    expect(screen.getByText("The agent is checking the fields")).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-bar")).toHaveTextContent(
+      "The agent is checking the fields",
+    );
   });
 
   it("holds its asks while the conversation replies to something else", () => {
     renderBody({ replying: true });
 
     expect(screen.getByRole("button", { name: "Create shipment" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Check 7 fields" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ask the agent to check 7" })).toBeDisabled();
   });
 
-  it("opens the approval of the drafted shipment from Review", () => {
+  it("opens the approval of the drafted shipment from the bar", () => {
     const onOpenArtifact = vi.fn();
-    renderBody({
+    const { container } = renderBody({
       proposals: [
         {
           id: "aprop_1",
@@ -255,43 +363,36 @@ describe("DeskExtractBody", () => {
       onOpenArtifact,
     });
 
-    expect(screen.getByText("Drafted and waiting on your approval")).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-st")).toHaveTextContent("Drafted, waiting on you");
+    expect(container.querySelector(".dk-rec-bar")).toHaveTextContent(
+      "The agent drafted it; nothing is created until you approve",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Review the draft" }));
 
     expect(onOpenArtifact).toHaveBeenCalledWith("aart_decision");
     expect(screen.queryByRole("button", { name: "Create shipment" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ask the agent to check/ })).toBeNull();
   });
 
-  it("links the shipment once it is created", () => {
-    renderBody({
-      proposals: [
-        {
-          id: "aprop_1",
-          toolName: "create_shipment",
-          arguments: { sourceDocumentId: DOCUMENT },
-          status: "Executed",
-          createdAt: 10,
-          executionResult: {
-            action: "Created",
-            kind: "shipment",
-            name: "S-104260",
-            ids: {},
-            record: { entityType: "shipment", id: "shp_1" },
-          },
-        },
-      ],
-    });
+  it("links the shipment once it is created, and stops asking for checks", () => {
+    const { container } = renderBody({ proposals: [created] });
 
-    expect(screen.getByText("Created shipment S-104260")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "S-104260" })).toHaveAttribute(
-      "href",
-      expect.stringContaining("shp_1"),
-    );
-    expect(screen.getByRole("link", { name: /Open the shipment/ })).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-st")).toHaveTextContent("Shipment created");
+    expect(
+      within(container.querySelector(".dk-rec-q") as HTMLElement).getByRole("link", {
+        name: "S-104260",
+      }),
+    ).toHaveAttribute("href", expect.stringContaining("shp_1"));
+    expect(container.querySelector(".dk-rec-q")).not.toHaveTextContent("not read");
+    expect(screen.getByRole("link", { name: "Open S-104260" })).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-bar")).toHaveTextContent("Created from this reading");
+    expect(
+      screen.queryByRole("heading", { name: "Check before it becomes a shipment" }),
+    ).toBeNull();
   });
 
   it("says why an approved draft was not created and offers to ask again", () => {
-    renderBody({
+    const { container } = renderBody({
       proposals: [
         {
           id: "aprop_1",
@@ -304,22 +405,24 @@ describe("DeskExtractBody", () => {
       ],
     });
 
-    expect(
-      screen.getByText("It was approved but not created: The customer is inactive."),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-bar")).toHaveTextContent(
+      "It was approved but not created: The customer is inactive.",
+    );
     expect(screen.getByRole("button", { name: "Ask again" })).toBeEnabled();
   });
 
-  it("reads a card saved before stop parts and reasons were kept", async () => {
-    renderBody({ payload: legacyPayload() });
+  it("reads a card saved before stops named their place, titling it by its kind", async () => {
+    const { container } = renderBody({ payload: legacyPayload() });
 
-    expect(screen.getByRole("group", { name: "Delivery · stop 2" })).toBeInTheDocument();
     expect(
-      within(screen.getByRole("group", { name: "Delivery · stop 2" })).getByRole("option", {
-        name: /^Stop: Anyco Clothes #425/,
-      }),
-    ).toHaveTextContent("Low confidence · 64%");
-    expect(await screen.findByAltText("Page 1 of rate_confirmation.pdf")).toBeInTheDocument();
+      screen.getByRole("heading", { name: "Rate confirmation", level: 2 }),
+    ).toBeInTheDocument();
+    expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("$4,500.00rate as read");
+    expect(container.querySelector(".dk-rec-amt b")).toHaveClass("dk-warn");
+    const stop = within(section("Check before it becomes a shipment")).getAllByRole("listitem")[0];
+    expect(stop).toHaveTextContent("Delivery · stop 2");
+    expect(stop).toHaveTextContent("Low confidence · 64%");
+    expect(await screen.findByAltText("Page 2 of rate_confirmation.pdf")).toBeInTheDocument();
   });
 
   it("draws no page when the file is no longer on record", () => {

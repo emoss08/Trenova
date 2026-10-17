@@ -234,8 +234,14 @@ func TestExtractionArtifact_ReadsEachStopAsItsParts(t *testing.T) {
 	_, nameAppointment := name["appointment"]
 	assert.False(t, nameAppointment)
 
+	for _, part := range []map[string]any{name, address, window} {
+		assert.Equal(t, "Fort Worth, TX", part["place"], "every part of a stop names its place")
+	}
+
 	pickup := fields["stop1.name"]
 	assert.Equal(t, "pickup", pickup["role"])
+	_, pickupPlace := pickup["place"]
+	assert.False(t, pickupPlace, "a stop read without a city or state names no place")
 	assert.NotContains(t, fields, "stop1.address", "a part the reading lacks is not a field")
 	assert.NotContains(t, fields, "stop2.name", "stops keep their own sequence")
 }

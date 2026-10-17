@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5c30f3367a369087b40a3e246cbbcd012c48f17294b6d3e9252f057e42567b50",
+  "version": "sha256:162ef6398a3167ec6d2bf417d11d19248d93ab331d456421707703cc4b68f878",
   "modules": [
     {
       "id": "home",
@@ -9789,10 +9789,11 @@
             "document intelligence"
           ],
           "steps": [
-            "Upload a document in the conversation. When the agent reads it, the workspace shows the page with a box over every value it found, and the list of fields with how sure it is of each one. Fields that need a look are counted and marked.",
-            "Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.",
-            "Select **Fix fields** to ask the agent to check the doubtful fields against the document again.",
-            "Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead."
+            "Upload a document in the conversation. When the agent reads it, the workspace shows the load as a record: its lane and the rate exactly as the document gives it, how many fields need a look, and the document itself with a box over every value that was found.",
+            "Under **Check before it becomes a shipment**, each doubtful field says why (two readings disagree, marked for review, or low confidence) beside the bit of the page it was read from, and each field that was not found says so. Select the snippet to bring that value up on the page.",
+            "Under **The load as read**, select any value to light up where it was found and turn to its page; select a box on the page to pick its value. Use the page thumbnails to move through a document with several pages, and **Open file** to see the original.",
+            "Select the check button at the bottom to ask the agent to look at the doubtful fields again and search for the ones it did not find.",
+            "Select **Create shipment**. The agent drafts the shipment, and it waits for your approval like any other change; **Review the draft** opens it. Once it is approved, the record shows **Shipment created** with a link to it. If the document is already attached to a shipment, it shows **Already a shipment** instead."
           ]
         },
         {
