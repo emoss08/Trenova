@@ -562,7 +562,7 @@ func (r *repository) ListOpenShipmentIDs(
 			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
 			GroupExpr(bqi.ShipmentID.Qualified()).
 			OrderExpr(bqi.CreatedAt.Expr("MAX({}) DESC")).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx, &ids); err != nil {
 			return nil, fmt.Errorf("list open billing queue shipments: %w", err)
 		}

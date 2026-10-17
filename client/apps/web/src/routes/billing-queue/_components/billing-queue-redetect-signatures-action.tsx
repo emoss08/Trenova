@@ -39,7 +39,7 @@ export function BillingQueueRedetectSignaturesAction() {
   const { allowed: canUpdateQueue } = usePermission(Resource.BillingQueue, Operation.Update);
   const { allowed: canUpdateDocuments } = usePermission(Resource.Document, Operation.Update);
 
-  const { mutate, isPending } = useApiMutation<PODSignatureRedetectResult, void>({
+  const { mutate, isPending } = useApiMutation<PODSignatureRedetectResult, undefined>({
     resourceName: "Billing queue",
     mutationFn: () => apiService.billingQueueService.redetectPODSignatures(),
     onSuccess: (result) => {
@@ -72,7 +72,7 @@ export function BillingQueueRedetectSignaturesAction() {
             </AlertDialogCancel>
             <AlertDialogAction
               size="default"
-              onClick={() => mutate()}
+              onClick={() => mutate(undefined)}
               disabled={isPending}
               isLoading={isPending}
             >
