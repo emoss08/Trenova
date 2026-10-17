@@ -12,8 +12,10 @@ export function DocumentIntelligencePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t("Document intelligence"),
-        description: t("Configure OCR, classification, extraction, and shipment draft behavior"),
+        title: t("Document extraction"),
+        description: t(
+          "Configure how documents are read, classified, extracted, and drafted into shipments",
+        ),
       }}
     >
       <LazyComponent fallback={<DocumentIntelligenceSkeleton />}>

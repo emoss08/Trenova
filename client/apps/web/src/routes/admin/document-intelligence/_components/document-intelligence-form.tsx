@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormSaveDock } from "@/components/form-save-dock";
+import { SegmentedField } from "@/components/fields/segmented-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -17,8 +18,10 @@ import { apiService } from "@/services/api";
 import {
   documentControlResourceSchema,
   documentControlSchema,
+  extractionEngineSchema,
   type DocumentControl,
   type DocumentControlResource,
+  type ExtractionEngine,
 } from "@/types/document-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -52,6 +55,11 @@ const allowedResourceOptions: Array<{
   },
 ];
 
+const extractionEngineOptions: Array<{ value: ExtractionEngine; label: string }> = [
+  { value: extractionEngineSchema.enum.legacy, label: "Legacy" },
+  { value: extractionEngineSchema.enum.docling, label: "Docling" },
+];
+
 export default function DocumentIntelligenceForm() {
   const t = useT();
 
@@ -69,10 +77,10 @@ export default function DocumentIntelligenceForm() {
   const { mutateAsync } = useOptimisticMutation({
     queryKey: documentControl.get._def,
     mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
-    resourceName: "Document Intelligence",
+    resourceName: "Document extraction",
     resetForm: reset,
     form,
-    invalidateQueries: [documentControl.get._def],
+    invalidateQueries: [documentControl.get._def, documentControl.extractionStatus._def],
   });
 
   const onSubmit = useCallback(
@@ -87,6 +95,7 @@ export default function DocumentIntelligenceForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <PlatformAvailabilityCard />
+          <ExtractionEngineCard />
           <ClassificationAndExtractionCard />
           <ShipmentDraftCard />
           <SearchCard />
@@ -112,7 +121,7 @@ function PlatformAvailabilityCard() {
         <CardTitle>{t("Platform availability")}</CardTitle>
         <CardDescription>
           {t(
-            "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.",
+            "Control whether document extraction is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.",
           )}
         </CardDescription>
       </CardHeader>
@@ -122,9 +131,9 @@ function PlatformAvailabilityCard() {
             <SwitchField
               control={control}
               name="enableDocumentIntelligence"
-              label={t("Enable document intelligence")}
+              label={t("Enable document extraction")}
               description={t(
-                "Master switch for OCR, document classification, extraction, and indexing workflows.",
+                "Master switch for reading, classifying, extracting, and indexing uploaded documents.",
               )}
               position="left"
             />
@@ -134,9 +143,64 @@ function PlatformAvailabilityCard() {
               control={control}
               name="enableOcr"
               label={t("Enable OCR")}
-              description={t("Run OCR when native text extraction is unavailable or insufficient.")}
+              description={t(
+                "Read text from scanned pages, photos, and faxes that carry no text of their own.",
+              )}
               position="left"
               disabled={!enabled}
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ExtractionEngineCard() {
+  const t = useT();
+
+  const { control } = useFormContext<DocumentControl>();
+  const enabled = useWatch({
+    control,
+    name: "enableDocumentIntelligence",
+  });
+  const engine = useWatch({
+    control,
+    name: "extractionEngine",
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Extraction engine")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl>
+            <SegmentedField
+              control={control}
+              name="extractionEngine"
+              label={t("Read documents with")}
+              description={
+                engine === extractionEngineSchema.enum.docling
+                  ? t(
+                      "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.",
+                    )
+                  : t(
+                      "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.",
+                    )
+              }
+              options={extractionEngineOptions.map((option) => ({
+                value: option.value,
+                label: t(option.label),
+                disabled: !enabled,
+              }))}
+              fullWidth={false}
             />
           </FormControl>
         </FormGroup>

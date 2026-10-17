@@ -7,6 +7,7 @@ const dependentSwitch = { kind: "switch", nested: true } as const;
 
 const sections: readonly SettingsSectionSpec[] = [
   { fields: ["switch", dependentSwitch] },
+  { title: "sm", fields: ["input"] },
   { title: "lg", fields: ["switch", dependentSwitch, "switch", dependentSwitch, "switch"] },
   {
     title: "lg",

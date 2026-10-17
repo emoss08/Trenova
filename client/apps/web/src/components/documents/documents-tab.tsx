@@ -35,6 +35,7 @@ import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
 import { DocumentVersionDialog } from "./document-version-dialog";
+import { ExtractionNeedsProviderAlert } from "./extraction-needs-provider-alert";
 import {
   DocumentToolbar,
   type FileTypeFilter,
@@ -499,6 +500,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   return (
     <div className="space-y-4" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+      <ExtractionNeedsProviderAlert />
       {packetSummary && packetSummary.totalRules > 0 && (
         <PacketCompletenessPanel summary={packetSummary} />
       )}

@@ -32,6 +32,7 @@ import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { ExtractionNeedsProviderAlert } from "./extraction-needs-provider-alert";
 
 interface DocumentShipmentDraftReviewDialogProps {
   open: boolean;
@@ -479,6 +480,7 @@ export function DocumentShipmentDraftReviewDialog({
             )}
           </DialogDescription>
         </DialogHeader>
+        <ExtractionNeedsProviderAlert className="mx-6 mt-4 w-auto" />
         {content}
       </DialogContent>
     </Dialog>

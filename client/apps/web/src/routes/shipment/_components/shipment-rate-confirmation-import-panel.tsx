@@ -1,7 +1,10 @@
-import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
+import {
+  ExtractionNeedsProviderAlert,
+  useDocumentExtractionAvailable,
+} from "@/components/documents/extraction-needs-provider-alert";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -23,7 +26,6 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { apiService } from "@/services/api";
-import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
@@ -36,6 +38,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { isBlockedByProvider, processingSummary } from "./rate-confirmation-import-status";
 
 type ShipmentRateConfirmationImportPanelProps = {
   open: boolean;
@@ -86,102 +89,6 @@ function uploadStatusLabel(status?: string) {
     default:
       return "Waiting for file";
   }
-}
-
-function processingSummary(
-  document: Document | null | undefined,
-  draft: DocumentShipmentDraft | null | undefined,
-) {
-  if (!document) {
-    return {
-      title: translate("Waiting for uploaded document"),
-      description: translate("The upload must complete before extraction can start."),
-      progress: 10,
-      variant: "default" as const,
-    };
-  }
-
-  if (document.contentStatus === "Failed") {
-    return {
-      title: translate("Extraction failed"),
-      description:
-        document.contentError || "We could not extract text from this rate confirmation.",
-      progress: 100,
-      variant: "error" as const,
-    };
-  }
-
-  if (draft?.status === "Failed") {
-    return {
-      title: translate("Draft generation failed"),
-      description:
-        draft.failureMessage || "We extracted text but could not build a shipment draft.",
-      progress: 100,
-      variant: "error" as const,
-    };
-  }
-
-  if (draft?.status === "Ready") {
-    return {
-      title: translate("Shipment draft ready"),
-      description: translate("The extracted shipment draft is ready for review."),
-      progress: 100,
-      variant: "success" as const,
-    };
-  }
-
-  if (
-    document.shipmentDraftStatus === "Unavailable" &&
-    document.contentStatus !== "Pending" &&
-    document.contentStatus !== "Extracting"
-  ) {
-    return {
-      title: translate("No shipment draft available"),
-      description: translate("This file did not produce a usable shipment draft."),
-      progress: 100,
-      variant: "error" as const,
-    };
-  }
-
-  if (document.contentStatus === "Pending") {
-    return {
-      title: translate("Preparing extraction"),
-      description: translate(
-        "We are queuing OCR and intelligence work for this rate confirmation.",
-      ),
-      progress: 35,
-      variant: "default" as const,
-    };
-  }
-
-  if (document.contentStatus === "Extracting") {
-    return {
-      title: translate("Extracting shipment details"),
-      description: translate(
-        "We are extracting text, classifying the document, and assembling the shipment draft.",
-      ),
-      progress: 70,
-      variant: "default" as const,
-    };
-  }
-
-  if (document.shipmentDraftStatus === "Pending") {
-    return {
-      title: translate("Building shipment draft"),
-      description: translate(
-        "Extraction finished. We are mapping the results into a shipment draft now.",
-      ),
-      progress: 85,
-      variant: "default" as const,
-    };
-  }
-
-  return {
-    title: translate("Processing rate confirmation"),
-    description: translate("We are still evaluating the uploaded document."),
-    progress: 55,
-    variant: "default" as const,
-  };
 }
 
 export function ShipmentRateConfirmationImportPanel({
@@ -298,6 +205,9 @@ export function ShipmentRateConfirmationImportPanel({
     }
   }, [createdShipmentId, currentUpload, open, uploadedDocumentId]);
 
+  const extractionAvailable = useDocumentExtractionAvailable();
+  const blockedByProvider = isBlockedByProvider(importedDocument, extractionAvailable);
+
   const processingFailure = useMemo(() => {
     if (importedDocument?.contentStatus === "Failed") {
       return (
@@ -312,6 +222,7 @@ export function ShipmentRateConfirmationImportPanel({
     }
     if (
       importedDocument &&
+      !blockedByProvider &&
       importedDocument.shipmentDraftStatus === "Unavailable" &&
       importedDocument.contentStatus !== "Pending" &&
       importedDocument.contentStatus !== "Extracting"
@@ -319,7 +230,7 @@ export function ShipmentRateConfirmationImportPanel({
       return "This rate confirmation did not produce a usable shipment draft.";
     }
     return null;
-  }, [importedDocument, importedDraft]);
+  }, [blockedByProvider, importedDocument, importedDraft]);
 
   const currentStep = useMemo<ImportStep>(() => {
     if (createdShipmentId) {
@@ -364,7 +275,7 @@ export function ShipmentRateConfirmationImportPanel({
     [t],
   );
 
-  const processStatus = processingSummary(importedDocument, importedDraft);
+  const processStatus = processingSummary(importedDocument, importedDraft, extractionAvailable);
 
   const handleFilesSelected = useCallback(
     (files: File[]) => {
@@ -465,6 +376,7 @@ export function ShipmentRateConfirmationImportPanel({
 
         {currentStep === "upload" ? (
           <div className="grid gap-6 p-6">
+            <ExtractionNeedsProviderAlert />
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -586,6 +498,8 @@ export function ShipmentRateConfirmationImportPanel({
                       </div>
                     </AlertDescription>
                   </Alert>
+                ) : blockedByProvider ? (
+                  <ExtractionNeedsProviderAlert />
                 ) : (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
                     {t(
