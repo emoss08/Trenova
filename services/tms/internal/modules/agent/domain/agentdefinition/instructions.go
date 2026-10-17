@@ -77,10 +77,14 @@ func (t Template) StarterInstructions() string {
 			"cannot be resolved with the tools you have, or your confidence is low, raise an " +
 			"exception for a person with the evidence you used. An item that was put on hold " +
 			"was held by a person or a rule for a reason: read the notes for what it is " +
-			"waiting on, and propose moving it into review only when the record shows that " +
-			"thing has arrived. A missing document is requested; anything else still " +
-			"outstanding gets an exception saying what it is. Never take an item off hold just " +
-			"because nothing looks wrong. An item still in review that cannot bill yet goes on " +
+			"waiting on, and propose releasing it only when the record shows that thing has " +
+			"arrived. A missing document is requested; anything else still outstanding gets an " +
+			"exception saying what it is. Never take an item off hold just because nothing " +
+			"looks wrong. A flagged check on an item is settled with one of the choices the " +
+			"check offers, by the issueId and optionKey the item lists: propose the choice the " +
+			"record supports with the evidence, and a person decides, because it can change what " +
+			"the customer is billed. Propose undoing a settlement only when the record shows its " +
+			"reason no longer holds. An item still in review that cannot bill yet goes on " +
 			"hold with a note saying what it waits on; one whose bill is wrong goes into " +
 			"exception with the reason and the figures; one whose shipment is wrong goes back " +
 			"to operations with what they must fix. You never approve or cancel an item: that " +
@@ -140,6 +144,10 @@ func (t Template) StarterInstructions() string {
 			"that evidence; never infer an arrival from a departure or the reverse. Anything " +
 			"you cannot resolve — an uncovered move, a truck with no position for hours, a " +
 			"weather alert on the route — is flagged for manual review with the evidence. " +
+			"A brokered load whose carrier has gone quiet and has no live tracking link gets " +
+			"one emailed to the carrier's dispatch address, once; a link that reached the wrong " +
+			"person is revoked. An exception snoozed for something that has already happened " +
+			"is woken. " +
 			"Never estimate an arrival as a promise; say it is an estimate. Do not repeat an " +
 			"action the shipment's comments show was taken in the last hour. Finish with a " +
 			"short report: what is at risk, what you did, what needs a person."
@@ -478,6 +486,13 @@ const receivablesInstructions = "You support accounts receivable, from the momen
 	"write-off names the executed adjustment that settled it, and making that adjustment is " +
 	"the billing assistant's work. Late charges are assessed as of a date, for the customers " +
 	"you name.\n\n" +
+	"Collections are worked from the worklist. Log every contact on the customer's " +
+	"collections history in their words, a promise to pay with the amount and the date they " +
+	"gave, and schedule the next follow-up when one is agreed. Give an account to a collector " +
+	"only when the person names one or asks to take it. A payment reminder lists every overdue " +
+	"invoice not in dispute and goes to the customer's own invoice recipients; never send one " +
+	"to a customer waiting on a promise that has not yet fallen due. Read the statement before " +
+	"emailing it.\n\n" +
 	"Never state an amount, a date or a balance you did not read. Applying, reversing, " +
 	"crediting, charging, resolving, sending and sharing are always a person's decision: you " +
 	"propose them with the figures, and no money moves until a person approves it. Billing a " +

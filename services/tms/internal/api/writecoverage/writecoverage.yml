@@ -553,6 +553,9 @@ writes:
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
+  "POST /api/v1/billing-queue/pod-signatures/redetect/":
+    exempt: infrastructure
+    reason: "A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed."
   "POST /api/v1/billing-queue/transfer/":
     tools: [transfer_to_billing]
   "PUT /api/v1/billing-queue/:itemID/charges/":
@@ -565,11 +568,11 @@ writes:
   "mutation postBillingQueueItem":
     tools: [post_invoice, send_invoice]
   "mutation releaseBillingQueueItem":
-    pending: "Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item."
+    tools: [release_billing_queue_item]
   "mutation resolveBillingQueueIssue":
-    pending: "Settle one of a billing queue item's checks with one of the options the check offers."
+    tools: [resolve_billing_queue_issue]
   "mutation undoBillingQueueIssue":
-    pending: "Take back how a billing queue item's check was settled and put back any charge the settlement changed."
+    tools: [undo_billing_queue_issue]
   "mutation updateBillingQueueStatus":
     tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review, transition_items_to_in_review]
 
@@ -768,11 +771,11 @@ writes:
 
   # checkcall
   "mutation issueCarrierTrackingLink":
-    pending: "Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link."
+    tools: [issue_carrier_tracking_link]
   "mutation logCheckCall":
     tools: [log_check_call]
   "mutation revokeCarrierTrackingLink":
-    pending: "Revoke the live carrier tracking link on a move, so the carrier can no longer post through it."
+    tools: [revoke_carrier_tracking_link]
 
   # customertracking
   "mutation issueCustomerTrackingLink":
@@ -785,15 +788,15 @@ writes:
 
   # collection
   "POST /api/v1/accounting/collections/customers/:customerID/activities/":
-    pending: "Log a call, email, note or promise to pay against a customer's overdue receivables."
+    tools: [log_collection_activity]
   "PUT /api/v1/accounting/collections/customers/:customerID/collector/":
-    pending: "Assign a customer's overdue receivables to a collector, or take them off whoever has them."
+    tools: [assign_collector]
   "POST /api/v1/accounting/collections/customers/:customerID/reminder/":
-    pending: "Email a customer a reminder of every overdue invoice it has, with a note."
+    tools: [send_payment_reminder]
   "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
-    pending: "Schedule when a customer's overdue receivables are next chased, or clear the follow-up."
+    tools: [schedule_collection_follow_up]
   "POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/":
-    pending: "Email a customer its statement of account as a PDF, with a note."
+    tools: [send_customer_statement]
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
@@ -985,6 +988,9 @@ writes:
   "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
     exempt: infrastructure
     reason: "A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it."
+  "POST /api/v1/documents/:documentID/signature/":
+    exempt: attestation
+    reason: "Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one."
   "POST /api/v1/documents/bulk-delete/":
     tools: [delete_documents]
   "POST /api/v1/documents/upload-bulk/":
@@ -3146,7 +3152,7 @@ writes:
     exempt: user-preference
     reason: "Records that a person opened an item so it stops showing as new to them; it changes nothing anyone else sees."
   "mutation wakeWatchtowerItem":
-    pending: "Bring a snoozed exception back before its time, the counterpart of snooze_exception."
+    tools: [wake_exception]
 
   # worker
   "POST /api/v1/workers/":

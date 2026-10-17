@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 610.
+Tools listed: 620.
 
 ## The model
 
@@ -61,11 +61,11 @@ and Confidential fields never reach a model at all.
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 211 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 243 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 248 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
-| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 39 |
-| Money | Moves or commits money. | Automatic | Yes | 103 |
+| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 25 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 43 |
+| Money | Moves or commits money. | Automatic | Yes | 105 |
 
 ## Reads only
 
@@ -313,6 +313,7 @@ Changes records only people inside the organization see.
 | Archive worker credential (`archive_worker_credential`) | Inside the organization | Propose | — | — | Retires a credential inside Trenova, which can take the worker off dispatch; the archived row stays on file, and a new credential is recorded to replace it. |
 | Assign billing queue biller (`assign_billing_queue_biller`) | Inside the organization | Automatic | — | — | Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else. |
 | Assign billing queue billers (`assign_billing_queue_billers`) | Inside the organization | Automatic | — | — | Names who reviews several items inside Trenova, each exactly as assign_billing_queue_biller would; it creates no money and is changed by assigning someone else. |
+| Assign collector (`assign_collector`) | Inside the organization | Ask first | — | — | Changes who chases a customer inside Trenova and tells the new collector; nothing is sent to the customer and assigning someone else changes it back. |
 | Assign exception (`assign_exception`) | Inside the organization | Ask first | — | — | Changes who owns an exception inside Trenova and notifies that person; the record behind it is unchanged. |
 | Assign fuel card (`assign_fuel_card`) | Inside the organization | Ask first | — | — | Changes which tractor a card's purchases count against inside Trenova; nothing is sent, and assigning it again changes it back. |
 | Assign move (`assign_move`) | Inside the organization | Automatic | — | — | Assigns a driver and tractor to a move; the driver sees the assignment but no text the model wrote. |
@@ -416,6 +417,7 @@ Changes records only people inside the organization see.
 | Link inbound message (`link_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Links an inbound message to a record inside Trenova; the mailbox decides how far it may run. |
 | Locate tractor (`locate_tractor`) | Inside the organization | Ask first | — | — | Moves where Trenova thinks a tractor is; nothing is sent and locating it again moves it back. |
 | Log check call (`log_check_call`) | Inside the organization | Automatic | — | — | Records a check call, and for an arrival or departure the stop's actual time; nothing leaves the organization. |
+| Log collection activity (`log_collection_activity`) | Inside the organization | Automatic | What a customer said is what a collector acts on next, and a promise to pay holds back reminders and moves the follow-up, so a run that has read outside text proposes it rather than writing it. | — | Adds an entry to a customer's collections history inside Trenova; a promise moves the follow-up and holds back reminders until its date, and nothing is sent. |
 | Log employment verification request (`log_employment_verification_request`) | Inside the organization | Ask first | — | — | Stamps the request date or counts a follow-up inside Trenova; nothing is sent to the employer. |
 | Manage billing transfer run (`manage_billing_transfer_run`) | Inside the organization | Ask first | — | — | Stops or reruns a transfer inside Trenova; nothing is invoiced or sent, and a stopped run is retried the same way. |
 | Mark carrier intel reviewed (`mark_carrier_intel_reviewed`) | Inside the organization | Propose | — | — | Puts a person's name on a carrier risk review; only that person can say they reviewed it. |
@@ -454,6 +456,7 @@ Changes records only people inside the organization see.
 | Reject driver settlement (`reject_driver_settlement`) | Inside the organization | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns a settlement to draft with a note inside Trenova; nothing is paid and it is submitted again once fixed. |
 | Reject invoice adjustment (`reject_invoice_adjustment`) | Inside the organization | Propose | — | — | Turns down an adjustment an approver was asked to sign off; the approval decision is a person's. |
 | Reject rate agreement (`reject_rate_agreement`) | Inside the organization | Propose | — | — | Returns an agreement to its author with the reviewer's reason; it prices nothing either way, but the review is a person's decision. |
+| Release billing queue item (`release_billing_queue_item`) | Inside the organization | Ask first | What the hold waited on is what outside text would claim has arrived, so a run that has read it proposes the release rather than making it. | — | Moves an item back into the review queue inside Trenova; it creates no money and hold_billing_queue_item puts it back on hold. |
 | Release driver pay event (`release_driver_pay_event`) | Inside the organization | Automatic | — | — | Returns held pay to the settlement pool inside Trenova; nothing is paid until a settlement is approved, and the pay is held again the same way. |
 | Release factoring noa (`release_factoring_noa`) | Inside the organization | Ask first | — | — | Ends the customer's assignment to the factor; only the factor can release it, so a person confirms the release. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
@@ -480,6 +483,7 @@ Changes records only people inside the organization see.
 | Run rate simulation (`run_rate_simulation`) | Inside the organization | Automatic | — | — | Saves a simulation inside Trenova and replays past shipments in the background; no shipment, rate or invoice changes. |
 | Save invoice adjustment draft (`save_invoice_adjustment_draft`) | Inside the organization | Automatic | A draft written from what a customer sent is proposed, since its reason and amounts are what a biller submits. | — | Saves a draft adjustment inside Trenova; it credits nothing until a person submits it, and a later save rewrites it. |
 | Save table view (`save_table_view`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. A call on the caller's own records runs unasked while they are present. | — | A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization. |
+| Schedule collection follow up (`schedule_collection_follow_up`) | Inside the organization | Automatic | What a customer said is what a collector acts on next, and a promise to pay holds back reminders and moves the follow-up, so a run that has read outside text proposes it rather than writing it. | — | Changes when a customer is next chased inside Trenova and notes why; nothing is sent and another follow-up replaces it. |
 | Schedule DOT test (`schedule_dot_test`) | Inside the organization | Ask first | — | — | Files a scheduled collection inside Trenova. The driver is sent nothing, no result is recorded, and cancel_dot_test withdraws it. |
 | Send billing item back to ops (`send_billing_item_back_to_ops`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it. |
 | Set accounting mapping (`set_accounting_mapping`) | Inside the organization | Ask first | — | — | Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it. |
@@ -537,6 +541,7 @@ Changes records only people inside the organization see.
 | Update worker safety event (`update_worker_safety_event`) | Inside the organization | Ask first | — | — | Corrects an event on a driver's safety record inside Trenova; nothing is sent, and the event is corrected again the same way. |
 | Verify carrier equipment (`verify_carrier_equipment`) | Inside the organization | Ask first | — | — | Records an equipment check inside Trenova after a provider lookup; nothing is sent to the carrier. |
 | Wait until (`wait_until`) | Inside the organization | Automatic | — | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
+| Wake exception (`wake_exception`) | Inside the organization | Ask first | — | — | Puts a snoozed exception back in the open queue inside Trenova; nothing outside changes and it can be snoozed again. |
 | Withdraw invoice dispute (`withdraw_invoice_dispute`) | Inside the organization | Ask first | A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections. | — | Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute. |
 
 ## Seen by a customer
@@ -586,6 +591,7 @@ Sends to someone outside the organization.
 | Decline EDI tender (`decline_edi_tender`) | Sent outside the organization | Propose | — | — | Turns down freight a partner offered and sends them the decline; the partner moves the load elsewhere and it cannot be taken back. A person always decides. |
 | Email customer (`email_customer`) | Sent outside the organization | Ask first | — | — | Emails the customer's contacts a message the model wrote. |
 | Expire EDI tender (`expire_edi_tender`) | Sent outside the organization | Propose | — | — | Closes a tender on both sides of the trading relationship, which the other side sees; an expired tender is sent afresh, never reopened. A person always decides. |
+| Issue carrier tracking link (`issue_carrier_tracking_link`) | Sent outside the organization | Ask first | — | — | Emails a link outside the organization that lets the carrier post to the load, and ends any link the carrier holds now; revoke_carrier_tracking_link ends it. |
 | Replay EDI message (`replay_edi_message`) | Sent outside the organization | Propose | — | — | Sends a trading partner a document it already has, which it may act on a second time; a document sent cannot be recalled. A person always decides. |
 | Reply to inbound message (`reply_to_inbound_message`) | Sent outside the organization | Ask first | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Replies to whoever wrote in with text the model composed. |
 | Reprocess EDI inbound files (`reprocess_edi_inbound_files`) | Sent outside the organization | Propose | — | — | Turns what trading partners sent into tenders, status updates and invoices again, and sends each partner acknowledgments they act on. A person always decides. |
@@ -598,7 +604,9 @@ Sends to someone outside the organization.
 | Review EDI tender change (`review_edi_tender_change`) | Sent outside the organization | Propose | — | — | Changes a load this organization committed to on another organization's word, and that organization sees the outcome. A person always decides. |
 | Review EDI transfer change (`review_edi_transfer_change`) | Sent outside the organization | Propose | — | — | Changes a shipment on another organization's report, and that organization sees the outcome on its own shipment. A person always decides. |
 | Review service failure (`review_service_failure`) | Sent outside the organization | Propose | — | — | Reviewing a failure is a person's attestation and may send an EDI 214 to the customer's trading partner; only a person approves it. |
+| Revoke carrier tracking link (`revoke_carrier_tracking_link`) | Sent outside the organization | Ask first | — | — | Ends a link someone outside the organization holds, so the carrier's page stops working; a new link can be issued later. |
 | Schedule report (`schedule_report`) | Sent outside the organization | Ask first | — | — | Emails a report on a schedule to whatever addresses the call names, which may be outside the organization. |
+| Send customer statement (`send_customer_statement`) | Sent outside the organization | Ask first | — | — | Emails the customer its balance and open items, which cannot be called back; a person approves every statement and sees the recipients and the email first. |
 | Send detention notice (`send_detention_notice`) | Sent outside the organization | Ask first | — | — | Sends the customer a detention notice that starts a charge. |
 | Send EDI status update (`send_edi_status_update`) | Sent outside the organization | Propose | — | — | Sends a trading partner a shipment status they act on and pass to their own customers; a document sent cannot be recalled. A person always decides. |
 | Send EDI tender (`send_edi_tender`) | Sent outside the organization | Propose | — | — | Offers a load to another organization, which may accept it and haul it on the terms tendered; a tender is withdrawn, never recalled. A person always decides. |
@@ -606,6 +614,7 @@ Sends to someone outside the organization.
 | Send invoice (`send_invoice`) | Sent outside the organization | Propose | — | — | Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names. |
 | Send invoice EDI (`send_invoice_edi`) | Sent outside the organization | Propose | — | — | Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it. |
 | Send invoices (`send_invoices`) | Sent outside the organization | Propose | — | — | Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving. |
+| Send payment reminder (`send_payment_reminder`) | Sent outside the organization | Ask first | — | — | Emails the customer about what it owes, which cannot be called back; a person approves every reminder and sees the recipients and the email first. |
 | Send rate confirmation (`send_rate_confirmation`) | Sent outside the organization | Propose | — | — | Emails a binding agreement, with a link to sign it, to a carrier outside the organization; the recipients come from the carrier's record, and a sent email cannot be recalled, so a person decides every send. |
 | Share customer tracking link (`share_customer_tracking_link`) | Seen by a customer, sent outside the organization | Ask first | Each call is classified by what it reaches. | — | Gives the customer a link to the shipment's tracking page and can email it outside the organization; the link can be revoked. |
 | Submit invoices to factor (`submit_invoices_to_factor`) | Sent outside the organization | Propose | — | — | Sells receivables to a factor and sends them out of the organization; a person approves every schedule. |
@@ -699,6 +708,7 @@ Moves or commits money.
 | Request journal reversal (`request_journal_reversal`) | Money | Propose | — | — | Commits the organization to taking a posted entry back out of the ledger, approved at once where approval is off; only a person requests a reversal. |
 | Rerate shipment (`rerate_shipment`) | Money | Ask first | — | — | Changes what the customer will be billed for the shipment; nothing is invoiced or sent, and a person can edit the rate back. |
 | Resolve accounting drift (`resolve_accounting_drift`) | Money | Ask first | — | — | Changes money on one side of the books: it posts a memo, void or reversal in Trenova, or sends a document to the accounting system, so a person approves each fix. |
+| Resolve billing queue issue (`resolve_billing_queue_issue`) | Money, seen by a driver | Propose | Each call is classified by what it reaches. | — | Decides what a customer is billed for a flagged charge, or messages the driver for paperwork, so only a person settles it; undo_billing_queue_issue takes it back. |
 | Resolve settlement dispute (`resolve_settlement_dispute`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Decides a driver's pay complaint, tells the driver, and can add pay to a settlement, so a person approves it and it runs as them; a decided dispute stays decided. |
 | Resume rate agreement (`resume_rate_agreement`) | Money | Propose | — | — | Turns an agreement back on so it prices shipments again; only a person resumes one. |
 | Reverse customer payment (`reverse_customer_payment`) | Money | Propose | — | — | Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment. |
@@ -709,6 +719,7 @@ Moves or commits money.
 | Submit invoice adjustment (`submit_invoice_adjustment`) | Money | Propose | — | — | Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver. |
 | Suspend rate agreement (`suspend_rate_agreement`) | Money | Propose | — | — | Stops an agreement pricing shipments, which changes what customers are charged; only a person suspends one. |
 | Unapply credit memo (`unapply_credit_memo`) | Money | Propose | — | — | Reopens an invoice's balance and restores a customer's credit; only a person moves credit. |
+| Undo billing queue issue (`undo_billing_queue_issue`) | Money | Propose | — | — | Puts back a charge a settlement removed or repriced, which changes what the customer is billed, so only a person decides. |
 | Unlock fiscal period (`unlock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person unlocks a period. |
 | Update carrier (`update_carrier`) | Inside the organization, money | Ask first | Each call is classified by what it reaches. A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it. | — | Changes a carrier inside Trenova and keeps its contacts, insurance and EDI channels; nothing is sent. A call that changes payment or remit-to details is money and runs only on a person's approval. |
 | Update escrow account (`update_escrow_account`) | Money | Propose | — | — | Changes the escrow terms of an owner-operator's lease; only a person agrees them. |

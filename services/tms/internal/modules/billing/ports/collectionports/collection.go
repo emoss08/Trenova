@@ -182,6 +182,23 @@ type ScheduleFollowUpRequest struct {
 	Note       string                `json:"note"`
 }
 
+type AccountState struct {
+	CollectorID         pulid.ID
+	CollectorName       string
+	NextFollowUpOn      *int64
+	PromisedOn          *int64
+	PromisedAmountMinor *int64
+}
+
+type AccountChangePlan struct {
+	Row               *WorklistRow
+	Activity          *collection.Activity
+	Before            AccountState
+	After             AccountState
+	Changed           bool
+	NotifiesCollector bool
+}
+
 type Service interface {
 	Worklist(ctx context.Context, req *WorklistRequest) (*WorklistPage, error)
 	GetAccount(
@@ -204,4 +221,19 @@ type Service interface {
 		req *ScheduleFollowUpRequest,
 		actor *permissionports.RequestActor,
 	) (*AccountView, error)
+	PlanLogActivity(
+		ctx context.Context,
+		req *LogActivityRequest,
+		actor *permissionports.RequestActor,
+	) (*AccountChangePlan, error)
+	PlanAssignCollector(
+		ctx context.Context,
+		req *AssignCollectorRequest,
+		actor *permissionports.RequestActor,
+	) (*AccountChangePlan, error)
+	PlanScheduleFollowUp(
+		ctx context.Context,
+		req *ScheduleFollowUpRequest,
+		actor *permissionports.RequestActor,
+	) (*AccountChangePlan, error)
 }

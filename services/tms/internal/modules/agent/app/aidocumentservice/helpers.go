@@ -87,6 +87,20 @@ func derivedConflicts(
 	return derived
 }
 
+func convertSignatureReading(
+	reading *routeSignatureReading,
+) *documentaiextractionports.AISignatureReading {
+	if reading == nil {
+		return nil
+	}
+
+	return &documentaiextractionports.AISignatureReading{
+		Status:     strings.TrimSpace(reading.Status),
+		Confidence: clampAIConfidence(reading.Confidence),
+		SignedDate: strings.TrimSpace(reading.SignedDate),
+	}
+}
+
 func normalizeReviewStatus(status string) string {
 	switch strings.TrimSpace(strings.ToLower(status)) {
 	case "ready":

@@ -63,3 +63,16 @@ func RenderedEmailPreview(
 
 	return message
 }
+
+func PlannedEmailPreview(planned *emailports.PlannedEmail) *agent.MessagePreview {
+	return &agent.MessagePreview{
+		Channel:           agent.MessageChannelEmail,
+		To:                planned.To,
+		Cc:                planned.CC,
+		Bcc:               planned.BCC,
+		Attachments:       planned.Attachments,
+		Subject:           planned.Subject,
+		Body:              planned.Text,
+		TemplateVersionID: planned.TemplateVersionID,
+	}
+}

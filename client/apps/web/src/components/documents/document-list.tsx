@@ -16,6 +16,7 @@ interface DocumentListProps {
   onVersions?: (document: Document) => void;
   onApprove?: (document: Document) => void;
   onReject?: (document: Document) => void;
+  onRecordSignature?: (document: Document) => void;
   deletingId?: string | null;
   reviewingId?: string | null;
   isLoading?: boolean;
@@ -85,6 +86,7 @@ export function DocumentList({
   onVersions,
   onApprove,
   onReject,
+  onRecordSignature,
   deletingId,
   reviewingId,
   isLoading = false,
@@ -115,6 +117,7 @@ export function DocumentList({
             onVersions={onVersions}
             onApprove={onApprove}
             onReject={onReject}
+            onRecordSignature={onRecordSignature}
             isDeleting={deletingId === document.id}
             isReviewing={reviewingId === document.id}
             isSelected={selectedIds?.has(document.id)}
@@ -141,6 +144,7 @@ export function DocumentList({
           onVersions={onVersions}
           onApprove={onApprove}
           onReject={onReject}
+          onRecordSignature={onRecordSignature}
           isDeleting={deletingId === document.id}
           isReviewing={reviewingId === document.id}
           isSelected={selectedIds?.has(document.id)}

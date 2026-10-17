@@ -373,6 +373,19 @@ export const billingQueueApprovalRunSchema = z.object({
 });
 export type BillingQueueApprovalRun = z.infer<typeof billingQueueApprovalRunSchema>;
 
+export const podSignatureRedetectResultSchema = z.object({
+  shipments: z.number(),
+  documents: z.number(),
+  queued: z.number(),
+  alreadyRead: z.number(),
+  setByPerson: z.number(),
+  notReadByMachine: z.number(),
+  deferred: z.number(),
+  failed: z.number(),
+});
+
+export type PODSignatureRedetectResult = z.infer<typeof podSignatureRedetectResultSchema>;
+
 export const billingQueuePostResultSchema = z.object({
   item: billingQueueItemSchema,
   invoiceId: z.string(),

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -89,6 +90,19 @@ type SendResult struct {
 	FileName      string   `json:"fileName"`
 }
 
+type SendPreview struct {
+	CustomerID         pulid.ID
+	CustomerName       string
+	PeriodStart        int64
+	PeriodEnd          int64
+	CurrencyCode       string
+	EndingBalanceMinor int64
+	PastDueMinor       int64
+	OpenItemCount      int
+	FileName           string
+	Email              *emailports.PlannedEmail
+}
+
 // SweepResult is what one organization's monthly statements did.
 type SweepResult struct {
 	Customers    int      `json:"customers"`
@@ -105,6 +119,11 @@ type Service interface {
 		req *SendRequest,
 		actor *permissionports.RequestActor,
 	) (*SendResult, error)
+	PreviewSend(
+		ctx context.Context,
+		req *SendRequest,
+		actor *permissionports.RequestActor,
+	) (*SendPreview, error)
 	SendMonthly(
 		ctx context.Context,
 		control *tenant.BillingControl,

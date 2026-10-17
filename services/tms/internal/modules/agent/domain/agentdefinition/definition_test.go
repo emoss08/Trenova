@@ -476,6 +476,11 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 		"move_billing_item_to_exception",
 		"hold_billing_queue_item",
 	}
+	settlements := []string{
+		"release_billing_queue_item",
+		"resolve_billing_queue_issue",
+		"undo_billing_queue_issue",
+	}
 	personal := []string{
 		"transfer_to_billing",
 		"approve_billing_queue_item",
@@ -499,7 +504,7 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 	}
 
 	desk := agentdefinition.TemplateBillingException.StarterTools()
-	for _, tool := range slices.Concat(reads, moneyless) {
+	for _, tool := range slices.Concat(reads, moneyless, settlements) {
 		assert.Contains(t, desk, tool)
 	}
 	for _, tool := range personal {
