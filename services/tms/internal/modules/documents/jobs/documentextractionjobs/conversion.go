@@ -314,12 +314,16 @@ func (a *Activities) markExtractionUnavailable(
 		Stops:         []*IntelligenceStop{},
 	}
 	content := &documentcontent.Content{
-		DocumentID:      doc.ID,
-		OrganizationID:  doc.OrganizationID,
-		BusinessUnitID:  doc.BusinessUnitID,
-		Status:          documentcontent.StatusIndexed,
-		Converter:       documentcontent.ConverterDocling,
-		StructuredData:  buildStructuredData(analysis, &AIDiagnostics{AcceptanceStatus: aiAcceptanceStatusNotAttempted, RejectionReason: why.reason}),
+		DocumentID:     doc.ID,
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		Status:         documentcontent.StatusIndexed,
+		Converter:      documentcontent.ConverterDocling,
+		StructuredData: buildStructuredData(analysis, &AIDiagnostics{
+			FallbackAnalysis: analysis,
+			AcceptanceStatus: aiAcceptanceStatusNotAttempted,
+			RejectionReason:  why.reason,
+		}),
 		FailureCode:     why.code.String(),
 		FailureMessage:  why.message,
 		LastExtractedAt: &now,

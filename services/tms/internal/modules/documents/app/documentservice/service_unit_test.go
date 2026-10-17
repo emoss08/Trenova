@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -1175,7 +1176,12 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.DeletedCount)
 	assert.Len(t, result.Errors, 0)
-	assert.Len(t, storageDeletions, 2)
+	assert.ElementsMatch(t, []string{
+		"path/a.pdf",
+		documentcontent.RawObjectKey(orgID, id1),
+		"path/b.pdf",
+		documentcontent.RawObjectKey(orgID, id2),
+	}, storageDeletions, "each file goes with its stored conversion")
 }
 
 func TestUnit_BulkDelete_EmptyIDs(t *testing.T) {

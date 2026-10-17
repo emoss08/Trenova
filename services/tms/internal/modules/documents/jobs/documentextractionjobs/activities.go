@@ -78,7 +78,7 @@ type ActivitiesParams struct {
 	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
 	PDFReader           kernelports.PDFReader
 	OfficeReader        kernelports.OfficeDocumentReader
-	Converter           kernelports.DocumentConverter `optional:"true"`
+	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
 }
 

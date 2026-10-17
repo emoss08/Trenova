@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -103,12 +103,12 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		StartWorkflow(
 			mock.Anything,
 			mock.Anything,
-			"ProcessDocumentIntelligenceWorkflow",
+			documentextractioncontract.ProcessWorkflowName,
 			mock.MatchedBy(func(args []any) bool {
 				if len(args) != 1 {
 					return false
 				}
-				payload, ok := args[0].(*documentintelligencecontract.ProcessDocumentIntelligencePayload)
+				payload, ok := args[0].(*documentextractioncontract.ProcessDocumentExtractionPayload)
 				return ok && payload.DocumentID == documentID && payload.UserID == userID
 			}),
 		).
