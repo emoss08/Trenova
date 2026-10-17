@@ -280,18 +280,19 @@ func (a *recordingAudit) RegisterSensitiveFields(permission.Resource, []auditpor
 }
 
 type fixture struct {
-	svc      *Service
-	repo     *memoryRepo
-	usage    *memoryUsage
-	web      *fakeWeb
-	parallel *fakeWeb
-	browser  *fakeBrowser
-	sandbox  *fakeSandbox
-	sites    *memorySites
-	runs     *memoryRuns
-	analyses *memoryAnalyses
-	audit    *recordingAudit
-	tenant   pagination.TenantInfo
+	svc       *Service
+	repo      *memoryRepo
+	usage     *memoryUsage
+	web       *fakeWeb
+	parallel  *fakeWeb
+	browser   *fakeBrowser
+	sandbox   *fakeSandbox
+	sites     *memorySites
+	runs      *memoryRuns
+	analyses  *memoryAnalyses
+	audit     *recordingAudit
+	workflows *recordingWorkflows
+	tenant    pagination.TenantInfo
 }
 
 func newFixture(t *testing.T) *fixture {

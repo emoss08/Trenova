@@ -10,6 +10,13 @@ export function portalRunStatusAttrs(t: TranslateFn): Record<PortalRunStatus, Ba
       text: t("Running"),
       description: t("The browser is working on it"),
     },
+    AwaitingCode: {
+      phase: "awaiting",
+      text: t("Needs a code"),
+      description: t(
+        "The portal sent a sign-in code to the person the task is for, and the browser is waiting for it",
+      ),
+    },
     Succeeded: {
       phase: "complete",
       text: t("Done"),
@@ -46,4 +53,14 @@ export function portalRunTitle(t: TranslateFn, run: Pick<PortalRun, "mode" | "si
     return run.siteName ? t("Acted on {0}", run.siteName) : t("Acted on a removed site");
   }
   return run.siteName ? t("Looked up on {0}", run.siteName) : t("Looked up on a removed site");
+}
+
+const CODE_MARKER = /^\s*SIGN-IN CODE NEEDED[\s:.,-]*/iu;
+
+/**
+ * How the portal asked for its sign-in code, as the browser put it, without the marker the
+ * browser was told to begin with.
+ */
+export function portalCodePrompt(prompt: string): string {
+  return prompt.replace(CODE_MARKER, "").trim();
 }

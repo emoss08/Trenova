@@ -1,12 +1,24 @@
 import type { ConversationWaits } from "@/components/assistant/use-conversation-waits";
 import { waitIdOfNote } from "@/components/assistant/use-conversation-waits";
 import type { AgentWait } from "@/types/assistant";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { api } from "@trenova/shared/lib/api";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskWaitNote } from "../../conversation/desk-wait-note";
 import { DeskWaits } from "../desk-waits";
 
-afterEach(cleanup);
+vi.mock("@trenova/shared/lib/api", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 function wait(overrides: Partial<AgentWait>): AgentWait {
   return {
@@ -57,6 +69,63 @@ describe("DeskWaits", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Cancel the wait" })[0]);
     expect(waits.cancel).toHaveBeenCalledWith(first);
+  });
+
+  it("asks for the sign-in code a portal sent and sends it only to the portal", async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      id: "aprn_1",
+      siteId: "apst_1",
+      siteName: "Acme DC",
+      extensionType: "BrowserUse",
+      mode: "Read",
+      status: "Running",
+      instruction: "On Acme DC, find out: Which slots are open?",
+      usedSignIn: true,
+      answer: "",
+      visitedUrls: [],
+      offSiteUrls: [],
+      steps: 2,
+      costUsd: "0.03",
+      failure: "",
+      hasRecording: true,
+      codeAttempts: 1,
+      startedAt: 1_800_000_000,
+    });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <DeskWaits
+          waits={waitsOf([
+            wait({
+              kind: "PortalRun",
+              description: "the task on Acme DC to finish",
+              signInCode: {
+                portalRunId: "aprn_1",
+                prompt: "SIGN-IN CODE NEEDED: the portal texted a code to the phone ending 42.",
+                expiresAt: 1_800_000_600,
+                attempts: 0,
+              },
+            }),
+          ])}
+          timezone="UTC"
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText("Waiting for your sign-in code")).toBeInTheDocument();
+    expect(screen.getByText("The portal sent you a sign-in code.")).toBeInTheDocument();
+    expect(
+      screen.getByText("the portal texted a code to the phone ending 42."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Sign-in code"), { target: { value: "123 456" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith("/agent-portals/runs/aprn_1/sign-in-code/", {
+        code: "123 456",
+      }),
+    );
   });
 
   it("shows a file being read as being read, not as due at its next look", () => {

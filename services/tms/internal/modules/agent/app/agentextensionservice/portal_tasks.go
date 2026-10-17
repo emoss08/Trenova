@@ -3,6 +3,8 @@ package agentextensionservice
 import (
 	"context"
 	"errors"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +36,7 @@ const (
 var (
 	_ agentextensionports.PortalAutomator   = (*Service)(nil)
 	_ agentextensionports.PortalRunFinisher = (*Service)(nil)
+	_ agentextensionports.PortalSignInCodes = (*Service)(nil)
 )
 
 type portalCall struct {
@@ -316,7 +319,9 @@ func (s *Service) newRun(
 
 // ReadPortal looks something up on a portal and waits for the answer within
 // the tool call. A task still running at the budget is stopped rather than
-// left to run unwatched.
+// left to run unwatched. One the portal stopped for a sign-in code the person
+// can relay is kept open on the code prompt and followed from there, and the
+// outcome says it waits on the code.
 func (s *Service) ReadPortal(
 	ctx context.Context,
 	req *agentextensionports.PortalReadRequest,
@@ -355,10 +360,23 @@ func (s *Service) ReadPortal(
 			Status:  agentextension.PortalRunStatusFailed,
 			Failure: "Trenova lost track of the task while it ran.",
 		})
+		s.release(ctx, call, finished)
 		return nil, s.portalOutcomeError(finished, err, call)
 	}
 
-	finished := s.finish(ctx, req.TenantInfo, start.run, outcomeOf(state, site, timedOut))
+	outcome, asked := outcomeOf(start.run, state, site, timedOut)
+	if asked && relays(start.run) {
+		return s.readAwaitingCode(ctx, &awaitingRead{
+			tenant:  req.TenantInfo,
+			call:    call,
+			site:    site,
+			run:     start.run,
+			outcome: outcome,
+		})
+	}
+
+	finished := s.finish(ctx, req.TenantInfo, start.run, outcome)
+	s.release(ctx, call, finished)
 	if finished.Status != agentextension.PortalRunStatusSucceeded {
 		return nil, s.portalOutcomeError(finished, nil, call)
 	}
@@ -424,23 +442,46 @@ func (s *Service) stopQuietly(ctx context.Context, call *portalCall, taskID stri
 	}
 }
 
-// outcomeOf decides how a task ended. A task that reached a page outside the
-// site's addresses is Strayed whatever it says it did: what it found may have
-// come from anywhere.
+// progressOf is what a run has done with its current task: the task's own
+// pages, steps and cost, added to what the run held before a relayed code
+// started that task.
+func progressOf(
+	run *agentextension.PortalRun,
+	state *agentextensionports.PortalTaskState,
+	site *agentextension.PortalSite,
+) *agentextension.PortalRunOutcome {
+	visited := state.VisitedURLs
+	steps := state.Steps
+	cost := state.CostUSD
+	if run.Continued() {
+		visited = append(slices.Clone(run.VisitedURLs), state.VisitedURLs...)
+		steps += run.Steps
+		cost = cost.Add(run.CostUSD)
+	}
+
+	return &agentextension.PortalRunOutcome{
+		Answer:      state.Answer,
+		VisitedURLs: visited,
+		OffSiteURLs: agentextension.OffSite(visited, site.Domains),
+		Steps:       steps,
+		CostUSD:     cost,
+	}
+}
+
+// outcomeOf decides how a task ended, and says whether the portal stopped it
+// for a sign-in code. A task that reached a page outside the site's addresses
+// is Strayed whatever it says it did: what it found may have come from
+// anywhere.
 func outcomeOf(
+	run *agentextension.PortalRun,
 	state *agentextensionports.PortalTaskState,
 	site *agentextension.PortalSite,
 	timedOut bool,
-) *agentextension.PortalRunOutcome {
-	outcome := &agentextension.PortalRunOutcome{
-		Answer:      state.Answer,
-		VisitedURLs: state.VisitedURLs,
-		OffSiteURLs: agentextension.OffSite(state.VisitedURLs, site.Domains),
-		Steps:       state.Steps,
-		CostUSD:     state.CostUSD,
-	}
+) (*agentextension.PortalRunOutcome, bool) {
+	outcome := progressOf(run, state, site)
 	succeeded := state.Phase == agentextensionports.PortalTaskFinished &&
 		(state.Succeeded == nil || *state.Succeeded)
+	asked := false
 
 	switch {
 	case len(outcome.OffSiteURLs) > 0:
@@ -450,8 +491,9 @@ func outcomeOf(
 		outcome.Status = agentextension.PortalRunStatusTimedOut
 		outcome.Failure = portalTimedOutMessage
 	case agentextension.AsksForSignInCode(state.Answer, succeeded):
+		asked = true
 		outcome.Status = agentextension.PortalRunStatusFailed
-		outcome.Failure = signInCodeMessage(site)
+		outcome.Failure = signInCodeMessage(site, run)
 	case succeeded:
 		outcome.Status = agentextension.PortalRunStatusSucceeded
 	case state.Phase == agentextensionports.PortalTaskStopped:
@@ -465,13 +507,19 @@ func outcomeOf(
 		}
 	}
 
-	return outcome
+	return outcome, asked
 }
 
 // signInCodeMessage says what the person can change when a portal stopped the
 // browser for a sign-in code: add the authenticator key, check the one stored,
-// or use a browser profile that is already signed in.
-func signInCodeMessage(site *agentextension.PortalSite) string {
+// or use a browser profile that is already signed in. A run that already
+// spent its relayed codes says so instead.
+func signInCodeMessage(site *agentextension.PortalSite, run *agentextension.PortalRun) string {
+	if run.CodeAttempts >= agentextension.MaxPortalCodeAttempts {
+		return site.Name + " still asked for a sign-in code after " +
+			strconv.Itoa(run.CodeAttempts) + " codes were entered, so the task was stopped. " +
+			"Check that the codes come from this portal's sign-in, then ask again."
+	}
 	if site.HasSignIn() && site.HasAuthenticator() {
 		return site.Name + " asked for a sign-in code the browser could not give from the " +
 			"site's authenticator key: the key may be wrong, or the portal sends its codes " +
@@ -682,37 +730,51 @@ func (s *Service) PortalRun(
 
 // PollPortalRun asks the vendor once how an action is going and records its
 // end when it has ended. The run's own extension answers, even one turned off
-// since: a task the vendor is running is followed to its end.
+// since: a task the vendor is running is followed to its end. A run waiting
+// on a sign-in code is left waiting until the code's time runs out, when its
+// browser is closed and it fails.
 func (s *Service) PollPortalRun(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	runID pulid.ID,
-) (*agentextension.PortalRun, error) {
+) (*agentextensionports.PortalPoll, error) {
 	ctx = dbscope.WithValidTenant(ctx, tenantInfo.DBTenant())
 	run, err := s.runs.Get(ctx, tenantInfo, runID)
 	if err != nil {
 		return nil, err
 	}
 	if run.Status.Finished() {
-		return run, nil
+		return &agentextensionports.PortalPoll{Run: run}, nil
 	}
 	if run.VendorTaskID == "" {
-		return s.finish(ctx, tenantInfo, run, &agentextension.PortalRunOutcome{
-			Status:  agentextension.PortalRunStatusFailed,
-			Failure: "The vendor never took the task.",
-		}), nil
+		return &agentextensionports.PortalPoll{
+			Run: s.finish(ctx, tenantInfo, run, &agentextension.PortalRunOutcome{
+				Status:  agentextension.PortalRunStatusFailed,
+				Failure: "The vendor never took the task.",
+			}),
+		}, nil
 	}
 
 	call, err := s.portalCallOf(ctx, tenantInfo, run.ExtensionType)
 	if err != nil {
 		return nil, err
 	}
+	if run.Status == agentextension.PortalRunStatusAwaitingCode {
+		if expires := run.CodeExpiresAt(); expires != nil && s.now() >= *expires {
+			finished := s.finish(ctx, tenantInfo, run, heldProgress(run,
+				agentextension.PortalRunStatusFailed, portalCodeExpiredMessage))
+			s.release(ctx, call, finished)
+			return &agentextensionports.PortalPoll{Run: finished}, nil
+		}
+		return &agentextensionports.PortalPoll{Run: run}, nil
+	}
+
 	state, err := call.provider.TaskState(ctx, call.values, run.VendorTaskID)
 	if err != nil {
 		return nil, err
 	}
 	if state.Phase == agentextensionports.PortalTaskRunning {
-		return run, nil
+		return &agentextensionports.PortalPoll{Run: run}, nil
 	}
 
 	site, err := s.sites.Get(ctx, tenantInfo, run.SiteID)
@@ -720,7 +782,19 @@ func (s *Service) PollPortalRun(
 		return nil, err
 	}
 
-	return s.finish(ctx, tenantInfo, run, outcomeOf(state, site, false)), nil
+	outcome, asked := outcomeOf(run, state, site, false)
+	if asked && relays(run) {
+		awaiting, awaitErr := s.awaitCode(ctx, run, outcome)
+		if awaitErr != nil {
+			return nil, awaitErr
+		}
+		return &agentextensionports.PortalPoll{Run: awaiting, CodeRequested: true}, nil
+	}
+
+	finished := s.finish(ctx, tenantInfo, run, outcome)
+	s.release(ctx, call, finished)
+
+	return &agentextensionports.PortalPoll{Run: finished}, nil
 }
 
 // StopPortalRun stops an action that ran too long or could no longer be
@@ -741,26 +815,36 @@ func (s *Service) StopPortalRun(
 		return run, nil
 	}
 
-	outcome := &agentextension.PortalRunOutcome{Status: status, Failure: reason}
-	if run.VendorTaskID != "" {
+	if run.Status == agentextension.PortalRunStatusAwaitingCode {
+		finished := s.finish(ctx, tenantInfo, run, heldProgress(run, status, reason))
 		if call, callErr := s.portalCallOf(ctx, tenantInfo, run.ExtensionType); callErr == nil {
-			s.stopQuietly(ctx, call, run.VendorTaskID)
-			if state, stateErr := call.provider.TaskState(
-				ctx,
-				call.values,
-				run.VendorTaskID,
-			); stateErr == nil {
-				outcome.VisitedURLs = state.VisitedURLs
-				outcome.Steps = state.Steps
-				outcome.CostUSD = state.CostUSD
-				if site, siteErr := s.sites.Get(ctx, tenantInfo, run.SiteID); siteErr == nil {
-					outcome.OffSiteURLs = agentextension.OffSite(state.VisitedURLs, site.Domains)
-				}
-			}
+			s.release(ctx, call, finished)
 		}
+		return finished, nil
 	}
 
-	return s.finish(ctx, tenantInfo, run, outcome), nil
+	outcome := &agentextension.PortalRunOutcome{Status: status, Failure: reason}
+	if run.VendorTaskID == "" {
+		return s.finish(ctx, tenantInfo, run, outcome), nil
+	}
+	call, callErr := s.portalCallOf(ctx, tenantInfo, run.ExtensionType)
+	if callErr != nil {
+		return s.finish(ctx, tenantInfo, run, outcome), nil
+	}
+
+	s.stopQuietly(ctx, call, run.VendorTaskID)
+	state, stateErr := call.provider.TaskState(ctx, call.values, run.VendorTaskID)
+	site, siteErr := s.sites.Get(ctx, tenantInfo, run.SiteID)
+	if stateErr == nil && siteErr == nil {
+		outcome = progressOf(run, state, site)
+		outcome.Answer = ""
+		outcome.Status = status
+		outcome.Failure = reason
+	}
+	finished := s.finish(ctx, tenantInfo, run, outcome)
+	s.release(ctx, call, finished)
+
+	return finished, nil
 }
 
 func (s *Service) portalCallOf(

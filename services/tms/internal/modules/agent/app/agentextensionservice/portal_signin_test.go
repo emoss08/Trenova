@@ -166,6 +166,8 @@ func TestAPortalThatAsksForACodeSaysWhatToChange(t *testing.T) {
 	run := f.runs.only(t)
 	assert.Equal(t, agentextension.PortalRunStatusFailed, run.Status)
 	assert.Contains(t, run.Failure, "authenticator key")
+	assert.Equal(t, []string{"session-1"}, f.browser.closed,
+		"a read no one can relay a code to closes its browser")
 }
 
 func TestTrenovaItselfCannotBeAPortalSite(t *testing.T) {

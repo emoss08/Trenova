@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -117,6 +118,13 @@ func TestCreateTaskRefusesWhatTheVendorWouldReject(t *testing.T) {
 		"no allow-list":    func(r *browseruse.CreateTaskRequest) { r.AllowedDomains = nil },
 		"blank domain":     func(r *browseruse.CreateTaskRequest) { r.AllowedDomains = []string{" "} },
 		"plain http start": func(r *browseruse.CreateTaskRequest) { r.StartURL = "http://portal.acme.com" },
+		"session settings in a session": func(r *browseruse.CreateTaskRequest) {
+			r.SessionID = "session-1"
+		},
+		"session id that changes the path": func(r *browseruse.CreateTaskRequest) {
+			r.SessionID = "../billing"
+			r.SessionSettings = nil
+		},
 	}
 	for name, mutate := range tests {
 		req := validTask()
@@ -125,6 +133,95 @@ func TestCreateTaskRefusesWhatTheVendorWouldReject(t *testing.T) {
 		require.ErrorIs(t, err, browseruse.ErrInvalidRequest, name)
 	}
 	assert.Zero(t, calls)
+}
+
+func TestCreateTaskInASessionNamesItAndSendsNoSessionSettings(t *testing.T) {
+	t.Parallel()
+
+	var received map[string]any
+	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		assert.NoError(t, sonic.Unmarshal(body, &received))
+		_, _ = w.Write([]byte(`{"id": "task-2", "sessionId": "session-1"}`))
+	})
+
+	req := validTask()
+	req.SessionID = "session-1"
+	req.SessionSettings = nil
+	created, err := client.CreateTask(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "task-2", created.ID)
+	assert.Equal(t, "session-1", received["sessionId"])
+	assert.NotContains(t, received, "sessionSettings")
+}
+
+func TestCreateSessionKeepsTheBrowserOpenBetweenTasks(t *testing.T) {
+	t.Parallel()
+
+	var raw string
+	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/sessions", r.URL.Path)
+		body, _ := io.ReadAll(r.Body)
+		raw = string(body)
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"id": "session-1", "status": "active"}`))
+	})
+
+	created, err := client.CreateSession(t.Context(), &browseruse.CreateSessionRequest{
+		ProfileID:       "profile-1",
+		EnableRecording: true,
+		KeepAlive:       true,
+		PersistMemory:   true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "session-1", created.ID)
+
+	var received map[string]any
+	require.NoError(t, sonic.UnmarshalString(raw, &received))
+	assert.Equal(t, map[string]any{
+		"profileId":        "profile-1",
+		"proxyCountryCode": nil,
+		"enableRecording":  true,
+		"keepAlive":        true,
+		"persistMemory":    true,
+	}, received)
+}
+
+func TestCreateSessionRefusesAResponseWithoutASessionID(t *testing.T) {
+	t.Parallel()
+
+	client := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"status": "active"}`))
+	})
+
+	_, err := client.CreateSession(t.Context(), &browseruse.CreateSessionRequest{})
+	require.ErrorIs(t, err, browseruse.ErrUnexpectedPayload)
+}
+
+func TestStopSessionClosesItAndToleratesOneAlreadyGone(t *testing.T) {
+	t.Parallel()
+
+	var received map[string]any
+	var gone atomic.Bool
+	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPatch, r.Method)
+		assert.Equal(t, "/sessions/session-1", r.URL.Path)
+		if gone.Load() {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"detail": "Session not found"}`))
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		assert.NoError(t, sonic.Unmarshal(body, &received))
+		_, _ = w.Write([]byte(`{"id": "session-1", "status": "stopped"}`))
+	})
+
+	require.NoError(t, client.StopSession(t.Context(), "session-1"))
+	assert.Equal(t, map[string]any{"action": "stop"}, received)
+
+	gone.Store(true)
+	require.NoError(t, client.StopSession(t.Context(), "session-1"))
 }
 
 func TestCreateTaskRefusesAResponseWithoutATaskID(t *testing.T) {
@@ -214,6 +311,7 @@ func TestIDsThatWouldChangeThePathAreRefused(t *testing.T) {
 		require.ErrorIs(t, client.StopTask(t.Context(), id), browseruse.ErrInvalidRequest, id)
 		_, err = client.GetSession(t.Context(), id)
 		require.ErrorIs(t, err, browseruse.ErrInvalidRequest, id)
+		require.ErrorIs(t, client.StopSession(t.Context(), id), browseruse.ErrInvalidRequest, id)
 	}
 	assert.Zero(t, calls)
 }

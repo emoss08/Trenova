@@ -64,6 +64,17 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.runRecording,
 	)
+	portals.POST(
+		"/runs/:runID/sign-in-code/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourcePortalAutomation.String(),
+				Operation: permission.OpRead,
+			},
+		),
+		h.provideSignInCode,
+	)
 
 	analyses := rg.Group("/agent-analysis")
 	analyses.GET("/runs/", h.pm.RequirePermission(resource, permission.OpRead), h.listAnalysisRuns)

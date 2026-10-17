@@ -10049,6 +10049,15 @@
       "routes/admin"
     ]
   },
+  "A sign-in code is 4 to 12 letters or digits, as the portal sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A sign-in needs both a username and a password": {
     "sites": 1,
     "scope": [
@@ -91163,6 +91172,15 @@
       "apps/web/types"
     ]
   },
+  "Enter it by {0}. It goes only to the portal, never into the conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Enter maximum shipment weight": {
     "sites": 1,
     "scope": [
@@ -91354,6 +91372,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Enter the code the portal sent you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Enter the date the customer promised to pay by": {
@@ -91556,6 +91583,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Enter the sign-in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Enter the six-digit code": {
@@ -150409,6 +150445,15 @@
       "routes/org-structure"
     ]
   },
+  "Needs a code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Needs a driver now": {
     "sites": 1,
     "scope": [
@@ -189374,6 +189419,15 @@
       "go/other"
     ]
   },
+  "Portal run not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Portal site": {
     "sites": 4,
     "scope": [
@@ -189404,12 +189458,13 @@
     ]
   },
   "Portal task": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "apps/web/services"
     ]
   },
   "Portal task recording": {
@@ -229180,6 +229235,15 @@
       "go/other"
     ]
   },
+  "Send code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send comment": {
     "sites": 1,
     "scope": [
@@ -230104,7 +230168,7 @@
     ]
   },
   "Sending": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -237721,6 +237785,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Sign-in code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Sign-in credential": {
@@ -261435,6 +261508,15 @@
       "routes/edi"
     ]
   },
+  "The portal asked for another code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The portal did what was asked and said so": {
     "sites": 1,
     "scope": [
@@ -261454,12 +261536,30 @@
     ]
   },
   "The portal run id is not valid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "The portal sent a sign-in code to the person the task is for, and the browser is waiting for it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The portal sent you a sign-in code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The portal sites could not be loaded.": {
@@ -265376,6 +265476,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The time to enter this code has run out. Ask the agent to try the portal again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The timeline has been updated.": {
@@ -271281,6 +271390,15 @@
     ]
   },
   "This portal task has no recording": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This portal task is not waiting for a sign-in code": {
     "sites": 1,
     "scope": [
       "go"
@@ -290642,6 +290760,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Waiting for your sign-in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waiting for {0} · put the pages in the scanner": {

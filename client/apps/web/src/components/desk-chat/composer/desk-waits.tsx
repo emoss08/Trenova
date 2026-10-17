@@ -1,3 +1,4 @@
+import { PortalCodeForm } from "@/components/assistant/portal-code-form";
 import type { ConversationWaits } from "@/components/assistant/use-conversation-waits";
 import type { AgentWait, AgentWaitKind } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -22,6 +23,8 @@ const KIND_ICONS: Record<AgentWaitKind, DeskIconName> = {
  * What the conversation's agent is waiting on, above the composer: each wait
  * in the agent's words, when it comes due or gives up, and a way to cancel
  * it. Nothing is running while these wait; the agent comes back on its own.
+ * A portal task stopped at a sign-in code the portal sent the person shows
+ * where to enter it.
  */
 export function DeskWaits({ waits, timezone }: { waits: ConversationWaits; timezone: string }) {
   const t = useT();
@@ -51,6 +54,15 @@ export function DeskWaits({ waits, timezone }: { waits: ConversationWaits; timez
               {wait.description}
             </p>
             <span className="dk-wq-meta">{whenText(wait, timezone, t)}</span>
+            {wait.signInCode && (
+              <PortalCodeForm
+                className="dk-wq-ed"
+                runId={wait.signInCode.portalRunId}
+                prompt={wait.signInCode.prompt}
+                deadline={turnTime(wait.signInCode.expiresAt, timezone, t)}
+                attempts={wait.signInCode.attempts}
+              />
+            )}
             <span className="dk-wq-acts">
               <Button
                 variant="quiet"
@@ -98,6 +110,9 @@ function whenText(wait: AgentWait, timezone: string, t: TranslateFn): string {
   // back the moment the reading finishes, not at that time.
   if (wait.kind === "DocumentRead") {
     return t("Being read");
+  }
+  if (wait.signInCode) {
+    return t("Waiting for your sign-in code");
   }
   if (wait.dueAt) {
     return t("Due {0}", turnTime(wait.dueAt, timezone, t));

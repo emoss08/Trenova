@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -33,6 +34,7 @@ var (
 		PortalSecretUsername,
 		PortalSecretPassword,
 		PortalSecretAuthenticator,
+		PortalSecretSignInCode,
 	}
 
 	// signInCodeWords are how a browser that did not use the marker still
@@ -117,4 +119,93 @@ func namesSecret(name string) bool {
 	}
 
 	return strings.Contains(lower, "bu_2fa_code")
+}
+
+const (
+	// PortalSecretSignInCode is the placeholder a follow-up task types for a
+	// code a person relayed; the code itself is sent only as a vendor secret.
+	PortalSecretSignInCode = "portal_sign_in_code"
+
+	// PortalCodeWaitSeconds is how long a browser is kept open on a code
+	// prompt for a person to enter the code.
+	PortalCodeWaitSeconds    = 10 * 60
+	MaxPortalCodeAttempts    = 3
+	MaxPortalCodePromptRunes = 500
+	minSignInCodeLength      = 4
+	maxSignInCodeLength      = 12
+)
+
+var ErrSignInCodeInvalid = errors.New(
+	"a sign-in code is 4 to 12 letters or digits, as the portal sent it",
+)
+
+// NormalizeSignInCode reads a code as a person types it from a text message
+// or an email: grouped with spaces or dashes, which portals ignore. Anything
+// that is not 4 to 12 letters and digits is refused, so nothing else rides
+// into the portal with it.
+func NormalizeSignInCode(raw string) (string, error) {
+	code := strings.NewReplacer(" ", "", "-", "", "\t", "").Replace(strings.TrimSpace(raw))
+	if len(code) < minSignInCodeLength || len(code) > maxSignInCodeLength {
+		return "", ErrSignInCodeInvalid
+	}
+	for _, char := range code {
+		isDigit := char >= '0' && char <= '9'
+		isLetter := (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
+		if !isDigit && !isLetter {
+			return "", ErrSignInCodeInvalid
+		}
+	}
+
+	return code, nil
+}
+
+// ContinueWithCode is the follow-up task that carries on in the same browser
+// once a person relayed the code: enter it where the portal asked, then do
+// what the first task was given, without repeating what it already did.
+func ContinueWithCode(task string) string {
+	return "The portal is showing where to enter the sign-in code it sent. Enter " +
+		PortalSecretSignInCode + " there and submit it. Then carry on with the task below from " +
+		"where you stopped, without repeating anything already done. If the portal says the " +
+		"code is wrong or has expired, stop there and begin your answer with " +
+		PortalSignInCodeMarker + ", then say what it said.\n\n" + task
+}
+
+// CodeExpiresAt is when a run waiting on a sign-in code stops waiting.
+func (r *PortalRun) CodeExpiresAt() *int64 {
+	if r == nil || r.Status != PortalRunStatusAwaitingCode || r.CodeRequestedAt == nil {
+		return nil
+	}
+	expires := *r.CodeRequestedAt + PortalCodeWaitSeconds
+
+	return &expires
+}
+
+// AwaitCode keeps a run open on the portal's code prompt. What it has done so
+// far (the pages, steps and cost the outcome carries) is kept, so the task the
+// code starts adds to it, and how the portal asked is kept for the person.
+func (r *PortalRun) AwaitCode(progress *PortalRunOutcome, at int64) {
+	r.Status = PortalRunStatusAwaitingCode
+	r.CodePrompt = stringutils.TruncateRunes(strings.TrimSpace(progress.Answer),
+		MaxPortalCodePromptRunes)
+	r.VisitedURLs = boundedURLs(progress.VisitedURLs)
+	r.OffSiteURLs = boundedURLs(progress.OffSiteURLs)
+	r.Steps = progress.Steps
+	r.CostUSD = progress.CostUSD
+	requested := at
+	r.CodeRequestedAt = &requested
+}
+
+// Continued says the run's current task was started by a relayed code, so
+// its pages, steps and cost add to what the run already holds.
+func (r *PortalRun) Continued() bool {
+	return r != nil && r.CodeAttempts > 0
+}
+
+// ContinuedWith records the follow-up task a relayed code started.
+func (r *PortalRun) ContinuedWith(taskID string) {
+	r.Status = PortalRunStatusRunning
+	r.VendorTaskID = taskID
+	r.CodeAttempts++
+	r.CodePrompt = ""
+	r.CodeRequestedAt = nil
 }

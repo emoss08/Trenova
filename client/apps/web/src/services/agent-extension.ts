@@ -7,6 +7,7 @@ import {
   agentExtensionTestResponseSchema,
   analysisRunsResponseSchema,
   portalRecordingSchema,
+  portalRunSchema,
   portalRunsResponseSchema,
   portalSiteSchema,
   portalSitesResponseSchema,
@@ -110,6 +111,18 @@ export class AgentExtensionService {
       { signal: options?.signal },
     );
     return file.blob;
+  }
+
+  /**
+   * Continues a portal task waiting on a sign-in code with the code the person was sent. The
+   * code goes only to the browser, never into a conversation.
+   */
+  public async sendPortalSignInCode(runId: string, code: string) {
+    const response = await api.post(
+      `/agent-portals/runs/${encodeURIComponent(runId)}/sign-in-code/`,
+      { code },
+    );
+    return safeParse(portalRunSchema, response, translate("Portal task"));
   }
 
   public async portalRunRecording(id: string) {

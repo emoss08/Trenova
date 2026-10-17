@@ -194,6 +194,13 @@ Keywords: waiting, wait until, parked, notify me when, truck arrives, reply from
 3. Nothing runs while it waits. When the event happens, the agent comes back to the conversation on its own, and a note marks the place: **Picked up after a wait**, or **Picked up after the wait ran out** if it gave up first.
 4. Select **Cancel the wait** (×) to drop one you no longer need.
 
+### Enter a sign-in code a portal sent you
+Keywords: sign-in code, verification code, two-factor, 2FA, MFA, one-time code, text message code, email code, portal login code
+1. When an agent reading or acting on a portal reaches a sign-in that sends a code to your phone or email, it says so, and the wait above the message box shows **Waiting for your sign-in code** with how the portal asked.
+2. Type the code into **Sign-in code** and select **Send code** before the time shown. The code goes only to the portal's browser, never into the conversation, so don't paste it as a message.
+3. If the portal asks again, for example because the code was mistyped or expired, enter the new one. After three codes, or ten minutes without one, the task stops.
+4. The agent comes back to the conversation on its own with what the portal said.
+
 ### Make a conversation a case about a shipment, invoice or dispute
 Keywords: case, cases, link conversation to shipment, attach invoice, open a case, dispute case, about this load
 1. Open the conversation from [Desk](/desk).

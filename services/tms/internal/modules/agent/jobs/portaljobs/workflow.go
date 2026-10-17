@@ -46,11 +46,16 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // PortalRunWorkflow polls one portal task until it ends or runs past its
 // deadline, then hands what the portal said back to the work that asked. A
 // poll that keeps failing still ends the task: it is stopped and recorded as
-// failed rather than left running unwatched.
+// failed rather than left running unwatched. Time spent waiting for a person
+// to enter a sign-in code is not counted against the deadline; the run's own
+// code wait bounds it.
 func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) error {
 	var a *Activities
 	pollCtx := workflow.WithActivityOptions(ctx, pollOptions)
 	notifyCtx := workflow.WithActivityOptions(ctx, notifyOptions)
+	waitsOutsideDeadline := workflow.GetVersion(
+		ctx, codeWaitChange, workflow.DefaultVersion, 1,
+	) == 1
 
 	deadline := workflow.Now(ctx).Add(actDeadline)
 	for {
@@ -67,6 +72,9 @@ func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) er
 		if poll.Finished {
 			return workflow.ExecuteActivity(notifyCtx, a.NotifyPortalRunActivity, payload).
 				Get(ctx, nil)
+		}
+		if waitsOutsideDeadline && poll.AwaitingCode {
+			deadline = deadline.Add(pollInterval)
 		}
 		if !workflow.Now(ctx).Before(deadline) {
 			return stop(ctx, pollCtx, notifyCtx, &portalcontract.StopInput{

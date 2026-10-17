@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -41,17 +43,54 @@ func taskRequest(settings map[string]string) *agentextensionports.PortalTaskRequ
 	}
 }
 
-func TestStartTaskSendsTheOrganizationsChoices(t *testing.T) {
-	t.Parallel()
+// vendor answers as Browser Use does: a session opened with POST /sessions,
+// a task created with POST /tasks, a session stopped with PATCH /sessions/{id}.
+type vendor struct {
+	mu        sync.Mutex
+	sessions  []map[string]any
+	tasks     []map[string]any
+	stopped   []string
+	taskFails bool
+}
 
-	var received map[string]any
-	connector := serve(t, func(w http.ResponseWriter, r *http.Request) {
+func (v *vendor) handle(t *testing.T) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "bu-key", r.Header.Get("X-Browser-Use-API-Key"))
 		body, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
+		var received map[string]any
 		assert.NoError(t, sonic.Unmarshal(body, &received))
-		_, _ = w.Write([]byte(`{"id": "task-1", "sessionId": "session-1"}`))
-	})
+
+		v.mu.Lock()
+		defer v.mu.Unlock()
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/sessions":
+			v.sessions = append(v.sessions, received)
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"id": "session-1", "status": "active"}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/tasks":
+			v.tasks = append(v.tasks, received)
+			if v.taskFails {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
+			_, _ = w.Write([]byte(`{"id": "task-1", "sessionId": "session-1"}`))
+		case r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/sessions/"):
+			assert.Equal(t, map[string]any{"action": "stop"}, received)
+			v.stopped = append(v.stopped, strings.TrimPrefix(r.URL.Path, "/sessions/"))
+			_, _ = w.Write([]byte(`{"status": "stopped"}`))
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}
+}
+
+func TestStartTaskOpensABrowserThatOutlivesTheTask(t *testing.T) {
+	t.Parallel()
+
+	v := &vendor{}
+	connector := serve(t, v.handle(t))
 
 	started, err := connector.StartTask(t.Context(), taskRequest(map[string]string{
 		agentextension.ConfigKeyAPIKey:           "bu-key",
@@ -65,33 +104,38 @@ func TestStartTaskSendsTheOrganizationsChoices(t *testing.T) {
 	assert.Equal(t, "task-1", started.TaskID)
 	assert.Equal(t, "session-1", started.SessionID)
 
-	assert.Equal(t, agentextension.BrowserUseModelSonnet, received["llm"])
-	assert.InDelta(t, 40, received["maxSteps"], 0)
-	assert.Equal(t, true, received["vision"])
-	assert.Equal(t, []any{"portal.acme.com"}, received["allowedDomains"])
-	assert.Equal(t, "https://portal.acme.com/login", received["startUrl"])
-	assert.Equal(t, "Stay on portal.acme.com; never open another site.",
-		received["systemPromptExtension"])
-	assert.Equal(t, map[string]any{
-		"portal_username": "dispatch@trenova.test",
-		"portal_password": "s3cret-pass",
-	}, received["secrets"])
+	require.Len(t, v.sessions, 1)
 	assert.Equal(t, map[string]any{
 		"profileId":        "profile-1",
 		"proxyCountryCode": "ca",
 		"enableRecording":  false,
-	}, received["sessionSettings"])
+		"keepAlive":        true,
+		"persistMemory":    true,
+	}, v.sessions[0])
+
+	require.Len(t, v.tasks, 1)
+	task := v.tasks[0]
+	assert.Equal(t, "session-1", task["sessionId"])
+	assert.NotContains(t, task, "sessionSettings")
+	assert.Equal(t, agentextension.BrowserUseModelSonnet, task["llm"])
+	assert.InDelta(t, 40, task["maxSteps"], 0)
+	assert.Equal(t, true, task["vision"])
+	assert.Equal(t, []any{"portal.acme.com"}, task["allowedDomains"])
+	assert.Equal(t, "https://portal.acme.com/login", task["startUrl"])
+	assert.Equal(t, "Stay on portal.acme.com; never open another site.",
+		task["systemPromptExtension"])
+	assert.Equal(t, map[string]any{
+		"portal_username": "dispatch@trenova.test",
+		"portal_password": "s3cret-pass",
+	}, task["secrets"])
+	assert.Empty(t, v.stopped)
 }
 
 func TestStartTaskDefaultsKeepScreenshotsOffAndRecordTheSession(t *testing.T) {
 	t.Parallel()
 
-	var received map[string]any
-	connector := serve(t, func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		assert.NoError(t, sonic.Unmarshal(body, &received))
-		_, _ = w.Write([]byte(`{"id": "task-1"}`))
-	})
+	v := &vendor{}
+	connector := serve(t, v.handle(t))
 
 	_, err := connector.StartTask(t.Context(), taskRequest(map[string]string{
 		agentextension.ConfigKeyAPIKey:       "bu-key",
@@ -99,30 +143,71 @@ func TestStartTaskDefaultsKeepScreenshotsOffAndRecordTheSession(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	assert.Equal(t, agentextension.BrowserUseModelDefault, received["llm"])
-	assert.Equal(t, false, received["vision"])
-	session, ok := received["sessionSettings"].(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, true, session["enableRecording"])
-	assert.Contains(t, session, "proxyCountryCode")
-	assert.Nil(t, session["proxyCountryCode"])
+	require.Len(t, v.tasks, 1)
+	assert.Equal(t, agentextension.BrowserUseModelDefault, v.tasks[0]["llm"])
+	assert.Equal(t, false, v.tasks[0]["vision"])
+	require.Len(t, v.sessions, 1)
+	assert.Equal(t, true, v.sessions[0]["enableRecording"])
+	assert.Contains(t, v.sessions[0], "proxyCountryCode")
+	assert.Nil(t, v.sessions[0]["proxyCountryCode"])
 }
 
-func TestStartTaskIsNeverRetried(t *testing.T) {
+func TestAFollowUpTaskCarriesOnInTheBrowserItNames(t *testing.T) {
 	t.Parallel()
 
-	var calls atomic.Int32
-	connector := serve(t, func(w http.ResponseWriter, _ *http.Request) {
-		calls.Add(1)
-		w.WriteHeader(http.StatusBadGateway)
-	})
+	v := &vendor{}
+	connector := serve(t, v.handle(t))
+
+	req := taskRequest(map[string]string{agentextension.ConfigKeyAPIKey: "bu-key"})
+	req.SessionID = "session-7"
+	req.StartURL = ""
+	started, err := connector.StartTask(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "session-7", started.SessionID)
+
+	assert.Empty(t, v.sessions, "no second browser is opened")
+	require.Len(t, v.tasks, 1)
+	assert.Equal(t, "session-7", v.tasks[0]["sessionId"])
+	assert.NotContains(t, v.tasks[0], "startUrl")
+}
+
+func TestStartTaskIsNeverRetriedAndClosesTheBrowserItOpened(t *testing.T) {
+	t.Parallel()
+
+	v := &vendor{taskFails: true}
+	connector := serve(t, v.handle(t))
 
 	_, err := connector.StartTask(t.Context(), taskRequest(map[string]string{
 		agentextension.ConfigKeyAPIKey: "bu-key",
 	}))
 	require.Error(t, err)
-	assert.Equal(t, int32(1), calls.Load(),
+	assert.Len(t, v.tasks, 1,
 		"a create that failed after the vendor began it must not start a second browser")
+	assert.Equal(t, []string{"session-1"}, v.stopped)
+}
+
+func TestAFollowUpThatFailsLeavesItsBrowserToTheRun(t *testing.T) {
+	t.Parallel()
+
+	v := &vendor{taskFails: true}
+	connector := serve(t, v.handle(t))
+
+	req := taskRequest(map[string]string{agentextension.ConfigKeyAPIKey: "bu-key"})
+	req.SessionID = "session-7"
+	_, err := connector.StartTask(t.Context(), req)
+	require.Error(t, err)
+	assert.Empty(t, v.stopped, "the run that owns the browser closes it")
+}
+
+func TestStopSessionClosesTheBrowser(t *testing.T) {
+	t.Parallel()
+
+	v := &vendor{}
+	connector := serve(t, v.handle(t))
+
+	require.NoError(t, connector.StopSession(t.Context(),
+		map[string]string{agentextension.ConfigKeyAPIKey: "bu-key"}, "session-1"))
+	assert.Equal(t, []string{"session-1"}, v.stopped)
 }
 
 func TestTaskStateIsRetriedAndMapsTheVendorStatus(t *testing.T) {

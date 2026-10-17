@@ -126,6 +126,13 @@ func (f *fakeWaits) NotifyPortalRun(
 ) {
 }
 
+func (f *fakeWaits) AnnouncePortalRun(
+	context.Context,
+	pagination.TenantInfo,
+	*agentextension.PortalRun,
+) {
+}
+
 func actArgs(siteID pulid.ID) map[string]any {
 	return map[string]any{
 		paramSiteID:      siteID.String(),
@@ -243,8 +250,7 @@ func TestActOnPortalStillFollowsATaskWhoseWaitCouldNotBeSet(t *testing.T) {
 	t.Parallel()
 
 	portals := newFakePortals()
-	tool := NewActOnPortalTool(portals, &fakeWaits{err: errors.New("db down")}, nil).
-		(*ActOnPortalTool)
+	tool := NewActOnPortalTool(portals, &fakeWaits{err: errors.New("db down")}, nil).(*ActOnPortalTool)
 
 	result, err := tool.ExecuteWithResult(t.Context(),
 		agenttoolstest.Approved(agenttoolstest.AgentParamsFor(actArgs(portals.site.ID))))

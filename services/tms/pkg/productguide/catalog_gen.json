@@ -1,5 +1,5 @@
 {
-  "version": "sha256:81aa948ed2b1001471a0e7340172757d6ebf19d38b03f9c149c95c6f9175fdb3",
+  "version": "sha256:fb75128f2c976fa4ffca89174bf0b57eaf3aa3dd5e2804d71d1ad9f5381d05e3",
   "modules": [
     {
       "id": "home",
@@ -2696,7 +2696,7 @@
             "Under **Available to**, choose **Every agent** or **Agents you choose**.",
             "Under **Portal sites**, select **New portal site**. Give it a **Name**, say **What it is for**, list its **Addresses** (the hostnames it lives on, such as `portal.acme.com`) and the **Start page** the browser opens, which must be an https address on one of them.",
             "If the portal needs a sign-in, enter its **Username** and **Password**. They are stored encrypted, never shown again and never seen by an agent; leave them blank later to keep them, or select **Remove the stored sign-in**.",
-            "If the portal asks for a code from an authenticator app at sign-in, enter its **Authenticator key**: the setup key the portal showed when the app was added, often under \"Can't scan the code\", not a six-digit code. The browser then makes a fresh code each time. For a portal that sends its codes by text message or email, give the site a **Browser profile** that is already signed in instead.",
+            "If the portal asks for a code from an authenticator app at sign-in, enter its **Authenticator key**: the setup key the portal showed when the app was added, often under \"Can't scan the code\", not a six-digit code. The browser then makes a fresh code each time. For a portal that sends its codes by text message or email, the agent asks the person it is working for to enter the code in the Desk; giving the site a **Browser profile** that is already signed in saves asking. A task waiting on a code shows **Needs a code** under **Recent portal tasks**, where you can enter the code for it too.",
             "Turn on **Let agents act on this portal** only for a site where agents may book, upload or submit. A site left read-only can only be looked up. Select **Add site**.",
             "Optionally change the browser model, the country it browses from, the steps per task, the daily limit, whether every task is recorded and whether the browser may see screenshots. Each change is saved as you make it.",
             "**Recent portal tasks** lists every task agents ran: open one to see what the browser was told, every page it visited, how it ended and its recording.",
@@ -9462,6 +9462,26 @@
             "Above the message box, a list shows what the agent is waiting on: the kind of wait (an arrival, a departure, a reply, an appointment, free time, drive time or a time), the agent's description, and when it is due or gives up.",
             "Nothing runs while it waits. When the event happens, the agent comes back to the conversation on its own, and a note marks the place: **Picked up after a wait**, or **Picked up after the wait ran out** if it gave up first.",
             "Select **Cancel the wait** (×) to drop one you no longer need."
+          ]
+        },
+        {
+          "title": "Enter a sign-in code a portal sent you",
+          "keywords": [
+            "sign-in code",
+            "verification code",
+            "two-factor",
+            "2FA",
+            "MFA",
+            "one-time code",
+            "text message code",
+            "email code",
+            "portal login code"
+          ],
+          "steps": [
+            "When an agent reading or acting on a portal reaches a sign-in that sends a code to your phone or email, it says so, and the wait above the message box shows **Waiting for your sign-in code** with how the portal asked.",
+            "Type the code into **Sign-in code** and select **Send code** before the time shown. The code goes only to the portal's browser, never into the conversation, so don't paste it as a message.",
+            "If the portal asks again, for example because the code was mistyped or expired, enter the new one. After three codes, or ten minutes without one, the task stops.",
+            "The agent comes back to the conversation on its own with what the portal said."
           ]
         },
         {

@@ -123,6 +123,7 @@ export const portalSitesResponseSchema = z.object({
 
 export const portalRunStatusSchema = z.enum([
   "Running",
+  "AwaitingCode",
   "Succeeded",
   "Failed",
   "Stopped",
@@ -160,6 +161,12 @@ export const portalRunSchema = z.object({
   proposalId: z.string().default(""),
   requestedById: z.string().default(""),
   hasRecording: z.boolean(),
+  /** How the portal asked for the sign-in code it sent, while the run waits on one. */
+  codePrompt: z.string().default(""),
+  /** When the browser stops waiting for the code; set only while the run waits. */
+  codeExpiresAt: z.number().int().nullish(),
+  /** How many codes a person has entered for the run. */
+  codeAttempts: z.number().int().default(0),
   startedAt: z.number().int(),
   finishedAt: z.number().int().nullish(),
 });
@@ -249,6 +256,14 @@ export const savePortalSiteRequestSchema = z.object({
   version: z.number().int(),
 });
 
+/** A sign-in code as a person types it from a text message or email; the server reads its shape. */
+export const portalSignInCodeFormSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Enter the code the portal sent you") }),
+});
+
 /** A site as the form edits it; a sign-in left blank keeps the stored one. */
 export const portalSiteFormSchema = z.object({
   name: z
@@ -291,6 +306,7 @@ export type PortalRunsResponse = z.infer<typeof portalRunsResponseSchema>;
 export type PortalRecording = z.infer<typeof portalRecordingSchema>;
 export type SavePortalSiteRequest = z.infer<typeof savePortalSiteRequestSchema>;
 export type PortalSiteFormValues = z.infer<typeof portalSiteFormSchema>;
+export type PortalSignInCodeFormValues = z.infer<typeof portalSignInCodeFormSchema>;
 export type AnalysisRun = z.infer<typeof analysisRunSchema>;
 export type AnalysisRunStatus = z.infer<typeof analysisRunStatusSchema>;
 export type AnalysisRunsResponse = z.infer<typeof analysisRunsResponseSchema>;

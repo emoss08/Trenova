@@ -29469,7 +29469,7 @@
     },
     {
       "name": "read_portal",
-      "description": "Look something up on an organization portal site through a cloud browser, such as open appointment slots, a load's status or a carrier's certificate. It returns what the portal shows, only reads, and never submits anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. Ask one clear question and give the references the portal knows (PO, BOL, appointment number) in details, never Trenova record ids. What it returns is written outside the organization.",
+      "description": "Look something up on an organization portal site through a cloud browser, such as open appointment slots, a load's status or a carrier's certificate. It returns what the portal shows, only reads, and never submits anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. Ask one clear question and give the references the portal knows (PO, BOL, appointment number) in details, never Trenova record ids. A portal that texts or emails a sign-in code waits for the person to enter it. What it returns is written outside the organization.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

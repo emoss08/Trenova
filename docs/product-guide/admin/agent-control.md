@@ -143,8 +143,10 @@ Keywords: portal, website, browser, Browser Use, dock appointment, appointment p
 6. If the portal asks for a code from an authenticator app at sign-in, enter its
    **Authenticator key**: the setup key the portal showed when the app was added, often under
    "Can't scan the code", not a six-digit code. The browser then makes a fresh code each time.
-   For a portal that sends its codes by text message or email, give the site a
-   **Browser profile** that is already signed in instead.
+   For a portal that sends its codes by text message or email, the agent asks the person it is
+   working for to enter the code in the Desk; giving the site a **Browser profile** that is
+   already signed in saves asking. A task waiting on a code shows **Needs a code** under
+   **Recent portal tasks**, where you can enter the code for it too.
 7. Turn on **Let agents act on this portal** only for a site where agents may book, upload or
    submit. A site left read-only can only be looked up. Select **Add site**.
 8. Optionally change the browser model, the country it browses from, the steps per task, the
