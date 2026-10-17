@@ -34,7 +34,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
 | Agent tool rule held lower or returned to its declared rule, with the reason and the agents whose answer moved | `audit_entries` | `agenttoolruleservice` | yes |
 | Agent memory written after outside content reviewed (directly, or by approving it as a suggestion), so it no longer holds the writes of the turns that read it | `audit_entries` | `agentmemoryservice` | yes |
-| Document downloaded or viewed (content or presigned URL) | `audit_entries` | `documentservice` | — |
+| Document downloaded or viewed (content, presigned URL or page image) | `audit_entries` | `documentservice` | — |
 | Document attached to an outbound email | `audit_entries` | `documentmailservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
 
@@ -188,9 +188,12 @@ are notified when a session starts. Platform staff membership changes are record
 `documentservice` records every download and view, whether it streams the content
 or hands out a presigned URL, as a non-critical entry with operation `read` and
 `metadata.access` (`download`/`view`) and `metadata.channel`
-(`content`/`presigned_url`). Because it is in the service, invoice share links, the
+(`content`/`presigned_url`/`page_image`). Because it is in the service, invoice share links, the
 driver portal and attachment reads are covered as well as the documents API.
-Preview thumbnails are not recorded. A read with no user (a share link) is
+A page drawn as an image to read (`GET /documents/:id/pages/:page/image/`, which the
+extraction card shows) is a view on the `page_image` channel, recorded once per page the
+browser fetches; a repeat answered `304 Not Modified` from its ETag delivers nothing and is
+not recorded. Preview thumbnails are not recorded. A read with no user (a share link) is
 attributed to the system principal; the request metadata identifies the requester.
 
 ### Documents sent by email

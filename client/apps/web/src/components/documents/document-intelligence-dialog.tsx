@@ -22,6 +22,7 @@ import { apiService } from "@/services/api";
 import type {
   Document,
   DocumentContent,
+  DocumentAIAcceptanceStatus,
   DocumentIntelligenceAIDiagnostics,
   DocumentIntelligenceConflict,
   DocumentIntelligence,
@@ -135,12 +136,14 @@ function formatStopSummary(stop: DocumentIntelligenceStop) {
   return addressParts.length > 0 ? addressParts.join(", ") : "Address not extracted";
 }
 
-function formatAIAcceptanceStatus(status?: string) {
+function formatAIAcceptanceStatus(status?: DocumentAIAcceptanceStatus) {
   switch (status) {
     case "accepted":
       return "Accepted";
     case "rejected":
       return "Rejected";
+    case "pending":
+      return "Reading";
     case "not_attempted":
       return "Not Attempted";
     default:
@@ -148,14 +151,12 @@ function formatAIAcceptanceStatus(status?: string) {
   }
 }
 
-function aiAcceptanceVariant(status?: string) {
+function aiAcceptanceVariant(status?: DocumentAIAcceptanceStatus) {
   switch (status) {
     case "accepted":
       return "success";
-    case "rejected":
-      return "neutral";
-    case "not_attempted":
-      return "neutral";
+    case "pending":
+      return "info";
     default:
       return "neutral";
   }

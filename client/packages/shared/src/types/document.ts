@@ -181,11 +181,18 @@ export const documentIntelligenceSchema = z
   })
   .passthrough();
 
+export const documentAIAcceptanceStatusSchema = z.enum([
+  "not_attempted",
+  "pending",
+  "accepted",
+  "rejected",
+]);
+
 export const documentIntelligenceAIDiagnosticsSchema = z
   .object({
     fallbackAnalysis: documentIntelligenceSchema.optional(),
     candidateAnalysis: documentIntelligenceSchema.nullable().optional(),
-    acceptanceStatus: z.enum(["not_attempted", "accepted", "rejected"]).optional(),
+    acceptanceStatus: documentAIAcceptanceStatusSchema.optional(),
     rejectionReason: z.string().optional(),
   })
   .passthrough();
@@ -346,6 +353,7 @@ export type DocumentIntelligenceField = z.infer<typeof documentIntelligenceField
 export type DocumentIntelligenceConflict = z.infer<typeof documentIntelligenceConflictSchema>;
 export type DocumentIntelligenceStop = z.infer<typeof documentIntelligenceStopSchema>;
 export type DocumentIntelligence = z.infer<typeof documentIntelligenceSchema>;
+export type DocumentAIAcceptanceStatus = z.infer<typeof documentAIAcceptanceStatusSchema>;
 export type DocumentIntelligenceAIDiagnostics = z.infer<
   typeof documentIntelligenceAIDiagnosticsSchema
 >;

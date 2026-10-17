@@ -5,6 +5,7 @@
 import { deskThread } from "../fixtures/desk-cards.mjs";
 import { deskCaseThreads } from "./deskcase.mjs";
 import { ediDraftThreads } from "./deskedidraft.mjs";
+import { extractionThreads } from "./deskextraction.mjs";
 import { formulaThreads } from "./formula-nova.mjs";
 
 const UNLISTED_ORIGINS = new Set(["Ask", "Import", "Formula"]);
@@ -23,6 +24,7 @@ function threads(state) {
     cards,
     ...deskCaseThreads(state),
     ...ediDraftThreads(state),
+    ...extractionThreads(state),
     ...triage,
     ...formulaThreads(state),
   ]

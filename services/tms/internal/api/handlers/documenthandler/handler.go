@@ -276,6 +276,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.preview,
 	)
+	api.GET(
+		"/:documentID/pages/:pageNumber/image/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.pageImage,
+	)
 	api.POST(
 		"/upload/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
@@ -620,6 +625,71 @@ func (h *Handler) preview(c *gin.Context) {
 
 	c.Header("Content-Disposition", content.ContentDisposition)
 	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
+}
+
+// @Summary Get one page of a document as an image
+// @ID getDocumentPageImage
+// @Tags Documents
+// @Produce image/webp
+// @Param documentID path string true "Document ID"
+// @Param pageNumber path int true "Page number, from 1"
+// @Success 200 {file} binary
+// @Success 304 "Not modified"
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/{documentID}/pages/{pageNumber}/image/ [get]
+func (h *Handler) pageImage(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	page, err := strconv.Atoi(c.Param("pageNumber"))
+	if err != nil || page < 1 {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"pageNumber",
+				errortypes.ErrInvalid,
+				"Page number must be a whole number from 1",
+			),
+		)
+		return
+	}
+
+	image, err := h.service.GetPageImage(
+		c.Request.Context(),
+		&documentports.GetDocumentPageImageRequest{
+			GetDocumentByIDRequest: documentports.GetDocumentByIDRequest{
+				ID:         id,
+				TenantInfo: pagination.FromAuth(authCtx),
+			},
+			PageNumber:  page,
+			IfNoneMatch: c.GetHeader("If-None-Match"),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "private, max-age=86400")
+	c.Header("ETag", image.ETag)
+	if image.NotModified {
+		c.Status(http.StatusNotModified)
+		return
+	}
+	defer image.Body.Close()
+
+	c.Header("Content-Disposition", image.ContentDisposition)
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.DataFromReader(http.StatusOK, image.ContentLength, image.ContentType, image.Body, nil)
 }
 
 type uploadRequest struct {

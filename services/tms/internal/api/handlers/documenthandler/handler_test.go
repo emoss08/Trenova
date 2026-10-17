@@ -1,10 +1,15 @@
 package documenthandler_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -29,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/gen2brain/webp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -852,6 +858,174 @@ func TestDocumentHandler_Preview_InvalidID(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+}
+
+func pagePNG(t *testing.T) []byte {
+	t.Helper()
+
+	img := image.NewRGBA(image.Rect(0, 0, 85, 110))
+	for x := range 85 {
+		for y := range 110 {
+			img.Set(x, y, color.RGBA{R: 250, G: 250, B: 250, A: 255})
+		}
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, png.Encode(&buf, img))
+	return buf.Bytes()
+}
+
+func pageImageRepo(
+	t *testing.T,
+	fileType string,
+) *documentportsmock.MockDocumentRepository {
+	t.Helper()
+
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
+			return &document.Document{
+				ID:             req.ID,
+				FileName:       "ratecon.png",
+				OriginalName:   "ratecon.png",
+				FileType:       fileType,
+				StoragePath:    "org/shipment/ratecon.png",
+				ChecksumSHA256: "abc123",
+				Status:         document.StatusActive,
+			}, nil
+		})
+
+	return repo
+}
+
+func pageImageStorage(t *testing.T) *mockStorageClient {
+	t.Helper()
+
+	return &mockStorageClient{
+		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
+			assert.Equal(t, "org/shipment/ratecon.png", key)
+			body := encryptedDocumentBody(t, string(pagePNG(t)), key)
+			return &kernelports.DownloadResult{
+				Body:        io.NopCloser(strings.NewReader(body)),
+				ContentType: "image/png",
+				Size:        int64(len(body)),
+			}, nil
+		},
+	}
+}
+
+func servePageImage(
+	t *testing.T,
+	deps *handlerDeps,
+	path string,
+	headers map[string]string,
+) *testutil.GinTestContext {
+	t.Helper()
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath(path).
+		WithHeaders(headers).
+		WithDefaultAuthContext()
+
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+	return ginCtx
+}
+
+func TestDocumentHandler_PageImage_ServesThePageAsWebP(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	deps := setupHandler(t, pageImageRepo(t, "image/png"), pageImageStorage(t))
+
+	ginCtx := servePageImage(
+		t, deps, "/api/v1/documents/"+docID.String()+"/pages/1/image/", nil,
+	)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	header := ginCtx.Recorder.Header()
+	assert.Equal(t, "image/webp", header.Get("Content-Type"))
+	assert.Equal(t, "inline", header.Get("Content-Disposition"))
+	assert.Equal(t, "nosniff", header.Get("X-Content-Type-Options"))
+	assert.Equal(t, "private, max-age=86400", header.Get("Cache-Control"))
+	assert.Equal(t, `"abc123-1400x1800-p1"`, header.Get("ETag"))
+
+	body := ginCtx.Recorder.Body.Bytes()
+	assert.Equal(t, strconv.Itoa(len(body)), header.Get("Content-Length"))
+	cfg, err := webp.DecodeConfig(bytes.NewReader(body))
+	require.NoError(t, err)
+	assert.Equal(t, 85, cfg.Width)
+	assert.Equal(t, 110, cfg.Height)
+}
+
+func TestDocumentHandler_PageImage_NotModifiedSkipsTheRender(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	storage := &mockStorageClient{
+		downloadFunc: func(context.Context, string) (*kernelports.DownloadResult, error) {
+			t.Error("a page the browser already holds must not be read from storage")
+			return nil, errService
+		},
+	}
+	deps := setupHandler(t, pageImageRepo(t, "image/png"), storage)
+
+	ginCtx := servePageImage(
+		t,
+		deps,
+		"/api/v1/documents/"+docID.String()+"/pages/1/image/",
+		map[string]string{"If-None-Match": `"abc123-1400x1800-p1"`},
+	)
+
+	assert.Equal(t, http.StatusNotModified, ginCtx.ResponseCode())
+	assert.Equal(t, `"abc123-1400x1800-p1"`, ginCtx.Recorder.Header().Get("ETag"))
+	assert.Empty(t, ginCtx.Recorder.Body.Bytes())
+}
+
+func TestDocumentHandler_PageImage_AnImageHasOnePage(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	deps := setupHandler(t, pageImageRepo(t, "image/png"), pageImageStorage(t))
+
+	ginCtx := servePageImage(
+		t, deps, "/api/v1/documents/"+docID.String()+"/pages/2/image/", nil,
+	)
+
+	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+}
+
+func TestDocumentHandler_PageImage_DocumentWithoutPages(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	deps := setupHandler(t, pageImageRepo(t, "text/plain"), &mockStorageClient{})
+
+	ginCtx := servePageImage(
+		t, deps, "/api/v1/documents/"+docID.String()+"/pages/1/image/", nil,
+	)
+
+	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+}
+
+func TestDocumentHandler_PageImage_InvalidPageNumber(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	for _, page := range []string{"0", "-1", "first"} {
+		deps := setupHandler(
+			t,
+			documentportsmock.NewMockDocumentRepository(t),
+			&mockStorageClient{},
+		)
+
+		ginCtx := servePageImage(
+			t, deps, "/api/v1/documents/"+docID.String()+"/pages/"+page+"/image/", nil,
+		)
+
+		assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode(), page)
+	}
 }
 
 func TestDocumentHandler_Upload_Success(t *testing.T) {
