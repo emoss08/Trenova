@@ -555,7 +555,7 @@ describe("DataTable add-record menu", () => {
       "New test-tableCreate a new record from scratch.",
       "Import testsFrom a file.",
     ]);
-    expect(screen.getByRole("separator")).toBeInTheDocument();
+    expect(within(screen.getByRole("menu")).getByRole("separator")).toBeInTheDocument();
   });
 
   it("uses the table's own new-record action in place of the default", async () => {

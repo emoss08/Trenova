@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderAccountingPage } from "@/test/accounting-page-mocks";
@@ -236,7 +236,11 @@ describe("AccountingBriefing", () => {
     );
     renderBriefing();
 
-    expect(await screen.findByText(/nobody needs a call today/)).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
+        /nobody needs a call today/,
+      ),
+    );
     expect(screen.queryByRole("list", { name: "Next steps" })).toBeNull();
   });
 
@@ -251,7 +255,11 @@ describe("AccountingBriefing", () => {
     );
     renderBriefing();
 
-    expect(await screen.findByText(/holds 42%/)).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
+        /Acme Freight holds 42%/,
+      ),
+    );
     expect(screen.queryByRole("button", { name: "Open this customer's ledger" })).toBeNull();
   });
 
