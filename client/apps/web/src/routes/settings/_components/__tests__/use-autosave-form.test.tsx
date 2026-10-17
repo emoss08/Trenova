@@ -9,11 +9,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsFeedbackProvider } from "../settings-feedback";
 import { useAutosaveForm } from "../use-autosave-form";
 
-const toasts = vi.hoisted(() => ({
-  success: vi.fn(),
-  dismiss: vi.fn(),
-  error: vi.fn(),
-}));
+const toasts = vi.hoisted(() =>
+  Object.assign(vi.fn(), {
+    success: vi.fn(),
+    dismiss: vi.fn(),
+    error: vi.fn(),
+  }),
+);
 
 vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: toasts }));
 
@@ -65,6 +67,7 @@ async function pressLastUndo() {
 
 describe("useAutosaveForm", () => {
   beforeEach(() => {
+    toasts.mockReset();
     toasts.success.mockReset();
     toasts.dismiss.mockReset();
     toasts.error.mockReset();
