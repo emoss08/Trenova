@@ -215,12 +215,11 @@ func planRelease(
 		NewStatus:  target,
 		TenantInfo: req.TenantInfo,
 	}
-	if err = billingqueueservice.PlanStatusChange(
-		&after,
-		statusReq,
-		actor,
-		timeutils.NowUnix(),
-	); err != nil {
+	plan := billingqueueservice.PlanStatusChange
+	if actor.IsAgent() && !billingqueueservice.AgentMayMoveTo(target) {
+		plan = billingqueueservice.PlanTransition
+	}
+	if err = plan(&after, statusReq, actor, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
