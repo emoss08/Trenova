@@ -226,20 +226,29 @@ func TestClientErrorIsNotConvertibleAndNotRetried(t *testing.T) {
 	assert.Equal(t, int32(1), calls.Load())
 }
 
-func TestRefusedAPIKeyIsUnavailableNotTheDocument(t *testing.T) {
+func TestRefusedAPIKeyIsAConfigurationFailureNotTheDocument(t *testing.T) {
 	t.Parallel()
 
-	var calls atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		calls.Add(1)
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	defer server.Close()
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			t.Parallel()
 
-	_, err := newTestClient(t, server.URL, nil).Submit(t.Context(), convertRequest("x"))
-	require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
-	require.NotErrorIs(t, err, kernelports.ErrDocumentNotConvertible)
-	assert.Equal(t, int32(1), calls.Load())
+			var calls atomic.Int32
+			server := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					calls.Add(1)
+					w.WriteHeader(status)
+				}),
+			)
+			defer server.Close()
+
+			_, err := newTestClient(t, server.URL, nil).Submit(t.Context(), convertRequest("x"))
+			require.ErrorIs(t, err, kernelports.ErrDocumentConverterMisconfigured)
+			require.NotErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
+			require.NotErrorIs(t, err, kernelports.ErrDocumentNotConvertible)
+			assert.Equal(t, int32(1), calls.Load(), "a refused key is never retried")
+		})
+	}
 }
 
 func TestSubmitRefusesOversizedFilesBeforeUpload(t *testing.T) {
@@ -396,16 +405,32 @@ func TestResultLargerThanTheCapIsRefused(t *testing.T) {
 func TestDisabledClientIsUnavailable(t *testing.T) {
 	t.Parallel()
 
-	client := newTestClient(t, "", nil)
-	assert.False(t, client.Enabled())
+	for name, mutate := range map[string]func(*config.DocumentConversionConfig){
+		"no url": func(c *config.DocumentConversionConfig) { c.DoclingURL = "" },
+		"no api key": func(c *config.DocumentConversionConfig) {
+			c.DoclingURL = "http://docling:5001"
+			c.APIKey = ""
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	_, err := client.Submit(t.Context(), convertRequest("x"))
-	require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
-	_, err = client.Status(t.Context(), "task")
-	require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
-	_, err = client.Result(t.Context(), "task")
-	require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
-	require.ErrorIs(t, client.Healthy(t.Context()), kernelports.ErrDocumentConverterUnavailable)
+			client := newTestClient(t, "http://docling:5001", mutate)
+			assert.False(t, client.Enabled())
+
+			_, err := client.Submit(t.Context(), convertRequest("x"))
+			require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
+			_, err = client.Status(t.Context(), "task")
+			require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
+			_, err = client.Result(t.Context(), "task")
+			require.ErrorIs(t, err, kernelports.ErrDocumentConverterUnavailable)
+			require.ErrorIs(
+				t,
+				client.Healthy(t.Context()),
+				kernelports.ErrDocumentConverterUnavailable,
+			)
+		})
+	}
 }
 
 func TestHealthy(t *testing.T) {

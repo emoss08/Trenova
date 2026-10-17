@@ -300,6 +300,25 @@ database schema under you.
 **Rolling back** the images is only safe when the newer release did not migrate the
 database. Otherwise restore the backup you took before upgrading.
 
+### Upgrading to a release with document conversion
+
+Releases that bundle the `docling` service read a new key from `.env`,
+`TRENOVA_DOCUMENTCONVERSION_APIKEY`. An `.env` written before it existed still works: every
+compose command runs, the stack starts, and document extraction reports that it is not set
+up. The `docling` service itself refuses to start without a key and says so in
+`docker compose logs docling`. Add a generated key to the existing `.env`, from this
+directory, without re-running `init-env.sh` (which would replace every other secret):
+
+```bash
+grep -q '^TRENOVA_DOCUMENTCONVERSION_APIKEY=.' .env || {
+  sed -i.bak '/^TRENOVA_DOCUMENTCONVERSION_APIKEY=/d' .env
+  printf 'TRENOVA_DOCUMENTCONVERSION_APIKEY=%s\n' "$(openssl rand -hex 32)" >> .env
+}
+docker compose up -d
+```
+
+The first line leaves a key that is already set alone, so the command is safe to run twice.
+
 ## Backups and restore
 
 What to keep, from most to least important:

@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	ErrDocumentConverterUnavailable = errors.New("document converter unavailable")
-	ErrConversionTaskNotFound       = errors.New("conversion task not found")
-	ErrDocumentNotConvertible       = errors.New("document could not be converted")
+	ErrDocumentConverterUnavailable   = errors.New("document converter unavailable")
+	ErrDocumentConverterMisconfigured = errors.New("document converter refused its credentials")
+	ErrConversionTaskNotFound         = errors.New("conversion task not found")
+	ErrDocumentNotConvertible         = errors.New("document could not be converted")
 )
 
 type ConversionTaskID string

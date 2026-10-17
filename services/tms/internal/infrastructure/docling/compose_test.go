@@ -3,6 +3,7 @@ package docling
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -39,4 +40,46 @@ func TestComposeFilesPinTheTestedImage(t *testing.T) {
 			file,
 		)
 	}
+}
+
+var requiredAPIKeyInterpolation = regexp.MustCompile(
+	`\$\{TRENOVA_DOCUMENTCONVERSION_APIKEY:?\?`,
+)
+
+func TestSelfHostComposeDoesNotRequireTheConverterKey(t *testing.T) {
+	t.Parallel()
+
+	file := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost", "compose.yml")
+	raw, err := os.ReadFile(file)
+	require.NoError(t, err)
+	contents := string(raw)
+
+	assert.Empty(
+		t,
+		requiredAPIKeyInterpolation.FindAllString(contents, -1),
+		"compose interpolates the whole file, so a required TRENOVA_DOCUMENTCONVERSION_APIKEY "+
+			"breaks every compose command on an .env written before the key existed",
+	)
+	assert.Contains(t, contents, "DOCLING_SERVE_API_KEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}")
+	assert.Contains(
+		t,
+		contents,
+		`if [ -z "$${DOCLING_SERVE_API_KEY}" ]; then`,
+		"the sidecar must refuse to start without a key",
+	)
+}
+
+func TestRequiredAPIKeyInterpolationPattern(t *testing.T) {
+	t.Parallel()
+
+	for _, refused := range []string{
+		"${TRENOVA_DOCUMENTCONVERSION_APIKEY:?set it}",
+		"${TRENOVA_DOCUMENTCONVERSION_APIKEY?set it}",
+	} {
+		assert.True(t, requiredAPIKeyInterpolation.MatchString(refused), refused)
+	}
+	assert.False(
+		t,
+		requiredAPIKeyInterpolation.MatchString("${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}"),
+	)
 }

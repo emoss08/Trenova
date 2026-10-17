@@ -1605,7 +1605,7 @@ func (c *RendererConfig) GetMaxPDFBytes() int64 {
 
 type DocumentConversionConfig struct {
 	DoclingURL        string        `mapstructure:"doclingUrl"        validate:"omitempty,url"`
-	APIKey            string        `mapstructure:"apiKey"            validate:"required_with=DoclingURL"`
+	APIKey            string        `mapstructure:"apiKey"`
 	RequestTimeout    time.Duration `mapstructure:"requestTimeout"`
 	ConversionTimeout time.Duration `mapstructure:"conversionTimeout"`
 	HealthTimeout     time.Duration `mapstructure:"healthTimeout"`
@@ -1620,7 +1620,13 @@ type DocumentConversionConfig struct {
 	VLMModel          string        `mapstructure:"vlmModel"`
 }
 
-func (c *DocumentConversionConfig) Enabled() bool { return c.DoclingURL != "" }
+func (c *DocumentConversionConfig) Enabled() bool {
+	return c.DoclingURL != "" && c.APIKey != ""
+}
+
+func (c *DocumentConversionConfig) MissingAPIKey() bool {
+	return c.DoclingURL != "" && c.APIKey == ""
+}
 
 func (c *DocumentConversionConfig) GetDoclingURL() string {
 	return strings.TrimSuffix(c.DoclingURL, "/")

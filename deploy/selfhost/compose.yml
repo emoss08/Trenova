@@ -256,10 +256,25 @@ services:
   # depends on its request schema. Without an AI provider no organization
   # needs it: remove this service and the tms-worker dependency below, and
   # leave documentConversion.doclingUrl empty.
+  #
+  # The key is optional here so an .env from before the sidecar existed
+  # still interpolates (a `:?` would stop every compose command, pull and
+  # up included). The sidecar itself refuses to start without one, and the
+  # worker reports extraction as not configured until it has one; see
+  # "Upgrades" in docs/self-hosting/README.md for adding it.
   docling:
     image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+    entrypoint: &docling-entrypoint
+      - /bin/sh
+      - -c
+      - |
+        if [ -z "$${DOCLING_SERVE_API_KEY}" ]; then
+          echo "docling: refusing to start: TRENOVA_DOCUMENTCONVERSION_APIKEY is not set in .env. Add one as described under Upgrades in docs/self-hosting/README.md, then run docker compose up -d." >&2
+          exit 78
+        fi
+        exec container-entrypoint docling-serve run
     environment: &docling-environment
-      DOCLING_SERVE_API_KEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:?set TRENOVA_DOCUMENTCONVERSION_APIKEY in .env}
+      DOCLING_SERVE_API_KEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}
       DOCLING_SERVE_ENABLE_UI: "false"
       DOCLING_SERVE_ENABLE_API_DOCS: "false"
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
@@ -304,6 +319,7 @@ services:
   docling-gpu:
     profiles: [gpu]
     image: ghcr.io/docling-project/docling-serve-cu128:v1.36.0@sha256:68f9c77470225a154622b7a05c2660a22ab74ac12ccf3efee1a92588d0213b41
+    entrypoint: *docling-entrypoint
     environment:
       <<: *docling-environment
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
@@ -508,8 +524,11 @@ services:
         condition: service_healthy
       gotenberg:
         condition: service_healthy
+      # Not required: without an API key the sidecar refuses to start, and
+      # the worker still runs and reports document extraction as not set up.
       docling:
         condition: service_healthy
+        required: false
     restart: unless-stopped
     networks: [data, egress]
 

@@ -90,7 +90,7 @@ func New(p Params) *Client {
 	}
 }
 
-func (c *Client) Enabled() bool { return c.baseURL != "" }
+func (c *Client) Enabled() bool { return c.cfg.Enabled() }
 
 func (c *Client) Healthy(ctx context.Context) error {
 	if !c.Enabled() {
@@ -389,7 +389,7 @@ func (c *Client) do(
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return nil, backoff.Permanent(fmt.Errorf(
 			"%w: the converter refused the API key (%d)",
-			kernelports.ErrDocumentConverterUnavailable,
+			kernelports.ErrDocumentConverterMisconfigured,
 			resp.StatusCode,
 		))
 	case retryableStatus(resp.StatusCode):

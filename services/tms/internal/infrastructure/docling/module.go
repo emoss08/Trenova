@@ -3,6 +3,7 @@ package docling
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,12 +20,23 @@ var Module = fx.Module(
 func registerHealthProbe(
 	lc fx.Lifecycle,
 	converter kernelports.DocumentConverter,
+	cfg *config.Config,
 	logger *zap.Logger,
 ) {
 	l := logger.Named("docling")
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			if cfg.GetDocumentConversionConfig().MissingAPIKey() {
+				l.Error(
+					"documentConversion.doclingUrl is set but documentConversion.apiKey is empty; document extraction is not configured until both are set",
+					zap.String(
+						"remedy",
+						"set TRENOVA_DOCUMENTCONVERSION_APIKEY (documentConversion.apiKey) to the key the docling sidecar uses",
+					),
+				)
+				return nil
+			}
 			if !converter.Enabled() {
 				l.Warn(
 					"no document converter configured; organizations on the Docling extraction engine get no extraction",
