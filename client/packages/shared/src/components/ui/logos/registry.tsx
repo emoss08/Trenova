@@ -16,6 +16,7 @@ import { MistralLogo } from "./mistral";
 import { OllamaLogo } from "./ollama";
 import { OpenAILogo } from "./openai";
 import { OpenRouterLogo } from "./openrouter";
+import { ParallelLogo } from "./parallel";
 import { TogetherLogo } from "./together";
 import { VLLMLogo } from "./vllm";
 import { VoyageLogo } from "./voyage";
@@ -78,6 +79,7 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "together.xyz": TogetherLogo,
   "fireworks.ai": FireworksLogo,
   "exa.ai": ExaLogo,
+  "parallel.ai": ParallelLogo,
 };
 
 export type BrandMarkLookup = {
