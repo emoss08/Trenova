@@ -925,7 +925,7 @@ export function DocumentIntelligenceDialog({
                     ) : (
                       <ContentSection
                         content={content ?? null}
-                        loadFailed={contentLoadFailed}
+                        loadFailed={contentLoadFailed && !content}
                         onRetry={() => void refetchContent()}
                         fallbackStatus={document.contentStatus}
                         fallbackError={document.contentError}

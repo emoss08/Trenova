@@ -119,6 +119,35 @@ describe("DocumentIntelligenceDialog", () => {
     expect(screen.getByText("Reading")).toBeInTheDocument();
   });
 
+  it("keeps reading every few seconds, and keeps the text through a failed check", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let calls = 0;
+      respond(() => {
+        calls += 1;
+        if (calls === 2) throw apiError(500);
+        return contentBody(calls === 1 ? "pending" : "accepted");
+      });
+
+      renderDialog();
+
+      expect(await screen.findByText(TEXT, { normalizer: (text) => text })).toBeInTheDocument();
+      expect(screen.getByText("Reading")).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(screen.getByText(TEXT, { normalizer: (text) => text })).toBeInTheDocument();
+      expect(screen.queryByText("The extracted text could not be loaded.")).toBeNull();
+
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(get).toHaveBeenCalledTimes(3);
+      expect(await screen.findByText("Accepted")).toBeInTheDocument();
+      expect(screen.getByText(TEXT, { normalizer: (text) => text })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("says the text could not be loaded and loads it again when asked", async () => {
     let calls = 0;
     respond(() => {
