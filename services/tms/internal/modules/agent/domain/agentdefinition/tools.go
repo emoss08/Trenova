@@ -6,6 +6,8 @@ const (
 	toolGetCarrier          = "get_carrier"
 	toolListServiceFailures = "list_service_failures"
 	toolGetFormulaTemplate  = "get_formula_template"
+
+	toolListCarrierIntelEvents = "list_carrier_intel_events"
 )
 
 func (t Template) StarterTools() []string {
@@ -137,7 +139,6 @@ func (t Template) StarterTools() []string {
 			"list_time_off",
 			"list_tractors",
 			"list_trailers",
-			"preview_report",
 			"run_report",
 			"get_report_run",
 			"list_insights",
@@ -153,6 +154,7 @@ func (t Template) StarterTools() []string {
 			"withdraw_shift_swap",
 			toolListCarriers,
 			toolGetCarrier,
+			toolListCarrierIntelEvents,
 			"vet_carrier",
 			"set_carrier_monitoring",
 			"mark_carrier_intel_reviewed",
@@ -266,10 +268,13 @@ func (t Template) StarterTools() []string {
 			"send_detention_notice",
 			"record_stop_actual",
 			"log_check_call",
+			"issue_carrier_tracking_link",
+			"revoke_carrier_tracking_link",
 			"get_edi_ack_health",
 			"list_watchtower_items",
 			"comment_on_exception",
 			"snooze_exception",
+			"wake_exception",
 			"assign_exception",
 			"set_exception_due",
 			"resolve_exception",
@@ -313,6 +318,7 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateCarrierRiskDesk:
 		return []string{
+			toolListCarrierIntelEvents,
 			"get_carrier_intel_event",
 			"get_carrier",
 			"list_carriers",
@@ -373,9 +379,12 @@ func (t Template) StarterTools() []string {
 			"get_billing_queue_item",
 			"transition_item_to_in_review",
 			"hold_billing_queue_item",
+			"release_billing_queue_item",
 			"move_billing_item_to_exception",
 			"send_billing_item_back_to_ops",
 			"correct_charge_code",
+			"resolve_billing_queue_issue",
+			"undo_billing_queue_issue",
 			"request_missing_docs",
 			"attach_document_to_shipment",
 			"get_accounting_sync_status",
@@ -676,6 +685,11 @@ func receivablesTools() []string {
 		"list_ar_open_items",
 		"list_collections_worklist",
 		"get_customer_statement",
+		"log_collection_activity",
+		"assign_collector",
+		"schedule_collection_follow_up",
+		"send_payment_reminder",
+		"send_customer_statement",
 		"list_customer_payments",
 		"apply_customer_payment",
 		"reverse_customer_payment",

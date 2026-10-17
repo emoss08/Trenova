@@ -1,5 +1,5 @@
 {
-  "version": "sha256:3e5f981ca5f78a65c617d22ac3aab0806c0b03264d39d51e47ffc0b38807d94c",
+  "version": "sha256:f94049d6bab2c501d394fb935f44dcf64034e66e780b953d76c5d0116f72a02d",
   "modules": [
     {
       "id": "home",
@@ -2637,19 +2637,22 @@
             "web search",
             "internet",
             "Exa",
+            "Parallel",
             "look up regulations",
             "ELD rules",
             "hours of service",
             "current information",
-            "extension marketplace"
+            "extension marketplace",
+            "switch search provider"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Extensions**.",
-            "Open **Web search**, under **Featured** or from **All extensions**.",
-            "Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is stored encrypted and never shown again; select **Replace** to change it later.",
+            "Open **Web search** from Exa or from Parallel, under **Featured** or from **All extensions**. Both give agents the same web search tools; choose the vendor the organization has an account with.",
+            "Paste the organization's API key from that vendor under **Connection** and select **Turn on**. The key is stored encrypted and never shown again; select **Replace** to change it later.",
             "Select **Test connection** to check the key works.",
             "Under **Available to**, choose **Every agent** to give all agents, the assistant included, the web search tools, or **Agents you choose** and select the agents that get them.",
-            "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it."
+            "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it.",
+            "To move to the other vendor, open the one that is on and select **Turn off**, then turn on the other. Only one can be on at a time, and agents keep their web search tools, so no agent needs changing."
           ]
         },
         {
@@ -5809,7 +5812,7 @@
           ],
           "steps": [
             "Open [Organization settings](/admin/organization-settings) and select the **Security** tab. It opens on **Overview**.",
-            "Read **Recommendations**, worst first. Each one says what was found and offers the step that settles it, such as **Open users**, **Open policies** or **Review API keys**. Checks that hold are folded into one collapsed row that counts them.",
+            "Read **Recommendations**, worst first. Each one says what was found and offers the step that settles it, such as **Open users**, **Open policies** or **Review API keys**. Checks that hold are folded under a line that counts the checks passed.",
             "**Without two-factor** lists the members who still sign in with a password alone. Each person turns two-factor on from their own security settings.",
             "**Idle sign-out**, among the figures, shows how long an idle browser stays signed in and how long a session lasts. These come from the server's configuration and apply to every organization it hosts, so they are shown here but not changed.",
             "Select **Check again** to run the checks once more after a change."
@@ -11020,7 +11023,9 @@
         "FMCSA lookup",
         "USDOT lookup",
         "new carriers",
-        "carrier onboarding"
+        "carrier onboarding",
+        "find a trucking company",
+        "carrier for a brokered load"
       ],
       "tasks": [
         {
@@ -11104,7 +11109,8 @@
         "partner carriers",
         "vendors",
         "MC number",
-        "DOT number"
+        "DOT number",
+        "carriers for brokered loads"
       ],
       "tasks": [
         {
@@ -14705,7 +14711,10 @@
         "work schedule",
         "shift patterns",
         "who is working",
-        "shift swaps"
+        "shift swaps",
+        "who is scheduled to work",
+        "weekend shifts",
+        "weekend schedule"
       ],
       "tasks": [
         {

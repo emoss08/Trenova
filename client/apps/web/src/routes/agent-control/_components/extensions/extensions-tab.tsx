@@ -21,6 +21,7 @@ import {
   extensionState,
   filterExtensions,
   sortExtensions,
+  WEB_RESEARCH,
   type ExtensionSort,
 } from "./extension-roster";
 import { ExtensionMark, ExtensionStateTag, ExtensionTile } from "./extension-tile";
@@ -193,7 +194,7 @@ export default function ExtensionsTab() {
                   )}
                 </div>
               </div>
-              <ExtensionDemo agentName={demoAgent} />
+              {featured.capability === WEB_RESEARCH && <ExtensionDemo agentName={demoAgent} />}
             </section>
           )}
           <div className="mkt">

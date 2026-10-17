@@ -88,34 +88,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 54 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 55 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1162 writes: 643 GraphQL mutations and 519 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1163 writes: 642 GraphQL mutations and 521 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 425 |
-| Exempt | 702 |
+| Covered by a tool | 436 |
+| Exempt | 701 |
 | — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 40 |
-| — Infrastructure | 54 |
-| — Agent administration | 104 |
+| — Infrastructure | 55 |
+| — Agent administration | 103 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
-| — Attestation | 48 |
+| — Attestation | 49 |
 | — Duplicate | 8 |
-| **Pending** | **35** |
-| Total | 1162 |
+| **Pending** | **24** |
+| Total | 1161 |
 
-Of the 460 writes an agent should be able to make, 425 have a tool (92%).
+Of the 460 writes an agent should be able to make, 436 have a tool (94%).
 
 ## Pending
 
@@ -123,16 +123,6 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
-| billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
-| billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
-| checkcall | `mutation issueCarrierTrackingLink` | Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link. |
-| checkcall | `mutation revokeCarrierTrackingLink` | Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
-| collection | `POST /api/v1/accounting/collections/customers/:customerID/activities/` | Log a call, email, note or promise to pay against a customer's overdue receivables. |
-| collection | `POST /api/v1/accounting/collections/customers/:customerID/reminder/` | Email a customer a reminder of every overdue invoice it has, with a note. |
-| collection | `PUT /api/v1/accounting/collections/customers/:customerID/collector/` | Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
-| collection | `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/` | Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
-| customerstatement | `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/` | Email a customer its statement of account as a PDF, with a note. |
 | inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
 | inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
@@ -157,7 +147,6 @@ The writes no tool performs yet, and what the tool would do.
 | inboundreply | `mutation unfileInboundAttachment` | Take an email attachment back off the shipment it was filed on. |
 | triage | `mutation reopenInboundConflict` | Reopen a settled duplicate-document or repeated-load conflict on a triage message |
 | triage | `mutation resolveInboundConflict` | Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
-| watchtower | `mutation wakeWatchtowerItem` | Bring a snoozed exception back before its time, the counterpart of snooze_exception. |
 
 ## By domain
 
@@ -190,7 +179,7 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 14 | 7 | 4 | 3 |
+| billingqueue | 14 | 10 | 4 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |
@@ -201,13 +190,13 @@ The writes no tool performs yet, and what the tool would do.
 | carriersettlement | 16 | 15 | 1 | 0 |
 | carriertrackingpublic | 1 | 0 | 1 | 0 |
 | casechecklist | 2 | 0 | 2 | 0 |
-| checkcall | 3 | 1 | 0 | 2 |
-| collection | 4 | 0 | 0 | 4 |
+| checkcall | 3 | 3 | 0 | 0 |
+| collection | 4 | 4 | 0 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
-| customerstatement | 1 | 0 | 0 | 1 |
+| customerstatement | 1 | 1 | 0 | 0 |
 | customertracking | 3 | 2 | 1 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
@@ -221,7 +210,7 @@ The writes no tool performs yet, and what the tool would do.
 | distancecontrol | 2 | 0 | 2 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
-| document | 15 | 4 | 11 | 0 |
+| document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
@@ -328,7 +317,7 @@ The writes no tool performs yet, and what the tool would do.
 | triage | 8 | 0 | 6 | 2 |
 | user | 21 | 0 | 21 | 0 |
 | version | 1 | 0 | 1 | 0 |
-| watchtower | 13 | 7 | 5 | 1 |
+| watchtower | 13 | 8 | 5 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -666,15 +655,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller`, `assign_billing_queue_billers` |
 | `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `post_invoice`, `send_invoice` |
-| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Pending: Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
-| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Pending: Settle one of a billing queue item's checks with one of the options the check offers. |
-| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Pending: Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `release_billing_queue_item` |
+| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `resolve_billing_queue_issue` |
+| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `undo_billing_queue_issue` |
 | `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `approve_billing_queue_items`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review`, `transition_items_to_in_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
 | `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `approve_billing_queue_items` |
 | `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
+| `POST /api/v1/billing-queue/pod-signatures/redetect/`<br>billingqueuehandler.redetectPODSignatures | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
 | `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `transfer_to_billing` |
 | `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `correct_charge_code` |
 | `PUT /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.updateFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
@@ -806,18 +796,18 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation issueCarrierTrackingLink` | Pending: Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link. |
+| `mutation issueCarrierTrackingLink` | Tool: `issue_carrier_tracking_link` |
 | `mutation logCheckCall` | Tool: `log_check_call` |
-| `mutation revokeCarrierTrackingLink` | Pending: Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
+| `mutation revokeCarrierTrackingLink` | Tool: `revoke_carrier_tracking_link` |
 
 ### collection
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/collections/customers/:customerID/activities/`<br>collectionhandler.logActivity | Pending: Log a call, email, note or promise to pay against a customer's overdue receivables. |
-| `POST /api/v1/accounting/collections/customers/:customerID/reminder/`<br>collectionhandler.sendReminder | Pending: Email a customer a reminder of every overdue invoice it has, with a note. |
-| `PUT /api/v1/accounting/collections/customers/:customerID/collector/`<br>collectionhandler.assignCollector | Pending: Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
-| `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/`<br>collectionhandler.scheduleFollowUp | Pending: Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
+| `POST /api/v1/accounting/collections/customers/:customerID/activities/`<br>collectionhandler.logActivity | Tool: `log_collection_activity` |
+| `POST /api/v1/accounting/collections/customers/:customerID/reminder/`<br>collectionhandler.sendReminder | Tool: `send_payment_reminder` |
+| `PUT /api/v1/accounting/collections/customers/:customerID/collector/`<br>collectionhandler.assignCollector | Tool: `assign_collector` |
+| `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/`<br>collectionhandler.scheduleFollowUp | Tool: `schedule_collection_follow_up` |
 
 ### commodity
 
@@ -858,7 +848,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Pending: Email a customer its statement of account as a PDF, with a note. |
+| `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Tool: `send_customer_statement` |
 
 ### customertracking
 
@@ -978,6 +968,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
 | `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
 | `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
+| `POST /api/v1/documents/:documentID/signature/`<br>documenthandler.setSignature | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
 | `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
 | `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
 | `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
@@ -2259,7 +2250,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setWatchtowerItemDue` | Tool: `set_exception_due` |
 | `mutation snoozeWatchtowerItem` | Tool: `snooze_exception` |
 | `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |
-| `mutation wakeWatchtowerItem` | Pending: Bring a snoozed exception back before its time, the counterpart of snooze_exception. |
+| `mutation wakeWatchtowerItem` | Tool: `wake_exception` |
 
 ### worker
 

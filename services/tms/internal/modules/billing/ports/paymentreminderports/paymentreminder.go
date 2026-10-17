@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -64,6 +65,16 @@ type SendNowResult struct {
 	TotalOverdue   string   `json:"totalOverdue"`
 }
 
+type SendNowPreview struct {
+	CustomerID        pulid.ID
+	CustomerName      string
+	CurrencyCode      string
+	InvoiceNumbers    []string
+	TotalOverdue      string
+	OldestDaysPastDue int
+	Email             *emailports.PlannedEmail
+}
+
 type Service interface {
 	SendDue(ctx context.Context, control *tenant.BillingControl, now int64) (*SweepResult, error)
 	SendNow(
@@ -71,4 +82,9 @@ type Service interface {
 		req *SendNowRequest,
 		actor *permissionports.RequestActor,
 	) ([]*SendNowResult, error)
+	PreviewSendNow(
+		ctx context.Context,
+		req *SendNowRequest,
+		actor *permissionports.RequestActor,
+	) ([]*SendNowPreview, error)
 }

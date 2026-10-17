@@ -199,6 +199,80 @@ func (s *Service) SendNow(
 	req *paymentreminderports.SendNowRequest,
 	actor *permissionports.RequestActor,
 ) ([]*paymentreminderports.SendNowResult, error) {
+	batch, err := s.prepareSendNow(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*paymentreminderports.SendNowResult, 0, len(batch.reminders))
+	for _, rem := range batch.reminders {
+		sent, sendErr := s.send(ctx, batch.from, rem)
+		if sendErr != nil {
+			return nil, sendErr
+		}
+		if len(sent) == 0 {
+			return nil, errNoRecipients(rem.customer)
+		}
+		results = append(results, &paymentreminderports.SendNowResult{
+			SentTo:         sent,
+			InvoiceNumbers: invoiceNumbers(rem.listed),
+			TotalOverdue:   money.FormatMinor(openTotal(rem.listed), rem.currency),
+		})
+	}
+	slices.SortFunc(results, func(a, b *paymentreminderports.SendNowResult) int {
+		return strings.Compare(a.TotalOverdue, b.TotalOverdue)
+	})
+	return results, nil
+}
+
+func (s *Service) PreviewSendNow(
+	ctx context.Context,
+	req *paymentreminderports.SendNowRequest,
+	actor *permissionports.RequestActor,
+) ([]*paymentreminderports.SendNowPreview, error) {
+	batch, err := s.prepareSendNow(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	recipients := batch.customer.EmailProfile.Recipients()
+	previews := make([]*paymentreminderports.SendNowPreview, 0, len(batch.reminders))
+	for _, rem := range batch.reminders {
+		rendered, renderErr := s.render(ctx, batch.from, rem)
+		if renderErr != nil {
+			return nil, renderErr
+		}
+		previews = append(previews, &paymentreminderports.SendNowPreview{
+			CustomerID:        rem.customer.ID,
+			CustomerName:      rem.customer.DisplayName(),
+			CurrencyCode:      rem.currency,
+			InvoiceNumbers:    invoiceNumbers(rem.listed),
+			TotalOverdue:      money.FormatMinor(openTotal(rem.listed), rem.currency),
+			OldestDaysPastDue: oldestDaysPastDue(rem.listed, rem.asOf),
+			Email: &emailports.PlannedEmail{
+				To:                recipients.To,
+				CC:                recipients.CC,
+				BCC:               recipients.BCC,
+				Subject:           rendered.Subject,
+				Text:              rendered.Text,
+				TemplateVersionID: pulid.ConvertFromPtr(rendered.VersionID),
+			},
+		})
+	}
+	return previews, nil
+}
+
+type manualBatch struct {
+	customer  *customer.Customer
+	from      *sender
+	reminders []*reminder
+}
+
+func (s *Service) prepareSendNow(
+	ctx context.Context,
+	req *paymentreminderports.SendNowRequest,
+	actor *permissionports.RequestActor,
+) (*manualBatch, error) {
 	note := strings.TrimSpace(req.Note)
 	if len(note) > maxNoteLength {
 		return nil, errortypes.NewValidationError(
@@ -236,6 +310,9 @@ func (s *Service) SendNow(
 			cus.DisplayName(),
 		)
 	}
+	if len(cus.EmailProfile.Recipients().To) == 0 {
+		return nil, errNoRecipients(cus)
+	}
 
 	control, err := s.billingControls.GetByOrgID(ctx, req.TenantInfo.OrgID)
 	if err != nil {
@@ -250,38 +327,45 @@ func (s *Service) SendNow(
 		return nil, err
 	}
 
-	results := make([]*paymentreminderports.SendNowResult, 0, 1)
-	for currency, listed := range byCurrency(invoices) {
-		rem := &reminder{
+	grouped := byCurrency(invoices)
+	codes := make([]string, 0, len(grouped))
+	for code := range grouped {
+		codes = append(codes, code)
+	}
+	slices.Sort(codes)
+	batch := &manualBatch{
+		customer:  cus,
+		from:      from,
+		reminders: make([]*reminder, 0, len(codes)),
+	}
+	for _, code := range codes {
+		batch.reminders = append(batch.reminders, &reminder{
 			customer: cus,
-			currency: currency,
-			listed:   listed,
+			currency: code,
+			listed:   grouped[code],
 			steps:    map[pulid.ID]int{},
 			note:     note,
 			manual:   true,
 			sentBy:   actorID,
 			asOf:     now,
-		}
-		sent, sendErr := s.send(ctx, from, rem)
-		if sendErr != nil {
-			return nil, sendErr
-		}
-		if len(sent) == 0 {
-			return nil, errortypes.NewBusinessError(
-				"{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.",
-				cus.DisplayName(),
-			)
-		}
-		results = append(results, &paymentreminderports.SendNowResult{
-			SentTo:         sent,
-			InvoiceNumbers: invoiceNumbers(listed),
-			TotalOverdue:   money.FormatMinor(openTotal(listed), currency),
 		})
 	}
-	slices.SortFunc(results, func(a, b *paymentreminderports.SendNowResult) int {
-		return strings.Compare(a.TotalOverdue, b.TotalOverdue)
-	})
-	return results, nil
+	return batch, nil
+}
+
+func errNoRecipients(cus *customer.Customer) error {
+	return errortypes.NewBusinessError(
+		"{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.",
+		cus.DisplayName(),
+	)
+}
+
+func oldestDaysPastDue(invoices []*paymentreminderports.OverdueInvoice, asOf int64) int {
+	oldest := 0
+	for _, inv := range invoices {
+		oldest = max(oldest, paymentreminder.DaysPastDue(inv.DueDate, asOf))
+	}
+	return oldest
 }
 
 // send queues the reminder and records what it covered. The email's
@@ -295,14 +379,7 @@ func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]stri
 		return nil, nil
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo:  from.tenant,
-		Kind:        documenttemplate.KindPaymentReminderEmail,
-		CustomerID:  &rem.customer.ID,
-		Data:        templateContext(from, rem),
-		ReferenceID: rem.customer.ID,
-		UserID:      rem.sentBy,
-	})
+	rendered, err := s.render(ctx, from, rem)
 	if err != nil {
 		return nil, err
 	}
@@ -332,6 +409,21 @@ func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]stri
 		return nil, err
 	}
 	return recipients.To, nil
+}
+
+func (s *Service) render(
+	ctx context.Context,
+	from *sender,
+	rem *reminder,
+) (*documenttemplateports.RenderedMessage, error) {
+	return s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
+		TenantInfo:  from.tenant,
+		Kind:        documenttemplate.KindPaymentReminderEmail,
+		CustomerID:  &rem.customer.ID,
+		Data:        templateContext(from, rem),
+		ReferenceID: rem.customer.ID,
+		UserID:      rem.sentBy,
+	})
 }
 
 // logActivity writes the reminder into the customer's collections history,

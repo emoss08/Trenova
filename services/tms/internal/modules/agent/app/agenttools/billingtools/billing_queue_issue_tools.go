@@ -1,0 +1,647 @@
+package billingtools
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+const (
+	toolReleaseBillingQueueItem  = "release_billing_queue_item"
+	toolResolveBillingQueueIssue = "resolve_billing_queue_issue"
+	toolUndoBillingQueueIssue    = "undo_billing_queue_issue"
+	toolGetBillingQueueItem      = "get_billing_queue_item"
+	toolListBillingQueueItems    = "list_billing_queue_items"
+	paramIssueID                 = "issueId"
+	paramOptionKey               = "optionKey"
+	checkStateOpen               = "Open"
+	checkStateSettled            = "Settled"
+	maxOptionKeyChars            = 30
+)
+
+type queueItemReader interface {
+	GetByID(
+		ctx context.Context,
+		req *billingqueueports.GetBillingQueueItemByIDRequest,
+	) (*billingqueue.BillingQueueItem, error)
+}
+
+type queueReviewer interface {
+	Release(
+		ctx context.Context,
+		req *billingqueueports.BillingQueueItemRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueue.BillingQueueItem, error)
+	ResolveIssue(
+		ctx context.Context,
+		req *billingqueueports.ResolveBillingQueueIssueRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueue.BillingQueueItem, error)
+	UndoIssue(
+		ctx context.Context,
+		req *billingqueueports.UndoBillingQueueIssueRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueue.BillingQueueItem, error)
+	PlanResolveIssue(
+		ctx context.Context,
+		req *billingqueueports.ResolveBillingQueueIssueRequest,
+	) (*billingqueueports.IssueSettlementPlan, error)
+	PlanUndoIssue(
+		ctx context.Context,
+		req *billingqueueports.UndoBillingQueueIssueRequest,
+	) (*billingqueueports.IssueSettlementPlan, error)
+}
+
+func queueItemProperty() map[string]any {
+	return agenttoolschema.OfKinds(map[string]any{
+		toolschema.KeyType: toolschema.TypeString,
+		toolschema.KeyDescription: "The billing queue item, from list_billing_queue_items, " +
+			"get_billing_queue_item or this run's subject. Never guess one.",
+	}, permission.KindBillingQueueItem)
+}
+
+func issueProperty() map[string]any {
+	return common.StringProperty("The check, by the id get_billing_queue_item lists under the "+
+		"item's issues. Never guess one.", 0)
+}
+
+func queueTarget(params map[string]any) (agentports.ToolTarget, bool) {
+	return common.TargetOf(params, common.ParamBillingQueueItemID, permission.ResourceBillingQueue)
+}
+
+type releasePlan struct {
+	before *billingqueue.BillingQueueItem
+	after  *billingqueue.BillingQueueItem
+}
+
+func NewReleaseBillingQueueItemTool(
+	items common.BillingQueueDecider,
+	review billingqueueports.BillingQueueReviewService,
+) agentports.AgentTool {
+	return newReleaseBillingQueueItemTool(items, review)
+}
+
+func newReleaseBillingQueueItemTool(
+	items queueItemReader,
+	review queueReviewer,
+) agentports.AgentTool {
+	return common.NewReportingReceivableTool(
+		&common.ReceivableSpec{
+			Name: toolReleaseBillingQueueItem,
+			Recipe: []string{
+				toolListBillingQueueItems,
+				toolGetBillingQueueItem,
+				toolReleaseBillingQueueItem,
+			},
+			Description: "Take a billing queue item off hold and back to the status the hold " +
+				"found it in, the counterpart of hold_billing_queue_item. A hold was put on for " +
+				"a reason: read the item's review notes with get_billing_queue_item and release " +
+				"it only when the record shows that what it waited on has arrived, never because " +
+				"nothing looks wrong.",
+			Resource:    permission.ResourceBillingQueue,
+			Operation:   permission.OpUpdate,
+			Egress:      agent.EgressInternal,
+			DefaultTier: agent.TierPropose,
+			MaxTier:     agent.TierActWithApproval,
+			Reversible:  true,
+			TaintHold: "What the hold waited on is what outside text would claim has arrived, " +
+				"so a run that has read it proposes the release rather than making it.",
+			Rationale: "Moves an item back into the review queue inside Trenova; it creates no " +
+				"money and hold_billing_queue_item puts it back on hold.",
+			Target:   queueTarget,
+			Artifact: billingQueueRecordEntity,
+			Properties: map[string]any{
+				common.ParamBillingQueueItemID: queueItemProperty(),
+			},
+			Required:    []string{common.ParamBillingQueueItemID},
+			SearchTerms: []string{"release hold", "take off hold", "unhold billing"},
+		},
+		common.ReceivablePlan[*billingqueueports.BillingQueueItemRequest, *releasePlan]{
+			Request: func(
+				params *agentports.ToolExecuteParams,
+			) (*billingqueueports.BillingQueueItemRequest, error) {
+				itemID, err := common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+				if err != nil {
+					return nil, err
+				}
+				return &billingqueueports.BillingQueueItemRequest{
+					ItemID:     itemID,
+					TenantInfo: common.TenantFrom(*params),
+				}, nil
+			},
+			Plan: func(
+				ctx context.Context,
+				req *billingqueueports.BillingQueueItemRequest,
+				params *agentports.ToolExecuteParams,
+			) (*releasePlan, error) {
+				return planRelease(ctx, items, req, params.Actor)
+			},
+			Refused: func(*billingqueueports.BillingQueueItemRequest) string {
+				return "Would take the billing queue item off hold."
+			},
+			Render: func(
+				_ *billingqueueports.BillingQueueItemRequest,
+				plan *releasePlan,
+			) (*agent.ToolPreview, error) {
+				changed, err := toolpreview.Changed(
+					common.QueueRecord(plan.before),
+					plan.before,
+					plan.after,
+					toolpreview.Only(common.FieldStatus, "holdReasonCode", fieldReviewStartedAt),
+					toolpreview.Volatile(decisionVolatile...),
+					toolpreview.WithRefs(decisionRefs),
+				)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf(
+					"Would take billing queue item %s off hold and back to %s.",
+					plan.before.Number,
+					plan.after.Status,
+				), changed), nil
+			},
+			Run: func(
+				ctx context.Context,
+				req *billingqueueports.BillingQueueItemRequest,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				released, err := review.Release(ctx, req, params.Actor)
+				if err != nil {
+					return nil, err
+				}
+				return queueItemResult("released", released), nil
+			},
+		},
+	)
+}
+
+func planRelease(
+	ctx context.Context,
+	items queueItemReader,
+	req *billingqueueports.BillingQueueItemRequest,
+	actor *permissionports.RequestActor,
+) (*releasePlan, error) {
+	item, err := items.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:     req.ItemID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	target, err := billingqueueservice.ReleaseTarget(item)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *item
+	statusReq := &billingqueueports.UpdateBillingQueueStatusRequest{
+		ItemID:     req.ItemID,
+		NewStatus:  target,
+		TenantInfo: req.TenantInfo,
+	}
+	plan := billingqueueservice.PlanStatusChange
+	if actor.IsAgent() && !billingqueueservice.AgentMayMoveTo(target) {
+		plan = billingqueueservice.PlanTransition
+	}
+	if err = plan(&after, statusReq, actor, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
+	multiErr := errortypes.NewMultiError()
+	billingqueueservice.CheckStatusFields(&after, multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return &releasePlan{before: item, after: &after}, nil
+}
+
+func queueItemResult(
+	action string,
+	item *billingqueue.BillingQueueItem,
+) *agent.ToolExecutionResult {
+	return &agent.ToolExecutionResult{
+		Action: action,
+		Kind:   "billing queue item",
+		Name:   item.Number,
+		IDs:    map[string]string{common.ParamBillingQueueItemID: item.ID.String()},
+		Record: &agent.RecordRef{EntityType: billingQueueRecordEntity, ID: item.ID.String()},
+		State:  string(item.Status),
+	}
+}
+
+type queueCheckView struct {
+	Check      string `json:"check"`
+	State      string `json:"state"`
+	Resolution string `json:"resolution,omitempty"`
+}
+
+type queueChargeView struct {
+	Method string `json:"method"`
+	Amount string `json:"amount"`
+	Unit   int16  `json:"unit"`
+}
+
+var queueCheckLabels = map[string]string{
+	"check":      "Check",
+	"state":      "State",
+	"resolution": "Settled as",
+	"method":     "Method",
+	"amount":     "Amount",
+	"unit":       "Units",
+}
+
+func checkViewOf(issue *billingqueue.Issue) *queueCheckView {
+	view := &queueCheckView{Check: issue.Summary, State: checkStateOpen}
+	if issue.Settled() {
+		view.State = checkStateSettled
+		view.Resolution = issue.ResolutionText
+	}
+
+	return view
+}
+
+func chargeViewOf(charge *shipment.AdditionalCharge) *queueChargeView {
+	return &queueChargeView{
+		Method: string(charge.Method),
+		Amount: charge.Amount.StringFixed(2),
+		Unit:   charge.Unit,
+	}
+}
+
+func chargeLabel(item *billingqueue.BillingQueueItem, chargeID pulid.ID) string {
+	if item.Review != nil && item.Review.Charges != nil && chargeID.IsNotNil() {
+		for _, line := range item.Review.Charges.Lines {
+			if line != nil && line.AdditionalChargeID == chargeID && line.Label != "" {
+				return line.Label
+			}
+		}
+	}
+
+	return "Accessorial charge"
+}
+
+func checkRecord(plan *billingqueueports.IssueSettlementPlan) toolpreview.Record {
+	record := common.QueueRecord(plan.Item)
+	record.Label = plan.Item.Number + " · " + plan.Issue.Summary
+
+	return record
+}
+
+func chargeChange(plan *billingqueueports.IssueSettlementPlan) (*agent.RecordChange, error) {
+	before, after := plan.ChargeBefore, plan.ChargeAfter
+	if before == nil && after == nil {
+		return nil, nil //nolint:nilnil // the choice changes no charge
+	}
+
+	chargeID := pulid.Nil
+	if before != nil {
+		chargeID = before.ID
+	}
+	record := toolpreview.Record{
+		Resource: permission.ResourceShipment,
+		ID:       plan.Item.ShipmentID,
+		Label:    chargeLabel(plan.Item, chargeID) + " on " + common.ShipmentLabel(plan.Item),
+	}
+	opts := []toolpreview.Option{toolpreview.Labels(queueCheckLabels)}
+	switch {
+	case after == nil:
+		return toolpreview.Delete(record, chargeViewOf(before), opts...)
+	case before == nil:
+		return toolpreview.Create(record, chargeViewOf(after), opts...)
+	default:
+		return toolpreview.Changed(record, chargeViewOf(before), chargeViewOf(after), opts...)
+	}
+}
+
+func chargeClause(plan *billingqueueports.IssueSettlementPlan) string {
+	before, after := plan.ChargeBefore, plan.ChargeAfter
+	switch {
+	case before != nil && after == nil:
+		return fmt.Sprintf(", removing the %s from the shipment",
+			strings.ToLower(chargeLabel(plan.Item, before.ID)))
+	case before == nil && after != nil:
+		return fmt.Sprintf(", putting the removed charge back on the shipment at %s",
+			after.Amount.StringFixed(2))
+	case before != nil && after != nil:
+		return fmt.Sprintf(", changing the %s from %s to %s",
+			strings.ToLower(chargeLabel(plan.Item, before.ID)),
+			before.Amount.StringFixed(2),
+			after.Amount.StringFixed(2))
+	default:
+		return ""
+	}
+}
+
+func classifyIssueOption(
+	params agentports.ToolExecuteParams, //nolint:gocritic // Classify passes params by value
+) agentports.CallPolicy {
+	if strings.TrimSpace(common.OptionalString(params.Params, paramOptionKey)) ==
+		billingqueue.OptionKeyRequest {
+		return agentports.CallPolicy{Egress: agent.EgressDriverVisible}
+	}
+
+	return agentports.CallPolicy{Egress: agent.EgressMoney}
+}
+
+func NewResolveBillingQueueIssueTool(
+	review billingqueueports.BillingQueueReviewService,
+) agentports.AgentTool {
+	return newResolveBillingQueueIssueTool(review)
+}
+
+func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
+	return common.NewReportingReceivableTool(
+		&common.ReceivableSpec{
+			Name:          toolResolveBillingQueueIssue,
+			Recipe:        []string{toolGetBillingQueueItem, toolResolveBillingQueueIssue},
+			Prerequisites: []string{toolGetBillingQueueItem},
+			Description: "Propose settling one of a billing queue item's flagged checks with " +
+				"one of the choices that check offers. A choice bills a charge as it stands, " +
+				"takes it off, reprices it, bills without the paperwork, or asks the driver for " +
+				"a signed POD. " +
+				"get_billing_queue_item lists each check's issueId and its options with their " +
+				"optionKey; use them exactly. Settling can change what the customer is charged, " +
+				"so a person always decides, and asking the driver settles nothing until the " +
+				"paperwork arrives.",
+			Resource:    permission.ResourceBillingQueue,
+			Operation:   permission.OpUpdate,
+			Egress:      agent.EgressMoney,
+			AlsoEgress:  []agent.EgressClass{agent.EgressDriverVisible},
+			Classify:    classifyIssueOption,
+			DefaultTier: agent.TierPropose,
+			MaxTier:     agent.TierPropose,
+			PersonOnly:  true,
+			Reversible:  true,
+			Rationale: "Decides what a customer is billed for a flagged charge, or messages " +
+				"the driver for paperwork, so only a person settles it; undo_billing_queue_issue " +
+				"takes it back.",
+			Target:   queueTarget,
+			Artifact: billingQueueRecordEntity,
+			Properties: map[string]any{
+				common.ParamBillingQueueItemID: queueItemProperty(),
+				paramIssueID:                   issueProperty(),
+				paramOptionKey: common.StringProperty(
+					"The optionKey of the choice, exactly as get_billing_queue_item lists it "+
+						"under the check.",
+					maxOptionKeyChars,
+				),
+			},
+			Required: []string{
+				common.ParamBillingQueueItemID,
+				paramIssueID,
+				paramOptionKey,
+			},
+			SearchTerms: []string{
+				"settle check",
+				"billing issue",
+				"flagged charge",
+				"resolve issue",
+			},
+		},
+		common.ReceivablePlan[
+			*billingqueueports.ResolveBillingQueueIssueRequest,
+			*billingqueueports.IssueSettlementPlan,
+		]{
+			Request: func(
+				params *agentports.ToolExecuteParams,
+			) (*billingqueueports.ResolveBillingQueueIssueRequest, error) {
+				itemID, issueID, err := queueIssueIDs(params)
+				if err != nil {
+					return nil, err
+				}
+				optionKey, err := common.RequireBoundedText(
+					params.Params,
+					paramOptionKey,
+					maxOptionKeyChars,
+				)
+				if err != nil {
+					return nil, err
+				}
+				return &billingqueueports.ResolveBillingQueueIssueRequest{
+					ItemID:     itemID,
+					IssueID:    issueID,
+					OptionKey:  optionKey,
+					TenantInfo: common.TenantFrom(*params),
+				}, nil
+			},
+			Plan: func(
+				ctx context.Context,
+				req *billingqueueports.ResolveBillingQueueIssueRequest,
+				_ *agentports.ToolExecuteParams,
+			) (*billingqueueports.IssueSettlementPlan, error) {
+				return review.PlanResolveIssue(ctx, req)
+			},
+			Refused: func(*billingqueueports.ResolveBillingQueueIssueRequest) string {
+				return "Would settle a flagged check on the billing queue item."
+			},
+			Render: renderResolveIssue,
+			Run: func(
+				ctx context.Context,
+				req *billingqueueports.ResolveBillingQueueIssueRequest,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				item, err := review.ResolveIssue(ctx, req, params.Actor)
+				if err != nil {
+					return nil, err
+				}
+				return queueItemResult("settled", item), nil
+			},
+		},
+	)
+}
+
+func queueIssueIDs(params *agentports.ToolExecuteParams) (itemID, issueID pulid.ID, err error) {
+	itemID, err = common.RequirePulid(params.Params, common.ParamBillingQueueItemID)
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+	if issueID, err = common.RequirePulid(params.Params, paramIssueID); err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+
+	return itemID, issueID, nil
+}
+
+func renderResolveIssue(
+	_ *billingqueueports.ResolveBillingQueueIssueRequest,
+	plan *billingqueueports.IssueSettlementPlan,
+) (*agent.ToolPreview, error) {
+	changes := make([]*agent.RecordChange, 0, 2)
+	if plan.Option.Effect.Kind == billingqueue.EffectRequest {
+		summary := fmt.Sprintf("Would ask the driver on billing queue item %s's shipment for a "+
+			"signed POD; the check stays open until the paperwork arrives.", plan.Item.Number)
+		if !plan.AsksDriver {
+			return toolpreview.Build(summary), nil
+		}
+		changes = append(changes, toolpreview.Send(toolpreview.Record{
+			Resource: permission.ResourceShipment,
+			ID:       plan.Item.ShipmentID,
+			Label:    driverLabel(plan.DriverName),
+		}, &agent.MessagePreview{
+			Channel: agent.MessageChannelDash,
+			Subject: plan.DriverMessageTitle,
+			Body:    plan.DriverMessage,
+		}))
+		return toolpreview.Build(summary, changes...), nil
+	}
+
+	settled := *plan.Issue
+	key := plan.Option.Key
+	settled.ResolutionKey = &key
+	settled.ResolutionText = plan.Option.Done
+	check, err := toolpreview.Changed(
+		checkRecord(plan),
+		checkViewOf(plan.Issue),
+		checkViewOf(&settled),
+		toolpreview.Labels(queueCheckLabels),
+	)
+	if err != nil {
+		return nil, err
+	}
+	changes = append(changes, check)
+	charge, err := chargeChange(plan)
+	if err != nil {
+		return nil, err
+	}
+	if charge != nil {
+		changes = append(changes, charge)
+	}
+
+	summary := fmt.Sprintf("Would settle %q on billing queue item %s as %q%s.",
+		plan.Issue.Summary, plan.Item.Number, plan.Option.Label, chargeClause(plan))
+
+	return toolpreview.Build(summary, changes...), nil
+}
+
+func driverLabel(name string) string {
+	if name == "" {
+		return "Message to the driver"
+	}
+
+	return "Message to " + name
+}
+
+func NewUndoBillingQueueIssueTool(
+	review billingqueueports.BillingQueueReviewService,
+) agentports.AgentTool {
+	return newUndoBillingQueueIssueTool(review)
+}
+
+func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
+	return common.NewReportingReceivableTool(
+		&common.ReceivableSpec{
+			Name:          toolUndoBillingQueueIssue,
+			Recipe:        []string{toolGetBillingQueueItem, toolUndoBillingQueueIssue},
+			Prerequisites: []string{toolGetBillingQueueItem},
+			Description: "Propose taking back how one of a billing queue item's checks was " +
+				"settled. The check is open again and any charge the settlement removed or " +
+				"repriced is put back as it was. get_billing_queue_item lists each check's " +
+				"issueId and whether its settlement can be undone; only a settled check on an " +
+				"item still in review can be. It can change what the customer is charged, so a " +
+				"person always decides.",
+			Resource:    permission.ResourceBillingQueue,
+			Operation:   permission.OpUpdate,
+			Egress:      agent.EgressMoney,
+			DefaultTier: agent.TierPropose,
+			MaxTier:     agent.TierPropose,
+			PersonOnly:  true,
+			Reversible:  true,
+			Rationale: "Puts back a charge a settlement removed or repriced, which changes what " +
+				"the customer is billed, so only a person decides.",
+			Target:   queueTarget,
+			Artifact: billingQueueRecordEntity,
+			Properties: map[string]any{
+				common.ParamBillingQueueItemID: queueItemProperty(),
+				paramIssueID:                   issueProperty(),
+			},
+			Required:    []string{common.ParamBillingQueueItemID, paramIssueID},
+			SearchTerms: []string{"undo settlement", "reopen check", "undo billing issue"},
+		},
+		common.ReceivablePlan[
+			*billingqueueports.UndoBillingQueueIssueRequest,
+			*billingqueueports.IssueSettlementPlan,
+		]{
+			Request: func(
+				params *agentports.ToolExecuteParams,
+			) (*billingqueueports.UndoBillingQueueIssueRequest, error) {
+				itemID, issueID, err := queueIssueIDs(params)
+				if err != nil {
+					return nil, err
+				}
+				return &billingqueueports.UndoBillingQueueIssueRequest{
+					ItemID:     itemID,
+					IssueID:    issueID,
+					TenantInfo: common.TenantFrom(*params),
+				}, nil
+			},
+			Plan: func(
+				ctx context.Context,
+				req *billingqueueports.UndoBillingQueueIssueRequest,
+				_ *agentports.ToolExecuteParams,
+			) (*billingqueueports.IssueSettlementPlan, error) {
+				return review.PlanUndoIssue(ctx, req)
+			},
+			Refused: func(*billingqueueports.UndoBillingQueueIssueRequest) string {
+				return "Would undo how a check on the billing queue item was settled."
+			},
+			Render: renderUndoIssue,
+			Run: func(
+				ctx context.Context,
+				req *billingqueueports.UndoBillingQueueIssueRequest,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				item, err := review.UndoIssue(ctx, req, params.Actor)
+				if err != nil {
+					return nil, err
+				}
+				return queueItemResult("reopened", item), nil
+			},
+		},
+	)
+}
+
+func renderUndoIssue(
+	_ *billingqueueports.UndoBillingQueueIssueRequest,
+	plan *billingqueueports.IssueSettlementPlan,
+) (*agent.ToolPreview, error) {
+	reopened := *plan.Issue
+	reopened.ResolutionKey = nil
+	reopened.ResolutionText = ""
+	check, err := toolpreview.Changed(
+		checkRecord(plan),
+		checkViewOf(plan.Issue),
+		checkViewOf(&reopened),
+		toolpreview.Labels(queueCheckLabels),
+	)
+	if err != nil {
+		return nil, err
+	}
+	changes := []*agent.RecordChange{check}
+	charge, err := chargeChange(plan)
+	if err != nil {
+		return nil, err
+	}
+	if charge != nil {
+		changes = append(changes, charge)
+	}
+
+	return toolpreview.Build(fmt.Sprintf("Would reopen %q on billing queue item %s, undoing %q%s.",
+		plan.Issue.Summary, plan.Item.Number, plan.Issue.ResolutionText, chargeClause(plan)),
+		changes...), nil
+}

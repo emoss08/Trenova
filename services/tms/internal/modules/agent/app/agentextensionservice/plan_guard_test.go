@@ -12,12 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestActiveExtensionsOffersNothingThePlanRestricts(t *testing.T) {
+func TestActiveCapabilitiesOfferNothingThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)}
+	f := newFixture(t)
+	f.enable(t, map[string]string{"apiKey": testAPIKey})
+	f.svc.plans = plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)
 
-	active, err := svc.ActiveExtensions(t.Context(), plantest.Tenant())
+	active, err := f.svc.ActiveCapabilities(t.Context(), f.tenant)
 
 	require.NoError(t, err)
 	assert.Empty(t, active)
@@ -37,12 +39,12 @@ func TestUpdateConfigRefusesEnablingWebSearchThePlanRestricts(t *testing.T) {
 	require.True(t, errortypes.IsPlanRestrictionError(err))
 }
 
-func TestRuntimeTellsTheAgentWebSearchIsNotOnThePlan(t *testing.T) {
+func TestServingTellsTheAgentWebResearchIsNotOnThePlan(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)}
 
-	settings, err := svc.runtime(t.Context(), plantest.Tenant(), agentextension.TypeExa, true)
+	settings, err := svc.serving(t.Context(), plantest.Tenant(), agentextension.CapabilityWebResearch)
 
 	require.Nil(t, settings)
 	require.True(t, IsToolError(err))

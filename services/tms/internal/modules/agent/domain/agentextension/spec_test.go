@@ -9,26 +9,113 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEveryTypeHasASpec(t *testing.T) {
+func TestEveryTypeHasASpecOnAKnownCapability(t *testing.T) {
 	t.Parallel()
 
 	for _, typ := range agentextension.AllTypes() {
 		spec, ok := agentextension.SpecFor(typ)
 		require.True(t, ok, typ)
-		assert.NotEmpty(t, spec.Tools, typ)
+		require.True(t, spec.Capability.IsValid(), typ)
+		assert.NotNil(t, spec.Validate, typ)
+		assert.NotEmpty(t, spec.Tools(), typ)
+		assert.Contains(t, agentextension.TypesFor(spec.Capability), typ)
+
+		keys := make(map[string]bool, len(spec.Fields))
+		for _, field := range spec.Fields {
+			keys[field.Key] = true
+		}
+		assert.True(t, keys[agentextension.ConfigKeyAPIKey], "%s needs an API key field", typ)
+		assert.True(t, keys[agentextension.ConfigKeyDailyRequestLimit],
+			"%s needs a daily request limit so metering applies", typ)
+	}
+}
+
+func TestEveryToolBelongsToOneCapability(t *testing.T) {
+	t.Parallel()
+
+	owners := make(map[string]agentextension.Capability)
+	for _, capability := range agentextension.AllCapabilities() {
+		spec, ok := agentextension.CapabilitySpecFor(capability)
+		require.True(t, ok, capability)
+		assert.NotEmpty(t, spec.Unchecked, capability)
+		assert.NotEmpty(t, spec.RequestNoun, capability)
 		for _, tool := range spec.Tools {
-			owner, found := agentextension.ExtensionForTool(tool)
+			previous, taken := owners[tool]
+			assert.False(t, taken, "%s is claimed by %s and %s", tool, previous, capability)
+			owners[tool] = capability
+
+			owner, found := agentextension.CapabilityForTool(tool)
 			assert.True(t, found, tool)
-			assert.Equal(t, typ, owner, tool)
+			assert.Equal(t, capability, owner, tool)
 		}
 	}
 }
 
-func TestExtensionForToolIgnoresOtherTools(t *testing.T) {
+func TestCapabilityForToolIgnoresOtherTools(t *testing.T) {
 	t.Parallel()
 
-	_, found := agentextension.ExtensionForTool("get_shipment")
+	_, found := agentextension.CapabilityForTool("get_shipment")
 	assert.False(t, found)
+	assert.False(t, agentextension.IsExtensionTool("get_shipment"))
+	assert.False(t, agentextension.ReturnsExternalContent("get_shipment"))
+	assert.True(t, agentextension.ReturnsExternalContent(agentextension.ToolWebSearch))
+}
+
+func readyExa(availability agentextension.Availability) *agentextension.Extension {
+	return &agentextension.Extension{
+		Type:          agentextension.TypeExa,
+		Enabled:       true,
+		Availability:  availability,
+		Configuration: map[string]any{agentextension.ConfigKeyAPIKey: "sealed"},
+	}
+}
+
+func TestActiveFromNeedsOnAndSetUp(t *testing.T) {
+	t.Parallel()
+
+	off := readyExa(agentextension.AvailabilityAllAgents)
+	off.Enabled = false
+	assert.Empty(t, agentextension.ActiveFrom([]*agentextension.Extension{off}))
+
+	unset := readyExa(agentextension.AvailabilityAllAgents)
+	unset.Configuration = map[string]any{}
+	assert.Empty(t, agentextension.ActiveFrom([]*agentextension.Extension{unset}))
+
+	active := agentextension.ActiveFrom(
+		[]*agentextension.Extension{readyExa(agentextension.AvailabilitySelectedAgents)},
+	)
+	assert.Equal(t, agentextension.ActiveExtension{
+		Type:         agentextension.TypeExa,
+		Availability: agentextension.AvailabilitySelectedAgents,
+	}, active[agentextension.CapabilityWebResearch])
+}
+
+func TestActiveOffersGrantsAndServes(t *testing.T) {
+	t.Parallel()
+
+	none := agentextension.Active{}
+	assert.True(t, none.Offers("get_shipment"))
+	assert.False(t, none.Offers(agentextension.ToolWebSearch))
+	assert.Empty(t, none.Grants())
+
+	chosen := agentextension.ActiveFrom(
+		[]*agentextension.Extension{readyExa(agentextension.AvailabilitySelectedAgents)},
+	)
+	assert.True(t, chosen.Offers(agentextension.ToolWebRead))
+	assert.Empty(t, chosen.Grants())
+	assert.False(t, chosen.GrantsEveryAgent(agentextension.ToolWebSearch))
+
+	everyone := agentextension.ActiveFrom(
+		[]*agentextension.Extension{readyExa(agentextension.AvailabilityAllAgents)},
+	)
+	assert.Equal(t,
+		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		everyone.Grants(),
+	)
+	assert.True(t, everyone.GrantsEveryAgent(agentextension.ToolWebRead))
+	served, ok := everyone.Serving(agentextension.ToolWebSearch)
+	require.True(t, ok)
+	assert.Equal(t, agentextension.TypeExa, served.Type)
 }
 
 func TestParseExaSettingsDefaults(t *testing.T) {
@@ -79,6 +166,19 @@ func TestParseExaSettingsRejectsBadValues(t *testing.T) {
 		"configuration.dailyRequestLimit",
 		"configuration.excludedDomains",
 	}, fields)
+}
+
+func TestValidateSettingsUsesTheTypesValidator(t *testing.T) {
+	t.Parallel()
+
+	multiErr := errortypes.NewMultiError()
+	agentextension.ValidateSettings(
+		agentextension.TypeExa,
+		map[string]string{"searchType": "exhaustive"},
+		multiErr,
+	)
+	require.True(t, multiErr.HasErrors())
+	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field)
 }
 
 func TestConfiguredNeedsTheAPIKey(t *testing.T) {

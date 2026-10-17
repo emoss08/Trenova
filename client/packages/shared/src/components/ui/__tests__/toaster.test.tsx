@@ -15,9 +15,7 @@ function titles() {
   return toastStore.getSnapshot().toasts.map((entry) => entry.title);
 }
 
-// The live regions repeat a toast's text for screen readers, so a toast is found by the
-// card its text sits in rather than by the text alone.
-function cardsOf(text: string): HTMLElement[] {
+function cardsWith(text: string): HTMLElement[] {
   return screen
     .queryAllByText(text)
     .map((element) => element.closest<HTMLElement>("[data-slot='toast']"))
@@ -25,7 +23,7 @@ function cardsOf(text: string): HTMLElement[] {
 }
 
 function cardOf(text: string): HTMLElement {
-  const cards = cardsOf(text);
+  const cards = cardsWith(text);
   expect(cards).toHaveLength(1);
   return cards[0] as HTMLElement;
 }
@@ -68,7 +66,7 @@ describe("Toaster", () => {
 
     expect(download).toHaveBeenCalledTimes(1);
     expect(titles()).toEqual([]);
-    await waitFor(() => expect(cardsOf("Aging report is ready")).toEqual([]));
+    await waitFor(() => expect(cardsWith("Aging report is ready")).toEqual([]));
   });
 
   it("stays open when the action prevents the default", async () => {

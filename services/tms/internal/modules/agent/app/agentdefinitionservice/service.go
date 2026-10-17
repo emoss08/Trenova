@@ -368,14 +368,14 @@ func (s *Service) activeExtensions(
 		return extensionState{}, nil
 	}
 
-	active, err := s.extensions.ActiveExtensions(ctx, tenantInfo)
+	active, err := s.extensions.ActiveCapabilities(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
 			"could not read which extensions are turned on",
 		).WithInternal(err)
 	}
 
-	return active, nil
+	return extensionState(active), nil
 }
 
 func (s *Service) EventKinds() []agent.EventDescriptor {

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
@@ -43,31 +42,52 @@ type Params struct {
 	Usage        agentextensionports.AgentExtensionUsageRepository
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
-	WebSearch    agentextensionports.WebSearchProvider
-	Plans        platformplanports.PlanService `optional:"true"`
+	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
+	Plans        platformplanports.PlanService            `                                   optional:"true"`
 }
 
 type Service struct {
-	l         *zap.Logger
-	repo      agentextensionports.AgentExtensionRepository
-	usage     agentextensionports.AgentExtensionUsageRepository
-	secrets   secretconfig.Codec
-	audit     auditports.AuditService
-	webSearch agentextensionports.WebSearchProvider
-	plans     platformplanports.PlanService
-	now       func() int64
+	l          *zap.Logger
+	repo       agentextensionports.AgentExtensionRepository
+	usage      agentextensionports.AgentExtensionUsageRepository
+	secrets    secretconfig.Codec
+	audit      auditports.AuditService
+	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
+	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
+	plans      platformplanports.PlanService
+	now        func() int64
 }
 
 func New(p Params) *Service {
+	connectors := make(
+		map[agentextension.Type]agentextensionports.ExtensionConnector,
+		len(p.Connectors),
+	)
+	webSearch := make(
+		map[agentextension.Type]agentextensionports.WebSearchProvider,
+		len(p.Connectors),
+	)
+	for _, connector := range p.Connectors {
+		if connector == nil {
+			continue
+		}
+		typ := connector.Type()
+		connectors[typ] = connector
+		if provider, ok := connector.(agentextensionports.WebSearchProvider); ok {
+			webSearch[typ] = provider
+		}
+	}
+
 	return &Service{
-		l:         p.Logger.Named("service.agentextension"),
-		repo:      p.Repo,
-		usage:     p.Usage,
-		secrets:   secretconfig.NewCodec(p.Encryption, p.Logger),
-		audit:     p.AuditService,
-		webSearch: p.WebSearch,
-		plans:     p.Plans,
-		now:       timeutils.NowUnix,
+		l:          p.Logger.Named("service.agentextension"),
+		repo:       p.Repo,
+		usage:      p.Usage,
+		secrets:    secretconfig.NewCodec(p.Encryption, p.Logger),
+		audit:      p.AuditService,
+		connectors: connectors,
+		webSearch:  webSearch,
+		plans:      p.Plans,
+		now:        timeutils.NowUnix,
 	}
 }
 
@@ -125,7 +145,13 @@ func (s *Service) ListCatalog(
 		if !ok {
 			continue
 		}
-		items = append(items, catalogItem(def, spec, byType[def.Type], usage[def.Type]))
+		item := catalogItem(def, spec, byType[def.Type], usage[def.Type])
+		if holder := enabledFor(installed, spec.Capability, def.Type); holder != nil {
+			if held, found := definitionFor(holder.Type); found {
+				item.CapabilityHeldBy = held.Vendor
+			}
+		}
+		items = append(items, item)
 	}
 
 	sort.SliceStable(items, func(i, j int) bool {
@@ -147,6 +173,7 @@ func catalogItem(
 	record *agentextension.Extension,
 	usage agentextension.UsageSummary,
 ) agentextensionports.AgentExtensionCatalogItem {
+	capability := capabilityDefinitions[spec.Capability]
 	item := agentextensionports.AgentExtensionCatalogItem{
 		Type:                def.Type,
 		Name:                def.Name,
@@ -155,12 +182,14 @@ func catalogItem(
 		Description:         def.Description,
 		Category:            def.Category,
 		CategoryLabel:       categoryLabels[def.Category],
+		Capability:          spec.Capability,
+		CapabilityLabel:     capability.Label,
 		BrandDomain:         def.BrandDomain,
 		DocsURL:             def.DocsURL,
 		WebsiteURL:          def.WebsiteURL,
 		PricingURL:          def.PricingURL,
 		Capabilities:        def.Capabilities,
-		Tools:               def.Tools,
+		Tools:               capability.Tools,
 		DataNotice:          def.DataNotice,
 		Featured:            def.Featured,
 		SortOrder:           def.SortOrder,
@@ -269,7 +298,7 @@ func (s *Service) UpdateConfig(
 
 	tenantInfo := req.TenantInfo
 	if req.Enabled {
-		if err = s.requireWebSearch(ctx, tenantInfo); err != nil {
+		if err = s.requirePlan(ctx, tenantInfo, spec.Capability); err != nil {
 			return nil, err
 		}
 	}
@@ -279,6 +308,11 @@ func (s *Service) UpdateConfig(
 	}
 	if err = checkVersion(existing, req.Version); err != nil {
 		return nil, err
+	}
+	if req.Enabled {
+		if err = s.checkCapabilityFree(ctx, tenantInfo, &def, spec); err != nil {
+			return nil, err
+		}
 	}
 
 	var existingConfig map[string]any
@@ -334,11 +368,62 @@ func (s *Service) UpdateConfig(
 		before:   existing,
 		after:    saved,
 		spec:     spec,
-		name:     def.Vendor + " " + def.Name,
+		name:     def.title(),
 		critical: existing == nil || existing.Enabled != saved.Enabled,
 	})
 
 	return configResponse(saved, spec), nil
+}
+
+func (s *Service) checkCapabilityFree(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	def *definition,
+	spec agentextension.Spec,
+) error {
+	installed, err := s.repo.ListByTenant(ctx, tenantInfo)
+	if err != nil {
+		return errortypes.NewBusinessError("failed to list extensions").WithInternal(err)
+	}
+
+	holder := enabledFor(installed, spec.Capability, def.Type)
+	if holder == nil {
+		return nil
+	}
+	held, ok := definitionFor(holder.Type)
+	if !ok {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"enabled",
+		errortypes.ErrInvalid,
+		"{0} is already on and gives agents the same tools. Turn it off before turning on {1}.",
+		held.Vendor,
+		def.Vendor,
+	)
+
+	return multiErr
+}
+
+func enabledFor(
+	installed []*agentextension.Extension,
+	capability agentextension.Capability,
+	except agentextension.Type,
+) *agentextension.Extension {
+	for _, typ := range agentextension.TypesFor(capability) {
+		if typ == except {
+			continue
+		}
+		for _, record := range installed {
+			if record.Type == typ && record.Enabled {
+				return record
+			}
+		}
+	}
+
+	return nil
 }
 
 func checkVersion(existing *agentextension.Extension, version int64) error {
@@ -479,68 +564,94 @@ func auditSnapshot(record *agentextension.Extension, spec agentextension.Spec) m
 	}
 }
 
-func (s *Service) ActiveExtensions(
+func (s *Service) ActiveCapabilities(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (map[agentextension.Type]agentextension.Availability, error) {
-	allowed, err := planservice.Allows(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityAgentWebSearch,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !allowed {
-		return map[agentextension.Type]agentextension.Availability{}, nil
-	}
-
+) (agentextension.Active, error) {
 	records, err := s.repo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	active := make(map[agentextension.Type]agentextension.Availability, len(records))
-	for _, record := range records {
-		spec, ok := agentextension.SpecFor(record.Type)
-		if !ok || !record.Ready(spec) {
-			continue
+	active := agentextension.ActiveFrom(records)
+	for capability := range active {
+		allowed, planErr := s.allows(ctx, tenantInfo, capability)
+		if planErr != nil {
+			return nil, planErr
 		}
-		active[record.Type] = record.Availability
+		if !allowed {
+			delete(active, capability)
+		}
 	}
 
 	return active, nil
 }
 
-type runtimeSettings struct {
-	values map[string]string
-	record *agentextension.Extension
+type extensionSettings struct {
+	typ       agentextension.Type
+	def       definition
+	values    map[string]string
+	connector agentextensionports.ExtensionConnector
 }
 
-func (s *Service) runtime(
+func (s *Service) serving(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	typ agentextension.Type,
-	requireEnabled bool,
-) (*runtimeSettings, error) {
-	spec, def, err := lookup(typ)
-	if err != nil {
-		return nil, err
-	}
-
-	allowed, err := planservice.Allows(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityAgentWebSearch,
-	)
+	capability agentextension.Capability,
+) (*extensionSettings, error) {
+	label := capabilityDefinitions[capability].Label
+	allowed, err := s.allows(ctx, tenantInfo, capability)
 	if err != nil {
 		return nil, err
 	}
 	if !allowed {
-		return nil, &ToolError{Message: def.Vendor + " " + def.Name + " is not included in this " +
-			"organization's plan."}
+		return nil, &ToolError{Message: label + " is not included in this organization's plan."}
+	}
+
+	records, err := s.repo.ListByTenant(ctx, tenantInfo)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to list extensions").WithInternal(err)
+	}
+
+	served, ok := agentextension.ActiveFrom(records)[capability]
+	if !ok {
+		if enabledFor(records, capability, "") != nil {
+			return nil, &ToolError{Message: label + " is not set up for this organization. " +
+				"An administrator can finish setting it up under AI Control, Extensions."}
+		}
+		for _, typ := range agentextension.TypesFor(capability) {
+			spec, _ := agentextension.SpecFor(typ)
+			for _, record := range records {
+				if record.Type == typ && spec.Configured(record.Configuration) {
+					return nil, &ToolError{Message: label + " is turned off for this " +
+						"organization. An administrator can turn it on under AI Control, Extensions."}
+				}
+			}
+		}
+		return nil, &ToolError{Message: label + " is not set up for this organization. An " +
+			"administrator can set it up under AI Control, Extensions."}
+	}
+
+	for _, record := range records {
+		if record.Type == served.Type {
+			return s.settingsOf(tenantInfo, record)
+		}
+	}
+
+	return nil, errortypes.NewBusinessError(
+		"failed to read the {0} extension",
+		served.Type.String(),
+	)
+}
+
+func (s *Service) settingsFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	typ agentextension.Type,
+) (*extensionSettings, error) {
+	spec, def, err := lookup(typ)
+	if err != nil {
+		return nil, err
 	}
 
 	record, err := s.find(ctx, tenantInfo, typ)
@@ -548,34 +659,66 @@ func (s *Service) runtime(
 		return nil, err
 	}
 	if record == nil || !spec.Configured(record.Configuration) {
-		return nil, &ToolError{Message: def.Vendor + " " + def.Name + " is not set up for this " +
-			"organization. An administrator can set it up under AI Control, Extensions."}
+		return nil, &ToolError{Message: def.title() + " is not set up for this organization. " +
+			"An administrator can set it up under AI Control, Extensions."}
 	}
-	if requireEnabled && !record.Enabled {
-		return nil, &ToolError{Message: def.Vendor + " " + def.Name + " is turned off for this " +
-			"organization. An administrator can turn it on under AI Control, Extensions."}
+
+	return s.settingsOf(tenantInfo, record)
+}
+
+func (s *Service) settingsOf(
+	tenantInfo pagination.TenantInfo,
+	record *agentextension.Extension,
+) (*extensionSettings, error) {
+	spec, def, err := lookup(record.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	connector, ok := s.connectors[record.Type]
+	if !ok {
+		return nil, errortypes.NewBusinessError(
+			"the {0} extension has no connector", record.Type.String(),
+		)
 	}
 
 	values, err := s.secrets.ReadAll(
 		record.Configuration,
 		spec.Fields,
-		secretScope(tenantInfo, typ),
+		secretScope(tenantInfo, record.Type),
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
-			"failed to read the {0} extension settings", typ.String(),
+			"failed to read the {0} extension settings", record.Type.String(),
 		).WithInternal(err)
 	}
 
-	return &runtimeSettings{values: values, record: record}, nil
+	return &extensionSettings{
+		typ:       record.Type,
+		def:       def,
+		values:    values,
+		connector: connector,
+	}, nil
 }
 
-func (s *Service) requireWebSearch(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+func (s *Service) allows(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	capability agentextension.Capability,
+) (bool, error) {
+	return planservice.Allows(ctx, s.plans, tenantInfo, capabilityDefinitions[capability].Plan)
+}
+
+func (s *Service) requirePlan(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	capability agentextension.Capability,
+) error {
 	return planservice.RequireCapability(
 		ctx,
 		s.plans,
 		tenantInfo,
-		platformplan.CapabilityAgentWebSearch,
+		capabilityDefinitions[capability].Plan,
 	)
 }
 
@@ -611,7 +754,9 @@ func (s *Service) reserve(ctx context.Context, call meteredCall) (int, error) {
 			WithInternal(err)
 	}
 	if !reserved {
-		return 0, &ToolError{Message: dailyLimitMessage(call.limit)}
+		spec, _ := agentextension.SpecFor(call.typ)
+		capability, _ := agentextension.CapabilitySpecFor(spec.Capability)
+		return 0, &ToolError{Message: dailyLimitMessage(capability, call.limit)}
 	}
 
 	return day, nil

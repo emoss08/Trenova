@@ -19661,7 +19661,7 @@
     ]
   },
   "Advanced": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -36784,6 +36784,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Basic": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Basic auth password": {
@@ -222935,15 +222944,6 @@
       "routes/agent-control"
     ]
   },
-  "Search depth must be auto, fast or deep": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Search driver or number": {
     "sites": 1,
     "scope": [
@@ -261321,6 +261321,15 @@
       "routes/random-testing"
     ]
   },
+  "The same web search agents already know — regulations, agency guidance, industry news — run on the organization's Parallel account. Parallel reads pages built with JavaScript and PDFs, and a fast search costs a fifth of a standard one. Turn it on in place of Exa; agents keep the same tools.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The same words, ignoring case and surrounding spaces.": {
     "sites": 1,
     "scope": [
@@ -289909,6 +289918,15 @@
       "go/other"
     ]
   },
+  "Web research": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Web search": {
     "sites": 1,
     "scope": [
@@ -289916,6 +289934,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Web search for agents from Parallel, the lowest-cost search an organization can bring.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Webhook Secret": {
@@ -309821,6 +309848,24 @@
       "apps/web/components"
     ]
   },
+  "the {0} extension cannot search the web": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "the {0} extension has no connector": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "their team": {
     "sites": 1,
     "scope": [
@@ -320612,6 +320657,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is already on and gives agents the same tools. Turn it off before turning on {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is already on and gives agents the same tools. Turn it off before turning this one on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} is already queued to be sent again": {

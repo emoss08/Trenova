@@ -24,6 +24,11 @@ export const agentExtensionCatalogItemSchema = z.object({
   description: z.string(),
   category: z.string(),
   categoryLabel: z.string(),
+  /** What the extension gives agents; tools belong to it, so vendors of one are interchangeable. */
+  capability: z.string(),
+  capabilityLabel: z.string(),
+  /** Another extension already on that gives agents the same capability, empty when none. */
+  capabilityHeldBy: z.string().default(""),
   brandDomain: z.string(),
   docsUrl: z.string(),
   websiteUrl: z.string(),

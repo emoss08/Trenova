@@ -432,7 +432,7 @@ func TestCreate_NamesTheConversationForItsRequest(t *testing.T) {
 
 	assert.Equal(t, []string{
 		"Send me a list of delivered shipments",
-		"List every shipment that is still waiting on a proof of deli…",
+		"List every shipment that is still waiting on a proof of del…",
 	}, f.schedules.titles)
 }
 

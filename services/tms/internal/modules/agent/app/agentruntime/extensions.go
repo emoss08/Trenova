@@ -18,50 +18,22 @@ const externalContentNote = " It was not run automatically because this turn rea
 
 var outsideTextTools = []string{"inspect_x12", "draft_edi_connection"}
 
-type activeExtensions map[agentextension.Type]agentextension.Availability
-
 func (s *Service) activeExtensions(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-) activeExtensions {
+) agentextension.Active {
 	if s.extensions == nil || actor == nil {
-		return activeExtensions{}
+		return agentextension.Active{}
 	}
 
-	active, err := s.extensions.ActiveExtensions(ctx, actor.TenantInfo())
+	active, err := s.extensions.ActiveCapabilities(ctx, actor.TenantInfo())
 	if err != nil {
 		s.logger.Warn("could not read the organization's extensions; withholding their tools",
 			zap.String("organization", actor.OrganizationID.String()), zap.Error(err))
-		return activeExtensions{}
+		return agentextension.Active{}
 	}
 
 	return active
-}
-
-func (a activeExtensions) offers(name string) bool {
-	typ, isExtension := agentextension.ExtensionForTool(name)
-	if !isExtension {
-		return true
-	}
-	_, active := a[typ]
-
-	return active
-}
-
-func (a activeExtensions) grants() []string {
-	granted := make([]string, 0, len(a)*2)
-	for _, typ := range agentextension.AllTypes() {
-		if a[typ] != agentextension.AvailabilityAllAgents {
-			continue
-		}
-		spec, ok := agentextension.SpecFor(typ)
-		if !ok {
-			continue
-		}
-		granted = append(granted, spec.Tools...)
-	}
-
-	return granted
 }
 
 func withGrants(held, granted []string) []string {
@@ -74,10 +46,10 @@ func withGrants(held, granted []string) []string {
 	return held
 }
 
-func onlyOffered(names []string, active activeExtensions) []string {
+func onlyOffered(names []string, active agentextension.Active) []string {
 	kept := make([]string, 0, len(names))
 	for _, name := range names {
-		if active.offers(name) {
+		if active.Offers(name) {
 			kept = append(kept, name)
 		}
 	}
@@ -86,21 +58,18 @@ func onlyOffered(names []string, active activeExtensions) []string {
 }
 
 func touchesExtensions(names []string) bool {
-	return slices.ContainsFunc(names, func(name string) bool {
-		_, isExtension := agentextension.ExtensionForTool(name)
-		return isExtension
-	})
+	return slices.ContainsFunc(names, agentextension.IsExtensionTool)
 }
 
 func (s *Service) holdsFor(ctx context.Context, req *agentports.RunRequest, name string) bool {
 	if s.holds(req.Definition, name) {
 		return true
 	}
-	if _, isExtension := agentextension.ExtensionForTool(name); !isExtension {
+	if !agentextension.IsExtensionTool(name) {
 		return false
 	}
 
-	return slices.Contains(s.activeExtensions(ctx, req.Actor).grants(), name)
+	return s.activeExtensions(ctx, req.Actor).GrantsEveryAgent(name)
 }
 
 func (s *Service) extensionRefusal(
@@ -108,29 +77,23 @@ func (s *Service) extensionRefusal(
 	req *agentports.RunRequest,
 	name string,
 ) (toolOutcome, bool) {
-	if _, isExtension := agentextension.ExtensionForTool(name); !isExtension {
+	capability, isExtension := agentextension.CapabilityForTool(name)
+	if !isExtension {
 		return toolOutcome{}, false
 	}
-	if s.activeExtensions(ctx, req.Actor).offers(name) {
+	if s.activeExtensions(ctx, req.Actor).Offers(name) {
 		return toolOutcome{}, false
 	}
+	spec, _ := agentextension.CapabilitySpecFor(capability)
 
 	return failedOutcome("Tool %q comes with an extension this organization has turned off "+
-		"or not set up, so it was not run. Answer without it, and say the web could not be "+
-		"checked.", name), true
+		"or not set up, so it was not run. Answer without it, and say %s.", name,
+		spec.Unchecked), true
 }
 
 func ReadsExternalContent(name string) bool {
-	if slices.Contains(outsideTextTools, name) {
-		return true
-	}
-	typ, isExtension := agentextension.ExtensionForTool(name)
-	if !isExtension {
-		return false
-	}
-	spec, ok := agentextension.SpecFor(typ)
-
-	return ok && spec.ReturnsExternalContent
+	return slices.Contains(outsideTextTools, name) ||
+		agentextension.ReturnsExternalContent(name)
 }
 
 // decisionTaint is the taint a call is decided with: what the turn had read,

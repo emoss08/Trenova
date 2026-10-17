@@ -462,7 +462,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
 	active := s.activeExtensions(ctx, req.Actor)
-	granted := active.grants()
+	granted := active.Grants()
 	runtimeContext.Tools = withSummaries(runtimeContext.Tools, s.summarize(definition, granted))
 
 	// Another agent's steps on a task this one handed it are never replayed:

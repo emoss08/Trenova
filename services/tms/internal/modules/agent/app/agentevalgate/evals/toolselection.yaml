@@ -129,7 +129,13 @@ cases:
   - request: flag this for a person to review
     expect: [flag_for_manual_review, raise_exception]
   - request: what are the carrier risk alerts
-    expect: [get_carrier_intel_event, acknowledge_carrier_intel_event]
+    expect: [list_carrier_intel_events, get_carrier_intel_event, acknowledge_carrier_intel_event]
+  - request: which carriers had authority or insurance problems this week
+    expect: [list_carrier_intel_events]
+  - request: show the open carrier intelligence events
+    expect: [list_carrier_intel_events]
+  - request: list critical carrier alerts from the last seven days
+    expect: [list_carrier_intel_events]
   - request: add a widget to my home dashboard
     expect: [add_home_widget]
   - request: which weather alerts affect our lanes

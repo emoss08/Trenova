@@ -16,11 +16,11 @@ const (
 	versionField  = "version"
 	readVersion   = "the tool sends the version of the record it reads, which the approved " +
 		"preview pins"
-	watchtowerItemID     = "watchtowerItemId"
+	watchtowerItemID       = "watchtowerItemId"
 	reserveMovementInput   = "FactoringReserveMovementInput"
 	remittanceVersionInput = "FactoringRemittanceVersionInput"
-	exceptionItemArg     = "the mutation takes the exception as its id argument, beside the input"
-	resolutionCode       = "one value under two names: the input's code, and resolutionCode, " +
+	exceptionItemArg       = "the mutation takes the exception as its id argument, beside the input"
+	resolutionCode         = "one value under two names: the input's code, and resolutionCode, " +
 		"the name the read tools hand it out under and the tool takes"
 )
 
@@ -207,6 +207,12 @@ var Bindings = []Binding{
 	{
 		Tool:  "share_customer_tracking_link",
 		Input: "IssueCustomerTrackingLinkInput",
+	},
+	{
+		Tool:      "issue_carrier_tracking_link",
+		Input:     "IssueCarrierTrackingLinkInput",
+		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
+		Extra:     map[string]string{"moveId": namedID("moveId")},
 	},
 	{
 		Tool:  "add_shipment_comment",

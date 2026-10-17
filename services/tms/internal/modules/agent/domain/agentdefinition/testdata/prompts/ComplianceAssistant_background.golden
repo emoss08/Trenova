@@ -64,11 +64,11 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- preview_report
 - run_report
 - get_report_run
 - list_insights
 - get_insight
+- assign_worker_shift
 - set_worker_availability_preference
 - mark_carrier_intel_reviewed
 - list_reports
@@ -84,7 +84,6 @@ Callable after find_tools:
 - list_trailers — List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed).
 - get_worker_schedule — Read one worker's schedule: the shift patterns they have been on (the current one open-ended), what they said about each weekday, and their open shift swaps.
 - list_shift_templates — List the organization's active shift patterns: the days, start time and length of each, and how many weeks it rotates over.
-- assign_worker_shift — Put a worker on a shift pattern from a day onward.
 - end_worker_shift_assignment — End a worker's shift pattern after a day, leaving them on no pattern from the day after.
 - propose_shift_swap — Raise a shift swap for a worker who asked the office: they give up a day, handed to another worker or traded for one of theirs.
 - approve_shift_swap — Approve a shift swap the other worker has accepted, so the day changes hands on the rota.
@@ -92,6 +91,7 @@ Callable after find_tools:
 - withdraw_shift_swap — Withdraw a shift swap on the proposing worker's behalf, when they told the office they no longer want it.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
+- list_carrier_intel_events — List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records.
 - vet_carrier — Look a carrier up with the organization's carrier intelligence provider now: authority, insurance, safety and the organization's rules, recorded on the carrier.
 - set_carrier_monitoring — Turn continuous monitoring on or off for carriers, so the provider reports authority, insurance and safety changes as they happen.
 - apply_carrier_intel_suggestions — Correct a carrier's profile where its intelligence result disagrees: name, DBA, MC number, safety rating, address, phone, email or insurance.

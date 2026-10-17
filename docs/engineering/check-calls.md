@@ -34,7 +34,7 @@ no-check-call-sweep (15 min) ─▶ ListOverdue per monitoring tenant ─▶ Rec
 | Watchtower source, observer | `agent/app/watchtowersources/checkcall.go`, `DescribeNoCheckCall` in `describe.go` |
 | Sweep | `NoCheckCallSweepWorkflow` in `agent/jobs/watchtowerjobs` (schedule `no-check-call-sweep`) |
 | GraphQL | `checkcall.graphqls`, resolvers in `resolver/checkcallresolver` |
-| Agent tool | `log_check_call` in `agent/app/agenttools/movetools`, held by the load monitor |
+| Agent tools | `log_check_call`, `issue_carrier_tracking_link` and `revoke_carrier_tracking_link` in `agent/app/agenttools/movetools`, held by the load monitor |
 | Web | "Check calls" under move details, tracking link controls on a carrier-covered move, `/carrier-tracking/:token` |
 
 ## The record
@@ -104,6 +104,26 @@ What the carrier sees is the shipper and carrier names, the PRO number, the stop
 window, recorded times) and when the last check call came in. Nothing about the customer, the
 rate or other loads.
 
+## The agent tools
+
+`issue_carrier_tracking_link` emails a link to the carrier covering a brokered move and
+`revoke_carrier_tracking_link` ends the live one. Both reach someone outside the organization
+(the carrier gets mail, or the page it holds stops working), so both are external-recipient
+writes that default to Propose and never run past Ask first, and a run that has read outside
+text proposes them.
+
+- The agent tool always emails the link: `recipientEmail` is required, and the result says
+  whether the email went but never carries the URL. A bearer link in the model's context would
+  end up in the transcript, the step ledger and any proposal or reply the agent writes, where
+  anyone reading them could post to the load. A person who wants a link to copy issues one
+  from the move.
+- The preview renders the email with the same template and data the send uses, through
+  `renderLinkEmail`. Two values do not exist until the link is issued: the token, shown as
+  `LINK-MADE-WHEN-ISSUED`, and the expiry, shown as "21 days after the link is issued". Both
+  are constant, so the preview digest a person approves does not change from minute to minute.
+- A link the issue replaces is shown as revoked in the same preview. Revoking a move with no
+  live link is a refusal the preview warns of, not a missing record.
+
 ## Monitoring
 
 `dispatch_controls.enable_check_call_monitoring` turns it on for an organization and
@@ -141,5 +161,6 @@ rewritten every fifteen minutes.
 - Never record a stop visit from a check call any way but through tracking events.
 - Anything more a carrier can see goes into `PublicTrackingView` deliberately: the page is
   open to whoever holds the link.
-- `issueCarrierTrackingLink` and `revokeCarrierTrackingLink` are `pending` in
-  `writecoverage.yml`; an agent tool for them is a write that reaches a counterparty.
+- `PreviewIssueLink` and `PreviewRevokeLink` share their checks with `IssueLink` and
+  `RevokeLink` (`planIssue`, `linkToRevoke`); a new refusal goes in the shared step, or the
+  agent's preview approves a link the write then refuses.

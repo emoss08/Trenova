@@ -140,7 +140,7 @@ func (s *Service) everyRead() []string {
 	tools := s.queries.All()
 	reads := make([]string, 0, len(tools))
 	for _, tool := range tools {
-		if _, extension := agentextension.ExtensionForTool(tool.Name()); extension {
+		if agentextension.IsExtensionTool(tool.Name()) {
 			continue
 		}
 		reads = append(reads, tool.Name())

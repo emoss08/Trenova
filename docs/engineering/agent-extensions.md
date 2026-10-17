@@ -5,17 +5,25 @@ integration: integrations feed the whole system (maps, telematics, email), while
 contributes agent tools and nothing else. Each extension runs on the organization's own account
 with its vendor, so its credentials, limits and cost belong to the organization.
 
-The first extension is web search through Exa (`web_search`, `web_read`).
+An extension provides a **capability**, and the capability owns the tools. Web research
+(`web_search`, `web_read`) is the first capability; Exa and Parallel each provide it. Agents,
+the agent editor, the safety rules and the citation UI name the capability's tools, never a
+vendor, so an organization can move from one vendor to another without touching an agent.
+Only one extension may serve a capability at a time: turning on a second while the first is on
+is refused on `enabled`, and the catalog item says who holds it (`capabilityHeldBy`). Should two
+ever be on at once, `agentextension.ActiveFrom` picks the first in `AllTypes` order, so the gate
+and every tool call agree on which vendor answers.
 
 ## Where things live
 
 | Piece | Location |
 |---|---|
-| Types, availability, settings spec, tool ownership | `services/tms/internal/modules/agent/domain/agentextension/` |
+| Capabilities and the tools they own, what is active | `services/tms/internal/modules/agent/domain/agentextension/capability.go` |
+| Types, availability, each vendor's settings spec and validator | `services/tms/internal/modules/agent/domain/agentextension/` (`spec.go`, `webresearch.go`, one file per vendor) |
 | Stored settings and daily usage | `agent_extensions`, `agent_extension_usage_daily` |
 | Marketplace, settings, test, metering, web research | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
-| Vendor adapter | `internal/infrastructure/agentextension/exaconnector/` over `shared/exa` |
+| Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
 | Tools | `internal/modules/agent/app/agentquerytoolservice/web_tools.go` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
@@ -25,9 +33,10 @@ Settings reuse the integration field spec (`domain/configspec`) and the encrypte
 
 ## How an extension reaches an agent
 
-An extension is **active** for an organization when it is enabled and its required settings are
-saved. `AgentExtensionGate.ActiveExtensions` answers that, and every place a tool is offered asks
-it:
+An extension is **active** for an organization when it is enabled, its required settings are
+saved and the plan allows its capability. `AgentExtensionGate.ActiveCapabilities` answers that
+as an `agentextension.Active` (capability → serving type and availability), and every place a
+tool is offered asks it through `Offers`, `Grants` and `Serving`:
 
 - `permittedTools` drops an inactive extension's tools, so a turn is never offered one and
   `find_tools` never names one.
@@ -126,15 +135,47 @@ Every request reserves one unit of the organization's daily limit before it is s
 vendor-reported cost after. The connection test counts but is never refused by the limit. The
 marketplace card shows today's requests against the limit and the month's cost.
 
-## Adding an extension
+## Connectors
+
+Each vendor is one `agentextensionports.ExtensionConnector`, provided into the
+`agent_extension_connectors` fx group by `connectorkit.Provide`. A connector names its `Type`,
+runs its own connection test (`Test`, returning the cost and an optional note), and `Classify`s
+its errors into `ProviderFailure` kinds (unauthorized, out of credits, rate limited, invalid
+request, not found). The service turns a kind into the message the model and the administrator
+read, with the vendor's name and the capability's own words (`CapabilitySpec.Unchecked`,
+`RequestNoun`), so no vendor's error type reaches the service. `connectorkit.ClassifyHTTP` covers
+the HTTP status mapping most vendors need.
+
+A connector for a capability also implements that capability's provider port (web research:
+`WebSearchProvider`), receiving the decrypted settings and reading its own vendor fields from
+them. `TestEveryExtensionHasAConnectorForItsCapability` fails when a type has no connector or its
+connector cannot do what the capability needs.
+
+## Adding a vendor for an existing capability
 
 1. Add the `Type` to `domain/agentextension/enums.go` and a migration widening
    `ck_agent_extensions_type` (the enum constraint test fails otherwise).
-2. Add its `Spec` in `spec.go`: fields, the tools it owns, whether it returns outside content,
-   and a settings parser. Include `dailyRequestLimit` so metering applies.
-3. Add its catalog `definition` in `agentextensionservice/catalog.go` and its tools to a tool
-   package's `ToolProviders()`; `TestEveryExtensionToolIsRegistered` checks the two agree.
-4. Bundle the vendor's mark in `client/packages/shared/src/components/ui/logos/` and register its
-   domain, so the marketplace needs no network call to draw it.
-5. Add its strings to the translation catalogs (`task i18n`) and describe it in the AI control
+2. Add a file for its `Spec`: the capability, its fields (a web research vendor builds them with
+   `webResearchFields`, which brings the API key, results per search, daily limit and excluded
+   sites), and a `Validate`. Every spec has `apiKey` and `dailyRequestLimit`.
+3. Write its client in `shared/<vendor>` and its connector in
+   `internal/infrastructure/agentextension/<vendor>connector`, and register it in that module.
+   A vendor that does not report cost computes it from its published prices.
+4. Add its catalog `definition` in `agentextensionservice/catalog.go`.
+5. Bundle the vendor's mark in `client/packages/shared/src/components/ui/logos/` from Brandfetch
+   and register its domain, so the marketplace needs no network call to draw it.
+6. Add its strings to the translation catalogs (`task i18n`) and describe it in the AI control
    product guide.
+
+## Adding a capability
+
+A new capability is a new kind of thing agents can do, so it needs more than a vendor:
+
+1. Add it to `capability.go` with the tools it owns, whether they return outside content, and
+   the words an agent uses when it is unavailable. A tool belongs to exactly one capability.
+2. Give it a plan capability and label in `capabilityDefinitions` (`agentextensionservice`).
+3. Declare its provider port next to `WebSearchProvider`, and write its tools in a tool
+   package's `ToolProviders()`; `TestEveryExtensionToolIsRegistered` checks they are registered.
+   Each tool's `ToolPolicy` declares what it reads and writes, as for any other tool.
+4. If its tools act outside Trenova (a browser that submits a form, a phone call), they are
+   writes: they need previews, write coverage and a `Propose` ceiling like any other write.

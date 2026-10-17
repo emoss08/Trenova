@@ -248,6 +248,21 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			never: []string{"post_customer_payment", "notify_driver"},
 		},
 		{
+			template: agentdefinition.TemplateCarrierRiskDesk,
+			needs: []string{
+				"list_carrier_intel_events", "get_carrier_intel_event",
+				"acknowledge_carrier_intel_event", "resolve_carrier_intel_event", "get_carrier",
+			},
+			never: []string{"update_carrier_status", "email_customer"},
+		},
+		{
+			template: agentdefinition.TemplateComplianceAssistant,
+			needs: []string{
+				"list_carrier_intel_events", "list_carriers", "get_carrier",
+				"mark_carrier_intel_reviewed", "list_expiring_credentials",
+			},
+		},
+		{
 			template: agentdefinition.TemplateInsightAnalyst,
 			needs:    []string{"get_insight", "list_insights", "preview_report", "dismiss_insight"},
 			never:    []string{"email_customer", "create_report", "update_report"},

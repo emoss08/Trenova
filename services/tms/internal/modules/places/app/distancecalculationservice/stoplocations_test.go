@@ -158,7 +158,6 @@ func TestResolveForShipmentKeepsTheManualDistanceWhenAStopLocationIsNotFound(t *
 	t.Parallel()
 
 	f := newResolveFixture(t)
-	storedMileageMiss(f)
 	manual := 190.0
 	f.move.Distance = &manual
 

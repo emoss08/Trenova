@@ -1,6 +1,6 @@
 ---
 path: /dispatch/carriers
-aliases: [trucking companies, brokered carriers, outside carriers, partner carriers, vendors, MC number, DOT number]
+aliases: [trucking companies, brokered carriers, outside carriers, partner carriers, vendors, MC number, DOT number, carriers for brokered loads]
 related:
   - /dispatch/carrier-monitoring
   - /dispatch/carrier-sourcing

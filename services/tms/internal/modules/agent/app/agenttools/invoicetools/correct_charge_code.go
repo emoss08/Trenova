@@ -37,9 +37,9 @@ func (t *CorrectChargeCodeTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"billingQueueItemId": agenttoolschema.KindID(
-				"The billing queue item whose charges are corrected: this run's "+
-					"subject or the record on the page. No tool lists queue items, so never "+
-					"guess one.",
+				"The billing queue item whose charges are corrected, from "+
+					"list_billing_queue_items, get_billing_queue_item, this run's subject or "+
+					"the record on the page. Never guess one.",
 				permission.KindBillingQueueItem,
 			),
 			"additionalCharges": map[string]any{
