@@ -1,12 +1,19 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { toTitleCase } from "@trenova/shared/lib/utils";
 import type { ProvisioningAuditRecord } from "@trenova/shared/types/iam";
 import { ActivityIcon } from "@trenova/shared/components/icons";
 import { memo } from "react";
 import { ActivityItem, EmptyState, RowSkeleton, SecuritySection } from "../security-access/shared";
 
 const AUDIT_LIMIT = 8;
+
+const ACTION_LABELS = defineLabels({
+  create: "Created",
+  update: "Updated",
+  deactivate: "Deactivated",
+  delete: "Deleted",
+});
 
 export const AuditTimeline = memo(function AuditTimeline({
   records,
@@ -30,7 +37,7 @@ export const AuditTimeline = memo(function AuditTimeline({
           {records.slice(0, AUDIT_LIMIT).map((record) => (
             <ActivityItem
               key={record.id}
-              title={t("{0} {1}", toTitleCase(record.action), record.resourceType)}
+              title={t("{0} · {1}", ACTION_LABELS[record.action], record.resourceType)}
               detail={
                 record.errorMessage ||
                 record.externalId ||
