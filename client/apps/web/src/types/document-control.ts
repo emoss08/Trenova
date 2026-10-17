@@ -49,6 +49,7 @@ export const documentControlSchema = z.object({
 export const documentExtractionStatusSchema = z.object({
   engine: extractionEngineSchema,
   modelProviderAvailable: z.boolean(),
+  converterAvailable: z.boolean(),
   extractionAvailable: z.boolean(),
 });
 

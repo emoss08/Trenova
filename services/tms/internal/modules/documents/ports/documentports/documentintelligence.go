@@ -33,6 +33,7 @@ type DocumentContentService interface {
 type ExtractionStatus struct {
 	Engine                 string `json:"engine"`
 	ModelProviderAvailable bool   `json:"modelProviderAvailable"`
+	ConverterAvailable     bool   `json:"converterAvailable"`
 	ExtractionAvailable    bool   `json:"extractionAvailable"`
 }
 

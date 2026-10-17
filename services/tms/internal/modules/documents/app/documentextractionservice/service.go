@@ -55,6 +55,7 @@ type Service struct {
 	logger              *zap.Logger
 	metrics             *metrics.Registry
 	searchConfig        *config.SearchConfig
+	conversionConfig    *config.DocumentConversionConfig
 	documentControlRepo tenantports.DocumentControlRepository
 	documentRepo        documentports.DocumentRepository
 	contentRepo         documentcontentports.DocumentContentRepository
@@ -85,6 +86,7 @@ func New(p Params) *Service {
 	return &Service{
 		logger:              p.Logger.Named("service.document-extraction"),
 		searchConfig:        p.Config.GetSearchConfig(),
+		conversionConfig:    p.Config.GetDocumentConversionConfig(),
 		metrics:             p.Metrics,
 		documentControlRepo: p.DocumentControlRepo,
 		documentRepo:        p.DocumentRepo,
@@ -118,10 +120,14 @@ func (s *Service) ExtractionStatus(
 		}
 	}
 
+	converterAvailable := s.conversionConfig.Enabled()
+
 	return &documentports.ExtractionStatus{
 		Engine:                 string(control.ExtractionEngine),
 		ModelProviderAvailable: providerAvailable,
-		ExtractionAvailable:    !control.UsesDocling() || providerAvailable,
+		ConverterAvailable:     converterAvailable,
+		ExtractionAvailable: !control.UsesDocling() ||
+			(providerAvailable && converterAvailable),
 	}, nil
 }
 

@@ -24,7 +24,7 @@ import {
   type ExtractionEngine,
 } from "@/types/document-control";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 
@@ -168,6 +168,8 @@ function ExtractionEngineCard() {
     control,
     name: "extractionEngine",
   });
+  const { data: status } = useQuery({ ...documentControl.extractionStatus() });
+  const converterMissing = status?.converterAvailable === false;
 
   return (
     <Card>
@@ -187,18 +189,24 @@ function ExtractionEngineCard() {
               name="extractionEngine"
               label={t("Read documents with")}
               description={
-                engine === extractionEngineSchema.enum.docling
+                converterMissing
                   ? t(
-                      "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.",
+                      "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.",
                     )
-                  : t(
-                      "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.",
-                    )
+                  : engine === extractionEngineSchema.enum.docling
+                    ? t(
+                        "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.",
+                      )
+                    : t(
+                        "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.",
+                      )
               }
               options={extractionEngineOptions.map((option) => ({
                 value: option.value,
                 label: t(option.label),
-                disabled: !enabled,
+                disabled:
+                  !enabled ||
+                  (converterMissing && option.value === extractionEngineSchema.enum.docling),
               }))}
               fullWidth={false}
             />

@@ -26,38 +26,57 @@ func TestExtractionStatus(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name              string
-		engine            tenant.ExtractionEngine
-		providerAvailable bool
-		want              documentports.ExtractionStatus
+		name               string
+		engine             tenant.ExtractionEngine
+		providerAvailable  bool
+		converterAvailable bool
+		want               documentports.ExtractionStatus
 	}{
 		{
-			name:              "docling without a provider cannot extract",
-			engine:            tenant.ExtractionEngineDocling,
-			providerAvailable: false,
+			name:               "docling without a provider cannot extract",
+			engine:             tenant.ExtractionEngineDocling,
+			providerAvailable:  false,
+			converterAvailable: true,
 			want: documentports.ExtractionStatus{
 				Engine:                 "docling",
 				ModelProviderAvailable: false,
+				ConverterAvailable:     true,
 				ExtractionAvailable:    false,
 			},
 		},
 		{
-			name:              "docling with a provider extracts",
-			engine:            tenant.ExtractionEngineDocling,
-			providerAvailable: true,
+			name:               "docling with a provider and a converter extracts",
+			engine:             tenant.ExtractionEngineDocling,
+			providerAvailable:  true,
+			converterAvailable: true,
 			want: documentports.ExtractionStatus{
 				Engine:                 "docling",
 				ModelProviderAvailable: true,
+				ConverterAvailable:     true,
 				ExtractionAvailable:    true,
 			},
 		},
 		{
-			name:              "legacy reads documents without a provider",
-			engine:            tenant.ExtractionEngineLegacy,
-			providerAvailable: false,
+			name:               "docling without a converter cannot extract, provider or not",
+			engine:             tenant.ExtractionEngineDocling,
+			providerAvailable:  true,
+			converterAvailable: false,
+			want: documentports.ExtractionStatus{
+				Engine:                 "docling",
+				ModelProviderAvailable: true,
+				ConverterAvailable:     false,
+				ExtractionAvailable:    false,
+			},
+		},
+		{
+			name:               "legacy reads documents without a provider",
+			engine:             tenant.ExtractionEngineLegacy,
+			providerAvailable:  false,
+			converterAvailable: false,
 			want: documentports.ExtractionStatus{
 				Engine:                 "legacy",
 				ModelProviderAvailable: false,
+				ConverterAvailable:     false,
 				ExtractionAvailable:    true,
 			},
 		},
@@ -88,9 +107,16 @@ func TestExtractionStatus(t *testing.T) {
 				ExtractionAvailable(mock.Anything, tenantInfo).
 				Return(tc.providerAvailable, nil)
 
+			cfg := &config.Config{}
+			if tc.converterAvailable {
+				cfg.DocumentConversion = config.DocumentConversionConfig{
+					DoclingURL: "http://docling:5001",
+					APIKey:     "key",
+				}
+			}
 			service := documentextractionservice.New(documentextractionservice.Params{
 				Logger:              zap.NewNop(),
-				Config:              &config.Config{},
+				Config:              cfg,
 				Metrics:             metricRegistry,
 				DocumentControlRepo: controlRepo,
 				DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
