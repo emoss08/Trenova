@@ -46,7 +46,7 @@ func TestSearchSendsTheOrganizationsChoices(t *testing.T) {
 		]}`))
 	})
 
-	resp, err := connector.Search(t.Context(), agentextensionports.WebSearchProviderRequest{
+	resp, err := connector.Search(t.Context(), &agentextensionports.WebSearchProviderRequest{
 		Settings:           settings,
 		Query:              "hours of service driving limit",
 		NumResults:         5,

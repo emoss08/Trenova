@@ -1,4 +1,5 @@
 import type { AuthEventRow } from "@/lib/graphql/security-activity-table";
+import type { RowData } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -38,7 +39,7 @@ function renderCell(column: ColumnDef<AuthEventRow>, row: AuthEventRow) {
   render(<>{cell({ row: { original: row } } as never)}</>);
 }
 
-function filterableFields<T>(columns: ColumnDef<T>[]): string[] {
+function filterableFields<T extends RowData>(columns: ColumnDef<T>[]): string[] {
   return columns
     .filter((column) => column.meta?.filterable)
     .map((column) => column.meta?.apiField ?? "");

@@ -68,7 +68,7 @@ func (s *Service) SearchWeb(
 		numResults = min(query.ResultLimit, settings.ResultsPerSearch)
 	}
 
-	request := agentextensionports.WebSearchProviderRequest{
+	request := &agentextensionports.WebSearchProviderRequest{
 		Settings:       research.values,
 		Query:          text,
 		NumResults:     numResults,
@@ -324,11 +324,11 @@ type providerFailure struct {
 	spec    agentextension.CapabilitySpec
 }
 
-func (e *extensionSettings) failing(err error, action string) providerFailure {
+func (e *extensionSettings) failing(err error, action string) *providerFailure {
 	spec, _ := agentextension.SpecFor(e.typ)
 	capability, _ := agentextension.CapabilitySpecFor(spec.Capability)
 
-	return providerFailure{
+	return &providerFailure{
 		err:     err,
 		vendor:  e.def.Vendor,
 		action:  action,
@@ -337,7 +337,7 @@ func (e *extensionSettings) failing(err error, action string) providerFailure {
 	}
 }
 
-func (s *Service) providerError(f providerFailure) error {
+func (s *Service) providerError(f *providerFailure) error {
 	var message string
 	switch {
 	case f.failure.Kind == agentextensionports.ProviderFailureUnauthorized:

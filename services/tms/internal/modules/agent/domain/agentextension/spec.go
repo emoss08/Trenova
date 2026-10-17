@@ -139,7 +139,7 @@ type choiceField struct {
 	message  string
 }
 
-func parseChoice(field choiceField, multiErr *errortypes.MultiError) string {
+func parseChoice(field *choiceField, multiErr *errortypes.MultiError) string {
 	value := strings.TrimSpace(field.values[field.key])
 	if value == "" {
 		return field.fallback

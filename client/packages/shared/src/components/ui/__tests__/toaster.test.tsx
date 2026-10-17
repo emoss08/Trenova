@@ -15,10 +15,17 @@ function titles() {
   return toastStore.getSnapshot().toasts.map((entry) => entry.title);
 }
 
+function cardsWith(text: string): HTMLElement[] {
+  return screen
+    .queryAllByText(text)
+    .map((element) => element.closest<HTMLElement>("[data-slot='toast']"))
+    .filter((card): card is HTMLElement => card !== null);
+}
+
 function cardOf(text: string): HTMLElement {
-  const card = screen.getByText(text).closest<HTMLElement>("[data-slot='toast']");
-  expect(card).not.toBeNull();
-  return card as HTMLElement;
+  const cards = cardsWith(text);
+  expect(cards).toHaveLength(1);
+  return cards[0] as HTMLElement;
 }
 
 beforeAll(() => {
@@ -59,9 +66,7 @@ describe("Toaster", () => {
 
     expect(download).toHaveBeenCalledTimes(1);
     expect(titles()).toEqual([]);
-    await waitFor(() =>
-      expect(screen.queryByText("Aging report is ready")).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(cardsWith("Aging report is ready")).toEqual([]));
   });
 
   it("stays open when the action prevents the default", async () => {

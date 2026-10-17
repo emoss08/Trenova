@@ -33,15 +33,15 @@ const (
 	ModeBasic    = "basic"
 	ModeAdvanced = "advanced"
 
-	MaxSearchQueries    = 5
-	MaxQueryLength      = 400
-	MaxResults          = 40
-	MaxSourceFilters    = 200
-	MaxExtractURLs      = 20
-	MaxCharsPerResult   = 1_000_000
-	includedResults     = 10
-	minFetchAgeSeconds  = 600
-	afterDateLayout     = time.DateOnly
+	MaxSearchQueries   = 5
+	MaxQueryLength     = 400
+	MaxResults         = 40
+	MaxSourceFilters   = 200
+	MaxExtractURLs     = 20
+	MaxCharsPerResult  = 1_000_000
+	includedResults    = 10
+	minFetchAgeSeconds = 600
+	afterDateLayout    = time.DateOnly
 )
 
 var (
@@ -221,7 +221,11 @@ func (r SearchRequest) Validate() error {
 
 func (r ExtractRequest) Validate() error {
 	if len(r.URLs) == 0 || len(r.URLs) > MaxExtractURLs {
-		return fmt.Errorf("%w: between 1 and %d urls are required", ErrInvalidRequest, MaxExtractURLs)
+		return fmt.Errorf(
+			"%w: between 1 and %d urls are required",
+			ErrInvalidRequest,
+			MaxExtractURLs,
+		)
 	}
 	for _, target := range r.URLs {
 		if strings.TrimSpace(target) == "" {
@@ -237,7 +241,10 @@ func (r ExtractRequest) Validate() error {
 	}
 	if full := settings.FullContent; full != nil &&
 		(full.MaxCharsPerResult < 0 || full.MaxCharsPerResult > MaxCharsPerResult) {
-		return fmt.Errorf("%w: full_content max_chars_per_result is out of range", ErrInvalidRequest)
+		return fmt.Errorf(
+			"%w: full_content max_chars_per_result is out of range",
+			ErrInvalidRequest,
+		)
 	}
 
 	return validateFetch(settings.FetchPolicy)

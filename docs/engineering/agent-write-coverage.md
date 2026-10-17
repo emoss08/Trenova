@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 49 |
 | — Duplicate | 8 |
 | **Pending** | **35** |
-| Total | 1161 |
+| Total | 1163 |
 
 Of the 460 writes an agent should be able to make, 425 have a tool (92%).
 
@@ -190,7 +190,7 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 14 | 7 | 4 | 3 |
+| billingqueue | 15 | 7 | 5 | 3 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |
@@ -221,7 +221,7 @@ The writes no tool performs yet, and what the tool would do.
 | distancecontrol | 2 | 0 | 2 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
-| document | 15 | 4 | 11 | 0 |
+| document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |

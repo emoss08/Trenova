@@ -44,7 +44,9 @@ func (c *Connector) Type() agentextension.Type { return agentextension.TypeParal
 func (c *Connector) Classify(err error) agentextensionports.ProviderFailure {
 	switch {
 	case errors.Is(err, parallel.ErrContentNotFound):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureNotFound}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureNotFound,
+		}
 	case errors.Is(err, parallel.ErrInvalidRequest):
 		return connectorkit.InvalidRequest(err)
 	default:
@@ -97,7 +99,7 @@ func (c *Connector) client(
 
 func (c *Connector) Search(
 	ctx context.Context,
-	req agentextensionports.WebSearchProviderRequest,
+	req *agentextensionports.WebSearchProviderRequest,
 ) (*agentextensionports.WebSearchProviderResponse, error) {
 	client, settings, err := c.client(req.Settings)
 	if err != nil {
@@ -143,7 +145,7 @@ func (c *Connector) Search(
 	}, nil
 }
 
-func sourcePolicy(req agentextensionports.WebSearchProviderRequest) *parallel.SourcePolicy {
+func sourcePolicy(req *agentextensionports.WebSearchProviderRequest) *parallel.SourcePolicy {
 	afterDate := ""
 	if req.StartPublishedDate != "" {
 		if started, err := time.Parse(time.RFC3339, req.StartPublishedDate); err == nil {

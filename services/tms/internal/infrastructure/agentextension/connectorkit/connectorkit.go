@@ -24,13 +24,21 @@ func ClassifyHTTP(err error) agentextensionports.ProviderFailure {
 	case err == nil:
 		return agentextensionports.ProviderFailure{}
 	case restx.IsStatus(err, http.StatusUnauthorized), restx.IsStatus(err, http.StatusForbidden):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureUnauthorized}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureUnauthorized,
+		}
 	case restx.IsStatus(err, http.StatusPaymentRequired):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureOutOfCredits}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureOutOfCredits,
+		}
 	case restx.IsRateLimited(err):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureRateLimited}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureRateLimited,
+		}
 	case restx.IsStatus(err, http.StatusNotFound):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureNotFound}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureNotFound,
+		}
 	case restx.IsStatus(err, http.StatusBadRequest),
 		restx.IsStatus(err, http.StatusUnprocessableEntity):
 		return InvalidRequest(err)

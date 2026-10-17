@@ -21,7 +21,7 @@ var parallelSearchDepth = searchDepthField{
 func parallelSpec() Spec {
 	return Spec{
 		Capability: CapabilityWebResearch,
-		Fields: webResearchFields(webResearchFieldsParams{
+		Fields: webResearchFields(&webResearchFieldsParams{
 			apiKey: APIKeyField(
 				"Your Parallel API key",
 				"Create a key at platform.parallel.ai. Trenova stores it encrypted and only sends it to api.parallel.ai.",

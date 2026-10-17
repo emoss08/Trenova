@@ -43,7 +43,9 @@ func (c *Connector) Type() agentextension.Type { return agentextension.TypeExa }
 func (c *Connector) Classify(err error) agentextensionports.ProviderFailure {
 	switch {
 	case errors.Is(err, exa.ErrContentNotFound):
-		return agentextensionports.ProviderFailure{Kind: agentextensionports.ProviderFailureNotFound}
+		return agentextensionports.ProviderFailure{
+			Kind: agentextensionports.ProviderFailureNotFound,
+		}
 	case errors.Is(err, exa.ErrInvalidRequest):
 		return connectorkit.InvalidRequest(err)
 	default:
@@ -55,7 +57,7 @@ func (c *Connector) Test(
 	ctx context.Context,
 	settings map[string]string,
 ) (*agentextensionports.ConnectorTestResult, error) {
-	resp, err := c.Search(ctx, agentextensionports.WebSearchProviderRequest{
+	resp, err := c.Search(ctx, &agentextensionports.WebSearchProviderRequest{
 		Settings:   withSearchType(settings, agentextension.ExaSearchTypeFast),
 		Query:      testQuery,
 		NumResults: 1,
@@ -85,7 +87,9 @@ func withSearchType(settings map[string]string, searchType string) map[string]st
 	return next
 }
 
-func (c *Connector) client(settings map[string]string) (*exa.Client, agentextension.ExaSettings, error) {
+func (c *Connector) client(
+	settings map[string]string,
+) (*exa.Client, agentextension.ExaSettings, error) {
 	parsed, err := agentextension.ParseExaSettings(settings)
 	if err != nil {
 		return nil, agentextension.ExaSettings{}, err
@@ -102,7 +106,7 @@ func (c *Connector) client(settings map[string]string) (*exa.Client, agentextens
 
 func (c *Connector) Search(
 	ctx context.Context,
-	req agentextensionports.WebSearchProviderRequest,
+	req *agentextensionports.WebSearchProviderRequest,
 ) (*agentextensionports.WebSearchProviderResponse, error) {
 	client, settings, err := c.client(req.Settings)
 	if err != nil {

@@ -21,7 +21,7 @@ var exaSearchDepth = searchDepthField{
 func exaSpec() Spec {
 	return Spec{
 		Capability: CapabilityWebResearch,
-		Fields: webResearchFields(webResearchFieldsParams{
+		Fields: webResearchFields(&webResearchFieldsParams{
 			apiKey: APIKeyField(
 				"Your Exa API key",
 				"Create a key at dashboard.exa.ai. Trenova stores it encrypted and only sends it to api.exa.ai.",

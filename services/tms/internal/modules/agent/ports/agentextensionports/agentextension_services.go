@@ -212,7 +212,7 @@ type WebPageProviderResponse struct {
 type WebSearchProvider interface {
 	Search(
 		ctx context.Context,
-		req WebSearchProviderRequest,
+		req *WebSearchProviderRequest,
 	) (*WebSearchProviderResponse, error)
 	Read(
 		ctx context.Context,

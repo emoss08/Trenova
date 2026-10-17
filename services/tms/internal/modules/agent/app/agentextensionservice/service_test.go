@@ -175,7 +175,7 @@ func (u *memoryUsage) Summarize(
 type fakeWeb struct {
 	typ         agentextension.Type
 	mu          sync.Mutex
-	searches    []agentextensionports.WebSearchProviderRequest
+	searches    []*agentextensionports.WebSearchProviderRequest
 	reads       []agentextensionports.WebPageProviderRequest
 	results     []agentextensionports.WebSearchProviderResult
 	pageText    string
@@ -196,7 +196,7 @@ func (f *fakeWeb) Test(
 	ctx context.Context,
 	settings map[string]string,
 ) (*agentextensionports.ConnectorTestResult, error) {
-	resp, err := f.Search(ctx, agentextensionports.WebSearchProviderRequest{
+	resp, err := f.Search(ctx, &agentextensionports.WebSearchProviderRequest{
 		Settings:   settings,
 		Query:      "test",
 		NumResults: 1,
@@ -210,7 +210,7 @@ func (f *fakeWeb) Test(
 
 func (f *fakeWeb) Search(
 	_ context.Context,
-	req agentextensionports.WebSearchProviderRequest,
+	req *agentextensionports.WebSearchProviderRequest,
 ) (*agentextensionports.WebSearchProviderResponse, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

@@ -45,7 +45,7 @@ func (f searchDepthField) field() configspec.Field {
 }
 
 func (f searchDepthField) parse(values map[string]string, multiErr *errortypes.MultiError) string {
-	return parseChoice(choiceField{
+	return parseChoice(&choiceField{
 		values:   values,
 		key:      ConfigKeySearchType,
 		fallback: f.fallback,
@@ -59,7 +59,7 @@ type webResearchFieldsParams struct {
 	vendor []configspec.Field
 }
 
-func webResearchFields(params webResearchFieldsParams) []configspec.Field {
+func webResearchFields(params *webResearchFieldsParams) []configspec.Field {
 	fields := make([]configspec.Field, 0, len(params.vendor)+4)
 	fields = append(fields, params.apiKey)
 	fields = append(fields, params.vendor...)

@@ -43,7 +43,7 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
-	Plans        platformplanports.PlanService            `optional:"true"`
+	Plans        platformplanports.PlanService            `                                   optional:"true"`
 }
 
 type Service struct {
@@ -638,7 +638,10 @@ func (s *Service) serving(
 		}
 	}
 
-	return nil, errortypes.NewBusinessError("failed to read the {0} extension", served.Type.String())
+	return nil, errortypes.NewBusinessError(
+		"failed to read the {0} extension",
+		served.Type.String(),
+	)
 }
 
 func (s *Service) settingsFor(
