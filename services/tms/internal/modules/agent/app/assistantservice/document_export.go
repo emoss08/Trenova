@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -96,7 +97,7 @@ func renderableDocument(version *assistantartifact.Artifact) *docrender.Document
 	); editor != "" {
 		author = editor
 	}
-	byline := strings.Join(nonEmpty(
+	byline := strings.Join(stringutils.NonEmptyStrings(
 		author,
 		"written "+time.Unix(version.CreatedAt, 0).UTC().Format("Jan 2, 2006"),
 		typeutils.StringOfTrimmed(version.Payload[assistantartifact.DocumentBasis]),

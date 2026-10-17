@@ -17,11 +17,12 @@ const MaxLayoutLines = 400
 // LayoutLine is one line of a page's text and its box, each coordinate a
 // fraction of the page so it draws on a page of any size.
 type LayoutLine struct {
-	Text string  `json:"t"`
-	X    float64 `json:"x"`
-	Y    float64 `json:"y"`
-	W    float64 `json:"w"`
-	H    float64 `json:"h"`
+	Text  string    `json:"t"`
+	X     float64   `json:"x"`
+	Y     float64   `json:"y"`
+	W     float64   `json:"w"`
+	H     float64   `json:"h"`
+	Words []float64 `json:"wx,omitempty"`
 }
 
 // LinesOf reads the layout a page's metadata holds; none when it was

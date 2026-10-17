@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -283,68 +282,3 @@ func TestWriteTableCSV_StopsWhenTheListFails(t *testing.T) {
 	require.Error(t, err)
 }
 
-// What document intelligence read becomes an extraction: each field with its
-// confidence and the box on its page where the value was found, stops after
-// the fields, and the ones below the review line counted.
-func TestExtractionArtifact_PlacesEachFieldOnItsPage(t *testing.T) {
-	t.Parallel()
-
-	draft := map[string]any{
-		"documentId":   "doc_1",
-		"status":       "Ready",
-		"documentKind": "RateConfirmation",
-		"confidence":   0.98,
-		"fields": map[string]any{
-			"rate": map[string]any{
-				"label": "Rate", "value": "1359.56", "confidence": 0.99, "pageNumber": 1.0,
-			},
-			"poNumber": map[string]any{
-				"label": "PO number", "value": "77812", "confidence": 0.62, "pageNumber": 2.0,
-			},
-			"notes": map[string]any{"label": "Notes", "value": "", "confidence": 0.9},
-		},
-		"stops": []any{map[string]any{
-			"role": "pickup", "name": "Acme DC 4", "city": "Chicago", "state": "IL",
-			"confidence": 0.91,
-		}},
-	}
-	pages := []extractionPage{
-		{Number: 2, Lines: []documentcontent.LayoutLine{
-			{Text: "PO 77812", X: 0.1, Y: 0.4, W: 0.4, H: 0.02},
-		}},
-		{Number: 1, Lines: []documentcontent.LayoutLine{
-			{Text: "Total: $1,359.56", X: 0.5, Y: 0.8, W: 0.4, H: 0.03},
-		}},
-	}
-
-	artifact := extractionArtifact("call_1", draft, "rate-con-77812.pdf", pages)
-	require.NotNil(t, artifact)
-
-	assert.Equal(t, assistantartifact.KindExtraction, artifact.Kind)
-	assert.Equal(t, "Rate confirmation · rate-con-77812.pdf", artifact.Title)
-	assert.Equal(t, 2, artifact.Payload["pageCount"])
-	assert.Equal(t, 1, artifact.Payload["needsLook"])
-
-	fields, ok := artifact.Payload["fields"].([]map[string]any)
-	require.True(t, ok)
-	require.Len(t, fields, 3, "an empty value is not a reading")
-	assert.Equal(t, "rate", fields[0]["key"])
-	assert.Equal(t, 1, fields[0]["page"])
-	box := fields[0]["box"].(map[string]float64)
-	assert.InDelta(t, 0.5+0.4*(5.0/11.0), box["x"], 0.001, "the box covers the value, not the label")
-	assert.InDelta(t, 0.8, box["y"], 0.0001)
-	assert.Equal(t, "poNumber", fields[1]["key"])
-	assert.Equal(t, true, fields[1]["needsLook"])
-	assert.Equal(t, "Pickup", fields[2]["label"])
-	assert.Equal(t, "Acme DC 4 · Chicago, IL", fields[2]["value"])
-	_, placed := fields[2]["box"]
-	assert.False(t, placed, "a stop the page does not show has no box")
-}
-
-func TestExtractionArtifact_NothingReadIsNoArtifact(t *testing.T) {
-	t.Parallel()
-
-	assert.Nil(t, extractionArtifact("call_1", map[string]any{
-		"documentId": "doc_1", "status": "Pending", "fields": map[string]any{},
-	}, "", nil))
-}

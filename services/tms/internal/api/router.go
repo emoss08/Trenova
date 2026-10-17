@@ -619,6 +619,7 @@ func (r *Router) setupCors() {
 	}
 
 	r.s.router.Use(cors.New(corsConfig))
+	r.s.router.Use(middleware.NewVaryOriginMiddleware())
 }
 
 func (r *Router) Setup() {

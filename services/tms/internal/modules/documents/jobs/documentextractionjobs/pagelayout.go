@@ -21,6 +21,7 @@ type tsvLineKey struct {
 
 type layoutBox struct {
 	text                   []string
+	words                  []kernelports.PDFTextWord
 	left, top, right, bott float64
 }
 
@@ -34,6 +35,7 @@ func (b *layoutBox) add(word string, left, top, width, height float64) {
 		b.bott = max(b.bott, top+height)
 	}
 	b.text = append(b.text, word)
+	b.words = append(b.words, kernelports.PDFTextWord{Left: left, Width: width})
 }
 
 // tesseractLayout groups the words of tesseract's TSV output into lines and
@@ -93,11 +95,18 @@ func tesseractLayout(output string, width, height int) []documentcontent.LayoutL
 			break
 		}
 		box := boxes[key]
-		lines = append(lines, layoutLine(
-			strings.Join(box.text, " "),
-			box.left, box.top, box.right-box.left, box.bott-box.top,
-			extentW, extentH,
-		))
+		lines = append(lines, layoutLine(layoutLineParams{
+			text:  strings.Join(box.text, " "),
+			words: box.words,
+			box: kernelports.PDFTextLine{
+				Left:   box.left,
+				Top:    box.top,
+				Width:  box.right - box.left,
+				Height: box.bott - box.top,
+			},
+			pageW: extentW,
+			pageH: extentH,
+		}))
 	}
 
 	return lines
@@ -121,31 +130,59 @@ func pdfLayout(layout *kernelports.PDFPageLayout) []documentcontent.LayoutLine {
 		if text == "" {
 			continue
 		}
-		lines = append(lines, layoutLine(
-			text,
-			line.Left, line.Top, line.Width, line.Height,
-			layout.Width, layout.Height,
-		))
+		lines = append(lines, layoutLine(layoutLineParams{
+			text:  text,
+			words: line.Words,
+			box:   line,
+			pageW: layout.Width,
+			pageH: layout.Height,
+		}))
 	}
 
 	return lines
 }
 
-func layoutLine(
-	text string,
-	left, top, width, height, pageW, pageH float64,
-) documentcontent.LayoutLine {
+type layoutLineParams struct {
+	text  string
+	words []kernelports.PDFTextWord
+	box   kernelports.PDFTextLine
+	pageW float64
+	pageH float64
+}
+
+func layoutLine(p layoutLineParams) documentcontent.LayoutLine {
+	text := p.text
 	if utf8.RuneCountInString(text) > maxLayoutLineRunes {
 		text = string([]rune(text)[:maxLayoutLineRunes])
 	}
-	x := documentcontent.Fraction(left, pageW)
-	y := documentcontent.Fraction(top, pageH)
+	x := documentcontent.Fraction(p.box.Left, p.pageW)
+	y := documentcontent.Fraction(p.box.Top, p.pageH)
 
 	return documentcontent.LayoutLine{
-		Text: text,
-		X:    x,
-		Y:    y,
-		W:    min(documentcontent.Fraction(width, pageW), 1-x),
-		H:    min(documentcontent.Fraction(height, pageH), 1-y),
+		Text:  text,
+		X:     x,
+		Y:     y,
+		W:     min(documentcontent.Fraction(p.box.Width, p.pageW), 1-x),
+		H:     min(documentcontent.Fraction(p.box.Height, p.pageH), 1-y),
+		Words: wordSpans(text, p.words, p.pageW),
 	}
+}
+
+func wordSpans(text string, words []kernelports.PDFTextWord, pageW float64) []float64 {
+	count := len(strings.Fields(text))
+	if count == 0 || len(words) < count || pageW <= 0 {
+		return nil
+	}
+
+	spans := make([]float64, 0, count*2)
+	for _, word := range words[:count] {
+		start := documentcontent.Fraction(word.Left, pageW)
+		spans = append(
+			spans,
+			start,
+			max(start, documentcontent.Fraction(word.Left+word.Width, pageW)),
+		)
+	}
+
+	return spans
 }

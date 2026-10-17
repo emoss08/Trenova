@@ -21,6 +21,7 @@ describe("codeLanguage", () => {
     expect(codeLanguage("yml")).toBe("yaml");
     expect(codeLanguage("bash")).toBe("shell");
     expect(codeLanguage("patch")).toBe("diff");
+    expect(codeLanguage("py")).toBe("python");
   });
 
   it("answers null for a language the app has no grammar for, or none at all", () => {
@@ -63,6 +64,11 @@ describe("highlightLines", () => {
       [{ text: "PERFORM X." }],
       [{ text: "STOP RUN." }],
     ]);
+  });
+
+  it("colours the Python an analysis runs", () => {
+    const line = highlightLines("import pandas as pd", "python")[0];
+    expect(line[0]).toEqual({ role: "keyword", text: "import" });
   });
 
   it("colours SQL fenced as plsql the way it colours sql", () => {

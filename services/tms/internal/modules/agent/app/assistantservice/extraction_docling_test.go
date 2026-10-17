@@ -71,7 +71,11 @@ func TestExtractionArtifact_BoxesValuesOnDoclingLines(t *testing.T) {
 		},
 	}
 
-	artifact := extractionArtifact("call_1", draft, "rate-confirmation.pdf", pages)
+	artifact := extractionArtifact(
+		"call_1",
+		draft,
+		extractionSource{fileName: "rate-confirmation.pdf", pages: pages},
+	)
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindExtraction, artifact.Kind)
 	assert.Equal(t, len(pages), artifact.Payload["pageCount"])
@@ -89,15 +93,15 @@ func TestExtractionArtifact_BoxesValuesOnDoclingLines(t *testing.T) {
 	require.NotNil(t, rate)
 	assert.Equal(t, 1, rate["page"])
 	assert.Equal(t, map[string]float64{
-		"x": 0.698, "y": 0.4571, "w": 0.0581, "h": 0.01,
-	}, rate["box"], "the total is boxed on its own table cell, no shorter than the floor")
+		"x": 0.7045, "y": 0.4571, "w": 0.0516, "h": 0.01,
+	}, rate["box"], "the total is boxed on its own table cell past the dollar sign, no shorter than the floor")
 
 	load := byKey["loadNumber"]
 	require.NotNil(t, load)
 	assert.Equal(t, 1, load["page"])
 	assert.Equal(t, map[string]float64{
-		"x": 0.8364, "y": 0.0327, "w": 0.0754, "h": 0.0105,
-	}, load["box"], "the load number is boxed on its part of the header line")
+		"x": 0.8486, "y": 0.0327, "w": 0.0632, "h": 0.0105,
+	}, load["box"], "the load number is boxed on its part of the header line, after the label")
 
 	assert.Equal(t, "loadNumber", fields[0]["key"], "fields read top to bottom")
 }

@@ -60,6 +60,7 @@ var specs = map[Type]Spec{
 	TypeExa:        exaSpec(),
 	TypeParallel:   parallelSpec(),
 	TypeBrowserUse: browserUseSpec(),
+	TypeE2B:        e2bSpec(),
 }
 
 func SpecFor(t Type) (Spec, bool) {

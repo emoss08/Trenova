@@ -24,6 +24,7 @@ import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   Document,
   DocumentContent,
+  DocumentAIAcceptanceStatus,
   DocumentIntelligenceAIDiagnostics,
   DocumentIntelligenceConflict,
   DocumentIntelligence,
@@ -140,7 +141,7 @@ function formatStopSummary(stop: DocumentIntelligenceStop) {
 /** How often a document still being read is fetched again. */
 const READING_POLL_MS = 5000;
 
-function formatAIAcceptanceStatus(t: TranslateFn, status?: string) {
+function formatAIAcceptanceStatus(t: TranslateFn, status?: DocumentAIAcceptanceStatus) {
   switch (status) {
     case "accepted":
       return t("Accepted");
@@ -155,16 +156,12 @@ function formatAIAcceptanceStatus(t: TranslateFn, status?: string) {
   }
 }
 
-function aiAcceptanceVariant(status?: string) {
+function aiAcceptanceVariant(status?: DocumentAIAcceptanceStatus) {
   switch (status) {
     case "accepted":
       return "success";
     case "pending":
       return "info";
-    case "rejected":
-      return "neutral";
-    case "not_attempted":
-      return "neutral";
     default:
       return "neutral";
   }

@@ -1,0 +1,213 @@
+import type { AssistantArtifact } from "@/types/assistant";
+
+export const THREAD = "athr_ex";
+export const DOCUMENT = "doc_01JRATECON";
+
+/**
+ * The payload `assistantservice/extraction.go` stores for a two-page rate confirmation: the
+ * fields in reading order with their reason and box, each stop as its parts, the pages' sizes,
+ * and the missing fields with their keys.
+ */
+export function currentPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    documentId: DOCUMENT,
+    fileName: "Northline_RateCon.pdf",
+    contentType: "application/pdf",
+    documentKind: "RateConfirmation",
+    kindLabel: "Rate confirmation",
+    kindConfidence: 0.94,
+    confidence: 0.91,
+    reviewStatus: "NeedsReview",
+    pageCount: 2,
+    pages: [
+      { number: 1, width: 1275, height: 1650 },
+      { number: 2, width: 1650, height: 1275 },
+    ],
+    fields: [
+      {
+        key: "loadNumber",
+        label: "Load Number",
+        value: "NL-482913",
+        confidence: 0.97,
+        needsLook: false,
+        page: 1,
+        box: { x: 0.7075, y: 0.085, w: 0.1125, h: 0.014 },
+      },
+      {
+        key: "billTo",
+        label: "Bill To",
+        value: "Northline Logistics",
+        confidence: 0.71,
+        needsLook: true,
+        reason: "review",
+        page: 1,
+        box: { x: 0.1758, y: 0.17, w: 0.2023, h: 0.014 },
+      },
+      {
+        key: "shipper",
+        label: "Shipper",
+        value: "Ridgefield Paper Co.",
+        confidence: 0.95,
+        needsLook: false,
+        page: 1,
+        box: { x: 0.08, y: 0.25, w: 0.22, h: 0.014 },
+      },
+      {
+        key: "stop1.name",
+        label: "Name",
+        value: "Ridgefield Paper Co.",
+        confidence: 0.93,
+        needsLook: false,
+        stop: 1,
+        role: "pickup",
+        part: "name",
+        page: 1,
+        box: { x: 0.08, y: 0.25, w: 0.22, h: 0.014 },
+      },
+      {
+        key: "stop1.window",
+        label: "Window",
+        value: "10/20/2026 08:00-12:00",
+        confidence: 0.93,
+        needsLook: false,
+        stop: 1,
+        role: "pickup",
+        part: "window",
+        appointment: true,
+        page: 1,
+        box: { x: 0.08, y: 0.29, w: 0.25, h: 0.014 },
+      },
+      {
+        key: "pickupWindow",
+        label: "Pickup Window",
+        value: "10/20/2026 08:00-12:00",
+        confidence: 0.9,
+        needsLook: false,
+        page: 1,
+        box: { x: 0.08, y: 0.29, w: 0.25, h: 0.014 },
+      },
+      {
+        key: "deliveryWindow",
+        label: "Delivery Window",
+        value: "10/21/2026",
+        confidence: 0.62,
+        needsLook: true,
+        reason: "conflict",
+        readings: ["10/21/2026", "10/22/2026"],
+        page: 1,
+        box: { x: 0.52, y: 0.29, w: 0.11, h: 0.014 },
+      },
+      {
+        key: "commodity",
+        label: "Commodity",
+        value: "Paper products",
+        confidence: 0.78,
+        needsLook: true,
+        reason: "low",
+        page: 1,
+      },
+      {
+        key: "rate",
+        label: "Rate",
+        value: "2465.00",
+        confidence: 0.86,
+        needsLook: false,
+        page: 1,
+        box: { x: 0.6111, y: 0.5, w: 0.0889, h: 0.018 },
+      },
+      {
+        key: "stop3.name",
+        label: "Name",
+        value: "Anyco Clothes #612",
+        confidence: 0.74,
+        needsLook: true,
+        reason: "review",
+        stop: 3,
+        role: "delivery",
+        part: "name",
+        page: 2,
+        box: { x: 0.1, y: 0.18, w: 0.2, h: 0.018 },
+      },
+      {
+        key: "stop2.name",
+        label: "Name",
+        value: "Anyco Clothes DC #425",
+        confidence: 0.9,
+        needsLook: false,
+        stop: 2,
+        role: "delivery",
+        part: "name",
+        page: 1,
+        box: { x: 0.52, y: 0.25, w: 0.24, h: 0.014 },
+      },
+      { key: "customFlag", label: "Custom Flag", value: "Yes", confidence: 0.95, needsLook: false },
+    ],
+    needsLook: 4,
+    missing: ["Pro Number", "Piece Count", "Temperature"],
+    missingFields: [
+      { key: "proNumber", label: "Pro Number" },
+      { key: "pieceCount", label: "Piece Count" },
+      { key: "temperature", label: "Temperature" },
+    ],
+    tool: "get_shipment_draft",
+    ...overrides,
+  };
+}
+
+/** A payload saved before reasons, stop parts, page sizes and keyed missing fields were kept. */
+export function legacyPayload(): Record<string, unknown> {
+  return {
+    documentId: DOCUMENT,
+    fileName: "rate_confirmation.pdf",
+    kindLabel: "Rate confirmation",
+    confidence: 0.82,
+    pageCount: 2,
+    fields: [
+      {
+        key: "loadNumber",
+        label: "Load Number",
+        value: "123456789",
+        confidence: 0.97,
+        needsLook: false,
+        page: 1,
+        box: { x: 0.62, y: 0.08, w: 0.14, h: 0.018 },
+      },
+      {
+        key: "stop2",
+        label: "Delivery",
+        value: "Anyco Clothes #425 · Dallas, TX",
+        confidence: 0.64,
+        needsLook: true,
+        page: 2,
+        box: { x: 0.1, y: 0.42, w: 0.3, h: 0.02 },
+      },
+      { key: "rate", label: "Rate", value: "4500", confidence: 0.9, needsLook: true },
+      { key: "blank", label: "Notes", value: "  ", confidence: 0.9 },
+      "not a field",
+    ],
+    missing: ["Pro Number"],
+  };
+}
+
+export function artifactOf(payload: Record<string, unknown>): AssistantArtifact {
+  return {
+    id: "aart_ex",
+    threadId: THREAD,
+    kind: "extraction",
+    status: "Ready",
+    title: "Rate confirmation · Northline_RateCon.pdf",
+    payload,
+    sourceToolCallId: "call_1",
+    messageId: "msg_1",
+    runId: "",
+    proposalId: "",
+    planId: "",
+    pinned: false,
+    lineageId: "",
+    lineageSeq: 1,
+    slug: "northline",
+    turn: "",
+    createdAt: 0,
+    updatedAt: 0,
+  } as unknown as AssistantArtifact;
+}

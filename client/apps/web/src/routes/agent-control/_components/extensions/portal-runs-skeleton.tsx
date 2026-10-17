@@ -1,24 +1,9 @@
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { RunHistorySkeleton } from "./run-history-skeleton";
 
-/** The portal task history while it loads: its heading and four task rows. */
+/** The portal task history while it loads. */
 export function PortalRunsSkeleton() {
   const t = useT();
 
-  return (
-    <div aria-busy aria-label={t("Loading portal tasks")} className="flex flex-col gap-3">
-      <div aria-hidden className="contents">
-        <Skeleton className="h-4 w-32" />
-        <div className="flex flex-col divide-y rounded-md border">
-          {[0, 1, 2, 3].map((row) => (
-            <div key={row} className="flex items-center gap-3 px-3 py-2.5">
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-3 w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <RunHistorySkeleton label={t("Loading portal tasks")} />;
 }

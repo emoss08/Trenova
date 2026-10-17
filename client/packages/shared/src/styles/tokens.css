@@ -304,11 +304,9 @@
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
   --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0.2 0 0 / 0.08);
   --lift-card:
-    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 0 / 0.1),
-    0 6px 16px -8px oklch(0.2 0 0 / 0.12);
+    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 0 / 0.1), 0 6px 16px -8px oklch(0.2 0 0 / 0.12);
   --lift-float:
-    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 0 / 0.12),
-    0 16px 40px -16px oklch(0.2 0 0 / 0.18);
+    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 0 / 0.12), 0 16px 40px -16px oklch(0.2 0 0 / 0.18);
 
   /* Desk ------------------------------------------------------------------
      The Desk is a room rather than a page, and it is the one surface allowed
@@ -383,12 +381,14 @@
   --dsk-lift: var(--lift-whisper);
   --dsk-lift-hi: var(--lift-float);
   --dsk-on-solid: oklch(1 0 0);
-  --dsk-approve: oklch(0.627 0.170 149.2);
-  --dsk-mention: oklch(0.679 0.175 251.0);
-  --dsk-error: oklch(0.626 0.193 23.0);
+  --dsk-approve: oklch(0.627 0.17 149.2);
+  --dsk-mention: oklch(0.679 0.175 251);
+  --dsk-error: oklch(0.626 0.193 23);
   --dsk-paper: oklch(0.985 0.004 91.4);
-  --dsk-paper-ink: oklch(0.863 0.009 264.5);
-  --dsk-paper-rule: oklch(0.922 0.006 264.5);
+  --dsk-mark: color-mix(in oklch, var(--brand) 9%, transparent);
+  --dsk-mark-line: color-mix(in oklch, var(--brand) 40%, transparent);
+  --dsk-mark-on: color-mix(in oklch, var(--brand) 20%, transparent);
+  --dsk-mark-warn: color-mix(in oklch, var(--warning) 24%, transparent);
   --dsk-vendor-anthropic: oklch(0.672 0.131 38.8);
   --dsk-vendor-gemini: oklch(0.652 0.171 259.6);
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
@@ -882,12 +882,14 @@
   --dsk-lift: var(--lift-ring);
   --dsk-lift-hi: var(--lift-float);
   --dsk-on-solid: oklch(1 0 0);
-  --dsk-approve: oklch(0.627 0.170 149.2);
-  --dsk-mention: oklch(0.679 0.175 251.0);
-  --dsk-error: oklch(0.626 0.193 23.0);
+  --dsk-approve: oklch(0.627 0.17 149.2);
+  --dsk-mention: oklch(0.679 0.175 251);
+  --dsk-error: oklch(0.626 0.193 23);
   --dsk-paper: oklch(0.985 0.004 91.4);
-  --dsk-paper-ink: oklch(0.863 0.009 264.5);
-  --dsk-paper-rule: oklch(0.922 0.006 264.5);
+  --dsk-mark: color-mix(in oklch, var(--brand) 14%, transparent);
+  --dsk-mark-line: color-mix(in oklch, var(--brand) 55%, transparent);
+  --dsk-mark-on: color-mix(in oklch, var(--brand) 28%, transparent);
+  --dsk-mark-warn: color-mix(in oklch, var(--warning) 30%, transparent);
   --dsk-vendor-anthropic: oklch(0.672 0.131 38.8);
   --dsk-vendor-gemini: oklch(0.652 0.171 259.6);
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
@@ -2144,10 +2146,10 @@
 }
 
 @utility field-focus-state {
-    outline: none;
-    border-color: var(--ring);
-    box-shadow: 0 0 0 var(--ring-width)
-      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
 }
 
 /* Focus landed on a child and the wrapper draws the ring: a field with an affix,

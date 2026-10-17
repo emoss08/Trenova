@@ -34,6 +34,11 @@ line decides several of the obvious candidates:
   is a proposal whose preview is the exact task the browser gets, run from the approval and
   followed by a workflow and a wait; every task is recorded with the pages it reached and its
   session recording.
+- **Data analysis** (`analyze_data`) on E2B; see
+  [agent-data-analysis.md](../engineering/agent-data-analysis.md). Python over the report runs a
+  person ran and the files they attached, in a fresh sandbox with all egress denied, stopped when
+  it ends; charts are kept with the run and drawn on the Desk. Chosen over Daytona because E2B
+  closes egress at sandbox creation and runs a code interpreter that returns charts as images.
 
 ## Next, in order
 
@@ -48,9 +53,7 @@ line decides several of the obvious candidates:
    and FleetWorks. Every call is a write outside the organization and every transcript is outside
    content; it needs a consent ledger (TCPA treats AI voices as artificial, and some states
    require two-party recording consent) before anything else.
-4. **Code sandbox (E2B, Daytona)** for lane, margin and reconciliation analysis over exports, only
-   with network egress denied; with egress open it is an exfiltration path.
-5. **Bring your own remote MCP server**, last. No TMS researched offers an organization-run
+4. **Bring your own remote MCP server**, last. No TMS researched offers an organization-run
    extension marketplace; Alvys and HappyRobot expose MCP inbound only. When it comes: remote
    servers only, OAuth through client ID metadata documents, an administrator approves each tool,
    each tool definition pinned by hash and disabled on any change until approved again, every

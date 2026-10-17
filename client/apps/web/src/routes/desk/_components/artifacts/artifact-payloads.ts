@@ -10,7 +10,9 @@ import {
   type DisplayColumn,
   type DisplayField,
 } from "@/components/assistant/readable-values";
+import type { AnalysisView } from "@/components/assistant/analysis-result";
 import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
+import type { AnalysisRunStatus } from "@/types/agent-extension";
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -910,5 +912,56 @@ export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload
     totals: diffMeasures(payload.totals),
     truncated: payload.truncated === true,
     note: stringOf(payload.note),
+  };
+}
+
+const ANALYSIS_STATUSES: readonly AnalysisRunStatus[] = [
+  "Running",
+  "Succeeded",
+  "Errored",
+  "Failed",
+  "TimedOut",
+];
+
+/**
+ * What an analysis showed: the figures it printed and returned, the charts it
+ * drew by position (their images are read from the run), the exception it
+ * raised, and the code. A status the server did not send reads as a failure,
+ * never as a success.
+ */
+export function analysisFrom(artifact: AssistantArtifact): AnalysisView {
+  const payload = artifact.payload;
+  const status = stringOf(payload.status) as AnalysisRunStatus;
+  const error = isRecord(payload.error) ? payload.error : null;
+
+  return {
+    runId: stringOf(payload.analysisRunId),
+    status: ANALYSIS_STATUSES.includes(status) ? status : "Failed",
+    code: stringOf(payload.code),
+    datasets: listOf(payload.datasets)
+      .filter(isRecord)
+      .map((dataset) => ({
+        name: stringOf(dataset.name),
+        path: stringOf(dataset.path),
+        source:
+          dataset.source === "Attachment" ? ("Attachment" as const) : ("ReportRun" as const),
+        label: stringOf(dataset.label),
+        rows: numberOf(dataset.rows),
+      })),
+    output: stringOf(payload.output),
+    results: listOf(payload.results).map(stringOf).filter((text) => text !== ""),
+    charts: listOf(payload.charts)
+      .filter(isRecord)
+      .map((chart) => ({ position: numberOf(chart.position), title: stringOf(chart.title) }))
+      .filter((chart) => chart.position > 0),
+    error: error
+      ? {
+          name: stringOf(error.name),
+          value: stringOf(error.value),
+          traceback: stringOf(error.traceback),
+        }
+      : null,
+    failure: stringOf(payload.failure),
+    truncated: payload.truncated === true,
   };
 }

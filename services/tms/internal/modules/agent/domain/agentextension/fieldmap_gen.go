@@ -4,6 +4,20 @@ package agentextension
 
 import "github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AnalysisChart].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.AnalysisChartFieldMap] instead of parsing struct tags via reflection.
+func (e *AnalysisChart) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.AnalysisChartFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AnalysisRun].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.AnalysisRunFieldMap] instead of parsing struct tags via reflection.
+func (e *AnalysisRun) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.AnalysisRunFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Extension].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [agentextensioncol.ExtensionFieldMap] instead of parsing struct tags via reflection.

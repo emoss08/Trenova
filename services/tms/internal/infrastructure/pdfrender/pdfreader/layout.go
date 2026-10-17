@@ -160,6 +160,7 @@ func splitBand(band *lineBand) []kernelports.PDFTextLine {
 
 	var lines []kernelports.PDFTextLine
 	var parts []string
+	var words []kernelports.PDFTextWord
 	var current textRun
 	flush := func() {
 		if len(parts) == 0 {
@@ -171,8 +172,10 @@ func splitBand(band *lineBand) []kernelports.PDFTextLine {
 			Top:    current.top,
 			Width:  current.right - current.left,
 			Height: current.bottom - current.top,
+			Words:  words,
 		})
 		parts = parts[:0]
+		words = nil
 	}
 
 	for _, run := range band.runs {
@@ -188,6 +191,7 @@ func splitBand(band *lineBand) []kernelports.PDFTextLine {
 			current.bottom = max(current.bottom, run.bottom)
 		}
 		parts = append(parts, run.text)
+		words = append(words, kernelports.PDFTextWord{Left: run.left, Width: run.right - run.left})
 	}
 	flush()
 

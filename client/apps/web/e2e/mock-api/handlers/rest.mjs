@@ -5,6 +5,7 @@ import { TRIAGE_ROUTES } from "./triage.mjs";
 import { DESK_CARD_ROUTES } from "./deskcards.mjs";
 import { DESK_CASE_ROUTES } from "./deskcase.mjs";
 import { EDI_DRAFT_ROUTES } from "./deskedidraft.mjs";
+import { EXTRACTION_ROUTES } from "./deskextraction.mjs";
 import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
@@ -21,6 +22,7 @@ const ROUTES = [
   ...FORMULA_ROUTES,
   ...DESK_CASE_ROUTES,
   ...EDI_DRAFT_ROUTES,
+  ...EXTRACTION_ROUTES,
   ...DESK_THREAD_ROUTES,
   ...PALETTE_ROUTES,
   ...TRIAGE_ROUTES,

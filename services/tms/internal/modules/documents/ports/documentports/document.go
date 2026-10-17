@@ -26,6 +26,13 @@ type GetDocumentByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetDocumentPageImageRequest struct {
+	GetDocumentByIDRequest
+
+	PageNumber  int    `json:"pageNumber"`
+	IfNoneMatch string `json:"ifNoneMatch"`
+}
+
 type GetDocumentByStoragePathRequest struct {
 	StoragePath string                `json:"storagePath"`
 	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`

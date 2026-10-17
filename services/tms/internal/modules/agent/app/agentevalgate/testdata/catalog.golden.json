@@ -1411,6 +1411,101 @@
       }
     },
     {
+      "name": "analyze_data",
+      "description": "Run Python over report results and files the person attached, to work out what a report alone does not show: margin by lane over a quarter, which customers drift past terms, where detention clusters. pandas, numpy and matplotlib are available, and the code cannot reach the internet. Each dataset is written to /home/user/data/<name>.csv (or .xlsx, .json, .txt for a file) before the code runs; a report run's CSV has one column per report column, headed by its id, with raw values: decimals as exact text, times as unix seconds. Print what you need to read back, and show a chart with plt.show() to put it beside your reply. Run the report with run_report first and use its runId; each call starts afresh, so load what it needs every time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The Python to run, as one cell. Read each dataset from its path, print the figures, and plt.show() any chart.",
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "datasets": {
+            "description": "The data the code reads, at most five. Give each a name and exactly one of reportRunId or documentId.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "documentId": {
+                  "description": "A CSV, XLSX, JSON or text file the person attached to this conversation, from read_attachment.",
+                  "type": "string",
+                  "x-recordOf": "document"
+                },
+                "name": {
+                  "description": "The file's name in the sandbox: lower-case letters, digits and underscores, starting with a letter, such as lanes.",
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                "reportRunId": {
+                  "description": "A finished report run you ran for this person, from run_report. Its rows are written as CSV.",
+                  "type": "string",
+                  "x-recordKinds": [
+                    "report_run"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "purpose": {
+            "description": "What the analysis answers, in one plain sentence the person will read, such as \"Margin by lane for Q3\".",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "code"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "analyze",
+        "analysis",
+        "chart",
+        "graph",
+        "plot",
+        "trend",
+        "python",
+        "pandas",
+        "spreadsheet",
+        "calculate",
+        "margin by lane",
+        "compare periods",
+        "statistics"
+      ],
+      "prerequisites": [
+        "run_report"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "data_analysis",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "marked",
+        "source": "attachment",
+        "carriesTaint": false,
+        "rationale": "Runs code over report results and files the person already read, in a sandbox that cannot reach the network; it changes nothing, and it carries the taint of any attached file it reads."
+      }
+    },
+    {
       "name": "apply_accounting_inbound_change",
       "description": "Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. Accepting brings it into Trenova on the day it was made, with any credits it used, or marks the settlement it pays as paid, and only while it still matches what is open. The preview shows exactly what would post.",
       "parameters": {

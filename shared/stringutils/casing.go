@@ -27,6 +27,23 @@ func LowerFirst(s string) string {
 	return string(runes)
 }
 
+func LowerCamel(s string) string {
+	words := strings.FieldsFunc(s, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	var result strings.Builder
+	result.Grow(len(s))
+	for i, word := range words {
+		if i == 0 {
+			result.WriteString(strings.ToLower(word))
+			continue
+		}
+		result.WriteString(CapitalizeFirst(strings.ToLower(word)))
+	}
+
+	return result.String()
+}
+
 var humanizeSpecialWords = map[string]string{
 	"id":   "ID",
 	"url":  "URL",

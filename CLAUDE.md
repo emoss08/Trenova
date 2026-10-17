@@ -403,6 +403,11 @@ as vendor secrets, actions run from an approval and followed by `PortalRunWorkfl
 [docs/engineering/agent-portal-automation.md](docs/engineering/agent-portal-automation.md).
 Read it before changing `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools` or
 `browseruseconnector`.
+Data analysis (`analyze_data`: Python over the caller's report runs and attached files in an E2B
+sandbox with all egress denied, charts kept with the run and drawn as the Desk's `analysis`
+artifact) is in [docs/engineering/agent-data-analysis.md](docs/engineering/agent-data-analysis.md).
+Read it before changing `analysis.go` in `agentextensionservice`, `analysis_tool.go`,
+`e2bconnector` or `shared/e2b`.
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.

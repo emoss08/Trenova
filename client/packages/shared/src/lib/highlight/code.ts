@@ -6,6 +6,7 @@ import {
 import { diff } from "@tanstack/highlight/languages/diff";
 import { js } from "@tanstack/highlight/languages/js";
 import { json } from "@tanstack/highlight/languages/json";
+import { python } from "@tanstack/highlight/languages/python";
 import { shell } from "@tanstack/highlight/languages/shell";
 import { sql } from "@tanstack/highlight/languages/sql";
 import { ts } from "@tanstack/highlight/languages/ts";
@@ -26,6 +27,7 @@ const highlighter = createHighlighter({
       aliases: ["mysql", "pgsql", "plsql", "postgres", "postgresql", "psql", "tsql"],
     }),
     graphql,
+    python,
     yaml,
     shell,
     diff,

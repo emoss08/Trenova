@@ -25,6 +25,7 @@ type documentChannel string
 const (
 	documentChannelContent      documentChannel = "content"
 	documentChannelPresignedURL documentChannel = "presigned_url"
+	documentChannelPageImage    documentChannel = "page_image"
 )
 
 var documentAccessComments = map[documentAccess]string{

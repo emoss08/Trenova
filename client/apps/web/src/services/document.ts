@@ -49,6 +49,11 @@ export function documentContentEndpoint(documentId: string, action: DocumentCont
   return `/documents/${encodeURIComponent(documentId)}/${action}/`;
 }
 
+/** One page of a PDF or an image, numbered from 1, drawn by the server as an image to read. */
+export function documentPageImageEndpoint(documentId: string, page: number): string {
+  return `/documents/${encodeURIComponent(documentId)}/pages/${page}/image/`;
+}
+
 export class DocumentService {
   public async upload(params: UploadDocumentParams): Promise<Document> {
     const formData = new FormData();

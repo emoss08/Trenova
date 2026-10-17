@@ -263,6 +263,11 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 	},
+	// Running code over report results and files the person already read, in
+	// a sandbox that cannot reach the network. It changes nothing.
+	ResourceDataAnalysis: {
+		OpRead: {},
+	},
 	ResourceBriefing: {
 		OpRead: {},
 	},

@@ -43,3 +43,19 @@ func TestLowerFirst(t *testing.T) {
 		}
 	}
 }
+
+func TestLowerCamel(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		"":                "",
+		"Piece Count":     "pieceCount",
+		"Pickup Stop":     "pickupStop",
+		"PO number":       "poNumber",
+		"  bill-to / ref": "billToRef",
+		"Weight":          "weight",
+	}
+	for in, want := range cases {
+		assert.Equal(t, want, LowerCamel(in), in)
+	}
+}

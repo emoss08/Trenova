@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
+	"github.com/gen2brain/webp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,4 +101,72 @@ func TestSupportsThumbnail(t *testing.T) {
 	require.True(t, generator.SupportsThumbnail("application/pdf"))
 	require.False(t, generator.SupportsThumbnail("text/plain"))
 	require.False(t, generator.SupportsThumbnail("application/zip"))
+}
+
+var twoPagePDF = []byte(`%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R 4 0 R]/Count 2>>endobj
+3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj
+4 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 792 612]>>endobj
+trailer<</Root 1 0 R>>
+`)
+
+func webPSize(t *testing.T, data []byte) (int, int) {
+	t.Helper()
+
+	requireWebP(t, data)
+	cfg, err := webp.DecodeConfig(bytes.NewReader(data))
+	require.NoError(t, err)
+	return cfg.Width, cfg.Height
+}
+
+func TestRenderPageDrawsTheRequestedPDFPage(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
+
+	first, err := generator.RenderPage(
+		t.Context(), bytes.NewReader(twoPagePDF), "application/pdf", 1,
+	)
+	require.NoError(t, err)
+	width, height := webPSize(t, first)
+	require.InDelta(t, 1275, width, 1)
+	require.InDelta(t, 1650, height, 1)
+
+	second, err := generator.RenderPage(
+		t.Context(), bytes.NewReader(twoPagePDF), "application/pdf", 2,
+	)
+	require.NoError(t, err)
+	width, height = webPSize(t, second)
+	require.Equal(t, thumbnailservice.PageMaxWidth, width)
+	require.InDelta(t, 1081, height, 1)
+}
+
+func TestRenderPagePastTheLastPDFPage(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
+
+	_, err := generator.RenderPage(
+		t.Context(), bytes.NewReader(twoPagePDF), "application/pdf", 3,
+	)
+	require.ErrorIs(t, err, thumbnailservice.ErrPageOutOfRange)
+
+	_, err = generator.RenderPage(
+		t.Context(), bytes.NewReader(twoPagePDF), "application/pdf", 0,
+	)
+	require.ErrorIs(t, err, thumbnailservice.ErrPageOutOfRange)
+}
+
+func TestRenderPageKeepsAnImageAtItsOwnSize(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
+
+	page, err := generator.RenderPage(t.Context(), bytes.NewReader(testPNG(t)), "image/png", 1)
+	require.NoError(t, err)
+	width, height := webPSize(t, page)
+	require.Equal(t, 640, width)
+	require.Equal(t, 480, height)
+}
+
+func TestRenderPageAnImageHasOnePage(t *testing.T) {
+	generator := thumbnailservice.NewGenerator(pdftest.Reader())
+
+	_, err := generator.RenderPage(t.Context(), bytes.NewReader(testPNG(t)), "image/png", 2)
+	require.ErrorIs(t, err, thumbnailservice.ErrPageOutOfRange)
 }

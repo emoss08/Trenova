@@ -27,10 +27,13 @@ import {
   type DeskArtifactShape,
 } from "@/components/desk-chat/desk-skeletons";
 import { whenIdle } from "@/lib/when-idle";
+import { lazyComponent } from "@/lib/lazy-component";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
+import { DeskAnalysisBody } from "./kinds/analysis/desk-analysis-body";
 import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
 import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
 import { DeskEmailBody } from "./kinds/email/desk-email-body";
@@ -43,12 +46,18 @@ import { DeskDocBody } from "./kinds/document/desk-doc-body";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
 import { ConnectionDraftSkeleton } from "./kinds/edi-connection-draft/connection-draft-skeleton";
 import { DeskConnectionDraftBody } from "./kinds/edi-connection-draft/desk-connection-draft-body";
-import { DeskExtractBody } from "./kinds/extraction/desk-extract-body";
+import { ExtractionSkeleton } from "./kinds/extraction/extraction-skeleton";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
 import { DeskReportBars, barsOf } from "./kinds/report/desk-report-bars";
 import { DeskTableBody, gridOf, versionNote } from "./kinds/table/desk-table-body";
+
+/** The extraction card is its own chunk: its viewer and list load the first time one is opened. */
+const extractionBody = lazyComponent(
+  () => import("./kinds/extraction/desk-extract-body"),
+  (module) => module.DeskExtractBody,
+);
 
 /** How long a just-arrived artifact keeps its "New" mark. */
 const NEW_MS = 6000;
@@ -375,9 +384,15 @@ export function ArtifactBody({
         />
       );
     case "extraction":
-      return <DeskExtractBody artifact={artifact} />;
+      return (
+        <LazyComponent fallback={<ExtractionSkeleton />}>
+          <extractionBody.Component artifact={artifact} onOpenArtifact={onOpenArtifact} />
+        </LazyComponent>
+      );
     case "edi_connection_draft":
       return <DeskConnectionDraftBody artifact={artifact} />;
+    case "analysis":
+      return <DeskAnalysisBody artifact={artifact} />;
     case "navigation":
     case "dashboard_ref":
       return <DeskViewBody artifact={artifact} />;
@@ -445,6 +460,9 @@ const READ_AHEAD = 4;
 function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
   if (artifact.kind === "edi_connection_draft") {
     return <ConnectionDraftSkeleton />;
+  }
+  if (artifact.kind === "extraction") {
+    return <ExtractionSkeleton />;
   }
   const resource =
     artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"
