@@ -4,6 +4,13 @@ package extractioneval
 
 import "github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CasePages].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [extractionevalcol.CasePagesFieldMap] instead of parsing struct tags via reflection.
+func (e *CasePages) GetStaticFieldMap() map[string]string {
+	return extractionevalcol.CasePagesFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtractionCase].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [extractionevalcol.ExtractionCaseFieldMap] instead of parsing struct tags via reflection.

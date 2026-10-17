@@ -14732,6 +14732,14 @@ type ExtractionEvalPage {
   text: String!
 }
 
+"""
+A re-freeze queued in the background: each case's original file is converted through Docling.
+"""
+type ExtractionEvalRefreeze {
+  queued: Int!
+  workflowId: String!
+}
+
 """One case evaluated within a run."""
 type ExtractionEvalResult {
   accuracy: Float!
@@ -14820,6 +14828,10 @@ type ExtractionEvalRun {
   """Why the run ended before every case ran."""
   stopReason: String!
   task: String!
+  """
+  The reading of each case the run sent to the model; a case with no pages for it is skipped.
+  """
+  textSource: ExtractionTextSource!
   unconfirmedCount: Int!
   unscoredCount: Int!
   updatedAt: Timestamp!
@@ -15209,6 +15221,18 @@ type ExtractionStop {
   state: String!
   timeWindow: String!
   timezone: String!
+}
+
+"""Which reading of a document an evaluation sends to the model."""
+enum ExtractionTextSource {
+  """
+  The case's pages frozen again from its original file through Docling, as Markdown.
+  """
+  docling
+  """
+  The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader.
+  """
+  legacy
 }
 
 """One provider's corrections in one UTC week, Monday to Sunday."""
@@ -21163,6 +21187,10 @@ type Mutation {
   """
   redateAccountingSync(id: ID!): AccountingSyncRecord!
   """
+  Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source.
+  """
+  refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
+  """
   Reads the accounting system's records again and refreshes the proposals.
   """
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
@@ -25279,6 +25307,11 @@ enum RecurringShipmentStatus {
   Paused
 }
 
+input RefreezeExtractionEvalCasesInput {
+  """The cases to freeze again; every active case when empty."""
+  caseIds: [ID!]
+}
+
 input RejectInvoiceAdjustmentInput {
   adjustmentId: ID!
   reason: String
@@ -29247,6 +29280,8 @@ input StartExtractionEvalRunInput {
   """
   caseLimit: Int
   providerId: ID!
+  """Which reading of each case to send; legacy by default."""
+  textSource: ExtractionTextSource
 }
 
 input StartWorkerChecklistInput {

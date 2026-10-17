@@ -3990,6 +3990,13 @@ export type ExtractionShadowVerdict =
   | 'Same'
   | 'Worse';
 
+/** Which reading of a document an evaluation sends to the model. */
+export type ExtractionTextSource =
+  /** The case's pages frozen again from its original file through Docling, as Markdown. */
+  | 'docling'
+  /** The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader. */
+  | 'legacy';
+
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -7785,6 +7792,8 @@ export type StartExtractionEvalRunInput = {
   /** How many active cases to run, newest first; 50 by default, at most 500. */
   caseLimit?: number | null | undefined;
   providerId: string | number;
+  /** Which reading of each case to send; legacy by default. */
+  textSource?: ExtractionTextSource | null | undefined;
 };
 
 export type StartWorkerChecklistInput = {

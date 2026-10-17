@@ -2120,6 +2120,7 @@ type MutationResolver interface {
 	DeleteExtractionEvalCase(ctx context.Context, id string) (bool, error)
 	StartExtractionEvalRun(ctx context.Context, input gqlmodel.StartExtractionEvalRunInput) (*extractioneval.ExtractionRun, error)
 	CancelExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
+	RefreezeExtractionEvalCases(ctx context.Context, input gqlmodel.RefreezeExtractionEvalCasesInput) (*extractionevalports.RefreezeExtractionEvalCasesResult, error)
 	UpdateExtractionRollout(ctx context.Context, input gqlmodel.UpdateExtractionRolloutInput) (*extractionrollout.ExtractionRollout, error)
 	UpdateExtractionShadowSettings(ctx context.Context, input gqlmodel.UpdateExtractionShadowSettingsInput) (*extractionshadow.ShadowSettings, error)
 	CreateFactoringAgreement(ctx context.Context, input gqlmodel.FactoringAgreementInput) (*factoring.Agreement, error)
@@ -20350,6 +20351,14 @@ enum ExtractionEvalRunStatus {
   Failed
 }
 
+"Which reading of a document an evaluation sends to the model."
+enum ExtractionTextSource {
+  "The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader."
+  legacy
+  "The case's pages frozen again from its original file through Docling, as Markdown."
+  docling
+}
+
 enum ExtractionEvalResultStatus {
   Pending
   Completed
@@ -20510,6 +20519,8 @@ type ExtractionEvalRun {
   "The model the provider reported serving."
   servedModel: String!
   caseLimit: Int!
+  "The reading of each case the run sent to the model; a case with no pages for it is skipped."
+  textSource: ExtractionTextSource!
   casesTotal: Int!
   casesCompleted: Int!
   casesFailed: Int!
@@ -20691,6 +20702,19 @@ input StartExtractionEvalRunInput {
   providerId: ID!
   "How many active cases to run, newest first; 50 by default, at most 500."
   caseLimit: Int
+  "Which reading of each case to send; legacy by default."
+  textSource: ExtractionTextSource
+}
+
+input RefreezeExtractionEvalCasesInput {
+  "The cases to freeze again; every active case when empty."
+  caseIds: [ID!]
+}
+
+"A re-freeze queued in the background: each case's original file is converted through Docling."
+type ExtractionEvalRefreeze {
+  queued: Int!
+  workflowId: String!
 }
 
 extend type Query {
@@ -20714,6 +20738,8 @@ extend type Mutation {
   "Runs one provider's model over the active cases, within the evaluation budget."
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+  "Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source."
+  refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
 }
 `, BuiltIn: false},
 	{Name: "../schema/extractionrollout.graphqls", Input: `enum ExtractionRolloutHaltReason {

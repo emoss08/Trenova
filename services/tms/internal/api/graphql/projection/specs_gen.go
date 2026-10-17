@@ -589,6 +589,8 @@ var RoutingGuideSpec TypeSpec
 
 var RoutingGuideEntrySpec TypeSpec
 
+var SCIMDirectorySpec TypeSpec
+
 var SCIMGroupRoleMappingSpec TypeSpec
 
 var ServiceFailureSpec TypeSpec
@@ -14042,6 +14044,10 @@ func init() {
 				FieldMapKey: "caseLimit",
 			},
 			{
+				Name:        "textSource",
+				FieldMapKey: "textSource",
+			},
+			{
 				Name:        "casesTotal",
 				FieldMapKey: "casesTotal",
 			},
@@ -22951,6 +22957,45 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
+			},
+		},
+	}
+
+	SCIMDirectorySpec = TypeSpec{
+		TypeName: "SCIMDirectory",
+		FieldMap: iamcol.SCIMDirectoryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "tenantSlug",
+				FieldMapKey: "tenantSlug",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
