@@ -474,6 +474,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceInsight, Operations: []Operation{OpRead}},
 			{Resource: ResourceWebResearch, Operations: []Operation{OpRead}},
 			{Resource: ResourcePortalAutomation, Operations: []Operation{OpRead}},
+			{Resource: ResourceDataAnalysis, Operations: []Operation{OpRead}},
 		},
 	},
 	{

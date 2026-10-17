@@ -8,7 +8,9 @@ with its vendor, so its credentials, limits and cost belong to the organization.
 An extension provides a **capability**, and the capability owns the tools. Web research
 (`web_search`, `web_read`) is the first capability; Exa and Parallel each provide it. Portal
 automation (`list_portal_sites`, `read_portal`, `act_on_portal`) is the second; Browser Use
-provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Agents,
+provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Data
+analysis (`analyze_data`) is the third; E2B provides it, and
+[agent-data-analysis.md](agent-data-analysis.md) describes it. Agents,
 the agent editor, the safety rules and the citation UI name the capability's tools, never a
 vendor, so an organization can move from one vendor to another without touching an agent.
 Only one extension may serve a capability at a time: turning on a second while the first is on
@@ -23,10 +25,10 @@ and every tool call agree on which vendor answers.
 | Capabilities and the tools they own, what is active | `services/tms/internal/modules/agent/domain/agentextension/capability.go` |
 | Types, availability, each vendor's settings spec and validator | `services/tms/internal/modules/agent/domain/agentextension/` (`spec.go`, `webresearch.go`, one file per vendor) |
 | Stored settings and daily usage | `agent_extensions`, `agent_extension_usage_daily` |
-| Marketplace, settings, test, metering, web research, portal sites and tasks | `internal/modules/agent/app/agentextensionservice/` |
+| Marketplace, settings, test, metering, web research, portal sites and tasks, analyses | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `portal_tools.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal` |
+| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
@@ -53,7 +55,7 @@ tool is offered asks it through `Offers`, `Grants` and `Serving`:
   an extension grants to every agent.
 
 Tool use is authorized on the capability's own resource (`web_research` read; `portal_automation`
-read to look and update to act). Managing extensions, and the portal sites and task history,
+read to look and update to act; `data_analysis` read). Managing extensions, and the portal sites and task history,
 needs `agent_extension` read and update.
 
 ## Outside content holds every later write for a person
@@ -61,7 +63,11 @@ needs `agent_extension` read and update.
 A tool a capability lists in `CapabilitySpec.OutsideContentTools` returns text written outside
 the organization, which may have been written to steer an agent. It is declared per tool, not per
 capability: `read_portal` returns a portal's page, while `list_portal_sites` returns what
-administrators wrote and `act_on_portal` returns only that the task started. Once a turn has a
+administrators wrote and `act_on_portal` returns only that the task started. A tool whose
+result is outside content only when it read something a person brought in declares
+`ReadsExternal: marked` instead and names what it read: `analyze_data` taints the run with
+each attached file it analyzed and caps nothing, because a report run is the organization's
+own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
 the ceiling or the private-write rule would allow, and the model is told why.
 
@@ -158,7 +164,7 @@ read, with the vendor's name and the capability's own words (`CapabilitySpec.Unc
 the HTTP status mapping most vendors need.
 
 A connector for a capability also implements that capability's provider port (web research:
-`WebSearchProvider`; portal automation: `BrowserProvider`), receiving the decrypted settings and reading its own vendor fields from
+`WebSearchProvider`; portal automation: `BrowserProvider`; data analysis: `SandboxProvider`), receiving the decrypted settings and reading its own vendor fields from
 them. `TestEveryExtensionHasAConnectorForItsCapability` fails when a type has no connector or its
 connector cannot do what the capability needs.
 

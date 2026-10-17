@@ -13,5 +13,7 @@ var Module = fx.Module("agent-extension-service",
 		func(svc *Service) agentextensionports.PortalAutomator { return svc },
 		func(svc *Service) agentextensionports.PortalSites { return svc },
 		func(svc *Service) agentextensionports.PortalRunFinisher { return svc },
+		func(svc *Service) agentextensionports.DataAnalyzer { return svc },
+		func(svc *Service) agentextensionports.AnalysisRuns { return svc },
 	),
 )

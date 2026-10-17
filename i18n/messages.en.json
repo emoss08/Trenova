@@ -20108,6 +20108,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent data analysis": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent definition loader is not configured": {
     "sites": 1,
     "scope": [
@@ -20541,6 +20550,15 @@
       "apps/web/lib"
     ]
   },
+  "Agents answer questions a report alone does not — margin by lane over a quarter, which customers drift past their payment terms, where detention clusters by facility and hour — by running Python over the report results and spreadsheets they were given, and show the figures and charts beside the reply. The code runs in a sandbox that cannot reach the internet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Agents are not learning from their work in this organization. Turn learning on in AI Control first.": {
     "sites": 1,
     "scope": [
@@ -20704,6 +20722,15 @@
     ]
   },
   "Agents reading and acting on the third-party web portals the organization set up, through an enabled extension": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Agents running code over the report results and files a person gave them, through an enabled extension": {
     "sites": 1,
     "scope": [
       "go"
@@ -25467,6 +25494,27 @@
       "routes/admin"
     ]
   },
+  "Analyses": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
+  "Analysis": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config",
+      "routes/agent-control"
+    ]
+  },
   "Analysis window": {
     "sites": 1,
     "scope": [
@@ -25501,6 +25549,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Analyze data": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Analyzing rate confirmation": {
@@ -48824,6 +48883,15 @@
       "routes/reports"
     ]
   },
+  "Chart {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Charts": {
     "sites": 1,
     "scope": [
@@ -54543,12 +54611,13 @@
     ]
   },
   "Code": {
-    "sites": 104,
+    "sites": 105,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
@@ -54680,6 +54749,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Code error": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Code expires": {
@@ -62131,7 +62209,7 @@
     ]
   },
   "Cost": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -65326,6 +65404,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Create the shipment a tender in Triage describes, from the fields you checked. Start from the draft draft_inbound_load wrote, which get_inbound_message shows, and send every field the load should carry: one left out is not on it. It is billed to the customer the message is linked to, so link that first with link_inbound_message. A message that already made its load is refused.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Create the shipment and finish import.": {
@@ -69386,6 +69473,15 @@
       "apps/web/config"
     ]
   },
+  "Data Analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Data Entry Control": {
     "sites": 1,
     "scope": [
@@ -69422,6 +69518,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Data analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Data as of": {
@@ -69549,6 +69654,15 @@
     ],
     "areas": [
       "api/helpers"
+    ]
+  },
+  "Datasets read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Date": {
@@ -81007,7 +81121,7 @@
     ]
   },
   "Done": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "ts"
     ],
@@ -100063,7 +100177,7 @@
     ]
   },
   "Failed": {
-    "sites": 70,
+    "sites": 71,
     "scope": [
       "go",
       "ts"
@@ -103355,6 +103469,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "File an email attachment on a shipment as a typed document, whole or split into page ranges that each become their own document. Whole, it is filed as the type you name, or as the kind it was read as when you name none. Only a PDF splits. A file that was not read, or is already filed, is refused; unfile_inbound_attachment undoes a filing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "File as": {
@@ -111511,6 +111634,15 @@
       "routes/agent-control"
     ]
   },
+  "Give messages waiting in the Triage queue to a person on the Triage team, or take them off whoever has them. Choose the owner from list_triage_assignees, which shows who can take Triage messages and how many each already holds. Settled messages and ones the person already owns are left alone. The new owner sees them in their own lane.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Give the alert a name": {
     "sites": 1,
     "scope": [
@@ -113061,6 +113193,15 @@
     ]
   },
   "Hand a week over": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Hand every message still waiting in the Triage queue to one person, usually the on-call person at the end of the working day. list_triage_assignees names the on-call person and who else can take it. Snoozed, parked and settled messages are left alone; to move only some messages, use assign_inbound_messages.": {
     "sites": 1,
     "scope": [
       "go"
@@ -133102,6 +133243,15 @@
       "routes/admin"
     ]
   },
+  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which search_inbound_messages and list_inbound_messages find. Messages already ignored stay settled; reopen_inbound_messages returns any that still matter to the queue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Let agents act on this portal": {
     "sites": 1,
     "scope": [
@@ -133109,6 +133259,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Let agents analyze this person's report results and attached files": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Let agents look things up on portals for this person": {
@@ -133148,6 +133307,15 @@
     ]
   },
   "Let agents search the web and read pages when an answer is not in Trenova.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Let agents work out figures and charts from your reports and spreadsheets with Python.": {
     "sites": 1,
     "scope": [
       "go"
@@ -136134,6 +136302,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading analyses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading analytics": {
     "sites": 1,
     "scope": [
@@ -137646,11 +137823,12 @@
     ]
   },
   "Loading {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/edi",
       "routes/onboarding"
     ]
@@ -138366,6 +138544,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold. That hold keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (link_inbound_message).": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Log an exception": {
@@ -153561,6 +153748,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "No analyses yet. Each one an agent runs is listed here with its code and output.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No analysis captured.": {
@@ -171942,6 +172138,15 @@
       "go/other"
     ]
   },
+  "Only the end of what it printed is kept here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Only the final tier may be open-ended": {
     "sites": 2,
     "scope": [
@@ -180535,6 +180740,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way. Use it after asking the sender something with reply_to_inbound_message. It parks the message for the people working the queue, not what you are doing: to be woken yourself when they answer, call wait_until with a Reply wait on the record.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Parked in Waiting on them": {
@@ -196589,6 +196803,15 @@
       "apps/web/components"
     ]
   },
+  "Ran for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Ran out of steps": {
     "sites": 1,
     "scope": [
@@ -199433,6 +199656,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "Read no datasets": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Read on {0}.": {
     "sites": 1,
     "scope": [
@@ -199568,6 +199800,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Read the load a tender in Triage describes into a draft on the message: customer, stops, dates, equipment, weight, rate and references. It is read from the attached tender's document when that has one, else from the message body. Nothing is booked; check the draft get_inbound_message shows, then create it with create_inbound_load.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Read the question": {
@@ -201734,6 +201975,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Recent analyses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Recent artifacts": {
@@ -207530,6 +207780,15 @@
       "routes/admin"
     ]
   },
+  "Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known. When the right one is known, link_inbound_message replaces the link in one step. get_inbound_message shows what the message is linked to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remove the stored sign-in": {
     "sites": 1,
     "scope": [
@@ -208122,6 +208381,15 @@
     ]
   },
   "Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on. Nothing is sent to the customer, a carrier or a trading partner, and nobody is assigned: tender or assign it again afterwards. Read it with get_shipment first to be sure it is the canceled one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reopen a conflict on a message that was settled the wrong way, so it can be settled again with resolve_inbound_conflict. A document conflict whose attachment is already filed is refused: unfile it first with unfile_inbound_attachment. get_inbound_message lists each conflict.": {
     "sites": 1,
     "scope": [
       "go"
@@ -213044,11 +213312,12 @@
     ]
   },
   "Results": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -213643,6 +213912,15 @@
       "go/other"
     ]
   },
+  "Return a message to the Triage queue now: one that was snoozed, or one parked waiting on the sender's reply. Use it when what it was waiting for has happened some other way, or the wait no longer makes sense. A message already in the queue is refused.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Return a zero-based character slice.": {
     "sites": 1,
     "scope": [
@@ -213704,6 +213982,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Return messages that were settled as Actioned or Ignored to the Triage queue, waiting on a person again with a fresh due time. Use it when a message was settled by mistake or is not finished. Messages still waiting are left alone. Their review note is kept.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Return the period to Open": {
@@ -218301,7 +218588,7 @@
     ]
   },
   "Running": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -218443,6 +218730,15 @@
       "routes/recurring-shipment",
       "routes/reports",
       "routes/time-attendance"
+    ]
+  },
+  "Runs Python over report results and attached spreadsheets, and returns the figures and charts.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Runs and proposals": {
@@ -219887,6 +220183,24 @@
       "routes/admin"
     ]
   },
+  "Sandbox template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sandbox template must be an E2B template name such as code-interpreter-v1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sap Evaluation": {
     "sites": 1,
     "scope": [
@@ -220123,6 +220437,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent. Write the body yourself, or leave it out to have Triage's drafter write it from the message, its linked records and, for a detention dispute, the stop times. It replaces any draft already there. To answer the sender yourself, use reply_to_inbound_message instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Save amendment": {
@@ -224749,6 +225072,15 @@
       "routes/tractor"
     ]
   },
+  "Seconds per analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Secret access key": {
     "sites": 1,
     "scope": [
@@ -228434,6 +228766,15 @@
       "apps/web/lib"
     ]
   },
+  "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with unblock_inbound_sender. Never block on what the message itself asks.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Send for approval": {
     "sites": 2,
     "scope": [
@@ -231898,6 +232239,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Settle a conflict Triage found on a message. A duplicate document: ReplaceExisting files the new one in place of the one on file, KeepBoth keeps both. A repeated load: SkipDuplicate when the load is already entered, ConfirmNew when it is a separate load. get_inbound_message lists each conflict with its id and what it compares. Settle a document conflict before filing the attachment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Settle now": {
@@ -246704,6 +247054,15 @@
       "go/other"
     ]
   },
+  "Take an email attachment off the shipment it was filed on, when it went on the wrong load or as the wrong type. A whole file returns to the message and any document it replaced is restored; the documents a split made are deleted. get_inbound_message shows where each attachment is filed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone. Use it for a weather alert that has passed or a message already answered. Items about agents' own runs, proposals and exceptions stay for a person to clear.": {
     "sites": 1,
     "scope": [
@@ -246783,6 +247142,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Take messages waiting on a person out of the Triage queue until a time, or until an event on their linked shipment. They return on their own when it delivers, gets a document of a given type, or has its invoice paid. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (link_inbound_message). To wait for the sender to answer, use wait_for_inbound_reply.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Take one shipment off an order onto an order of its own, so it is billed on its own. The order's only shipment and an invoiced one stay where they are.": {
@@ -249792,6 +250160,15 @@
       "go/other"
     ]
   },
+  "That chart was not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "That code didn't work. Check it and try again, or sign in again.": {
     "sites": 1,
     "scope": [
@@ -251578,6 +251955,33 @@
       "go/other"
     ]
   },
+  "The analyses could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The analysis id is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "The analysis you opened is older than the ones listed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The analytics could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -253083,6 +253487,15 @@
       "go/other"
     ]
   },
+  "The chart number is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "The chart of accounts and its running balances": {
     "sites": 1,
     "scope": [
@@ -253264,6 +253677,15 @@
       "go/other"
     ]
   },
+  "The code is running in the sandbox": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The code of the account type": {
     "sites": 1,
     "scope": [
@@ -253307,6 +253729,33 @@
     ],
     "areas": [
       "routes/shipment-type"
+    ]
+  },
+  "The code raised an error; the agent can fix it and run it again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The code ran out of time and was stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The code ran to the end": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The coded reason waiver leakage is reported against.": {
@@ -254316,6 +254765,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "The datasets together are larger than 40 MB. Narrow them, or analyze them one at a time.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The date cannot be in the future": {
@@ -262469,6 +262927,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The sandbox could not run the code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The saved {0} app keys could not be read. Enter them again.": {
@@ -272333,6 +272800,24 @@
       "go/other"
     ]
   },
+  "Throw away the load drafted from a tender in Triage, when the draft is wrong or the tender is not going to be booked. A load already created from the message is refused; draft_inbound_load reads it again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Throw away the reply draft waiting on a message in Triage, when it should not be sent at all. get_inbound_message shows whether a message has one. A person's own draft is lost with it; to change a draft, write a new one with draft_inbound_reply instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Thrown away without filing what was left": {
     "sites": 1,
     "scope": [
@@ -273217,7 +273702,7 @@
     ]
   },
   "Timed out": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -287030,7 +287515,7 @@
     ]
   },
   "View": {
-    "sites": 126,
+    "sites": 127,
     "scope": [
       "go",
       "ts"
@@ -289979,6 +290464,15 @@
       "go/other"
     ]
   },
+  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with get_detention_occurrence or get_shipment_tracking. A waived charge already invoiced is credited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Waive requirement": {
     "sites": 2,
     "scope": [
@@ -292845,6 +293339,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "What it printed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it says": {
@@ -304697,7 +305200,7 @@
     ]
   },
   "before must be a Unix time in seconds": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -307817,6 +308320,15 @@
       "routes/reports"
     ]
   },
+  "every sandbox the account may run at once is in use": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "every settlement": {
     "sites": 2,
     "scope": [
@@ -308749,7 +309261,7 @@
     ]
   },
   "limit must be a whole number from 1 to 200": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -311172,6 +311684,15 @@
       "go/other"
     ]
   },
+  "the {0} extension cannot run code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "the {0} extension cannot search the web": {
     "sites": 1,
     "scope": [
@@ -312869,6 +313390,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "{0, plural, one {# chart} other {# charts}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# chase} other {# chases}}": {
@@ -319991,6 +320521,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "{0} could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} could not be posted automatically": {
@@ -328363,6 +328902,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} · {1, plural, one {# row} other {# rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} · {1, plural, one {# segment} other {# segments}}": {

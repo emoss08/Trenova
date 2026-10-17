@@ -14,6 +14,7 @@ import {
 } from "@/types/agent-extension";
 import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 import { PortalSitesSkeleton } from "./portal-sites-skeleton";
 import type { ConfigFieldSpec } from "@/types/integration";
@@ -44,6 +45,10 @@ const portalSites = lazyComponent(
 const portalRuns = lazyComponent(
   () => import("./portal-runs"),
   (module) => module.PortalRuns,
+);
+const analysisRuns = lazyComponent(
+  () => import("./analysis-runs"),
+  (module) => module.AnalysisRuns,
 );
 
 /** What each choice a setting offers is called; one a vendor adds unnamed shows as sent. */
@@ -421,6 +426,13 @@ export function ExtensionDetail({
           </LazyComponent>
           <LazyComponent fallback={<PortalRunsSkeleton />}>
             <portalRuns.Component />
+          </LazyComponent>
+        </div>
+      )}
+      {item.capability === AgentExtensionCapability.DataAnalysis && (
+        <div className="flex flex-col gap-6 px-5 pb-5">
+          <LazyComponent fallback={<AnalysisRunsSkeleton />}>
+            <analysisRuns.Component />
           </LazyComponent>
         </div>
       )}

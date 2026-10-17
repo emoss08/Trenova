@@ -44,6 +44,9 @@ func TestEveryExtensionHasAConnectorForItsCapability(t *testing.T) {
 		case agentextension.CapabilityPortalAutomation:
 			_, browses := connector.(agentextensionports.BrowserProvider)
 			assert.True(t, browses, "%s provides portal automation but cannot browse", typ)
+		case agentextension.CapabilityDataAnalysis:
+			_, runs := connector.(agentextensionports.SandboxProvider)
+			assert.True(t, runs, "%s provides data analysis but cannot run code", typ)
 		default:
 			t.Errorf("%s provides %s, which this test does not know how to check", typ,
 				spec.Capability)

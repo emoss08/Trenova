@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, data analysis, analyze data, E2B, python, charts, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -149,6 +149,21 @@ Keywords: portal, website, browser, Browser Use, dock appointment, appointment p
    told, every page it visited, how it ended and its recording.
 9. To stop agents using a site without losing its history, edit it and turn off **Available to
    agents**. A site with tasks recorded against it cannot be removed, only turned off.
+
+### Let agents analyze data
+Keywords: data analysis, analyze, analysis, chart, graph, python, pandas, E2B, sandbox, spreadsheet, margin by lane, trend, statistics, analysis history
+1. Open [AI control](/admin/agent-control) and select **Extensions**, then open Data analysis
+   from E2B.
+2. Paste the organization's E2B API key under **Connection**, select **Turn on**, then
+   **Test connection**. The test shows how many sandboxes the account is running.
+3. Under **Available to**, choose **Every agent** or **Agents you choose**.
+4. Optionally change how many seconds an analysis may run, the daily limit and the sandbox
+   template. Each change is saved as you make it.
+5. Ask an agent a question its reports alone do not answer, such as margin by lane for the
+   quarter. It runs the report, analyzes the rows, and shows the figures and charts beside its
+   reply.
+6. **Recent analyses** lists every analysis agents ran: open one to see what it read, its code,
+   what it printed and drew, how long it ran and what it cost.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
@@ -674,7 +689,9 @@ update access to AI control, deciding proposals needs update access to agent pro
 access to agent extensions, and turning one on, changing its settings or testing it needs update
 access. An agent searches the web for someone only when their role has the web research
 permission, and looks something up on a portal only when their role may view portal automation;
-an action on a portal needs a person who may act on portal automation to approve it.
+an action on a portal needs a person who may act on portal automation to approve it. An agent
+analyzes data only for someone whose role may use data analysis, and reads only the report
+runs that person ran and the files they attached to the conversation.
 
 Search queries and the addresses of pages agents read are sent to the extension's vendor. Queries
 that contain Trenova record IDs, email addresses or phone numbers are refused before they leave

@@ -44,6 +44,9 @@ const (
 	// partner's implementation guide: every value with the page it came from,
 	// what was held for a person, and what the guide asks that nothing meets.
 	KindEDIConnectionDraft Kind = "edi_connection_draft"
+	// KindAnalysis is code an agent ran over report results and attached
+	// files: what it answers, the figures, the charts it drew and the code.
+	KindAnalysis Kind = "analysis"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -70,6 +73,7 @@ func AllKinds() []Kind {
 		KindDecisionRequest,
 		KindExtraction,
 		KindEDIConnectionDraft,
+		KindAnalysis,
 	}
 }
 
