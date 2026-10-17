@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
@@ -1233,7 +1234,7 @@ func (s *Service) cleanupDocumentStorage(
 	log *zap.Logger,
 	doc *document.Document,
 ) {
-	failedPaths := make([]string, 0, 2)
+	failedPaths := make([]string, 0, 3)
 
 	if err := s.deleteStoredObject(ctx, doc.StoragePath, doc.StorageVersionID); err != nil {
 		log.Warn("failed to delete file from storage after document delete",
@@ -1242,6 +1243,16 @@ func (s *Service) cleanupDocumentStorage(
 			zap.Error(err),
 		)
 		failedPaths = append(failedPaths, doc.StoragePath)
+	}
+
+	convertedPath := documentcontent.RawObjectKey(doc.OrganizationID, doc.ID)
+	if err := s.deleteStoredObject(ctx, convertedPath, ""); err != nil {
+		log.Warn("failed to delete converted document from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.String("convertedPath", convertedPath),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, convertedPath)
 	}
 
 	if doc.PreviewStoragePath == "" {

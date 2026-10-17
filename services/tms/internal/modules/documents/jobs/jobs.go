@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/capturejobs"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionshadowjobs"
@@ -15,7 +15,7 @@ import (
 
 func WorkerOptions() fx.Option {
 	return fx.Options(
-		documentintelligencejobs.Module,
+		documentextractionjobs.Module,
 		documentuploadjobs.Module,
 		thumbnailjobs.Module,
 		inboundjobs.Module,

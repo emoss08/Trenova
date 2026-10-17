@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentintelligenceservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentmailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
@@ -120,7 +120,7 @@ func SharedOptions() fx.Option {
 			documentparsingruleservice.NewValidator,
 			documentpacketruleservice.NewValidator,
 			documenttemplateservice.NewValidator,
-			documentintelligenceservice.New,
+			documentextractionservice.New,
 			documentoperationsservice.New,
 			documentsearchprojectionservice.New,
 			documentservice.New,

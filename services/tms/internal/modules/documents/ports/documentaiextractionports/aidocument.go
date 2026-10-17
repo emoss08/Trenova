@@ -13,6 +13,17 @@ const AIDocumentSourceAI = "ai"
 type AIDocumentPage struct {
 	PageNumber int
 	Text       string
+	Markdown   bool
+}
+
+func PagesAreMarkdown(pages []AIDocumentPage) bool {
+	for i := range pages {
+		if pages[i].Markdown {
+			return true
+		}
+	}
+
+	return false
 }
 
 type AIDocumentFeatureSet struct {
@@ -190,6 +201,7 @@ type AIEvaluationExtractResult struct {
 }
 
 type AIDocumentService interface {
+	ExtractionAvailable(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
 	RouteDocument(ctx context.Context, req *AIRouteRequest) (*AIRouteResult, error)
 	ExtractRateConfirmation(ctx context.Context, req *AIExtractRequest) (*AIExtractResult, error)
 	SubmitRateConfirmationBackgroundExtraction(

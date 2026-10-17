@@ -286,6 +286,10 @@ type StructuredCompleter interface {
 	) (*StructuredCompletionResult, error)
 }
 
+type ProviderAvailability interface {
+	CanServe(ctx context.Context, task aiprovider.Task, tenant pagination.TenantInfo) (bool, error)
+}
+
 type CompletionService interface {
 	CompleteStructured(
 		ctx context.Context,

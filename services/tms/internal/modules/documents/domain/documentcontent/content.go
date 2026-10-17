@@ -222,3 +222,7 @@ func (c *Content) PagedText() string {
 
 	return b.String()
 }
+
+func RawObjectKey(organizationID, documentID pulid.ID) string {
+	return organizationID.String() + "/document-extraction/" + documentID.String() + "/docling.json.gz"
+}

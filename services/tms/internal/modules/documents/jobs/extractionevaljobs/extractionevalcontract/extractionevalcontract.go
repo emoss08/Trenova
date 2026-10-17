@@ -55,7 +55,7 @@ func (s *RunStarter) StartExtractionEvalRun(
 	workflowID := extractioneval.RunWorkflowID(start.RunID)
 	if _, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
-		TaskQueue:             temporaltype.DocumentIntelligenceTaskQueue,
+		TaskQueue:             temporaltype.DocumentExtractionTaskQueue,
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		Priority:              EvaluationPriority(start.TenantInfo.OrgID),
 	}, ExtractionEvalRunWorkflowName, &RunPayload{

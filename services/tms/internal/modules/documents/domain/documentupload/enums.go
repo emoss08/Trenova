@@ -16,6 +16,11 @@ const (
 	FailureReadFailed                   = FailureCode("READ_FAILED")
 	FailureExtractionFailed             = FailureCode("EXTRACTION_FAILED")
 	FailurePlanLimitReached             = FailureCode("PLAN_LIMIT_REACHED")
+	FailureUnsupportedFormat            = FailureCode("UNSUPPORTED_FORMAT")
+	FailureFileTooLarge                 = FailureCode("FILE_TOO_LARGE")
+	FailureTooManyPages                 = FailureCode("TOO_MANY_PAGES")
+	FailureExtractionUnavailable        = FailureCode("EXTRACTION_UNAVAILABLE")
+	FailureConverterUnavailable         = FailureCode("CONVERTER_UNAVAILABLE")
 )
 
 func (f FailureCode) String() string {

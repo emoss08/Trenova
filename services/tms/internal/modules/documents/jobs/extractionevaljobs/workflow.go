@@ -48,7 +48,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        extractionevalcontract.ExtractionEvalRunWorkflowName,
 			Fn:          ExtractionEvalRunWorkflow,
-			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
+			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
 			Description: "Run one AI provider's model over the active extraction cases within the evaluation budget and score each field",
 		},
 	}

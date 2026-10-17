@@ -11,6 +11,7 @@ var Module = fx.Module("completion-router",
 		newService,
 		asCompletionService,
 		asEmbeddingService,
+		asProviderAvailability,
 		NewPromptRenderer,
 	),
 )
@@ -18,3 +19,5 @@ var Module = fx.Module("completion-router",
 func asCompletionService(s *Service) agentports.CompletionService { return s }
 
 func asEmbeddingService(s *Service) aiusageports.EmbeddingService { return s }
+
+func asProviderAvailability(s *Service) agentports.ProviderAvailability { return s }
