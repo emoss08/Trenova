@@ -138,10 +138,8 @@ func (f *fakeCollections) PlanScheduleFollowUp(
 	req *collectionports.ScheduleFollowUpRequest,
 	_ *permissionports.RequestActor,
 ) (*collectionports.AccountChangePlan, error) {
-	if req.FollowUpOn != nil && *req.FollowUpOn < 1_700_000_000 {
-		return nil, errortypes.NewValidationError(
-			"followUpOn", errortypes.ErrInvalid, "Schedule the follow-up for today or later",
-		)
+	if err := refusePastFollowUp(req); err != nil {
+		return nil, err
 	}
 	plan := f.plan()
 	plan.Activity = &collection.Activity{
@@ -164,9 +162,22 @@ func (f *fakeCollections) ScheduleFollowUp(
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
+	if err := refusePastFollowUp(req); err != nil {
+		return nil, err
+	}
 	f.scheduled = append(f.scheduled, req)
 
 	return f.view(), nil
+}
+
+func refusePastFollowUp(req *collectionports.ScheduleFollowUpRequest) error {
+	if req.FollowUpOn != nil && *req.FollowUpOn < 1_700_000_000 {
+		return errortypes.NewValidationError(
+			"followUpOn", errortypes.ErrInvalid, "Schedule the follow-up for today or later",
+		)
+	}
+
+	return nil
 }
 
 func previewOf(
