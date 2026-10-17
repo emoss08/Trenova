@@ -219,7 +219,7 @@ services:
         image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
         container_name: docling
         environment:
-            DOCLING_SERVE_API_KEY: 4vjNhTqOgkoNd4L2EH2qGed6Uw7rPNZZjsjJCkZpEC8
+            DOCLING_SERVE_API_KEY: ${DOCLING_API_KEY:-trenova-local-docling}
             DOCLING_SERVE_ENABLE_UI: "false"
             DOCLING_SERVE_ENABLE_API_DOCS: "false"
             DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"

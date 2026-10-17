@@ -351,7 +351,7 @@ renderer:
 # carries apiKey as X-Api-Key, matching the sidecar's DOCLING_SERVE_API_KEY.
 documentConversion:
     doclingUrl: http://localhost:5001
-    apiKey: 4vjNhTqOgkoNd4L2EH2qGed6Uw7rPNZZjsjJCkZpEC8 # Matches DOCLING_SERVE_API_KEY in dev/compose.yml; required when doclingUrl is set
+    apiKey: trenova-local-docling # Matches DOCLING_API_KEY in dev/compose.yml (its local default); required when doclingUrl is set
     requestTimeout: 30s # One HTTP call: submit, status poll or result fetch
     conversionTimeout: 10m # Whole conversion of one document, enforced by the activity
     healthTimeout: 5s # Startup health probe
