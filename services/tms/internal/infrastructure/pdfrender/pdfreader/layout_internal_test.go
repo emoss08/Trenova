@@ -3,6 +3,7 @@ package pdfreader
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,12 @@ func TestArrangeJoinsRunsOnOneLineAndSplitsColumns(t *testing.T) {
 	assert.InDelta(t, 55, lines[0].Width, 0.001)
 	assert.InDelta(t, 100, lines[0].Top, 0.001)
 	assert.InDelta(t, 10.5, lines[0].Height, 0.001)
+	assert.Equal(t, []kernelports.PDFTextWord{
+		{Left: 50, Width: 25},
+		{Left: 78, Width: 27},
+	}, lines[0].Words, "each word keeps where it sits, so a value can be boxed on its own words")
 	assert.Equal(t, "Total", lines[1].Text)
+	assert.Equal(t, []kernelports.PDFTextWord{{Left: 300, Width: 30}}, lines[1].Words)
 	assert.Equal(t, "$1,200.00", lines[2].Text)
 	assert.Equal(t, "Line Haul:   Total\n$1,200.00", text)
 

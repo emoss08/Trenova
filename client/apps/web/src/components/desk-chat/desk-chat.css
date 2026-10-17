@@ -5623,41 +5623,6 @@
   font-size: 10.5px;
   color: var(--dsk-subtle);
 }
-.dk-ex-ph i {
-  display: block;
-  height: 6px;
-  border-radius: 2px;
-  background: var(--dsk-paper-ink);
-}
-.dk-ex-box.dk-low {
-  background: oklch(0.78 0.15 75/0.2);
-  box-shadow: inset 0 0 0 1px oklch(0.7 0.16 70/0.8);
-}
-.dk-ex-box.dk-on {
-  background: oklch(0.62 0.17 255/0.32);
-  box-shadow:
-    inset 0 0 0 1.5px oklch(0.55 0.2 255),
-    0 0 0 3px oklch(0.62 0.17 255/0.2);
-}
-.dk-ex-box.dk-low.dk-on {
-  background: oklch(0.78 0.15 75/0.38);
-  box-shadow:
-    inset 0 0 0 1.5px oklch(0.65 0.17 65),
-    0 0 0 3px oklch(0.78 0.15 75/0.25);
-}
-.dk-ex-f.dk-on {
-  background: var(--dsk-hover);
-}
-.dk-ex-f.dk-low .dk-ex-v {
-  color: var(--dsk-warn-fg);
-  font-weight: 500;
-}
-.dk-ex-c i {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--dsk-success);
-}
 .dk-ar-l {
   flex-wrap: wrap;
   overflow: visible;

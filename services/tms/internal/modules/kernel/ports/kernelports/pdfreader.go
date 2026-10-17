@@ -16,6 +16,12 @@ type PDFTextLine struct {
 	Top    float64
 	Width  float64
 	Height float64
+	Words  []PDFTextWord
+}
+
+type PDFTextWord struct {
+	Left  float64
+	Width float64
 }
 
 type PDFPageLayout struct {

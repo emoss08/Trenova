@@ -31,24 +31,24 @@ The board is drawn for 11:30 UTC today; every timestamp in the fixture is relati
 anchor. A scenario is set from the environment when the server starts, or at any time with
 `POST /__mock/scenario` (which rebuilds the state from scratch):
 
-| Field | Values | Default | Effect |
-|---|---|---|---|
-| `board` | `quiet` \| `busy` \| `high` | `high` | 2 sample loads, the 14-load prototype board, or 480 shipments |
-| `ai` | `true` \| `false` | `true` | Briefing sentence, AI wording in the brief |
-| `operationType` | `asset` \| `brokerage` \| `both` | `both` | Drivers, carriers or both in the strip and queue |
-| `hos` | `true` \| `false` | `true` | HOS rings, sublines and HOS suggestions |
-| `maps` | `true` \| `false` | `false` | Map view shows the map or "not connected" |
-| `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
-| `aiProviders` | `configured` \| `many` \| `all` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, both together, or none |
-| `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
-| `aiAnalytics` | `ok` \| `error` \| `hold` | `ok` | AI control › Analytics: the query answers, every read fails (the error state), or every read is left open (the skeleton) |
-| `triage` | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live` | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off |
-| `triageTime` | `afternoon` \| `endOfDay` | `afternoon` | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up |
-| `triageReplyAfterMs` | number | `6500` | How long after "Wait for reply" the sender answers on the thread |
-| `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
-| `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
-| `deskReply` | `idle` \| `working` | `idle` | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued |
-| `agentMatch` | `match` \| `none` \| `nobody` \| `hold` | `match` | The Desk's agent suggestion (`MyAgentMatch`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, no tool matching, tools matching that none of the person's agents holds, or the request left open (the "finding the agent" state). Suggestions the page records (`RecordMyAgentSuggestion`, `SettleMyAgentSuggestion`) are kept and counted in AI analytics with a month of seeded ones |
+| Field                | Values                                           | Default         | Effect                                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------- | ------------------------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `board`              | `quiet` \| `busy` \| `high`                      | `high`          | 2 sample loads, the 14-load prototype board, or 480 shipments                                                                                                                                                                                                                                                                                                                                                     |
+| `ai`                 | `true` \| `false`                                | `true`          | Briefing sentence, AI wording in the brief                                                                                                                                                                                                                                                                                                                                                                        |
+| `operationType`      | `asset` \| `brokerage` \| `both`                 | `both`          | Drivers, carriers or both in the strip and queue                                                                                                                                                                                                                                                                                                                                                                  |
+| `hos`                | `true` \| `false`                                | `true`          | HOS rings, sublines and HOS suggestions                                                                                                                                                                                                                                                                                                                                                                           |
+| `maps`               | `true` \| `false`                                | `false`         | Map view shows the map or "not connected"                                                                                                                                                                                                                                                                                                                                                                         |
+| `listRows`           | number                                           | `3`             | Rows on the hazardous materials list, for checking a short and a long list page                                                                                                                                                                                                                                                                                                                                   |
+| `aiProviders`        | `configured` \| `many` \| `all` \| `none`        | `configured`    | AI control: the prototype's three providers (one failing), five cloud providers, both together, or none                                                                                                                                                                                                                                                                                                           |
+| `aiPaused`           | `true` \| `false`                                | `false`         | Every agent paused in shadow                                                                                                                                                                                                                                                                                                                                                                                      |
+| `aiAnalytics`        | `ok` \| `error` \| `hold`                        | `ok`            | AI control › Analytics: the query answers, every read fails (the error state), or every read is left open (the skeleton)                                                                                                                                                                                                                                                                                          |
+| `triage`             | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live`          | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off                                                                                                                                                                                                                                                                                                            |
+| `triageTime`         | `afternoon` \| `endOfDay`                        | `afternoon`     | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up                                                                                                                                                                                                                                                                                                                                     |
+| `triageReplyAfterMs` | number                                           | `6500`          | How long after "Wait for reply" the sender answers on the thread                                                                                                                                                                                                                                                                                                                                                  |
+| `desk`               | `full` \| `empty` \| `hold`                      | `full`          | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton)                                                                                                                                                                                                                                                                                                             |
+| `deskSlug`           | an artifact slug                                 | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds                                                                                                                                                                                                                                                                                                                                                     |
+| `deskReply`          | `idle` \| `working`                              | `idle`          | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued                                                                                                                                                                                                                                                                   |
+| `agentMatch`         | `match` \| `none` \| `nobody` \| `hold`          | `match`         | The Desk's agent suggestion (`MyAgentMatch`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, no tool matching, tools matching that none of the person's agents holds, or the request left open (the "finding the agent" state). Suggestions the page records (`RecordMyAgentSuggestion`, `SettleMyAgentSuggestion`) are kept and counted in AI analytics with a month of seeded ones |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -177,11 +177,11 @@ quotes come from it, so they agree. Statement offsets are UTF-16 code units.
 
 Three saved copies of the prototype's "Regional per mile + fuel" template are always there:
 
-| Id | Status | What it shows |
-|---|---|---|
-| `fmt_studio_draft` | Draft, v4 | The prototype's edit template (`FS_EDIT_TEMPLATE`): v3 is the approved version (fuel 14%, no breakdown), v4 the draft (fuel 18%, four breakdown lines). Its four scenarios: three recorded on v4, and "Weekend reefer, Fresno" recorded on v3 by Priya Shah with `fuelSurchargePercent` 14, so it fails (1,837.68 expected, 1,902.16 billed) and explaining it has a real trace. Readiness fails on scenarios, so Submit is refused until it is re-recorded. Usage is the prototype's `FS_USAGE` |
-| `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a reviewer note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every scenario passes, so it can be approved |
-| `fmt_studio_active` | Active, v2 | Approved by Priya Shah, with `FS_USAGE` usage |
+| Id                  | Status        | What it shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fmt_studio_draft`  | Draft, v4     | The prototype's edit template (`FS_EDIT_TEMPLATE`): v3 is the approved version (fuel 14%, no breakdown), v4 the draft (fuel 18%, four breakdown lines). Its four scenarios: three recorded on v4, and "Weekend reefer, Fresno" recorded on v3 by Priya Shah with `fuelSurchargePercent` 14, so it fails (1,837.68 expected, 1,902.16 billed) and explaining it has a real trace. Readiness fails on scenarios, so Submit is refused until it is re-recorded. Usage is the prototype's `FS_USAGE` |
+| `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a reviewer note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every scenario passes, so it can be approved                                                                                                                                                                                                                                            |
+| `fmt_studio_active` | Active, v2    | Approved by Priya Shah, with `FS_USAGE` usage                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 A created template is `fmt_studio_new_1`, `fmt_studio_new_2`, …. The reviewers are Priya Shah,
 Marcus Lee and Dana Whitfield (Triage's team, with the same avatars); review history, versions and
@@ -410,6 +410,28 @@ guide, a change set against the saved partner). The drafts are in `fixtures/desk
 shaped as `connectionDraftArtifact` stores them. It shoots each stage in light and dark, a value's
 page quote on hover, the document types, the approval and the revised control numbers, and writes
 to `e2e/mock-api/screenshots/desk-edi-draft` by default.
+
+The Desk's extraction artifact, what document intelligence read off a file, has its own
+walkthrough:
+
+```bash
+node e2e/mock-api/desk-extraction-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/t/athr_desk_extract` (`handlers/deskextraction.mjs`), a conversation about a file
+the person attached, at the card (`/desk/c/athr_desk_extract/a/northline-rate-confirmation`) and
+its own page (`…/page`). The `extraction` scenario field picks the file and how it was read:
+`ratecon` (a two-page rate confirmation, the second page a sideways scan on a grey bed), `image`
+(a photographed bill of lading), `legacy` (a payload saved before reasons, stop parts and page
+sizes were kept), `nobox` (no layout lines), `broken` (every page fails to draw) or `long` (many
+fields, long values, none placed). `extractionStage` picks where the shipment stands: `idle`,
+`replying`, `proposed`, `created`, `failed`, `rejected` or `attached`. The pages are drawn as SVGs
+from the same text lines the payload's boxes are built from (`fixtures/desk-extraction.mjs`, a
+port of `assistantservice/extraction.go`), and the walkthrough measures every drawn box against
+the drawn page and fails a shot whose worst box is more than 1.5px off. It shoots the pane, a
+field on page 2, a hovered box, a zoom step, a resize, the page, and the phone, in light and dark,
+then each file, the skeleton, the stored preview, drafting, checking and every stage, and writes
+to `e2e/mock-api/screenshots/desk-extraction` by default.
 
 Settings has its own walkthrough, the same way:
 

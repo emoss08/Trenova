@@ -18,6 +18,7 @@ import (
 var (
 	ErrPDFHasNoPages        = errors.New("PDF has no pages")
 	ErrPDFReaderUnavailable = errors.New("PDF reader is not configured")
+	ErrPageOutOfRange       = errors.New("the document has no such page")
 )
 
 const (
@@ -25,9 +26,28 @@ const (
 	DefaultMaxHeight   = 400
 	DefaultWebPQuality = 80
 
+	PageMaxWidth    = 1400
+	PageMaxHeight   = 1800
+	pageWebPQuality = 82
+	pageRenderDPI   = 150
+
 	renderDPI     = 96
 	renderTimeout = 90 * time.Second
 )
+
+type frame struct {
+	maxWidth  int
+	maxHeight int
+	quality   int
+	dpi       int
+}
+
+var pageFrame = frame{
+	maxWidth:  PageMaxWidth,
+	maxHeight: PageMaxHeight,
+	quality:   pageWebPQuality,
+	dpi:       pageRenderDPI,
+}
 
 type Generator struct {
 	maxWidth    int
@@ -55,29 +75,65 @@ func (g *Generator) Generate(
 	reader io.Reader,
 	contentType string,
 ) ([]byte, error) {
+	return g.render(ctx, reader, contentType, 0, frame{
+		maxWidth:  g.maxWidth,
+		maxHeight: g.maxHeight,
+		quality:   g.webpQuality,
+		dpi:       renderDPI,
+	})
+}
+
+func (g *Generator) RenderPage(
+	ctx context.Context,
+	reader io.Reader,
+	contentType string,
+	page int,
+) ([]byte, error) {
+	if page < 1 {
+		return nil, ErrPageOutOfRange
+	}
+
+	return g.render(ctx, reader, contentType, page-1, pageFrame)
+}
+
+func (g *Generator) render(
+	ctx context.Context,
+	reader io.Reader,
+	contentType string,
+	pageIndex int,
+	f frame,
+) ([]byte, error) {
 	ct := strings.ToLower(contentType)
 
 	if ct == "application/pdf" {
-		return g.generateFromPDF(ctx, reader)
+		return g.renderPDF(ctx, reader, pageIndex, f)
 	}
 
 	if strings.HasPrefix(ct, "image/") {
-		return g.generateFromImage(reader)
+		if pageIndex != 0 {
+			return nil, ErrPageOutOfRange
+		}
+		return g.renderImage(reader, f)
 	}
 
 	return nil, fmt.Errorf("unsupported content type: %s", contentType)
 }
 
-func (g *Generator) generateFromImage(reader io.Reader) ([]byte, error) {
+func (g *Generator) renderImage(reader io.Reader, f frame) ([]byte, error) {
 	img, _, err := image.Decode(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}
 
-	return g.encodeThumbnail(img)
+	return encode(img, f)
 }
 
-func (g *Generator) generateFromPDF(ctx context.Context, reader io.Reader) ([]byte, error) {
+func (g *Generator) renderPDF(
+	ctx context.Context,
+	reader io.Reader,
+	pageIndex int,
+	f frame,
+) ([]byte, error) {
 	if g.pdfReader == nil {
 		return nil, ErrPDFReaderUnavailable
 	}
@@ -99,21 +155,24 @@ func (g *Generator) generateFromPDF(ctx context.Context, reader io.Reader) ([]by
 	if doc.PageCount() == 0 {
 		return nil, ErrPDFHasNoPages
 	}
+	if pageIndex >= doc.PageCount() {
+		return nil, ErrPageOutOfRange
+	}
 
-	img, err := doc.RenderPage(renderCtx, 0, renderDPI)
+	img, err := doc.RenderPage(renderCtx, pageIndex, f.dpi)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render PDF page: %w", err)
 	}
 
-	return g.encodeThumbnail(img)
+	return encode(img, f)
 }
 
-func (g *Generator) encodeThumbnail(img image.Image) ([]byte, error) {
-	thumbnail := imaging.Fit(img, g.maxWidth, g.maxHeight, imaging.Lanczos)
+func encode(img image.Image, f frame) ([]byte, error) {
+	fitted := imaging.Fit(img, f.maxWidth, f.maxHeight, imaging.Lanczos)
 
 	var buf bytes.Buffer
-	if err := webp.Encode(&buf, thumbnail, webp.Options{Quality: g.webpQuality}); err != nil {
-		return nil, fmt.Errorf("failed to encode thumbnail: %w", err)
+	if err := webp.Encode(&buf, fitted, webp.Options{Quality: f.quality}); err != nil {
+		return nil, fmt.Errorf("failed to encode image: %w", err)
 	}
 
 	return buf.Bytes(), nil

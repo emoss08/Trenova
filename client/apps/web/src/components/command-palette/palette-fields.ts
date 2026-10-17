@@ -1,3 +1,4 @@
+import { DOCUMENT_KIND_LABELS } from "@/lib/document-kinds";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { matchFields, type MatchField } from "@trenova/shared/lib/fuzzy-score";
 import type { PaletteCommand, PaletteMatch, PalettePage, PaletteRecord } from "./palette-model";
@@ -43,16 +44,6 @@ export const DRIVER_TYPE_LABELS = defineLabels({
 export const MATCH_SOURCE_LABELS = defineLabels({
   Driver: "Driver",
   Keyword: "Keyword",
-});
-
-export const DOCUMENT_KIND_LABELS = defineLabels({
-  RateConfirmation: "Rate confirmation",
-  BillOfLading: "Bill of lading",
-  ProofOfDelivery: "Proof of delivery",
-  Invoice: "Invoice",
-  LumperReceipt: "Lumper receipt",
-  ScaleTicket: "Scale ticket",
-  DeliveryReceipt: "Delivery receipt",
 });
 
 function labelFrom<T extends Readonly<Record<string, string>>>(

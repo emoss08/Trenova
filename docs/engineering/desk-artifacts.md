@@ -121,8 +121,70 @@ and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
 ## The extraction card
 
-`extraction` is what document intelligence read off a file: the page with a box over each
-value it found, and each field with how sure the reading is (`kinds/extraction/`). The agent
+`extraction` is what document intelligence read off a file, drawn document first
+(`kinds/extraction/`): the file's own pages with a quiet box over every value found, beside the
+values grouped the way a dispatcher reads a load, a tally of what needs a person, and where the
+shipment stands.
+
+**The page.** Each page is the server's drawing of it, `GET /documents/:id/pages/:page/image/`
+(a PDF page rendered by pdfium at 150 dpi, or the image itself as page 1, as WebP; read on
+`document:read`, recorded as a view on the `page_image` channel and cached against an ETag;
+every API response says `Vary: Origin` (`middleware.NewVaryOriginMiddleware`), so a copy a
+browser cached from a request without an origin is never handed to a cross-origin fetch that
+needs the CORS headers). The card fetches it with `api.download` (`lib/queries/document-page.ts`), so it carries the session's
+credentials and the app's error handling, and keeps it as a blob in the query cache; the next
+page and the first page with something to check are read ahead. No PDF library renders pages in
+the browser: `PdfFrame` still shows every PDF, and the card's "Open file" opens the whole file in
+it (or the image itself) for search and print. While page 1 is drawn the upload's stored preview
+stands in for it, blurred, with the boxes already on it; any other page stands as its skeleton in
+the page's own shape, from the payload's `pages` sizes.
+
+**The boxes.** A box is a fraction of the page. `assistantservice/extraction.go` finds each value
+in the page's layout lines (`documentcontent.LayoutLine`): first on the line the reading quoted
+as its evidence (read from the stored draft, not from the tool result the model sees), then on a
+line that carries the field's label before the value (so "Bill to" is not boxed on a letterhead
+that happens to hold the same name), then on any line; the page the reading names is searched
+first, and a value split by other words on the page ("10/22/2026 Appt 09:00") is boxed on its
+leading words. The value's span is measured on the line's own characters, and where the reader
+placed each word (`LayoutLine.Words`, from pdfium's glyphs on a native PDF and from tesseract's
+words on a scan) the box runs from the first word's edge to the last; Docling pages and
+documents read before words were kept fall back to each character's share of the line. On the
+client the sheet is the image at its own size and the boxes are percentages of a layer exactly
+over it (`boxStyle`), so they stay on their text at any width, zoom step or pixel ratio and after
+a resize. Fit draws the page at the viewer's width but never under 600px (`sheetWidth`), so on a
+phone it scrolls sideways rather than shrinking past reading.
+
+**What was read.** `extraction-payload.ts` reads the payload, old and new. Each field carries
+`reason` (`conflict`, `review` or `low`) and, for a conflict, every `readings`; each stop is its
+`name`, `address` and `window` parts (`stop`, `role`, `part`, `appointment`); `missingFields`
+names what the document lacked with its key. A card saved before these were kept still reads:
+no sizes means a letter frame, a stop without parts is one row, a reason is inferred from the
+confidence, and a missing field is placed by its label. `extraction-groups.ts` owns the order
+(parties, the stops in sequence, references, equipment and freight, charges, then Other, which
+takes any key it does not know) and the labels; a pickup or delivery window read apart from its
+stop joins it, and is left out when it is settled and only repeats the stop's own window. A value
+read at 90% or more is settled and plain, one between 80% and 90% shows its figure, one that
+needs a look says why under it (a stop marked for review says it once, on the stop), and a
+missing one stands where it would have been read, saying it is not on the document. The tally
+counts a stop under review once. The list is a list box: the arrow keys, Home and End walk it and
+each step lights the box and turns to its page; each option's name says its value, its state and
+its confidence. Choosing a box chooses its field.
+
+**The shipment.** `shipment-stage.ts` works out where it stands from the server and the
+conversation, never from the component: the newest `create_shipment` proposal whose
+`sourceDocumentId` is the file (waiting, creating, created and linked with `recordPath`, failed
+with the server's reason, declined, expired, simulated), `attachedShipmentId`, the conversation's
+running turn (`assistant.activeTurns`), and what the card asked (`documentAsks` in the Desk
+store, kept for the session only). A create asked after the newest proposal is drafting while the
+conversation is on it and "not drafted" once the reply ends without one. Check names every field
+it will ask about, with why, and Create asks the agent to draft the shipment, which waits for
+approval like every other write; Review opens that approval's `decision_request` artifact. While
+the conversation replies to something else, the card asks nothing.
+
+The body is its own chunk (`lazyComponent` in `desk-workspace.tsx`), and `ExtractionSkeleton`,
+drawn on the card's own classes, stands in for both the code and the payload.
+
+The agent
 opens it by reading a draft with `get_shipment_draft`, and a file the person attaches opens it
 without anyone asking (`assistantservice/attachment_cards.go`; see "Files a person attaches" in
 [agent-runtime.md](agent-runtime.md)). Both are one lineage per document, so a later reading

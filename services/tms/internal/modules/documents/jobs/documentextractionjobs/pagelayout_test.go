@@ -27,7 +27,9 @@ func TestTesseractLayoutGroupsWordsIntoLines(t *testing.T) {
 	assert.InDelta(t, 0.099, lines[0].Y, 0.0001)
 	assert.InDelta(t, 0.2, lines[0].W, 0.0001)
 	assert.InDelta(t, 0.012, lines[0].H, 0.0001)
+	assert.Equal(t, []float64{0.1, 0.18, 0.19, 0.3}, lines[0].Words)
 	assert.Equal(t, "$1,200.00", lines[1].Text)
+	assert.Equal(t, []float64{0.1, 0.16}, lines[1].Words)
 }
 
 // A native PDF page gives each line's box in points from the top left; the
@@ -39,7 +41,10 @@ func TestPDFLayoutPlacesLinesOnThePage(t *testing.T) {
 		Width:  600,
 		Height: 800,
 		Lines: []kernelports.PDFTextLine{
-			{Text: "Rate:  $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12},
+			{
+				Text: "Rate:  $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12,
+				Words: []kernelports.PDFTextWord{{Left: 60, Width: 24}, {Left: 90, Width: 45}},
+			},
 			{Text: "   ", Left: 60, Top: 90, Width: 10, Height: 12},
 			{Text: "PO & 77812", Left: 590, Top: 795, Width: 50, Height: 12},
 		},
@@ -51,9 +56,22 @@ func TestPDFLayoutPlacesLinesOnThePage(t *testing.T) {
 	assert.InDelta(t, 0.1, lines[0].Y, 0.0001)
 	assert.InDelta(t, 0.125, lines[0].W, 0.0001)
 	assert.InDelta(t, 0.015, lines[0].H, 0.0001)
+	assert.Equal(t, []float64{0.1, 0.14, 0.15, 0.225}, lines[0].Words)
 	assert.Equal(t, "PO & 77812", lines[1].Text)
+	assert.Nil(t, lines[1].Words, "a line whose words were not placed keeps none")
 	assert.LessOrEqual(t, lines[1].X+lines[1].W, 1.0)
 	assert.LessOrEqual(t, lines[1].Y+lines[1].H, 1.0)
 	assert.Nil(t, pdfLayout(&kernelports.PDFPageLayout{}))
 	assert.Nil(t, pdfLayout(nil))
+}
+
+func TestWordSpansKeepOnlyWordsTheTextStillHolds(t *testing.T) {
+	t.Parallel()
+
+	words := []kernelports.PDFTextWord{{Left: 0, Width: 100}, {Left: 150, Width: 50}}
+
+	assert.Equal(t, []float64{0, 0.25}, wordSpans("Rate", words, 400))
+	assert.Nil(t, wordSpans("Rate total due", words, 400), "fewer words than the text holds")
+	assert.Nil(t, wordSpans("", words, 400))
+	assert.Nil(t, wordSpans("Rate", words, 0))
 }

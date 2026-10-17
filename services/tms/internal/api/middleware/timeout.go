@@ -139,7 +139,7 @@ func applyTimeoutFallbackCORS(header http.Header, cfg *config.Config, r *http.Re
 	}
 
 	header.Set("Access-Control-Allow-Origin", origin)
-	header.Add("Vary", "Origin")
+	AddVary(header, "Origin")
 	if cfg.Server.CORS.Credentials {
 		header.Set("Access-Control-Allow-Credentials", "true")
 	}

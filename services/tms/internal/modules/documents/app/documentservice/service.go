@@ -803,6 +803,75 @@ func (s *Service) GetPreviewContent(
 	}, nil
 }
 
+func (s *Service) GetPageImage(
+	ctx context.Context,
+	req *documentports.GetDocumentPageImageRequest,
+) (*documentports.DocumentPageImage, error) {
+	if req.PageNumber < 1 {
+		return nil, errortypes.NewNotFoundError("This page is not in the document")
+	}
+
+	doc, err := s.repo.GetByID(ctx, req.GetDocumentByIDRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	if !document.SupportsPreview(doc.FileType) {
+		return nil, errortypes.NewNotFoundError("This document has no pages to show")
+	}
+
+	etag := pageImageETag(doc, req.PageNumber)
+	if req.IfNoneMatch == etag {
+		return &documentports.DocumentPageImage{ETag: etag, NotModified: true}, nil
+	}
+
+	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	rendered, err := s.thumbnailGenerator.RenderPage(
+		ctx,
+		bytes.NewReader(body),
+		doc.FileType,
+		req.PageNumber,
+	)
+	if errors.Is(err, thumbnailservice.ErrPageOutOfRange) ||
+		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
+		return nil, errortypes.NewNotFoundError("This page is not in the document")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("render page %d of document %s: %w", req.PageNumber, doc.ID, err)
+	}
+
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelPageImage)
+	return &documentports.DocumentPageImage{
+		DocumentContent: documentports.DocumentContent{
+			Document:           doc,
+			Body:               io.NopCloser(bytes.NewReader(rendered)),
+			ContentType:        "image/webp",
+			ContentLength:      int64(len(rendered)),
+			ContentDisposition: "inline",
+		},
+		ETag: etag,
+	}, nil
+}
+
+func pageImageETag(doc *document.Document, page int) string {
+	source := doc.ChecksumSHA256
+	if source == "" {
+		source = fmt.Sprintf("%s-%d", doc.ID, doc.UpdatedAt)
+	}
+
+	return fmt.Sprintf(
+		`"%s-%dx%d-p%d"`,
+		source,
+		thumbnailservice.PageMaxWidth,
+		thumbnailservice.PageMaxHeight,
+		page,
+	)
+}
+
 func (s *Service) readDocumentObject(
 	ctx context.Context,
 	doc *document.Document,

@@ -7,7 +7,9 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -25,17 +27,62 @@ const lowConfidence = 0.8
 // and in the draft it returns.
 const draftDocumentIDParam = "documentId"
 
-// extractionPage is what the extraction shows of one page: its number and
-// where each line of its text sits.
+const (
+	maxNeedleRunes = 24
+	minPrefixRunes = 6
+	minBoxWidth    = 0.02
+	minBoxHeight   = 0.01
+
+	reasonConflict = "conflict"
+	reasonReview   = "review"
+	reasonLow      = "low"
+
+	stopPartName    = "name"
+	stopPartAddress = "address"
+	stopPartWindow  = "window"
+)
+
 type extractionPage struct {
 	Number int
+	Width  int
+	Height int
 	Lines  []documentcontent.LayoutLine
 }
 
-// extraction reads a shipment draft as what document intelligence read off
-// the page: the file, the pages, and each field with its confidence and the
-// box it was found in. It is nil when the draft holds nothing read yet, which
-// leaves the result to be shown as a record card.
+type extractionSource struct {
+	fileName       string
+	contentType    string
+	kindConfidence float64
+	pages          []extractionPage
+	fieldEvidence  map[string]string
+	stopEvidence   map[int]string
+}
+
+type fieldReading struct {
+	key        string
+	label      string
+	value      string
+	evidence   string
+	confidence float64
+	page       int
+	review     bool
+	conflict   bool
+	readings   []string
+	stop       *stopPart
+}
+
+type stopPart struct {
+	sequence    int
+	role        string
+	part        string
+	appointment bool
+}
+
+type placement struct {
+	page int
+	box  map[string]float64
+}
+
 func (r *artifactRecorder) extraction(callID string, data any) *assistantartifact.Artifact {
 	document, ok := toJSONDocument(data)
 	if !ok {
@@ -47,55 +94,114 @@ func (r *artifactRecorder) extraction(callID string, data any) *assistantartifac
 		return nil
 	}
 
-	fileName := ""
-	var pages []extractionPage
-	if r.svc != nil && r.svc.documents != nil {
-		if doc, docErr := r.svc.documents.GetByID(r.ctx, documentports.GetDocumentByIDRequest{
+	return extractionArtifact(callID, draft, r.extractionSource(documentID))
+}
+
+func (r *artifactRecorder) extractionSource(documentID pulid.ID) extractionSource {
+	source := extractionSource{}
+	if r.svc == nil {
+		return source
+	}
+
+	if r.svc.documents != nil {
+		doc, err := r.svc.documents.GetByID(r.ctx, documentports.GetDocumentByIDRequest{
 			ID:         documentID,
 			TenantInfo: r.tenant,
-		}); docErr == nil && doc != nil {
-			fileName = cmp.Or(doc.OriginalName, doc.FileName)
+		})
+		if err == nil && doc != nil {
+			source.fileName = cmp.Or(doc.OriginalName, doc.FileName)
+			source.contentType = strings.ToLower(doc.FileType)
 		}
 	}
-	if r.svc != nil && r.svc.contents != nil {
-		content, contentErr := r.svc.contents.GetContent(r.ctx, documentID, r.tenant)
-		if contentErr != nil {
-			r.logger.Debug("extraction pages could not be read", zap.Error(contentErr))
-		} else {
-			for _, page := range content.Pages {
-				pages = append(pages, extractionPage{
-					Number: page.PageNumber,
-					Lines:  documentcontent.LinesOf(page.Metadata),
-				})
+
+	if r.svc.contents == nil {
+		return source
+	}
+	content, err := r.svc.contents.GetContent(r.ctx, documentID, r.tenant)
+	if err != nil {
+		r.logger.Debug("extraction pages could not be read", zap.Error(err))
+	} else if content != nil {
+		source.kindConfidence = content.ClassificationConfidence
+		source.pages = make([]extractionPage, 0, len(content.Pages))
+		for _, page := range content.Pages {
+			if page == nil {
+				continue
+			}
+			source.pages = append(source.pages, extractionPage{
+				Number: page.PageNumber,
+				Width:  page.Width,
+				Height: page.Height,
+				Lines:  documentcontent.LinesOf(page.Metadata),
+			})
+		}
+	}
+
+	stored, err := r.svc.contents.GetShipmentDraft(r.ctx, documentID, r.tenant)
+	if err != nil {
+		r.logger.Debug("extraction evidence could not be read", zap.Error(err))
+	} else if stored != nil {
+		source.fieldEvidence, source.stopEvidence = draftEvidence(stored.DraftData)
+	}
+
+	return source
+}
+
+func draftEvidence(data map[string]any) (map[string]string, map[int]string) {
+	fields := map[string]string{}
+	if raw, ok := data["fields"].(map[string]any); ok {
+		for key, value := range raw {
+			field, isObject := value.(map[string]any)
+			if !isObject {
+				continue
+			}
+			if excerpt := evidenceOf(field); excerpt != "" {
+				fields[key] = excerpt
 			}
 		}
 	}
 
-	return extractionArtifact(callID, draft, fileName, pages)
+	stops := map[int]string{}
+	if raw, ok := data["stops"].([]any); ok {
+		for idx, value := range raw {
+			stop, isObject := value.(map[string]any)
+			if !isObject {
+				continue
+			}
+			if excerpt := evidenceOf(stop); excerpt != "" {
+				stops[idx] = excerpt
+			}
+		}
+	}
+
+	return fields, stops
 }
 
-// extractionArtifact is the mapping itself, apart from the reads, so it can
-// be checked against a draft and pages as they are stored.
+func evidenceOf(object map[string]any) string {
+	return cmp.Or(
+		typeutils.StringOfTrimmed(object["evidenceExcerpt"]),
+		typeutils.StringOfTrimmed(object["excerpt"]),
+	)
+}
+
 func extractionArtifact(
 	callID string,
 	draft map[string]any,
-	fileName string,
-	pages []extractionPage,
+	source extractionSource,
 ) *assistantartifact.Artifact {
-	fields := extractionFields(draft, pages)
+	pages := slices.Clone(source.pages)
+	slices.SortFunc(pages, func(a, b extractionPage) int { return cmp.Compare(a.Number, b.Number) })
+
+	fields := extractionFields(draftReadings(draft, source), pages)
 	if len(fields) == 0 {
 		return nil
 	}
 
-	slices.SortFunc(pages, func(a, b extractionPage) int { return cmp.Compare(a.Number, b.Number) })
 	pageCount := len(pages)
+	needs := 0
 	for _, field := range fields {
 		if page, _ := field["page"].(int); page > pageCount {
 			pageCount = page
 		}
-	}
-	needs := 0
-	for _, field := range fields {
 		if field["needsLook"] == true {
 			needs++
 		}
@@ -107,22 +213,27 @@ func extractionArtifact(
 		kindLabel = "Document"
 	}
 	title := kindLabel
-	if fileName != "" {
-		title += " · " + fileName
+	if source.fileName != "" {
+		title += " · " + source.fileName
 	}
 
+	missing := stringsOf(draft["missingFields"])
 	payload := map[string]any{
-		"documentId":   typeutils.StringOfTrimmed(draft[draftDocumentIDParam]),
-		"fileName":     fileName,
-		"documentKind": documentKind,
-		"kindLabel":    kindLabel,
-		"confidence":   numberOf(draft, "confidence"),
-		"reviewStatus": typeutils.StringOfTrimmed(draft["reviewStatus"]),
-		"pageCount":    max(pageCount, 1),
-		"fields":       fields,
-		"needsLook":    needs,
-		"missing":      stringsOf(draft["missingFields"]),
-		"tool":         toolGetShipmentDraft,
+		"documentId":     typeutils.StringOfTrimmed(draft[draftDocumentIDParam]),
+		"fileName":       source.fileName,
+		"contentType":    source.contentType,
+		"documentKind":   documentKind,
+		"kindLabel":      kindLabel,
+		"kindConfidence": roundConfidence(source.kindConfidence),
+		"confidence":     numberOf(draft, "confidence"),
+		"reviewStatus":   typeutils.StringOfTrimmed(draft["reviewStatus"]),
+		"pageCount":      max(pageCount, 1),
+		"pages":          pageSizes(pages),
+		"fields":         fields,
+		"needsLook":      needs,
+		"missing":        missing,
+		"missingFields":  missingFields(missing),
+		"tool":           toolGetShipmentDraft,
 	}
 	if attached := typeutils.StringOfTrimmed(draft["attachedShipmentId"]); attached != "" {
 		payload["attachedShipmentId"] = attached
@@ -151,11 +262,46 @@ func extractionLineageKey(documentID string) string {
 	)
 }
 
-// extractionFields lists the draft's fields in a reading order (the order
-// they sit on the page, then by name), followed by its stops.
-func extractionFields(draft map[string]any, pages []extractionPage) []map[string]any {
+func pageSizes(pages []extractionPage) []map[string]int {
+	out := make([]map[string]int, 0, len(pages))
+	for _, page := range pages {
+		if page.Number < 1 {
+			continue
+		}
+		size := map[string]int{"number": page.Number}
+		if page.Width > 0 && page.Height > 0 {
+			size["width"] = page.Width
+			size["height"] = page.Height
+		}
+		out = append(out, size)
+	}
+
+	return out
+}
+
+func missingFields(labels []string) []map[string]string {
+	out := make([]map[string]string, 0, len(labels))
+	for _, label := range labels {
+		label = strings.TrimSpace(label)
+		if label == "" {
+			continue
+		}
+		key := aicorrection.CanonicalFieldKey(label)
+		if key == label {
+			key = stringutils.LowerCamel(label)
+		}
+		out = append(out, map[string]string{"key": key, "label": label})
+	}
+
+	return out
+}
+
+func draftReadings(draft map[string]any, source extractionSource) []fieldReading {
 	raw, _ := draft["fields"].(map[string]any)
-	out := make([]map[string]any, 0, len(raw)+4)
+	stops, _ := draft["stops"].([]any)
+	conflicts := conflictReadings(draft["conflicts"])
+
+	out := make([]fieldReading, 0, len(raw)+len(stops)*3)
 	for key, value := range raw {
 		field, isObject := value.(map[string]any)
 		if !isObject {
@@ -169,39 +315,125 @@ func extractionFields(draft map[string]any, pages []extractionPage) []map[string
 		if label == "" {
 			label = stringutils.CapitalizeFirst(strings.ToLower(splitCamel(key)))
 		}
-		out = append(out, extractionField(
-			key, label, text, numberOf(field, "confidence"),
-			int(numberOf(field, "pageNumber")),
-			typeutils.BoolOf(field["reviewRequired"]) || typeutils.BoolOf(field["conflict"]),
-			pages,
-		))
+		readings := conflicts[key]
+		out = append(out, fieldReading{
+			key:        key,
+			label:      label,
+			value:      text,
+			evidence:   source.fieldEvidence[key],
+			confidence: numberOf(field, "confidence"),
+			page:       int(numberOf(field, "pageNumber")),
+			review:     typeutils.BoolOf(field["reviewRequired"]),
+			conflict:   typeutils.BoolOf(field["conflict"]) || len(readings) > 1,
+			readings:   readings,
+		})
 	}
 
-	stops, _ := draft["stops"].([]any)
 	for idx, value := range stops {
 		stop, isObject := value.(map[string]any)
 		if !isObject {
 			continue
 		}
-		place := strings.Join(nonEmpty(
-			typeutils.StringOfTrimmed(stop["name"]),
-			typeutils.StringOfTrimmed(stop["city"])+cityStateGap(stop)+
-				typeutils.StringOfTrimmed(stop["state"]),
+		out = append(out, stopReadings(idx, stop, source.stopEvidence[idx])...)
+	}
+
+	return out
+}
+
+func stopReadings(idx int, stop map[string]any, evidence string) []fieldReading {
+	sequence := int(numberOf(stop, "sequence"))
+	if sequence < 1 {
+		sequence = idx + 1
+	}
+	role := strings.ToLower(typeutils.StringOfTrimmed(stop["role"]))
+	appointment := typeutils.BoolOf(stop["appointmentRequired"])
+
+	parts := []struct {
+		part  string
+		label string
+		value string
+	}{
+		{stopPartName, "Name", typeutils.StringOfTrimmed(stop["name"])},
+		{stopPartAddress, "Address", stopAddress(stop)},
+		{stopPartWindow, "Window", strings.Join(stringutils.NonEmptyStrings(
 			typeutils.StringOfTrimmed(stop["date"]),
-		), " · ")
-		if place == "" {
+			typeutils.StringOfTrimmed(stop["timeWindow"]),
+		), " ")},
+	}
+
+	out := make([]fieldReading, 0, len(parts))
+	for _, part := range parts {
+		if part.value == "" {
 			continue
 		}
-		role := stringutils.CapitalizeFirst(typeutils.StringOfTrimmed(stop["role"]))
-		if role == "" {
-			role = "Stop"
+		out = append(out, fieldReading{
+			key:        fmt.Sprintf("stop%d.%s", sequence, part.part),
+			label:      part.label,
+			value:      part.value,
+			evidence:   evidence,
+			confidence: numberOf(stop, "confidence"),
+			page:       int(numberOf(stop, "pageNumber")),
+			review:     typeutils.BoolOf(stop["reviewRequired"]),
+			stop: &stopPart{
+				sequence:    sequence,
+				role:        role,
+				part:        part.part,
+				appointment: appointment && part.part == stopPartWindow,
+			},
+		})
+	}
+
+	return out
+}
+
+func stopAddress(stop map[string]any) string {
+	place := typeutils.StringOfTrimmed(stop["city"])
+	if state := typeutils.StringOfTrimmed(stop["state"]); state != "" {
+		if place != "" {
+			place += ", "
 		}
-		out = append(out, extractionField(
-			fmt.Sprintf("stop%d", idx+1), role, place, numberOf(stop, "confidence"),
-			int(numberOf(stop, "pageNumber")),
-			typeutils.BoolOf(stop["reviewRequired"]),
-			pages,
-		))
+		place += state
+	}
+	if postal := typeutils.StringOfTrimmed(stop["postalCode"]); postal != "" {
+		place = strings.TrimSpace(place + " " + postal)
+	}
+
+	return strings.Join(stringutils.NonEmptyStrings(
+		typeutils.StringOfTrimmed(stop["addressLine1"]),
+		typeutils.StringOfTrimmed(stop["addressLine2"]),
+		place,
+	), ", ")
+}
+
+func conflictReadings(value any) map[string][]string {
+	raw, _ := value.([]any)
+	out := make(map[string][]string, len(raw))
+	for _, item := range raw {
+		conflict, isObject := item.(map[string]any)
+		if !isObject {
+			continue
+		}
+		key := typeutils.StringOfTrimmed(conflict["key"])
+		values, _ := conflict["values"].([]any)
+		if key == "" || len(values) == 0 {
+			continue
+		}
+		readings := make([]string, 0, len(values))
+		for _, reading := range values {
+			if text := displayValue(reading); text != "" && !slices.Contains(readings, text) {
+				readings = append(readings, text)
+			}
+		}
+		out[key] = readings
+	}
+
+	return out
+}
+
+func extractionFields(readings []fieldReading, pages []extractionPage) []map[string]any {
+	out := make([]map[string]any, 0, len(readings))
+	for i := range readings {
+		out = append(out, extractionField(&readings[i], pages))
 	}
 
 	slices.SortStableFunc(out, func(a, b map[string]any) int {
@@ -215,81 +447,252 @@ func extractionFields(draft map[string]any, pages []extractionPage) []map[string
 	return out
 }
 
-func extractionField(
-	key, label, value string,
-	confidence float64,
-	page int,
-	review bool,
-	pages []extractionPage,
-) map[string]any {
-	confidence = math.Round(math.Max(0, math.Min(1, confidence))*100) / 100
-	field := map[string]any{
-		"key":        key,
-		"label":      label,
-		"value":      value,
-		"confidence": confidence,
-		"needsLook":  review || confidence < lowConfidence,
+func extractionField(reading *fieldReading, pages []extractionPage) map[string]any {
+	confidence := roundConfidence(reading.confidence)
+	reason := ""
+	switch {
+	case reading.conflict:
+		reason = reasonConflict
+	case reading.review:
+		reason = reasonReview
+	case confidence < lowConfidence:
+		reason = reasonLow
 	}
-	if found, box := locate(value, page, pages); found > 0 {
-		field["page"] = found
-		field["box"] = box
-	} else if page > 0 {
-		field["page"] = page
+
+	field := map[string]any{
+		"key":        reading.key,
+		"label":      reading.label,
+		"value":      reading.value,
+		"confidence": confidence,
+		"needsLook":  reason != "",
+	}
+	if reason != "" {
+		field["reason"] = reason
+	}
+	if len(reading.readings) > 1 {
+		field["readings"] = reading.readings
+	}
+	if reading.stop != nil {
+		field["stop"] = reading.stop.sequence
+		field["role"] = reading.stop.role
+		field["part"] = reading.stop.part
+		if reading.stop.appointment {
+			field["appointment"] = true
+		}
+	}
+
+	if found, ok := locate(reading, pages); ok {
+		field["page"] = found.page
+		field["box"] = found.box
+	} else if reading.page > 0 {
+		field["page"] = reading.page
 	}
 
 	return field
 }
 
-// locate finds the line a value was read from, on the page the reading names
-// or on any page when it names none, and the part of that line the value
-// covers. It returns the page and the box as fractions of the page.
-func locate(value string, page int, pages []extractionPage) (int, map[string]float64) {
-	needle := comparable(value)
-	if needle == "" {
-		return 0, nil
-	}
-	// A long value (an address) is looked for by its start, which is the
-	// part most likely to sit on one line.
-	if runes := []rune(needle); len(runes) > 24 {
-		needle = string(runes[:24])
-	}
-	for _, candidate := range pages {
-		if page > 0 && candidate.Number != page {
-			continue
+func roundConfidence(value float64) float64 {
+	return math.Round(math.Max(0, math.Min(1, value))*100) / 100
+}
+
+type lineMatch struct {
+	page   int
+	line   *documentcontent.LayoutLine
+	at     int
+	span   int
+	score  int
+	weight int
+}
+
+func (m *lineMatch) beats(other *lineMatch) bool {
+	return other == nil || m.score > other.score ||
+		(m.score == other.score && m.weight > other.weight)
+}
+
+func locate(reading *fieldReading, pages []extractionPage) (placement, bool) {
+	evidence := comparable(reading.evidence)
+	label := comparable(reading.label)
+	words := strings.Fields(reading.value)
+	for n := len(words); n > 0; n-- {
+		value := comparable(strings.Join(words[:n], " "))
+		if n < len(words) && utf8.RuneCountInString(value) < minPrefixRunes {
+			break
 		}
-		for _, line := range candidate.Lines {
-			hay := comparable(line.Text)
-			at := strings.Index(hay, needle)
-			if at < 0 || hay == "" {
+		if best := bestLine(reading.page, pages, value, evidence, label); best != nil {
+			return placement{page: best.page, box: boxOf(best)}, true
+		}
+	}
+
+	return placement{}, false
+}
+
+func bestLine(named int, pages []extractionPage, value, evidence, label string) *lineMatch {
+	if value == "" {
+		return nil
+	}
+	needle := value
+	if utf8.RuneCountInString(needle) > maxNeedleRunes {
+		needle = string([]rune(needle)[:maxNeedleRunes])
+	}
+
+	var best *lineMatch
+	for pass := range 2 {
+		for pi := range pages {
+			page := &pages[pi]
+			if named > 0 && (pass == 0) != (page.Number == named) {
 				continue
 			}
-			share := float64(len([]rune(hay)))
-			start := float64(len([]rune(hay[:at]))) / share
-			span := float64(len([]rune(needle))) / share
-
-			return candidate.Number, map[string]float64{
-				"x": round4(line.X + line.W*start),
-				"y": round4(line.Y),
-				"w": round4(math.Max(line.W*span, 0.02)),
-				"h": round4(math.Max(line.H, 0.01)),
+			for li := range page.Lines {
+				match, ok := matchLine(&page.Lines[li], value, needle, evidence, label)
+				if !ok {
+					continue
+				}
+				match.page = page.Number
+				if match.beats(best) {
+					best = &match
+				}
 			}
+		}
+		if best != nil || named <= 0 {
+			break
 		}
 	}
 
-	return 0, nil
+	return best
+}
+
+func matchLine(
+	line *documentcontent.LayoutLine,
+	value, needle, evidence, label string,
+) (lineMatch, bool) {
+	hay, _ := comparableIndex(line.Text)
+	at := strings.Index(hay, needle)
+	if at < 0 || hay == "" {
+		return lineMatch{}, false
+	}
+
+	span := len(needle)
+	for span < len(value) && at+span < len(hay) && hay[at+span] == value[span] {
+		span++
+	}
+
+	score, weight := 1, 0
+	if quoted(hay, value, evidence) {
+		score += 2
+		weight = len(hay)
+	}
+	if label != "" && strings.Contains(hay[:at], label) {
+		score++
+	}
+
+	return lineMatch{line: line, at: at, span: span, score: score, weight: weight}, true
+}
+
+func quoted(hay, value, evidence string) bool {
+	if evidence == "" {
+		return false
+	}
+
+	return strings.Contains(evidence, hay) ||
+		(len(evidence) > len(value) && strings.Contains(hay, evidence))
+}
+
+func boxOf(match *lineMatch) map[string]float64 {
+	line := match.line
+	_, index := comparableIndex(line.Text)
+	runes := []rune(line.Text)
+	first := index[match.at]
+	last := index[match.at+match.span-1] + 1
+
+	x, right := spanAcross(line, runes, first, last)
+
+	return map[string]float64{
+		"x": round4(x),
+		"y": round4(line.Y),
+		"w": round4(math.Max(right-x, minBoxWidth)),
+		"h": round4(math.Max(line.H, minBoxHeight)),
+	}
+}
+
+func spanAcross(
+	line *documentcontent.LayoutLine,
+	runes []rune,
+	first, last int,
+) (float64, float64) {
+	if words := wordRanges(runes); len(words)*2 == len(line.Words) && len(words) > 0 {
+		return wordEdge(line, words, first, false), wordEdge(line, words, last, true)
+	}
+
+	share := float64(len(runes))
+	return line.X + line.W*float64(first)/share, line.X + line.W*float64(last)/share
+}
+
+type wordRange struct {
+	start int
+	end   int
+}
+
+func wordRanges(runes []rune) []wordRange {
+	var out []wordRange
+	start := -1
+	for i, r := range runes {
+		switch {
+		case r == ' ' && start >= 0:
+			out = append(out, wordRange{start: start, end: i})
+			start = -1
+		case r != ' ' && start < 0:
+			start = i
+		}
+	}
+	if start >= 0 {
+		out = append(out, wordRange{start: start, end: len(runes)})
+	}
+
+	return out
+}
+
+func wordEdge(line *documentcontent.LayoutLine, words []wordRange, at int, closing bool) float64 {
+	for i, word := range words {
+		if at > word.end || (at == word.end && !closing) {
+			continue
+		}
+		left, right := line.Words[i*2], line.Words[i*2+1]
+		if at <= word.start {
+			if closing && i > 0 {
+				return line.Words[i*2-1]
+			}
+			return left
+		}
+		share := float64(at-word.start) / float64(word.end-word.start)
+		return left + (right-left)*share
+	}
+
+	return line.Words[len(line.Words)-1]
 }
 
 // comparable is text as a value and a line are compared: lower case, letters
 // and digits only, so "$1,359.56" on the page matches "1359.56" in the draft.
 func comparable(text string) string {
+	hay, _ := comparableIndex(text)
+	return hay
+}
+
+func comparableIndex(text string) (string, []int) {
 	var b strings.Builder
-	for _, r := range strings.ToLower(text) {
+	index := make([]int, 0, len(text))
+	position := 0
+	for _, r := range text {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			b.WriteRune(r)
+			lower := unicode.ToLower(r)
+			b.WriteRune(lower)
+			for range utf8.RuneLen(lower) {
+				index = append(index, position)
+			}
 		}
+		position++
 	}
 
-	return b.String()
+	return b.String(), index
 }
 
 func displayValue(value any) string {
@@ -325,19 +728,6 @@ func splitCamel(text string) string {
 	}
 
 	return b.String()
-}
-
-func nonEmpty(parts ...string) []string {
-	return slices.DeleteFunc(parts, func(part string) bool { return strings.TrimSpace(part) == "" })
-}
-
-func cityStateGap(stop map[string]any) string {
-	if typeutils.StringOfTrimmed(stop["city"]) != "" &&
-		typeutils.StringOfTrimmed(stop["state"]) != "" {
-		return ", "
-	}
-
-	return ""
 }
 
 func sortPage(field map[string]any) int {

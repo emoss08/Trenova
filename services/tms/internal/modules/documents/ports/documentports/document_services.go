@@ -22,6 +22,13 @@ type DocumentContent struct {
 	ContentDisposition string             `json:"contentDisposition"`
 }
 
+type DocumentPageImage struct {
+	DocumentContent
+
+	ETag        string `json:"etag"`
+	NotModified bool   `json:"notModified"`
+}
+
 type InvoiceDocumentService interface {
 	Get(
 		ctx context.Context,

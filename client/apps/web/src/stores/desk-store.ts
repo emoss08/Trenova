@@ -8,6 +8,14 @@ export type DeskPaneState = "open" | "closed";
 /** The rail: the Desk's table of contents, open along the left, or folded to nothing. */
 export type DeskRailState = "open" | "closed";
 
+/** A request an extraction card sent about its file: when, in which conversation, and for what. */
+export type DocumentAsk = {
+  threadId: string;
+  intent: "create" | "check";
+  /** Milliseconds since the epoch. */
+  at: number;
+};
+
 interface DeskState {
   /** Whether the rail of conversations and places is showing along the left. */
   rail: DeskRailState;
@@ -30,6 +38,12 @@ interface DeskState {
    */
   asks: Record<string, string>;
   /**
+   * What the person last asked the agent to do with a file from its extraction card, by
+   * document id, so the card can say the shipment is being drafted until the agent proposes it
+   * or the reply ends without one. Not kept.
+   */
+  documentAsks: Record<string, DocumentAsk>;
+  /**
    * What the reply being written in each conversation says about handing it
    * to another agent, so the hand-off menu can offer one before the reply is
    * saved. Only a conversation with a reply under way has an entry. Not kept.
@@ -47,6 +61,7 @@ interface DeskState {
   setBrowsing: (browsing: boolean) => void;
   askAgent: (threadId: string, question: string) => void;
   takeAsk: (threadId: string) => string | null;
+  noteDocumentAsk: (documentId: string, ask: DocumentAsk) => void;
   setLiveHandoff: (threadId: string, live: TurnHandoff | null) => void;
 }
 
@@ -105,6 +120,7 @@ export const useDeskStore = create<DeskState>()(
       sharePage: true,
       browsing: false,
       asks: {},
+      documentAsks: {},
       liveHandoff: {},
 
       setRail: (rail) => set({ rail }),
@@ -124,6 +140,8 @@ export const useDeskStore = create<DeskState>()(
       setBrowsing: (browsing) => set({ browsing }),
       askAgent: (threadId, question) =>
         set((state) => ({ asks: { ...state.asks, [threadId]: question } })),
+      noteDocumentAsk: (documentId, ask) =>
+        set((state) => ({ documentAsks: { ...state.documentAsks, [documentId]: ask } })),
       takeAsk: (threadId) => {
         const question = get().asks[threadId] ?? null;
         if (question !== null) {
