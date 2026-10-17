@@ -63,6 +63,16 @@ to say; that is the recipe's job.
   `Prompted` or `JSONMode` provider is given.
 - `TestRenderedPromptMatchesWhatTheRouterSends` holds the two paths together.
 
+**Two kinds of page text reach the model.** Pages read by the legacy engine carry plain text and
+get the original system prompt, cut at the page limit. Pages read by Docling carry Markdown
+(`document_content_pages.markdown`): tables are pipe tables, the printed header and footer sit
+under a `<!-- page header -->` marker, the system prompt says so, and the page limit cuts at a
+block boundary, never inside a table row. A Markdown page is a different prompt with a
+different fingerprint. The current model was trained on plain text only, so the extraction
+rollout never pairs it with Docling content, and an export that includes Docling-read documents
+must be rendered again and the model retrained before it serves them. The reply schema did not
+change, so the pipeline's schema fixture stays as it is.
+
 **Choose the structured output mode now.** `--structured-output` must be the mode the model will
 be registered with:
 
@@ -260,7 +270,7 @@ runs and `trenova ai fine-tune score` alike:
 | stop `sequence` | Position in the reply, from 1 | Ordering and scoring use array order, never the model's number |
 | field `conflict` | The field's key appears in `conflicts` | The UI already treated either signal as a conflict |
 | field `alternativeValues` | Not produced | It was dropped before storage; the UI's alternatives come from `conflicts[].values` |
-| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentintelligencejobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
+| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentextractionjobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
 
 Conflict keys are also run through `aicorrection.CanonicalFieldKey`, so a conflict on
 `pickupwindow` now lines up with the `pickupWindow` field it is about.
