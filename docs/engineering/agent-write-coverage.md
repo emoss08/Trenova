@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 55 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 107 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1164 writes: 643 GraphQL mutations and 521 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1167 writes: 643 GraphQL mutations and 524 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 436 |
-| Exempt | 704 |
+| Exempt | 707 |
 | — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 40 |
 | — Infrastructure | 55 |
-| — Agent administration | 104 |
+| — Agent administration | 107 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 49 |
 | — Duplicate | 8 |
 | **Pending** | **24** |
-| Total | 1164 |
+| Total | 1167 |
 
 Of the 460 writes an agent should be able to make, 436 have a tool (94%).
 
@@ -159,7 +159,7 @@ The writes no tool performs yet, and what the tool would do.
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 13 | 0 | 13 | 0 |
-| agentextension | 2 | 0 | 2 | 0 |
+| agentextension | 5 | 0 | 5 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
@@ -335,6 +335,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
+| `act_on_portal` | portal_automation | update |
 | `escalate_detention` | detention | update |
 | `flag_for_manual_review` | agent_exception | create |
 | `notify_driver` | driver_message | create |
@@ -456,8 +457,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.deleteSite | Exempt, agent-administration: Removes a portal from what agents may use, an administrator's decision about the agents themselves. |
 | `POST /api/v1/agent-extensions/:type/test/`<br>agentextensionhandler.test | Exempt, read-only: Tests the vendor credentials and returns the result. |
+| `POST /api/v1/agent-portals/sites/`<br>agentextensionhandler.createSite | Exempt, agent-administration: Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes. |
 | `PUT /api/v1/agent-extensions/:type/config/`<br>agentextensionhandler.updateConfig | Exempt, agent-administration: Configures a vendor account an organization turns on for its agents; it holds the vendor credentials. |
+| `PUT /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.updateSite | Exempt, agent-administration: Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach. |
 
 ### agentprofile
 

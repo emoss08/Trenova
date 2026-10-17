@@ -162,6 +162,8 @@ func coreToolProviders() []any {
 		newOpenPageTool,
 		newWebSearchTool,
 		newWebReadTool,
+		newListPortalSitesTool,
+		newReadPortalTool,
 	}
 }
 

@@ -1396,6 +1396,7 @@ export const agentWaitKindSchema = z.enum([
   "AppointmentNear",
   "FreeTimeEnding",
   "HOSDriveBelow",
+  "PortalRun",
 ]);
 
 export const agentWaitStatusSchema = z.enum(["Waiting", "Met", "TimedOut", "Cancelled", "Failed"]);

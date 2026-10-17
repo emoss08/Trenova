@@ -255,6 +255,8 @@ func SharedOptions() fx.Option {
 			accountingbriefrepository.New,
 			agentextensionrepository.New,
 			agentextensionrepository.NewUsageRepository,
+			agentextensionrepository.NewPortalSiteRepository,
+			agentextensionrepository.NewPortalRunRepository,
 			agentrunservice.NewValidator,
 			retrievalservice.New,
 			retrievalservice.AsIndexer,

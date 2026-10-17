@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { configFieldSpecSchema, configFieldValueSchema } from "@/types/integration";
 
@@ -89,3 +90,142 @@ export type AgentExtensionCatalogItem = z.infer<typeof agentExtensionCatalogItem
 export type AgentExtensionCatalogResponse = z.infer<typeof agentExtensionCatalogResponseSchema>;
 export type AgentExtensionConfigResponse = z.infer<typeof agentExtensionConfigResponseSchema>;
 export type UpdateAgentExtensionRequest = z.infer<typeof updateAgentExtensionRequestSchema>;
+
+/** What an extension's capability gives agents, as the server names it. */
+export const AgentExtensionCapability = {
+  WebResearch: "WebResearch",
+  PortalAutomation: "PortalAutomation",
+} as const;
+
+export const portalSiteSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  purpose: z.string(),
+  domains: z.array(z.string()),
+  startUrl: z.string(),
+  browserProfileId: z.string(),
+  allowActions: z.boolean(),
+  enabled: z.boolean(),
+  hasSignIn: z.boolean(),
+  version: z.number().int(),
+  createdAt: z.number().int(),
+  updatedAt: z.number().int(),
+});
+
+export const portalSitesResponseSchema = z.object({
+  items: z
+    .array(portalSiteSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const portalRunStatusSchema = z.enum([
+  "Running",
+  "Succeeded",
+  "Failed",
+  "Stopped",
+  "TimedOut",
+  "Strayed",
+]);
+
+export const portalRunSchema = z.object({
+  id: z.string(),
+  siteId: z.string(),
+  siteName: z.string(),
+  extensionType: z.string(),
+  mode: z.enum(["Read", "Act"]),
+  status: portalRunStatusSchema,
+  instruction: z.string(),
+  details: z
+    .record(z.string(), z.string())
+    .nullish()
+    .transform((value) => value ?? {}),
+  usedSignIn: z.boolean(),
+  answer: z.string(),
+  visitedUrls: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  offSiteUrls: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  steps: z.number().int(),
+  costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
+  failure: z.string(),
+  agentRunId: z.string().default(""),
+  threadId: z.string().default(""),
+  proposalId: z.string().default(""),
+  requestedById: z.string().default(""),
+  hasRecording: z.boolean(),
+  startedAt: z.number().int(),
+  finishedAt: z.number().int().nullish(),
+});
+
+export const portalRunsResponseSchema = z.object({
+  items: z
+    .array(portalRunSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  nextBefore: z.number().int(),
+});
+
+export const portalRecordingSchema = z.object({
+  recordingUrl: z.string(),
+  shareUrl: z.string(),
+});
+
+export const savePortalSiteRequestSchema = z.object({
+  name: z.string(),
+  purpose: z.string(),
+  domains: z.array(z.string()),
+  startUrl: z.string(),
+  username: z.string(),
+  password: z.string(),
+  clearSignIn: z.boolean(),
+  browserProfileId: z.string(),
+  allowActions: z.boolean(),
+  enabled: z.boolean(),
+  version: z.number().int(),
+});
+
+/** A site as the form edits it; a sign-in left blank keeps the stored one. */
+export const portalSiteFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name the site") })
+    .max(100, { error: () => translate("Keep the name to 100 characters") }),
+  purpose: z
+    .string()
+    .trim()
+    .max(500, { error: () => translate("Keep what it is for to 500 characters") }),
+  domains: z
+    .array(z.string().trim().min(1))
+    .min(1, { error: () => translate("Add at least one address, such as portal.example.com") })
+    .max(10, { error: () => translate("A site can have at most 10 addresses") }),
+  startUrl: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Give the page the browser starts on") })
+    .refine((value) => value.startsWith("https://"), {
+      error: () => translate("The start page must be an https address"),
+    }),
+  username: z.string().trim(),
+  password: z.string(),
+  clearSignIn: z.boolean(),
+  browserProfileId: z
+    .string()
+    .trim()
+    .max(100, { error: () => translate("Keep the profile to 100 characters") }),
+  allowActions: z.boolean(),
+  enabled: z.boolean(),
+});
+
+export type PortalSite = z.infer<typeof portalSiteSchema>;
+export type PortalRun = z.infer<typeof portalRunSchema>;
+export type PortalRunStatus = z.infer<typeof portalRunStatusSchema>;
+export type PortalRunsResponse = z.infer<typeof portalRunsResponseSchema>;
+export type PortalRecording = z.infer<typeof portalRecordingSchema>;
+export type SavePortalSiteRequest = z.infer<typeof savePortalSiteRequestSchema>;
+export type PortalSiteFormValues = z.infer<typeof portalSiteFormSchema>;

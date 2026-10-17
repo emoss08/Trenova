@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -416,6 +417,12 @@ var kindMinters = map[permission.RecordKind]minter{
 	),
 	permission.KindWait: mint(
 		func(e *agentwait.Wait) pulid.ID { return e.ID },
+	),
+	permission.KindPortalSite: mint(
+		func(e *agentextension.PortalSite) pulid.ID { return e.ID },
+	),
+	permission.KindPortalRun: mint(
+		func(e *agentextension.PortalRun) pulid.ID { return e.ID },
 	),
 	permission.KindWatchtowerItem: mint(
 		func(e *watchtower.Item) pulid.ID { return e.ID },

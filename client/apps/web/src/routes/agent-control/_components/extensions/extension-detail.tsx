@@ -1,15 +1,21 @@
 import { InputField } from "@/components/fields/input-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { ExternalLink } from "@/components/link";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
-import type {
-  AgentExtensionAvailability,
-  AgentExtensionCatalogItem,
-  AgentExtensionConfigResponse,
+import {
+  AgentExtensionCapability,
+  type AgentExtensionAvailability,
+  type AgentExtensionCatalogItem,
+  type AgentExtensionConfigResponse,
 } from "@/types/agent-extension";
+import { lazyComponent } from "@/lib/lazy-component";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { PortalRunsSkeleton } from "./portal-runs-skeleton";
+import { PortalSitesSkeleton } from "./portal-sites-skeleton";
 import type { ConfigFieldSpec } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { defineLabels } from "@trenova/shared/i18n/labels";
@@ -17,7 +23,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { cn } from "@trenova/shared/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toAgentPanelRow, toSaveRequest } from "../agents/agent-form-schema";
 import { aicFieldTrigger } from "../edit/field-trigger";
@@ -31,12 +37,30 @@ import {
 } from "./extension-roster";
 import { Button } from "@trenova/shared/components/ui/button";
 
-const SEARCH_DEPTH_LABELS: Record<string, string> = defineLabels({
+const portalSites = lazyComponent(
+  () => import("./portal-sites"),
+  (module) => module.PortalSites,
+);
+const portalRuns = lazyComponent(
+  () => import("./portal-runs"),
+  (module) => module.PortalRuns,
+);
+
+/** What each choice a setting offers is called; one a vendor adds unnamed shows as sent. */
+const SETTING_OPTION_LABELS: Record<string, string> = defineLabels({
   auto: "Auto",
   fast: "Fast",
   deep: "Deep",
   basic: "Basic",
   advanced: "Advanced",
+  "browser-use-2.0": "Browser Use 2.0",
+  "gpt-5.6-luna": "GPT-5.6 Luna",
+  "claude-sonnet-5": "Claude Sonnet 5",
+  "gemini-3-flash-preview": "Gemini 3 Flash",
+  us: "United States",
+  ca: "Canada",
+  mx: "Mexico",
+  none: "No proxy",
 });
 
 /** The daily limits offered as steps; a saved limit outside them is offered too. */
@@ -283,7 +307,7 @@ export function ExtensionDetail({
                 value={valueOf(config, "searchType") || depthField.default || "auto"}
                 items={(depthField.options ?? []).map((option) => ({
                   value: option,
-                  label: SEARCH_DEPTH_LABELS[option] ?? option,
+                  label: SETTING_OPTION_LABELS[option] ?? option,
                   disabled: !canUpdate,
                 }))}
                 onValueChange={(value) =>
@@ -310,15 +334,42 @@ export function ExtensionDetail({
             </>
           )}
           {config &&
-            others.map((field) => (
-              <OtherField
-                key={`${field.key}:${config.version}`}
-                field={field}
-                value={valueOf(config, field.key)}
-                disabled={!canUpdate || busy}
-                onSave={(value) => control.save({ configuration: { [field.key]: value } })}
-              />
-            ))}
+            others.map((field) => {
+              const save = (value: string) =>
+                control.save({ configuration: { [field.key]: value } });
+              const value = valueOf(config, field.key) || field.default || "";
+              if (field.type === "select" && (field.options?.length ?? 0) > 0) {
+                return (
+                  <ChoiceSetting
+                    key={`${field.key}:${config.version}`}
+                    field={field}
+                    value={value}
+                    disabled={!canUpdate || busy}
+                    onSave={save}
+                  />
+                );
+              }
+              if (field.type === "boolean") {
+                return (
+                  <FlagSetting
+                    key={`${field.key}:${config.version}`}
+                    field={field}
+                    value={value}
+                    disabled={!canUpdate || busy}
+                    onSave={save}
+                  />
+                );
+              }
+              return (
+                <OtherField
+                  key={`${field.key}:${config.version}`}
+                  field={field}
+                  value={valueOf(config, field.key)}
+                  disabled={!canUpdate || busy}
+                  onSave={save}
+                />
+              );
+            })}
         </div>
         <div className="pd-s">
           <h4>{t("Available to")}</h4>
@@ -363,6 +414,16 @@ export function ExtensionDetail({
           )}
         </div>
       </div>
+      {item.capability === AgentExtensionCapability.PortalAutomation && (
+        <div className="flex flex-col gap-6 px-5 pb-5">
+          <LazyComponent fallback={<PortalSitesSkeleton />}>
+            <portalSites.Component canUpdate={canUpdate} />
+          </LazyComponent>
+          <LazyComponent fallback={<PortalRunsSkeleton />}>
+            <portalRuns.Component />
+          </LazyComponent>
+        </div>
+      )}
       <div className="ad-bar sh-f">
         {canUpdate &&
           (on ? (
@@ -436,6 +497,59 @@ function currentConfiguration(config: AgentExtensionConfigResponse): Record<stri
 }
 
 /** A setting the extension takes beyond its key, depth and limit, saved when it is left. */
+type SettingProps = {
+  field: ConfigFieldSpec;
+  value: string;
+  disabled: boolean;
+  onSave: (value: string) => void;
+};
+
+/** A setting with a few named choices, saved as soon as one is picked. */
+function ChoiceSetting({ field, value, disabled, onSave }: SettingProps) {
+  const t = useT();
+
+  return (
+    <div className="mt-3 flex flex-col gap-1.5">
+      <h4 className="mt">{t(field.label)}</h4>
+      <SegmentedControl<string>
+        aria-label={t(field.label)}
+        value={value}
+        items={(field.options ?? []).map((option) => ({
+          value: option,
+          label: SETTING_OPTION_LABELS[option] ?? option,
+          disabled,
+        }))}
+        onValueChange={(next) => !disabled && next !== value && onSave(next)}
+      />
+      {field.helpText && <p className="text-muted-foreground text-xs">{t(field.helpText)}</p>}
+    </div>
+  );
+}
+
+/** A setting that is on or off, saved as soon as it is flipped. */
+function FlagSetting({ field, value, disabled, onSave }: SettingProps) {
+  const t = useT();
+  const form = useForm<{ on: boolean }>({ values: { on: value === "true" } });
+
+  useEffect(() => {
+    const subscription = form.watch((next, { type }) => {
+      if (type === "change") onSave(next.on ? "true" : "false");
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onSave]);
+
+  return (
+    <SwitchField
+      control={form.control}
+      name="on"
+      label={t(field.label)}
+      description={field.helpText ? t(field.helpText) : undefined}
+      disabled={disabled}
+      className="mt-3"
+    />
+  );
+}
+
 function OtherField({
   field,
   value,

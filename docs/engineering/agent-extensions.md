@@ -6,7 +6,9 @@ contributes agent tools and nothing else. Each extension runs on the organizatio
 with its vendor, so its credentials, limits and cost belong to the organization.
 
 An extension provides a **capability**, and the capability owns the tools. Web research
-(`web_search`, `web_read`) is the first capability; Exa and Parallel each provide it. Agents,
+(`web_search`, `web_read`) is the first capability; Exa and Parallel each provide it. Portal
+automation (`list_portal_sites`, `read_portal`, `act_on_portal`) is the second; Browser Use
+provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Agents,
 the agent editor, the safety rules and the citation UI name the capability's tools, never a
 vendor, so an organization can move from one vendor to another without touching an agent.
 Only one extension may serve a capability at a time: turning on a second while the first is on
@@ -21,10 +23,10 @@ and every tool call agree on which vendor answers.
 | Capabilities and the tools they own, what is active | `services/tms/internal/modules/agent/domain/agentextension/capability.go` |
 | Types, availability, each vendor's settings spec and validator | `services/tms/internal/modules/agent/domain/agentextension/` (`spec.go`, `webresearch.go`, one file per vendor) |
 | Stored settings and daily usage | `agent_extensions`, `agent_extension_usage_daily` |
-| Marketplace, settings, test, metering, web research | `internal/modules/agent/app/agentextensionservice/` |
+| Marketplace, settings, test, metering, web research, portal sites and tasks | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/web_tools.go` |
+| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `portal_tools.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
@@ -50,14 +52,17 @@ tool is offered asks it through `Offers`, `Grants` and `Serving`:
 - `dispatch` refuses an inactive extension's tool even when the agent lists it, and accepts one
   an extension grants to every agent.
 
-Tool use is authorized on its own resource (`web_research`, read). Managing extensions needs
-`agent_extension` read and update.
+Tool use is authorized on the capability's own resource (`web_research` read; `portal_automation`
+read to look and update to act). Managing extensions, and the portal sites and task history,
+needs `agent_extension` read and update.
 
 ## Outside content holds every later write for a person
 
-An extension whose spec sets `ReturnsExternalContent` returns text written outside the
-organization, which may have been written to steer an agent. Once a turn has a successful result
-from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
+A tool a capability lists in `CapabilitySpec.OutsideContentTools` returns text written outside
+the organization, which may have been written to steer an agent. It is declared per tool, not per
+capability: `read_portal` returns a portal's page, while `list_portal_sites` returns what
+administrators wrote and `act_on_portal` returns only that the task started. Once a turn has a
+successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
 the ceiling or the private-write rule would allow, and the model is told why.
 
 - The flag lives on the turn (`Turn.external`, `TurnState.ExternalContent`) and travels to the
@@ -71,7 +76,10 @@ the ceiling or the private-write rule would allow, and the model is told why.
   flag held records `PolicyDefault` as its tier source and `tainted` among what held it, so the
   trace and the audit trail say the rule chose the tier, not a person or earned trust. See
   [ai-tracing.md](ai-tracing.md#execute_tool-tool-internal).
-- The web tools declare `ReadsExternal: always` with the `web` taint source in their
+- A turn or run that picks up a portal task's answer from a wait opens with the flag already set
+  (`RunRequest.AfterExternalContent`, from `Wait.CarriesOutsideText`), because the answer is
+  quoted in its opening note rather than returned by a tool call.
+- The web tools and `read_portal` declare `ReadsExternal: always` with the `web` taint source in their
   `ToolPolicy`, so a successful call also adds a `web` mark to the run's taint (see
   [agent-runtime.md](agent-runtime.md#taint-runs-that-have-read-outside-content)). While a turn
   carries the flag, dispatch hands `agenttoolpolicy.Decide` the turn's taint with a `web` mark
@@ -94,7 +102,8 @@ has a `Propose` ceiling of its own and carries the guide's digest; see
 [edi-spec-onboarding.md](edi-spec-onboarding.md).
 
 Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
-extension whose spec returns outside content, or a name in `outsideTextTools`), because the loop
+extension tool its capability lists as returning outside content
+(`agentextension.ReturnsExternalContent`), or a name in `outsideTextTools`), because the loop
 runs in workflow code and must decide the same way on replay. Each such tool's policy declares
 `CapsLaterWrites`, which the safety table and the tool snapshot show, and
 `TestEveryToolThatCapsLaterWritesIsOneTheRuntimeCapsOn` (`agentevalgate`) fails when a policy and
@@ -105,7 +114,9 @@ leaves the organization.
 ## What leaves Trenova
 
 Queries are checked before they are sent (`agentextension.CheckSearchQuery`): record IDs, email
-addresses and phone numbers are refused. `web_read` opens only a page a search returned: each
+addresses and phone numbers are refused. A portal task's instruction and details are checked by
+`CheckPortalInstruction` and `NormalizePortalDetails`: record IDs are refused, because the person
+reviewing a portal action sees the details that will be typed into the page. `web_read` opens only a page a search returned: each
 result carries a `ref`, an HMAC of the tenant and the URL keyed from the organization's API key,
 and a read with any other URL or ref is refused. The model cannot construct an address to send
 data to.
@@ -147,7 +158,7 @@ read, with the vendor's name and the capability's own words (`CapabilitySpec.Unc
 the HTTP status mapping most vendors need.
 
 A connector for a capability also implements that capability's provider port (web research:
-`WebSearchProvider`), receiving the decrypted settings and reading its own vendor fields from
+`WebSearchProvider`; portal automation: `BrowserProvider`), receiving the decrypted settings and reading its own vendor fields from
 them. `TestEveryExtensionHasAConnectorForItsCapability` fails when a type has no connector or its
 connector cannot do what the capability needs.
 
@@ -157,7 +168,9 @@ connector cannot do what the capability needs.
    `ck_agent_extensions_type` (the enum constraint test fails otherwise).
 2. Add a file for its `Spec`: the capability, its fields (a web research vendor builds them with
    `webResearchFields`, which brings the API key, results per search, daily limit and excluded
-   sites), and a `Validate`. Every spec has `apiKey` and `dailyRequestLimit`.
+   sites; a portal vendor with `portalAutomationFields`), and a `Validate`. Every spec has `apiKey`
+   and `dailyRequestLimit`; `DefaultDailyLimit` sets the limit's default when the capability's
+   unit is not one request (50 portal tasks a day rather than 1,000 searches).
 3. Write its client in `shared/<vendor>` and its connector in
    `internal/infrastructure/agentextension/<vendor>connector`, and register it in that module.
    A vendor that does not report cost computes it from its published prices.
@@ -175,7 +188,11 @@ A new capability is a new kind of thing agents can do, so it needs more than a v
    the words an agent uses when it is unavailable. A tool belongs to exactly one capability.
 2. Give it a plan capability and label in `capabilityDefinitions` (`agentextensionservice`).
 3. Declare its provider port next to `WebSearchProvider`, and write its tools in a tool
-   package's `ToolProviders()`; `TestEveryExtensionToolIsRegistered` checks they are registered.
+   package's `ToolProviders()`; `TestEveryExtensionToolIsRegistered` (`agenttoolpolicy`) checks
+   each is registered as a read or a write, and that a tool listed as returning outside content
+   declares `CapsLaterWrites` and is one the runtime caps on.
    Each tool's `ToolPolicy` declares what it reads and writes, as for any other tool.
 4. If its tools act outside Trenova (a browser that submits a form, a phone call), they are
    writes: they need previews, write coverage and a `Propose` ceiling like any other write.
+   `act_on_portal` is the example: an `external_recipient` write whose preview is a `Send`, and
+   which runs only from an approval.

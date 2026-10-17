@@ -7857,6 +7857,7 @@ enum AgentPreviewMessageChannel {
   Dash
   EDI
   Comment
+  Portal
 }
 
 """

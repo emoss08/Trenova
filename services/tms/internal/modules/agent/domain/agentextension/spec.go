@@ -29,6 +29,19 @@ type Spec struct {
 	Fields              []configspec.Field
 	SupportsTestConnect bool
 	Validate            SettingsValidator
+	DefaultDailyLimit   int
+}
+
+func (s Spec) DailyLimit(values map[string]string, multiErr *errortypes.MultiError) int {
+	return dailyRequestLimitFrom(values, s.dailyLimitFallback(), multiErr)
+}
+
+func (s Spec) dailyLimitFallback() int {
+	if s.DefaultDailyLimit > 0 {
+		return s.DefaultDailyLimit
+	}
+
+	return DefaultDailyRequestLimit
 }
 
 func (s Spec) Configured(configuration map[string]any) bool {
@@ -44,8 +57,9 @@ func (s Spec) HasTool(name string) bool {
 }
 
 var specs = map[Type]Spec{
-	TypeExa:      exaSpec(),
-	TypeParallel: parallelSpec(),
+	TypeExa:        exaSpec(),
+	TypeParallel:   parallelSpec(),
+	TypeBrowserUse: browserUseSpec(),
 }
 
 func SpecFor(t Type) (Spec, bool) {
@@ -87,20 +101,32 @@ func APIKeyField(placeholder, helpText string) configspec.Field {
 }
 
 func DailyRequestLimitField(helpText string) configspec.Field {
+	return dailyRequestLimitField(helpText, DefaultDailyRequestLimit)
+}
+
+func dailyRequestLimitField(helpText string, fallback int) configspec.Field {
 	return configspec.Field{
 		Key:      ConfigKeyDailyRequestLimit,
 		Label:    "Daily request limit",
 		Type:     configspec.FieldTypeNumber,
-		Default:  strconv.Itoa(DefaultDailyRequestLimit),
+		Default:  strconv.Itoa(fallback),
 		HelpText: helpText,
 	}
 }
 
 func DailyRequestLimit(values map[string]string, multiErr *errortypes.MultiError) int {
+	return dailyRequestLimitFrom(values, DefaultDailyRequestLimit, multiErr)
+}
+
+func dailyRequestLimitFrom(
+	values map[string]string,
+	fallback int,
+	multiErr *errortypes.MultiError,
+) int {
 	return parseBoundedInt(boundedIntField{
 		values:   values,
 		key:      ConfigKeyDailyRequestLimit,
-		fallback: DefaultDailyRequestLimit,
+		fallback: fallback,
 		min:      MinDailyRequestLimit,
 		max:      MaxDailyRequestLimit,
 		message:  "Daily request limit must be a whole number from 1 to 10,000",

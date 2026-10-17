@@ -269,6 +269,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agentextension.AllTypes()),
 		},
 		{
+			name:   "ck_agent_portal_runs_mode",
+			values: stringsOf(agentextension.AllPortalRunModes()),
+		},
+		{
+			name:   "ck_agent_portal_runs_status",
+			values: stringsOf(agentextension.AllPortalRunStatuses()),
+		},
+		{
 			name:   "ck_agent_extensions_availability",
 			values: stringsOf(agentextension.AllAvailabilities()),
 		},

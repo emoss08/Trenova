@@ -183,11 +183,13 @@ func (s *Service) prepareTurn(
 	definition, history := checks.definition, checks.history
 	attachments, runtimeAttachments := checks.attachments, checks.runtimeAttachments
 
+	outsideText := false
 	if resumesWait {
-		content, err = s.waitNote(ctx, thread.ID, req.ResumeWaitID, req.TenantInfo)
-		if err != nil {
-			return nil, nil, err
+		resumed, noteErr := s.waitNote(ctx, thread.ID, req.ResumeWaitID, req.TenantInfo)
+		if noteErr != nil {
+			return nil, nil, noteErr
 		}
+		content, outsideText = resumed.note, resumed.outside
 	}
 	if followUp {
 		followed, noteErr := s.decisionNote(ctx, &decisionNoteParams{
@@ -224,6 +226,7 @@ func (s *Service) prepareTurn(
 		Anchors:             checks.anchors,
 		TrenovaWritten:      followUp || resumesWait,
 		EarlierFiles:        checks.earlierFiles,
+		OutsideText:         outsideText,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)

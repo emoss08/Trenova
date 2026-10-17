@@ -256,6 +256,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceWebResearch: {
 		OpRead: {},
 	},
+	// Reading the portals an administrator set up, and acting on one. What an
+	// agent reads there holds every later write for a person, and acting on a
+	// portal is always a proposal a person approves.
+	ResourcePortalAutomation: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
 	ResourceBriefing: {
 		OpRead: {},
 	},

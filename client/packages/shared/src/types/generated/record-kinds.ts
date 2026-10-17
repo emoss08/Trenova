@@ -108,6 +108,8 @@ export const RecordKindIDPrefix = {
   performance_review: "prev_",
   performance_review_template: "prt_",
   permit: "pmt_",
+  portal_run: "aprn_",
+  portal_site: "apst_",
   rate_agreement: "rag_",
   rate_agreement_lane: "ragr_",
   rate_confirmation: "ratecon_",

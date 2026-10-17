@@ -274,6 +274,77 @@
       }
     },
     {
+      "name": "act_on_portal",
+      "description": "Propose doing something on one of the organization's portal sites through a cloud browser: book or move a dock appointment, upload a proof of delivery, accept or decline a load on a shipper's portal, update a status. A person sees the exact instruction and details the browser will get and decides; once approved the portal does it in the background and you pick the work up with what it said. Only sites that allow actions can take one. Give one action per proposal, and the references the portal knows in details, never Trenova record ids.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "details": {
+            "additionalProperties": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "description": "The values the portal needs, by what the portal calls them, such as {\"PO number\": \"4512\", \"Carrier\": \"Ridgeline Freight\"}.",
+            "type": "object"
+          },
+          "instruction": {
+            "description": "Exactly what to do, in one plain sentence, such as \"Book the 8:00 AM dock appointment on October 20 for this PO\".",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "siteId": {
+            "description": "The portal site to act on, from list_portal_sites. It must allow actions.",
+            "type": "string",
+            "x-recordKinds": [
+              "portal_site"
+            ]
+          }
+        },
+        "required": [
+          "siteId",
+          "instruction"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "book appointment",
+        "dock appointment",
+        "schedule appointment",
+        "upload pod",
+        "accept load",
+        "shipper portal",
+        "portal",
+        "submit on portal",
+        "reschedule"
+      ],
+      "prerequisites": [
+        "list_portal_sites",
+        "read_portal"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "portal_automation",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "portal_run",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Acts on a third-party portal in the organization's name, which another company then relies on; what it books or submits is undone, if at all, on that portal. A person always decides."
+      }
+    },
+    {
       "name": "add_carrier_settlement_adjustment",
       "description": "Add a manual adjustment line to a draft or pending carrier settlement: a positive amount pays the carrier more, one below zero takes money back. The settlement is flagged as manually adjusted for whoever approves it. Say why in the description. When the person names the amount and the reason, propose it: a concern such as no matching advance on file or a net below zero goes in your reply beside the proposal, for them to weigh on the preview, rather than in place of it.",
       "parameters": {
@@ -23118,6 +23189,46 @@
       }
     },
     {
+      "name": "list_portal_sites",
+      "description": "List the third-party web portals the organization set up for agents: warehouse dock-appointment portals, shipper and carrier portals, insurers' lookups. Each says what it is for, the addresses it lives on, whether it signs in and whether agents may act on it or only read it. Call it before read_portal or act_on_portal to find the site's id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "searchTerms": [
+        "portal",
+        "website",
+        "dock appointment",
+        "appointment portal",
+        "shipper portal",
+        "carrier portal",
+        "login",
+        "sites"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "portal_automation",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Lists the portal sites an administrator set up; it changes nothing, sends nothing, and returns only what administrators wrote."
+      }
+    },
+    {
       "name": "list_rate_agreements",
       "description": "List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier. Each has its code, name, party, type, status and effective dates. Narrow to a customer, a carrier, a status or text; get_rate_agreement opens one with its lane rules.",
       "parameters": {
@@ -28624,6 +28735,78 @@
         "source": "attachment",
         "carriesTaint": false,
         "rationale": "Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "read_portal",
+      "description": "Look something up on one of the organization's portal sites through a cloud browser, and get back what the portal shows: open appointment slots, a load's status on a shipper's portal, a carrier's certificate. It only reads and never submits anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. Ask one clear question and give the references the portal knows (PO, BOL, appointment number) in details, never Trenova record ids. What it returns is written outside the organization.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "details": {
+            "additionalProperties": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "description": "Optional: the values the portal needs to find it, by what the portal calls them, such as {\"PO number\": \"4512\", \"Warehouse\": \"Dallas DC\"}.",
+            "type": "object"
+          },
+          "question": {
+            "description": "What to find out, in one plain sentence, such as \"Which dock appointment slots are open on October 20?\".",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "siteId": {
+            "description": "The portal site to read, from list_portal_sites.",
+            "type": "string",
+            "x-recordKinds": [
+              "portal_site"
+            ]
+          }
+        },
+        "required": [
+          "siteId",
+          "question"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "portal",
+        "check the portal",
+        "look up",
+        "appointment slots",
+        "dock appointment",
+        "shipper portal",
+        "load status",
+        "certificate",
+        "website",
+        "log in"
+      ],
+      "prerequisites": [
+        "list_portal_sites"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "portal_automation",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "always",
+        "source": "web",
+        "carriesTaint": false,
+        "capsLaterWrites": true,
+        "rationale": "Reads a third-party portal through the organization's extension; it changes nothing in Trenova, tells the browser to submit nothing, and returns text written outside it."
       }
     },
     {

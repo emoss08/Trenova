@@ -8,6 +8,7 @@ export const PlanCapability = {
   APIKeys: "api_keys",
   AgentAutomation: "agent.automation",
   AgentWebSearch: "agent.web_search",
+  AgentPortalAutomation: "agent.portal_automation",
   CarrierIntelligencePaid: "carrier_intelligence.paid",
   DocumentIntelligence: "document_intelligence",
   SMS: "sms",

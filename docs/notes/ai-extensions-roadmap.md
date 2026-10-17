@@ -26,21 +26,21 @@ line decides several of the obvious candidates:
   time.
 - **Parallel** as a second web research vendor: SOC 2 on every API, $1–5 per 1k searches, reads
   JavaScript pages and PDFs.
+- **Portal automation** (`list_portal_sites`, `read_portal`, `act_on_portal`) on Browser Use
+  Cloud; see [agent-portal-automation.md](../engineering/agent-portal-automation.md). Browser Use
+  was chosen because its V2 task API enforces a navigation allow-list (`allowedDomains`), which
+  is the rule the capability cannot do without, and types sign-ins from secrets the browser agent
+  only sees as placeholders. Administrators set up each site; reads taint the turn; every action
+  is a proposal whose preview is the exact task the browser gets, run from the approval and
+  followed by a workflow and a wait; every task is recorded with the pages it reached and its
+  session recording.
 
 ## Next, in order
 
-1. **Browser capability (portal work).** The largest time saving available to agents: appointment
-   portals, shipper tender portals, carrier tracking pages, insurer certificate checks. Vendors:
-   Browserbase (largest ecosystem), Anchor or Kernel (strongest on signed-in sessions and zero
-   data retention), TinyFish (per-step pricing meters cleanly, but no SOC 2 or retention terms
-   published yet — diligence first). It cannot reuse web research's safety model, because
-   `web_read` is safe only since the model never chooses an address. It needs:
-   - an administrator's allow-list of sites per organization; no navigation outside it;
-   - credentials held in the vendor's vault, never in the prompt or the turn;
-   - reads (look up an appointment, read a tracking page) as `ReturnsExternalContent` tools;
-   - every submit, booking or upload as a write with a preview, write coverage and a `Propose`
-     ceiling;
-   - session recordings kept as the evidence a person approves against.
+1. **A second portal vendor** once one enforces where the browser may go, not only where a
+   credential may be typed: Anchor or Kernel (signed-in sessions, zero data retention),
+   Browserbase (largest ecosystem). `BrowserProvider` already takes the allow-list. TinyFish
+   still needs SOC 2 and retention terms before it is considered.
 2. **Exa's newer endpoints on the web research capability:** Monitors (watch a regulation page or
    a carrier's site) and Baselayer business verification through Exa Connect, which fits carrier
    vetting conversations without becoming an integration.
