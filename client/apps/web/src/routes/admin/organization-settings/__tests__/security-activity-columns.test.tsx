@@ -62,7 +62,9 @@ describe("authEventColumns", () => {
   });
 
   it("labels an outcome in words", () => {
-    const outcome = columns.find((column) => "accessorKey" in column && column.accessorKey === "outcome")!;
+    const outcome = columns.find(
+      (column) => "accessorKey" in column && column.accessorKey === "outcome",
+    )!;
     renderCell(outcome, { ...signOut, outcome: "denied" } as AuthEventRow);
 
     expect(screen.getByText("Refused")).toBeInTheDocument();

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 )
@@ -137,4 +139,46 @@ func TestExtractionEvalRunWorkflow_ContinuesAsNewOnLongRuns(t *testing.T) {
 	var continued *workflow.ContinueAsNewError
 	require.ErrorAs(t, err, &continued)
 	assert.Equal(t, extractionevalcontract.ExtractionEvalRunWorkflowName, continued.WorkflowType.Name)
+}
+
+func TestRefreezeWorkflow_AnswersItsProgress(t *testing.T) {
+	t.Parallel()
+
+	var s testsuite.WorkflowTestSuite
+	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(&Activities{})
+
+	var a *Activities
+	env.OnActivity(a.FreezeExtractionEvalCaseActivity, mock.Anything, mock.MatchedBy(
+		func(in *FreezeCaseInput) bool { return in.CaseID == "eec_1" },
+	)).Return(&FreezeCaseOutcome{CaseID: "eec_1", Frozen: true}, nil).Once()
+	env.OnActivity(a.FreezeExtractionEvalCaseActivity, mock.Anything, mock.MatchedBy(
+		func(in *FreezeCaseInput) bool { return in.CaseID == "eec_2" },
+	)).Return(&FreezeCaseOutcome{CaseID: "eec_2", Reason: "no original document"}, nil).Once()
+
+	var midway extractionevalcontract.RefreezeProgress
+	env.SetOnActivityCompletedListener(func(_ *activity.Info, _ converter.EncodedValue, _ error) {
+		if midway.Total != 0 {
+			return
+		}
+		encoded, err := env.QueryWorkflow(extractionevalcontract.RefreezeProgressQuery)
+		require.NoError(t, err)
+		require.NoError(t, encoded.Get(&midway))
+	})
+
+	env.ExecuteWorkflow(RefreezeExtractionEvalCasesWorkflow, &extractionevalcontract.RefreezePayload{
+		OrganizationID: "org_1",
+		BusinessUnitID: "bu_1",
+		CaseIDs:        []pulid.ID{"eec_1", "eec_2"},
+	})
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	assert.Equal(t, 2, midway.Total)
+
+	encoded, err := env.QueryWorkflow(extractionevalcontract.RefreezeProgressQuery)
+	require.NoError(t, err)
+	var done extractionevalcontract.RefreezeProgress
+	require.NoError(t, encoded.Get(&done))
+	assert.Equal(t, extractionevalcontract.RefreezeProgress{Total: 2, Frozen: 1, Skipped: 1}, done)
 }

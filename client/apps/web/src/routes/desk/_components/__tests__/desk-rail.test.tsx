@@ -247,9 +247,7 @@ describe("DeskRail", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Today", expanded: true }));
 
-    expect(
-      screen.getByRole("button", { name: "Today", expanded: false }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Today", expanded: false })).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
     expect(screen.getByText("Old question")).toBeInTheDocument();
     expect(useDeskSettingsStore.getState().collapsedShelves).toEqual(["today"]);
@@ -264,9 +262,7 @@ describe("DeskRail", () => {
     useDeskSettingsStore.setState({ collapsedShelves: ["today"] });
     renderRail({ threads: [thread({ id: "a", title: "Today's question" })] });
 
-    expect(
-      screen.getByRole("button", { name: "Today", expanded: false }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Today", expanded: false })).toBeInTheDocument();
     expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
   });
 

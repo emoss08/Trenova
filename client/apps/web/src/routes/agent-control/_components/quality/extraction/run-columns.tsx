@@ -4,7 +4,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatShare, formatUsd } from "../quality-model";
 import { RunStatusBadge } from "./extraction-badges";
-import { RUN_STATUS, choicesOf } from "./extraction-model";
+import { RUN_STATUS, TEXT_SOURCE, choicesOf } from "./extraction-model";
 
 export function getRunColumns(t: TranslateFn): ColumnDef<ExtractionEvalRunRow>[] {
   return [
@@ -45,6 +45,24 @@ export function getRunColumns(t: TranslateFn): ColumnDef<ExtractionEvalRunRow>[]
         filterable: true,
         sortable: true,
         filterType: "text",
+      },
+    },
+    {
+      accessorKey: "textSource",
+      header: t("Document text"),
+      cell: ({ row }) => TEXT_SOURCE[row.original.textSource],
+      size: 130,
+      meta: {
+        label: t("Document text"),
+        apiField: "textSource",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: (Object.keys(TEXT_SOURCE) as (keyof typeof TEXT_SOURCE)[]).map((value) => ({
+          value,
+          label: TEXT_SOURCE[value],
+        })),
+        defaultFilterOperator: "eq",
       },
     },
     {

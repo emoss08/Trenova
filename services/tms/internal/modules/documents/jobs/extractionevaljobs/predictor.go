@@ -3,7 +3,7 @@ package extractionevaljobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"go.uber.org/fx"
@@ -33,7 +33,11 @@ func (p *Predictor) Predict(
 	for _, page := range req.Pages {
 		pages = append(
 			pages,
-			documentaiextractionports.AIDocumentPage{PageNumber: page.Number, Text: page.Text},
+			documentaiextractionports.AIDocumentPage{
+				PageNumber: page.Number,
+				Text:       page.Text,
+				Markdown:   page.Markdown,
+			},
 		)
 	}
 
@@ -51,7 +55,7 @@ func (p *Predictor) Predict(
 	}
 
 	return &extractionevalports.ExtractionPrediction{
-		DraftData:    documentintelligencejobs.ShipmentDraftDataFromAIExtract(result.Extract),
+		DraftData:    documentextractionjobs.ShipmentDraftDataFromAIExtract(result.Extract),
 		Model:        result.Model,
 		ProviderID:   result.ProviderID,
 		InputTokens:  result.InputTokens,

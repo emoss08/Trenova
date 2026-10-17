@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f94049d6bab2c501d394fb935f44dcf64034e66e780b953d76c5d0116f72a02d",
+  "version": "sha256:86455c27a12b52891d65b01413b8732d35b21ae3fbb87564a1f91f7b104c1ca4",
   "modules": [
     {
       "id": "home",
@@ -4384,15 +4384,15 @@
     },
     {
       "path": "/admin/document-intelligence",
-      "name": "Document intelligence",
+      "name": "Document extraction",
       "module": "admin",
       "breadcrumb": [
         "Organization settings",
         "AI & Automation",
-        "Document intelligence"
+        "Document extraction"
       ],
-      "description": "Configure OCR, classification, extraction, and shipment draft behavior",
-      "summary": "Document intelligence decides what Trenova does with uploaded documents: whether it reads them with OCR, classifies them into document kinds and types, extracts structured data (optionally with an AI provider), turns documents such as rate confirmations into reviewable shipment drafts, and indexes their text for search. The page is one settings form in four cards: **Platform availability**, **Classification and extraction**, **Shipment draft extraction** and **Search and retrieval**.\n\nAdministrators use it to switch document processing on and choose how much of it is automatic.",
+      "description": "Configure how documents are read, classified, extracted, and drafted into shipments",
+      "summary": "Document extraction decides what Trenova does with uploaded documents: whether it reads text from scanned pages, which engine reads them, how it classifies them into document kinds and types, whether it extracts structured data with an AI provider, whether documents such as rate confirmations become reviewable shipment drafts, and whether their text is indexed for search. The page is one settings form in five cards: **Platform availability**, **Extraction engine**, **Classification and extraction**, **Shipment draft extraction** and **Search and retrieval**.\n\nAdministrators use it to switch document processing on and choose how much of it is automatic.",
       "requires": [
         {
           "resource": "document_control",
@@ -4401,25 +4401,42 @@
       ],
       "capabilities": [],
       "aliases": [
+        "Document intelligence",
         "OCR settings",
         "document AI",
         "document classification",
         "document extraction",
+        "Docling",
+        "extraction engine",
         "shipment drafts from documents",
         "rate confirmation extraction"
       ],
       "tasks": [
         {
-          "title": "Turn document intelligence on",
+          "title": "Turn document extraction on",
           "keywords": [
             "enable OCR",
             "document processing on"
           ],
           "steps": [
-            "Open [Document intelligence](/admin/document-intelligence).",
-            "In **Platform availability**, turn on **Enable document intelligence**. This is the master switch; every other option on the page stays unavailable while it is off.",
-            "Turn on **Enable OCR** to read scanned documents when native text extraction is not enough.",
+            "Open [Document extraction](/admin/document-intelligence).",
+            "In **Platform availability**, turn on **Enable document extraction**. This is the master switch; every other option on the page stays unavailable while it is off.",
+            "Turn on **Enable OCR** to read scanned pages, photos and faxes that carry no text of their own.",
             "Select **Save changes** in the bar that appears at the bottom."
+          ]
+        },
+        {
+          "title": "Choose the extraction engine",
+          "keywords": [
+            "Docling",
+            "legacy engine",
+            "switch engine",
+            "layout extraction"
+          ],
+          "steps": [
+            "Open [Document extraction](/admin/document-intelligence).",
+            "In **Extraction engine**, choose **Legacy** or **Docling**. Docling reads the page layout, tables and scanned text, and every field it extracts needs an AI provider that serves document work; parsing rules are not applied. Legacy reads native PDF text, runs OCR on scans and applies your parsing rules.",
+            "Select **Save changes**. The engine applies to documents uploaded from then on; documents already read keep their text."
           ]
         },
         {
@@ -4430,7 +4447,7 @@
             "AI extraction"
           ],
           "steps": [
-            "Open [Document intelligence](/admin/document-intelligence).",
+            "Open [Document extraction](/admin/document-intelligence).",
             "In **Classification and extraction**, turn on the options you want: **Enable automatic classification**, **Enable AI-assisted classification**, **Enable automatic document type association**, **Enable automatic document type creation** and **Enable AI-assisted extraction**.",
             "Select **Save changes**."
           ]
@@ -4443,7 +4460,7 @@
             "auto create shipment"
           ],
           "steps": [
-            "Open [Document intelligence](/admin/document-intelligence).",
+            "Open [Document extraction](/admin/document-intelligence).",
             "In **Shipment draft extraction**, turn on **Enable shipment draft extraction**.",
             "Tick the records whose documents may produce drafts: **Shipment**, **Trailer**, **Tractor** or **Worker**.",
             "Select **Save changes**."
@@ -4456,13 +4473,13 @@
             "index documents"
           ],
           "steps": [
-            "Open [Document intelligence](/admin/document-intelligence).",
+            "Open [Document extraction](/admin/document-intelligence).",
             "In **Search and retrieval**, turn on **Enable full-text indexing**.",
             "Select **Save changes**."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to document control. The AI-assisted options depend on an enabled AI provider that serves document work, which is set up on [AI control](/admin/agent-control). Provider-specific parsing rules live on [Parsing rules](/admin/document-parsing-rules).",
+      "notes": "Opening the page needs read access to document control. The AI-assisted options, and every document read by the Docling engine, depend on an enabled AI provider that serves document work, which is set up on [AI control](/admin/agent-control). Without one, Docling documents are stored but not read, and upload screens say so. Provider-specific parsing rules live on [Parsing rules](/admin/document-parsing-rules) and apply only to the legacy engine.",
       "related": [
         "/admin/document-parsing-rules",
         "/admin/document-operations",

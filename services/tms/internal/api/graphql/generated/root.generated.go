@@ -2120,6 +2120,7 @@ type MutationResolver interface {
 	DeleteExtractionEvalCase(ctx context.Context, id string) (bool, error)
 	StartExtractionEvalRun(ctx context.Context, input gqlmodel.StartExtractionEvalRunInput) (*extractioneval.ExtractionRun, error)
 	CancelExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
+	RefreezeExtractionEvalCases(ctx context.Context, input gqlmodel.RefreezeExtractionEvalCasesInput) (*extractionevalports.RefreezeExtractionEvalCasesResult, error)
 	UpdateExtractionRollout(ctx context.Context, input gqlmodel.UpdateExtractionRolloutInput) (*extractionrollout.ExtractionRollout, error)
 	UpdateExtractionShadowSettings(ctx context.Context, input gqlmodel.UpdateExtractionShadowSettingsInput) (*extractionshadow.ShadowSettings, error)
 	CreateFactoringAgreement(ctx context.Context, input gqlmodel.FactoringAgreementInput) (*factoring.Agreement, error)
@@ -2962,6 +2963,7 @@ type QueryResolver interface {
 	ExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
 	ExtractionEvalResults(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalResultConnection, error)
 	ExtractionEvalResult(ctx context.Context, id string) (*extractioneval.ExtractionResult, error)
+	ExtractionEvalRefreeze(ctx context.Context) (*extractionevalports.ExtractionEvalRefreezeProgress, error)
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
 	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
@@ -20350,6 +20352,14 @@ enum ExtractionEvalRunStatus {
   Failed
 }
 
+"Which reading of a document an evaluation sends to the model."
+enum ExtractionTextSource {
+  "The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader."
+  legacy
+  "The case's pages frozen again from its original file through Docling, as Markdown."
+  docling
+}
+
 enum ExtractionEvalResultStatus {
   Pending
   Completed
@@ -20510,6 +20520,8 @@ type ExtractionEvalRun {
   "The model the provider reported serving."
   servedModel: String!
   caseLimit: Int!
+  "The reading of each case the run sent to the model; a case with no pages for it is skipped."
+  textSource: ExtractionTextSource!
   casesTotal: Int!
   casesCompleted: Int!
   casesFailed: Int!
@@ -20691,6 +20703,42 @@ input StartExtractionEvalRunInput {
   providerId: ID!
   "How many active cases to run, newest first; 50 by default, at most 500."
   caseLimit: Int
+  "Which reading of each case to send; legacy by default."
+  textSource: ExtractionTextSource
+}
+
+input RefreezeExtractionEvalCasesInput {
+  "The cases to freeze again; every active case when empty."
+  caseIds: [ID!]
+}
+
+"A re-freeze queued in the background: each case's original file is converted through Docling."
+type ExtractionEvalRefreeze {
+  queued: Int!
+  workflowId: String!
+  "True when the organization's re-freeze was already running; that run is returned and no new one is started."
+  alreadyRunning: Boolean!
+}
+
+enum ExtractionEvalRefreezeStatus {
+  Running
+  Completed
+  "Stopped before every case was read: failed, canceled, terminated or timed out."
+  Failed
+}
+
+"The organization's most recent re-freeze and how far it has got."
+type ExtractionEvalRefreezeProgress {
+  workflowId: String!
+  status: ExtractionEvalRefreezeStatus!
+  "Cases the re-freeze was asked to read."
+  total: Int!
+  "Cases frozen again from their original file."
+  frozen: Int!
+  "Cases left as they were: no original file, or one Docling could not read."
+  skipped: Int!
+  "Cases the re-freeze could not finish."
+  failed: Int!
 }
 
 extend type Query {
@@ -20704,6 +20752,8 @@ extend type Query {
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalResults(runId: ID!, input: DataTableConnectionInput!): ExtractionEvalResultConnection!
   extractionEvalResult(id: ID!): ExtractionEvalResult
+  "The organization's most recent re-freeze through Docling; empty when none has run."
+  extractionEvalRefreeze: ExtractionEvalRefreezeProgress
 }
 
 extend type Mutation {
@@ -20714,6 +20764,8 @@ extend type Mutation {
   "Runs one provider's model over the active cases, within the evaluation budget."
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+  "Converts each case's original file through Docling and freezes the result beside the case for runs that choose the docling text source."
+  refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput!): ExtractionEvalRefreeze!
 }
 `, BuiltIn: false},
 	{Name: "../schema/extractionrollout.graphqls", Input: `enum ExtractionRolloutHaltReason {
@@ -20774,6 +20826,18 @@ type ExtractionRolloutAccuracy {
   accuracy: Float!
 }
 
+"Why a production extraction was left out of the rollout's comparison."
+enum ExtractionRolloutExclusionReason {
+  "The document was read by Docling, and the candidate must not see Markdown input until it is retrained on it."
+  docling_input
+}
+
+"Production extractions left out of the comparison since the rollout started, for one reason. Excluded extractions are served by production and never assigned to either side."
+type ExtractionRolloutExclusion {
+  reason: ExtractionRolloutExclusionReason!
+  count: Int!
+}
+
 "How the candidate is doing on the documents it serves, beside production on the rest."
 type ExtractionRolloutReport {
   rollout: ExtractionRollout!
@@ -20790,6 +20854,8 @@ type ExtractionRolloutReport {
   minGuardScoredFields: Int!
   "Settled extractions each side needs before the rejection guard can stop the rollout."
   minGuardExtractions: Int!
+  "Extractions left out of the comparison since the rollout started, one entry per reason."
+  exclusions: [ExtractionRolloutExclusion!]!
 }
 
 input UpdateExtractionRolloutInput {

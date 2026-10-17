@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
+	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
@@ -62,6 +63,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		// enabled, so its Temporal activity, AI and database metrics can be
 		// scraped too. Off, it opens no port and cannot collide with the API's.
 		apimodule.WorkerMonitoringServerModule,
+		modulesinfra.DoclingModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
 		conversationschedulejobs.WorkerModule,

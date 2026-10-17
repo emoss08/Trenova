@@ -56,14 +56,17 @@ func (s *Service) Update(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetOrCreate(ctx, entity.OrganizationID, entity.BusinessUnitID)
 	if err != nil {
 		log.Error("failed to get original document control", zap.Error(err))
 		return nil, err
+	}
+	if entity.ExtractionEngine == "" {
+		entity.ExtractionEngine = original.ExtractionEngine
+	}
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)

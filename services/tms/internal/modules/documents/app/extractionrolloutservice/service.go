@@ -39,6 +39,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Rollouts      extractionrolloutports.ExtractionRolloutRepository
 	Assignments   extractionrolloutports.RolloutAssignmentRepository
+	Exclusions    extractionrolloutports.RolloutExclusionRepository
 	Corrections   aicorrectionports.AICorrectionRepository
 	Providers     agentports.AIProviderRepository
 	Retention     tenantports.DataRetentionRepository
@@ -50,6 +51,7 @@ type Service struct {
 	l           *zap.Logger
 	rollouts    extractionrolloutports.ExtractionRolloutRepository
 	assignments extractionrolloutports.RolloutAssignmentRepository
+	exclusions  extractionrolloutports.RolloutExclusionRepository
 	corrections aicorrectionports.AICorrectionRepository
 	providers   agentports.AIProviderRepository
 	retention   tenantports.DataRetentionRepository
@@ -69,6 +71,7 @@ func New(p Params) *Service {
 		l:           p.Logger.Named("service.extractionrollout"),
 		rollouts:    p.Rollouts,
 		assignments: p.Assignments,
+		exclusions:  p.Exclusions,
 		corrections: p.Corrections,
 		providers:   p.Providers,
 		retention:   p.Retention,

@@ -215,6 +215,23 @@ func TestValidateConfig(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("a docling url without an api key starts with conversion off", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.DocumentConversion.DoclingURL = "http://docling:5001"
+		cfg.DocumentConversion.APIKey = ""
+
+		require.NoError(t, l.validateConfig(cfg))
+		assert.False(t, cfg.DocumentConversion.Enabled())
+		assert.True(t, cfg.DocumentConversion.MissingAPIKey())
+
+		cfg.DocumentConversion.APIKey = "key"
+		assert.True(t, cfg.DocumentConversion.Enabled())
+		assert.False(t, cfg.DocumentConversion.MissingAPIKey())
+	})
+
 	t.Run("MaxIdleConns exceeds MaxOpenConns", func(t *testing.T) {
 		t.Parallel()
 

@@ -33,7 +33,7 @@ func (r *Registry) registerComplianceResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceDocumentControl.String(),
 		DisplayName:        "Document Control",
-		Description:        "Document intelligence and OCR settings",
+		Description:        "Document extraction settings",
 		Category:           "Documents",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,

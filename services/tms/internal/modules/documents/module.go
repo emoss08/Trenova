@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentintelligenceservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentmailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
@@ -81,8 +81,10 @@ func SharedOptions() fx.Option {
 			extractionevalrepository.NewCases,
 			extractionevalrepository.NewRuns,
 			extractionevalrepository.NewResults,
+			extractionevalrepository.NewCasePages,
 			extractionrolloutrepository.NewRollouts,
 			extractionrolloutrepository.NewAssignments,
+			extractionrolloutrepository.NewExclusions,
 			extractionshadowrepository.NewSettings,
 			extractionshadowrepository.NewResults,
 			retrievalsourcerepository.New,
@@ -120,7 +122,9 @@ func SharedOptions() fx.Option {
 			documentparsingruleservice.NewValidator,
 			documentpacketruleservice.NewValidator,
 			documenttemplateservice.NewValidator,
-			documentintelligenceservice.New,
+			documentextractionservice.New,
+			documentextractionservice.AsContentService,
+			documentextractionservice.AsExtractionStatusReader,
 			documentoperationsservice.New,
 			documentsearchprojectionservice.New,
 			documentservice.New,
@@ -137,8 +141,12 @@ func SharedOptions() fx.Option {
 			extractionevalservice.AsService,
 			extractionevalservice.AsRunner,
 			extractionevalservice.AsDriftChecker,
+			extractionevalservice.AsCaseFreezer,
 			extractionevalcontract.NewRunStarter,
 			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRunStarter { return s },
+			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRefreezeStarter {
+				return s
+			},
 			extractionrolloutservice.New,
 			extractionrolloutservice.AsService,
 			extractionrolloutservice.AsRouter,

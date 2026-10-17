@@ -38,6 +38,11 @@ import {
   ExtractionWeekAccuracyFieldsFragmentDoc,
   type ExtractionProviderTrendsQuery,
   type ExtractionWeekAccuracyFieldsFragment,
+  ExtractionEvalRefreezeDocument,
+  ExtractionEvalRefreezeProgressFieldsFragmentDoc,
+  RefreezeExtractionEvalCasesDocument,
+  type ExtractionEvalRefreezeProgressFieldsFragment,
+  type RefreezeExtractionEvalCasesInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -69,6 +74,9 @@ export const EXTRACTION_EVAL_RUN_LIST_KEY = "extraction-eval-run-list";
 export const EXTRACTION_EVAL_RUN_DETAIL_KEY = "extraction-eval-run";
 export const EXTRACTION_EVAL_RESULT_LIST_KEY = "extraction-eval-result-list";
 export const EXTRACTION_EVAL_RESULT_DETAIL_KEY = "extraction-eval-result";
+export const EXTRACTION_EVAL_REFREEZE_KEY = "extraction-eval-refreeze";
+
+export type ExtractionEvalRefreezeProgress = ExtractionEvalRefreezeProgressFieldsFragment;
 
 export type ExtractionFieldAccuracy = ExtractionFieldAccuracyFieldsFragment;
 export type ExtractionSnapshot = ExtractionSnapshotFieldsFragment;
@@ -292,6 +300,30 @@ export async function cancelExtractionEvalRun(id: string) {
   });
 
   return getFragmentData(ExtractionEvalRunFieldsFragmentDoc, data.cancelExtractionEvalRun);
+}
+
+export async function fetchExtractionEvalRefreeze(
+  options: RequestOptions = {},
+): Promise<ExtractionEvalRefreezeProgress | null> {
+  const data = await requestGraphQL({
+    document: ExtractionEvalRefreezeDocument,
+    operationName: "ExtractionEvalRefreeze",
+    signal: options.signal,
+  });
+
+  return data.extractionEvalRefreeze
+    ? getFragmentData(ExtractionEvalRefreezeProgressFieldsFragmentDoc, data.extractionEvalRefreeze)
+    : null;
+}
+
+export async function refreezeExtractionEvalCases(input: RefreezeExtractionEvalCasesInput = {}) {
+  const data = await requestGraphQL({
+    document: RefreezeExtractionEvalCasesDocument,
+    operationName: "RefreezeExtractionEvalCases",
+    variables: { input },
+  });
+
+  return data.refreezeExtractionEvalCases;
 }
 
 export type ExtractionEvalResult = ExtractionEvalResultTableRowFieldsFragment;

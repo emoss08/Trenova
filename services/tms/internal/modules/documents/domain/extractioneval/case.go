@@ -35,8 +35,9 @@ const (
 )
 
 type Page struct {
-	Number int    `json:"number"`
-	Text   string `json:"text"`
+	Number   int    `json:"number"`
+	Text     string `json:"text"`
+	Markdown bool   `json:"markdown,omitempty"`
 }
 
 type ExtractionCase struct {

@@ -6980,6 +6980,11 @@ type RecurringShipmentEdge struct {
 	Cursor string                               `json:"cursor"`
 }
 
+type RefreezeExtractionEvalCasesInput struct {
+	// The cases to freeze again; every active case when empty.
+	CaseIds []string `json:"caseIds,omitempty"`
+}
+
 type RejectInvoiceAdjustmentInput struct {
 	AdjustmentID string  `json:"adjustmentId"`
 	Reason       *string `json:"reason,omitempty"`
@@ -9999,6 +10004,8 @@ type StartExtractionEvalRunInput struct {
 	ProviderID string `json:"providerId"`
 	// How many active cases to run, newest first; 50 by default, at most 500.
 	CaseLimit *int `json:"caseLimit,omitempty"`
+	// Which reading of each case to send; legacy by default.
+	TextSource *extractioneval.TextSource `json:"textSource,omitempty"`
 }
 
 type StartWorkerChecklistInput struct {

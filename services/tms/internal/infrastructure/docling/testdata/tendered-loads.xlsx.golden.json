@@ -1,0 +1,24 @@
+[
+  {
+    "Number": 1,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 6,
+    "Height": 4,
+    "Text": "Load   Origin   Destination   Pickup   Equipment   Rate\nRC-48213   Fresno, CA   Reno, NV   2026-10-21   Dry Van   2062.75\nRC-48214   Stockton, CA   Boise, ID   2026-10-22   Reefer   3110\nRC-48215   Modesto, CA   Salt Lake City, UT   2026-10-23   Dry Van   2780.5",
+    "Markdown": "| Load | Origin | Destination | Pickup | Equipment | Rate |\n| --- | --- | --- | --- | --- | --- |\n| RC-48213 | Fresno, CA | Reno, NV | 2026-10-21 | Dry Van | 2062.75 |\n| RC-48214 | Stockton, CA | Boise, ID | 2026-10-22 | Reefer | 3110 |\n| RC-48215 | Modesto, CA | Salt Lake City, UT | 2026-10-23 | Dry Van | 2780.5 |",
+    "Lines": []
+  },
+  {
+    "Number": 2,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 3,
+    "Height": 4,
+    "Text": "Code   Description   Amount\nDET   Detention per hour after 2 free   50\nLUM   Lumper, receipt required   175\nTONU   Truck ordered not used   150",
+    "Markdown": "| Code | Description | Amount |\n| --- | --- | --- |\n| DET | Detention per hour after 2 free | 50 |\n| LUM | Lumper, receipt required | 175 |\n| TONU | Truck ordered not used | 150 |",
+    "Lines": []
+  }
+]
