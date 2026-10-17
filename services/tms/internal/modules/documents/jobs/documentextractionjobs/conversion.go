@@ -45,6 +45,14 @@ const (
 		"Add one in AI settings, then extract the document again."
 	converterUnavailableMessage = "Document extraction is not set up on this server: " +
 		"the document converter is not configured."
+	converterUnreachableMessage = "The document converter could not be reached. " +
+		"Extract the document again once it is running."
+	converterMisconfiguredMessage = "The document converter refused this server's API key. " +
+		"An administrator needs to set documentConversion.apiKey to the converter's key, " +
+		"then extract the document again."
+	conversionFailedMessage = "The document could not be read. Extract it again to retry."
+
+	errorTypeConverterUnavailable = "DocumentConverterUnavailable"
 )
 
 type ExtractionRoute string
@@ -76,6 +84,14 @@ type ConvertDocumentResult struct {
 	PageCount  int      `json:"pageCount"`
 	Converted  bool     `json:"converted"`
 	Status     string   `json:"status"`
+}
+
+type MarkConversionFailedInput struct {
+	temporaltype.BasePayload
+
+	DocumentID pulid.ID `json:"documentId"`
+	Code       string   `json:"code"`
+	Message    string   `json:"message"`
 }
 
 type AnalyzeConvertedDocumentInput struct {
@@ -405,6 +421,37 @@ func (a *Activities) ConvertDocumentActivity(
 	}, nil
 }
 
+func (a *Activities) MarkConversionFailedActivity(
+	ctx context.Context,
+	input *MarkConversionFailedInput,
+) error {
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  input.OrganizationID,
+		BuID:   input.BusinessUnitID,
+		UserID: input.UserID,
+	}
+
+	doc, err := a.loadDocument(ctx, input.DocumentID, tenantInfo)
+	if err != nil {
+		if appErr, ok := errors.AsType[*temporal.ApplicationError](err); ok &&
+			appErr.Type() == temporaltype.ErrorTypeResourceNotFound.String() {
+			return nil
+		}
+		return err
+	}
+	content, err := a.contentForConversion(ctx, doc, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.conversionFailed(ctx, doc, content, &conversionFailure{
+		code:    documentupload.FailureCode(input.Code),
+		message: input.Message,
+	})
+
+	return err
+}
+
 func (a *Activities) contentForConversion(
 	ctx context.Context,
 	doc *document.Document,
@@ -549,6 +596,21 @@ func (a *Activities) convertDocumentBytes(
 			code:    documentupload.FailureExtractionFailed,
 			message: stringutils.TruncateRunes(err.Error(), 500),
 		}, nil
+	case errors.Is(err, kernelports.ErrDocumentConverterMisconfigured):
+		a.logger.Error("the document converter refused the configured API key",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+		return nil, &conversionFailure{
+			code:    documentupload.FailureConverterMisconfigured,
+			message: converterMisconfiguredMessage,
+		}, nil
+	case errors.Is(err, kernelports.ErrDocumentConverterUnavailable):
+		return nil, nil, temporal.NewApplicationErrorWithCause(
+			err.Error(),
+			errorTypeConverterUnavailable,
+			err,
+		)
 	case err != nil:
 		return nil, nil, err
 	}

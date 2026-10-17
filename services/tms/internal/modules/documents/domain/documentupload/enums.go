@@ -21,6 +21,7 @@ const (
 	FailureTooManyPages                 = FailureCode("TOO_MANY_PAGES")
 	FailureExtractionUnavailable        = FailureCode("EXTRACTION_UNAVAILABLE")
 	FailureConverterUnavailable         = FailureCode("CONVERTER_UNAVAILABLE")
+	FailureConverterMisconfigured       = FailureCode("CONVERTER_MISCONFIGURED")
 )
 
 func (f FailureCode) String() string {

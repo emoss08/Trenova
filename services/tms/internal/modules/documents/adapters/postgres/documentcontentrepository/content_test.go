@@ -82,3 +82,49 @@ func TestListPendingExtractionTenants_UsesQualifiedTenantGrouping(t *testing.T) 
 	require.NoError(t, bunDB.Close())
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestListPendingExtraction_LeavesFailedDocumentsForAReextract(t *testing.T) {
+	t.Parallel()
+
+	matcher := sqlmock.QueryMatcherFunc(func(_ string, actualSQL string) error {
+		for _, fragment := range []string{"'Pending'", "'Extracting'"} {
+			if !strings.Contains(actualSQL, fragment) {
+				return fmt.Errorf("expected SQL to contain %q, got %s", fragment, actualSQL)
+			}
+		}
+		if strings.Contains(actualSQL, "'Failed'") {
+			return fmt.Errorf(
+				"a failed conversion waits for a Reextract and is never re-driven, got %s",
+				actualSQL,
+			)
+		}
+
+		return nil
+	})
+	sqlDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(matcher))
+	require.NoError(t, err)
+
+	bunDB := bun.NewDB(sqlDB, pgdialect.New())
+	repo := &repository{
+		db: postgres.NewTestConnection(bunDB),
+		l:  zap.NewNop(),
+	}
+	mock.ExpectQuery("pending extraction").WillReturnRows(sqlmock.NewRows([]string{"id"}))
+	mock.ExpectClose()
+
+	docs, err := repo.ListPendingExtraction(
+		t.Context(),
+		&documentcontentports.ListPendingDocumentExtractionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			OlderThan: 1779222120,
+			Limit:     10,
+		},
+	)
+	require.NoError(t, err)
+	require.Empty(t, docs)
+	require.NoError(t, bunDB.Close())
+	require.NoError(t, mock.ExpectationsWereMet())
+}

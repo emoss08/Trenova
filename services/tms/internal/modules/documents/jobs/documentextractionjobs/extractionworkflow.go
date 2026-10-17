@@ -1,10 +1,12 @@
 package documentextractionjobs
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -16,6 +18,16 @@ const (
 	defaultConversionTimeout   = 10 * time.Minute
 	conversionHeartbeatTimeout = time.Minute
 )
+
+var markConversionFailedOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 30 * time.Second,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumInterval:    time.Minute,
+		MaximumAttempts:    10,
+	},
+}
 
 var convertRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    10 * time.Second,
@@ -112,7 +124,7 @@ func ProcessDocumentExtractionWorkflow(
 		DocumentID:  payload.DocumentID,
 		OCR:         plan.OCR,
 	}).Get(ctx, &converted); err != nil {
-		return nil, err
+		return nil, markConversionFailed(ctx, payload, err)
 	}
 	if !converted.Converted {
 		return &ProcessDocumentIntelligenceResult{
@@ -134,6 +146,45 @@ func ProcessDocumentExtractionWorkflow(
 	}
 
 	return result, nil
+}
+
+func markConversionFailed(
+	ctx workflow.Context,
+	payload *documentextractioncontract.ProcessDocumentExtractionPayload,
+	convertErr error,
+) error {
+	if temporal.IsCanceledError(convertErr) {
+		return convertErr
+	}
+
+	code, message := conversionFailureOf(convertErr)
+	var a *Activities
+	markCtx := workflow.WithActivityOptions(ctx, markConversionFailedOptions)
+	if err := workflow.ExecuteActivity(markCtx, a.MarkConversionFailedActivity, &MarkConversionFailedInput{
+		BasePayload: payload.BasePayload,
+		DocumentID:  payload.DocumentID,
+		Code:        code.String(),
+		Message:     message,
+	}).Get(ctx, nil); err != nil {
+		workflow.GetLogger(ctx).Error("Could not mark the document's conversion failed",
+			"documentId", payload.DocumentID.String(),
+			"error", err,
+		)
+	}
+
+	return convertErr
+}
+
+func conversionFailureOf(err error) (documentupload.FailureCode, string) {
+	if appErr, ok := errors.AsType[*temporal.ApplicationError](err); ok &&
+		appErr.Type() == errorTypeConverterUnavailable {
+		return documentupload.FailureConverterUnavailable, converterUnreachableMessage
+	}
+	if _, ok := errors.AsType[*temporal.TimeoutError](err); ok {
+		return documentupload.FailureConverterUnavailable, converterUnreachableMessage
+	}
+
+	return documentupload.FailureExtractionFailed, conversionFailedMessage
 }
 
 func ReconcileDocumentExtractionWorkflow(
