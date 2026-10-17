@@ -89,8 +89,8 @@ func TestExtractionArtifact_BoxesValuesOnDoclingLines(t *testing.T) {
 	require.NotNil(t, rate)
 	assert.Equal(t, 1, rate["page"])
 	assert.Equal(t, map[string]float64{
-		"x": 0.698, "y": 0.4571, "w": 0.0581, "h": 0.0093,
-	}, rate["box"], "the total is boxed on its own table cell")
+		"x": 0.698, "y": 0.4571, "w": 0.0581, "h": 0.01,
+	}, rate["box"], "the total is boxed on its own table cell, no shorter than the floor")
 
 	load := byKey["loadNumber"]
 	require.NotNil(t, load)
