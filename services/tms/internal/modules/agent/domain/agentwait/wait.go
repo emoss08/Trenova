@@ -63,8 +63,9 @@ func AllKinds() []Kind {
 }
 
 // AgentKinds are the kinds an agent asks for with wait_until. A portal run's
-// wait is set by the system when a person approves acting on a portal, and a
-// file's when the agent finds a file the person attached still being read.
+// wait is set by the system when a person approves acting on a portal or a
+// portal read stops for a sign-in code, and a file's when the agent finds a
+// file the person attached still being read.
 func AgentKinds() []Kind {
 	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool {
 		return kind == KindPortalRun || kind == KindDocumentRead
@@ -175,6 +176,20 @@ type Wait struct {
 
 	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+
+	// SignInCode is set on an open portal wait whose task is waiting on a
+	// sign-in code, when a conversation's waits are listed for its owner.
+	SignInCode *SignInCode `json:"signInCode,omitempty" bun:"-"`
+}
+
+// SignInCode is what a person is asked for when the portal task a wait
+// follows stopped at a sign-in code the portal sent them. It is read from the
+// task each time the waits are listed, never stored on the wait.
+type SignInCode struct {
+	PortalRunID pulid.ID `json:"portalRunId"`
+	Prompt      string   `json:"prompt"`
+	ExpiresAt   int64    `json:"expiresAt"`
+	Attempts    int      `json:"attempts"`
 }
 
 // Conversational reports a wait a conversation set, which picks up as a turn

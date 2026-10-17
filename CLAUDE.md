@@ -397,8 +397,9 @@ on with its own vendor account; how they are gated, metered, and why a turn that
 content proposes every later write, is in
 [docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
 Portal automation (`list_portal_sites`, `read_portal`, `act_on_portal` on a cloud browser):
-administrator-set sites, the navigation allow-list and the post-hoc page check, sign-ins sent
-as vendor secrets, actions run from an approval and followed by `PortalRunWorkflow` and a
+administrator-set sites, the navigation allow-list and the post-hoc page check, sign-ins and
+authenticator keys sent as vendor secrets, texted or emailed sign-in codes relayed by the person
+into the same browser, Trenova's own address refused as a site, actions run from an approval and followed by `PortalRunWorkflow` and a
 `PortalRun` wait, is in
 [docs/engineering/agent-portal-automation.md](docs/engineering/agent-portal-automation.md).
 Read it before changing `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools` or

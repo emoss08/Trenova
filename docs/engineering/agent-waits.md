@@ -37,12 +37,16 @@ The workflow costs nothing while it waits and survives every restart.
 | `AppointmentNear` | `shipmentMoveId`, `stopId`, `minutesBefore` | `minutesBefore` before the stop's scheduled window start |
 | `FreeTimeEnding` | `detentionOccurrenceId`, `minutesBefore` | `minutesBefore` before the occurrence's free time ends |
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
-| `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
+| `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started, or a `read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
 
 `PortalRun` is not one an agent asks for: `wait_until` offers only `AgentKinds()`, and the
 `act_on_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
-conversation or background run that filed the proposal, with a two-hour expiry. See
+conversation or background run that filed the proposal, with a two-hour expiry. `read_portal`
+registers one on its conversation (by thread, since a query tool has no run) when the portal
+stops for a sign-in code the person can relay. While its run waits on that code, listing the
+conversation's waits attaches `signInCode` to the wait for the code box, and
+`AnnouncePortalRun` republishes the waits when the code is first asked for. See
 [agent-portal-automation.md](agent-portal-automation.md).
 
 `DocumentRead` is not one an agent asks for either. When `read_attachment` finds a

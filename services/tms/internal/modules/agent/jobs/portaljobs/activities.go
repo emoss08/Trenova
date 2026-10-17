@@ -3,6 +3,7 @@ package portaljobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"go.uber.org/fx"
@@ -28,12 +29,18 @@ func (a *Activities) PollPortalRunActivity(
 	ctx context.Context,
 	payload *portalcontract.Payload,
 ) (*portalcontract.PollResult, error) {
-	run, err := a.finisher.PollPortalRun(ctx, payload.Tenant(), payload.RunID)
+	poll, err := a.finisher.PollPortalRun(ctx, payload.Tenant(), payload.RunID)
 	if err != nil {
 		return nil, err
 	}
+	if poll.CodeRequested {
+		a.waits.AnnouncePortalRun(ctx, payload.Tenant(), poll.Run)
+	}
 
-	return &portalcontract.PollResult{Finished: run.Status.Finished()}, nil
+	return &portalcontract.PollResult{
+		Finished:     poll.Run.Status.Finished(),
+		AwaitingCode: poll.Run.Status == agentextension.PortalRunStatusAwaitingCode,
+	}, nil
 }
 
 func (a *Activities) StopPortalRunActivity(

@@ -13,7 +13,9 @@ export function siteFormDefaults(site: PortalSite | null): PortalSiteFormValues 
     startUrl: site?.startUrl ?? "",
     username: "",
     password: "",
+    authenticatorKey: "",
     clearSignIn: false,
+    clearAuthenticator: false,
     browserProfileId: site?.browserProfileId ?? "",
     allowActions: site?.allowActions ?? false,
     enabled: site?.enabled ?? true,
@@ -22,7 +24,8 @@ export function siteFormDefaults(site: PortalSite | null): PortalSiteFormValues 
 
 /**
  * What the form saves. Addresses are hostnames, so a pasted URL keeps only its host; a
- * sign-in left blank keeps the stored one, and clearing it sends neither part.
+ * sign-in or authenticator key left blank keeps the stored one, and clearing the sign-in
+ * clears the key with it.
  */
 export function siteRequestOf(
   values: PortalSiteFormValues,
@@ -35,7 +38,10 @@ export function siteRequestOf(
     startUrl: values.startUrl.trim(),
     username: values.clearSignIn ? "" : values.username.trim(),
     password: values.clearSignIn ? "" : values.password,
+    authenticatorKey:
+      values.clearSignIn || values.clearAuthenticator ? "" : values.authenticatorKey.trim(),
     clearSignIn: values.clearSignIn,
+    clearAuthenticator: values.clearAuthenticator && !values.clearSignIn,
     browserProfileId: values.browserProfileId.trim(),
     allowActions: values.allowActions,
     enabled: values.enabled,

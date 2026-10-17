@@ -885,6 +885,9 @@ var PortalRunColumns = struct {
 	Steps             buncolgen.Column // "steps" → qualified: "aprn.steps"
 	CostUSD           buncolgen.Column // "cost_usd" → qualified: "aprn.cost_usd"
 	Failure           buncolgen.Column // "failure" → qualified: "aprn.failure"
+	CodePrompt        buncolgen.Column // "code_prompt" → qualified: "aprn.code_prompt"
+	CodeRequestedAt   buncolgen.Column // "code_requested_at" → qualified: "aprn.code_requested_at"
+	CodeAttempts      buncolgen.Column // "code_attempts" → qualified: "aprn.code_attempts"
 	IdempotencyKey    buncolgen.Column // "idempotency_key" → qualified: "aprn.idempotency_key"
 	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "aprn.agent_definition_id"
 	AgentRunID        buncolgen.Column // "agent_run_id" → qualified: "aprn.agent_run_id"
@@ -915,6 +918,9 @@ var PortalRunColumns = struct {
 	Steps:             buncolgen.NewColumn("steps", "aprn"),
 	CostUSD:           buncolgen.NewColumn("cost_usd", "aprn"),
 	Failure:           buncolgen.NewColumn("failure", "aprn"),
+	CodePrompt:        buncolgen.NewColumn("code_prompt", "aprn"),
+	CodeRequestedAt:   buncolgen.NewColumn("code_requested_at", "aprn"),
+	CodeAttempts:      buncolgen.NewColumn("code_attempts", "aprn"),
 	IdempotencyKey:    buncolgen.NewColumn("idempotency_key", "aprn"),
 	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "aprn"),
 	AgentRunID:        buncolgen.NewColumn("agent_run_id", "aprn"),
@@ -951,6 +957,9 @@ var PortalRunFieldMap = map[string]string{
 	"steps":             "steps",
 	"costUsd":           "cost_usd",
 	"failure":           "failure",
+	"codePrompt":        "code_prompt",
+	"codeRequestedAt":   "code_requested_at",
+	"codeAttempts":      "code_attempts",
 	"agentDefinitionId": "agent_definition_id",
 	"agentRunId":        "agent_run_id",
 	"threadId":          "thread_id",
@@ -984,6 +993,9 @@ var PortalRunInsertableColumns = []string{
 	"steps",
 	"cost_usd",
 	"failure",
+	"code_prompt",
+	"code_requested_at",
+	"code_attempts",
 	"idempotency_key",
 	"agent_definition_id",
 	"agent_run_id",
@@ -1065,6 +1077,9 @@ var PortalRunFilter = struct {
 	Steps             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "steps" → DB: "steps"
 	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
 	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
+	CodePrompt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "codePrompt" → DB: "code_prompt"
+	CodeRequestedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "codeRequestedAt" → DB: "code_requested_at"
+	CodeAttempts      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "codeAttempts" → DB: "code_attempts"
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
 	AgentRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
 	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
@@ -1129,6 +1144,15 @@ var PortalRunFilter = struct {
 	},
 	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("failure", op, value)
+	},
+	CodePrompt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("codePrompt", op, value)
+	},
+	CodeRequestedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("codeRequestedAt", op, value)
+	},
+	CodeAttempts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("codeAttempts", op, value)
 	},
 	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)

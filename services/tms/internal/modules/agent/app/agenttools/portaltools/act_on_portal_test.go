@@ -3,6 +3,7 @@ package portaltools
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
@@ -27,6 +28,8 @@ type fakePortals struct {
 	trackErr error
 	runID    pulid.ID
 	site     agentextensionports.PortalSiteSummary
+
+	authenticator bool
 }
 
 func newFakePortals() *fakePortals {
@@ -73,6 +76,8 @@ func (f *fakePortals) PlanPortalAction(
 		SentTask:    "On the Acme DC portal, do this: " + req.Instruction,
 		UsesSignIn:  f.site.HasSignIn,
 		Vendor:      "Browser Use",
+
+		UsesAuthenticator: f.authenticator,
 	}, nil
 }
 
@@ -115,6 +120,13 @@ func (f *fakeWaits) RegisterPortalRunWait(
 }
 
 func (f *fakeWaits) NotifyPortalRun(
+	context.Context,
+	pagination.TenantInfo,
+	*agentextension.PortalRun,
+) {
+}
+
+func (f *fakeWaits) AnnouncePortalRun(
 	context.Context,
 	pagination.TenantInfo,
 	*agentextension.PortalRun,
@@ -238,8 +250,7 @@ func TestActOnPortalStillFollowsATaskWhoseWaitCouldNotBeSet(t *testing.T) {
 	t.Parallel()
 
 	portals := newFakePortals()
-	tool := NewActOnPortalTool(portals, &fakeWaits{err: errors.New("db down")}, nil).
-		(*ActOnPortalTool)
+	tool := NewActOnPortalTool(portals, &fakeWaits{err: errors.New("db down")}, nil).(*ActOnPortalTool)
 
 	result, err := tool.ExecuteWithResult(t.Context(),
 		agenttoolstest.Approved(agenttoolstest.AgentParamsFor(actArgs(portals.site.ID))))
@@ -282,3 +293,17 @@ func TestActOnPortalRefusesDetailsThatAreNotText(t *testing.T) {
 }
 
 var _ agentports.ToolPreviewer = (*ActOnPortalTool)(nil)
+
+func TestActOnPortalPreviewSaysWhenItAnswersAnAuthenticatorCode(t *testing.T) {
+	t.Parallel()
+
+	portals := newFakePortals()
+	portals.authenticator = true
+	tool := NewActOnPortalTool(portals, &fakeWaits{}, nil).(*ActOnPortalTool)
+
+	preview, err := tool.Preview(t.Context(),
+		agenttoolstest.AgentParamsFor(actArgs(portals.site.ID)))
+	require.NoError(t, err)
+	assert.True(t, strings.HasSuffix(preview.Summary,
+		"It signs in with the site's stored sign-in and answers its authenticator code."))
+}
