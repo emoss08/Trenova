@@ -25,6 +25,14 @@ const (
 )
 
 const (
+	inboundMessageID   = "messageId"
+	inboundMessageArg  = "the mutation takes the message as its own argument, beside the input"
+	triageMessageIDs   = "messageIds"
+	triageSelectionIDs = "one list under two names: the selection's ids, and messageIds, the " +
+		"name the inbox read tools hand them out under; the tool never takes a folder"
+)
+
+const (
 	watchtowerItemIDParam = "watchtowerItemId"
 	noaIDParam            = "noaId"
 	exceptionIDArg        = "the mutation takes the exception as its id argument, beside the input"
@@ -484,6 +492,41 @@ var Bindings = []Binding{
 		Input:     "FileCaptureItemsEntryInput",
 		Param:     "items",
 		Defaulted: map[string]string{"version": readVersion},
+	},
+	{
+		Tool:  "assign_inbound_messages",
+		Input: "TriageSelectionInput",
+		Extra: map[string]string{
+			triageMessageIDs: triageSelectionIDs,
+			"ownerId": "the mutation takes the owner as its own argument, beside the " +
+				"selection",
+		},
+	},
+	{
+		Tool:  "reopen_inbound_messages",
+		Input: "TriageSelectionInput",
+		Extra: map[string]string{triageMessageIDs: triageSelectionIDs},
+	},
+	{
+		Tool:  "snooze_inbound_messages",
+		Input: "SnoozeInboundMessagesInput",
+		Extra: map[string]string{triageMessageIDs: triageSelectionIDs},
+	},
+	{Tool: "create_inbound_load", Input: "TriageLoadFieldInput", Param: "fields"},
+	{
+		Tool:   "file_inbound_attachment",
+		Input:  "FileInboundAttachmentInput",
+		Nested: map[string]string{"pages": "InboundAttachmentPagesInput"},
+		Extra: map[string]string{
+			inboundMessageID: "the message the attachment came on, which decides how far the " +
+				"call may run and must hold the attachment; the mutation reads it from the " +
+				"attachment",
+		},
+	},
+	{
+		Tool:  "log_inbound_exception",
+		Input: "LogInboundExceptionInput",
+		Extra: map[string]string{inboundMessageID: inboundMessageArg},
 	},
 	{
 		Tool:   "create_invoice_memo",

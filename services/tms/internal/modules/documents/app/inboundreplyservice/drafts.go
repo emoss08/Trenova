@@ -31,21 +31,20 @@ type DraftReplyRequest struct {
 	Mode       triagenova.Mode
 }
 
+type DraftPlan struct {
+	Message *inboundmessage.InboundMessage
+	Current *triage.Reply
+	Draft   *triage.Reply
+}
+
 func (s *Service) SaveDraft(ctx context.Context, req *SaveDraftRequest) (*triage.Reply, error) {
 	message, err := s.message(ctx, req.TenantInfo, req.MessageID, false)
 	if err != nil {
 		return nil, err
 	}
 
-	draft := s.draftFor(message, req.UserID)
-	if subject := strings.TrimSpace(req.Subject); subject != "" {
-		draft.Subject = subject
-	}
-	draft.Body = strings.TrimSpace(req.Body)
-	if err = validateDraft(draft); err != nil {
-		return nil, err
-	}
-	if draft.Attachments, err = s.draftAttachments(ctx, req, message); err != nil {
+	draft, err := s.savedDraft(ctx, message, req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -56,6 +55,66 @@ func (s *Service) SaveDraft(ctx context.Context, req *SaveDraftRequest) (*triage
 	s.changed(ctx, message)
 
 	return saved, nil
+}
+
+func (s *Service) PlanSaveDraft(ctx context.Context, req *SaveDraftRequest) (*DraftPlan, error) {
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := s.savedDraft(ctx, message, req)
+	if err != nil {
+		return nil, err
+	}
+
+	current, _, err := s.currentDraft(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DraftPlan{Message: message, Current: current, Draft: draft}, nil
+}
+
+func (s *Service) savedDraft(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+	req *SaveDraftRequest,
+) (*triage.Reply, error) {
+	draft := s.draftFor(message, req.UserID)
+	if subject := strings.TrimSpace(req.Subject); subject != "" {
+		draft.Subject = subject
+	}
+	draft.Body = strings.TrimSpace(req.Body)
+	if err := validateDraft(draft); err != nil {
+		return nil, err
+	}
+
+	attachments, err := s.draftAttachments(ctx, req, message)
+	if err != nil {
+		return nil, err
+	}
+	draft.Attachments = attachments
+
+	return draft, nil
+}
+
+func (s *Service) PlanDiscardDraft(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	messageID pulid.ID,
+) (*DraftPlan, error) {
+	message, err := s.message(ctx, tenantInfo, messageID, true)
+	if err != nil {
+		return nil, err
+	}
+
+	current, _, err := s.currentDraft(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DraftPlan{Message: message, Current: current}, nil
 }
 
 func (s *Service) DiscardDraft(
@@ -111,16 +170,47 @@ func (s *Service) DraftReplyFor(
 	})
 }
 
+func (s *Service) PlanDraftReply(
+	ctx context.Context,
+	req *DraftReplyRequest,
+) (*DraftPlan, error) {
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID, true)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.canDraft(message, req.Mode); err != nil {
+		return nil, err
+	}
+
+	current, _, err := s.currentDraft(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	draft := s.draftFor(message, req.UserID)
+	draft.DraftedByNova = true
+
+	return &DraftPlan{Message: message, Current: current, Draft: draft}, nil
+}
+
+func (s *Service) canDraft(message *inboundmessage.InboundMessage, mode triagenova.Mode) error {
+	if !s.nova.Available(mode) {
+		return triagenova.ErrUnavailable
+	}
+	if message.Mailbox == nil {
+		return errortypes.NewBusinessError("The message's mailbox no longer exists")
+	}
+
+	return nil
+}
+
 func (s *Service) draftReplyFor(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	req *DraftReplyRequest,
 ) (*triage.Reply, error) {
-	if !s.nova.Available(req.Mode) {
-		return nil, triagenova.ErrUnavailable
-	}
-	if message.Mailbox == nil {
-		return nil, errortypes.NewBusinessError("The message's mailbox no longer exists")
+	if err := s.canDraft(message, req.Mode); err != nil {
+		return nil, err
 	}
 
 	mc := s.messageContext(ctx, message)

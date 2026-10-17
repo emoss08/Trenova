@@ -51,11 +51,8 @@ func (s *Service) split(
 	ctx context.Context,
 	req *splitRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if !strings.EqualFold(req.attachment.ContentType, pdfContentType) &&
-		!strings.EqualFold(filepath.Ext(req.attachment.FileName), ".pdf") {
-		return nil, errortypes.NewValidationError(
-			"pages", errortypes.ErrInvalid, "Only a PDF can be split into page ranges",
-		)
+	if err := requireSplittable(req.attachment); err != nil {
+		return nil, err
 	}
 
 	pdf, err := s.attachmentBytes(ctx, req.tenantInfo, req.attachment)
@@ -84,11 +81,7 @@ func (s *Service) split(
 	}
 
 	filedAt := s.now()
-	req.attachment.FiledShipmentID = req.shipmentID
-	req.attachment.FiledAs = splitLabel(staged)
-	req.attachment.FiledAt = filedAt
-	req.attachment.FiledBy = req.userID
-	req.attachment.SplitDocuments = nil
+	applyFiling(req.attachment, req.shipmentID, splitLabel(staged), req.userID, filedAt)
 	if _, err = s.messages.UpdateAttachment(ctx, req.attachment); err != nil {
 		return nil, err
 	}
@@ -128,6 +121,17 @@ func (s *Service) split(
 	}
 
 	return s.refreshed(ctx, req.tenantInfo, req.message.ID)
+}
+
+func requireSplittable(attachment *inboundmessage.InboundAttachment) error {
+	if !strings.EqualFold(attachment.ContentType, pdfContentType) &&
+		!strings.EqualFold(filepath.Ext(attachment.FileName), ".pdf") {
+		return errortypes.NewValidationError(
+			"pages", errortypes.ErrInvalid, "Only a PDF can be split into page ranges",
+		)
+	}
+
+	return nil
 }
 
 func (s *Service) attachmentBytes(
@@ -346,11 +350,7 @@ func (s *Service) clearFiling(
 	ctx context.Context,
 	attachment *inboundmessage.InboundAttachment,
 ) error {
-	attachment.FiledShipmentID = pulid.Nil
-	attachment.FiledAs = ""
-	attachment.FiledAt = 0
-	attachment.FiledBy = pulid.Nil
-	attachment.SplitDocuments = nil
+	clearFilingFields(attachment)
 	_, err := s.messages.UpdateAttachment(ctx, attachment)
 
 	return err

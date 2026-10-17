@@ -131,6 +131,15 @@ func (r ConflictResolution) FitsKind(kind ConflictKind) bool {
 	}
 }
 
+func AllConflictResolutions() []ConflictResolution {
+	return []ConflictResolution{
+		ConflictReplaceExisting,
+		ConflictKeepBoth,
+		ConflictSkipDuplicate,
+		ConflictConfirmNew,
+	}
+}
+
 type Conflict struct {
 	ID                 string             `json:"id"`
 	Kind               ConflictKind       `json:"kind"`
@@ -157,6 +166,10 @@ func (d StopsDecision) IsValid() bool {
 	return d == StopsDecisionWaive || d == StopsDecisionStandBy
 }
 
+func AllStopsDecisions() []StopsDecision {
+	return []StopsDecision{StopsDecisionWaive, StopsDecisionStandBy}
+}
+
 type ExceptionKind string
 
 const (
@@ -172,6 +185,10 @@ func (k ExceptionKind) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+func AllExceptionKinds() []ExceptionKind {
+	return []ExceptionKind{ExceptionShortage, ExceptionOverage, ExceptionDamage}
 }
 
 type DetentionWaiver struct {
@@ -233,6 +250,25 @@ func (k LoadFieldKey) IsValid() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func AllLoadFieldKeys() []LoadFieldKey {
+	return []LoadFieldKey{
+		LoadFieldCustomer,
+		LoadFieldOrigin,
+		LoadFieldDestination,
+		LoadFieldPickup,
+		LoadFieldDelivery,
+		LoadFieldEquipment,
+		LoadFieldWeight,
+		LoadFieldRate,
+		LoadFieldLoads,
+		LoadFieldWeekOf,
+		LoadFieldRespondBy,
+		LoadFieldReference,
+		LoadFieldCommodity,
+		LoadFieldInstructions,
 	}
 }
 

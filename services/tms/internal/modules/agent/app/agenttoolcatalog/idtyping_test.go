@@ -46,6 +46,14 @@ var untypedIDs = map[string]string{
 		"no record kind; the service reads it scoped to the item id",
 	"undo_billing_queue_issue.issueId": "a billing queue check is part of its item and has " +
 		"no record kind; the service reads it scoped to the item id",
+	"file_inbound_attachment.attachmentId": "an email attachment is part of its message and " +
+		"has no record kind; the tool checks it is one of the named message's attachments",
+	"unfile_inbound_attachment.attachmentId": "an email attachment is part of its message and " +
+		"has no record kind; the tool checks it is one of the named message's attachments",
+	"resolve_inbound_conflict.conflictId": "a triage conflict is a key inside its message, " +
+		"not a PULID; the service reads it scoped to the message id",
+	"reopen_inbound_conflict.conflictId": "a triage conflict is a key inside its message, " +
+		"not a PULID; the service reads it scoped to the message id",
 }
 
 /*

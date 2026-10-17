@@ -100,6 +100,29 @@ func (s *Service) Snooze(
 	ctx context.Context,
 	req *SnoozeRequest,
 ) (*inboundmessageports.BulkResult, error) {
+	t, err := s.snoozeTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.runTransition(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.bulkResult(ctx, req.TenantInfo, result, nil)
+}
+
+func (s *Service) PlanSnooze(ctx context.Context, req *SnoozeRequest) (*QueuePlan, error) {
+	t, err := s.snoozeTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planTransition(ctx, t)
+}
+
+func (s *Service) snoozeTransition(ctx context.Context, req *SnoozeRequest) (*transition, error) {
 	if err := ValidateSnooze(req, s.now()); err != nil {
 		return nil, err
 	}
@@ -125,7 +148,7 @@ func (s *Service) Snooze(
 		return nil, err
 	}
 
-	result, err := s.runTransition(ctx, &transition{
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    ids,
 		check:  checkSnoozable(req.Event),
@@ -147,19 +170,26 @@ func (s *Service) Snooze(
 
 			return byPerson(activity, req.ActorID)
 		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return s.bulkResult(ctx, req.TenantInfo, result, nil)
+	}, nil
 }
 
 func (s *Service) Wake(
 	ctx context.Context,
 	req *MessageActionRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if _, err := s.runTransition(ctx, &transition{
+	if _, err := s.runTransition(ctx, wakeTransition(req)); err != nil {
+		return nil, err
+	}
+
+	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+}
+
+func (s *Service) PlanWake(ctx context.Context, req *MessageActionRequest) (*QueuePlan, error) {
+	return s.planTransition(ctx, wakeTransition(req))
+}
+
+func wakeTransition(req *MessageActionRequest) *transition {
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    []pulid.ID{req.MessageID},
 		check: func(states []*inboundmessageports.QueueState) error {
@@ -176,11 +206,7 @@ func (s *Service) Wake(
 		activity: func(_, after *inboundmessageports.QueueState) *triage.Activity {
 			return byPerson(activityOf(after, triage.ActivityWoken), req.ActorID)
 		},
-	}); err != nil {
-		return nil, err
 	}
-
-	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
 }
 
 func ValidateAwaitUntil(until, now int64) error {
@@ -200,11 +226,35 @@ func (s *Service) WaitForReply(
 	ctx context.Context,
 	req *WaitForReplyRequest,
 ) (*inboundmessage.InboundMessage, error) {
+	t, err := s.waitForReplyTransition(req)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = s.runTransition(ctx, t); err != nil {
+		return nil, err
+	}
+
+	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+}
+
+func (s *Service) PlanWaitForReply(
+	ctx context.Context,
+	req *WaitForReplyRequest,
+) (*QueuePlan, error) {
+	t, err := s.waitForReplyTransition(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planTransition(ctx, t)
+}
+
+func (s *Service) waitForReplyTransition(req *WaitForReplyRequest) (*transition, error) {
 	if err := ValidateAwaitUntil(req.Until, s.now()); err != nil {
 		return nil, err
 	}
 
-	if _, err := s.runTransition(ctx, &transition{
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    []pulid.ID{req.MessageID},
 		check: func(states []*inboundmessageports.QueueState) error {
@@ -234,18 +284,29 @@ func (s *Service) WaitForReply(
 
 			return byPerson(activity, req.ActorID)
 		},
-	}); err != nil {
-		return nil, err
-	}
-
-	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+	}, nil
 }
 
 func (s *Service) StopWaiting(
 	ctx context.Context,
 	req *MessageActionRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if _, err := s.runTransition(ctx, &transition{
+	if _, err := s.runTransition(ctx, stopWaitingTransition(req)); err != nil {
+		return nil, err
+	}
+
+	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+}
+
+func (s *Service) PlanStopWaiting(
+	ctx context.Context,
+	req *MessageActionRequest,
+) (*QueuePlan, error) {
+	return s.planTransition(ctx, stopWaitingTransition(req))
+}
+
+func stopWaitingTransition(req *MessageActionRequest) *transition {
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    []pulid.ID{req.MessageID},
 		check: func(states []*inboundmessageports.QueueState) error {
@@ -262,11 +323,7 @@ func (s *Service) StopWaiting(
 		activity: func(_, after *inboundmessageports.QueueState) *triage.Activity {
 			return byPerson(activityOf(after, triage.ActivityStoppedWaiting), req.ActorID)
 		},
-	}); err != nil {
-		return nil, err
 	}
-
-	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
 }
 
 func linkedID(state *inboundmessageports.QueueState, record LinkedRecord) pulid.ID {
@@ -306,6 +363,27 @@ func (s *Service) Unlink(
 	ctx context.Context,
 	req *UnlinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
+	t, err := unlinkTransition(req)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = s.runTransition(ctx, t); err != nil {
+		return nil, err
+	}
+
+	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+}
+
+func (s *Service) PlanUnlink(ctx context.Context, req *UnlinkRequest) (*QueuePlan, error) {
+	t, err := unlinkTransition(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planTransition(ctx, t)
+}
+
+func unlinkTransition(req *UnlinkRequest) (*transition, error) {
 	switch req.Record {
 	case LinkedShipment, LinkedCustomer, LinkedCarrier:
 	default:
@@ -313,7 +391,7 @@ func (s *Service) Unlink(
 			"Say which record to unlink")
 	}
 
-	if _, err := s.runTransition(ctx, &transition{
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    []pulid.ID{req.MessageID},
 		check: func(states []*inboundmessageports.QueueState) error {
@@ -336,9 +414,5 @@ func (s *Service) Unlink(
 
 			return byPerson(activity, req.ActorID)
 		},
-	}); err != nil {
-		return nil, err
-	}
-
-	return s.messageAfter(ctx, req.TenantInfo, req.MessageID)
+	}, nil
 }

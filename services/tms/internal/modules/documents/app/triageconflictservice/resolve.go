@@ -30,10 +30,34 @@ type ReopenRequest struct {
 	ConflictID string
 }
 
+type ConflictPlan struct {
+	Message *inboundmessage.InboundMessage
+	Before  inboundmessage.Conflict
+	After   inboundmessage.Conflict
+}
+
 func (s *Service) Resolve(
 	ctx context.Context,
 	req *ResolveRequest,
 ) (*inboundmessage.InboundMessage, error) {
+	change, err := resolveChange(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.change(ctx, change)
+}
+
+func (s *Service) PlanResolve(ctx context.Context, req *ResolveRequest) (*ConflictPlan, error) {
+	change, err := resolveChange(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.plan(ctx, change)
+}
+
+func resolveChange(req *ResolveRequest) (*changeRequest, error) {
 	if !req.Resolution.FitsKind(inboundmessage.ConflictDuplicateDocument) &&
 		!req.Resolution.FitsKind(inboundmessage.ConflictOverlappingLoad) {
 		return nil, errortypes.NewValidationError(
@@ -41,7 +65,7 @@ func (s *Service) Resolve(
 		)
 	}
 
-	return s.change(ctx, &changeRequest{
+	return &changeRequest{
 		tenantInfo: req.TenantInfo,
 		messageID:  req.MessageID,
 		conflictID: req.ConflictID,
@@ -73,14 +97,22 @@ func (s *Service) Resolve(
 
 			return activity
 		},
-	})
+	}, nil
 }
 
 func (s *Service) Reopen(
 	ctx context.Context,
 	req *ReopenRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	return s.change(ctx, &changeRequest{
+	return s.change(ctx, reopenChange(req))
+}
+
+func (s *Service) PlanReopen(ctx context.Context, req *ReopenRequest) (*ConflictPlan, error) {
+	return s.plan(ctx, reopenChange(req))
+}
+
+func reopenChange(req *ReopenRequest) *changeRequest {
+	return &changeRequest{
 		tenantInfo: req.TenantInfo,
 		messageID:  req.MessageID,
 		conflictID: req.ConflictID,
@@ -108,7 +140,7 @@ func (s *Service) Reopen(
 
 			return activity
 		},
-	})
+	}
 }
 
 type changeRequest struct {
@@ -133,10 +165,9 @@ func (s *Service) change(
 			return nil, err
 		}
 
-		conflicts := append([]inboundmessage.Conflict(nil), message.Conflicts...)
-		index := conflictIndex(conflicts, req.conflictID)
-		if index < 0 {
-			return nil, errortypes.NewNotFoundError("That conflict is not on this message")
+		conflicts, index, err := conflictOf(message, req.conflictID)
+		if err != nil {
+			return nil, err
 		}
 		if err = req.apply(message, &conflicts[index]); err != nil {
 			return nil, err
@@ -171,6 +202,41 @@ func (s *Service) change(
 	return nil, errortypes.NewConflictError(
 		"The message kept changing while the conflict was being settled. Try again.",
 	)
+}
+
+func (s *Service) plan(ctx context.Context, req *changeRequest) (*ConflictPlan, error) {
+	message, err := s.messages.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
+		ID:                 req.messageID,
+		TenantInfo:         req.tenantInfo,
+		IncludeAttachments: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, index, err := conflictOf(message, req.conflictID)
+	if err != nil {
+		return nil, err
+	}
+	before := conflicts[index]
+	if err = req.apply(message, &conflicts[index]); err != nil {
+		return nil, err
+	}
+
+	return &ConflictPlan{Message: message, Before: before, After: conflicts[index]}, nil
+}
+
+func conflictOf(
+	message *inboundmessage.InboundMessage,
+	conflictID string,
+) ([]inboundmessage.Conflict, int, error) {
+	conflicts := append([]inboundmessage.Conflict(nil), message.Conflicts...)
+	index := conflictIndex(conflicts, conflictID)
+	if index < 0 {
+		return nil, -1, errortypes.NewNotFoundError("That conflict is not on this message")
+	}
+
+	return conflicts, index, nil
 }
 
 func conflictIndex(conflicts []inboundmessage.Conflict, id string) int {

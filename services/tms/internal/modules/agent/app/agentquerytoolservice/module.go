@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -154,6 +155,7 @@ func coreToolProviders() []any {
 		provideListCustomerPaymentsTool,
 		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
+		provideListTriageAssigneesTool,
 		provideSearchDocumentsTool,
 		provideSearchInboundMessagesTool,
 		newGetMyHomeLayoutTool,
@@ -382,14 +384,21 @@ func provideGetWorkerTool(
 
 func provideGetInboundMessageTool(
 	messages *inboundmessageservice.Service,
+	replies inboundmessageports.InboundReplyRepository,
 ) agentports.AgentQueryTool {
-	return newGetInboundMessageTool(messages)
+	return newGetInboundMessageTool(messages, replies)
 }
 
 func provideListInboundMessagesTool(
 	messages *inboundmessageservice.Service,
 ) agentports.AgentQueryTool {
 	return newListInboundMessagesTool(messages)
+}
+
+func provideListTriageAssigneesTool(
+	inbox *inboundmessageservice.Service,
+) agentports.AgentQueryTool {
+	return newListTriageAssigneesTool(inbox)
 }
 
 func provideSearchDocumentsTool(

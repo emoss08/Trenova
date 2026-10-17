@@ -116,57 +116,12 @@ func (f *fakeQueueRepo) UpdateQueueState(
 	return changed, nil
 }
 
-func applyFakePatch(state *inboundmessageports.QueueState, patch inboundmessageports.QueuePatch, now int64) {
-	if patch.Status != "" {
-		state.Status = patch.Status
-	}
-	if patch.Review != nil && !patch.Review.Clear && patch.Review.Note != "" {
-		state.ReviewNote = patch.Review.Note
-	}
-	if patch.Owner != nil {
-		state.OwnerID = *patch.Owner
-	}
-	if patch.Unpark || patch.Park != nil {
-		state.Parked = ""
-		state.SnoozedUntil = 0
-		state.SnoozeEvent = ""
-		state.SnoozeWatchID = pulid.Nil
-		state.SnoozeDocumentTypeID = pulid.Nil
-		state.AwaitingUntil = 0
-	}
-	if patch.Park != nil {
-		state.Parked = patch.Park.Parking
-		state.SnoozedUntil = patch.Park.SnoozedUntil
-		state.SnoozeEvent = patch.Park.SnoozeEvent
-		state.SnoozeDocumentTypeID = patch.Park.DocumentTypeID
-		state.AwaitingUntil = patch.Park.AwaitingUntil
-		if patch.Park.WatchShipment {
-			state.SnoozeWatchID = state.MatchedShipmentID
-		}
-	}
-	switch patch.Due {
-	case inboundmessageports.DueClear:
-		state.DueAt = 0
-	case inboundmessageports.DueFromTargets:
-		state.DueAt = state.ReceivedAt + int64(patch.Targets.For(state.Classification))*60
-	case inboundmessageports.DueKeep:
-	}
-	if patch.ClearShipment {
-		state.MatchedShipmentID = pulid.Nil
-	}
-	if patch.ClearCustomer {
-		state.MatchedCustomerID = pulid.Nil
-	}
-	if patch.ClearCarrier {
-		state.MatchedCarrierID = pulid.Nil
-	}
-	if patch.ClearReason {
-		state.MatchReason = ""
-	}
-	if patch.NovaUnread {
-		state.NovaRead = false
-	}
-	_ = now
+func applyFakePatch(
+	state *inboundmessageports.QueueState,
+	patch inboundmessageports.QueuePatch,
+	_ int64,
+) {
+	patch.ApplyTo(state)
 }
 
 func (f *fakeQueueRepo) ListByIDs(

@@ -106,6 +106,23 @@ var families = [...][]string{
 		"acknowledge_carrier_intel_event",
 		"resolve_carrier_intel_event",
 	},
+	{
+		"draft_inbound_reply",
+		"discard_inbound_reply_draft",
+		"reply_to_inbound_message",
+		"wait_for_inbound_reply",
+	},
+	{"list_triage_assignees", "assign_inbound_messages", "hand_off_triage"},
+	{"snooze_inbound_messages", "wake_inbound_message", "reopen_inbound_messages"},
+	{"draft_inbound_load", "create_inbound_load", "discard_inbound_load"},
+	{
+		"file_inbound_attachment",
+		"unfile_inbound_attachment",
+		"resolve_inbound_conflict",
+		"reopen_inbound_conflict",
+	},
+	{"block_inbound_sender", "unblock_inbound_sender"},
+	{"link_inbound_message", "unlink_inbound_message"},
 }
 
 // indexFamilies maps each family member to the others, in family order.

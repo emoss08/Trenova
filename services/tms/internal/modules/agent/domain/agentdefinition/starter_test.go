@@ -173,8 +173,11 @@ template only makes room.
 It holds nothing that creates a load or money on its own. A tender's attachment
 already wakes shipment intake through the document it became; a second desk
 holding create_shipment would put two proposals for the same load in front of a
-person. A tender that arrives over EDI never becomes a document, so the desk
-answers it, and accepting one is always a proposal a person decides.
+person. A tender written only in an email's body reaches no other agent, so the
+desk drafts it and proposes create_inbound_load, which never runs unattended. A
+tender that arrives over EDI never becomes a document, so the desk answers it,
+and accepting one is always a proposal a person decides. A detention dispute's
+money is the detention desk's, so settle_detention_dispute is not the intake desk's.
 */
 func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 	t.Parallel()
@@ -193,12 +196,24 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 		"get_edi_transfer",
 		"accept_edi_tender",
 		"decline_edi_tender",
+		"list_triage_assignees",
+		"unlink_inbound_message",
+		"draft_inbound_reply",
+		"wait_for_inbound_reply",
+		"snooze_inbound_messages",
+		"wake_inbound_message",
+		"file_inbound_attachment",
+		"resolve_inbound_conflict",
+		"log_inbound_exception",
+		"draft_inbound_load",
+		"create_inbound_load",
+		"block_inbound_sender",
 	} {
 		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
 	}
 	for _, tool := range []string{
 		"create_shipment", "post_customer_payment", "tender_move_to_carriers",
-		"send_edi_tender", "replay_edi_message",
+		"send_edi_tender", "replay_edi_message", "settle_detention_dispute",
 	} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
 	}
@@ -266,6 +281,16 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			template: agentdefinition.TemplateInsightAnalyst,
 			needs:    []string{"get_insight", "list_insights", "preview_report", "dismiss_insight"},
 			never:    []string{"email_customer", "create_report", "update_report"},
+		},
+		{
+			template: agentdefinition.TemplateDetentionDesk,
+			needs: []string{
+				"get_detention_occurrence", "get_inbound_message", "search_inbound_messages",
+				"settle_detention_dispute",
+			},
+			never: []string{
+				"reply_to_inbound_message", "block_inbound_sender", "create_inbound_load",
+			},
 		},
 		{
 			template: agentdefinition.TemplateEDIDesk,

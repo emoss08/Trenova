@@ -181,6 +181,29 @@ func (s *Service) Reopen(
 	ctx context.Context,
 	req *ReopenRequest,
 ) (*inboundmessageports.BulkResult, error) {
+	t, err := s.reopenTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.runTransition(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.bulkResult(ctx, req.TenantInfo, result, nil)
+}
+
+func (s *Service) PlanReopen(ctx context.Context, req *ReopenRequest) (*QueuePlan, error) {
+	t, err := s.reopenTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planTransition(ctx, t)
+}
+
+func (s *Service) reopenTransition(ctx context.Context, req *ReopenRequest) (*transition, error) {
 	ids, err := s.resolveSelection(ctx, req.TenantInfo, req.Selection)
 	if err != nil {
 		return nil, err
@@ -191,7 +214,7 @@ func (s *Service) Reopen(
 		return nil, err
 	}
 
-	result, err := s.runTransition(ctx, &transition{
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    ids,
 		eligible: func(state *inboundmessageports.QueueState) bool {
@@ -211,7 +234,19 @@ func (s *Service) Reopen(
 				req.ActorID,
 			)
 		},
-	})
+	}, nil
+}
+
+func (s *Service) Assign(
+	ctx context.Context,
+	req *AssignRequest,
+) (*inboundmessageports.BulkResult, error) {
+	t, err := s.assignTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.runTransition(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -219,10 +254,16 @@ func (s *Service) Reopen(
 	return s.bulkResult(ctx, req.TenantInfo, result, nil)
 }
 
-func (s *Service) Assign(
-	ctx context.Context,
-	req *AssignRequest,
-) (*inboundmessageports.BulkResult, error) {
+func (s *Service) PlanAssign(ctx context.Context, req *AssignRequest) (*QueuePlan, error) {
+	t, err := s.assignTransition(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planTransition(ctx, t)
+}
+
+func (s *Service) assignTransition(ctx context.Context, req *AssignRequest) (*transition, error) {
 	if req.OwnerID.IsNotNil() && req.OwnerID != req.ActorID && !req.CanAssignOthers {
 		return nil, errortypes.NewAuthorizationError(
 			"You can take messages yourself, but assigning them to someone else needs the assign permission",
@@ -249,7 +290,8 @@ func (s *Service) Assign(
 	}
 
 	owner := req.OwnerID
-	result, err := s.runTransition(ctx, &transition{
+
+	return &transition{
 		tenant: req.TenantInfo,
 		ids:    ids,
 		check: func(states []*inboundmessageports.QueueState) error {
@@ -283,12 +325,7 @@ func (s *Service) Assign(
 
 			return byPerson(activity, req.ActorID)
 		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return s.bulkResult(ctx, req.TenantInfo, result, nil)
+	}, nil
 }
 
 type assignee struct {

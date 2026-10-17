@@ -59,11 +59,15 @@ var inboundReviewStatuses = agenttoolschema.Source(
 	[]inboundmessage.Status{inboundmessage.StatusActioned, inboundmessage.StatusIgnored},
 )
 
-type inboundMessageDesk interface {
+type inboundMessageReader interface {
 	GetByID(
 		ctx context.Context,
 		req inboundmessageports.GetInboundMessageByIDRequest,
 	) (*inboundmessage.InboundMessage, error)
+}
+
+type inboundMessageDesk interface {
+	inboundMessageReader
 	CheckLink(ctx context.Context, req inboundmessageservice.LinkRequest) error
 	Link(
 		ctx context.Context,
@@ -77,7 +81,7 @@ type inboundMessageDesk interface {
 
 func loadInboundMessage(
 	ctx context.Context,
-	desk inboundMessageDesk,
+	desk inboundMessageReader,
 	params agentports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
 	messageID, err := common.RequirePulid(params.Params, paramMessageID)
@@ -98,7 +102,7 @@ func loadInboundMessage(
 // settled, or unreadable — is a proposal a person decides.
 func inboundTierLimit(
 	ctx context.Context,
-	desk inboundMessageDesk,
+	desk inboundMessageReader,
 	params agentports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
@@ -111,7 +115,7 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
-func inboundCondition(desk inboundMessageDesk) *agentports.TierCondition {
+func inboundCondition(desk inboundMessageReader) *agentports.TierCondition {
 	return &agentports.TierCondition{
 		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
 			"a classified message the mailbox handles without review may run on its own, " +

@@ -82,6 +82,18 @@ func (s *Service) currentDraftAttachments(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) ([]triage.ReplyAttachment, error) {
+	draft, found, err := s.currentDraft(ctx, message)
+	if err != nil || !found {
+		return nil, err
+	}
+
+	return draft.Attachments, nil
+}
+
+func (s *Service) currentDraft(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+) (*triage.Reply, bool, error) {
 	drafts, err := s.replies.DraftsByMessageIDs(
 		ctx,
 		inboundmessageports.InboundRepliesByMessagesRequest{
@@ -90,15 +102,12 @@ func (s *Service) currentDraftAttachments(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	draft, ok := drafts[message.ID]
-	if !ok || draft == nil {
-		return nil, nil
-	}
 
-	return draft.Attachments, nil
+	return draft, ok && draft != nil, nil
 }
 
 func (s *Service) draftAttachments(
