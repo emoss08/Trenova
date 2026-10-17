@@ -296,7 +296,7 @@ func (r *portalRunRepository) List(
 				return sq
 			}).
 			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list portal runs", zap.Error(err))
