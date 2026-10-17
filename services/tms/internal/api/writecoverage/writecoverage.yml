@@ -1504,6 +1504,9 @@ writes:
   "mutation promoteAICorrection":
     exempt: agent-administration
     reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation refreezeExtractionEvalCases":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
   "mutation startExtractionEvalRun":
     exempt: agent-administration
     reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."

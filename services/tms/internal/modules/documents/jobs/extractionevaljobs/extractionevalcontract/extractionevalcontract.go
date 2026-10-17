@@ -68,3 +68,38 @@ func (s *RunStarter) StartExtractionEvalRun(
 
 	return workflowID, nil
 }
+
+const RefreezeWorkflowName = "RefreezeExtractionEvalCasesWorkflow"
+
+type RefreezePayload struct {
+	OrganizationID pulid.ID   `json:"organizationId"`
+	BusinessUnitID pulid.ID   `json:"businessUnitId"`
+	UserID         pulid.ID   `json:"userId"`
+	CaseIDs        []pulid.ID `json:"caseIds"`
+}
+
+var _ extractionevalports.ExtractionEvalRefreezeStarter = (*RunStarter)(nil)
+
+func (s *RunStarter) StartExtractionEvalRefreeze(
+	ctx context.Context,
+	start *extractionevalports.ExtractionEvalRefreezeStart,
+) (string, error) {
+	workflowID := "extraction-eval-refreeze:" + start.TenantInfo.OrgID.String() + ":" +
+		pulid.MustNew("eerf_").String()
+	if _, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:                    workflowID,
+		TaskQueue:             temporaltype.DocumentExtractionTaskQueue,
+		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+		Priority:              EvaluationPriority(start.TenantInfo.OrgID),
+		StaticSummary:         fmt.Sprintf("Freeze %d evaluation cases through Docling", len(start.CaseIDs)),
+	}, RefreezeWorkflowName, &RefreezePayload{
+		OrganizationID: start.TenantInfo.OrgID,
+		BusinessUnitID: start.TenantInfo.BuID,
+		UserID:         start.TenantInfo.UserID,
+		CaseIDs:        start.CaseIDs,
+	}); err != nil {
+		return "", fmt.Errorf("start extraction evaluation re-freeze workflow: %w", err)
+	}
+
+	return workflowID, nil
+}

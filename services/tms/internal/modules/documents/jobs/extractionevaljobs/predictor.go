@@ -33,7 +33,11 @@ func (p *Predictor) Predict(
 	for _, page := range req.Pages {
 		pages = append(
 			pages,
-			documentaiextractionports.AIDocumentPage{PageNumber: page.Number, Text: page.Text},
+			documentaiextractionports.AIDocumentPage{
+				PageNumber: page.Number,
+				Text:       page.Text,
+				Markdown:   page.Markdown,
+			},
 		)
 	}
 

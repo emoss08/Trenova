@@ -140,8 +140,32 @@ func (r *MutationResolver) StartExtractionEvalRun(ctx context.Context, input gql
 	if input.CaseLimit != nil {
 		request.CaseLimit = *input.CaseLimit
 	}
+	if input.TextSource != nil {
+		request.TextSource = *input.TextSource
+	}
 
 	return r.ExtractionEvalService.StartRun(ctx, request, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) RefreezeExtractionEvalCases(ctx context.Context, input gqlmodel.RefreezeExtractionEvalCasesInput) (*extractionevalports.RefreezeExtractionEvalCasesResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	caseIDs := make([]pulid.ID, 0, len(input.CaseIds))
+	for _, raw := range input.CaseIds {
+		caseID, parseErr := pulid.MustParse(raw)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		caseIDs = append(caseIDs, caseID)
+	}
+
+	return r.ExtractionEvalService.RefreezeCases(ctx, &extractionevalports.RefreezeExtractionEvalCasesRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		CaseIDs:    caseIDs,
+	}, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) CancelExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error) {

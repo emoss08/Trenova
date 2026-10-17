@@ -10,6 +10,7 @@ import (
 var Module = fx.Module("document-extraction-jobs",
 	fx.Provide(NewActivities),
 	fx.Provide(NewCaptureAnalyzer),
+	fx.Provide(NewCaseConverter),
 	fx.Provide(
 		NewShadowPredictor,
 		func(p *ShadowPredictor) extractionshadowports.ExtractionShadowPredictor { return p },

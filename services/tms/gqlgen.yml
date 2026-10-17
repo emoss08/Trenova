@@ -2321,6 +2321,12 @@ models:
   ExtractionEvalRunStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.RunStatus
+  ExtractionTextSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.TextSource
+  ExtractionEvalRefreeze:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.RefreezeExtractionEvalCasesResult
   ExtractionEvalResult:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ExtractionResult

@@ -14,19 +14,22 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Runner extractionevalports.ExtractionEvalRunner
-	Logger *zap.Logger
+	Runner  extractionevalports.ExtractionEvalRunner
+	Freezer extractionevalports.ExtractionEvalCaseFreezer `optional:"true"`
+	Logger  *zap.Logger
 }
 
 type Activities struct {
-	runner extractionevalports.ExtractionEvalRunner
-	l      *zap.Logger
+	runner  extractionevalports.ExtractionEvalRunner
+	freezer extractionevalports.ExtractionEvalCaseFreezer
+	l       *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		runner: p.Runner,
-		l:      p.Logger.Named("job.extraction-eval"),
+		runner:  p.Runner,
+		freezer: p.Freezer,
+		l:       p.Logger.Named("job.extraction-eval"),
 	}
 }
 

@@ -81,6 +81,7 @@ func SharedOptions() fx.Option {
 			extractionevalrepository.NewCases,
 			extractionevalrepository.NewRuns,
 			extractionevalrepository.NewResults,
+			extractionevalrepository.NewCasePages,
 			extractionrolloutrepository.NewRollouts,
 			extractionrolloutrepository.NewAssignments,
 			extractionshadowrepository.NewSettings,
@@ -137,8 +138,12 @@ func SharedOptions() fx.Option {
 			extractionevalservice.AsService,
 			extractionevalservice.AsRunner,
 			extractionevalservice.AsDriftChecker,
+			extractionevalservice.AsCaseFreezer,
 			extractionevalcontract.NewRunStarter,
 			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRunStarter { return s },
+			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRefreezeStarter {
+				return s
+			},
 			extractionrolloutservice.New,
 			extractionrolloutservice.AsService,
 			extractionrolloutservice.AsRouter,

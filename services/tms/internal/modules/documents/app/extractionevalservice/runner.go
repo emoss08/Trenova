@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -117,13 +118,21 @@ func (s *Service) EvaluateResult(
 		return err
 	}
 
+	pages, err := s.pagesFor(ctx, req.TenantInfo, run, evalCase)
+	if err != nil {
+		return err
+	}
+	if pages == nil {
+		return s.saveSkipped(ctx, result, "The case has no pages frozen through Docling yet")
+	}
+
 	started := s.now()
 	result.StartedAt = &started
 	prediction, err := s.predictor.Predict(ctx, &extractionevalports.PredictExtractionRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: run.ProviderID,
 		FileName:   evalCase.FileName,
-		Pages:      evalCase.Pages,
+		Pages:      pages,
 	})
 	if err != nil {
 		if extractionfailure.Retryable(err) && !req.FinalAttempt {
@@ -165,6 +174,45 @@ func (s *Service) saveFailure(
 ) error {
 	completed := s.now()
 	result.Status = extractioneval.ResultStatusFailed
+	result.ErrorMessage = stringutils.TruncateRunes(message, extractioneval.MaxFailureRunes)
+	result.CompletedAt = &completed
+
+	_, err := s.results.Save(ctx, result)
+	return err
+}
+
+func (s *Service) pagesFor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	run *extractioneval.ExtractionRun,
+	evalCase *extractioneval.ExtractionCase,
+) ([]extractioneval.Page, error) {
+	if !run.TextSource.Frozen() {
+		return evalCase.Pages, nil
+	}
+
+	frozen, err := s.casePages.Get(ctx, extractionevalports.GetExtractionEvalCasePagesRequest{
+		TenantInfo: tenant,
+		CaseID:     evalCase.ID,
+		TextSource: run.TextSource,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return frozen.Pages, nil
+}
+
+func (s *Service) saveSkipped(
+	ctx context.Context,
+	result *extractioneval.ExtractionResult,
+	message string,
+) error {
+	completed := s.now()
+	result.Status = extractioneval.ResultStatusSkipped
 	result.ErrorMessage = stringutils.TruncateRunes(message, extractioneval.MaxFailureRunes)
 	result.CompletedAt = &completed
 

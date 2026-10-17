@@ -56,7 +56,11 @@ func (s *Service) StartRun(
 		),
 		ProviderModel: stringutils.TruncateRunes(provider.Model, extractioneval.MaxModelRunes),
 		CaseLimit:     limit,
+		TextSource:    req.TextSource,
 		RequestedByID: actorID(actor, req.TenantInfo),
+	}
+	if run.TextSource == "" {
+		run.TextSource = extractioneval.TextSourceLegacy
 	}
 
 	multiErr := errortypes.NewMultiError()
