@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -447,4 +447,73 @@ func TestPurgeRemovesExpiredAssignments(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), purged)
 	assert.Len(t, w.assignments.items, 2)
+}
+
+func (w *world) exclude(t *testing.T, document pulid.ID) {
+	t.Helper()
+
+	require.NoError(t, w.svc.ExcludeExtraction(
+		t.Context(),
+		&extractionrolloutports.ExcludeExtractionRolloutRequest{
+			TenantInfo:  testTenant(),
+			DocumentID:  document,
+			ExtractedAt: testNow,
+			Reason:      extractionrollout.ExclusionReasonDoclingInput,
+		},
+	))
+}
+
+func TestDoclingInputIsCountedAsExcludedAndNeverAssigned(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	w.start(50)
+	first := pulid.MustNew("doc_")
+	w.exclude(t, first)
+	w.exclude(t, first)
+	w.exclude(t, pulid.MustNew("doc_"))
+
+	assert.Empty(t, w.assignments.items, "an excluded extraction is never assigned")
+
+	report, err := w.svc.Report(t.Context(), testTenant())
+	require.NoError(t, err)
+	assert.Equal(t, []extractionrolloutports.ExtractionRolloutExclusionCount{{
+		Reason: extractionrollout.ExclusionReasonDoclingInput,
+		Count:  2,
+	}}, report.Exclusions, "a retried extraction is counted once")
+	assert.Zero(t, report.Candidate.Assigned)
+	assert.Zero(t, report.Control.Assigned)
+}
+
+func TestExclusionsAreNotRecordedWhileTheRolloutIsOff(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	w.exclude(t, pulid.MustNew("doc_"))
+
+	assert.Empty(t, w.exclusions.items)
+	report, err := w.svc.Report(t.Context(), testTenant())
+	require.NoError(t, err)
+	assert.Equal(t, []extractionrolloutports.ExtractionRolloutExclusionCount{{
+		Reason: extractionrollout.ExclusionReasonDoclingInput,
+		Count:  0,
+	}}, report.Exclusions)
+}
+
+func TestPurgeRemovesExpiredExclusions(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	w.start(50)
+	w.exclude(t, pulid.MustNew("doc_"))
+	w.exclude(t, pulid.MustNew("doc_"))
+	w.exclusions.items[0].CreatedAt = 1
+
+	purged, err := w.svc.PurgeExpiredAssignments(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
+		TenantInfo: testTenant(),
+		Now:        testNow,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), purged)
+	assert.Len(t, w.exclusions.items, 1)
 }

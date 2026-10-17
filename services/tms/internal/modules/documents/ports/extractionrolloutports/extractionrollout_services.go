@@ -40,6 +40,11 @@ type ExtractionRolloutAccuracy struct {
 	Accuracy float64
 }
 
+type ExtractionRolloutExclusionCount struct {
+	Reason extractionrollout.ExclusionReason
+	Count  int
+}
+
 type ExtractionRolloutReport struct {
 	Rollout              *extractionrollout.ExtractionRollout
 	ProviderName         string
@@ -51,6 +56,7 @@ type ExtractionRolloutReport struct {
 	Truncated            bool
 	MinGuardScoredFields int
 	MinGuardExtractions  int
+	Exclusions           []ExtractionRolloutExclusionCount
 }
 
 type ExtractionRolloutService interface {
@@ -81,8 +87,16 @@ type SettleExtractionRolloutRequest struct {
 	ServedModel      string
 }
 
+type ExcludeExtractionRolloutRequest struct {
+	TenantInfo  pagination.TenantInfo
+	DocumentID  pulid.ID
+	ExtractedAt int64
+	Reason      extractionrollout.ExclusionReason
+}
+
 type ExtractionRolloutRouter interface {
 	AssignExtraction(ctx context.Context, req *AssignExtractionRolloutRequest) (pulid.ID, error)
+	ExcludeExtraction(ctx context.Context, req *ExcludeExtractionRolloutRequest) error
 	SettleExtraction(ctx context.Context, req *SettleExtractionRolloutRequest) error
 }
 

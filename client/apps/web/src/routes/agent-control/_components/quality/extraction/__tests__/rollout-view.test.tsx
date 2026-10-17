@@ -113,6 +113,7 @@ function report(overrides: Partial<ExtractionRolloutReport> = {}): ExtractionRol
     truncated: false,
     minGuardScoredFields: 200,
     minGuardExtractions: 30,
+    exclusions: [{ reason: "docling_input", count: 0 }],
     ...overrides,
   } as ExtractionRolloutReport;
 }
@@ -155,6 +156,23 @@ describe("RolloutView", () => {
     expect(screen.getByText("4 pts above production")).toBeInTheDocument();
     expect(screen.getByText("1 fell back to production, 2 pending")).toBeInTheDocument();
     expect(screen.getByText("+5 pts")).toBeInTheDocument();
+  });
+
+  it("says how many documents Docling read were kept out of the rollout", async () => {
+    fetchRollout.mockResolvedValue(rollout());
+    fetchReport.mockResolvedValue(report({ exclusions: [{ reason: "docling_input", count: 3 }] }));
+    renderView();
+
+    expect(await screen.findByText("3 documents excluded: read by Docling")).toBeInTheDocument();
+  });
+
+  it("says nothing about exclusions when none were made", async () => {
+    fetchRollout.mockResolvedValue(rollout());
+    fetchReport.mockResolvedValue(report());
+    renderView();
+
+    expect(await screen.findByText("94%")).toBeInTheDocument();
+    expect(screen.queryByText(/excluded: read by Docling/)).not.toBeInTheDocument();
   });
 
   it("says how much evidence each guard still needs", async () => {

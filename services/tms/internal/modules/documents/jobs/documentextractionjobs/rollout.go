@@ -41,6 +41,33 @@ func (a *Activities) rolloutPreference(
 	return preferred
 }
 
+func (a *Activities) excludeFromRollout(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	payload *ProcessDocumentAIExtractionPayload,
+	reason extractionrollout.ExclusionReason,
+) {
+	if a.rollout == nil {
+		return
+	}
+
+	if err := a.rollout.ExcludeExtraction(
+		ctx,
+		&extractionrolloutports.ExcludeExtractionRolloutRequest{
+			TenantInfo:  tenantInfo,
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+			Reason:      reason,
+		},
+	); err != nil {
+		a.logger.Warn("could not record the extraction's exclusion from the rollout",
+			zap.String("documentId", payload.DocumentID.String()),
+			zap.String("reason", reason.String()),
+			zap.Error(err),
+		)
+	}
+}
+
 func (a *Activities) settleRollout(
 	ctx context.Context,
 	payload *ApplyDocumentAIExtractionPayload,

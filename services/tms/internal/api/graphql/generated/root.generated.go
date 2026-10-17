@@ -20800,6 +20800,18 @@ type ExtractionRolloutAccuracy {
   accuracy: Float!
 }
 
+"Why a production extraction was left out of the rollout's comparison."
+enum ExtractionRolloutExclusionReason {
+  "The document was read by Docling, and the candidate must not see Markdown input until it is retrained on it."
+  docling_input
+}
+
+"Production extractions left out of the comparison since the rollout started, for one reason. Excluded extractions are served by production and never assigned to either side."
+type ExtractionRolloutExclusion {
+  reason: ExtractionRolloutExclusionReason!
+  count: Int!
+}
+
 "How the candidate is doing on the documents it serves, beside production on the rest."
 type ExtractionRolloutReport {
   rollout: ExtractionRollout!
@@ -20816,6 +20828,8 @@ type ExtractionRolloutReport {
   minGuardScoredFields: Int!
   "Settled extractions each side needs before the rejection guard can stop the rollout."
   minGuardExtractions: Int!
+  "Extractions left out of the comparison since the rollout started, one entry per reason."
+  exclusions: [ExtractionRolloutExclusion!]!
 }
 
 input UpdateExtractionRolloutInput {

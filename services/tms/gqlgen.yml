@@ -2374,6 +2374,12 @@ models:
   ExtractionRolloutReport:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutReport
+  ExtractionRolloutExclusion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutExclusionCount
+  ExtractionRolloutExclusionReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout.ExclusionReason
   ExtractionShadowSettings:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.ShadowSettings

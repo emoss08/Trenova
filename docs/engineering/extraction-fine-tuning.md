@@ -509,6 +509,10 @@ correction captured   →  ObserveCorrection →  accuracy guard
   them, and the choice is independent of which documents shadow traffic samples. Every extraction
   while the rollout serves gets an `extraction_rollout_assignments` row (one per document and
   extraction time), on either side, so both sides are compared over the same period.
+- **Docling input.** A document read by Docling is never assigned, so the candidate never sees
+  Markdown before it is retrained on it; `ExcludeExtraction` records it in
+  `extraction_rollout_exclusions` with the reason `docling_input` instead, and the report's
+  `exclusions` count is shown in the rollout view as "N documents excluded: read by Docling".
 - **Serving.** `submitAIExtraction` asks `AssignExtraction` before it submits. A candidate-side
   extraction passes the candidate as `AIExtractRequest.PreferredProviderID`; the completion router
   tries it first and falls through to the usual priority order when it is disabled, busy or

@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 55 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1163 writes: 642 GraphQL mutations and 521 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1164 writes: 643 GraphQL mutations and 521 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 436 |
-| Exempt | 701 |
+| Exempt | 704 |
 | — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 40 |
 | — Infrastructure | 55 |
-| — Agent administration | 103 |
+| — Agent administration | 104 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 49 |
 | — Duplicate | 8 |
 | **Pending** | **24** |
-| Total | 1161 |
+| Total | 1164 |
 
 Of the 460 writes an agent should be able to make, 436 have a tool (94%).
 
@@ -179,7 +179,7 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 14 | 10 | 4 | 0 |
+| billingqueue | 15 | 10 | 5 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |

@@ -3973,6 +3973,11 @@ export type ExtractionEvalRunStatus =
   | 'Queued'
   | 'Running';
 
+/** Why a production extraction was left out of the rollout's comparison. */
+export type ExtractionRolloutExclusionReason =
+  /** The document was read by Docling, and the candidate must not see Markdown input until it is retrained on it. */
+  | 'docling_input';
+
 export type ExtractionRolloutHaltReason =
   /** The candidate read confirmed fields worse than production by more than the allowed points. */
   | 'AccuracyDrop'
@@ -13708,7 +13713,7 @@ export type ExtractionRolloutQuery = { extractionRollout: { ' $fragmentRefs'?: {
 export type ExtractionRolloutReportQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ExtractionRolloutReportQuery = { extractionRolloutReport: { providerName: string, truncated: boolean, minGuardScoredFields: number, minGuardExtractions: number, rollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } }, candidate: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, control: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, candidateAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, productionAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }> } };
+export type ExtractionRolloutReportQuery = { extractionRolloutReport: { providerName: string, truncated: boolean, minGuardScoredFields: number, minGuardExtractions: number, rollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } }, candidate: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, control: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, candidateAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, productionAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }>, exclusions: Array<{ reason: ExtractionRolloutExclusionReason, count: number }> } };
 
 export type UpdateExtractionRolloutMutationVariables = Exact<{
   input: UpdateExtractionRolloutInput;
