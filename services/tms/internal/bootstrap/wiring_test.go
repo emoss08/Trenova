@@ -1,6 +1,7 @@
 package bootstrap_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 )
@@ -56,6 +58,26 @@ func TestWiring_WorkerGraphResolves(t *testing.T) {
 		bootstrap.Options(),
 		bootstrap.WorkerOptions(),
 	))
+}
+
+func TestWiring_APIProcessesNeverHoldADocumentConverter(t *testing.T) {
+	t.Parallel()
+
+	for name, processOptions := range map[string]fx.Option{
+		"api":        fx.Options(bootstrap.Options(), bootstrap.APIOptions()),
+		"api-binary": fx.Options(core.Options(), apiapp.Options()),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			err := fx.ValidateApp(
+				processOptions,
+				fx.Invoke(func(kernelports.DocumentConverter) {}),
+			)
+			require.Error(t, err, "the API only enqueues extraction; it never calls the sidecar")
+			assert.Contains(t, err.Error(), "kernelports.DocumentConverter")
+		})
+	}
 }
 
 func TestWiring_APIBinaryGraphResolves(t *testing.T) {
@@ -103,6 +125,12 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 
 			if name != "api-binary" {
 				processOptions = fx.Options(processOptions, workerReachable)
+			}
+			if strings.HasPrefix(name, "worker") {
+				processOptions = fx.Options(
+					processOptions,
+					fx.Invoke(func(kernelports.DocumentConverter) {}),
+				)
 			}
 
 			require.NoError(t, fx.ValidateApp(

@@ -812,7 +812,7 @@ export function DocumentIntelligenceDialog({
                 <div className="grid gap-6 p-4">
                   <section className="grid gap-3">
                     <div>
-                      <h3 className="text-sm font-medium">{t("Document intelligence")}</h3>
+                      <h3 className="text-sm font-medium">{t("Document extraction")}</h3>
                       <p className="text-muted-foreground text-xs">
                         {t("Extraction status, classification, and structured output.")}
                       </p>

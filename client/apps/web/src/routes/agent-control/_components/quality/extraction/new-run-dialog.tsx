@@ -26,9 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import type { ExtractionTextSource } from "@trenova/graphql/generated/graphql";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, useMemo, useState } from "react";
-import { DEFAULT_CASE_LIMIT, MAX_CASE_LIMIT } from "./extraction-model";
+import {
+  DEFAULT_CASE_LIMIT,
+  DEFAULT_TEXT_SOURCE,
+  MAX_CASE_LIMIT,
+  TEXT_SOURCE,
+  TEXT_SOURCE_DESCRIPTION,
+} from "./extraction-model";
 
 type NewRunDialogProps = {
   open: boolean;
@@ -50,6 +58,7 @@ export function NewRunDialog({ open, onOpenChange, activeCases, onStarted }: New
   const providers = useQuery({ ...aiProvider.list(), enabled: open });
   const [providerId, setProviderId] = useState<string>("");
   const [caseLimit, setCaseLimit] = useState(String(DEFAULT_CASE_LIMIT));
+  const [textSource, setTextSource] = useState<ExtractionTextSource>(DEFAULT_TEXT_SOURCE);
 
   const extractors = useMemo(
     () =>
@@ -75,7 +84,8 @@ export function NewRunDialog({ open, onOpenChange, activeCases, onStarted }: New
   const limitValid = Number.isInteger(limit) && limit >= 1 && limit <= MAX_CASE_LIMIT;
 
   const start = useApiMutation({
-    mutationFn: () => startExtractionEvalRun({ providerId: selectedId, caseLimit: limit }),
+    mutationFn: () =>
+      startExtractionEvalRun({ providerId: selectedId, caseLimit: limit, textSource }),
     onSuccess: async (run) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [EXTRACTION_EVAL_RUN_LIST_KEY] }),
@@ -138,6 +148,21 @@ export function NewRunDialog({ open, onOpenChange, activeCases, onStarted }: New
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <span aria-hidden className="font-mono text-sm leading-none font-medium">
+              {t("Document text")}
+            </span>
+            <SegmentedControl<ExtractionTextSource>
+              aria-label={t("Document text")}
+              value={textSource}
+              onValueChange={setTextSource}
+              items={(Object.keys(TEXT_SOURCE) as ExtractionTextSource[]).map((value) => ({
+                value,
+                label: TEXT_SOURCE[value],
+              }))}
+            />
+            <p className="text-muted-foreground text-xs">{TEXT_SOURCE_DESCRIPTION[textSource]}</p>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor={limitFieldId}>{t("Cases to run")}</Label>

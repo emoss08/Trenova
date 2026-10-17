@@ -42,7 +42,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        ExtractionShadowWorkflowName,
 			Fn:          ExtractionShadowWorkflow,
-			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
+			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
 			Description: "Run a production document extraction again on the shadow AI provider and keep its answer for scoring",
 		},
 	}

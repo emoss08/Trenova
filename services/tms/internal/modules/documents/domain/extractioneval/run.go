@@ -52,6 +52,7 @@ type ExtractionRun struct {
 	ProviderModel string            `json:"providerModel" bun:"provider_model,type:VARCHAR(255),nullzero"`
 	ServedModel   string            `json:"servedModel"   bun:"served_model,type:VARCHAR(255),nullzero"`
 	CaseLimit     int               `json:"caseLimit"     bun:"case_limit,type:INTEGER,notnull"`
+	TextSource    TextSource        `json:"textSource"    bun:"text_source,type:VARCHAR(20),notnull,default:'legacy'"`
 
 	CasesTotal     int `json:"casesTotal"     bun:"cases_total,type:INTEGER,notnull,default:0"`
 	CasesCompleted int `json:"casesCompleted" bun:"cases_completed,type:INTEGER,notnull,default:0"`
@@ -117,6 +118,10 @@ func (r *ExtractionRun) Validate(multiErr *errortypes.MultiError) {
 				Error(fmt.Sprintf("A run evaluates at most %d cases", MaxCaseLimit)),
 		),
 		validation.Field(&r.RequestedByID, validation.Required.Error("Requested by is required")),
+		validation.Field(&r.TextSource,
+			validation.Required.Error("Text source is required"),
+			domainvalidation.ValidEnum[TextSource]("Text source must be legacy or docling"),
+		),
 	))
 }
 
@@ -202,6 +207,9 @@ func (r *ExtractionRun) BeforeAppendModel(_ context.Context, query bun.Query) er
 	case *bun.InsertQuery:
 		if r.ID.IsNil() {
 			r.ID = pulid.MustNew("eer_")
+		}
+		if r.TextSource == "" {
+			r.TextSource = TextSourceLegacy
 		}
 		if r.CreatedAt == 0 {
 			r.CreatedAt = now

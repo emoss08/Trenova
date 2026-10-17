@@ -17,8 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
@@ -28,29 +31,53 @@ import (
 type Params struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Config     *config.Config
-	Metrics    *metrics.Registry
-	Completion agentports.CompletionService
-	Plans      platformplanports.PlanService `optional:"true"`
+	Logger       *zap.Logger
+	Config       *config.Config
+	Metrics      *metrics.Registry
+	Completion   agentports.CompletionService
+	Availability agentports.ProviderAvailability `optional:"true"`
+	Plans        platformplanports.PlanService   `optional:"true"`
 }
 
 type Service struct {
-	logger     *zap.Logger
-	cfg        *config.AIConfig
-	metrics    *metrics.Registry
-	completion agentports.CompletionService
-	plans      platformplanports.PlanService
+	logger       *zap.Logger
+	cfg          *config.AIConfig
+	metrics      *metrics.Registry
+	completion   agentports.CompletionService
+	availability agentports.ProviderAvailability
+	plans        platformplanports.PlanService
 }
 
 func New(p Params) documentaiextractionports.AIDocumentService {
 	return &Service{
-		logger:     p.Logger.Named("service.ai-document"),
-		cfg:        p.Config.GetAIConfig(),
-		metrics:    p.Metrics,
-		completion: p.Completion,
-		plans:      p.Plans,
+		logger:       p.Logger.Named("service.ai-document"),
+		cfg:          p.Config.GetAIConfig(),
+		metrics:      p.Metrics,
+		completion:   p.Completion,
+		availability: p.Availability,
+		plans:        p.Plans,
 	}
+}
+
+func (s *Service) ExtractionAvailable(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	if !s.cfg.DocumentExtractionEnabled() || s.availability == nil {
+		return false, nil
+	}
+
+	allowed, err := planservice.Allows(
+		ctx,
+		s.plans,
+		tenantInfo,
+		platformplan.CapabilityDocumentIntelligence,
+	)
+	if err != nil || !allowed {
+		return false, err
+	}
+
+	return s.availability.CanServe(ctx, aiprovider.TaskDocumentExtraction, tenantInfo)
 }
 
 var errDisabled = errortypes.NewBusinessError("AI document intelligence is disabled")
@@ -70,7 +97,7 @@ func (s *Service) RouteDocument(
 		feature:    aiusage.FeatureDocumentIntelligenceRoute,
 		task:       aiprovider.TaskDocumentClassification,
 		metric:     "route",
-		system:     routeSystemPrompt,
+		system:     routePrompt(req.Pages),
 		schemaName: schemaNameRoute,
 		context:    buildRouteContext(req),
 		schema:     buildRouteSchema(),
@@ -185,7 +212,7 @@ func newExtractCall(req *documentaiextractionports.AIExtractRequest) *structured
 		feature:    aiusage.FeatureDocumentIntelligenceExtract,
 		task:       aiprovider.TaskDocumentExtraction,
 		metric:     "extract",
-		system:     extractSystemPrompt,
+		system:     extractPrompt(req.Pages),
 		schemaName: schemaNameExtract,
 		context:    buildExtractContext(req),
 		schema:     buildExtractSchema(),

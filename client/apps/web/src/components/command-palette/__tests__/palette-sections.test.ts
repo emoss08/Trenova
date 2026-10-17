@@ -497,8 +497,8 @@ describe("matching 'ai' against the real navigation", () => {
     expect(ranked[0]?.match.highlights).toEqual({ title: [[0, 2]] });
   });
 
-  it("finds Document intelligence through its keyword and says so", () => {
-    const hit = ranked.find(({ entry }) => entry.title === "Document intelligence");
+  it("finds Document extraction through its keyword and says so", () => {
+    const hit = ranked.find(({ entry }) => entry.title === "Document extraction");
 
     expect(hit?.match.via).toEqual({ label: "Keyword", text: "ai", ranges: [[0, 2]] });
   });

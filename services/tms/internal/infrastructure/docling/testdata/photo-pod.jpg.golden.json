@@ -1,0 +1,119 @@
+[
+  {
+    "Number": 1,
+    "OCR": true,
+    "Native": false,
+    "OCRConfidence": 0.9893044444444443,
+    "Width": 1500,
+    "Height": 1900,
+    "Text": "PROOF OF DELIVERY\nDelivery receipt #: VG14-88213\nLoad: RC-48213\nPO: 55318 BOL: HF-2026-10433\nConsignee: Valley Grocers #14, 88 Commerce Dr, Reno, NV 89502\nDelivered: 10/22/202607:42\nPallets   Description\n22   Packaged snack foods   Received 22   Damaged 0\nExceptions: none\nReceived by: M. Ortega\nSignature:",
+    "Markdown": "## PROOF OF DELIVERY\n\n## Delivery receipt #: VG14-88213\n\nLoad: RC-48213\n\nPO: 55318 BOL: HF-2026-10433\n\nConsignee: Valley Grocers #14, 88 Commerce Dr, Reno, NV 89502\n\nDelivered: 10/22/202607:42\n\n| Pallets | Description | Description | Description |\n| --- | --- | --- | --- |\n| 22 | Packaged snack foods | Received 22 | Damaged 0 |\n\nExceptions: none\n\nReceived by: M. Ortega\n\nSignature:",
+    "Lines": [
+      {
+        "Text": "Pallets",
+        "X": 0.2364,
+        "Y": 0.3652,
+        "W": 0.0414,
+        "H": 0.0131
+      },
+      {
+        "Text": "Description",
+        "X": 0.3097,
+        "Y": 0.3683,
+        "W": 0.065,
+        "H": 0.0146
+      },
+      {
+        "Text": "Received 22",
+        "X": 0.5628,
+        "Y": 0.3793,
+        "W": 0.0542,
+        "H": 0.0363
+      },
+      {
+        "Text": "Damaged 0",
+        "X": 0.6654,
+        "Y": 0.3829,
+        "W": 0.0548,
+        "H": 0.0353
+      },
+      {
+        "Text": "22",
+        "X": 0.2358,
+        "Y": 0.3889,
+        "W": 0.0185,
+        "H": 0.0126
+      },
+      {
+        "Text": "Packaged snack foods",
+        "X": 0.3091,
+        "Y": 0.3919,
+        "W": 0.1052,
+        "H": 0.0166
+      },
+      {
+        "Text": "Signature:",
+        "X": 0.2263,
+        "Y": 0.5164,
+        "W": 0.0688,
+        "H": 0.0176
+      },
+      {
+        "Text": "Load: RC-48213",
+        "X": 0.2364,
+        "Y": 0.2846,
+        "W": 0.0931,
+        "H": 0.0171
+      },
+      {
+        "Text": "Exceptions: none",
+        "X": 0.2307,
+        "Y": 0.4317,
+        "W": 0.0988,
+        "H": 0.0176
+      },
+      {
+        "Text": "PROOF OF DELIVERY",
+        "X": 0.3556,
+        "Y": 0.2196,
+        "W": 0.2377,
+        "H": 0.0302
+      },
+      {
+        "Text": "Received by: M. Ortega",
+        "X": 0.2282,
+        "Y": 0.4836,
+        "W": 0.1453,
+        "H": 0.0222
+      },
+      {
+        "Text": "Delivered: 10/22/202607:42",
+        "X": 0.2352,
+        "Y": 0.332,
+        "W": 0.1657,
+        "H": 0.0202
+      },
+      {
+        "Text": "PO: 55318 BOL: HF-2026-10433",
+        "X": 0.3391,
+        "Y": 0.2897,
+        "W": 0.195,
+        "H": 0.0212
+      },
+      {
+        "Text": "Delivery receipt #: VG14-88213",
+        "X": 0.2377,
+        "Y": 0.2615,
+        "W": 0.2212,
+        "H": 0.0237
+      },
+      {
+        "Text": "Consignee: Valley Grocers #14, 88 Commerce Dr, Reno, NV 89502",
+        "X": 0.2352,
+        "Y": 0.3088,
+        "W": 0.3703,
+        "H": 0.0287
+      }
+    ]
+  }
+]

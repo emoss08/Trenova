@@ -1,0 +1,13 @@
+[
+  {
+    "Number": 1,
+    "OCR": false,
+    "Native": true,
+    "OCRConfidence": 0,
+    "Width": 0,
+    "Height": 0,
+    "Text": "Northwind Freight Brokerage LLC    Load # RC-48213-B\nCarrier Rate Confirmation\nCarrier: Granite State Haulers (MC 640118)\nEquipment: 48' Flatbed with tarps\nStops\nType   Location   Date   Window\nPickup   Summit Steel, 12 Mill Rd, Nashua, NH 03060   10/23/2026   07:00-09:00\nDelivery   Coastal Builders Yard, 5 Pier St, Portland, ME 04101   10/23/2026   13:00-16:00\nCharges\nLine haul: $1,240.00\nTarp fee: $75.00\nTotal: $1,315.00\nSpecial instructions: chains and binders required; call | 555-0199 on arrival.",
+    "Markdown": "\u003c!-- page header --\u003e\nNorthwind Freight Brokerage LLC    Load # RC-48213-B\n\n## Carrier Rate Confirmation\n\nCarrier: Granite State Haulers (MC 640118)\n\nEquipment: 48' Flatbed with tarps\n\n### Stops\n\n| Type | Location | Date | Window |\n| --- | --- | --- | --- |\n| Pickup | Summit Steel, 12 Mill Rd, Nashua, NH 03060 | 10/23/2026 | 07:00-09:00 |\n| Delivery | Coastal Builders Yard, 5 Pier St, Portland, ME 04101 | 10/23/2026 | 13:00-16:00 |\n\n### Charges\n\n- Line haul: $1,240.00\n- Tarp fee: $75.00\n- Total: $1,315.00\n\nSpecial instructions: chains and binders required; call | 555-0199 on arrival.",
+    "Lines": []
+  }
+]

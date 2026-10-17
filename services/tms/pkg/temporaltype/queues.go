@@ -7,6 +7,7 @@ const (
 	TaskQueueDispatch             TaskQueue = "dispatch-queue"
 	TaskQueueBilling              TaskQueue = "billing-queue"
 	TaskQueueDocumentIntelligence TaskQueue = "document-intelligence-queue"
+	TaskQueueDocumentExtraction   TaskQueue = "document-extraction-queue"
 	TaskQueueIntegration          TaskQueue = "integration-queue"
 	TaskQueueDistanceMileage      TaskQueue = "distance-mileage-queue"
 	TaskQueueWeatherAlert         TaskQueue = "weather-alert-queue"
@@ -48,6 +49,7 @@ func (t TaskQueue) String() string {
 
 const AuditTaskQueue = string(TaskQueueAudit)
 const DocumentIntelligenceTaskQueue = string(TaskQueueDocumentIntelligence)
+const DocumentExtractionTaskQueue = string(TaskQueueDocumentExtraction)
 const ThumbnailTaskQueue = string(TaskQueueThumbnail)
 const UploadTaskQueue = string(TaskQueueUpload)
 const SMSTaskQueue = string(TaskQueueSMS)

@@ -23,7 +23,13 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { StopCircleIcon } from "@trenova/shared/components/icons";
 import { formatShare, formatUsd } from "../quality-model";
 import { RunStatusBadge } from "./extraction-badges";
-import { ACTIVE_RUN_POLL_MS, accuracyTone, isRunActive } from "./extraction-model";
+import {
+  ACTIVE_RUN_POLL_MS,
+  TEXT_SOURCE,
+  TEXT_SOURCE_DESCRIPTION,
+  accuracyTone,
+  isRunActive,
+} from "./extraction-model";
 import { FieldAccuracyTable } from "./field-accuracy-table";
 import { RunResults } from "./run-results";
 
@@ -122,6 +128,11 @@ export function RunPanel({ open, onOpenChange, row }: DataTablePanelProps<Extrac
               label={t("Model")}
               value={run.servedModel || run.providerModel || "—"}
               sub={run.providerName}
+            />
+            <KpiStripItem
+              label={t("Document text")}
+              value={TEXT_SOURCE[run.textSource]}
+              sub={TEXT_SOURCE_DESCRIPTION[run.textSource]}
             />
             <KpiStripItem
               label={t("Avg latency")}

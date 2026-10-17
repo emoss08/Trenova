@@ -53,6 +53,9 @@ type Params struct {
 	Predictor     extractionevalports.ExtractionPredictor      `optional:"true"`
 	Starter       extractionevalports.ExtractionEvalRunStarter `optional:"true"`
 	Notifications *notificationservice.Service                 `optional:"true"`
+	CasePages     extractionevalports.ExtractionEvalCasePagesRepository
+	Refreezes     extractionevalports.ExtractionEvalRefreezeStarter `optional:"true"`
+	Converter     extractionevalports.ExtractionCaseConverter       `optional:"true"`
 }
 
 type Service struct {
@@ -69,6 +72,9 @@ type Service struct {
 	budget      agentqualityports.EvaluationBudget
 	predictor   extractionevalports.ExtractionPredictor
 	starter     extractionevalports.ExtractionEvalRunStarter
+	casePages   extractionevalports.ExtractionEvalCasePagesRepository
+	refreezes   extractionevalports.ExtractionEvalRefreezeStarter
+	converter   extractionevalports.ExtractionCaseConverter
 	notifier    driftNotifier
 	now         func() int64
 }
@@ -100,6 +106,9 @@ func New(p Params) *Service {
 		budget:      p.Budget,
 		predictor:   p.Predictor,
 		starter:     p.Starter,
+		casePages:   p.CasePages,
+		refreezes:   p.Refreezes,
+		converter:   p.Converter,
 		notifier:    notifier,
 		now:         timeutils.NowUnix,
 	}
@@ -110,6 +119,8 @@ func AsService(s *Service) extractionevalports.ExtractionEvalService { return s 
 func AsRunner(s *Service) extractionevalports.ExtractionEvalRunner { return s }
 
 func AsDriftChecker(s *Service) extractionevalports.ExtractionDriftChecker { return s }
+
+func AsCaseFreezer(s *Service) extractionevalports.ExtractionEvalCaseFreezer { return s }
 
 func (s *Service) PromoteCorrection(
 	ctx context.Context,
@@ -152,7 +163,7 @@ func (s *Service) PromoteCorrection(
 		return nil, err
 	}
 
-	pages, err := s.frozenPages(ctx, doc.ID, req.TenantInfo)
+	pages, markdownPages, err := s.frozenPages(ctx, doc.ID, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +204,9 @@ func (s *Service) PromoteCorrection(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.freezeConvertedPages(ctx, created, markdownPages); err != nil {
+		return nil, err
+	}
 
 	s.logCase(
 		actor,
@@ -209,13 +223,14 @@ func (s *Service) frozenPages(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenant pagination.TenantInfo,
-) ([]extractioneval.Page, error) {
+) (pages, markdownPages []extractioneval.Page, err error) {
 	stored, err := s.contents.ListPagesByDocumentID(ctx, documentID, tenant)
 	if err != nil {
-		return nil, fmt.Errorf("read document pages: %w", err)
+		return nil, nil, fmt.Errorf("read document pages: %w", err)
 	}
 
-	pages := make([]extractioneval.Page, 0, min(len(stored), extractioneval.MaxPages))
+	pages = make([]extractioneval.Page, 0, min(len(stored), extractioneval.MaxPages))
+	markdownPages = make([]extractioneval.Page, 0)
 	for _, page := range stored {
 		if len(pages) >= extractioneval.MaxPages {
 			break
@@ -224,14 +239,63 @@ func (s *Service) frozenPages(
 			continue
 		}
 		pages = append(pages, frozenPage(page))
+		if strings.TrimSpace(page.Markdown) != "" {
+			markdownPages = append(markdownPages, extractioneval.Page{
+				Number:   page.PageNumber,
+				Text:     stringutils.TruncateRunes(page.Markdown, extractioneval.MaxPageRunes),
+				Markdown: true,
+			})
+		}
 	}
 	if len(pages) == 0 {
-		return nil, errortypes.NewBusinessError(
+		return nil, nil, errortypes.NewBusinessError(
 			"The document has no extracted text to evaluate against; re-extract it first",
 		)
 	}
 
-	return pages, nil
+	return pages, markdownPages, nil
+}
+
+func (s *Service) freezeConvertedPages(
+	ctx context.Context,
+	evalCase *extractioneval.ExtractionCase,
+	markdownPages []extractioneval.Page,
+) error {
+	if len(markdownPages) == 0 || evalCase.SourceDocumentID == nil {
+		return nil
+	}
+
+	version := ""
+	content, err := s.contents.GetByDocumentID(
+		ctx,
+		*evalCase.SourceDocumentID,
+		tenantOfCase(evalCase),
+	)
+	if err == nil {
+		version = content.ConverterVersion
+	} else if !errortypes.IsNotFoundError(err) {
+		return err
+	}
+
+	entity := extractioneval.NewCasePages(
+		evalCase,
+		extractioneval.TextSourceDocling,
+		markdownPages,
+		version,
+		evalCase.CreatedByID,
+	)
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	_, err = s.casePages.Upsert(ctx, entity)
+	return err
+}
+
+func tenantOfCase(evalCase *extractioneval.ExtractionCase) pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: evalCase.OrganizationID, BuID: evalCase.BusinessUnitID}
 }
 
 func frozenPage(page *documentcontent.Page) extractioneval.Page {

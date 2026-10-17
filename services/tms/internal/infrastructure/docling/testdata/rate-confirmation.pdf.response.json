@@ -1,0 +1,2591 @@
+{
+ "confidence": {
+  "layout_score": 0.9120609432458877,
+  "low_grade": "excellent",
+  "low_score": 0.9164578960835934,
+  "mean_grade": "excellent",
+  "mean_score": 0.9560304716229439,
+  "ocr_score": null,
+  "parse_score": 1.0,
+  "table_score": null
+ },
+ "document": {
+  "doclang_content": null,
+  "doctags_content": null,
+  "filename": "rate-confirmation.pdf",
+  "html_content": null,
+  "json_content": {
+   "body": {
+    "children": [
+     {
+      "$ref": "#/texts/0"
+     },
+     {
+      "$ref": "#/texts/1"
+     },
+     {
+      "$ref": "#/texts/2"
+     },
+     {
+      "$ref": "#/groups/0"
+     },
+     {
+      "$ref": "#/texts/6"
+     },
+     {
+      "$ref": "#/tables/0"
+     },
+     {
+      "$ref": "#/texts/7"
+     },
+     {
+      "$ref": "#/tables/1"
+     },
+     {
+      "$ref": "#/texts/8"
+     },
+     {
+      "$ref": "#/groups/1"
+     },
+     {
+      "$ref": "#/texts/15"
+     },
+     {
+      "$ref": "#/texts/16"
+     },
+     {
+      "$ref": "#/texts/17"
+     },
+     {
+      "$ref": "#/texts/18"
+     },
+     {
+      "$ref": "#/groups/2"
+     },
+     {
+      "$ref": "#/texts/21"
+     },
+     {
+      "$ref": "#/texts/22"
+     }
+    ],
+    "content_layer": "body",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/body"
+   },
+   "form_items": [],
+   "furniture": {
+    "children": [],
+    "content_layer": "furniture",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/furniture"
+   },
+   "groups": [
+    {
+     "children": [
+      {
+       "$ref": "#/texts/3"
+      },
+      {
+       "$ref": "#/texts/4"
+      },
+      {
+       "$ref": "#/texts/5"
+      }
+     ],
+     "content_layer": "body",
+     "label": "key_value_area",
+     "meta": null,
+     "name": "group",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/0"
+    },
+    {
+     "children": [
+      {
+       "$ref": "#/texts/9"
+      },
+      {
+       "$ref": "#/texts/10"
+      },
+      {
+       "$ref": "#/texts/11"
+      },
+      {
+       "$ref": "#/texts/12"
+      },
+      {
+       "$ref": "#/texts/13"
+      },
+      {
+       "$ref": "#/texts/14"
+      }
+     ],
+     "content_layer": "body",
+     "label": "list",
+     "meta": null,
+     "name": "list",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/1"
+    },
+    {
+     "children": [
+      {
+       "$ref": "#/texts/19"
+      },
+      {
+       "$ref": "#/texts/20"
+      }
+     ],
+     "content_layer": "body",
+     "label": "form_area",
+     "meta": null,
+     "name": "group",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/2"
+    }
+   ],
+   "key_value_items": [],
+   "name": "rate-confirmation",
+   "origin": {
+    "binary_hash": 4422032266295608078,
+    "filename": "rate-confirmation.pdf",
+    "mimetype": "application/pdf",
+    "uri": null
+   },
+   "pages": {
+    "1": {
+     "image": null,
+     "page_no": 1,
+     "size": {
+      "height": 792.0,
+      "width": 612.0
+     }
+    },
+    "2": {
+     "image": null,
+     "page_no": 2,
+     "size": {
+      "height": 792.0,
+      "width": 612.0
+     }
+    }
+   },
+   "pictures": [],
+   "schema_name": "DoclingDocument",
+   "tables": [
+    {
+     "annotations": [],
+     "captions": [],
+     "children": [],
+     "content_layer": "body",
+     "data": {
+      "grid": [
+       [
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 60.0,
+          "r": 64.44800000000001,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 0,
+         "text": "#"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 81.6,
+          "r": 100.27199999999999,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 0,
+         "text": "Type"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 132.0,
+          "r": 159.56800000000004,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 0,
+         "text": "Facility"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 225.6,
+          "r": 257.60800000000006,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 0,
+         "text": "Address"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 384.0,
+          "r": 401.33599999999996,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 5,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 4,
+         "start_row_offset_idx": 0,
+         "text": "Date"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 441.6,
+          "r": 472.26399999999995,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 6,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 5,
+         "start_row_offset_idx": 0,
+         "text": "Window"
+        },
+        {
+         "bbox": {
+          "b": 195.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 506.4,
+          "r": 519.288,
+          "t": 188.05599999999993
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 7,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 6,
+         "start_row_offset_idx": 0,
+         "text": "Ref"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 60.0,
+          "r": 64.44800000000001,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 1,
+         "text": "1"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 81.6,
+          "r": 105.608,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 1,
+         "text": "Pickup"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 132.0,
+          "r": 197.79200000000003,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 1,
+         "text": "Harvest Foods DC"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 225.6,
+          "r": 368.77599999999984,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 1,
+         "text": "4410 Industrial Pkwy, Fresno, CA 93725"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 384.0,
+          "r": 424.0319999999998,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 5,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 4,
+         "start_row_offset_idx": 1,
+         "text": "10/21/2026"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 441.6,
+          "r": 484.2959999999998,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 6,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 5,
+         "start_row_offset_idx": 1,
+         "text": "08:00-12:00"
+        },
+        {
+         "bbox": {
+          "b": 213.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 506.4,
+          "r": 541.9759999999999,
+          "t": 206.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 7,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 6,
+         "start_row_offset_idx": 1,
+         "text": "PU 77120"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 60.0,
+          "r": 64.44800000000001,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 2,
+         "text": "2"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 81.6,
+          "r": 110.48800000000001,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 2,
+         "text": "Delivery"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 132.0,
+          "r": 200.02400000000003,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 2,
+         "text": "Valley Grocers #14"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 225.6,
+          "r": 350.08799999999985,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 2,
+         "text": "88 Commerce Dr, Reno, NV 89502"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 384.0,
+          "r": 424.0319999999998,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 5,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 4,
+         "start_row_offset_idx": 2,
+         "text": "10/22/2026"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 441.6,
+          "r": 484.2959999999998,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 6,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 5,
+         "start_row_offset_idx": 2,
+         "text": "06:00-10:00"
+        },
+        {
+         "bbox": {
+          "b": 231.4559999999999,
+          "coord_origin": "TOPLEFT",
+          "l": 506.4,
+          "r": 542.4239999999999,
+          "t": 224.05599999999993
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 7,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 6,
+         "start_row_offset_idx": 2,
+         "text": "PO 55318"
+        }
+       ]
+      ],
+      "num_cols": 7,
+      "num_rows": 3,
+      "orientation": "rot_0",
+      "table_cells": [
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 60.0,
+         "r": 64.44800000000001,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 0,
+        "text": "#"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 81.6,
+         "r": 100.27199999999999,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 0,
+        "text": "Type"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 132.0,
+         "r": 159.56800000000004,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 0,
+        "text": "Facility"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 225.6,
+         "r": 257.60800000000006,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 0,
+        "text": "Address"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 384.0,
+         "r": 401.33599999999996,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 5,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 4,
+        "start_row_offset_idx": 0,
+        "text": "Date"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 441.6,
+         "r": 472.26399999999995,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 6,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 5,
+        "start_row_offset_idx": 0,
+        "text": "Window"
+       },
+       {
+        "bbox": {
+         "b": 195.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 506.4,
+         "r": 519.288,
+         "t": 188.05599999999993
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 7,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 6,
+        "start_row_offset_idx": 0,
+        "text": "Ref"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 60.0,
+         "r": 64.44800000000001,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 1,
+        "text": "1"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 81.6,
+         "r": 105.608,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 1,
+        "text": "Pickup"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 132.0,
+         "r": 197.79200000000003,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 1,
+        "text": "Harvest Foods DC"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 225.6,
+         "r": 368.77599999999984,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 1,
+        "text": "4410 Industrial Pkwy, Fresno, CA 93725"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 384.0,
+         "r": 424.0319999999998,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 5,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 4,
+        "start_row_offset_idx": 1,
+        "text": "10/21/2026"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 441.6,
+         "r": 484.2959999999998,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 6,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 5,
+        "start_row_offset_idx": 1,
+        "text": "08:00-12:00"
+       },
+       {
+        "bbox": {
+         "b": 213.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 506.4,
+         "r": 541.9759999999999,
+         "t": 206.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 7,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 6,
+        "start_row_offset_idx": 1,
+        "text": "PU 77120"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 60.0,
+         "r": 64.44800000000001,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 2,
+        "text": "2"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 81.6,
+         "r": 110.48800000000001,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 2,
+        "text": "Delivery"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 132.0,
+         "r": 200.02400000000003,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 2,
+        "text": "Valley Grocers #14"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 225.6,
+         "r": 350.08799999999985,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 2,
+        "text": "88 Commerce Dr, Reno, NV 89502"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 384.0,
+         "r": 424.0319999999998,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 5,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 4,
+        "start_row_offset_idx": 2,
+        "text": "10/22/2026"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 441.6,
+         "r": 484.2959999999998,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 6,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 5,
+        "start_row_offset_idx": 2,
+        "text": "06:00-10:00"
+       },
+       {
+        "bbox": {
+         "b": 231.4559999999999,
+         "coord_origin": "TOPLEFT",
+         "l": 506.4,
+         "r": 542.4239999999999,
+         "t": 224.05599999999993
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 7,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 6,
+        "start_row_offset_idx": 2,
+        "text": "PO 55318"
+       }
+      ]
+     },
+     "footnotes": [],
+     "image": null,
+     "label": "table",
+     "meta": null,
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 554.6347961425781,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 52.957820892333984,
+        "r": 558.8382568359375,
+        "t": 610.4905853271484
+       },
+       "charspan": [
+        0,
+        0
+       ],
+       "page_no": 1
+      }
+     ],
+     "references": [],
+     "self_ref": "#/tables/0"
+    },
+    {
+     "annotations": [],
+     "captions": [],
+     "children": [],
+     "content_layer": "body",
+     "data": {
+      "grid": [
+       [
+        {
+         "bbox": {
+          "b": 297.456,
+          "coord_origin": "TOPLEFT",
+          "l": 110.4,
+          "r": 154.40800000000002,
+          "t": 290.05600000000004
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 0,
+         "text": "Description"
+        },
+        {
+         "bbox": {
+          "b": 297.456,
+          "coord_origin": "TOPLEFT",
+          "l": 297.6,
+          "r": 310.936,
+          "t": 290.05600000000004
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 0,
+         "text": "Qty"
+        },
+        {
+         "bbox": {
+          "b": 297.456,
+          "coord_origin": "TOPLEFT",
+          "l": 340.8,
+          "r": 358.136,
+          "t": 290.05600000000004
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 0,
+         "text": "Rate"
+        },
+        {
+         "bbox": {
+          "b": 297.456,
+          "coord_origin": "TOPLEFT",
+          "l": 427.20000000000005,
+          "r": 457.41599999999994,
+          "t": 290.05600000000004
+         },
+         "col_span": 1,
+         "column_header": true,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 0,
+         "text": "Amount"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 315.456,
+          "coord_origin": "TOPLEFT",
+          "l": 110.4,
+          "r": 142.864,
+          "t": 308.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 1,
+         "text": "Line haul"
+        },
+        {
+         "bbox": {
+          "b": 315.456,
+          "coord_origin": "TOPLEFT",
+          "l": 297.6,
+          "r": 302.048,
+          "t": 308.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 1,
+         "text": "1"
+        },
+        {
+         "bbox": {
+          "b": 315.456,
+          "coord_origin": "TOPLEFT",
+          "l": 340.8,
+          "r": 376.3839999999999,
+          "t": 308.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 1,
+         "text": "$1,850.00"
+        },
+        {
+         "bbox": {
+          "b": 315.456,
+          "coord_origin": "TOPLEFT",
+          "l": 427.20000000000005,
+          "r": 462.7839999999999,
+          "t": 308.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 1,
+         "text": "$1,850.00"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 333.456,
+          "coord_origin": "TOPLEFT",
+          "l": 110.4,
+          "r": 163.752,
+          "t": 326.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 2,
+         "text": "Fuel surcharge"
+        },
+        {
+         "bbox": {
+          "b": 333.456,
+          "coord_origin": "TOPLEFT",
+          "l": 297.6,
+          "r": 302.048,
+          "t": 326.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 2,
+         "text": "1"
+        },
+        {
+         "bbox": {
+          "b": 333.456,
+          "coord_origin": "TOPLEFT",
+          "l": 340.8,
+          "r": 369.712,
+          "t": 326.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 2,
+         "text": "$212.75"
+        },
+        {
+         "bbox": {
+          "b": 333.456,
+          "coord_origin": "TOPLEFT",
+          "l": 427.20000000000005,
+          "r": 456.11199999999985,
+          "t": 326.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 3,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 2,
+         "text": "$212.75"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 351.456,
+          "coord_origin": "TOPLEFT",
+          "l": 110.4,
+          "r": 188.208,
+          "t": 344.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 4,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 3,
+         "text": "Detention (after 2 hrs)"
+        },
+        {
+         "bbox": {
+          "b": 351.456,
+          "coord_origin": "TOPLEFT",
+          "l": 297.6,
+          "r": 302.048,
+          "t": 344.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 4,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 3,
+         "text": "0"
+        },
+        {
+         "bbox": {
+          "b": 351.456,
+          "coord_origin": "TOPLEFT",
+          "l": 340.8,
+          "r": 374.5999999999999,
+          "t": 344.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 4,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 3,
+         "text": "$50.00/hr"
+        },
+        {
+         "bbox": {
+          "b": 351.456,
+          "coord_origin": "TOPLEFT",
+          "l": 427.20000000000005,
+          "r": 447.2159999999999,
+          "t": 344.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 4,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 3,
+         "text": "$0.00"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 369.456,
+          "coord_origin": "TOPLEFT",
+          "l": 110.4,
+          "r": 128.184,
+          "t": 362.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 5,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 4,
+         "text": "Total"
+        },
+        {
+         "bbox": null,
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 5,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 4,
+         "text": ""
+        },
+        {
+         "bbox": null,
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 5,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 4,
+         "text": ""
+        },
+        {
+         "bbox": {
+          "b": 369.456,
+          "coord_origin": "TOPLEFT",
+          "l": 427.20000000000005,
+          "r": 462.7839999999999,
+          "t": 362.05600000000004
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 5,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 4,
+         "text": "$2,062.75"
+        }
+       ]
+      ],
+      "num_cols": 4,
+      "num_rows": 5,
+      "orientation": "rot_0",
+      "table_cells": [
+       {
+        "bbox": {
+         "b": 297.456,
+         "coord_origin": "TOPLEFT",
+         "l": 110.4,
+         "r": 154.40800000000002,
+         "t": 290.05600000000004
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 0,
+        "text": "Description"
+       },
+       {
+        "bbox": {
+         "b": 297.456,
+         "coord_origin": "TOPLEFT",
+         "l": 297.6,
+         "r": 310.936,
+         "t": 290.05600000000004
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 0,
+        "text": "Qty"
+       },
+       {
+        "bbox": {
+         "b": 297.456,
+         "coord_origin": "TOPLEFT",
+         "l": 340.8,
+         "r": 358.136,
+         "t": 290.05600000000004
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 0,
+        "text": "Rate"
+       },
+       {
+        "bbox": {
+         "b": 297.456,
+         "coord_origin": "TOPLEFT",
+         "l": 427.20000000000005,
+         "r": 457.41599999999994,
+         "t": 290.05600000000004
+        },
+        "col_span": 1,
+        "column_header": true,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 0,
+        "text": "Amount"
+       },
+       {
+        "bbox": {
+         "b": 315.456,
+         "coord_origin": "TOPLEFT",
+         "l": 110.4,
+         "r": 142.864,
+         "t": 308.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 1,
+        "text": "Line haul"
+       },
+       {
+        "bbox": {
+         "b": 315.456,
+         "coord_origin": "TOPLEFT",
+         "l": 297.6,
+         "r": 302.048,
+         "t": 308.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 1,
+        "text": "1"
+       },
+       {
+        "bbox": {
+         "b": 315.456,
+         "coord_origin": "TOPLEFT",
+         "l": 340.8,
+         "r": 376.3839999999999,
+         "t": 308.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 1,
+        "text": "$1,850.00"
+       },
+       {
+        "bbox": {
+         "b": 315.456,
+         "coord_origin": "TOPLEFT",
+         "l": 427.20000000000005,
+         "r": 462.7839999999999,
+         "t": 308.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 1,
+        "text": "$1,850.00"
+       },
+       {
+        "bbox": {
+         "b": 333.456,
+         "coord_origin": "TOPLEFT",
+         "l": 110.4,
+         "r": 163.752,
+         "t": 326.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 2,
+        "text": "Fuel surcharge"
+       },
+       {
+        "bbox": {
+         "b": 333.456,
+         "coord_origin": "TOPLEFT",
+         "l": 297.6,
+         "r": 302.048,
+         "t": 326.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 2,
+        "text": "1"
+       },
+       {
+        "bbox": {
+         "b": 333.456,
+         "coord_origin": "TOPLEFT",
+         "l": 340.8,
+         "r": 369.712,
+         "t": 326.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 2,
+        "text": "$212.75"
+       },
+       {
+        "bbox": {
+         "b": 333.456,
+         "coord_origin": "TOPLEFT",
+         "l": 427.20000000000005,
+         "r": 456.11199999999985,
+         "t": 326.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 3,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 2,
+        "text": "$212.75"
+       },
+       {
+        "bbox": {
+         "b": 351.456,
+         "coord_origin": "TOPLEFT",
+         "l": 110.4,
+         "r": 188.208,
+         "t": 344.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 4,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 3,
+        "text": "Detention (after 2 hrs)"
+       },
+       {
+        "bbox": {
+         "b": 351.456,
+         "coord_origin": "TOPLEFT",
+         "l": 297.6,
+         "r": 302.048,
+         "t": 344.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 4,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 3,
+        "text": "0"
+       },
+       {
+        "bbox": {
+         "b": 351.456,
+         "coord_origin": "TOPLEFT",
+         "l": 340.8,
+         "r": 374.5999999999999,
+         "t": 344.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 4,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 3,
+        "text": "$50.00/hr"
+       },
+       {
+        "bbox": {
+         "b": 351.456,
+         "coord_origin": "TOPLEFT",
+         "l": 427.20000000000005,
+         "r": 447.2159999999999,
+         "t": 344.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 4,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 3,
+        "text": "$0.00"
+       },
+       {
+        "bbox": {
+         "b": 369.456,
+         "coord_origin": "TOPLEFT",
+         "l": 110.4,
+         "r": 128.184,
+         "t": 362.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 5,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 4,
+        "text": "Total"
+       },
+       {
+        "bbox": {
+         "b": 369.456,
+         "coord_origin": "TOPLEFT",
+         "l": 427.20000000000005,
+         "r": 462.7839999999999,
+         "t": 362.05600000000004
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 5,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 4,
+        "text": "$2,062.75"
+       }
+      ]
+     },
+     "footnotes": [],
+     "image": null,
+     "label": "table",
+     "meta": null,
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 416.4580993652344,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 103.33480072021484,
+        "r": 508.4381103515625,
+        "t": 508.1165771484375
+       },
+       "charspan": [
+        0,
+        0
+       ],
+       "page_no": 1
+      }
+     ],
+     "references": [],
+     "self_ref": "#/tables/1"
+    }
+   ],
+   "texts": [
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_header",
+     "meta": null,
+     "orig": "Northwind Freight Brokerage LLC",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 757.737,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 54.0,
+        "r": 198.51299999999995,
+        "t": 766.062
+       },
+       "charspan": [
+        0,
+        31
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/0",
+     "text": "Northwind Freight Brokerage LLC"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_header",
+     "meta": null,
+     "orig": "Load # RC-48213",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 757.737,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 485.478,
+        "r": 558.0000000000002,
+        "t": 766.062
+       },
+       "charspan": [
+        0,
+        15
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/1",
+     "text": "Load # RC-48213"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "Carrier Rate Confirmation",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 699.474,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 195.984,
+        "r": 416.01600000000013,
+        "t": 716.124
+       },
+       "charspan": [
+        0,
+        25
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/2",
+     "text": "Carrier Rate Confirmation"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Carrier: Blue Ridge Transport Inc. (MC 711204, DOT 2290431)",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 681.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 338.99,
+        "t": 690.38
+       },
+       "charspan": [
+        0,
+        59
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/3",
+     "text": "Carrier: Blue Ridge Transport Inc. (MC 711204, DOT 2290431)"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Dispatcher: Dana Whitfield, (555) 014-2290",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 669.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 252.30000000000007,
+        "t": 678.38
+       },
+       "charspan": [
+        0,
+        42
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/4",
+     "text": "Dispatcher: Dana Whitfield, (555) 014-2290"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Equipment: 53' Dry Van | Weight: 38,450 lbs | Commodity: Packaged snacks",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 657.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 399.23,
+        "t": 666.38
+       },
+       "charspan": [
+        0,
+        72
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/5",
+     "text": "Equipment: 53' Dry Van | Weight: 38,450 lbs | Commodity: Packaged snacks"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "Stops",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 616.302,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 98.892,
+        "t": 629.2520000000001
+       },
+       "charspan": [
+        0,
+        5
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/6",
+     "text": "Stops"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "Charges",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 514.302,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 116.014,
+        "t": 527.2520000000001
+       },
+       "charspan": [
+        0,
+        7
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/7",
+     "text": "Charges"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "Terms and conditions",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 370.30199999999996,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 205.474,
+        "t": 383.252
+       },
+       "charspan": [
+        0,
+        20
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/8",
+     "text": "Terms and conditions"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "1.",
+     "meta": null,
+     "orig": "1. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 315.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 360.38
+       },
+       "charspan": [
+        0,
+        389
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/9",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "2.",
+     "meta": null,
+     "orig": "2. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 261.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 306.38
+       },
+       "charspan": [
+        0,
+        389
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/10",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "3.",
+     "meta": null,
+     "orig": "3. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 207.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 252.38
+       },
+       "charspan": [
+        0,
+        389
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/11",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "4.",
+     "meta": null,
+     "orig": "4. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 153.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 198.38
+       },
+       "charspan": [
+        0,
+        389
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/12",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "5.",
+     "meta": null,
+     "orig": "5. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 99.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 144.38
+       },
+       "charspan": [
+        0,
+        389
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/13",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "enumerated": true,
+     "formatting": null,
+     "hyperlink": null,
+     "label": "list_item",
+     "marker": "6.",
+     "meta": null,
+     "orig": "6. Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is",
+     "parent": {
+      "$ref": "#/groups/1"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 69.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 516.8599999999999,
+        "t": 90.38
+       },
+       "charspan": [
+        0,
+        209
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/14",
+     "text": "Carrier agrees to transport the shipment described above under the broker-carrier agreement on file. Payment terms are net 30 days from receipt of a signed bill of lading and this confirmation. Quick pay is"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_footer",
+     "meta": null,
+     "orig": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 34.34400000000005,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 54.0,
+        "r": 238.83200000000008,
+        "t": 41.74400000000003
+       },
+       "charspan": [
+        0,
+        46
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/15",
+     "text": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_footer",
+     "meta": null,
+     "orig": "Page 1 of 2",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 34.34400000000005,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 517.08,
+        "r": 558.0000000000001,
+        "t": 41.74400000000003
+       },
+       "charspan": [
+        0,
+        11
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/16",
+     "text": "Page 1 of 2"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_header",
+     "meta": null,
+     "orig": "Northwind Freight Brokerage LLC",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 757.737,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 54.0,
+        "r": 198.51299999999995,
+        "t": 766.062
+       },
+       "charspan": [
+        0,
+        31
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/17",
+     "text": "Northwind Freight Brokerage LLC"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_header",
+     "meta": null,
+     "orig": "Load # RC-48213",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 757.737,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 485.478,
+        "r": 558.0000000000002,
+        "t": 766.062
+       },
+       "charspan": [
+        0,
+        15
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/18",
+     "text": "Load # RC-48213"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment.",
+     "parent": {
+      "$ref": "#/groups/2"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 697.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 527.4200000000001,
+        "t": 718.38
+       },
+       "charspan": [
+        0,
+        179
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/19",
+     "text": "available at 2% with a 48-hour turnaround. Carrier must call in at pickup and delivery and report any delay longer than one hour. Double brokering is prohibited and voids payment."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Accepted by carrier: ______________________ Date: __________",
+     "parent": {
+      "$ref": "#/groups/2"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 661.13,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 60.0,
+        "r": 359.0800000000001,
+        "t": 670.38
+       },
+       "charspan": [
+        0,
+        60
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/20",
+     "text": "Accepted by carrier: ______________________ Date: __________"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_footer",
+     "meta": null,
+     "orig": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 34.34400000000005,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 54.0,
+        "r": 238.83200000000008,
+        "t": 41.74400000000003
+       },
+       "charspan": [
+        0,
+        46
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/21",
+     "text": "MC 900123 | 1200 Harbor Way, Oakland, CA 94607"
+    },
+    {
+     "children": [],
+     "content_layer": "furniture",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "page_footer",
+     "meta": null,
+     "orig": "Page 2 of 2",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 34.34400000000005,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 517.08,
+        "r": 558.0000000000001,
+        "t": 41.74400000000003
+       },
+       "charspan": [
+        0,
+        11
+       ],
+       "page_no": 2
+      }
+     ],
+     "self_ref": "#/texts/22",
+     "text": "Page 2 of 2"
+    }
+   ],
+   "version": "1.10.0"
+  },
+  "md_content": null,
+  "text_content": null
+ },
+ "errors": [],
+ "processing_time": 19.343229039000107,
+ "status": "success",
+ "timings": {}
+}

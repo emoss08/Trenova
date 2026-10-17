@@ -1,0 +1,206 @@
+{
+ "confidence": {
+  "layout_score": null,
+  "low_grade": "unspecified",
+  "low_score": null,
+  "mean_grade": "unspecified",
+  "mean_score": null,
+  "ocr_score": null,
+  "parse_score": null,
+  "table_score": null
+ },
+ "document": {
+  "doclang_content": null,
+  "doctags_content": null,
+  "filename": "load-tender.eml",
+  "html_content": null,
+  "json_content": {
+   "body": {
+    "children": [
+     {
+      "$ref": "#/texts/0"
+     },
+     {
+      "$ref": "#/texts/1"
+     },
+     {
+      "$ref": "#/texts/2"
+     },
+     {
+      "$ref": "#/texts/3"
+     },
+     {
+      "$ref": "#/texts/4"
+     },
+     {
+      "$ref": "#/texts/5"
+     },
+     {
+      "$ref": "#/texts/6"
+     },
+     {
+      "$ref": "#/texts/7"
+     }
+    ],
+    "content_layer": "body",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/body"
+   },
+   "form_items": [],
+   "furniture": {
+    "children": [],
+    "content_layer": "furniture",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/furniture"
+   },
+   "groups": [],
+   "key_value_items": [],
+   "name": "load-tender",
+   "origin": {
+    "binary_hash": 10302083588627175514,
+    "filename": "load-tender.eml",
+    "mimetype": "message/rfc822",
+    "uri": null
+   },
+   "pages": {},
+   "pictures": [],
+   "schema_name": "DoclingDocument",
+   "tables": [],
+   "texts": [
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "title",
+     "meta": null,
+     "orig": "Load tender RC-48213 Fresno CA to Reno NV",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/0",
+     "text": "Load tender RC-48213 Fresno CA to Reno NV"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "From: Dana Whitfield <dana@northwind-freight.example>",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/1",
+     "text": "From: Dana Whitfield <dana@northwind-freight.example>"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "To: dispatch@blueridge-transport.example",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/2",
+     "text": "To: dispatch@blueridge-transport.example"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Date: 2026-10-20T15:30:00+00:00",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/3",
+     "text": "Date: 2026-10-20T15:30:00+00:00"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Hi team,",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/4",
+     "text": "Hi team,"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Please confirm load RC-48213.",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/5",
+     "text": "Please confirm load RC-48213."
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Pickup: Harvest Foods DC, Fresno, CA on 10/21/2026 08:00-12:00\nDelivery: Valley Grocers #14, Reno, NV on 10/22/2026 06:00-10:00\nRate: $2,062.75 all in",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/6",
+     "text": "Pickup: Harvest Foods DC, Fresno, CA on 10/21/2026 08:00-12:00\nDelivery: Valley Grocers #14, Reno, NV on 10/22/2026 06:00-10:00\nRate: $2,062.75 all in"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Thanks,\nDana",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [],
+     "self_ref": "#/texts/7",
+     "text": "Thanks,\nDana"
+    }
+   ],
+   "version": "1.10.0"
+  },
+  "md_content": null,
+  "text_content": null
+ },
+ "errors": [],
+ "processing_time": 0.006326082999976279,
+ "status": "success",
+ "timings": {}
+}

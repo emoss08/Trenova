@@ -157,3 +157,20 @@ type ExtractionEvalResultRepository interface {
 		req *ListExtractionEvalResultConnectionRequest,
 	) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error)
 }
+
+type GetExtractionEvalCasePagesRequest struct {
+	TenantInfo pagination.TenantInfo
+	CaseID     pulid.ID
+	TextSource extractioneval.TextSource
+}
+
+type ExtractionEvalCasePagesRepository interface {
+	Upsert(
+		ctx context.Context,
+		entity *extractioneval.CasePages,
+	) (*extractioneval.CasePages, error)
+	Get(
+		ctx context.Context,
+		req *GetExtractionEvalCasePagesRequest,
+	) (*extractioneval.CasePages, error)
+}

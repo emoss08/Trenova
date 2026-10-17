@@ -63,3 +63,17 @@ type RolloutAssignmentRepository interface {
 	) ([]RolloutAssignmentTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeRolloutAssignmentsRequest) (int64, error)
 }
+
+type RolloutExclusionTotal struct {
+	Reason extractionrollout.ExclusionReason `bun:"reason"`
+	Count  int                               `bun:"count"`
+}
+
+type RolloutExclusionRepository interface {
+	Record(ctx context.Context, entity *extractionrollout.RolloutExclusion) error
+	Totals(
+		ctx context.Context,
+		req TotalRolloutAssignmentsRequest,
+	) ([]RolloutExclusionTotal, error)
+	PurgeBefore(ctx context.Context, req PurgeRolloutAssignmentsRequest) (int64, error)
+}

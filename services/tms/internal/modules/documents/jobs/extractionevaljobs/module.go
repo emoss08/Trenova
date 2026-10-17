@@ -3,7 +3,7 @@ package extractionevaljobs
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
@@ -32,12 +32,22 @@ type RegistryParams struct {
 	Logger     *zap.Logger
 }
 
+func NewDrainingRegistry(p RegistryParams) registry.WorkerRegistry {
+	return documentextractionjobs.DrainingRegistry(
+		"extraction-eval-worker",
+		p.Activities,
+		workflows(),
+		p.Config,
+		p.Logger,
+	)
+}
+
 func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 	return registry.NewDomainRegistry(
 		&registry.DomainConfig{
 			Name:         "extraction-eval-worker",
-			TaskQueue:    temporaltype.DocumentIntelligenceTaskQueue,
-			WorkerConfig: documentintelligencejobs.QueueWorkerConfig(p.Config),
+			TaskQueue:    temporaltype.DocumentExtractionTaskQueue,
+			WorkerConfig: documentextractionjobs.QueueWorkerConfig(p.Config),
 		},
 		p.Activities,
 		workflows(),
@@ -51,9 +61,16 @@ var Module = fx.Module("extraction-eval-jobs",
 		NewPredictor,
 		func(p *Predictor) extractionevalports.ExtractionPredictor { return p },
 	),
-	fx.Provide(fx.Annotate(
-		NewRegistry,
-		fx.As(new(registry.WorkerRegistry)),
-		fx.ResultTags(`group:"worker_registries"`),
-	)),
+	fx.Provide(
+		fx.Annotate(
+			NewRegistry,
+			fx.As(new(registry.WorkerRegistry)),
+			fx.ResultTags(`group:"worker_registries"`),
+		),
+		fx.Annotate(
+			NewDrainingRegistry,
+			fx.As(new(registry.WorkerRegistry)),
+			fx.ResultTags(`group:"worker_registries"`),
+		),
+	),
 )

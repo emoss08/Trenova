@@ -16771,11 +16771,13 @@
     ]
   },
   "Add an AI provider": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other"
     ]
   },
@@ -30262,6 +30264,24 @@
       "routes/inbox"
     ]
   },
+  "Ask an administrator to add an AI provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Ask an administrator to configure the document converter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask an agent in Desk": {
     "sites": 2,
     "scope": [
@@ -41593,7 +41613,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 143,
+    "sites": 145,
     "scope": [
       "go"
     ],
@@ -43680,7 +43700,7 @@
     ]
   },
   "Candidate is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -46337,6 +46357,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Case is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Case score": {
@@ -50634,6 +50663,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose one of the listed resolution codes": {
@@ -57703,15 +57741,6 @@
       "routes/location"
     ]
   },
-  "Configure OCR, classification, extraction, and shipment draft behavior": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.": {
     "sites": 1,
     "scope": [
@@ -57818,6 +57847,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Configure how documents are read, classified, extracted, and drafted into shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.": {
@@ -60414,7 +60452,7 @@
       "routes/customer"
     ]
   },
-  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
+  "Control whether document extraction is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -60858,6 +60896,15 @@
       "routes/billing-queue"
     ]
   },
+  "Convert each evaluation case's original file through Docling and freeze the pages beside the case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Convert text to lowercase.": {
     "sites": 1,
     "scope": [
@@ -60895,6 +60942,24 @@
     ]
   },
   "Converted amount is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Converter is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Converter version cannot be longer than 40 characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -79672,6 +79737,52 @@
       "apps/web/components"
     ]
   },
+  "Docling": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Docling re-conversion": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Docs": {
     "sites": 1,
     "scope": [
@@ -79972,14 +80083,17 @@
     ]
   },
   "Document extraction": {
-    "sites": 3,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "api/handlers",
+      "apps/web/components",
+      "apps/web/config",
       "apps/web/lib",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -79990,6 +80104,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Document extraction settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Document extraction view": {
@@ -80008,27 +80131,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Document intelligence": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "apps/web/config",
-      "apps/web/lib",
-      "routes/admin"
-    ]
-  },
-  "Document intelligence and OCR settings": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document intelligence finished extracting a document's contents.": {
@@ -80059,7 +80161,7 @@
     ]
   },
   "Document is required": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -80343,12 +80445,13 @@
     ]
   },
   "Document text": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -85490,6 +85593,24 @@
       "routes/dispatch-control"
     ]
   },
+  "Each case's pages as first frozen, read by the legacy engine.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each check reads this organization's own records as they are now. Check again after a change to see it reflected.": {
     "sites": 1,
     "scope": [
@@ -89183,7 +89304,7 @@
       "routes/admin"
     ]
   },
-  "Enable document intelligence": {
+  "Enable document extraction": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98941,8 +99062,35 @@
       "routes/agent-control"
     ]
   },
+  "Extraction engine": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Extraction engine is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Extraction engine must be Legacy or Docling": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Extraction evaluations cannot run on this installation": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -98969,6 +99117,15 @@
       "routes/shipment"
     ]
   },
+  "Extraction is not set up on this server": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Extraction is still in progress.": {
     "sites": 1,
     "scope": [
@@ -98976,6 +99133,16 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Extraction needs a model provider": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "Extraction source": {
@@ -98997,7 +99164,7 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -107865,6 +108032,15 @@
       "go/other"
     ]
   },
+  "Freeze at most {0} cases at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Freight": {
     "sites": 15,
     "scope": [
@@ -108620,6 +108796,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Frozen by is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fuel": {
@@ -121477,7 +121662,7 @@
       "routes/edi"
     ]
   },
-  "Inspect document intelligence": {
+  "Inspect document extraction": {
     "sites": 1,
     "scope": [
       "ts"
@@ -132656,6 +132841,16 @@
       "routes/dispatch-console"
     ]
   },
+  "Legacy": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/agent-control"
+    ]
+  },
   "Legacy exact matches": {
     "sites": 1,
     "scope": [
@@ -141811,7 +142006,7 @@
       "go/other"
     ]
   },
-  "Master switch for OCR, document classification, extraction, and indexing workflows.": {
+  "Master switch for reading, classifying, extracting, and indexing uploaded documents.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -152464,6 +152659,15 @@
       "apps/web/components"
     ]
   },
+  "No AI provider can read documents for your organization, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No AI provider is configured for the formula assistant": {
     "sites": 1,
     "scope": [
@@ -160969,6 +161173,15 @@
       "routes/desk"
     ]
   },
+  "None of these cases has an original document to read again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "None of these courses could be assigned: {0}": {
     "sites": 1,
     "scope": [
@@ -169441,6 +169654,15 @@
       "routes/billing-queue"
     ]
   },
+  "Only Docling pages are frozen beside a case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only Draft and Published versions are available for simulation.": {
     "sites": 1,
     "scope": [
@@ -176081,7 +176303,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 142,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -188342,15 +188564,6 @@
       "go/other"
     ]
   },
-  "Poll pending OpenAI background extraction jobs": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Polygon": {
     "sites": 1,
     "scope": [
@@ -198525,6 +198738,42 @@
       "routes/admin"
     ]
   },
+  "Re-conversion progress": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Re-convert cases with Docling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Re-converting cases with Docling: {0} of {1, plural, one {# case} other {# cases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Re-drive stale document extraction jobs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Re-drive stale document intelligence jobs": {
     "sites": 1,
     "scope": [
@@ -198947,6 +199196,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Read a document with its organization's extraction engine, then classify and extract it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read a web page": {
     "sites": 2,
     "scope": [
@@ -199046,6 +199304,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Read documents with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.": {
@@ -199247,6 +199514,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Read text from scanned pages, photos, and faxes that carry no text of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Read the board": {
@@ -201974,7 +202250,7 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Reconcile stale document intelligence jobs": {
+  "Reconcile stale document extraction jobs": {
     "sites": 1,
     "scope": [
       "go"
@@ -217423,15 +217699,6 @@
       "routes/admin"
     ]
   },
-  "Run OCR when native text extraction is unavailable or insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.": {
     "sites": 1,
     "scope": [
@@ -217533,7 +217800,7 @@
     ]
   },
   "Run asynchronous AI extraction for an indexed document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -249327,6 +249594,15 @@
       "go/other"
     ]
   },
+  "Text source is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Text strings that mark the beginning of this section": {
     "sites": 1,
     "scope": [
@@ -252123,6 +252399,15 @@
       "routes/agent-control"
     ]
   },
+  "The candidate is not sent documents read by Docling until it is retrained on Docling's output. Production reads them, and they count for neither side.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The candidate read fewer fields right than production": {
     "sites": 1,
     "scope": [
@@ -254582,7 +254867,25 @@
       "go/other"
     ]
   },
+  "The document converter is not configured, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The document has no extracted text to evaluate against; re-extract it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The document has no readable pages": {
     "sites": 1,
     "scope": [
       "go"
@@ -256067,6 +256370,15 @@
       "routes/agent-control"
     ]
   },
+  "The file is stored, but no AI provider can read documents for your organization, so no shipment draft was built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The file is too large to split": {
     "sites": 1,
     "scope": [
@@ -257427,6 +257739,24 @@
       "routes/desk"
     ]
   },
+  "The last re-conversion with Docling finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The last re-conversion with Docling stopped before it finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The last read of {0} failed: {1}": {
     "sites": 1,
     "scope": [
@@ -257506,6 +257836,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The legs and charges of a {0} order cannot be modified": {
@@ -312392,6 +312731,15 @@
       "apps/web/lib"
     ]
   },
+  "{0, plural, one {# case} other {# cases}} asked for: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# cell can't be edited} other {# cells can't be edited}}": {
     "sites": 1,
     "scope": [
@@ -312963,6 +313311,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# document excluded: read by Docling} other {# documents excluded: read by Docling}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# document on file} other {# documents on file}}": {
@@ -325183,6 +325540,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} re-converted, {1} skipped, {2} failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} read · {1} propose · {2} act": {

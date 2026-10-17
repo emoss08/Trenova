@@ -632,6 +632,7 @@
   "The earliest time the driver is expected to arrive at this stop": "La hora más temprana a la que se espera que el conductor llegue a esta parada",
   "The extracted shipment draft is ready for review.": "El borrador de envío extraído está listo para su revisión.",
   "The facility, warehouse, or yard where the driver will stop": "La instalación, el almacén o el patio donde parará el conductor",
+  "The file is stored, but no AI provider can read documents for your organization, so no shipment draft was built.": "El archivo está guardado, pero ningún proveedor de IA puede leer documentos para tu organización, así que no se creó ningún borrador de envío.",
   "The issue date on the permit, not the day it was keyed in.": "La fecha de emisión que figura en el permiso, no el día en que se registró.",
   "The latest acceptable arrival time, leave blank for exact appointments": "La hora de llegada aceptable más tardía; déjelo en blanco para citas exactas",
   "The link could not be copied": "No se pudo copiar el enlace",

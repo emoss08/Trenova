@@ -54,7 +54,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
 | Change data capture | [GTC](https://github.com/emoss08/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis (runs as the `ghcr.io/emoss08/gtc` image; routing in `deploy/gtc/sinks.yaml`) |
 | Web client | React 19, TypeScript, Vite, GraphQL |
-| Documents | Gotenberg (PDF), MinIO / S3-compatible object storage |
+| Documents | Gotenberg (PDF), docling-serve (document extraction), MinIO / S3-compatible object storage |
 | Deployment | Docker images on GHCR, Caddy, Docker Compose |
 
 ## Repository layout
@@ -82,7 +82,7 @@ git clone https://github.com/emoss08/trenova.git
 cd trenova
 cp .env.example .env
 
-# Start PostgreSQL, Redis, MinIO, Meilisearch, and Gotenberg
+# Start PostgreSQL, Redis, MinIO, Meilisearch, Gotenberg, and docling-serve
 docker compose -f dev/compose.yml up -d
 
 # Run the TMS API
@@ -115,7 +115,7 @@ Run `task list` to see every available task. Agent-facing engineering guides liv
 
 ## Self-hosting
 
-Trenova runs on a single Linux host with Docker Compose. The production stack in [`deploy/selfhost`](./deploy/selfhost) runs the released images with everything they need (PostgreSQL, Redis, MinIO, Meilisearch, Temporal, Gotenberg, change data capture) and Caddy for automatic HTTPS:
+Trenova runs on a single Linux host with Docker Compose. The production stack in [`deploy/selfhost`](./deploy/selfhost) runs the released images with everything they need (PostgreSQL, Redis, MinIO, Meilisearch, Temporal, Gotenberg, docling-serve, change data capture) and Caddy for automatic HTTPS:
 
 ```bash
 git clone --depth 1 --branch v0.9.17 https://github.com/emoss08/trenova.git
