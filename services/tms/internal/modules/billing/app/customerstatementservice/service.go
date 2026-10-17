@@ -174,6 +174,92 @@ func (s *Service) Send(
 	req *customerstatementports.SendRequest,
 	actor *permissionports.RequestActor,
 ) (*customerstatementports.SendResult, error) {
+	manual, err := s.prepareSend(ctx, req, actor, true)
+	if err != nil {
+		return nil, err
+	}
+	statement, err := s.prepare(ctx, manual.from, manual.customer, manual.period, manual.note)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.deliver(ctx, manual.from, statement, manual.delivery()); err != nil {
+		return nil, err
+	}
+	return &customerstatementports.SendResult{
+		SentTo: manual.recipients.To,
+		EndingBalance: money.FormatMinor(
+			statement.statement.EndingBalanceMinor,
+			statement.currency,
+		),
+		FileName: statement.fileName,
+	}, nil
+}
+
+func (s *Service) PreviewSend(
+	ctx context.Context,
+	req *customerstatementports.SendRequest,
+	actor *permissionports.RequestActor,
+) (*customerstatementports.SendPreview, error) {
+	manual, err := s.prepareSend(ctx, req, actor, false)
+	if err != nil {
+		return nil, err
+	}
+	statement, err := s.draft(ctx, manual.from, manual.customer, manual.period)
+	if err != nil {
+		return nil, err
+	}
+	rendered, err := s.renderEmail(ctx, manual.from, statement, manual.delivery())
+	if err != nil {
+		return nil, err
+	}
+	return &customerstatementports.SendPreview{
+		CustomerID:         manual.customer.ID,
+		CustomerName:       manual.customer.DisplayName(),
+		PeriodStart:        manual.period.Start,
+		PeriodEnd:          manual.period.End,
+		CurrencyCode:       statement.currency,
+		EndingBalanceMinor: statement.statement.EndingBalanceMinor,
+		PastDueMinor:       statement.pastDue,
+		OpenItemCount:      len(statement.statement.OpenItems),
+		FileName:           statement.fileName,
+		Email: &emailports.PlannedEmail{
+			To:                manual.recipients.To,
+			CC:                manual.recipients.CC,
+			BCC:               manual.recipients.BCC,
+			Subject:           rendered.Subject,
+			Text:              rendered.Text,
+			Attachments:       []string{statement.fileName},
+			TemplateVersionID: pulid.ConvertFromPtr(rendered.VersionID),
+		},
+	}, nil
+}
+
+type manualSend struct {
+	from       *issuer
+	customer   *customer.Customer
+	period     customerstatement.Period
+	recipients customer.EmailRecipients
+	note       string
+	sentBy     pulid.ID
+	sentAt     int64
+}
+
+func (m *manualSend) delivery() *delivery {
+	return &delivery{
+		recipients: m.recipients,
+		note:       m.note,
+		sentBy:     m.sentBy,
+		sentAt:     m.sentAt,
+		key:        manualKey(m.customer.ID, m.period, m.sentBy, m.note, m.sentAt),
+	}
+}
+
+func (s *Service) prepareSend(
+	ctx context.Context,
+	req *customerstatementports.SendRequest,
+	actor *permissionports.RequestActor,
+	inlineLogo bool,
+) (*manualSend, error) {
 	note := strings.TrimSpace(req.Note)
 	if len(note) > maxNoteLength {
 		return nil, errortypes.NewValidationError(
@@ -201,30 +287,18 @@ func (s *Service) Send(
 	if actor != nil {
 		actorID = actor.UserID
 	}
-	from, err := s.issuerFor(ctx, req.TenantInfo, actorID)
+	from, err := s.issuer(ctx, req.TenantInfo, actorID, inlineLogo)
 	if err != nil {
 		return nil, err
 	}
-	statement, err := s.prepare(ctx, from, cus, period, note)
-	if err != nil {
-		return nil, err
-	}
-	if err = s.deliver(ctx, from, statement, &delivery{
+	return &manualSend{
+		from:       from,
+		customer:   cus,
+		period:     period,
 		recipients: recipients,
 		note:       note,
 		sentBy:     actorID,
 		sentAt:     now,
-		key:        manualKey(cus.ID, period, actorID, note, now),
-	}); err != nil {
-		return nil, err
-	}
-	return &customerstatementports.SendResult{
-		SentTo: recipients.To,
-		EndingBalance: money.FormatMinor(
-			statement.statement.EndingBalanceMinor,
-			statement.currency,
-		),
-		FileName: statement.fileName,
 	}, nil
 }
 
@@ -352,6 +426,34 @@ func (s *Service) prepare(
 	period customerstatement.Period,
 	note string,
 ) (*prepared, error) {
+	out, err := s.draft(ctx, from, cus, period)
+	if err != nil {
+		return nil, err
+	}
+	out.document, err = s.templates.RenderDocument(
+		ctx,
+		&documenttemplateports.RenderDocumentRequest{
+			TenantInfo:  from.tenant,
+			Kind:        documenttemplate.KindCustomerStatementPDF,
+			CustomerID:  &cus.ID,
+			Data:        pdfContext(from, out, note),
+			ReferenceID: cus.ID,
+			UserID:      from.tenant.UserID,
+			Title:       strings.TrimSuffix(out.fileName, ".pdf"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *Service) draft(
+	ctx context.Context,
+	from *issuer,
+	cus *customer.Customer,
+	period customerstatement.Period,
+) (*prepared, error) {
 	statement, err := s.statements.GetCustomerStatement(
 		ctx,
 		from.tenant,
@@ -378,21 +480,6 @@ func (s *Service) prepare(
 		fileNameFallback,
 		maxFileNameLength,
 	)
-	out.document, err = s.templates.RenderDocument(
-		ctx,
-		&documenttemplateports.RenderDocumentRequest{
-			TenantInfo:  from.tenant,
-			Kind:        documenttemplate.KindCustomerStatementPDF,
-			CustomerID:  &cus.ID,
-			Data:        pdfContext(from, out, note),
-			ReferenceID: cus.ID,
-			UserID:      from.tenant.UserID,
-			Title:       strings.TrimSuffix(out.fileName, ".pdf"),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
 	return out, nil
 }
 
@@ -413,14 +500,7 @@ func (s *Service) deliver(
 	statement *prepared,
 	d *delivery,
 ) error {
-	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo:  from.tenant,
-		Kind:        documenttemplate.KindCustomerStatementEmail,
-		CustomerID:  &statement.customer.ID,
-		Data:        emailContext(from, statement, d),
-		ReferenceID: statement.customer.ID,
-		UserID:      d.sentBy,
-	})
+	rendered, err := s.renderEmail(ctx, from, statement, d)
 	if err != nil {
 		return err
 	}
@@ -474,6 +554,22 @@ func (s *Service) deliver(
 		s.recordDocument(ctx, from, statement, record, d.sentBy)
 	}
 	return nil
+}
+
+func (s *Service) renderEmail(
+	ctx context.Context,
+	from *issuer,
+	statement *prepared,
+	d *delivery,
+) (*documenttemplateports.RenderedMessage, error) {
+	return s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
+		TenantInfo:  from.tenant,
+		Kind:        documenttemplate.KindCustomerStatementEmail,
+		CustomerID:  &statement.customer.ID,
+		Data:        emailContext(from, statement, d),
+		ReferenceID: statement.customer.ID,
+		UserID:      d.sentBy,
+	})
 }
 
 // logActivity writes the statement into the customer's collections history,
@@ -572,6 +668,15 @@ func (s *Service) issuerFor(
 	tenantInfo pagination.TenantInfo,
 	actorID pulid.ID,
 ) (*issuer, error) {
+	return s.issuer(ctx, tenantInfo, actorID, true)
+}
+
+func (s *Service) issuer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	actorID pulid.ID,
+	inlineLogo bool,
+) (*issuer, error) {
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo:   tenantInfo,
 		IncludeState: true,
@@ -583,12 +688,15 @@ func (s *Service) issuerFor(
 	if err != nil {
 		return nil, err
 	}
-	logo, err := documenttemplateports.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL)
-	if err != nil {
-		// A statement without a logo still says what is owed; one that fails
-		// to send because a logo moved does not.
-		s.l.Warn("could not inline the organization logo on a statement", zap.Error(err))
-		logo = ""
+	var logo template.URL
+	if inlineLogo {
+		logo, err = documenttemplateports.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL)
+		if err != nil {
+			// A statement without a logo still says what is owed; one that fails
+			// to send because a logo moved does not.
+			s.l.Warn("could not inline the organization logo on a statement", zap.Error(err))
+			logo = ""
+		}
 	}
 	from := &issuer{tenant: tenantInfo, org: org, control: control, logo: logo, activityBy: actorID}
 	if from.activityBy.IsNil() {

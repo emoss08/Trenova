@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,6 +23,18 @@ type UndoBillingQueueIssueRequest struct {
 	ItemID     pulid.ID
 	IssueID    pulid.ID
 	TenantInfo pagination.TenantInfo
+}
+
+type IssueSettlementPlan struct {
+	Item               *billingqueue.BillingQueueItem
+	Issue              *billingqueue.Issue
+	Option             *billingqueue.IssueOption
+	ChargeBefore       *shipment.AdditionalCharge
+	ChargeAfter        *shipment.AdditionalCharge
+	AsksDriver         bool
+	DriverName         string
+	DriverMessageTitle string
+	DriverMessage      string
 }
 
 type BillingQueueItemRequest struct {
@@ -73,6 +86,14 @@ type BillingQueueReviewService interface {
 		req *UndoBillingQueueIssueRequest,
 		actor *permissionports.RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	PlanResolveIssue(
+		ctx context.Context,
+		req *ResolveBillingQueueIssueRequest,
+	) (*IssueSettlementPlan, error)
+	PlanUndoIssue(
+		ctx context.Context,
+		req *UndoBillingQueueIssueRequest,
+	) (*IssueSettlementPlan, error)
 	Release(
 		ctx context.Context,
 		req *BillingQueueItemRequest,

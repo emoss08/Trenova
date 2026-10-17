@@ -228,6 +228,7 @@ on the item's source resource; the assignee check is the same pair, evaluated fo
 |---|---|---|
 | `assign_exception` | gives an exception to a person who can see it, or to nobody | Propose → Ask first |
 | `snooze_exception` | sets it aside until a local time | Propose → Ask first |
+| `wake_exception` | brings a snoozed exception back to the queue before its time | Propose → Ask first |
 | `set_exception_due` | moves or clears the due time | Propose → Ask first |
 | `resolve_exception` | closes it with a code (and a note for `Other`) | Propose → Ask first |
 | `reopen_exception` | reopens a resolved exception | Propose → Ask first |

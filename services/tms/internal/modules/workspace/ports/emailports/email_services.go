@@ -32,6 +32,16 @@ type SendEmailRequest struct {
 	IdempotencyKey string                `json:"idempotencyKey"`
 }
 
+type PlannedEmail struct {
+	To                []string `json:"to"`
+	CC                []string `json:"cc"`
+	BCC               []string `json:"bcc"`
+	Subject           string   `json:"subject"`
+	Text              string   `json:"text"`
+	Attachments       []string `json:"attachments"`
+	TemplateVersionID pulid.ID `json:"templateVersionId"`
+}
+
 type EmailAttachment struct {
 	FileName    string               `json:"fileName"`
 	ContentType string               `json:"contentType"`

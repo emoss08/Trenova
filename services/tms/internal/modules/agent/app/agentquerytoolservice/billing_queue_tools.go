@@ -272,11 +272,14 @@ func (t *getBillingQueueItemTool) Name() string { return "get_billing_queue_item
 func (t *getBillingQueueItemTool) Description() string {
 	return "Open one billing queue item with its payer, shipment and the charges this payer " +
 		"is billed. It also shows the detention charges holding it, its exception and review " +
-		"notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it " +
-		"before proposing approve_billing_queue_item, hold_billing_queue_item, " +
-		"move_billing_item_to_exception, send_billing_item_back_to_ops or " +
-		"cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when " +
-		"your data access does not reach them."
+		"notes, what its shipment still lacks for billing, and the invoice it made once approved. " +
+		"Its issues are the flagged checks, each with the issueId, whether it is Open or Settled, " +
+		"the options a biller settles it with by optionKey, and whether its settlement can be " +
+		"undone. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, " +
+		"release_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, " +
+		"cancel_billing_queue_item, resolve_billing_queue_issue or undo_billing_queue_issue. " +
+		"Amounts are left out, and named in withheldByAccess, when your data access does not " +
+		"reach them."
 }
 
 func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
@@ -329,6 +332,7 @@ type billingQueueDetail struct {
 	ChargesTruncated          bool                     `json:"chargesTruncated,omitempty"`
 	ChargeProblem             string                   `json:"chargeProblem,omitempty"`
 	DetentionHolds            []billingQueueHold       `json:"detentionHolds"`
+	Issues                    []billingQueueIssue      `json:"issues"`
 	Readiness                 *billingQueueReadiness   `json:"readiness,omitempty"`
 	CanApprove                bool                     `json:"canApprove"`
 	ApprovalBlockedBy         string                   `json:"approvalBlockedBy,omitempty"`
@@ -398,6 +402,7 @@ func (r queueDetailReader) detail(
 		RequiresReplacementReview: item.RequiresReplacementReview,
 		Charges:                   []billingQueueChargeLine{},
 		DetentionHolds:            holdsOf(item.DetentionHolds, showAmount),
+		Issues:                    issuesOf(item, showAmount),
 	}
 	if item.Shipment != nil {
 		detail.ShipmentStatus = string(item.Shipment.Status)
@@ -494,6 +499,116 @@ func holdsOf(holds []*billingqueue.DetentionHold, showAmount bool) []billingQueu
 	}
 
 	return out
+}
+
+type billingQueueIssueOption struct {
+	OptionKey string `json:"optionKey"`
+	Label     string `json:"label"`
+	Amount    string `json:"amount,omitempty"`
+}
+
+type billingQueueIssue struct {
+	IssueID    string                    `json:"issueId"`
+	Check      string                    `json:"check"`
+	Code       string                    `json:"code"`
+	Summary    string                    `json:"summary"`
+	Reasoning  string                    `json:"reasoning,omitempty"`
+	State      string                    `json:"state"`
+	Resolution string                    `json:"resolution,omitempty"`
+	Undoable   bool                      `json:"undoable,omitempty"`
+	AskedAt    optionalDate              `json:"driverAskedAt"`
+	Options    []billingQueueIssueOption `json:"options"`
+}
+
+func issuesOf(item *billingqueue.BillingQueueItem, showAmount bool) []billingQueueIssue {
+	if item.Review == nil {
+		return []billingQueueIssue{}
+	}
+
+	out := make([]billingQueueIssue, 0, len(item.Review.Issues))
+	for _, issue := range item.Review.Issues {
+		if issue == nil {
+			continue
+		}
+		priced := showAmount || issue.CheckKey != billingqueue.CheckCharges
+		entry := billingQueueIssue{
+			IssueID:  issue.ID.String(),
+			Check:    string(issue.CheckKey),
+			Code:     string(issue.Code),
+			Summary:  issue.Summary,
+			State:    issueState(issue),
+			Undoable: issue.Undoable,
+			AskedAt:  pointerDateOr(issue.RequestedAt, "not asked"),
+			Options:  make([]billingQueueIssueOption, 0, len(issue.Options)),
+		}
+		if priced {
+			entry.Reasoning = issue.Reasoning
+		} else {
+			entry.Summary = unpricedIssueSummary(issue.Code)
+		}
+		if !issue.IsOpen() {
+			if priced {
+				entry.Resolution = issue.ResolutionText
+			}
+			out = append(out, entry)
+			continue
+		}
+		for idx := range issue.Options {
+			option := &issue.Options[idx]
+			choice := billingQueueIssueOption{OptionKey: option.Key, Label: option.Label}
+			switch {
+			case !priced:
+				choice.Label = unpricedOptionLabel(option.Effect.Kind)
+			case option.Amount.Valid:
+				choice.Amount = option.Amount.Decimal.StringFixed(2)
+			}
+			entry.Options = append(entry.Options, choice)
+		}
+		out = append(out, entry)
+	}
+
+	return out
+}
+
+func unpricedIssueSummary(code billingqueue.IssueCode) string {
+	switch code { //nolint:exhaustive // the charge checks whose wording carries amounts
+	case billingqueue.IssueAccessorialNotOnRateCon:
+		return "An accessorial isn't on the rate con"
+	case billingqueue.IssueChargeOverRateCon:
+		return "A charge is over the rate con"
+	case billingqueue.IssueDetentionELDMismatch:
+		return "Detention doesn't match the ELD"
+	default:
+		return "A charge needs a biller's decision"
+	}
+}
+
+func unpricedOptionLabel(kind billingqueue.EffectKind) string {
+	switch kind {
+	case billingqueue.EffectKeep:
+		return "Keep it as billed"
+	case billingqueue.EffectDrop:
+		return "Remove it"
+	case billingqueue.EffectSet:
+		return "Reprice it"
+	case billingqueue.EffectRequest:
+		return "Ask the driver for it"
+	case billingqueue.EffectAccept:
+		return "Bill it anyway"
+	default:
+		return string(kind)
+	}
+}
+
+func issueState(issue *billingqueue.Issue) string {
+	switch {
+	case issue.IsOpen():
+		return "Open"
+	case issue.Settled():
+		return "Settled"
+	default:
+		return "Cleared"
+	}
 }
 
 func readinessOf(readiness *shipmentports.ShipmentBillingReadiness) *billingQueueReadiness {

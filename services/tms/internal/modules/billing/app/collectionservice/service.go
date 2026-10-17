@@ -207,6 +207,66 @@ func (s *Service) LogActivity(
 	req *collectionports.LogActivityRequest,
 	actor *permissionports.RequestActor,
 ) (*collectionports.AccountView, error) {
+	activity, err := s.contactActivity(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		account, txErr := s.repo.GetAccountForUpdate(
+			txCtx,
+			accountRequest(req.TenantInfo, req.CustomerID),
+		)
+		if txErr != nil {
+			return txErr
+		}
+		if txErr = s.repo.InsertActivity(txCtx, activity); txErr != nil {
+			return txErr
+		}
+		if activity.IsPromise() {
+			account.PromiseActivityID = activity.ID
+		}
+		account.NextFollowUpOn = followUpAfter(account.NextFollowUpOn, activity, req.FollowUpOn)
+		_, txErr = s.repo.SaveAccount(txCtx, account)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.publish(ctx, req.TenantInfo, req.CustomerID, actor)
+	return s.GetAccount(ctx, accountRequest(req.TenantInfo, req.CustomerID), nil)
+}
+
+func (s *Service) PlanLogActivity(
+	ctx context.Context,
+	req *collectionports.LogActivityRequest,
+	actor *permissionports.RequestActor,
+) (*collectionports.AccountChangePlan, error) {
+	activity, err := s.contactActivity(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	plan, err := s.planFor(ctx, req.TenantInfo, req.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	plan.Activity = activity
+	plan.Changed = true
+	if activity.IsPromise() {
+		plan.After.PromisedOn = activity.PromisedOn
+		plan.After.PromisedAmountMinor = activity.PromisedAmountMinor
+	}
+	plan.After.NextFollowUpOn = followUpAfter(plan.Before.NextFollowUpOn, activity, req.FollowUpOn)
+	return plan, nil
+}
+
+func (s *Service) contactActivity(
+	ctx context.Context,
+	req *collectionports.LogActivityRequest,
+	actor *permissionports.RequestActor,
+) (*collection.Activity, error) {
 	if !req.Kind.IsContact() {
 		return nil, errortypes.NewValidationError(
 			"kind", errortypes.ErrInvalid, "Log a note, call, email or promise to pay",
@@ -248,35 +308,19 @@ func (s *Service) LogActivity(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+	return activity, nil
+}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.repo.GetAccountForUpdate(
-			txCtx,
-			accountRequest(req.TenantInfo, req.CustomerID),
-		)
-		if txErr != nil {
-			return txErr
-		}
-		if txErr = s.repo.InsertActivity(txCtx, activity); txErr != nil {
-			return txErr
-		}
-		if activity.IsPromise() {
-			account.PromiseActivityID = activity.ID
-			dayAfter := *activity.PromisedOn + secondsPerDay
-			account.NextFollowUpOn = &dayAfter
-		}
-		if req.FollowUpOn != nil {
-			account.NextFollowUpOn = req.FollowUpOn
-		}
-		_, txErr = s.repo.SaveAccount(txCtx, account)
-		return txErr
-	})
-	if err != nil {
-		return nil, err
+func followUpAfter(current *int64, activity *collection.Activity, scheduled *int64) *int64 {
+	next := current
+	if activity.IsPromise() {
+		dayAfter := *activity.PromisedOn + secondsPerDay
+		next = &dayAfter
 	}
-
-	s.publish(ctx, req.TenantInfo, req.CustomerID, actor)
-	return s.GetAccount(ctx, accountRequest(req.TenantInfo, req.CustomerID), nil)
+	if scheduled != nil {
+		next = scheduled
+	}
+	return next
 }
 
 // AssignCollector gives the account to a member of the organization, or to
@@ -290,22 +334,9 @@ func (s *Service) AssignCollector(
 	if err != nil {
 		return nil, err
 	}
-	var collectorName string
-	if req.CollectorID.IsNotNil() {
-		member, memberErr := s.users.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
-			UserID:     req.CollectorID,
-			TenantInfo: req.TenantInfo,
-			Now:        s.now(),
-		})
-		if memberErr != nil {
-			if errortypes.IsNotFoundError(memberErr) {
-				return nil, errortypes.NewValidationError(
-					"collectorId", errortypes.ErrInvalid, "Choose someone in this organization",
-				)
-			}
-			return nil, memberErr
-		}
-		collectorName = member.Name
+	collectorName, err := s.collectorName(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	actorID := actorUserID(actor, req.TenantInfo)
@@ -318,7 +349,7 @@ func (s *Service) AssignCollector(
 		if txErr != nil {
 			return txErr
 		}
-		if account.CollectorID == req.CollectorID && account.ID.IsNotNil() {
+		if account.CollectorID == req.CollectorID {
 			return nil
 		}
 		changed = true
@@ -326,20 +357,7 @@ func (s *Service) AssignCollector(
 		if _, txErr = s.repo.SaveAccount(txCtx, account); txErr != nil {
 			return txErr
 		}
-		summary := "Unassigned the collector"
-		if req.CollectorID.IsNotNil() {
-			summary = "Assigned to " + collectorName
-		}
-		return s.repo.InsertActivity(txCtx, &collection.Activity{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			CustomerID:     req.CustomerID,
-			Kind:           collection.ActivityCollectorAssigned,
-			Summary:        summary,
-			CollectorID:    req.CollectorID,
-			CurrencyCode:   money.DefaultCurrencyCode,
-			CreatedByID:    actorID,
-		})
+		return s.repo.InsertActivity(txCtx, collectorActivity(req, collectorName, actorID))
 	})
 	if err != nil {
 		return nil, err
@@ -358,6 +376,80 @@ func (s *Service) AssignCollector(
 	return view, nil
 }
 
+func (s *Service) PlanAssignCollector(
+	ctx context.Context,
+	req *collectionports.AssignCollectorRequest,
+	actor *permissionports.RequestActor,
+) (*collectionports.AccountChangePlan, error) {
+	if _, err := s.billingCurrency(ctx, req.TenantInfo, req.CustomerID); err != nil {
+		return nil, err
+	}
+	collectorName, err := s.collectorName(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	plan, err := s.planFor(ctx, req.TenantInfo, req.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	plan.After.CollectorID = req.CollectorID
+	plan.After.CollectorName = collectorName
+	if plan.Before.CollectorID == req.CollectorID {
+		return plan, nil
+	}
+	actorID := actorUserID(actor, req.TenantInfo)
+	plan.Changed = true
+	plan.Activity = collectorActivity(req, collectorName, actorID)
+	plan.NotifiesCollector = req.CollectorID.IsNotNil() && req.CollectorID != actorID &&
+		s.notifier != nil
+	return plan, nil
+}
+
+func (s *Service) collectorName(
+	ctx context.Context,
+	req *collectionports.AssignCollectorRequest,
+) (string, error) {
+	if req.CollectorID.IsNil() {
+		return "", nil
+	}
+	member, err := s.users.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
+		UserID:     req.CollectorID,
+		TenantInfo: req.TenantInfo,
+		Now:        s.now(),
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return "", errortypes.NewValidationError(
+				"collectorId", errortypes.ErrInvalid, "Choose someone in this organization",
+			)
+		}
+		return "", err
+	}
+	return member.Name, nil
+}
+
+func collectorActivity(
+	req *collectionports.AssignCollectorRequest,
+	collectorName string,
+	actorID pulid.ID,
+) *collection.Activity {
+	summary := "Unassigned the collector"
+	if req.CollectorID.IsNotNil() {
+		summary = "Assigned to " + collectorName
+	}
+	return &collection.Activity{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		CustomerID:     req.CustomerID,
+		Kind:           collection.ActivityCollectorAssigned,
+		Summary:        summary,
+		CollectorID:    req.CollectorID,
+		CurrencyCode:   money.DefaultCurrencyCode,
+		CreatedByID:    actorID,
+	}
+}
+
 // ScheduleFollowUp sets when the account is next chased, or clears it, and
 // records the change in the history.
 func (s *Service) ScheduleFollowUp(
@@ -365,6 +457,58 @@ func (s *Service) ScheduleFollowUp(
 	req *collectionports.ScheduleFollowUpRequest,
 	actor *permissionports.RequestActor,
 ) (*collectionports.AccountView, error) {
+	activity, err := s.followUpActivity(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		account, txErr := s.repo.GetAccountForUpdate(
+			txCtx,
+			accountRequest(req.TenantInfo, req.CustomerID),
+		)
+		if txErr != nil {
+			return txErr
+		}
+		account.NextFollowUpOn = req.FollowUpOn
+		if _, txErr = s.repo.SaveAccount(txCtx, account); txErr != nil {
+			return txErr
+		}
+		return s.repo.InsertActivity(txCtx, activity)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.publish(ctx, req.TenantInfo, req.CustomerID, actor)
+	return s.GetAccount(ctx, accountRequest(req.TenantInfo, req.CustomerID), nil)
+}
+
+func (s *Service) PlanScheduleFollowUp(
+	ctx context.Context,
+	req *collectionports.ScheduleFollowUpRequest,
+	actor *permissionports.RequestActor,
+) (*collectionports.AccountChangePlan, error) {
+	activity, err := s.followUpActivity(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	plan, err := s.planFor(ctx, req.TenantInfo, req.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	plan.Activity = activity
+	plan.Changed = true
+	plan.After.NextFollowUpOn = req.FollowUpOn
+	return plan, nil
+}
+
+func (s *Service) followUpActivity(
+	ctx context.Context,
+	req *collectionports.ScheduleFollowUpRequest,
+	actor *permissionports.RequestActor,
+) (*collection.Activity, error) {
 	if _, err := s.billingCurrency(ctx, req.TenantInfo, req.CustomerID); err != nil {
 		return nil, err
 	}
@@ -378,39 +522,45 @@ func (s *Service) ScheduleFollowUp(
 		return nil, multiErr
 	}
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.repo.GetAccountForUpdate(
-			txCtx,
-			accountRequest(req.TenantInfo, req.CustomerID),
-		)
-		if txErr != nil {
-			return txErr
-		}
-		account.NextFollowUpOn = req.FollowUpOn
-		if _, txErr = s.repo.SaveAccount(txCtx, account); txErr != nil {
-			return txErr
-		}
-		summary := note
-		if summary == "" && req.FollowUpOn == nil {
-			summary = "Cleared the follow-up"
-		}
-		return s.repo.InsertActivity(txCtx, &collection.Activity{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			CustomerID:     req.CustomerID,
-			Kind:           collection.ActivityFollowUpScheduled,
-			Summary:        summary,
-			FollowUpOn:     req.FollowUpOn,
-			CurrencyCode:   money.DefaultCurrencyCode,
-			CreatedByID:    actorUserID(actor, req.TenantInfo),
-		})
-	})
+	summary := note
+	if summary == "" && req.FollowUpOn == nil {
+		summary = "Cleared the follow-up"
+	}
+	return &collection.Activity{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		CustomerID:     req.CustomerID,
+		Kind:           collection.ActivityFollowUpScheduled,
+		Summary:        summary,
+		FollowUpOn:     req.FollowUpOn,
+		CurrencyCode:   money.DefaultCurrencyCode,
+		CreatedByID:    actorUserID(actor, req.TenantInfo),
+	}, nil
+}
+
+func (s *Service) planFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) (*collectionports.AccountChangePlan, error) {
+	now := s.now()
+	row, err := s.repo.GetWorklistRow(ctx, accountRequest(tenantInfo, customerID), now)
 	if err != nil {
 		return nil, err
 	}
+	rank(row, now)
 
-	s.publish(ctx, req.TenantInfo, req.CustomerID, actor)
-	return s.GetAccount(ctx, accountRequest(req.TenantInfo, req.CustomerID), nil)
+	before := collectionports.AccountState{
+		CollectorID:    row.CollectorID,
+		CollectorName:  row.CollectorName,
+		NextFollowUpOn: row.NextFollowUpOn,
+	}
+	if row.Promise != nil {
+		promisedOn, amount := row.Promise.PromisedOn, row.Promise.AmountMinor
+		before.PromisedOn = &promisedOn
+		before.PromisedAmountMinor = &amount
+	}
+	return &collectionports.AccountChangePlan{Row: row, Before: before, After: before}, nil
 }
 
 // validateFollowUp refuses a follow-up scheduled for a day already over.
