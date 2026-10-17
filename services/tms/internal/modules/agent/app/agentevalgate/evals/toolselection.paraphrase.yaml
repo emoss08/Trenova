@@ -61,7 +61,9 @@ cases:
   - request: have a human look at this
     expect: [flag_for_manual_review, raise_exception]
   - request: what's happening with safety scores on haulers we use
-    expect: [get_carrier_intel_event, acknowledge_carrier_intel_event, get_carrier]
+    expect: [list_carrier_intel_events, get_carrier_intel_event, acknowledge_carrier_intel_event, get_carrier]
+  - request: which haulers lost their cover or operating permission lately
+    expect: [list_carrier_intel_events, get_carrier_intel_event]
   - request: late deliveries last week and why
     expect: [list_service_failures, evaluate_service_failures]
   - request: book a new load for Acme out of Dallas

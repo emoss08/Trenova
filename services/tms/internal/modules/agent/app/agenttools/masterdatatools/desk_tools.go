@@ -788,7 +788,8 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"eventId": agenttoolschema.KindID(
-				"The finding id from get_carrier_intel_event.",
+				"The finding id, from list_carrier_intel_events, get_carrier_intel_event "+
+					"or this run's subject. Never guess one.",
 				permission.KindCarrierIntelligenceEvent,
 			),
 			common.ParamNote: map[string]any{

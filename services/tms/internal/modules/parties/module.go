@@ -41,6 +41,7 @@ func SharedOptions() fx.Option {
 			carrierintelservice.New,
 			func(s *carrierintelservice.Service) carrierintelports.CarrierIntelGate { return s },
 			func(s *carrierintelservice.Service) carrierintelports.CarrierLifecycleObserver { return s },
+			func(s *carrierintelservice.Service) carrierintelports.CarrierIntelEventReader { return s },
 			customerservice.New,
 			carriercapacityservice.New,
 		),

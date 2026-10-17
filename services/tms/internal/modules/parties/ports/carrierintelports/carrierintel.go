@@ -146,15 +146,17 @@ type CarrierIntelRawPayloadRepository interface {
 }
 
 type ListCarrierIntelEventsRequest struct {
-	Filter      *pagination.QueryOptions
-	Cursor      pagination.CursorInfo
-	Statuses    []carrierintel.EventStatus
-	Severities  []carrierintel.Severity
-	Categories  []carrierintel.Section
-	SubjectType carrierintel.SubjectType
-	SubjectID   string
-	CarrierID   pulid.ID
-	OpenOnly    bool
+	Filter       *pagination.QueryOptions
+	Cursor       pagination.CursorInfo
+	Statuses     []carrierintel.EventStatus
+	Severities   []carrierintel.Severity
+	Categories   []carrierintel.Section
+	SubjectType  carrierintel.SubjectType
+	SubjectID    string
+	CarrierID    pulid.ID
+	OpenOnly     bool
+	DetectedFrom int64
+	DetectedTo   int64
 }
 
 type BulkAcknowledgeCarrierIntelEventsRequest struct {

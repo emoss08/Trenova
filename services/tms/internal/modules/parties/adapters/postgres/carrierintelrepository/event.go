@@ -129,6 +129,12 @@ func (r *eventRepository) applyEventFilters(
 	if !req.CarrierID.IsNil() {
 		q = q.Where(cols.CarrierID.Eq(), req.CarrierID)
 	}
+	if req.DetectedFrom > 0 {
+		q = q.Where(cols.DetectedAt.Gte(), req.DetectedFrom)
+	}
+	if req.DetectedTo > 0 {
+		q = q.Where(cols.DetectedAt.Lte(), req.DetectedTo)
+	}
 
 	return q
 }

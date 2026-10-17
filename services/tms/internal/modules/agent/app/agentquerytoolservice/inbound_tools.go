@@ -67,6 +67,7 @@ type inboundMessageView struct {
 	Subject           string                  `json:"subject"`
 	ReceivedAt        string                  `json:"receivedAt"`
 	Mailbox           string                  `json:"mailbox,omitempty"`
+	MailboxID         string                  `json:"mailboxId,omitempty"`
 	MatchedShipmentID string                  `json:"matchedShipmentId,omitempty"`
 	MatchedCustomerID string                  `json:"matchedCustomerId,omitempty"`
 	MatchedCarrierID  string                  `json:"matchedCarrierId,omitempty"`
@@ -97,6 +98,7 @@ func toInboundMessageView(
 		To:                message.ToAddresses,
 		Subject:           message.Subject,
 		ReceivedAt:        timeutils.FormatUnixDateTimeIn(message.ReceivedAt, timezone),
+		MailboxID:         pulidString(message.MailboxID),
 		MatchedShipmentID: pulidString(message.MatchedShipmentID),
 		MatchedCustomerID: pulidString(message.MatchedCustomerID),
 		MatchedCarrierID:  pulidString(message.MatchedCarrierID),
@@ -196,6 +198,7 @@ type inboundMessageRow struct {
 	ReceivedAt        string  `json:"receivedAt"`
 	From              string  `json:"from"`
 	Subject           string  `json:"subject"`
+	Mailbox           string  `json:"mailbox,omitempty"`
 	Preview           string  `json:"preview,omitempty"`
 	Status            string  `json:"status"`
 	NeedsReview       bool    `json:"needsReview"`
@@ -203,6 +206,7 @@ type inboundMessageRow struct {
 	Confidence        float64 `json:"confidence"`
 	MatchedShipmentID string  `json:"matchedShipmentId,omitempty"`
 	MatchReason       string  `json:"matchReason,omitempty"`
+	MailboxID         string  `json:"mailboxId,omitempty"`
 }
 
 type listInboundMessagesTool struct {
@@ -237,8 +241,8 @@ func (t *listInboundMessagesTool) ParamSchema() map[string]any {
 				"Optional: only messages read as this kind.", inboundClassifications,
 			),
 			"mailboxId": agenttoolschema.RecordIDText(permission.ResourceInboundMailbox,
-				"Optional: only messages to this mailbox, by id from the page "+
-					"you are on. No tool lists mailboxes, so leave it out otherwise."),
+				"Optional: only messages to this mailbox, by the mailboxId a row of "+
+					"this tool or get_inbound_message shows, or by id from the page you are on."),
 			"query": map[string]any{
 				"type":        "string",
 				"description": "Optional: words from the sender's name or address, or the subject.",
@@ -375,7 +379,7 @@ func (t *listInboundMessagesTool) Query(
 
 	rows := make([]inboundMessageRow, 0, len(result.Items))
 	for _, message := range result.Items {
-		rows = append(rows, inboundMessageRow{
+		row := inboundMessageRow{
 			ID:                message.ID.String(),
 			ReceivedAt:        timeutils.FormatUnixDateTimeIn(message.ReceivedAt, params.Timezone),
 			From:              sender(message),
@@ -387,7 +391,12 @@ func (t *listInboundMessagesTool) Query(
 			Confidence:        message.Confidence,
 			MatchedShipmentID: pulidString(message.MatchedShipmentID),
 			MatchReason:       message.MatchReason,
-		})
+			MailboxID:         pulidString(message.MailboxID),
+		}
+		if message.Mailbox != nil {
+			row.Mailbox = message.Mailbox.Address
+		}
+		rows = append(rows, row)
 	}
 
 	return searchResult(criteria, rows, len(rows)), nil
