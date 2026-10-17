@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -39,7 +38,7 @@ const unknownRefMessage = "Only pages a web_search returned can be read, with th
 const unreadablePageMessage = "The page could not be retrieved. It may have moved, require a " +
 	"login, or block automated readers. Try another result."
 
-const invalidSettingsFormat = "The %s extension's settings are invalid. An administrator can " +
+const invalidSettingsSuffix = " extension's settings are invalid. An administrator can " +
 	"correct them under AI Control, Extensions."
 
 type settledCall struct {
@@ -299,7 +298,7 @@ func (s *Service) webResearch(
 	if multiErr.HasErrors() || err != nil {
 		s.l.Error("stored web research settings are invalid",
 			zap.String("type", extension.typ.String()), zap.Error(errors.Join(multiErr, err)))
-		return nil, &ToolError{Message: fmt.Sprintf(invalidSettingsFormat, extension.def.title())}
+		return nil, &ToolError{Message: "The " + extension.def.title() + invalidSettingsSuffix}
 	}
 
 	return &webResearchCall{

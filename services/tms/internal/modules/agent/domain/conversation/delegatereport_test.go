@@ -65,7 +65,7 @@ func TestDelegateReport_BoundedKeepsTheRowSmall(t *testing.T) {
 	assert.Equal(t, 26, bounded.ToolCallsUsed)
 
 	assert.True(t, strings.HasSuffix(bounded.Reply, "…"), "a cut answer says it was cut")
-	assert.Len(t, []rune(bounded.Reply), maxReportReplyRunes+1)
+	assert.Len(t, []rune(bounded.Reply), maxReportReplyRunes)
 	assert.True(t, strings.HasSuffix(bounded.Reason, "…"))
 
 	assert.Len(t, bounded.Made, maxReportWrites)
