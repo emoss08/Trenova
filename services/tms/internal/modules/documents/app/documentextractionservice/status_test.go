@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentaiextractionportsmock"
@@ -28,18 +29,19 @@ func TestExtractionStatus(t *testing.T) {
 	cases := []struct {
 		name               string
 		engine             tenant.ExtractionEngine
-		providerAvailable  bool
+		availability       documentaiextractionports.ExtractionAvailability
 		converterAvailable bool
 		want               documentports.ExtractionStatus
 	}{
 		{
 			name:               "docling without a provider cannot extract",
 			engine:             tenant.ExtractionEngineDocling,
-			providerAvailable:  false,
+			availability:       documentaiextractionports.ExtractionNoProviderAssigned,
 			converterAvailable: true,
 			want: documentports.ExtractionStatus{
 				Engine:                 "docling",
 				ModelProviderAvailable: false,
+				ModelProviderReason:    "no_model_provider",
 				ConverterAvailable:     true,
 				ExtractionAvailable:    false,
 			},
@@ -47,11 +49,12 @@ func TestExtractionStatus(t *testing.T) {
 		{
 			name:               "docling with a provider and a converter extracts",
 			engine:             tenant.ExtractionEngineDocling,
-			providerAvailable:  true,
+			availability:       documentaiextractionports.ExtractionAvailable,
 			converterAvailable: true,
 			want: documentports.ExtractionStatus{
 				Engine:                 "docling",
 				ModelProviderAvailable: true,
+				ModelProviderReason:    "available",
 				ConverterAvailable:     true,
 				ExtractionAvailable:    true,
 			},
@@ -59,11 +62,12 @@ func TestExtractionStatus(t *testing.T) {
 		{
 			name:               "docling without a converter cannot extract, provider or not",
 			engine:             tenant.ExtractionEngineDocling,
-			providerAvailable:  true,
+			availability:       documentaiextractionports.ExtractionAvailable,
 			converterAvailable: false,
 			want: documentports.ExtractionStatus{
 				Engine:                 "docling",
 				ModelProviderAvailable: true,
+				ModelProviderReason:    "available",
 				ConverterAvailable:     false,
 				ExtractionAvailable:    false,
 			},
@@ -71,13 +75,27 @@ func TestExtractionStatus(t *testing.T) {
 		{
 			name:               "legacy reads documents without a provider",
 			engine:             tenant.ExtractionEngineLegacy,
-			providerAvailable:  false,
+			availability:       documentaiextractionports.ExtractionNoProviderAssigned,
 			converterAvailable: false,
 			want: documentports.ExtractionStatus{
 				Engine:                 "legacy",
 				ModelProviderAvailable: false,
+				ModelProviderReason:    "no_model_provider",
 				ConverterAvailable:     false,
 				ExtractionAvailable:    true,
+			},
+		},
+		{
+			name:               "docling on a server with document extraction off names the switch",
+			engine:             tenant.ExtractionEngineDocling,
+			availability:       documentaiextractionports.ExtractionOffOnServer,
+			converterAvailable: true,
+			want: documentports.ExtractionStatus{
+				Engine:                 "docling",
+				ModelProviderAvailable: false,
+				ModelProviderReason:    "off_on_server",
+				ConverterAvailable:     true,
+				ExtractionAvailable:    false,
 			},
 		},
 	}
@@ -104,8 +122,8 @@ func TestExtractionStatus(t *testing.T) {
 
 			aiDocuments := documentaiextractionportsmock.NewMockAIDocumentService(t)
 			aiDocuments.EXPECT().
-				ExtractionAvailable(mock.Anything, tenantInfo).
-				Return(tc.providerAvailable, nil)
+				ExtractionAvailability(mock.Anything, tenantInfo).
+				Return(tc.availability, nil)
 
 			cfg := &config.Config{}
 			if tc.converterAvailable {

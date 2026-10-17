@@ -59,12 +59,12 @@ func New(p Params) documentaiextractionports.AIDocumentService {
 	}
 }
 
-func (s *Service) ExtractionAvailable(
+func (s *Service) ExtractionAvailability(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (bool, error) {
-	if !s.cfg.DocumentExtractionEnabled() || s.availability == nil {
-		return false, nil
+) (documentaiextractionports.ExtractionAvailability, error) {
+	if !s.cfg.AIEnabled() || !s.cfg.DocumentExtractionEnabled() {
+		return documentaiextractionports.ExtractionOffOnServer, nil
 	}
 
 	allowed, err := planservice.Allows(
@@ -73,11 +73,26 @@ func (s *Service) ExtractionAvailable(
 		tenantInfo,
 		platformplan.CapabilityDocumentIntelligence,
 	)
-	if err != nil || !allowed {
-		return false, err
+	if err != nil {
+		return "", err
+	}
+	if !allowed {
+		return documentaiextractionports.ExtractionNotInPlan, nil
 	}
 
-	return s.availability.CanServe(ctx, aiprovider.TaskDocumentExtraction, tenantInfo)
+	if s.availability == nil {
+		return documentaiextractionports.ExtractionNoProviderAssigned, nil
+	}
+
+	servable, err := s.availability.CanServe(ctx, aiprovider.TaskDocumentExtraction, tenantInfo)
+	if err != nil {
+		return "", err
+	}
+	if !servable {
+		return documentaiextractionports.ExtractionNoProviderAssigned, nil
+	}
+
+	return documentaiextractionports.ExtractionAvailable, nil
 }
 
 var errDisabled = errortypes.NewBusinessError("AI document intelligence is disabled")

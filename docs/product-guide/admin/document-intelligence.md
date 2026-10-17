@@ -64,7 +64,8 @@ Keywords: full text search, index documents
 
 ## Notes
 Opening the page needs read access to document control. The AI-assisted options, and every
-document read by the Docling engine, depend on an enabled AI provider that serves document
-work, which is set up on [AI control](/admin/agent-control). Without one, Docling documents are
-stored but not read, and upload screens say so. Provider-specific parsing rules live on
+document read by the Docling engine, depend on an enabled AI provider assigned to the Document
+extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only
+to chat does not read documents. The server must also have document extraction turned on. Without
+both, Docling documents are stored but not read, and upload screens say which is missing. Provider-specific parsing rules live on
 [Parsing rules](/admin/document-parsing-rules) and apply only to the legacy engine.

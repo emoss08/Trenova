@@ -35,11 +35,11 @@ func (noopAIDocumentService) SubmitRateConfirmationBackgroundExtraction(
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
-func (noopAIDocumentService) ExtractionAvailable(
+func (noopAIDocumentService) ExtractionAvailability(
 	context.Context,
 	pagination.TenantInfo,
-) (bool, error) {
-	return false, nil
+) (documentaiextractionports.ExtractionAvailability, error) {
+	return documentaiextractionports.ExtractionNoProviderAssigned, nil
 }
 
 func (noopAIDocumentService) PollRateConfirmationBackgroundExtraction(
