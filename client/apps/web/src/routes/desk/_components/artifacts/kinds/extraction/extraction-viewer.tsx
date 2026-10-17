@@ -35,8 +35,8 @@ export type PageMark = {
   box: PageBox;
 };
 
-/** At most this many pages get a button each; past it the switcher says which page of how many. */
-const PAGE_BUTTONS = 8;
+/** At most this many pages are drawn as thumbnails; past it the rail says which page of how many. */
+const PAGE_THUMBS = 8;
 
 /** How long a page the server drew is kept once no viewer shows it. */
 const PAGE_GC_MS = 5 * 60 * 1000;
@@ -47,8 +47,8 @@ type ViewerProps = {
   page: number;
   pageCount: number;
   pages: readonly PageSize[];
-  /** Pages holding a field to check, marked in the switcher. */
-  pagesToCheck: ReadonlySet<number>;
+  /** How many fields to check each page holds, for the count on its thumbnail. */
+  checksByPage: ReadonlyMap<number, number>;
   /** Pages to read ahead of being turned to, such as the next one. */
   readAhead: readonly number[];
   onPage: (page: number) => void;
@@ -60,15 +60,21 @@ type ViewerProps = {
   /** A box pressed on the page. */
   onSelect: (key: string) => void;
   onOpenFile: (() => void) | null;
+  /** The section, so the card can bring it into view when a value is found from a snippet. */
+  sectionRef?: RefObject<HTMLElement | null>;
 };
 
 /**
- * The document as it was read, a page at a time, with a box over each value found on it. The
- * page opens fitted to the viewer's width, never narrower than a readable page. The selected value is scrolled to the middle of the viewer on whatever page
- * it was read from, and Page Up, Page Down, plus, minus and 0 turn and zoom from the keyboard.
+ * The document as it was read, a page at a time, with a mark over each value found on it:
+ * a faint tint where a value was read, an amber outline where one needs a person, and the
+ * selected value outlined with its name above it. The pages stand beside it as thumbnails,
+ * each counting what it holds to check. The page opens fitted to the frame, never narrower
+ * than a readable page, and the selected value is scrolled to the middle of the frame on
+ * whatever page it was read from; Page Up, Page Down, plus, minus and 0 turn and zoom.
  */
 export function ExtractionViewer(props: ViewerProps) {
-  const { documentId, page, pageCount, onPage, pagesToCheck, readAhead } = props;
+  const { sectionRef, documentId, page, pageCount, onPage, checksByPage, readAhead, onOpenFile } =
+    props;
   const t = useT();
   const queryClient = useQueryClient();
   const wellRef = useRef<HTMLDivElement>(null);
@@ -107,96 +113,166 @@ export function ExtractionViewer(props: ViewerProps) {
   };
 
   return (
-    <section className="dk-ex-viewer" aria-label={t("Document")}>
-      <div className="dk-ex-bar">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Previous page")}
-          disabled={page <= 1}
-          onClick={() => turn(page - 1)}
-        >
-          <ChevronLeftIcon className="size-3.5" />
-        </Button>
-        {pageCount <= PAGE_BUTTONS ? (
-          <span className="dk-ex-pages">
-            {Array.from({ length: pageCount }, (_, index) => {
-              const number = index + 1;
-              const check = pagesToCheck.has(number);
-              return (
-                <Button
-                  key={number}
-                  variant="ghost"
-                  size="icon-xs"
-                  className="dk-ex-pg"
-                  aria-current={number === page ? "page" : undefined}
-                  aria-label={
-                    check ? t("Page {0}, with fields to check", number) : t("Page {0}", number)
-                  }
-                  onClick={() => turn(number)}
-                >
-                  {number}
-                  {check && <span className="dk-ex-pdot" aria-hidden />}
-                </Button>
-              );
-            })}
-          </span>
-        ) : (
-          <span className="dk-ex-pno">{t("Page {0} of {1}", page, pageCount)}</span>
-        )}
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Next page")}
-          disabled={page >= pageCount}
-          onClick={() => turn(page + 1)}
-        >
-          <ChevronRightIcon className="size-3.5" />
-        </Button>
-        <span className="flex-1" />
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Zoom out")}
-          disabled={zoom === ZOOM_STEPS[0]}
-          onClick={() => setZoom(stepZoom(zoom, -1))}
-        >
-          <ZoomOutIcon className="size-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="xxs"
-          className="dk-ex-zoom"
-          aria-label={t("Fit the page to the width")}
-          disabled={zoom === ZOOM_STEPS[0]}
-          onClick={() => setZoom(ZOOM_STEPS[0])}
-        >
-          {zoom === ZOOM_STEPS[0] ? t("Fit") : t("{0}%", Math.round(zoom * 100))}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Zoom in")}
-          disabled={zoom === most}
-          onClick={() => setZoom(stepZoom(zoom, 1))}
-        >
-          <ZoomInIcon className="size-3.5" />
-        </Button>
+    <section ref={sectionRef} className="dk-rec-sec dk-ex-doc" aria-label={t("Document")}>
+      <div className="dk-rec-sh">
+        <h3>{t("The document")}</h3>
+        <span className="dk-ex-doc-acts">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("Zoom out")}
+            disabled={zoom === ZOOM_STEPS[0]}
+            onClick={() => setZoom(stepZoom(zoom, -1))}
+          >
+            <ZoomOutIcon className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="xxs"
+            className="dk-ex-zoom"
+            aria-label={t("Fit the page to the width")}
+            disabled={zoom === ZOOM_STEPS[0]}
+            onClick={() => setZoom(ZOOM_STEPS[0])}
+          >
+            {zoom === ZOOM_STEPS[0] ? t("Fit") : t("{0}%", Math.round(zoom * 100))}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("Zoom in")}
+            disabled={zoom === most}
+            onClick={() => setZoom(stepZoom(zoom, 1))}
+          >
+            <ZoomInIcon className="size-3.5" />
+          </Button>
+          {onOpenFile && (
+            <Button variant="outline" size="xs" className="dk-ex-open" onClick={onOpenFile}>
+              {t("Open file")}
+              <LinkExternal01Icon className="size-3" />
+            </Button>
+          )}
+        </span>
       </div>
       <span className="sr-only" aria-live="polite">
         {t("Page {0} of {1}", page, pageCount)}
       </span>
-      <div
-        ref={wellRef}
-        className="dk-ex-well ui-focus-ring"
-        role="region"
-        tabIndex={0}
-        aria-label={t("Page {0} of {1}. Page Up and Page Down turn pages.", page, pageCount)}
-        onKeyDown={onKeyDown}
-      >
-        <ExtractionPage key={page} {...props} zoom={zoom} wellRef={wellRef} />
+      <div className={cn("dk-ex-doc-body", pageCount < 2 && "dk-one")}>
+        {pageCount > 1 && pageCount <= PAGE_THUMBS && (
+          <div className="dk-ex-thumbs" role="group" aria-label={t("Pages")}>
+            {Array.from({ length: pageCount }, (_, index) => (
+              <PageThumb
+                key={index + 1}
+                documentId={documentId}
+                number={index + 1}
+                size={props.pages.find((candidate) => candidate.number === index + 1)}
+                checks={checksByPage.get(index + 1) ?? 0}
+                current={index + 1 === page}
+                onTurn={() => turn(index + 1)}
+              />
+            ))}
+          </div>
+        )}
+        {pageCount > PAGE_THUMBS && (
+          <div className="dk-ex-pager">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("Previous page")}
+              disabled={page <= 1}
+              onClick={() => turn(page - 1)}
+            >
+              <ChevronLeftIcon className="size-3.5" />
+            </Button>
+            <span>{t("Page {0} of {1}", page, pageCount)}</span>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("Next page")}
+              disabled={page >= pageCount}
+              onClick={() => turn(page + 1)}
+            >
+              <ChevronRightIcon className="size-3.5" />
+            </Button>
+          </div>
+        )}
+        <div
+          ref={wellRef}
+          className="dk-ex-well ui-focus-ring"
+          role="region"
+          tabIndex={0}
+          aria-label={t("Page {0} of {1}. Page Up and Page Down turn pages.", page, pageCount)}
+          onKeyDown={onKeyDown}
+        >
+          <ExtractionPage key={page} {...props} zoom={zoom} wellRef={wellRef} />
+        </div>
       </div>
+      <p className="dk-ex-legend">
+        <span>
+          <i aria-hidden className="dk-ex-lg" />
+          {t("Read")}
+        </span>
+        <span>
+          <i aria-hidden className="dk-ex-lg dk-warn" />
+          {t("To check")}
+        </span>
+        <span className="dk-ex-legend-hint">{t("Choose a value to find it on the page")}</span>
+      </p>
     </section>
+  );
+}
+
+/** A page as a thumbnail beside the one shown, with how many fields on it are to be checked. */
+function PageThumb({
+  documentId,
+  number,
+  size,
+  checks,
+  current,
+  onTurn,
+}: {
+  documentId: string;
+  number: number;
+  size: PageSize | undefined;
+  checks: number;
+  current: boolean;
+  onTurn: () => void;
+}) {
+  const t = useT();
+  const query = useQuery({
+    ...documentPage.image(documentId, number),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: PAGE_GC_MS,
+    retry: 1,
+  });
+  const url = useObjectUrl(query.data);
+  return (
+    <Button
+      variant="bare"
+      size="bare"
+      className="dk-ex-thumb ui-focus-ring"
+      aria-current={current ? "page" : undefined}
+      aria-label={
+        checks > 0
+          ? t(
+              "Page {0}, {1, plural, one {# field to check} other {# fields to check}}",
+              number,
+              checks,
+            )
+          : t("Page {0}", number)
+      }
+      onClick={onTurn}
+    >
+      <span
+        className={cn("dk-ex-thumb-sheet", url === null && "ui-shimmer")}
+        style={{ aspectRatio: pageAspect(size) }}
+      >
+        {url !== null && <img src={url} alt="" draggable={false} />}
+      </span>
+      <span className="dk-ex-thumb-n" aria-hidden>
+        {number}
+        {checks > 0 && <i>{checks}</i>}
+      </span>
+    </Button>
   );
 }
 

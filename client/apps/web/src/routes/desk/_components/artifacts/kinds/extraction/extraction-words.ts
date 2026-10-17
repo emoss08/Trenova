@@ -1,11 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { FieldRow, StopGroup } from "./extraction-groups";
 
-/** A row's id in the page, so the list can point at the selected one for a screen reader. */
-export function rowDomId(listId: string, key: string): string {
-  return `${listId}-${key.replace(/[^A-Za-z0-9_-]/g, "_")}`;
-}
-
 /** What a stop is called above its rows: its role and its place in the route. */
 export function stopTitle(stop: Pick<StopGroup, "role" | "sequence">, t: TranslateFn): string {
   switch (stop.role) {
@@ -20,7 +15,7 @@ export function stopTitle(stop: Pick<StopGroup, "role" | "sequence">, t: Transla
 
 /** Why a row needs a person, in the words the row shows under its value. */
 export function rowReason(row: FieldRow, t: TranslateFn): string | null {
-  if (row.kind === "missing") return t("Not on the document");
+  if (row.kind === "missing") return t("Not read");
   if (row.state !== "doubtful") return null;
   const { field } = row;
   switch (field.reason) {
@@ -37,7 +32,7 @@ export function rowReason(row: FieldRow, t: TranslateFn): string | null {
 
 /** What a screen reader says for a row: its name, its value and how it was read. */
 export function rowAnnouncement(row: FieldRow, multiPage: boolean, t: TranslateFn): string {
-  if (row.kind === "missing") return t("{0}: not on the document", row.label);
+  if (row.kind === "missing") return t("{0}: not read", row.label);
   const { field } = row;
   const percent = Math.round(field.confidence * 100);
   const how =

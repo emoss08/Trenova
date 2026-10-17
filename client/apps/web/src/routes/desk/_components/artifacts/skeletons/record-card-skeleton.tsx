@@ -27,10 +27,19 @@ export function SkeletonBar({
 }
 
 /** The card's outline: announced once to a screen reader, hidden from it otherwise. */
-export function RecordCardSkeleton({ label, children }: { label?: string; children: ReactNode }) {
+export function RecordCardSkeleton({
+  label,
+  className,
+  children,
+}: {
+  label?: string;
+  /** The card's own class, so its skeleton takes the card's layout. */
+  className?: string;
+  children: ReactNode;
+}) {
   const t = useT();
   return (
-    <div className="dk-rec dk-rec-skel" aria-busy>
+    <div className={cn("dk-rec dk-rec-skel", className)} aria-busy>
       <span role="status" className="sr-only">
         {label ?? t("Loading the record…")}
       </span>

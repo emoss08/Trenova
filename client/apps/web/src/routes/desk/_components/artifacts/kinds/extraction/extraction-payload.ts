@@ -11,6 +11,8 @@ export type FieldStop = {
   /** As the reading wrote it, lower case: pickup, delivery or anything else. */
   role: string;
   part: StopPart;
+  /** The stop's city and state, as the route's ends are named; empty on an older card. */
+  place: string;
   appointment: boolean;
 };
 
@@ -100,6 +102,7 @@ function stopOf(field: Json, key: string, label: string): FieldStop | null {
       sequence,
       role: text(field.role).toLowerCase(),
       part: part as StopPart,
+      place: text(field.place),
       appointment: field.appointment === true,
     };
   }
@@ -109,6 +112,7 @@ function stopOf(field: Json, key: string, label: string): FieldStop | null {
       sequence: Number(legacy[1]),
       role: label.toLowerCase(),
       part: "whole",
+      place: "",
       appointment: false,
     };
   }

@@ -1,52 +1,11 @@
 import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { recordPath } from "@/config/record-links";
-import { CheckIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Link } from "react-router";
-import { canAsk, stageStep, type ShipmentStage } from "./shipment-stage";
-
-/**
- * Where the shipment stands, as one line of four steps under the file's name: not created,
- * drafting, waiting on the person, created, with the shipment linked once there is one.
- */
-export function ShipmentSteps({ stage }: { stage: ShipmentStage }) {
-  const t = useT();
-  const at = stageStep(stage);
-  const steps = [t("Not created"), t("Drafting"), t("Waiting on you"), t("Created")];
-  const shipmentId =
-    stage.stage === "created" || stage.stage === "attached" ? stage.shipmentId : "";
-
-  return (
-    <div className="dk-ex-state">
-      <span className="dk-ex-state-l">{t("Shipment")}</span>
-      <ol className="dk-ex-steps" aria-label={t("Where the shipment stands")}>
-        {steps.map((label, index) => (
-          <li
-            key={label}
-            className={cn(
-              "dk-ex-step",
-              index < at && "dk-done",
-              index === at && "dk-now",
-              index === at && stage.stage === "drafting" && "dk-wait",
-            )}
-            aria-current={index === at ? "step" : undefined}
-          >
-            <i aria-hidden />
-            {label}
-          </li>
-        ))}
-      </ol>
-      {shipmentId !== "" && (
-        <Link className="dk-ex-link ui-focus-ring" to={recordPath("shipment", shipmentId)}>
-          {stage.stage === "created" && stage.name !== "" ? stage.name : t("Open the shipment")}
-        </Link>
-      )}
-    </div>
-  );
-}
+import { CardBar, CardBarHint, CardIcon } from "../../record-card/record-card";
+import { canAsk, type ShipmentStage } from "./shipment-stage";
 
 type ActionsProps = {
   stage: ShipmentStage;
@@ -61,10 +20,82 @@ type ActionsProps = {
   onReview: (() => void) | null;
 };
 
+/** The bar's line: what is under way, what became of the last ask, or what Create will do. */
+function StageNote({ stage, checking }: { stage: ShipmentStage; checking: boolean }) {
+  const t = useT();
+  if (checking) {
+    return (
+      <>
+        <WorkingDot working />
+        {t("The agent is checking the fields")}
+      </>
+    );
+  }
+  switch (stage.stage) {
+    case "replying":
+      return (
+        <>
+          <WorkingDot working />
+          {t("The agent is replying; ask again once it is done")}
+        </>
+      );
+    case "drafting":
+      return (
+        <>
+          <WorkingDot working />
+          {t("Drafting the shipment")}
+        </>
+      );
+    case "notDrafted":
+      return t(
+        "The reply ended without a drafted shipment. Read it in the conversation, or ask again.",
+      );
+    case "waiting":
+      return t("The agent drafted it; nothing is created until you approve");
+    case "creating":
+      return (
+        <>
+          <WorkingDot working />
+          {t("Approved; creating the shipment")}
+        </>
+      );
+    case "created":
+      return (
+        <>
+          <CardIcon name="check" size={13} stroke={2.4} />
+          {t("Created from this reading")}
+        </>
+      );
+    case "attached":
+      return (
+        <>
+          <CardIcon name="check" size={13} stroke={2.4} />
+          {t("This file is already a shipment")}
+        </>
+      );
+    case "failed":
+      return stage.reason !== ""
+        ? t("It was approved but not created: {0}", stage.reason)
+        : t("It was approved but not created.");
+    case "declined":
+      return t("You declined the drafted shipment.");
+    case "expired":
+      return t("The drafted shipment expired before it was approved.");
+    case "simulated":
+      return t("The agent was simulating, so the shipment was previewed and not created.");
+    case "noFile":
+      return t("The file this was read from is no longer on record.");
+    default:
+      return t("Creating drafts the shipment for your approval");
+  }
+}
+
 /**
- * What can be done next with what was read. Check asks the agent to look again at the fields
- * that need a person and to look for the missing ones; Create asks it to draft the shipment,
- * which waits for approval like every other write. Neither writes anything from the browser.
+ * What can be done next with what was read, along the card's bar. Check asks the agent to
+ * look again at the fields that need a person and to look for the missing ones; Create asks
+ * it to draft the shipment, which waits for approval like every other write; once drafted the
+ * bar opens the approval, and once created it opens the shipment. Nothing is written from the
+ * browser.
  */
 export function ExtractionActions({
   stage,
@@ -78,95 +109,6 @@ export function ExtractionActions({
   const t = useT();
   const busy = checking || stage.stage === "replying" || stage.stage === "drafting";
   const askable = !busy && canAsk(stage);
-
-  const note = (() => {
-    if (checking) {
-      return (
-        <span className="dk-ex-note">
-          <WorkingDot working />
-          {t("The agent is checking the fields")}
-        </span>
-      );
-    }
-    switch (stage.stage) {
-      case "replying":
-        return (
-          <span className="dk-ex-note">
-            <WorkingDot working />
-            {t("The agent is replying; ask again once it is done")}
-          </span>
-        );
-      case "drafting":
-        return (
-          <span className="dk-ex-note">
-            <WorkingDot working />
-            {t("Drafting the shipment")}
-          </span>
-        );
-      case "notDrafted":
-        return (
-          <span className="dk-ex-note">
-            {t(
-              "The reply ended without a drafted shipment. Read it in the conversation, or ask again.",
-            )}
-          </span>
-        );
-      case "waiting":
-        return <span className="dk-ex-note">{t("Drafted and waiting on your approval")}</span>;
-      case "creating":
-        return (
-          <span className="dk-ex-note">
-            <WorkingDot working />
-            {t("Approved; creating the shipment")}
-          </span>
-        );
-      case "created":
-        return (
-          <span className="dk-ex-note dk-ok">
-            <CheckIcon className="size-3.5" />
-            {stage.name !== "" ? t("Created shipment {0}", stage.name) : t("Created the shipment")}
-          </span>
-        );
-      case "attached":
-        return (
-          <span className="dk-ex-note dk-ok">
-            <CheckIcon className="size-3.5" />
-            {t("This file is already a shipment")}
-          </span>
-        );
-      case "failed":
-        return (
-          <span className="dk-ex-note dk-bad">
-            {stage.reason !== ""
-              ? t("It was approved but not created: {0}", stage.reason)
-              : t("It was approved but not created.")}
-          </span>
-        );
-      case "declined":
-        return <span className="dk-ex-note">{t("You declined the drafted shipment.")}</span>;
-      case "expired":
-        return (
-          <span className="dk-ex-note">
-            {t("The drafted shipment expired before it was approved.")}
-          </span>
-        );
-      case "simulated":
-        return (
-          <span className="dk-ex-note">
-            {t("The agent was simulating, so the shipment was previewed and not created.")}
-          </span>
-        );
-      case "noFile":
-        return (
-          <span className="dk-ex-note">
-            {t("The file this was read from is no longer on record.")}
-          </span>
-        );
-      default:
-        return null;
-    }
-  })();
-
   const shipmentId =
     stage.stage === "created" || stage.stage === "attached" ? stage.shipmentId : "";
   const createLabel =
@@ -179,37 +121,53 @@ export function ExtractionActions({
     stage.stage !== "waiting" &&
     stage.stage !== "creating" &&
     stage.stage !== "created" &&
-    stage.stage !== "attached";
+    stage.stage !== "attached" &&
+    stage.stage !== "noFile";
+  const settled = stage.stage === "created" || stage.stage === "attached";
+  const failed = stage.stage === "failed";
 
   return (
-    <div className="dk-ex-acts">
-      {askable && checkCount > 0 && <p className="dk-ex-ask">{checkSummary}</p>}
-      <div className="dk-ex-btns">
-        {note}
-        <span className="flex-1" />
-        {checkCount > 0 && offersCreate && (
-          <Button variant="outline" disabled={!askable} onClick={onCheck}>
-            {t("{0, plural, one {Check # field} other {Check # fields}}", checkCount)}
-          </Button>
-        )}
-        {stage.stage === "waiting" && onReview && (
-          <Button onClick={onReview}>{t("Review the draft")}</Button>
-        )}
-        {shipmentId !== "" && (
-          <Link
-            className={buttonVariants({ variant: "outline" })}
-            to={recordPath("shipment", shipmentId)}
-          >
-            {t("Open the shipment")}
-            <LinkExternal01Icon className="size-3.5" />
-          </Link>
-        )}
-        {offersCreate && (
-          <Button disabled={!askable} onClick={onCreate}>
-            {createLabel}
-          </Button>
-        )}
-      </div>
-    </div>
+    <CardBar>
+      {checkCount > 0 && offersCreate && (
+        <Button
+          variant="quiet"
+          className="dk-rec-step"
+          disabled={!askable}
+          title={askable ? checkSummary : undefined}
+          aria-label={t("Ask the agent to check {0}", checkCount)}
+          aria-description={askable ? checkSummary : undefined}
+          onClick={onCheck}
+        >
+          <CardIcon name="reset" size={13} stroke={2} />
+          <span className="dk-ex-long" aria-hidden>
+            {t("Ask the agent to check {0}", checkCount)}
+          </span>
+          <span className="dk-ex-short" aria-hidden>
+            {t("Check {0}", checkCount)}
+          </span>
+        </Button>
+      )}
+      <CardBarHint>
+        <span className={cn("dk-ex-note", settled && "dk-ok", failed && "dk-bad")}>
+          <StageNote stage={stage} checking={checking} />
+        </span>
+      </CardBarHint>
+      {stage.stage === "waiting" && onReview && (
+        <Button onClick={onReview}>{t("Review the draft")}</Button>
+      )}
+      {shipmentId !== "" && (
+        <Link className="dk-ax-btn dk-ink" to={recordPath("shipment", shipmentId)}>
+          <CardIcon name="ext" size={13} />
+          {stage.stage === "created" && stage.name !== ""
+            ? t("Open {0}", stage.name)
+            : t("Open the shipment")}
+        </Link>
+      )}
+      {offersCreate && (
+        <Button disabled={!askable} onClick={onCreate}>
+          {createLabel}
+        </Button>
+      )}
+    </CardBar>
   );
 }

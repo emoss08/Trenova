@@ -75,6 +75,7 @@ type stopPart struct {
 	sequence    int
 	role        string
 	part        string
+	place       string
 	appointment bool
 }
 
@@ -347,6 +348,7 @@ func stopReadings(idx int, stop map[string]any, evidence string) []fieldReading 
 	}
 	role := strings.ToLower(typeutils.StringOfTrimmed(stop["role"]))
 	appointment := typeutils.BoolOf(stop["appointmentRequired"])
+	place := stopPlace(stop)
 
 	parts := []struct {
 		part  string
@@ -378,6 +380,7 @@ func stopReadings(idx int, stop map[string]any, evidence string) []fieldReading 
 				sequence:    sequence,
 				role:        role,
 				part:        part.part,
+				place:       place,
 				appointment: appointment && part.part == stopPartWindow,
 			},
 		})
@@ -386,14 +389,15 @@ func stopReadings(idx int, stop map[string]any, evidence string) []fieldReading 
 	return out
 }
 
+func stopPlace(stop map[string]any) string {
+	return strings.Join(stringutils.NonEmptyStrings(
+		typeutils.StringOfTrimmed(stop["city"]),
+		typeutils.StringOfTrimmed(stop["state"]),
+	), ", ")
+}
+
 func stopAddress(stop map[string]any) string {
-	place := typeutils.StringOfTrimmed(stop["city"])
-	if state := typeutils.StringOfTrimmed(stop["state"]); state != "" {
-		if place != "" {
-			place += ", "
-		}
-		place += state
-	}
+	place := stopPlace(stop)
 	if postal := typeutils.StringOfTrimmed(stop["postalCode"]); postal != "" {
 		place = strings.TrimSpace(place + " " + postal)
 	}
@@ -476,6 +480,9 @@ func extractionField(reading *fieldReading, pages []extractionPage) map[string]a
 		field["stop"] = reading.stop.sequence
 		field["role"] = reading.stop.role
 		field["part"] = reading.stop.part
+		if reading.stop.place != "" {
+			field["place"] = reading.stop.place
+		}
 		if reading.stop.appointment {
 			field["appointment"] = true
 		}

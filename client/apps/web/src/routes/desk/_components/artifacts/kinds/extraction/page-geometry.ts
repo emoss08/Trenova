@@ -74,3 +74,51 @@ export function stepZoom(zoom: Zoom, direction: 1 | -1): Zoom {
 export function sheetWidth(zoom: Zoom): string {
   return `calc(max(100%, ${READABLE_PAGE_WIDTH}px) * ${zoom})`;
 }
+
+/** The margin a snippet keeps around what it shows, so the label beside a value reads with it. */
+const SNIPPET_MARGIN = { x: 0.05, y: 0.016 };
+
+/** The part of the page a snippet shows: every box given, with a margin of the text around them. */
+export function snippetRegion(boxes: readonly PageBox[]): PageBox {
+  const left = Math.min(...boxes.map((box) => box.x));
+  const top = Math.min(...boxes.map((box) => box.y));
+  const right = Math.max(...boxes.map((box) => box.x + box.w));
+  const bottom = Math.max(...boxes.map((box) => box.y + box.h));
+  const x = Math.max(0, left - SNIPPET_MARGIN.x);
+  const y = Math.max(0, top - SNIPPET_MARGIN.y);
+  return {
+    x,
+    y,
+    w: Math.min(1, right + SNIPPET_MARGIN.x) - x,
+    h: Math.min(1, bottom + SNIPPET_MARGIN.y) - y,
+  };
+}
+
+/** A box as fractions of a region of its page, for drawing it over that region's snippet. */
+export function boxInRegion(box: PageBox, region: PageBox): PageBox {
+  return {
+    x: (box.x - region.x) / region.w,
+    y: (box.y - region.y) / region.h,
+    w: box.w / region.w,
+    h: box.h / region.h,
+  };
+}
+
+/** The snippet's width over its height: the region's own shape on a page of the given shape. */
+export function regionAspect(region: PageBox, aspect: number): number {
+  return (region.w / region.h) * aspect;
+}
+
+/**
+ * The whole page placed so only the region shows through its snippet's frame: the page drawn
+ * as many times wider and taller than the frame as the region is smaller than the page, and
+ * moved up and left by where the region starts.
+ */
+export function regionImageStyle(region: PageBox): CSSProperties {
+  return {
+    width: pagePercent(1 / region.w),
+    height: pagePercent(1 / region.h),
+    left: pagePercent(-region.x / region.w),
+    top: pagePercent(-region.y / region.h),
+  };
+}
