@@ -79,6 +79,17 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	analyses := rg.Group("/agent-analysis")
 	analyses.GET("/runs/", h.pm.RequirePermission(resource, permission.OpRead), h.listAnalysisRuns)
 	analyses.GET(
+		"/runs/:runID/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{Resource: resource, Operation: permission.OpRead},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourceDataAnalysis.String(),
+				Operation: permission.OpRead,
+			},
+		),
+		h.analysisRun,
+	)
+	analyses.GET(
 		"/runs/:runID/charts/:position/",
 		h.pm.RequireAnyPermission(
 			middleware.PermissionCheck{Resource: resource, Operation: permission.OpRead},

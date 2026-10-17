@@ -3,12 +3,14 @@ package agentextensionservice
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,9 +23,24 @@ import (
 const (
 	analysisMetadataRun  = "trenovaAnalysisRun"
 	analysisStopTimeout  = 20 * time.Second
+	analysisPrepTimeout  = 60 * time.Second
 	maxAnalysisPurpose   = 500
 	analysisRunListLimit = 200
+	displayKindKey       = "trenova"
+	displayTable         = "table"
+	displayFigure        = "figure"
+	displayDatasets      = "datasets"
+
+	analysisPrepFailure = "Trenova could not prepare the sandbox for the analysis. Try again " +
+		"shortly."
 )
+
+// analysisPrelude runs before the agent's code: it loads each dataset as a
+// typed DataFrame named after it, styles charts for either theme, and
+// defines show_table and show_figure.
+//
+//go:embed analysis_prelude.py
+var analysisPrelude string
 
 var (
 	_ agentextensionports.DataAnalyzer = (*Service)(nil)
@@ -190,6 +207,7 @@ func (s *Service) newAnalysisRun(
 		BusinessUnitID:    req.TenantInfo.BuID,
 		ExtensionType:     typ,
 		Status:            agentextension.AnalysisRunStatusRunning,
+		Title:             agentextension.NormalizeAnalysisTitle(req.Title, req.Purpose),
 		Purpose:           stringutils.TruncateRunes(strings.TrimSpace(req.Purpose), maxAnalysisPurpose),
 		Code:              req.Code,
 		Datasets:          datasetsOf(req.Inputs),
@@ -235,16 +253,17 @@ func (s *Service) runAnalysis(
 			zap.String("analysisRun", attempt.run.ID.String()), zap.Error(updateErr))
 	}
 
-	files := make([]agentextensionports.SandboxFile, 0, len(req.Inputs))
-	for idx := range req.Inputs {
-		input := &req.Inputs[idx]
-		files = append(files, agentextensionports.SandboxFile{
-			Path:    agentextension.DatasetPath(input.Name, input.Extension),
-			Content: input.Content,
-		})
+	files, err := sandboxFiles(req)
+	if err != nil {
+		return nil, s.failPrep(ctx, attempt, err)
 	}
 	if err = call.provider.WriteFiles(ctx, sandbox, files); err != nil {
 		return nil, s.failAnalysis(ctx, attempt, call.failing(err, "load the data into the sandbox"))
+	}
+
+	loaded, err := s.prepare(ctx, attempt)
+	if err != nil {
+		return nil, err
 	}
 
 	execution, err := call.provider.RunCode(ctx, &agentextensionports.RunCodeRequest{
@@ -256,7 +275,121 @@ func (s *Service) runAnalysis(
 		return nil, s.failAnalysis(ctx, attempt, call.failing(err, "run the code"))
 	}
 
-	return s.finishAnalysis(ctx, attempt, execution), nil
+	outcome := s.finishAnalysis(ctx, attempt, execution)
+	outcome.Loaded = loaded
+
+	return outcome, nil
+}
+
+type analysisConfig struct {
+	Timezone string                  `json:"timezone"`
+	Datasets []analysisConfigDataset `json:"datasets"`
+}
+
+type analysisConfigDataset struct {
+	Name      string                              `json:"name"`
+	Path      string                              `json:"path"`
+	Extension string                              `json:"extension"`
+	Columns   []agentextension.AnalysisColumnSpec `json:"columns,omitempty"`
+}
+
+// sandboxFiles are the datasets and what the prelude needs to load them: the
+// organization's timezone and each report column's type and label.
+func sandboxFiles(
+	req *agentextensionports.AnalysisRequest,
+) ([]agentextensionports.SandboxFile, error) {
+	config := analysisConfig{
+		Timezone: strings.TrimSpace(req.Timezone),
+		Datasets: make([]analysisConfigDataset, 0, len(req.Inputs)),
+	}
+	if config.Timezone == "" {
+		config.Timezone = "UTC"
+	}
+
+	files := make([]agentextensionports.SandboxFile, 0, len(req.Inputs)+1)
+	for idx := range req.Inputs {
+		input := &req.Inputs[idx]
+		path := agentextension.DatasetPath(input.Name, input.Extension)
+		files = append(files, agentextensionports.SandboxFile{Path: path, Content: input.Content})
+		config.Datasets = append(config.Datasets, analysisConfigDataset{
+			Name:      input.Name,
+			Path:      path,
+			Extension: input.Extension,
+			Columns:   input.Columns,
+		})
+	}
+
+	encoded, err := sonic.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("encode the analysis configuration: %w", err)
+	}
+
+	return append(files, agentextensionports.SandboxFile{
+		Path:    agentextension.AnalysisConfigPath,
+		Content: encoded,
+	}), nil
+}
+
+// prepare runs the prelude and returns how it loaded each dataset. A
+// prelude that could not run is the sandbox's failure, not the agent's.
+func (s *Service) prepare(
+	ctx context.Context,
+	attempt *analysisAttempt,
+) ([]agentextension.AnalysisDatasetLoad, error) {
+	call := attempt.call
+	execution, err := call.provider.RunCode(ctx, &agentextensionports.RunCodeRequest{
+		Sandbox: attempt.sandbox,
+		Code:    analysisPrelude,
+		Timeout: analysisPrepTimeout,
+	})
+	if err != nil {
+		return nil, s.failAnalysis(ctx, attempt, call.failing(err, "prepare the sandbox"))
+	}
+	if execution.TimedOut || execution.Incomplete || execution.Error != nil {
+		reason := "it stopped"
+		if execution.Error != nil {
+			reason = execution.Error.Name + ": " + execution.Error.Value
+		}
+		return nil, s.failPrep(ctx, attempt, fmt.Errorf("the prelude did not finish: %s", reason))
+	}
+
+	for idx := range execution.Results {
+		shown := execution.Results[idx].JSON
+		if kind, _ := shown[displayKindKey].(string); kind != displayDatasets {
+			continue
+		}
+		var report struct {
+			Datasets []agentextension.AnalysisDatasetLoad `json:"datasets"`
+		}
+		if decodeDisplay(shown, &report) {
+			return agentextension.BoundedLoads(report.Datasets), nil
+		}
+	}
+
+	return []agentextension.AnalysisDatasetLoad{}, nil
+}
+
+// failPrep records a run Trenova could not prepare and tells the agent it was
+// not the code's fault.
+func (s *Service) failPrep(ctx context.Context, attempt *analysisAttempt, cause error) error {
+	s.l.Error("an analysis sandbox could not be prepared",
+		zap.String("analysisRun", attempt.run.ID.String()), zap.Error(cause))
+	outcome := usageOf(attempt)
+	outcome.Status = agentextension.AnalysisRunStatusFailed
+	outcome.Failure = analysisPrepFailure
+	s.recordAnalysis(ctx, attempt, outcome)
+
+	return &ToolError{Message: analysisPrepFailure}
+}
+
+// decodeDisplay reads a value the code displayed as JSON into its shape.
+func decodeDisplay(raw map[string]any, into any) bool {
+	encoded, err := sonic.Marshal(raw)
+	if err != nil {
+		return false
+	}
+
+	return sonic.Unmarshal(encoded, into) == nil
 }
 
 func (s *Service) stopSandbox(ctx context.Context, call *analysisCall, sandboxID string) {
@@ -304,11 +437,14 @@ func (s *Service) finishAnalysis(
 	attempt *analysisAttempt,
 	execution *agentextensionports.SandboxExecution,
 ) *agentextensionports.AnalysisOutcome {
+	shown := collectDisplays(attempt.run, execution.Results)
 	outcome := usageOf(attempt)
 	outcome.Stdout = execution.Stdout
 	outcome.Stderr = execution.Stderr
 	outcome.Error = execution.Error
-	outcome.Results = textResults(execution.Results)
+	outcome.Results = shown.texts
+	outcome.Tables = shown.tables
+	outcome.Figures = shown.figures
 
 	switch {
 	case execution.TimedOut:
@@ -325,21 +461,111 @@ func (s *Service) finishAnalysis(
 		outcome.Status = agentextension.AnalysisRunStatusSucceeded
 	}
 
-	charts := s.keepCharts(ctx, attempt.run, execution.Results)
+	charts := s.keepCharts(ctx, attempt.run, shown.charts)
 	outcome.ChartCount = len(charts)
+	outcome.Layout = shown.layout
 	run := s.recordAnalysis(ctx, attempt, outcome)
 
 	return &agentextensionports.AnalysisOutcome{
 		RunID:      run.ID,
 		Status:     run.Status,
+		Title:      run.Title,
 		Datasets:   run.Datasets,
 		Stdout:     run.Stdout,
 		Stderr:     run.Stderr,
 		Results:    run.Results,
 		Charts:     charts,
+		Tables:     run.Tables,
+		Figures:    run.Figures,
+		Layout:     run.Layout,
 		Error:      outcome.Error,
 		Failure:    run.Failure,
 		DurationMs: run.DurationMs,
+	}
+}
+
+type displays struct {
+	charts  []*agentextension.AnalysisChart
+	tables  []agentextension.AnalysisTable
+	figures []agentextension.AnalysisFigure
+	layout  []agentextension.AnalysisBlock
+	texts   []string
+}
+
+// collectDisplays sorts what the code displayed, in the order it showed it:
+// the charts it drew, the tables and headline numbers it handed back as
+// values, and anything else as text. An image that is not a PNG or is too
+// large, and a value past what a run keeps, are left out.
+func collectDisplays(
+	run *agentextension.AnalysisRun,
+	results []agentextensionports.SandboxResult,
+) *displays {
+	shown := &displays{
+		charts:  make([]*agentextension.AnalysisChart, 0, agentextension.MaxAnalysisCharts),
+		tables:  make([]agentextension.AnalysisTable, 0),
+		figures: make([]agentextension.AnalysisFigure, 0),
+		layout:  make([]agentextension.AnalysisBlock, 0),
+		texts:   make([]string, 0),
+	}
+	for idx := range results {
+		result := &results[idx]
+		switch {
+		case len(result.PNG) > 0:
+			shown.addChart(run, result)
+		case result.JSON != nil:
+			shown.addValue(result.JSON)
+		default:
+			if text := strings.TrimSpace(result.Text); text != "" {
+				shown.texts = append(shown.texts, text)
+			}
+		}
+	}
+
+	return shown
+}
+
+func (d *displays) addChart(
+	run *agentextension.AnalysisRun,
+	result *agentextensionports.SandboxResult,
+) {
+	image := result.PNG
+	if len(d.charts) == agentextension.MaxAnalysisCharts ||
+		!bytes.HasPrefix(image, pngSignature) || len(image) > agentextension.MaxAnalysisChartBytes {
+		return
+	}
+	position := len(d.charts) + 1
+	d.charts = append(d.charts, &agentextension.AnalysisChart{
+		RunID:          run.ID,
+		Position:       position,
+		OrganizationID: run.OrganizationID,
+		BusinessUnitID: run.BusinessUnitID,
+		Title: stringutils.TruncateRunes(strings.TrimSpace(result.Title),
+			agentextension.MaxAnalysisChartTitle),
+		Image: image,
+	})
+	d.layout = append(d.layout, agentextension.AnalysisBlock{
+		Kind:  agentextension.AnalysisBlockChart,
+		Index: position,
+	})
+}
+
+func (d *displays) addValue(raw map[string]any) {
+	kind, _ := raw[displayKindKey].(string)
+	switch kind {
+	case displayTable:
+		var table agentextension.AnalysisTable
+		if len(d.tables) < agentextension.MaxAnalysisTables && decodeDisplay(raw, &table) {
+			d.layout = append(d.layout, agentextension.AnalysisBlock{
+				Kind:  agentextension.AnalysisBlockTable,
+				Index: len(d.tables),
+			})
+			d.tables = append(d.tables, table)
+		}
+	case displayFigure:
+		var figure agentextension.AnalysisFigure
+		if decodeDisplay(raw, &figure) {
+			d.figures = append(d.figures, figure)
+		}
 	}
 }
 
@@ -366,46 +592,12 @@ func (s *Service) recordAnalysis(
 	return run
 }
 
-func textResults(results []agentextensionports.SandboxResult) []string {
-	texts := make([]string, 0, len(results))
-	for idx := range results {
-		if len(results[idx].PNG) == 0 {
-			if text := strings.TrimSpace(results[idx].Text); text != "" {
-				texts = append(texts, text)
-			}
-		}
-	}
-
-	return texts
-}
-
-// keepCharts stores the images the code displayed, in the order it showed
-// them, up to the most a run keeps. An image that is not a PNG or is too
-// large is left out.
+// keepCharts stores the charts the code drew, in the order it showed them.
 func (s *Service) keepCharts(
 	ctx context.Context,
 	run *agentextension.AnalysisRun,
-	results []agentextensionports.SandboxResult,
+	charts []*agentextension.AnalysisChart,
 ) []agentextensionports.AnalysisChartSummary {
-	charts := make([]*agentextension.AnalysisChart, 0, agentextension.MaxAnalysisCharts)
-	for idx := range results {
-		image := results[idx].PNG
-		if len(charts) == agentextension.MaxAnalysisCharts {
-			break
-		}
-		if !bytes.HasPrefix(image, pngSignature) || len(image) > agentextension.MaxAnalysisChartBytes {
-			continue
-		}
-		charts = append(charts, &agentextension.AnalysisChart{
-			RunID:          run.ID,
-			Position:       len(charts) + 1,
-			OrganizationID: run.OrganizationID,
-			BusinessUnitID: run.BusinessUnitID,
-			Title: stringutils.TruncateRunes(strings.TrimSpace(results[idx].Title),
-				agentextension.MaxAnalysisChartTitle),
-			Image: image,
-		})
-	}
 	if len(charts) == 0 {
 		return []agentextensionports.AnalysisChartSummary{}
 	}
@@ -457,12 +649,16 @@ func analysisRunView(run *agentextension.AnalysisRun) agentextensionports.Analys
 		ID:            run.ID,
 		ExtensionType: run.ExtensionType,
 		Status:        run.Status,
+		Title:         run.Title,
 		Purpose:       run.Purpose,
 		Code:          run.Code,
 		Datasets:      run.Datasets,
 		Stdout:        run.Stdout,
 		Stderr:        run.Stderr,
 		Results:       run.Results,
+		Tables:        run.Tables,
+		Figures:       run.Figures,
+		Layout:        run.Layout,
 		ErrorName:     run.ErrorName,
 		ErrorValue:    run.ErrorValue,
 		Traceback:     run.Traceback,
@@ -476,6 +672,29 @@ func analysisRunView(run *agentextension.AnalysisRun) agentextensionports.Analys
 		StartedAt:     run.StartedAt,
 		FinishedAt:    run.FinishedAt,
 	}
+}
+
+// AnalysisRun is one run, whole, for the person it was run for or someone who
+// oversees agents: the Desk reads it for a table longer than the agent was
+// shown. Anyone else is told it does not exist.
+func (s *Service) AnalysisRun(
+	ctx context.Context,
+	req *agentextensionports.AnalysisRunRequest,
+) (*agentextensionports.AnalysisRunView, error) {
+	run, err := s.analyses.Get(ctx, req.TenantInfo, req.RunID)
+	if errortypes.IsNotFoundError(err) {
+		return nil, errortypes.NewNotFoundError("That analysis was not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !req.Administers && run.RequestedByID != req.TenantInfo.UserID {
+		return nil, errortypes.NewNotFoundError("That analysis was not found")
+	}
+
+	view := analysisRunView(run)
+
+	return &view, nil
 }
 
 // AnalysisChart is one of a run's charts, for the person the analysis was run

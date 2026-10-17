@@ -5,6 +5,7 @@ import {
   agentExtensionCatalogResponseSchema,
   agentExtensionConfigResponseSchema,
   agentExtensionTestResponseSchema,
+  analysisRunSchema,
   analysisRunsResponseSchema,
   portalRecordingSchema,
   portalRunSchema,
@@ -101,6 +102,14 @@ export class AgentExtensionService {
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     const response = await api.get(`/agent-analysis/runs/${suffix}`, { signal: options?.signal });
     return safeParse(analysisRunsResponseSchema, response, translate("Analyses"));
+  }
+
+  /** One analysis, whole: the Desk reads it for a table longer than the agent was shown. */
+  public async analysisRun(runId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/agent-analysis/runs/${encodeURIComponent(runId)}/`, {
+      signal: options?.signal,
+    });
+    return safeParse(analysisRunSchema, response, translate("Analysis"));
   }
 
   /** One of an analysis's charts, as the image it is, under the session's own credentials. */

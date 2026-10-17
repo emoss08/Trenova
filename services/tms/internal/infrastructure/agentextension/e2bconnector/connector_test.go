@@ -74,7 +74,7 @@ func TestStartSandboxClosesTheNetworkAndReadsItsSize(t *testing.T) {
 	assert.Equal(t, false, created["allow_internet_access"])
 	assert.Equal(t, map[string]any{"allowPublicTraffic": false}, created["network"])
 	assert.Equal(t, "lanes-v2", created["templateID"])
-	assert.InDelta(t, 180, created["timeout"], 0, "the run's limit plus a minute")
+	assert.InDelta(t, 240, created["timeout"], 0, "the run's limit plus two minutes")
 	assert.Equal(t, map[string]any{"trenovaAnalysisRun": "aanr_1"}, created["metadata"])
 
 	assert.Equal(t, &agentextensionports.Sandbox{

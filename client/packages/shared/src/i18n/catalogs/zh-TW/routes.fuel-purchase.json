@@ -51,7 +51,6 @@
   "Select a card": "選擇卡片",
   "Select a unit": "選擇單位",
   "Showing {0, plural, one {# row} other {# rows}}": "顯示 {0, plural, other {# 列}}",
-  "Showing {0} of {1, plural, one {# row} other {# rows}}": "顯示 {1, plural, other {# 列}}中的 {0} 列",
   "Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.": "對帳單以末四碼識別卡片，而採購記錄只需這四碼即可比對回該卡片。系統絕不會儲存完整卡號。",
   "Tax paid": "已納稅額",
   "The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}": "卡片與交易參照編號來自對帳單，在此為唯讀，因此同一份對帳單即使再次匯入也不會重複計算。{0}",

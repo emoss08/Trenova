@@ -282,6 +282,23 @@ func TestParseExecutionKeepsTheExceptionTheCodeRaised(t *testing.T) {
 	assert.Equal(t, "'margin'", execution.Error.Value)
 }
 
+func TestParseExecutionKeepsWhatTheCodeDisplayedAsJSON(t *testing.T) {
+	t.Parallel()
+
+	execution, err := e2b.ParseExecution([]byte(
+		`{"type":"result","json":{"trenova":"figure","label":"Total open","value":6045662.16}}` +
+			"\n" + `{"type":"end_of_execution"}`,
+	))
+	require.NoError(t, err)
+	require.Len(t, execution.Results, 1)
+	assert.Equal(t, map[string]any{
+		"trenova": "figure",
+		"label":   "Total open",
+		"value":   6045662.16,
+	}, execution.Results[0].JSON)
+	assert.Empty(t, execution.Results[0].Text)
+}
+
 func TestParseExecutionSaysWhenTheCellNeverFinished(t *testing.T) {
 	t.Parallel()
 

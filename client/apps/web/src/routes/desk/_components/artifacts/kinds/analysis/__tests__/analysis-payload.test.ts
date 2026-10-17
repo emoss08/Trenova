@@ -41,6 +41,7 @@ describe("analysisFrom", () => {
     ).toEqual({
       runId: "aanr_1",
       status: "Succeeded",
+      title: "Margin by lane for Q3",
       code: "print(1)",
       datasets: [
         {
@@ -54,10 +55,65 @@ describe("analysisFrom", () => {
       output: "margin 0.18",
       results: ["0.18"],
       charts: [{ position: 1, title: "Margin by lane" }],
+      tables: [],
+      figures: [],
+      layout: [],
       error: null,
       failure: "",
       truncated: false,
     });
+  });
+
+  it("reads the tables, figures and order the analysis showed, and its own title", () => {
+    const analysis = analysisFrom(
+      artifactOf({
+        analysisRunId: "aanr_2",
+        status: "Succeeded",
+        title: "Open AR by customer",
+        tables: [
+          {
+            title: "Open balance",
+            columns: [
+              { name: "Customer", kind: "text" },
+              { name: "Open Balance", kind: "money", currency: "USD" },
+              { name: "Share", kind: "share-of-wallet" },
+            ],
+            rows: [["Acme", 36912.16, { nested: true }]],
+            totalRows: 40,
+          },
+        ],
+        figures: [{ label: "Total open", value: 6045662.16, kind: "money", currency: "USD" }],
+        layout: [
+          { kind: "table", index: 0 },
+          { kind: "chart", index: 1 },
+        ],
+      }),
+    );
+
+    expect(analysis.title).toBe("Open AR by customer");
+    expect(analysis.tables).toEqual([
+      {
+        title: "Open balance",
+        columns: [
+          { name: "Customer", kind: "text", currency: "" },
+          { name: "Open Balance", kind: "money", currency: "USD" },
+          { name: "Share", kind: "text", currency: "" },
+        ],
+        rows: [["Acme", 36912.16, null]],
+        totalRows: 40,
+      },
+    ]);
+    expect(analysis.figures).toEqual([
+      { label: "Total open", value: 6045662.16, kind: "money", currency: "USD", note: "" },
+    ]);
+    expect(analysis.layout).toEqual([
+      { kind: "table", index: 0 },
+      { kind: "chart", index: 1 },
+    ]);
+  });
+
+  it("drops tables it cannot read rather than the whole analysis", () => {
+    expect(analysisFrom(artifactOf({ tables: "not a list" })).tables).toEqual([]);
   });
 
   it("reads a status it does not know as a failure, never a success", () => {
@@ -81,6 +137,7 @@ describe("analysisViewOf", () => {
     id: "aanr_1",
     extensionType: "E2B",
     status: "Errored",
+    title: "Lane margin",
     purpose: "Margin by lane for Q3",
     code: "print(1/0)",
     datasets: [
@@ -97,6 +154,9 @@ describe("analysisViewOf", () => {
     stdout: "loading\n",
     stderr: "warning: dtype",
     results: [],
+    tables: [],
+    figures: [],
+    layout: [],
     errorName: "ZeroDivisionError",
     errorValue: "division by zero",
     traceback: "tb",
@@ -115,6 +175,7 @@ describe("analysisViewOf", () => {
     expect(analysisViewOf(run)).toEqual({
       runId: "aanr_1",
       status: "Errored",
+      title: "Lane margin",
       code: "print(1/0)",
       datasets: [
         {
@@ -127,6 +188,9 @@ describe("analysisViewOf", () => {
       ],
       output: "loading\n[stderr]\nwarning: dtype",
       results: [],
+      tables: [],
+      figures: [],
+      layout: [],
       charts: [
         { position: 1, title: "" },
         { position: 2, title: "" },
