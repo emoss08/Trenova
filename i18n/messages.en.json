@@ -15649,7 +15649,7 @@
     ]
   },
   "Activity": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -16659,11 +16659,13 @@
     ]
   },
   "Add an AI provider": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other"
     ]
   },
@@ -22304,11 +22306,12 @@
     ]
   },
   "Allowed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -30031,6 +30034,15 @@
       "routes/inbox"
     ]
   },
+  "Ask an administrator to add an AI provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask an agent in Desk": {
     "sites": 2,
     "scope": [
@@ -33343,15 +33355,6 @@
       "routes/auth"
     ]
   },
-  "Authentication events could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Authentication policy": {
     "sites": 2,
     "scope": [
@@ -33383,22 +33386,14 @@
       "go/other"
     ]
   },
-  "Authenticator": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Authenticator app": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Authenticator app. Asks for a code when you sign in.": {
@@ -39529,13 +39524,14 @@
     ]
   },
   "Blocked": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/desk",
       "routes/dispatch-console"
     ]
@@ -40353,14 +40349,13 @@
     ]
   },
   "Brief as of {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-dashboard",
-      "routes/admin",
-      "routes/shipment"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Brief date is required": {
@@ -40716,6 +40711,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Browser": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Bucket": {
@@ -41280,7 +41284,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 142,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -46025,6 +46029,15 @@
       "api/graphql"
     ]
   },
+  "Case is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Case score": {
     "sites": 1,
     "scope": [
@@ -46799,6 +46812,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Challenged": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Change": {
@@ -50311,6 +50333,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose one of the listed resolution codes": {
@@ -57371,15 +57402,6 @@
       "routes/location"
     ]
   },
-  "Configure OCR, classification, extraction, and shipment draft behavior": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.": {
     "sites": 1,
     "scope": [
@@ -57486,6 +57508,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Configure how documents are read, classified, extracted, and drafted into shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.": {
@@ -60082,7 +60113,7 @@
       "routes/customer"
     ]
   },
-  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
+  "Control whether document extraction is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -60526,6 +60557,15 @@
       "routes/billing-queue"
     ]
   },
+  "Convert each evaluation case's original file through Docling and freeze the pages beside the case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Convert text to lowercase.": {
     "sites": 1,
     "scope": [
@@ -60563,6 +60603,24 @@
     ]
   },
   "Converted amount is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Converter is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Converter version cannot be longer than 40 characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -65031,7 +65089,7 @@
     ]
   },
   "Created": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -70757,12 +70815,13 @@
     ]
   },
   "Decision": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk",
       "routes/invoice-approval",
       "routes/worker"
@@ -76389,6 +76448,15 @@
       "apps/web/components"
     ]
   },
+  "Device": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Device is required": {
     "sites": 2,
     "scope": [
@@ -77063,7 +77131,7 @@
     ]
   },
   "Disabled": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -79310,6 +79378,24 @@
       "apps/web/components"
     ]
   },
+  "Docling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Docs": {
     "sites": 1,
     "scope": [
@@ -79610,14 +79696,17 @@
     ]
   },
   "Document extraction": {
-    "sites": 3,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "api/handlers",
+      "apps/web/components",
+      "apps/web/config",
       "apps/web/lib",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -79628,6 +79717,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Document extraction settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Document extraction view": {
@@ -79646,27 +79744,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Document intelligence": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "apps/web/config",
-      "apps/web/lib",
-      "routes/admin"
-    ]
-  },
-  "Document intelligence and OCR settings": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Document intelligence finished extracting a document's contents.": {
@@ -87016,7 +87093,7 @@
     ]
   },
   "Email": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -87028,6 +87105,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/admin",
       "routes/auth",
       "routes/carrier",
       "routes/collections",
@@ -88784,7 +88862,7 @@
       "routes/admin"
     ]
   },
-  "Enable document intelligence": {
+  "Enable document extraction": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88830,7 +88908,7 @@
     ]
   },
   "Enabled": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -91692,6 +91770,15 @@
       "go/other"
     ]
   },
+  "Error code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Error code cannot be longer than 100 characters": {
     "sites": 1,
     "scope": [
@@ -92545,13 +92632,14 @@
     ]
   },
   "Event": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/worker"
@@ -98312,15 +98400,6 @@
       "routes/admin"
     ]
   },
-  "External identities could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "External integration configuration and synchronization": {
     "sites": 1,
     "scope": [
@@ -98532,8 +98611,35 @@
       "routes/agent-control"
     ]
   },
+  "Extraction engine": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Extraction engine is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Extraction engine must be Legacy or Docling": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Extraction evaluations cannot run on this installation": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -98567,6 +98673,16 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Extraction needs a model provider": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "Extraction source": {
@@ -99487,7 +99603,7 @@
     ]
   },
   "Failed": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -107447,6 +107563,15 @@
       "go/other"
     ]
   },
+  "Freeze at most {0} cases at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Freight": {
     "sites": 15,
     "scope": [
@@ -108202,6 +108327,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Frozen by is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fuel": {
@@ -117594,7 +117728,7 @@
     ]
   },
   "IP address": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -121014,7 +121148,7 @@
       "routes/edi"
     ]
   },
-  "Inspect document intelligence": {
+  "Inspect document extraction": {
     "sites": 1,
     "scope": [
       "ts"
@@ -130103,7 +130237,7 @@
     ]
   },
   "Last login": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130326,6 +130460,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Last sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Last sign-in: {0}": {
@@ -132128,6 +132271,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Legacy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Legacy exact matches": {
@@ -133957,11 +134109,12 @@
     ]
   },
   "Linked": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox",
       "routes/worker"
     ]
@@ -135302,12 +135455,11 @@
     ]
   },
   "Loading activity": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control",
       "routes/shipment"
     ]
@@ -138706,15 +138858,6 @@
       "go/other"
     ]
   },
-  "MFA authenticators could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "MJ": {
     "sites": 2,
     "scope": [
@@ -141164,7 +141307,7 @@
       "go/other"
     ]
   },
-  "Master switch for OCR, document classification, extraction, and indexing workflows.": {
+  "Master switch for reading, classifying, extracting, and indexing uploaded documents.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151780,6 +151923,15 @@
       "apps/web/components"
     ]
   },
+  "No AI provider can read documents for your organization, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No AI provider is configured for the formula assistant": {
     "sites": 1,
     "scope": [
@@ -152014,15 +152166,6 @@
       "routes/desk"
     ]
   },
-  "No IP captured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No Longer Differs": {
     "sites": 1,
     "scope": [
@@ -152030,15 +152173,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "No MFA authenticators found.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No Open Item": {
@@ -152820,15 +152954,6 @@
     ]
   },
   "No audit entries yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "No authentication events found.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154831,15 +154956,6 @@
       "routes/agent-control"
     ]
   },
-  "No external identities found.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No extracted text": {
     "sites": 1,
     "scope": [
@@ -155342,6 +155458,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "No identities linked yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No identity providers configured": {
@@ -157979,7 +158104,7 @@
       "routes/admin"
     ]
   },
-  "No risk decisions found.": {
+  "No risk decisions recorded yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -158600,6 +158725,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No sign-ins recorded yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No sign-ins recorded yet.": {
@@ -159295,6 +159429,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "No two-factor devices enrolled yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No uncovered moves in the current window.": {
@@ -160249,6 +160392,15 @@
       "routes/desk"
     ]
   },
+  "None of these cases has an original document to read again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "None of these courses could be assigned: {0}": {
     "sites": 1,
     "scope": [
@@ -161055,6 +161207,15 @@
       "apps/web/lib"
     ]
   },
+  "Not finished": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Not finished yet": {
     "sites": 1,
     "scope": [
@@ -161155,6 +161316,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Not identified": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Not in any document. Drag a page into one to file it.": {
@@ -162032,12 +162202,11 @@
     ]
   },
   "Not verified": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -166468,7 +166637,7 @@
     ]
   },
   "Off": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -167250,7 +167419,7 @@
     ]
   },
   "On": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -168702,6 +168871,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Only Docling pages are frozen beside a case": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only Draft and Published versions are available for simulation.": {
@@ -175296,7 +175474,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 141,
+    "sites": 142,
     "scope": [
       "go"
     ],
@@ -184523,13 +184701,14 @@
     ]
   },
   "Person": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -187547,7 +187726,7 @@
     ]
   },
   "Poll pending OpenAI background extraction jobs": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -197627,6 +197806,15 @@
       "routes/admin"
     ]
   },
+  "Re-drive stale document extraction jobs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Re-drive stale document intelligence jobs": {
     "sites": 1,
     "scope": [
@@ -198031,6 +198219,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Read a document with its organization's extraction engine, then classify and extract it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read a web page": {
     "sites": 2,
     "scope": [
@@ -198130,6 +198327,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Read documents with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.": {
@@ -198320,6 +198526,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Read text from scanned pages, photos, and faxes that carry no text of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Read the board": {
@@ -199375,7 +199590,7 @@
     ]
   },
   "Reason": {
-    "sites": 70,
+    "sites": 71,
     "scope": [
       "go",
       "ts"
@@ -201029,7 +201244,7 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Reconcile stale document intelligence jobs": {
+  "Reconcile stale document extraction jobs": {
     "sites": 1,
     "scope": [
       "go"
@@ -203869,11 +204084,12 @@
     ]
   },
   "Refused": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -214502,12 +214718,11 @@
     ]
   },
   "Risk": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/carrier",
       "routes/carrier-sourcing"
     ]
@@ -214519,6 +214734,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Risk check": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Risk check allowed a sign-in": {
@@ -214567,15 +214791,6 @@
     ]
   },
   "Risk decisions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Risk decisions could not be loaded.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -216440,15 +216655,6 @@
       "routes/admin"
     ]
   },
-  "Run OCR when native text extraction is unavailable or insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.": {
     "sites": 1,
     "scope": [
@@ -216550,7 +216756,7 @@
     ]
   },
   "Run asynchronous AI extraction for an indexed document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -222260,15 +222466,6 @@
       "routes/intake"
     ]
   },
-  "Search activity": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Search addresses": {
     "sites": 1,
     "scope": [
@@ -223756,6 +223953,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Security key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Security notices always reach you in Trenova": {
@@ -230337,12 +230543,13 @@
     ]
   },
   "Set up": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/factoring-company",
       "routes/fuel-purchase",
@@ -235707,7 +235914,7 @@
     ]
   },
   "Signals": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -242945,7 +243152,7 @@
     ]
   },
   "Subject": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -243584,7 +243791,7 @@
     ]
   },
   "Succeeded": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -243592,6 +243799,7 @@
     "areas": [
       "apps/web/types",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
@@ -248151,6 +248359,15 @@
   },
   "Text snapshot is required": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Text source is required": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -253395,6 +253612,15 @@
       "go/other"
     ]
   },
+  "The document has no readable pages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The document type required by this rule": {
     "sites": 1,
     "scope": [
@@ -254871,6 +255097,15 @@
       "routes/agent-control"
     ]
   },
+  "The file is stored, but no AI provider can read documents for your organization, so no shipment draft was built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The file is too large to split": {
     "sites": 1,
     "scope": [
@@ -256310,6 +256545,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The legs and charges of a {0} order cannot be modified": {
@@ -276964,15 +277208,6 @@
       "routes/admin"
     ]
   },
-  "Try a different filter.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Try a draft agent once against live data with every write simulated, writing nothing": {
     "sites": 1,
     "scope": [
@@ -279876,6 +280111,15 @@
     "areas": [
       "routes/accounting-drift",
       "routes/accounting-inbound"
+    ]
+  },
+  "Unknown person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Unknown profile field": {
@@ -284735,7 +284979,7 @@
     ]
   },
   "Verified": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -284745,7 +284989,6 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/carrier",
       "routes/jurisdiction-rule",
@@ -298820,7 +299063,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accounting-dashboard"
+      "apps/web/components"
     ]
   },
   "Written by a run that had read text from outside the organization; until a person reviews it, an agent that reads it is treated as having read that text too.": {
