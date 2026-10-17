@@ -15,10 +15,11 @@ func TruncateAtBlock(value string, maxBytes int) string {
 	}
 
 	window := value[:maxBytes]
-	if cut := strings.LastIndex(window, "\n\n"); cut >= maxBytes/2 {
+	floor := maxBytes / 2
+	if cut := strings.LastIndex(window, "\n\n"); cut > 0 && cut >= floor {
 		return strings.TrimSpace(window[:cut])
 	}
-	if cut := strings.LastIndexByte(window, '\n'); cut > 0 {
+	if cut := strings.LastIndexByte(window, '\n'); cut > 0 && cut >= floor {
 		return strings.TrimSpace(window[:cut])
 	}
 
