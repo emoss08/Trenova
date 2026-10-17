@@ -69,7 +69,7 @@ func TestGetInboundMessage_ReadsTheTenantsMessageWithItsAttachments(t *testing.T
 	}}
 	params := testParams(map[string]any{"messageId": messages.message.ID.String()})
 
-	result, err := newGetInboundMessageTool(messages).Query(t.Context(), params)
+	result, err := newGetInboundMessageTool(messages, nil).Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, messages.gotGet)
@@ -101,7 +101,7 @@ func TestGetInboundMessage_BoundsTheBodyAndSaysSo(t *testing.T) {
 		TextBody: long,
 	}}
 
-	result, err := newGetInboundMessageTool(messages).Query(
+	result, err := newGetInboundMessageTool(messages, nil).Query(
 		t.Context(),
 		testParams(map[string]any{"messageId": messages.message.ID.String()}),
 	)
@@ -112,7 +112,7 @@ func TestGetInboundMessage_BoundsTheBodyAndSaysSo(t *testing.T) {
 	assert.True(t, view.BodyTruncated)
 
 	messages.message.TextBody = "short"
-	result, err = newGetInboundMessageTool(messages).Query(
+	result, err = newGetInboundMessageTool(messages, nil).Query(
 		t.Context(),
 		testParams(map[string]any{"messageId": messages.message.ID.String()}),
 	)
@@ -124,7 +124,8 @@ func TestGetInboundMessage_RefusesWithoutAnID(t *testing.T) {
 	t.Parallel()
 
 	messages := &fakeInboundMessages{}
-	_, err := newGetInboundMessageTool(messages).Query(t.Context(), testParams(map[string]any{}))
+	_, err := newGetInboundMessageTool(messages, nil).
+		Query(t.Context(), testParams(map[string]any{}))
 
 	require.Error(t, err)
 	assert.Nil(t, messages.gotGet, "the repository must not be asked for nothing")
@@ -271,7 +272,7 @@ func TestGetInboundMessage_NamesTheMailboxIDTheListFiltersBy(t *testing.T) {
 		Mailbox:   &inboundmessage.Mailbox{ID: mailboxID, Address: "loads@carrier.example"},
 	}}
 
-	result, err := newGetInboundMessageTool(messages).Query(
+	result, err := newGetInboundMessageTool(messages, nil).Query(
 		t.Context(),
 		testParams(map[string]any{"messageId": messages.message.ID.String()}),
 	)

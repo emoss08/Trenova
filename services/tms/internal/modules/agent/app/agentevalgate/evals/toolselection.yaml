@@ -974,6 +974,48 @@ cases:
     expect: [link_inbound_message]
   - request: mark that email from the shipper as ignored, it is spam
     expect: [mark_inbound_message]
+  - request: give these three inbound messages to Dana so she owns them in triage
+    expect: [assign_inbound_messages]
+  - request: that inbound message was ignored by mistake, put it back in the triage queue
+    expect: [reopen_inbound_messages]
+  - request: snooze this inbound message until the shipment is delivered
+    expect: [snooze_inbound_messages]
+  - request: unsnooze that inbound message, the POD already came in
+    expect: [wake_inbound_message]
+  - request: I asked the shipper a question, park the inbound message until they reply
+    expect: [wait_for_inbound_reply]
+  - request: unlink the wrong shipment from this inbound message
+    expect: [unlink_inbound_message]
+  - request: hand off the triage inbox to the on call person for the night
+    expect: [hand_off_triage]
+  - request: block the sender of this phishing message
+    expect: [block_inbound_sender]
+  - request: unblock the sender we blocked by mistake so their mail reaches triage again
+    expect: [unblock_inbound_sender]
+  - request: draft a reply to the inbound message for me to review before it goes out
+    expect: [draft_inbound_reply]
+  - request: discard the reply draft on that inbound message
+    expect: [discard_inbound_reply_draft]
+  - request: read out the load from the tender in triage into a draft
+    expect: [draft_inbound_load]
+  - request: create the shipment from the tender in triage with the fields I checked
+    expect: [create_inbound_load]
+  - request: throw away the drafted load on that tender in triage
+    expect: [discard_inbound_load]
+  - request: file the attachment on the inbound message onto its shipment as the POD
+    expect: [file_inbound_attachment]
+  - request: unfile the attachment, it went on the wrong load
+    expect: [unfile_inbound_attachment]
+  - request: the delivery email reports a shortage of two pallets, log it as a billing hold
+    expect: [log_inbound_exception]
+  - request: settle the detention dispute the customer emailed about after checking the stop times
+    expect: [settle_detention_dispute]
+  - request: the duplicate document on this inbound message should replace the one on file
+    expect: [resolve_inbound_conflict]
+  - request: reopen the conflict on that inbound message, it was settled the wrong way
+    expect: [reopen_inbound_conflict]
+  - request: who is on the triage team and who is on call tonight
+    expect: [list_triage_assignees]
   - request: update the carrier's profile with the corrected MC number and insurance from the intelligence check
     expect: [apply_carrier_intel_suggestions]
   - request: note that I reviewed Swift's carrier intelligence and checked their authority

@@ -237,6 +237,26 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"resolve_bank_receipt_work_item": {agent.EgressInternal},
 		"link_inbound_message":           {agent.EgressInternal},
 		"mark_inbound_message":           {agent.EgressInternal},
+		"assign_inbound_messages":        {agent.EgressInternal},
+		"reopen_inbound_messages":        {agent.EgressInternal},
+		"snooze_inbound_messages":        {agent.EgressInternal},
+		"wake_inbound_message":           {agent.EgressInternal},
+		"wait_for_inbound_reply":         {agent.EgressInternal},
+		"unlink_inbound_message":         {agent.EgressInternal},
+		"hand_off_triage":                {agent.EgressInternal},
+		"block_inbound_sender":           {agent.EgressInternal},
+		"unblock_inbound_sender":         {agent.EgressInternal},
+		"draft_inbound_reply":            {agent.EgressInternal},
+		"discard_inbound_reply_draft":    {agent.EgressInternal},
+		"draft_inbound_load":             {agent.EgressInternal},
+		"create_inbound_load":            {agent.EgressInternal},
+		"discard_inbound_load":           {agent.EgressInternal},
+		"file_inbound_attachment":        {agent.EgressInternal},
+		"unfile_inbound_attachment":      {agent.EgressInternal},
+		"log_inbound_exception":          {agent.EgressInternal},
+		"settle_detention_dispute":       {agent.EgressMoney},
+		"resolve_inbound_conflict":       {agent.EgressInternal},
+		"reopen_inbound_conflict":        {agent.EgressInternal},
 		"check_accounting_connection":    {agent.EgressInternal},
 		"set_accounting_mapping":         {agent.EgressInternal},
 		"clear_accounting_mapping":       {agent.EgressInternal},
@@ -621,7 +641,9 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		assert.Equal(t, want, registeredPolicy(t, name).Egress, name)
 	}
 	for _, name := range []string{"link_inbound_message", "mark_inbound_message",
-		"reply_to_inbound_message", "transition_item_to_in_review"} {
+		"reply_to_inbound_message", "transition_item_to_in_review", "unlink_inbound_message",
+		"draft_inbound_reply", "draft_inbound_load", "discard_inbound_load",
+		"file_inbound_attachment", "log_inbound_exception", "reopen_inbound_conflict"} {
 		assert.NotNil(t, registeredPolicy(t, name).Condition, name)
 	}
 }

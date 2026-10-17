@@ -1,11 +1,11 @@
 {
   "keyword": {
-    "cases": 536,
+    "cases": 557,
     "recallAt5": 1,
     "top1": 0.98
   },
   "hybrid": {
-    "cases": 610,
+    "cases": 631,
     "recallAt5": 0.91,
     "top1": 0.77
   }

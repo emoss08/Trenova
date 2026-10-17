@@ -29,22 +29,7 @@ const (
 	loadSubjectMaxRunes = 300
 )
 
-var loadFieldOrder = []inboundmessage.LoadFieldKey{
-	inboundmessage.LoadFieldCustomer,
-	inboundmessage.LoadFieldOrigin,
-	inboundmessage.LoadFieldDestination,
-	inboundmessage.LoadFieldPickup,
-	inboundmessage.LoadFieldDelivery,
-	inboundmessage.LoadFieldEquipment,
-	inboundmessage.LoadFieldWeight,
-	inboundmessage.LoadFieldRate,
-	inboundmessage.LoadFieldLoads,
-	inboundmessage.LoadFieldWeekOf,
-	inboundmessage.LoadFieldRespondBy,
-	inboundmessage.LoadFieldReference,
-	inboundmessage.LoadFieldCommodity,
-	inboundmessage.LoadFieldInstructions,
-}
+var loadFieldOrder = inboundmessage.AllLoadFieldKeys()
 
 var findingKeys = map[inboundmessage.LoadFieldKey][]string{
 	inboundmessage.LoadFieldOrigin:      nil,
@@ -132,8 +117,8 @@ func (s *Service) draftLoad(
 	message *inboundmessage.InboundMessage,
 	mode triagenova.Mode,
 ) (*inboundmessage.InboundMessage, error) {
-	if message.ActionState.CreatedShipmentID.IsNotNil() {
-		return nil, errortypes.NewBusinessError("The load was already created from this message")
+	if err := requireNoCreatedLoad(message); err != nil {
+		return nil, err
 	}
 
 	draft, err := s.readLoad(ctx, message, mode)
@@ -167,23 +152,56 @@ func (s *Service) draftLoad(
 	return updated, nil
 }
 
+type LoadDraftPlan struct {
+	Message   *inboundmessage.InboundMessage
+	Draft     *inboundmessage.LoadDraft
+	NeedsNova bool
+}
+
+func (s *Service) PlanDraftLoad(ctx context.Context, req *LoadRequest) (*LoadDraftPlan, error) {
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
+	if err != nil {
+		return nil, err
+	}
+	if err = requireNoCreatedLoad(message); err != nil {
+		return nil, err
+	}
+
+	draft, found, err := s.loadFromDocuments(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		draft.DraftedAt = s.now()
+
+		return &LoadDraftPlan{Message: message, Draft: draft}, nil
+	}
+	if !s.nova.Available(triagenova.Interactive) {
+		return nil, triagenova.ErrUnavailable
+	}
+
+	return &LoadDraftPlan{Message: message, NeedsNova: true}, nil
+}
+
+func requireNoCreatedLoad(message *inboundmessage.InboundMessage) error {
+	if message.ActionState.CreatedShipmentID.IsNotNil() {
+		return errortypes.NewBusinessError("The load was already created from this message")
+	}
+
+	return nil
+}
+
 func (s *Service) readLoad(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	mode triagenova.Mode,
 ) (*inboundmessage.LoadDraft, error) {
-	source, findings, err := s.tenderFindings(ctx, message)
+	draft, found, err := s.loadFromDocuments(ctx, message)
 	if err != nil {
 		return nil, err
 	}
-	if findings != nil {
-		draft := loadFromFindings(findings)
-		if filledFields(draft) > 0 {
-			draft.Source = source
-			draft.DraftedByNova = true
-
-			return draft, nil
-		}
+	if found {
+		return draft, nil
 	}
 
 	if !s.nova.Available(mode) {
@@ -191,6 +209,28 @@ func (s *Service) readLoad(
 	}
 
 	return s.readLoadWithNova(ctx, message, mode)
+}
+
+func (s *Service) loadFromDocuments(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+) (*inboundmessage.LoadDraft, bool, error) {
+	source, findings, err := s.tenderFindings(ctx, message)
+	if err != nil {
+		return nil, false, err
+	}
+	if findings == nil {
+		return nil, false, nil
+	}
+
+	draft := loadFromFindings(findings)
+	if filledFields(draft) == 0 {
+		return nil, false, nil
+	}
+	draft.Source = source
+	draft.DraftedByNova = true
+
+	return draft, true, nil
 }
 
 func (s *Service) tenderFindings(
@@ -368,19 +408,7 @@ func (s *Service) DiscardLoad(
 	ctx context.Context,
 	req *LoadRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	updated, err := s.mutate(
-		ctx,
-		req.TenantInfo,
-		req.MessageID,
-		func(m *inboundmessage.InboundMessage) error {
-			if m.ActionState.CreatedShipmentID.IsNotNil() {
-				return errortypes.NewBusinessError("The load was already created from this message")
-			}
-			m.LoadDraft = nil
-
-			return nil
-		},
-	)
+	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, ApplyDiscardLoad)
 	if err != nil {
 		return nil, err
 	}
@@ -389,10 +417,85 @@ func (s *Service) DiscardLoad(
 	return updated, nil
 }
 
+type LoadDiscardPlan struct {
+	Message *inboundmessage.InboundMessage
+	After   *inboundmessage.InboundMessage
+}
+
+func (s *Service) PlanDiscardLoad(ctx context.Context, req *LoadRequest) (*LoadDiscardPlan, error) {
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *message
+	if err = ApplyDiscardLoad(&after); err != nil {
+		return nil, err
+	}
+
+	return &LoadDiscardPlan{Message: message, After: &after}, nil
+}
+
+func ApplyDiscardLoad(message *inboundmessage.InboundMessage) error {
+	if message.ActionState.CreatedShipmentID.IsNotNil() {
+		return errortypes.NewBusinessError("The load was already created from this message")
+	}
+	message.LoadDraft = nil
+
+	return nil
+}
+
+type CreateLoadPlan struct {
+	Message        *inboundmessage.InboundMessage
+	Load           *inboundmessageports.CreateTriageLoadRequest
+	AlreadyCreated bool
+}
+
 func (s *Service) CreateLoad(
 	ctx context.Context,
 	req *CreateLoadRequest,
 ) (*inboundmessage.InboundMessage, error) {
+	plan, err := s.PlanCreateLoad(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if plan.AlreadyCreated {
+		return plan.Message, nil
+	}
+
+	created, err := s.loads.CreateLoad(ctx, plan.Load)
+	if err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			ApplyCreatedLoad(m, plan.Load.Fields, created.ShipmentID, now)
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	activity := personActivity(updated, triage.ActivityLoadCreated, req.UserID).
+		About(created.ProNumber, "")
+	activity.RecordID = created.ShipmentID
+	s.record(ctx, activity)
+	s.changed(ctx, updated)
+
+	return updated, nil
+}
+
+func (s *Service) PlanCreateLoad(
+	ctx context.Context,
+	req *CreateLoadRequest,
+) (*CreateLoadPlan, error) {
 	if s.loads == nil {
 		return nil, errortypes.NewBusinessError(
 			"Loads cannot be created from messages on this installation",
@@ -409,53 +512,40 @@ func (s *Service) CreateLoad(
 		return nil, err
 	}
 	if message.ActionState.CreatedShipmentID.IsNotNil() {
-		return message, nil
+		return &CreateLoadPlan{Message: message, AlreadyCreated: true}, nil
 	}
 
 	actorTenant := req.TenantInfo
 	actorTenant.UserID = req.UserID
-	created, err := s.loads.CreateLoad(ctx, &inboundmessageports.CreateTriageLoadRequest{
-		TenantInfo:       req.TenantInfo,
-		Actor:            permissionports.UserActor(actorTenant),
-		CustomerID:       message.MatchedCustomerID,
-		Fields:           fields,
-		SourceDocumentID: tenderDocumentID(message),
-		IdempotencyKey:   req.IdempotencyKey,
-	})
-	if err != nil {
-		return nil, err
-	}
 
-	now := s.now()
-	updated, err := s.mutate(
-		ctx,
-		req.TenantInfo,
-		req.MessageID,
-		func(m *inboundmessage.InboundMessage) error {
-			m.ActionState.CreatedShipmentID = created.ShipmentID
-			m.ActionState.CreatedShipmentAt = now
-			draft := orderedDraft(fieldValues(fields))
-			if m.LoadDraft != nil {
-				draft.Source = m.LoadDraft.Source
-				draft.DraftedAt = m.LoadDraft.DraftedAt
-				draft.DraftedByNova = m.LoadDraft.DraftedByNova
-			}
-			m.LoadDraft = draft
-
-			return nil
+	return &CreateLoadPlan{
+		Message: message,
+		Load: &inboundmessageports.CreateTriageLoadRequest{
+			TenantInfo:       req.TenantInfo,
+			Actor:            permissionports.UserActor(actorTenant),
+			CustomerID:       message.MatchedCustomerID,
+			Fields:           fields,
+			SourceDocumentID: tenderDocumentID(message),
+			IdempotencyKey:   req.IdempotencyKey,
 		},
-	)
-	if err != nil {
-		return nil, err
+	}, nil
+}
+
+func ApplyCreatedLoad(
+	message *inboundmessage.InboundMessage,
+	fields []inboundmessageports.TriageLoadFieldValue,
+	shipmentID pulid.ID,
+	now int64,
+) {
+	message.ActionState.CreatedShipmentID = shipmentID
+	message.ActionState.CreatedShipmentAt = now
+	draft := orderedDraft(fieldValues(fields))
+	if message.LoadDraft != nil {
+		draft.Source = message.LoadDraft.Source
+		draft.DraftedAt = message.LoadDraft.DraftedAt
+		draft.DraftedByNova = message.LoadDraft.DraftedByNova
 	}
-
-	activity := personActivity(updated, triage.ActivityLoadCreated, req.UserID).
-		About(created.ProNumber, "")
-	activity.RecordID = created.ShipmentID
-	s.record(ctx, activity)
-	s.changed(ctx, updated)
-
-	return updated, nil
+	message.LoadDraft = draft
 }
 
 func validateLoadFields(

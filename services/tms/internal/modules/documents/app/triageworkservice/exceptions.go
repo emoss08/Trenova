@@ -42,10 +42,53 @@ type LogExceptionRequest struct {
 	Note       string
 }
 
+type ExceptionPlan struct {
+	Message *inboundmessage.InboundMessage
+	After   *inboundmessage.InboundMessage
+	Hold    *inboundmessageports.LogTriageExceptionRequest
+	Summary string
+}
+
 func (s *Service) LogException(
 	ctx context.Context,
 	req *LogExceptionRequest,
 ) (*inboundmessage.InboundMessage, error) {
+	plan, err := s.PlanLogException(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.exceptions.LogException(ctx, plan.Hold); err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			ApplyException(m, req.Kind, now)
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	activity := personActivity(updated, triage.ActivityExceptionLogged, req.UserID).
+		About(plan.Summary, strings.TrimSpace(req.Note))
+	activity.RecordID = plan.Message.MatchedShipmentID
+	s.record(ctx, activity)
+	s.changed(ctx, updated)
+
+	return updated, nil
+}
+
+func (s *Service) PlanLogException(
+	ctx context.Context,
+	req *LogExceptionRequest,
+) (*ExceptionPlan, error) {
 	if s.exceptions == nil {
 		return nil, errortypes.NewBusinessError("Exceptions cannot be logged on this installation")
 	}
@@ -63,45 +106,39 @@ func (s *Service) LogException(
 		)
 	}
 
-	summary := exceptionSummary(req)
 	actorTenant := req.TenantInfo
 	actorTenant.UserID = req.UserID
-	if err = s.exceptions.LogException(ctx, &inboundmessageports.LogTriageExceptionRequest{
-		TenantInfo: req.TenantInfo,
-		Actor:      permissionports.UserActor(actorTenant),
-		ShipmentID: message.MatchedShipmentID,
-		Kind:       req.Kind,
-		Quantity:   req.Quantity,
-		Unit:       strings.TrimSpace(req.Unit),
-		Note:       strings.TrimSpace(req.Note),
-		Source:     fmt.Sprintf("From an email from %s: %s", message.FromAddress, message.Subject),
-	}); err != nil {
-		return nil, err
-	}
+	after := *message
+	ApplyException(&after, req.Kind, s.now())
 
-	now := s.now()
-	updated, err := s.mutate(
-		ctx,
-		req.TenantInfo,
-		req.MessageID,
-		func(m *inboundmessage.InboundMessage) error {
-			m.ActionState.ExceptionKind = req.Kind
-			m.ActionState.ExceptionLoggedAt = now
-
-			return nil
+	return &ExceptionPlan{
+		Message: message,
+		After:   &after,
+		Hold: &inboundmessageports.LogTriageExceptionRequest{
+			TenantInfo: req.TenantInfo,
+			Actor:      permissionports.UserActor(actorTenant),
+			ShipmentID: message.MatchedShipmentID,
+			Kind:       req.Kind,
+			Quantity:   req.Quantity,
+			Unit:       strings.TrimSpace(req.Unit),
+			Note:       strings.TrimSpace(req.Note),
+			Source: fmt.Sprintf(
+				"From an email from %s: %s",
+				message.FromAddress,
+				message.Subject,
+			),
 		},
-	)
-	if err != nil {
-		return nil, err
-	}
+		Summary: exceptionSummary(req),
+	}, nil
+}
 
-	activity := personActivity(updated, triage.ActivityExceptionLogged, req.UserID).
-		About(summary, strings.TrimSpace(req.Note))
-	activity.RecordID = message.MatchedShipmentID
-	s.record(ctx, activity)
-	s.changed(ctx, updated)
-
-	return updated, nil
+func ApplyException(
+	message *inboundmessage.InboundMessage,
+	kind inboundmessage.ExceptionKind,
+	now int64,
+) {
+	message.ActionState.ExceptionKind = kind
+	message.ActionState.ExceptionLoggedAt = now
 }
 
 func validateException(req *LogExceptionRequest) error {
@@ -154,6 +191,27 @@ type BlockSenderRequest struct {
 	MessageID  pulid.ID
 }
 
+type SenderPlan struct {
+	Message *inboundmessage.InboundMessage
+	After   *inboundmessage.InboundMessage
+	Mailbox *inboundmessage.Mailbox
+	Sender  string
+	Blocked []string
+	Changed bool
+}
+
+func SenderOf(message *inboundmessage.InboundMessage) (string, error) {
+	sender, err := emailutils.Normalize(message.FromAddress)
+	if err != nil {
+		sender = strings.ToLower(strings.TrimSpace(message.FromAddress))
+	}
+	if sender == "" {
+		return "", errortypes.NewBusinessError("This message has no sender to block")
+	}
+
+	return sender, nil
+}
+
 func (s *Service) BlockSender(
 	ctx context.Context,
 	req *BlockSenderRequest,
@@ -163,25 +221,16 @@ func (s *Service) BlockSender(
 		return nil, err
 	}
 
-	sender, err := emailutils.Normalize(message.FromAddress)
+	sender, err := SenderOf(message)
 	if err != nil {
-		sender = strings.ToLower(strings.TrimSpace(message.FromAddress))
-	}
-	if sender == "" {
-		return nil, errortypes.NewBusinessError("This message has no sender to block")
+		return nil, err
 	}
 
 	if _, err = s.changeBlockedSenders(
 		ctx,
 		req.TenantInfo,
 		message.MailboxID,
-		func(senders []string) []string {
-			if slices.Contains(senders, sender) {
-				return senders
-			}
-
-			return append(senders, sender)
-		},
+		blocking(sender),
 	); err != nil {
 		return nil, err
 	}
@@ -192,16 +241,7 @@ func (s *Service) BlockSender(
 		req.TenantInfo,
 		req.MessageID,
 		func(m *inboundmessage.InboundMessage) error {
-			m.ActionState.SenderBlockedAt = now
-			if m.Status != inboundmessage.StatusIgnored &&
-				m.Status != inboundmessage.StatusActioned {
-				m.Status = inboundmessage.StatusIgnored
-				m.ReviewedBy = req.UserID
-				m.ReviewedAt = now
-				m.ReviewNote = blockedReviewNote
-				m.DueAt = 0
-				m.Unpark()
-			}
+			ApplyBlockSender(m, req.UserID, now)
 
 			return nil
 		},
@@ -219,6 +259,48 @@ func (s *Service) BlockSender(
 	return updated, nil
 }
 
+func (s *Service) PlanBlockSender(
+	ctx context.Context,
+	req *BlockSenderRequest,
+) (*SenderPlan, error) {
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
+	if err != nil {
+		return nil, err
+	}
+
+	sender, err := SenderOf(message)
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := s.planBlockedSenders(ctx, req.TenantInfo, message.MailboxID, blocking(sender))
+	if err != nil {
+		return nil, err
+	}
+
+	after := *message
+	ApplyBlockSender(&after, req.UserID, s.now())
+	plan.Message = message
+	plan.After = &after
+	plan.Sender = sender
+
+	return plan, nil
+}
+
+func ApplyBlockSender(message *inboundmessage.InboundMessage, userID pulid.ID, now int64) {
+	message.ActionState.SenderBlockedAt = now
+	if message.Status == inboundmessage.StatusIgnored ||
+		message.Status == inboundmessage.StatusActioned {
+		return
+	}
+	message.Status = inboundmessage.StatusIgnored
+	message.ReviewedBy = userID
+	message.ReviewedAt = now
+	message.ReviewNote = blockedReviewNote
+	message.DueAt = 0
+	message.Unpark()
+}
+
 type UnblockSenderRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
@@ -230,26 +312,101 @@ func (s *Service) UnblockSender(
 	ctx context.Context,
 	req *UnblockSenderRequest,
 ) (*inboundmessage.Mailbox, error) {
+	sender, err := unblockedSender(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.changeBlockedSenders(ctx, req.TenantInfo, req.MailboxID, unblocking(sender))
+}
+
+func (s *Service) PlanUnblockSender(
+	ctx context.Context,
+	req *UnblockSenderRequest,
+) (*SenderPlan, error) {
+	sender, err := unblockedSender(req)
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := s.planBlockedSenders(ctx, req.TenantInfo, req.MailboxID, unblocking(sender))
+	if err != nil {
+		return nil, err
+	}
+	plan.Sender = sender
+
+	return plan, nil
+}
+
+func unblockedSender(req *UnblockSenderRequest) (string, error) {
 	sender := strings.ToLower(strings.TrimSpace(req.Sender))
 	if sender == "" {
-		return nil, errortypes.NewValidationError(
+		return "", errortypes.NewValidationError(
 			"sender",
 			errortypes.ErrRequired,
 			"Say which sender to unblock",
 		)
 	}
 
-	return s.changeBlockedSenders(
-		ctx,
-		req.TenantInfo,
-		req.MailboxID,
-		func(senders []string) []string {
-			return slices.DeleteFunc(
-				senders,
-				func(blocked string) bool { return blocked == sender },
-			)
-		},
-	)
+	return sender, nil
+}
+
+func blocking(sender string) func([]string) []string {
+	return func(senders []string) []string {
+		if slices.Contains(senders, sender) {
+			return senders
+		}
+
+		return append(senders, sender)
+	}
+}
+
+func unblocking(sender string) func([]string) []string {
+	return func(senders []string) []string {
+		return slices.DeleteFunc(
+			senders,
+			func(blocked string) bool { return blocked == sender },
+		)
+	}
+}
+
+func nextBlockedSenders(
+	current []string,
+	change func([]string) []string,
+) (next []string, changed bool, err error) {
+	next = change(slices.Clone(current))
+	if slices.Equal(next, current) {
+		return current, false, nil
+	}
+	if len(next) > maxBlockedSenders {
+		return nil, false, errortypes.NewBusinessError(
+			"A source blocks at most {0} senders. Unblock some first.", maxBlockedSenders,
+		)
+	}
+
+	return next, true, nil
+}
+
+func (s *Service) planBlockedSenders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	mailboxID pulid.ID,
+	change func([]string) []string,
+) (*SenderPlan, error) {
+	mailbox, err := s.mailboxes.GetByID(ctx, inboundmessageports.GetMailboxByIDRequest{
+		ID:         mailboxID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	next, changed, err := nextBlockedSenders(mailbox.BlockedSenders, change)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SenderPlan{Mailbox: mailbox, Blocked: next, Changed: changed}, nil
 }
 
 func (s *Service) changeBlockedSenders(
@@ -268,14 +425,12 @@ func (s *Service) changeBlockedSenders(
 			return nil, err
 		}
 
-		next := change(slices.Clone(mailbox.BlockedSenders))
-		if slices.Equal(next, mailbox.BlockedSenders) {
-			return mailbox, nil
+		next, changed, err := nextBlockedSenders(mailbox.BlockedSenders, change)
+		if err != nil {
+			return nil, err
 		}
-		if len(next) > maxBlockedSenders {
-			return nil, errortypes.NewBusinessError(
-				"A source blocks at most {0} senders. Unblock some first.", maxBlockedSenders,
-			)
+		if !changed {
+			return mailbox, nil
 		}
 		mailbox.BlockedSenders = next
 
@@ -300,41 +455,23 @@ type DecideStopsRequest struct {
 	Decision   inboundmessage.StopsDecision
 }
 
+type StopsPlan struct {
+	Message   *inboundmessage.InboundMessage
+	After     *inboundmessage.InboundMessage
+	Unchanged bool
+}
+
 func (s *Service) DecideStops(
 	ctx context.Context,
 	req *DecideStopsRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if !req.Decision.IsValid() {
-		return nil, errortypes.NewValidationError(
-			"decision",
-			errortypes.ErrInvalid,
-			"Choose waive or stand by",
-		)
-	}
-
-	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
+	plan, err := s.PlanDecideStops(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if message.Classification != inboundmessage.ClassificationDetentionDispute {
-		return nil, errortypes.NewBusinessError(
-			"Stop times are checked only for detention disputes",
-		)
-	}
-	if message.MatchedShipmentID.IsNil() {
-		return nil, errortypes.NewBusinessError("Link the message to its shipment first")
-	}
-	pending := message.ActionState.CreditPending()
-	if message.ActionState.StopsDecision == req.Decision && !pending {
+	message := plan.Message
+	if plan.Unchanged {
 		return s.refreshed(ctx, req.TenantInfo, message.ID)
-	}
-	if pending && req.Decision == inboundmessage.StopsDecisionStandBy {
-		return nil, errortypes.NewValidationError(
-			"decision",
-			errortypes.ErrInvalidOperation,
-			"The credit for this detention on {0} is waiting for approval in billing. Reject it there before standing by the charge.",
-			strings.Join(message.ActionState.DetentionWaiver.InvoiceNumbers, ", "),
-		)
 	}
 
 	settled := &inboundmessageports.SettledTriageDetention{}
@@ -364,9 +501,7 @@ func (s *Service) DecideStops(
 		req.TenantInfo,
 		req.MessageID,
 		func(m *inboundmessage.InboundMessage) error {
-			m.ActionState.StopsDecision = req.Decision
-			m.ActionState.StopsDecidedAt = now
-			m.ActionState.DetentionWaiver = waiverOf(req.Decision, settled)
+			ApplyStopsDecision(m, req.Decision, now, settled)
 
 			return nil
 		},
@@ -386,6 +521,60 @@ func (s *Service) DecideStops(
 	}
 
 	return s.refreshed(ctx, req.TenantInfo, updated.ID)
+}
+
+func (s *Service) PlanDecideStops(
+	ctx context.Context,
+	req *DecideStopsRequest,
+) (*StopsPlan, error) {
+	if !req.Decision.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"decision",
+			errortypes.ErrInvalid,
+			"Choose waive or stand by",
+		)
+	}
+
+	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
+	if err != nil {
+		return nil, err
+	}
+	if message.Classification != inboundmessage.ClassificationDetentionDispute {
+		return nil, errortypes.NewBusinessError(
+			"Stop times are checked only for detention disputes",
+		)
+	}
+	if message.MatchedShipmentID.IsNil() {
+		return nil, errortypes.NewBusinessError("Link the message to its shipment first")
+	}
+	pending := message.ActionState.CreditPending()
+	if message.ActionState.StopsDecision == req.Decision && !pending {
+		return &StopsPlan{Message: message, After: message, Unchanged: true}, nil
+	}
+	if pending && req.Decision == inboundmessage.StopsDecisionStandBy {
+		return nil, errortypes.NewValidationError(
+			"decision",
+			errortypes.ErrInvalidOperation,
+			"The credit for this detention on {0} is waiting for approval in billing. Reject it there before standing by the charge.",
+			strings.Join(message.ActionState.DetentionWaiver.InvoiceNumbers, ", "),
+		)
+	}
+
+	after := *message
+	ApplyStopsDecision(&after, req.Decision, s.now(), nil)
+
+	return &StopsPlan{Message: message, After: &after}, nil
+}
+
+func ApplyStopsDecision(
+	message *inboundmessage.InboundMessage,
+	decision inboundmessage.StopsDecision,
+	now int64,
+	settled *inboundmessageports.SettledTriageDetention,
+) {
+	message.ActionState.StopsDecision = decision
+	message.ActionState.StopsDecidedAt = now
+	message.ActionState.DetentionWaiver = waiverOf(decision, settled)
 }
 
 func waiverOf(

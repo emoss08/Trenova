@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -42,24 +43,7 @@ func (s *Service) File(
 	ctx context.Context,
 	req *FileRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	attachment, err := s.messages.GetAttachmentByID(
-		ctx,
-		inboundmessageports.GetInboundAttachmentRequest{
-			ID:         req.AttachmentID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err = requireFileable(attachment); err != nil {
-		return nil, err
-	}
-	if err = s.requireShipment(ctx, req.TenantInfo, req.ShipmentID); err != nil {
-		return nil, err
-	}
-
-	message, err := s.message(ctx, req.TenantInfo, attachment.MessageID)
+	attachment, message, err := s.fileTarget(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +76,141 @@ func (s *Service) File(
 	}
 
 	return s.refreshed(ctx, req.TenantInfo, message.ID)
+}
+
+type PlannedRange struct {
+	FromPage       int
+	ToPage         int
+	DocumentTypeID pulid.ID
+	DocumentType   string
+	FileName       string
+}
+
+type FilePlan struct {
+	Message        *inboundmessage.InboundMessage
+	Attachment     *inboundmessage.InboundAttachment
+	After          *inboundmessage.InboundAttachment
+	DocumentType   *documenttype.DocumentType
+	Ranges         []PlannedRange
+	Replaces       pulid.ID
+	PagesUnchecked bool
+}
+
+func (s *Service) PlanFile(ctx context.Context, req *FileRequest) (*FilePlan, error) {
+	attachment, message, err := s.fileTarget(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *attachment
+	plan := &FilePlan{Message: message, Attachment: attachment, After: &after}
+	if len(req.Pages) == 0 {
+		docType, typeErr := s.fileAs(ctx, req, attachment)
+		if typeErr != nil {
+			return nil, typeErr
+		}
+		applyFiling(&after, req.ShipmentID, docType.Name, req.UserID, s.now())
+		plan.DocumentType = docType
+		if conflict, ok := replacingConflict(message, attachment.ID); ok {
+			plan.Replaces = conflict.ExistingDocumentID
+		}
+
+		return plan, nil
+	}
+
+	if err = requireSplittable(attachment); err != nil {
+		return nil, err
+	}
+	pageCount := attachment.PageCount
+	if pageCount <= 0 {
+		plan.PagesUnchecked = true
+		pageCount = lastPage(req.Pages)
+	}
+	ranges, err := s.validateRanges(ctx, req.TenantInfo, req.Pages, pageCount)
+	if err != nil {
+		return nil, err
+	}
+
+	staged := make([]triageworkcontract.SplitRange, 0, len(ranges))
+	plan.Ranges = make([]PlannedRange, 0, len(ranges))
+	for _, rng := range ranges {
+		staged = append(staged, triageworkcontract.SplitRange{
+			FromPage:       rng.FromPage,
+			ToPage:         rng.ToPage,
+			DocumentTypeID: rng.docType.ID,
+			DocumentType:   rng.docType.Name,
+		})
+		plan.Ranges = append(plan.Ranges, PlannedRange{
+			FromPage:       rng.FromPage,
+			ToPage:         rng.ToPage,
+			DocumentTypeID: rng.docType.ID,
+			DocumentType:   rng.docType.Name,
+			FileName:       rangeFileName(attachment.FileName, rng.PageRange),
+		})
+	}
+	applyFiling(&after, req.ShipmentID, splitLabel(staged), req.UserID, s.now())
+
+	return plan, nil
+}
+
+func lastPage(pages []PageRange) int {
+	last := 0
+	for _, page := range pages {
+		last = max(last, page.ToPage)
+	}
+
+	return last
+}
+
+func (s *Service) fileTarget(
+	ctx context.Context,
+	req *FileRequest,
+) (*inboundmessage.InboundAttachment, *inboundmessage.InboundMessage, error) {
+	attachment, err := s.messages.GetAttachmentByID(
+		ctx,
+		inboundmessageports.GetInboundAttachmentRequest{
+			ID:         req.AttachmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err = requireFileable(attachment); err != nil {
+		return nil, nil, err
+	}
+	if err = s.requireShipment(ctx, req.TenantInfo, req.ShipmentID); err != nil {
+		return nil, nil, err
+	}
+
+	message, err := s.message(ctx, req.TenantInfo, attachment.MessageID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return attachment, message, nil
+}
+
+func applyFiling(
+	attachment *inboundmessage.InboundAttachment,
+	shipmentID pulid.ID,
+	filedAs string,
+	userID pulid.ID,
+	now int64,
+) {
+	attachment.FiledShipmentID = shipmentID
+	attachment.FiledAs = filedAs
+	attachment.FiledAt = now
+	attachment.FiledBy = userID
+	attachment.SplitDocuments = nil
+}
+
+func clearFilingFields(attachment *inboundmessage.InboundAttachment) {
+	attachment.FiledShipmentID = pulid.Nil
+	attachment.FiledAs = ""
+	attachment.FiledAt = 0
+	attachment.FiledBy = pulid.Nil
+	attachment.SplitDocuments = nil
 }
 
 func requireFileable(attachment *inboundmessage.InboundAttachment) error {
@@ -215,11 +334,7 @@ func (s *Service) fileWhole(ctx context.Context, f *wholeFiling) error {
 
 	replaced := s.replaceExisting(ctx, f, attached.ID)
 
-	f.attachment.FiledShipmentID = f.shipmentID
-	f.attachment.FiledAs = f.docType.Name
-	f.attachment.FiledAt = s.now()
-	f.attachment.FiledBy = f.userID
-	f.attachment.SplitDocuments = nil
+	applyFiling(f.attachment, f.shipmentID, f.docType.Name, f.userID, s.now())
 	if _, err = s.messages.UpdateAttachment(ctx, f.attachment); err != nil {
 		return err
 	}
@@ -352,21 +467,7 @@ func (s *Service) Unfile(
 	ctx context.Context,
 	req *UnfileRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	attachment, err := s.messages.GetAttachmentByID(
-		ctx,
-		inboundmessageports.GetInboundAttachmentRequest{
-			ID:         req.AttachmentID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !attachment.Filed() {
-		return nil, errortypes.NewBusinessError("This file is not filed")
-	}
-
-	message, err := s.message(ctx, req.TenantInfo, attachment.MessageID)
+	attachment, message, err := s.unfileTarget(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +506,63 @@ func (s *Service) Unfile(
 	s.record(ctx, activity)
 
 	return s.refreshed(ctx, req.TenantInfo, message.ID)
+}
+
+type UnfilePlan struct {
+	Message    *inboundmessage.InboundMessage
+	Attachment *inboundmessage.InboundAttachment
+	After      *inboundmessage.InboundAttachment
+	Removed    []inboundmessage.SplitDocument
+	Restores   pulid.ID
+}
+
+func (s *Service) PlanUnfile(ctx context.Context, req *UnfileRequest) (*UnfilePlan, error) {
+	attachment, message, err := s.unfileTarget(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *attachment
+	clearFilingFields(&after)
+	plan := &UnfilePlan{
+		Message:    message,
+		Attachment: attachment,
+		After:      &after,
+		Removed:    attachment.SplitDocuments,
+	}
+	if len(attachment.SplitDocuments) == 0 {
+		if conflict, ok := replacingConflict(message, attachment.ID); ok {
+			plan.Restores = conflict.ExistingDocumentID
+		}
+	}
+
+	return plan, nil
+}
+
+func (s *Service) unfileTarget(
+	ctx context.Context,
+	req *UnfileRequest,
+) (*inboundmessage.InboundAttachment, *inboundmessage.InboundMessage, error) {
+	attachment, err := s.messages.GetAttachmentByID(
+		ctx,
+		inboundmessageports.GetInboundAttachmentRequest{
+			ID:         req.AttachmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !attachment.Filed() {
+		return nil, nil, errortypes.NewBusinessError("This file is not filed")
+	}
+
+	message, err := s.message(ctx, req.TenantInfo, attachment.MessageID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return attachment, message, nil
 }
 
 func (s *Service) restoreReplaced(

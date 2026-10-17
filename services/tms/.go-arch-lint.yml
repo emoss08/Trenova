@@ -3245,7 +3245,7 @@ deps:
       - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (11 imports)
       - agent-test # TODO(build-arch): layer import inside the module that the layer rules do not allow (2 imports)
       - billing-app # TODO(build-arch): imports app of billing; use its ports (rule 6) (24 imports)
-      - documents-app # TODO(build-arch): imports app of documents; use its ports (rule 6) (13 imports)
+      - documents-app # TODO(build-arch): imports app of documents; use its ports (rule 6) (28 imports)
       - edi-app # TODO(build-arch): imports app of edi; use its ports (rule 6) (16 imports)
       - equipment-app # TODO(build-arch): imports app of equipment; use its ports (rule 6) (6 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (28 imports)

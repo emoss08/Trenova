@@ -1983,7 +1983,7 @@ writes:
 
   # inboundmessage
   "mutation assignInboundMessages":
-    pending: "Assign inbound messages to a person, or take them off whoever has them."
+    tools: [assign_inbound_messages]
   "mutation createInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -1994,7 +1994,7 @@ writes:
     exempt: user-preference
     reason: "A saved search in one person's own Triage sidebar."
   "mutation handOffTriage":
-    pending: "Hand everything still waiting in Triage to the on-call person at the end of the day."
+    tools: [hand_off_triage]
   "mutation linkInboundMessage":
     tools: [link_inbound_message]
   "mutation readUnreadInboundMessages":
@@ -2004,7 +2004,7 @@ writes:
     exempt: user-preference
     reason: "A saved search in one person's own Triage sidebar."
   "mutation reopenInboundMessages":
-    pending: "Put settled inbound messages back in the Triage queue."
+    tools: [reopen_inbound_messages]
   "mutation reviewInboundMessage":
     tools: [mark_inbound_message]
   "mutation reviewInboundMessages":
@@ -2023,11 +2023,11 @@ writes:
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."
   "mutation snoozeInboundMessages":
-    pending: "Snooze inbound messages until a time, a delivery, a document or a payment."
+    tools: [snooze_inbound_messages]
   "mutation stopWaitingForInboundReply":
-    pending: "Bring an inbound message waiting on a reply back to the queue now."
+    tools: [wake_inbound_message]
   "mutation unlinkInboundMessage":
-    pending: "Remove the shipment, customer or carrier an inbound message was linked to."
+    tools: [unlink_inbound_message]
   "mutation updateInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -2038,47 +2038,49 @@ writes:
     exempt: configuration
     reason: "The on-call person and the end of the working day are organization-wide settings an administrator owns."
   "mutation waitForInboundReply":
-    pending: "Park an inbound message until the sender replies on its thread, or until a time."
+    tools: [wait_for_inbound_reply]
   "mutation wakeInboundMessage":
-    pending: "Bring a snoozed inbound message back to the queue now."
+    tools: [wake_inbound_message]
 
   # inboundreply
   "mutation blockInboundSender":
-    pending: "Send a sender's future mail on a source straight to Ignored, and ignore the message."
+    tools: [block_inbound_sender]
   "mutation createInboundLoad":
-    pending: "Create the shipment a tender in Triage describes, from the fields a person checked."
+    tools: [create_inbound_load]
   "mutation createTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
   "mutation decideInboundStops":
-    pending: "Waive or stand by a disputed detention charge after checking the stop times, and draft the answer."
+    tools: [settle_detention_dispute]
   "mutation deleteTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
   "mutation discardInboundLoad":
-    pending: "Throw away the load Nova drafted from an inbound message."
+    tools: [discard_inbound_load]
   "mutation discardInboundReplyDraft":
-    pending: "Throw away the reply draft waiting on an inbound message."
+    tools: [discard_inbound_reply_draft]
   "mutation draftInboundLoad":
-    pending: "Have Nova read the load an inbound tender describes into a draft for a person to check."
+    tools: [draft_inbound_load]
   "mutation draftInboundMany":
-    pending: "Have Nova draft replies and loads for many inbound messages in the background."
+    exempt: duplicate
+    reason: "The bulk, background form of draftInboundReply and draftInboundLoad; draft_inbound_reply and draft_inbound_load draft each message."
   "mutation draftInboundReply":
-    pending: "Have Nova draft a reply to an inbound message for a person to review."
+    tools: [draft_inbound_reply]
   "mutation fileInboundAttachment":
-    pending: "File an email attachment on a shipment as a typed document, whole or split into page ranges."
+    tools: [file_inbound_attachment]
   "mutation fileInboundMany":
-    pending: "File every readable attachment of each inbound message on its matched shipment."
+    exempt: duplicate
+    reason: "The bulk form of fileInboundAttachment, filing each readable attachment by the kind it was read as; file_inbound_attachment files each one, taking that kind when no type is named."
   "mutation logInboundException":
-    pending: "Log a shortage, overage or damage from a delivery on the shipment as a billing hold."
+    tools: [log_inbound_exception]
   "mutation saveInboundReplyDraft":
-    pending: "Save a person's reply to an inbound message as its draft."
+    tools: [draft_inbound_reply]
   "mutation sendInboundReply":
     tools: [reply_to_inbound_message]
   "mutation unblockInboundSender":
-    pending: "Let a blocked sender's mail on a source reach the queue again."
+    tools: [unblock_inbound_sender]
   "mutation unfileInboundAttachment":
-    pending: "Take an email attachment back off the shipment it was filed on."
+    tools: [unfile_inbound_attachment]
   "mutation updateTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
@@ -3050,9 +3052,9 @@ writes:
     exempt: attestation
     reason: "A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading."
   "mutation reopenInboundConflict":
-    pending: "Reopen a settled duplicate-document or repeated-load conflict on a triage message"
+    tools: [reopen_inbound_conflict]
   "mutation resolveInboundConflict":
-    pending: "Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load"
+    tools: [resolve_inbound_conflict]
   "mutation setTriageRuleEnabled":
     exempt: agent-administration
     reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."

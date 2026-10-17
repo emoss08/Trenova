@@ -87,6 +87,8 @@ func (s *Service) StopTimes(
 func stopTimesOf(occurrence *detention.DetentionOccurrence) *inboundmessageports.StopTimes {
 	out := &inboundmessageports.StopTimes{
 		ShipmentID:             occurrence.ShipmentID,
+		OccurrenceID:           occurrence.ID,
+		Currency:               occurrence.Currency,
 		StopName:               strings.TrimSpace(occurrence.LocationName),
 		AppointmentStart:       occurrence.AppointmentStart,
 		AppointmentEnd:         occurrence.AppointmentEnd,

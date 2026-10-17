@@ -25,6 +25,8 @@ func TestStopTimesOf(t *testing.T) {
 
 	arrived := int64(1_791_000_000)
 	occurrence := &detention.DetentionOccurrence{
+		ID:             pulid.MustNew("dto_"),
+		Currency:       "USD",
 		LocationName:   " Louisville Store ",
 		ArrivedAt:      &arrived,
 		LateByMinutes:  -5,
@@ -38,6 +40,8 @@ func TestStopTimesOf(t *testing.T) {
 	}
 
 	out := stopTimesOf(occurrence)
+	assert.Equal(t, occurrence.ID, out.OccurrenceID)
+	assert.Equal(t, "USD", out.Currency)
 	assert.Equal(t, "Louisville Store", out.StopName)
 	assert.Equal(t, 0, out.LateMinutes)
 	assert.Equal(t, 90, out.BilledDetentionMinutes)

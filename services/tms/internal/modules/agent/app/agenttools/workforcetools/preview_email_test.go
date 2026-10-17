@@ -1,62 +1,24 @@
 package workforcetools
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type fakeSenders struct {
-	suppressed []string
-	refused    bool
-}
-
-func (f fakeSenders) ResolveSender(
-	context.Context,
-	*emailports.SendEmailRequest,
-) (*emailports.EmailSender, error) {
-	return &emailports.EmailSender{
-		Email:      "ops@carrier.example",
-		Name:       "Carrier Operations",
-		Suppressed: f.suppressed,
-		Refused:    f.refused,
-	}, nil
-}
-
-// assertMessageIsTheSend holds a preview's message to what the write then
-// handed the mailer.
-func assertMessageIsTheSend(
-	t *testing.T,
-	message *agent.MessagePreview,
-	sent *emailports.SendEmailRequest,
-) {
-	t.Helper()
-
-	require.NotNil(t, message)
-	require.NotNil(t, sent)
-	assert.Equal(t, agent.MessageChannelEmail, message.Channel)
-	assert.Equal(t, sent.To, message.To)
-	assert.Equal(t, sent.Subject, message.Subject)
-	assert.Equal(t, sent.Text, message.Body)
-	assert.Equal(t, "Carrier Operations <ops@carrier.example>", message.From)
-}
-
 func TestEmailCustomerPreview_IsTheEmailExecuteSends(t *testing.T) {
 	t.Parallel()
 
 	tool, mailer, _, comments, _ := agenttoolstest.CustomerEmailFixture()
-	tool.Deps.Senders = fakeSenders{}
+	tool.Deps.Senders = agenttoolstest.FakeSenders{}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"profileId":  pulid.MustNew("emp_").String(),
@@ -78,7 +40,7 @@ func TestEmailCustomerPreview_IsTheEmailExecuteSends(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipmentComment, recorded.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	assertMessageIsTheSend(t, send.Message, mailer.Sent)
+	agenttoolstest.AssertMessageIsTheSend(t, send.Message, mailer.Sent)
 	assert.Equal(t, []string{"ops@acme.example", "ap@acme.example"}, send.Message.To)
 	require.NotNil(t, comments.Created)
 	assert.Equal(t, comments.Created.Comment, agenttoolstest.FindField(t, recorded, "comment").After)
@@ -116,7 +78,10 @@ func TestEmailCustomerPreview_WarnsOfSuppressedRecipientsAndSensitiveText(t *tes
 	t.Parallel()
 
 	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
-	tool.Deps.Senders = fakeSenders{suppressed: []string{"ap@acme.example"}, refused: true}
+	tool.Deps.Senders = agenttoolstest.FakeSenders{
+		Suppressed: []string{"ap@acme.example"},
+		Refused:    true,
+	}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"profileId":  pulid.MustNew("emp_").String(),
@@ -142,7 +107,7 @@ func TestEmailCustomerPreview_WarnsThatASuppressedCopyIsSkipped(t *testing.T) {
 	t.Parallel()
 
 	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
-	tool.Deps.Senders = fakeSenders{suppressed: []string{"cc@acme.example"}}
+	tool.Deps.Senders = agenttoolstest.FakeSenders{Suppressed: []string{"cc@acme.example"}}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"profileId":  pulid.MustNew("emp_").String(),
@@ -165,7 +130,7 @@ func TestRequestMissingDocsPreview_IsTheEmailExecuteSends(t *testing.T) {
 	tool := &RequestMissingDocsTool{
 		email:     mailer,
 		templates: &agenttoolstest.FakeRenderer{},
-		senders:   fakeSenders{},
+		senders:   agenttoolstest.FakeSenders{},
 	}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"profileId":          pulid.MustNew("emp_").String(),
@@ -188,39 +153,5 @@ func TestRequestMissingDocsPreview_IsTheEmailExecuteSends(t *testing.T) {
 	assert.Equal(t, "Halstead Grocery Group", send.Label)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	assertMessageIsTheSend(t, send.Message, mailer.Sent)
-}
-
-func TestReplyToInboundMessagePreview_IsTheReplyExecuteSends(t *testing.T) {
-	t.Parallel()
-
-	desk := &fakeInboundDesk{message: inboundMessage()}
-	mailer := &agenttoolstest.FakeMailer{}
-	tool := &ReplyToInboundMessageTool{
-		inbox: desk,
-		deps:  inboundReplier{email: mailer, templates: &agenttoolstest.FakeRenderer{}, senders: fakeSenders{}},
-	}
-	params := agenttoolstest.DeskParams(map[string]any{
-		"messageId": desk.message.ID.String(),
-		"profileId": pulid.MustNew("emp_").String(),
-		"body":      "It delivers tomorrow before noon.",
-	})
-
-	preview, err := tool.Preview(t.Context(), params)
-	require.NoError(t, err)
-	require.Nil(t, mailer.Sent, "a preview must not send")
-	require.Nil(t, desk.reviewed, "a preview must not settle the message")
-	assert.Equal(t, inboundmessage.StatusInReview, desk.message.Status,
-		"a preview must not touch the message it read")
-
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
-	assert.Equal(t, []string{"dana@shipper.example"}, send.Message.To)
-	settled := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
-	assert.Equal(t, "Actioned", agenttoolstest.FindField(t, settled, "status").After)
-	note := agenttoolstest.FindField(t, settled, "reviewNote")
-
-	require.NoError(t, tool.Execute(t.Context(), params))
-	assertMessageIsTheSend(t, send.Message, mailer.Sent)
-	require.NotNil(t, desk.reviewed)
-	assert.Equal(t, desk.reviewed.Note, note.After)
+	agenttoolstest.AssertMessageIsTheSend(t, send.Message, mailer.Sent)
 }

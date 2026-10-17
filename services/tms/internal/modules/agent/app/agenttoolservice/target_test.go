@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
@@ -13,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,11 +80,11 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&invoicetools.CorrectChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
 		{&masterdatatools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
 		{&alerttools.ScheduleReportTool{}, "definitionId", permission.ResourceReport},
-		{&workforcetools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
-		{&workforcetools.MarkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&inboundtools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&inboundtools.MarkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		// The message, not a new record: a reply to a message somebody has
 		// since settled or relinked must be refused as stale.
-		{&workforcetools.ReplyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&inboundtools.ReplyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		{&carriertools.AssignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
 		{&carriertools.CancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
 		// The tender, whose version moves as it advances or ends, so a

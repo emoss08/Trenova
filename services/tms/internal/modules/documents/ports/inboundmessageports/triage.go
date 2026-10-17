@@ -138,6 +138,7 @@ type ResponseTargetView struct {
 
 type AssigneeView struct {
 	UserID  pulid.ID `json:"userId"`
+	Name    string   `json:"name"`
 	Waiting int      `json:"waiting"`
 }
 
@@ -326,6 +327,8 @@ type DocumentReading struct {
 
 type StopTimes struct {
 	ShipmentID             pulid.ID `json:"shipmentId"`
+	OccurrenceID           pulid.ID `json:"occurrenceId"`
+	Currency               string   `json:"currency"`
 	StopName               string   `json:"stopName"`
 	AppointmentStart       *int64   `json:"appointmentStart"`
 	AppointmentEnd         *int64   `json:"appointmentEnd"`

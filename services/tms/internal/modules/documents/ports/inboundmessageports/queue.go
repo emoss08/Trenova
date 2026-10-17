@@ -157,6 +157,71 @@ type QueuePatch struct {
 	NovaUnread    bool
 }
 
+func (p *QueuePatch) ApplyTo(state *QueueState) {
+	if p.Status != "" {
+		state.Status = p.Status
+	}
+	if p.Review != nil && !p.Review.Clear && p.Review.Note != "" {
+		state.ReviewNote = p.Review.Note
+	}
+	if p.Owner != nil {
+		state.OwnerID = *p.Owner
+	}
+	switch {
+	case p.Park != nil:
+		p.Park.applyTo(state)
+	case p.Unpark:
+		state.clearParking()
+	}
+	switch p.Due {
+	case DueClear:
+		state.DueAt = 0
+	case DueFromTargets:
+		state.DueAt = state.ReceivedAt + int64(p.Targets.For(state.Classification))*60
+	case DueKeep:
+	}
+	if p.ClearShipment {
+		state.MatchedShipmentID = pulid.Nil
+	}
+	if p.ClearCustomer {
+		state.MatchedCustomerID = pulid.Nil
+	}
+	if p.ClearCarrier {
+		state.MatchedCarrierID = pulid.Nil
+	}
+	if p.ClearReason {
+		state.MatchReason = ""
+	}
+	if p.NovaUnread {
+		state.NovaRead = false
+	}
+}
+
+func (p *ParkPatch) applyTo(state *QueueState) {
+	state.clearParking()
+	state.Parked = p.Parking
+	if p.Parking == inboundmessage.ParkingAwaitingReply {
+		state.AwaitingUntil = p.AwaitingUntil
+
+		return
+	}
+	state.SnoozedUntil = p.SnoozedUntil
+	state.SnoozeEvent = p.SnoozeEvent
+	state.SnoozeDocumentTypeID = p.DocumentTypeID
+	if p.WatchShipment {
+		state.SnoozeWatchID = state.MatchedShipmentID
+	}
+}
+
+func (s *QueueState) clearParking() {
+	s.Parked = ""
+	s.SnoozedUntil = 0
+	s.SnoozeEvent = ""
+	s.SnoozeWatchID = pulid.Nil
+	s.SnoozeDocumentTypeID = pulid.Nil
+	s.AwaitingUntil = 0
+}
+
 type UpdateQueueStateRequest struct {
 	TenantInfo pagination.TenantInfo
 	IDs        []pulid.ID

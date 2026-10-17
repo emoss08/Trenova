@@ -310,6 +310,7 @@ func (s *Service) Assignees(
 	for _, user := range users {
 		views = append(views, &inboundmessageports.AssigneeView{
 			UserID:  user.UserID,
+			Name:    user.Name,
 			Waiting: counts[user.UserID],
 		})
 	}
@@ -327,17 +328,11 @@ func (s *Service) HandOff(
 	ctx context.Context,
 	req *HandOffRequest,
 ) (*inboundmessageports.HandOffResult, error) {
-	people, err := s.assignablePeople(ctx, req.TenantInfo)
+	to, err := s.handOffTarget(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	to, ok := people[req.ToUserID]
-	if !ok {
-		return nil, errortypes.NewValidationError("toUserId", errortypes.ErrInvalid,
-			"The queue can only be handed to someone who can work messages in Triage")
-	}
 
-	target := req.ToUserID
 	affected := 0
 	for affected < triage.DefaultHandOffBatchMax {
 		ids, cErr := s.queueRepo.HandOffCandidates(
@@ -358,23 +353,7 @@ func (s *Service) HandOff(
 			break
 		}
 
-		result, tErr := s.runTransition(ctx, &transition{
-			tenant: req.TenantInfo,
-			ids:    ids,
-			eligible: func(state *inboundmessageports.QueueState) bool {
-				return state.IsWaiting() && state.OwnerID != req.ToUserID
-			},
-			patch: inboundmessageports.QueuePatch{
-				Owner:   &target,
-				HandOff: &inboundmessageports.HandOffPatch{To: req.ToUserID},
-			},
-			activity: func(_, after *inboundmessageports.QueueState) *triage.Activity {
-				activity := activityOf(after, triage.ActivityHandedOff).About(to.Name, "")
-				activity.RecordID = req.ToUserID
-
-				return byPerson(activity, req.ActorID)
-			},
-		})
+		result, tErr := s.runTransition(ctx, handOffTransition(req, to, ids))
 		if tErr != nil {
 			return nil, tErr
 		}
@@ -388,4 +367,65 @@ func (s *Service) HandOff(
 	}
 
 	return &inboundmessageports.HandOffResult{ToUserID: req.ToUserID, Affected: affected}, nil
+}
+
+func (s *Service) PlanHandOff(ctx context.Context, req *HandOffRequest) (*QueuePlan, error) {
+	to, err := s.handOffTarget(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := min(inboundmessageports.HandOffBatchSize, triage.DefaultHandOffBatchMax)
+	ids, err := s.queueRepo.HandOffCandidates(ctx, inboundmessageports.HandOffCandidatesRequest{
+		TenantInfo: req.TenantInfo,
+		To:         req.ToUserID,
+		Limit:      limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := s.planTransition(ctx, handOffTransition(req, to, ids))
+	if err != nil {
+		return nil, err
+	}
+	plan.More = len(ids) == limit
+
+	return plan, nil
+}
+
+func (s *Service) handOffTarget(ctx context.Context, req *HandOffRequest) (assignee, error) {
+	people, err := s.assignablePeople(ctx, req.TenantInfo)
+	if err != nil {
+		return assignee{}, err
+	}
+	to, ok := people[req.ToUserID]
+	if !ok {
+		return assignee{}, errortypes.NewValidationError("toUserId", errortypes.ErrInvalid,
+			"The queue can only be handed to someone who can work messages in Triage")
+	}
+
+	return to, nil
+}
+
+func handOffTransition(req *HandOffRequest, to assignee, ids []pulid.ID) *transition {
+	target := req.ToUserID
+
+	return &transition{
+		tenant: req.TenantInfo,
+		ids:    ids,
+		eligible: func(state *inboundmessageports.QueueState) bool {
+			return state.IsWaiting() && state.OwnerID != req.ToUserID
+		},
+		patch: inboundmessageports.QueuePatch{
+			Owner:   &target,
+			HandOff: &inboundmessageports.HandOffPatch{To: req.ToUserID},
+		},
+		activity: func(_, after *inboundmessageports.QueueState) *triage.Activity {
+			activity := activityOf(after, triage.ActivityHandedOff).About(to.Name, "")
+			activity.RecordID = req.ToUserID
+
+			return byPerson(activity, req.ActorID)
+		},
+	}
 }
