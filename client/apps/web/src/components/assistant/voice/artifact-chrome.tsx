@@ -17,6 +17,7 @@ import {
   IdCardIcon,
   Inbox01Icon,
   LayoutAlt04Icon,
+  LineChartUp01Icon,
   ListChecksIcon,
   Mail01Icon,
   NewspaperIcon,
@@ -58,6 +59,7 @@ export const ARTIFACT_KINDS: Record<
   decision_request: { label: "Decision", icon: GavelIcon },
   extraction: { label: "Extraction", icon: ScanTextIcon },
   edi_connection_draft: { label: "EDI draft", icon: Dataflow03Icon },
+  analysis: { label: "Analysis", icon: LineChartUp01Icon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

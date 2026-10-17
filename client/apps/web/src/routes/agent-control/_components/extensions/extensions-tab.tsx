@@ -9,8 +9,10 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { useMemo, useRef, useState } from "react";
 import {
+  ANALYSIS_RUN_PARAM,
   EXTENSION_OPEN_PARAM,
   PORTAL_RUN_PARAM,
+  analysisRunParser,
   extensionOpenParser,
   portalRunParser,
 } from "../../ai-control-tabs";
@@ -60,13 +62,24 @@ export default function ExtensionsTab() {
   const [query, setQuery] = useState("");
   const [shelf, setShelf] = useState<Shelf>("all");
   const [sort, setSort] = useState<ExtensionSort>("featured");
-  const [{ [EXTENSION_OPEN_PARAM]: openType, [PORTAL_RUN_PARAM]: portalRun }, setOpenState] =
-    useQueryStates({
-      [EXTENSION_OPEN_PARAM]: extensionOpenParser,
-      [PORTAL_RUN_PARAM]: portalRunParser,
-    });
+  const [
+    {
+      [EXTENSION_OPEN_PARAM]: openType,
+      [PORTAL_RUN_PARAM]: portalRun,
+      [ANALYSIS_RUN_PARAM]: analysisRun,
+    },
+    setOpenState,
+  ] = useQueryStates({
+    [EXTENSION_OPEN_PARAM]: extensionOpenParser,
+    [PORTAL_RUN_PARAM]: portalRunParser,
+    [ANALYSIS_RUN_PARAM]: analysisRunParser,
+  });
   const setOpenType = (type: string | null) =>
-    setOpenState({ [EXTENSION_OPEN_PARAM]: type, [PORTAL_RUN_PARAM]: null });
+    setOpenState({
+      [EXTENSION_OPEN_PARAM]: type,
+      [PORTAL_RUN_PARAM]: null,
+      [ANALYSIS_RUN_PARAM]: null,
+    });
   const [now] = useState(() => Math.floor(Date.now() / 1000));
 
   const items = useMemo(() => catalogQuery.data?.items ?? [], [catalogQuery.data?.items]);
@@ -98,9 +111,14 @@ export default function ExtensionsTab() {
   );
   const onCount = items.filter((item) => extensionState(item) === "on").length;
   const featured = items.find((item) => item.featured) ?? null;
+  const linkedCapability = portalRun
+    ? AgentExtensionCapability.PortalAutomation
+    : analysisRun
+      ? AgentExtensionCapability.DataAnalysis
+      : null;
   const open =
     items.find((item) => item.type === openType) ??
-    (portalRun ? capabilityServer(items, AgentExtensionCapability.PortalAutomation) : null);
+    (linkedCapability ? capabilityServer(items, linkedCapability) : null);
   const control = useExtensionControl(open);
   const demoAgent =
     deskAgents.find((agent) => agent.enabled && agent.toolNames.length > 0)?.name ??

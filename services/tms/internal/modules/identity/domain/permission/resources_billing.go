@@ -557,6 +557,21 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDataAnalysis.String(),
+		DisplayName: "Data Analysis",
+		Description: "Agents running code over the report results and files a person gave them, through an enabled extension",
+		Category:    "Desk",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "View",
+				Description: "Let agents analyze this person's report results and attached files",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAIProvider.String(),
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",

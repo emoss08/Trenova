@@ -589,3 +589,43 @@ func TestDoRefusesBodyAndForm(t *testing.T) {
 	require.ErrorIs(t, err, restx.ErrBodyAndForm)
 	assert.Zero(t, calls.Load())
 }
+
+func TestDoSendsARawBodyWithItsOwnContentType(t *testing.T) {
+	t.Parallel()
+
+	var gotContentType, gotBody string
+	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
+		gotContentType = r.Header.Get("Content-Type")
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}, nil)
+
+	_, err := client.Do(t.Context(), &restx.Request{
+		Method: http.MethodPost,
+		Path:   "/files",
+		Raw:    &restx.RawBody{Data: []byte("a,b\n1,2\n"), ContentType: "text/csv"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "text/csv", gotContentType)
+	assert.Equal(t, "a,b\n1,2\n", gotBody)
+}
+
+func TestDoRefusesARawBodyBesideAnEncodedOne(t *testing.T) {
+	t.Parallel()
+
+	var calls atomic.Int32
+	client := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusOK)
+	}, nil)
+
+	_, err := client.Do(t.Context(), &restx.Request{
+		Method: http.MethodPost,
+		Path:   "/files",
+		Body:   map[string]string{"a": "b"},
+		Raw:    &restx.RawBody{Data: []byte("x"), ContentType: "text/plain"},
+	})
+	require.ErrorIs(t, err, restx.ErrRawAndEncoded)
+	assert.Zero(t, calls.Load())
+}

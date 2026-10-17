@@ -25,6 +25,464 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// AnalysisChart — table "agent_analysis_charts", alias "aanc"
+// ---------------------------------------------------------------------------
+
+// AnalysisChartTable holds the table name, alias, and primary key columns
+// for the "agent_analysis_charts" table. The alias "aanc" is used in all generated
+// SQL fragments (e.g. "aanc.id = ?").
+var AnalysisChartTable = buncolgen.TableInfo{
+	Name:       "agent_analysis_charts",
+	Alias:      "aanc",
+	PrimaryKey: []string{"run_id", "position", "business_unit_id", "organization_id"},
+}
+
+// AnalysisChartColumns provides type-safe column references for the "agent_analysis_charts" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AnalysisChartColumns.ID.String())
+//	// SELECT aanc.id FROM agent_analysis_charts AS aanc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AnalysisChartColumns.ID.Eq(), id)           // WHERE aanc.id = ?
+//	q.Order(AnalysisChartColumns.CreatedAt.OrderDesc())  // ORDER BY aanc.created_at DESC
+var AnalysisChartColumns = struct {
+	RunID          buncolgen.Column // "run_id" → qualified: "aanc.run_id"
+	Position       buncolgen.Column // "position" → qualified: "aanc.position"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "aanc.business_unit_id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "aanc.organization_id"
+	Title          buncolgen.Column // "title" → qualified: "aanc.title"
+	Image          buncolgen.Column // "image" → qualified: "aanc.image"
+	CreatedAt      buncolgen.Column // "created_at" → qualified: "aanc.created_at"
+}{
+	RunID:          buncolgen.NewColumn("run_id", "aanc"),
+	Position:       buncolgen.NewColumn("position", "aanc"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "aanc"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "aanc"),
+	Title:          buncolgen.NewColumn("title", "aanc"),
+	Image:          buncolgen.NewColumn("image", "aanc"),
+	CreatedAt:      buncolgen.NewColumn("created_at", "aanc"),
+}
+
+// AnalysisChartFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AnalysisChart.GetStaticFieldMap().
+var AnalysisChartFieldMap = map[string]string{
+	"runId":          "run_id",
+	"position":       "position",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"title":          "title",
+	"createdAt":      "created_at",
+}
+
+// AnalysisChartInsertableColumns lists column names suitable for INSERT statements on the "agent_analysis_charts" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AnalysisChartInsertableColumns = []string{
+	"run_id",
+	"position",
+	"business_unit_id",
+	"organization_id",
+	"title",
+	"image",
+	"created_at",
+}
+
+// AnalysisChartScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aanc.organization_id = ? AND aanc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.AnalysisChartScopeTenant(sq, ti).
+//		Where(agentextensioncol.AnalysisChartColumns.ID.Eq(), id)
+func AnalysisChartScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, AnalysisChartColumns.OrganizationID, AnalysisChartColumns.BusinessUnitID, ti)
+}
+
+// AnalysisChartScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.AnalysisChartScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.AnalysisChartColumns.ID.In(), bun.List(ids))
+//	})
+func AnalysisChartScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, AnalysisChartColumns.OrganizationID, AnalysisChartColumns.BusinessUnitID, ti)
+}
+
+// AnalysisChartScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.AnalysisChartScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.AnalysisChartColumns.ID.Eq(), id)
+//	})
+func AnalysisChartScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, AnalysisChartColumns.OrganizationID, AnalysisChartColumns.BusinessUnitID, ti)
+}
+
+// AnalysisChartApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.AnalysisChartApplyTenant(tenantInfo))
+func AnalysisChartApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(AnalysisChartColumns.OrganizationID, AnalysisChartColumns.BusinessUnitID, ti)
+}
+
+// AnalysisChartFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_analysis_charts" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AnalysisChartFilter.RunID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "runId", Operator: "eq", Value: value}
+var AnalysisChartFilter = struct {
+	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Position       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Title          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	RunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("runId", op, value)
+	},
+	Position: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("position", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	Title: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("title", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AnalysisRun — table "agent_analysis_runs", alias "aanr"
+// ---------------------------------------------------------------------------
+
+// AnalysisRunTable holds the table name, alias, and primary key columns
+// for the "agent_analysis_runs" table. The alias "aanr" is used in all generated
+// SQL fragments (e.g. "aanr.id = ?").
+var AnalysisRunTable = buncolgen.TableInfo{
+	Name:       "agent_analysis_runs",
+	Alias:      "aanr",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AnalysisRunColumns provides type-safe column references for the "agent_analysis_runs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AnalysisRunColumns.ID.String())
+//	// SELECT aanr.id FROM agent_analysis_runs AS aanr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AnalysisRunColumns.ID.Eq(), id)           // WHERE aanr.id = ?
+//	q.Order(AnalysisRunColumns.CreatedAt.OrderDesc())  // ORDER BY aanr.created_at DESC
+var AnalysisRunColumns = struct {
+	ID                buncolgen.Column // "id" → qualified: "aanr.id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "aanr.business_unit_id"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "aanr.organization_id"
+	ExtensionType     buncolgen.Column // "extension_type" → qualified: "aanr.extension_type"
+	Status            buncolgen.Column // "status" → qualified: "aanr.status"
+	Purpose           buncolgen.Column // "purpose" → qualified: "aanr.purpose"
+	Code              buncolgen.Column // "code" → qualified: "aanr.code"
+	Datasets          buncolgen.Column // "datasets" → qualified: "aanr.datasets"
+	Stdout            buncolgen.Column // "stdout" → qualified: "aanr.stdout"
+	Stderr            buncolgen.Column // "stderr" → qualified: "aanr.stderr"
+	Results           buncolgen.Column // "results" → qualified: "aanr.results"
+	ErrorName         buncolgen.Column // "error_name" → qualified: "aanr.error_name"
+	ErrorValue        buncolgen.Column // "error_value" → qualified: "aanr.error_value"
+	Traceback         buncolgen.Column // "traceback" → qualified: "aanr.traceback"
+	ChartCount        buncolgen.Column // "chart_count" → qualified: "aanr.chart_count"
+	Failure           buncolgen.Column // "failure" → qualified: "aanr.failure"
+	VendorSandboxID   buncolgen.Column // "vendor_sandbox_id" → qualified: "aanr.vendor_sandbox_id"
+	DurationMs        buncolgen.Column // "duration_ms" → qualified: "aanr.duration_ms"
+	CostUSD           buncolgen.Column // "cost_usd" → qualified: "aanr.cost_usd"
+	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "aanr.agent_definition_id"
+	AgentRunID        buncolgen.Column // "agent_run_id" → qualified: "aanr.agent_run_id"
+	ThreadID          buncolgen.Column // "thread_id" → qualified: "aanr.thread_id"
+	RequestedByID     buncolgen.Column // "requested_by_id" → qualified: "aanr.requested_by_id"
+	StartedAt         buncolgen.Column // "started_at" → qualified: "aanr.started_at"
+	FinishedAt        buncolgen.Column // "finished_at" → qualified: "aanr.finished_at"
+	Version           buncolgen.Column // "version" → qualified: "aanr.version"
+	CreatedAt         buncolgen.Column // "created_at" → qualified: "aanr.created_at"
+	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "aanr.updated_at"
+}{
+	ID:                buncolgen.NewColumn("id", "aanr"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "aanr"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "aanr"),
+	ExtensionType:     buncolgen.NewColumn("extension_type", "aanr"),
+	Status:            buncolgen.NewColumn("status", "aanr"),
+	Purpose:           buncolgen.NewColumn("purpose", "aanr"),
+	Code:              buncolgen.NewColumn("code", "aanr"),
+	Datasets:          buncolgen.NewColumn("datasets", "aanr"),
+	Stdout:            buncolgen.NewColumn("stdout", "aanr"),
+	Stderr:            buncolgen.NewColumn("stderr", "aanr"),
+	Results:           buncolgen.NewColumn("results", "aanr"),
+	ErrorName:         buncolgen.NewColumn("error_name", "aanr"),
+	ErrorValue:        buncolgen.NewColumn("error_value", "aanr"),
+	Traceback:         buncolgen.NewColumn("traceback", "aanr"),
+	ChartCount:        buncolgen.NewColumn("chart_count", "aanr"),
+	Failure:           buncolgen.NewColumn("failure", "aanr"),
+	VendorSandboxID:   buncolgen.NewColumn("vendor_sandbox_id", "aanr"),
+	DurationMs:        buncolgen.NewColumn("duration_ms", "aanr"),
+	CostUSD:           buncolgen.NewColumn("cost_usd", "aanr"),
+	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "aanr"),
+	AgentRunID:        buncolgen.NewColumn("agent_run_id", "aanr"),
+	ThreadID:          buncolgen.NewColumn("thread_id", "aanr"),
+	RequestedByID:     buncolgen.NewColumn("requested_by_id", "aanr"),
+	StartedAt:         buncolgen.NewColumn("started_at", "aanr"),
+	FinishedAt:        buncolgen.NewColumn("finished_at", "aanr"),
+	Version:           buncolgen.NewColumn("version", "aanr"),
+	CreatedAt:         buncolgen.NewColumn("created_at", "aanr"),
+	UpdatedAt:         buncolgen.NewColumn("updated_at", "aanr"),
+}
+
+// AnalysisRunFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AnalysisRun.GetStaticFieldMap().
+var AnalysisRunFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"extensionType":     "extension_type",
+	"status":            "status",
+	"purpose":           "purpose",
+	"code":              "code",
+	"datasets":          "datasets",
+	"stdout":            "stdout",
+	"stderr":            "stderr",
+	"results":           "results",
+	"errorName":         "error_name",
+	"errorValue":        "error_value",
+	"traceback":         "traceback",
+	"chartCount":        "chart_count",
+	"failure":           "failure",
+	"durationMs":        "duration_ms",
+	"costUsd":           "cost_usd",
+	"agentDefinitionId": "agent_definition_id",
+	"agentRunId":        "agent_run_id",
+	"threadId":          "thread_id",
+	"requestedById":     "requested_by_id",
+	"startedAt":         "started_at",
+	"finishedAt":        "finished_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// AnalysisRunInsertableColumns lists column names suitable for INSERT statements on the "agent_analysis_runs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AnalysisRunInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"extension_type",
+	"status",
+	"purpose",
+	"code",
+	"datasets",
+	"stdout",
+	"stderr",
+	"results",
+	"error_name",
+	"error_value",
+	"traceback",
+	"chart_count",
+	"failure",
+	"vendor_sandbox_id",
+	"duration_ms",
+	"cost_usd",
+	"agent_definition_id",
+	"agent_run_id",
+	"thread_id",
+	"requested_by_id",
+	"started_at",
+	"finished_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AnalysisRunScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aanr.organization_id = ? AND aanr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.AnalysisRunScopeTenant(sq, ti).
+//		Where(agentextensioncol.AnalysisRunColumns.ID.Eq(), id)
+func AnalysisRunScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, AnalysisRunColumns.OrganizationID, AnalysisRunColumns.BusinessUnitID, ti)
+}
+
+// AnalysisRunScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.AnalysisRunScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.AnalysisRunColumns.ID.In(), bun.List(ids))
+//	})
+func AnalysisRunScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, AnalysisRunColumns.OrganizationID, AnalysisRunColumns.BusinessUnitID, ti)
+}
+
+// AnalysisRunScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.AnalysisRunScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.AnalysisRunColumns.ID.Eq(), id)
+//	})
+func AnalysisRunScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, AnalysisRunColumns.OrganizationID, AnalysisRunColumns.BusinessUnitID, ti)
+}
+
+// AnalysisRunApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.AnalysisRunApplyTenant(tenantInfo))
+func AnalysisRunApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(AnalysisRunColumns.OrganizationID, AnalysisRunColumns.BusinessUnitID, ti)
+}
+
+// AnalysisRunFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_analysis_runs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AnalysisRunFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AnalysisRunFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ExtensionType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extensionType" → DB: "extension_type"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Purpose           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
+	Code              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Datasets          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "datasets" → DB: "datasets"
+	Stdout            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stdout" → DB: "stdout"
+	Stderr            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stderr" → DB: "stderr"
+	Results           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "results" → DB: "results"
+	ErrorName         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorName" → DB: "error_name"
+	ErrorValue        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorValue" → DB: "error_value"
+	Traceback         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceback" → DB: "traceback"
+	ChartCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chartCount" → DB: "chart_count"
+	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
+	DurationMs        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "durationMs" → DB: "duration_ms"
+	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	AgentRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	RequestedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	FinishedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	ExtensionType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("extensionType", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	Purpose: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("purpose", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("code", op, value)
+	},
+	Datasets: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("datasets", op, value)
+	},
+	Stdout: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("stdout", op, value)
+	},
+	Stderr: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("stderr", op, value)
+	},
+	Results: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("results", op, value)
+	},
+	ErrorName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("errorName", op, value)
+	},
+	ErrorValue: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("errorValue", op, value)
+	},
+	Traceback: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("traceback", op, value)
+	},
+	ChartCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("chartCount", op, value)
+	},
+	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("failure", op, value)
+	},
+	DurationMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("durationMs", op, value)
+	},
+	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("costUsd", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentRunId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("threadId", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requestedById", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("startedAt", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("finishedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Extension — table "agent_extensions", alias "agext"
 // ---------------------------------------------------------------------------
 

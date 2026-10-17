@@ -415,6 +415,7 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
       return "path" in artifact.payload ? "view" : "table";
     case "report_preview":
     case "report_run":
+    case "analysis":
       return "report";
     case "entity_card": {
       const entity = artifact.payload.entity;

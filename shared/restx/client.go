@@ -30,6 +30,7 @@ var (
 	ErrResponseTooLarge  = errors.New("restx: response body exceeds the configured limit")
 	ErrInvalidHeaderName = errors.New("restx: header names must not be blank")
 	ErrBodyAndForm       = errors.New("restx: a request carries a JSON body or a form, not both")
+	ErrRawAndEncoded     = errors.New("restx: a request carries a raw body or an encoded one")
 )
 
 type Bucket struct {
@@ -83,8 +84,16 @@ type Request struct {
 	Query          url.Values
 	Body           any
 	Form           url.Values
+	Raw            *RawBody
 	Out            any
 	ExpectedStatus []int
+}
+
+// RawBody is a payload sent as it is, with its own content type: a multipart
+// upload, a file, or anything else that is not JSON or a form.
+type RawBody struct {
+	Data        []byte
+	ContentType string
 }
 
 type Response struct {
@@ -269,6 +278,10 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 
 func encodePayload(method string, req *Request) (payload []byte, contentType string, err error) {
 	switch {
+	case req.Raw != nil && (req.Body != nil || req.Form != nil):
+		return nil, "", ErrRawAndEncoded
+	case req.Raw != nil:
+		return req.Raw.Data, req.Raw.ContentType, nil
 	case req.Body != nil && req.Form != nil:
 		return nil, "", ErrBodyAndForm
 	case req.Body != nil:

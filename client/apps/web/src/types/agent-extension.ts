@@ -95,6 +95,7 @@ export type UpdateAgentExtensionRequest = z.infer<typeof updateAgentExtensionReq
 export const AgentExtensionCapability = {
   WebResearch: "WebResearch",
   PortalAutomation: "PortalAutomation",
+  DataAnalysis: "DataAnalysis",
 } as const;
 
 export const portalSiteSchema = z.object({
@@ -170,6 +171,62 @@ export const portalRunsResponseSchema = z.object({
   nextBefore: z.number().int(),
 });
 
+export const analysisRunStatusSchema = z.enum([
+  "Running",
+  "Succeeded",
+  "Errored",
+  "Failed",
+  "TimedOut",
+]);
+
+export const analysisDatasetSchema = z.object({
+  name: z.string(),
+  source: z.enum(["ReportRun", "Attachment"]),
+  sourceId: z.string(),
+  label: z.string(),
+  path: z.string(),
+  rows: z.number().int(),
+  bytes: z.number().int(),
+});
+
+export const analysisRunSchema = z.object({
+  id: z.string(),
+  extensionType: z.string(),
+  status: analysisRunStatusSchema,
+  purpose: z.string(),
+  code: z.string(),
+  datasets: z
+    .array(analysisDatasetSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  stdout: z.string(),
+  stderr: z.string(),
+  results: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  errorName: z.string(),
+  errorValue: z.string(),
+  traceback: z.string(),
+  chartCount: z.number().int(),
+  failure: z.string(),
+  durationMs: z.number().int(),
+  costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
+  agentRunId: z.string().default(""),
+  threadId: z.string().default(""),
+  requestedById: z.string().default(""),
+  startedAt: z.number().int(),
+  finishedAt: z.number().int().nullish(),
+});
+
+export const analysisRunsResponseSchema = z.object({
+  items: z
+    .array(analysisRunSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  nextBefore: z.number().int(),
+});
+
 export const portalRecordingSchema = z.object({
   recordingUrl: z.string(),
   shareUrl: z.string(),
@@ -229,3 +286,6 @@ export type PortalRunsResponse = z.infer<typeof portalRunsResponseSchema>;
 export type PortalRecording = z.infer<typeof portalRecordingSchema>;
 export type SavePortalSiteRequest = z.infer<typeof savePortalSiteRequestSchema>;
 export type PortalSiteFormValues = z.infer<typeof portalSiteFormSchema>;
+export type AnalysisRun = z.infer<typeof analysisRunSchema>;
+export type AnalysisRunStatus = z.infer<typeof analysisRunStatusSchema>;
+export type AnalysisRunsResponse = z.infer<typeof analysisRunsResponseSchema>;

@@ -13,6 +13,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -990,6 +991,8 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return draftEditArtifact(observation.Call.ID, result)
 	case name == toolDraftEDIConnection:
 		return connectionDraftArtifact(observation.Call.ID, result)
+	case name == agentextension.ToolAnalyzeData:
+		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
 			return card

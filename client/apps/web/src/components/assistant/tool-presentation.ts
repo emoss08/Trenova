@@ -150,6 +150,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   list_portal_sites: "List portal sites",
   read_portal: "Look something up on a portal",
   act_on_portal: "Do something on a portal",
+  analyze_data: "Analyze data",
   approve_worker_pto: "Approve time off",
   reject_worker_pto: "Decline time off",
   cancel_worker_pto: "Cancel time off",

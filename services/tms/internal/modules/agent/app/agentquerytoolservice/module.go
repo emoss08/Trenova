@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
@@ -166,6 +167,7 @@ func coreToolProviders() []any {
 		newWebReadTool,
 		newListPortalSitesTool,
 		newReadPortalTool,
+		provideAnalyzeDataTool,
 	}
 }
 
@@ -195,6 +197,15 @@ func provideRunReportTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newRunReportTool(reports, permissions)
+}
+
+func provideAnalyzeDataTool(
+	reports *reporting.Service,
+	files documentports.ConversationFileReader,
+	analyzer agentextensionports.DataAnalyzer,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
+	return newAnalyzeDataTool(reports, files, analyzer, permissions)
 }
 
 func provideGetReportRunTool(reports *reporting.Service) agentports.AgentQueryTool {

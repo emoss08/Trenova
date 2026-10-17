@@ -1797,6 +1797,7 @@
   "{0, plural, one {# artifact} other {# artifacts}}": "{0, plural, one {# artefacto} other {# artefactos}}",
   "{0, plural, one {# attempt failed} other {# attempts failed}}": "{0, plural, one {# intento fallido} other {# intentos fallidos}}",
   "{0, plural, one {# charge waits on approval} other {# charges wait on approval}}": "{0, plural, one {# cargo espera aprobación} other {# cargos esperan aprobación}}",
+  "{0, plural, one {# chart} other {# charts}}": "{0, plural, one {# gráfico} other {# gráficos}}",
   "{0, plural, one {# code has no mapping} other {# codes have no mapping}}": "{0, plural, one {# código no tiene asignación} other {# códigos no tienen asignación}}",
   "{0, plural, one {# code} other {# codes}}": "{0, plural, one {# código} other {# códigos}}",
   "{0, plural, one {# commodity} other {# commodities}}": "{0, plural, one {# mercancía} other {# mercancías}}",

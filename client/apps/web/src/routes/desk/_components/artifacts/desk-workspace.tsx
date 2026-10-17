@@ -33,6 +33,7 @@ import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-a
 import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
+import { DeskAnalysisBody } from "./kinds/analysis/desk-analysis-body";
 import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
 import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
 import { DeskEmailBody } from "./kinds/email/desk-email-body";
@@ -390,6 +391,8 @@ export function ArtifactBody({
       );
     case "edi_connection_draft":
       return <DeskConnectionDraftBody artifact={artifact} />;
+    case "analysis":
+      return <DeskAnalysisBody artifact={artifact} />;
     case "navigation":
     case "dashboard_ref":
       return <DeskViewBody artifact={artifact} />;
