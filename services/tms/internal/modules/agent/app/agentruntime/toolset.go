@@ -278,9 +278,33 @@ func (s *Service) load(set *toolSet, name string) bool {
 		for _, companion := range s.catalog.Companions(name) {
 			s.load(set, companion)
 		}
+		if fed := soleFed(set.allowed, s.catalog.Feeds(name)); fed != "" {
+			s.load(set, fed)
+		}
 	}
 
 	return true
+}
+
+// soleFed is the one held tool a lookup is a step of the recipe of, when it
+// is one. A lookup that exists to hand one write its arguments brings the
+// write: find_shipment_records was loaded on its own, its answer said to
+// call create_shipment next, and the model went looking for create_shipment
+// with find_tools first. A lookup many recipes start from (search_shipments,
+// get_shipment) brings none of them.
+func soleFed(allowed, fed []string) string {
+	held := ""
+	for _, name := range fed {
+		if !slices.Contains(allowed, name) {
+			continue
+		}
+		if held != "" {
+			return ""
+		}
+		held = name
+	}
+
+	return held
 }
 
 // carryOver reloads what the model worked with in its recent turns: the tools

@@ -83,6 +83,7 @@ Loaded now:
 - list_billing_transfer_candidates
 - list_billing_queue_items
 - transition_item_to_in_review
+- release_billing_queue_item
 - request_missing_docs
 - attach_document_to_shipment
 - get_accounting_sync_status
@@ -93,7 +94,6 @@ Callable after find_tools:
 - get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
 - get_billing_queue_item — Open one billing queue item with its payer, shipment and the charges this payer is billed.
 - hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
-- release_billing_queue_item — Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item.
 - move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
 - send_billing_item_back_to_ops — Send a billing queue item in review back to operations to fix, with a reason.
 - correct_charge_code — Correct or normalize the accessorial charge codes on a billing queue item's charges.

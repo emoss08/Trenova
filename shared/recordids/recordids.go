@@ -167,3 +167,28 @@ func standsAlone(text string, start, end int) bool {
 func isWord(c byte) bool {
 	return c == '_' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
+
+var found = regexp.MustCompile(`\b` + idPattern + `\b`)
+
+// Find is the record ids the text holds, each once and in the order they first
+// appear, at most limit of them.
+func Find(text string, limit int) []string {
+	if limit <= 0 {
+		return nil
+	}
+	matches := found.FindAllString(text, -1)
+	ids := make([]string, 0, min(len(matches), limit))
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range matches {
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+		if len(ids) == limit {
+			break
+		}
+	}
+
+	return ids
+}

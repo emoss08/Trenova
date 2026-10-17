@@ -191,15 +191,16 @@ func shipmentDraftSchema() map[string]any {
 				"A trailer equipment type, from list_equipment_types.",
 			),
 			"bol": common.StringProperty(
-				"The customer's BOL or reference. It must be unique among "+
-					"open shipments, so never reuse one from another shipment. Optional unless the "+
-					"customer's billing requires a BOL; leave it out when none is known.",
+				"The bill of lading number. It must be unique among open shipments, so "+
+					"never reuse one from another shipment. Optional unless the customer's "+
+					"billing requires a BOL; leave it out when none is known.",
 				100,
 			),
 			"externalReference": common.StringProperty("The customer's own order or load number, "+
-				"as it appears on their tender, email or rate confirmation. One live shipment "+
-				"per customer may carry it, so a second booking of the same order is refused; "+
-				"leave it out when the customer gave none.", 100),
+				"as it appears on their tender, email or rate confirmation. It is checked apart "+
+				"from the BOL, only against this customer's other live shipments, so a second "+
+				"booking of the same order is refused; keep it as written unless that refusal "+
+				"comes back, and leave it out when the customer gave none.", 100),
 			common.FieldPieces: common.IntegerProperty(
 				"The total piece or handling-unit count.",
 				0,

@@ -99,6 +99,7 @@ Loaded now:
 - search_shipments
 - list_time_off
 - request_worker_pto
+- approve_worker_pto
 - adjust_worker_pto_balance
 - open_leave_case
 - record_leave_day
@@ -109,7 +110,6 @@ Callable after find_tools:
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - update_worker_pto — Change the kind, days or reason of a time-off request still waiting for a decision.
-- approve_worker_pto — Approve a worker's time-off request.
 - reject_worker_pto — Decline a worker's time-off request.
 - cancel_worker_pto — Cancel a worker's time off, whether it was still awaiting a decision or already approved.
 - list_worker_leave_cases — List FMLA, medical, military, parental and personal leave cases.

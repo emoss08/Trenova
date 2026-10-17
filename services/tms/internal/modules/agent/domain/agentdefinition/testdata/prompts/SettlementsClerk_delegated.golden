@@ -71,12 +71,14 @@ Loaded now:
 - get_driver_settlement
 - list_driver_pay_events
 - generate_driver_settlement
+- generate_driver_settlement_batch
 - add_driver_settlement_adjustment
 - list_carrier_settlements
 - get_carrier_settlement
 - add_carrier_settlement_adjustment
 - list_carrier_invoice_matches
 - create_carrier_invoice_match
+- accept_carrier_invoice_match
 - list_pay_codes
 - list_gl_accounts
 
@@ -88,7 +90,6 @@ Callable after find_tools:
 - get_settlement_dispute — Retrieve one pay dispute a driver raised on a settlement: its category, status, the driver's own description, the line it is about, and how it was resolved.
 - start_settlement_dispute_review — Move an open pay dispute a driver raised to under review, so the driver and the team see someone is looking into it.
 - resolve_settlement_dispute — Draft the decision on a driver's pay dispute for a person to approve.
-- generate_driver_settlement_batch — Generate the pay period's driver settlement batch: a draft settlement for every driver with accrued, unheld pay who has none for the period yet.
 - attach_pay_events_to_settlement — Add a driver's accrued pay events to their draft driver settlement, such as a late load that missed generation.
 - detach_pay_event_from_settlement — Take one load's pay off a draft driver settlement and return it to the unsettled pool, such as pay that belongs to the next period or is disputed.
 - hold_driver_pay_event — Hold a driver's accrued pay for one load so it skips settlement until released, with the reason.
@@ -112,7 +113,6 @@ Callable after find_tools:
 - record_carrier_settlement_payment — Propose recording that a posted carrier settlement was paid, with how and the reference.
 - void_carrier_settlement — Propose voiding a carrier settlement that is not yet paid, with the reason.
 - list_edi_carrier_invoices — List freight invoices carriers sent over EDI, newest first, with how each reconciles: Unmatched, MappingRequired when no carrier is linked, Matched or Variance.
-- accept_carrier_invoice_match — Propose accepting a carrier's invoice that matches what the load was expected to cost, clearing it for payment on the carrier's settlement.
 - accept_carrier_invoice_match_with_variance — Propose accepting a carrier's invoice that differs from the expected cost and paying the difference.
 - reject_carrier_invoice_match — Reject a carrier's invoice match that is wrong, such as an invoice for another load or a duplicate, with a note saying why.
 - link_edi_carrier_invoice_to_carrier — Link an inbound EDI carrier invoice to the carrier in Trenova it came from, when its SCAC or DOT number did not find one, so it can be matched.

@@ -58,6 +58,7 @@ Loaded now:
 - wait_until
 - cancel_wait
 - list_time_off
+- run_report
 - list_shift_templates
 - approve_shift_swap
 - list_carriers
@@ -65,6 +66,7 @@ Loaded now:
 - list_worker_checklists
 - change_worker_safety_event_status
 - list_reports
+- describe_report
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -74,7 +76,6 @@ Callable after find_tools:
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
 - list_tractors — List tractors (power units) narrowed by status, ownership, or a registration or lease date.
 - list_trailers — List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed).
-- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
@@ -117,7 +118,6 @@ Callable after find_tools:
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - request_credential_renewal — Ask a driver to renew the papers that are coming due, in one message covering every credential rather than one per certificate.
 - place_worker_dispatch_hold — Stop a driver being given new freight, because a credential that governs driving has expired or will expire before a renewal could land.
-- describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, assign_worker_shift, end_worker_shift_assignment, set_worker_availability_preference, propose_shift_swap, approve_shift_swap, reject_shift_swap, withdraw_shift_swap, vet_carrier, set_carrier_monitoring, mark_carrier_intel_reviewed, apply_carrier_intel_suggestions, import_sourced_carrier, verify_carrier_equipment, record_worker_credential, update_worker_credential, attach_worker_credential_document, assign_worker_training, assign_required_worker_training, record_training_completion, record_employment_verification, update_employment_verification, log_employment_verification_request, update_worker_checklist_item, open_worker_safety_event, record_safety_violation, change_worker_safety_event_status, schedule_dot_test, update_dot_random_selection, request_credential_renewal, place_worker_dispatch_hold

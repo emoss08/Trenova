@@ -76,6 +76,7 @@ Loaded now:
 - list_driver_settlements
 - get_driver_settlement
 - get_settlement_dispute
+- resolve_settlement_dispute
 - generate_driver_settlement
 - add_driver_settlement_adjustment
 - recalculate_driver_settlement
@@ -94,7 +95,6 @@ Callable after find_tools:
 - list_driver_pay_events — List driver pay events, the pay a driver earned per load, newest first.
 - get_worker_earnings_summary — Summarize what a worker has earned but not yet been paid on a settlement.
 - start_settlement_dispute_review — Move an open pay dispute a driver raised to under review, so the driver and the team see someone is looking into it.
-- resolve_settlement_dispute — Draft the decision on a driver's pay dispute for a person to approve.
 - generate_driver_settlement_batch — Generate the pay period's driver settlement batch: a draft settlement for every driver with accrued, unheld pay who has none for the period yet.
 - attach_pay_events_to_settlement — Add a driver's accrued pay events to their draft driver settlement, such as a late load that missed generation.
 - detach_pay_event_from_settlement — Take one load's pay off a draft driver settlement and return it to the unsettled pool, such as pay that belongs to the next period or is disputed.

@@ -100,7 +100,9 @@ Loaded now:
 - list_equipment_types
 - search_shipments
 - list_document_types
+- file_capture_items
 - list_watchtower_items
+- dismiss_watchtower_item
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -143,7 +145,6 @@ Callable after find_tools:
 - delete_documents — Delete documents that should not be on file, such as a duplicate upload or a scan of the wrong paperwork.
 - restore_document_version — Make an earlier version of a document the current one again, when the newest upload was the wrong file.
 - list_capture_batches — List scanned and printed paperwork waiting in capture intake, newest first.
-- file_capture_items — File scanned documents from capture intake onto the shipment, worker, tractor, trailer, customer or carrier they belong to, as the document type they are.
 - discard_capture_item — Throw away one scanned document from capture intake without filing it, such as a blank sheet, a duplicate or a stray page.
 - discard_capture_batch — Throw away every unfiled document of a scanned stack in capture intake, when nothing left in it is worth filing.
 - list_table_change_alerts — List the change alerts the person you are working for has set up: what each watches, for which changes, and whether it is Active or Paused.
@@ -151,7 +152,6 @@ Callable after find_tools:
 - update_table_change_alert — Change one of the person's change alerts: what it watches, which changes, the conditions or its message.
 - set_table_change_alert_status — Pause one of the person's change alerts so it stops notifying them, or resume a paused one.
 - delete_table_change_alert — Delete one of the person's change alerts they no longer want.
-- dismiss_watchtower_item — Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, create_carrier, update_carrier, update_carrier_status, create_customer, update_customer, update_customer_status, create_commodity, update_commodity, update_commodity_status, create_hazardous_material, update_hazardous_material, update_hazardous_material_status, create_location, update_location, update_location_status, create_tractor, update_tractor, update_tractor_status, locate_tractor, create_trailer, update_trailer, update_trailer_status, locate_trailer, delete_documents, restore_document_version, file_capture_items, discard_capture_item, discard_capture_batch, create_table_change_alert, update_table_change_alert, set_table_change_alert_status, delete_table_change_alert, dismiss_watchtower_item

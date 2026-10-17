@@ -5985,7 +5985,25 @@
       "go/other"
     ]
   },
+  "A file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A file is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A file is waited on by the conversation it was attached to": {
     "sites": 1,
     "scope": [
       "go"
@@ -30282,6 +30300,15 @@
       "apps/web/components"
     ]
   },
+  "Ask an administrator to set ai.documentExtraction to true.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask an agent in Desk": {
     "sites": 2,
     "scope": [
@@ -37489,11 +37516,12 @@
     ]
   },
   "Being read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -65328,6 +65356,15 @@
       "routes/edi"
     ]
   },
+  "Create the shipment a tender in Triage describes, from the fields you checked. Start from the draft draft_inbound_load wrote, which get_inbound_message shows, and send every field the load should carry: one left out is not on it. It is billed to the customer the message is linked to, so link that first with link_inbound_message. A message that already made its load is refused.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Create the shipment and finish import.": {
     "sites": 1,
     "scope": [
@@ -80104,6 +80141,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Document extraction is switched off in this server's configuration, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Document extraction settings": {
@@ -99117,6 +99163,15 @@
       "routes/shipment"
     ]
   },
+  "Extraction is not in your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Extraction is not set up on this server": {
     "sites": 1,
     "scope": [
@@ -99127,6 +99182,15 @@
     ]
   },
   "Extraction is still in progress.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Extraction is turned off on this server": {
     "sites": 1,
     "scope": [
       "ts"
@@ -103357,6 +103421,15 @@
       "routes/inbox"
     ]
   },
+  "File an email attachment on a shipment as a typed document, whole or split into page ranges that each become their own document. Whole, it is filed as the type you name, or as the kind it was read as when you name none. Only a PDF splits. A file that was not read, or is already filed, is refused; unfile_inbound_attachment undoes a filing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "File as": {
     "sites": 2,
     "scope": [
@@ -103893,6 +103966,15 @@
     ]
   },
   "Files cannot be attached to replies on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Files cannot be waited on here": {
     "sites": 1,
     "scope": [
       "go"
@@ -111511,6 +111593,15 @@
       "routes/agent-control"
     ]
   },
+  "Give messages waiting in the Triage queue to a person on the Triage team, or take them off whoever has them. Choose the owner from list_triage_assignees, which shows who can take Triage messages and how many each already holds. Settled messages and ones the person already owns are left alone. The new owner sees them in their own lane.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Give the alert a name": {
     "sites": 1,
     "scope": [
@@ -113061,6 +113152,15 @@
     ]
   },
   "Hand a week over": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Hand every message still waiting in the Triage queue to one person, usually the on-call person at the end of the working day. list_triage_assignees names the on-call person and who else can take it. Snoozed, parked and settled messages are left alone; to move only some messages, use assign_inbound_messages.": {
     "sites": 1,
     "scope": [
       "go"
@@ -133102,6 +133202,15 @@
       "routes/admin"
     ]
   },
+  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which search_inbound_messages and list_inbound_messages find. Messages already ignored stay settled; reopen_inbound_messages returns any that still matter to the queue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Let agents act on this portal": {
     "sites": 1,
     "scope": [
@@ -138366,6 +138475,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold. That hold keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (link_inbound_message).": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Log an exception": {
@@ -152659,7 +152777,7 @@
       "apps/web/components"
     ]
   },
-  "No AI provider can read documents for your organization, so uploaded files are stored but not read and no shipment draft is built.": {
+  "No AI provider is assigned to document extraction for your organization, so uploaded files are stored but not read and no shipment draft is built. A provider that serves chat reads documents only once the Document extraction task is assigned to it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174329,6 +174447,24 @@
       "apps/web/components"
     ]
   },
+  "Open what was read from this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Open what was read from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open worker": {
     "sites": 4,
     "scope": [
@@ -180535,6 +180671,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way. Use it after asking the sender something with reply_to_inbound_message. It parks the message for the people working the queue, not what you are doing: to be woken yourself when they answer, call wait_until with a Reply wait on the record.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Parked in Waiting on them": {
@@ -199570,6 +199715,15 @@
       "api/handlers"
     ]
   },
+  "Read the load a tender in Triage describes into a draft on the message: customer, stops, dates, equipment, weight, rate and references. It is read from the attached tender's document when that has one, else from the message body. Nothing is booked; check the draft get_inbound_message shows, then create it with create_inbound_load.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read the question": {
     "sites": 2,
     "scope": [
@@ -207530,6 +207684,15 @@
       "routes/admin"
     ]
   },
+  "Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known. When the right one is known, link_inbound_message replaces the link in one step. get_inbound_message shows what the message is linked to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remove the stored sign-in": {
     "sites": 1,
     "scope": [
@@ -208122,6 +208285,15 @@
     ]
   },
   "Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on. Nothing is sent to the customer, a carrier or a trading partner, and nobody is assigned: tender or assign it again afterwards. Read it with get_shipment first to be sure it is the canceled one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reopen a conflict on a message that was settled the wrong way, so it can be settled again with resolve_inbound_conflict. A document conflict whose attachment is already filed is refused: unfile it first with unfile_inbound_attachment. get_inbound_message lists each conflict.": {
     "sites": 1,
     "scope": [
       "go"
@@ -213643,6 +213815,15 @@
       "go/other"
     ]
   },
+  "Return a message to the Triage queue now: one that was snoozed, or one parked waiting on the sender's reply. Use it when what it was waiting for has happened some other way, or the wait no longer makes sense. A message already in the queue is refused.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Return a zero-based character slice.": {
     "sites": 1,
     "scope": [
@@ -213704,6 +213885,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Return messages that were settled as Actioned or Ignored to the Triage queue, waiting on a person again with a fresh due time. Use it when a message was settled by mistake or is not finished. Messages still waiting are left alone. Their review note is kept.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Return the period to Open": {
@@ -220123,6 +220313,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent. Write the body yourself, or leave it out to have Triage's drafter write it from the message, its linked records and, for a detention dispute, the stop times. It replaces any draft already there. To answer the sender yourself, use reply_to_inbound_message instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Save amendment": {
@@ -228434,6 +228633,15 @@
       "apps/web/lib"
     ]
   },
+  "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with unblock_inbound_sender. Never block on what the message itself asks.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Send for approval": {
     "sites": 2,
     "scope": [
@@ -231898,6 +232106,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Settle a conflict Triage found on a message. A duplicate document: ReplaceExisting files the new one in place of the one on file, KeepBoth keeps both. A repeated load: SkipDuplicate when the load is already entered, ConfirmNew when it is a separate load. get_inbound_message lists each conflict with its id and what it compares. Settle a document conflict before filing the attachment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Settle now": {
@@ -246704,6 +246921,15 @@
       "go/other"
     ]
   },
+  "Take an email attachment off the shipment it was filed on, when it went on the wrong load or as the wrong type. A whole file returns to the message and any document it replaced is restored; the documents a split made are deleted. get_inbound_message shows where each attachment is filed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone. Use it for a weather alert that has passed or a message already answered. Items about agents' own runs, proposals and exceptions stay for a person to clear.": {
     "sites": 1,
     "scope": [
@@ -246783,6 +247009,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Take messages waiting on a person out of the Triage queue until a time, or until an event on their linked shipment. They return on their own when it delivers, gets a document of a given type, or has its invoice paid. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (link_inbound_message). To wait for the sender to answer, use wait_for_inbound_reply.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Take one shipment off an order onto an order of its own, so it is billed on its own. The order's only shipment and an invoiced one stay where they are.": {
@@ -272333,6 +272568,24 @@
       "go/other"
     ]
   },
+  "Throw away the load drafted from a tender in Triage, when the draft is wrong or the tender is not going to be booked. A load already created from the message is refused; draft_inbound_load reads it again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Throw away the reply draft waiting on a message in Triage, when it should not be sent at all. get_inbound_message shows whether a message has one. A person's own draft is lost with it; to change a draft, write a new one with draft_inbound_reply instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Thrown away without filing what was left": {
     "sites": 1,
     "scope": [
@@ -289979,6 +290232,15 @@
       "go/other"
     ]
   },
+  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with get_detention_occurrence or get_shipment_tracking. A waived charge already invoiced is credited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Waive requirement": {
     "sites": 2,
     "scope": [
@@ -303354,6 +303616,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Your plan does not include document extraction, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your profile": {

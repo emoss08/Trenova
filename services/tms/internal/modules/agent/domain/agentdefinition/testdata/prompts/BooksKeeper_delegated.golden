@@ -66,6 +66,7 @@ Loaded now:
 - get_accounting_mapping
 - create_accounting_reference_record
 - list_accounting_inbound_changes
+- apply_accounting_inbound_change
 - list_accounting_drift_findings
 - resolve_accounting_drift
 - release_accounting_sync
@@ -80,7 +81,6 @@ Callable after find_tools:
 - list_accounting_mapping_gaps — List what still has to be matched to the accounting system before anything can sync.
 - set_accounting_mapping — Choose which accounting system record a Trenova record or setting is sent as, and confirm it.
 - refresh_accounting_reference_data — Read the accounting system's accounts, items, customers, vendors, terms and payment methods again and refresh Trenova's proposals.
-- apply_accounting_inbound_change — Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes.
 - ignore_accounting_inbound_change — Dismiss an inbound change, with the reason, so the accounting system's payment is never brought into Trenova.
 - dismiss_accounting_drift — Dismiss an open drift finding, with the reason, keeping both sides as they are.
 - check_accounting_drift — Compare the accounting system with Trenova immediately instead of waiting for the nightly check.

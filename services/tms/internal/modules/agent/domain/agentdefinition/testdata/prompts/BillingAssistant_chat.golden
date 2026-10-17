@@ -93,6 +93,7 @@ Loaded now:
 - request_missing_docs
 - list_accessorial_charges
 - adjust_invoice_run_membership
+- add_shipment_charge
 - send_detention_notice
 - list_customers
 - list_detention_desk
@@ -147,7 +148,6 @@ Callable after find_tools:
 - reassign_billing_charge — Move who pays one charge on a shipment in billing review: its freight or one accessorial, whole to another payer or split among several.
 - manage_billing_transfer_run — Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer.
 - explain_rate — Explain how a saved shipment's rate was arrived at: the agreement and rule that priced it and every charge with its arithmetic.
-- add_shipment_charge — Add an accessorial charge to a saved shipment not yet invoiced, at the charge's own rate unless you give an amount.
 - approve_detention — Propose approving a detention charge that is waiting on approval, so it can be invoiced.
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.

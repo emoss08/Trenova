@@ -88,13 +88,16 @@ Loaded now:
 - wait_until
 - cancel_wait
 - search_shipments
+- accept_edi_tender
 - list_service_failures
 - create_customer
 - list_commodities
 - email_customer
+- quote_shipment
 - share_customer_tracking_link
 - list_customers
 - list_service_types
+- list_locations
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -107,7 +110,6 @@ Callable after find_tools:
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
-- accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
 - list_edi_tender_changes — List changes another Trenova organization made to loads it tendered to this one over EDI, and changes this organization made to loads it tendered, newest first.
 - review_edi_tender_change — Propose applying or rejecting a change another Trenova organization made to a load it tendered to this one over EDI, after this organization received it.
@@ -147,8 +149,6 @@ Callable after find_tools:
 - update_commodity — Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material.
 - get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
-- quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
-- list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, add_shipment_comment, accept_edi_tender, decline_edi_tender, review_edi_tender_change, send_edi_status_update, create_order, update_order, attach_order_shipments, detach_order_shipment, add_order_charge, update_order_charge, set_order_charge_allocations, remove_order_charge, close_order, cancel_order, create_recurring_shipment, update_recurring_shipment, set_recurring_shipment_status, generate_recurring_shipment, rerate_shipment, edit_shipment_comment, unpin_shipment_comment, delete_shipment_comment, update_service_failure, review_service_failure, void_service_failure, dispute_detention, vet_customer_broker, create_customer, update_customer, update_customer_status, update_location, update_location_status, create_commodity, update_commodity, email_customer, share_customer_tracking_link

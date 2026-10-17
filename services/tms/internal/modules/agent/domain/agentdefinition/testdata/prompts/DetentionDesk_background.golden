@@ -69,6 +69,7 @@ Loaded now:
 - add_shipment_comment
 - dispute_detention
 - get_inbound_message
+- settle_detention_dispute
 
 Callable after find_tools:
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
@@ -76,7 +77,6 @@ Callable after find_tools:
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - waive_detention — Waive a detention charge, with a coded reason and a note.
 - search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
-- settle_detention_dispute — Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, add_shipment_comment, dispute_detention, settle_detention_dispute
