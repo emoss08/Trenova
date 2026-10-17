@@ -1014,7 +1014,7 @@ cases:
     expect: [resolve_inbound_conflict]
   - request: reopen the conflict on that inbound message, it was settled the wrong way
     expect: [reopen_inbound_conflict]
-  - request: who can work the triage queue and who is on call tonight
+  - request: who is on the triage team and who is on call tonight
     expect: [list_triage_assignees]
   - request: update the carrier's profile with the corrected MC number and insurance from the intelligence check
     expect: [apply_carrier_intel_suggestions]

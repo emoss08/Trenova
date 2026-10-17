@@ -132,8 +132,7 @@ func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agen
 				"see; nothing is booked.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from get_inbound_message, list_inbound_messages or this " +
-						"run's subject.",
+					"The tender, from list_inbound_messages or search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
@@ -224,7 +223,7 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 				"so no desk books one unattended.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from get_inbound_message or this run's subject.",
+					"The tender, from list_inbound_messages or search_inbound_messages.",
 				),
 				paramLoadFields: map[string]any{
 					toolschema.KeyType: toolschema.TypeArray,
@@ -403,7 +402,7 @@ func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) ag
 				"again and nothing is booked or sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from get_inbound_message or this run's subject.",
+					"The tender, from list_inbound_messages or search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},

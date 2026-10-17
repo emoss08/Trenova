@@ -123,8 +123,7 @@ func newDraftInboundReplyTool(
 				"stays with a person.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message to answer, from get_inbound_message, list_inbound_messages " +
-						"or this run's subject.",
+					"The message to answer, from list_inbound_messages or search_inbound_messages.",
 				),
 				paramReplyBody: common.StringProperty(
 					"The reply in plain prose, as the person should send it. Leave it out to "+
@@ -288,7 +287,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool
 				"to bring it back.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from get_inbound_message or this run's subject.",
+					"The message, from list_inbound_messages or search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},

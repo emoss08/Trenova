@@ -133,7 +133,7 @@ func newLogInboundExceptionTool(
 				"and a person can release it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The delivery email, from get_inbound_message or this run's subject.",
+					"The delivery email, from list_inbound_messages or search_inbound_messages.",
 				),
 				paramExceptionKind: agenttoolschema.Enum(
 					"What the delivery reported.",
@@ -160,7 +160,7 @@ func newLogInboundExceptionTool(
 				paramExceptionQuantity,
 				paramExceptionUnit,
 			},
-			SearchTerms: []string{"shortage", "overage", "damaged freight", "OS&D", "billing hold"},
+			SearchTerms: []string{"shortage", "overage", "damaged goods", "OS&D", "billing hold"},
 			Recipe:      []string{toolGetInboundMessage, "log_inbound_exception"},
 			Target:      targetMessage,
 		},
@@ -294,8 +294,8 @@ func newSettleDetentionDisputeTool(
 				"credit an invoice; only a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The detention dispute, from get_inbound_message, list_inbound_messages " +
-						"or this run's subject.",
+					"The detention dispute, from list_inbound_messages or " +
+						"search_inbound_messages.",
 				),
 				paramStopsDecision: agenttoolschema.Enum(
 					"Waive gives the charge up; StandBy keeps it.",

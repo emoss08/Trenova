@@ -87,8 +87,8 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 				"customer or carrier from everyone, so a person always approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"A message from the sender, from get_inbound_message, " +
-						"list_inbound_messages or this run's subject.",
+					"A message from the sender, from list_inbound_messages or " +
+						"search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
@@ -200,7 +200,7 @@ func newUnblockInboundSenderTool(
 				"source it arrives on. Name the sender by one of their messages: their mail " +
 				"since the block sits under Ignored, which search_inbound_messages and " +
 				"list_inbound_messages find. Messages already ignored stay settled; " +
-				"reopen_inbound_messages puts any that need work back.",
+				"reopen_inbound_messages returns any that still matter to the queue.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,

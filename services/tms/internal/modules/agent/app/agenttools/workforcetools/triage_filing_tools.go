@@ -137,7 +137,7 @@ func newFileInboundAttachmentTool(
 				"or split into page ranges that each become their own document. Whole, it is " +
 				"filed as the type you name, or as the kind it was read as when you name " +
 				"none. Only a PDF splits. A file that was not read, or is already filed, is " +
-				"refused; unfile_inbound_attachment takes one back.",
+				"refused; unfile_inbound_attachment undoes a filing.",
 			Resource:    permission.ResourceDocument,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -149,8 +149,8 @@ func newFileInboundAttachmentTool(
 				"told and it can be unfiled.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from get_inbound_message or this " +
-						"run's subject.",
+					"The message the attachment came on, from list_inbound_messages or " +
+						"search_inbound_messages.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
 					"The attachment, from the attachments get_inbound_message lists for the " +
@@ -410,8 +410,8 @@ func newUnfileInboundAttachmentTool(
 		&common.ReceivableSpec{
 			Name:     "unfile_inbound_attachment",
 			Artifact: inboundMessageEntity,
-			Description: "Take an email attachment back off the shipment it was filed on, " +
-				"when it went on the wrong load or as the wrong type. A whole file goes back " +
+			Description: "Take an email attachment off the shipment it was filed on, when " +
+				"it went on the wrong load or as the wrong type. A whole file returns " +
 				"to the message and any document it replaced is restored; the documents a " +
 				"split made are deleted. get_inbound_message shows where each attachment is " +
 				"filed.",
@@ -424,8 +424,8 @@ func newUnfileInboundAttachmentTool(
 				"documents a split made, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from get_inbound_message or this " +
-						"run's subject.",
+					"The message the attachment came on, from list_inbound_messages or " +
+						"search_inbound_messages.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
 					"The filed attachment, from the attachments get_inbound_message lists " +

@@ -433,6 +433,9 @@ changing `ediconnectiondraft`, `draft_edi_connection`, `apply_edi_connection_dra
 The carrier, customer, commodity, hazardous material, location and equipment tools, document,
 change alert and watchtower housekeeping, capture filing, and who holds them are in
 [docs/engineering/agent-master-data-tools.md](docs/engineering/agent-master-data-tools.md).
+The Triage queue tools (owners, parking, senders, reply and load drafts, filing, exceptions,
+detention disputes and conflicts), the plans their previews render, and who holds them are in
+[docs/engineering/agent-triage-tools.md](docs/engineering/agent-triage-tools.md).
 What a person approves is a preview of the write, computed for them from the world as it is
 now, and the approval carries its digest; tools implement `ToolPreviewer` with
 `services/toolpreview`, and the filing baseline stays off `PendingAction`. **Read
