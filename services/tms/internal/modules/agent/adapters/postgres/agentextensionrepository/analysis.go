@@ -128,7 +128,7 @@ func (r *analysisRunRepository) List(
 				return sq
 			}).
 			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list analysis runs", zap.Error(err))

@@ -5,7 +5,6 @@ import {
   isChecking,
   shipmentProposal,
   shipmentStage,
-  stageStep,
   type ShipmentStageInput,
 } from "../shipment-stage";
 
@@ -133,15 +132,7 @@ describe("shipmentProposal", () => {
   });
 });
 
-describe("the stage's step and what may be asked", () => {
-  it("stands each stage on its step of the head's line", () => {
-    expect(stageStep({ stage: "none" })).toBe(0);
-    expect(stageStep({ stage: "drafting" })).toBe(1);
-    expect(stageStep({ stage: "waiting", proposalId: "p" })).toBe(2);
-    expect(stageStep({ stage: "failed", reason: "" })).toBe(2);
-    expect(stageStep({ stage: "attached", shipmentId: "s" })).toBe(3);
-  });
-
+describe("what may be asked", () => {
   it("asks nothing while a draft is under way, waiting or done", () => {
     expect(canAsk({ stage: "none" })).toBe(true);
     expect(canAsk({ stage: "declined" })).toBe(true);

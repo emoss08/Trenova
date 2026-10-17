@@ -78,8 +78,9 @@ func (t *analyzeDataTool) Name() string { return agentextension.ToolAnalyzeData 
 
 func (t *analyzeDataTool) Description() string {
 	return "Run Python over report results and files the person attached, to work out what a " +
-		"report alone does not show: margin by lane over a quarter, which customers drift past " +
-		"terms, where detention clusters. pandas, numpy and matplotlib are available, and the " +
+		"report alone does not show, such as margin by lane over a quarter. It also finds which " +
+		"customers drift past terms or where detention clusters. pandas, numpy and matplotlib are " +
+		"available, and the " +
 		"code cannot reach the internet. Each dataset is written to /home/user/data/<name>.csv " +
 		"(or .xlsx, .json, .txt for a file) before the code runs; a report run's CSV has one " +
 		"column per report column, headed by its id, with raw values: decimals as exact text, " +

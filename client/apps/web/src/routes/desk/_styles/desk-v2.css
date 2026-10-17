@@ -1814,271 +1814,473 @@
   box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
   animation: dk-fcin 360ms var(--dk-spring) both;
 }
-/* extraction artifact: the document first, what was read beside it */
+/* extraction artifact: the reading as the record it is about to become, beside the document */
 .dk-ex {
   container: dkex / inline-size;
-  flex: 1 1 0;
-  min-height: 480px;
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
 }
-.dk-apage-body > .dk-ex {
-  height: calc(100dvh - 140px);
-  min-height: 560px;
-}
-.dk-ex-head {
-  display: grid;
-  gap: 6px;
-  padding: 4px 16px 12px;
-  border-bottom: 1px solid var(--dsk-b-sub);
-}
-.dk-ex-id {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.dk-ex-kind {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--dsk-fg);
-  white-space: nowrap;
-}
-.dk-ex-sure {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-ex-open {
-  flex-shrink: 0;
-  margin-left: auto;
-}
-.dk-ex-file {
-  display: flex;
-  gap: 6px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-ex-file > span + span::before {
-  content: "·";
-  margin-right: 6px;
-}
-.dk-ex-file > span {
-  white-space: nowrap;
-}
-.dk-ex-fname {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* where the shipment stands */
-.dk-ex-state {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  font-size: 12px;
-}
-.dk-ex-state-l {
-  color: var(--dsk-subtle);
-}
-.dk-ex-steps {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--dsk-faint);
-}
-.dk-ex-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-}
-.dk-ex-step + .dk-ex-step::before {
-  content: "";
-  width: 14px;
-  height: 1px;
-  margin: 0 8px;
-  background: var(--dsk-b-strong);
-}
-.dk-ex-step i {
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-}
-.dk-ex-step.dk-done {
-  color: var(--dsk-subtle);
-}
-.dk-ex-step.dk-done i {
-  background: currentColor;
-}
-.dk-ex-step.dk-now {
-  font-weight: 500;
-  color: var(--dsk-fg);
-}
-.dk-ex-step.dk-now i {
-  border-color: var(--brand);
-  background: var(--brand);
-}
-.dk-ex-step.dk-wait i {
-  animation: var(--animate-breathe);
+.dk-ex .dk-rec-amt .dk-warn {
+  color: var(--dsk-warn-fg);
 }
 .dk-ex-link {
-  font-weight: 500;
-  color: var(--brand);
-  text-underline-offset: 3px;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  color: var(--dsk-blue-fg);
+  text-decoration: none;
 }
 .dk-ex-link:hover {
   text-decoration: underline;
 }
-/* the tally: to check, not on the document, read */
-.dk-ex-tally {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.dk-ex-t {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid var(--dsk-b);
-  border-radius: var(--radius-label);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+.dk-ex-empty {
+  margin: 0;
+  font-size: 13px;
   color: var(--dsk-subtle);
-  background: var(--dsk-card);
 }
-.dk-ex-t:hover:not(:disabled) {
-  background: var(--dsk-hover);
+
+/* what a person settles: each doubtful value beside the bit of page it came from */
+.dk-ex-check {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
 }
-.dk-ex-t.dk-warn {
-  border-color: var(--warning-border);
+.dk-ex-ck {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, min(42%, 340px));
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+.dk-ex-ck + .dk-ex-ck {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ex-ck.dk-on {
+  background: var(--dsk-sunken);
+}
+.dk-ex-ck.dk-miss {
+  grid-template-columns: 20px minmax(0, 1fr);
+}
+.dk-ex-ck-mark {
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 999px;
   color: var(--dsk-warn-fg);
   background: var(--dsk-warn-sub);
 }
-.dk-ex-t.dk-miss {
-  border-color: var(--danger-border);
-  color: var(--danger-foreground);
-  background: var(--danger-subtle);
+.dk-ex-ck.dk-miss .dk-ex-ck-mark {
+  width: 16px;
+  height: 16px;
+  margin: 3px 2px 0;
+  background: none;
+  border: 1.5px dashed var(--dsk-b-strong);
 }
-.dk-ex-dot {
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.dk-ex-ring {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border: 1.5px dashed currentColor;
-  border-radius: 50%;
-}
-/* the page above the list in the pane and on a phone, beside it from 760px */
-.dk-ex-main {
-  flex: 1 1 0;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
-}
-.dk-ex-main.dk-nofile {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-@container dkex (min-width: 760px) {
-  .dk-ex-main {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
-  }
-  .dk-ex-main > .dk-ex-fields {
-    border-top: 0;
-    border-left: 1px solid var(--dsk-b-sub);
-  }
-}
-@container dkex (max-width: 480px) {
-  .dk-ex-main {
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .dk-ex-head {
-    gap: 5px;
-    padding-inline: 12px;
-  }
-  .dk-ex-acts {
-    padding-inline: 12px;
-  }
-  .dk-ex-row {
-    grid-template-columns: 88px minmax(0, 1fr) auto;
-  }
-}
-.dk-ex-viewer {
-  min-width: 0;
-  min-height: 0;
+.dk-ex-ck-main {
   display: flex;
   flex-direction: column;
-  background: var(--dsk-sunken);
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  white-space: normal;
 }
-.dk-ex-bar {
+.dk-ex-ck-l {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ex-ck-line {
   display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 36px;
-  padding: 0 6px;
-  border-bottom: 1px solid var(--dsk-b-sub);
-  background: var(--dsk-card);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
 }
-.dk-ex-pages {
-  display: inline-flex;
-  gap: 2px;
-}
-.dk-ex-pg {
-  position: relative;
-  font-variant-numeric: tabular-nums;
-}
-.dk-ex-pg[aria-current="page"] {
+.dk-ex-ck-v {
+  font-size: 14px;
   font-weight: 500;
   color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-ex-ck-v.dk-blank {
+  font-weight: 400;
+  color: var(--dsk-subtle);
+}
+.dk-ex-ck-part {
+  margin-right: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dsk-subtle);
+}
+.dk-ex-ck-why {
+  font-size: 12px;
+  color: var(--dsk-warn-fg);
+}
+.dk-ex-ck.dk-miss .dk-ex-ck-why {
+  color: var(--dsk-subtle);
+}
+.dk-ex-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+.dk-ex-pick > span:not(.dk-ex-ck-part) {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--dsk-b);
+  border-radius: var(--radius-label);
+  font-size: 13px;
+  color: var(--dsk-fg);
+}
+.dk-ex-pick > span.dk-used {
+  border-color: var(--dsk-warn);
+  background: var(--dsk-warn-sub);
+}
+.dk-ex-pick b {
+  font-weight: 500;
+}
+.dk-ex-pick em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+
+/* the snippet: the bit of page a value was read from, at the size its text is read at */
+.dk-ex-snip {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  min-height: 28px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-control);
+  background: var(--dsk-paper);
+  cursor: zoom-in;
+}
+.dk-ex-snip img {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+}
+.dk-ex-snip-box {
+  position: absolute;
+  box-sizing: content-box;
+  margin: -2px;
+  padding: 2px;
+  border-radius: 3px;
+  background: var(--dsk-mark);
+  box-shadow: 0 0 0 1.5px var(--dsk-mark-line);
+}
+.dk-ex-snip-box.dk-warn {
+  background: var(--dsk-mark-warn);
+  box-shadow: 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-ex-snip-pg {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  padding: 0 4px;
+  border-radius: var(--radius-label);
+  font: 500 10px var(--dk-plex);
+  color: var(--dsk-subtle);
+  background: color-mix(in oklch, var(--dsk-paper) 85%, transparent);
+}
+
+/* the load as read: the route, then the facts in short columns */
+.dk-ex-route {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.dk-ex-route > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 14px;
+}
+.dk-ex-route > li:last-child {
+  padding-bottom: 0;
+}
+.dk-ex-route > li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  bottom: 2px;
+  left: 10.5px;
+  border-left: 1.5px solid var(--dsk-b);
+}
+.dk-ex-route > li > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-ex-pin {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font: 600 11px var(--dk-plex);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+}
+.dk-ex-route > li.dk-warn .dk-ex-pin {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-ex-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ex-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dsk-fg2);
+}
+.dk-ex-part {
+  font-size: 13px;
+}
+.dk-ex-part.dk-lead {
+  font-size: 14px;
+  font-weight: 500;
+}
+.dk-ex-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 2px;
+  font-size: 12.5px;
+}
+.dk-ex-extras em {
+  margin-right: 5px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+}
+.dk-ex-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
+}
+.dk-ex-panel {
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ex-panel:nth-child(odd) {
+  border-right: 1px solid var(--dsk-b-sub);
+}
+.dk-ex-panel:nth-child(-n + 2) {
+  border-top: 0;
+}
+.dk-ex-panel:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  border-right: 0;
+}
+.dk-ex-panel h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+.dk-ex-panel dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 13px;
+}
+.dk-ex-panel dl > div {
+  display: contents;
+}
+.dk-ex-panel dt {
+  color: var(--dsk-subtle);
+}
+.dk-ex-panel dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dk-ex-panel .dk-money dd {
+  font-family: var(--dk-plex);
+  font-size: 12.5px;
+  text-align: right;
+}
+.dk-ex-blank {
+  color: var(--dsk-subtle);
+}
+
+/* a value as read: plain when settled, dotted when loose, wavy amber when it needs a person */
+.dk-ex-v {
+  display: inline;
+  margin: 0 -2px;
+  padding: 0 2px;
+  border-radius: 3px;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+  color: var(--dsk-fg);
+  cursor: pointer;
+}
+.dk-ex-v:hover,
+.dk-ex-v.dk-hot {
   background: var(--dsk-hover);
 }
-.dk-ex-pdot {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--dsk-warn);
+.dk-ex-v.dk-fair {
+  text-decoration: underline dotted var(--dsk-b-strong);
+  text-underline-offset: 3px;
 }
-.dk-ex-pno {
-  padding: 0 4px;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--dsk-fg2);
+.dk-ex-v.dk-doubtful {
+  color: var(--dsk-warn-fg);
+  text-decoration: underline wavy color-mix(in oklch, var(--dsk-warn) 70%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.dk-ex-v.dk-on {
+  background: var(--dsk-mark-on);
+  box-shadow: 0 0 0 1.5px var(--dsk-mark-line);
+}
+.dk-ex-v.dk-doubtful.dk-on {
+  background: var(--dsk-mark-warn);
+  box-shadow: 0 0 0 1.5px var(--dsk-warn);
+}
+
+/* the document: thumbnails beside the page, the page with a mark over each value read */
+.dk-ex-doc-acts {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 .dk-ex-zoom {
   min-width: 44px;
   font-variant-numeric: tabular-nums;
 }
+.dk-ex-open {
+  margin-left: 6px;
+}
+.dk-ex-doc-body {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+}
+.dk-ex-doc-body.dk-one {
+  grid-template-columns: minmax(0, 1fr);
+}
+.dk-ex-doc-body:has(.dk-ex-pager) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.dk-ex-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-ex-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 0;
+  font: 500 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-ex-thumb-sheet {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--dsk-paper);
+  box-shadow: 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-ex-thumb-sheet img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.dk-ex-thumb[aria-current="page"] {
+  color: var(--dsk-fg);
+}
+.dk-ex-thumb[aria-current="page"] .dk-ex-thumb-sheet {
+  box-shadow: 0 0 0 2px var(--dsk-ink);
+}
+.dk-ex-thumb-n {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dk-ex-thumb-n i {
+  padding: 0 4px;
+  border-radius: var(--radius-label);
+  font-style: normal;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-ex-pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
 .dk-ex-well {
   position: relative;
-  flex: 1 1 0;
-  min-height: 0;
+  max-height: 560px;
   padding: 12px;
   overflow: auto;
   overscroll-behavior: contain;
+  border-radius: var(--radius-surface);
+  background: var(--dsk-sunken);
   scrollbar-width: thin;
   scrollbar-color: var(--dsk-b) transparent;
+}
+.dk-ex-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ex-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dk-ex-legend .dk-ex-legend-hint {
+  margin-left: auto;
+}
+.dk-ex-lg {
+  width: 14px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--dsk-mark-on);
+}
+.dk-ex-lg.dk-warn {
+  background: var(--dsk-mark-warn);
+  box-shadow: 0 0 0 1.5px var(--dsk-warn);
 }
 /* the sheet is the drawn image at its own size; the marks are a layer exactly over it */
 .dk-ex-sheet {
@@ -2122,33 +2324,31 @@
 }
 .dk-ex-box {
   position: absolute;
-  border-radius: 2px;
+  box-sizing: content-box;
+  margin: -2px;
+  padding: 2px;
+  border-radius: 3px;
+  background: var(--dsk-mark);
   cursor: pointer;
-  box-shadow: inset 0 -1.5px 0 var(--dsk-mark-line);
   transition:
     background-color 120ms,
     box-shadow 120ms;
 }
 .dk-ex-box.dk-warn {
   background: var(--dsk-mark-warn);
-  box-shadow: inset 0 0 0 1px var(--dsk-warn);
+  box-shadow: 0 0 0 1.5px var(--dsk-warn);
 }
 .dk-ex-box:hover,
 .dk-ex-box.dk-hot {
-  background: var(--dsk-mark);
-  box-shadow: inset 0 0 0 1px var(--dsk-mark-line);
+  background: var(--dsk-mark-on);
 }
 .dk-ex-box.dk-on {
   background: var(--dsk-mark-on);
-  box-shadow:
-    inset 0 0 0 1.5px var(--brand),
-    0 0 0 3px var(--dsk-mark);
+  box-shadow: 0 0 0 2px var(--brand);
 }
 .dk-ex-box.dk-warn.dk-on {
   background: var(--dsk-mark-warn);
-  box-shadow:
-    inset 0 0 0 1.5px var(--dsk-warn-fg),
-    0 0 0 3px var(--dsk-mark-warn);
+  box-shadow: 0 0 0 2px var(--dsk-warn-fg);
 }
 .dk-ex-flag {
   position: absolute;
@@ -2161,7 +2361,7 @@
   color: var(--dsk-ink-fg);
   background: var(--dsk-ink);
   pointer-events: none;
-  transform: translateY(calc(-100% - 4px));
+  transform: translateY(calc(-100% - 6px));
 }
 .dk-ex-flag.dk-warn {
   background: var(--dsk-warn-fg);
@@ -2171,7 +2371,7 @@
   align-content: center;
   justify-items: center;
   gap: 8px;
-  height: 100%;
+  min-height: 240px;
   margin: 0;
   padding: 24px;
   font-size: 13px;
@@ -2218,173 +2418,23 @@
 .dk-ex-psk-gap {
   margin-top: 2.5%;
 }
-/* what was read, grouped */
-.dk-ex-fields {
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 4px 10px 12px;
-  overflow: auto;
-  border-top: 1px solid var(--dsk-b-sub);
-  scrollbar-width: thin;
-  scrollbar-color: var(--dsk-b) transparent;
+.dk-ex-skel .dk-ex-snip,
+.dk-rec-skel .dk-ex-snip {
+  height: 44px;
+  cursor: default;
 }
-.dk-ex-empty {
-  padding: 16px;
-  color: var(--dsk-subtle);
+.dk-rec-skel .dk-ex-ck-mark,
+.dk-rec-skel .dk-ex-pin {
+  background: none;
 }
-.dk-ex-grp {
-  padding-top: 8px;
-}
-.dk-ex-grp-h {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 6px 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-subtle);
-}
-.dk-ex-stop {
-  margin: 4px 0 6px;
-  border: 1px solid var(--dsk-b-sub);
-  border-radius: var(--radius-surface);
-}
-.dk-ex-stop.dk-doubtful {
-  border-color: var(--warning-border);
-}
-.dk-ex-stop-h {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px 2px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-fg);
-}
-.dk-ex-stop-n {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font: 500 11px var(--dk-plex);
-  background: var(--dsk-hover);
-}
-.dk-ex-stop-why {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 400;
-  color: var(--dsk-warn-fg);
-}
-.dk-ex-appt {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--dsk-subtle);
-}
-.dk-ex-row {
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr) auto;
-  align-items: baseline;
-  column-gap: 10px;
-  padding: 6px;
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-.dk-ex-row:hover,
-.dk-ex-row.dk-hot {
-  background: var(--dsk-hover);
-}
-.dk-ex-row[aria-selected="true"] {
-  background: var(--surface-selected);
-}
-.dk-ex-l {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-ex-v {
-  display: -webkit-box;
-  min-width: 0;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  color: var(--dsk-fg);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-.dk-ex-row[aria-selected="true"] .dk-ex-v {
-  display: block;
-}
-.dk-ex-m {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  color: var(--dsk-faint);
-}
-.dk-ex-why {
-  display: flex;
-  flex-wrap: wrap;
-  grid-column: 2 / 4;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  font-size: 12px;
-}
-.dk-ex-row.dk-doubtful .dk-ex-l,
-.dk-ex-row.dk-doubtful .dk-ex-why {
-  color: var(--dsk-warn-fg);
-}
-.dk-ex-row.dk-missing .dk-ex-l,
-.dk-ex-row.dk-missing .dk-ex-v,
-.dk-ex-row.dk-missing .dk-ex-why {
-  color: var(--danger-foreground);
-}
-.dk-ex-alts {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.dk-ex-alt {
-  padding: 0 4px;
-  border-radius: 3px;
-  font: 11px var(--dk-plex);
-  color: var(--dsk-fg);
-  background: var(--dsk-warn-sub);
-}
-/* what to do next */
-.dk-ex-acts {
-  display: grid;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--dsk-b-sub);
-  background: var(--dsk-card);
-}
-.dk-ex-ask {
-  margin: 0;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-ex-btns {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
+
+/* the bar */
 .dk-ex-note {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   min-width: 0;
-  font-size: 12px;
-  color: var(--dsk-subtle);
 }
 .dk-ex-note.dk-ok {
   color: var(--dsk-success-fg);
@@ -2392,6 +2442,15 @@
 .dk-ex-note.dk-bad {
   color: var(--danger-foreground);
 }
+.dk-ex .dk-rec-bar .dk-rec-step,
+.dk-ex .dk-rec-bar .dk-ax-btn {
+  flex: none;
+  white-space: nowrap;
+}
+.dk-ex-short {
+  display: none;
+}
+
 /* the whole file, in the regular viewer */
 .dk-ex-file-frame {
   width: 100%;
@@ -2405,38 +2464,109 @@
 .dk-ex-file-image img {
   max-width: 100%;
 }
-/* the card's outline while it is read */
-.dk-ex-head .dk-sk,
-.dk-ex-bar .dk-sk,
-.dk-ex-acts .dk-sk {
-  flex: none;
+
+/* wide: the document beside the reading, held in view while the reading scrolls */
+@container dkex (min-width: 900px) {
+  .dk-ex-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: start;
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+  .dk-ex-body > .dk-ex-doc {
+    position: sticky;
+    top: 0;
+    grid-row: 1;
+    grid-column: 1;
+    border-top: 0;
+    border-right: 1px solid var(--dsk-b-sub);
+  }
+  .dk-ex-body > .dk-ex-reads {
+    grid-row: 1;
+    grid-column: 2;
+    container: dkexr / inline-size;
+  }
+  .dk-ex-reads > .dk-rec-sec:first-child {
+    border-top: 0;
+  }
+  .dk-ex-body > .dk-ex-doc .dk-ex-well {
+    max-height: calc(100dvh - 260px);
+  }
 }
-.dk-ex .dk-ex-sk-title {
-  height: 12px;
+@container dkexr (max-width: 560px) {
+  .dk-ex-ck {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+  .dk-ex-ck > .dk-ex-snip {
+    grid-column: 2;
+  }
+  .dk-ex-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-ex-panel:nth-child(odd) {
+    border-right: 0;
+  }
+  .dk-ex-panel:nth-child(-n + 2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+  .dk-ex-panel:first-child {
+    border-top: 0;
+  }
 }
-.dk-ex .dk-ex-sk-chip {
-  height: 22px;
-  border-radius: var(--radius-label);
+@container dkex (max-width: 520px) {
+  .dk-ex-ck {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+  .dk-ex-ck > .dk-ex-snip {
+    grid-column: 2;
+  }
+  .dk-ex-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-ex-panel:nth-child(odd) {
+    border-right: 0;
+  }
+  .dk-ex-panel:nth-child(-n + 2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+  .dk-ex-panel:first-child {
+    border-top: 0;
+  }
+  .dk-ex-doc-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-ex-thumbs {
+    flex-direction: row;
+  }
+  .dk-ex-thumb {
+    width: 40px;
+  }
 }
-.dk-ex .dk-ex-sk-end {
-  margin-left: auto;
-}
-.dk-ex .dk-ex-sk-line {
-  height: 8px;
-}
-.dk-ex .dk-ex-sk-value {
-  height: 11px;
-}
-.dk-ex .dk-ex-sk-btn {
-  height: 32px;
-  border-radius: var(--radius-control);
-}
-.dk-ex-sk-row {
-  cursor: default;
+@container dkex (max-width: 440px) {
+  .dk-ex .dk-rec-hrow {
+    flex-wrap: wrap;
+  }
+  .dk-ex .dk-rec-amt {
+    flex-basis: 100%;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .dk-ex .dk-rec-bar .dk-rec-bh,
+  .dk-ex-legend .dk-ex-legend-hint {
+    display: none;
+  }
+  .dk-ex .dk-rec-bar {
+    justify-content: space-between;
+  }
+  .dk-ex-long {
+    display: none;
+  }
+  .dk-ex-short {
+    display: inline;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .dk-ex-sheet[data-state="ready"] .dk-ex-img,
-  .dk-ex-step.dk-wait i {
+  .dk-ex-sheet[data-state="ready"] .dk-ex-img {
     animation: none;
   }
   .dk-ex-box {
@@ -4097,6 +4227,21 @@ button.dk-dx-c:hover {
   width: min(880px, 100%);
   margin: 0 auto;
   padding: 28px 24px 48px;
+}
+/* the extraction shows the document beside the reading, so its page is given the room for both */
+.dk-apage-in:has(> .dk-apage-body > .dk-ex) {
+  width: min(1280px, 100%);
+}
+/*
+ * The window scrolls this page, so nothing between it and the document may be a scroll
+ * container of its own: the page lets its overflow show and the body clips rather than hides,
+ * and the document stays in view while the reading scrolls past it.
+ */
+.dk-apage:has(.dk-ex) {
+  overflow: visible;
+}
+.dk-apage-body:has(> .dk-ex) {
+  overflow: clip;
 }
 .dk-apage-h {
   display: flex;

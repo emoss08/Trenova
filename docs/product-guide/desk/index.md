@@ -331,10 +331,11 @@ Keywords: draft email, agent email, send message, edit draft, email approval
 
 ### Create a shipment from a document an agent read
 Keywords: rate confirmation, extract document, scanned load, read fields, create load from PDF, document intelligence
-1. Upload a document in the conversation. When the agent reads it, the workspace shows the page with a box over every value it found, and the list of fields with how sure it is of each one. Fields that need a look are counted and marked.
-2. Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.
-3. When fields need a look, select the button that counts them, such as Check 2 fields, to ask the agent to check them against the document again.
-4. Select **Create shipment**. The agent drafts the shipment, and it waits for your approval like any other change; **Review the draft** opens it. Once it is approved, the item says the shipment was created and offers **Open the shipment**. If the document is already attached to a shipment, it says **This file is already a shipment** instead.
+1. Upload a document in the conversation. When the agent reads it, the workspace shows the load as a record: its lane and the rate exactly as the document gives it, how many fields need a look, and the document itself with a box over every value that was found.
+2. Under **Check before it becomes a shipment**, each doubtful field says why (two readings disagree, marked for review, or low confidence) beside the bit of the page it was read from, and each field that was not found says so. Select the snippet to bring that value up on the page.
+3. Under **The load as read**, select any value to light up where it was found and turn to its page; select a box on the page to pick its value. Use the page thumbnails to move through a document with several pages, and **Open file** to see the original.
+4. Select the check button at the bottom to ask the agent to look at the doubtful fields again and search for the ones it did not find.
+5. Select **Create shipment**. The agent drafts the shipment, and it waits for your approval like any other change; **Review the draft** opens it. Once it is approved, the record shows **Shipment created** with a link to it. If the document is already attached to a shipment, it shows **Already a shipment** instead.
 
 ### Set up an EDI partner from its implementation guide
 Keywords: EDI spec, implementation guide, companion guide, onboard trading partner, EDI setup from PDF, revised guide
