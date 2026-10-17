@@ -174,10 +174,17 @@ func (s *RunStarter) ExtractionEvalRefreezeProgress(
 func RefreezeStatusOf(status enums.WorkflowExecutionStatus) extractioneval.RefreezeStatus {
 	switch status {
 	case enums.WORKFLOW_EXECUTION_STATUS_RUNNING,
-		enums.WORKFLOW_EXECUTION_STATUS_CONTINUED_AS_NEW:
+		enums.WORKFLOW_EXECUTION_STATUS_CONTINUED_AS_NEW,
+		enums.WORKFLOW_EXECUTION_STATUS_PAUSED:
 		return extractioneval.RefreezeStatusRunning
 	case enums.WORKFLOW_EXECUTION_STATUS_COMPLETED:
 		return extractioneval.RefreezeStatusCompleted
+	case enums.WORKFLOW_EXECUTION_STATUS_UNSPECIFIED,
+		enums.WORKFLOW_EXECUTION_STATUS_FAILED,
+		enums.WORKFLOW_EXECUTION_STATUS_CANCELED,
+		enums.WORKFLOW_EXECUTION_STATUS_TERMINATED,
+		enums.WORKFLOW_EXECUTION_STATUS_TIMED_OUT:
+		return extractioneval.RefreezeStatusFailed
 	default:
 		return extractioneval.RefreezeStatusFailed
 	}

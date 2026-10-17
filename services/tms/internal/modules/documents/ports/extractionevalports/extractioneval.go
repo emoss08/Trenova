@@ -171,6 +171,6 @@ type ExtractionEvalCasePagesRepository interface {
 	) (*extractioneval.CasePages, error)
 	Get(
 		ctx context.Context,
-		req GetExtractionEvalCasePagesRequest,
+		req *GetExtractionEvalCasePagesRequest,
 	) (*extractioneval.CasePages, error)
 }

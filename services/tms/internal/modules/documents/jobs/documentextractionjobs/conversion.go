@@ -353,19 +353,22 @@ func (a *Activities) markExtractionUnavailable(
 	doc.HasExtractedText = false
 	doc.DetectedKind = ""
 	doc.ShipmentDraftStatus = document.ShipmentDraftStatusUnavailable
-	if err := a.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
-		ID: doc.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: doc.OrganizationID,
-			BuID:  doc.BusinessUnitID,
+	if err := a.documentRepo.UpdateIntelligence(
+		ctx,
+		&documentports.UpdateDocumentIntelligenceRequest{
+			ID: doc.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: doc.OrganizationID,
+				BuID:  doc.BusinessUnitID,
+			},
+			ContentStatus:       doc.ContentStatus,
+			ContentError:        doc.ContentError,
+			DetectedKind:        doc.DetectedKind,
+			HasExtractedText:    doc.HasExtractedText,
+			ShipmentDraftStatus: doc.ShipmentDraftStatus,
+			DocumentTypeID:      doc.DocumentTypeID,
 		},
-		ContentStatus:       doc.ContentStatus,
-		ContentError:        doc.ContentError,
-		DetectedKind:        doc.DetectedKind,
-		HasExtractedText:    doc.HasExtractedText,
-		ShipmentDraftStatus: doc.ShipmentDraftStatus,
-		DocumentTypeID:      doc.DocumentTypeID,
-	}); err != nil {
+	); err != nil {
 		return err
 	}
 
@@ -643,7 +646,10 @@ func (a *Activities) plainTextConversion(data []byte) *convertedFile {
 	}
 }
 
-func (a *Activities) pdfTextProfile(ctx context.Context, data []byte) (int, map[int]bool) {
+func (a *Activities) pdfTextProfile(
+	ctx context.Context,
+	data []byte,
+) (pageCount int, native map[int]bool) {
 	if a.pdfReader == nil {
 		return 0, nil
 	}
@@ -653,12 +659,12 @@ func (a *Activities) pdfTextProfile(ctx context.Context, data []byte) (int, map[
 	}
 	defer pdf.Close()
 
-	pageCount := pdf.PageCount()
+	pageCount = pdf.PageCount()
 	if pageCount > a.conversionCfg.GetMaxPages() {
 		return pageCount, nil
 	}
 
-	native := make(map[int]bool, pageCount)
+	native = make(map[int]bool, pageCount)
 	for page := range pageCount {
 		text, textErr := pdf.PageText(ctx, page)
 		native[page+1] = textErr == nil && strings.TrimSpace(text) != ""

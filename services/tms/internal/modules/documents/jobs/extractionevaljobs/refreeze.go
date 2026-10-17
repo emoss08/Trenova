@@ -81,7 +81,8 @@ func RefreezeExtractionEvalCasesWorkflow(
 			BusinessUnitID: payload.BusinessUnitID,
 			UserID:         payload.UserID,
 			CaseID:         caseID,
-		}).Get(freezeCtx, &frozen); err != nil {
+		}).
+			Get(freezeCtx, &frozen); err != nil {
 			logger.Error("could not freeze an extraction evaluation case through Docling",
 				"caseId", caseID.String(),
 				"error", err,

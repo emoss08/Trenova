@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	pollPendingAIExtractionsDescription = "Poll pending OpenAI background extraction jobs"
+
 	defaultConversionTimeout   = 10 * time.Minute
 	conversionHeartbeatTimeout = time.Minute
 )
@@ -65,7 +67,7 @@ func RegisterExtractionWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        "PollPendingDocumentAIExtractionsWorkflow",
 			Fn:          PollPendingDocumentAIExtractionsWorkflow,
 			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
-			Description: "Poll pending OpenAI background extraction jobs",
+			Description: pollPendingAIExtractionsDescription,
 		},
 	}
 }
@@ -165,7 +167,8 @@ func markConversionFailed(
 		DocumentID:  payload.DocumentID,
 		Code:        code.String(),
 		Message:     message,
-	}).Get(ctx, nil); err != nil {
+	}).
+		Get(ctx, nil); err != nil {
 		workflow.GetLogger(ctx).Error("Could not mark the document's conversion failed",
 			"documentId", payload.DocumentID.String(),
 			"error", err,
@@ -175,7 +178,7 @@ func markConversionFailed(
 	return convertErr
 }
 
-func conversionFailureOf(err error) (documentupload.FailureCode, string) {
+func conversionFailureOf(err error) (code documentupload.FailureCode, message string) {
 	if appErr, ok := errors.AsType[*temporal.ApplicationError](err); ok &&
 		appErr.Type() == errorTypeConverterUnavailable {
 		return documentupload.FailureConverterUnavailable, converterUnreachableMessage

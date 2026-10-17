@@ -97,7 +97,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        "PollPendingDocumentAIExtractionsWorkflow",
 			Fn:          PollPendingDocumentAIExtractionsWorkflow,
 			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
-			Description: "Poll pending OpenAI background extraction jobs",
+			Description: pollPendingAIExtractionsDescription,
 		},
 	}
 }

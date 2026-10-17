@@ -37,7 +37,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return append(schedules,
 		&schedule.Schedule{
 			ID:            "document-extraction-ai-poller",
-			Description:   "Poll pending OpenAI background extraction jobs",
+			Description:   pollPendingAIExtractionsDescription,
 			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      PollPendingDocumentAIExtractionsWorkflow,
 			TaskQueue:     temporaltype.DocumentExtractionTaskQueue,

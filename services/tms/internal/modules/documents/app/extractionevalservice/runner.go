@@ -191,7 +191,7 @@ func (s *Service) pagesFor(
 		return evalCase.Pages, nil
 	}
 
-	frozen, err := s.casePages.Get(ctx, extractionevalports.GetExtractionEvalCasePagesRequest{
+	frozen, err := s.casePages.Get(ctx, &extractionevalports.GetExtractionEvalCasePagesRequest{
 		TenantInfo: tenant,
 		CaseID:     evalCase.ID,
 		TextSource: run.TextSource,

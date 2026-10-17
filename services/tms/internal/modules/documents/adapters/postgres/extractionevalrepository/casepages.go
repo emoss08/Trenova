@@ -59,7 +59,7 @@ func (r *casePagesRepository) Upsert(
 
 func (r *casePagesRepository) Get(
 	ctx context.Context,
-	req extractionevalports.GetExtractionEvalCasePagesRequest,
+	req *extractionevalports.GetExtractionEvalCasePagesRequest,
 ) (*extractioneval.CasePages, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractioneval.CasePages, error) {
 		entity := new(extractioneval.CasePages)

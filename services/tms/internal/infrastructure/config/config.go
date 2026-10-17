@@ -223,13 +223,13 @@ func (c *MetricsConfig) GetHost() string {
 
 type TracingConfig struct {
 	Enabled      bool    `mapstructure:"enabled"`
-	Provider     string  `mapstructure:"provider"         validate:"required_if=Enabled true,oneof=jaeger otlp otlp-grpc stdout"`
-	Endpoint     string  `mapstructure:"endpoint"         validate:"required_if=Enabled true"`
-	ServiceName  string  `mapstructure:"serviceName"      validate:"required_if=Enabled true"`
-	SamplingRate float64 `mapstructure:"samplingRate"     validate:"min=0,max=1"`
+	Provider     string  `mapstructure:"provider"     validate:"required_if=Enabled true,oneof=jaeger otlp otlp-grpc stdout"`
+	Endpoint     string  `mapstructure:"endpoint"     validate:"required_if=Enabled true"`
+	ServiceName  string  `mapstructure:"serviceName"  validate:"required_if=Enabled true"`
+	SamplingRate float64 `mapstructure:"samplingRate" validate:"min=0,max=1"`
 	// AISamplingRate is the share of agent runs, turns and delegates whose
 	// traces are kept. Unset keeps every one.
-	AISamplingRate *float64 `mapstructure:"aiSamplingRate"   validate:"omitempty,min=0,max=1"`
+	AISamplingRate *float64 `mapstructure:"aiSamplingRate" validate:"omitempty,min=0,max=1"`
 	// TraceURLTemplate opens a trace in the tracing backend, with {traceId}
 	// where the id goes. Empty leaves the id to be copied.
 	TraceURLTemplate string `mapstructure:"traceUrlTemplate"`
@@ -309,11 +309,11 @@ type PasswordResetConfig struct {
 	// https://app.example.com. The server cannot infer it from the request without
 	// trusting a Host header an attacker controls, which is how reset links end up
 	// pointing at somebody else's domain.
-	BaseURL string `mapstructure:"baseUrl"            validate:"omitempty,url"`
+	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
 	// TokenTTL is how long a link stays redeemable. Short by default: a reset link is
 	// a bearer credential sitting in a mailbox.
-	TokenTTL       time.Duration `mapstructure:"tokenTtl"           validate:"omitempty,min=0"`
-	InviteTokenTTL time.Duration `mapstructure:"inviteTokenTtl"     validate:"omitempty,min=0"`
+	TokenTTL       time.Duration `mapstructure:"tokenTtl"       validate:"omitempty,min=0"`
+	InviteTokenTTL time.Duration `mapstructure:"inviteTokenTtl" validate:"omitempty,min=0"`
 	// MaxRequestsPerHour caps how many links one account can be sent in an hour, so
 	// the endpoint cannot be used to flood somebody's inbox.
 	MaxRequestsPerHour int `mapstructure:"maxRequestsPerHour" validate:"omitempty,min=1"`
@@ -805,7 +805,7 @@ type AIConfig struct {
 	// misses, and the API keeps a fingerprint of each request it is asked
 	// about for a short while.
 	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
-	MaxRetries       int  `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
+	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
 	// ModelPriceReference fills in a model's price, when the provider's own
 	// model list gives none, from OpenRouter's public catalog, marked as an
 	// estimate. It is a pointer so an absent key keeps it on; a deployment that
@@ -813,7 +813,7 @@ type AIConfig struct {
 	ModelPriceReference *bool `mapstructure:"modelPriceReference"`
 	// ModelPriceReferenceTTL is how long the catalog is kept before it is read
 	// again; one read serves every replica and organization for that long.
-	ModelPriceReferenceTTL time.Duration `mapstructure:"modelPriceReferenceTtl"  validate:"omitempty,min=0"`
+	ModelPriceReferenceTTL time.Duration `mapstructure:"modelPriceReferenceTtl" validate:"omitempty,min=0"`
 
 	// DocumentExtraction lets a model classify and extract uploaded
 	// documents. Off by default; the OCR pipeline below runs either way.
