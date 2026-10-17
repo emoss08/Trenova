@@ -601,6 +601,74 @@ func (_c *MockBillingQueueRepository_CountHeldForPeriod_Call) RunAndReturn(run f
 	return _c
 }
 
+// ListOpenShipmentIDs provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListOpenShipmentIDs(ctx context.Context, req *billingqueueports.ListOpenShipmentIDsRequest) ([]pulid.ID, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOpenShipmentIDs")
+	}
+
+	var r0 []pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListOpenShipmentIDsRequest) ([]pulid.ID, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListOpenShipmentIDsRequest) []pulid.ID); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pulid.ID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListOpenShipmentIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListOpenShipmentIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOpenShipmentIDs'
+type MockBillingQueueRepository_ListOpenShipmentIDs_Call struct {
+	*mock.Call
+}
+
+// ListOpenShipmentIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ListOpenShipmentIDsRequest
+func (_e *MockBillingQueueRepository_Expecter) ListOpenShipmentIDs(ctx any, req any) *MockBillingQueueRepository_ListOpenShipmentIDs_Call {
+	return &MockBillingQueueRepository_ListOpenShipmentIDs_Call{Call: _e.mock.On("ListOpenShipmentIDs", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ListOpenShipmentIDs_Call) Run(run func(ctx context.Context, req *billingqueueports.ListOpenShipmentIDsRequest)) *MockBillingQueueRepository_ListOpenShipmentIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ListOpenShipmentIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ListOpenShipmentIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListOpenShipmentIDs_Call) Return(iDs []pulid.ID, err error) *MockBillingQueueRepository_ListOpenShipmentIDs_Call {
+	_c.Call.Return(iDs, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListOpenShipmentIDs_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListOpenShipmentIDsRequest) ([]pulid.ID, error)) *MockBillingQueueRepository_ListOpenShipmentIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkPostedForInvoice provides a mock function for the type MockBillingQueueRepository
 func (_mock *MockBillingQueueRepository) MarkPostedForInvoice(ctx context.Context, req *billingqueueports.MarkPostedForInvoiceRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)

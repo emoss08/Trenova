@@ -6,6 +6,7 @@ import {
   type BulkUploadDocumentParams,
   type BulkUploadDocumentResponse,
   type Document,
+  type DocumentSignatureStatus,
   type ImportAssistantChatHistoryResponse,
   importAssistantChatHistoryResponseSchema,
   type DocumentContent,
@@ -32,6 +33,12 @@ import {
 import { z } from "zod";
 
 export type DocumentContentAction = "download" | "view" | "preview";
+
+export type SetDocumentSignatureParams = {
+  status: DocumentSignatureStatus;
+  signedAt: number | null;
+  version: number;
+};
 
 export function documentContentUrl(documentId: string, action: DocumentContentAction): string {
   return `${API_BASE_URL}${documentContentEndpoint(documentId, action)}`;
@@ -199,6 +206,17 @@ export class DocumentService {
 
   public async reject(documentId: string, reason: string): Promise<Document> {
     const response = await api.post<Document>(`/documents/${documentId}/reject/`, { reason });
+    return safeParse(documentSchema, response, "Document");
+  }
+
+  public async setSignature(
+    documentId: string,
+    params: SetDocumentSignatureParams,
+  ): Promise<Document> {
+    const response = await api.post<Document>(
+      `/documents/${encodeURIComponent(documentId)}/signature/`,
+      params,
+    );
     return safeParse(documentSchema, response, "Document");
   }
 

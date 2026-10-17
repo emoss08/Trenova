@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -390,6 +391,7 @@ type EnrichmentResult struct {
 	Classification       *ClassificationResult
 	DocumentIntelligence *DocumentIntelligenceAnalysis
 	AIDiagnostics        *AIDiagnostics
+	Signature            *documentaiextractionports.AISignatureReading
 	EnqueueAsyncAI       bool
 }
 
@@ -405,6 +407,7 @@ type ExtractionPipelineOutcome struct {
 	Classification *ClassificationResult
 	Intelligence   *DocumentIntelligenceAnalysis
 	AIDiagnostics  *AIDiagnostics
+	Signature      *documentaiextractionports.AISignatureReading
 	EnqueueAsyncAI bool
 }
 
@@ -488,6 +491,7 @@ type FinalizeIntelligenceParams struct {
 	Classification *ClassificationResult
 	Intelligence   *DocumentIntelligenceAnalysis
 	AIDiagnostics  *AIDiagnostics
+	Signature      *documentaiextractionports.AISignatureReading
 	Control        *tenant.DocumentControl
 	TenantInfo     pagination.TenantInfo
 	EnqueueAsyncAI bool

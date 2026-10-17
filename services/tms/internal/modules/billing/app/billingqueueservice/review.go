@@ -716,7 +716,7 @@ func (s *service) shipmentDocuments(
 	docs, err := s.documentRepo.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:          tenantInfo,
 		ResourceID:          item.ShipmentID.String(),
-		ResourceType:        "shipment",
+		ResourceType:        shipmentResourceType,
 		IncludeDocumentType: true,
 	})
 	if err != nil {

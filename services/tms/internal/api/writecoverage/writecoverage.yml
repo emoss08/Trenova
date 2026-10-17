@@ -553,6 +553,9 @@ writes:
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
+  "POST /api/v1/billing-queue/pod-signatures/redetect/":
+    exempt: infrastructure
+    reason: "A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed."
   "POST /api/v1/billing-queue/transfer/":
     tools: [transfer_to_billing]
   "PUT /api/v1/billing-queue/:itemID/charges/":
@@ -985,6 +988,9 @@ writes:
   "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
     exempt: infrastructure
     reason: "A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it."
+  "POST /api/v1/documents/:documentID/signature/":
+    exempt: attestation
+    reason: "Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one."
   "POST /api/v1/documents/bulk-delete/":
     tools: [delete_documents]
   "POST /api/v1/documents/upload-bulk/":

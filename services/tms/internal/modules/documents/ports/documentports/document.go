@@ -39,9 +39,10 @@ type GetDocumentsByResourceRequest struct {
 }
 
 type GetDocumentsByResourceIDsRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	ResourceType string                `json:"resourceType"`
-	ResourceIDs  []string              `json:"resourceIds"`
+	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
+	ResourceType        string                `json:"resourceType"`
+	ResourceIDs         []string              `json:"resourceIds"`
+	IncludeDocumentType bool                  `json:"includeDocumentType"`
 }
 
 type DeleteDocumentRequest struct {
@@ -65,6 +66,14 @@ type UpdateDocumentIntelligenceRequest struct {
 	HasExtractedText    bool                         `json:"hasExtractedText"`
 	ShipmentDraftStatus document.ShipmentDraftStatus `json:"shipmentDraftStatus"`
 	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
+}
+
+type RecordDetectedSignatureRequest struct {
+	ID         pulid.ID                 `json:"id"`
+	TenantInfo pagination.TenantInfo    `json:"tenantInfo"`
+	Status     document.SignatureStatus `json:"status"`
+	SignedAt   *int64                   `json:"signedAt"`
+	DetectedAt int64                    `json:"detectedAt"`
 }
 
 type ListPendingPreviewReconciliationRequest struct {
@@ -137,6 +146,7 @@ type DocumentRepository interface {
 	Update(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
 	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
+	RecordDetectedSignature(ctx context.Context, req *RecordDetectedSignatureRequest) (bool, error)
 	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
 	MoveLineageToResource(ctx context.Context, req *MoveDocumentLineageRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error

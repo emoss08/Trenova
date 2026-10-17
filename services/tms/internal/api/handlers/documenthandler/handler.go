@@ -230,6 +230,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpReject),
 		h.reject,
 	)
+	api.POST(
+		"/:documentID/signature/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.setSignature,
+	)
 	api.GET(
 		"/:documentID/shipment-draft/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -1283,6 +1288,64 @@ func (h *Handler) review(c *gin.Context, decision document.ReviewDecision, reaso
 	}
 
 	c.JSON(http.StatusOK, reviewed)
+}
+
+type setSignatureRequest struct {
+	Status   document.SignatureStatus `json:"status"`
+	SignedAt *int64                   `json:"signedAt"`
+	Version  int64                    `json:"version"`
+}
+
+// @Summary Record whether a document is signed
+// @Description Records a person's reading of a document's signature: Signed with an optional signing date, Unsigned, or Unknown. A person's answer is final; extraction no longer changes it. Requires document update.
+// @ID setDocumentSignature
+// @Tags Documents
+// @Accept json
+// @Produce json
+// @Param documentID path string true "Document ID"
+// @Param request body setSignatureRequest true "Signature status, signing date and the document version being changed"
+// @Success 200 {object} document.Document
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 409 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/{documentID}/signature/ [post]
+func (h *Handler) setSignature(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(setSignatureRequest)
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	updated, err := h.service.SetSignature(c.Request.Context(), &documentservice.SetSignatureRequest{
+		DocumentID: documentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		Status:   req.Status,
+		SignedAt: req.SignedAt,
+		Version:  req.Version,
+		Actor:    requestActorFromAuthContext(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
 }
 
 type attachToShipmentRequest struct {

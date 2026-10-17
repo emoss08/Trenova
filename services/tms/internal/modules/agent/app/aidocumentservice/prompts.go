@@ -14,7 +14,19 @@ const (
 		"RateConfirmation, BillOfLading, ProofOfDelivery, Other. " +
 		"Use the extracted text, the feature summary, and any provider fingerprint hint. " +
 		"Set shouldExtract=true only when the documentKind is RateConfirmation and the " +
-		"evidence is strong enough for structured extraction. Return strict JSON only."
+		"evidence is strong enough for structured extraction. " +
+		"Also read the receiver's signature on delivery paperwork (proof of delivery, " +
+		"delivery receipt, signed bill of lading). Set signature.status to Signed only when " +
+		"the text shows the consignee or receiver signed: a printed or handwritten name or " +
+		"mark on the signature line, a \"signed by\" entry, or an electronic signature " +
+		"stamp. Set Unsigned only when the document plainly says it was not signed, the " +
+		"receiver refused to sign, or a typed form shows the signature field empty. OCR " +
+		"rarely reads handwriting, so a blank-looking signature line in scanned text is not " +
+		"proof of Unsigned; answer Unknown with low confidence. Use Unknown with confidence " +
+		"0 when the document has no signature line. signature.confidence is how sure you " +
+		"are of the status, from 0 to 1. signature.signedDate is the date written beside " +
+		"the receiver's signature as YYYY-MM-DD when it is legible, otherwise an empty " +
+		"string; never use the print, pickup or due date. Return strict JSON only."
 
 	extractSystemPrompt = "You extract structured rate confirmation data for a " +
 		"transportation management system. Return only the compact canonical fields and " +

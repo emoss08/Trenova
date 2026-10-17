@@ -82,6 +82,7 @@ type Params struct {
 	Realtime             agentports.RealtimeService
 	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
 	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
+	Permissions          permissionports.PermissionEngine
 }
 
 type Service struct {
@@ -107,6 +108,7 @@ type Service struct {
 	realtime             agentports.RealtimeService
 	aiCorrections        aicorrectionports.AICorrectionService
 	triage               inboundmessageports.TriageEventSink
+	permissions          permissionports.PermissionEngine
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -148,6 +150,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		realtime:             p.Realtime,
 		aiCorrections:        p.AICorrections,
 		triage:               p.Triage,
+		permissions:          p.Permissions,
 	}
 }
 

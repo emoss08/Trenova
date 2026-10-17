@@ -544,6 +544,33 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 	)
 }
 
+func (r *repository) ListOpenShipmentIDs(
+	ctx context.Context,
+	req *billingqueueports.ListOpenShipmentIDsRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		bqi := billingqueuecol.BillingQueueItemColumns
+		ids := make([]pulid.ID, 0, max(req.Limit, 0))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*billingqueue.BillingQueueItem)(nil)).
+			ColumnExpr(bqi.ShipmentID.Qualified()).
+			Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
+				billingqueue.StatusPosted,
+				billingqueue.StatusCanceled,
+			})).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
+			GroupExpr(bqi.ShipmentID.Qualified()).
+			OrderExpr(bqi.CreatedAt.Expr("MAX({}) DESC")).
+			Limit(req.Limit).
+			Scan(ctx, &ids); err != nil {
+			return nil, fmt.Errorf("list open billing queue shipments: %w", err)
+		}
+
+		return ids, nil
+	})
+}
+
 func (r *repository) GetStatusCounts(
 	ctx context.Context,
 	req *billingqueueports.GetBillingQueueStatsRequest,

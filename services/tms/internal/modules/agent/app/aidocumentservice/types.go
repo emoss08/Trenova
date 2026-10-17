@@ -5,14 +5,21 @@ import (
 )
 
 type routeResponse struct {
-	ShouldExtract       bool     `json:"shouldExtract"`
-	DocumentKind        string   `json:"documentKind"`
-	Confidence          float64  `json:"confidence"`
-	Signals             []string `json:"signals"`
-	ReviewStatus        string   `json:"reviewStatus"`
-	ClassifierSource    string   `json:"classifierSource"`
-	ProviderFingerprint string   `json:"providerFingerprint"`
-	Reason              string   `json:"reason"`
+	ShouldExtract       bool                   `json:"shouldExtract"`
+	DocumentKind        string                 `json:"documentKind"`
+	Confidence          float64                `json:"confidence"`
+	Signals             []string               `json:"signals"`
+	ReviewStatus        string                 `json:"reviewStatus"`
+	ClassifierSource    string                 `json:"classifierSource"`
+	ProviderFingerprint string                 `json:"providerFingerprint"`
+	Reason              string                 `json:"reason"`
+	Signature           *routeSignatureReading `json:"signature"`
+}
+
+type routeSignatureReading struct {
+	Status     string  `json:"status"`
+	Confidence float64 `json:"confidence"`
+	SignedDate string  `json:"signedDate"`
 }
 
 type extractFieldResponse struct {

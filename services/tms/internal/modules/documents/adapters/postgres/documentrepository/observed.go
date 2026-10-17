@@ -78,6 +78,17 @@ func (o *observed) UpdateIntelligence(
 	return err
 }
 
+func (o *observed) RecordDetectedSignature(
+	ctx context.Context,
+	req *documentports.RecordDetectedSignatureRequest,
+) (bool, error) {
+	changed, err := o.DocumentRepository.RecordDetectedSignature(ctx, req)
+	if err == nil && changed {
+		o.notify(ctx, o.load(ctx, req.ID, req.TenantInfo)...)
+	}
+	return changed, err
+}
+
 func (o *observed) PromoteVersion(
 	ctx context.Context,
 	req *documentports.PromoteDocumentVersionRequest,

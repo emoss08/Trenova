@@ -80,6 +80,7 @@ type ActivitiesParams struct {
 	OfficeReader        kernelports.OfficeDocumentReader
 	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
+	Realtime            agentports.RealtimeService          `optional:"true"`
 }
 
 type Activities struct {
@@ -107,6 +108,7 @@ type Activities struct {
 	converter           kernelports.DocumentConverter
 	conversionCfg       *config.DocumentConversionConfig
 	triage              inboundmessageports.TriageEventSink
+	realtime            agentports.RealtimeService
 }
 
 //nolint:gocritic // dependency injection param
@@ -152,6 +154,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		shadowSampler:       p.ShadowSampler,
 		rollout:             p.Rollout,
 		triage:              p.Triage,
+		realtime:            p.Realtime,
 		pdfReader:           p.PDFReader,
 		officeReader:        p.OfficeReader,
 		converter:           p.Converter,
@@ -251,6 +254,7 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		Classification: outcome.Classification,
 		Intelligence:   outcome.Intelligence,
 		AIDiagnostics:  outcome.AIDiagnostics,
+		Signature:      outcome.Signature,
 		Control:        control,
 		TenantInfo:     tenantInfo,
 		EnqueueAsyncAI: outcome.EnqueueAsyncAI,
@@ -335,6 +339,7 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 	); err != nil {
 		return err
 	}
+	a.recordDetectedSignature(ctx, p.Document, p.TenantInfo, p.Signature)
 	indexedText := p.Extracted.Text
 	if !p.Control.EnableFullTextIndexing {
 		indexedText = ""
@@ -496,6 +501,7 @@ func (a *Activities) runExtractionPipeline(
 		Classification: classification,
 		Intelligence:   intelligence,
 		AIDiagnostics:  result.AIDiagnostics,
+		Signature:      result.Signature,
 		EnqueueAsyncAI: result.EnqueueAsyncAI,
 	}, nil
 }
@@ -1240,6 +1246,7 @@ func (a *Activities) enrichWithAI(
 			Classification:       routedClassification,
 			DocumentIntelligence: routedAnalysis,
 			AIDiagnostics:        diagnostics,
+			Signature:            route.Signature,
 			EnqueueAsyncAI:       false,
 		}, nil
 	}
@@ -1250,6 +1257,7 @@ func (a *Activities) enrichWithAI(
 		Classification:       routedClassification,
 		DocumentIntelligence: routedAnalysis,
 		AIDiagnostics:        diagnostics,
+		Signature:            route.Signature,
 		EnqueueAsyncAI:       true,
 	}, nil
 }

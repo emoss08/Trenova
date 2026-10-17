@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -282,6 +283,13 @@ func (r *repository) GetByResourceIDs(
 					Where(cols.ResourceType.Eq(), req.ResourceType).
 					Where(cols.IsCurrentVersion.Eq(), true)
 			}).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				if req.IncludeDocumentType {
+					return sq.Relation(documentcol.DocumentRelations.DocumentType)
+				}
+
+				return sq
+			}).
 			Order(cols.CreatedAt.OrderDesc()).
 			Scan(ctx)
 		if err != nil {
@@ -520,6 +528,65 @@ func (r *repository) UpdateIntelligence(
 		}
 
 		return nil
+	})
+}
+
+func (r *repository) RecordDetectedSignature(
+	ctx context.Context,
+	req *documentports.RecordDetectedSignatureRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := documentcol.DocumentColumns
+		signedAt := req.SignedAt
+		if req.Status != document.SignatureStatusSigned {
+			signedAt = nil
+		}
+
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*document.Document)(nil)).
+			Set(cols.SignatureStatus.Set(), req.Status).
+			Set(cols.SignedAt.Set(), signedAt).
+			Set(cols.SignatureSource.Set(), document.SignatureSourceExtraction).
+			Set(cols.SignatureUpdatedByID.SetNull()).
+			Set(cols.SignatureUpdatedAt.Set(), req.DetectedAt).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.Version.Inc(1)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return documentcol.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID).
+					Where(
+						buncolgen.Expr("{0} IS DISTINCT FROM ?", cols.SignatureSource),
+						document.SignatureSourcePerson,
+					).
+					Where(
+						buncolgen.Expr(
+							"NOT ({0} = ? AND {1} IS NOT DISTINCT FROM ? AND {2} IS NOT DISTINCT FROM ?)",
+							cols.SignatureStatus,
+							cols.SignedAt,
+							cols.SignatureSource,
+						),
+						req.Status,
+						signedAt,
+						document.SignatureSourceExtraction,
+					)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error(
+				"failed to record detected document signature",
+				zap.Error(err),
+				zap.String("id", req.ID.String()),
+			)
+			return false, err
+		}
+
+		rows, err := results.RowsAffected()
+		if err != nil {
+			return false, fmt.Errorf("get rows affected: %w", err)
+		}
+
+		return rows > 0, nil
 	})
 }
 

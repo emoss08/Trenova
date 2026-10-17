@@ -923,6 +923,7 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 		Classification: outcome.Classification,
 		Intelligence:   outcome.Intelligence,
 		AIDiagnostics:  outcome.AIDiagnostics,
+		Signature:      outcome.Signature,
 		Control:        control,
 		TenantInfo:     tenantInfo,
 		EnqueueAsyncAI: outcome.EnqueueAsyncAI,
@@ -1001,6 +1002,7 @@ func (a *Activities) analyzeExtraction(
 		Classification: classification,
 		Intelligence:   intelligence,
 		AIDiagnostics:  result.AIDiagnostics,
+		Signature:      result.Signature,
 		EnqueueAsyncAI: result.EnqueueAsyncAI,
 	}, nil
 }
