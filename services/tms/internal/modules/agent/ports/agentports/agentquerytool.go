@@ -24,6 +24,7 @@ type QueryToolParams struct {
 	AgentDefinitionID pulid.ID
 	DataAccessCeiling permission.FieldSensitivity
 	ThreadID          pulid.ID
+	RunID             pulid.ID
 }
 
 // AgentQueryTool reads data and returns it.
