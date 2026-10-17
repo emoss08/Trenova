@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -59,7 +60,7 @@ func (s *Service) RefreezeCases(
 
 	tenant := req.TenantInfo
 	tenant.UserID = actorID(actor, req.TenantInfo)
-	workflowID, err := s.refreezes.StartExtractionEvalRefreeze(
+	started, err := s.refreezes.StartExtractionEvalRefreeze(
 		ctx,
 		&extractionevalports.ExtractionEvalRefreezeStart{
 			TenantInfo: tenant,
@@ -70,10 +71,13 @@ func (s *Service) RefreezeCases(
 		s.l.Error("failed to start extraction evaluation re-freeze", zap.Error(err))
 		return nil, fmt.Errorf("start extraction evaluation re-freeze: %w", err)
 	}
+	if started.AlreadyRunning {
+		return s.runningRefreeze(ctx, req.TenantInfo, started.WorkflowID), nil
+	}
 
 	s.logAction(actor, &auditports.LogActionParams{
 		Resource:   permission.ResourceAgentEvalSuite,
-		ResourceID: workflowID,
+		ResourceID: started.WorkflowID,
 		Operation:  permission.OpUpdate,
 		CurrentState: jsonutils.MustToJSON(
 			map[string]any{"caseIds": caseIDs, "textSource": extractioneval.TextSourceDocling},
@@ -84,8 +88,39 @@ func (s *Service) RefreezeCases(
 
 	return &extractionevalports.RefreezeExtractionEvalCasesResult{
 		Queued:     len(caseIDs),
-		WorkflowID: workflowID,
+		WorkflowID: started.WorkflowID,
 	}, nil
+}
+
+func (s *Service) runningRefreeze(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	workflowID string,
+) *extractionevalports.RefreezeExtractionEvalCasesResult {
+	result := &extractionevalports.RefreezeExtractionEvalCasesResult{
+		WorkflowID:     workflowID,
+		AlreadyRunning: true,
+	}
+	progress, err := s.refreezes.ExtractionEvalRefreezeProgress(ctx, tenant)
+	switch {
+	case err != nil:
+		s.l.Warn("failed to read the running extraction evaluation re-freeze", zap.Error(err))
+	case progress != nil:
+		result.Queued = progress.Total
+	}
+
+	return result
+}
+
+func (s *Service) RefreezeProgress(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*extractionevalports.ExtractionEvalRefreezeProgress, error) {
+	if s.refreezes == nil {
+		return nil, nil //nolint:nilnil // no re-freeze can have run on this installation
+	}
+
+	return s.refreezes.ExtractionEvalRefreezeProgress(ctx, tenant)
 }
 
 func (s *Service) refreezeTargets(

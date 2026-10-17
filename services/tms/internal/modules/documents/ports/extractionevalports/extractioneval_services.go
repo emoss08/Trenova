@@ -92,6 +92,10 @@ type ExtractionEvalService interface {
 		req *RefreezeExtractionEvalCasesRequest,
 		actor *permissionports.RequestActor,
 	) (*RefreezeExtractionEvalCasesResult, error)
+	RefreezeProgress(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*ExtractionEvalRefreezeProgress, error)
 	PromoteCorrection(
 		ctx context.Context,
 		req *PromoteCorrectionRequest,
@@ -250,11 +254,29 @@ type ExtractionEvalRefreezeStart struct {
 	CaseIDs    []pulid.ID
 }
 
+type ExtractionEvalRefreezeStarted struct {
+	WorkflowID     string
+	AlreadyRunning bool
+}
+
+type ExtractionEvalRefreezeProgress struct {
+	WorkflowID string
+	Status     extractioneval.RefreezeStatus
+	Total      int
+	Frozen     int
+	Skipped    int
+	Failed     int
+}
+
 type ExtractionEvalRefreezeStarter interface {
 	StartExtractionEvalRefreeze(
 		ctx context.Context,
 		start *ExtractionEvalRefreezeStart,
-	) (string, error)
+	) (*ExtractionEvalRefreezeStarted, error)
+	ExtractionEvalRefreezeProgress(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*ExtractionEvalRefreezeProgress, error)
 }
 
 type RefreezeExtractionEvalCasesRequest struct {
@@ -263,8 +285,9 @@ type RefreezeExtractionEvalCasesRequest struct {
 }
 
 type RefreezeExtractionEvalCasesResult struct {
-	Queued     int
-	WorkflowID string
+	Queued         int
+	WorkflowID     string
+	AlreadyRunning bool
 }
 
 type ConvertedCasePages struct {

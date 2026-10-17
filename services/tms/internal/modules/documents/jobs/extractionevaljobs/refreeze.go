@@ -60,6 +60,20 @@ func RefreezeExtractionEvalCasesWorkflow(
 
 	var a *Activities
 	outcome := &RefreezeOutcome{Outcomes: make([]FreezeCaseOutcome, 0, len(payload.CaseIDs))}
+	if err := workflow.SetQueryHandler(
+		ctx,
+		extractionevalcontract.RefreezeProgressQuery,
+		func() (extractionevalcontract.RefreezeProgress, error) {
+			return extractionevalcontract.RefreezeProgress{
+				Total:   len(payload.CaseIDs),
+				Frozen:  outcome.Frozen,
+				Skipped: outcome.Skipped,
+				Failed:  outcome.Failed,
+			}, nil
+		},
+	); err != nil {
+		return nil, err
+	}
 	for _, caseID := range payload.CaseIDs {
 		var frozen FreezeCaseOutcome
 		if err := workflow.ExecuteActivity(freezeCtx, a.FreezeExtractionEvalCaseActivity, &FreezeCaseInput{

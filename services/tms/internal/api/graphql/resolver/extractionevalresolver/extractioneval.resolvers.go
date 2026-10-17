@@ -373,3 +373,12 @@ func (r *QueryResolver) ExtractionEvalResult(ctx context.Context, id string) (*e
 		ID:         resultID,
 	})
 }
+
+func (r *QueryResolver) ExtractionEvalRefreeze(ctx context.Context) (*extractionevalports.ExtractionEvalRefreezeProgress, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ExtractionEvalService.RefreezeProgress(ctx, base.TenantInfo(authCtx))
+}

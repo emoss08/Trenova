@@ -2327,6 +2327,12 @@ models:
   ExtractionEvalRefreeze:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.RefreezeExtractionEvalCasesResult
+  ExtractionEvalRefreezeProgress:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionEvalRefreezeProgress
+  ExtractionEvalRefreezeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.RefreezeStatus
   ExtractionEvalResult:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.ExtractionResult

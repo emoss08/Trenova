@@ -121,3 +121,13 @@ func (s TextSource) IsValid() bool {
 func (s TextSource) String() string { return string(s) }
 
 func (s TextSource) Frozen() bool { return s == TextSourceDocling }
+
+type RefreezeStatus string
+
+const (
+	RefreezeStatusRunning   = RefreezeStatus("Running")
+	RefreezeStatusCompleted = RefreezeStatus("Completed")
+	RefreezeStatusFailed    = RefreezeStatus("Failed")
+)
+
+func (s RefreezeStatus) String() string { return string(s) }

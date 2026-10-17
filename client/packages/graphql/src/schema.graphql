@@ -14736,8 +14736,37 @@ type ExtractionEvalPage {
 A re-freeze queued in the background: each case's original file is converted through Docling.
 """
 type ExtractionEvalRefreeze {
+  """
+  True when the organization's re-freeze was already running; that run is returned and no new one is started.
+  """
+  alreadyRunning: Boolean!
   queued: Int!
   workflowId: String!
+}
+
+"""The organization's most recent re-freeze and how far it has got."""
+type ExtractionEvalRefreezeProgress {
+  """Cases the re-freeze could not finish."""
+  failed: Int!
+  """Cases frozen again from their original file."""
+  frozen: Int!
+  """
+  Cases left as they were: no original file, or one Docling could not read.
+  """
+  skipped: Int!
+  status: ExtractionEvalRefreezeStatus!
+  """Cases the re-freeze was asked to read."""
+  total: Int!
+  workflowId: String!
+}
+
+enum ExtractionEvalRefreezeStatus {
+  Completed
+  """
+  Stopped before every case was read: failed, canceled, terminated or timed out.
+  """
+  Failed
+  Running
 }
 
 """One case evaluated within a run."""
@@ -24047,6 +24076,10 @@ type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
   extractionEvalCase(id: ID!): ExtractionEvalCase
   extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
+  """
+  The organization's most recent re-freeze through Docling; empty when none has run.
+  """
+  extractionEvalRefreeze: ExtractionEvalRefreezeProgress
   extractionEvalResult(id: ID!): ExtractionEvalResult
   extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
   extractionEvalRun(id: ID!): ExtractionEvalRun

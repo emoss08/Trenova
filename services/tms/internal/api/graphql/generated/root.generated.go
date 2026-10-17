@@ -2963,6 +2963,7 @@ type QueryResolver interface {
 	ExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
 	ExtractionEvalResults(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalResultConnection, error)
 	ExtractionEvalResult(ctx context.Context, id string) (*extractioneval.ExtractionResult, error)
+	ExtractionEvalRefreeze(ctx context.Context) (*extractionevalports.ExtractionEvalRefreezeProgress, error)
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
 	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
@@ -20715,6 +20716,29 @@ input RefreezeExtractionEvalCasesInput {
 type ExtractionEvalRefreeze {
   queued: Int!
   workflowId: String!
+  "True when the organization's re-freeze was already running; that run is returned and no new one is started."
+  alreadyRunning: Boolean!
+}
+
+enum ExtractionEvalRefreezeStatus {
+  Running
+  Completed
+  "Stopped before every case was read: failed, canceled, terminated or timed out."
+  Failed
+}
+
+"The organization's most recent re-freeze and how far it has got."
+type ExtractionEvalRefreezeProgress {
+  workflowId: String!
+  status: ExtractionEvalRefreezeStatus!
+  "Cases the re-freeze was asked to read."
+  total: Int!
+  "Cases frozen again from their original file."
+  frozen: Int!
+  "Cases left as they were: no original file, or one Docling could not read."
+  skipped: Int!
+  "Cases the re-freeze could not finish."
+  failed: Int!
 }
 
 extend type Query {
@@ -20728,6 +20752,8 @@ extend type Query {
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalResults(runId: ID!, input: DataTableConnectionInput!): ExtractionEvalResultConnection!
   extractionEvalResult(id: ID!): ExtractionEvalResult
+  "The organization's most recent re-freeze through Docling; empty when none has run."
+  extractionEvalRefreeze: ExtractionEvalRefreezeProgress
 }
 
 extend type Mutation {

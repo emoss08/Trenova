@@ -31,6 +31,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ExtractionEvalCaseEdge", Implementors: []string{"ExtractionEvalCaseEdge"}},
 		{Name: "ExtractionEvalPage", Implementors: []string{"ExtractionEvalPage"}},
 		{Name: "ExtractionEvalRefreeze", Implementors: []string{"ExtractionEvalRefreeze"}},
+		{Name: "ExtractionEvalRefreezeProgress", Implementors: []string{"ExtractionEvalRefreezeProgress"}},
 		{Name: "ExtractionEvalResult", Implementors: []string{"ExtractionEvalResult"}},
 		{Name: "ExtractionEvalResultConnection", Implementors: []string{"ExtractionEvalResultConnection"}},
 		{Name: "ExtractionEvalResultEdge", Implementors: []string{"ExtractionEvalResultEdge"}},
@@ -1009,6 +1010,78 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:     "alreadyRunning",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.RefreezeExtractionEvalCasesResult)
+					return obj.AlreadyRunning, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "ExtractionEvalRefreezeProgress", Fields: []*gqlexec.Field{
+			{
+				Name:     "workflowId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.WorkflowID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNExtractionEvalRefreezeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐRefreezeStatus),
+			},
+			{
+				Name:     "total",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "frozen",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.Frozen, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "skipped",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.Skipped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "failed",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionevalports.ExtractionEvalRefreezeProgress)
+					return obj.Failed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
 		}},
 		{Object: "ExtractionEvalResult", Fields: []*gqlexec.Field{
 			{
@@ -1084,7 +1157,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionResult)
 					return obj.Status, nil
@@ -1236,7 +1309,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild9,
+				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionResult)
 					return gqlexec.Resolver[resolverExtractionEvalResult](ec, "ExtractionEvalResult").CostUsd(ctx, obj)
@@ -1404,7 +1477,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionRun)
 					return obj.Status, nil
@@ -1464,7 +1537,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "textSource",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionRun)
 					return obj.TextSource, nil
@@ -1597,7 +1670,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild9,
+				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractioneval.ExtractionRun)
 					return gqlexec.Resolver[resolverExtractionEvalRun](ec, "ExtractionEvalRun").CostUsd(ctx, obj)
@@ -2484,6 +2557,17 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOExtractionEvalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionResult),
 			},
+			{
+				Name:       "extractionEvalRefreeze",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ExtractionEvalRefreezeProgress",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionEvalRefreeze(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalOExtractionEvalRefreezeProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐExtractionEvalRefreezeProgress),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -2547,6 +2631,7 @@ type resolverQuery interface {
 	ExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
 	ExtractionEvalResults(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalResultConnection, error)
 	ExtractionEvalResult(ctx context.Context, id string) (*extractioneval.ExtractionResult, error)
+	ExtractionEvalRefreeze(ctx context.Context) (*extractionevalports.ExtractionEvalRefreezeProgress, error)
 }
 
 var (
@@ -2558,10 +2643,11 @@ var (
 	errNoChild5  = errors.New("field of type AICorrectionOutcome does not have child fields")
 	errNoChild6  = errors.New("field of type Boolean does not have child fields")
 	errNoChild7  = errors.New("field of type ExtractionEvalCaseStatus does not have child fields")
-	errNoChild8  = errors.New("field of type ExtractionEvalResultStatus does not have child fields")
-	errNoChild9  = errors.New("field of type Decimal does not have child fields")
-	errNoChild10 = errors.New("field of type ExtractionEvalRunStatus does not have child fields")
-	errNoChild11 = errors.New("field of type ExtractionTextSource does not have child fields")
+	errNoChild8  = errors.New("field of type ExtractionEvalRefreezeStatus does not have child fields")
+	errNoChild9  = errors.New("field of type ExtractionEvalResultStatus does not have child fields")
+	errNoChild10 = errors.New("field of type Decimal does not have child fields")
+	errNoChild11 = errors.New("field of type ExtractionEvalRunStatus does not have child fields")
+	errNoChild12 = errors.New("field of type ExtractionTextSource does not have child fields")
 )
 
 func field_Mutation_promoteAICorrection_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -3184,6 +3270,14 @@ func marshalNExtractionEvalRefreeze2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ExtractionEvalRefreeze", v)
 }
 
+func marshalNExtractionEvalRefreezeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐRefreezeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractioneval.RefreezeStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNExtractionEvalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractioneval.ExtractionResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -3437,6 +3531,13 @@ func marshalOExtractionEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ExtractionEvalCase", v)
+}
+
+func marshalOExtractionEvalRefreezeProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionevalportsᚐExtractionEvalRefreezeProgress(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionevalports.ExtractionEvalRefreezeProgress) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ExtractionEvalRefreezeProgress", v)
 }
 
 func marshalOExtractionEvalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐExtractionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractioneval.ExtractionResult) graphql.Marshaler {
