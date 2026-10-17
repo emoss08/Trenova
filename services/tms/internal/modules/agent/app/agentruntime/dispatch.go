@@ -606,6 +606,7 @@ func (s *Service) runQueryTool(
 		AgentDefinitionID: req.Definition.ID,
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
+		RunID:             req.RunID,
 	})
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),

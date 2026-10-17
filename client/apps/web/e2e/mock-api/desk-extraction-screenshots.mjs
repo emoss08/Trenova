@@ -23,7 +23,7 @@ const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 
 const field = (name) => (page) =>
-  page.getByRole("option", { name: new RegExp(`^${name}`) }).first();
+  page.getByRole("button", { name: new RegExp(`^${name}`) }).first();
 
 const selectField = (name) => async (page) => {
   const row = field(name)(page);
@@ -50,7 +50,16 @@ async function measureBoxes(page) {
     const boxes = [...document.querySelectorAll("[data-box-x], .dk-ex-box")];
     let worst = 0;
     for (const box of boxes) {
-      const rect = box.getBoundingClientRect();
+      const outer = box.getBoundingClientRect();
+      const style = getComputedStyle(box);
+      const left = parseFloat(style.paddingLeft) || 0;
+      const top = parseFloat(style.paddingTop) || 0;
+      const rect = {
+        left: outer.left + left,
+        top: outer.top + top,
+        width: outer.width - left - (parseFloat(style.paddingRight) || 0),
+        height: outer.height - top - (parseFloat(style.paddingBottom) || 0),
+      };
       const expect = box.dataset.boxX
         ? {
             x: Number(box.dataset.boxX),
@@ -137,7 +146,7 @@ const CASES = [
     path: PANE,
     act: (page) =>
       page
-        .getByRole("button", { name: /^Check \d+ fields/ })
+        .getByRole("button", { name: /^Ask the agent to check \d+/ })
         .first()
         .click(),
     after: 200,
@@ -157,8 +166,9 @@ const CASES = [
     name: "keyboard",
     path: PANE,
     act: async (page) => {
-      await page.getByRole("listbox", { name: "What was read" }).first().focus();
-      for (let i = 0; i < 4; i += 1) await page.keyboard.press("ArrowDown");
+      await field("Shipper")(page).focus();
+      for (let i = 0; i < 3; i += 1) await page.keyboard.press("Tab");
+      await page.keyboard.press("Enter");
     },
   },
 ].map((shot) => ({ ...shot, colorScheme: "light" }));

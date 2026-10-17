@@ -39,6 +39,7 @@ describe("extractionFrom", () => {
       sequence: 1,
       role: "pickup",
       part: "window",
+      place: "Memphis, TN",
       appointment: true,
     });
     expect(byKey.get("commodity")).toMatchObject({ reason: "low", box: null, page: 1 });
@@ -62,7 +63,7 @@ describe("extractionFrom", () => {
     expect(extraction.fields.map((field) => field.key)).toEqual(["loadNumber", "stop2", "rate"]);
     expect(extraction.fields[1]).toMatchObject({
       reason: "low",
-      stop: { sequence: 2, role: "delivery", part: "whole", appointment: false },
+      stop: { sequence: 2, role: "delivery", part: "whole", place: "", appointment: false },
     });
     expect(extraction.fields[2]).toMatchObject({ reason: "review", page: 0, box: null });
     expect(extraction.missing).toEqual([{ key: "", label: "Pro Number" }]);

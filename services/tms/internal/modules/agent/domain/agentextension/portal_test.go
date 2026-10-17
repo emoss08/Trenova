@@ -189,6 +189,9 @@ func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 	assert.Equal(t,
 		"On the Acme DC portal (dock appointments), find out: Which slots are open on October 20?\n"+
 			"Details to use:\n- PO number: 4512\n- Warehouse: Dallas\n"+
+			"If the portal asks for a sign-in code you were not given (one sent by text message "+
+			"or email, or a prompt to approve on a phone), stop there and begin your answer with "+
+			"SIGN-IN CODE NEEDED, then say how it asked for the code.\n"+
 			"Only look things up. Do not submit, book, upload, accept, cancel, change or delete "+
 			"anything. When you have the answer, finish with it in plain words, with reference "+
 			"numbers, dates and times exactly as the portal shows them. If the portal does not "+
@@ -206,6 +209,12 @@ func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 	assert.Contains(t, acting, "use the username portal_username and the password portal_password")
 	assert.Contains(t, acting, "Do exactly this and nothing more.")
 	assert.NotContains(t, acting, "Only look things up")
+	assert.NotContains(t, acting, agentextension.PortalSecretAuthenticator,
+		"a site without an authenticator key never names the placeholder")
+
+	act.UsesAuthenticator = true
+	assert.Contains(t, act.Task(),
+		"If it asks for a code from an authenticator app, enter portal_bu_2fa_code.")
 }
 
 func TestParseBrowserUseSettingsDefaultsAndRefusals(t *testing.T) {
@@ -274,4 +283,137 @@ func TestPortalRunFinishRecordsTheOutcome(t *testing.T) {
 	require.NotNil(t, run.FinishedAt)
 	assert.True(t, run.Status.Finished())
 	assert.False(t, agentextension.PortalRunStatusRunning.Finished())
+}
+
+func TestNormalizeAuthenticatorKeyReadsTheKeyAsAPersonCopiesIt(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{ raw, want string }{
+		{raw: "jbsw y3dp ehpk 3pxp", want: "JBSWY3DPEHPK3PXP"},
+		{raw: "JBSW-Y3DP-EHPK-3PXP", want: "JBSWY3DPEHPK3PXP"},
+		{raw: "JBSWY3DPEHPK3PXP====", want: "JBSWY3DPEHPK3PXP"},
+		{
+			raw:  "otpauth://totp/Trenova:eric?secret=JBSWY3DPEHPK3PXP&issuer=Trenova",
+			want: "JBSWY3DPEHPK3PXP",
+		},
+		{raw: "   ", want: ""},
+	}
+	for _, tt := range tests {
+		key, err := agentextension.NormalizeAuthenticatorKey(tt.raw)
+		require.NoError(t, err, tt.raw)
+		assert.Equal(t, tt.want, key, tt.raw)
+	}
+
+	for _, raw := range []string{"123456", "not base32 at all!", "JBSWY3DP", "otpauth://totp/x"} {
+		_, err := agentextension.NormalizeAuthenticatorKey(raw)
+		require.ErrorIs(t, err, agentextension.ErrAuthenticatorKeyInvalid, raw)
+	}
+}
+
+func TestAsksForSignInCodeTellsABlockedSignInFromAnAnswer(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, agentextension.AsksForSignInCode(
+		"SIGN-IN CODE NEEDED: the portal sent a code by text message.", true),
+		"the marker counts whatever the vendor says about success")
+	assert.True(t, agentextension.AsksForSignInCode(
+		"The portal is asking for a two-factor authentication (2FA) code.", false))
+	assert.True(t, agentextension.AsksForSignInCode(
+		"I need the 6-digit code from an authenticator app to continue.", false))
+	assert.False(t, agentextension.AsksForSignInCode(
+		"Two-factor authentication is turned on for this account.", true),
+		"a finished lookup that mentions two-factor settings was not blocked")
+	assert.False(t, agentextension.AsksForSignInCode("The slot was taken.", false))
+}
+
+func TestPortalDetailsRefuseEverySignInPlaceholder(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{
+		"portal_bu_2fa_code", "my_bu_2fa_code", "Portal_Password", "portal_sign_in_code",
+	} {
+		_, err := agentextension.NormalizePortalDetails(map[string]string{name: "x"})
+		require.Error(t, err, name)
+	}
+}
+
+func TestOnlyAStoredKeyIsAnAuthenticator(t *testing.T) {
+	t.Parallel()
+
+	site := &agentextension.PortalSite{Credentials: map[string]any{}}
+	assert.False(t, site.HasAuthenticator())
+	site.Credentials[agentextension.PortalCredentialAuthenticator] = "enc:key"
+	assert.True(t, site.HasAuthenticator())
+
+	var none *agentextension.PortalSite
+	assert.False(t, none.HasAuthenticator())
+}
+
+func TestNormalizeSignInCodeReadsACodeAsAPersonTypesIt(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{ raw, want string }{
+		{raw: "123456", want: "123456"},
+		{raw: " 123 456 ", want: "123456"},
+		{raw: "123-456", want: "123456"},
+		{raw: "Ab12Cd", want: "Ab12Cd"},
+	}
+	for _, tt := range tests {
+		code, err := agentextension.NormalizeSignInCode(tt.raw)
+		require.NoError(t, err, tt.raw)
+		assert.Equal(t, tt.want, code, tt.raw)
+	}
+
+	refused := []string{"", "123", "1234567890123", "12!456", "12\n3456", "١٢٣٤٥٦"}
+	for _, raw := range refused {
+		_, err := agentextension.NormalizeSignInCode(raw)
+		require.ErrorIs(t, err, agentextension.ErrSignInCodeInvalid, raw)
+	}
+}
+
+func TestContinueWithCodeEntersThePlaceholderAndCarriesOnWithTheTask(t *testing.T) {
+	t.Parallel()
+
+	task := "On Acme DC, find out: Which slots are open?"
+	assert.Equal(t, "The portal is showing where to enter the sign-in code it sent. Enter "+
+		"portal_sign_in_code there and submit it. Then carry on with the task below from "+
+		"where you stopped, without repeating anything already done. If the portal says the "+
+		"code is wrong or has expired, stop there and begin your answer with SIGN-IN CODE "+
+		"NEEDED, then say what it said.\n\n"+task, agentextension.ContinueWithCode(task))
+}
+
+func TestAPortalRunWaitingOnACodeKeepsItsProgressUntilACodeContinuesIt(t *testing.T) {
+	t.Parallel()
+
+	run := &agentextension.PortalRun{Status: agentextension.PortalRunStatusRunning}
+	assert.Nil(t, run.CodeExpiresAt())
+	assert.False(t, run.Continued())
+
+	run.AwaitCode(&agentextension.PortalRunOutcome{
+		Answer:      "  SIGN-IN CODE NEEDED: " + strings.Repeat("a", 600),
+		VisitedURLs: []string{"https://portal.acme.com/login"},
+		Steps:       2,
+	}, 1_790_000_000)
+
+	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, run.Status)
+	assert.False(t, run.Status.Finished(), "a run waiting on a code has not ended")
+	assert.Len(t, []rune(run.CodePrompt), agentextension.MaxPortalCodePromptRunes)
+	assert.True(t, strings.HasPrefix(run.CodePrompt, "SIGN-IN CODE NEEDED"))
+	assert.Equal(t, []string{"https://portal.acme.com/login"}, run.VisitedURLs)
+	assert.Equal(t, []string{}, run.OffSiteURLs)
+	assert.Equal(t, 2, run.Steps)
+	require.NotNil(t, run.CodeExpiresAt())
+	assert.Equal(t, int64(1_790_000_000+agentextension.PortalCodeWaitSeconds),
+		*run.CodeExpiresAt())
+	assert.Nil(t, run.FinishedAt)
+
+	run.ContinuedWith("task-2")
+	assert.Equal(t, agentextension.PortalRunStatusRunning, run.Status)
+	assert.Equal(t, "task-2", run.VendorTaskID)
+	assert.Equal(t, 1, run.CodeAttempts)
+	assert.True(t, run.Continued())
+	assert.Empty(t, run.CodePrompt)
+	assert.Nil(t, run.CodeRequestedAt)
+	assert.Nil(t, run.CodeExpiresAt())
+	assert.Equal(t, 2, run.Steps, "what it did before the code stays on the run")
 }

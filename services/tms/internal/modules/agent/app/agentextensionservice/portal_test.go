@@ -3,6 +3,7 @@ package agentextensionservice
 import (
 	"context"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -213,10 +214,12 @@ func (m *memoryRuns) only(t *testing.T) *agentextension.PortalRun {
 }
 
 type fakeBrowser struct {
-	mu      sync.Mutex
-	started []*agentextensionports.PortalTaskRequest
-	stopped []string
-	state   *agentextensionports.PortalTaskState
+	mu       sync.Mutex
+	started  []*agentextensionports.PortalTaskRequest
+	stopped  []string
+	closed   []string
+	state    *agentextensionports.PortalTaskState
+	startErr error
 }
 
 func (f *fakeBrowser) Type() agentextension.Type { return agentextension.TypeBrowserUse }
@@ -239,9 +242,19 @@ func (f *fakeBrowser) StartTask(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
+	if f.startErr != nil {
+		return nil, f.startErr
+	}
 	f.started = append(f.started, req)
+	session := req.SessionID
+	if session == "" {
+		session = "session-1"
+	}
 
-	return &agentextensionports.PortalTaskStarted{TaskID: "task-1", SessionID: "session-1"}, nil
+	return &agentextensionports.PortalTaskStarted{
+		TaskID:    "task-" + strconv.Itoa(len(f.started)),
+		SessionID: session,
+	}, nil
 }
 
 func (f *fakeBrowser) TaskState(
@@ -265,6 +278,15 @@ func (f *fakeBrowser) StopTask(_ context.Context, _ map[string]string, taskID st
 	defer f.mu.Unlock()
 
 	f.stopped = append(f.stopped, taskID)
+
+	return nil
+}
+
+func (f *fakeBrowser) StopSession(_ context.Context, _ map[string]string, sessionID string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.closed = append(f.closed, sessionID)
 
 	return nil
 }
@@ -537,15 +559,19 @@ func TestPollingAnActionRecordsHowItEnded(t *testing.T) {
 
 	running, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, running.Status)
+	assert.Equal(t, agentextension.PortalRunStatusRunning, running.Run.Status)
+	assert.Empty(t, f.browser.closed, "a running task keeps its browser")
 
 	f.browser.finishWith(finished("Booked, confirmation 77812.", "https://portal.acme.com/book"))
 	done, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, done.Status)
-	assert.Equal(t, "Booked, confirmation 77812.", done.Answer)
-	require.NotNil(t, done.FinishedAt)
-	assert.True(t, decimal.RequireFromString("0.04").Equal(done.CostUSD))
+	assert.False(t, done.CodeRequested)
+	assert.Equal(t, agentextension.PortalRunStatusSucceeded, done.Run.Status)
+	assert.Equal(t, "Booked, confirmation 77812.", done.Run.Answer)
+	require.NotNil(t, done.Run.FinishedAt)
+	assert.True(t, decimal.RequireFromString("0.04").Equal(done.Run.CostUSD))
+	assert.Equal(t, []string{"session-1"}, f.browser.closed,
+		"the browser kept open for a code is closed once the run ends")
 }
 
 func TestStoppingAnActionRecordsTheReasonOnce(t *testing.T) {
@@ -568,6 +594,7 @@ func TestStoppingAnActionRecordsTheReasonOnce(t *testing.T) {
 	assert.Equal(t, agentextension.PortalRunStatusTimedOut, stopped.Status)
 	assert.Equal(t, "Still running after 20 minutes.", stopped.Failure)
 	assert.Equal(t, []string{"task-1"}, f.browser.stopped)
+	assert.Equal(t, []string{"session-1"}, f.browser.closed)
 
 	again, err := f.svc.StopPortalRun(t.Context(), f.tenant, started.RunID,
 		agentextension.PortalRunStatusFailed, "A second reason.")

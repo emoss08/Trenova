@@ -57,6 +57,10 @@ type PortalTaskRequest struct {
 	Secrets        map[string]string
 	ProfileID      string
 	Metadata       map[string]string
+
+	// SessionID continues in a browser a task already opened, on the page it
+	// stopped at, instead of opening a new one.
+	SessionID string
 }
 
 type PortalTaskStarted struct {
@@ -96,6 +100,7 @@ type BrowserProvider interface {
 		taskID string,
 	) (*PortalTaskState, error)
 	StopTask(ctx context.Context, settings map[string]string, taskID string) error
+	StopSession(ctx context.Context, settings map[string]string, sessionID string) error
 	Recording(
 		ctx context.Context,
 		settings map[string]string,
@@ -113,25 +118,28 @@ type PortalSiteView struct {
 	AllowActions     bool     `json:"allowActions"`
 	Enabled          bool     `json:"enabled"`
 	HasSignIn        bool     `json:"hasSignIn"`
+	HasAuthenticator bool     `json:"hasAuthenticator"`
 	Version          int64    `json:"version"`
 	CreatedAt        int64    `json:"createdAt"`
 	UpdatedAt        int64    `json:"updatedAt"`
 }
 
 type SavePortalSiteRequest struct {
-	TenantInfo       pagination.TenantInfo `json:"-"`
-	ID               pulid.ID              `json:"-"`
-	Name             string                `json:"name"`
-	Purpose          string                `json:"purpose"`
-	Domains          []string              `json:"domains"`
-	StartURL         string                `json:"startUrl"`
-	Username         string                `json:"username"`
-	Password         string                `json:"password"`
-	ClearSignIn      bool                  `json:"clearSignIn"`
-	BrowserProfileID string                `json:"browserProfileId"`
-	AllowActions     bool                  `json:"allowActions"`
-	Enabled          bool                  `json:"enabled"`
-	Version          int64                 `json:"version"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	ID                 pulid.ID              `json:"-"`
+	Name               string                `json:"name"`
+	Purpose            string                `json:"purpose"`
+	Domains            []string              `json:"domains"`
+	StartURL           string                `json:"startUrl"`
+	Username           string                `json:"username"`
+	Password           string                `json:"password"`
+	AuthenticatorKey   string                `json:"authenticatorKey"`
+	ClearSignIn        bool                  `json:"clearSignIn"`
+	ClearAuthenticator bool                  `json:"clearAuthenticator"`
+	BrowserProfileID   string                `json:"browserProfileId"`
+	AllowActions       bool                  `json:"allowActions"`
+	Enabled            bool                  `json:"enabled"`
+	Version            int64                 `json:"version"`
 }
 
 type PortalRunView struct {
@@ -155,6 +163,9 @@ type PortalRunView struct {
 	ProposalID      pulid.ID                       `json:"proposalId"`
 	RequestedByID   pulid.ID                       `json:"requestedById"`
 	HasRecording    bool                           `json:"hasRecording"`
+	CodePrompt      string                         `json:"codePrompt"`
+	CodeExpiresAt   *int64                         `json:"codeExpiresAt"`
+	CodeAttempts    int                            `json:"codeAttempts"`
 	StartedAt       int64                          `json:"startedAt"`
 	FinishedAt      *int64                         `json:"finishedAt"`
 	VendorSessionID string                         `json:"-"`
@@ -217,6 +228,10 @@ type PortalReadOutcome struct {
 	VisitedURLs []string
 	Steps       int
 	RetrievedAt int64
+
+	// CodePrompt is how the portal asked for the sign-in code it sent the
+	// person, when the read is waiting on one; written by the portal.
+	CodePrompt string
 }
 
 type PortalActionRequest struct {
@@ -229,12 +244,13 @@ type PortalActionRequest struct {
 }
 
 type PortalActionPlan struct {
-	Site        PortalSiteSummary
-	Instruction string
-	Details     map[string]string
-	SentTask    string
-	UsesSignIn  bool
-	Vendor      string
+	Site              PortalSiteSummary
+	Instruction       string
+	Details           map[string]string
+	SentTask          string
+	UsesSignIn        bool
+	UsesAuthenticator bool
+	Vendor            string
 }
 
 type PortalActionStarted struct {
@@ -269,7 +285,7 @@ type PortalRunFinisher interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		runID pulid.ID,
-	) (*agentextension.PortalRun, error)
+	) (*PortalPoll, error)
 	StopPortalRun(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -279,9 +295,39 @@ type PortalRunFinisher interface {
 	) (*agentextension.PortalRun, error)
 }
 
+// PortalPoll is a run as one poll left it, and whether that poll is the one
+// that found the portal asking for a sign-in code.
+type PortalPoll struct {
+	Run           *agentextension.PortalRun
+	CodeRequested bool
+}
+
 type PortalRunWaits interface {
 	RegisterPortalRunWait(ctx context.Context, req *RegisterPortalRunWaitRequest) error
 	NotifyPortalRun(ctx context.Context, tenantInfo pagination.TenantInfo, run *agentextension.PortalRun)
+	// AnnouncePortalRun tells the people whose work waits on a run that it
+	// changed without ending, so their screen shows what it now needs.
+	AnnouncePortalRun(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		run *agentextension.PortalRun,
+	)
+}
+
+type ProvidePortalCodeRequest struct {
+	TenantInfo pagination.TenantInfo
+	RunID      pulid.ID
+	Code       string
+
+	// Administers lets someone who oversees agents enter a code for any run;
+	// anyone else only for a run that was asked for them.
+	Administers bool
+}
+
+// PortalSignInCodes takes a sign-in code a person relays from their phone or
+// inbox and continues the portal task with it, in the browser that asked.
+type PortalSignInCodes interface {
+	ProvidePortalCode(ctx context.Context, req *ProvidePortalCodeRequest) (*PortalRunView, error)
 }
 
 type RegisterPortalRunWaitRequest struct {

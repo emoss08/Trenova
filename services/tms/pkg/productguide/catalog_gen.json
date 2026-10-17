@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5c30f3367a369087b40a3e246cbbcd012c48f17294b6d3e9252f057e42567b50",
+  "version": "sha256:162ef6398a3167ec6d2bf417d11d19248d93ab331d456421707703cc4b68f878",
   "modules": [
     {
       "id": "home",
@@ -2682,7 +2682,13 @@
             "upload POD",
             "portal sign-in",
             "portal history",
-            "recording"
+            "recording",
+            "two-factor",
+            "2FA",
+            "MFA",
+            "authenticator",
+            "sign-in code",
+            "one-time code"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Extensions**, then open Portal work from Browser Use.",
@@ -2690,10 +2696,11 @@
             "Under **Available to**, choose **Every agent** or **Agents you choose**.",
             "Under **Portal sites**, select **New portal site**. Give it a **Name**, say **What it is for**, list its **Addresses** (the hostnames it lives on, such as `portal.acme.com`) and the **Start page** the browser opens, which must be an https address on one of them.",
             "If the portal needs a sign-in, enter its **Username** and **Password**. They are stored encrypted, never shown again and never seen by an agent; leave them blank later to keep them, or select **Remove the stored sign-in**.",
+            "If the portal asks for a code from an authenticator app at sign-in, enter its **Authenticator key**: the setup key the portal showed when the app was added, often under \"Can't scan the code\", not a six-digit code. The browser then makes a fresh code each time. For a portal that sends its codes by text message or email, the agent asks the person it is working for to enter the code in the Desk; giving the site a **Browser profile** that is already signed in saves asking. A task waiting on a code shows **Needs a code** under **Recent portal tasks**, where you can enter the code for it too.",
             "Turn on **Let agents act on this portal** only for a site where agents may book, upload or submit. A site left read-only can only be looked up. Select **Add site**.",
             "Optionally change the browser model, the country it browses from, the steps per task, the daily limit, whether every task is recorded and whether the browser may see screenshots. Each change is saved as you make it.",
             "**Recent portal tasks** lists every task agents ran: open one to see what the browser was told, every page it visited, how it ended and its recording.",
-            "To stop agents using a site without losing its history, edit it and turn off **Available to agents**. A site with tasks recorded against it cannot be removed, only turned off."
+            "To stop agents using a site without losing its history, edit it and turn off **Available to agents**. A site with tasks recorded against it cannot be removed, only turned off. Trenova's own address cannot be a portal site: agents work in Trenova with their own tools."
           ]
         },
         {
@@ -9458,6 +9465,26 @@
           ]
         },
         {
+          "title": "Enter a sign-in code a portal sent you",
+          "keywords": [
+            "sign-in code",
+            "verification code",
+            "two-factor",
+            "2FA",
+            "MFA",
+            "one-time code",
+            "text message code",
+            "email code",
+            "portal login code"
+          ],
+          "steps": [
+            "When an agent reading or acting on a portal reaches a sign-in that sends a code to your phone or email, it says so, and the wait above the message box shows **Waiting for your sign-in code** with how the portal asked.",
+            "Type the code into **Sign-in code** and select **Send code** before the time shown. The code goes only to the portal's browser, never into the conversation, so don't paste it as a message.",
+            "If the portal asks again, for example because the code was mistyped or expired, enter the new one. After three codes, or ten minutes without one, the task stops.",
+            "The agent comes back to the conversation on its own with what the portal said."
+          ]
+        },
+        {
           "title": "Make a conversation a case about a shipment, invoice or dispute",
           "keywords": [
             "case",
@@ -9789,10 +9816,11 @@
             "document intelligence"
           ],
           "steps": [
-            "Upload a document in the conversation. When the agent reads it, the workspace shows the page with a box over every value it found, and the list of fields with how sure it is of each one. Fields that need a look are counted and marked.",
-            "Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.",
-            "Select **Fix fields** to ask the agent to check the doubtful fields against the document again.",
-            "Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead."
+            "Upload a document in the conversation. When the agent reads it, the workspace shows the load as a record: its lane and the rate exactly as the document gives it, how many fields need a look, and the document itself with a box over every value that was found.",
+            "Under **Check before it becomes a shipment**, each doubtful field says why (two readings disagree, marked for review, or low confidence) beside the bit of the page it was read from, and each field that was not found says so. Select the snippet to bring that value up on the page.",
+            "Under **The load as read**, select any value to light up where it was found and turn to its page; select a box on the page to pick its value. Use the page thumbnails to move through a document with several pages, and **Open file** to see the original.",
+            "Select the check button at the bottom to ask the agent to look at the doubtful fields again and search for the ones it did not find.",
+            "Select **Create shipment**. The agent drafts the shipment, and it waits for your approval like any other change; **Review the draft** opens it. Once it is approved, the record shows **Shipment created** with a link to it. If the document is already attached to a shipment, it shows **Already a shipment** instead."
           ]
         },
         {

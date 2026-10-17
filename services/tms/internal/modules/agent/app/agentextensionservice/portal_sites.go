@@ -42,6 +42,7 @@ func portalSiteView(site *agentextension.PortalSite) agentextensionports.PortalS
 		AllowActions:     site.AllowActions,
 		Enabled:          site.Enabled,
 		HasSignIn:        site.HasSignIn(),
+		HasAuthenticator: site.HasSignIn() && site.HasAuthenticator(),
 		Version:          site.Version,
 		CreatedAt:        site.CreatedAt,
 		UpdatedAt:        site.UpdatedAt,
@@ -156,12 +157,23 @@ func (s *Service) applySiteRequest(
 
 	multiErr := errortypes.NewMultiError()
 	site.Validate(multiErr)
+	s.checkNotTrenova(site, multiErr)
 
 	username := strings.TrimSpace(req.Username)
 	password := req.Password
 	if !req.ClearSignIn && (username == "") != (password == "") && !site.HasSignIn() {
 		multiErr.Add("password", errortypes.ErrRequired,
 			"A sign-in needs both a username and a password")
+	}
+	authenticator, keyErr := agentextension.NormalizeAuthenticatorKey(req.AuthenticatorKey)
+	if keyErr != nil {
+		multiErr.Add("authenticatorKey", errortypes.ErrInvalid,
+			"The authenticator key must be the setup key the portal showed for an authenticator app")
+	}
+	signsIn := !req.ClearSignIn && (site.HasSignIn() || (username != "" && password != ""))
+	if authenticator != "" && !signsIn {
+		multiErr.Add("authenticatorKey", errortypes.ErrInvalid,
+			"An authenticator key is used with the site's sign-in; add the username and password too")
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -175,8 +187,9 @@ func (s *Service) applySiteRequest(
 	merged, err := s.secrets.Merge(
 		agentextension.PortalCredentialFields(),
 		map[string]string{
-			agentextension.PortalCredentialUsername: username,
-			agentextension.PortalCredentialPassword: password,
+			agentextension.PortalCredentialUsername:      username,
+			agentextension.PortalCredentialPassword:      password,
+			agentextension.PortalCredentialAuthenticator: authenticator,
 		},
 		site.Credentials,
 		portalSiteScope(pagination.TenantInfo{
@@ -187,9 +200,26 @@ func (s *Service) applySiteRequest(
 	if err != nil {
 		return err
 	}
+	if req.ClearAuthenticator && authenticator == "" {
+		delete(merged, agentextension.PortalCredentialAuthenticator)
+	}
 	site.Credentials = merged
 
 	return nil
+}
+
+// checkNotTrenova refuses a site on Trenova's own address. An agent acts in
+// Trenova through its own tools, as the person it works for and within their
+// permissions; a browser signed in with a stored sign-in would act as
+// whoever that sign-in belongs to.
+func (s *Service) checkNotTrenova(
+	site *agentextension.PortalSite,
+	multiErr *errortypes.MultiError,
+) {
+	if s.appHost != "" && agentextension.HostAllowed(s.appHost, site.Domains) {
+		multiErr.Add("domains", errortypes.ErrInvalid,
+			"Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for.")
+	}
 }
 
 func (s *Service) DeleteSite(
@@ -270,6 +300,9 @@ func portalRunView(run *agentextension.PortalRun, siteName string) agentextensio
 		ProposalID:      run.ProposalID,
 		RequestedByID:   run.RequestedByID,
 		HasRecording:    run.VendorSessionID != "",
+		CodePrompt:      run.CodePrompt,
+		CodeExpiresAt:   run.CodeExpiresAt(),
+		CodeAttempts:    run.CodeAttempts,
 		StartedAt:       run.StartedAt,
 		FinishedAt:      run.FinishedAt,
 		VendorSessionID: run.VendorSessionID,

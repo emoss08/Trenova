@@ -1,14 +1,23 @@
+import { recordPath } from "@/config/record-links";
 import { documentKindName } from "@/lib/document-kinds";
 import { assistant } from "@/lib/queries/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
+import { useReducedMotion } from "@trenova/shared/hooks/use-reduced-motion";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useId, useState } from "react";
-import { ExtractionActions, ShipmentSteps } from "./extraction-actions";
+import { useRef, useState } from "react";
+import { Link } from "react-router";
+import { SettlementStub } from "../../record-card/card-settlement";
+import {
+  CardFacts,
+  CardHead,
+  CardSection,
+  CardStatus,
+  RecordCard,
+} from "../../record-card/record-card";
+import { ExtractionActions } from "./extraction-actions";
 import {
   checkCount,
   checkNames,
@@ -16,17 +25,19 @@ import {
   checkSummary,
   createQuestion,
 } from "./extraction-asks";
-import { ExtractionFields } from "./extraction-fields";
+import { ExtractionCheck } from "./extraction-check";
 import { ExtractionFileDialog } from "./extraction-file-dialog";
-import {
-  firstRowOf,
-  groupExtraction,
-  pagesToCheck,
-  reviewTally,
-  rowsInOrder,
-  type FieldRow,
-} from "./extraction-groups";
+import { groupExtraction, reviewTally, rowsInOrder, type FieldRow } from "./extraction-groups";
+import { ExtractionLoad } from "./extraction-load";
 import { extractionFrom, isImageFile } from "./extraction-payload";
+import {
+  documentMark,
+  headFacts,
+  headFigure,
+  headStanding,
+  headSubtitle,
+  laneOf,
+} from "./extraction-summary";
 import { ExtractionViewer, type PageMark } from "./extraction-viewer";
 import { stopTitle } from "./extraction-words";
 import { isChecking, shipmentProposal, shipmentStage } from "./shipment-stage";
@@ -37,17 +48,22 @@ type BodyProps = {
   onOpenArtifact?: (id: string) => void;
 };
 
+/** How sure the classifier must be of the kind before the head stops saying how sure it was. */
+const SURE_OF_KIND = 0.9;
+
 /**
- * What document intelligence read off a file, document first: its pages with a quiet box over
- * every value found, beside the values grouped the way a dispatcher reads a load. Choosing a
- * value (pointer or keyboard) lights its box, turns to its page and scrolls the box into view;
- * choosing a box chooses its value. The tally counts what needs a person, what the document
- * lacked and what was read. The shipment is drafted by the agent and waits for approval, as
- * every write does; the card only asks.
+ * What document intelligence read off a file, as the record it is about to become. The head
+ * names the load by its lane and leads with the rate exactly as read; the readings a person
+ * must settle come first, each beside the bit of page it came from; then the load as the
+ * reading has it, route first; then the document itself, its pages with a mark over every
+ * value read. Choosing a value lights its mark, turns to its page and scrolls it into view;
+ * choosing a mark chooses its value. On a wide screen the document stands beside the reading
+ * and stays in view while the reading scrolls. The shipment is drafted by the agent and waits
+ * for approval, as every write does; the card only asks.
  */
 export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
   const t = useT();
-  const listId = useId();
+  const reduced = useReducedMotion();
   const extraction = extractionFrom(artifact.payload);
   const { documentId, fileName, pageCount } = extraction;
   const threadId = artifact.threadId;
@@ -56,12 +72,15 @@ export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
   const tally = reviewTally(groups);
   const names = checkNames(tally, t);
   const multiPage = pageCount > 1;
+  const docRef = useRef<HTMLElement>(null);
 
   const [selected, setSelected] = useState<string | null>(null);
   const [listHover, setListHover] = useState<string | null>(null);
   const [boxHover, setBoxHover] = useState<string | null>(null);
   const [page, setPage] = useState(() => {
-    const first = extraction.fields.find((field) => field.box !== null);
+    const first =
+      extraction.fields.find((field) => field.needsLook && field.box !== null) ??
+      extraction.fields.find((field) => field.box !== null);
     return first ? first.page : 1;
   });
   const [fileOpen, setFileOpen] = useState(false);
@@ -113,20 +132,29 @@ export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
       },
     ];
   });
-  const checkPages = pagesToCheck(extraction.fields);
+  const checksByPage = new Map<number, number>();
+  for (const field of extraction.fields) {
+    if (field.needsLook && field.box) {
+      checksByPage.set(field.page, (checksByPage.get(field.page) ?? 0) + 1);
+    }
+  }
   const firstCheckPage = extraction.fields.find((field) => field.needsLook && field.box)?.page ?? 0;
 
-  const select = (key: string, from: "pointer" | "keyboard" | "box") => {
-    if (from === "pointer" && selected === key) {
-      setSelected(null);
-      return;
-    }
+  const focus = (key: string) => {
     setSelected(key);
     const row = rowByKey.get(key);
     if (row?.kind === "read" && row.field.box && row.field.page > 0) setPage(row.field.page);
   };
-  const jump = (row: FieldRow | undefined) => {
-    if (row) select(row.key, "keyboard");
+  const select = (key: string) => {
+    if (selected === key) {
+      setSelected(null);
+      return;
+    }
+    focus(key);
+  };
+  const show = (key: string) => {
+    focus(key);
+    docRef.current?.scrollIntoView?.({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
   };
 
   const file = { fileName: fileName || t("this document"), documentId };
@@ -138,112 +166,113 @@ export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
     noteDocumentAsk(documentId, { threadId, intent: "create", at: Date.now() });
     askAgent(threadId, createQuestion(file, t));
   };
+
   const kind = documentKindName(extraction.documentKind) || extraction.kindLabel || t("Document");
+  const lane = laneOf(groups);
+  const figure = headFigure(extraction, tally, t);
+  const settled = stage.stage === "created" || stage.stage === "attached";
+  const standing = headStanding(stage, tally.check.length, t);
+  const shipmentId = settled ? stage.shipmentId : "";
+  const unsure =
+    extraction.kindConfidence !== null && extraction.kindConfidence < SURE_OF_KIND
+      ? t("{0}% sure of the kind", Math.round(extraction.kindConfidence * 100))
+      : "";
 
   return (
-    <div className="dk-ex">
-      <div className="dk-ex-head">
-        <div className="dk-ex-id">
-          <span className="dk-ex-kind">{kind}</span>
-          {extraction.kindConfidence !== null && (
-            <span className="dk-ex-sure">
-              {t("{0}% sure of the kind", Math.round(extraction.kindConfidence * 100))}
-            </span>
+    <RecordCard className="dk-ex">
+      <CardHead
+        kicker={[
+          kind,
+          fileName || t("This document"),
+          t("{0, plural, one {# page} other {# pages}}", pageCount),
+        ]}
+        lead={<SettlementStub mark={documentMark(extraction.documentKind, t)} />}
+        title={lane ? t("{0} → {1}", lane.from, lane.to) : kind}
+        subtitle={headSubtitle(extraction, lane, t) || undefined}
+        figure={
+          figure && (
+            <>
+              <b className={cn(figure.warn && "dk-warn")}>{figure.amount}</b>
+              <span>{figure.caption}</span>
+            </>
+          )
+        }
+        meta={
+          <>
+            <CardStatus key={standing.label} tone={standing.tone} mark={standing.mark}>
+              {standing.label}
+            </CardStatus>
+            <CardFacts>
+              {[
+                shipmentId !== "" ? (
+                  <Link
+                    key="shipment"
+                    className="dk-ex-link ui-focus-ring"
+                    to={recordPath("shipment", shipmentId)}
+                  >
+                    {stage.stage === "created" && stage.name !== ""
+                      ? stage.name
+                      : t("Open the shipment")}
+                  </Link>
+                ) : null,
+                ...(settled ? [] : headFacts(tally, t)),
+                unsure,
+              ]}
+            </CardFacts>
+          </>
+        }
+      />
+      <div className={cn("dk-ex-body", documentId === "" && "dk-nofile")}>
+        <div className="dk-ex-reads">
+          {!settled && (
+            <ExtractionCheck
+              documentId={documentId}
+              pages={extraction.pages}
+              tally={tally}
+              selected={selected}
+              onSelect={select}
+              onShow={show}
+            />
           )}
-          {documentId !== "" && (
-            <Button
-              variant="outline"
-              size="xs"
-              className="dk-ex-open"
-              onClick={() => setFileOpen(true)}
-            >
-              {t("Open file")}
-              <LinkExternal01Icon className="size-3" />
-            </Button>
+          {rows.length > 0 ? (
+            <ExtractionLoad
+              groups={groups}
+              selected={selected}
+              hot={boxHover ?? listHover}
+              multiPage={multiPage}
+              onSelect={select}
+              onPoint={setListHover}
+            />
+          ) : (
+            <CardSection title={t("The load as read")}>
+              <p className="dk-ex-empty">{t("Nothing was read off this document.")}</p>
+            </CardSection>
           )}
         </div>
-        <div className="dk-ex-file">
-          <span className="dk-ex-fname">{fileName || t("This document")}</span>
-          <span>{t("{0, plural, one {# page} other {# pages}}", pageCount)}</span>
-        </div>
-        <ShipmentSteps stage={stage} />
-        {rows.length > 0 && (
-          <div className="dk-ex-tally" role="group" aria-label={t("What was read")}>
-            {tally.check.length > 0 && (
-              <Button
-                variant="bare"
-                size="bare"
-                className="dk-ex-t dk-warn"
-                onClick={() => jump(firstRowOf(tally.check[0]))}
-              >
-                <i aria-hidden className="dk-ex-dot" />
-                {t("{0} to check", tally.check.length)}
-              </Button>
-            )}
-            {tally.missing.length > 0 && (
-              <Button
-                variant="bare"
-                size="bare"
-                className="dk-ex-t dk-miss"
-                onClick={() => jump(tally.missing[0])}
-              >
-                <i aria-hidden className="dk-ex-ring" />
-                {t("{0} not on the document", tally.missing.length)}
-              </Button>
-            )}
-            <Button
-              variant="bare"
-              size="bare"
-              className="dk-ex-t"
-              disabled={tally.read === 0}
-              onClick={() =>
-                jump(rows.find((row) => row.state === "settled" || row.state === "fair"))
-              }
-            >
-              {t("{0} read", tally.read)}
-            </Button>
-          </div>
-        )}
-      </div>
-      <div className={cn("dk-ex-main", documentId === "" && "dk-nofile")}>
         {documentId !== "" ? (
           <ExtractionViewer
+            sectionRef={docRef}
             documentId={documentId}
             fileName={fileName || t("this document")}
             page={page}
             pageCount={pageCount}
             pages={extraction.pages}
-            pagesToCheck={checkPages}
+            checksByPage={checksByPage}
             readAhead={[page + 1, firstCheckPage]}
             onPage={setPage}
             marks={marks}
             hot={listHover ?? boxHover}
             selected={selected}
             onPoint={setBoxHover}
-            onSelect={(key) => select(key, "box")}
+            onSelect={select}
             onOpenFile={() => setFileOpen(true)}
           />
         ) : (
-          <section className="dk-ex-viewer" aria-label={t("Document")}>
-            <p className="dk-ex-pfail" role="status">
+          <CardSection title={t("The document")}>
+            <p className="dk-ex-empty" role="status">
               {t("The file this was read from is no longer on record.")}
             </p>
-          </section>
-        )}
-        {rows.length > 0 ? (
-          <ExtractionFields
-            listId={listId}
-            groups={groups}
-            multiPage={multiPage}
-            page={page}
-            selected={selected}
-            hot={boxHover ?? listHover}
-            onSelect={select}
-            onClear={() => setSelected(null)}
-            onPoint={setListHover}
-          />
-        ) : (
-          <p className="dk-ex-fields dk-ex-empty">{t("Nothing was read off this document.")}</p>
+          </CardSection>
         )}
       </div>
       <ExtractionActions
@@ -266,6 +295,6 @@ export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
           onOpenChange={setFileOpen}
         />
       )}
-    </div>
+    </RecordCard>
   );
 }

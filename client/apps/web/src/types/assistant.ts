@@ -1407,6 +1407,17 @@ export const agentWaitStatusSchema = z.enum(["Waiting", "Met", "TimedOut", "Canc
  * Work the agent parked until something happens: the conversation picks it up
  * as a new turn when the wait is met or runs out.
  */
+/**
+ * What the person is asked for when the portal task a wait follows stopped at a
+ * sign-in code the portal sent them. Read from the task with the waits.
+ */
+export const agentWaitSignInCodeSchema = z.object({
+  portalRunId: z.string(),
+  prompt: z.string().default(""),
+  expiresAt: z.number(),
+  attempts: z.number().int().default(0),
+});
+
 export const agentWaitSchema = z.object({
   id: z.string(),
   kind: agentWaitKindSchema,
@@ -1421,6 +1432,7 @@ export const agentWaitSchema = z.object({
   outcome: z.string().optional().default(""),
   resumedTurnId: z.string().optional().default(""),
   createdAt: z.number().optional().default(0),
+  signInCode: agentWaitSignInCodeSchema.nullish(),
 });
 
 export const agentWaitListSchema = z.object({
@@ -1431,6 +1443,7 @@ export const agentWaitListSchema = z.object({
 });
 
 export type AgentWait = z.infer<typeof agentWaitSchema>;
+export type AgentWaitSignInCode = z.infer<typeof agentWaitSignInCodeSchema>;
 export type AgentWaitKind = z.infer<typeof agentWaitKindSchema>;
 export type AgentWaitList = z.infer<typeof agentWaitListSchema>;
 

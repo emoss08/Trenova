@@ -1412,7 +1412,7 @@
     },
     {
       "name": "analyze_data",
-      "description": "Run Python over report results and files the person attached, to work out what a report alone does not show: margin by lane over a quarter, which customers drift past terms, where detention clusters. pandas, numpy and matplotlib are available, and the code cannot reach the internet. Each dataset is written to /home/user/data/<name>.csv (or .xlsx, .json, .txt for a file) before the code runs; a report run's CSV has one column per report column, headed by its id, with raw values: decimals as exact text, times as unix seconds. Print what you need to read back, and show a chart with plt.show() to put it beside your reply. Run the report with run_report first and use its runId; each call starts afresh, so load what it needs every time.",
+      "description": "Run Python over report results and files the person attached, to work out what a report alone does not show, such as margin by lane over a quarter. It also finds which customers drift past terms or where detention clusters. pandas, numpy and matplotlib are available, and the code cannot reach the internet. Each dataset is written to /home/user/data/<name>.csv (or .xlsx, .json, .txt for a file) before the code runs; a report run's CSV has one column per report column, headed by its id, with raw values: decimals as exact text, times as unix seconds. Print what you need to read back, and show a chart with plt.show() to put it beside your reply. Run the report with run_report first and use its runId; each call starts afresh, so load what it needs every time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -27362,6 +27362,7 @@
               "agent_run",
               "ai_audit_event",
               "ai_audit_export",
+              "analysis_run",
               "assistant_thread",
               "billing_queue_item",
               "capture_batch",
@@ -29469,7 +29470,7 @@
     },
     {
       "name": "read_portal",
-      "description": "Look something up on an organization portal site through a cloud browser, such as open appointment slots, a load's status or a carrier's certificate. It returns what the portal shows, only reads, and never submits anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. Ask one clear question and give the references the portal knows (PO, BOL, appointment number) in details, never Trenova record ids. What it returns is written outside the organization.",
+      "description": "Look something up on an organization portal site through a cloud browser, such as open appointment slots, a load's status or a carrier's certificate. It returns what the portal shows, only reads, and never submits anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. Ask one clear question and give the references the portal knows (PO, BOL, appointment number) in details, never Trenova record ids. A portal that texts or emails a sign-in code waits for the person to enter it. What it returns is written outside the organization.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

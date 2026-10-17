@@ -120,7 +120,7 @@ func TestReadPortalAsksTheQuestionAndMarksTheAnswerAsOutsideText(t *testing.T) {
 	})
 	params.ThreadID = pulid.MustNew("athr_")
 
-	result, err := newReadPortalTool(portals).Query(t.Context(), params)
+	result, err := newReadPortalTool(portals, nil).Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, portals.read)
@@ -139,11 +139,104 @@ func TestReadPortalAsksTheQuestionAndMarksTheAnswerAsOutsideText(t *testing.T) {
 	assert.Equal(t, portalUntrustedReminder, answer.Note)
 }
 
+type stubPortalWaits struct {
+	registered []*agentextensionports.RegisterPortalRunWaitRequest
+	err        error
+}
+
+func (s *stubPortalWaits) RegisterPortalRunWait(
+	_ context.Context,
+	req *agentextensionports.RegisterPortalRunWaitRequest,
+) error {
+	s.registered = append(s.registered, req)
+
+	return s.err
+}
+
+func (s *stubPortalWaits) NotifyPortalRun(
+	context.Context,
+	pagination.TenantInfo,
+	*agentextension.PortalRun,
+) {
+}
+
+func (s *stubPortalWaits) AnnouncePortalRun(
+	context.Context,
+	pagination.TenantInfo,
+	*agentextension.PortalRun,
+) {
+}
+
+func awaitingCodePortals(siteID, runID pulid.ID) *stubPortals {
+	return &stubPortals{outcome: &agentextensionports.PortalReadOutcome{
+		RunID:       runID,
+		Site:        agentextensionports.PortalSiteSummary{ID: siteID, Name: "Acme DC"},
+		Status:      agentextension.PortalRunStatusAwaitingCode,
+		VisitedURLs: []string{"https://portal.acme.com/login"},
+		CodePrompt:  "SIGN-IN CODE NEEDED: the portal texted a six-digit code to the phone on file.",
+		RetrievedAt: 1_790_150_400,
+	}}
+}
+
+func TestAReadStoppedForASignInCodeParksTheConversationOnIt(t *testing.T) {
+	t.Parallel()
+
+	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
+	runID := pulid.MustNew(agentextension.PortalRunIDPrefix)
+	waits := &stubPortalWaits{}
+	params := testParams(map[string]any{
+		"siteId":   siteID.String(),
+		"question": "Which slots are open on October 20?",
+	})
+	params.ThreadID = pulid.MustNew("athr_")
+
+	result, err := newReadPortalTool(awaitingCodePortals(siteID, runID), waits).
+		Query(t.Context(), params)
+	require.NoError(t, err)
+
+	require.Len(t, waits.registered, 1)
+	registered := waits.registered[0]
+	assert.Equal(t, runID, registered.RunID)
+	assert.Equal(t, "Acme DC", registered.SiteName)
+	assert.Equal(t, params.ThreadID, registered.Owner.ThreadID)
+	assert.Equal(t, params.Actor.TenantInfo(), registered.TenantInfo)
+
+	answer, ok := result.(portalCodeAnswer)
+	require.True(t, ok)
+	assert.Equal(t, portalCodeAnswer{
+		Site:               "Acme DC",
+		Question:           "Which slots are open on October 20?",
+		AwaitingSignInCode: true,
+		PortalSaid: "SIGN-IN CODE NEEDED: the portal texted a six-digit code to the phone " +
+			"on file.",
+		PortalRunID: runID.String(),
+		Note:        portalCodeGuidance,
+	}, answer)
+}
+
+func TestAReadStoppedForASignInCodeThatCannotWaitSaysSo(t *testing.T) {
+	t.Parallel()
+
+	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
+	runID := pulid.MustNew(agentextension.PortalRunIDPrefix)
+	params := testParams(map[string]any{
+		"siteId":   siteID.String(),
+		"question": "Which slots are open on October 20?",
+	})
+	params.ThreadID = pulid.MustNew("athr_")
+
+	_, err := newReadPortalTool(awaitingCodePortals(siteID, runID), &stubPortalWaits{
+		err: errors.New("the conversation is gone"),
+	}).Query(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), portalCodeUnwatched)
+}
+
 func TestReadPortalNeedsASite(t *testing.T) {
 	t.Parallel()
 
 	portals := &stubPortals{}
-	_, err := newReadPortalTool(portals).Query(t.Context(), testParams(map[string]any{
+	_, err := newReadPortalTool(portals, nil).Query(t.Context(), testParams(map[string]any{
 		"question": "Which slots are open on October 20?",
 	}))
 	require.Error(t, err)
@@ -153,7 +246,7 @@ func TestReadPortalNeedsASite(t *testing.T) {
 func TestReadPortalDeclaresWhatItBringsIn(t *testing.T) {
 	t.Parallel()
 
-	policy := newReadPortalTool(&stubPortals{}).Policy()
+	policy := newReadPortalTool(&stubPortals{}, nil).Policy()
 	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
 	assert.True(t, policy.CapsLaterWrites)
 

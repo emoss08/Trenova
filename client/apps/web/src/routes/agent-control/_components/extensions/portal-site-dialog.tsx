@@ -48,6 +48,7 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
   });
   const { control, handleSubmit, reset } = form;
   const clearSignIn = useWatch({ control, name: "clearSignIn" });
+  const clearAuthenticator = useWatch({ control, name: "clearAuthenticator" });
 
   useEffect(() => {
     if (open) {
@@ -171,6 +172,36 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
                       }
                     />
                   </FormControl>
+                  {site?.hasAuthenticator && (
+                    <FormControl cols="full">
+                      <SwitchField<PortalSiteFormValues>
+                        control={control}
+                        name="clearAuthenticator"
+                        label={t("Remove the stored authenticator key")}
+                        description={t(
+                          "The browser stops answering the portal's authenticator codes; the username and password stay.",
+                        )}
+                      />
+                    </FormControl>
+                  )}
+                  {!clearAuthenticator && (
+                    <FormControl cols="full">
+                      <SensitiveField<PortalSiteFormValues>
+                        control={control}
+                        name="authenticatorKey"
+                        label={t("Authenticator key")}
+                        autoComplete="off"
+                        placeholder={
+                          site?.hasAuthenticator
+                            ? t("Leave blank to keep the stored one")
+                            : t("Optional")
+                        }
+                        description={t(
+                          "For a portal that asks for a code from an authenticator app at sign-in: the setup key it showed when the app was added, often under Can't scan the code. Not a six-digit code. The browser makes a fresh code each time, and no model sees the key.",
+                        )}
+                      />
+                    </FormControl>
+                  )}
                 </>
               )}
               <FormControl cols="full">
@@ -180,7 +211,7 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
                   label={t("Browser profile")}
                   placeholder={t("Optional")}
                   description={t(
-                    "A profile in your browser vendor's account that is already signed in to this portal, for portals that ask for a code at sign-in.",
+                    "A profile in your browser vendor's account that is already signed in to this portal, for portals that send sign-in codes by text message or email.",
                   )}
                 />
               </FormControl>

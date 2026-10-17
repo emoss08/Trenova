@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"math"
+	"net/url"
 	"sort"
+	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -49,6 +52,7 @@ type Params struct {
 	Runs         agentextensionports.PortalRunRepository
 	Analyses     agentextensionports.AnalysisRunRepository
 	Workflows    kernelports.WorkflowStarter `optional:"true"`
+	Config       *config.Config              `optional:"true"`
 }
 
 type Service struct {
@@ -66,6 +70,7 @@ type Service struct {
 	runs       agentextensionports.PortalRunRepository
 	analyses   agentextensionports.AnalysisRunRepository
 	workflows  kernelports.WorkflowStarter
+	appHost    string
 	now        func() int64
 }
 
@@ -118,8 +123,23 @@ func New(p Params) *Service {
 		runs:       p.Runs,
 		analyses:   p.Analyses,
 		workflows:  p.Workflows,
+		appHost:    appHostOf(p.Config),
 		now:        timeutils.NowUnix,
 	}
+}
+
+// appHostOf is the host Trenova's own web app is served from, which no portal
+// site may cover.
+func appHostOf(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	parsed, err := url.Parse(cfg.App.GetWebBaseURL())
+	if err != nil {
+		return ""
+	}
+
+	return strings.ToLower(parsed.Hostname())
 }
 
 func secretScope(tenantInfo pagination.TenantInfo, typ agentextension.Type) secretconfig.Scope {

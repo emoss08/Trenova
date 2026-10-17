@@ -24,14 +24,16 @@ const (
 	defaultMaxBackoff     = 5 * time.Second
 	maxResponseBytes      = 8 << 20
 
-	endpointCreateTask = "create-task"
-	endpointGetTask    = "get-task"
-	endpointStopTask   = "stop-task"
-	endpointGetSession = "get-session"
-	endpointAccount    = "get-account"
-	pathTasks          = "/tasks"
-	pathSessions       = "/sessions"
-	pathAccount        = "/billing/account"
+	endpointCreateTask    = "create-task"
+	endpointGetTask       = "get-task"
+	endpointStopTask      = "stop-task"
+	endpointGetSession    = "get-session"
+	endpointCreateSession = "create-session"
+	endpointStopSession   = "stop-session"
+	endpointAccount       = "get-account"
+	pathTasks             = "/tasks"
+	pathSessions          = "/sessions"
+	pathAccount           = "/billing/account"
 
 	StatusCreated  = "created"
 	StatusStarted  = "started"
@@ -40,6 +42,7 @@ const (
 	StatusStopped  = "stopped"
 
 	actionStopTaskAndSession = "stop_task_and_session"
+	actionStopSession        = "stop"
 
 	MaxTaskLength     = 20000
 	MaxSteps          = 200
@@ -103,6 +106,7 @@ type CreateTaskRequest struct {
 	Metadata              map[string]string `json:"metadata,omitempty"`
 	Secrets               map[string]string `json:"secrets,omitempty"`
 	AllowedDomains        []string          `json:"allowedDomains"`
+	SessionID             string            `json:"sessionId,omitempty"`
 	SessionSettings       *SessionSettings  `json:"sessionSettings,omitempty"`
 	Vision                bool              `json:"vision"`
 	SystemPromptExtension string            `json:"systemPromptExtension,omitempty"`
@@ -193,8 +197,84 @@ func (r *CreateTaskRequest) Validate() error {
 			return fmt.Errorf("%w: startUrl must be an https URL", ErrInvalidRequest)
 		}
 	}
+	if r.SessionID != "" {
+		if _, err := pathID(r.SessionID); err != nil {
+			return err
+		}
+		if r.SessionSettings != nil {
+			return fmt.Errorf("%w: a task in an existing session takes the session's settings",
+				ErrInvalidRequest)
+		}
+	}
 
 	return nil
+}
+
+// CreateSessionRequest opens a browser that stays open after a task ends, so
+// a follow-up task can carry on in the same page with what the first one
+// learned.
+type CreateSessionRequest struct {
+	ProfileID        string  `json:"profileId,omitempty"`
+	ProxyCountryCode *string `json:"proxyCountryCode"`
+	EnableRecording  bool    `json:"enableRecording"`
+	KeepAlive        bool    `json:"keepAlive"`
+	PersistMemory    bool    `json:"persistMemory"`
+}
+
+type SessionCreated struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+}
+
+// CreateSession opens a session. Like a task, it is never worth retrying
+// blindly: a request that failed after the vendor opened the browser would
+// leave a second one billed.
+func (c *Client) CreateSession(
+	ctx context.Context,
+	req *CreateSessionRequest,
+) (*SessionCreated, error) {
+	resp, err := c.transport.Do(ctx, &restx.Request{
+		Endpoint:       endpointCreateSession,
+		Method:         http.MethodPost,
+		Path:           pathSessions,
+		Body:           req,
+		ExpectedStatus: []int{http.StatusOK, http.StatusCreated},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(SessionCreated)
+	if err = sonic.Unmarshal(resp.Body, out); err != nil {
+		return nil, fmt.Errorf("%w: %s: %w", ErrUnexpectedPayload, endpointCreateSession, err)
+	}
+	if out.ID == "" {
+		return nil, fmt.Errorf("%w: %s: no session id", ErrUnexpectedPayload,
+			endpointCreateSession)
+	}
+
+	return out, nil
+}
+
+// StopSession closes a session and any task still running in it. One already
+// gone is not an error.
+func (c *Client) StopSession(ctx context.Context, sessionID string) error {
+	id, err := pathID(sessionID)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.transport.Do(ctx, &restx.Request{
+		Endpoint: endpointStopSession,
+		Method:   http.MethodPatch,
+		Path:     pathSessions + "/" + id,
+		Body:     map[string]string{"action": actionStopSession},
+	})
+	if restx.IsStatus(err, http.StatusNotFound) {
+		return nil
+	}
+
+	return err
 }
 
 func (c *Client) CreateTask(ctx context.Context, req *CreateTaskRequest) (*TaskCreated, error) {

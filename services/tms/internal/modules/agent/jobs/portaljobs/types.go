@@ -6,9 +6,11 @@ package portaljobs
 import "time"
 
 const (
-	pollInterval = 10 * time.Second
-	actDeadline  = 20 * time.Minute
-	pollTimeout  = time.Minute
+	pollInterval    = 10 * time.Second
+	actDeadline     = 20 * time.Minute
+	pollTimeout     = time.Minute
 	timedOutNote    = "The portal task was still running after 20 minutes, so it was stopped."
 	unreachableNote = "Trenova could not reach the vendor to follow the portal task, so it was stopped."
+
+	codeWaitChange = "portal-run-code-wait-outside-deadline"
 )

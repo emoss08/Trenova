@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -134,4 +135,51 @@ func (h *Handler) runRecording(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, recording)
+}
+
+type signInCodeRequest struct {
+	Code string `json:"code"`
+}
+
+// provideSignInCode continues a portal task waiting on a sign-in code with the
+// code the person was sent. The person the task was asked for enters it from
+// their conversation; someone who administers agents can enter it for any.
+func (h *Handler) provideSignInCode(c *gin.Context) {
+	id, err := pulid.MustParse(c.Param("runID"))
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError("runId", errortypes.ErrInvalid,
+			"The portal run id is not valid"))
+		return
+	}
+	body := new(signInCodeRequest)
+	if err = c.ShouldBindJSON(body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	administers, err := h.pm.Allowed(
+		c,
+		permission.ResourceAgentExtension.String(),
+		permission.OpUpdate,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	run, err := h.service.ProvidePortalCode(
+		c.Request.Context(),
+		&agentextensionports.ProvidePortalCodeRequest{
+			TenantInfo:  tenantOf(c),
+			RunID:       id,
+			Code:        body.Code,
+			Administers: administers,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, run)
 }

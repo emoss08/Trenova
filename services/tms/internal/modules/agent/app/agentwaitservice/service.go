@@ -366,7 +366,13 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	return s.waits.ListByThread(ctx, req)
+	waits, err := s.waits.ListByThread(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.facts.attachSignInCodes(ctx, req.TenantInfo, waits)
+
+	return waits, nil
 }
 
 // NotifyEvent ends the waits watching for what the event says happened.

@@ -8000,7 +8000,7 @@
       "go/other"
     ]
   },
-  "A profile in your browser vendor's account that is already signed in to this portal, for portals that ask for a code at sign-in.": {
+  "A profile in your browser vendor's account that is already signed in to this portal, for portals that send sign-in codes by text message or email.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -10047,6 +10047,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "A sign-in code is 4 to 12 letters or digits, as the portal sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A sign-in needs both a username and a password": {
@@ -22672,6 +22681,15 @@
       "go/other"
     ]
   },
+  "Already a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Already answered": {
     "sites": 1,
     "scope": [
@@ -24490,6 +24508,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "An authenticator key is used with the site's sign-in; add the username and password too": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "An earlier step changes this record first; it is shown as it would be after it.": {
@@ -30547,6 +30574,15 @@
       "apps/web/components"
     ]
   },
+  "Ask the agent to check {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask the agent to fix it": {
     "sites": 2,
     "scope": [
@@ -33768,6 +33804,26 @@
       "go/other"
     ]
   },
+  "Authenticator codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Authenticator key": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
+    ]
+  },
   "Author a home screen and assign it to roles": {
     "sites": 1,
     "scope": [
@@ -35605,7 +35661,7 @@
     ]
   },
   "BOL": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -49197,6 +49253,15 @@
       "routes/customer-payments"
     ]
   },
+  "Check before it becomes a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Check call": {
     "sites": 1,
     "scope": [
@@ -49569,6 +49634,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Check {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Checked": {
@@ -50453,6 +50527,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Choose a value to find it on the page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Choose a worker": {
@@ -65710,16 +65793,7 @@
       "apps/web/hooks"
     ]
   },
-  "Created shipment {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "Created the shipment": {
+  "Created from this reading": {
     "sites": 1,
     "scope": [
       "ts"
@@ -65819,6 +65893,15 @@
       "routes/inbox"
     ]
   },
+  "Creating drafts the shipment for your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Creating invoice...": {
     "sites": 1,
     "scope": [
@@ -65829,7 +65912,7 @@
     ]
   },
   "Creating the shipment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -68882,7 +68965,7 @@
     ]
   },
   "DOC": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -69133,6 +69216,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "DR": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "DSO": {
@@ -70729,6 +70821,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Deactivated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Deactivated {0, plural, one {# course} other {# courses}}": {
@@ -74170,12 +74271,13 @@
     ]
   },
   "Deleted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -74415,7 +74517,7 @@
     ]
   },
   "Delivery": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -80048,7 +80150,7 @@
     ]
   },
   "Document": {
-    "sites": 47,
+    "sites": 46,
     "scope": [
       "go",
       "ts"
@@ -81892,15 +81994,6 @@
       "routes/desk"
     ]
   },
-  "Drafted and waiting on your approval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Drafted here, signed off by the worker in Dash, then closed and scheduled again.": {
     "sites": 1,
     "scope": [
@@ -81928,7 +82021,7 @@
       "routes/customer"
     ]
   },
-  "Drafting": {
+  "Drafted, waiting on you": {
     "sites": 1,
     "scope": [
       "ts"
@@ -81947,7 +82040,7 @@
     ]
   },
   "Drafting the shipment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -91135,6 +91228,15 @@
       "apps/web/types"
     ]
   },
+  "Enter it by {0}. It goes only to the portal, never into the conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Enter maximum shipment weight": {
     "sites": 1,
     "scope": [
@@ -91326,6 +91428,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Enter the code the portal sent you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Enter the date the customer promised to pay by": {
@@ -91528,6 +91639,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Enter the sign-in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Enter the six-digit code": {
@@ -107118,6 +107238,15 @@
       "routes/settings"
     ]
   },
+  "For a portal that asks for a code from an authenticator app at sign-in: the setup key it showed when the app was added, often under Can't scan the code. Not a six-digit code. The browser makes a fresh code each time, and no model sees the key.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "For anything the employment events do not start on their own.": {
     "sites": 1,
     "scope": [
@@ -118588,7 +118717,7 @@
     ]
   },
   "INV": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -130123,6 +130252,15 @@
       "api/handlers"
     ]
   },
+  "LMP": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "LOC": {
     "sites": 1,
     "scope": [
@@ -132586,7 +132724,7 @@
     ]
   },
   "Leave blank to keep the stored one": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -136299,11 +136437,12 @@
     ]
   },
   "Load {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment-tracking-public"
     ]
   },
@@ -150372,6 +150511,15 @@
       "routes/org-structure"
     ]
   },
+  "Needs a code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Needs a driver now": {
     "sites": 1,
     "scope": [
@@ -162318,15 +162466,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Not created": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Not decided": {
     "sites": 1,
     "scope": [
@@ -162499,13 +162638,21 @@
     ]
   },
   "Not found": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/hooks",
+      "apps/web/hooks"
+    ]
+  },
+  "Not found on any page that was read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -162808,15 +162955,6 @@
       "go/other"
     ]
   },
-  "Not on the document": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Not open yet": {
     "sites": 1,
     "scope": [
@@ -163007,7 +163145,7 @@
     ]
   },
   "Not read": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -165649,6 +165787,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Nothing to check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing to compact yet.": {
@@ -174924,7 +175071,7 @@
     ]
   },
   "Open {0}": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -175691,7 +175838,7 @@
     ]
   },
   "Optional": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -179686,6 +179833,15 @@
       "routes/desk"
     ]
   },
+  "POD": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "POD / BOL upload": {
     "sites": 1,
     "scope": [
@@ -180434,7 +180590,7 @@
       "routes/desk"
     ]
   },
-  "Page {0}, with fields to check": {
+  "Page {0}, {1, plural, one {# field to check} other {# fields to check}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -180453,13 +180609,14 @@
     ]
   },
   "Pages": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -187263,7 +187420,7 @@
     ]
   },
   "Pickup": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -189346,6 +189503,15 @@
       "go/other"
     ]
   },
+  "Portal run not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Portal site": {
     "sites": 4,
     "scope": [
@@ -189376,12 +189542,13 @@
     ]
   },
   "Portal task": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "apps/web/services"
     ]
   },
   "Portal task recording": {
@@ -196905,6 +197072,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "RC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "RPM ${0}": {
     "sites": 1,
     "scope": [
@@ -198369,6 +198545,15 @@
       "apps/web/lib"
     ]
   },
+  "Rate not read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rate per Gallon": {
     "sites": 1,
     "scope": [
@@ -199770,7 +199955,7 @@
     ]
   },
   "Read": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -200390,15 +200575,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Read, but not found on the page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Read-only": {
@@ -208244,6 +208420,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Remove the stored authenticator key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Remove the stored sign-in": {
@@ -217484,7 +217669,7 @@
     ]
   },
   "Route": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -219636,6 +219821,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "SCL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "SD": {
@@ -229144,6 +229338,15 @@
       "go/other"
     ]
   },
+  "Send code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send comment": {
     "sites": 1,
     "scope": [
@@ -230068,7 +230271,7 @@
     ]
   },
   "Sending": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -234143,7 +234346,7 @@
     ]
   },
   "Shipment": {
-    "sites": 51,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -234784,7 +234987,7 @@
     ]
   },
   "Shipment created": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -237043,6 +237246,15 @@
       "apps/web/components"
     ]
   },
+  "Show {0} on page {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Showing": {
     "sites": 1,
     "scope": [
@@ -237685,6 +237897,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Sign-in code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Sign-in credential": {
@@ -244016,7 +244237,7 @@
     ]
   },
   "Stop": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -244674,7 +244895,7 @@
     ]
   },
   "Stops": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -252039,6 +252260,15 @@
       "routes/agent-control"
     ]
   },
+  "The agent drafted it; nothing is created until you approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The agent is checking the fields": {
     "sites": 1,
     "scope": [
@@ -252858,6 +253088,15 @@
       "routes/edi"
     ]
   },
+  "The authenticator key must be the setup key the portal showed for an authenticator app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The authorization code is missing": {
     "sites": 1,
     "scope": [
@@ -253218,6 +253457,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The browser stops answering the portal's authenticator codes; the username and password stay.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The calendar could not be loaded. Try again in a moment.": {
@@ -255794,6 +256042,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The document": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The document behind this correction has been deleted, so its text cannot be frozen": {
@@ -259137,6 +259394,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "The load as read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The load could not be loaded because of a temporary problem. Please try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -261399,6 +261665,15 @@
       "routes/edi"
     ]
   },
+  "The portal asked for another code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The portal did what was asked and said so": {
     "sites": 1,
     "scope": [
@@ -261418,12 +261693,30 @@
     ]
   },
   "The portal run id is not valid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "The portal sent a sign-in code to the person the task is for, and the browser is waiting for it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The portal sent you a sign-in code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The portal sites could not be loaded.": {
@@ -265340,6 +265633,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The time to enter this code has run out. Ask the agent to try the portal again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The timeline has been updated.": {
@@ -271253,6 +271555,15 @@
       "go/other"
     ]
   },
+  "This portal task is not waiting for a sign-in code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.": {
     "sites": 1,
     "scope": [
@@ -274731,6 +275042,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "To check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "To clear a rate mismatch: …": {
@@ -279055,6 +279375,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Trenova keeps the ledger and sends {0} every journal entry it posts. Invoices, payments and bills stay in Trenova; {0} receives their accounting.": {
@@ -284356,7 +284685,7 @@
     ]
   },
   "Updated": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -290599,6 +290928,15 @@
       "apps/dash/_components"
     ]
   },
+  "Waiting for your sign-in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting for {0} · put the pages in the scanner": {
     "sites": 1,
     "scope": [
@@ -290772,7 +291110,7 @@
     ]
   },
   "Waiting on you": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -295119,15 +295457,6 @@
       "routes/insights"
     ]
   },
-  "What was read": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "What was read from a document, kept beside what a person confirmed when they created a shipment from it, is deleted after this many days. These corrections measure extraction accuracy. At least 30.": {
     "sites": 1,
     "scope": [
@@ -296921,15 +297250,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Where the shipment stands": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Where the specimen was collected.": {
@@ -306109,6 +306429,15 @@
       "routes/billing-queue"
     ]
   },
+  "check the document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "checked in a few minutes": {
     "sites": 1,
     "scope": [
@@ -311432,6 +311761,24 @@
       "go/other"
     ]
   },
+  "rate as read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "rate as read · fuel {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "rate cons": {
     "sites": 1,
     "scope": [
@@ -313216,6 +313563,15 @@
     ],
     "areas": [
       "routes/ar-open-items"
+    ]
+  },
+  "what the shipment would be": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "what to ask": {
@@ -315807,6 +316163,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# not read} other {# not read}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# note to review} other {# notes to review}}": {
     "sites": 1,
     "scope": [
@@ -316304,6 +316669,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# read clearly} other {# read clearly}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# recipient} other {# recipients}}": {
@@ -317037,7 +317411,7 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -317209,6 +317583,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0, plural, one {# to check} other {# to check}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# to index} other {# to index}}": {
@@ -317825,15 +318208,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "{0, plural, one {Check # field} other {Check # fields}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0, plural, one {Clear # short-pay balance} other {Clear # short-pay balances}} · {1}": {
@@ -325268,15 +325642,6 @@
       "go/other"
     ]
   },
-  "{0} not on the document": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0} not opened yet": {
     "sites": 1,
     "scope": [
@@ -326771,15 +327136,6 @@
       "routes/agent-control"
     ]
   },
-  "{0} read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0} read · {1} propose · {2} act": {
     "sites": 1,
     "scope": [
@@ -328048,15 +328404,6 @@
       "apps/web/components"
     ]
   },
-  "{0} to check": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0} to clear": {
     "sites": 1,
     "scope": [
@@ -328082,15 +328429,6 @@
     ],
     "areas": [
       "routes/my-team"
-    ]
-  },
-  "{0} to look at": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0} to read and sign.": {
@@ -330188,16 +330526,26 @@
     ]
   },
   "{0}% sure": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox",
       "routes/intake"
     ]
   },
   "{0}% sure of the kind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}% sure · page {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -330539,7 +330887,7 @@
       "routes/desk"
     ]
   },
-  "{0}: not on the document": {
+  "{0}: not read": {
     "sites": 1,
     "scope": [
       "ts"

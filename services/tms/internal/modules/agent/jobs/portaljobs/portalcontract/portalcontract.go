@@ -29,7 +29,8 @@ func (p *Payload) Tenant() pagination.TenantInfo {
 }
 
 type PollResult struct {
-	Finished bool `json:"finished"`
+	Finished     bool `json:"finished"`
+	AwaitingCode bool `json:"awaitingCode"`
 }
 
 type StopInput struct {

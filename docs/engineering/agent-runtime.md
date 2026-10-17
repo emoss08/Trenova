@@ -2366,6 +2366,7 @@ before the change:
 | `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
 | `daily-briefing-accounting-brief` | an organization's morning ends after the shipment board brief, and the accounting dashboard writes its brief when it is first opened | nothing; the check itself is the only cost |
+| `portal-run-code-wait-outside-deadline` | a portal task waiting on a person's sign-in code counts that wait toward the workflow's 20-minute deadline | nothing; the check itself is the only cost |
 | `weather-alert-poll-fetch-once` | `pollPerTenant` | `ListWeatherAlertTenantsActivity`, `PollNWSAlertsForTenantActivity`, and `WeatherAlertService.ListWeatherAlertTenants` / `PollNWSAlertsForTenant` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |

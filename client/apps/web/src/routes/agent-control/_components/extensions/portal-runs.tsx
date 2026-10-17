@@ -1,4 +1,6 @@
+import { PortalCodeForm } from "@/components/assistant/portal-code-form";
 import { ExternalLink } from "@/components/link";
+import { usePermission } from "@/hooks/use-permission";
 import { portalRunStatusAttrs, portalRunTitle } from "@/lib/portal-run";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { apiService } from "@/services/api";
@@ -12,6 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import { PORTAL_RUN_PARAM, portalRunParser } from "../../ai-control-tabs";
@@ -88,9 +91,7 @@ function PortalRunRow({ run, linked }: { run: PortalRun; linked: boolean }) {
         <Badge variant={phaseTone(status.phase)} title={status.description}>
           {status.text}
         </Badge>
-        <span className="min-w-0 flex-1 truncate text-sm">
-          {portalRunTitle(t, run)}
-        </span>
+        <span className="min-w-0 flex-1 truncate text-sm">{portalRunTitle(t, run)}</span>
         <span className="text-muted-foreground shrink-0 text-xs">
           {formatUnixTime(run.startedAt)}
         </span>
@@ -105,6 +106,7 @@ function PortalRunRow({ run, linked }: { run: PortalRun; linked: boolean }) {
 
 function PortalRunDetail({ run }: { run: PortalRun }) {
   const t = useT();
+  const { allowed: canEnterCode } = usePermission(Resource.AgentExtension, Operation.Update);
   const [recording, setRecording] = useState<PortalRecording | null>(null);
   const fetchRecording = useMutation({
     mutationFn: () => apiService.agentExtensionService.portalRunRecording(run.id),
@@ -134,6 +136,15 @@ function PortalRunDetail({ run }: { run: PortalRun }) {
           {run.instruction}
         </p>
       </div>
+      {run.status === "AwaitingCode" && run.codeExpiresAt && canEnterCode && (
+        <PortalCodeForm
+          className="bg-background rounded-md border p-2"
+          runId={run.id}
+          prompt={run.codePrompt}
+          deadline={formatUnixTime(run.codeExpiresAt)}
+          attempts={run.codeAttempts}
+        />
+      )}
       {run.answer && run.status !== "Strayed" && (
         <div className="flex flex-col gap-1">
           <span className="text-muted-foreground text-xs">{t("What the portal said")}</span>

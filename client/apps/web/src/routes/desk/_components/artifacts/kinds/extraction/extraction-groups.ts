@@ -303,15 +303,3 @@ export function reviewTally(groups: readonly FieldGroup[]): ReviewTally {
   }
   return { check, missing, read };
 }
-
-/** The first row a tally item stands for, which choosing the item selects. */
-export function firstRowOf(item: CheckItem): FieldRow | undefined {
-  return item.kind === "field"
-    ? item.row
-    : (item.stop.rows.find((row) => row.state === "doubtful") ?? item.stop.rows[0]);
-}
-
-/** The pages that hold a field to check, for the dot on each in the page switcher. */
-export function pagesToCheck(fields: readonly ExtractedField[]): Set<number> {
-  return new Set(fields.flatMap((field) => (field.needsLook && field.box ? [field.page] : [])));
-}

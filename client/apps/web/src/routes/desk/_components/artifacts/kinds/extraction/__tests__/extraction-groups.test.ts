@@ -3,9 +3,7 @@ import { describe, expect, it } from "vitest";
 import { checkCount, checkNames, checkQuestion } from "../extraction-asks";
 import {
   fieldState,
-  firstRowOf,
   groupExtraction,
-  pagesToCheck,
   reviewTally,
   rowsInOrder,
   type FieldRow,
@@ -13,8 +11,8 @@ import {
 import { extractionFrom } from "../extraction-payload";
 import { currentPayload, legacyPayload } from "./extraction-fixtures";
 
-const t: TranslateFn = (source, ...args) =>
-  (source ?? "").replace(/\{(\d+)\}/g, (_, index: string) => String(args[Number(index)]));
+const t = ((source: string, ...args: unknown[]) =>
+  source.replace(/\{(\d+)\}/g, (_, index: string) => String(args[Number(index)]))) as TranslateFn;
 
 function labels(rows: readonly FieldRow[]) {
   return rows.map((row) => row.label);
@@ -135,11 +133,6 @@ describe("reviewTally", () => {
     expect(tally.read).toBe(7);
   });
 
-  it("chooses a stop's doubtful part when the tally's item is chosen", () => {
-    expect(firstRowOf(tally.check[1])?.key).toBe("deliveryWindow");
-    expect(firstRowOf(tally.check[0])?.key).toBe("billTo");
-  });
-
   it("names every field Check asks about, with why, and those to look for", () => {
     const names = checkNames(tally, t);
 
@@ -156,11 +149,5 @@ describe("reviewTally", () => {
     expect(
       checkQuestion({ fileName: "Northline_RateCon.pdf", documentId: "doc_1" }, names, t),
     ).toContain("On Northline_RateCon.pdf (document doc_1), check these fields");
-  });
-});
-
-describe("pagesToCheck", () => {
-  it("marks the pages that hold a field to check and are drawn with its box", () => {
-    expect([...pagesToCheck(extractionFrom(currentPayload()).fields)].sort()).toEqual([1, 2]);
   });
 });

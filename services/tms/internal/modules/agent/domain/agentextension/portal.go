@@ -54,6 +54,7 @@ func PortalCredentialFields() []configspec.Field {
 			Type:      configspec.FieldTypePassword,
 			Sensitive: true,
 		},
+		authenticatorField(),
 	}
 }
 
@@ -247,6 +248,11 @@ const (
 	PortalRunStatusStopped   = PortalRunStatus("Stopped")
 	PortalRunStatusTimedOut  = PortalRunStatus("TimedOut")
 	PortalRunStatusStrayed   = PortalRunStatus("Strayed")
+
+	// PortalRunStatusAwaitingCode is a task the portal stopped for a sign-in
+	// code it sent a person: the browser is kept open on the code prompt
+	// until they enter it or it is too late.
+	PortalRunStatusAwaitingCode = PortalRunStatus("AwaitingCode")
 )
 
 func AllPortalRunStatuses() []PortalRunStatus {
@@ -257,6 +263,7 @@ func AllPortalRunStatuses() []PortalRunStatus {
 		PortalRunStatusStopped,
 		PortalRunStatusTimedOut,
 		PortalRunStatusStrayed,
+		PortalRunStatusAwaitingCode,
 	}
 }
 
@@ -267,7 +274,7 @@ func (s PortalRunStatus) IsValid() bool {
 }
 
 func (s PortalRunStatus) Finished() bool {
-	return s.IsValid() && s != PortalRunStatusRunning
+	return s.IsValid() && s != PortalRunStatusRunning && s != PortalRunStatusAwaitingCode
 }
 
 type PortalRun struct {
@@ -291,6 +298,9 @@ type PortalRun struct {
 	Steps             int               `json:"steps"             bun:"steps,type:INTEGER,notnull,default:0"`
 	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0"`
 	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''"`
+	CodePrompt        string            `json:"codePrompt"        bun:"code_prompt,type:TEXT,notnull,default:''"`
+	CodeRequestedAt   *int64            `json:"codeRequestedAt"   bun:"code_requested_at,type:BIGINT,nullzero"`
+	CodeAttempts      int               `json:"codeAttempts"      bun:"code_attempts,type:INTEGER,notnull,default:0"`
 	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(200),nullzero"`
 	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
 	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`

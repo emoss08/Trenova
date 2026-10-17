@@ -428,7 +428,10 @@ fields, long values, none placed). `extractionStage` picks where the shipment st
 `replying`, `proposed`, `created`, `failed`, `rejected` or `attached`. The pages are drawn as SVGs
 from the same text lines the payload's boxes are built from (`fixtures/desk-extraction.mjs`, a
 port of `assistantservice/extraction.go`), and the walkthrough measures every drawn box against
-the drawn page and fails a shot whose worst box is more than 1.5px off. It shoots the pane, a
+the drawn page (inside the sheet's padding) and fails a shot whose worst box is more than 1.5px
+off. Stop fields carry their `place` as the server's do, so the head reads the lane. Values are
+found by their button names (`Bill to: Northline Logistics, needs a look, …`), the check button by
+`Ask the agent to check {n}`. It shoots the pane, a
 field on page 2, a hovered box, a zoom step, a resize, the page, and the phone, in light and dark,
 then each file, the skeleton, the stored preview, drafting, checking and every stage, and writes
 to `e2e/mock-api/screenshots/desk-extraction` by default.

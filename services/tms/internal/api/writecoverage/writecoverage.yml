@@ -274,6 +274,9 @@ writes:
   "DELETE /api/v1/agent-portals/sites/:siteID/":
     exempt: agent-administration
     reason: "Removes a portal from what agents may use, an administrator's decision about the agents themselves."
+  "POST /api/v1/agent-portals/runs/:runID/sign-in-code/":
+    exempt: security
+    reason: "Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent."
 
   # agentquality
   "mutation createAgentEvalCase":
