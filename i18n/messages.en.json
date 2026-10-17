@@ -30052,6 +30052,15 @@
       "apps/web/components"
     ]
   },
+  "Ask an administrator to configure the document converter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask an agent in Desk": {
     "sites": 2,
     "scope": [
@@ -38482,7 +38491,7 @@
     ]
   },
   "Billing checks are unavailable": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -40489,6 +40498,15 @@
       "template/notification.dash.credential_expiring"
     ]
   },
+  "Bring a snoozed exception back to the open queue now, before the time snooze_exception set, when whatever it was waiting for has happened early. Only a snoozed exception can be woken; list_watchtower_items shows which are snoozed and until when.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bring a snoozed or waiting inbound message back to the queue when its time comes": {
     "sites": 1,
     "scope": [
@@ -41302,7 +41320,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 143,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -43388,7 +43406,7 @@
     ]
   },
   "Candidate is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -79406,12 +79424,40 @@
     ]
   },
   "Docling": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Docling re-conversion": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
@@ -79801,7 +79847,7 @@
     ]
   },
   "Document is required": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -80085,12 +80131,13 @@
     ]
   },
   "Document text": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -85232,6 +85279,24 @@
       "routes/dispatch-control"
     ]
   },
+  "Each case's pages as first frozen, read by the legacy engine.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each check reads this organization's own records as they are now. Check again after a change to see it reflected.": {
     "sites": 1,
     "scope": [
@@ -87251,6 +87316,24 @@
       "go/other"
     ]
   },
+  "Email a customer a reminder of every overdue invoice it has that is not in dispute, with an optional note. It is one email per currency, to the invoice recipients on its email profile, and it goes whatever the reminder schedule says, so use it when a collector asks or a promise to pay was broken, never for a customer waiting on a promise that has not yet fallen due. The email is entered in the customer's collections history.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with get_customer_statement first so you know what it says. The email is entered in the customer's collections history.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Email a report weekly": {
     "sites": 1,
     "scope": [
@@ -87710,6 +87793,15 @@
     ]
   },
   "Email that arrived on a monitored address, and what was made of it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in. Issuing replaces any live link on the move, which stops working. Send it to the address the carrier gave you or the email get_carrier shows for the carrier or its dispatch contact; never invent one. The link itself is never shown to you, so it cannot be pasted anywhere else.": {
     "sites": 1,
     "scope": [
       "go"
@@ -98702,6 +98794,15 @@
       "routes/shipment"
     ]
   },
+  "Extraction is not set up on this server": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Extraction is still in progress.": {
     "sites": 1,
     "scope": [
@@ -98740,7 +98841,7 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -110980,6 +111081,15 @@
     ]
   },
   "Give": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId list_collections_worklist shows or the person who asked; leave it out only to leave the account with nobody.": {
     "sites": 1,
     "scope": [
       "go"
@@ -132319,12 +132429,13 @@
     ]
   },
   "Legacy": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Legacy exact matches": {
@@ -137723,6 +137834,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Log a call, email, note or promise to pay against a customer's overdue receivables, so the next person chasing them knows what was said. Record what the customer said in their words; a promise to pay takes the amount and the date they gave, holds back payment reminders until then, and moves the follow-up to the day after unless you give one. Never infer a promise from a payment that has not arrived.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Log a contact": {
@@ -175584,7 +175704,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 142,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -192741,7 +192861,25 @@
       "go/other"
     ]
   },
+  "Propose settling one of a billing queue item's flagged checks with one of the choices that check offers. A choice bills a charge as it stands, takes it off, reprices it, bills without the paperwork, or asks the driver for a signed POD. get_billing_queue_item lists each check's issueId and its options with their optionKey; use them exactly. Settling can change what the customer is charged, so a person always decides, and asking the driver settles nothing until the paperwork arrives.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it. Pick them with list_invoice_share_candidates, which lists only people who may read invoices. It is sent in the name of the person who approves it, so a person always decides.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Propose taking back how one of a billing queue item's checks was settled. The check is open again and any charge the settlement removed or repriced is put back as it was. get_billing_queue_item lists each check's issueId and whether its settlement can be undone; only a settled check on an item still in review can be. It can change what the customer is charged, so a person always decides.": {
     "sites": 1,
     "scope": [
       "go"
@@ -197914,6 +198052,33 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Re-conversion progress": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Re-convert cases with Docling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Re-converting cases with Docling: {0} of {1, plural, one {# case} other {# cases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Re-drive stale document extraction jobs": {
@@ -230636,6 +230801,15 @@
       "routes/formula-template"
     ]
   },
+  "Set the day a customer's overdue receivables are next chased, or clear the follow-up, with a note saying why. The account comes back up the worklist on that day. Leave followUpOn out only to clear it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Set the item aside until tomorrow morning; Undo brings it back": {
     "sites": 1,
     "scope": [
@@ -242632,6 +242806,15 @@
       "go/other"
     ]
   },
+  "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with issue_carrier_tracking_link if the carrier should keep posting.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stop the reply": {
     "sites": 1,
     "scope": [
@@ -245705,6 +245888,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. A hold was put on for a reason: read the item's review notes with get_billing_queue_item and release it only when the record shows that what it waited on has arrived, never because nothing looks wrong.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Take a driver off dispatch, and put them back": {
@@ -251384,6 +251576,15 @@
       "routes/agent-control"
     ]
   },
+  "The candidate is not sent documents read by Docling until it is retrained on Docling's output. Production reads them, and they count for neither side.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The candidate read fewer fields right than production": {
     "sites": 1,
     "scope": [
@@ -253841,6 +254042,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The document converter is not configured, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The document has no extracted text to evaluate against; re-extract it first": {
@@ -256704,6 +256914,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The last re-conversion with Docling finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The last re-conversion with Docling stopped before it finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The last read of {0} failed: {1}": {
@@ -268540,6 +268768,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This move has no live carrier tracking link to revoke": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.": {
@@ -311407,6 +311644,15 @@
       "apps/web/lib"
     ]
   },
+  "{0, plural, one {# case} other {# cases}} asked for: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# cell can't be edited} other {# cells can't be edited}}": {
     "sites": 1,
     "scope": [
@@ -311978,6 +312224,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# document excluded: read by Docling} other {# documents excluded: read by Docling}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# document on file} other {# documents on file}}": {
@@ -324189,6 +324444,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} re-converted, {1} skipped, {2} failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} read · {1} propose · {2} act": {

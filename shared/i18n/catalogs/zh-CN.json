@@ -3270,6 +3270,7 @@
   "Do Not Rebill": "不重新开单",
   "Do Not Use": "请勿使用",
   "Do not use": "请勿使用",
+  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": "Docling 需要文档转换器，但此服务器未配置。请设置 documentConversion.doclingUrl 和 documentConversion.apiKey，或继续使用旧版引擎。",
   "Docs URL must be a valid URL": "文档网址必须为有效网址",
   "Document": "文件",
   "Document & Message Template": "文档与消息模板",

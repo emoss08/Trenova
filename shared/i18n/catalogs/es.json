@@ -3270,6 +3270,7 @@
   "Do Not Rebill": "No refacturar",
   "Do Not Use": "No usar",
   "Do not use": "No utilizar",
+  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": "Docling necesita el convertidor de documentos, que no está configurado en este servidor. Defina documentConversion.doclingUrl y documentConversion.apiKey, o mantenga el motor heredado.",
   "Docs URL must be a valid URL": "La URL de documentación debe ser una URL válida",
   "Document": "Documento",
   "Document & Message Template": "Plantilla de documentos y mensajes",
