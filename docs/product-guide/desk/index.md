@@ -326,8 +326,8 @@ Keywords: draft email, agent email, send message, edit draft, email approval
 Keywords: rate confirmation, extract document, scanned load, read fields, create load from PDF, document intelligence
 1. Upload a document in the conversation. When the agent reads it, the workspace shows the page with a box over every value it found, and the list of fields with how sure it is of each one. Fields that need a look are counted and marked.
 2. Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.
-3. Select **Fix fields** to ask the agent to check the doubtful fields against the document again.
-4. Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead.
+3. When fields need a look, select the button that counts them, such as Check 2 fields, to ask the agent to check them against the document again.
+4. Select **Create shipment**. The agent drafts the shipment, and it waits for your approval like any other change; **Review the draft** opens it. Once it is approved, the item says the shipment was created and offers **Open the shipment**. If the document is already attached to a shipment, it says **This file is already a shipment** instead.
 
 ### Set up an EDI partner from its implementation guide
 Keywords: EDI spec, implementation guide, companion guide, onboard trading partner, EDI setup from PDF, revised guide

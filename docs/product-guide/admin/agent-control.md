@@ -128,7 +128,7 @@ Keywords: web search, internet, Exa, Parallel, look up regulations, ELD rules, h
    changing.
 
 ### Let agents work on portal sites
-Keywords: portal, website, browser, Browser Use, dock appointment, appointment portal, shipper portal, carrier portal, book appointment, upload POD, portal sign-in, portal history, recording
+Keywords: portal, website, browser, Browser Use, dock appointment, appointment portal, shipper portal, carrier portal, book appointment, upload POD, portal sign-in, portal history, recording, two-factor, 2FA, MFA, authenticator, sign-in code, one-time code
 1. Open [AI control](/admin/agent-control) and select **Extensions**, then open Portal work
    from Browser Use.
 2. Paste the organization's Browser Use API key under **Connection**, select **Turn on**, then
@@ -140,15 +140,21 @@ Keywords: portal, website, browser, Browser Use, dock appointment, appointment p
 5. If the portal needs a sign-in, enter its **Username** and **Password**. They are stored
    encrypted, never shown again and never seen by an agent; leave them blank later to keep them,
    or select **Remove the stored sign-in**.
-6. Turn on **Let agents act on this portal** only for a site where agents may book, upload or
+6. If the portal asks for a code from an authenticator app at sign-in, enter its
+   **Authenticator key**: the setup key the portal showed when the app was added, often under
+   "Can't scan the code", not a six-digit code. The browser then makes a fresh code each time.
+   For a portal that sends its codes by text message or email, give the site a
+   **Browser profile** that is already signed in instead.
+7. Turn on **Let agents act on this portal** only for a site where agents may book, upload or
    submit. A site left read-only can only be looked up. Select **Add site**.
-7. Optionally change the browser model, the country it browses from, the steps per task, the
+8. Optionally change the browser model, the country it browses from, the steps per task, the
    daily limit, whether every task is recorded and whether the browser may see screenshots. Each
    change is saved as you make it.
-8. **Recent portal tasks** lists every task agents ran: open one to see what the browser was
+9. **Recent portal tasks** lists every task agents ran: open one to see what the browser was
    told, every page it visited, how it ended and its recording.
-9. To stop agents using a site without losing its history, edit it and turn off **Available to
-   agents**. A site with tasks recorded against it cannot be removed, only turned off.
+10. To stop agents using a site without losing its history, edit it and turn off **Available to
+    agents**. A site with tasks recorded against it cannot be removed, only turned off. Trenova's
+    own address cannot be a portal site: agents work in Trenova with their own tools.
 
 ### Let agents analyze data
 Keywords: data analysis, analyze, analysis, chart, graph, python, pandas, E2B, sandbox, spreadsheet, margin by lane, trend, statistics, analysis history

@@ -198,7 +198,10 @@ func (t *ActOnPortalTool) Preview(
 
 	summary = fmt.Sprintf("Would ask %s's browser to do this on %s: %s.",
 		plan.Vendor, plan.Site.Name, strings.TrimRight(plan.Instruction, ". "))
-	if plan.UsesSignIn {
+	switch {
+	case plan.UsesSignIn && plan.UsesAuthenticator:
+		summary += " It signs in with the site's stored sign-in and answers its authenticator code."
+	case plan.UsesSignIn:
 		summary += " It signs in with the site's stored sign-in."
 	}
 

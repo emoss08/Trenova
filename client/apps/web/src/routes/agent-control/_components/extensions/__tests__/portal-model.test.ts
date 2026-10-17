@@ -13,6 +13,7 @@ function site(overrides: Partial<PortalSite> = {}): PortalSite {
     allowActions: true,
     enabled: true,
     hasSignIn: true,
+    hasAuthenticator: true,
     version: 3,
     createdAt: 1_790_000_000,
     updatedAt: 1_790_000_000,
@@ -45,7 +46,9 @@ describe("siteFormDefaults", () => {
       startUrl: "https://portal.acme.com/login",
       username: "",
       password: "",
+      authenticatorKey: "",
       clearSignIn: false,
+      clearAuthenticator: false,
       browserProfileId: "",
       allowActions: true,
       enabled: true,
@@ -80,7 +83,9 @@ describe("siteRequestOf", () => {
       startUrl: "https://portal.acme.com/login",
       username: "dispatch@trenova.test",
       password: " s3cret ",
+      authenticatorKey: "",
       clearSignIn: false,
+      clearAuthenticator: false,
       browserProfileId: "",
       allowActions: true,
       enabled: true,
@@ -96,6 +101,37 @@ describe("siteRequestOf", () => {
     expect(request.username).toBe("");
     expect(request.password).toBe("");
     expect(request.clearSignIn).toBe(true);
+  });
+
+  it("sends the authenticator key trimmed, and nothing when it is being removed", () => {
+    expect(
+      siteRequestOf(
+        { ...siteFormDefaults(site()), authenticatorKey: "  JBSW Y3DP EHPK 3PXP  " },
+        site(),
+      ).authenticatorKey,
+    ).toBe("JBSW Y3DP EHPK 3PXP");
+
+    const removed = siteRequestOf(
+      { ...siteFormDefaults(site()), authenticatorKey: "typed", clearAuthenticator: true },
+      site(),
+    );
+    expect(removed.authenticatorKey).toBe("");
+    expect(removed.clearAuthenticator).toBe(true);
+  });
+
+  it("clears the key with the sign-in, without asking to clear it twice", () => {
+    const request = siteRequestOf(
+      {
+        ...siteFormDefaults(site()),
+        authenticatorKey: "typed",
+        clearSignIn: true,
+        clearAuthenticator: true,
+      },
+      site(),
+    );
+    expect(request.authenticatorKey).toBe("");
+    expect(request.clearSignIn).toBe(true);
+    expect(request.clearAuthenticator).toBe(false);
   });
 
   it("sends version 0 for a new site", () => {

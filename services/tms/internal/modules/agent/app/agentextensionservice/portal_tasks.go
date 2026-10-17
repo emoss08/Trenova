@@ -27,6 +27,8 @@ const (
 	portalSiteListLimit   = 10
 	portalStrayedMessage  = "The browser reached pages outside this site's addresses, so what it found was withheld. A person can review the task under AI Control, Extensions."
 	portalTimedOutMessage = "The portal did not answer within four minutes, so the task was stopped. Ask for one thing at a time, or name the page or reference to look at."
+
+	portalOnTrenovaMessage = "Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for."
 )
 
 var (
@@ -127,6 +129,10 @@ func (s *Service) site(
 		return nil, &ToolError{Message: site.Name + " is turned off for agents. " +
 			s.knownSites(ctx, tenantInfo)}
 	}
+	if s.appHost != "" && agentextension.HostAllowed(s.appHost, site.Domains) {
+		return nil, &ToolError{Message: portalOnTrenovaMessage + " Use the tools for it instead, " +
+			"or tell the person what to do there."}
+	}
 	if acting && !site.AllowActions {
 		return nil, &ToolError{Message: "Agents may only read " + site.Name + ", not act on " +
 			"it. Tell the person what to do there, or ask an administrator to let agents act " +
@@ -180,10 +186,15 @@ func (s *Service) signIn(site *agentextension.PortalSite) (map[string]string, er
 			WithInternal(err)
 	}
 
-	return map[string]string{
+	secrets := map[string]string{
 		agentextension.PortalSecretUsername: values[agentextension.PortalCredentialUsername],
 		agentextension.PortalSecretPassword: values[agentextension.PortalCredentialPassword],
-	}, nil
+	}
+	if key := values[agentextension.PortalCredentialAuthenticator]; key != "" {
+		secrets[agentextension.PortalSecretAuthenticator] = key
+	}
+
+	return secrets, nil
 }
 
 func taskText(
@@ -200,6 +211,8 @@ func taskText(
 		Instruction: instruction,
 		Details:     details,
 		UsesSignIn:  site.HasSignIn(),
+
+		UsesAuthenticator: site.HasSignIn() && site.HasAuthenticator(),
 	}
 }
 
@@ -345,7 +358,7 @@ func (s *Service) ReadPortal(
 		return nil, s.portalOutcomeError(finished, err, call)
 	}
 
-	finished := s.finish(ctx, req.TenantInfo, start.run, outcomeOf(state, site.Domains, timedOut))
+	finished := s.finish(ctx, req.TenantInfo, start.run, outcomeOf(state, site, timedOut))
 	if finished.Status != agentextension.PortalRunStatusSucceeded {
 		return nil, s.portalOutcomeError(finished, nil, call)
 	}
@@ -416,16 +429,18 @@ func (s *Service) stopQuietly(ctx context.Context, call *portalCall, taskID stri
 // come from anywhere.
 func outcomeOf(
 	state *agentextensionports.PortalTaskState,
-	domains []string,
+	site *agentextension.PortalSite,
 	timedOut bool,
 ) *agentextension.PortalRunOutcome {
 	outcome := &agentextension.PortalRunOutcome{
 		Answer:      state.Answer,
 		VisitedURLs: state.VisitedURLs,
-		OffSiteURLs: agentextension.OffSite(state.VisitedURLs, domains),
+		OffSiteURLs: agentextension.OffSite(state.VisitedURLs, site.Domains),
 		Steps:       state.Steps,
 		CostUSD:     state.CostUSD,
 	}
+	succeeded := state.Phase == agentextensionports.PortalTaskFinished &&
+		(state.Succeeded == nil || *state.Succeeded)
 
 	switch {
 	case len(outcome.OffSiteURLs) > 0:
@@ -434,8 +449,10 @@ func outcomeOf(
 	case timedOut:
 		outcome.Status = agentextension.PortalRunStatusTimedOut
 		outcome.Failure = portalTimedOutMessage
-	case state.Phase == agentextensionports.PortalTaskFinished &&
-		(state.Succeeded == nil || *state.Succeeded):
+	case agentextension.AsksForSignInCode(state.Answer, succeeded):
+		outcome.Status = agentextension.PortalRunStatusFailed
+		outcome.Failure = signInCodeMessage(site)
+	case succeeded:
 		outcome.Status = agentextension.PortalRunStatusSucceeded
 	case state.Phase == agentextensionports.PortalTaskStopped:
 		outcome.Status = agentextension.PortalRunStatusStopped
@@ -449,6 +466,22 @@ func outcomeOf(
 	}
 
 	return outcome
+}
+
+// signInCodeMessage says what the person can change when a portal stopped the
+// browser for a sign-in code: add the authenticator key, check the one stored,
+// or use a browser profile that is already signed in.
+func signInCodeMessage(site *agentextension.PortalSite) string {
+	if site.HasSignIn() && site.HasAuthenticator() {
+		return site.Name + " asked for a sign-in code the browser could not give from the " +
+			"site's authenticator key: the key may be wrong, or the portal sends its codes " +
+			"another way. An administrator can check the key under AI Control, Extensions, or " +
+			"give the site a browser profile that is already signed in."
+	}
+
+	return site.Name + " asked for a sign-in code the browser was not given. An administrator " +
+		"can add the portal's authenticator key to the site under AI Control, Extensions, or " +
+		"give it a browser profile that is already signed in."
 }
 
 // finish records how the task ended and what it cost. A failure to record it
@@ -526,6 +559,8 @@ func (s *Service) PlanPortalAction(
 		SentTask:    text.Task(),
 		UsesSignIn:  site.HasSignIn(),
 		Vendor:      call.def.Vendor,
+
+		UsesAuthenticator: text.UsesAuthenticator,
 	}, nil
 }
 
@@ -685,7 +720,7 @@ func (s *Service) PollPortalRun(
 		return nil, err
 	}
 
-	return s.finish(ctx, tenantInfo, run, outcomeOf(state, site.Domains, false)), nil
+	return s.finish(ctx, tenantInfo, run, outcomeOf(state, site, false)), nil
 }
 
 // StopPortalRun stops an action that ran too long or could no longer be

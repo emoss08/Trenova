@@ -113,25 +113,28 @@ type PortalSiteView struct {
 	AllowActions     bool     `json:"allowActions"`
 	Enabled          bool     `json:"enabled"`
 	HasSignIn        bool     `json:"hasSignIn"`
+	HasAuthenticator bool     `json:"hasAuthenticator"`
 	Version          int64    `json:"version"`
 	CreatedAt        int64    `json:"createdAt"`
 	UpdatedAt        int64    `json:"updatedAt"`
 }
 
 type SavePortalSiteRequest struct {
-	TenantInfo       pagination.TenantInfo `json:"-"`
-	ID               pulid.ID              `json:"-"`
-	Name             string                `json:"name"`
-	Purpose          string                `json:"purpose"`
-	Domains          []string              `json:"domains"`
-	StartURL         string                `json:"startUrl"`
-	Username         string                `json:"username"`
-	Password         string                `json:"password"`
-	ClearSignIn      bool                  `json:"clearSignIn"`
-	BrowserProfileID string                `json:"browserProfileId"`
-	AllowActions     bool                  `json:"allowActions"`
-	Enabled          bool                  `json:"enabled"`
-	Version          int64                 `json:"version"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	ID                 pulid.ID              `json:"-"`
+	Name               string                `json:"name"`
+	Purpose            string                `json:"purpose"`
+	Domains            []string              `json:"domains"`
+	StartURL           string                `json:"startUrl"`
+	Username           string                `json:"username"`
+	Password           string                `json:"password"`
+	AuthenticatorKey   string                `json:"authenticatorKey"`
+	ClearSignIn        bool                  `json:"clearSignIn"`
+	ClearAuthenticator bool                  `json:"clearAuthenticator"`
+	BrowserProfileID   string                `json:"browserProfileId"`
+	AllowActions       bool                  `json:"allowActions"`
+	Enabled            bool                  `json:"enabled"`
+	Version            int64                 `json:"version"`
 }
 
 type PortalRunView struct {
@@ -229,12 +232,13 @@ type PortalActionRequest struct {
 }
 
 type PortalActionPlan struct {
-	Site        PortalSiteSummary
-	Instruction string
-	Details     map[string]string
-	SentTask    string
-	UsesSignIn  bool
-	Vendor      string
+	Site              PortalSiteSummary
+	Instruction       string
+	Details           map[string]string
+	SentTask          string
+	UsesSignIn        bool
+	UsesAuthenticator bool
+	Vendor            string
 }
 
 type PortalActionStarted struct {

@@ -54,6 +54,7 @@ func PortalCredentialFields() []configspec.Field {
 			Type:      configspec.FieldTypePassword,
 			Sensitive: true,
 		},
+		authenticatorField(),
 	}
 }
 

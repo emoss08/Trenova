@@ -8000,7 +8000,7 @@
       "go/other"
     ]
   },
-  "A profile in your browser vendor's account that is already signed in to this portal, for portals that ask for a code at sign-in.": {
+  "A profile in your browser vendor's account that is already signed in to this portal, for portals that send sign-in codes by text message or email.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -24491,6 +24491,15 @@
       "apps/web/components"
     ]
   },
+  "An authenticator key is used with the site's sign-in; add the username and password too": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An earlier step changes this record first; it is shown as it would be after it.": {
     "sites": 1,
     "scope": [
@@ -33765,6 +33774,26 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Authenticator codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Authenticator key": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
     ]
   },
   "Author a home screen and assign it to roles": {
@@ -107117,6 +107146,15 @@
       "routes/settings"
     ]
   },
+  "For a portal that asks for a code from an authenticator app at sign-in: the setup key it showed when the app was added, often under Can't scan the code. Not a six-digit code. The browser makes a fresh code each time, and no model sees the key.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "For anything the employment events do not start on their own.": {
     "sites": 1,
     "scope": [
@@ -132585,7 +132623,7 @@
     ]
   },
   "Leave blank to keep the stored one": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -175681,7 +175719,7 @@
     ]
   },
   "Optional": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -208233,6 +208271,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Remove the stored authenticator key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Remove the stored sign-in": {
@@ -252847,6 +252894,15 @@
       "routes/edi"
     ]
   },
+  "The authenticator key must be the setup key the portal showed for an authenticator app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The authorization code is missing": {
     "sites": 1,
     "scope": [
@@ -253207,6 +253263,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The browser stops answering the portal's authenticator codes; the username and password stay.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The calendar could not be loaded. Try again in a moment.": {
@@ -279026,6 +279091,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Trenova keeps the ledger and sends {0} every journal entry it posts. Invoices, payments and bills stay in Trenova; {0} receives their accounting.": {

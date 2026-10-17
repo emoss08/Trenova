@@ -63,8 +63,7 @@ func NormalizePortalDetails(raw map[string]string) (map[string]string, error) {
 		case utf8.RuneCountInString(value) > MaxPortalDetailValueRunes:
 			multiErr.Add("details", errortypes.ErrInvalid,
 				"A detail's value must be 500 characters or fewer")
-		case strings.Contains(strings.ToLower(name), PortalSecretUsername) ||
-			strings.Contains(strings.ToLower(name), PortalSecretPassword):
+		case namesSecret(name):
 			multiErr.Add("details", errortypes.ErrInvalid,
 				"The sign-in is added by Trenova; do not send it as a detail")
 		case recordIDPattern.MatchString(value):
@@ -81,13 +80,17 @@ func NormalizePortalDetails(raw map[string]string) (map[string]string, error) {
 }
 
 type PortalTaskText struct {
-	SiteName     string
-	SitePurpose  string
-	Domains      []string
-	Mode         PortalRunMode
-	Instruction  string
-	Details      map[string]string
-	UsesSignIn   bool
+	SiteName    string
+	SitePurpose string
+	Domains     []string
+	Mode        PortalRunMode
+	Instruction string
+	Details     map[string]string
+	UsesSignIn  bool
+
+	// UsesAuthenticator is a sign-in that also has an authenticator key, so
+	// the browser can answer a code from an authenticator app itself.
+	UsesAuthenticator bool
 }
 
 // Task is the task the browser is given, written so that what an approver
@@ -124,6 +127,13 @@ func (p *PortalTaskText) Task() string {
 		b.WriteString("If the portal asks you to sign in, use the username " + PortalSecretUsername +
 			" and the password " + PortalSecretPassword + ".\n")
 	}
+	if p.UsesSignIn && p.UsesAuthenticator {
+		b.WriteString("If it asks for a code from an authenticator app, enter " +
+			PortalSecretAuthenticator + ".\n")
+	}
+	b.WriteString("If the portal asks for a sign-in code you were not given (one sent by text " +
+		"message or email, or a prompt to approve on a phone), stop there and begin your answer " +
+		"with " + PortalSignInCodeMarker + ", then say how it asked for the code.\n")
 
 	if p.Mode == PortalRunModeAct {
 		b.WriteString("Do exactly this and nothing more. If the portal asks for something this " +

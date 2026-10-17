@@ -108,6 +108,7 @@ export const portalSiteSchema = z.object({
   allowActions: z.boolean(),
   enabled: z.boolean(),
   hasSignIn: z.boolean(),
+  hasAuthenticator: z.boolean().default(false),
   version: z.number().int(),
   createdAt: z.number().int(),
   updatedAt: z.number().int(),
@@ -239,7 +240,9 @@ export const savePortalSiteRequestSchema = z.object({
   startUrl: z.string(),
   username: z.string(),
   password: z.string(),
+  authenticatorKey: z.string(),
   clearSignIn: z.boolean(),
+  clearAuthenticator: z.boolean(),
   browserProfileId: z.string(),
   allowActions: z.boolean(),
   enabled: z.boolean(),
@@ -270,7 +273,9 @@ export const portalSiteFormSchema = z.object({
     }),
   username: z.string().trim(),
   password: z.string(),
+  authenticatorKey: z.string(),
   clearSignIn: z.boolean(),
+  clearAuthenticator: z.boolean(),
   browserProfileId: z
     .string()
     .trim()

@@ -32,7 +32,40 @@ The sign-in's username and password are encrypted with the tenant-bound secret
 codec under `PurposeAgentExtensionSecret`, resource kind `agent_portal_site` and
 the site's id as subject, so a value copied to another site or tenant does not
 decrypt. A sign-in left blank on save keeps the stored one; clearing it removes
-both parts. The site is never returned with its sign-in, only `hasSignIn`.
+every part. The site is never returned with its sign-in, only `hasSignIn` and
+`hasAuthenticator`.
+
+Trenova itself cannot be a site. A site whose addresses cover the host of
+`app.webBaseUrl` is refused when it is saved, and one saved before the rule is
+refused when a task names it: an agent acts in Trenova with its own tools, as the
+person it works for and within their permissions, while a browser signed in with
+a stored sign-in would act as whoever that sign-in belongs to.
+
+## Sign-in codes
+
+A portal that asks for a second factor at sign-in is handled one of three ways:
+
+- **An authenticator app's code.** The site can hold the portal's authenticator
+  key (the setup key it shows when an authenticator app is added, not a six-digit
+  code), encrypted beside the username and password. It is accepted as copied:
+  grouped with spaces or dashes, in either case, or as an `otpauth://` link, and
+  refused unless it is a base32 key of at least 80 bits
+  (`agentextension.NormalizeAuthenticatorKey`). It is sent as the vendor secret
+  `portal_bu_2fa_code`: Browser Use generates a fresh code from any secret named
+  with the `bu_2fa_code` suffix whenever the browser types it, so no code is
+  stored or shown, and no model sees the key. A key needs a sign-in beside it;
+  clearing the sign-in clears it, and `clearAuthenticator` removes the key alone.
+  The approver's preview says the task answers the authenticator code.
+- **A code sent by text message or email, or a prompt on a phone.** The browser
+  cannot answer one. Every task tells it to stop there and begin its answer with
+  `SIGN-IN CODE NEEDED` (`agentextension.PortalSignInCodeMarker`); a run that does,
+  or that did not succeed and talks about a sign-in code
+  (`agentextension.AsksForSignInCode`), ends `Failed` with a message that names the
+  site and says what an administrator can change, so the agent tells the person
+  rather than trying again. Such a portal needs a browser profile.
+- **A browser profile already signed in.** A profile in the vendor's account
+  keeps a signed-in session; a site that names one (`browserProfileId`) starts
+  each task already past the sign-in until the portal ends that session.
 
 Sites belong to the organization, not to a vendor, so moving to another vendor
 keeps them. An agent finds them with `list_portal_sites` and names one by its id
@@ -59,7 +92,8 @@ written to steer an agent. The rules:
   (`portal_username`, `portal_password`); the task names the placeholders, the
   browser agent sees only those, and the vendor types the values into the
   page. Trenova's agent never sees them either: they are decrypted only to start
-  the task, and a detail whose name contains a placeholder is refused.
+  the task, and a detail whose name contains a placeholder, the authenticator's
+  included, is refused.
 - **The browser agent does not see screenshots** unless an administrator turns
   that on, so a value on the page cannot reach the vendor's model as an image.
 - **Reading a portal holds every later write for a person.** `read_portal`
