@@ -155,7 +155,7 @@ describe("Toaster", () => {
       toast.error("Couldn't reach PC*MILER", { duration: 3000 });
     });
 
-    expect(cardsOf("Couldn't reach PC*MILER")).toHaveLength(1);
+    expect(cardsWith("Couldn't reach PC*MILER")).toHaveLength(1);
     expect(within(cardOf("Couldn't reach PC*MILER")).getByText("×3")).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(2999));
