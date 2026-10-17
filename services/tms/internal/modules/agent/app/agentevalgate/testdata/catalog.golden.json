@@ -25387,7 +25387,7 @@
     },
     {
       "name": "list_triage_assignees",
-      "description": "List the people who can take messages in the Triage queue, with how many waiting messages each already holds, and the on-call person who takes the queue at the end of the working day. Each person's userId is the owner assign_inbound_messages and hand_off_triage take.",
+      "description": "List the people who can take messages in the Triage queue, with how many waiting messages each already holds, and the on-call person. The on-call person takes the queue at the end of the working day. Each person's userId is the owner assign_inbound_messages and hand_off_triage take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {},
@@ -26438,7 +26438,7 @@
     },
     {
       "name": "log_inbound_exception",
-      "description": "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold that keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (link_inbound_message).",
+      "description": "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold. That hold keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (link_inbound_message).",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -37930,7 +37930,7 @@
     },
     {
       "name": "snooze_inbound_messages",
-      "description": "Take messages waiting on a person out of the Triage queue until a time, or until their linked shipment delivers, gets a document of a given type, or has its invoice paid; they return on their own. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (link_inbound_message). To wait for the sender to answer, use wait_for_inbound_reply.",
+      "description": "Take messages waiting on a person out of the Triage queue until a time, or until an event on their linked shipment. They return on their own when it delivers, gets a document of a given type, or has its invoice paid. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (link_inbound_message). To wait for the sender to answer, use wait_for_inbound_reply.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

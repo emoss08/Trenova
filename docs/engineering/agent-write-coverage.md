@@ -155,7 +155,7 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 14 | 10 | 4 | 0 |
+| billingqueue | 15 | 10 | 5 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |

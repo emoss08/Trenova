@@ -118,7 +118,7 @@ func newLogInboundExceptionTool(
 			Name:     "log_inbound_exception",
 			Artifact: inboundMessageEntity,
 			Description: "Log a shortage, overage or damage a delivery email reports on the " +
-				"message's linked shipment, as a billing hold that keeps it from being " +
+				"message's linked shipment, as a billing hold. That hold keeps it from being " +
 				"invoiced until someone releases it. Count what the sender reports, in the " +
 				"units they use, and never estimate. The message must be linked to its " +
 				"shipment first (link_inbound_message).",
@@ -179,37 +179,7 @@ func newLogInboundExceptionTool(
 			Refused: func(*triageworkservice.LogExceptionRequest) string {
 				return "Would log a delivery exception as a billing hold."
 			},
-			Render: func(
-				_ *triageworkservice.LogExceptionRequest,
-				plan *triageworkservice.ExceptionPlan,
-			) (*agent.ToolPreview, error) {
-				hold, err := toolpreview.Create(
-					toolpreview.Record{
-						Resource: permission.ResourceShipmentHold,
-						Label:    "Billing hold: " + plan.Summary,
-					},
-					&exceptionHoldView{
-						Kind:     string(plan.Hold.Kind),
-						Quantity: plan.Hold.Quantity,
-						Unit:     plan.Hold.Unit,
-						Note:     plan.Hold.Note,
-						Source:   plan.Hold.Source,
-					},
-				)
-				if err != nil {
-					return nil, err
-				}
-				logged, err := actionStateChange(plan.Message, plan.After)
-				if err != nil {
-					return nil, err
-				}
-
-				return toolpreview.Build(
-					"Would hold the linked shipment from billing for "+plan.Summary+".",
-					hold,
-					logged,
-				), nil
-			},
+			Render: renderLoggedException,
 			Run: func(
 				ctx context.Context,
 				req *triageworkservice.LogExceptionRequest,
@@ -224,6 +194,38 @@ func newLogInboundExceptionTool(
 			},
 		},
 	)
+}
+
+func renderLoggedException(
+	_ *triageworkservice.LogExceptionRequest,
+	plan *triageworkservice.ExceptionPlan,
+) (*agent.ToolPreview, error) {
+	hold, err := toolpreview.Create(
+		toolpreview.Record{
+			Resource: permission.ResourceShipmentHold,
+			Label:    "Billing hold: " + plan.Summary,
+		},
+		&exceptionHoldView{
+			Kind:     string(plan.Hold.Kind),
+			Quantity: plan.Hold.Quantity,
+			Unit:     plan.Hold.Unit,
+			Note:     plan.Hold.Note,
+			Source:   plan.Hold.Source,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	logged, err := actionStateChange(plan.Message, plan.After)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(
+		"Would hold the linked shipment from billing for "+plan.Summary+".",
+		hold,
+		logged,
+	), nil
 }
 
 func logExceptionRequest(

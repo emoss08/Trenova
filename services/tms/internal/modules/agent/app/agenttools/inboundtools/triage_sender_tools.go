@@ -168,30 +168,6 @@ func newUnblockInboundSenderTool(
 	inbox inboundMessageReader,
 	senders triageSenders,
 ) agentports.AgentTool {
-	unblockOf := func(
-		ctx context.Context,
-		req *inboundmessageservice.MessageActionRequest,
-	) (*triageworkservice.UnblockSenderRequest, error) {
-		message, err := inbox.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
-			ID:         req.MessageID,
-			TenantInfo: req.TenantInfo,
-		})
-		if err != nil {
-			return nil, err
-		}
-		sender, err := triageworkservice.SenderOf(message)
-		if err != nil {
-			return nil, err
-		}
-
-		return &triageworkservice.UnblockSenderRequest{
-			TenantInfo: req.TenantInfo,
-			UserID:     req.ActorID,
-			MailboxID:  message.MailboxID,
-			Sender:     sender,
-		}, nil
-	}
-
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
 			Name:     "unblock_inbound_sender",
@@ -230,7 +206,7 @@ func newUnblockInboundSenderTool(
 				req *inboundmessageservice.MessageActionRequest,
 				_ *agentports.ToolExecuteParams,
 			) (*triageworkservice.SenderPlan, error) {
-				unblock, err := unblockOf(ctx, req)
+				unblock, err := unblockRequest(ctx, inbox, req)
 				if err != nil {
 					return nil, err
 				}
@@ -240,28 +216,13 @@ func newUnblockInboundSenderTool(
 			Refused: func(*inboundmessageservice.MessageActionRequest) string {
 				return "Would let a blocked sender's mail through again."
 			},
-			Render: func(
-				_ *inboundmessageservice.MessageActionRequest,
-				plan *triageworkservice.SenderPlan,
-			) (*agent.ToolPreview, error) {
-				summary := "Would let mail from " + plan.Sender + " on " + plan.Mailbox.Address +
-					" reach the Triage queue again."
-				if !plan.Changed {
-					return refusedPreview(summary, errSenderNotBlocked), nil
-				}
-				mailbox, err := mailboxSendersChange(plan)
-				if err != nil {
-					return nil, err
-				}
-
-				return toolpreview.Build(summary, mailbox), nil
-			},
+			Render: renderUnblockSender,
 			Run: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
 				_ *agentports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
-				unblock, err := unblockOf(ctx, req)
+				unblock, err := unblockRequest(ctx, inbox, req)
 				if err != nil {
 					return nil, err
 				}
@@ -286,4 +247,46 @@ func newUnblockInboundSenderTool(
 			},
 		},
 	)
+}
+
+func unblockRequest(
+	ctx context.Context,
+	inbox inboundMessageReader,
+	req *inboundmessageservice.MessageActionRequest,
+) (*triageworkservice.UnblockSenderRequest, error) {
+	message, err := inbox.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
+		ID:         req.MessageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	sender, err := triageworkservice.SenderOf(message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &triageworkservice.UnblockSenderRequest{
+		TenantInfo: req.TenantInfo,
+		UserID:     req.ActorID,
+		MailboxID:  message.MailboxID,
+		Sender:     sender,
+	}, nil
+}
+
+func renderUnblockSender(
+	_ *inboundmessageservice.MessageActionRequest,
+	plan *triageworkservice.SenderPlan,
+) (*agent.ToolPreview, error) {
+	summary := "Would let mail from " + plan.Sender + " on " + plan.Mailbox.Address +
+		" reach the Triage queue again."
+	if !plan.Changed {
+		return refusedPreview(summary, errSenderNotBlocked), nil
+	}
+	mailbox, err := mailboxSendersChange(plan)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(summary, mailbox), nil
 }

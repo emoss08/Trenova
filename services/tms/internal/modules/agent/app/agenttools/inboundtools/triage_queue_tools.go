@@ -239,11 +239,11 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 			Name:     "snooze_inbound_messages",
 			Artifact: inboundMessageEntity,
 			Description: "Take messages waiting on a person out of the Triage queue until a " +
-				"time, or until their linked shipment delivers, gets a document of a given " +
-				"type, or has its invoice paid; they return on their own. Give until or " +
-				"event, not both. Waiting on an event takes every message being linked to a " +
-				"shipment (link_inbound_message). To wait for the sender to answer, use " +
-				"wait_for_inbound_reply.",
+				"time, or until an event on their linked shipment. They return on their own " +
+				"when it delivers, gets a document of a given type, or has its invoice paid. " +
+				"Give until or event, not both. Waiting on an event takes every message " +
+				"being linked to a shipment (link_inbound_message). To wait for the sender " +
+				"to answer, use wait_for_inbound_reply.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,

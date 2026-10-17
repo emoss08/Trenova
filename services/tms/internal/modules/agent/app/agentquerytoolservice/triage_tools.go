@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 const minutesPerHour = 60
@@ -46,8 +47,8 @@ func (t *listTriageAssigneesTool) Name() string { return "list_triage_assignees"
 
 func (t *listTriageAssigneesTool) Description() string {
 	return "List the people who can take messages in the Triage queue, with how many " +
-		"waiting messages each already holds, and the on-call person who takes the queue " +
-		"at the end of the working day. Each person's userId is the owner " +
+		"waiting messages each already holds, and the on-call person. The on-call person " +
+		"takes the queue at the end of the working day. Each person's userId is the owner " +
 		"assign_inbound_messages and hand_off_triage take."
 }
 
@@ -57,9 +58,9 @@ func (t *listTriageAssigneesTool) SearchTerms() []string {
 
 func (t *listTriageAssigneesTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type":                 "object",
-		"properties":           map[string]any{},
-		"additionalProperties": false,
+		toolschema.KeyType:                 toolschema.TypeObject,
+		toolschema.KeyProperties:           map[string]any{},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 

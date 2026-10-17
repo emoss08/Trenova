@@ -370,8 +370,11 @@ func unblocking(sender string) func([]string) []string {
 	}
 }
 
-func nextBlockedSenders(current []string, change func([]string) []string) ([]string, bool, error) {
-	next := change(slices.Clone(current))
+func nextBlockedSenders(
+	current []string,
+	change func([]string) []string,
+) (next []string, changed bool, err error) {
+	next = change(slices.Clone(current))
 	if slices.Equal(next, current) {
 		return current, false, nil
 	}

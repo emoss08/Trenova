@@ -290,11 +290,14 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 	},
 	// The intake desk reads the inbox, files a message against its records
-	// and settles it. Mailboxes stay closed: their addresses, tokens and
-	// signing secrets are an administrator's.
+	// and settles it, and proposes who owns a message and the end-of-day
+	// hand-off to the on-call person; both assign tools stop at Ask first.
+	// Mailboxes stay closed: their addresses, tokens and signing secrets are
+	// an administrator's.
 	ResourceInboundMessage: {
 		OpRead:   {},
 		OpUpdate: {},
+		OpAssign: {},
 	},
 	ResourceAccountsReceivable: {
 		OpRead: {},

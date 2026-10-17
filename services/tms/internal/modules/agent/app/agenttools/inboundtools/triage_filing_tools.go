@@ -164,36 +164,7 @@ func newFileInboundAttachmentTool(
 					"Optional, for the whole file: what to file it as, from "+
 						"list_document_types. Ignored when pages are given.",
 				),
-				paramPages: map[string]any{
-					toolschema.KeyType: toolschema.TypeArray,
-					toolschema.KeyDescription: "Optional: page ranges of a PDF to file as " +
-						"separate documents instead of the whole file. Ranges may not overlap.",
-					toolschema.KeyMinItems: 1,
-					toolschema.KeyMaxItems: maxFilingRanges,
-					toolschema.KeyItems: map[string]any{
-						toolschema.KeyType: toolschema.TypeObject,
-						toolschema.KeyProperties: map[string]any{
-							paramFromPage: map[string]any{
-								toolschema.KeyType:        toolschema.TypeInteger,
-								toolschema.KeyDescription: "The first page, counting from 1.",
-								toolschema.KeyMinimum:     1,
-							},
-							paramToPage: map[string]any{
-								toolschema.KeyType:        toolschema.TypeInteger,
-								toolschema.KeyDescription: "The last page, inclusive.",
-								toolschema.KeyMinimum:     1,
-							},
-							paramDocumentTypeID: agenttoolschema.RecordIDText(
-								permission.ResourceDocumentType,
-								"What these pages are, from list_document_types.",
-							),
-						},
-						toolschema.KeyRequired: []string{
-							paramFromPage, paramToPage, paramDocumentTypeID,
-						},
-						toolschema.KeyAdditionalProperties: false,
-					},
-				},
+				paramPages: filingPagesProperty(),
 			},
 			Required:    []string{paramMessageID, paramAttachmentID, paramShipmentID},
 			SearchTerms: []string{"file attachment", "attach POD", "split pdf", "file on load"},
@@ -240,6 +211,39 @@ func newFileInboundAttachmentTool(
 			},
 		},
 	)
+}
+
+func filingPagesProperty() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeArray,
+		toolschema.KeyDescription: "Optional: page ranges of a PDF to file as " +
+			"separate documents instead of the whole file. Ranges may not overlap.",
+		toolschema.KeyMinItems: 1,
+		toolschema.KeyMaxItems: maxFilingRanges,
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				paramFromPage: map[string]any{
+					toolschema.KeyType:        toolschema.TypeInteger,
+					toolschema.KeyDescription: "The first page, counting from 1.",
+					toolschema.KeyMinimum:     1,
+				},
+				paramToPage: map[string]any{
+					toolschema.KeyType:        toolschema.TypeInteger,
+					toolschema.KeyDescription: "The last page, inclusive.",
+					toolschema.KeyMinimum:     1,
+				},
+				paramDocumentTypeID: agenttoolschema.RecordIDText(
+					permission.ResourceDocumentType,
+					"What these pages are, from list_document_types.",
+				),
+			},
+			toolschema.KeyRequired: []string{
+				paramFromPage, paramToPage, paramDocumentTypeID,
+			},
+			toolschema.KeyAdditionalProperties: false,
+		},
+	}
 }
 
 func fileRequest(params *agentports.ToolExecuteParams) (*fileCall, error) {

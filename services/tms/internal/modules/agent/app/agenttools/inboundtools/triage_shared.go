@@ -31,6 +31,7 @@ const (
 	toolGetInboundMessage  = "get_inbound_message"
 	toolListInboundMessage = "list_inbound_messages"
 	toolListAssignees      = "list_triage_assignees"
+	fieldMatchReason       = "matchReason"
 )
 
 type triageToolParams struct {
@@ -201,7 +202,7 @@ var queueStateLabels = map[string]string{
 	"matchedShipmentId":    common.LabelShipment,
 	"matchedCustomerId":    common.LabelCustomer,
 	"matchedCarrierId":     common.LabelCarrier,
-	"matchReason":          "Why",
+	fieldMatchReason:       "Why",
 	"reviewNote":           "Note",
 }
 

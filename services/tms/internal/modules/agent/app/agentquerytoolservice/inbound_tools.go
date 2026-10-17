@@ -349,15 +349,15 @@ func (t *getInboundMessageTool) Query(
 
 	view := toInboundMessageView(message, params.Timezone)
 	if t.drafts != nil {
-		drafts, err := t.drafts.DraftsByMessageIDs(
+		drafts, draftErr := t.drafts.DraftsByMessageIDs(
 			ctx,
 			inboundmessageports.InboundRepliesByMessagesRequest{
 				TenantInfo: tenantOf(params),
 				MessageIDs: []pulid.ID{message.ID},
 			},
 		)
-		if err != nil {
-			return nil, err
+		if draftErr != nil {
+			return nil, draftErr
 		}
 		if draft, ok := drafts[message.ID]; ok && draft != nil {
 			view.ReplyDraft = replyDraftView(draft)

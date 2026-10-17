@@ -292,8 +292,8 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 					Kind:   "shipment",
 					Name:   "Shipment from " + describeInboundMessage(message),
 					IDs: map[string]string{
-						"shipmentId":   idText(shipmentID),
-						paramMessageID: message.ID.String(),
+						paramShipmentID: idText(shipmentID),
+						paramMessageID:  message.ID.String(),
 					},
 					Record: common.RecordOf(common.ShipmentRecordEntity, shipmentID),
 				}, nil

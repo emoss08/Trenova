@@ -65,7 +65,7 @@ type replyDraftView struct {
 var replyDraftLabels = map[string]string{
 	"toAddress":     "To",
 	"subject":       "Subject",
-	"body":          "Body",
+	paramReplyBody:  "Body",
 	"draftedByNova": "Written by Nova",
 }
 
@@ -157,12 +157,7 @@ func newDraftInboundReplyTool(
 			Refused: func(*draftReplyCall) string {
 				return "Would save a reply draft on an inbound message."
 			},
-			Render: func(
-				call *draftReplyCall,
-				plan *inboundreplyservice.DraftPlan,
-			) (*agent.ToolPreview, error) {
-				return renderReplyDraft(call, plan)
-			},
+			Render: renderReplyDraft,
 			Run: func(
 				ctx context.Context,
 				call *draftReplyCall,

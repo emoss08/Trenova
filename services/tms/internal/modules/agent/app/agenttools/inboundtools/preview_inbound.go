@@ -26,14 +26,14 @@ var inboundLinkLabels = map[string]string{
 	common.FieldMatchedShipmentID: common.LabelShipment,
 	common.FieldMatchedCustomerID: common.LabelCustomer,
 	common.FieldMatchedCarrierID:  common.LabelCarrier,
-	"matchReason":                 "Why",
+	fieldMatchReason:              "Why",
 }
 
 var inboundLinkFields = []string{
 	common.FieldMatchedShipmentID,
 	common.FieldMatchedCustomerID,
 	common.FieldMatchedCarrierID,
-	"matchReason",
+	fieldMatchReason,
 }
 
 var inboundReviewFields = []string{common.FieldStatus, "reviewNote", "reviewedAt"}
