@@ -12,6 +12,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
+import { useArtifactOpener, useAttachmentCard } from "@/components/assistant/artifact-opener";
 import { DeskIcon } from "../desk-icons";
 import {
   extensionOf,
@@ -481,16 +482,42 @@ export function DeskMessageAttachments({
   return (
     <div className="dk-ma">
       {attachments.map((attachment) => (
-        <span
-          key={attachment.documentId}
-          className="dk-fp dk-s-sent"
-          data-tip={formatFileSize(attachment.fileSize ?? 0)}
-        >
-          <DeskFileIcon name={attachment.fileName} size={18} />
-          <span className="dk-fp-n">{attachment.fileName}</span>
-        </span>
+        <DeskSentFile key={attachment.documentId} attachment={attachment} />
       ))}
     </div>
+  );
+}
+
+/** A sent file, which opens what was read off it once there is a card for it. */
+function DeskSentFile({ attachment }: { attachment: AssistantMessageAttachment }) {
+  const t = useT();
+  const card = useAttachmentCard(attachment.documentId);
+  const open = useArtifactOpener();
+  const name = (
+    <>
+      <DeskFileIcon name={attachment.fileName} size={18} />
+      <span className="dk-fp-n">{attachment.fileName}</span>
+    </>
+  );
+
+  if (card === null || open === null) {
+    return (
+      <span className="dk-fp dk-s-sent" data-tip={formatFileSize(attachment.fileSize ?? 0)}>
+        {name}
+      </span>
+    );
+  }
+  return (
+    <Button
+      variant="bare"
+      size="bare"
+      className="dk-fp dk-s-sent"
+      data-tip={t("Open what was read from this file")}
+      aria-label={t("Open what was read from {0}", attachment.fileName)}
+      onClick={() => open(card)}
+    >
+      {name}
+    </Button>
   );
 }
 

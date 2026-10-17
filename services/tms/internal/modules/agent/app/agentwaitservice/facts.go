@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -34,6 +36,8 @@ type facts struct {
 	customers   customerports.CustomerRepository
 	subjects    agentports.AgentSubjectRepository
 	portalRuns  agentextensionports.PortalRunRepository
+	documents   documentports.DocumentRepository
+	contents    documentcontentports.DocumentContentRepository
 }
 
 // alreadyTrue refuses a wait on something that has happened: the agent is
@@ -109,6 +113,9 @@ func (f *facts) assess(ctx context.Context, wait *agentwait.Wait, now int64) (*i
 
 	case agentwait.KindPortalRun:
 		return nil, f.assessPortalRun(ctx, tenant, c) //nolint:nilnil // the task's end, not a time, ends it
+
+	case agentwait.KindDocumentRead:
+		return f.assessDocumentRead(ctx, tenant, c, now)
 
 	case agentwait.KindHOSDriveBelow:
 		state, err := f.telematics.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
@@ -278,6 +285,9 @@ func (f *facts) recheck(
 				"while driving.", durationText(left), stamp(state.RecordedAt)), nil
 		}
 		return &agentwaitcontract.Check{DueAt: crossingAt(state, c.DriveMinutesBelow)}, nil
+
+	case agentwait.KindDocumentRead:
+		return f.recheckDocumentRead(ctx, tenant, c, now)
 
 	default:
 		return met("It is %s.", stamp(now)), nil

@@ -303,7 +303,11 @@ func SharedOptions() fx.Option {
 			agentactivityservice.New,
 			agentdecisionqueueservice.New,
 			agentshadow.New,
-			agentevents.New,
+			fx.Annotate(
+				agentevents.New,
+				fx.As(fx.Self()),
+				fx.As(new(agentports.AgentEventPublisher)),
+			),
 			agentproposalservice.New,
 			agentexceptionservice.New,
 			proposalexecutor.New,
@@ -388,6 +392,7 @@ func SharedOptions() fx.Option {
 		conversationscheduleservice.Module,
 		aiproviderspendservice.Module,
 		agenttoolruleservice.LoaderModule,
+		fx.Invoke(agentevents.RegisterAttachmentObservers),
 	)
 }
 

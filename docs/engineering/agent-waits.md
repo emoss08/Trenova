@@ -38,11 +38,25 @@ The workflow costs nothing while it waits and survives every restart.
 | `FreeTimeEnding` | `detentionOccurrenceId`, `minutesBefore` | `minutesBefore` before the occurrence's free time ends |
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
 | `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
+| `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
 
 `PortalRun` is not one an agent asks for: `wait_until` offers only `AgentKinds()`, and the
 `act_on_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
 conversation or background run that filed the proposal, with a two-hour expiry. See
 [agent-portal-automation.md](agent-portal-automation.md).
+
+`DocumentRead` is not one an agent asks for either. When `read_attachment` finds a
+file the person attached still being read, the turn's tool observer
+(`assistantservice.WaitOnUnreadFile`) calls `WaitForDocumentRead`, which keeps one
+open wait per file and conversation, with a half-hour expiry and the plan to carry
+on with what the person asked of the file. `Register` refuses one on a file whose
+reading has already ended, so the agent reads it instead. The timer looks at the
+file every minute (`documentReadRecheckSeconds`, past `rearmSlack`) for readings
+that save no extraction, such as a file that could not be read, which ends the
+wait saying why. A turn that reads the file in full cancels its open wait
+(`StopWaitingForDocumentRead`), and the turn that picks one up shows the file's
+extraction card first. A delegated task never sets one; it reports the file to the
+agent that handed it over.
 
 Every wait also has an expiry (`giveUpAfterHours`, default 24, at most 168; a
 `Time` wait stays open at least five minutes past its time). A wait that runs

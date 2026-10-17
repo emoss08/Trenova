@@ -17,7 +17,7 @@ func TestAgentsCannotAskForAPortalRunWait(t *testing.T) {
 	assert.True(t, agentwait.KindPortalRun.IsValid())
 	assert.Contains(t, agentwait.AllKinds(), agentwait.KindPortalRun)
 	assert.False(t, slices.Contains(agentwait.AgentKinds(), agentwait.KindPortalRun))
-	assert.Len(t, agentwait.AgentKinds(), len(agentwait.AllKinds())-1)
+	assert.Len(t, agentwait.AgentKinds(), len(agentwait.AllKinds())-2)
 }
 
 func TestAPortalRunWaitNamesItsRunAndWatchesIt(t *testing.T) {

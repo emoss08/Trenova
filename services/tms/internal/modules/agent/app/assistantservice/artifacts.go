@@ -162,7 +162,7 @@ func (r *artifactRecorder) observe(
 		return r.requestDecision(observation.Call.ID, request)
 	}
 	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
-		if extraction := r.extraction(observation); extraction != nil {
+		if extraction := r.extraction(observation.Call.ID, observation.Data); extraction != nil {
 			saved, err := r.save(extraction)
 			if err != nil {
 				return nil, nil

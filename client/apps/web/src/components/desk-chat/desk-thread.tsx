@@ -67,6 +67,7 @@ import { DeskWorldChange } from "./conversation/desk-world-change";
 import { DeskContextMeter } from "./composer/desk-context-meter";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
+import { extractionCardsByDocument } from "@/lib/attachment-cards";
 import { DeskDropOverlay, DeskMessageAttachments, useDeskDrop } from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
 import { DeskAskDock, deskAskPlaceholder } from "./conversation/desk-ask";
@@ -948,9 +949,14 @@ export function DeskThread({
     [activeInline, knownArtifacts, openArtifact, showsArtifacts],
   );
 
+  const attachmentCards = useMemo(
+    () => (showsArtifacts ? extractionCardsByDocument(artifacts) : undefined),
+    [artifacts, showsArtifacts],
+  );
+
   return (
     <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
-      <ArtifactOpenerProvider onOpen={openArtifact}>
+      <ArtifactOpenerProvider onOpen={openArtifact} attachmentCards={attachmentCards}>
         <ArtifactLinkContext value={renderArtifactLink}>
           <DecisionFollowUpProvider value={model.followUpDecision}>
             <div

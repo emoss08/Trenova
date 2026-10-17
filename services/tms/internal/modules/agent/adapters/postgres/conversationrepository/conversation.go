@@ -657,6 +657,32 @@ func (r *repository) CountMessages(
 	})
 }
 
+func (r *repository) CarriesAttachment(
+	ctx context.Context,
+	req *agentports.CarriesAttachmentRequest,
+) (bool, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		return buildCarriesAttachmentQuery(r.db.DBForContext(ctx), req).Exists(ctx)
+	})
+}
+
+func buildCarriesAttachmentQuery(
+	db bun.IDB,
+	req *agentports.CarriesAttachmentRequest,
+) *bun.SelectQuery {
+	cols := conversationcol.MessageColumns
+	contained := `[{"documentId":"` + req.DocumentID.String() + `"}]`
+
+	return db.NewSelect().
+		Model((*conversation.Message)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
+				Where(cols.ThreadID.Eq(), req.ThreadID).
+				Where(cols.Role.Eq(), conversation.RoleUser).
+				Where(cols.Attachments.Expr("{} @> ?::jsonb"), contained)
+		})
+}
+
 func reverse(messages []conversation.Message) {
 	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 		messages[i], messages[j] = messages[j], messages[i]
