@@ -101,7 +101,6 @@ Callable after find_tools:
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
-- preview_report — Run a report definition now and see its first rows, without saving it or producing a file.
 - run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
@@ -116,6 +115,7 @@ Callable after find_tools:
 - reject_shift_swap — Reject a shift swap, with the reason the workers read, when the office cannot let the day change hands.
 - withdraw_shift_swap — Withdraw a shift swap on the proposing worker's behalf, when they told the office they no longer want it.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
+- list_carrier_intel_events — List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records.
 - vet_carrier — Look a carrier up with the organization's carrier intelligence provider now: authority, insurance, safety and the organization's rules, recorded on the carrier.
 - set_carrier_monitoring — Turn continuous monitoring on or off for carriers, so the provider reports authority, insurance and safety changes as they happen.
 - mark_carrier_intel_reviewed — Record that a person reviewed a carrier's current intelligence result, with what they checked.

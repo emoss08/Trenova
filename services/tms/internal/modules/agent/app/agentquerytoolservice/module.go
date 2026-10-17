@@ -115,6 +115,7 @@ func coreToolProviders() []any {
 		newListBillingTransferCandidatesTool,
 		provideGetDetentionOccurrenceTool,
 		newGetCarrierIntelEventTool,
+		newListCarrierIntelEventsTool,
 		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
 		newGetServiceFailureTool,

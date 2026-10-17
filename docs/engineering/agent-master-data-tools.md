@@ -83,6 +83,31 @@ content; the customer's billing and email profiles are not edited here. A hazard
 class, packing group, placarding and emergency contact decide what a driver carries and posts,
 so a person checks every one against the DOT table before it is saved.
 
+## Carrier intelligence events
+
+```
+list_carrier_intel_events ──► get_carrier_intel_event ──► acknowledge_carrier_intel_event
+                                                      ──► resolve_carrier_intel_event
+```
+
+| Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
+| --- | --- | --- | --- | --- |
+| `list_carrier_intel_events` | carrier intelligence / read | reads only | automatic | — |
+
+`list_carrier_intel_events` reads the events monitoring raised through
+`carrierintelservice.ListEvents`, the same call the carrier intelligence page's event list
+makes, behind the `carrierintelports.CarrierIntelEventReader` port. It filters on what that
+list filters on — status (or `openOnly` for Open and Acknowledged), severity, category such as
+Authority or Insurance, and a carrier — plus the days an event was detected (`fromDate`,
+`toDate`, read in the organization's timezone, the last day included) and free text over the
+carrier's name, DOT number and the summary. It returns 25 events newest first unless asked, at
+most 50, and a `nextCursor` while more are left. Each row is the carrier, DOT number, category,
+severity, what the rule did, the summary, when it was detected and whether it was acknowledged
+or resolved; the prior and current values stay on `get_carrier_intel_event`, which every row's
+id opens, and the same id is what `acknowledge_carrier_intel_event` and
+`resolve_carrier_intel_event` take. Before it existed the get tool's id could only come from the
+page or the run's subject, so "which carriers had insurance problems this week" had no answer.
+
 ## Locations, tractors and trailers
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
@@ -168,6 +193,8 @@ nothing to bring them back, so it is always proposed.
 | Master data steward | chat, at a Propose ceiling, Internal data access | `create_carrier`, `update_carrier`, `update_carrier_status`, `create_customer`, `update_customer`, `update_customer_status`, `create_commodity`, `update_commodity`, `update_commodity_status`, `create_hazardous_material`, `update_hazardous_material`, `update_hazardous_material_status`, `create_location`, `update_location`, `update_location_status`, `create_tractor`, `update_tractor`, `update_tractor_status`, `locate_tractor`, `create_trailer`, `update_trailer`, `update_trailer_status`, `locate_trailer`, `list_equipment_manufacturers`, `delete_documents`, `restore_document_version`, `list_table_change_alerts`, `create_table_change_alert`, `update_table_change_alert`, `set_table_change_alert_status`, `delete_table_change_alert`, `list_watchtower_items`, `dismiss_watchtower_item`, `list_capture_batches`, `file_capture_items`, `discard_capture_item`, `discard_capture_batch`, and the list and get tools each needs |
 | Customer assistant | chat, at a Propose ceiling | `create_customer`, `update_customer`, `update_customer_status`, `list_locations`, `update_location`, `update_location_status`, `list_commodities`, `create_commodity`, `update_commodity` |
 | Insight analyst | on each new insight, at a Propose ceiling | `restore_insight` |
+| Carrier risk desk | on each new carrier finding, at a Propose ceiling | `list_carrier_intel_events`, `get_carrier_intel_event`, `acknowledge_carrier_intel_event`, `resolve_carrier_intel_event` |
+| Compliance assistant | chat, Ask first | `list_carrier_intel_events`, beside its carrier vetting and monitoring tools |
 | Any agent holding `create_shipment` | as the agent runs | `create_customer`, `create_location`, `create_commodity`, as `create_shipment`'s companions, unless switched off for the agent |
 
 The master data steward is the organization's records keeper and holds 55 of its 56 tools:
@@ -179,6 +206,10 @@ noise and can bring one back. All three run at a Propose ceiling, so every write
 waits for a person and needs no new permission ceiling entry; `locate_trailer`, and a carrier
 change that sets payment or remit-to, still run only from that person's approval.
 
+The compliance assistant was at its 56-tool limit, so it gave up `preview_report` (the report
+analyst's; it still runs saved and built-in reports with `run_report`) to hold
+`list_carrier_intel_events`.
+
 No write on this page is left without a holder. The carrier risk desk still only says whether a
 carrier can be tendered and leaves the decision to stop using one to a person, and capture
 filing stays a proposal the person whose paperwork it is approves. An organization can still
@@ -186,8 +217,12 @@ add any of these tools to an agent it builds in AI control.
 
 ## Known limits
 
-- An agent made from the customer assistant or insight analyst template before these tools
-  existed keeps the tools it was saved with; an administrator adds them in AI control. An
+- An agent made from the customer assistant, insight analyst, carrier risk desk or compliance
+  assistant template before these tools existed keeps the tools it was saved with; an
+  administrator adds them in AI control. A compliance agent saved earlier also keeps
+  `preview_report`.
+- `list_carrier_intel_events` shows at most 50 events a page; it filters on the day an event
+  was detected, not on when the provider says the change happened. An
   organization that wants the master data steward creates it from its starter.
 - A bulk status change, a document delete and a capture filing each take at most 25 records;
   `list_capture_batches` shows at most 10 open stacks.

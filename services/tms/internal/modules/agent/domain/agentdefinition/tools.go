@@ -6,6 +6,8 @@ const (
 	toolGetCarrier          = "get_carrier"
 	toolListServiceFailures = "list_service_failures"
 	toolGetFormulaTemplate  = "get_formula_template"
+
+	toolListCarrierIntelEvents = "list_carrier_intel_events"
 )
 
 func (t Template) StarterTools() []string {
@@ -137,7 +139,6 @@ func (t Template) StarterTools() []string {
 			"list_time_off",
 			"list_tractors",
 			"list_trailers",
-			"preview_report",
 			"run_report",
 			"get_report_run",
 			"list_insights",
@@ -153,6 +154,7 @@ func (t Template) StarterTools() []string {
 			"withdraw_shift_swap",
 			toolListCarriers,
 			toolGetCarrier,
+			toolListCarrierIntelEvents,
 			"vet_carrier",
 			"set_carrier_monitoring",
 			"mark_carrier_intel_reviewed",
@@ -313,6 +315,7 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateCarrierRiskDesk:
 		return []string{
+			toolListCarrierIntelEvents,
 			"get_carrier_intel_event",
 			"get_carrier",
 			"list_carriers",

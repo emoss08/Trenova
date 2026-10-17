@@ -122,10 +122,11 @@ func newGetCarrierIntelEventTool(
 		summary: "Retrieve one carrier intelligence event by id: what changed on the " +
 			"carrier's authority, insurance or safety record, and its severity. It also " +
 			"gives the prior and current values and whether anyone has acknowledged or " +
-			"resolved it. No tool lists these events; use get_carrier for the carrier itself.",
+			"resolved it. Use list_carrier_intel_events first when you do not have an id, " +
+			"and get_carrier for the carrier itself.",
 		paramName: "eventId",
-		idSource: "from the page you are on, this run's subject, or a mentioned record " +
-			"(no tool lists these events)",
+		idSource: "from list_carrier_intel_events, the page you are on, this run's subject " +
+			"or a mentioned record",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			events, err := repo.GetByIDs(ctx, tenant, []pulid.ID{id})
 			if err != nil {

@@ -26,6 +26,13 @@ type CarrierIntelGate interface {
 	EnsureFresh(ctx context.Context, req *CarrierIntelEnsureFreshRequest)
 }
 
+type CarrierIntelEventReader interface {
+	ListEvents(
+		ctx context.Context,
+		req *ListCarrierIntelEventsRequest,
+	) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error)
+}
+
 type CarrierLifecycleEvent struct {
 	TenantInfo     pagination.TenantInfo
 	Carrier        *carrier.Carrier

@@ -223,7 +223,7 @@
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The finding id from get_carrier_intel_event.",
+            "description": "The finding id, from list_carrier_intel_events, get_carrier_intel_event or this run's subject. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
@@ -5904,7 +5904,7 @@
             "type": "array"
           },
           "billingQueueItemId": {
-            "description": "The billing queue item whose charges are corrected: this run's subject or the record on the page. No tool lists queue items, so never guess one.",
+            "description": "The billing queue item whose charges are corrected, from list_billing_queue_items, get_billing_queue_item, this run's subject or the record on the page. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "billing_queue_item"
@@ -13475,12 +13475,12 @@
     },
     {
       "name": "get_carrier_intel_event",
-      "description": "Retrieve one carrier intelligence event by id: what changed on the carrier's authority, insurance or safety record, and its severity. It also gives the prior and current values and whether anyone has acknowledged or resolved it. No tool lists these events; use get_carrier for the carrier itself.",
+      "description": "Retrieve one carrier intelligence event by id: what changed on the carrier's authority, insurance or safety record, and its severity. It also gives the prior and current values and whether anyone has acknowledged or resolved it. Use list_carrier_intel_events first when you do not have an id, and get_carrier for the carrier itself.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The carrier intelligence event's id, from the page you are on, this run's subject, or a mentioned record (no tool lists these events).",
+            "description": "The carrier intelligence event's id, from list_carrier_intel_events, the page you are on, this run's subject or a mentioned record.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
@@ -17522,6 +17522,138 @@
       }
     },
     {
+      "name": "list_carrier_intel_events",
+      "description": "List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records. Each row gives the carrier, the category, the severity, what the rule did, the summary, when it was detected and whether anyone acknowledged or resolved it. Filter by status (openOnly for the ones not settled yet), severity, category such as Authority or Insurance, a carrier, or the days it was detected. Pass a row's id to get_carrier_intel_event for its prior and current values, or to acknowledge_carrier_intel_event or resolve_carrier_intel_event.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "Only this carrier's events, by id from list_carriers or get_carrier.",
+            "type": "string",
+            "x-recordOf": "carrier"
+          },
+          "category": {
+            "description": "Only events about these parts of a carrier's record, such as Authority or Insurance.",
+            "items": {
+              "description": "A category.",
+              "enum": [
+                "Identity",
+                "Authority",
+                "Insurance",
+                "Safety",
+                "Basics",
+                "Inspections",
+                "Crashes",
+                "Fleet",
+                "Equipment",
+                "Contacts",
+                "Operations",
+                "ChangeHistory",
+                "Network",
+                "Lanes",
+                "Benchmarks"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.category"
+            },
+            "maxItems": 15,
+            "type": "array"
+          },
+          "fromDate": {
+            "description": "Only events detected on or after this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many events to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "openOnly": {
+            "description": "Only events nobody has resolved or dismissed yet: Open and Acknowledged.",
+            "type": "boolean"
+          },
+          "query": {
+            "description": "Words to find in the carrier's name, its DOT number or the event's summary.",
+            "type": "string"
+          },
+          "severity": {
+            "description": "Only events of these severities.",
+            "items": {
+              "description": "A severity.",
+              "enum": [
+                "Critical",
+                "High",
+                "Medium",
+                "Low",
+                "Info"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.severity"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "status": {
+            "description": "Only events in these statuses. Open and Acknowledged ones are not settled yet.",
+            "items": {
+              "description": "A status.",
+              "enum": [
+                "Open",
+                "Acknowledged",
+                "Resolved",
+                "Dismissed"
+              ],
+              "type": "string",
+              "x-enumOf": "carrierIntel.eventStatus"
+            },
+            "maxItems": 4,
+            "type": "array"
+          },
+          "toDate": {
+            "description": "Only events detected on or before this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier risk alerts",
+        "authority or insurance problems"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "carrier_intelligence",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_carrier_invoice_matches",
       "description": "List carrier freight invoices matched against what each load was expected to cost, with the variance. Each has the carrier's invoice number, the match status and how it was matched. Narrow to one carrier or a status such as Variance. An invoice a carrier sent over EDI is the carrier's own text.",
       "parameters": {
@@ -21360,7 +21492,7 @@
             "type": "integer"
           },
           "mailboxId": {
-            "description": "Optional: only messages to this mailbox, by id from the page you are on. No tool lists mailboxes, so leave it out otherwise.",
+            "description": "Optional: only messages to this mailbox, by the mailboxId a row of this tool or get_inbound_message shows, or by id from the page you are on.",
             "type": "string",
             "x-recordOf": "inbound_mailbox"
           },
@@ -31006,7 +31138,7 @@
         "additionalProperties": false,
         "properties": {
           "holdId": {
-            "description": "The hold to release. No tool lists a shipment's holds, so it comes from the page or the event that started this run; never guess one.",
+            "description": "The hold to release, from the holds get_shipment lists, the page or the event that started this run. Never guess one.",
             "type": "string",
             "x-recordOf": "shipment_hold"
           },
@@ -32427,7 +32559,7 @@
         "additionalProperties": false,
         "properties": {
           "eventId": {
-            "description": "The finding id from get_carrier_intel_event.",
+            "description": "The finding id, from list_carrier_intel_events, get_carrier_intel_event or this run's subject. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "carrier_intelligence_event"
