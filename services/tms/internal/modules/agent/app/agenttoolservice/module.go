@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
@@ -142,27 +143,27 @@ func ToolProviders() []any {
 		operationstools.NewEmailCustomerTool,
 		provideLinkInboundMessageTool,
 		provideMarkInboundMessageTool,
-		workforcetools.NewReplyToInboundMessageTool,
-		workforcetools.NewAssignInboundMessagesTool,
-		workforcetools.NewReopenInboundMessagesTool,
-		workforcetools.NewSnoozeInboundMessagesTool,
-		workforcetools.NewWakeInboundMessageTool,
-		workforcetools.NewWaitForInboundReplyTool,
-		workforcetools.NewUnlinkInboundMessageTool,
-		workforcetools.NewHandOffTriageTool,
-		workforcetools.NewBlockInboundSenderTool,
-		workforcetools.NewUnblockInboundSenderTool,
-		workforcetools.NewDraftInboundReplyTool,
-		workforcetools.NewDiscardInboundReplyDraftTool,
-		workforcetools.NewDraftInboundLoadTool,
-		workforcetools.NewCreateInboundLoadTool,
-		workforcetools.NewDiscardInboundLoadTool,
-		workforcetools.NewFileInboundAttachmentTool,
-		workforcetools.NewUnfileInboundAttachmentTool,
-		workforcetools.NewLogInboundExceptionTool,
-		workforcetools.NewSettleDetentionDisputeTool,
-		workforcetools.NewResolveInboundConflictTool,
-		workforcetools.NewReopenInboundConflictTool,
+		inboundtools.NewReplyToInboundMessageTool,
+		inboundtools.NewAssignInboundMessagesTool,
+		inboundtools.NewReopenInboundMessagesTool,
+		inboundtools.NewSnoozeInboundMessagesTool,
+		inboundtools.NewWakeInboundMessageTool,
+		inboundtools.NewWaitForInboundReplyTool,
+		inboundtools.NewUnlinkInboundMessageTool,
+		inboundtools.NewHandOffTriageTool,
+		inboundtools.NewBlockInboundSenderTool,
+		inboundtools.NewUnblockInboundSenderTool,
+		inboundtools.NewDraftInboundReplyTool,
+		inboundtools.NewDiscardInboundReplyDraftTool,
+		inboundtools.NewDraftInboundLoadTool,
+		inboundtools.NewCreateInboundLoadTool,
+		inboundtools.NewDiscardInboundLoadTool,
+		inboundtools.NewFileInboundAttachmentTool,
+		inboundtools.NewUnfileInboundAttachmentTool,
+		inboundtools.NewLogInboundExceptionTool,
+		inboundtools.NewSettleDetentionDisputeTool,
+		inboundtools.NewResolveInboundConflictTool,
+		inboundtools.NewReopenInboundConflictTool,
 		provideSendDetentionNoticeTool,
 		provideWaiveDetentionTool,
 		provideCreateShipmentTool,
@@ -511,11 +512,11 @@ func provideAttachDocumentTool(documents *documentservice.Service) agentports.Ag
 }
 
 func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) agentports.AgentTool {
-	return workforcetools.NewLinkInboundMessageTool(inbox)
+	return inboundtools.NewLinkInboundMessageTool(inbox)
 }
 
 func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) agentports.AgentTool {
-	return workforcetools.NewMarkInboundMessageTool(inbox)
+	return inboundtools.NewMarkInboundMessageTool(inbox)
 }
 
 func ediToolProviders() []any {

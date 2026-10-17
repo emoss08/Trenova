@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
@@ -30,7 +31,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 		&masterdatatools.RequestCredentialRenewalTool{},
 		&tendertools.TenderToRoutingGuideTool{},
 		&tendertools.TenderToCarriersTool{},
-		&workforcetools.ReplyToInboundMessageTool{},
+		&inboundtools.ReplyToInboundMessageTool{},
 		&alerttools.ScheduleReportTool{},
 		&shipmenttools.CancelShipmentTool{},
 		&operationstools.UpdateShipmentTool{},

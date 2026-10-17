@@ -14,6 +14,10 @@ page explains them.
 
 ## The rule
 
+The write tools live in `agenttools/inboundtools`, beside the ones that came before them
+(`link_inbound_message`, `mark_inbound_message`, `reply_to_inbound_message`); the reads
+(`get_inbound_message`, `list_triage_assignees`) live in `agentquerytoolservice`.
+
 Every write calls the service its GraphQL mutation calls (`inboundmessageservice`,
 `triageworkservice`, `inboundreplyservice`, `triageconflictservice`) and never writes
 around it. Each service exposes the plan its write runs on, and the tool's preview and

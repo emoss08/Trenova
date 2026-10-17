@@ -9,5 +9,3 @@ import (
 var _ agentports.ToolPreviewer = (*operationstools.EmailCustomerTool)(nil)
 
 var _ agentports.ToolPreviewer = (*workforcetools.RequestMissingDocsTool)(nil)
-
-var _ agentports.ToolPreviewer = (*workforcetools.ReplyToInboundMessageTool)(nil)

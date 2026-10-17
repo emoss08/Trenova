@@ -1,4 +1,4 @@
-package workforcetools
+package inboundtools
 
 import (
 	"context"
