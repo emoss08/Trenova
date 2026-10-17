@@ -58,6 +58,26 @@ describe("DeskWaits", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Cancel the wait" })[0]);
     expect(waits.cancel).toHaveBeenCalledWith(first);
   });
+
+  it("shows a file being read as being read, not as due at its next look", () => {
+    render(
+      <DeskWaits
+        waits={waitsOf([
+          wait({
+            kind: "DocumentRead",
+            description: "rate-con.pdf to finish being read",
+            dueAt: 1_800_000_060,
+          }),
+        ])}
+        timezone="UTC"
+      />,
+    );
+
+    expect(screen.getByText("rate-con.pdf to finish being read")).toBeInTheDocument();
+    expect(screen.getByText("A file")).toBeInTheDocument();
+    expect(screen.getByText("Being read")).toBeInTheDocument();
+    expect(screen.queryByText(/^Due /u)).not.toBeInTheDocument();
+  });
 });
 
 describe("DeskWaitNote", () => {

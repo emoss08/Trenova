@@ -80,3 +80,20 @@ func TestStrip_KeepsASentenceThatSaysMoreThanTheID(t *testing.T) {
 	assert.Equal(t, "Its ID is the one Acme sent.",
 		Strip("Its ID is edip_01M504P2M5BKZJ2EK36C1T4XKA the one Acme sent."))
 }
+
+func TestFind_NamesEachIDOnceInOrder(t *testing.T) {
+	t.Parallel()
+
+	text := `{"customer":{"id":"cus_01M4PHSWHNYFKQ9GSBZ7CB2PJX"},"locations":[` +
+		`{"id":"loc_01M4SAMFDCV8AGW5XZ28YHJYC6"},{"id":"cus_01M4PHSWHNYFKQ9GSBZ7CB2PJX"},` +
+		`{"id":"loc_01M4SAMFS0M58Y5T8XVG9X7Q9P"}],"code":"ANY-JAC-FL-065"}`
+
+	assert.Equal(t, []string{
+		"cus_01M4PHSWHNYFKQ9GSBZ7CB2PJX",
+		"loc_01M4SAMFDCV8AGW5XZ28YHJYC6",
+		"loc_01M4SAMFS0M58Y5T8XVG9X7Q9P",
+	}, Find(text, 10))
+	assert.Equal(t, []string{"cus_01M4PHSWHNYFKQ9GSBZ7CB2PJX"}, Find(text, 1))
+	assert.Empty(t, Find(text, 0))
+	assert.Empty(t, Find("no ids here", 10))
+}

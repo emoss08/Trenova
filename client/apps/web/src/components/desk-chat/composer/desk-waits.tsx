@@ -15,6 +15,7 @@ const KIND_ICONS: Record<AgentWaitKind, DeskIconName> = {
   FreeTimeEnding: "clock",
   HOSDriveBelow: "route",
   PortalRun: "globe",
+  DocumentRead: "file",
 };
 
 /**
@@ -87,10 +88,17 @@ function kindLabel(kind: AgentWaitKind, t: TranslateFn): string {
       return t("Drive time");
     case "PortalRun":
       return t("A portal task");
+    case "DocumentRead":
+      return t("A file");
   }
 }
 
 function whenText(wait: AgentWait, timezone: string, t: TranslateFn): string {
+  // A file's wait comes due only to look at the file again; the agent comes
+  // back the moment the reading finishes, not at that time.
+  if (wait.kind === "DocumentRead") {
+    return t("Being read");
+  }
   if (wait.dueAt) {
     return t("Due {0}", turnTime(wait.dueAt, timezone, t));
   }

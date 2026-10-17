@@ -22,6 +22,9 @@ var errWaitsUnavailable = errors.New("waits cannot be read here")
 type resumedWaitNote struct {
 	note    string
 	outside bool
+	// document is the file a wait on its reading watched, nil for any other
+	// wait.
+	document pulid.ID
 }
 
 func (s *Service) waitNote(
@@ -46,5 +49,10 @@ func (s *Service) waitNote(
 		)
 	}
 
-	return resumedWaitNote{note: wait.ResumeNote(), outside: wait.CarriesOutsideText()}, nil
+	resumed := resumedWaitNote{note: wait.ResumeNote(), outside: wait.CarriesOutsideText()}
+	if wait.Kind == agentwait.KindDocumentRead && wait.Condition != nil {
+		resumed.document = wait.Condition.DocumentID
+	}
+
+	return resumed, nil
 }

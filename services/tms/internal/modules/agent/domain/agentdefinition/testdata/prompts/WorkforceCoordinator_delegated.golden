@@ -69,6 +69,7 @@ Loaded now:
 - cancel_worker_pto
 - delete_leave_day
 - list_dot_random_draws
+- finalize_dot_random_draw
 - list_employment_verifications
 - list_shipment_permits
 - record_shipment_permit
@@ -111,7 +112,6 @@ Callable after find_tools:
 - cancel_dot_test — Cancel a drug or alcohol test that did not happen, with the reason kept on the record.
 - get_dot_random_draw — Retrieve one random testing round with every driver it selected.
 - run_dot_random_draw — Draw a random testing round from a pool for the period a day falls in, today by default.
-- finalize_dot_random_draw — Finalize a draft random testing round so its selections stand as the evidence of the period.
 - cancel_dot_random_draw — Cancel a random testing round, draft or final, so the period can be drawn again.
 - list_worker_checklists — List one worker's onboarding, offboarding and other checklists with every item and where it stands, and the templates a person can start by hand.
 - start_worker_checklist — Start a checklist for a worker from one of the organization's hand-started templates, such as an annual file audit.

@@ -109,6 +109,20 @@ trims mappings, samples and gaps to the payload limit with the full mapping coun
 (`assistantservice/edi_connection_draft.go`). A redraft of the same guide is a new version,
 and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
+## The extraction card
+
+`extraction` is what document intelligence read off a file: the page with a box over each
+value it found, and each field with how sure the reading is (`kinds/extraction/`). The agent
+opens it by reading a draft with `get_shipment_draft`, and a file the person attaches opens it
+without anyone asking (`assistantservice/attachment_cards.go`; see "Files a person attaches" in
+[agent-runtime.md](agent-runtime.md)). Both are one lineage per document, so a later reading
+(the model's after the rule-based one) is a new version of the same card. The summary keeps
+the payload's `documentId` (`SummaryPayloadKeys`), and the file's chip under the message that
+carried it opens the newest card read off it: the thread hands `extractionCardsByDocument`'s
+map to `ArtifactOpenerProvider` as `attachmentCards`, and `DeskMessageAttachments` reads it
+with `useAttachmentCard`. A chip with no card yet, or on a surface with no pane, is the file's
+name and nothing to press. Never publish a document to show what was read off a file.
+
 ## Giving a card its own shape
 
 `record-card/` is the frame every card shares: the head, the stepper, sections, the

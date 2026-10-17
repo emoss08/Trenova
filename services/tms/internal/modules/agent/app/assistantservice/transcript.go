@@ -194,7 +194,21 @@ func delegatedAgents(messages []conversation.Message) []pulid.ID {
 	return ids
 }
 
+// withoutSilentReplies leaves out the empty reply a turn saves when it ends
+// on a question to the person: ask_user tells the model to write nothing
+// more, and the export drew a header with nothing under it.
+func withoutSilentReplies(messages []conversation.Message) []conversation.Message {
+	return slices.DeleteFunc(slices.Clone(messages), func(message conversation.Message) bool {
+		return message.Role == conversation.RoleAssistant &&
+			strings.TrimSpace(message.Content) == "" &&
+			len(message.ToolCalls) == 0 &&
+			!message.Reasoning.Readable() &&
+			!message.Refused
+	})
+}
+
 func renderTranscript(in *transcriptInput) string {
+	in.Messages = withoutSilentReplies(in.Messages)
 	title := strings.TrimSpace(in.Thread.Title)
 	if title == "" {
 		title = "Conversation"

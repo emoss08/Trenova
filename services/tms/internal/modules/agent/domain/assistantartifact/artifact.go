@@ -21,10 +21,12 @@ const (
 )
 
 // SummaryPayloadKeys are the payload keys a summary keeps: the tool that made
-// the artifact, the entity it shows and the page it points at, which are what
-// a list needs to name and draw it without its contents.
+// the artifact, the entity it shows, the page it points at and the document
+// it was read from, which are what a list needs to name and draw it without
+// its contents, and what lets a file the person attached open what was read
+// off it.
 func SummaryPayloadKeys() []string {
-	return []string{"tool", "entity", "path"}
+	return []string{"tool", "entity", "path", "documentId"}
 }
 
 // Artifact is what a turn produced besides words: the rows a report preview

@@ -96,11 +96,14 @@ Loaded now:
 - list_tractors
 - search_shipments
 - list_fuel_purchases
+- record_fuel_purchase
 - correct_fuel_purchase
 - list_fuel_cards
 - list_fuel_purchase_imports
+- commit_fuel_purchase_import
 - list_ifta_mileage_entries
 - list_ifta_returns
+- recompute_ifta_return
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -110,11 +113,9 @@ Callable after find_tools:
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - list_ifta_jurisdictions — List the active states and provinces fuel tax is reported by, with each one's two-letter code and whether it is an IFTA member.
-- record_fuel_purchase — Record fuel bought for a tractor from a receipt or a statement line: where it was bought for IFTA, when, what fuel, how much and what it cost.
 - delete_fuel_purchase — Propose deleting a fuel purchase recorded in error, such as a receipt entered twice.
 - assign_fuel_card — Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered.
 - resolve_fuel_purchase_import_rows — Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again.
-- commit_fuel_purchase_import — Commit a staged fuel card statement: every row ready to commit becomes a fuel purchase in one step, and rows whose reference is already on file are skipped.
 - discard_fuel_purchase_import — Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice.
 - record_ifta_mileage_entry — Record miles a tractor drove in one state or province that no routed move carries, or that correct a move's routed miles.
 - correct_ifta_mileage_entry — Correct a jurisdiction mileage entry that was keyed wrong: its tractor, state or province, day, miles or notes.
@@ -122,7 +123,6 @@ Callable after find_tools:
 - recalculate_move_jurisdiction_miles — Ask the routing provider again for one move's state-by-state miles and replace its jurisdiction rows.
 - backfill_jurisdiction_miles — Start a background job that routes every completed move in a quarter that has no state-by-state miles.
 - generate_ifta_return — Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file.
-- recompute_ifta_return — Recompute a draft IFTA return from the miles, purchases and tax rates on file now, after purchases or mileage were corrected.
 - delete_ifta_return — Delete a draft IFTA return, such as one generated for the wrong quarter.
 - amend_ifta_return — Propose opening an amendment of a filed IFTA return, with the reason: a new draft for the same quarter, computed from what is on file now.
 - list_fuel_index_prices — List the prices on file for one fuel index, newest first, with the day each applies to and whether a person entered it or it was fetched.

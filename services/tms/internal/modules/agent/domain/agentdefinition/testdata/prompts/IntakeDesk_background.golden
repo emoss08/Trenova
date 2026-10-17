@@ -67,6 +67,7 @@ Loaded now:
 - get_shipment_tracking
 - get_document_summary
 - get_shipment_draft
+- reply_to_inbound_message
 - get_edi_inbound_file
 - get_edi_transfer
 - decline_edi_tender
@@ -86,7 +87,6 @@ Callable after find_tools:
 - link_inbound_message — Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong.
 - unlink_inbound_message — Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known.
 - mark_inbound_message — Settle a message that arrived on a monitored address as Actioned or Ignored.
-- reply_to_inbound_message — Answer a message that arrived on a monitored address, in the same thread: a status question, a request for a missing detail.
 - draft_inbound_reply — Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent.
 - discard_inbound_reply_draft — Throw away the reply draft waiting on a message in Triage, when it should not be sent at all.
 - wait_for_inbound_reply — Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way.

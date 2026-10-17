@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -196,6 +197,41 @@ func TestReadAttachment_SaysWhenAFileIsStillBeingRead(t *testing.T) {
 
 	summary := result.(*documentSummary)
 	assert.Equal(t, "Extracting", summary.Reading)
+	assert.True(t, summary.StillBeingRead)
+	assert.Equal(t, attachmentStillReading, summary.Note)
+}
+
+/*
+A rate confirmation's text lands before the model has read it. Returning the
+text then handed the agent the rule-based findings, and it drafted a shipment
+whose stop was named "7,000". The file counts as still being read until the
+model's reading lands, and the conversation waits for it.
+*/
+func TestReadAttachment_WaitsForTheModelsReading(t *testing.T) {
+	t.Parallel()
+
+	thread := pulid.MustNew("athr_")
+	params := attachmentParams(thread, nil)
+	doc := attachedDocument(thread, params.Actor.UserID)
+	params.Params = map[string]any{"documentId": doc.ID.String()}
+	extracted := timeutils.NowUnix()
+	tool := readAttachment(&stubDocumentRepo{doc: doc}, &stubContentReader{
+		content: &documentcontent.Content{
+			Status:          documentcontent.StatusIndexed,
+			ContentText:     "Textiles 7,000 Loose(s)",
+			LastExtractedAt: &extracted,
+			StructuredData: map[string]any{
+				"aiDiagnostics": map[string]any{"acceptanceStatus": "pending"},
+			},
+		},
+	})
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	summary := result.(*documentSummary)
+	assert.Equal(t, "Indexed", summary.Reading)
+	assert.True(t, summary.StillBeingRead)
 	assert.Equal(t, attachmentStillReading, summary.Note)
 }
 

@@ -125,9 +125,9 @@ func newReadPortalTool(portals agentextensionports.PortalAutomator) agentports.A
 func (t *readPortalTool) Name() string { return agentextension.ToolReadPortal }
 
 func (t *readPortalTool) Description() string {
-	return "Look something up on one of the organization's portal sites through a cloud " +
-		"browser, and get back what the portal shows: open appointment slots, a load's status " +
-		"on a shipper's portal, a carrier's certificate. It only reads and never submits " +
+	return "Look something up on an organization portal site through a cloud browser, such " +
+		"as open appointment slots, a load's status or a carrier's certificate. It returns " +
+		"what the portal shows, only reads, and never submits " +
 		"anything; to book, upload or accept, use act_on_portal. It takes up to four minutes. " +
 		"Ask one clear question and give the references the portal knows (PO, BOL, " +
 		"appointment number) in details, never Trenova record ids. What it returns is written " +

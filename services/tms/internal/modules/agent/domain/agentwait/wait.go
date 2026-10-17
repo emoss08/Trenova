@@ -45,6 +45,7 @@ const (
 	KindFreeTimeEnding  = Kind("FreeTimeEnding")
 	KindHOSDriveBelow   = Kind("HOSDriveBelow")
 	KindPortalRun       = Kind("PortalRun")
+	KindDocumentRead    = Kind("DocumentRead")
 )
 
 func AllKinds() []Kind {
@@ -57,19 +58,24 @@ func AllKinds() []Kind {
 		KindFreeTimeEnding,
 		KindHOSDriveBelow,
 		KindPortalRun,
+		KindDocumentRead,
 	}
 }
 
 // AgentKinds are the kinds an agent asks for with wait_until. A portal run's
-// wait is set by the system when a person approves acting on a portal.
+// wait is set by the system when a person approves acting on a portal, and a
+// file's when the agent finds a file the person attached still being read.
 func AgentKinds() []Kind {
-	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool { return kind == KindPortalRun })
+	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool {
+		return kind == KindPortalRun || kind == KindDocumentRead
+	})
 }
 
 func (k Kind) IsValid() bool {
 	switch k {
 	case KindTime, KindStopArrival, KindStopDeparture, KindReply,
-		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow, KindPortalRun:
+		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow, KindPortalRun,
+		KindDocumentRead:
 		return true
 	default:
 		return false
@@ -79,10 +85,13 @@ func (k Kind) IsValid() bool {
 // Timed reports a wait that comes due at a time it can work out: a timer
 // wakes it, and it reads the record again before it decides. Drive time is
 // one: while the driver drives, the clock runs down a second a second, so the
-// moment it crosses is known ahead of the next poll.
+// moment it crosses is known ahead of the next poll. A file being read is
+// another: its extraction ends the wait as it is saved, and the timer reads
+// the file again for the readings that save no extraction, such as a file
+// that could not be read.
 func (k Kind) Timed() bool {
 	return k == KindTime || k == KindAppointmentNear || k == KindFreeTimeEnding ||
-		k == KindHOSDriveBelow
+		k == KindHOSDriveBelow || k == KindDocumentRead
 }
 
 // Visit reports a wait on a truck reaching or leaving a stop.
@@ -118,6 +127,7 @@ type Condition struct {
 	WorkerID              pulid.ID `json:"workerId,omitempty"`
 	DetentionOccurrenceID pulid.ID `json:"detentionOccurrenceId,omitempty"`
 	PortalRunID           pulid.ID `json:"portalRunId,omitempty"`
+	DocumentID            pulid.ID `json:"documentId,omitempty"`
 	MinutesBefore         int      `json:"minutesBefore,omitempty"`
 	DriveMinutesBelow     int      `json:"driveMinutesBelow,omitempty"`
 	// SeenInsideAt is when the truck was last seen inside the stop's geofence,
@@ -203,6 +213,8 @@ func (c *Condition) watched(kind Kind) pulid.ID {
 		return c.WorkerID
 	case KindPortalRun:
 		return c.PortalRunID
+	case KindDocumentRead:
+		return c.DocumentID
 	case KindTime:
 		return pulid.Nil
 	default:
@@ -280,6 +292,8 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 		minutes("minutesBefore", c.MinutesBefore, MaxMinutesBefore)
 	case KindPortalRun:
 		require("portalRunId", c.PortalRunID)
+	case KindDocumentRead:
+		require("documentId", c.DocumentID)
 	case KindHOSDriveBelow:
 		require("workerId", c.WorkerID)
 		if c.DriveMinutesBelow < 1 || c.DriveMinutesBelow > MaxDriveMinutes {

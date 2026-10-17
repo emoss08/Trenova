@@ -900,5 +900,20 @@ func (o *artifactObserver) ObserveTool(
 	observation agentports.ToolObservation,
 	emit kernelports.AssistantStreamEmitter,
 ) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
+	o.assistant.WaitOnUnreadFile(ctx, &assistantservice.UnreadFileRun{
+		ThreadID:     run.ThreadID,
+		DefinitionID: definitionIDOf(run.Definition),
+		Actor:        run.Actor,
+		Delegated:    run.Delegation != nil,
+	}, &observation)
+
 	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, observation, emit)
+}
+
+func definitionIDOf(definition *agentdefinition.Definition) pulid.ID {
+	if definition == nil {
+		return pulid.Nil
+	}
+
+	return definition.ID
 }

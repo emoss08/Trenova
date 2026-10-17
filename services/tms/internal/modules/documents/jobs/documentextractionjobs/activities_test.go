@@ -84,11 +84,11 @@ func (asyncRouteOnlyAIDocumentService) SubmitRateConfirmationBackgroundExtractio
 	return nil, nil
 }
 
-func (asyncRouteOnlyAIDocumentService) ExtractionAvailable(
+func (asyncRouteOnlyAIDocumentService) ExtractionAvailability(
 	context.Context,
 	pagination.TenantInfo,
-) (bool, error) {
-	return true, nil
+) (documentaiextractionports.ExtractionAvailability, error) {
+	return documentaiextractionports.ExtractionAvailable, nil
 }
 
 func (asyncRouteOnlyAIDocumentService) PollRateConfirmationBackgroundExtraction(

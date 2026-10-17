@@ -80,21 +80,21 @@ Loaded now:
 - wait_until
 - cancel_wait
 - list_customers
+- list_locations
 - list_service_types
 - list_shipment_types
 - list_formula_templates
 - list_commodities
 - list_accessorial_charges
 - search_shipments
+- quote_shipment
 - create_customer
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_shipment_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
-- list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 - list_equipment_types — List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
-- quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
 - create_shipment — Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment.
 - create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 - create_commodity — Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling.

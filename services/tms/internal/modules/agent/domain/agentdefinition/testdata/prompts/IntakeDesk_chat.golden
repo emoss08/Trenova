@@ -87,6 +87,7 @@ Loaded now:
 - list_document_types
 - add_shipment_comment
 - quote_shipment
+- accept_edi_tender
 - list_service_types
 - list_locations
 
@@ -130,7 +131,6 @@ Callable after find_tools:
 - get_edi_inbound_file — Retrieve one inbound EDI file by id: its partner, status and failure reason, and each transaction set parsed from it with its control numbers.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
-- accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
 
 What a change you call does:

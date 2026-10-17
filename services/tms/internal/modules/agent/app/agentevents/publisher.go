@@ -3,6 +3,8 @@ package agentevents
 import (
 	"context"
 	"errors"
+	"sync"
+	"sync/atomic"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -33,9 +35,14 @@ type Publisher struct {
 	runService  agentports.AgentRunService
 	plans       platformplanports.PlanService
 	waits       agentwaitports.AgentWaitNotifier
+	// attachments are bound after the graph is built, by
+	// RegisterAttachmentObservers: what shows an attached file's card
+	// depends, through its tools, on services that publish events.
+	attachments   atomic.Pointer[[]agentports.AttachmentExtractionObserver]
+	attachmentsMu sync.Mutex
 }
 
-func New(p Params) agentports.AgentEventPublisher {
+func New(p Params) *Publisher {
 	return &Publisher{
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
@@ -43,6 +50,43 @@ func New(p Params) agentports.AgentEventPublisher {
 		plans:       p.Plans,
 		waits:       p.Waits,
 	}
+}
+
+type ObserverParams struct {
+	fx.In
+
+	Publisher *Publisher
+	Observers []agentports.AttachmentExtractionObserver `group:"attachment_extraction_observers"`
+}
+
+// RegisterAttachmentObservers binds the observers told when a document's
+// extraction is saved.
+func RegisterAttachmentObservers(p ObserverParams) {
+	p.Publisher.ObserveAttachments(p.Observers...)
+}
+
+// ObserveAttachments adds observers told of every document extraction from
+// now on.
+func (p *Publisher) ObserveAttachments(observers ...agentports.AttachmentExtractionObserver) {
+	if len(observers) == 0 {
+		return
+	}
+
+	p.attachmentsMu.Lock()
+	defer p.attachmentsMu.Unlock()
+
+	var current []agentports.AttachmentExtractionObserver
+	if loaded := p.attachments.Load(); loaded != nil {
+		current = *loaded
+	}
+	next := make([]agentports.AttachmentExtractionObserver, 0, len(current)+len(observers))
+	next = append(next, current...)
+	for _, observer := range observers {
+		if observer != nil {
+			next = append(next, observer)
+		}
+	}
+	p.attachments.Store(&next)
 }
 
 func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
@@ -67,6 +111,15 @@ func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
 	// without automated agents still has conversations that wait.
 	if p.waits != nil {
 		p.waits.NotifyEvent(ctx, &event)
+	}
+	// A file read for a conversation is shown there whatever the plan says
+	// of automated agents: the person asked for it by attaching it.
+	if event.Kind == agent.EventDocumentExtracted {
+		if observers := p.attachments.Load(); observers != nil {
+			for _, observer := range *observers {
+				observer.AttachmentExtracted(ctx, &event)
+			}
+		}
 	}
 
 	allowed, err := planservice.Allows(

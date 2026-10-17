@@ -28,3 +28,20 @@ func TestDocumentControl_AllowsDraftsFromInboundMessages(t *testing.T) {
 	assert.True(t, control.AllowsShipmentDraftResource("shipment"))
 	assert.False(t, control.AllowsShipmentDraftResource("worker"))
 }
+
+/*
+A rate confirmation dropped into a Desk conversation is read so the agent can
+draft the shipment from it. Before this arm the draft was refused for the
+conversation's resource type: the model's reading was started, but the draft
+was stored at once from the rule-based reading and marked Unavailable, so the
+agent and the extraction card read stop names like "7,000" while the model's
+reading was still on its way.
+*/
+func TestDocumentControl_AllowsDraftsFromConversationAttachments(t *testing.T) {
+	t.Parallel()
+
+	control := tenant.NewDefaultDocumentControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+
+	assert.True(t, control.AllowsShipmentDraftResource("assistant_thread"))
+	assert.True(t, control.AllowsShipmentDraftResource("ASSISTANT_THREAD"))
+}

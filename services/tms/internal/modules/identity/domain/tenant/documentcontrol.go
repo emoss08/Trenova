@@ -157,11 +157,12 @@ func (dc *DocumentControl) AllowsShipmentDraftResource(resourceType string) bool
 func normalizeDocumentControlResource(resourceType string) string {
 	normalized := strings.ToLower(strings.TrimSpace(resourceType))
 	switch normalized {
-	// Both of these are a shipment arriving by another road. A tenant that
-	// allows drafts on shipments means it allows them on the tenders that
-	// become shipments, and making them opt in again per channel is asking the
-	// same question twice.
-	case "shipment_import", "inbound_message":
+	// Each of these is a shipment arriving by another road: an import, a
+	// tender by email, and a rate confirmation handed to an agent in a
+	// conversation. A tenant that allows drafts on shipments means it allows
+	// them on the paperwork that becomes shipments, and making them opt in
+	// again per channel is asking the same question twice.
+	case "shipment_import", "inbound_message", "assistant_thread":
 		return "shipment"
 	default:
 		return normalized

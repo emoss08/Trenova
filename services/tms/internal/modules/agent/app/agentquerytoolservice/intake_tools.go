@@ -52,8 +52,10 @@ func (t *getShipmentDraftTool) Description() string {
 	return "Read the shipment draft extracted from an uploaded document: the fields and " +
 		"stops it found, each with a confidence, and what it could not read. Fields " +
 		"include BOL, customer, rate, pieces, weight and dates; stops carry addresses " +
-		"and dates. Use it before create_shipment so the record is " +
-		"built from the document rather than from memory. Every id the draft names " +
+		"and dates. The person sees what it read as the document's extraction card beside " +
+		"the conversation, so call it when they ask to see what was extracted and point to " +
+		"the card rather than publishing the reading. Use it before create_shipment so the " +
+		"record is built from the document rather than from memory. Every id the draft names " +
 		"still has to be resolved with list_customers and list_locations; the draft " +
 		"carries names and addresses, not ids."
 }

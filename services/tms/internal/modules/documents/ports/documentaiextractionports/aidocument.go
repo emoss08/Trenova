@@ -208,7 +208,10 @@ type AIEvaluationExtractResult struct {
 }
 
 type AIDocumentService interface {
-	ExtractionAvailable(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
+	ExtractionAvailability(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (ExtractionAvailability, error)
 	RouteDocument(ctx context.Context, req *AIRouteRequest) (*AIRouteResult, error)
 	ExtractRateConfirmation(ctx context.Context, req *AIExtractRequest) (*AIExtractResult, error)
 	SubmitRateConfirmationBackgroundExtraction(

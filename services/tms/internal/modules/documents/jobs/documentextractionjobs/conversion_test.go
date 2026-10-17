@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -39,13 +40,21 @@ import (
 type extractionAvailability struct {
 	noopAIDocumentService
 	available bool
+	blocker   documentaiextractionports.ExtractionAvailability
 }
 
-func (s extractionAvailability) ExtractionAvailable(
+func (s extractionAvailability) ExtractionAvailability(
 	context.Context,
 	pagination.TenantInfo,
-) (bool, error) {
-	return s.available, nil
+) (documentaiextractionports.ExtractionAvailability, error) {
+	switch {
+	case s.available:
+		return documentaiextractionports.ExtractionAvailable, nil
+	case s.blocker != "":
+		return s.blocker, nil
+	default:
+		return documentaiextractionports.ExtractionNoProviderAssigned, nil
+	}
 }
 
 type memoryDocumentRepository struct {
@@ -364,8 +373,48 @@ func TestProcessDocumentExtractionWorkflow_WithoutAProviderNeverCallsTheConverte
 		documentupload.FailureExtractionUnavailable.String(),
 		h.contents.content.FailureCode,
 	)
+	assert.Equal(t, extractionNoProviderMessage, h.contents.content.FailureMessage)
 	assert.Empty(t, h.contents.pages)
 	assert.Empty(t, h.drafts.drafts)
+}
+
+/*
+Each thing that keeps a model from reading the document is named on the
+content, so the person is sent to the setting that is actually missing: a
+server with document extraction switched off is not fixed by adding a
+provider, and a provider that serves chat does not serve document extraction.
+*/
+func TestProcessDocumentExtractionWorkflow_NamesWhatKeepsTheModelFromReading(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		blocker documentaiextractionports.ExtractionAvailability
+		message string
+	}{
+		{documentaiextractionports.ExtractionOffOnServer, extractionOffOnServerMessage},
+		{documentaiextractionports.ExtractionNotInPlan, extractionNotInPlanMessage},
+		{documentaiextractionports.ExtractionNoProviderAssigned, extractionNoProviderMessage},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.blocker), func(t *testing.T) {
+			t.Parallel()
+
+			h := newDoclingHarness(t, false)
+			h.activities.aiDocumentService = extractionAvailability{blocker: tt.blocker}
+
+			h.run(t)
+
+			require.NotNil(t, h.contents.content)
+			assert.Equal(
+				t,
+				documentupload.FailureExtractionUnavailable.String(),
+				h.contents.content.FailureCode,
+			)
+			assert.Equal(t, tt.message, h.contents.content.FailureMessage)
+			assert.Empty(t, h.contents.pages)
+		})
+	}
 }
 
 /*

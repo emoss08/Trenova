@@ -113,18 +113,20 @@ func (s *Service) ExtractionStatus(
 		return nil, err
 	}
 
-	providerAvailable := false
+	availability := documentaiextractionports.ExtractionNoProviderAssigned
 	if s.aiDocuments != nil {
-		if providerAvailable, err = s.aiDocuments.ExtractionAvailable(ctx, tenantInfo); err != nil {
+		if availability, err = s.aiDocuments.ExtractionAvailability(ctx, tenantInfo); err != nil {
 			return nil, err
 		}
 	}
 
+	providerAvailable := availability.Available()
 	converterAvailable := s.conversionConfig.Enabled()
 
 	return &documentports.ExtractionStatus{
 		Engine:                 string(control.ExtractionEngine),
 		ModelProviderAvailable: providerAvailable,
+		ModelProviderReason:    string(availability),
 		ConverterAvailable:     converterAvailable,
 		ExtractionAvailable: !control.UsesDocling() ||
 			(providerAvailable && converterAvailable),

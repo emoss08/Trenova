@@ -447,23 +447,23 @@ func (_c *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call)
 	return _c
 }
 
-// ExtractionAvailable provides a mock function for the type MockAIDocumentService
-func (_mock *MockAIDocumentService) ExtractionAvailable(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+// ExtractionAvailability provides a mock function for the type MockAIDocumentService
+func (_mock *MockAIDocumentService) ExtractionAvailability(ctx context.Context, tenantInfo pagination.TenantInfo) (documentaiextractionports.ExtractionAvailability, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ExtractionAvailable")
+		panic("no return value specified for ExtractionAvailability")
 	}
 
-	var r0 bool
+	var r0 documentaiextractionports.ExtractionAvailability
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (bool, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (documentaiextractionports.ExtractionAvailability, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) bool); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) documentaiextractionports.ExtractionAvailability); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Get(0).(documentaiextractionports.ExtractionAvailability)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
 		r1 = returnFunc(ctx, tenantInfo)
@@ -473,19 +473,19 @@ func (_mock *MockAIDocumentService) ExtractionAvailable(ctx context.Context, ten
 	return r0, r1
 }
 
-// MockAIDocumentService_ExtractionAvailable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExtractionAvailable'
-type MockAIDocumentService_ExtractionAvailable_Call struct {
+// MockAIDocumentService_ExtractionAvailability_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExtractionAvailability'
+type MockAIDocumentService_ExtractionAvailability_Call struct {
 	*mock.Call
 }
 
-// ExtractionAvailable is a helper method to define mock.On call
+// ExtractionAvailability is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockAIDocumentService_Expecter) ExtractionAvailable(ctx any, tenantInfo any) *MockAIDocumentService_ExtractionAvailable_Call {
-	return &MockAIDocumentService_ExtractionAvailable_Call{Call: _e.mock.On("ExtractionAvailable", ctx, tenantInfo)}
+func (_e *MockAIDocumentService_Expecter) ExtractionAvailability(ctx any, tenantInfo any) *MockAIDocumentService_ExtractionAvailability_Call {
+	return &MockAIDocumentService_ExtractionAvailability_Call{Call: _e.mock.On("ExtractionAvailability", ctx, tenantInfo)}
 }
 
-func (_c *MockAIDocumentService_ExtractionAvailable_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockAIDocumentService_ExtractionAvailable_Call {
+func (_c *MockAIDocumentService_ExtractionAvailability_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockAIDocumentService_ExtractionAvailability_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -503,12 +503,12 @@ func (_c *MockAIDocumentService_ExtractionAvailable_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockAIDocumentService_ExtractionAvailable_Call) Return(b bool, err error) *MockAIDocumentService_ExtractionAvailable_Call {
-	_c.Call.Return(b, err)
+func (_c *MockAIDocumentService_ExtractionAvailability_Call) Return(extractionAvailability documentaiextractionports.ExtractionAvailability, err error) *MockAIDocumentService_ExtractionAvailability_Call {
+	_c.Call.Return(extractionAvailability, err)
 	return _c
 }
 
-func (_c *MockAIDocumentService_ExtractionAvailable_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)) *MockAIDocumentService_ExtractionAvailable_Call {
+func (_c *MockAIDocumentService_ExtractionAvailability_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (documentaiextractionports.ExtractionAvailability, error)) *MockAIDocumentService_ExtractionAvailability_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -200,7 +200,7 @@ ai:
   modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again
 
   # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
-  documentExtraction: false # Let a model classify and extract uploaded documents
+  documentExtraction: true # Let a model classify and extract uploaded documents. Off, no document is read by a model whatever providers an organization has, and Docling reads nothing at all
   maxInputChars: 24000 # Max extracted text sent to a model
   extractionMaxTokens: 5000 # Output ceiling for one extraction
   ocrCommand: tesseract # OCR binary path

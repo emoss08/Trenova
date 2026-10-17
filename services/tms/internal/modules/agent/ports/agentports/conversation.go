@@ -19,6 +19,12 @@ type GetThreadRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type CarriesAttachmentRequest struct {
+	ThreadID   pulid.ID
+	DocumentID pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type GetThreadOwnedRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -283,6 +289,9 @@ type ConversationRepository interface {
 	DeleteStaleThreads(ctx context.Context, req DeleteStaleThreadsRequest) (int, error)
 	ListMessages(ctx context.Context, req ListMessagesRequest) ([]conversation.Message, error)
 	CountMessages(ctx context.Context, req CountMessagesRequest) (int, error)
+	// CarriesAttachment says whether a saved message of the thread was sent
+	// with the document, as opposed to a file uploaded and never sent.
+	CarriesAttachment(ctx context.Context, req *CarriesAttachmentRequest) (bool, error)
 	// AppendTurn allocates sequence numbers and writes the messages atomically,
 	// returning them with their assigned identifiers.
 	AppendTurn(ctx context.Context, req AppendTurnRequest) ([]conversation.Message, error)

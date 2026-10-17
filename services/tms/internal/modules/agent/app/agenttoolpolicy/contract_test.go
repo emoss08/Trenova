@@ -633,6 +633,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"rematch_factoring_remittance":         {agent.EgressInternal},
 		"apply_factoring_remittance":           {agent.EgressMoney},
 		"discard_factoring_remittance":         {agent.EgressInternal},
+		"act_on_portal":                        {agent.EgressExternalRecipient},
 	}
 
 	tools := buildRegistered(t)

@@ -31,7 +31,7 @@ func TestVersionsQueryKeepsOnlyTheSummaryKeysOfAPayload(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(aart.payload) AS e WHERE e.key IN ('tool', 'entity', 'path')), jsonb_build_object()) AS payload",
+		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(aart.payload) AS e WHERE e.key IN ('tool', 'entity', 'path', 'documentId')), jsonb_build_object()) AS payload",
 	)
 	assert.NotContains(t, sql, `"aart"."payload"`, "the full payload is not read alongside it")
 	assert.NotContains(t, sql, "'aart.payload'",

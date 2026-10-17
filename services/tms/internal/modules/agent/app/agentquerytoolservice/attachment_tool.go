@@ -17,15 +17,20 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
-	maxListedAttachments    = 25
-	attachmentReadingWait   = 20 * time.Second
-	attachmentReadingPoll   = time.Second
-	attachmentListNote      = "Read one with read_attachment and its documentId."
-	attachmentNoneNote      = "No file has been attached to this conversation."
-	attachmentStillReading  = "The file is still being read. Tell the person it is still being read and ask them to send their message again in a moment."
+	maxListedAttachments   = 25
+	attachmentReadingWait  = 20 * time.Second
+	attachmentReadingPoll  = time.Second
+	attachmentListNote     = "Read one with read_attachment and its documentId."
+	attachmentNoneNote     = "No file has been attached to this conversation."
+	attachmentStillReading = "The file is still being read. This conversation now waits for it: " +
+		"when the reading finishes it picks up again on its own, and you carry on then with the " +
+		"file read. Tell the person in one short sentence that you will carry on as soon as the " +
+		"file is read, and end your turn. Do not ask them to send their message again, and do " +
+		"not guess what the file says."
 	attachmentOutsideThread = "document %s was not attached to this conversation by the person you are working for"
 )
 
@@ -157,7 +162,8 @@ func (t *readAttachmentTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	if content == nil || !content.Status.Settled() {
+	if content == nil || content.StillBeingRead(timeutils.NowUnix()) {
+		summary.StillBeingRead = true
 		summary.Note = attachmentStillReading
 	}
 
@@ -218,7 +224,7 @@ func (t *readAttachmentTool) settled(
 			return nil, err
 		case err != nil:
 			content = nil
-		case content != nil && content.Status.Settled():
+		case content != nil && !content.StillBeingRead(timeutils.NowUnix()):
 			return content, nil
 		}
 		if !time.Now().Add(t.poll).Before(deadline) {

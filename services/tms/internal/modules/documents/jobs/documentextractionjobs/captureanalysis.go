@@ -87,11 +87,11 @@ func (c *CaptureAnalyzer) analyzeConverted(
 	control *tenant.DocumentControl,
 ) (*captureports.CaptureAnalysis, error) {
 	a := c.activities
-	available, err := a.aiDocumentService.ExtractionAvailable(ctx, req.TenantInfo)
+	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if !available || a.converter == nil || !a.converter.Enabled() ||
+	if !availability.Available() || a.converter == nil || !a.converter.Enabled() ||
 		int64(len(req.PDF)) > a.conversionCfg.GetMaxFileBytes() {
 		return &captureports.CaptureAnalysis{}, nil
 	}
