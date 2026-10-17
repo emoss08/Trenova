@@ -40,6 +40,11 @@ const (
 		"paymentTerms, billTo, carrierName, carrierContact, containerNumber, trailerNumber, " +
 		"tractorNumber, fuelSurcharge, serviceType."
 
+	markdownInputNote = " The document is Markdown converted from the original file: tables " +
+		"are Markdown pipe tables with one row per line, and the lines after " +
+		"<!-- page header --> at the top of a page are its printed header and footer, " +
+		"which often carry the load or reference number."
+
 	routeTextLimit    = 4000
 	routePageLimit    = 800
 	extractPageLimit  = 2500
@@ -130,17 +135,38 @@ func formatFeatures(features *documentaiextractionports.AIDocumentFeatureSet) st
 	return strings.TrimSpace(b.String())
 }
 
+func routePrompt(pages []documentaiextractionports.AIDocumentPage) string {
+	if documentaiextractionports.PagesAreMarkdown(pages) {
+		return strings.Replace(
+			routeSystemPrompt,
+			"Use the extracted text",
+			"Use the document text",
+			1,
+		) +
+			markdownInputNote
+	}
+
+	return routeSystemPrompt
+}
+
+func extractPrompt(pages []documentaiextractionports.AIDocumentPage) string {
+	if documentaiextractionports.PagesAreMarkdown(pages) {
+		return extractSystemPrompt + markdownInputNote
+	}
+
+	return extractSystemPrompt
+}
+
 func formatPages(pages []documentaiextractionports.AIDocumentPage, limit int) string {
 	var b strings.Builder
 
 	for i := range pages {
 		page := &pages[i]
-		fmt.Fprintf(
-			&b,
-			"[Page %d]\n%s\n\n",
-			page.PageNumber,
-			stringutils.Truncate(page.Text, limit),
-		)
+		text := stringutils.Truncate(page.Text, limit)
+		if page.Markdown {
+			text = stringutils.TruncateAtBlock(page.Text, limit)
+		}
+		fmt.Fprintf(&b, "[Page %d]\n%s\n\n", page.PageNumber, text)
 	}
 
 	return strings.TrimSpace(b.String())

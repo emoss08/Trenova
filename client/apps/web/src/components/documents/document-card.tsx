@@ -197,7 +197,7 @@ export function DocumentCard({
             variant="ghost"
             size="icon-sm"
             onClick={() => onInspect(document)}
-            aria-label={t("Inspect document intelligence")}
+            aria-label={t("Inspect document extraction")}
           >
             <BrainCircuitIcon className="size-4" />
           </Button>

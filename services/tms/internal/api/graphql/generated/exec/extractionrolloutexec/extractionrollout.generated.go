@@ -22,6 +22,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ExtractionRollout", Implementors: []string{"ExtractionRollout"}},
 		{Name: "ExtractionRolloutAccuracy", Implementors: []string{"ExtractionRolloutAccuracy"}},
 		{Name: "ExtractionRolloutArm", Implementors: []string{"ExtractionRolloutArm"}},
+		{Name: "ExtractionRolloutExclusion", Implementors: []string{"ExtractionRolloutExclusion"}},
 		{Name: "ExtractionRolloutReport", Implementors: []string{"ExtractionRolloutReport"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -280,6 +281,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 		}},
+		{Object: "ExtractionRolloutExclusion", Fields: []*gqlexec.Field{
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionrolloutports.ExtractionRolloutExclusionCount)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutExclusionReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExclusionReason),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionrolloutports.ExtractionRolloutExclusionCount)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "ExtractionRolloutReport", Fields: []*gqlexec.Field{
 			{
 				Name:      "rollout",
@@ -295,7 +318,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "providerName",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.ProviderName, nil
@@ -387,6 +410,17 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
+			{
+				Name:      "exclusions",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ExtractionRolloutExclusion",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
+					return obj.Exclusions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutExclusion2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutExclusionCountᚄ),
+			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
@@ -461,7 +495,8 @@ var (
 	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild4 = errors.New("field of type ExtractionRolloutHaltReason does not have child fields")
 	errNoChild5 = errors.New("field of type Float does not have child fields")
-	errNoChild6 = errors.New("field of type String does not have child fields")
+	errNoChild6 = errors.New("field of type ExtractionRolloutExclusionReason does not have child fields")
+	errNoChild7 = errors.New("field of type String does not have child fields")
 )
 
 func field_Mutation_updateExtractionRollout_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -587,6 +622,26 @@ func marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 
 func marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutArmReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionrolloutports.ExtractionRolloutArmReport) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionRolloutArm", &v)
+}
+
+func marshalNExtractionRolloutExclusion2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutExclusionCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionrolloutports.ExtractionRolloutExclusionCount) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "ExtractionRolloutExclusion", &v)
+}
+
+func marshalNExtractionRolloutExclusion2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutExclusionCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []extractionrolloutports.ExtractionRolloutExclusionCount) graphql.Marshaler {
+	return gqlexec.List[extractionrolloutports.ExtractionRolloutExclusionCount]{
+		Elem:        marshalNExtractionRolloutExclusion2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutExclusionCount,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNExtractionRolloutExclusionReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExclusionReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionrollout.ExclusionReason) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrolloutports.ExtractionRolloutReport) graphql.Marshaler {

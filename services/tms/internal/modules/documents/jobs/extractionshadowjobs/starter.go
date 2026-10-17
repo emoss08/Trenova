@@ -37,7 +37,7 @@ func (s *Starter) StartExtractionShadow(
 	workflowID := extractionshadow.WorkflowID(start.ResultID)
 	_, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                                       workflowID,
-		TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
+		TaskQueue:                                temporaltype.DocumentExtractionTaskQueue,
 		WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
 		Priority:                                 shadowPriority(start.TenantInfo.OrgID),

@@ -1,0 +1,210 @@
+[
+  {
+    "Number": 1,
+    "OCR": true,
+    "Native": false,
+    "OCRConfidence": 0.9651223333333333,
+    "Width": 612,
+    "Height": 792,
+    "Text": "F5 5-5 G   / : 2 /1\nSTRAIGHT BILL OF LADING\nShip date: 10/21/2026\nSHIP FROM\nHarvest Foods DC 4410 Industrial Pkwy Fresno, CA 93725\nBOL #: HF-2026-10433\nSHIP TO\nValley Grocers #14\n88 Commerce Dr\nReno, NV 89502\nCaera    Tt n   t z)\nCustomer order / PO: 55318Load: RC-48213\nQty   Type   Description   Weight   Class\n22   PLT   Packaged snack foods, non-haz   38,450   65\n22   TOTAL   38,450\nShipper signature:\nReceived in good order except as noted.\nDriver signature:",
+    "Markdown": "\u003c!-- page header --\u003e\nF5 5-5 G   / : 2 /1\n\n## STRAIGHT BILL OF LADING\n\nShip date: 10/21/2026\n\n## SHIP FROM\n\nHarvest Foods DC 4410 Industrial Pkwy Fresno, CA 93725\n\nBOL #: HF-2026-10433\n\nSHIP TO\n\nValley Grocers #14\n\n88 Commerce Dr\n\nReno, NV 89502\n\nCaera    Tt n   t z)\n\nCustomer order / PO: 55318Load: RC-48213\n\n| Qty | Type | Description | Weight | Class |\n| --- | --- | --- | --- | --- |\n| 22 | PLT | Packaged snack foods, non-haz | 38,450 | 65 |\n| 22 |  | TOTAL | 38,450 |  |\n\nShipper signature:\n\nReceived in good order except as noted.\n\nDriver signature:",
+    "Lines": [
+      {
+        "Text": "Weight",
+        "X": 0.6955,
+        "Y": 0.3746,
+        "W": 0.0659,
+        "H": 0.0177
+      },
+      {
+        "Text": "Class",
+        "X": 0.8257,
+        "Y": 0.3737,
+        "W": 0.0501,
+        "H": 0.0164
+      },
+      {
+        "Text": "Qty",
+        "X": 0.0708,
+        "Y": 0.3809,
+        "W": 0.0387,
+        "H": 0.0194
+      },
+      {
+        "Text": "Type",
+        "X": 0.1661,
+        "Y": 0.3805,
+        "W": 0.0452,
+        "H": 0.0185
+      },
+      {
+        "Text": "Description",
+        "X": 0.2723,
+        "Y": 0.3792,
+        "W": 0.1013,
+        "H": 0.0164
+      },
+      {
+        "Text": "38,450",
+        "X": 0.6955,
+        "Y": 0.4045,
+        "W": 0.0599,
+        "H": 0.0147
+      },
+      {
+        "Text": "65",
+        "X": 0.8257,
+        "Y": 0.4036,
+        "W": 0.0267,
+        "H": 0.0156
+      },
+      {
+        "Text": "22",
+        "X": 0.0724,
+        "Y": 0.4116,
+        "W": 0.0256,
+        "H": 0.016
+      },
+      {
+        "Text": "PLT",
+        "X": 0.1672,
+        "Y": 0.4104,
+        "W": 0.0316,
+        "H": 0.016
+      },
+      {
+        "Text": "Packaged snack foods, non-haz",
+        "X": 0.2729,
+        "Y": 0.4087,
+        "W": 0.2369,
+        "H": 0.0139
+      },
+      {
+        "Text": "38,450",
+        "X": 0.6966,
+        "Y": 0.4625,
+        "W": 0.0594,
+        "H": 0.016
+      },
+      {
+        "Text": "22",
+        "X": 0.0735,
+        "Y": 0.4693,
+        "W": 0.0256,
+        "H": 0.016
+      },
+      {
+        "Text": "TOTAL",
+        "X": 0.274,
+        "Y": 0.4668,
+        "W": 0.0528,
+        "H": 0.016
+      },
+      {
+        "Text": "SHIP TO",
+        "X": 0.5076,
+        "Y": 0.1654,
+        "W": 0.0741,
+        "H": 0.016
+      },
+      {
+        "Text": "SHIP FROM",
+        "X": 0.073,
+        "Y": 0.1705,
+        "W": 0.0986,
+        "H": 0.0147
+      },
+      {
+        "Text": "88 Commerce Dr",
+        "X": 0.5098,
+        "Y": 0.2172,
+        "W": 0.14,
+        "H": 0.0139
+      },
+      {
+        "Text": "Reno, NV 89502",
+        "X": 0.5103,
+        "Y": 0.2399,
+        "W": 0.1334,
+        "H": 0.0139
+      },
+      {
+        "Text": "Caera Tt n t z)",
+        "X": 0.0763,
+        "Y": 0.3081,
+        "W": 0.6253,
+        "H": 0.0088
+      },
+      {
+        "Text": "F5 5-5 G / : 2 /1",
+        "X": 0.0583,
+        "Y": 0.0358,
+        "W": 0.4804,
+        "H": 0.0076
+      },
+      {
+        "Text": "Driver signature:",
+        "X": 0.415,
+        "Y": 0.5244,
+        "W": 0.14,
+        "H": 0.0185
+      },
+      {
+        "Text": "Valley Grocers #14",
+        "X": 0.5093,
+        "Y": 0.194,
+        "W": 0.158,
+        "H": 0.0147
+      },
+      {
+        "Text": "Shipper signature:",
+        "X": 0.079,
+        "Y": 0.5274,
+        "W": 0.152,
+        "H": 0.0202
+      },
+      {
+        "Text": "BOL #: HF-2026-10433",
+        "X": 0.6492,
+        "Y": 0.1195,
+        "W": 0.2293,
+        "H": 0.0139
+      },
+      {
+        "Text": "Ship date: 10/21/2026",
+        "X": 0.0724,
+        "Y": 0.1258,
+        "W": 0.2026,
+        "H": 0.0147
+      },
+      {
+        "Text": "STRAIGHT BILL OF LADING",
+        "X": 0.2723,
+        "Y": 0.0753,
+        "W": 0.4434,
+        "H": 0.0194
+      },
+      {
+        "Text": "Received in good order except as noted.",
+        "X": 0.0801,
+        "Y": 0.5644,
+        "W": 0.3028,
+        "H": 0.0147
+      },
+      {
+        "Text": "Customer order / PO: 55318Load: RC-48213",
+        "X": 0.0768,
+        "Y": 0.3346,
+        "W": 0.3742,
+        "H": 0.0122
+      },
+      {
+        "Text": "Harvest Foods DC 4410 Industrial Pkwy Fresno, CA 93725",
+        "X": 0.0741,
+        "Y": 0.1991,
+        "W": 0.1716,
+        "H": 0.0593
+      }
+    ]
+  }
+]

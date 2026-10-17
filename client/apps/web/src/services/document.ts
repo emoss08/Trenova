@@ -26,6 +26,10 @@ import {
   documentUploadSessionStateSchema,
 } from "@trenova/shared/types/document";
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
+import {
+  documentExtractionStatusSchema,
+  type DocumentExtractionStatus,
+} from "@/types/document-control";
 import { z } from "zod";
 
 export type DocumentContentAction = "download" | "view" | "preview";
@@ -97,6 +101,15 @@ export class DocumentService {
   ): Promise<DocumentUploadSession> {
     const response = await api.post<DocumentUploadSession>("/documents/uploads/", params);
     return safeParse(documentUploadSessionSchema, response, "Document Upload Session");
+  }
+
+  public async getExtractionStatus(options?: {
+    signal?: AbortSignal;
+  }): Promise<DocumentExtractionStatus> {
+    const response = await api.get<DocumentExtractionStatus>("/documents/extraction-status/", {
+      signal: options?.signal,
+    });
+    return safeParse(documentExtractionStatusSchema, response, "Document Extraction Status");
   }
 
   public async listActiveUploadSessions(

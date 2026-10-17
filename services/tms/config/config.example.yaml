@@ -339,6 +339,32 @@ renderer:
     maxAssetBudget: 4194304 # Total inlined image bytes per document (4 MiB)
     maxPdfBytes: 20971520 # Largest PDF accepted back from the renderer (20 MiB)
 
+# Document extraction reads uploaded files through a docling-serve sidecar
+# (PDFs, scans, photos, Office files and email) and turns each page into
+# Markdown for the model, plain text for search and boxes for highlights. Leave
+# doclingUrl empty to turn it off; organizations on the Docling engine then get
+# no extraction, and nothing calls the sidecar. Only organizations whose
+# document controls choose the Docling engine use it.
+#
+# The sidecar parses untrusted files, so it runs like Gotenberg: internal
+# network only, no published port, no route through a proxy. Every request
+# carries apiKey as X-Api-Key, matching the sidecar's DOCLING_SERVE_API_KEY.
+documentConversion:
+    doclingUrl: http://localhost:5001
+    apiKey: trenova-local-docling # Matches DOCLING_API_KEY in dev/compose.yml (its local default); conversion stays off until both are set
+    requestTimeout: 30s # One HTTP call: submit, status poll or result fetch
+    conversionTimeout: 10m # Whole conversion of one document, enforced by the activity
+    healthTimeout: 5s # Startup health probe
+    maxConcurrent: 2 # Conversions in flight per worker; match DOCLING_SERVE_ENG_LOC_NUM_WORKERS
+    maxRetries: 3 # Attempts on transport errors and 429/502/503/504 only
+    maxFileBytes: 52428800 # Files larger than this are refused before upload (50 MiB)
+    maxPages: 50 # PDFs with more pages are refused before upload
+    ocrEngine: rapidocr # rapidocr, easyocr, tesseract, tesserocr or auto
+    ocrLanguages: [en] # BCP-47 tags the OCR engine reads, in order of preference
+    tableMode: accurate # accurate or fast table structure
+    vlmEndpoint: "" # gpu profile only: OpenAI-compatible vision model on the internal network
+    vlmModel: ibm-granite/granite-docling-258M # Model the vision endpoint serves
+
 # Reading uploaded PDFs: thumbnails, capture page inspection, and the text and
 # layout document intelligence extracts. PDFium runs in-process as WebAssembly,
 # so no native library is needed; every instance is sandboxed with its own

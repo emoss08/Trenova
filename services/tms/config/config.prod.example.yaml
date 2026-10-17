@@ -149,3 +149,13 @@ monitoring:
 # internal network, no published port, never proxied.
 renderer:
   gotenbergUrl: http://gotenberg:3000
+
+# Document extraction sidecar (docling-serve). Internal network only, never
+# published or proxied. To turn it on, set doclingUrl (http://docling:5001) and
+# TRENOVA_DOCUMENTCONVERSION_APIKEY to the sidecar's DOCLING_SERVE_API_KEY; the
+# key is required whenever the URL is set.
+documentConversion:
+  doclingUrl: ""
+  apiKey: ""
+  maxConcurrent: 2
+  ocrLanguages: [en]

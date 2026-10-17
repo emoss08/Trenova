@@ -69,6 +69,9 @@ var ContentColumns = struct {
 	CreatedAt                buncolgen.Column // "created_at" → qualified: "dc.created_at"
 	UpdatedAt                buncolgen.Column // "updated_at" → qualified: "dc.updated_at"
 	LastExtractedAt          buncolgen.Column // "last_extracted_at" → qualified: "dc.last_extracted_at"
+	Converter                buncolgen.Column // "converter" → qualified: "dc.converter"
+	ConverterVersion         buncolgen.Column // "converter_version" → qualified: "dc.converter_version"
+	RawObjectKey             buncolgen.Column // "raw_object_key" → qualified: "dc.raw_object_key"
 }{
 	ID:                       buncolgen.NewColumn("id", "dc"),
 	DocumentID:               buncolgen.NewColumn("document_id", "dc"),
@@ -89,6 +92,9 @@ var ContentColumns = struct {
 	CreatedAt:                buncolgen.NewColumn("created_at", "dc"),
 	UpdatedAt:                buncolgen.NewColumn("updated_at", "dc"),
 	LastExtractedAt:          buncolgen.NewColumn("last_extracted_at", "dc"),
+	Converter:                buncolgen.NewColumn("converter", "dc"),
+	ConverterVersion:         buncolgen.NewColumn("converter_version", "dc"),
+	RawObjectKey:             buncolgen.NewColumn("raw_object_key", "dc"),
 }
 
 // ContentFieldMap maps JSON API field names to database column names.
@@ -114,6 +120,8 @@ var ContentFieldMap = map[string]string{
 	"createdAt":                "created_at",
 	"updatedAt":                "updated_at",
 	"lastExtractedAt":          "last_extracted_at",
+	"converter":                "converter",
+	"converterVersion":         "converter_version",
 }
 
 // ContentInsertableColumns lists column names suitable for INSERT statements on the "document_contents" table.
@@ -137,6 +145,9 @@ var ContentInsertableColumns = []string{
 	"created_at",
 	"updated_at",
 	"last_extracted_at",
+	"converter",
+	"converter_version",
+	"raw_object_key",
 }
 
 // ContentScopeTenant restricts a query to a single tenant by adding:
@@ -207,6 +218,8 @@ var ContentFilter = struct {
 	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 	LastExtractedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastExtractedAt" → DB: "last_extracted_at"
+	Converter                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "converter" → DB: "converter"
+	ConverterVersion         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "converterVersion" → DB: "converter_version"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -262,6 +275,12 @@ var ContentFilter = struct {
 	LastExtractedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lastExtractedAt", op, value)
 	},
+	Converter: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("converter", op, value)
+	},
+	ConverterVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("converterVersion", op, value)
+	},
 }
 
 // ---------------------------------------------------------------------------
@@ -298,6 +317,7 @@ var PageColumns = struct {
 	PageNumber           buncolgen.Column // "page_number" → qualified: "dcp.page_number"
 	SourceKind           buncolgen.Column // "source_kind" → qualified: "dcp.source_kind"
 	ExtractedText        buncolgen.Column // "extracted_text" → qualified: "dcp.extracted_text"
+	Markdown             buncolgen.Column // "markdown" → qualified: "dcp.markdown"
 	OCRConfidence        buncolgen.Column // "ocr_confidence" → qualified: "dcp.ocr_confidence"
 	PreprocessingApplied buncolgen.Column // "preprocessing_applied" → qualified: "dcp.preprocessing_applied"
 	Width                buncolgen.Column // "width" → qualified: "dcp.width"
@@ -315,6 +335,7 @@ var PageColumns = struct {
 	PageNumber:           buncolgen.NewColumn("page_number", "dcp"),
 	SourceKind:           buncolgen.NewColumn("source_kind", "dcp"),
 	ExtractedText:        buncolgen.NewColumn("extracted_text", "dcp"),
+	Markdown:             buncolgen.NewColumn("markdown", "dcp"),
 	OCRConfidence:        buncolgen.NewColumn("ocr_confidence", "dcp"),
 	PreprocessingApplied: buncolgen.NewColumn("preprocessing_applied", "dcp"),
 	Width:                buncolgen.NewColumn("width", "dcp"),
@@ -338,6 +359,7 @@ var PageFieldMap = map[string]string{
 	"pageNumber":           "page_number",
 	"sourceKind":           "source_kind",
 	"extractedText":        "extracted_text",
+	"markdown":             "markdown",
 	"ocrConfidence":        "ocr_confidence",
 	"preprocessingApplied": "preprocessing_applied",
 	"width":                "width",
@@ -359,6 +381,7 @@ var PageInsertableColumns = []string{
 	"page_number",
 	"source_kind",
 	"extracted_text",
+	"markdown",
 	"ocr_confidence",
 	"preprocessing_applied",
 	"width",
@@ -427,6 +450,7 @@ var PageFilter = struct {
 	PageNumber           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageNumber" → DB: "page_number"
 	SourceKind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceKind" → DB: "source_kind"
 	ExtractedText        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extractedText" → DB: "extracted_text"
+	Markdown             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "markdown" → DB: "markdown"
 	OCRConfidence        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ocrConfidence" → DB: "ocr_confidence"
 	PreprocessingApplied func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preprocessingApplied" → DB: "preprocessing_applied"
 	Width                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "width" → DB: "width"
@@ -459,6 +483,9 @@ var PageFilter = struct {
 	},
 	ExtractedText: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("extractedText", op, value)
+	},
+	Markdown: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("markdown", op, value)
 	},
 	OCRConfidence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("ocrConfidence", op, value)

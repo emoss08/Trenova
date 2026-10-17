@@ -364,7 +364,7 @@ modules:
     service:
       - capturereleaseservice
       - captureservice
-      - documentintelligenceservice
+      - documentextractionservice
       - documentmailservice
       - documentoperationsservice
       - documentpacketruleservice
@@ -385,7 +385,7 @@ modules:
       - triagesupport
     job:
       - capturejobs
-      - documentintelligencejobs
+      - documentextractionjobs
       - documentuploadjobs
       - extractionevaljobs
       - extractionshadowjobs

@@ -48,6 +48,7 @@ fragment ExtractionEvalRunFields on ExtractionEvalRun {
   providerModel
   servedModel
   caseLimit
+  textSource
   casesTotal
   casesCompleted
   casesFailed
@@ -307,6 +308,29 @@ mutation StartExtractionEvalRun($input: StartExtractionEvalRunInput!) {
 mutation CancelExtractionEvalRun($id: ID!) {
   cancelExtractionEvalRun(id: $id) {
     ...ExtractionEvalRunFields
+  }
+}
+
+fragment ExtractionEvalRefreezeProgressFields on ExtractionEvalRefreezeProgress {
+  workflowId
+  status
+  total
+  frozen
+  skipped
+  failed
+}
+
+query ExtractionEvalRefreeze {
+  extractionEvalRefreeze {
+    ...ExtractionEvalRefreezeProgressFields
+  }
+}
+
+mutation RefreezeExtractionEvalCases($input: RefreezeExtractionEvalCasesInput!) {
+  refreezeExtractionEvalCases(input: $input) {
+    queued
+    workflowId
+    alreadyRunning
   }
 }
 

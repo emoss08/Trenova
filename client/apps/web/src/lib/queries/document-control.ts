@@ -6,4 +6,9 @@ export const documentControl = createQueryKeys("documentControl", {
     queryKey: ["get"],
     queryFn: async () => apiService.documentControlService.get(),
   }),
+  extractionStatus: () => ({
+    queryKey: ["extraction-status"],
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.documentService.getExtractionStatus({ signal }),
+  }),
 });

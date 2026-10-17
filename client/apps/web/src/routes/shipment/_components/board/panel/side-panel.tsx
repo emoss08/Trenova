@@ -1,4 +1,5 @@
 import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { AI_SETUP_PATH } from "@/lib/ai-setup";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
@@ -14,8 +15,6 @@ import { ActionQueue } from "./action-queue";
 import { ActivityTimeline } from "./activity/activity-timeline";
 import { SIDE_PANEL_FRAME_CLASS } from "./side-panel-skeleton";
 import { Watchlist } from "./watchlist";
-
-const AI_SETUP_PATH = "/admin/agent-control?tab=providers";
 
 export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
   const t = useT();

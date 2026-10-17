@@ -1647,7 +1647,7 @@ export const adminLinks: SidebarLink[] = [
   {
     href: "/admin/document-intelligence",
     keywords: ["ocr", "extraction", "capture", "ai", "scanning"],
-    title: "Document intelligence",
+    title: "Document extraction",
     group: "AI & Automation",
     resource: Resource.DocumentControl,
     requiredOperation: Operation.Read,

@@ -21,10 +21,21 @@ func (s *Service) PurgeExpiredAssignments(
 	}
 
 	return sweep.Run(ctx, req, func(ctx context.Context, before int64, limit int) (int64, error) {
-		return s.assignments.PurgeBefore(ctx, extractionrolloutports.PurgeRolloutAssignmentsRequest{
+		purge := extractionrolloutports.PurgeRolloutAssignmentsRequest{
 			TenantInfo: req.TenantInfo,
 			Before:     before,
 			Limit:      limit,
-		})
+		}
+		assignments, err := s.assignments.PurgeBefore(ctx, purge)
+		if err != nil {
+			return assignments, err
+		}
+		purge.Limit = max(limit-int(assignments), 0)
+		if purge.Limit == 0 {
+			return assignments, nil
+		}
+		exclusions, err := s.exclusions.PurgeBefore(ctx, purge)
+
+		return assignments + exclusions, err
 	})
 }

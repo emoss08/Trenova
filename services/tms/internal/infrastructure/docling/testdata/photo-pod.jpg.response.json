@@ -1,0 +1,778 @@
+{
+ "confidence": {
+  "layout_score": 0.7125813314853396,
+  "low_grade": "fair",
+  "low_score": 0.7264174871332949,
+  "mean_grade": "good",
+  "mean_score": 0.8509428879648919,
+  "ocr_score": 0.9893044444444443,
+  "parse_score": null,
+  "table_score": null
+ },
+ "document": {
+  "doclang_content": null,
+  "doctags_content": null,
+  "filename": "photo-pod.jpg",
+  "html_content": null,
+  "json_content": {
+   "body": {
+    "children": [
+     {
+      "$ref": "#/texts/0"
+     },
+     {
+      "$ref": "#/texts/1"
+     },
+     {
+      "$ref": "#/texts/2"
+     },
+     {
+      "$ref": "#/groups/0"
+     },
+     {
+      "$ref": "#/tables/0"
+     },
+     {
+      "$ref": "#/groups/1"
+     },
+     {
+      "$ref": "#/texts/6"
+     },
+     {
+      "$ref": "#/groups/2"
+     }
+    ],
+    "content_layer": "body",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/body"
+   },
+   "form_items": [],
+   "furniture": {
+    "children": [],
+    "content_layer": "furniture",
+    "label": "unspecified",
+    "meta": null,
+    "name": "_root_",
+    "parent": null,
+    "self_ref": "#/furniture"
+   },
+   "groups": [
+    {
+     "children": [
+      {
+       "$ref": "#/texts/3"
+      },
+      {
+       "$ref": "#/texts/4"
+      },
+      {
+       "$ref": "#/texts/5"
+      }
+     ],
+     "content_layer": "body",
+     "label": "key_value_area",
+     "meta": null,
+     "name": "group",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/0"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "label": "key_value_area",
+     "meta": null,
+     "name": "group",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/1"
+    },
+    {
+     "children": [
+      {
+       "$ref": "#/texts/7"
+      },
+      {
+       "$ref": "#/texts/8"
+      },
+      {
+       "$ref": "#/pictures/0"
+      }
+     ],
+     "content_layer": "body",
+     "label": "key_value_area",
+     "meta": null,
+     "name": "group",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "self_ref": "#/groups/2"
+    }
+   ],
+   "key_value_items": [],
+   "name": "photo-pod",
+   "origin": {
+    "binary_hash": 9561357109986988681,
+    "filename": "photo-pod.jpg",
+    "mimetype": "application/pdf",
+    "uri": null
+   },
+   "pages": {
+    "1": {
+     "image": null,
+     "page_no": 1,
+     "size": {
+      "height": 1900.0,
+      "width": 1500.0
+     }
+    }
+   },
+   "pictures": [
+    {
+     "annotations": [],
+     "captions": [],
+     "children": [],
+     "content_layer": "body",
+     "footnotes": [],
+     "image": null,
+     "label": "picture",
+     "meta": null,
+     "parent": {
+      "$ref": "#/groups/2"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 863.117431640625,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 483.1221618652344,
+        "r": 772.335205078125,
+        "t": 928.6907348632812
+       },
+       "charspan": [
+        0,
+        0
+       ],
+       "page_no": 1
+      }
+     ],
+     "references": [],
+     "self_ref": "#/pictures/0"
+    }
+   ],
+   "schema_name": "DoclingDocument",
+   "tables": [
+    {
+     "annotations": [],
+     "captions": [],
+     "children": [],
+     "content_layer": "body",
+     "data": {
+      "grid": [
+       [
+        {
+         "bbox": {
+          "b": 718.8251139322916,
+          "coord_origin": "TOPLEFT",
+          "l": 354.6741129557292,
+          "r": 416.8138020833333,
+          "t": 693.9390462239584
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 0,
+         "text": "Pallets"
+        },
+        {
+         "bbox": {
+          "b": 727.4395345052084,
+          "coord_origin": "TOPLEFT",
+          "l": 464.613525390625,
+          "r": 562.125,
+          "t": 699.6819661458334
+         },
+         "col_span": 3,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 0,
+         "text": "Description"
+        },
+        {
+         "bbox": {
+          "b": 727.4395345052084,
+          "coord_origin": "TOPLEFT",
+          "l": 464.613525390625,
+          "r": 562.125,
+          "t": 699.6819661458334
+         },
+         "col_span": 3,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 0,
+         "text": "Description"
+        },
+        {
+         "bbox": {
+          "b": 727.4395345052084,
+          "coord_origin": "TOPLEFT",
+          "l": 464.613525390625,
+          "r": 562.125,
+          "t": 699.6819661458334
+         },
+         "col_span": 3,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 1,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 0,
+         "text": "Description"
+        }
+       ],
+       [
+        {
+         "bbox": {
+          "b": 762.8543294270834,
+          "coord_origin": "TOPLEFT",
+          "l": 353.7181396484375,
+          "r": 381.4419759114583,
+          "t": 738.9254557291666
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 1,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 0,
+         "start_row_offset_idx": 1,
+         "text": "22"
+        },
+        {
+         "bbox": {
+          "b": 776.2545572916666,
+          "coord_origin": "TOPLEFT",
+          "l": 463.6575520833333,
+          "r": 621.3966878255209,
+          "t": 744.6683756510416
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 2,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 1,
+         "start_row_offset_idx": 1,
+         "text": "Packaged snack foods"
+        },
+        {
+         "bbox": {
+          "b": 789.65478515625,
+          "coord_origin": "TOPLEFT",
+          "l": 844.1435546875,
+          "r": 925.403076171875,
+          "t": 720.7394205729166
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 3,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 2,
+         "start_row_offset_idx": 1,
+         "text": "Received 22"
+        },
+        {
+         "bbox": {
+          "b": 794.4405924479166,
+          "coord_origin": "TOPLEFT",
+          "l": 998.0586751302084,
+          "r": 1080.2742513020833,
+          "t": 727.4395345052084
+         },
+         "col_span": 1,
+         "column_header": false,
+         "end_col_offset_idx": 4,
+         "end_row_offset_idx": 2,
+         "fillable": false,
+         "row_header": false,
+         "row_section": false,
+         "row_span": 1,
+         "start_col_offset_idx": 3,
+         "start_row_offset_idx": 1,
+         "text": "Damaged 0"
+        }
+       ]
+      ],
+      "num_cols": 4,
+      "num_rows": 2,
+      "orientation": "rot_0",
+      "table_cells": [
+       {
+        "bbox": {
+         "b": 718.8251139322916,
+         "coord_origin": "TOPLEFT",
+         "l": 354.6741129557292,
+         "r": 416.8138020833333,
+         "t": 693.9390462239584
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 0,
+        "text": "Pallets"
+       },
+       {
+        "bbox": {
+         "b": 727.4395345052084,
+         "coord_origin": "TOPLEFT",
+         "l": 464.613525390625,
+         "r": 562.125,
+         "t": 699.6819661458334
+        },
+        "col_span": 3,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 1,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 0,
+        "text": "Description"
+       },
+       {
+        "bbox": {
+         "b": 789.65478515625,
+         "coord_origin": "TOPLEFT",
+         "l": 844.1435546875,
+         "r": 925.403076171875,
+         "t": 720.7394205729166
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 3,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 2,
+        "start_row_offset_idx": 1,
+        "text": "Received 22"
+       },
+       {
+        "bbox": {
+         "b": 794.4405924479166,
+         "coord_origin": "TOPLEFT",
+         "l": 998.0586751302084,
+         "r": 1080.2742513020833,
+         "t": 727.4395345052084
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 4,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 3,
+        "start_row_offset_idx": 1,
+        "text": "Damaged 0"
+       },
+       {
+        "bbox": {
+         "b": 762.8543294270834,
+         "coord_origin": "TOPLEFT",
+         "l": 353.7181396484375,
+         "r": 381.4419759114583,
+         "t": 738.9254557291666
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 1,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 0,
+        "start_row_offset_idx": 1,
+        "text": "22"
+       },
+       {
+        "bbox": {
+         "b": 776.2545572916666,
+         "coord_origin": "TOPLEFT",
+         "l": 463.6575520833333,
+         "r": 621.3966878255209,
+         "t": 744.6683756510416
+        },
+        "col_span": 1,
+        "column_header": false,
+        "end_col_offset_idx": 2,
+        "end_row_offset_idx": 2,
+        "fillable": false,
+        "row_header": false,
+        "row_section": false,
+        "row_span": 1,
+        "start_col_offset_idx": 1,
+        "start_row_offset_idx": 1,
+        "text": "Packaged snack foods"
+       }
+      ]
+     },
+     "footnotes": [],
+     "image": null,
+     "label": "table",
+     "meta": null,
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1076.5579833984375,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 349.46142578125,
+        "r": 1130.9422607421875,
+        "t": 1209.6384887695312
+       },
+       "charspan": [
+        0,
+        0
+       ],
+       "page_no": 1
+      }
+     ],
+     "references": [],
+     "self_ref": "#/tables/0"
+    }
+   ],
+   "texts": [
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "PROOF OF DELIVERY",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1425.25,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 533.4451497395834,
+        "r": 890.03125,
+        "t": 1482.6794026692708
+       },
+       "charspan": [
+        0,
+        17
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/0",
+     "text": "PROOF OF DELIVERY"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "section_header",
+     "level": 1,
+     "meta": null,
+     "orig": "Delivery receipt #: VG14-88213",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1358.248982747396,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 356.5861002604167,
+        "r": 688.3163248697916,
+        "t": 1403.2353515625
+       },
+       "charspan": [
+        0,
+        30
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/1",
+     "text": "Delivery receipt #: VG14-88213"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Load: RC-48213",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1326.662801106771,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 354.6741129557292,
+        "r": 494.2493896484375,
+        "t": 1359.2061360677085
+       },
+       "charspan": [
+        0,
+        14
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/2",
+     "text": "Load: RC-48213"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "PO: 55318 BOL: HF-2026-10433",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1309.4339599609375,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 508.5893147786458,
+        "r": 801.123779296875,
+        "t": 1349.634562174479
+       },
+       "charspan": [
+        0,
+        28
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/3",
+     "text": "PO: 55318 BOL: HF-2026-10433"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Consignee: Valley Grocers #14, 88 Commerce Dr, Reno, NV 89502",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1258.704630533854,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 352.7621256510417,
+        "r": 908.1951497395834,
+        "t": 1313.2625732421875
+       },
+       "charspan": [
+        0,
+        61
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/4",
+     "text": "Consignee: Valley Grocers #14, 88 Commerce Dr, Reno, NV 89502"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Delivered: 10/22/202607:42",
+     "parent": {
+      "$ref": "#/groups/0"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1230.947062174479,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 352.7621256510417,
+        "r": 601.32080078125,
+        "t": 1269.233357747396
+       },
+       "charspan": [
+        0,
+        26
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/5",
+     "text": "Delivered: 10/22/202607:42"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Exceptions: none",
+     "parent": {
+      "$ref": "#/body"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 1046.2156575520835,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 346.0701497395833,
+        "r": 494.2493896484375,
+        "t": 1079.7162272135415
+       },
+       "charspan": [
+        0,
+        16
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/6",
+     "text": "Exceptions: none"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Received by: M. Ortega",
+     "parent": {
+      "$ref": "#/groups/2"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 939.0140787760416,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 342.2461751302083,
+        "r": 560.2130126953125,
+        "t": 981.1289876302084
+       },
+       "charspan": [
+        0,
+        22
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/7",
+     "text": "Received by: M. Ortega"
+    },
+    {
+     "children": [],
+     "content_layer": "body",
+     "formatting": null,
+     "hyperlink": null,
+     "label": "text",
+     "meta": null,
+     "orig": "Signature:",
+     "parent": {
+      "$ref": "#/groups/2"
+     },
+     "prov": [
+      {
+       "bbox": {
+        "b": 885.4132486979166,
+        "coord_origin": "BOTTOMLEFT",
+        "l": 339.37819417317706,
+        "r": 442.6256510416667,
+        "t": 918.9137369791666
+       },
+       "charspan": [
+        0,
+        10
+       ],
+       "page_no": 1
+      }
+     ],
+     "self_ref": "#/texts/8",
+     "text": "Signature:"
+    }
+   ],
+   "version": "1.10.0"
+  },
+  "md_content": null,
+  "text_content": null
+ },
+ "errors": [],
+ "processing_time": 9.394811767000192,
+ "status": "success",
+ "timings": {}
+}

@@ -25,6 +25,217 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// CasePages — table "extraction_eval_case_pages", alias "eecp"
+// ---------------------------------------------------------------------------
+
+// CasePagesTable holds the table name, alias, and primary key columns
+// for the "extraction_eval_case_pages" table. The alias "eecp" is used in all generated
+// SQL fragments (e.g. "eecp.id = ?").
+var CasePagesTable = buncolgen.TableInfo{
+	Name:       "extraction_eval_case_pages",
+	Alias:      "eecp",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// CasePagesColumns provides type-safe column references for the "extraction_eval_case_pages" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CasePagesColumns.ID.String())
+//	// SELECT eecp.id FROM extraction_eval_case_pages AS eecp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CasePagesColumns.ID.Eq(), id)           // WHERE eecp.id = ?
+//	q.Order(CasePagesColumns.CreatedAt.OrderDesc())  // ORDER BY eecp.created_at DESC
+var CasePagesColumns = struct {
+	ID               buncolgen.Column // "id" → qualified: "eecp.id"
+	BusinessUnitID   buncolgen.Column // "business_unit_id" → qualified: "eecp.business_unit_id"
+	OrganizationID   buncolgen.Column // "organization_id" → qualified: "eecp.organization_id"
+	CaseID           buncolgen.Column // "case_id" → qualified: "eecp.case_id"
+	TextSource       buncolgen.Column // "text_source" → qualified: "eecp.text_source"
+	Pages            buncolgen.Column // "pages" → qualified: "eecp.pages"
+	PageCount        buncolgen.Column // "page_count" → qualified: "eecp.page_count"
+	InputHash        buncolgen.Column // "input_hash" → qualified: "eecp.input_hash"
+	ConverterVersion buncolgen.Column // "converter_version" → qualified: "eecp.converter_version"
+	FrozenByID       buncolgen.Column // "frozen_by_id" → qualified: "eecp.frozen_by_id"
+	FrozenAt         buncolgen.Column // "frozen_at" → qualified: "eecp.frozen_at"
+	CreatedAt        buncolgen.Column // "created_at" → qualified: "eecp.created_at"
+	UpdatedAt        buncolgen.Column // "updated_at" → qualified: "eecp.updated_at"
+}{
+	ID:               buncolgen.NewColumn("id", "eecp"),
+	BusinessUnitID:   buncolgen.NewColumn("business_unit_id", "eecp"),
+	OrganizationID:   buncolgen.NewColumn("organization_id", "eecp"),
+	CaseID:           buncolgen.NewColumn("case_id", "eecp"),
+	TextSource:       buncolgen.NewColumn("text_source", "eecp"),
+	Pages:            buncolgen.NewColumn("pages", "eecp"),
+	PageCount:        buncolgen.NewColumn("page_count", "eecp"),
+	InputHash:        buncolgen.NewColumn("input_hash", "eecp"),
+	ConverterVersion: buncolgen.NewColumn("converter_version", "eecp"),
+	FrozenByID:       buncolgen.NewColumn("frozen_by_id", "eecp"),
+	FrozenAt:         buncolgen.NewColumn("frozen_at", "eecp"),
+	CreatedAt:        buncolgen.NewColumn("created_at", "eecp"),
+	UpdatedAt:        buncolgen.NewColumn("updated_at", "eecp"),
+}
+
+// CasePagesFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CasePages.GetStaticFieldMap().
+var CasePagesFieldMap = map[string]string{
+	"id":               "id",
+	"businessUnitId":   "business_unit_id",
+	"organizationId":   "organization_id",
+	"caseId":           "case_id",
+	"textSource":       "text_source",
+	"pages":            "pages",
+	"pageCount":        "page_count",
+	"inputHash":        "input_hash",
+	"converterVersion": "converter_version",
+	"frozenById":       "frozen_by_id",
+	"frozenAt":         "frozen_at",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// CasePagesInsertableColumns lists column names suitable for INSERT statements on the "extraction_eval_case_pages" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CasePagesInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"case_id",
+	"text_source",
+	"pages",
+	"page_count",
+	"input_hash",
+	"converter_version",
+	"frozen_by_id",
+	"frozen_at",
+	"created_at",
+	"updated_at",
+}
+
+// CasePagesRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CasePagesRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var CasePagesRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// CasePagesScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE eecp.organization_id = ? AND eecp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	extractionevalcol.CasePagesScopeTenant(sq, ti).
+//		Where(extractionevalcol.CasePagesColumns.ID.Eq(), id)
+func CasePagesScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, CasePagesColumns.OrganizationID, CasePagesColumns.BusinessUnitID, ti)
+}
+
+// CasePagesScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return extractionevalcol.CasePagesScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(extractionevalcol.CasePagesColumns.ID.In(), bun.List(ids))
+//	})
+func CasePagesScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, CasePagesColumns.OrganizationID, CasePagesColumns.BusinessUnitID, ti)
+}
+
+// CasePagesScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return extractionevalcol.CasePagesScopeTenantDelete(dq, req.TenantInfo).
+//			Where(extractionevalcol.CasePagesColumns.ID.Eq(), id)
+//	})
+func CasePagesScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, CasePagesColumns.OrganizationID, CasePagesColumns.BusinessUnitID, ti)
+}
+
+// CasePagesApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(extractionevalcol.CasePagesApplyTenant(tenantInfo))
+func CasePagesApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(CasePagesColumns.OrganizationID, CasePagesColumns.BusinessUnitID, ti)
+}
+
+// CasePagesFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "extraction_eval_case_pages" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CasePagesFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CasePagesFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CaseID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseId" → DB: "case_id"
+	TextSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textSource" → DB: "text_source"
+	Pages            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pages" → DB: "pages"
+	PageCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageCount" → DB: "page_count"
+	InputHash        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputHash" → DB: "input_hash"
+	ConverterVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "converterVersion" → DB: "converter_version"
+	FrozenByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "frozenById" → DB: "frozen_by_id"
+	FrozenAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "frozenAt" → DB: "frozen_at"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	CaseID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("caseId", op, value)
+	},
+	TextSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("textSource", op, value)
+	},
+	Pages: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("pages", op, value)
+	},
+	PageCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("pageCount", op, value)
+	},
+	InputHash: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputHash", op, value)
+	},
+	ConverterVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("converterVersion", op, value)
+	},
+	FrozenByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("frozenById", op, value)
+	},
+	FrozenAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("frozenAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // ExtractionCase — table "extraction_eval_cases", alias "eec"
 // ---------------------------------------------------------------------------
 
@@ -661,6 +872,7 @@ var ExtractionRunColumns = struct {
 	ProviderModel    buncolgen.Column // "provider_model" → qualified: "eer.provider_model"
 	ServedModel      buncolgen.Column // "served_model" → qualified: "eer.served_model"
 	CaseLimit        buncolgen.Column // "case_limit" → qualified: "eer.case_limit"
+	TextSource       buncolgen.Column // "text_source" → qualified: "eer.text_source"
 	CasesTotal       buncolgen.Column // "cases_total" → qualified: "eer.cases_total"
 	CasesCompleted   buncolgen.Column // "cases_completed" → qualified: "eer.cases_completed"
 	CasesFailed      buncolgen.Column // "cases_failed" → qualified: "eer.cases_failed"
@@ -697,6 +909,7 @@ var ExtractionRunColumns = struct {
 	ProviderModel:    buncolgen.NewColumn("provider_model", "eer"),
 	ServedModel:      buncolgen.NewColumn("served_model", "eer"),
 	CaseLimit:        buncolgen.NewColumn("case_limit", "eer"),
+	TextSource:       buncolgen.NewColumn("text_source", "eer"),
 	CasesTotal:       buncolgen.NewColumn("cases_total", "eer"),
 	CasesCompleted:   buncolgen.NewColumn("cases_completed", "eer"),
 	CasesFailed:      buncolgen.NewColumn("cases_failed", "eer"),
@@ -739,6 +952,7 @@ var ExtractionRunFieldMap = map[string]string{
 	"providerModel":    "provider_model",
 	"servedModel":      "served_model",
 	"caseLimit":        "case_limit",
+	"textSource":       "text_source",
 	"casesTotal":       "cases_total",
 	"casesCompleted":   "cases_completed",
 	"casesFailed":      "cases_failed",
@@ -779,6 +993,7 @@ var ExtractionRunInsertableColumns = []string{
 	"provider_model",
 	"served_model",
 	"case_limit",
+	"text_source",
 	"cases_total",
 	"cases_completed",
 	"cases_failed",
@@ -879,6 +1094,7 @@ var ExtractionRunFilter = struct {
 	ProviderModel    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModel" → DB: "provider_model"
 	ServedModel      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "servedModel" → DB: "served_model"
 	CaseLimit        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseLimit" → DB: "case_limit"
+	TextSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textSource" → DB: "text_source"
 	CasesTotal       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesTotal" → DB: "cases_total"
 	CasesCompleted   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesCompleted" → DB: "cases_completed"
 	CasesFailed      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesFailed" → DB: "cases_failed"
@@ -934,6 +1150,9 @@ var ExtractionRunFilter = struct {
 	},
 	CaseLimit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("caseLimit", op, value)
+	},
+	TextSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("textSource", op, value)
 	},
 	CasesTotal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("casesTotal", op, value)

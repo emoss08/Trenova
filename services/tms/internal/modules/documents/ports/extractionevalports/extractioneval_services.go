@@ -33,6 +33,7 @@ type StartExtractionEvalRunRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
 	CaseLimit  int
+	TextSource extractioneval.TextSource
 }
 
 type ExtractionAccuracyRequest struct {
@@ -86,6 +87,15 @@ type FinishExtractionEvalRunRequest struct {
 }
 
 type ExtractionEvalService interface {
+	RefreezeCases(
+		ctx context.Context,
+		req *RefreezeExtractionEvalCasesRequest,
+		actor *permissionports.RequestActor,
+	) (*RefreezeExtractionEvalCasesResult, error)
+	RefreezeProgress(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*ExtractionEvalRefreezeProgress, error)
 	PromoteCorrection(
 		ctx context.Context,
 		req *PromoteCorrectionRequest,
@@ -237,4 +247,75 @@ type ExtractionEvalRunStart struct {
 
 type ExtractionEvalRunStarter interface {
 	StartExtractionEvalRun(ctx context.Context, start *ExtractionEvalRunStart) (string, error)
+}
+
+type ExtractionEvalRefreezeStart struct {
+	TenantInfo pagination.TenantInfo
+	CaseIDs    []pulid.ID
+}
+
+type ExtractionEvalRefreezeStarted struct {
+	WorkflowID     string
+	AlreadyRunning bool
+}
+
+type ExtractionEvalRefreezeProgress struct {
+	WorkflowID string
+	Status     extractioneval.RefreezeStatus
+	Total      int
+	Frozen     int
+	Skipped    int
+	Failed     int
+}
+
+type ExtractionEvalRefreezeStarter interface {
+	StartExtractionEvalRefreeze(
+		ctx context.Context,
+		start *ExtractionEvalRefreezeStart,
+	) (*ExtractionEvalRefreezeStarted, error)
+	ExtractionEvalRefreezeProgress(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*ExtractionEvalRefreezeProgress, error)
+}
+
+type RefreezeExtractionEvalCasesRequest struct {
+	TenantInfo pagination.TenantInfo
+	CaseIDs    []pulid.ID
+}
+
+type RefreezeExtractionEvalCasesResult struct {
+	Queued         int
+	WorkflowID     string
+	AlreadyRunning bool
+}
+
+type ConvertedCasePages struct {
+	Pages            []extractioneval.Page
+	ConverterVersion string
+}
+
+type ExtractionCaseConverter interface {
+	ConvertCaseDocument(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		documentID pulid.ID,
+	) (*ConvertedCasePages, error)
+}
+
+type FreezeCasePagesRequest struct {
+	TenantInfo pagination.TenantInfo
+	CaseID     pulid.ID
+}
+
+type FreezeCasePagesResult struct {
+	Frozen bool
+	Reason string
+}
+
+type ExtractionEvalCaseFreezer interface {
+	FreezeDoclingPages(
+		ctx context.Context,
+		req *FreezeCasePagesRequest,
+	) (*FreezeCasePagesResult, error)
 }

@@ -159,7 +159,7 @@ export const PLAN_CAPABILITY_LABELS: Readonly<Record<string, { label: string }>>
   "agent.automation": { label: "Agent automation" },
   "agent.web_search": { label: "Agent web search" },
   "carrier_intelligence.paid": { label: "Carrier intelligence lookups" },
-  document_intelligence: { label: "Document intelligence" },
+  document_intelligence: { label: "Document extraction" },
   sms: { label: "Text messages" },
   sso: { label: "Single sign-on" },
 };

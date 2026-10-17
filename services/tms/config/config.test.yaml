@@ -87,6 +87,11 @@ aiAudit:
 renderer:
   gotenbergUrl: ""
 
+# No document converter in tests: extraction paths use the hand-written mock,
+# and the integration test starts its own pinned docling-serve container.
+documentConversion:
+  doclingUrl: ""
+
 # AI: no outside calls from tests
 ai:
   modelPriceReference: false

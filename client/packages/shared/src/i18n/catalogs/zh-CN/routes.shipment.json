@@ -632,6 +632,7 @@
   "The earliest time the driver is expected to arrive at this stop": "预计司机抵达此停靠点的最早时间",
   "The extracted shipment draft is ready for review.": "提取的运单草稿已可供查看。",
   "The facility, warehouse, or yard where the driver will stop": "司机将停靠的场所、仓库或场区",
+  "The file is stored, but no AI provider can read documents for your organization, so no shipment draft was built.": "文件已存储，但没有任何 AI 提供商可以为您的组织读取文档，因此未生成货运草稿。",
   "The issue date on the permit, not the day it was keyed in.": "许可上所载的核发日期，而非录入系统的日期。",
   "The latest acceptable arrival time, leave blank for exact appointments": "可接受的最晚到达时间；若为精确预约请留空",
   "The link could not be copied": "无法复制链接",

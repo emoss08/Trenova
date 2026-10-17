@@ -237,6 +237,18 @@ renderer:
   # Internal network only: Gotenberg renders organization-authored HTML.
   gotenbergUrl: http://gotenberg:3000
 
+documentConversion:
+  # Internal network only: docling-serve parses uploaded files. The key comes
+  # from .env (TRENOVA_DOCUMENTCONVERSION_APIKEY). Without an AI provider no
+  # organization needs it: leave doclingUrl empty and remove the docling
+  # service from compose.yml.
+  doclingUrl: http://docling:5001
+  apiKey: "" # from .env
+  maxConcurrent: 2 # match DOCLING_SERVE_ENG_LOC_NUM_WORKERS in compose.yml
+  maxFileBytes: 52428800 # match DOCLING_SERVE_MAX_FILE_SIZE
+  maxPages: 50 # match DOCLING_SERVE_MAX_NUM_PAGES
+  ocrLanguages: [en]
+
 portal:
   baseUrl: https://localhost/dash # from .env (https://DOMAIN/dash)
 
