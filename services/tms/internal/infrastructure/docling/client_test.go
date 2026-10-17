@@ -166,7 +166,11 @@ func TestSubmitWithVisionEndpointUsesTheVLMPipeline(t *testing.T) {
 
 	assert.Equal(t, []string{"vlm"}, recorded.fields["pipeline"])
 	require.Len(t, recorded.fields["vlm_pipeline_model_api"], 1)
-	assert.Contains(t, recorded.fields["vlm_pipeline_model_api"][0], `"url":"http://vlm:8000/v1/chat/completions"`)
+	assert.Contains(
+		t,
+		recorded.fields["vlm_pipeline_model_api"][0],
+		`"url":"http://vlm:8000/v1/chat/completions"`,
+	)
 	assert.Contains(t, recorded.fields["vlm_pipeline_model_api"][0], "granite-docling-258M")
 }
 
@@ -257,7 +261,12 @@ func TestSubmitRefusesOversizedFilesBeforeUpload(t *testing.T) {
 	req := convertRequest("12345")
 	req.Size = 0
 	_, err = client.Submit(t.Context(), req)
-	require.ErrorIs(t, err, kernelports.ErrDocumentNotConvertible, "an understated size is caught on read")
+	require.ErrorIs(
+		t,
+		err,
+		kernelports.ErrDocumentNotConvertible,
+		"an understated size is caught on read",
+	)
 	assert.Zero(t, calls.Load())
 }
 
@@ -269,7 +278,10 @@ func TestStatusMapsTaskStates(t *testing.T) {
 		"started":         {State: kernelports.ConversionStateRunning},
 		"success":         {State: kernelports.ConversionStateSucceeded},
 		"partial_success": {State: kernelports.ConversionStateSucceeded},
-		"failure":         {State: kernelports.ConversionStateFailed, Message: "Internal processing error."},
+		"failure": {
+			State:   kernelports.ConversionStateFailed,
+			Message: "Internal processing error.",
+		},
 	}
 	for status, want := range states {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -308,7 +320,12 @@ func TestLostTaskIsReportedAsNotFound(t *testing.T) {
 
 	_, err = client.Result(t.Context(), "gone")
 	require.ErrorIs(t, err, kernelports.ErrConversionTaskNotFound)
-	assert.Equal(t, int32(2), calls.Load(), "a lost task is not retried here; the caller submits again")
+	assert.Equal(
+		t,
+		int32(2),
+		calls.Load(),
+		"a lost task is not retried here; the caller submits again",
+	)
 }
 
 func TestResultRendersTheDocument(t *testing.T) {
@@ -348,9 +365,11 @@ func TestResultOfAnUnreadableDocumentIsNotConvertible(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"document":{"filename":"x.pdf","json_content":null},"status":"failure",` +
-			`"errors":[{"component_type":"user_input","error_message":"docling-parse could not load document"}],` +
-			`"processing_time":0.01}`))
+		_, _ = w.Write(
+			[]byte(`{"document":{"filename":"x.pdf","json_content":null},"status":"failure",` +
+				`"errors":[{"component_type":"user_input","error_message":"docling-parse could not load document"}],` +
+				`"processing_time":0.01}`),
+		)
 	}))
 	defer server.Close()
 

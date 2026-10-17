@@ -203,9 +203,17 @@ func TestToLineConvertsBothOrigins(t *testing.T) {
 
 	size := pageSize{Width: 600, Height: 800}
 
-	bottomLeft, ok := toLine("Total", &bbox{L: 60, T: 780, R: 120, B: 760, CoordOrigin: "BOTTOMLEFT"}, size)
+	bottomLeft, ok := toLine(
+		"Total",
+		&bbox{L: 60, T: 780, R: 120, B: 760, CoordOrigin: "BOTTOMLEFT"},
+		size,
+	)
 	require.True(t, ok)
-	assert.Equal(t, kernelports.ConvertedLine{Text: "Total", X: 0.1, Y: 0.025, W: 0.1, H: 0.025}, bottomLeft)
+	assert.Equal(
+		t,
+		kernelports.ConvertedLine{Text: "Total", X: 0.1, Y: 0.025, W: 0.1, H: 0.025},
+		bottomLeft,
+	)
 
 	topLeft, ok := toLine("Total", &bbox{L: 60, T: 20, R: 120, B: 40, CoordOrigin: "TOPLEFT"}, size)
 	require.True(t, ok)
@@ -223,7 +231,10 @@ func TestLinesCapPrefersCellsAndShortItems(t *testing.T) {
 
 	builder := &pageBuilder{}
 	for range maxLinesPerPage {
-		builder.items = append(builder.items, kernelports.ConvertedLine{Text: "a long paragraph line"})
+		builder.items = append(
+			builder.items,
+			kernelports.ConvertedLine{Text: "a long paragraph line"},
+		)
 	}
 	builder.items = append(builder.items, kernelports.ConvertedLine{Text: "RC-1"})
 	builder.cells = []kernelports.ConvertedLine{{Text: "$1,850.00"}}
@@ -247,7 +258,13 @@ func TestSourceFlags(t *testing.T) {
 	}{
 		{"native pdf", sourcePDF, &confidenceScores{ParseScore: &score}, false, true},
 		{"scanned pdf", sourcePDF, &confidenceScores{OCRScore: &score}, true, false},
-		{"mixed pdf", sourcePDF, &confidenceScores{ParseScore: &score, OCRScore: &score}, true, true},
+		{
+			"mixed pdf",
+			sourcePDF,
+			&confidenceScores{ParseScore: &score, OCRScore: &score},
+			true,
+			true,
+		},
 		{"pdf without scores", sourcePDF, nil, false, true},
 		{"photo", sourceImage, &confidenceScores{OCRScore: &score}, true, false},
 		{"office", sourceOther, nil, false, true},

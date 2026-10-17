@@ -8,9 +8,6 @@
 package aidocumentservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"context"
 	"strings"
 
@@ -20,8 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
@@ -31,18 +31,18 @@ import (
 type Params struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Config     *config.Config
-	Metrics    *metrics.Registry
+	Logger       *zap.Logger
+	Config       *config.Config
+	Metrics      *metrics.Registry
 	Completion   agentports.CompletionService
 	Availability agentports.ProviderAvailability `optional:"true"`
 	Plans        platformplanports.PlanService   `optional:"true"`
 }
 
 type Service struct {
-	logger     *zap.Logger
-	cfg        *config.AIConfig
-	metrics    *metrics.Registry
+	logger       *zap.Logger
+	cfg          *config.AIConfig
+	metrics      *metrics.Registry
 	completion   agentports.CompletionService
 	availability agentports.ProviderAvailability
 	plans        platformplanports.PlanService
@@ -50,9 +50,9 @@ type Service struct {
 
 func New(p Params) documentaiextractionports.AIDocumentService {
 	return &Service{
-		logger:     p.Logger.Named("service.ai-document"),
-		cfg:        p.Config.GetAIConfig(),
-		metrics:    p.Metrics,
+		logger:       p.Logger.Named("service.ai-document"),
+		cfg:          p.Config.GetAIConfig(),
+		metrics:      p.Metrics,
 		completion:   p.Completion,
 		availability: p.Availability,
 		plans:        p.Plans,

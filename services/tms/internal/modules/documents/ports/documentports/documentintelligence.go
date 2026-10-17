@@ -37,5 +37,8 @@ type ExtractionStatus struct {
 }
 
 type ExtractionStatusReader interface {
-	ExtractionStatus(ctx context.Context, tenantInfo pagination.TenantInfo) (*ExtractionStatus, error)
+	ExtractionStatus(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*ExtractionStatus, error)
 }

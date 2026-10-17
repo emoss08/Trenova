@@ -72,10 +72,12 @@ func (s *Service) RefreezeCases(
 	}
 
 	s.logAction(actor, &auditports.LogActionParams{
-		Resource:       permission.ResourceAgentEvalSuite,
-		ResourceID:     workflowID,
-		Operation:      permission.OpUpdate,
-		CurrentState:   jsonutils.MustToJSON(map[string]any{"caseIds": caseIDs, "textSource": extractioneval.TextSourceDocling}),
+		Resource:   permission.ResourceAgentEvalSuite,
+		ResourceID: workflowID,
+		Operation:  permission.OpUpdate,
+		CurrentState: jsonutils.MustToJSON(
+			map[string]any{"caseIds": caseIDs, "textSource": extractioneval.TextSourceDocling},
+		),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}, "Extraction evaluation cases queued to be frozen again through Docling")
@@ -150,7 +152,11 @@ func (s *Service) FreezeDoclingPages(
 		).WithInternal(errConverterMissing)
 	}
 
-	converted, err := s.converter.ConvertCaseDocument(ctx, req.TenantInfo, *evalCase.SourceDocumentID)
+	converted, err := s.converter.ConvertCaseDocument(
+		ctx,
+		req.TenantInfo,
+		*evalCase.SourceDocumentID,
+	)
 	switch {
 	case errors.Is(err, kernelports.ErrDocumentNotConvertible), errortypes.IsNotFoundError(err):
 		return &extractionevalports.FreezeCasePagesResult{

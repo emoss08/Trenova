@@ -137,7 +137,12 @@ func formatFeatures(features *documentaiextractionports.AIDocumentFeatureSet) st
 
 func routePrompt(pages []documentaiextractionports.AIDocumentPage) string {
 	if documentaiextractionports.PagesAreMarkdown(pages) {
-		return strings.Replace(routeSystemPrompt, "Use the extracted text", "Use the document text", 1) +
+		return strings.Replace(
+			routeSystemPrompt,
+			"Use the extracted text",
+			"Use the document text",
+			1,
+		) +
 			markdownInputNote
 	}
 

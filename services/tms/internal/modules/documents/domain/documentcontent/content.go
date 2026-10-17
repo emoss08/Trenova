@@ -217,7 +217,12 @@ func (c *Content) PagedText() string {
 		if b.Len() > 0 {
 			b.WriteString("\n\n")
 		}
-		fmt.Fprintf(&b, "--- page %d ---\n%s", page.PageNumber, strings.TrimSpace(page.ExtractedText))
+		fmt.Fprintf(
+			&b,
+			"--- page %d ---\n%s",
+			page.PageNumber,
+			strings.TrimSpace(page.ExtractedText),
+		)
 	}
 
 	return b.String()

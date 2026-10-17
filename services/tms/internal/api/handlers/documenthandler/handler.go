@@ -1328,18 +1328,21 @@ func (h *Handler) setSignature(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.service.SetSignature(c.Request.Context(), &documentservice.SetSignatureRequest{
-		DocumentID: documentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	updated, err := h.service.SetSignature(
+		c.Request.Context(),
+		&documentservice.SetSignatureRequest{
+			DocumentID: documentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			Status:   req.Status,
+			SignedAt: req.SignedAt,
+			Version:  req.Version,
+			Actor:    requestActorFromAuthContext(authCtx),
 		},
-		Status:   req.Status,
-		SignedAt: req.SignedAt,
-		Version:  req.Version,
-		Actor:    requestActorFromAuthContext(authCtx),
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

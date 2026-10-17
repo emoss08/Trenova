@@ -34,28 +34,28 @@ func (e ExtractionEngine) IsValid() bool {
 type DocumentControl struct {
 	bun.BaseModel `bun:"table:document_controls,alias:dc" json:"-"`
 
-	ID                              pulid.ID `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                  pulid.ID `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                  pulid.ID `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull"`
-	EnableOCR                       bool     `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull"`
-	EnableAutoClassification        bool     `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull"`
-	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull"`
-	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull"`
-	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull"`
-	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull"`
-	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
-	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
-	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
-	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull"`
-	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull"`
-	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
-	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
-	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull"`
+	ID                              pulid.ID         `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID                  pulid.ID         `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID                  pulid.ID         `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	EnableDocumentIntelligence      bool             `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull"`
+	EnableOCR                       bool             `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull"`
+	EnableAutoClassification        bool             `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull"`
+	EnableAutoDocumentTypeAssociate bool             `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull"`
+	EnableAutoCreateDocumentTypes   bool             `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull"`
+	EnableShipmentDraftExtraction   bool             `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull"`
+	EnableAIAssistedClassification  bool             `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull"`
+	EnableAIAssistedExtraction      bool             `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
+	ShipmentDraftAllowedResources   []string         `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
+	EnableFullTextIndexing          bool             `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
+	EnableCapture                   bool             `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull"`
+	CaptureAutoFileCoverSheets      bool             `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull"`
+	CaptureRetentionDays            int              `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
+	CaptureMinAgentVersion          string           `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
+	CaptureAllowAutoUpdate          bool             `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull"`
 	ExtractionEngine                ExtractionEngine `json:"extractionEngine"                bun:"extraction_engine,type:VARCHAR(10),notnull,default:'legacy'"`
-	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
-	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version                         int64            `json:"version"                         bun:"version,type:BIGINT"`
+	CreatedAt                       int64            `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                       int64            `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {

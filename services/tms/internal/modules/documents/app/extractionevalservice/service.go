@@ -266,7 +266,11 @@ func (s *Service) freezeConvertedPages(
 	}
 
 	version := ""
-	content, err := s.contents.GetByDocumentID(ctx, *evalCase.SourceDocumentID, tenantOfCase(evalCase))
+	content, err := s.contents.GetByDocumentID(
+		ctx,
+		*evalCase.SourceDocumentID,
+		tenantOfCase(evalCase),
+	)
 	if err == nil {
 		version = content.ConverterVersion
 	} else if !errortypes.IsNotFoundError(err) {

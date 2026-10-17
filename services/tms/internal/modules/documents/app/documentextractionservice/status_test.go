@@ -72,7 +72,11 @@ func TestExtractionStatus(t *testing.T) {
 
 			orgID := pulid.MustNew("org_")
 			buID := pulid.MustNew("bu_")
-			tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: pulid.MustNew("usr_")}
+			tenantInfo := pagination.TenantInfo{
+				OrgID:  orgID,
+				BuID:   buID,
+				UserID: pulid.MustNew("usr_"),
+			}
 
 			control := tenant.NewDefaultDocumentControl(orgID, buID)
 			control.ExtractionEngine = tc.engine
@@ -91,9 +95,11 @@ func TestExtractionStatus(t *testing.T) {
 				DocumentControlRepo: controlRepo,
 				DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
 				ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-				DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-				WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
-				AIDocuments:         aiDocuments,
+				DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+					t,
+				),
+				WorkflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
+				AIDocuments:     aiDocuments,
 			})
 
 			status, err := service.ExtractionStatus(t.Context(), tenantInfo)

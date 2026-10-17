@@ -51,19 +51,19 @@ func startPinnedSidecar() (string, string, error) {
 			Image:        PinnedImage,
 			ExposedPorts: []string{"5001/tcp"},
 			Env: map[string]string{
-				"DOCLING_SERVE_API_KEY":                 liveAPIKey,
-				"DOCLING_SERVE_ENABLE_UI":               "false",
-				"DOCLING_SERVE_ENABLE_REMOTE_SERVICES":  "false",
-				"DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS":  "false",
-				"DOCLING_SERVE_ENG_KIND":                "local",
-				"DOCLING_SERVE_ENG_LOC_NUM_WORKERS":     "2",
-				"DOCLING_SERVE_LOAD_MODELS_AT_BOOT":     "true",
-				"DOCLING_SERVE_SINGLE_USE_RESULTS":      "true",
-				"DOCLING_SERVE_MAX_NUM_PAGES":           "50",
-				"DOCLING_SERVE_MAX_FILE_SIZE":           "52428800",
-				"DOCLING_SERVE_ENABLE_API_DOCS":         "false",
-				"DOCLING_SERVE_SCRATCH_PATH":            "/tmp/docling",
-				"DOCLING_SERVE_ARTIFACTS_PATH":          "/opt/app-root/src/.cache/docling/models",
+				"DOCLING_SERVE_API_KEY":                liveAPIKey,
+				"DOCLING_SERVE_ENABLE_UI":              "false",
+				"DOCLING_SERVE_ENABLE_REMOTE_SERVICES": "false",
+				"DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS": "false",
+				"DOCLING_SERVE_ENG_KIND":               "local",
+				"DOCLING_SERVE_ENG_LOC_NUM_WORKERS":    "2",
+				"DOCLING_SERVE_LOAD_MODELS_AT_BOOT":    "true",
+				"DOCLING_SERVE_SINGLE_USE_RESULTS":     "true",
+				"DOCLING_SERVE_MAX_NUM_PAGES":          "50",
+				"DOCLING_SERVE_MAX_FILE_SIZE":          "52428800",
+				"DOCLING_SERVE_ENABLE_API_DOCS":        "false",
+				"DOCLING_SERVE_SCRATCH_PATH":           "/tmp/docling",
+				"DOCLING_SERVE_ARTIFACTS_PATH":         "/opt/app-root/src/.cache/docling/models",
 			},
 			WaitingFor: wait.ForHTTP("/health").WithPort("5001/tcp").
 				WithStartupTimeout(5 * time.Minute),
@@ -144,7 +144,12 @@ func TestLiveSidecarIsThePinnedVersion(t *testing.T) {
 	client := liveClient(t)
 	require.NoError(t, client.Healthy(t.Context()))
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, liveBaseURL+"/v1/capabilities", http.NoBody)
+	req, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodGet,
+		liveBaseURL+"/v1/capabilities",
+		http.NoBody,
+	)
 	require.NoError(t, err)
 	req.Header.Set(apiKeyHeader, liveKey)
 	resp, err := http.DefaultClient.Do(req)
@@ -216,7 +221,12 @@ func TestLiveOCRIsHonoured(t *testing.T) {
 	unread, err := convertLive(t, client, "faxed-bol.pdf", "application/pdf", false)
 	require.NoError(t, err)
 	require.Len(t, unread.Pages, 1)
-	assert.NotContains(t, unread.Pages[0].Text, "HF-2026-10433", "do_ocr=false reads no scanned text")
+	assert.NotContains(
+		t,
+		unread.Pages[0].Text,
+		"HF-2026-10433",
+		"do_ocr=false reads no scanned text",
+	)
 	assert.False(t, unread.Pages[0].OCR)
 }
 

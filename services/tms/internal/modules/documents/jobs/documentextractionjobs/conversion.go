@@ -832,12 +832,16 @@ func (a *Activities) storeRawConversion(
 	}
 
 	key := documentcontent.RawObjectKey(doc.OrganizationID, doc.ID)
-	encrypted, err := a.encryption.EncryptBytesWithAADContext(ctx, compressed.Bytes(), encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeDocument,
-		OrganizationID: doc.OrganizationID,
-		BusinessUnitID: doc.BusinessUnitID,
-		ResourceID:     key,
-	})
+	encrypted, err := a.encryption.EncryptBytesWithAADContext(
+		ctx,
+		compressed.Bytes(),
+		encryptionservice.AAD{
+			Purpose:        encryptionservice.PurposeDocument,
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			ResourceID:     key,
+		},
+	)
 	if err != nil {
 		return "", fmt.Errorf("encrypt converted document: %w", err)
 	}

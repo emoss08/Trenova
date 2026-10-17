@@ -47,7 +47,7 @@ type Params struct {
 	SearchRepo          customerports.SearchRepository
 	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter     kernelports.WorkflowStarter
-	Plans               platformplanports.PlanService                 `optional:"true"`
+	Plans               platformplanports.PlanService               `optional:"true"`
 	AIDocuments         documentaiextractionports.AIDocumentService `optional:"true"`
 }
 

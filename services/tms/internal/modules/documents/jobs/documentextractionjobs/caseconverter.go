@@ -46,7 +46,10 @@ func (c *CaseConverter) ConvertCaseDocument(
 		return nil, fmt.Errorf(
 			"%w: %s",
 			kernelports.ErrDocumentNotConvertible,
-			unsupportedFormatMessage(conversionFormatOf(doc.FileType, doc.OriginalName), doc.FileType),
+			unsupportedFormatMessage(
+				conversionFormatOf(doc.FileType, doc.OriginalName),
+				doc.FileType,
+			),
 		)
 	case formatPlainText, formatPDF, formatImage, formatOffice, formatEmail:
 	}

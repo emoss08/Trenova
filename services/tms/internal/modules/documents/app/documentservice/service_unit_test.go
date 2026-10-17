@@ -1640,7 +1640,10 @@ func TestUnit_PlanDelete_CountsEveryVersionOfALineage(t *testing.T) {
 			_ context.Context,
 			_ documentports.ListDocumentVersionsRequest,
 		) ([]*document.Document, error) {
-			return []*document.Document{current, {ID: pulid.MustNew("doc_"), LineageID: lineage}}, nil
+			return []*document.Document{
+				current,
+				{ID: pulid.MustNew("doc_"), LineageID: lineage},
+			}, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
@@ -1708,7 +1711,10 @@ func TestUnit_Store_RefusesAFileTheValidatorRefuses(t *testing.T) {
 	deps := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
 
 	doc, err := deps.svc.Store(t.Context(), &documentports.StoreDocumentRequest{
-		TenantInfo:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		Content:      []byte("MZ"),
 		FileName:     "record.exe",
 		ContentType:  "application/x-msdownload",
