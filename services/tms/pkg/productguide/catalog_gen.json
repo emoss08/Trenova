@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b36ad977fea294e7a7121a53e95d4b74d4ef1c78010d5a795d8dcf80f846058f",
+  "version": "sha256:f94049d6bab2c501d394fb935f44dcf64034e66e780b953d76c5d0116f72a02d",
   "modules": [
     {
       "id": "home",
@@ -11006,7 +11006,9 @@
         "FMCSA lookup",
         "USDOT lookup",
         "new carriers",
-        "carrier onboarding"
+        "carrier onboarding",
+        "find a trucking company",
+        "carrier for a brokered load"
       ],
       "tasks": [
         {
@@ -11090,7 +11092,8 @@
         "partner carriers",
         "vendors",
         "MC number",
-        "DOT number"
+        "DOT number",
+        "carriers for brokered loads"
       ],
       "tasks": [
         {
@@ -14691,7 +14694,10 @@
         "work schedule",
         "shift patterns",
         "who is working",
-        "shift swaps"
+        "shift swaps",
+        "who is scheduled to work",
+        "weekend shifts",
+        "weekend schedule"
       ],
       "tasks": [
         {

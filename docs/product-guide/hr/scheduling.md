@@ -1,6 +1,6 @@
 ---
 path: /hr/scheduling
-aliases: [rota, roster, shift schedule, work schedule, shift patterns, who is working, shift swaps]
+aliases: [rota, roster, shift schedule, work schedule, shift patterns, who is working, shift swaps, who is scheduled to work, weekend shifts, weekend schedule]
 related:
   - /hr/workers
   - /hr/time-attendance
