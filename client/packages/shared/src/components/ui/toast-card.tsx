@@ -167,6 +167,8 @@ function useToastTimer({
       easing: "linear",
       fill: "forwards",
     });
+    // Cancelling on unmount rejects `finished`; nothing waits on it, so the rejection is expected.
+    void run.finished.catch(() => undefined);
     const since = runningSince.current;
     const left = remaining.current - (since === null ? 0 : Date.now() - since);
     run.currentTime = Math.min(duration, Math.max(0, duration - left));
