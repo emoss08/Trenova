@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
@@ -46,7 +47,8 @@ type Params struct {
 	SearchRepo          customerports.SearchRepository
 	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter     kernelports.WorkflowStarter
-	Plans               platformplanports.PlanService `optional:"true"`
+	Plans               platformplanports.PlanService                 `optional:"true"`
+	AIDocuments         documentaiextractionports.AIDocumentService `optional:"true"`
 }
 
 type Service struct {
@@ -61,11 +63,15 @@ type Service struct {
 	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	workflowStarter     kernelports.WorkflowStarter
 	plans               platformplanports.PlanService
+	aiDocuments         documentaiextractionports.AIDocumentService
 }
 
-var _ documentports.DocumentContentService = (*Service)(nil)
+var (
+	_ documentports.DocumentContentService = (*Service)(nil)
+	_ documentports.ExtractionStatusReader = (*Service)(nil)
+)
 
-func New(p Params) documentports.DocumentContentService {
+func New(p Params) *Service {
 	searchProjection := p.SearchProjection
 	if searchProjection == nil {
 		searchProjection = noopDocumentSearchProjectionService{}
@@ -88,7 +94,35 @@ func New(p Params) documentports.DocumentContentService {
 		searchProjection:    searchProjection,
 		workflowStarter:     workflowStarter,
 		plans:               p.Plans,
+		aiDocuments:         p.AIDocuments,
 	}
+}
+
+func AsContentService(s *Service) documentports.DocumentContentService { return s }
+
+func AsExtractionStatusReader(s *Service) documentports.ExtractionStatusReader { return s }
+
+func (s *Service) ExtractionStatus(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*documentports.ExtractionStatus, error) {
+	control, err := s.documentControlRepo.GetOrCreate(ctx, tenantInfo.OrgID, tenantInfo.BuID)
+	if err != nil {
+		return nil, err
+	}
+
+	providerAvailable := false
+	if s.aiDocuments != nil {
+		if providerAvailable, err = s.aiDocuments.ExtractionAvailable(ctx, tenantInfo); err != nil {
+			return nil, err
+		}
+	}
+
+	return &documentports.ExtractionStatus{
+		Engine:                 string(control.ExtractionEngine),
+		ModelProviderAvailable: providerAvailable,
+		ExtractionAvailable:    !control.UsesDocling() || providerAvailable,
+	}, nil
 }
 
 func (s *Service) GetContent(

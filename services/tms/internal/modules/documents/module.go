@@ -122,6 +122,8 @@ func SharedOptions() fx.Option {
 			documentpacketruleservice.NewValidator,
 			documenttemplateservice.NewValidator,
 			documentextractionservice.New,
+			documentextractionservice.AsContentService,
+			documentextractionservice.AsExtractionStatusReader,
 			documentoperationsservice.New,
 			documentsearchprojectionservice.New,
 			documentservice.New,

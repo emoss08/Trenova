@@ -29,3 +29,13 @@ type DocumentContentService interface {
 	Reextract(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) error
 	EnqueueExtraction(ctx context.Context, doc *document.Document, userID pulid.ID) error
 }
+
+type ExtractionStatus struct {
+	Engine                 string `json:"engine"`
+	ModelProviderAvailable bool   `json:"modelProviderAvailable"`
+	ExtractionAvailable    bool   `json:"extractionAvailable"`
+}
+
+type ExtractionStatusReader interface {
+	ExtractionStatus(ctx context.Context, tenantInfo pagination.TenantInfo) (*ExtractionStatus, error)
+}

@@ -35,6 +35,7 @@ type Params struct {
 	Service                *documentservice.Service
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
+	ExtractionStatus       documentports.ExtractionStatusReader
 	ImportAssistant        shipmentports.ShipmentImportAssistantService
 	PageAssistant          agentports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
@@ -47,6 +48,7 @@ type Handler struct {
 	service         *documentservice.Service
 	uploadService   *documentuploadservice.Service
 	contentService  documentports.DocumentContentService
+	extraction      documentports.ExtractionStatusReader
 	importAssistant shipmentports.ShipmentImportAssistantService
 	pageAssistant   agentports.PageAssistant
 	eh              *helpers.ErrorHandler
@@ -78,6 +80,7 @@ func New(p Params) *Handler {
 		service:         p.Service,
 		uploadService:   p.UploadService,
 		contentService:  p.DocumentContentService,
+		extraction:      p.ExtractionStatus,
 		importAssistant: p.ImportAssistant,
 		pageAssistant:   p.PageAssistant,
 		eh:              p.ErrorHandler,
@@ -153,6 +156,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/uploads/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
 		h.createUploadSession,
+	)
+	api.GET(
+		"/extraction-status/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.extractionStatus,
 	)
 	api.GET(
 		"/uploads/active/",
@@ -1440,4 +1448,19 @@ func (h *Handler) getImportAssistantHistory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) extractionStatus(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	status, err := h.extraction.ExtractionStatus(
+		c.Request.Context(),
+		pagination.FromAuthAsUser(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, status)
 }
