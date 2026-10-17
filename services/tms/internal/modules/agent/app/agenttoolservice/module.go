@@ -202,6 +202,7 @@ func ToolProviders() []any {
 	providers = append(providers, ratesToolProviders()...)
 	providers = append(providers, workforceToolProviders()...)
 	providers = append(providers, masterDataToolProviders()...)
+	providers = append(providers, followUpToolProviders()...)
 
 	providers = append(providers, factoringtools.Providers()...)
 

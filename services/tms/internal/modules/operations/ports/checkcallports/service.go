@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -73,6 +74,18 @@ type RevokeTrackingLinkRequest struct {
 	MoveID     pulid.ID
 }
 
+type TrackingLinkPreview struct {
+	MoveID            pulid.ID
+	ShipmentID        pulid.ID
+	ShipmentProNumber string
+	CarrierID         pulid.ID
+	CarrierName       string
+	RecipientEmail    string
+	ExpiresAt         int64
+	Replaces          *checkcall.TrackingLink
+	Email             *emailports.PlannedEmail
+}
+
 type PublicTrackingStop struct {
 	ID           pulid.ID `json:"id"`
 	Sequence     int64    `json:"sequence"`
@@ -127,7 +140,15 @@ type CheckCallService interface {
 		req *ListCheckCallsByShipmentRequest,
 	) ([]*checkcall.CheckCall, error)
 	IssueLink(ctx context.Context, req *IssueTrackingLinkRequest) (*IssuedTrackingLink, error)
+	PreviewIssueLink(
+		ctx context.Context,
+		req *IssueTrackingLinkRequest,
+	) (*TrackingLinkPreview, error)
 	RevokeLink(ctx context.Context, req *RevokeTrackingLinkRequest) error
+	PreviewRevokeLink(
+		ctx context.Context,
+		req *RevokeTrackingLinkRequest,
+	) (*checkcall.TrackingLink, error)
 	ActiveLink(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

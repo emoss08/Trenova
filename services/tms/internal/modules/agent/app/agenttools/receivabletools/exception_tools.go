@@ -303,6 +303,57 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 	)
 }
 
+func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return newExceptionChangeTool(
+		exceptions,
+		&exceptionChangeSpec[*watchtowerports.UnsnoozeExceptionRequest]{
+			spec: &common.ReceivableSpec{
+				Name:   "wake_exception",
+				Recipe: []string{toolListWatchtowerItems, "wake_exception"},
+				Description: "Bring a snoozed exception back to the open queue now, before the " +
+					"time snooze_exception set, when whatever it was waiting for has happened " +
+					"early. Only a snoozed exception can be woken; list_watchtower_items shows " +
+					"which are snoozed and until when.",
+				DefaultTier: agent.TierPropose,
+				MaxTier:     agent.TierActWithApproval,
+				Reversible:  true,
+				Rationale: "Puts a snoozed exception back in the open queue inside Trenova; " +
+					"nothing outside changes and it can be snoozed again.",
+				Properties: map[string]any{
+					paramWatchtowerItemID: exceptionItemProperty(),
+				},
+				Required:    []string{paramWatchtowerItemID},
+				SearchTerms: []string{"wake exception", "unsnooze", "bring back"},
+			},
+			request: func(
+				params *agentports.ToolExecuteParams,
+			) (*watchtowerports.UnsnoozeExceptionRequest, error) {
+				target, err := exceptionTargetFrom(params)
+				if err != nil {
+					return nil, err
+				}
+				return &watchtowerports.UnsnoozeExceptionRequest{ExceptionTarget: target}, nil
+			},
+			target: func(
+				req *watchtowerports.UnsnoozeExceptionRequest,
+			) *watchtowerports.ExceptionTarget {
+				return &req.ExceptionTarget
+			},
+			apply: func(
+				ctx context.Context,
+				req *watchtowerports.UnsnoozeExceptionRequest,
+				actor *permissionports.RequestActor,
+			) (*watchtower.Item, error) {
+				return exceptions.UnsnoozeException(ctx, req, actor)
+			},
+			summary: func(before, _ *watchtower.Item) string {
+				return fmt.Sprintf("Would bring %q back to the open queue now.", before.Title)
+			},
+			action: "woken",
+		},
+	)
+}
+
 func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
 	return newExceptionChangeTool(
 		exceptions,

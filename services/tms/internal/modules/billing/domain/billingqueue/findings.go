@@ -303,7 +303,7 @@ func podFindings(pod *PODState, customer string) []*Issue {
 	}
 	options := []IssueOption{
 		{
-			Key:    "request",
+			Key:    OptionKeyRequest,
 			Label:  "Ask the driver for it",
 			Done:   "Asked the driver for a signed POD",
 			Effect: IssueEffect{Kind: EffectRequest},

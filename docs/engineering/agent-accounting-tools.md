@@ -153,12 +153,40 @@ it with a reason, restores it, or changes what it records. The clerk resolves on
 best suggestion names the same invoice and amount, proposes ignoring fees and adjustments, and
 then proposes the apply. Discarding is a person's and sits on no template.
 
+## Collections and statements
+
+The collections writes call the services the collections panel and the statement page call:
+`collectionservice` (`LogActivity`, `AssignCollector`, `ScheduleFollowUp`),
+`paymentreminderservice.SendNow` and `customerstatementservice.Send`. Each exposes the plan its
+write runs on (`PlanLogActivity`, `PlanAssignCollector`, `PlanScheduleFollowUp`,
+`PreviewSendNow`, `PreviewSend`), sharing the write's validation and arithmetic, so a proposal
+is refused for exactly what the write would refuse. A plan reads the account from the
+worklist row rather than taking it `FOR UPDATE`, because previews run in a read-only
+transaction.
+
+| Tool | Resource / operation | Class | Default → most | Taint |
+| --- | --- | --- | --- | --- |
+| `log_collection_activity` | accounts receivable / update | inside | Propose → Automatic | held: proposed once the run read outside text |
+| `assign_collector` | accounts receivable / update | inside | Propose → Ask first | — |
+| `schedule_collection_follow_up` | accounts receivable / update | inside | Propose → Automatic | held |
+| `send_payment_reminder` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
+| `send_customer_statement` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
+
+A logged promise to pay becomes the account's standing promise: the scheduled reminder sweep
+skips the customer until it falls due, and the follow-up moves to the day after unless one is
+given. That is why logging is held once a run has read what a customer wrote: a promise
+invented in an email would quietly stop the dunning. The reminder and statement previews are
+the email the send renders, with every recipient on the customer's email profile; the
+statement preview leaves the PDF out (it is named as the attachment) because rendering it would
+outrun the preview's time budget, and a statement dated today is digested by day.
+
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
 | Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
 | Cash application agent | unattended, on bank receipt exceptions | `triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
+| Receivables assistant | in chat, for the person working receivables | `log_collection_activity`, `assign_collector`, `schedule_collection_follow_up`, `send_payment_reminder`, `send_customer_statement`, beside the worklist and statement reads |
 | Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve`, `list_factoring_remittances`, `get_factoring_remittance`, `resolve_factoring_remittance_line`, `rematch_factoring_remittance`, `apply_factoring_remittance` |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
