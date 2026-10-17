@@ -37,6 +37,12 @@ The workflow costs nothing while it waits and survives every restart.
 | `AppointmentNear` | `shipmentMoveId`, `stopId`, `minutesBefore` | `minutesBefore` before the stop's scheduled window start |
 | `FreeTimeEnding` | `detentionOccurrenceId`, `minutesBefore` | `minutesBefore` before the occurrence's free time ends |
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
+| `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
+
+`PortalRun` is not one an agent asks for: `wait_until` offers only `AgentKinds()`, and the
+`act_on_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
+conversation or background run that filed the proposal, with a two-hour expiry. See
+[agent-portal-automation.md](agent-portal-automation.md).
 
 Every wait also has an expiry (`giveUpAfterHours`, default 24, at most 168; a
 `Time` wait stays open at least five minutes past its time). A wait that runs
@@ -135,7 +141,11 @@ A wait's `then` and description are the agent's own words, but a run that read
 outside content may have been steered into writing them. A conversation's turns
 inherit the conversation's taint already; a background run picking up a wait
 opens with the taint stored on the wait. The event detail that ends a wait never
-quotes outside content.
+quotes outside content, with one exception: a `PortalRun` wait ends with what the portal
+said, quoted and marked as written outside the organization (a task that strayed off its
+site has its answer withheld). `Wait.CarriesOutsideText` reports it, and the turn or run
+that picks the work up opens with outside content already read
+(`RunRequest.AfterExternalContent`), so every write it asks for is held for a person.
 
 ## Tools
 

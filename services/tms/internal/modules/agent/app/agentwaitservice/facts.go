@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -32,6 +33,7 @@ type facts struct {
 	carriers    carrierports.CarrierRepository
 	customers   customerports.CustomerRepository
 	subjects    agentports.AgentSubjectRepository
+	portalRuns  agentextensionports.PortalRunRepository
 }
 
 // alreadyTrue refuses a wait on something that has happened: the agent is
@@ -105,6 +107,9 @@ func (f *facts) assess(ctx context.Context, wait *agentwait.Wait, now int64) (*i
 		}
 		return &due, nil
 
+	case agentwait.KindPortalRun:
+		return nil, f.assessPortalRun(ctx, tenant, c) //nolint:nilnil // the task's end, not a time, ends it
+
 	case agentwait.KindHOSDriveBelow:
 		state, err := f.telematics.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
 			TenantInfo: tenant,
@@ -158,6 +163,25 @@ func (f *facts) assessStopVisit(
 	if wait.Kind == agentwait.KindStopDeparture && stop.ActualDeparture != nil {
 		return alreadyTrue("the truck left %s at %s.", stopName(stop),
 			stamp(*stop.ActualDeparture))
+	}
+
+	return nil
+}
+
+func (f *facts) assessPortalRun(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	c *agentwait.Condition,
+) error {
+	if f.portalRuns == nil {
+		return errortypes.NewBusinessError("Portal tasks cannot be waited on here")
+	}
+	run, err := f.portalRuns.Get(ctx, tenant, c.PortalRunID)
+	if err != nil {
+		return missing(err, "portal task")
+	}
+	if run.Status.Finished() {
+		return alreadyTrue("the portal task has already ended (%s).", run.Status)
 	}
 
 	return nil

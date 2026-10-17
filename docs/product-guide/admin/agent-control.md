@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -126,6 +126,29 @@ Keywords: web search, internet, Exa, Parallel, look up regulations, ELD rules, h
 7. To move to the other vendor, open the one that is on and select **Turn off**, then turn on the
    other. Only one can be on at a time, and agents keep their web search tools, so no agent needs
    changing.
+
+### Let agents work on portal sites
+Keywords: portal, website, browser, Browser Use, dock appointment, appointment portal, shipper portal, carrier portal, book appointment, upload POD, portal sign-in, portal history, recording
+1. Open [AI control](/admin/agent-control) and select **Extensions**, then open Portal work
+   from Browser Use.
+2. Paste the organization's Browser Use API key under **Connection**, select **Turn on**, then
+   **Test connection**. The test shows the account's credit and how many browsers it runs at once.
+3. Under **Available to**, choose **Every agent** or **Agents you choose**.
+4. Under **Portal sites**, select **New portal site**. Give it a **Name**, say **What it is for**,
+   list its **Addresses** (the hostnames it lives on, such as `portal.acme.com`) and the
+   **Start page** the browser opens, which must be an https address on one of them.
+5. If the portal needs a sign-in, enter its **Username** and **Password**. They are stored
+   encrypted, never shown again and never seen by an agent; leave them blank later to keep them,
+   or select **Remove the stored sign-in**.
+6. Turn on **Let agents act on this portal** only for a site where agents may book, upload or
+   submit. A site left read-only can only be looked up. Select **Add site**.
+7. Optionally change the browser model, the country it browses from, the steps per task, the
+   daily limit, whether every task is recorded and whether the browser may see screenshots. Each
+   change is saved as you make it.
+8. **Recent portal tasks** lists every task agents ran: open one to see what the browser was
+   told, every page it visited, how it ended and its recording.
+9. To stop agents using a site without losing its history, edit it and turn off **Available to
+   agents**. A site with tasks recorded against it cannot be removed, only turned off.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
@@ -650,12 +673,17 @@ update access to AI control, deciding proposals needs update access to agent pro
 **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
 access to agent extensions, and turning one on, changing its settings or testing it needs update
 access. An agent searches the web for someone only when their role has the web research
-permission.
+permission, and looks something up on a portal only when their role may view portal automation;
+an action on a portal needs a person who may act on portal automation to approve it.
 
 Search queries and the addresses of pages agents read are sent to the extension's vendor. Queries
 that contain Trenova record IDs, email addresses or phone numbers are refused before they leave
 Trenova. Once an agent has read web content, every change it asks for in the rest of that reply
-waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests
+waits for a person's approval, whatever the agent's autonomy. An agent stays on a portal site's
+addresses; a task that reached any other page has what it found withheld and is marked
+**Left the site**. Every action on a portal is a proposal: the person approving sees exactly what the
+browser will be told and the details it will type, and the work picks up with what the portal
+said once the task ends. Each extension counts its requests
 against the daily limit, which resets at midnight UTC, and the card shows today's requests and
 this month's cost.
 

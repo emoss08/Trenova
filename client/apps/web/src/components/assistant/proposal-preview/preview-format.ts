@@ -40,6 +40,8 @@ export function channelLabel(channel: AgentPreviewMessageChannel, t: TranslateFn
       return t("EDI");
     case "Comment":
       return t("Comment");
+    case "Portal":
+      return t("Web portal");
   }
 }
 

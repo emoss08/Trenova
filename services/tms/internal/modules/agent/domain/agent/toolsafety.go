@@ -241,6 +241,14 @@ func (t *RunTaint) Unknown() bool {
 	return t == nil
 }
 
+func (t *RunTaint) Has(source TaintSource) bool {
+	if t == nil {
+		return false
+	}
+
+	return slices.ContainsFunc(t.Marks, func(mark TaintMark) bool { return mark.Source == source })
+}
+
 func (t *RunTaint) Sources() []TaintSource {
 	if t == nil {
 		return nil

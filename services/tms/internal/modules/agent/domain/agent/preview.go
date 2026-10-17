@@ -80,12 +80,13 @@ const (
 	MessageChannelDash    = MessageChannel("Dash")
 	MessageChannelEDI     = MessageChannel("EDI")
 	MessageChannelComment = MessageChannel("Comment")
+	MessageChannelPortal  = MessageChannel("Portal")
 )
 
 func (c MessageChannel) IsValid() bool {
 	switch c {
 	case MessageChannelEmail, MessageChannelSMS, MessageChannelDash, MessageChannelEDI,
-		MessageChannelComment:
+		MessageChannelComment, MessageChannelPortal:
 		return true
 	default:
 		return false

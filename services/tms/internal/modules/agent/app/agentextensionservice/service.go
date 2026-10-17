@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,6 +45,9 @@ type Params struct {
 	AuditService auditports.AuditService
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
 	Plans        platformplanports.PlanService            `                                   optional:"true"`
+	Sites        agentextensionports.PortalSiteRepository
+	Runs         agentextensionports.PortalRunRepository
+	Workflows    kernelports.WorkflowStarter `optional:"true"`
 }
 
 type Service struct {
@@ -54,7 +58,11 @@ type Service struct {
 	audit      auditports.AuditService
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
+	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
 	plans      platformplanports.PlanService
+	sites      agentextensionports.PortalSiteRepository
+	runs       agentextensionports.PortalRunRepository
+	workflows  kernelports.WorkflowStarter
 	now        func() int64
 }
 
@@ -67,6 +75,10 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.WebSearchProvider,
 		len(p.Connectors),
 	)
+	browsers := make(
+		map[agentextension.Type]agentextensionports.BrowserProvider,
+		len(p.Connectors),
+	)
 	for _, connector := range p.Connectors {
 		if connector == nil {
 			continue
@@ -75,6 +87,9 @@ func New(p Params) *Service {
 		connectors[typ] = connector
 		if provider, ok := connector.(agentextensionports.WebSearchProvider); ok {
 			webSearch[typ] = provider
+		}
+		if provider, ok := connector.(agentextensionports.BrowserProvider); ok {
+			browsers[typ] = provider
 		}
 	}
 
@@ -86,7 +101,11 @@ func New(p Params) *Service {
 		audit:      p.AuditService,
 		connectors: connectors,
 		webSearch:  webSearch,
+		browsers:   browsers,
 		plans:      p.Plans,
+		sites:      p.Sites,
+		runs:       p.Runs,
+		workflows:  p.Workflows,
 		now:        timeutils.NowUnix,
 	}
 }
@@ -197,7 +216,7 @@ func catalogItem(
 		Availability:        agentextension.AvailabilitySelectedAgents,
 		ConfigSpec:          spec.Fields,
 		SupportsTestConnect: spec.SupportsTestConnect,
-		DailyRequestLimit:   agentextension.DefaultDailyRequestLimit,
+		DailyRequestLimit:   dailyLimitOf(nil, spec),
 		Usage:               usage,
 	}
 	if record == nil {
@@ -210,13 +229,13 @@ func catalogItem(
 	item.EnabledAt = record.EnabledAt
 	item.UpdatedAt = record.UpdatedAt
 	item.Version = record.Version
-	item.DailyRequestLimit = dailyLimitOf(record.Configuration)
+	item.DailyRequestLimit = dailyLimitOf(record.Configuration, spec)
 
 	return item
 }
 
-func dailyLimitOf(configuration map[string]any) int {
-	return agentextension.DailyRequestLimit(
+func dailyLimitOf(configuration map[string]any, spec agentextension.Spec) int {
+	return spec.DailyLimit(
 		map[string]string{
 			agentextension.ConfigKeyDailyRequestLimit: configspec.ReadString(
 				configuration,

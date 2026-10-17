@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -78,6 +79,7 @@ type Params struct {
 	RunService    agentports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
 	Realtime      agentports.RealtimeService `optional:"true"`
+	PortalRuns    agentextensionports.PortalRunRepository `optional:"true"`
 }
 
 type turnStarter interface {
@@ -132,6 +134,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 			carriers:    p.Carriers,
 			customers:   p.Customers,
 			subjects:    p.Subjects,
+			portalRuns:  p.PortalRuns,
 		},
 		conversations: p.Conversations,
 		runService:    p.RunService,

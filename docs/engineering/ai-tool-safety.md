@@ -59,13 +59,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 212 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 213 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 25 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 43 |
-| Money | Moves or commits money. | Automatic | Yes | 106 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 44 |
+| Money | Moves or commits money. | Automatic | Yes | 105 |
 
 ## Reads only
 
@@ -228,6 +228,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List pay profiles (`list_pay_profiles`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List payroll exports (`list_payroll_exports`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List performance reviews (`list_performance_reviews`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List portal sites (`list_portal_sites`) | Reads only | Automatic | — | — | Lists the portal sites an administrator set up; it changes nothing, sends nothing, and returns only what administrators wrote. |
 | List rate agreements (`list_rate_agreements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List rate confirmations (`list_rate_confirmations`) | Reads only | Automatic | — | — | Reads a move's rate confirmation revisions; the name a carrier typed when signing is left out, so nothing written outside the organization is read. |
 | List rate imports (`list_rate_imports`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -270,6 +271,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Rank move candidates (`rank_move_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Read attachment (`read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
+| Read portal (`read_portal`) | Reads only | Automatic | — | Always, from web | Reads a third-party portal through the organization's extension; it changes nothing in Trenova, tells the browser to submit nothing, and returns text written outside it. |
 | Recall memory (`recall_memory`) | Reads only | Automatic | — | When the record is marked, from memory | Reads memories earlier runs saved, which carry the taint of the run that wrote them. It returns only what the reader's own prompt already reads, so it is used under the assistant like the Desk's memory page. |
 | Run report (`run_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Search documents (`search_documents`) | Reads only | Automatic | — | Always, from document | Searches text extracted from documents, many of which someone outside wrote; each record returned is checked against what the caller may read, and nothing changes or is sent. |
@@ -603,6 +605,7 @@ Sends to someone outside the organization.
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
 | Accept EDI tender (`accept_edi_tender`) | Sent outside the organization | Propose | — | — | Commits the organization to haul the load, creates the shipment and sends the partner an acceptance they act on; it cannot be taken back. A person always decides. |
+| Act on portal (`act_on_portal`) | Sent outside the organization | Propose | — | — | Acts on a third-party portal in the organization's name, which another company then relies on; what it books or submits is undone, if at all, on that portal. A person always decides. |
 | Cancel EDI tender (`cancel_edi_tender`) | Sent outside the organization | Propose | — | — | Withdraws freight offered to another organization, which sees the tender canceled; a withdrawn tender is sent afresh, never reopened. A person always decides. |
 | Cancel order (`cancel_order`) | Sent outside the organization | Propose | — | — | Cancels every live shipment on the order, which reaches carriers and trading partners; only a person cancels an order. |
 | Cancel shipment (`cancel_shipment`) | Sent outside the organization | Ask first | — | — | Cancelling withdraws live tenders from carriers and sends the model's cancel reason to a linked partner over EDI. |

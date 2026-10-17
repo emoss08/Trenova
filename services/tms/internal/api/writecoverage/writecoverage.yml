@@ -265,6 +265,15 @@ writes:
   "PUT /api/v1/agent-extensions/:type/config/":
     exempt: agent-administration
     reason: "Configures a vendor account an organization turns on for its agents; it holds the vendor credentials."
+  "POST /api/v1/agent-portals/sites/":
+    exempt: agent-administration
+    reason: "Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes."
+  "PUT /api/v1/agent-portals/sites/:siteID/":
+    exempt: agent-administration
+    reason: "Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach."
+  "DELETE /api/v1/agent-portals/sites/:siteID/":
+    exempt: agent-administration
+    reason: "Removes a portal from what agents may use, an administrator's decision about the agents themselves."
 
   # agentquality
   "mutation createAgentEvalCase":

@@ -49,6 +49,9 @@ type TurnRequest struct {
 	Anchors        []agentdefinition.RuntimeAnchor
 	TrenovaWritten bool
 	EarlierFiles   map[string]string
+	// OutsideText says the turn's input carries text written outside the
+	// organization, such as a portal's answer a wait picked up.
+	OutsideText bool
 }
 
 type TurnResult struct {
@@ -118,6 +121,9 @@ func (s *Service) admit(
 		Taint:       req.Taint.Clone(),
 		Records:     runtimeContext.MemoryRecords(),
 		FileTexts:   req.EarlierFiles,
+		// Text written outside the organization in the turn's own input holds
+		// every write it asks for, as reading the web in the turn would.
+		AfterExternalContent: req.OutsideText,
 	}
 }
 

@@ -537,6 +537,26 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourcePortalAutomation.String(),
+		DisplayName: "Portal Automation",
+		Description: "Agents reading and acting on the third-party web portals the organization set up, through an enabled extension",
+		Category:    "Desk",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "View",
+				Description: "Let agents look things up on portals for this person",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Act",
+				Description: "Let agents propose booking, uploading or accepting on portals for this person",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAIProvider.String(),
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",

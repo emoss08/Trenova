@@ -382,3 +382,533 @@ var ExtensionUsageDailyFilter = struct {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// PortalRun — table "agent_portal_runs", alias "aprn"
+// ---------------------------------------------------------------------------
+
+// PortalRunTable holds the table name, alias, and primary key columns
+// for the "agent_portal_runs" table. The alias "aprn" is used in all generated
+// SQL fragments (e.g. "aprn.id = ?").
+var PortalRunTable = buncolgen.TableInfo{
+	Name:       "agent_portal_runs",
+	Alias:      "aprn",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// PortalRunColumns provides type-safe column references for the "agent_portal_runs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PortalRunColumns.ID.String())
+//	// SELECT aprn.id FROM agent_portal_runs AS aprn
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PortalRunColumns.ID.Eq(), id)           // WHERE aprn.id = ?
+//	q.Order(PortalRunColumns.CreatedAt.OrderDesc())  // ORDER BY aprn.created_at DESC
+var PortalRunColumns = struct {
+	ID                buncolgen.Column // "id" → qualified: "aprn.id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "aprn.business_unit_id"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "aprn.organization_id"
+	SiteID            buncolgen.Column // "site_id" → qualified: "aprn.site_id"
+	ExtensionType     buncolgen.Column // "extension_type" → qualified: "aprn.extension_type"
+	Mode              buncolgen.Column // "mode" → qualified: "aprn.mode"
+	Status            buncolgen.Column // "status" → qualified: "aprn.status"
+	Instruction       buncolgen.Column // "instruction" → qualified: "aprn.instruction"
+	Details           buncolgen.Column // "details" → qualified: "aprn.details"
+	UsedSignIn        buncolgen.Column // "used_sign_in" → qualified: "aprn.used_sign_in"
+	VendorTaskID      buncolgen.Column // "vendor_task_id" → qualified: "aprn.vendor_task_id"
+	VendorSessionID   buncolgen.Column // "vendor_session_id" → qualified: "aprn.vendor_session_id"
+	Answer            buncolgen.Column // "answer" → qualified: "aprn.answer"
+	VisitedURLs       buncolgen.Column // "visited_urls" → qualified: "aprn.visited_urls"
+	OffSiteURLs       buncolgen.Column // "off_site_urls" → qualified: "aprn.off_site_urls"
+	Steps             buncolgen.Column // "steps" → qualified: "aprn.steps"
+	CostUSD           buncolgen.Column // "cost_usd" → qualified: "aprn.cost_usd"
+	Failure           buncolgen.Column // "failure" → qualified: "aprn.failure"
+	IdempotencyKey    buncolgen.Column // "idempotency_key" → qualified: "aprn.idempotency_key"
+	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "aprn.agent_definition_id"
+	AgentRunID        buncolgen.Column // "agent_run_id" → qualified: "aprn.agent_run_id"
+	ThreadID          buncolgen.Column // "thread_id" → qualified: "aprn.thread_id"
+	ProposalID        buncolgen.Column // "proposal_id" → qualified: "aprn.proposal_id"
+	RequestedByID     buncolgen.Column // "requested_by_id" → qualified: "aprn.requested_by_id"
+	StartedAt         buncolgen.Column // "started_at" → qualified: "aprn.started_at"
+	FinishedAt        buncolgen.Column // "finished_at" → qualified: "aprn.finished_at"
+	Version           buncolgen.Column // "version" → qualified: "aprn.version"
+	CreatedAt         buncolgen.Column // "created_at" → qualified: "aprn.created_at"
+	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "aprn.updated_at"
+}{
+	ID:                buncolgen.NewColumn("id", "aprn"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "aprn"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "aprn"),
+	SiteID:            buncolgen.NewColumn("site_id", "aprn"),
+	ExtensionType:     buncolgen.NewColumn("extension_type", "aprn"),
+	Mode:              buncolgen.NewColumn("mode", "aprn"),
+	Status:            buncolgen.NewColumn("status", "aprn"),
+	Instruction:       buncolgen.NewColumn("instruction", "aprn"),
+	Details:           buncolgen.NewColumn("details", "aprn"),
+	UsedSignIn:        buncolgen.NewColumn("used_sign_in", "aprn"),
+	VendorTaskID:      buncolgen.NewColumn("vendor_task_id", "aprn"),
+	VendorSessionID:   buncolgen.NewColumn("vendor_session_id", "aprn"),
+	Answer:            buncolgen.NewColumn("answer", "aprn"),
+	VisitedURLs:       buncolgen.NewColumn("visited_urls", "aprn"),
+	OffSiteURLs:       buncolgen.NewColumn("off_site_urls", "aprn"),
+	Steps:             buncolgen.NewColumn("steps", "aprn"),
+	CostUSD:           buncolgen.NewColumn("cost_usd", "aprn"),
+	Failure:           buncolgen.NewColumn("failure", "aprn"),
+	IdempotencyKey:    buncolgen.NewColumn("idempotency_key", "aprn"),
+	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "aprn"),
+	AgentRunID:        buncolgen.NewColumn("agent_run_id", "aprn"),
+	ThreadID:          buncolgen.NewColumn("thread_id", "aprn"),
+	ProposalID:        buncolgen.NewColumn("proposal_id", "aprn"),
+	RequestedByID:     buncolgen.NewColumn("requested_by_id", "aprn"),
+	StartedAt:         buncolgen.NewColumn("started_at", "aprn"),
+	FinishedAt:        buncolgen.NewColumn("finished_at", "aprn"),
+	Version:           buncolgen.NewColumn("version", "aprn"),
+	CreatedAt:         buncolgen.NewColumn("created_at", "aprn"),
+	UpdatedAt:         buncolgen.NewColumn("updated_at", "aprn"),
+}
+
+// PortalRunFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by PortalRun.GetStaticFieldMap().
+var PortalRunFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"siteId":            "site_id",
+	"extensionType":     "extension_type",
+	"mode":              "mode",
+	"status":            "status",
+	"instruction":       "instruction",
+	"details":           "details",
+	"usedSignIn":        "used_sign_in",
+	"vendorTaskId":      "vendor_task_id",
+	"vendorSessionId":   "vendor_session_id",
+	"answer":            "answer",
+	"visitedUrls":       "visited_urls",
+	"offSiteUrls":       "off_site_urls",
+	"steps":             "steps",
+	"costUsd":           "cost_usd",
+	"failure":           "failure",
+	"agentDefinitionId": "agent_definition_id",
+	"agentRunId":        "agent_run_id",
+	"threadId":          "thread_id",
+	"proposalId":        "proposal_id",
+	"requestedById":     "requested_by_id",
+	"startedAt":         "started_at",
+	"finishedAt":        "finished_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// PortalRunInsertableColumns lists column names suitable for INSERT statements on the "agent_portal_runs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PortalRunInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"site_id",
+	"extension_type",
+	"mode",
+	"status",
+	"instruction",
+	"details",
+	"used_sign_in",
+	"vendor_task_id",
+	"vendor_session_id",
+	"answer",
+	"visited_urls",
+	"off_site_urls",
+	"steps",
+	"cost_usd",
+	"failure",
+	"idempotency_key",
+	"agent_definition_id",
+	"agent_run_id",
+	"thread_id",
+	"proposal_id",
+	"requested_by_id",
+	"started_at",
+	"finished_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// PortalRunScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aprn.organization_id = ? AND aprn.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.PortalRunScopeTenant(sq, ti).
+//		Where(agentextensioncol.PortalRunColumns.ID.Eq(), id)
+func PortalRunScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, PortalRunColumns.OrganizationID, PortalRunColumns.BusinessUnitID, ti)
+}
+
+// PortalRunScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.PortalRunScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.PortalRunColumns.ID.In(), bun.List(ids))
+//	})
+func PortalRunScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, PortalRunColumns.OrganizationID, PortalRunColumns.BusinessUnitID, ti)
+}
+
+// PortalRunScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.PortalRunScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.PortalRunColumns.ID.Eq(), id)
+//	})
+func PortalRunScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, PortalRunColumns.OrganizationID, PortalRunColumns.BusinessUnitID, ti)
+}
+
+// PortalRunApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.PortalRunApplyTenant(tenantInfo))
+func PortalRunApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(PortalRunColumns.OrganizationID, PortalRunColumns.BusinessUnitID, ti)
+}
+
+// PortalRunFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_portal_runs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PortalRunFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PortalRunFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	SiteID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "siteId" → DB: "site_id"
+	ExtensionType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extensionType" → DB: "extension_type"
+	Mode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mode" → DB: "mode"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Instruction       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "instruction" → DB: "instruction"
+	Details           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "details" → DB: "details"
+	UsedSignIn        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedSignIn" → DB: "used_sign_in"
+	VendorTaskID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vendorTaskId" → DB: "vendor_task_id"
+	VendorSessionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vendorSessionId" → DB: "vendor_session_id"
+	Answer            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "answer" → DB: "answer"
+	VisitedURLs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "visitedUrls" → DB: "visited_urls"
+	OffSiteURLs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offSiteUrls" → DB: "off_site_urls"
+	Steps             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "steps" → DB: "steps"
+	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	AgentRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	ProposalID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proposalId" → DB: "proposal_id"
+	RequestedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	FinishedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	SiteID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("siteId", op, value)
+	},
+	ExtensionType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("extensionType", op, value)
+	},
+	Mode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("mode", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	Instruction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("instruction", op, value)
+	},
+	Details: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("details", op, value)
+	},
+	UsedSignIn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("usedSignIn", op, value)
+	},
+	VendorTaskID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("vendorTaskId", op, value)
+	},
+	VendorSessionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("vendorSessionId", op, value)
+	},
+	Answer: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("answer", op, value)
+	},
+	VisitedURLs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("visitedUrls", op, value)
+	},
+	OffSiteURLs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("offSiteUrls", op, value)
+	},
+	Steps: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("steps", op, value)
+	},
+	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("costUsd", op, value)
+	},
+	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("failure", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentRunId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("threadId", op, value)
+	},
+	ProposalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("proposalId", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requestedById", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("startedAt", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("finishedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// PortalSite — table "agent_portal_sites", alias "apst"
+// ---------------------------------------------------------------------------
+
+// PortalSiteTable holds the table name, alias, and primary key columns
+// for the "agent_portal_sites" table. The alias "apst" is used in all generated
+// SQL fragments (e.g. "apst.id = ?").
+var PortalSiteTable = buncolgen.TableInfo{
+	Name:       "agent_portal_sites",
+	Alias:      "apst",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// PortalSiteColumns provides type-safe column references for the "agent_portal_sites" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PortalSiteColumns.ID.String())
+//	// SELECT apst.id FROM agent_portal_sites AS apst
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PortalSiteColumns.ID.Eq(), id)           // WHERE apst.id = ?
+//	q.Order(PortalSiteColumns.CreatedAt.OrderDesc())  // ORDER BY apst.created_at DESC
+var PortalSiteColumns = struct {
+	ID               buncolgen.Column // "id" → qualified: "apst.id"
+	BusinessUnitID   buncolgen.Column // "business_unit_id" → qualified: "apst.business_unit_id"
+	OrganizationID   buncolgen.Column // "organization_id" → qualified: "apst.organization_id"
+	Name             buncolgen.Column // "name" → qualified: "apst.name"
+	Purpose          buncolgen.Column // "purpose" → qualified: "apst.purpose"
+	Domains          buncolgen.Column // "domains" → qualified: "apst.domains"
+	StartURL         buncolgen.Column // "start_url" → qualified: "apst.start_url"
+	Credentials      buncolgen.Column // "credentials" → qualified: "apst.credentials"
+	BrowserProfileID buncolgen.Column // "browser_profile_id" → qualified: "apst.browser_profile_id"
+	AllowActions     buncolgen.Column // "allow_actions" → qualified: "apst.allow_actions"
+	Enabled          buncolgen.Column // "enabled" → qualified: "apst.enabled"
+	CreatedByID      buncolgen.Column // "created_by_id" → qualified: "apst.created_by_id"
+	Version          buncolgen.Column // "version" → qualified: "apst.version"
+	CreatedAt        buncolgen.Column // "created_at" → qualified: "apst.created_at"
+	UpdatedAt        buncolgen.Column // "updated_at" → qualified: "apst.updated_at"
+}{
+	ID:               buncolgen.NewColumn("id", "apst"),
+	BusinessUnitID:   buncolgen.NewColumn("business_unit_id", "apst"),
+	OrganizationID:   buncolgen.NewColumn("organization_id", "apst"),
+	Name:             buncolgen.NewColumn("name", "apst"),
+	Purpose:          buncolgen.NewColumn("purpose", "apst"),
+	Domains:          buncolgen.NewColumn("domains", "apst"),
+	StartURL:         buncolgen.NewColumn("start_url", "apst"),
+	Credentials:      buncolgen.NewColumn("credentials", "apst"),
+	BrowserProfileID: buncolgen.NewColumn("browser_profile_id", "apst"),
+	AllowActions:     buncolgen.NewColumn("allow_actions", "apst"),
+	Enabled:          buncolgen.NewColumn("enabled", "apst"),
+	CreatedByID:      buncolgen.NewColumn("created_by_id", "apst"),
+	Version:          buncolgen.NewColumn("version", "apst"),
+	CreatedAt:        buncolgen.NewColumn("created_at", "apst"),
+	UpdatedAt:        buncolgen.NewColumn("updated_at", "apst"),
+}
+
+// PortalSiteFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by PortalSite.GetStaticFieldMap().
+var PortalSiteFieldMap = map[string]string{
+	"id":               "id",
+	"businessUnitId":   "business_unit_id",
+	"organizationId":   "organization_id",
+	"name":             "name",
+	"purpose":          "purpose",
+	"domains":          "domains",
+	"startUrl":         "start_url",
+	"browserProfileId": "browser_profile_id",
+	"allowActions":     "allow_actions",
+	"enabled":          "enabled",
+	"createdById":      "created_by_id",
+	"version":          "version",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// PortalSiteInsertableColumns lists column names suitable for INSERT statements on the "agent_portal_sites" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PortalSiteInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"name",
+	"purpose",
+	"domains",
+	"start_url",
+	"credentials",
+	"browser_profile_id",
+	"allow_actions",
+	"enabled",
+	"created_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// PortalSiteScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE apst.organization_id = ? AND apst.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.PortalSiteScopeTenant(sq, ti).
+//		Where(agentextensioncol.PortalSiteColumns.ID.Eq(), id)
+func PortalSiteScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, PortalSiteColumns.OrganizationID, PortalSiteColumns.BusinessUnitID, ti)
+}
+
+// PortalSiteScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.PortalSiteScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.PortalSiteColumns.ID.In(), bun.List(ids))
+//	})
+func PortalSiteScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, PortalSiteColumns.OrganizationID, PortalSiteColumns.BusinessUnitID, ti)
+}
+
+// PortalSiteScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.PortalSiteScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.PortalSiteColumns.ID.Eq(), id)
+//	})
+func PortalSiteScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, PortalSiteColumns.OrganizationID, PortalSiteColumns.BusinessUnitID, ti)
+}
+
+// PortalSiteApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.PortalSiteApplyTenant(tenantInfo))
+func PortalSiteApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(PortalSiteColumns.OrganizationID, PortalSiteColumns.BusinessUnitID, ti)
+}
+
+// PortalSiteFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_portal_sites" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PortalSiteFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PortalSiteFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Purpose          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
+	Domains          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "domains" → DB: "domains"
+	StartURL         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startUrl" → DB: "start_url"
+	BrowserProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "browserProfileId" → DB: "browser_profile_id"
+	AllowActions     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowActions" → DB: "allow_actions"
+	Enabled          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	CreatedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	Version          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("name", op, value)
+	},
+	Purpose: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("purpose", op, value)
+	},
+	Domains: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("domains", op, value)
+	},
+	StartURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("startUrl", op, value)
+	},
+	BrowserProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("browserProfileId", op, value)
+	},
+	AllowActions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("allowActions", op, value)
+	},
+	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("enabled", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}

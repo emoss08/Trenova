@@ -253,9 +253,11 @@ func (a *Activities) runRequest(
 		return nil, err
 	}
 	var taint *agent.RunTaint
+	outsideText := false
 	if resumed != nil {
 		input += "\n\n" + resumed.ResumeNote()
 		taint = resumed.Taint.Clone()
+		outsideText = resumed.CarriesOutsideText()
 	}
 	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
 		Definition: definition,
@@ -283,6 +285,9 @@ func (a *Activities) runRequest(
 		// A run picking up a parked wait carries what the run that set it
 		// had read, so the wait's notes are never read as clean.
 		Taint: taint,
+		// A wait's note that carries a portal's answer is text written outside
+		// the organization, so every write the run asks for is proposed.
+		AfterExternalContent: outsideText,
 		// The ledger is what makes a retried write safe. Without it a second
 		// attempt re-runs every write the first one made, and the tools do
 		// not dedupe: RequiresIdempotencyKey is checked for presence and, bar

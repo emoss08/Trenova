@@ -3,11 +3,9 @@ package agentquerytoolservice
 import (
 	"context"
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -184,29 +182,5 @@ func TestWebToolsAreGatedOnWebResearch(t *testing.T) {
 		assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal, tool.Name())
 		assert.Equal(t, agent.TaintSourceWeb, policy.Source, tool.Name())
 		assert.True(t, permission.IsAgentAllowed(policy.Resource, permission.OpRead), tool.Name())
-	}
-}
-
-func TestEveryExtensionToolIsRegistered(t *testing.T) {
-	t.Parallel()
-
-	registered := make(map[string]struct{}, len(ToolProviders()))
-	for _, provider := range ToolProviders() {
-		fn := reflect.ValueOf(provider)
-		args := make([]reflect.Value, fn.Type().NumIn())
-		for idx := range args {
-			args[idx] = reflect.Zero(fn.Type().In(idx))
-		}
-		out := fn.Call(args)
-		if tool, ok := out[0].Interface().(agentports.AgentQueryTool); ok {
-			registered[tool.Name()] = struct{}{}
-		}
-	}
-
-	for _, typ := range agentextension.AllTypes() {
-		spec, _ := agentextension.SpecFor(typ)
-		for _, name := range spec.Tools() {
-			assert.Contains(t, registered, name, "%s declares %s but no tool is registered", typ, name)
-		}
 	}
 }

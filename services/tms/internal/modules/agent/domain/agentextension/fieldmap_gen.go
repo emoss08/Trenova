@@ -17,3 +17,17 @@ func (e *Extension) GetStaticFieldMap() map[string]string {
 func (e *ExtensionUsageDaily) GetStaticFieldMap() map[string]string {
 	return agentextensioncol.ExtensionUsageDailyFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PortalRun].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.PortalRunFieldMap] instead of parsing struct tags via reflection.
+func (e *PortalRun) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.PortalRunFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PortalSite].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.PortalSiteFieldMap] instead of parsing struct tags via reflection.
+func (e *PortalSite) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.PortalSiteFieldMap
+}

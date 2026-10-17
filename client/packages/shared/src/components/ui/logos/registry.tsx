@@ -3,6 +3,7 @@ import { AnthropicLogo } from "./anthropic";
 import { AWSLogo } from "./aws";
 import { AzureLogo } from "./azure";
 import { BedrockLogo } from "./bedrock";
+import { BrowserUseLogo } from "./browser-use";
 import { DeepInfraLogo } from "./deepinfra";
 import { DeepSeekLogo } from "./deepseek";
 import { ExaLogo } from "./exa";
@@ -80,6 +81,7 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "fireworks.ai": FireworksLogo,
   "exa.ai": ExaLogo,
   "parallel.ai": ParallelLogo,
+  "browser-use.com": BrowserUseLogo,
 };
 
 export type BrandMarkLookup = {

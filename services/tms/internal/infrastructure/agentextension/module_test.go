@@ -37,9 +37,16 @@ func TestEveryExtensionHasAConnectorForItsCapability(t *testing.T) {
 		require.True(t, ok, "%s has no connector", typ)
 
 		spec, _ := agentextension.SpecFor(typ)
-		if spec.Capability == agentextension.CapabilityWebResearch {
+		switch spec.Capability {
+		case agentextension.CapabilityWebResearch:
 			_, searches := connector.(agentextensionports.WebSearchProvider)
 			assert.True(t, searches, "%s provides web research but cannot search", typ)
+		case agentextension.CapabilityPortalAutomation:
+			_, browses := connector.(agentextensionports.BrowserProvider)
+			assert.True(t, browses, "%s provides portal automation but cannot browse", typ)
+		default:
+			t.Errorf("%s provides %s, which this test does not know how to check", typ,
+				spec.Capability)
 		}
 	}
 }
