@@ -1,7 +1,6 @@
 package documentextractionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
 	"context"
 	"testing"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

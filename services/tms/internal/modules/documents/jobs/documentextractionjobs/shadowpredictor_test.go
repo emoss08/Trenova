@@ -1,17 +1,17 @@
 package documentextractionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
