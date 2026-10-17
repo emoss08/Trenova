@@ -236,6 +236,11 @@ export const RECORD_LINKS = {
     path: "/admin/agent-control",
     params: { tab: "extensions", portalRun: "{id}" },
   },
+  analysis_run: {
+    label: "Analysis",
+    path: "/admin/agent-control",
+    params: { tab: "extensions", analysisRun: "{id}" },
+  },
   ai_audit_event: {
     label: "AI audit event",
     path: "/admin/agent-control",

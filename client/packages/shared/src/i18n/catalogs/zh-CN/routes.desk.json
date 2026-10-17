@@ -1741,6 +1741,7 @@
   "{0, plural, one {# artifact} other {# artifacts}}": "{0, plural, other {# 个产出物}}",
   "{0, plural, one {# attempt failed} other {# attempts failed}}": "{0, plural, other {# 次尝试失败}}",
   "{0, plural, one {# charge waits on approval} other {# charges wait on approval}}": "{0, plural, other {# 项费用等待批准}}",
+  "{0, plural, one {# chart} other {# charts}}": "{0, plural, one {# 个图表} other {# 个图表}}",
   "{0, plural, one {# code has no mapping} other {# codes have no mapping}}": "{0, plural, other {# 个代码没有映射}}",
   "{0, plural, one {# code} other {# codes}}": "{0, plural, other {# 个代码}}",
   "{0, plural, one {# commodity} other {# commodities}}": "{0, plural, other {# 种货品}}",

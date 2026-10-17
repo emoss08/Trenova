@@ -2,6 +2,7 @@ import { formatDisplayValue } from "@/components/assistant/readable-values";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
+  analysisFrom,
   emailDraftFrom,
   entityCardFrom,
   planFrom,
@@ -82,6 +83,13 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
       ]
         .filter((part) => part !== "")
         .join(" · ");
+    }
+    case "analysis": {
+      const analysis = analysisFrom(artifact);
+      if (analysis.error) return analysis.error.name;
+      return analysis.charts.length > 0
+        ? t("{0, plural, one {# chart} other {# charts}}", analysis.charts.length)
+        : "";
     }
     default:
       return "";

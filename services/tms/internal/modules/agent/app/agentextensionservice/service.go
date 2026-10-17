@@ -47,6 +47,7 @@ type Params struct {
 	Plans        platformplanports.PlanService            `                                   optional:"true"`
 	Sites        agentextensionports.PortalSiteRepository
 	Runs         agentextensionports.PortalRunRepository
+	Analyses     agentextensionports.AnalysisRunRepository
 	Workflows    kernelports.WorkflowStarter `optional:"true"`
 }
 
@@ -59,9 +60,11 @@ type Service struct {
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
 	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
+	sandboxes  map[agentextension.Type]agentextensionports.SandboxProvider
 	plans      platformplanports.PlanService
 	sites      agentextensionports.PortalSiteRepository
 	runs       agentextensionports.PortalRunRepository
+	analyses   agentextensionports.AnalysisRunRepository
 	workflows  kernelports.WorkflowStarter
 	now        func() int64
 }
@@ -79,6 +82,10 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.BrowserProvider,
 		len(p.Connectors),
 	)
+	sandboxes := make(
+		map[agentextension.Type]agentextensionports.SandboxProvider,
+		len(p.Connectors),
+	)
 	for _, connector := range p.Connectors {
 		if connector == nil {
 			continue
@@ -91,6 +98,9 @@ func New(p Params) *Service {
 		if provider, ok := connector.(agentextensionports.BrowserProvider); ok {
 			browsers[typ] = provider
 		}
+		if provider, ok := connector.(agentextensionports.SandboxProvider); ok {
+			sandboxes[typ] = provider
+		}
 	}
 
 	return &Service{
@@ -102,9 +112,11 @@ func New(p Params) *Service {
 		connectors: connectors,
 		webSearch:  webSearch,
 		browsers:   browsers,
+		sandboxes:  sandboxes,
 		plans:      p.Plans,
 		sites:      p.Sites,
 		runs:       p.Runs,
+		analyses:   p.Analyses,
 		workflows:  p.Workflows,
 		now:        timeutils.NowUnix,
 	}

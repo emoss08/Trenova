@@ -19,6 +19,7 @@ export const RecordKindIDPrefix = {
   agent_run: "ar_",
   ai_audit_event: "aiae_",
   ai_audit_export: "aiax_",
+  analysis_run: "aanr_",
   assistant_thread: "athr_",
   bank_receipt: "brcpt_",
   bank_receipt_work_item: "brwi_",

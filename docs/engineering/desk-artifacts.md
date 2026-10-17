@@ -49,8 +49,8 @@ artifacts/
     artifact-body-parts.tsx  what several kinds' bodies share
     <kind>/               one kind's body and everything only it uses: table,
                           report, document, extraction, edi-connection-draft,
-                          record, rate, diff, plan, email, view, decision, each
-                          with its __tests__/
+                          analysis, record, rate, diff, plan, email, view,
+                          decision, each with its __tests__/
   record-card/            the parts every card is built from: head, stepper, status,
                           sections, checks, timeline, a list's next page, the
                           "could not be read" head, bottom bar (record-card.tsx),
@@ -91,6 +91,16 @@ Before taking a prefix or a modifier class, search every stylesheet the Desk loa
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
 button, which stretched every warn pill to the button's width.
+
+## The analysis
+
+`analysis` is what `analyze_data` ran (see [agent-data-analysis.md](agent-data-analysis.md)):
+the purpose as its title, then the charts, the figures it returned, the error it raised,
+what it printed and the code, folded. `kinds/analysis/` only reads the payload
+(`analysisFrom`); the drawing is `AnalysisResult` in `components/assistant/`, which AI
+control's analysis history draws too, and each chart is read from the run by
+`AnalysisChartImage` under the session's credentials. An analysis is made on purpose, so it
+is not a lookup: it is kept whether or not the reply names it, and the reply must name it.
 
 ## The EDI connection draft
 
