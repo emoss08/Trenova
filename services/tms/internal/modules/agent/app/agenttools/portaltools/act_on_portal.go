@@ -58,9 +58,9 @@ func (t *ActOnPortalTool) Prerequisites() []string {
 }
 
 func (t *ActOnPortalTool) Description() string {
-	return "Propose doing something on one of the organization's portal sites through a cloud " +
-		"browser: book or move a dock appointment, upload a proof of delivery, accept or " +
-		"decline a load on a shipper's portal, update a status. A person sees the exact " +
+	return "Propose doing one thing on an organization portal site through a cloud browser, " +
+		"such as booking a dock appointment or accepting a load. It can also move an " +
+		"appointment, upload a proof of delivery or update a status. A person sees the exact " +
 		"instruction and details the browser will get and decides; once approved the portal " +
 		"does it in the background and you pick the work up with what it said. Only sites " +
 		"that allow actions can take one. Give one action per proposal, and the references " +

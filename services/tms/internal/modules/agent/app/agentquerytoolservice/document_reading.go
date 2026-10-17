@@ -36,7 +36,10 @@ type documentSummary struct {
 	TextTotal      int                       `json:"textTotal"`
 	TextTruncated  bool                      `json:"textTruncated"`
 	FailureMessage string                    `json:"failureMessage,omitempty"`
-	Note           string                    `json:"note,omitempty"`
+	// StillBeingRead says the reading has not finished: the text is not in,
+	// or the findings are the rule-based ones until a model's reading lands.
+	StillBeingRead bool   `json:"stillBeingRead,omitempty"`
+	Note           string `json:"note,omitempty"`
 }
 
 type textWindow struct {

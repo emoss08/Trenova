@@ -90,6 +90,7 @@ Loaded now:
 - wait_until
 - cancel_wait
 - describe_formula_schema
+- propose_formula
 - list_formula_templates
 - list_accessorial_charges
 - list_customers
@@ -101,7 +102,6 @@ Loaded now:
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - test_formula_expression — Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment.
-- propose_formula — Change the formula in the person's editor: the expression, its variables, the charge policy, breakdown lines, and for a new template its name and description.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - list_rate_agreements — List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier.
 - get_rate_agreement — Retrieve one rate agreement, a contract or tariff, by id with its lane rules, rates, minimums and weight breaks.

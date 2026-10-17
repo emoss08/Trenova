@@ -85,6 +85,8 @@ type Params struct {
 	Quota    platformplanports.QuotaGuard  `optional:"true"`
 	// Waits reads a wait whose ending a turn picks up.
 	Waits agentwaitports.AgentWaitRepository `optional:"true"`
+	// ReadWaits parks a conversation on a file still being read.
+	ReadWaits agentwaitports.DocumentReadWaiter `optional:"true"`
 	// Schedules settles the requests scheduled in a conversation being
 	// deleted, so none fires again and no open list keeps showing one.
 	Schedules conversationscheduleports.ConversationThreadSchedules `optional:"true"`
@@ -99,6 +101,10 @@ var Module = fx.Module("assistant",
 		fx.As(new(agentports.AssistantService)),
 		fx.As(new(agentports.PageAssistant)),
 		fx.As(new(agentports.AgentRunTranscriptService)),
+	)),
+	fx.Provide(fx.Annotate(
+		func(s *Service) agentports.AttachmentExtractionObserver { return s },
+		fx.ResultTags(`group:"attachment_extraction_observers"`),
 	)),
 )
 
@@ -140,6 +146,7 @@ type Service struct {
 	memories      agentports.AgentMemoryService
 	quota         platformplanports.QuotaGuard
 	waits         agentwaitports.AgentWaitRepository
+	readWaits     agentwaitports.DocumentReadWaiter
 	schedules     conversationscheduleports.ConversationThreadSchedules
 }
 
@@ -171,6 +178,7 @@ func New(p Params) *Service {
 		cases:         p.Cases,
 		runs:          p.Runs,
 		waits:         p.Waits,
+		readWaits:     p.ReadWaits,
 		schedules:     p.Schedules,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,

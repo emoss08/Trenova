@@ -39,6 +39,28 @@ type CancelWaitRequest struct {
 	By           string
 }
 
+type WaitForDocumentReadRequest struct {
+	Actor        *permissionports.RequestActor
+	DefinitionID pulid.ID
+	ThreadID     pulid.ID
+	DocumentID   pulid.ID
+	FileName     string
+}
+
+// DocumentReadWaiter parks a conversation on a file the person attached that
+// is still being read, so the conversation picks up again on its own when the
+// reading finishes rather than waiting for the person to ask again.
+type DocumentReadWaiter interface {
+	WaitForDocumentRead(
+		ctx context.Context,
+		req *WaitForDocumentReadRequest,
+	) (*agentwait.Wait, error)
+	// StopWaitingForDocumentRead cancels the conversation's wait on a file
+	// the agent has since read in full, so it does not pick the work up
+	// again for nothing.
+	StopWaitingForDocumentRead(ctx context.Context, req *WaitForDocumentReadRequest) error
+}
+
 type AgentWaitService interface {
 	Register(ctx context.Context, req *RegisterWaitRequest) (*agentwait.Wait, error)
 	Cancel(ctx context.Context, req *CancelWaitRequest) (*agentwait.Wait, error)

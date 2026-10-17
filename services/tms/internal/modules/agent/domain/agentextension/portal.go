@@ -75,7 +75,7 @@ type PortalSite struct {
 	Credentials      map[string]any `json:"-"                bun:"credentials,type:JSONB,notnull,default:'{}'::jsonb"`
 	BrowserProfileID string         `json:"browserProfileId" bun:"browser_profile_id,type:VARCHAR(100),notnull,default:''"`
 	AllowActions     bool           `json:"allowActions"     bun:"allow_actions,type:BOOLEAN,notnull,default:false"`
-	Enabled          bool           `json:"enabled"          bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled          bool           `json:"enabled"          bun:"enabled,type:BOOLEAN,notnull"`
 	CreatedByID      pulid.ID       `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

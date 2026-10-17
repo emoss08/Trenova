@@ -35,6 +35,7 @@ vi.mock("@/lib/queries/document-control", () => ({
 const NO_PROVIDER: DocumentExtractionStatus = {
   engine: "docling",
   modelProviderAvailable: false,
+  modelProviderReason: "no_model_provider",
   converterAvailable: true,
   extractionAvailable: false,
 };
@@ -119,6 +120,39 @@ describe("ExtractionNeedsProviderAlert", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+  });
+
+  it("names the server switch rather than asking for a provider when extraction is off", async () => {
+    grantProviderSetup();
+    mocks.status = { ...NO_PROVIDER, modelProviderReason: "off_on_server" };
+
+    renderAlert();
+
+    expect(await screen.findByText("Extraction is turned off on this server")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ask an administrator to set ai.documentExtraction to true."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+  });
+
+  it("says the plan leaves extraction out rather than asking for a provider", async () => {
+    grantProviderSetup();
+    mocks.status = { ...NO_PROVIDER, modelProviderReason: "not_in_plan" };
+
+    renderAlert();
+
+    expect(await screen.findByText("Extraction is not in your plan")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+  });
+
+  it("treats a status without a reason as a missing provider", async () => {
+    grantProviderSetup();
+    mocks.status = { ...NO_PROVIDER, modelProviderReason: undefined };
+
+    renderAlert();
+
+    expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
   });
 
   it("stays hidden on the legacy engine even without a provider", async () => {

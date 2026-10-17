@@ -101,6 +101,7 @@ Loaded now:
 - list_location_categories
 - search_shipments
 - accept_all_confident
+- set_stop_location
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -110,7 +111,6 @@ Callable after find_tools:
 - accept_field — Accept one field read from the document as correct on the import page.
 - set_field_value — Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate.
 - set_required_field — Set the customer, service type, shipment type or rating method on the import page, by record id.
-- set_stop_location — Match a stop on the import page to a location record.
 - set_stop_schedule — Set when a stop on the import page is scheduled: the start of its window and, optionally, the end.
 - create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 643.
+Tools listed: 646.
 
 ## The model
 
@@ -59,13 +59,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 214 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 25 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 44 |
-| Money | Moves or commits money. | Automatic | Yes | 105 |
+| Money | Moves or commits money. | Automatic | Yes | 106 |
 
 ## Reads only
 

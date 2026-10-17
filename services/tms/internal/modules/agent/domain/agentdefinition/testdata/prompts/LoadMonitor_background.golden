@@ -62,9 +62,11 @@ Loaded now:
 - cancel_wait
 - get_shipment_tracking
 - get_shipment
+- list_detention_desk
 - evaluate_service_failures
 - add_shipment_comment
 - email_customer
+- send_detention_notice
 - list_watchtower_items
 - assign_exception
 - get_detention_occurrence
@@ -75,12 +77,10 @@ Callable after find_tools:
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_service_failures — List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.
-- list_detention_desk — List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk.
 - list_weather_alerts — Active National Weather Service alerts: the event, its severity, the area it covers and when it expires.
 - resolve_service_failure — Close an open service failure with the reason it happened and a note on what was done.
 - notify_driver — Send a driver a message in the Dash app, such as a moved pickup, a new delivery window, a weather warning on their route, or a request to call dispatch.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
-- send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
 - log_check_call — Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop.
 - issue_carrier_tracking_link — Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in.

@@ -46,9 +46,17 @@ export const documentControlSchema = z.object({
   extractionEngine: extractionEngineSchema,
 });
 
+export const extractionModelReasonSchema = z.enum([
+  "available",
+  "off_on_server",
+  "not_in_plan",
+  "no_model_provider",
+]);
+
 export const documentExtractionStatusSchema = z.object({
   engine: extractionEngineSchema,
   modelProviderAvailable: z.boolean(),
+  modelProviderReason: extractionModelReasonSchema.optional(),
   converterAvailable: z.boolean(),
   extractionAvailable: z.boolean(),
 });
@@ -56,4 +64,5 @@ export const documentExtractionStatusSchema = z.object({
 export type DocumentControl = z.infer<typeof documentControlSchema>;
 export type DocumentControlResource = z.infer<typeof documentControlResourceSchema>;
 export type ExtractionEngine = z.infer<typeof extractionEngineSchema>;
+export type ExtractionModelReason = z.infer<typeof extractionModelReasonSchema>;
 export type DocumentExtractionStatus = z.infer<typeof documentExtractionStatusSchema>;

@@ -9,7 +9,6 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,6 +21,10 @@ import (
 // document intelligence uses to mark a field for review.
 const lowConfidence = 0.8
 
+// draftDocumentIDParam names the document in get_shipment_draft's arguments
+// and in the draft it returns.
+const draftDocumentIDParam = "documentId"
+
 // extractionPage is what the extraction shows of one page: its number and
 // where each line of its text sits.
 type extractionPage struct {
@@ -33,15 +36,13 @@ type extractionPage struct {
 // the page: the file, the pages, and each field with its confidence and the
 // box it was found in. It is nil when the draft holds nothing read yet, which
 // leaves the result to be shown as a record card.
-func (r *artifactRecorder) extraction(
-	observation agentports.ToolObservation,
-) *assistantartifact.Artifact {
-	document, ok := toJSONDocument(observation.Data)
+func (r *artifactRecorder) extraction(callID string, data any) *assistantartifact.Artifact {
+	document, ok := toJSONDocument(data)
 	if !ok {
 		return nil
 	}
 	draft := document.fields
-	documentID, err := pulid.Parse(typeutils.StringOfTrimmed(draft["documentId"]))
+	documentID, err := pulid.Parse(typeutils.StringOfTrimmed(draft[draftDocumentIDParam]))
 	if err != nil {
 		return nil
 	}
@@ -70,7 +71,7 @@ func (r *artifactRecorder) extraction(
 		}
 	}
 
-	return extractionArtifact(observation.Call.ID, draft, fileName, pages)
+	return extractionArtifact(callID, draft, fileName, pages)
 }
 
 // extractionArtifact is the mapping itself, apart from the reads, so it can
@@ -111,7 +112,7 @@ func extractionArtifact(
 	}
 
 	payload := map[string]any{
-		"documentId":   typeutils.StringOfTrimmed(draft["documentId"]),
+		"documentId":   typeutils.StringOfTrimmed(draft[draftDocumentIDParam]),
 		"fileName":     fileName,
 		"documentKind": documentKind,
 		"kindLabel":    kindLabel,
@@ -133,7 +134,21 @@ func extractionArtifact(
 		Title:            assistantartifact.NormalizeTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
+		LineageKey: extractionLineageKey(
+			typeutils.StringOfTrimmed(draft[draftDocumentIDParam]),
+		),
 	}
+}
+
+// extractionLineageKey names the extraction of one document, so the card
+// shown when the file was attached and the one the agent opens by reading
+// the draft are versions of one artifact.
+func extractionLineageKey(documentID string) string {
+	return assistantartifact.LineageKeyFor(
+		assistantartifact.KindExtraction,
+		toolGetShipmentDraft,
+		map[string]any{draftDocumentIDParam: documentID},
+	)
 }
 
 // extractionFields lists the draft's fields in a reading order (the order

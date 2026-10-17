@@ -57,6 +57,10 @@ type TurnPlan struct {
 	// activities keep no tool result as an artifact. A plan recorded before it
 	// existed reads false and keeps its artifacts.
 	Inline bool `json:"inline,omitempty"`
+	// Readings are files whose reading the turn picks up from a wait. Their
+	// extraction is shown again when the turn finishes, so a card the wait's
+	// pickup made opens in the pane like one the turn made.
+	Readings []pulid.ID `json:"readings,omitempty"`
 	// Turn is the runtime turn, empty when the guard refused the question.
 	Turn agentruntime.TurnState `json:"turn"`
 }
@@ -182,14 +186,18 @@ func (s *Service) prepareTurn(
 	}
 	definition, history := checks.definition, checks.history
 	attachments, runtimeAttachments := checks.attachments, checks.runtimeAttachments
+	s.showAttachments(ctx, thread, actor, req.TenantInfo, runtimeAttachments)
 
 	outsideText := false
+	var resumed resumedWaitNote
 	if resumesWait {
-		resumed, noteErr := s.waitNote(ctx, thread.ID, req.ResumeWaitID, req.TenantInfo)
+		var noteErr error
+		resumed, noteErr = s.waitNote(ctx, thread.ID, req.ResumeWaitID, req.TenantInfo)
 		if noteErr != nil {
 			return nil, nil, noteErr
 		}
 		content, outsideText = resumed.note, resumed.outside
+		content += s.showReading(ctx, thread, actor, req.TenantInfo, resumed.document)
 	}
 	if followUp {
 		followed, noteErr := s.decisionNote(ctx, &decisionNoteParams{
@@ -242,6 +250,7 @@ func (s *Service) prepareTurn(
 		Mentions:            mentions,
 		PreferredProviderID: thread.PreferredProviderID,
 		Proposals:           turnReq.Proposals,
+		Readings:            readingsOf(resumed.document),
 	}
 	if runReq != nil {
 		// A conversation keeps what the turn publishes beside it, in the
@@ -358,6 +367,7 @@ func (s *Service) FinishTurn(
 	if req.Failure == nil {
 		artifacts.keepLinked(linkedArtifacts(saved))
 	}
+	s.showFinishedAttachments(ctx, thread, plan, req.Actor, req.TenantInfo, emit)
 	s.runtime.MarkToolEffects(saved)
 	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
 	s.measureAfterTurn(ctx, thread, plan, saved, runWindow(req.Run), req.TenantInfo, emit)

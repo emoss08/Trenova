@@ -63,6 +63,10 @@ Loaded now:
 - reply_to_inbound_message
 - attach_document_to_shipment
 - add_shipment_comment
+- quote_shipment
+- accept_edi_tender
+- list_service_types
+- list_locations
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -101,11 +105,7 @@ Callable after find_tools:
 - get_edi_inbound_file — Retrieve one inbound EDI file by id: its partner, status and failure reason, and each transaction set parsed from it with its control numbers.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
-- quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
-- accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
-- list_service_types — List service types — the levels of service a shipment can be booked at.
-- list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: reply_to_inbound_message, discard_inbound_reply_draft, wait_for_inbound_reply, snooze_inbound_messages, reopen_inbound_messages, assign_inbound_messages, hand_off_triage, block_inbound_sender, unblock_inbound_sender, unfile_inbound_attachment, resolve_inbound_conflict, create_inbound_load, accept_edi_tender, decline_edi_tender

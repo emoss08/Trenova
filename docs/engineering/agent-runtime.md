@@ -1583,6 +1583,12 @@ stale when a tool was renamed, and told an agent without a tool to call it.
 Every recipe and prerequisite names a registered tool, and a recipe names its
 own tool (`TestEveryRecipeNamesRegisteredTools`).
 
+A lookup that is a step of exactly one held tool's recipe brings that tool when it
+loads (`Catalog.Feeds`, `soleFed`): `find_shipment_records` brings `create_shipment`.
+Its answer said to call `create_shipment` next, and the model went looking for it
+with `find_tools` first. A lookup many held recipes start from (`search_shipments`,
+`get_shipment`) brings none of them.
+
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
 declared instead as a companion (`agentports.CompanionTool`): `create_shipment` names
 `create_customer`, `create_location` and `create_commodity`, because a load from a broker
@@ -1775,11 +1781,47 @@ reads only the person's own uploads to this thread (`QueryToolParams.ThreadID`):
 its text in reading order, one page of it, or a window from an offset, with what
 document intelligence found; without an id it lists the conversation's files,
 which is how a turn past a compaction finds them again. A file still being read
-is waited for, polling for up to 20 seconds, and one still not read says so
-rather than coming back empty. Its policy is the person's own read
+is waited for, polling for up to 20 seconds. One still not read parks the
+conversation on it instead of the person: the turn's tool observer
+(`assistantservice.WaitOnUnreadFile`) registers a `DocumentRead` wait, the tool
+tells the agent to say in a sentence that it will carry on once the file is read
+and end its turn, and the composer shows the wait ("A file", "Being read") until
+the conversation picks up on its own with the file read (see
+[agent-waits.md](agent-waits.md)). The agent once told the person to send their
+message again, and the person had to ask "How is it looking?" to get an answer.
+A file read in full ends any open wait on it, so a conversation that got the
+file another way is not picked up again for nothing. Its policy is the person's own read
 (`ToolScopeSelf`) that always reads outside content (`TaintSourceAttachment`), so
 a run nobody is watching goes without it and a turn that read a file proposes
 its later writes. `get_document_summary` stays for documents a record names.
+
+What document intelligence read off an attached rate confirmation is shown as its
+extraction card without anyone asking (`attachment_cards.go`). The card is read as
+the person through `get_shipment_draft` (`agentruntime.ReadRecord`), kept under the
+call id `attachment:<documentId>` and in the lineage `get_shipment_draft` uses for
+that document (`extractionLineageKey`), so the card the attachment opened and the
+one the agent opens by reading the draft are versions of one artifact, and reading
+an unchanged draft points the reply at the card already there. It is recorded at
+three moments, each a no-op when nothing changed: as the turn is prepared, when the
+file's draft is already read, with the card's link on the file's entry in the
+attachments block (`RuntimeAttachment.Shown`) so the reply names it rather than
+publishing the reading as a document; when the turn finishes, for a reading that
+finished meanwhile; and on every `document.extracted` event for a file a saved
+message of the conversation carries (`ConversationRepository.CarriesAttachment`),
+which is how it usually arrives, and how the model's reading replaces the
+rule-based one. The event reaches the assistant service through an observer bound
+after the graph is built (`agentevents.RegisterAttachmentObservers`), because the
+assistant service depends, through its tools, on services that publish events. A
+turn that picks up a `DocumentRead` wait shows the card as it begins and is told
+where it is. The file's chip under the message that carried it opens the newest
+card read off it (`extractionCardsByDocument`, from the summary's `documentId`).
+
+A conversation's file drafts like a shipment's: `assistant_thread` is one of the
+roads a shipment arrives by in `DocumentControl.AllowsShipmentDraftResource`, with
+imports and tenders by email. Before, the draft was refused for the conversation,
+so the rule-based reading was stored at once and marked `Unavailable` while the
+model's reading was still on its way, and the agent read stop names like "7,000".
+Now the draft waits `Pending` for the model's reading like any other.
 
 A native PDF page's text is its layout read top to bottom, each row's segments
 left to right with `kernelports.PDFColumnGap` between them
@@ -1799,8 +1841,17 @@ A turn replays the newest 120 messages, and their tool results are most of it.
 is in the last three turns (a decision note is not a turn) and, newest first,
 within 48,000 characters; the rest are shortened to their first 320 characters
 inside a fence of their own, closed, with a note after it naming the tool to
-call again and saying not to quote what was left out. A result a proposal
-answered is replaced by its current outcome and never shortened. The figures of
+call again and saying not to quote what was left out. The note also names the
+record ids found in the part left out (`keptIDs`, at most 40, from
+`recordids.Find`), which still stand: an agent that could no longer see the
+lookup that found its ids looked everything up again and told the person it could
+not confirm the records it had already used. A result a proposal
+answered is replaced by its current outcome and never shortened. A recent
+message's file that has no text read off it yet is sent again as itself
+(`unreadFiles`), to a model that takes files: one that read a rate confirmation
+as itself while its text was still being extracted saw on the next turn only its
+own figures, with no file and no text behind them, and told the person it had made
+them up. Once the text is in, the replay carries the text instead. The figures of
 every shortened result travel with the turn (`TurnState.Evidence`), so the
 grounding guard above still counts them as read.
 

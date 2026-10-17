@@ -88,6 +88,7 @@ Loaded now:
 - add_shipment_comment
 - dispute_detention
 - get_inbound_message
+- settle_detention_dispute
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -96,7 +97,6 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - waive_detention — Waive a detention charge, with a coded reason and a note.
 - search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
-- settle_detention_dispute — Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, add_shipment_comment, dispute_detention, settle_detention_dispute

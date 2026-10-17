@@ -25,6 +25,12 @@ type AgentEventPublisher interface {
 	Publish(ctx context.Context, event AgentEvent)
 }
 
+// AttachmentExtractionObserver is told when a document's extraction is saved,
+// so a file a person attached in a conversation has its card shown there.
+type AttachmentExtractionObserver interface {
+	AttachmentExtracted(ctx context.Context, event *AgentEvent)
+}
+
 func PublishAgentEvent(ctx context.Context, publisher AgentEventPublisher, event AgentEvent) {
 	if publisher == nil {
 		return

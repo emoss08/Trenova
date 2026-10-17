@@ -101,8 +101,8 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 436 |
-| Exempt | 707 |
+| Covered by a tool | 458 |
+| Exempt | 709 |
 | — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 40 |
@@ -111,8 +111,8 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 49 |
-| — Duplicate | 8 |
-| **Pending** | **24** |
+| — Duplicate | 10 |
+| **Pending** | **0** |
 | Total | 1167 |
 
 Of the 458 writes an agent should be able to make, 458 have a tool (100%).

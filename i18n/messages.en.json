@@ -5985,7 +5985,25 @@
       "go/other"
     ]
   },
+  "A file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A file is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A file is waited on by the conversation it was attached to": {
     "sites": 1,
     "scope": [
       "go"
@@ -30341,6 +30359,15 @@
       "apps/web/components"
     ]
   },
+  "Ask an administrator to set ai.documentExtraction to true.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask an agent in Desk": {
     "sites": 2,
     "scope": [
@@ -37548,11 +37575,12 @@
     ]
   },
   "Being read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -80220,6 +80248,15 @@
       "routes/agent-control"
     ]
   },
+  "Document extraction is switched off in this server's configuration, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Document extraction settings": {
     "sites": 1,
     "scope": [
@@ -99231,6 +99268,15 @@
       "routes/shipment"
     ]
   },
+  "Extraction is not in your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Extraction is not set up on this server": {
     "sites": 1,
     "scope": [
@@ -99241,6 +99287,15 @@
     ]
   },
   "Extraction is still in progress.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Extraction is turned off on this server": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104016,6 +104071,15 @@
     ]
   },
   "Files cannot be attached to replies on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Files cannot be waited on here": {
     "sites": 1,
     "scope": [
       "go"
@@ -152846,7 +152910,7 @@
       "apps/web/components"
     ]
   },
-  "No AI provider can read documents for your organization, so uploaded files are stored but not read and no shipment draft is built.": {
+  "No AI provider is assigned to document extraction for your organization, so uploaded files are stored but not read and no shipment draft is built. A provider that serves chat reads documents only once the Document extraction task is assigned to it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174526,6 +174590,24 @@
     ]
   },
   "Open watchtower items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Open what was read from this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Open what was read from {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -303857,6 +303939,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Your plan does not include document extraction, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your profile": {

@@ -4,6 +4,7 @@ import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useCanAddAIProvider } from "@/hooks/use-can-add-ai-provider";
 import { AI_SETUP_PATH } from "@/lib/ai-setup";
 import { documentControl } from "@/lib/queries/document-control";
+import { extractionModelReasonSchema } from "@/types/document-control";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
@@ -39,6 +40,39 @@ export function ExtractionNeedsProviderAlert({ className }: { className?: string
     );
   }
 
+  if (data.modelProviderReason === extractionModelReasonSchema.enum.off_on_server) {
+    return (
+      <Alert variant="warning" size="sm" className={className}>
+        <AlertCircleIcon />
+        <AlertTitle>{t("Extraction is turned off on this server")}</AlertTitle>
+        <AlertDescription>
+          <p>
+            {t(
+              "Document extraction is switched off in this server's configuration, so uploaded files are stored but not read and no shipment draft is built.",
+            )}
+          </p>
+          <p>{t("Ask an administrator to set ai.documentExtraction to true.")}</p>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (data.modelProviderReason === extractionModelReasonSchema.enum.not_in_plan) {
+    return (
+      <Alert variant="warning" size="sm" className={className}>
+        <AlertCircleIcon />
+        <AlertTitle>{t("Extraction is not in your plan")}</AlertTitle>
+        <AlertDescription>
+          <p>
+            {t(
+              "Your plan does not include document extraction, so uploaded files are stored but not read and no shipment draft is built.",
+            )}
+          </p>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <Alert variant="warning" size="sm" className={className}>
       <AlertCircleIcon />
@@ -46,7 +80,7 @@ export function ExtractionNeedsProviderAlert({ className }: { className?: string
       <AlertDescription>
         <p>
           {t(
-            "No AI provider can read documents for your organization, so uploaded files are stored but not read and no shipment draft is built.",
+            "No AI provider is assigned to document extraction for your organization, so uploaded files are stored but not read and no shipment draft is built. A provider that serves chat reads documents only once the Document extraction task is assigned to it.",
           )}
         </p>
         {canAddProvider ? (

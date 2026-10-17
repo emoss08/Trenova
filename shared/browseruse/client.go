@@ -203,10 +203,11 @@ func (c *Client) CreateTask(ctx context.Context, req *CreateTaskRequest) (*TaskC
 	}
 
 	resp, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: endpointCreateTask,
-		Method:   http.MethodPost,
-		Path:     pathTasks,
-		Body:     req,
+		Endpoint:       endpointCreateTask,
+		Method:         http.MethodPost,
+		Path:           pathTasks,
+		Body:           req,
+		ExpectedStatus: []int{http.StatusOK, http.StatusCreated, http.StatusAccepted},
 	})
 	if err != nil {
 		return nil, err

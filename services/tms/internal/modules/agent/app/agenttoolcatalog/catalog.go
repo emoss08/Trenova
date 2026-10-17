@@ -10,6 +10,7 @@
 package agenttoolcatalog
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -41,6 +42,9 @@ type Catalog struct {
 	byName  map[string]int
 	family  map[string][]string
 	items   []agentports.EmbeddingCatalogItem
+	// feeds names, for each step of a recipe, the tools whose recipe it is a
+	// step of before the tool itself.
+	feeds map[string][]string
 }
 
 func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
@@ -53,6 +57,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 		byName:  make(map[string]int, len(sorted)),
 		family:  indexFamilies(),
 		items:   make([]agentports.EmbeddingCatalogItem, 0, len(sorted)),
+		feeds:   make(map[string][]string),
 	}
 
 	for i, descriptor := range sorted {
@@ -70,9 +75,23 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 			catalog.items,
 			agentports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
 		)
+		for _, step := range descriptor.Recipe {
+			if step == descriptor.Name {
+				break
+			}
+			if !slices.Contains(catalog.feeds[step], descriptor.Name) {
+				catalog.feeds[step] = append(catalog.feeds[step], descriptor.Name)
+			}
+		}
 	}
 
 	return catalog
+}
+
+// Feeds names the tools whose recipe has the tool as a step before them:
+// find_shipment_records feeds create_shipment.
+func (c *Catalog) Feeds(name string) []string {
+	return c.feeds[name]
 }
 
 // Descriptor returns one tool by its exact name.

@@ -45,6 +45,9 @@ type RuntimeAttachment struct {
 	Reading     AttachmentReading
 	Text        string
 	PoorlyRead  bool
+	// Shown is the link to the card beside the conversation that shows what
+	// was read off the file, empty while there is none.
+	Shown string
 }
 
 // RenderedAttachments is the attachments block and, for each file, its entry
@@ -123,6 +126,14 @@ func writeAttachmentHead(b *strings.Builder, attachment *RuntimeAttachment) {
 	if attachment.Kind != "" {
 		b.WriteString("\n  looks like: ")
 		b.WriteString(fenced(attachment.Kind))
+	}
+	if attachment.Shown != "" {
+		b.WriteString("\n  shown: the person already sees what was read off this file, in ")
+		b.WriteString(fenced(attachment.Shown))
+		b.WriteString(" beside the conversation. When the reply is about what was read, " +
+			"point to it by writing that link, exactly so, inside the sentence; do not " +
+			"publish the reading as a document, and read the file again only for values " +
+			"the work needs.")
 	}
 }
 

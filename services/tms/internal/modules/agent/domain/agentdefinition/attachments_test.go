@@ -151,3 +151,38 @@ func TestRenderAttachments_GivesEachFileItsEntryAndTheEntryThatReplacesIt(t *tes
 	assert.NotContains(t, rendered.NativeEntries[1], "could not be read")
 	assert.NotContains(t, rendered.NativeEntries[1], "legibility")
 }
+
+func TestRenderAttachments_PointsToTheExtractionAlreadyShown(t *testing.T) {
+	t.Parallel()
+
+	shown := "[Rate confirmation · rate-con.pdf](artifact:art_1)"
+	rendered := agentdefinition.RenderAttachments([]agentdefinition.RuntimeAttachment{{
+		DocumentID: "doc_1",
+		FileName:   "rate-con.pdf",
+		Reading:    agentdefinition.AttachmentReadingDone,
+		Text:       "SHIPPER#1",
+		Shown:      shown,
+	}}, agentdefinition.AttachmentTextBudget)
+
+	require.Len(t, rendered.Entries, 1)
+	assert.Contains(
+		t,
+		rendered.Entries[0],
+		"shown: the person already sees what was read off this file, in "+shown,
+	)
+	assert.Contains(t, rendered.NativeEntries[0], shown,
+		"a file sent as itself still has its card named")
+	assert.Contains(t, rendered.Block, "do not publish the reading as a document")
+}
+
+func TestRenderAttachments_SaysNothingOfACardThatIsNotThere(t *testing.T) {
+	t.Parallel()
+
+	block := agentdefinition.DescribeAttachments([]agentdefinition.RuntimeAttachment{{
+		DocumentID: "doc_1",
+		FileName:   "rate-con.pdf",
+		Reading:    agentdefinition.AttachmentReadingPending,
+	}}, agentdefinition.AttachmentTextBudget)
+
+	assert.NotContains(t, block, "shown:")
+}

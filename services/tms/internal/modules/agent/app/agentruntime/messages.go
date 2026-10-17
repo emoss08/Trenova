@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -187,13 +188,45 @@ func replayUserMessage(
 	if recent {
 		budget = agentdefinition.AttachmentTextBudget
 	}
-
-	return agentports.Message{
-		Role: agentports.RoleUser,
-		Content: agentdefinition.DescribeAttachments(
-			earlierAttachments(msg.Attachments, files), budget,
-		) + content,
+	attachments := earlierAttachments(msg.Attachments, files)
+	rendered := agentdefinition.RenderAttachments(attachments, budget)
+	replayed := agentports.Message{
+		Role:    agentports.RoleUser,
+		Content: rendered.Block + content,
 	}
+	if recent {
+		replayed.Files = unreadFiles(replayed.Content, attachments, &rendered)
+	}
+
+	return replayed
+}
+
+// unreadFiles are the files of a recent message that have no text read off
+// them yet, sent again as themselves to a model that takes files. A model
+// that read a rate confirmation as itself while its text was still being
+// extracted saw only its own figures on the next turn, with no file and no
+// text behind them, and told the person it had made them up. Once a file's
+// text is in, the replay carries the text instead.
+func unreadFiles(
+	content string,
+	attachments []agentdefinition.RuntimeAttachment,
+	rendered *agentdefinition.RenderedAttachments,
+) []agentports.MessageFile {
+	files := messageFiles(content, attachments, rendered)
+	unread := make(map[string]bool, len(attachments))
+	for idx := range attachments {
+		if strings.TrimSpace(attachments[idx].Text) == "" {
+			unread[attachments[idx].DocumentID] = true
+		}
+	}
+	files = slices.DeleteFunc(files, func(file agentports.MessageFile) bool {
+		return !unread[file.DocumentID]
+	})
+	if len(files) == 0 {
+		return nil
+	}
+
+	return files
 }
 
 // compactionPreamble opens the summary of a compacted conversation as the
@@ -321,7 +354,27 @@ func compactToolResult(content string) string {
 		fmt.Sprintf("\n[This result, from earlier in the conversation, was shortened: "+
 			"%d more characters were left out of the replay. "+
 			"Do not quote or count anything from the part left out; call %s again "+
-			"if the current details matter.]", len(payload)-len(head), tool)
+			"if the current details matter.%s]",
+			len(payload)-len(head), tool, keptIDs(payload[len(head):], head))
+}
+
+// maxKeptResultIDs bounds the record ids a shortened result keeps.
+const maxKeptResultIDs = 40
+
+// keptIDs names the record ids in the part of a result the replay left out.
+// An id is what a later call is made with, and an agent that could no longer
+// see the lookup that found its ids looked everything up again, then told the
+// person it could not confirm the records it had already used.
+func keptIDs(left, head string) string {
+	ids := slices.DeleteFunc(recordids.Find(left, maxKeptResultIDs), func(id string) bool {
+		return strings.Contains(head, id)
+	})
+	if len(ids) == 0 {
+		return ""
+	}
+
+	return " The record ids it named still stand and can be used as they are: " +
+		strings.Join(ids, ", ") + "."
 }
 
 func compactText(content, remedy string) string {
@@ -442,6 +495,7 @@ func earlierAttachments(
 			DocumentID:  id,
 			FileName:    stored[idx].FileName,
 			ContentType: stored[idx].ContentType,
+			FileSize:    stored[idx].FileSize,
 			PoorlyRead:  stored[idx].PoorlyRead,
 			Text:        files[id],
 		})

@@ -24,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -78,8 +80,10 @@ type Params struct {
 	Turns         *assistantturnservice.Service
 	RunService    agentports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
-	Realtime      agentports.RealtimeService `optional:"true"`
-	PortalRuns    agentextensionports.PortalRunRepository `optional:"true"`
+	Realtime      agentports.RealtimeService                     `optional:"true"`
+	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
+	Documents     documentports.DocumentRepository               `optional:"true"`
+	Contents      documentcontentports.DocumentContentRepository `optional:"true"`
 }
 
 type turnStarter interface {
@@ -135,6 +139,8 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 			customers:   p.Customers,
 			subjects:    p.Subjects,
 			portalRuns:  p.PortalRuns,
+			documents:   p.Documents,
+			contents:    p.Contents,
 		},
 		conversations: p.Conversations,
 		runService:    p.RunService,
@@ -383,7 +389,11 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 	}
 
 	detail := event.Detail
-	if detail == "" {
+	switch {
+	case detail != "":
+	case event.Kind == agent.EventDocumentExtracted:
+		detail = fmt.Sprintf("Its reading finished at %s.", stamp(s.now()))
+	default:
 		detail = fmt.Sprintf("Seen at %s.", stamp(s.now()))
 	}
 	for _, wait := range waits {
@@ -401,6 +411,8 @@ func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 		return []agentwait.Kind{agentwait.KindStopDeparture}, []pulid.ID{event.SubjectID}
 	case agent.EventInboundMessageClassified:
 		return []agentwait.Kind{agentwait.KindReply}, event.Related
+	case agent.EventDocumentExtracted:
+		return []agentwait.Kind{agentwait.KindDocumentRead}, []pulid.ID{event.SubjectID}
 	default:
 		return nil, nil
 	}
@@ -415,6 +427,8 @@ func eventMeets(wait *agentwait.Wait, event *agentports.AgentEvent) bool {
 			slices.Contains(event.Related, wait.Condition.StopID)
 	case agentwait.KindReply:
 		return slices.Contains(event.Related, wait.WatchID)
+	case agentwait.KindDocumentRead:
+		return true
 	default:
 		return false
 	}

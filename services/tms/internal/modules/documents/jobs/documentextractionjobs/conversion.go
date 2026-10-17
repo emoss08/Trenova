@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -38,11 +39,15 @@ const (
 	conversionPollInterval = 2 * time.Second
 	maxConversionResubmits = 3
 
-	reasonNoModelProvider       = "no_model_provider"
 	reasonConverterUnconfigured = "converter_not_configured"
 
-	extractionUnavailableMessage = "Document extraction needs an AI model provider. " +
-		"Add one in AI settings, then extract the document again."
+	extractionOffOnServerMessage = "Document extraction is turned off on this server. " +
+		"An administrator needs to set ai.documentExtraction to true, " +
+		"then extract the document again."
+	extractionNotInPlanMessage  = "Your plan does not include document extraction."
+	extractionNoProviderMessage = "No AI provider is assigned to document extraction. " +
+		"In AI settings, add a provider or assign an existing one to the Document extraction " +
+		"task, then extract the document again."
 	converterUnavailableMessage = "Document extraction is not set up on this server: " +
 		"the document converter is not configured."
 	converterUnreachableMessage = "The document converter could not be reached. " +
@@ -207,16 +212,16 @@ func (a *Activities) planDocling(
 	control *tenant.DocumentControl,
 	tenantInfo pagination.TenantInfo,
 ) (*PlanDocumentExtractionResult, error) {
-	available, err := a.aiDocumentService.ExtractionAvailable(ctx, tenantInfo)
+	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if !available {
-		if err = a.markExtractionUnavailable(ctx, doc, &extractionUnavailable{
-			code:    documentupload.FailureExtractionUnavailable,
-			reason:  reasonNoModelProvider,
-			message: extractionUnavailableMessage,
-		}); err != nil {
+	if !availability.Available() {
+		if err = a.markExtractionUnavailable(
+			ctx,
+			doc,
+			modelUnavailable(availability),
+		); err != nil {
 			return nil, err
 		}
 		return stoppedPlan(ExtractionRouteStopped, doc), nil
@@ -264,6 +269,26 @@ func (a *Activities) planDocling(
 		OCR:                      control.EnableOCR,
 		ConversionTimeoutSeconds: int64(a.conversionCfg.GetConversionTimeout().Seconds()),
 	}, nil
+}
+
+func modelUnavailable(
+	availability documentaiextractionports.ExtractionAvailability,
+) *extractionUnavailable {
+	message := extractionNoProviderMessage
+	switch availability {
+	case documentaiextractionports.ExtractionOffOnServer:
+		message = extractionOffOnServerMessage
+	case documentaiextractionports.ExtractionNotInPlan:
+		message = extractionNotInPlanMessage
+	case documentaiextractionports.ExtractionAvailable,
+		documentaiextractionports.ExtractionNoProviderAssigned:
+	}
+
+	return &extractionUnavailable{
+		code:    documentupload.FailureExtractionUnavailable,
+		reason:  string(availability),
+		message: message,
+	}
 }
 
 func unsupportedFormatMessage(format conversionFormat, fileType string) string {

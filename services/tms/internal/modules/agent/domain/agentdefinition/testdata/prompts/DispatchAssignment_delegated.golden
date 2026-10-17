@@ -60,6 +60,7 @@ Loaded now:
 - rank_move_candidates
 - shop_carriers
 - assign_move
+- assign_move_to_carrier
 - list_shipment_tenders
 - generate_rate_confirmation
 - list_tractors
@@ -72,7 +73,6 @@ Callable after find_tools:
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - tender_move_to_routing_guide — Offer an uncovered move to carriers down its routing guide, in the guide's order at the guide's rates.
 - tender_move_to_carriers — Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given.
-- assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
 - list_carrier_capacity_postings — List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked.

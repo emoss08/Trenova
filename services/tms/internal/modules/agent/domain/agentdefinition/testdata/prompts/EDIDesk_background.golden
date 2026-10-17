@@ -66,6 +66,7 @@ Loaded now:
 - inspect_x12
 - list_edi_transfers
 - get_edi_partner
+- reprocess_edi_inbound_files
 - draft_edi_connection
 - apply_edi_connection_draft
 
@@ -74,7 +75,6 @@ Callable after find_tools:
 - list_edi_messages — List EDI documents sent to or received from trading partners, newest first, with delivery status, attempts, the last delivery error and acknowledgment.
 - preview_edi_document — Render the X12 a send would produce now, without sending or saving it: a 204 or 214 for a shipment, or the 990 answering a partner's tender.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
-- reprocess_edi_inbound_files — Propose running quarantined or partly processed inbound EDI files through processing again.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, reprocess_edi_inbound_files, apply_edi_connection_draft
