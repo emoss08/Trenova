@@ -396,6 +396,13 @@ Extensions (web search and anything like it) add agent-only tools that an organi
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
 [docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
+Portal automation (`list_portal_sites`, `read_portal`, `act_on_portal` on a cloud browser):
+administrator-set sites, the navigation allow-list and the post-hoc page check, sign-ins sent
+as vendor secrets, actions run from an approval and followed by `PortalRunWorkflow` and a
+`PortalRun` wait, is in
+[docs/engineering/agent-portal-automation.md](docs/engineering/agent-portal-automation.md).
+Read it before changing `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools` or
+`browseruseconnector`.
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.

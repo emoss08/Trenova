@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/insightjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/retrievaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/watchtowerjobs"
 	"go.uber.org/fx"
 )
@@ -30,6 +31,7 @@ func WorkerOptions() fx.Option {
 	return fx.Options(
 		aiauditjobs.Module,
 		agentwaitjobs.Module,
+		portaljobs.Module,
 		agentjobs.Module,
 		reflectionjobs.Module,
 		agentqualityjobs.Module,

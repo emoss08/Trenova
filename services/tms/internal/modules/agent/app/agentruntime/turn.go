@@ -606,6 +606,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		delegates:    delegates,
 		directed:     directedTask(req),
 		opened:       opened,
+		external:     req.AfterExternalContent,
 		world:        s.watchWorld(ctx, req, now),
 		toolMemories: toolMemories,
 	}

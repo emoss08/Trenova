@@ -26,6 +26,8 @@ const (
 	KindDOTRandomSelection       RecordKind = "dot_random_selection"
 	KindAssistantThread          RecordKind = "assistant_thread"
 	KindWait                     RecordKind = "wait"
+	KindPortalSite               RecordKind = "portal_site"
+	KindPortalRun                RecordKind = "portal_run"
 	KindWatchtowerItem           RecordKind = "watchtower_item"
 	KindAccountingConnection     RecordKind = "accounting_connection"
 	KindAccountingMapping        RecordKind = "accounting_mapping"
@@ -93,6 +95,8 @@ var recordKinds = map[RecordKind]recordKindSpec{
 	KindDOTRandomSelection:      {"drde_", ResourceDOTRandomPool, "DOT random selection"},
 	KindAssistantThread:         {"athr_", ResourceAssistant, "conversation"},
 	KindWait:                    {"awt_", ResourceAgentRun, "wait"},
+	KindPortalSite:              {"apst_", ResourceAgentExtension, "portal site"},
+	KindPortalRun:               {"aprn_", ResourceAgentExtension, "portal task"},
 	KindWatchtowerItem:          {"wt_", ResourceWatchtower, "watchtower item"},
 	KindAccountingConnection:    {"acctc_", ResourceAccountingIntegration, "accounting connection"},
 	KindAccountingMapping:       {"acctm_", ResourceAccountingIntegration, "accounting mapping"},

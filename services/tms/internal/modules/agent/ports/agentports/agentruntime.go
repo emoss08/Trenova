@@ -147,6 +147,11 @@ type RunRequest struct {
 	// its thread's, the agent's that handed it a task. The turn adds what its
 	// own subject, attachments and memories bring.
 	Taint *agent.RunTaint
+	// AfterExternalContent opens the turn as one that has already read
+	// content written outside the organization, so every write it asks for
+	// is proposed. Work picked up from a wait set after reading the web, or
+	// from a portal's answer, opens this way.
+	AfterExternalContent bool
 	// Records are the records the turn is about: its subject, the page, the
 	// records the person named. A turn it hands a task to reads their
 	// memories too.

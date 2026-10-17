@@ -231,6 +231,11 @@ export const RECORD_LINKS = {
       fieldFilters: '[{"field":"id","operator":"eq","value":"{id}"}]',
     },
   },
+  portal_run: {
+    label: "Portal task",
+    path: "/admin/agent-control",
+    params: { tab: "extensions", portalRun: "{id}" },
+  },
   ai_audit_event: {
     label: "AI audit event",
     path: "/admin/agent-control",

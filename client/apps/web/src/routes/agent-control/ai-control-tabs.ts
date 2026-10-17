@@ -208,6 +208,10 @@ export const providerEditorParser = parseAsString.withOptions(dialogOptions);
 export const EXTENSION_OPEN_PARAM = "extension";
 export const extensionOpenParser = parseAsString.withOptions(dialogOptions);
 
+/** The portal task open in the portal extension's history, from a link to it. */
+export const PORTAL_RUN_PARAM = "portalRun";
+export const portalRunParser = parseAsString.withOptions(dialogOptions);
+
 /** The agent open in Quality's sheet from the figures above the tables. */
 export const QUALITY_SHEET_PARAM = "qualitySheet";
 export const qualitySheetParser = parseAsString.withOptions(dialogOptions);
@@ -276,6 +280,7 @@ export const aiControlDialogParsers = {
   [POLICY_EDITOR_PARAM]: policyEditorParser,
   [PROVIDER_EDITOR_PARAM]: providerEditorParser,
   [EXTENSION_OPEN_PARAM]: extensionOpenParser,
+  [PORTAL_RUN_PARAM]: portalRunParser,
   [QUALITY_SHEET_PARAM]: qualitySheetParser,
   [SWEEP_SETTINGS_PARAM]: sweepSettingsParser,
   [AUDIT_EXPORT_PARAM]: auditExportParser,
@@ -297,6 +302,7 @@ export const CLEARED_DIALOG_STATE = {
   [POLICY_EDITOR_PARAM]: null,
   [PROVIDER_EDITOR_PARAM]: null,
   [EXTENSION_OPEN_PARAM]: null,
+  [PORTAL_RUN_PARAM]: null,
   [QUALITY_SHEET_PARAM]: null,
   [SWEEP_SETTINGS_PARAM]: null,
   [AUDIT_EXPORT_PARAM]: null,

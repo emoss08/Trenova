@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
@@ -30,7 +31,7 @@ const cancelWaitName = "cancel_wait"
 
 const maxWaitHours = agentwait.MaxLifetimeSeconds / 3600
 
-var waitKinds = agenttoolschema.Source("agent_wait_kinds", agentwait.AllKinds())
+var waitKinds = agenttoolschema.Source("agent_wait_kinds", agentwait.AgentKinds())
 
 var errNoWaitService = errors.New("waits are not available here")
 
@@ -229,7 +230,7 @@ func (t *waitUntilTool) request(
 		return nil, err
 	}
 	kind := agentwait.Kind(strings.TrimSpace(until))
-	if !kind.IsValid() {
+	if !slices.Contains(agentwait.AgentKinds(), kind) {
 		return nil, errortypes.NewValidationError("until", errortypes.ErrInvalid,
 			"until must be one of "+strings.Join(waitKinds.Names(), ", "))
 	}

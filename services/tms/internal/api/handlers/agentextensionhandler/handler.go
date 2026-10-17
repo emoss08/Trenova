@@ -44,6 +44,26 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/:type/config/", h.pm.RequirePermission(resource, permission.OpRead), h.getConfig)
 	api.PUT("/:type/config/", h.pm.RequirePermission(resource, permission.OpUpdate), h.updateConfig)
 	api.POST("/:type/test/", h.pm.RequirePermission(resource, permission.OpUpdate), h.test)
+
+	portals := rg.Group("/agent-portals")
+	portals.GET("/sites/", h.pm.RequirePermission(resource, permission.OpRead), h.listSites)
+	portals.POST("/sites/", h.pm.RequirePermission(resource, permission.OpUpdate), h.createSite)
+	portals.PUT(
+		"/sites/:siteID/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.updateSite,
+	)
+	portals.DELETE(
+		"/sites/:siteID/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.deleteSite,
+	)
+	portals.GET("/runs/", h.pm.RequirePermission(resource, permission.OpRead), h.listRuns)
+	portals.GET(
+		"/runs/:runID/recording/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.runRecording,
+	)
 }
 
 func tenantOf(c *gin.Context) pagination.TenantInfo {

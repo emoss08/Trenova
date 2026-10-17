@@ -1,0 +1,150 @@
+# Portal automation
+
+Portal automation is the second agent extension capability (see
+[agent-extensions.md](agent-extensions.md)). It lets an agent read and act on the
+third-party web portals freight runs on — warehouse dock-appointment portals,
+shipper and carrier portals, insurer certificate lookups — through a cloud
+browser on the organization's own vendor account. The first vendor is Browser
+Use Cloud.
+
+It has three tools:
+
+| Tool | Kind | What it does |
+|---|---|---|
+| `list_portal_sites` | read | Lists the portal sites the organization set up: what each is for, the addresses it lives on, whether it signs in and whether agents may act on it. Written by administrators, so it is not outside content. |
+| `read_portal` | read | Looks something up on one of the organization's portal sites and returns what the page says. Never submits anything. |
+| `act_on_portal` | write | Does something on a portal site — books an appointment, uploads a document, accepts a tender — after a person approves it. |
+
+The capability is the plan capability `agent.portal_automation` and the
+permission resource `portal_automation` (`read` to look, `update` to act). Sites
+and runs are managed under the `agent_extension` resource, like the extension
+itself.
+
+## Sites
+
+An agent can only use a portal the organization has set up as a **site**
+(`agent_portal_sites`, ids `apst_`): a name, the hostnames it lives on, the https
+page to start on (which must be on those hostnames), an optional sign-in, an
+optional vendor browser profile that holds a saved sign-in, a note on what it is
+for, and whether agents may act on it or only read it. A new site is read-only.
+
+The sign-in's username and password are encrypted with the tenant-bound secret
+codec under `PurposeAgentExtensionSecret`, resource kind `agent_portal_site` and
+the site's id as subject, so a value copied to another site or tenant does not
+decrypt. A sign-in left blank on save keeps the stored one; clearing it removes
+both parts. The site is never returned with its sign-in, only `hasSignIn`.
+
+Sites belong to the organization, not to a vendor, so moving to another vendor
+keeps them. An agent finds them with `list_portal_sites` and names one by its id
+in `read_portal` and `act_on_portal`; a disabled or unknown site is refused with
+the sites that exist. A site with tasks recorded against it cannot be removed,
+only turned off, so its history keeps its site.
+
+## What keeps it safe
+
+Every portal is a page written outside the organization, which may have been
+written to steer an agent. The rules:
+
+- **Navigation is confined to the site.** Each task is sent with the site's
+  hostnames as the vendor's navigation allow-list (Browser Use `allowedDomains`)
+  and a system prompt extension telling the browser agent to stay on them.
+  Afterwards every page the browser visited (each step's URL) is checked against
+  the same list (`agentextension.OffSite`); a task that strayed is recorded as
+  `Strayed`, its answer is withheld from the model, and the run lists the pages
+  it reached. This is why the Browser Use connector uses API V2: V4 limits where
+  a credential may be typed, not where the browser may go. The connector
+  contract (`BrowserProvider`) takes the allow-list, so a vendor that enforces
+  one on a newer API can replace it.
+- **Credentials never reach a model.** A sign-in is sent as vendor secrets
+  (`portal_username`, `portal_password`); the task names the placeholders, the
+  browser agent sees only those, and the vendor types the values into the
+  page. Trenova's agent never sees them either: they are decrypted only to start
+  the task, and a detail whose name contains a placeholder is refused.
+- **The browser agent does not see screenshots** unless an administrator turns
+  that on, so a value on the page cannot reach the vendor's model as an image.
+- **Reading a portal holds every later write for a person.** `read_portal`
+  declares `ReadsExternal: always` with the `web` taint source and
+  `CapsLaterWrites`, exactly as `web_read` does. Outside content is declared per
+  tool (`CapabilitySpec.OutsideContentTools`), so `list_portal_sites` and
+  `act_on_portal` do not taint the turn by themselves.
+- **Acting on a portal is always a proposal.** `act_on_portal` is an
+  `external_recipient` write with a `Propose` ceiling. Its preview is a `Send`
+  on the `Portal` message channel: the site's addresses as the recipients, the
+  instruction as the subject, and the task exactly as the browser will receive
+  it as the body, with whether a sign-in is used. It runs only from a person's
+  approval (`ApprovedFromProposal`). A site an administrator marked read-only
+  refuses it before anything is filed, and the preview warns instead.
+- **What leaves Trenova** is the instruction, the details and the sign-in, sent
+  to the vendor and typed into that site. The instruction (8 to 2,000
+  characters) and every detail value are refused when they hold a Trenova record
+  id; at most 20 details are sent.
+
+## How a task runs
+
+A read must answer within its turn; a write is approved later and may take
+minutes, so they run differently. Either way the run is recorded before the
+vendor is called, so a task the vendor took is never one Trenova has no record
+of, and starting a task is never retried: a request that failed after the vendor
+began it would start a second browser doing the same thing.
+
+- **`read_portal`** starts the vendor task and polls it every 3 seconds inside
+  the tool call, for at most `ReadBudget` (4 minutes, under the 5-minute tool
+  activity). A task still running at the budget is stopped, recorded as
+  `TimedOut`, and the agent is told to narrow the question.
+- **`act_on_portal`** runs on approval. `StartPortalAction` records the run keyed
+  by the proposal (a unique idempotency key, so an approval retried finds the
+  task it started and does not act twice) and starts the vendor task. The tool
+  then registers a `PortalRun` wait on the conversation or background run that
+  filed it and starts `PortalRunWorkflow` (`agent-portal-run:<run id>`, system
+  queue). The workflow polls every 10 seconds, stops the task at 20 minutes,
+  records the outcome and calls `NotifyPortalRun`, which meets the wait with the
+  portal's answer quoted as outside text. The work picks up as a new turn
+  (`WaitResolved`) or run (trigger `Wait`) that opens with outside content
+  already read (`RunRequest.AfterExternalContent`, from
+  `Wait.CarriesOutsideText`), so whatever the agent does with the answer is held
+  for a person. A wait that cannot be set does not undo the action: the task is
+  followed to its end either way and its outcome is recorded.
+
+The wait service does not depend on the extension service (that would close a
+cycle through the runtime); the tool registers the wait and the workflow's
+activity reports the end.
+
+Every task is a row in `agent_portal_runs` (ids `aprn_`): the site, read or act,
+the instruction as sent, the details, whether it signed in, the vendor's task
+and session, every page visited and those off the site, the outcome and the
+answer, the steps and cost, who asked and from which agent run, conversation and
+proposal. AI control lists the history under the extension; a run's recording is
+fetched from the vendor when someone opens it, because its address is signed and
+short-lived. A run is the `portal_run` record kind: `act_on_portal`'s result names
+it, and its record link (`/admin/agent-control?tab=extensions&portalRun=<id>`)
+opens the extension serving the capability with that task expanded. Sites are the
+`portal_site` kind, so a tool schema takes a site id by its prefix.
+
+## Settings
+
+Browser Use's settings are its API key, the browser agent's model
+(`browser-use-2.0` by default), the proxy country (`us`, `ca`, `mx` or none), the
+step limit per task (30 by default, 5 to 100), the daily task limit (50 by
+default), whether sessions are recorded (on by default) and whether the browser
+agent sees screenshots (off by default). The connection test reads the account's
+credit balance and concurrency.
+
+## Metering
+
+Each task reserves one unit of the extension's daily limit before it is sent and
+records the vendor-reported cost after, against the day the task started, as
+every extension does.
+
+## Where things live
+
+| Piece | Location |
+|---|---|
+| Capability, tools, sites, runs and the task text | `internal/modules/agent/domain/agentextension/` (`capability.go`, `portal.go`, `portaltask.go`, `portalsettings.go`, `browseruse.go`) |
+| Stored sites and runs | `agent_portal_sites`, `agent_portal_runs` |
+| Site management, reads, starting and finishing actions | `internal/modules/agent/app/agentextensionservice/portal_sites.go`, `portal_tasks.go` |
+| The workflow that finishes an action | `internal/modules/agent/jobs/portaljobs/` |
+| The wait it sets | `agentwait.KindPortalRun`, `agentwaitservice/portal.go` |
+| Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
+| Tools | `agentquerytoolservice/portal_tools.go` (`list_portal_sites`, `read_portal`), `agenttools/portaltools/` (`act_on_portal`) |
+| REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/recording/`) |
+| AI control | `client/apps/web/src/routes/agent-control/_components/extensions/portal-*.tsx` |

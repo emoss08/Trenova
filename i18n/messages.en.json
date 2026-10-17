@@ -5393,6 +5393,24 @@
       "packages/shared/types"
     ]
   },
+  "A detail's name must be 60 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A detail's value must be 500 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A detailed description of the commodity.": {
     "sites": 1,
     "scope": [
@@ -7802,6 +7820,24 @@
       "go/other"
     ]
   },
+  "A portal task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "A portal task is picked up by the work that asked for it, and this one names none": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A position cannot report to itself": {
     "sites": 1,
     "scope": [
@@ -7944,6 +7980,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A profile in your browser vendor's account that is already signed in to this portal, for portals that ask for a code at sign-in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A profile is at most 3,000 characters": {
@@ -9986,6 +10031,15 @@
       "routes/admin"
     ]
   },
+  "A sign-in needs both a username and a password": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A signature a person recorded must name who recorded it": {
     "sites": 1,
     "scope": [
@@ -10038,6 +10092,17 @@
     ],
     "areas": [
       "routes/rate-zone"
+    ]
+  },
+  "A site can have at most 10 addresses": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "A skipped group must record why it was not billed": {
@@ -15110,11 +15175,13 @@
     ]
   },
   "Act": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/agent-control",
       "routes/inbox"
     ]
@@ -15137,6 +15204,24 @@
       "go/other"
     ]
   },
+  "Acted on a removed site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Acted on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Acting as": {
     "sites": 1,
     "scope": [
@@ -15144,6 +15229,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Acting on a portal needs the approval it runs from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Action": {
@@ -16480,6 +16574,15 @@
       "routes/benefits"
     ]
   },
+  "Add a portal site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add a position": {
     "sites": 4,
     "scope": [
@@ -16793,6 +16896,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Add at least one address, such as portal.example.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Add at least one axis before entering rates. Without one there is no coordinate to put a number at.": {
@@ -17756,6 +17868,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Add site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add sort": {
@@ -18831,12 +18952,13 @@
     ]
   },
   "Addresses": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -20174,6 +20296,15 @@
       "go/other"
     ]
   },
+  "Agent portal automation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent principals cannot reassign billing charges": {
     "sites": 1,
     "scope": [
@@ -20444,6 +20575,15 @@
       "routes/inbox"
     ]
   },
+  "Agents can only reach the addresses you list here, and the browser is stopped if it leaves them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents can't answer until a provider is connected.": {
     "sites": 1,
     "scope": [
@@ -20454,6 +20594,15 @@
     ]
   },
   "Agents cannot be started on this deployment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Agents have used this site, so its history is kept. Turn it off instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -20478,6 +20627,33 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Agents look things up on the portals you set up — an appointment slot, a load's status on a shipper's portal, a carrier's certificate on an insurer's site — and, once a person approves, book, upload or accept there. Each portal is a site you add with its addresses and sign-in; the browser never leaves those addresses, and every task is recorded.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Agents may act": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents may propose booking, uploading or accepting here. A person approves every one; off, agents only read it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agents may read {0} active memories; an organization should keep at most {1}. Each prompt carries only what fits its budget, so retire what no longer holds.": {
@@ -20514,6 +20690,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Agents read this to choose the right portal.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents reading and acting on the third-party web portals the organization set up, through an enabled extension": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Agents save useful facts and tell you in the conversation": {
@@ -20571,6 +20765,15 @@
     ]
   },
   "Agents stop reading it. The memory is kept, so what they were told stays readable.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents stop using it at once. A site agents have used keeps its history; turn it off instead.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -25100,6 +25303,15 @@
       "go/other"
     ]
   },
+  "An organization can set up at most 100 portal sites. Remove one you no longer use first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An organization keeps at most {0} reply templates. Delete one you no longer use first.": {
     "sites": 1,
     "scope": [
@@ -25654,6 +25866,15 @@
     ]
   },
   "Another mailbox already listens on this address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another portal site already has this name": {
     "sites": 1,
     "scope": [
       "go"
@@ -30326,6 +30547,15 @@
       "routes/inbox"
     ]
   },
+  "Ask the vendor how the portal task is going": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Ask them for its replacement before {0}.": {
     "sites": 1,
     "scope": [
@@ -34764,6 +34994,15 @@
       "routes/agent-control"
     ]
   },
+  "Available to agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Available to is required": {
     "sites": 1,
     "scope": [
@@ -38471,7 +38710,7 @@
     ]
   },
   "Billing checks are unavailable": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -40012,6 +40251,15 @@
       "go/other"
     ]
   },
+  "Books, uploads, accepts or updates something on a portal after a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Boolean": {
     "sites": 1,
     "scope": [
@@ -40478,6 +40726,15 @@
       "template/notification.dash.credential_expiring"
     ]
   },
+  "Bring a snoozed exception back to the open queue now, before the time snooze_exception set, when whatever it was waiting for has happened early. Only a snoozed exception can be woken; list_watchtower_items shows which are snoozed and until when.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bring a snoozed or waiting inbound message back to the queue when its time comes": {
     "sites": 1,
     "scope": [
@@ -40711,6 +40968,15 @@
       "apps/web/components"
     ]
   },
+  "Browse from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Browse reports": {
     "sites": 1,
     "scope": [
@@ -40727,6 +40993,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Browser Use 2.0": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Browser model": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Browser profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Browser profile must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Bucket": {
@@ -41291,7 +41593,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 142,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -42374,11 +42676,12 @@
     ]
   },
   "Canada": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -42392,7 +42695,7 @@
     ]
   },
   "Cancel": {
-    "sites": 319,
+    "sites": 320,
     "scope": [
       "go",
       "ts"
@@ -52552,6 +52855,15 @@
       "routes/agent-control"
     ]
   },
+  "Claude Sonnet 5": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Claude as a Vertex AI model in your Google Cloud project.": {
     "sites": 1,
     "scope": [
@@ -61754,7 +62066,7 @@
     ]
   },
   "Cost": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -79268,6 +79580,17 @@
       "go/other"
     ]
   },
+  "Do something on a portal": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
+    ]
+  },
   "Do the next open step of the message": {
     "sites": 1,
     "scope": [
@@ -80581,7 +80904,7 @@
     ]
   },
   "Done": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -86576,7 +86899,7 @@
     ]
   },
   "Edit {0}": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -87186,6 +87509,24 @@
       "go/other"
     ]
   },
+  "Email a customer a reminder of every overdue invoice it has that is not in dispute, with an optional note. It is one email per currency, to the invoice recipients on its email profile, and it goes whatever the reminder schedule says, so use it when a collector asks or a promise to pay was broken, never for a customer waiting on a promise that has not yet fallen due. The email is entered in the customer's collections history.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with get_customer_statement first so you know what it says. The email is entered in the customer's collections history.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Email a report weekly": {
     "sites": 1,
     "scope": [
@@ -87645,6 +87986,15 @@
     ]
   },
   "Email that arrived on a monitored address, and what was made of it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in. Issuing replaces any live link on the move, which stops working. Send it to the address the carrier gave you or the email get_carrier shows for the carrier or its dispatch contact; never invent one. The link itself is never shown to you, so it cannot be pasted anywhere else.": {
     "sites": 1,
     "scope": [
       "go"
@@ -93771,6 +94121,15 @@
       "routes/worker"
     ]
   },
+  "Every hostname the portal uses, such as its sign-in page's. Use *.example.com for all of a company's subdomains.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every hour": {
     "sites": 1,
     "scope": [
@@ -99537,7 +99896,7 @@
     ]
   },
   "Failed": {
-    "sites": 69,
+    "sites": 70,
     "scope": [
       "go",
       "ts"
@@ -104596,7 +104955,7 @@
     ]
   },
   "Finished": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -106014,6 +106373,15 @@
     ],
     "areas": [
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Follow an approved portal task to its end and hand its answer back": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Follow load {0} as it moves.": {
@@ -109737,6 +110105,15 @@
       "go/other"
     ]
   },
+  "GPT-5.6 Luna": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "GS / ST control numbers": {
     "sites": 1,
     "scope": [
@@ -109962,6 +110339,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Gemini 3 Flash": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Gemini embeddings": {
@@ -110868,6 +111254,15 @@
       "go/other"
     ]
   },
+  "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId list_collections_worklist shows or the person who asked; leave it out only to leave the account with nobody.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Give a tile a definitionId or a cannedKey, not both": {
     "sites": 1,
     "scope": [
@@ -110992,6 +111387,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Give the page the browser starts on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Give the recognition a title": {
@@ -112607,6 +113011,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Hand the portal's answer back to the work that asked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Hand this message to one of your agents in Desk": {
@@ -128127,6 +128540,15 @@
       "go/other"
     ]
   },
+  "Keep the name to 100 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Keep the name under 200 characters": {
     "sites": 1,
     "scope": [
@@ -128190,6 +128612,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Keep the profile to 100 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Keep the question to 20,000 characters": {
@@ -128340,6 +128771,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keep what it is for to 500 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Keep what the work taught": {
@@ -131587,6 +132027,15 @@
       "routes/edi"
     ]
   },
+  "Leave blank to keep the stored one": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Leave blank to print the standard notice: this invoice has been assigned to, and is payable only to, the factor.": {
     "sites": 1,
     "scope": [
@@ -132151,6 +132600,15 @@
       "routes/edi"
     ]
   },
+  "Left the site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Left to apply": {
     "sites": 1,
     "scope": [
@@ -132449,6 +132907,42 @@
       "routes/admin"
     ]
   },
+  "Let agents act on this portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Let agents look things up on portals for this person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Let agents propose booking, uploading or accepting on portals for this person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Let agents read and act on the web portals your work runs on: dock appointments, shipper portals, tracking pages.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Let agents search and read the web for this person": {
     "sites": 1,
     "scope": [
@@ -132474,6 +132968,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Let the browser see screenshots": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Let the customer know {0} has delivered.": {
@@ -134407,6 +134910,17 @@
       "go/other"
     ]
   },
+  "List portal sites": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
+    ]
+  },
   "List rating methods": {
     "sites": 1,
     "scope": [
@@ -134549,6 +135063,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Lists the portals set up for agents and what each is for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Lite lookup": {
@@ -136012,6 +136535,24 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Loading portal sites": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Loading portal tasks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading price history": {
@@ -137596,6 +138137,15 @@
       "routes/worker"
     ]
   },
+  "Log a call, email, note or promise to pay against a customer's overdue receivables, so the next person chasing them knows what was said. Record what the customer said in their words; a promise to pay takes the amount and the date they gave, holds back payment reminders until then, and moves the follow-up to the day after unless you give one. Never infer a promise from a payment that has not arrived.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Log a contact": {
     "sites": 1,
     "scope": [
@@ -138060,6 +138610,17 @@
       "apps/web/components"
     ]
   },
+  "Look something up on a portal": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
+    ]
+  },
   "Look things up": {
     "sites": 1,
     "scope": [
@@ -138220,6 +138781,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Looked up on a removed site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Looked up on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Looked up {0}": {
@@ -144079,11 +144658,12 @@
     ]
   },
   "Mexico": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -147952,7 +148532,7 @@
     ]
   },
   "Name": {
-    "sites": 166,
+    "sites": 167,
     "scope": [
       "go",
       "ts"
@@ -148143,6 +148723,15 @@
       "go/other"
     ]
   },
+  "Name at least one site address, such as portal.example.com": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Name at least one {0}": {
     "sites": 1,
     "scope": [
@@ -148264,7 +148853,7 @@
     ]
   },
   "Name is required": {
-    "sites": 154,
+    "sites": 155,
     "scope": [
       "go",
       "ts"
@@ -148294,6 +148883,15 @@
     "areas": [
       "routes/capture",
       "routes/inbox"
+    ]
+  },
+  "Name must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Name must be 255 characters or less": {
@@ -148613,6 +149211,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Name the site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Name the state": {
@@ -150762,6 +151369,15 @@
       "routes/random-testing"
     ]
   },
+  "New portal site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "New program": {
     "sites": 1,
     "scope": [
@@ -151802,7 +152418,7 @@
     ]
   },
   "No": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -157139,6 +157755,24 @@
       "routes/random-testing"
     ]
   },
+  "No portal tasks yet. Each one an agent runs is listed here with what it did.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No portals yet. Add the portals your team signs in to, such as a warehouse's dock appointment site, and agents can look things up there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No position matches that.": {
     "sites": 1,
     "scope": [
@@ -157421,6 +158055,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No proxy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No publish date": {
@@ -166562,7 +167205,7 @@
     ]
   },
   "Off": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -173246,6 +173889,15 @@
       "apps/web/components"
     ]
   },
+  "Open the recording": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Open the run": {
     "sites": 3,
     "scope": [
@@ -174252,7 +174904,7 @@
     ]
   },
   "Optional": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -174260,6 +174912,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/bank-receipt-batch",
       "routes/desk",
       "routes/edi",
@@ -175428,7 +176081,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 141,
+    "sites": 142,
     "scope": [
       "go"
     ],
@@ -176858,6 +177511,15 @@
   },
   "Outside text can't trigger an automatic action in the same run.": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Outside the site's addresses": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -180511,7 +181173,7 @@
     ]
   },
   "Password": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -180520,6 +181182,7 @@
       "apps/dash/routes",
       "apps/web/lib",
       "go/other",
+      "routes/agent-control",
       "routes/auth",
       "routes/desk",
       "routes/edi",
@@ -187783,6 +188446,15 @@
       "routes/worker"
     ]
   },
+  "Portal Automation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Portal access": {
     "sites": 1,
     "scope": [
@@ -187810,6 +188482,26 @@
       "go/other"
     ]
   },
+  "Portal site": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
+  "Portal sites": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
   "Portal status could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -187817,6 +188509,61 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Portal task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Portal task recording": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services"
+    ]
+  },
+  "Portal tasks": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
+  "Portal tasks cannot be followed here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Portal tasks cannot be waited on here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Portal work": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pos": {
@@ -192585,7 +193332,25 @@
       "go/other"
     ]
   },
+  "Propose settling one of a billing queue item's flagged checks with one of the choices that check offers. A choice bills a charge as it stands, takes it off, reprices it, bills without the paperwork, or asks the driver for a signed POD. get_billing_queue_item lists each check's issueId and its options with their optionKey; use them exactly. Settling can change what the customer is charged, so a person always decides, and asking the driver settles nothing until the paperwork arrives.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it. Pick them with list_invoice_share_candidates, which lists only people who may read invoices. It is sent in the name of the person who approves it, so a person always decides.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Propose taking back how one of a billing queue item's checks was settled. The check is open again and any charge the settlement removed or repriced is put back as it was. get_billing_queue_item lists each check's issueId and whether its settlement can be undone; only a settled check on an item still in review can be. It can change what the customer is charged, so a person always decides.": {
     "sites": 1,
     "scope": [
       "go"
@@ -198411,11 +199176,12 @@
     ]
   },
   "Read only": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/policies"
     ]
   },
@@ -199084,6 +199850,15 @@
     ]
   },
   "Reads a captured batch, divides it into documents and files what needs no person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reads a portal the organization set up and says what it shows, without submitting anything.": {
     "sites": 1,
     "scope": [
       "go"
@@ -200740,6 +201515,15 @@
       "apps/dash/routes"
     ]
   },
+  "Recent portal tasks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Recent searches": {
     "sites": 1,
     "scope": [
@@ -201782,6 +202566,15 @@
       "routes/worker"
     ]
   },
+  "Record every task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Record fail": {
     "sites": 1,
     "scope": [
@@ -202760,11 +203553,12 @@
     ]
   },
   "Recording": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/detention-desk"
     ]
   },
@@ -206406,6 +207200,15 @@
       "routes/pto-policy"
     ]
   },
+  "Remove site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Remove sort": {
     "sites": 1,
     "scope": [
@@ -206449,6 +207252,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Remove the stored sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Remove the waiting message": {
@@ -206596,7 +207408,7 @@
     ]
   },
   "Remove {0}": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -206632,7 +207444,7 @@
     ]
   },
   "Remove {0}?": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -217222,13 +218034,14 @@
     ]
   },
   "Running": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "apps/web/types",
       "go/other",
       "routes/admin",
@@ -218913,7 +219726,7 @@
     ]
   },
   "Save": {
-    "sites": 52,
+    "sites": 53,
     "scope": [
       "ts"
     ],
@@ -227208,6 +228021,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Send at most 20 details": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Send at most six reminders per invoice": {
     "sites": 1,
     "scope": [
@@ -230451,6 +231273,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Set the day a customer's overdue receivables are next chased, or clear the follow-up, with a note saying why. The account comes back up the worklist on that day. Leave followUpOn out only to clear it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Set the item aside until tomorrow morning; Undo brings it back": {
@@ -235998,6 +236829,15 @@
       "apps/web/components"
     ]
   },
+  "Signed in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Signed in with a password": {
     "sites": 1,
     "scope": [
@@ -236250,6 +237090,15 @@
       "apps/dash/_components"
     ]
   },
+  "Signs in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Signs in with": {
     "sites": 1,
     "scope": [
@@ -236466,6 +237315,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Site addresses must be hostnames such as portal.example.com or *.example.com; {0} is not": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.": {
@@ -240228,6 +241086,24 @@
       "routes/auth"
     ]
   },
+  "Start page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Start page is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start report": {
     "sites": 1,
     "scope": [
@@ -241953,7 +242829,7 @@
     ]
   },
   "Steps": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -241969,6 +242845,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Steps per task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Steps you set": {
@@ -242449,6 +243334,15 @@
       "go/other"
     ]
   },
+  "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with issue_carrier_tracking_link if the carrier should keep posting.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stop the reply": {
     "sites": 1,
     "scope": [
@@ -242591,11 +243485,12 @@
     ]
   },
   "Stopped": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -245522,6 +246417,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. A hold was put on for a reason: read the item's review notes with get_billing_queue_item and release it only when the record shows that what it waited on has arrived, never because nothing looks wrong.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Take a driver off dispatch, and put them back": {
@@ -251127,6 +252031,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The browser could not finish the task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The browser is working on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The browser reached pages outside the site's addresses, so what it found was withheld": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The calendar could not be loaded. Try again in a moment.": {
@@ -259146,6 +260077,60 @@
       "routes/edi"
     ]
   },
+  "The portal did what was asked and said so": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The portal is used without signing in from now on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The portal run id is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "The portal sites could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The portal task you opened is older than the ones listed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The portal tasks could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The position could not be read.": {
     "sites": 1,
     "scope": [
@@ -260107,6 +261092,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The recording could not be found.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The records behind this": {
@@ -261949,6 +262943,15 @@
       "api/graphql"
     ]
   },
+  "The sign-in is added by Trenova; do not send it as a detail": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The signed document's own number, for when somebody asks": {
     "sites": 1,
     "scope": [
@@ -262055,6 +263058,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The site id is not valid": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "The size one uploaded file may be.": {
@@ -262222,6 +263234,15 @@
     "areas": [
       "go/other",
       "routes/agent-control"
+    ]
+  },
+  "The start page must be an https address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "The start time is not a time of day": {
@@ -262681,6 +263702,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The task ran out of time and was stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The task was stopped before it finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The team by the terminal each person sits in, biggest first. Somebody with no terminal is listed as such rather than dropped.": {
@@ -263591,6 +264630,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The vendor has no recording of this task. Recording may have been off, or the video is still being prepared.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The verification could not be started — try again shortly": {
@@ -268323,6 +269371,15 @@
       "routes/shipment"
     ]
   },
+  "This move has no live carrier tracking link to revoke": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.": {
     "sites": 1,
     "scope": [
@@ -268794,6 +269851,15 @@
     ]
   },
   "This pool has already been drawn for {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This portal task has no recording": {
     "sites": 1,
     "scope": [
       "go"
@@ -269744,6 +270810,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "This site was changed by someone else while you were editing. Reload and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This source document is already attached.": {
@@ -271803,12 +272878,13 @@
     ]
   },
   "Timed out": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/agent-control"
     ]
   },
@@ -277594,6 +278670,15 @@
       "go/other"
     ]
   },
+  "Turn it off to keep the site and its history without agents using it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Turn it on": {
     "sites": 1,
     "scope": [
@@ -279812,11 +280897,12 @@
     ]
   },
   "United States": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -283864,7 +284950,7 @@
     ]
   },
   "Username": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -283872,6 +284958,7 @@
     "areas": [
       "go/other",
       "routes/admin",
+      "routes/agent-control",
       "routes/edi",
       "routes/settings"
     ]
@@ -285604,7 +286691,7 @@
     ]
   },
   "View": {
-    "sites": 125,
+    "sites": 126,
     "scope": [
       "go",
       "ts"
@@ -289699,6 +290786,15 @@
       "go/other"
     ]
   },
+  "Web portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Web research": {
     "sites": 1,
     "scope": [
@@ -291367,6 +292463,24 @@
       "routes/policies"
     ]
   },
+  "What it is for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "What it is for must be 500 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What it is for, so people pick the right one": {
     "sites": 1,
     "scope": [
@@ -291808,6 +292922,15 @@
       "routes/fuel-management"
     ]
   },
+  "What the browser was told": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What the carrier is billing this charge for.": {
     "sites": 1,
     "scope": [
@@ -292022,6 +293145,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What the portal said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What the provider charged, divided by runs that finished": {
@@ -294161,6 +295293,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Where the browser opens; it must be on one of the addresses.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Where the driver is waiting. Required: the customer needs to know which of their docks to expedite.": {
@@ -299602,7 +300743,7 @@
     ]
   },
   "Yes": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -303216,6 +304357,15 @@
       "routes/formula-template"
     ]
   },
+  "before must be a Unix time in seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "being confirmed": {
     "sites": 1,
     "scope": [
@@ -304204,6 +305354,15 @@
       "routes/manual-journal"
     ]
   },
+  "e.g. Acme DC dock appointments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "e.g. Alvarez": {
     "sites": 1,
     "scope": [
@@ -304310,6 +305469,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "e.g. Booking and moving dock appointments at Acme's Dallas DC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "e.g. Brake out of adjustment on two axles": {
@@ -306271,6 +307439,15 @@
       "apps/web/components"
     ]
   },
+  "every browser the account may run at once is busy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "every charge noticed": {
     "sites": 1,
     "scope": [
@@ -307230,6 +308407,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "limit must be a whole number from 1 to 200": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "link it by sender": {
@@ -308659,6 +309845,15 @@
       "go/other"
     ]
   },
+  "portal.example.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "posted · paid": {
     "sites": 2,
     "scope": [
@@ -309627,6 +310822,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "the {0} extension cannot browse": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the {0} extension cannot search the web": {
@@ -313195,6 +314399,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# page visited} other {# pages visited}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/portaltools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
@@ -140,6 +141,7 @@ func ToolProviders() []any {
 		provideResolveServiceFailureTool,
 		provideNotifyDriverTool,
 		operationstools.NewEmailCustomerTool,
+		portaltools.NewActOnPortalTool,
 		provideLinkInboundMessageTool,
 		provideMarkInboundMessageTool,
 		workforcetools.NewReplyToInboundMessageTool,

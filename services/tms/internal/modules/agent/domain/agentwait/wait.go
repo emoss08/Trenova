@@ -6,6 +6,7 @@ package agentwait
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -43,6 +44,7 @@ const (
 	KindAppointmentNear = Kind("AppointmentNear")
 	KindFreeTimeEnding  = Kind("FreeTimeEnding")
 	KindHOSDriveBelow   = Kind("HOSDriveBelow")
+	KindPortalRun       = Kind("PortalRun")
 )
 
 func AllKinds() []Kind {
@@ -54,13 +56,20 @@ func AllKinds() []Kind {
 		KindAppointmentNear,
 		KindFreeTimeEnding,
 		KindHOSDriveBelow,
+		KindPortalRun,
 	}
+}
+
+// AgentKinds are the kinds an agent asks for with wait_until. A portal run's
+// wait is set by the system when a person approves acting on a portal.
+func AgentKinds() []Kind {
+	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool { return kind == KindPortalRun })
 }
 
 func (k Kind) IsValid() bool {
 	switch k {
 	case KindTime, KindStopArrival, KindStopDeparture, KindReply,
-		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow:
+		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow, KindPortalRun:
 		return true
 	default:
 		return false
@@ -108,6 +117,7 @@ type Condition struct {
 	CustomerID            pulid.ID `json:"customerId,omitempty"`
 	WorkerID              pulid.ID `json:"workerId,omitempty"`
 	DetentionOccurrenceID pulid.ID `json:"detentionOccurrenceId,omitempty"`
+	PortalRunID           pulid.ID `json:"portalRunId,omitempty"`
 	MinutesBefore         int      `json:"minutesBefore,omitempty"`
 	DriveMinutesBelow     int      `json:"driveMinutesBelow,omitempty"`
 	// SeenInsideAt is when the truck was last seen inside the stop's geofence,
@@ -191,6 +201,8 @@ func (c *Condition) watched(kind Kind) pulid.ID {
 		return c.DetentionOccurrenceID
 	case KindHOSDriveBelow:
 		return c.WorkerID
+	case KindPortalRun:
+		return c.PortalRunID
 	case KindTime:
 		return pulid.Nil
 	default:
@@ -266,6 +278,8 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 	case KindFreeTimeEnding:
 		require("detentionOccurrenceId", c.DetentionOccurrenceID)
 		minutes("minutesBefore", c.MinutesBefore, MaxMinutesBefore)
+	case KindPortalRun:
+		require("portalRunId", c.PortalRunID)
 	case KindHOSDriveBelow:
 		require("workerId", c.WorkerID)
 		if c.DriveMinutesBelow < 1 || c.DriveMinutesBelow > MaxDriveMinutes {
@@ -278,6 +292,12 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 // ResumeNote is what the agent reads when it picks the work up: what it
 // waited for, what came of it, and what it said it would do then. It is the
 // system's account, not the person's words.
+// CarriesOutsideText reports whether what the wait picks up holds text written
+// outside the organization: a portal run's answer is the portal's words.
+func (w *Wait) CarriesOutsideText() bool {
+	return w.Kind == KindPortalRun && w.Outcome != ""
+}
+
 func (w *Wait) ResumeNote() string {
 	var b strings.Builder
 	b.WriteString("[Notice from the system, not from the person: a wait you set has ended.]\n")

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALL_CATEGORIES,
   capabilityHolder,
+  capabilityServer,
   dailyUsageShare,
   extensionState,
   filterExtensions,
@@ -182,5 +183,23 @@ describe("holdsExtension and withExtensionTools", () => {
     expect(withExtensionTools(["web_search", "list_loads", "web_fetch"], tools, false)).toEqual([
       "list_loads",
     ]);
+  });
+});
+
+describe("capabilityServer", () => {
+  const exa = extension({ type: "Exa", capability: "WebResearch" });
+  const parallel = extension({ type: "Parallel", capability: "WebResearch", enabled: true });
+  const browserUse = extension({ type: "BrowserUse", capability: "PortalAutomation" });
+
+  it("is the extension turned on for the capability", () => {
+    expect(capabilityServer([exa, parallel, browserUse], "WebResearch")).toBe(parallel);
+  });
+
+  it("is the first that provides it when none is on", () => {
+    expect(capabilityServer([exa, parallel, browserUse], "PortalAutomation")).toBe(browserUse);
+  });
+
+  it("is nothing when no extension provides it", () => {
+    expect(capabilityServer([exa, parallel], "PortalAutomation")).toBeNull();
   });
 });

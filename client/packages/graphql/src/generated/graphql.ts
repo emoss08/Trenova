@@ -1254,6 +1254,7 @@ export type AgentPreviewMessageChannel =
   | 'Dash'
   | 'EDI'
   | 'Email'
+  | 'Portal'
   | 'SMS';
 
 /** What a write would do to one record. */

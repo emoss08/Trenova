@@ -14,6 +14,7 @@ const KIND_ICONS: Record<AgentWaitKind, DeskIconName> = {
   AppointmentNear: "clock",
   FreeTimeEnding: "clock",
   HOSDriveBelow: "route",
+  PortalRun: "globe",
 };
 
 /**
@@ -84,6 +85,8 @@ function kindLabel(kind: AgentWaitKind, t: TranslateFn): string {
       return t("Free time");
     case "HOSDriveBelow":
       return t("Drive time");
+    case "PortalRun":
+      return t("A portal task");
   }
 }
 

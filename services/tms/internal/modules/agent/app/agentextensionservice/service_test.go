@@ -285,8 +285,11 @@ type fixture struct {
 	usage    *memoryUsage
 	web      *fakeWeb
 	parallel *fakeWeb
-	audit  *recordingAudit
-	tenant pagination.TenantInfo
+	browser  *fakeBrowser
+	sites    *memorySites
+	runs     *memoryRuns
+	audit    *recordingAudit
+	tenant   pagination.TenantInfo
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -305,7 +308,10 @@ func newFixture(t *testing.T) *fixture {
 			searchCost: decimal.RequireFromString("0.001"),
 			readCost:   decimal.RequireFromString("0.001"),
 		},
-		audit: &recordingAudit{},
+		browser: &fakeBrowser{},
+		sites:   newMemorySites(),
+		runs:    newMemoryRuns(),
+		audit:   &recordingAudit{},
 		tenant: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -318,7 +324,13 @@ func newFixture(t *testing.T) *fixture {
 		Usage:        f.usage,
 		Encryption:   testEncryptionService(),
 		AuditService: f.audit,
-		Connectors:   []agentextensionports.ExtensionConnector{f.web, f.parallel},
+		Connectors: []agentextensionports.ExtensionConnector{
+			f.web,
+			f.parallel,
+			f.browser,
+		},
+		Sites: f.sites,
+		Runs:  f.runs,
 	})
 	f.svc.now = func() int64 { return testNow }
 
@@ -384,8 +396,15 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	assert.Equal(t, "Web research", item.CapabilityLabel)
 	assert.Empty(t, item.CapabilityHeldBy)
 	assert.NotEmpty(t, item.DataNotice)
-	require.Len(t, catalog.Categories, 1)
+	require.Len(t, catalog.Categories, len(agentextension.AllCategories()))
 	assert.Equal(t, "Web research", catalog.Categories[0].Label)
+	assert.Equal(t, "Browser automation", catalog.Categories[1].Label)
+
+	portal := catalog.Items[len(catalog.Items)-1]
+	assert.Equal(t, agentextension.TypeBrowserUse, portal.Type)
+	assert.Equal(t, agentextension.CapabilityPortalAutomation, portal.Capability)
+	assert.Equal(t, agentextension.DefaultPortalDailyTasks, portal.DailyRequestLimit)
+	assert.Len(t, portal.Tools, 3)
 }
 
 func TestEnablingEncryptsTheKeyAndNeverReturnsIt(t *testing.T) {

@@ -1,18 +1,24 @@
 package agentextension
 
+import "slices"
+
 const (
-	ToolWebSearch = "web_search"
-	ToolWebRead   = "web_read"
+	ToolWebSearch       = "web_search"
+	ToolWebRead         = "web_read"
+	ToolListPortalSites = "list_portal_sites"
+	ToolReadPortal      = "read_portal"
+	ToolActOnPortal     = "act_on_portal"
 )
 
 type Capability string
 
 const (
-	CapabilityWebResearch = Capability("WebResearch")
+	CapabilityWebResearch      = Capability("WebResearch")
+	CapabilityPortalAutomation = Capability("PortalAutomation")
 )
 
 func AllCapabilities() []Capability {
-	return []Capability{CapabilityWebResearch}
+	return []Capability{CapabilityWebResearch, CapabilityPortalAutomation}
 }
 
 func (c Capability) String() string { return string(c) }
@@ -23,28 +29,32 @@ func (c Capability) IsValid() bool {
 }
 
 type CapabilitySpec struct {
-	Tools                  []string
-	ReturnsExternalContent bool
-	Unchecked              string
-	RequestNoun            string
+	Tools               []string
+	OutsideContentTools []string
+	Unchecked           string
+	RequestNoun         string
 }
 
 func (s CapabilitySpec) HasTool(name string) bool {
-	for _, tool := range s.Tools {
-		if tool == name {
-			return true
-		}
-	}
+	return slices.Contains(s.Tools, name)
+}
 
-	return false
+func (s CapabilitySpec) ReturnsOutsideContent(name string) bool {
+	return slices.Contains(s.OutsideContentTools, name)
 }
 
 var capabilities = map[Capability]CapabilitySpec{
 	CapabilityWebResearch: {
-		Tools:                  []string{ToolWebSearch, ToolWebRead},
-		ReturnsExternalContent: true,
-		Unchecked:              "the web could not be checked",
-		RequestNoun:            "web requests",
+		Tools:               []string{ToolWebSearch, ToolWebRead},
+		OutsideContentTools: []string{ToolWebSearch, ToolWebRead},
+		Unchecked:           "the web could not be checked",
+		RequestNoun:         "web requests",
+	},
+	CapabilityPortalAutomation: {
+		Tools:               []string{ToolListPortalSites, ToolReadPortal, ToolActOnPortal},
+		OutsideContentTools: []string{ToolReadPortal},
+		Unchecked:           "the portal could not be checked",
+		RequestNoun:         "portal tasks",
 	},
 }
 
@@ -70,7 +80,7 @@ func IsExtensionTool(name string) bool {
 
 func ReturnsExternalContent(name string) bool {
 	c, ok := CapabilityForTool(name)
-	return ok && capabilities[c].ReturnsExternalContent
+	return ok && capabilities[c].ReturnsOutsideContent(name)
 }
 
 type ActiveExtension struct {

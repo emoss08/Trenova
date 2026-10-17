@@ -7,7 +7,8 @@ import (
 )
 
 var categoryLabels = map[agentextension.Category]string{
-	agentextension.CategoryWebResearch: "Web research",
+	agentextension.CategoryWebResearch:       "Web research",
+	agentextension.CategoryBrowserAutomation: "Browser automation",
 }
 
 type capabilityDefinition struct {
@@ -17,6 +18,27 @@ type capabilityDefinition struct {
 }
 
 var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
+	agentextension.CapabilityPortalAutomation: {
+		Label: "Portal work",
+		Plan:  platformplan.CapabilityAgentPortalAutomation,
+		Tools: []agentextensionports.AgentExtensionTool{
+			{
+				Name:        agentextension.ToolListPortalSites,
+				Label:       "List portal sites",
+				Description: "Lists the portals set up for agents and what each is for.",
+			},
+			{
+				Name:        agentextension.ToolReadPortal,
+				Label:       "Look something up on a portal",
+				Description: "Reads a portal the organization set up and says what it shows, without submitting anything.",
+			},
+			{
+				Name:        agentextension.ToolActOnPortal,
+				Label:       "Do something on a portal",
+				Description: "Books, uploads, accepts or updates something on a portal after a person approves it.",
+			},
+		},
+	},
 	agentextension.CapabilityWebResearch: {
 		Label: "Web research",
 		Plan:  platformplan.CapabilityAgentWebSearch,
@@ -112,6 +134,36 @@ var definitions = []definition{
 			"content, any change it wants to make for the rest of that turn waits for a " +
 			"person's approval.",
 		SortOrder:  20,
+		ReleasedAt: 1_792_108_800,
+	},
+	{
+		Type:    agentextension.TypeBrowserUse,
+		Name:    "Portal work",
+		Vendor:  "Browser Use",
+		Summary: "Let agents read and act on the web portals your work runs on: dock appointments, shipper portals, tracking pages.",
+		Description: "Agents look things up on the portals you set up — an appointment slot, a " +
+			"load's status on a shipper's portal, a carrier's certificate on an insurer's site " +
+			"— and, once a person approves, book, upload or accept there. Each portal is a site " +
+			"you add with its addresses and sign-in; the browser never leaves those addresses, " +
+			"and every task is recorded.",
+		Category:    agentextension.CategoryBrowserAutomation,
+		BrandDomain: "browser-use.com",
+		DocsURL:     "https://docs.browser-use.com/cloud/api-v2-overview",
+		WebsiteURL:  "https://browser-use.com",
+		PricingURL:  "https://browser-use.com/pricing",
+		Capabilities: []string{
+			"Looks things up on the portals you set up and answers with what the portal shows",
+			"Books, uploads or accepts on a portal only after a person approves the exact instruction",
+			"Keeps the browser on each site's addresses and withholds what it found if it strays",
+			"Signs in with stored credentials the models never see",
+			"Records every task, with each page it visited, in AI control",
+		},
+		DataNotice: "The instruction, the details it names and the site's sign-in are sent to " +
+			"Browser Use, which types them into that site. Sign-ins are stored encrypted and " +
+			"never shown to a model. After an agent reads a portal, any change it wants to make " +
+			"for the rest of that turn waits for a person's approval, and acting on a portal " +
+			"always does.",
+		SortOrder:  30,
 		ReleasedAt: 1_792_108_800,
 	},
 }
