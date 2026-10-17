@@ -25,7 +25,9 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Progress } from "@trenova/shared/components/ui/progress";
+import { documentControl } from "@/lib/queries/document-control";
 import { apiService } from "@/services/api";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
@@ -89,6 +91,36 @@ function uploadStatusLabel(status?: string) {
     default:
       return "Waiting for file";
   }
+}
+
+function ImportRecoveryActions({
+  canRetry,
+  retrying,
+  onRetry,
+  onReplace,
+  className,
+}: {
+  canRetry: boolean;
+  retrying: boolean;
+  onRetry: () => void;
+  onReplace: () => void;
+  className?: string;
+}) {
+  const t = useT();
+
+  return (
+    <div className={cn("flex flex-wrap gap-2", className)}>
+      {canRetry ? (
+        <Button variant="outline" onClick={onRetry} disabled={retrying}>
+          {retrying ? <SpinnerIcon className="size-4 animate-spin" /> : null}
+          {t("Retry extraction")}
+        </Button>
+      ) : null}
+      <Button variant="outline" onClick={onReplace}>
+        {t("Replace file")}
+      </Button>
+    </div>
+  );
 }
 
 export function ShipmentRateConfirmationImportPanel({
@@ -178,6 +210,10 @@ export function ShipmentRateConfirmationImportPanel({
   const retryExtraction = useMutation({
     mutationFn: async () => {
       if (!uploadedDocumentId) return;
+      await queryClient.invalidateQueries({
+        queryKey: documentControl.extractionStatus().queryKey,
+        refetchType: "all",
+      });
       await apiService.documentService.reextract(uploadedDocumentId);
     },
     onSuccess: () => {
@@ -479,27 +515,25 @@ export function ShipmentRateConfirmationImportPanel({
                     <AlertTitle>{t("Import failed")}</AlertTitle>
                     <AlertDescription>
                       {processingFailure}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {uploadedDocumentId ? (
-                          <Button
-                            variant="outline"
-                            onClick={() => retryExtraction.mutate()}
-                            disabled={retryExtraction.isPending}
-                          >
-                            {retryExtraction.isPending ? (
-                              <SpinnerIcon className="size-4 animate-spin" />
-                            ) : null}
-                            {t("Retry extraction")}
-                          </Button>
-                        ) : null}
-                        <Button variant="outline" onClick={handleReplaceFile}>
-                          {t("Replace file")}
-                        </Button>
-                      </div>
+                      <ImportRecoveryActions
+                        className="mt-2"
+                        canRetry={!!uploadedDocumentId}
+                        retrying={retryExtraction.isPending}
+                        onRetry={() => retryExtraction.mutate()}
+                        onReplace={handleReplaceFile}
+                      />
                     </AlertDescription>
                   </Alert>
                 ) : blockedByProvider ? (
-                  <ExtractionNeedsProviderAlert />
+                  <div className="grid gap-3">
+                    <ExtractionNeedsProviderAlert />
+                    <ImportRecoveryActions
+                      canRetry={!!uploadedDocumentId}
+                      retrying={retryExtraction.isPending}
+                      onRetry={() => retryExtraction.mutate()}
+                      onReplace={handleReplaceFile}
+                    />
+                  </div>
                 ) : (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
                     {t(

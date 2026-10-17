@@ -1,17 +1,26 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { DocumentExtractionStatus } from "@/types/document-control";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExtractionNeedsProviderAlert } from "../extraction-needs-provider-alert";
 
 const mocks = vi.hoisted(() => ({
-  allowed: true,
+  granted: new Set<string>(),
+  restrictions: [] as string[],
   status: null as DocumentExtractionStatus | null,
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
-  usePermission: () => ({ allowed: mocks.allowed, isLoading: false }),
+  usePermission: (resource: string, operation: string) => ({
+    allowed: mocks.granted.has(`${resource}:${operation}`),
+    isLoading: false,
+  }),
+}));
+
+vi.mock("@/hooks/use-plan-restrictions", () => ({
+  usePlanRestrictions: () => mocks.restrictions,
 }));
 
 vi.mock("@/lib/queries/document-control", () => ({
@@ -23,9 +32,22 @@ vi.mock("@/lib/queries/document-control", () => ({
   },
 }));
 
+const NO_PROVIDER: DocumentExtractionStatus = {
+  engine: "docling",
+  modelProviderAvailable: false,
+  converterAvailable: true,
+  extractionAvailable: false,
+};
+
+function grantProviderSetup() {
+  mocks.granted.add(`${Resource.AIProvider}:${Operation.Create}`);
+  mocks.granted.add(`${Resource.AgentControl}:${Operation.Read}`);
+}
+
 afterEach(() => {
   cleanup();
-  mocks.allowed = true;
+  mocks.granted.clear();
+  mocks.restrictions = [];
   mocks.status = null;
 });
 
@@ -42,21 +64,22 @@ function renderAlert() {
 }
 
 describe("ExtractionNeedsProviderAlert", () => {
-  it("tells an administrator to add a provider when Docling has none to read with", async () => {
-    mocks.status = { engine: "docling", modelProviderAvailable: false, extractionAvailable: false };
+  it("links someone who can add a provider to the providers tab of AI control", async () => {
+    grantProviderSetup();
+    mocks.status = NO_PROVIDER;
 
     renderAlert();
 
     expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add an AI provider" })).toHaveAttribute(
       "href",
-      "/admin/agent-control",
+      "/admin/agent-control?tab=providers",
     );
   });
 
-  it("asks someone who cannot manage providers to ask an administrator", async () => {
-    mocks.allowed = false;
-    mocks.status = { engine: "docling", modelProviderAvailable: false, extractionAvailable: false };
+  it("asks someone who can only open AI control to ask an administrator", async () => {
+    mocks.granted.add(`${Resource.AgentControl}:${Operation.Read}`);
+    mocks.status = NO_PROVIDER;
 
     renderAlert();
 
@@ -66,8 +89,45 @@ describe("ExtractionNeedsProviderAlert", () => {
     expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
   });
 
+  it("hides the link when the plan withholds agent automation", async () => {
+    grantProviderSetup();
+    mocks.restrictions = ["agent.automation"];
+    mocks.status = NO_PROVIDER;
+
+    renderAlert();
+
+    expect(
+      await screen.findByText("Ask an administrator to add an AI provider."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+  });
+
+  it("says the converter is not configured rather than asking for a provider", async () => {
+    grantProviderSetup();
+    mocks.status = {
+      engine: "docling",
+      modelProviderAvailable: true,
+      converterAvailable: false,
+      extractionAvailable: false,
+    };
+
+    renderAlert();
+
+    expect(await screen.findByText("Extraction is not set up on this server")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ask an administrator to configure the document converter."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add an AI provider" })).not.toBeInTheDocument();
+  });
+
   it("stays hidden on the legacy engine even without a provider", async () => {
-    mocks.status = { engine: "legacy", modelProviderAvailable: false, extractionAvailable: true };
+    mocks.status = {
+      engine: "legacy",
+      modelProviderAvailable: false,
+      converterAvailable: false,
+      extractionAvailable: true,
+    };
 
     const { container } = renderAlert();
 
