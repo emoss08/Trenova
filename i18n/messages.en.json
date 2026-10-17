@@ -13191,12 +13191,13 @@
     ]
   },
   "Accepted": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
@@ -161786,6 +161787,15 @@
       "routes/factoring-company"
     ]
   },
+  "Not attempted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Not available": {
     "sites": 2,
     "scope": [
@@ -199972,11 +199982,12 @@
     ]
   },
   "Reading": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib"
     ]
   },
@@ -206047,7 +206058,7 @@
     ]
   },
   "Rejected": {
-    "sites": 44,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -255129,6 +255140,15 @@
       "go/other"
     ]
   },
+  "The document itself is unaffected. Try loading it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The document type required by this rule": {
     "sites": 1,
     "scope": [
@@ -256151,6 +256171,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The extracted text could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The facility address.": {
@@ -278952,7 +278981,7 @@
     ]
   },
   "Try again": {
-    "sites": 65,
+    "sites": 66,
     "scope": [
       "ts"
     ],
@@ -281526,7 +281555,7 @@
     ]
   },
   "Unknown": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"

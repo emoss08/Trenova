@@ -185,7 +185,7 @@ export const documentIntelligenceAIDiagnosticsSchema = z
   .object({
     fallbackAnalysis: documentIntelligenceSchema.optional(),
     candidateAnalysis: documentIntelligenceSchema.nullable().optional(),
-    acceptanceStatus: z.enum(["not_attempted", "accepted", "rejected"]).optional(),
+    acceptanceStatus: z.enum(["not_attempted", "pending", "accepted", "rejected"]).optional(),
     rejectionReason: z.string().optional(),
   })
   .passthrough();

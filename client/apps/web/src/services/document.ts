@@ -173,8 +173,13 @@ export class DocumentService {
     return safeParse(z.array(documentSchema), response, "Document");
   }
 
-  public async getContent(documentId: string): Promise<DocumentContent> {
-    const response = await api.get<DocumentContent>(`/documents/${documentId}/content/`);
+  public async getContent(
+    documentId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<DocumentContent> {
+    const response = await api.get<DocumentContent>(`/documents/${documentId}/content/`, {
+      signal: options?.signal,
+    });
     return safeParse(documentContentSchema, response, "Document Content");
   }
 

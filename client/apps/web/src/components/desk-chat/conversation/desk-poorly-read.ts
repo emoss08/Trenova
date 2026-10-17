@@ -47,9 +47,9 @@ export function usePoorlyReadFiles(files: readonly MessageAttachment[]): Readonl
   const results = useQueries({
     queries: checked.map((file) => ({
       queryKey: ["document-content", file.documentId],
-      queryFn: async () => {
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
         try {
-          return await apiService.documentService.getContent(file.documentId);
+          return await apiService.documentService.getContent(file.documentId, { signal });
         } catch {
           return null;
         }

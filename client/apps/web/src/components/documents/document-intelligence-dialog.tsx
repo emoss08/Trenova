@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import {
   Alert,
@@ -18,7 +18,9 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { stillBeingRead } from "@/lib/document-reading";
 import { apiService } from "@/services/api";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   Document,
   DocumentContent,
@@ -135,16 +137,21 @@ function formatStopSummary(stop: DocumentIntelligenceStop) {
   return addressParts.length > 0 ? addressParts.join(", ") : "Address not extracted";
 }
 
-function formatAIAcceptanceStatus(status?: string) {
+/** How often a document still being read is fetched again. */
+const READING_POLL_MS = 5000;
+
+function formatAIAcceptanceStatus(t: TranslateFn, status?: string) {
   switch (status) {
     case "accepted":
-      return "Accepted";
+      return t("Accepted");
     case "rejected":
-      return "Rejected";
+      return t("Rejected");
+    case "pending":
+      return t("Reading");
     case "not_attempted":
-      return "Not Attempted";
+      return t("Not attempted");
     default:
-      return "Unknown";
+      return t("Unknown");
   }
 }
 
@@ -152,6 +159,8 @@ function aiAcceptanceVariant(status?: string) {
   switch (status) {
     case "accepted":
       return "success";
+    case "pending":
+      return "info";
     case "rejected":
       return "neutral";
     case "not_attempted":
@@ -418,7 +427,7 @@ function AIDiagnosticsSection({
         <DescriptionItem label={t("AI outcome")}>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant={aiAcceptanceVariant(diagnostics.acceptanceStatus)}>
-              {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
+              {formatAIAcceptanceStatus(t, diagnostics.acceptanceStatus)}
             </Badge>
             {diagnostics.rejectionReason ? (
               <Badge variant="neutral">{formatDiagnosticReason(diagnostics.rejectionReason)}</Badge>
@@ -596,14 +605,35 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
 function ContentSection({
   content,
+  loadFailed,
+  onRetry,
   fallbackStatus,
   fallbackError,
 }: {
   content: DocumentContent | null;
+  loadFailed: boolean;
+  onRetry: () => void;
   fallbackStatus: Document["contentStatus"];
   fallbackError?: string | null;
 }) {
   const t = useT();
+
+  if (loadFailed) {
+    return (
+      <Alert variant="destructive" size="sm">
+        <AlertCircleIcon />
+        <AlertTitle>{t("The extracted text could not be loaded.")}</AlertTitle>
+        <AlertDescription>
+          {t("The document itself is unaffected. Try loading it again.")}
+        </AlertDescription>
+        <AlertAction>
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            {t("Try again")}
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
+  }
 
   const intelligence = content?.structuredData?.intelligence;
   const aiDiagnostics = content?.structuredData?.aiDiagnostics;
@@ -713,18 +743,32 @@ export function DocumentIntelligenceDialog({
   const [reviewShipmentOpen, setReviewShipmentOpen] = useState(false);
   const documentID = document?.id;
   const shipmentDraftStatus = document?.shipmentDraftStatus;
+  const contentStatus = document?.contentStatus;
 
-  const { data: content, isLoading: isContentLoading } = useQuery({
+  const {
+    data: content,
+    isLoading: isContentLoading,
+    isError: contentLoadFailed,
+    refetch: refetchContent,
+  } = useQuery({
     queryKey: ["document-content", documentID],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!documentID) return null;
       try {
-        return await apiService.documentService.getContent(documentID);
-      } catch {
-        return null;
+        return await apiService.documentService.getContent(documentID, { signal });
+      } catch (error) {
+        if (error instanceof ApiRequestError && error.status === 404) return null;
+        throw error;
       }
     },
     enabled: open && !!documentID,
+    refetchInterval: (query) => {
+      const current = query.state.data;
+      const reading = current
+        ? stillBeingRead(current, Math.floor(Date.now() / 1000))
+        : contentStatus === "Pending" || contentStatus === "Extracting";
+      return reading ? READING_POLL_MS : false;
+    },
   });
 
   const { data: shipmentDraft, isLoading: isDraftLoading } = useQuery({
@@ -884,6 +928,8 @@ export function DocumentIntelligenceDialog({
                     ) : (
                       <ContentSection
                         content={content ?? null}
+                        loadFailed={contentLoadFailed}
+                        onRetry={() => void refetchContent()}
                         fallbackStatus={document.contentStatus}
                         fallbackError={document.contentError}
                       />
