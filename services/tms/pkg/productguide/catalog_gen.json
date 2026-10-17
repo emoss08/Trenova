@@ -1,5 +1,5 @@
 {
-  "version": "sha256:2455fbce8c2a313c3b826273323eff6b049e57b4908afd6921d7be935a88f6c9",
+  "version": "sha256:3e5f981ca5f78a65c617d22ac3aab0806c0b03264d39d51e47ffc0b38807d94c",
   "modules": [
     {
       "id": "home",
@@ -8130,6 +8130,22 @@
           ]
         },
         {
+          "title": "Check or correct a POD's signature",
+          "keywords": [
+            "unsigned POD",
+            "signed proof of delivery",
+            "POD not signed",
+            "receiver signature",
+            "mark signed"
+          ],
+          "steps": [
+            "Open [Billing queue](/billing/queue), select the item and open the **Documents** tab. Each document whose type needs a signature shows whether it is **Signed**, **Unsigned** or not read yet.",
+            "To correct it, select **Record signature** on the document, choose **Signed**, **Unsigned** or **Signature not read**, and for a signed copy pick the date in **Signed on** if it can be read.",
+            "Select **Save**. The item's proof of delivery check updates straight away, and an unsigned POD raises an issue to ask the driver or bill without it.",
+            "To have document intelligence read the queued PODs nobody has checked yet, select **Read POD signatures** in the header, then **Read signatures**."
+          ]
+        },
+        {
           "title": "Correct charges before approval",
           "keywords": [
             "add accessorial",
@@ -8190,7 +8206,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nA detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
+      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nDocument intelligence reads the receiver's signature when it reads a delivery document, and marks it signed or unsigned only when it is sure; otherwise the signature stays unread. A signature a person records is final: reading the document again never changes it. Documents uploaded by hand from a shipment are not machine-read, so their signature is recorded with **Record signature**. Recording a signature needs permission to update documents.\n\nA detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
       "related": [
         "/billing/invoices",
         "/billing/configuration-files/customers",

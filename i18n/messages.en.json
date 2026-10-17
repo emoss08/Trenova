@@ -9986,6 +9986,15 @@
       "routes/admin"
     ]
   },
+  "A signature a person recorded must name who recorded it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.": {
     "sites": 1,
     "scope": [
@@ -42385,7 +42394,7 @@
     ]
   },
   "Cancel": {
-    "sites": 317,
+    "sites": 319,
     "scope": [
       "go",
       "ts"
@@ -69390,6 +69399,15 @@
       "go/other"
     ]
   },
+  "Date not legible": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Date of Birth": {
     "sites": 1,
     "scope": [
@@ -79755,6 +79773,15 @@
       "go/other"
     ]
   },
+  "Document intelligence reads every queued proof of delivery whose signature nobody has read yet and marks it signed or unsigned. PODs a person already marked, and PODs uploaded without machine reading, are left as they are.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Document is invalid": {
     "sites": 20,
     "scope": [
@@ -79765,7 +79792,7 @@
     ]
   },
   "Document is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -131988,6 +132015,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Leave empty when the date beside the signature can't be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Leave ended": {
     "sites": 2,
     "scope": [
@@ -141125,6 +141161,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Marked by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Marked false positive": {
@@ -157543,6 +157588,15 @@
       "routes/shipment"
     ]
   },
+  "No queued POD is waiting for its signature to be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No rate": {
     "sites": 2,
     "scope": [
@@ -159837,6 +159891,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Nobody has read the signature yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nobody has worked this account yet. Calls, emails, notes and promises appear here.": {
@@ -169377,6 +169440,24 @@
       "go/other"
     ]
   },
+  "Only a person can re-read the signatures on queued PODs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person can record whether a document is signed": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a person can review a document": {
     "sites": 1,
     "scope": [
@@ -169617,6 +169698,17 @@
       "go"
     ],
     "areas": [
+      "go/other"
+    ]
+  },
+  "Only a signed document has a signing date": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
       "go/other"
     ]
   },
@@ -171070,6 +171162,15 @@
     ]
   },
   "Only the current version of a document can be reviewed. Review the latest version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only the current version of a document can have its signature recorded. Record it on the latest version instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -198192,6 +198293,24 @@
       "go/other"
     ]
   },
+  "Read POD signatures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Read POD signatures again?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Read Ramp card transactions for fuel spend. Ramp runs on commercial Visa, so its rows carry the merchant and amount but not the gallons an IFTA return needs.": {
     "sites": 1,
     "scope": [
@@ -198384,11 +198503,12 @@
     ]
   },
   "Read from the document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib"
     ]
   },
@@ -198517,6 +198637,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Read signatures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Read so far, by kind": {
@@ -202220,6 +202349,16 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Record signature": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/billing-queue"
     ]
   },
   "Record stop arrival": {
@@ -218948,7 +219087,7 @@
     ]
   },
   "Save": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "ts"
     ],
@@ -220375,6 +220514,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Say whether the receiver signed it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Say whether the receiver signed this document. Your answer is final: reading the document again won't change it, and billing checks the proof of delivery against it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Say whether the schedule should run": {
@@ -235923,18 +236080,46 @@
     ]
   },
   "Signature": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "routes/policies",
       "template/factoring.noa.pdf"
     ]
   },
   "Signature cannot exceed 150 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signature detection is not available on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signature not read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Signature status must be Signed, Unsigned or Unknown": {
     "sites": 1,
     "scope": [
       "go"
@@ -235953,12 +236138,13 @@
     ]
   },
   "Signed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
@@ -236058,6 +236244,33 @@
       "apps/web/components"
     ]
   },
+  "Signed on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Signed on {0}, marked by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Signed on {0}, read from the document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Signed out": {
     "sites": 1,
     "scope": [
@@ -236137,6 +236350,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Signing date can't be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signing date is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Signing in": {
@@ -247253,6 +247484,15 @@
     ]
   },
   "Tenant ID is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tenant is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -266497,6 +266737,15 @@
       "go/other"
     ]
   },
+  "This document changed since you opened it; refresh and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This document could not be shown.": {
     "sites": 1,
     "scope": [
@@ -281040,11 +281289,12 @@
     ]
   },
   "Unsigned": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/agent-control"
     ]
   },
@@ -300328,6 +300578,15 @@
       "apps/dash/routes"
     ]
   },
+  "You don't have permission to change this document": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You don't have permission to do that.": {
     "sites": 1,
     "scope": [
@@ -315691,6 +315950,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Reading # POD again} other {Reading # PODs again}}. Each billing item updates when its POD is read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {Recorded # purchase.} other {Recorded # purchases.}}": {
