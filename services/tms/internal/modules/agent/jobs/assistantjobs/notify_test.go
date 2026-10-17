@@ -54,13 +54,11 @@ func (n *notices) Create(
 	return entity, nil
 }
 
-// conversations is the person's conversation, and what was done to it.
+// conversations is the person's conversation, and how it was read.
 type conversations struct {
-	thread  *conversation.Thread
-	err     error
-	read    agentports.GetThreadRequest
-	updated []*agentports.UpdateThreadRequest
-	actor   *permissionports.RequestActor
+	thread *conversation.Thread
+	err    error
+	read   agentports.GetThreadRequest
 }
 
 func (c *conversations) GetThread(
@@ -70,20 +68,6 @@ func (c *conversations) GetThread(
 	c.read = req
 	if c.err != nil {
 		return nil, c.err
-	}
-
-	return c.thread, nil
-}
-
-func (c *conversations) UpdateThread(
-	_ context.Context,
-	req *agentports.UpdateThreadRequest,
-	actor *permissionports.RequestActor,
-) (*conversation.Thread, error) {
-	c.updated = append(c.updated, req)
-	c.actor = actor
-	if req.Keep && c.thread.Origin.Keepable() {
-		c.thread.Origin = conversation.ThreadOriginDesk
 	}
 
 	return c.thread, nil
@@ -174,48 +158,35 @@ func TestNotifyUnseenTurn_TellsThePersonWhoAskedWhereTheirReplyIs(t *testing.T) 
 
 	assert.Equal(t, in.Payload.Actor.UserID, threads.read.UserID,
 		"the conversation is read as the person's own")
-	assert.Empty(t, threads.updated, "a listed conversation is left as it is")
 }
 
 /*
-A quick question's conversation is hidden until it is kept, and the sweep of
-unkept ones deletes it. A notification leading there would lead nowhere, so
-the conversation is kept first, as the person who asked.
+A quick question from the palette is answered in the palette, and a page's
+conversation on its page. Neither is announced, and a palette question is
+not turned into a Desk conversation because nobody read its answer.
 */
-func TestNotifyUnseenTurn_KeepsAQuickQuestionItLeadsTo(t *testing.T) {
-	t.Parallel()
-
-	in := notifyInput(conversation.AssistantTurnStatusCompleted)
-	threads := &conversations{thread: threadFor(in, conversation.ThreadOriginAsk)}
-	sent := &notices{}
-
-	notify(t, notifyActivities(threads, sent), in)
-
-	require.Len(t, threads.updated, 1)
-	assert.True(t, threads.updated[0].Keep)
-	assert.Equal(t, in.Payload.ThreadID, threads.updated[0].ThreadID)
-	require.NotNil(t, threads.actor)
-	assert.Equal(t, in.Payload.Actor.UserID, threads.actor.UserID)
-	assert.True(t, threads.thread.Origin.Listed())
-	require.Len(t, sent.created, 1)
-}
-
-func TestNotifyUnseenTurn_LeavesAPageConversationToItsPage(t *testing.T) {
+func TestNotifyUnseenTurn_LeavesAReplyWhereItWasAsked(t *testing.T) {
 	t.Parallel()
 
 	for _, origin := range []conversation.ThreadOrigin{
+		conversation.ThreadOriginAsk,
 		conversation.ThreadOriginImport,
 		conversation.ThreadOriginFormula,
 	} {
-		in := notifyInput(conversation.AssistantTurnStatusCompleted)
-		threads := &conversations{thread: threadFor(in, origin)}
-		sent := &notices{}
+		for _, status := range []conversation.AssistantTurnStatus{
+			conversation.AssistantTurnStatusCompleted,
+			conversation.AssistantTurnStatusRefused,
+			conversation.AssistantTurnStatusFailed,
+		} {
+			in := notifyInput(status)
+			threads := &conversations{thread: threadFor(in, origin)}
+			sent := &notices{}
 
-		notify(t, notifyActivities(threads, sent), in)
+			notify(t, notifyActivities(threads, sent), in)
 
-		assert.Empty(t, sent.created, string(origin))
-		assert.Empty(t, threads.updated, string(origin))
-		assert.Equal(t, origin, threads.thread.Origin)
+			assert.Empty(t, sent.created, "%s %s", origin, status)
+			assert.Equal(t, origin, threads.thread.Origin, "%s %s", origin, status)
+		}
 	}
 }
 
@@ -225,7 +196,7 @@ func TestNotifyUnseenTurn_NeverTellsThePersonTwice(t *testing.T) {
 	t.Parallel()
 
 	in := notifyInput(conversation.AssistantTurnStatusCompleted)
-	threads := &conversations{thread: threadFor(in, conversation.ThreadOriginAsk)}
+	threads := &conversations{thread: threadFor(in, conversation.ThreadOriginDesk)}
 	sent := &notices{}
 	a := notifyActivities(threads, sent)
 
@@ -233,7 +204,6 @@ func TestNotifyUnseenTurn_NeverTellsThePersonTwice(t *testing.T) {
 	notify(t, a, in)
 
 	assert.Len(t, sent.created, 1)
-	assert.Len(t, threads.updated, 1)
 	require.NotEmpty(t, sent.asked)
 	assert.Equal(t, in.Payload.TurnID.String(), sent.asked[0].CorrelationID)
 	assert.Equal(t, in.Payload.Timestamp, sent.asked[0].Since)

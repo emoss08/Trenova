@@ -957,8 +957,24 @@ left once "tell me about", "what's going on with" and the like are taken away, s
 index drops words from the end and would give up the record's name first) and lists them
 under the Nova row. A question carries the ones it names outright (`recordsNamedIn`: a PRO
 number or name written in the question as the record carries it) as mentions, found inside
-`useAsk`'s start under the withdraw signal, so closing the palette still asks and only Stop
-withdraws; a search that fails asks without them.
+`useAsk`'s start under the withdraw signal; a search that fails asks without them.
+
+A quick question's answer is read in the palette and nowhere else
+(`ThreadOrigin.AnsweredInPlace`, which the import and formula pages share): it is not announced
+when it ends unread, its conversation is not kept for it, and it is not listed among the
+person's live replies. So closing the palette or asking something else takes the question back,
+as Stop does: a question on its way is withdrawn and a turn under way is stopped. Continue in
+Desk keeps the conversation (its origin becomes `Desk`), and from then on its turn runs on
+whether the palette is open or not, and is announced like any other.
+
+Nor does anything sit beside a palette answer, so its turn runs **inline**
+(`ThreadOrigin.AnswersInline`, `RunRequest.Inline`, carried by `TurnPlan.Inline` into the turn
+workflow and on `RunContext.Inline` to the activities and to any delegate): no tool result is kept as an artifact (`agentflow`'s observer
+is skipped), `publish_artifact` and `request_decision` are not offered, the prompt has no
+Artifacts section, and its Output section tells the model to write the rows into the reply as a
+markdown table — every row up to about 30, past that the count and the rows that matter most —
+and never to point to an artifact. A run recorded before the field existed reads it as false and
+keeps its artifacts. Once the question is kept for the Desk its turns have artifacts again.
 
 ### The turn stream
 
@@ -1016,11 +1032,12 @@ Whether anybody drained the stream is how the turn knows somebody saw it end.
 One that ends **Completed, Refused or Failed with nobody drained** runs
 `NotifyUnseenTurnActivity` after the stream closes: a notification to the
 person who asked (`kind: assistant_reply_ready`, with `threadId`, `turnId`,
-`status` and a `link` to the conversation from the record-link registry), and a
-quick question's hidden thread is kept first so the stale-Ask sweep cannot
-delete what the notification leads to. It is keyed on the turn, so a retry
-never notifies twice. A stopped turn, and one started by
-`POST /threads/:id/messages/` (whose caller waits on the result), never notify.
+`status` and a `link` to the conversation from the record-link registry). It is
+keyed on the turn, so a retry never notifies twice. A stopped turn, one started
+by `POST /threads/:id/messages/` (whose caller waits on the result), and one in
+a conversation answered in place (an unkept palette question, an import or
+formula page) never notify; the last are also left out of
+`GET /assistant/turns/active/`.
 
 A turn starting (once its workflow is recorded) and its record closing, on
 every path, are announced as the `assistant_turns` realtime resource,
@@ -2297,6 +2314,7 @@ before the change:
 | `agent-loop-in-workflow` | `runInOneActivity`, `replayInOneActivity` | `RunAgentActivity`, `ReplayRunActivity`, `awaitDecision` |
 | `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
+| `daily-briefing-accounting-brief` | an organization's morning ends after the shipment board brief, and the accounting dashboard writes its brief when it is first opened | nothing; the check itself is the only cost |
 | `weather-alert-poll-fetch-once` | `pollPerTenant` | `ListWeatherAlertTenantsActivity`, `PollNWSAlertsForTenantActivity`, and `WeatherAlertService.ListWeatherAlertTenants` / `PollNWSAlertsForTenant` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |

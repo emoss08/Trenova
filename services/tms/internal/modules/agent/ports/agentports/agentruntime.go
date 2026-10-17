@@ -105,6 +105,11 @@ type RunRequest struct {
 	// even though no observer rides on this request: a durable turn keeps it
 	// in an activity of its own, where the observer lives.
 	Publishes bool
+	// Inline says the reply is read on its own, with nothing beside it: a
+	// quick question answered in the command palette. No tool result is kept
+	// as an artifact and nothing is published, so lists are written into the
+	// reply itself.
+	Inline bool
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string
@@ -166,6 +171,10 @@ func (r *RunRequest) AttributedPurpose() kernelports.AIUsagePurpose {
 // KeepsDocuments reports whether a run may publish a document: somewhere
 // beside the conversation is ready to keep it.
 func (r *RunRequest) KeepsDocuments() bool {
+	if r.Inline {
+		return false
+	}
+
 	return r.ToolObserver != nil || r.Publishes
 }
 

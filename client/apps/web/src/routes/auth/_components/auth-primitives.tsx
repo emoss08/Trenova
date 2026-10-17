@@ -203,7 +203,7 @@ export function AuthOption({
         ) : null}
       </span>
       {chip ? (
-        <span className="border-border-2 text-subtle-foreground text-2xs rounded-full border px-2 py-0.5 font-medium whitespace-nowrap">
+        <span className="border-border-2 text-subtle-foreground text-2xs rounded-badge border px-2 py-0.5 font-medium whitespace-nowrap">
           {chip}
         </span>
       ) : null}

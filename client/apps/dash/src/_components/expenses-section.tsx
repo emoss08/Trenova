@@ -240,7 +240,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
                       )
                     }
                     className={cn(
-                      "rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors",
+                      "rounded-badge border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors",
                       shipmentId === load.shipmentId &&
                         "border-primary bg-primary text-primary-foreground",
                     )}

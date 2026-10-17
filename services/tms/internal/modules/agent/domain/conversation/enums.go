@@ -167,6 +167,13 @@ func (o ThreadOrigin) Keepable() bool {
 	return o == ThreadOriginAsk
 }
 
+// AnswersInline reports whether a reply in a conversation of this origin is
+// read on its own, with nothing beside it to hold a table, a card or a
+// document: a quick question in the command palette, until it is kept.
+func (o ThreadOrigin) AnswersInline() bool {
+	return o == ThreadOriginAsk
+}
+
 func (o ThreadOrigin) ReadsEverything() bool {
 	return o == ThreadOriginAsk
 }
@@ -175,8 +182,24 @@ func (o ThreadOrigin) PageBound() bool {
 	return o == ThreadOriginImport || o == ThreadOriginFormula
 }
 
-func PageBoundOrigins() []ThreadOrigin {
-	return []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula}
+// AnsweredInPlace reports whether a reply in a conversation of this origin is
+// read only where it was asked: an unkept quick question in the palette, or a
+// conversation on an import or formula page. Nothing announces such a reply,
+// keeps its conversation, or lists it as under way anywhere else.
+func (o ThreadOrigin) AnsweredInPlace() bool {
+	return o == ThreadOriginAsk || o.PageBound()
+}
+
+func AnsweredInPlaceOrigins() []ThreadOrigin {
+	all := AllThreadOrigins()
+	out := make([]ThreadOrigin, 0, len(all))
+	for _, origin := range all {
+		if origin.AnsweredInPlace() {
+			out = append(out, origin)
+		}
+	}
+
+	return out
 }
 
 func UnlistedOrigins() []ThreadOrigin {

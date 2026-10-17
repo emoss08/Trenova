@@ -14,7 +14,7 @@ import { senderShortName } from "../rules/rule-model";
 type Suggestion = NonNullable<TriageBriefing["suggestion"]>;
 
 const PILL =
-  "ui-focus-ring inline-flex h-8 items-center gap-1.75 rounded-full border px-3 text-sm transition-colors";
+  "ui-focus-ring inline-flex h-8 items-center gap-1.75 rounded-badge border px-3 text-sm transition-colors";
 const QUIET =
   "border-border text-foreground-muted hover:border-border-strong hover:bg-surface-hover";
 
@@ -24,7 +24,7 @@ function Count({ children }: { children: ReactNode }) {
 
 function Tag({ children }: { children: ReactNode }) {
   return (
-    <em className="bg-surface-hover text-foreground-subtle -mr-1.5 rounded-full px-2 py-0.5 text-xs not-italic">
+    <em className="bg-surface-hover text-foreground-subtle -mr-1.5 rounded-badge px-2 py-0.5 text-xs not-italic">
       {children}
     </em>
   );
@@ -217,7 +217,7 @@ export function FooterPills({
             <button
               type="button"
               onClick={() => onPreview(suggestionInput(shownSuggestion))}
-              className="ui-focus-ring text-foreground-subtle hover:bg-surface-hover hover:text-foreground h-6 shrink-0 rounded-full px-2.25 text-xs"
+              className="ui-focus-ring text-foreground-subtle hover:bg-surface-hover hover:text-foreground h-6 shrink-0 rounded-badge px-2.25 text-xs"
             >
               {t("Preview")}
             </button>
@@ -238,7 +238,7 @@ export function FooterPills({
                   },
                 );
               }}
-              className="ui-focus-ring ui-press bg-ink text-ink-foreground hover:bg-ink-hover inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2.25 text-xs font-medium disabled:opacity-60"
+              className="ui-focus-ring ui-press bg-ink text-ink-foreground hover:bg-ink-hover inline-flex h-6 shrink-0 items-center gap-1 rounded-badge px-2.25 text-xs font-medium disabled:opacity-60"
             >
               {teaching && <Spinner className="size-3" />}
               {t("Hand it to Nova")}

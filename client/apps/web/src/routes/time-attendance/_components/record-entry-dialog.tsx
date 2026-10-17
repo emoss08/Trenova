@@ -217,7 +217,7 @@ export function RecordEntryDialog({
                           })
                         }
                         className={cn(
-                          "text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-7 items-center gap-1 rounded-full border border-transparent px-2 text-xs tabular-nums transition-colors",
+                          "text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-7 items-center gap-1 rounded-badge border border-transparent px-2 text-xs tabular-nums transition-colors",
                           breakMinutes === minutes && "border-border bg-muted text-foreground",
                         )}
                       >

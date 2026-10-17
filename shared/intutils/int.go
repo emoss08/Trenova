@@ -160,3 +160,11 @@ func SafeToInt16[T ~int | ~int64](value T) int16 {
 
 	return int16(value)
 }
+
+func PositiveIntPtr(value int64) *int {
+	if value <= 0 {
+		return nil
+	}
+	converted := int(value)
+	return &converted
+}

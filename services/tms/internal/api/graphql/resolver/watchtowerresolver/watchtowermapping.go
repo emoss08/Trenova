@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // watchtowerCountsModel renders the counts, listing the kinds in the order
@@ -35,6 +37,8 @@ func watchtowerCountsModel(counts *watchtowerports.WatchtowerCounts) *gqlmodel.W
 	return &gqlmodel.WatchtowerCounts{
 		Unresolved:     counts.Unresolved,
 		Critical:       counts.Critical,
+		Active:         counts.Active,
+		ActiveCritical: counts.ActiveCritical,
 		Unseen:         counts.Unseen,
 		UnseenCritical: counts.UnseenCritical,
 		Overdue:        counts.Overdue,
@@ -101,4 +105,57 @@ func optionalUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 	}
 
 	return base.OptionalMatch(loaders.UserByID(ctx, id.String()))
+}
+
+func optionalAgent(ctx context.Context, id pulid.ID) (*agentdefinition.Definition, error) {
+	if id.IsNil() {
+		return nil, nil //nolint:nilnil // no agent behind the work is no agent and no error
+	}
+
+	return base.OptionalMatch(loaders.AgentDefinitionByID(ctx, id.String()))
+}
+
+func suggestedAgent(
+	ctx context.Context,
+	item *watchtower.Item,
+) (*agentdefinition.Definition, error) {
+	if item.EventKind == "" || item.SubjectID.IsNil() {
+		return nil, nil //nolint:nilnil // an item no agent can take has no suggestion
+	}
+
+	return loaders.SuggestedAgentByEventKind(ctx, string(item.EventKind))
+}
+
+func recordModel(item *watchtower.Item) *watchtower.RecordRef {
+	kind := item.ResolvedRecordKind()
+	if kind == "" && item.RecordLabel == "" {
+		return nil
+	}
+
+	return &watchtower.RecordRef{Kind: kind, Label: item.RecordLabel}
+}
+
+func factsModel(facts []watchtower.Fact) []*gqlmodel.WatchtowerFact {
+	out := make([]*gqlmodel.WatchtowerFact, 0, len(facts))
+	for _, fact := range facts {
+		out = append(out, &gqlmodel.WatchtowerFact{
+			Label: fact.Label,
+			Value: stringutils.NilIfEmpty(fact.Value),
+			At:    intutils.PositiveIntPtr(fact.At),
+		})
+	}
+
+	return out
+}
+
+func trailModel(trail []watchtower.TrailEvent) []*gqlmodel.WatchtowerTrailEvent {
+	out := make([]*gqlmodel.WatchtowerTrailEvent, 0, len(trail))
+	for _, event := range trail {
+		out = append(out, &gqlmodel.WatchtowerTrailEvent{
+			At:   intutils.PositiveIntPtr(event.At),
+			Text: event.Text,
+		})
+	}
+
+	return out
 }

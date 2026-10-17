@@ -51,7 +51,7 @@ func (s *Service) StartAsk(
 
 	return s.StartThread(ctx, &agentports.StartThreadRequest{
 		AgentDefinitionID: definition.ID,
-		Title:             truncateRunes(content, maxTitleRunes),
+		Title:             conversation.TitleFrom(content),
 		TenantInfo:        req.TenantInfo,
 		Origin:            conversation.ThreadOriginAsk,
 	}, actor)

@@ -14,6 +14,7 @@ describe("securityAccess", () => {
     const access = securityAccess(grants([[Resource.AuthEvent, [Operation.Read]]]));
 
     expect(access.tabs).toEqual({
+      overview: false,
       "sign-in": false,
       provisioning: false,
       policies: false,
@@ -57,17 +58,35 @@ describe("securityAccess", () => {
     });
   });
 
-  it("no longer opens anything on an organization grant", () => {
+  it("opens only the briefing on an organization grant", () => {
     const access = securityAccess(
       grants([[Resource.Organization, [Operation.Read, Operation.Update]]]),
     );
 
-    expect(Object.values(access.tabs).some(Boolean)).toBe(false);
+    expect(access.tabs).toEqual({
+      overview: true,
+      "sign-in": false,
+      provisioning: false,
+      policies: false,
+      activity: false,
+    });
+  });
+
+  it("offers the users and API key pages only to people who can read them", () => {
+    const access = securityAccess(
+      grants([
+        [Resource.Organization, [Operation.Read]],
+        [Resource.User, [Operation.Read]],
+      ]),
+    );
+
+    expect(access.pages).toEqual({ users: true, apiKeys: false });
   });
 });
 
 describe("firstAllowed", () => {
   const allowed = {
+    overview: false,
     "sign-in": false,
     provisioning: false,
     policies: true,
@@ -85,6 +104,7 @@ describe("firstAllowed", () => {
   it("returns null when nothing is allowed", () => {
     expect(
       firstAllowed("sign-in", securityTabValues, {
+        overview: false,
         "sign-in": false,
         provisioning: false,
         policies: false,

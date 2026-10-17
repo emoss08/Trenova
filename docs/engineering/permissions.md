@@ -198,6 +198,48 @@ middleware installs the session's activation into the request context only when 
 required. A change advances the permission epoch and is recorded in the security audit
 trail.
 
+## Security briefing
+
+The Security tab of organization settings opens on a briefing:
+`GET /organizations/:id/iam/security-briefing` (`iamhandler.getSecurityBriefing`,
+`securitybriefingservice`). The route needs only `organization` read, because the briefing is
+part of the settings page; each section is then gated by the read permission of the records
+it summarizes, checked in one `CheckBatch`, and a section the caller may not read is `null`
+rather than an empty count:
+
+| Section | Needs read on |
+|---|---|
+| `members` | `user` |
+| `mfa` (counts) | `mfa_authenticator` |
+| `mfa.unenrolled` (names and emails) | `mfa_authenticator` and `user` |
+| `signIns` | `auth_event`; `signIns.riskDenied` also `risk_decision` |
+| `apiKeys` | `api_key` |
+| `sso` | `identity_provider` |
+| `provisioning` | `scim_directory` |
+| `policies` | `access_policy` |
+
+`session` is the deployment's own `security.session` configuration (lifetime, idle sign-out
+and its warning), not an organization setting, so it is always present. The findings — each a
+code, a severity (`critical`, `warning`, `notice`, `pass`) and the counts behind it — and every
+threshold (seven days of sign-ins, ninety days without a sign-in or key use, keys expiring
+within fourteen days, ten failed sign-ins, half the members without two-factor) are worked out
+on the server in `domain/iam/securitybriefing.go`; the client only words them.
+
+Two-factor coverage is the one read under the system scope
+(`securityBriefingRepository.MFACoverage`, listed in `rlslint`). A person enrols once, and the
+`mfa_authenticators` row carries the organization they enrolled from; its policy shows a row
+only to that organization or its own user, so under the tenant's scope a member who enrolled
+from another organization would count as unenrolled. The method filters the members to the
+tenant's organization and business unit in Go and reads only whether each has an active TOTP.
+
+The tab's Activity tables read four cursor connections (`authEvents`, `riskDecisions`,
+`externalIdentities`, `mfaAuthenticators` in `security_activity.graphqls`), each gated by read
+on its own resource (`auth_event`, `risk_decision`, `external_identity`, `mfa_authenticator`),
+so a person sees only the views they hold. Unlike the briefing's coverage count, the
+two-factor device table stays under the tenant's scope: it lists the devices enrolled from this
+organization, which is what an administrator here can act on. None of the four exposes a secret
+(raw claims, the TOTP secret or a credential id).
+
 ## Protected fields
 
 A few fields stay hidden from people who can read the record they sit on. Each belongs to a

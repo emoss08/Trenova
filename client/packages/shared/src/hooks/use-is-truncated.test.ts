@@ -60,4 +60,24 @@ describe("useIsTruncated", () => {
 
     expect(result.current[1]).toBe(false);
   });
+
+  it("reports clamped lines taller than their element as truncated, and lines that fit as not", () => {
+    const { result } = renderHook(() => useIsTruncated<HTMLParagraphElement>("block"));
+    const clamped = document.createElement("p");
+    Object.defineProperty(clamped, "scrollHeight", { configurable: true, value: 120 });
+    Object.defineProperty(clamped, "clientHeight", { configurable: true, value: 36 });
+    Object.defineProperty(clamped, "scrollWidth", { configurable: true, value: 200 });
+    Object.defineProperty(clamped, "clientWidth", { configurable: true, value: 200 });
+
+    act(() => {
+      result.current[0](clamped);
+    });
+    expect(result.current[1]).toBe(true);
+
+    Object.defineProperty(clamped, "scrollHeight", { configurable: true, value: 36 });
+    act(() => {
+      result.current[0](clamped);
+    });
+    expect(result.current[1]).toBe(false);
+  });
 });

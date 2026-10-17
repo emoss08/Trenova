@@ -98,7 +98,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
                 type="button"
                 onClick={() => setCategory(value)}
                 className={cn(
-                  "rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors",
+                  "rounded-badge border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors",
                   category === value && "border-primary bg-primary text-primary-foreground",
                 )}
               >

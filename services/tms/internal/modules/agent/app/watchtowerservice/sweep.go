@@ -109,6 +109,9 @@ func (s *Service) sweep(
 		}
 		result.Resolved += resolved
 	}
+	if result.Resolved > 0 {
+		s.projector.publishBulk(ctx, tenant, bulkResolvedAction)
+	}
 
 	return result, nil
 }

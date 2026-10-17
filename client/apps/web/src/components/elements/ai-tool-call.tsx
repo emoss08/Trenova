@@ -163,7 +163,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
         <span className="font-mono text-sm">{name}</span>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+            "inline-flex items-center gap-1 rounded-badge px-2 py-0.5 text-xs font-medium",
             stateConfig.className,
           )}
         >

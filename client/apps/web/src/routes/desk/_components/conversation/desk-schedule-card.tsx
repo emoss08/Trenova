@@ -1,16 +1,16 @@
 import type { ConversationSchedule } from "@/types/assistant";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { scheduleLine } from "./desk-schedules";
-
-const ICON_BUTTON_CLASS =
-  "size-6.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg";
+import { useState } from "react";
+import { DeskScheduleEditDialog } from "./desk-schedule-edit-dialog";
+import { ScheduleActionsMenu } from "./schedule-actions-menu";
+import { scheduleLine } from "@/lib/schedule-labels";
 
 /**
  * One schedule as a row: the clock, the request, when it runs and next, and
- * pause/resume and delete. `fresh` marks one just made, which pops in.
+ * a menu to edit, pause or resume, and delete it. `fresh` marks one just
+ * made, which pops in.
  */
 export function DeskScheduleRow({
   schedule,
@@ -18,6 +18,7 @@ export function DeskScheduleRow({
   timezone,
   fresh = false,
   disabled = false,
+  onEdit,
   onToggle,
   onDelete,
 }: {
@@ -26,6 +27,7 @@ export function DeskScheduleRow({
   timezone: string;
   fresh?: boolean;
   disabled?: boolean;
+  onEdit: (schedule: ConversationSchedule) => void;
   onToggle: (schedule: ConversationSchedule) => void;
   onDelete: (schedule: ConversationSchedule) => void;
 }) {
@@ -40,28 +42,13 @@ export function DeskScheduleRow({
         <b>{schedule.prompt}</b>
         <em>{scheduleLine(schedule, now, timezone, t)}</em>
       </span>
-      <Button
-        variant="quiet"
-        size="icon-sm"
-        className={ICON_BUTTON_CLASS}
-        title={schedule.enabled ? t("Pause") : t("Resume")}
-        aria-label={schedule.enabled ? t("Pause") : t("Resume")}
+      <ScheduleActionsMenu
+        schedule={schedule}
         disabled={disabled}
-        onClick={() => onToggle(schedule)}
-      >
-        <DeskIcon name={schedule.enabled ? "pause" : "play"} size={13} />
-      </Button>
-      <Button
-        variant="quiet"
-        size="icon-sm"
-        className={ICON_BUTTON_CLASS}
-        title={t("Delete")}
-        aria-label={t("Delete")}
-        disabled={disabled}
-        onClick={() => onDelete(schedule)}
-      >
-        <DeskIcon name="trash" size={13} />
-      </Button>
+        onEdit={onEdit}
+        onToggle={onToggle}
+        onDelete={onDelete}
+      />
     </div>
   );
 }
@@ -89,6 +76,7 @@ export function DeskScheduleCard({
   onDelete: (schedule: ConversationSchedule) => void;
 }) {
   const t = useT();
+  const [editing, setEditing] = useState<ConversationSchedule | null>(null);
   if (schedule === undefined) {
     return null;
   }
@@ -112,9 +100,11 @@ export function DeskScheduleCard({
         now={now}
         timezone={timezone}
         disabled={disabled}
+        onEdit={setEditing}
         onToggle={onToggle}
         onDelete={onDelete}
       />
+      <DeskScheduleEditDialog schedule={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }

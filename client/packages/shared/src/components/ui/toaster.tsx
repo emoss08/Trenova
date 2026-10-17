@@ -240,6 +240,7 @@ export function Toaster({
     }
   };
 
+  // i18n-ignore: CSS length for the stack's inset, not interface text
   const edge = `calc(${offset}px + env(safe-area-inset-${direction === 1 ? "top" : "bottom"}, 0px))`;
   const style: CSSProperties = direction === 1 ? { top: edge } : { bottom: edge };
 
@@ -316,7 +317,7 @@ export function Toaster({
         }}
         transition={STACK_SPRING}
         className={cn(
-          "dark ui-focus-ring absolute right-0 h-6.5 cursor-pointer rounded-full bg-popover px-2.5 text-xs font-medium text-popover-foreground ui-lift-float hover:bg-surface-hover",
+          "dark ui-focus-ring absolute right-0 h-6.5 cursor-pointer rounded-badge bg-popover px-2.5 text-xs font-medium text-popover-foreground ui-lift-float hover:bg-surface-hover",
           direction === 1 ? "top-0" : "bottom-0",
           position.endsWith("center") && "right-1/2 translate-x-1/2",
           !showClear && "pointer-events-none",

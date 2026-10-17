@@ -167,7 +167,7 @@ export function InvoiceReconciliationPage() {
                       <p className="text-sm font-medium">{row.originalInvoiceNumber}</p>
                       <p className="text-muted-foreground text-xs">{row.customerName}</p>
                     </div>
-                    <span className="rounded-full border px-2 py-0.5 text-xs">{row.status}</span>
+                    <span className="rounded-badge border px-2 py-0.5 text-xs">{row.status}</span>
                   </div>
                   <p className="mt-3 text-sm">{row.reason}</p>
                   <p className="text-muted-foreground mt-2 text-xs">
@@ -294,7 +294,7 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link
       to={to}
-      className="hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
+      className="hover:bg-muted inline-flex items-center gap-1 rounded-badge border px-3 py-1.5 text-xs"
     >
       <LinkExternal01Icon className="size-3.5" />
       {children}

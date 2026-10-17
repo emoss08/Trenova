@@ -63,6 +63,10 @@ func (r *repository) Upsert(
 		}
 
 		plan := planUpsert(existing, item)
+		if plan.unchanged {
+			existing.Unchanged = true
+			return existing, false, nil
+		}
 		if _, err = buildUpsert(db, item, plan).Exec(ctx); err != nil {
 			r.l.Error("failed to upsert watchtower item",
 				zap.String("kind", string(item.SourceKind)),
@@ -95,6 +99,9 @@ func (r *repository) Upsert(
 type upsertPlan struct {
 	reopen       bool
 	keepSeverity bool
+	takeDeadline bool
+	dropDeadline bool
+	unchanged    bool
 }
 
 func planUpsert(existing, incoming *watchtower.Item) upsertPlan {
@@ -110,6 +117,20 @@ func planUpsert(existing, incoming *watchtower.Item) upsertPlan {
 		existing.Severity.Rank() > incoming.Severity.Rank() {
 		plan.keepSeverity = true
 	}
+
+	incomingDeadline := incoming.DueSource == watchtower.DueSourceSource && incoming.DueAt != nil
+	switch {
+	case incomingDeadline:
+		plan.takeDeadline = plan.reopen || existing.DueSource != watchtower.DueSourcePerson
+	case !plan.reopen && existing.DueSource == watchtower.DueSourceSource:
+		plan.dropDeadline = true
+	}
+
+	plan.unchanged = !plan.reopen &&
+		!plan.dropDeadline &&
+		(!plan.takeDeadline || existing.SameDeadline(incoming)) &&
+		(plan.keepSeverity || existing.Severity == incoming.Severity) &&
+		existing.SameDescription(incoming)
 	return plan
 }
 
@@ -160,6 +181,11 @@ func buildUpsert(db bun.IDB, item *watchtower.Item, plan upsertPlan) *bun.Insert
 		Set(cols.EventKind.SetExcluded()).
 		Set(cols.Path.SetExcluded()).
 		Set(cols.OccurredAt.SetExcluded()).
+		Set(cols.RecordKind.SetExcluded()).
+		Set(cols.RecordLabel.SetExcluded()).
+		Set(cols.Facts.SetExcluded()).
+		Set(cols.Impact.SetExcluded()).
+		Set(cols.Trail.SetExcluded()).
 		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
 	if !plan.keepSeverity {
@@ -174,9 +200,23 @@ func buildUpsert(db bun.IDB, item *watchtower.Item, plan upsertPlan) *bun.Insert
 			Set(cols.SourceClearedAt.SetNull()).
 			Set(cols.AcknowledgedAt.SetNull()).
 			Set(cols.SnoozedUntil.SetNull()).
-			Set(cols.DueAt.SetNull()).
 			Set(cols.EscalationLevel.Set(), 0).
 			Set(cols.LastEscalatedAt.SetNull())
+		if !plan.takeDeadline {
+			q = q.Set(cols.DueAt.SetNull()).
+				Set(cols.DueLabel.SetNull()).
+				Set(cols.DueSource.SetNull())
+		}
+	}
+	switch {
+	case plan.takeDeadline:
+		q = q.Set(cols.DueAt.SetExcluded()).
+			Set(cols.DueLabel.SetExcluded()).
+			Set(cols.DueSource.SetExcluded())
+	case plan.dropDeadline:
+		q = q.Set(cols.DueAt.SetNull()).
+			Set(cols.DueLabel.SetNull()).
+			Set(cols.DueSource.SetNull())
 	}
 
 	return q.Returning("*, (xmax = 0) AS inserted")
@@ -353,6 +393,12 @@ func (r *repository) UpdateWorkflow(
 				cols.Severity.Bare(),
 				cols.EscalationLevel.Bare(),
 				cols.LastEscalatedAt.Bare(),
+				cols.DueLabel.Bare(),
+				cols.DueSource.Bare(),
+				cols.AgentDefinitionID.Bare(),
+				cols.AgentRunID.Bare(),
+				cols.AgentHandedAt.Bare(),
+				cols.AgentHandedByID.Bare(),
 			).
 			Set(cols.Version.SetExpr("{} + 1")).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
@@ -439,7 +485,12 @@ func (r *repository) ListOverdue(
 			Where(cols.Status.Ne(), watchtower.StatusSnoozed).
 			Where(cols.DueAt.IsNotNull()).
 			Where(cols.DueAt.Lt(), req.Now).
-			Where(cols.EscalationLevel.Lt(), req.BelowEscalationCap)
+			Where(cols.EscalationLevel.Lt(), req.BelowEscalationCap).
+			WhereGroup(" AND ", func(eq *bun.SelectQuery) *bun.SelectQuery {
+				return eq.Where(cols.DueSource.Expr("{} IS DISTINCT FROM ?"), watchtower.DueSourceSource).
+					WhereOr(cols.LastEscalatedAt.IsNull()).
+					WhereOr(cols.LastEscalatedAt.Lte(), req.Now-req.EscalateEvery)
+			})
 	}, cols.DueAt.OrderAsc())
 }
 
@@ -660,6 +711,7 @@ func (r *repository) Counts(
 		r.db,
 		func(ctx context.Context) (*watchtowerports.WatchtowerCountsRow, error) {
 			cols := watchtowercol.ItemColumns
+			readCols := watchtowercol.ReadColumns
 			db := r.db.DBForContext(ctx)
 
 			open := func() *bun.SelectQuery {
@@ -679,6 +731,8 @@ func (r *repository) Counts(
 			var totals struct {
 				Unresolved     int `bun:"unresolved"`
 				Critical       int `bun:"critical"`
+				Active         int `bun:"active"`
+				ActiveCritical int `bun:"active_critical"`
 				UnseenCritical int `bun:"unseen_critical"`
 				Unseen         int `bun:"unseen"`
 				Overdue        int `bun:"overdue"`
@@ -686,15 +740,28 @@ func (r *repository) Counts(
 				Mine           int `bun:"mine"`
 				MineOverdue    int `bun:"mine_overdue"`
 			}
+			severity := bun.Ident(cols.Severity.Qualified())
+			status := bun.Ident(cols.Status.Qualified())
+			unseen := db.NewSelect().
+				Model((*watchtower.Read)(nil)).
+				ColumnExpr("1").
+				Where(readCols.ItemID.EqColumn(cols.ID)).
+				Where(readCols.OrganizationID.EqColumn(cols.OrganizationID)).
+				Where(readCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+				Where(readCols.UserID.Eq(), req.ReaderID)
 			if err := open().
 				ColumnExpr("COUNT(*) AS unresolved").
-				ColumnExpr("COUNT(*) FILTER (WHERE ? = ?) AS critical", bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical).
-				ColumnExpr("COUNT(*) FILTER (WHERE ? = ? AND ? > ?) AS unseen_critical",
-					bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical,
-					bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
-				ColumnExpr("COUNT(*) FILTER (WHERE ? > ?) AS unseen", bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = ?) AS critical", severity, watchtower.SeverityCritical).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? <> ?) AS active", status, watchtower.StatusSnoozed).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? <> ? AND ? = ?) AS active_critical",
+					status, watchtower.StatusSnoozed, severity, watchtower.SeverityCritical).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = ? AND ? > ? AND NOT EXISTS (?)) AS unseen_critical",
+					severity, watchtower.SeverityCritical,
+					bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt, unseen).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? > ? AND NOT EXISTS (?)) AS unseen",
+					bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt, unseen).
 				ColumnExpr("COUNT(*) FILTER (WHERE ? <> ? AND ? < ?) AS overdue",
-					bun.Ident(cols.Status.Qualified()), watchtower.StatusSnoozed,
+					status, watchtower.StatusSnoozed,
 					bun.Ident(cols.DueAt.Qualified()), req.Now).
 				ColumnExpr("COUNT(*) FILTER (WHERE ? IS NULL) AS unassigned",
 					bun.Ident(cols.AssigneeID.Qualified())).
@@ -702,7 +769,7 @@ func (r *repository) Counts(
 					bun.Ident(cols.AssigneeID.Qualified()), req.AssigneeID).
 				ColumnExpr("COUNT(*) FILTER (WHERE ? = ? AND ? <> ? AND ? < ?) AS mine_overdue",
 					bun.Ident(cols.AssigneeID.Qualified()), req.AssigneeID,
-					bun.Ident(cols.Status.Qualified()), watchtower.StatusSnoozed,
+					status, watchtower.StatusSnoozed,
 					bun.Ident(cols.DueAt.Qualified()), req.Now).
 				Scan(ctx, &totals); err != nil {
 				return nil, fmt.Errorf("count watchtower items: %w", err)
@@ -716,6 +783,7 @@ func (r *repository) Counts(
 			if err := open().
 				ColumnExpr("? AS source_kind", bun.Ident(cols.SourceKind.Qualified())).
 				ColumnExpr("COUNT(*) AS count").
+				Where(cols.Status.Ne(), watchtower.StatusSnoozed).
 				GroupExpr("?", bun.Ident(cols.SourceKind.Qualified())).
 				Scan(ctx, &byKind); err != nil {
 				return nil, fmt.Errorf("count watchtower items by kind: %w", err)
@@ -724,6 +792,8 @@ func (r *repository) Counts(
 			return &watchtowerports.WatchtowerCountsRow{
 				Unresolved:     totals.Unresolved,
 				Critical:       totals.Critical,
+				Active:         totals.Active,
+				ActiveCritical: totals.ActiveCritical,
 				UnseenCritical: totals.UnseenCritical,
 				Unseen:         totals.Unseen,
 				Overdue:        totals.Overdue,
@@ -791,6 +861,98 @@ func (r *repository) SetCursor(
 		}
 
 		return cursor, nil
+	})
+}
+
+func (r *repository) MarkRead(ctx context.Context, read *watchtower.Read) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := watchtowercol.ReadColumns
+		target := "CONFLICT (" + cols.ItemID.Name + ", " + cols.UserID.Name + ", " +
+			cols.BusinessUnitID.Name + ", " + cols.OrganizationID.Name + ") DO NOTHING"
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(read).
+			On(target).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("mark watchtower item read: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *repository) ListReadItemIDs(
+	ctx context.Context,
+	req watchtowerports.ListWatchtowerReadsRequest,
+) (map[pulid.ID]struct{}, error) {
+	if len(req.ItemIDs) == 0 || req.UserID.IsNil() {
+		return map[pulid.ID]struct{}{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]struct{}, error) {
+		cols := watchtowercol.ReadColumns
+		ids := make([]pulid.ID, 0, len(req.ItemIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*watchtower.Read)(nil)).
+			Column(cols.ItemID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return watchtowercol.ReadScopeTenant(sq, req.TenantInfo).
+					Where(cols.UserID.Eq(), req.UserID).
+					Where(cols.ItemID.In(), bun.List(req.ItemIDs))
+			}).
+			Scan(ctx, &ids)
+		if err != nil {
+			return nil, fmt.Errorf("list watchtower item reads: %w", err)
+		}
+		read := make(map[pulid.ID]struct{}, len(ids))
+		for _, id := range ids {
+			read[id] = struct{}{}
+		}
+		return read, nil
+	})
+}
+
+func (r *repository) CountCleared(
+	ctx context.Context,
+	req watchtowerports.CountClearedWatchtowerItemsRequest,
+) (int, error) {
+	if req.UserID.IsNil() || len(req.Kinds) == 0 {
+		return 0, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := watchtowercol.ItemColumns
+		eventCols := watchtowercol.EventColumns
+		db := r.db.DBForContext(ctx)
+
+		snoozedByReader := db.NewSelect().
+			Model((*watchtower.Event)(nil)).
+			ColumnExpr("1").
+			Where(eventCols.ItemID.EqColumn(cols.ID)).
+			Where(eventCols.OrganizationID.EqColumn(cols.OrganizationID)).
+			Where(eventCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+			Where(eventCols.ActorID.Eq(), req.UserID).
+			Where(eventCols.Kind.Eq(), watchtower.EventSnoozed).
+			Where(eventCols.CreatedAt.Gte(), req.Since)
+
+		count, err := db.NewSelect().
+			Model((*watchtower.Item)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return watchtowercol.ItemScopeTenant(sq, req.TenantInfo).
+					Where(cols.SourceKind.In(), bun.List(req.Kinds)).
+					WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
+						return cq.WhereGroup(" OR ", func(rq *bun.SelectQuery) *bun.SelectQuery {
+							return rq.Where(cols.ResolvedByID.Eq(), req.UserID).
+								Where(cols.ResolvedAt.Gte(), req.Since)
+						}).WhereGroup(" OR ", func(zq *bun.SelectQuery) *bun.SelectQuery {
+							return zq.Where(cols.Status.Eq(), watchtower.StatusSnoozed).
+								Where("EXISTS (?)", snoozedByReader)
+						})
+					})
+			}).
+			Count(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("count cleared watchtower items: %w", err)
+		}
+		return int(count), nil
 	})
 }
 

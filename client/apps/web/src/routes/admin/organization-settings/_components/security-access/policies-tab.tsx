@@ -1,12 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
+  SegmentedControl,
+  type SegmentedControlItem,
+} from "@trenova/shared/components/ui/segmented-control";
 import { organization } from "@/lib/queries/organization";
 import { getAvailableOperations, getAvailableResources } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
@@ -21,11 +18,12 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { memo, useCallback, useMemo, useState } from "react";
-import { effectFilterOptions } from "./policies/constants";
 import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy-panel";
-import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
+import { EmptyState, ErrorState, PanelSearch, PanelToolbar, RowSkeleton, SecuritySection } from "./shared";
 import { RoleActivationSetting } from "./role-activation-setting";
 import { useSecurityAccess } from "./use-security-access";
+
+type EffectFilter = "all" | AccessPolicy["effect"];
 
 export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const t = useT();
@@ -45,9 +43,12 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<AccessPolicy | null>(null);
   const [search, setSearch] = useState("");
-  const [effectFilter, setEffectFilter] = useState("all");
-  const selectedOption =
-    effectFilterOptions.find((option) => option.value === effectFilter) || null;
+  const [effectFilter, setEffectFilter] = useState<EffectFilter>("all");
+  const effectFilterItems: SegmentedControlItem<EffectFilter>[] = [
+    { value: "all", label: t("All") },
+    { value: "allow", label: t("Allow") },
+    { value: "deny", label: t("Deny") },
+  ];
 
   const resources = useMemo(
     () => (resourcesQuery.data ?? []).flatMap((category) => category.resources),
@@ -110,87 +111,69 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-8">
       <RoleActivationSetting organizationId={organizationId} />
-      <ConsoleToolbar
+      <SecuritySection
         title={t("Access policies")}
-        description={t("Priority-ordered authorization decisions for protected resources.")}
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder={t("Search policies or resources")}
+        icon={<ShieldTickIcon />}
+        count={policies.length}
+        help={t(
+          "Policies are checked in priority order, lowest number first, and a deny wins over an allow at the same priority. They narrow what roles grant; they never grant more.",
+        )}
         action={
-          <div className="flex flex-wrap gap-2">
-            <Select
-              value={effectFilter}
-              items={effectFilterOptions}
-              onValueChange={(value) => setEffectFilter(value ?? "all")}
-            >
-              <SelectTrigger className="h-7 w-32 text-xs">
-                {selectedOption?.color ? (
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: selectedOption?.color }}
-                  />
-                ) : null}
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="p-1">
-                {effectFilterOptions.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    className="flex w-full flex-row items-center"
-                  >
-                    {option?.color ? (
-                      <span
-                        className="mt-1 size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: option?.color }}
-                      />
-                    ) : null}
-                    {t(option.label)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {access.create ? (
-              <Button size="sm" onClick={createPolicy}>
-                <PlusIcon />
-                {t("Add policy")}
-              </Button>
-            ) : null}
-          </div>
+          access.create ? (
+            <Button size="sm" onClick={createPolicy}>
+              <PlusIcon />
+              {t("New policy")}
+            </Button>
+          ) : null
         }
-      />
-
-      {policiesQuery.isLoading ? (
-        <RowSkeleton rows={4} />
-      ) : policiesQuery.isError ? (
-        <ErrorState label={t("Access policies could not be loaded.")} />
-      ) : filteredPolicies.length > 0 ? (
-        <div className="bg-background overflow-hidden rounded-lg border">
-          {filteredPolicies.map((policy) => (
-            <PolicyRow
-              key={policy.id}
-              policy={policy}
-              resourceName={resourceDisplayNames.get(policy.resource)}
-              onEditPolicy={editPolicy}
-              onDeletePolicy={deletePolicy}
+      >
+        {policies.length > 0 ? (
+          <PanelToolbar>
+            <SegmentedControl
+              aria-label={t("Filter by effect")}
+              items={effectFilterItems}
+              value={effectFilter}
+              onValueChange={setEffectFilter}
             />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon={<ShieldTickIcon />}
-          label={
-            policies.length === 0 ? t("No access policies configured") : t("No policies found")
-          }
-          description={
-            policies.length === 0
-              ? t("Create allow and deny policies to control sensitive operations.")
-              : t("Adjust filters to find a policy.")
-          }
-        />
-      )}
+            <PanelSearch
+              value={search}
+              onChange={setSearch}
+              placeholder={t("Search policies or resources")}
+            />
+          </PanelToolbar>
+        ) : null}
+        {policiesQuery.isLoading ? (
+          <RowSkeleton rows={3} label={t("Loading access policies")} />
+        ) : policiesQuery.isError ? (
+          <ErrorState label={t("Access policies could not be loaded.")} />
+        ) : filteredPolicies.length > 0 ? (
+          <div className="divide-border-subtle divide-y">
+            {filteredPolicies.map((policy) => (
+              <PolicyRow
+                key={policy.id}
+                policy={policy}
+                resourceName={resourceDisplayNames.get(policy.resource)}
+                onEditPolicy={editPolicy}
+                onDeletePolicy={deletePolicy}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<ShieldTickIcon />}
+            label={
+              policies.length === 0 ? t("No access policies configured") : t("No policies found")
+            }
+            description={
+              policies.length === 0
+                ? t("Create allow and deny policies to control sensitive operations.")
+                : t("Adjust filters to find a policy.")
+            }
+          />
+        )}
+      </SecuritySection>
 
       <AccessPolicyPanel
         organizationId={organizationId}
@@ -225,14 +208,14 @@ const PolicyRow = memo(function PolicyRow({
   const conditionCount = Object.keys(policy.conditions).length;
   const isAllow = policy.effect === "allow";
   const EffectIcon = isAllow ? ShieldTickIcon : ShieldXIcon;
-  const effectLabel = isAllow ? "Allow" : "Deny";
+  const effectLabel = isAllow ? t("Allow") : t("Deny");
   const resourceLabel = resourceName || policy.resource;
 
   return (
     <div
       className={cn(
-        "group bg-background hover:bg-muted/30 grid gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center",
-        !policy.enabled && "bg-muted/20 text-muted-foreground",
+        "group grid gap-3 py-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center",
+        !policy.enabled && "text-muted-foreground",
       )}
     >
       <div className="flex min-w-0 gap-3">

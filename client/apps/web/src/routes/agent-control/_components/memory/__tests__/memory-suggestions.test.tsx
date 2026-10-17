@@ -1,6 +1,6 @@
 import type { AgentMemorySuggestion } from "@/lib/graphql/agent-memories";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -161,6 +161,22 @@ describe("MemorySuggestions", () => {
     expect(await screen.findByText(/Offered by a colleague for their team ·/)).toBeInTheDocument();
     expect(screen.getByText(/Offered by a colleague for the organization ·/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Approve" })).toHaveLength(2);
+  });
+
+  it("keeps every suggestion in one scroll box under the heading, so a long queue does not push the page down", async () => {
+    api.fetchAgentMemorySuggestions.mockResolvedValue([
+      suggestion({ id: "amem_1", content: "Copy the AP inbox on Acme invoices." }),
+      suggestion({ id: "amem_2", content: "Granite wants the POD on the invoice." }),
+      suggestion({ id: "amem_3", content: "Columbus loads need a lumper receipt." }),
+    ]);
+    renderSuggestions();
+
+    const box = await screen.findByRole("region", { name: "Waiting for approval" });
+    expect(within(box).getByText("Copy the AP inbox on Acme invoices.")).toBeInTheDocument();
+    expect(within(box).getByText("Granite wants the POD on the invoice.")).toBeInTheDocument();
+    expect(within(box).getByText("Columbus loads need a lumper receipt.")).toBeInTheDocument();
+    expect(within(box).getAllByRole("button", { name: "Approve" })).toHaveLength(3);
+    expect(within(box).queryByRole("heading", { name: "Waiting for approval" })).toBeNull();
   });
 
   it("offers no decision to someone who cannot make one", async () => {

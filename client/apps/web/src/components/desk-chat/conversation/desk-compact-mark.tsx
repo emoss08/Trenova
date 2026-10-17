@@ -52,7 +52,7 @@ export function DeskCompactMark({ message }: { message: AssistantMessage }) {
         <Button
           variant="bare"
           size="bare"
-          className="h-6.5 gap-1.75 rounded-full bg-dsk-card pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-colors duration-120 ring-inset hover:bg-dsk-hover hover:text-dsk-fg"
+          className="h-6.5 gap-1.75 rounded-badge bg-dsk-card pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-colors duration-120 ring-inset hover:bg-dsk-hover hover:text-dsk-fg"
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >

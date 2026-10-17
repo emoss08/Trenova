@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
@@ -62,6 +64,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	t.Parallel()
 
 	constraints := []enumConstraint{
+		{
+			name:   "ck_watchtower_item_events_kind",
+			values: stringsOf(watchtower.AllEventKinds()),
+		},
+		{
+			name:   "ck_watchtower_items_due_source",
+			values: stringsOf(watchtower.AllDueSources()),
+		},
 		{
 			name:   "ck_ai_work_units_source",
 			values: stringsOf(aianalytics.AllSources()),
@@ -573,6 +583,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_shipment_board_briefs_trigger",
 			values: stringsOf(shipmentbrief.Triggers()),
+		},
+		{
+			name:   "ck_accounting_briefs_trigger",
+			values: stringsOf(accountingbrief.Triggers()),
 		},
 	}
 

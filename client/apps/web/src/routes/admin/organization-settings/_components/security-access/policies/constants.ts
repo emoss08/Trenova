@@ -1,11 +1,5 @@
 import type { SelectOption } from "@trenova/shared/types/fields";
 
-export const effectFilterOptions: SelectOption[] = [
-  { value: "all", label: "All effects" },
-  { value: "allow", label: "Allow", color: "var(--success)" },
-  { value: "deny", label: "Deny", color: "var(--danger)" },
-];
-
 export const policyEffectOptions: SelectOption[] = [
   {
     value: "deny",

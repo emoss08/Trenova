@@ -64,6 +64,13 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listThreadSchedules(threadId, { signal }),
   }),
+  // Every request the person scheduled, across their conversations, for the
+  // Desk's Scheduled page: the soonest first, paused ones after. Read as an
+  // infinite query a page at a time (useAllSchedules); kept fresh by the
+  // "conversation_schedules" realtime event, not polled.
+  allSchedules: () => ({
+    queryKey: ["assistant-all-schedules"],
+  }),
   // What the person left for a conversation while its agent worked, in send
   // order. Kept fresh by the "assistant_queue" realtime event, not polled.
   queue: (threadId: string) => ({

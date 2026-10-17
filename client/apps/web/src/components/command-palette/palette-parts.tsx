@@ -81,7 +81,7 @@ export function StatusLabel({
   return (
     <span
       className={cn(
-        "border-border text-foreground-muted inline-flex h-4.5 shrink-0 items-center gap-1.5 rounded-full border px-1.5 text-xs whitespace-nowrap",
+        "border-border text-foreground-muted inline-flex h-4.5 shrink-0 items-center gap-1.5 rounded-badge border px-1.5 text-xs whitespace-nowrap",
         className,
       )}
     >
@@ -95,7 +95,7 @@ export function CountChip({ value, className }: { value: number; className?: str
   return (
     <span
       className={cn(
-        "bg-sunken text-foreground-muted inline-flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-xs tabular-nums",
+        "bg-sunken text-foreground-muted inline-flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-badge px-1.5 font-mono text-xs tabular-nums",
         className,
       )}
     >

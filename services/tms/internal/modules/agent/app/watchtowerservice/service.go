@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -39,6 +37,8 @@ const (
 	// EventCritical is the notification a critical item raises when it
 	// first appears.
 	EventCritical = "watchtower.critical"
+
+	bulkResolvedAction = "bulk_resolved"
 )
 
 type Params struct {
@@ -50,9 +50,11 @@ type Params struct {
 	Permissions permissionports.PermissionEngine
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Runs        agentports.AgentRunService         `optional:"true"`
+	RunRepo     agentports.AgentRunRepository      `optional:"true"`
 	Events      agentports.AgentEventPublisher     `optional:"true"`
 	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
 	Dismisser   *Dismisser
+	Exceptions  *Exceptions
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -70,6 +72,8 @@ type Service struct {
 	dismisser   *Dismisser
 	definitions agentdefinitionports.AgentDefinitionRepository
 	runs        agentports.AgentRunService
+	runRepo     agentports.AgentRunRepository
+	exceptions  *Exceptions
 	events      agentports.AgentEventPublisher
 	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource
 	now         func() int64
@@ -92,6 +96,8 @@ func New(p Params) *Service {
 		access:      access,
 		definitions: p.Definitions,
 		runs:        p.Runs,
+		runRepo:     p.RunRepo,
+		exceptions:  p.Exceptions,
 		events:      p.Events,
 		sources:     sources,
 		dismisser:   p.Dismisser,
@@ -212,9 +218,14 @@ func (s *Service) List(
 		items = items[:first]
 		page.HasNextPage = true
 	}
+	read, err := s.readItemIDs(ctx, req.TenantInfo, actor, items)
+	if err != nil {
+		return nil, err
+	}
 	page.Cursors = make([]string, 0, len(items))
 	for _, item := range items {
-		item.Seen = item.OccurredAt <= cursor.SeenAt
+		_, opened := read[item.ID]
+		item.Seen = opened || item.OccurredAt <= cursor.SeenAt
 		encoded, eErr := ItemCursor(item, req.OrderByDue)
 		if eErr != nil {
 			return nil, eErr
@@ -259,6 +270,7 @@ func (s *Service) Counts(
 		Kinds:      kinds,
 		SeenAt:     cursor.SeenAt,
 		AssigneeID: actor.UserID,
+		ReaderID:   actor.UserID,
 		Now:        s.now(),
 	})
 	if err != nil {
@@ -266,6 +278,8 @@ func (s *Service) Counts(
 	}
 	counts.Unresolved = stored.Unresolved
 	counts.Critical = stored.Critical
+	counts.Active = stored.Active
+	counts.ActiveCritical = stored.ActiveCritical
 	counts.UnseenCritical = stored.UnseenCritical
 	counts.Unseen = stored.Unseen
 	counts.Overdue = stored.Overdue
@@ -350,22 +364,7 @@ func (s *Service) HandOff(
 	}
 
 	if req.AgentDefinitionID.IsNotNil() {
-		if s.runs == nil {
-			return nil, errortypes.NewBusinessError("Agents cannot be started on this deployment")
-		}
-		run, rErr := s.runs.StartForDefinition(ctx, &agentports.StartAgentRunForDefinitionRequest{
-			DefinitionID: req.AgentDefinitionID,
-			SubjectType:  item.SubjectType,
-			SubjectID:    item.SubjectID,
-			Trigger:      agent.RunTriggerManual,
-			EventKind:    item.EventKind,
-			TenantInfo:   req.TenantInfo,
-		}, actor)
-		if rErr != nil {
-			return nil, rErr
-		}
-
-		return &watchtowerports.HandOffWatchtowerItemResult{Item: item, Run: run}, nil
+		return s.handOffToAgent(ctx, req, item, actor)
 	}
 
 	result := &watchtowerports.HandOffWatchtowerItemResult{Item: item}
@@ -400,25 +399,11 @@ func (s *Service) HandOff(
 		}
 	}
 
-	candidates, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: req.TenantInfo,
-			Pagination: pagination.Info{Limit: 100},
-		},
-		EnabledOnly: true,
-	})
+	candidates, err := s.handOffCandidates(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	result.Candidates = make([]*agentdefinition.Definition, 0, len(candidates.Items))
-	for _, definition := range candidates.Items {
-		if definition != nil && definition.TriggerMode != agentdefinition.TriggerChat {
-			result.Candidates = append(result.Candidates, definition)
-		}
-	}
-	sort.Slice(result.Candidates, func(i, j int) bool {
-		return result.Candidates[i].Name < result.Candidates[j].Name
-	})
+	result.Candidates = candidates
 
 	return result, nil
 }

@@ -194,7 +194,7 @@ function RecordRowsSkeleton({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-16 rounded-full" />
+              <Skeleton className="h-4 w-16 rounded-badge" />
             </div>
             <Skeleton className="h-4 w-24" />
           </div>

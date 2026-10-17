@@ -79,6 +79,80 @@ enum WatchtowerItemEventKind {
   Reopened
   SourceResolved
   SourceReopened
+  "The item was handed to an agent, which is now working it."
+  HandedOff
+}
+
+"Where an item's due time came from."
+enum WatchtowerDueSource {
+  "The organization's due time for the item's severity."
+  Policy
+  "A deadline the record itself reports, such as a dock closing or a certificate lapsing."
+  Source
+  "A person set or cleared it."
+  Person
+}
+
+"How an agent handed an item is getting on."
+enum WatchtowerAgentStatus {
+  Working
+  "Waiting on a person: a change to approve, or a run that stopped."
+  NeedsYou
+  Done
+}
+
+"The phases an agent's work on an item goes through, in order."
+enum WatchtowerAgentStep {
+  "Reading the record the item is about."
+  Read
+  "Working out what to do and drafting it."
+  Decide
+  "Asking a person to approve what it drafted."
+  Approve
+}
+
+"One fact about the record behind an item, as the source reports it."
+type WatchtowerFact {
+  label: String!
+  "The value in words; absent when the fact is an instant."
+  value: String
+  "The instant the fact names, for the reader's own clock."
+  at: Timestamp
+}
+
+"One of the events that led to an item, oldest first."
+type WatchtowerTrailEvent {
+  "When it happened; absent when the source does not know."
+  at: Timestamp
+  text: String!
+}
+
+"The record an item is about, for the button that opens it."
+type WatchtowerRecord {
+  "The kind of record, as the permission registry names it."
+  kind: String!
+  "The kind in the reader's words."
+  noun: String!
+  "The record's name or number; blank when the source has none."
+  label: String!
+}
+
+"An agent working an item: who, how far along, and what it last said."
+type WatchtowerAgentWork {
+  agentId: ID!
+  agent: AgentDefinition
+  runId: ID!
+  status: WatchtowerAgentStatus!
+  "How many of the steps are behind it; equal to the step count once it is done."
+  step: Int!
+  steps: [WatchtowerAgentStep!]!
+  "What the run last said: its summary, or why it stopped."
+  note: String!
+  "The run stopped before it finished."
+  failed: Boolean!
+  handedAt: Timestamp!
+  handedById: ID
+  handedBy: User
 }
 
 "How loudly an item asks to be looked at."
@@ -140,6 +214,23 @@ type WatchtowerItem {
   "How many times it has escalated for being overdue."
   escalationLevel: Int!
   lastEscalatedAt: Timestamp
+  "What happens at the due time, when the record reports its own deadline."
+  dueLabel: String
+  "Where the due time came from; absent while there is none."
+  dueSource: WatchtowerDueSource
+  "The record the item is about; absent when it is about no one record."
+  record: WatchtowerRecord
+  "The facts about the record that matter here, at most six."
+  facts: [WatchtowerFact!]!
+  "What is at stake: loads, money, a customer, a clause."
+  impact: [String!]!
+  "The events that led here, oldest first."
+  trail: [WatchtowerTrailEvent!]!
+  "The agent best placed to take the item: one that subscribes to its event."
+  suggestedAgentId: ID
+  suggestedAgent: AgentDefinition
+  "The agent the item was handed to and how far along it is; absent until it is handed off."
+  agentWork: WatchtowerAgentWork
 }
 
 "One line of an exception's history. The history is never edited."
@@ -212,6 +303,10 @@ type WatchtowerKindSummary {
 type WatchtowerCounts {
   unresolved: Int!
   critical: Int!
+  "Open and not snoozed: what the queue shows."
+  active: Int!
+  "Critical, open and not snoozed."
+  activeCritical: Int!
   unseen: Int!
   unseenCritical: Int!
   "Open, not snoozed and past their due time."
@@ -288,6 +383,10 @@ extend type Query {
   watchtowerItemHistory(id: ID!, limit: Int = 100): [WatchtowerItemEvent!]!
   "The resolutions a person may pick."
   watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
+  "How many items this reader resolved or snoozed since an instant, of the kinds they may see."
+  watchtowerCleared(since: Timestamp!): Int!
+  "The agents an item can be handed to: every enabled agent that runs on its own."
+  watchtowerHandOffAgents: [AgentDefinition!]!
 }
 
 extend type Mutation {
@@ -313,4 +412,8 @@ extend type Mutation {
   resolveWatchtowerItem(id: ID!, input: ResolveWatchtowerItemInput!): WatchtowerItem!
   "Opens a resolved exception again."
   reopenWatchtowerItem(id: ID!, input: ReopenWatchtowerItemInput!): WatchtowerItem!
+  "Records that this reader opened an item, so it stops showing as new to them."
+  markWatchtowerItemSeen(id: ID!): WatchtowerItem!
+  "Brings a snoozed exception back before its time."
+  wakeWatchtowerItem(id: ID!, expectedVersion: Int): WatchtowerItem!
 }

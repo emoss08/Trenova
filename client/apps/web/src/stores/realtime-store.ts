@@ -1,4 +1,3 @@
-import { createSelectors } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -11,7 +10,7 @@ interface RealtimeState {
   setLastEventAt: (lastEventAt: number | null) => void;
 }
 
-const baseStore = create<RealtimeState>()(
+export const useRealtimeStore = create<RealtimeState>()(
   devtools((set) => ({
     connectionState: "disconnected",
     setConnectionState: (connectionState) => set({ connectionState }),
@@ -19,5 +18,3 @@ const baseStore = create<RealtimeState>()(
     setLastEventAt: (lastEventAt) => set({ lastEventAt }),
   })),
 );
-
-export const useRealtimeStore = createSelectors(baseStore);

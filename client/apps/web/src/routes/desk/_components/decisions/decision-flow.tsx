@@ -22,7 +22,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
-import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { QueueClear, QueueHeader, QueueLayout, QueueReading } from "../queue/queue";
+import { QueueBar, QueueBarSpacer, QueueButton, QueueKey, QueueNav } from "../queue/queue-bar";
+import {
+  QueueGroupHeader,
+  QueueList,
+  QueueRow,
+  QueueUnseenDot,
+  type QueueSection,
+} from "../queue/queue-list";
+import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
 import { DecisionCard, type CardGate } from "./decision-card";
 import { asAssistantProposal } from "./decision-presenters";
 import {
@@ -35,14 +45,9 @@ import {
   type PendingDecisionNode,
 } from "./use-pending-decisions";
 
-/** How long a decided card takes to leave before the next one comes in. */
-const LEAVE_MS = 320;
 const SEEN_KEY = "desk.decisions.seen";
 const LINK_CLASS =
   "text-sm font-medium whitespace-nowrap text-dsk-fg underline decoration-dsk-fg/30 underline-offset-2 hover:decoration-current";
-const NAV_CLASS =
-  "size-7.5 rounded-lg text-dsk-muted inset-ring inset-ring-dsk-b-sub hover:bg-dsk-hover hover:text-dsk-fg";
-const DECIDE_CLASS = "h-9.5 gap-2.5 rounded-lg pr-2.5 pl-4 text-base @max-[900px]/mainc:pl-3";
 
 type Item = {
   node: PendingDecisionNode;
@@ -116,16 +121,18 @@ export function DecisionFlow() {
   }, [gone, queue.data?.nodes]);
   const items = useMemo(() => groups.flatMap((group) => group.items), [groups]);
 
-  const [currentId, setCurrentId] = useState<string | null>(null);
-  const index = Math.max(
-    0,
-    items.findIndex((item) => item.id === currentId),
-  );
-  const current = items[index] ?? null;
+  const cursor = useQueueCursor(items);
+  const { current, index, go, select: setCurrentId } = cursor;
+  const currentId = current?.id ?? null;
 
-  // A notification lands on one proposal; the queue opens on it, and the
-  // address forgets it so going back doesn't land there again.
-  const requested = searchParams.get("proposal");
+  // A notification lands on one proposal, and the Watchtower on one agent's
+  // run; the queue opens on it, and the address forgets it so going back
+  // doesn't land there again.
+  const requestedProposal = searchParams.get("proposal");
+  const requestedRun = searchParams.get("run");
+  const requested =
+    requestedProposal ??
+    (requestedRun ? (items.find((item) => item.node.runId === requestedRun)?.id ?? null) : null);
   if (requested && requested !== currentId && items.some((item) => item.id === requested)) {
     setCurrentId(requested);
   }
@@ -135,6 +142,7 @@ export function DecisionFlow() {
         (params) => {
           const next = new URLSearchParams(params);
           next.delete("proposal");
+          next.delete("run");
           return next;
         },
         { replace: true },
@@ -169,18 +177,10 @@ export function DecisionFlow() {
     shownDigests.current.set(id, digest);
   }, []);
 
-  const [leaving, setLeaving] = useState<"ok" | "no" | null>(null);
+  const { leaving, leave } = useQueueLeave();
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
-
-  const go = useCallback(
-    (step: number) => {
-      if (items.length === 0) return;
-      setCurrentId(items[(index + step + items.length) % items.length].id);
-    },
-    [index, items],
-  );
 
   // An approved write runs after the decision is recorded, so whether it
   // went through is learned when the decisions are read again: a failure is
@@ -206,18 +206,16 @@ export function DecisionFlow() {
   const finish = useCallback(
     (ids: readonly string[], ok: boolean) => {
       if (ok) ids.forEach((id) => approved.current.add(id));
-      setLeaving(ok ? "ok" : "no");
-      window.setTimeout(() => {
-        const rest = items.filter((item) => !ids.includes(item.id));
+      const next = cursor.after(ids);
+      leave(ok ? "ok" : "no", () => {
         setGone((previous) => new Set([...previous, ...ids]));
-        setLeaving(null);
         setBatch(null);
         setGate(null);
-        setCurrentId(rest[Math.min(index, rest.length - 1)]?.id ?? null);
+        setCurrentId(next);
         void invalidateProposalViews(queryClient);
-      }, LEAVE_MS);
+      });
     },
-    [index, items, queryClient],
+    [cursor, leave, queryClient, setCurrentId],
   );
 
   const approve = useCallback(async () => {
@@ -383,119 +381,102 @@ export function DecisionFlow() {
       ? t("Approve {0}, skip {1}", gate.count - gate.refused, gate.refused)
       : t("Approve");
 
-  return (
-    <div className="dk-dc2">
-      <aside className="dk-dc2-q" aria-label={t("Queue")}>
-        <div className="dk-dc2-qh">
-          <b>{t("Queue")}</b>
-          <span>{t("{0} of {1} decided", decided.length, total)}</span>
-        </div>
-        <div className="dk-dc2-prog">
-          <i style={{ width: `${total ? (decided.length / total) * 100 : 0}%` }} />
-        </div>
-        <div className="dk-dc2-ql">
-          {groups.map((group) => (
-            <div key={group.tool} className="dk-dc2-g">
-              <div className="dk-dc2-gh">
-                <code>{group.tool}</code>
-                <i>{group.items.length}</i>
-              </div>
-              {group.items.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="bare"
-                  size="bare"
-                  className={cn(
-                    "dk-dc2-qi relative flex w-full gap-2.25 rounded-lg px-2 py-1.75 text-left transition-colors duration-100",
-                    current?.id === item.id
-                      ? "dk-on bg-dsk-card ring-1 ring-dsk-b"
-                      : "hover:bg-dsk-hover",
-                    batch?.includes(item.id) && "dk-in",
-                  )}
-                  aria-current={current?.id === item.id ? "true" : undefined}
-                  onClick={() => setCurrentId(item.id)}
-                >
-                  <DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <b className="truncate text-sm font-medium">{item.title}</b>
-                    <em className="text-xs text-dsk-subtle not-italic @max-[900px]/mainc:hidden">
-                      {formatTimeAgo(item.node.createdAt * 1000)}
-                      {item.reversible ? "" : ` · ${t("final")}`}
-                    </em>
-                  </span>
-                  {!seen.has(item.id) && (
-                    <span className="dk-dc2-new">
-                      <span className="sr-only">{t("Not opened yet")}</span>
-                    </span>
-                  )}
-                </Button>
-              ))}
-            </div>
-          ))}
-          {queue.hasNextPage && (
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(LINK_CLASS, "mx-2 mt-2.5")}
-              onClick={() => void queue.fetchNextPage()}
-              disabled={queue.isFetchingNextPage}
+  const sections: QueueSection[] = groups.map((group) => ({
+    key: group.tool,
+    header: <QueueGroupHeader label={<code>{group.tool}</code>} count={group.items.length} />,
+    rows: group.items.map((item) => ({
+      key: item.id,
+      render: () => (
+        <QueueRow
+          selected={current?.id === item.id}
+          marked={batch?.includes(item.id) ?? false}
+          onSelect={() => setCurrentId(item.id)}
+          leading={<DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />}
+          title={item.title}
+          subtitle={
+            <>
+              {formatTimeAgo(item.node.createdAt * 1000)}
+              {item.reversible ? "" : ` · ${t("final")}`}
+            </>
+          }
+          trailing={!seen.has(item.id) && <QueueUnseenDot label={t("Not opened yet")} />}
+        />
+      ),
+    })),
+  }));
+  if (decided.length > 0) {
+    sections.push({
+      key: "decided",
+      className: "dk-done",
+      header: <QueueGroupHeader label={t("Decided today")} count={decided.length} />,
+      rows: decided.map((row) => {
+        const ok = row.decision !== "Rejected";
+        const failed = ok && row.proposal.status === "ExecutionFailed";
+        const who = row.decidedByName || t("someone");
+        const Mark = failed ? AlertCircleIcon : ok ? CheckIcon : XCloseIcon;
+        return {
+          key: `decided:${row.id}`,
+          render: () => (
+            <div
+              className="dk-dc2-qd"
+              title={
+                failed
+                  ? `${t("Approved by {0}, but it didn't go through", who)}${row.proposal.executionError ? `: ${row.proposal.executionError}` : ""}`
+                  : ok
+                    ? t("Approved by {0}", who)
+                    : t("Declined by {0}", who)
+              }
             >
-              {t("Load more")}
-            </Button>
-          )}
-          {!queue.isLoading && items.length === 0 && (
-            <div className="dk-dc2-qe">{t("Queue clear")}</div>
-          )}
-          {decided.length > 0 && (
-            <div className="dk-dc2-g dk-done">
-              <div className="dk-dc2-gh">
-                {t("Decided today")}
-                <i>{decided.length}</i>
-              </div>
-              {decided.map((row) => {
-                const ok = row.decision !== "Rejected";
-                const failed = ok && row.proposal.status === "ExecutionFailed";
-                const who = row.decidedByName || t("someone");
-                return (
-                  <div
-                    key={row.id}
-                    className="dk-dc2-qd"
-                    title={
-                      failed
-                        ? `${t("Approved by {0}, but it didn't go through", who)}${row.proposal.executionError ? `: ${row.proposal.executionError}` : ""}`
-                        : ok
-                          ? t("Approved by {0}", who)
-                          : t("Declined by {0}", who)
-                    }
-                  >
-                    <span className={failed ? "dk-fail" : ok ? "dk-ok" : "dk-no"}>
-                      <DeskIcon
-                        name={failed ? "alert" : ok ? "check" : "x"}
-                        size={10}
-                        stroke={2.6}
-                      />
-                    </span>
-                    <em className="sr-only">
-                      {failed
-                        ? t("Approved, didn't go through")
-                        : ok
-                          ? t("Approved")
-                          : t("Declined")}
-                    </em>
-                    {presentProposal(asAssistantProposal(row.proposal)).title}
-                  </div>
-                );
-              })}
+              <span className={failed ? "dk-fail" : ok ? "dk-ok" : "dk-no"}>
+                <Mark className="size-2.5" strokeWidth={2.6} />
+              </span>
+              <em className="sr-only">
+                {failed ? t("Approved, didn't go through") : ok ? t("Approved") : t("Declined")}
+              </em>
+              {presentProposal(asAssistantProposal(row.proposal)).title}
             </div>
-          )}
-        </div>
-      </aside>
+          ),
+        };
+      }),
+    });
+  }
 
-      <main className="dk-dc2-main">
+  return (
+    <>
+      <QueueLayout
+        label={t("Queue")}
+        aside={
+          <>
+            <QueueHeader
+              title={t("Queue")}
+              progressLabel={t("{0} of {1} decided", decided.length, total)}
+              done={decided.length}
+              total={total}
+            />
+            <QueueList
+              label={t("Waiting decisions")}
+              sections={sections}
+              selectedKey={current?.id ?? null}
+              empty={!queue.isLoading && <div className="dk-dc2-qe">{t("Queue clear")}</div>}
+              footer={
+                queue.hasNextPage && (
+                  <Button
+                    variant="bare"
+                    size="bare"
+                    className={cn(LINK_CLASS, "mx-2 mt-2.5")}
+                    onClick={() => void queue.fetchNextPage()}
+                    disabled={queue.isFetchingNextPage}
+                  >
+                    {t("Load more")}
+                  </Button>
+                )
+              }
+            />
+          </>
+        }
+      >
         {queue.isLoading ? (
-          <div className="dk-dc2-clear">
-            <span className="dk-dc2-qe">{t("Reading the queue…")}</span>
-          </div>
+          <QueueReading label={t("Reading the queue…")} />
         ) : current ? (
           <DecisionCard
             key={current.id}
@@ -535,9 +516,7 @@ export function DecisionFlow() {
                       >
                         {t("Decide all {0} together", like.length)}
                       </Button>
-                      <span className="dk-kbd" aria-hidden>
-                        X
-                      </span>
+                      <QueueKey>X</QueueKey>
                     </>
                   )}
                 </div>
@@ -545,50 +524,26 @@ export function DecisionFlow() {
             }
           />
         ) : (
-          <div className="dk-dc2-clear">
-            <span className="dk-dc2-cic">
-              <DeskIcon name="check" size={22} stroke={2.2} />
-            </span>
-            <b>{t("Queue clear")}</b>
-            <span>
-              {decided.length > 0
+          <QueueClear
+            title={t("Queue clear")}
+            body={
+              decided.length > 0
                 ? t(
                     "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.",
                     decided.length,
                   )
-                : t("Agents will ask here before they change anything.")}
-            </span>
-          </div>
+                : t("Agents will ask here before they change anything.")
+            }
+          />
         )}
         {current && (
-          <div className="dk-dc2-bar">
-            <Button
-              variant="quiet"
-              size="icon-sm"
-              className={cn(NAV_CLASS, "[&_svg]:-rotate-90")}
-              onClick={() => go(-1)}
-              title={t("Previous (K)")}
-              aria-label={t("Previous")}
-              aria-keyshortcuts="K"
-            >
-              <DeskIcon name="chevR" size={12} stroke={2.4} />
-            </Button>
-            <Button
-              variant="quiet"
-              size="icon-sm"
-              className={cn(NAV_CLASS, "[&_svg]:rotate-90")}
-              onClick={() => go(1)}
-              title={t("Next (J)")}
-              aria-label={t("Next")}
-              aria-keyshortcuts="J"
-            >
-              <DeskIcon name="chevR" size={12} stroke={2.4} />
-            </Button>
+          <QueueBar>
+            <QueueNav onPrevious={() => go(-1)} onNext={() => go(1)} />
             <span className="dk-dc2-pos">
               {index + 1} / {items.length}
               {queue.hasNextPage ? "+" : ""}
             </span>
-            <span style={{ flex: 1 }} />
+            <QueueBarSpacer />
             {canDecide ? (
               <>
                 {editable && (
@@ -601,44 +556,27 @@ export function DecisionFlow() {
                     {t("Change values")}
                   </Button>
                 )}
-                <Button
-                  variant="quiet"
-                  size="lg"
-                  className={cn(
-                    DECIDE_CLASS,
-                    "text-dsk-fg inset-ring inset-ring-dsk-b hover:bg-dsk-hover hover:text-dsk-fg",
-                  )}
-                  disabled={busy}
-                  onClick={() => decline()}
-                  aria-keyshortcuts="D"
-                >
+                <QueueButton shortcut="D" disabled={busy} onClick={() => decline()}>
                   {batch ? t("Decline {0}", batch.length) : t("Decline")}
-                  <span className="dk-kbd" aria-hidden>
-                    D
-                  </span>
-                </Button>
-                <Button
-                  size="lg"
-                  className={cn(DECIDE_CLASS, "dk-dc2-ok")}
+                </QueueButton>
+                <QueueButton
+                  ink
+                  shortcut="A"
                   disabled={busy || (batch === null && !gate?.approvable)}
                   onClick={() => void approve()}
-                  aria-keyshortcuts="A"
                 >
                   {approveLabel}
-                  <span className="dk-kbd" aria-hidden>
-                    A
-                  </span>
-                </Button>
+                </QueueButton>
               </>
             ) : (
               <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>
             )}
-          </div>
+          </QueueBar>
         )}
-      </main>
+      </QueueLayout>
 
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />
-    </div>
+    </>
   );
 }

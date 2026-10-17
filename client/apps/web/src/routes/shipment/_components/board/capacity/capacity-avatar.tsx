@@ -72,8 +72,8 @@ export const CapacityAvatar = forwardRef<HTMLButtonElement, CapacityAvatarProps>
         {badge.show ? (
           <span
             className={cn(
-              "bg-success ring-canvas text-foreground-on-solid absolute right-0.5 bottom-0.5 grid place-items-center rounded-full font-mono text-3xs leading-none ring-2",
-              badge.count ? "h-3.5 min-w-3.5 px-0.5" : "size-2.5",
+              "bg-success ring-canvas text-foreground-on-solid absolute right-0.5 bottom-0.5 grid place-items-center font-mono text-3xs leading-none ring-2",
+              badge.count ? "h-3.5 min-w-3.5 rounded-badge px-0.5" : "size-2.5 rounded-full",
             )}
           >
             {badge.count ?? ""}

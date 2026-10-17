@@ -195,6 +195,8 @@ var ApprovalDelegationSpec TypeSpec
 
 var AuditEntrySpec TypeSpec
 
+var AuthEventSpec TypeSpec
+
 var BenefitPlanSpec TypeSpec
 
 var BillingQueueItemSpec TypeSpec
@@ -387,6 +389,8 @@ var EscrowAccountSpec TypeSpec
 
 var EscrowTransactionSpec TypeSpec
 
+var ExternalIdentitySpec TypeSpec
+
 var ExtractionEvalCaseSpec TypeSpec
 
 var ExtractionEvalResultSpec TypeSpec
@@ -505,6 +509,8 @@ var LocationCategorySpec TypeSpec
 
 var LogCheckCallPayloadSpec TypeSpec
 
+var MFAAuthenticatorSpec TypeSpec
+
 var ManualJournalSpec TypeSpec
 
 var MyAgentSpec TypeSpec
@@ -574,6 +580,8 @@ var ReportRunSpec TypeSpec
 var ReportScheduleSpec TypeSpec
 
 var ReportViewSpec TypeSpec
+
+var RiskDecisionSpec TypeSpec
 
 var RoleSpec TypeSpec
 
@@ -698,6 +706,8 @@ var VehiclePositionSpec TypeSpec
 var WatchtowerItemSpec TypeSpec
 
 var WatchtowerItemEventSpec TypeSpec
+
+var WatchtowerTrailEventSpec TypeSpec
 
 var WorkerSpec TypeSpec
 
@@ -5004,6 +5014,81 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	AuthEventSpec = TypeSpec{
+		TypeName: "AuthEvent",
+		FieldMap: iamcol.AuthEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "identityProviderId",
+				FieldMapKey: "identityProviderId",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "ipAddress",
+				FieldMapKey: "ipAddress",
+			},
+			{
+				Name:        "userAgent",
+				FieldMapKey: "userAgent",
+			},
+			{
+				Name:        "authenticatorAal",
+				FieldMapKey: "authenticatorAal",
+			},
+			{
+				Name:        "federationFal",
+				FieldMapKey: "federationFal",
+			},
+			{
+				Name:        "mfaState",
+				FieldMapKey: "mfaState",
+			},
+			{
+				Name:        "riskOutcome",
+				FieldMapKey: "riskOutcome",
+			},
+			{
+				Name:        "riskSignals",
+				FieldMapKey: "riskSignals",
+			},
+			{
+				Name:        "errorCode",
+				FieldMapKey: "errorCode",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
 			},
 		},
 	}
@@ -13635,6 +13720,57 @@ func init() {
 		},
 	}
 
+	ExternalIdentitySpec = TypeSpec{
+		TypeName: "ExternalIdentity",
+		FieldMap: iamcol.ExternalIdentityFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "identityProviderId",
+				FieldMapKey: "identityProviderId",
+			},
+			{
+				Name:        "externalSubject",
+				FieldMapKey: "externalSubject",
+			},
+			{
+				Name:        "externalUsername",
+				FieldMapKey: "externalUsername",
+			},
+			{
+				Name:        "externalEmail",
+				FieldMapKey: "externalEmail",
+			},
+			{
+				Name:        "lastLoginAt",
+				FieldMapKey: "lastLoginAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+			},
+		},
+	}
+
 	ExtractionEvalCaseSpec = TypeSpec{
 		TypeName: "ExtractionEvalCase",
 		FieldMap: extractionevalcol.ExtractionCaseFieldMap,
@@ -19755,6 +19891,57 @@ func init() {
 		},
 	}
 
+	MFAAuthenticatorSpec = TypeSpec{
+		TypeName: "MFAAuthenticator",
+		FieldMap: iamcol.MFAAuthenticatorFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "verifiedAt",
+				FieldMapKey: "verifiedAt",
+			},
+			{
+				Name:        "lastUsedAt",
+				FieldMapKey: "lastUsedAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+			},
+		},
+	}
+
 	ManualJournalSpec = TypeSpec{
 		TypeName: "ManualJournal",
 		FieldMap: manualjournalcol.RequestFieldMap,
@@ -22507,6 +22694,45 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RiskDecisionSpec = TypeSpec{
+		TypeName: "RiskDecision",
+		FieldMap: iamcol.RiskDecisionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "signals",
+				FieldMapKey: "signals",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
 			},
 		},
 	}
@@ -28027,6 +28253,42 @@ func init() {
 				Name:        "lastEscalatedAt",
 				FieldMapKey: "lastEscalatedAt",
 			},
+			{
+				Name:        "dueLabel",
+				FieldMapKey: "dueLabel",
+			},
+			{
+				Name:        "dueSource",
+				FieldMapKey: "dueSource",
+			},
+			{
+				Name:    "record",
+				Special: "record",
+			},
+			{
+				Name:        "facts",
+				FieldMapKey: "facts",
+			},
+			{
+				Name:        "impact",
+				FieldMapKey: "impact",
+			},
+			{
+				Name:        "trail",
+				FieldMapKey: "trail",
+			},
+			{
+				Name:        "suggestedAgentId",
+				FieldMapKey: "eventKind",
+			},
+			{
+				Name:        "suggestedAgent",
+				FieldMapKey: "eventKind",
+			},
+			{
+				Name:    "agentWork",
+				Special: "agentWork",
+			},
 		},
 	}
 
@@ -28073,6 +28335,25 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	WatchtowerTrailEventSpec = TypeSpec{
+		TypeName: "WatchtowerTrailEvent",
+		FieldMap: billingqueuecol.ItemEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "at",
+				FieldMapKey: "at",
+			},
+			{
+				Name:        "text",
+				FieldMapKey: "text",
 			},
 		},
 	}

@@ -91,10 +91,6 @@ export const scimDirectorySchema = z.object({
 
 export type SCIMDirectory = z.infer<typeof scimDirectorySchema>;
 
-export const scimDirectoryListSchema = createLimitOffsetResponse(scimDirectorySchema);
-
-export type SCIMDirectoryListResponse = z.infer<typeof scimDirectoryListSchema>;
-
 export const scimDirectoriesSchema = z.array(scimDirectorySchema);
 
 export const scimDirectoryFormSchema = scimDirectorySchema.extend({
@@ -353,3 +349,135 @@ export const authProviderSummarySchema = z.object({
 export type AuthProviderSummary = z.infer<typeof authProviderSummarySchema>;
 
 export const authProviderSummariesSchema = z.array(authProviderSummarySchema);
+
+export const SECURITY_FINDING_CODES = [
+  "mfa_coverage",
+  "mfa_policy",
+  "sso",
+  "scim",
+  "dormant_accounts",
+  "locked_accounts",
+  "failed_sign_ins",
+  "risk_denials",
+  "api_key_expiry",
+  "api_key_unused",
+  "api_key_expiring",
+  "role_activation",
+  "idle_timeout",
+] as const;
+
+export type SecurityFindingCode = (typeof SECURITY_FINDING_CODES)[number];
+
+export const SECURITY_FINDING_SEVERITIES = ["critical", "warning", "notice", "pass"] as const;
+
+export type SecurityFindingSeverity = (typeof SECURITY_FINDING_SEVERITIES)[number];
+
+const securityFindingCodeSet: ReadonlySet<string> = new Set(SECURITY_FINDING_CODES);
+
+function isSecurityFindingCode(code: string): code is SecurityFindingCode {
+  return securityFindingCodeSet.has(code);
+}
+
+const securityFindingSchema = z.object({
+  code: z.string(),
+  severity: z.enum(SECURITY_FINDING_SEVERITIES),
+  count: z.number().int().nonnegative().catch(0),
+  total: z.number().int().nonnegative().catch(0),
+});
+
+export type SecurityFinding = Omit<z.infer<typeof securityFindingSchema>, "code"> & {
+  code: SecurityFindingCode;
+};
+
+const countSchema = z.number().int().nonnegative().catch(0);
+
+export const securityUnenrolledMemberSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  emailAddress: z.string(),
+  lastLoginAt: z.number().nullish().transform((value) => value ?? null),
+});
+
+export type SecurityUnenrolledMember = z.infer<typeof securityUnenrolledMemberSchema>;
+
+/**
+ * The security briefing the server works out for an organization. Each section is null when the
+ * person reading it may not read what it is drawn from, and a finding whose code this client does
+ * not know (a newer server) is left out rather than failing the whole briefing.
+ */
+export const securityBriefingSchema = z.object({
+  generatedAt: z.number(),
+  signInWindowDays: countSchema,
+  dormantAfterDays: countSchema,
+  apiKeyUnusedAfterDays: countSchema,
+  apiKeyExpiringWithinDays: countSchema,
+  findings: z
+    .array(securityFindingSchema)
+    .nullish()
+    .transform((findings) =>
+      (findings ?? []).filter((finding): finding is SecurityFinding =>
+        isSecurityFindingCode(finding.code),
+      ),
+    ),
+  session: z.object({
+    maxAgeSeconds: countSchema,
+    idleTimeoutSeconds: countSchema,
+    idleWarningSeconds: countSchema,
+  }),
+  members: z
+    .object({
+      active: countSchema,
+      locked: countSchema,
+      neverSignedIn: countSchema,
+      dormant: countSchema,
+      mustChangePassword: countSchema,
+    })
+    .nullable(),
+  mfa: z
+    .object({
+      enrolled: countSchema,
+      total: countSchema,
+      unenrolled: z.array(securityUnenrolledMemberSchema).nullable(),
+    })
+    .nullable(),
+  signIns: z
+    .object({
+      succeeded: countSchema,
+      failed: countSchema,
+      denied: countSchema,
+      throttled: countSchema,
+      riskDenied: z
+        .number()
+        .int()
+        .nonnegative()
+        .nullish()
+        .transform((value) => value ?? null),
+    })
+    .nullable(),
+  apiKeys: z
+    .object({
+      active: countSchema,
+      withoutExpiry: countSchema,
+      unused: countSchema,
+      expiringSoon: countSchema,
+    })
+    .nullable(),
+  sso: z
+    .object({
+      enabledProviders: countSchema,
+      enforced: z.boolean(),
+      enforcedProviderName: z.string(),
+      trustsFederatedMfa: z.boolean(),
+    })
+    .nullable(),
+  provisioning: z.object({ activeDirectories: countSchema }).nullable(),
+  policies: z
+    .object({
+      enabled: countSchema,
+      requiringMfa: countSchema,
+      roleActivationRequired: z.boolean(),
+    })
+    .nullable(),
+});
+
+export type SecurityBriefing = z.infer<typeof securityBriefingSchema>;

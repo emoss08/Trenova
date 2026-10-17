@@ -967,19 +967,22 @@ export const shipmentTotalsResponseSchema = z.object({
 export type ShipmentTotalsResponse = z.infer<typeof shipmentTotalsResponseSchema>;
 
 export const shipmentDistanceMoveResultSchema = z.object({
-  moveId: optionalStringSchema,
+  moveId: z.string().nullish(),
   moveIndex: z.number(),
   distance: z.number(),
   source: z.string(),
-  provider: z.string().optional(),
-  routingType: z.string().optional(),
-  dataVersion: z.string().optional(),
-  warnings: z.array(z.string()).optional(),
+  provider: z.string().nullish(),
+  routingType: z.string().nullish(),
+  dataVersion: z.string().nullish(),
+  warnings: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
   calculatedAt: z.number(),
 });
 
 export const shipmentDistanceResponseSchema = z.object({
-  shipmentId: optionalStringSchema,
+  shipmentId: z.string().nullish(),
   totalDistance: z.number(),
   moves: z.array(shipmentDistanceMoveResultSchema),
 });

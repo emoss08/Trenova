@@ -1,3 +1,4 @@
+import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { type CSSProperties, type ReactNode } from "react";
 import { Ic, type IcName } from "./ic";
@@ -21,6 +22,34 @@ export function SecH({ t, n, r, ic }: SecHProps) {
       <span className="sp" />
       {r}
     </header>
+  );
+}
+
+type ScrollBoxProps = {
+  /** What the box holds, so a screen reader user can find it. */
+  label: string;
+  /** How tall it may grow before it scrolls: sm for prose, md for rows, lg for cards. */
+  size?: "sm" | "md" | "lg";
+  /** The surface it sits on, so the fade at a clipped edge melts into it. */
+  surface?: ScrollAreaMaskVariant;
+  children: ReactNode;
+};
+
+/**
+ * A list kept to its own height inside a section, so a long one scrolls in place
+ * instead of pushing everything after it down the page. An edge with more beyond it
+ * fades out, and the box takes keyboard focus whenever it has anything to scroll.
+ */
+export function ScrollBox({
+  label,
+  size = "md",
+  surface = "background",
+  children,
+}: ScrollBoxProps) {
+  return (
+    <ScrollArea role="region" aria-label={label} maskVariant={surface} className={cn("scb", size)}>
+      {children}
+    </ScrollArea>
   );
 }
 

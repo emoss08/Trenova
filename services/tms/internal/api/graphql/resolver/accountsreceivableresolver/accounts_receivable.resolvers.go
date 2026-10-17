@@ -9,9 +9,23 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 )
+
+func (r *QueryResolver) AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceAccountsReceivable,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AccountingBriefs.Briefing(ctx, base.TenantInfo(authCtx))
+}
 
 func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error) {
 	authCtx, err := r.RequirePermission(

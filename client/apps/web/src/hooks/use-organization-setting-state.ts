@@ -1,7 +1,13 @@
 import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
 
 export const organizationSettingsTabValues = ["general", "security"] as const;
-export const securityTabValues = ["sign-in", "provisioning", "policies", "activity"] as const;
+export const securityTabValues = [
+  "overview",
+  "sign-in",
+  "provisioning",
+  "policies",
+  "activity",
+] as const;
 export const activityViewValues = ["auth", "risk", "identities", "mfa"] as const;
 export const identityProviderPanelModeValues = ["create", "edit"] as const;
 
@@ -14,7 +20,7 @@ export const organizationSettingsTabParser = parseAsStringLiteral(
   organizationSettingsTabValues,
 ).withDefault("general");
 export const securityTabParser = parseAsStringLiteral(securityTabValues)
-  .withDefault("sign-in")
+  .withDefault("overview")
   .withOptions({ history: "push" });
 export const activityViewParser = parseAsStringLiteral(activityViewValues)
   .withDefault("auth")

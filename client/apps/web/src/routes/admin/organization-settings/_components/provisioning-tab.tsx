@@ -164,11 +164,15 @@ export function ProvisioningTab({
 }
 
 function ContentOuter({ children }: { children: React.ReactNode }) {
-  return <div className="min-w-0 space-y-3">{children}</div>;
+  return <div className="flex min-w-0 flex-col gap-8">{children}</div>;
 }
 
 function TabOuter({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">{children}</div>;
+  return (
+    <div className="grid items-start gap-x-12 gap-y-8 xl:grid-cols-[18rem_minmax(0,1fr)]">
+      {children}
+    </div>
+  );
 }
 
 function RailOuter({ children }: { children: React.ReactNode }) {

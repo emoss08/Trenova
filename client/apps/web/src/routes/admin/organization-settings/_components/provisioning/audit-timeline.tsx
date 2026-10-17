@@ -1,11 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import type { ProvisioningAuditRecord } from "@trenova/shared/types/iam";
 import { ActivityIcon } from "@trenova/shared/components/icons";
 import { memo } from "react";
-import { ActivityItem, EmptyState, PanelHeader } from "../security-access/shared";
+import { ActivityItem, EmptyState, RowSkeleton, SecuritySection } from "../security-access/shared";
+
+const AUDIT_LIMIT = 8;
 
 export const AuditTimeline = memo(function AuditTimeline({
   records,
@@ -17,44 +18,37 @@ export const AuditTimeline = memo(function AuditTimeline({
   const t = useT();
 
   return (
-    <div className="bg-background rounded-lg border">
-      <PanelHeader
-        icon={<ActivityIcon />}
-        title={t("Provisioning audit")}
-        description={t("Recent user and group synchronization events.")}
-      />
-      <div className="divide-y">
-        {isLoading ? (
-          <div className="space-y-2 p-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : records.length > 0 ? (
-          records
-            .slice(0, 8)
-            .map((record) => (
-              <ActivityItem
-                key={record.id}
-                title={`${toTitleCase(record.action)} ${record.resourceType}`}
-                detail={
-                  record.errorMessage ||
-                  record.externalId ||
-                  record.resourceId ||
-                  "Provisioning event"
-                }
-                badge={record.status}
-                when={formatUnixDateTimeOrDash(record.createdAt)}
-              />
-            ))
-        ) : (
-          <EmptyState
-            icon={<ActivityIcon />}
-            label={t("No provisioning events")}
-            description={t("SCIM activity will appear after your directory starts syncing.")}
-            compact
-          />
-        )}
-      </div>
-    </div>
+    <SecuritySection
+      title={t("Provisioning audit")}
+      icon={<ActivityIcon />}
+      hint={t("Latest user and group sync events")}
+    >
+      {isLoading ? (
+        <RowSkeleton rows={2} label={t("Loading provisioning events")} />
+      ) : records.length > 0 ? (
+        <div className="divide-border-subtle divide-y">
+          {records.slice(0, AUDIT_LIMIT).map((record) => (
+            <ActivityItem
+              key={record.id}
+              title={t("{0} {1}", toTitleCase(record.action), record.resourceType)}
+              detail={
+                record.errorMessage ||
+                record.externalId ||
+                record.resourceId ||
+                t("Provisioning event")
+              }
+              badge={record.status}
+              when={formatUnixDateTimeOrDash(record.createdAt)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<ActivityIcon />}
+          label={t("No provisioning events")}
+          description={t("SCIM activity will appear after your directory starts syncing.")}
+        />
+      )}
+    </SecuritySection>
   );
 });

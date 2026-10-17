@@ -3,10 +3,7 @@ import {
   listCustomerTrackingLinks,
 } from "@/lib/graphql/customer-tracking";
 import { getCarrierTrackingLink, listShipmentCheckCalls } from "@/lib/graphql/check-calls";
-import {
-  getShipmentProfitabilityGraphQL,
-  listShipmentTrackingEventsGraphQL,
-} from "@/lib/graphql/shipment";
+import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
 import { ShipmentTrackingService } from "@/services/shipment-tracking";
 import type { PaginationInfo } from "@trenova/shared/types/server";
@@ -62,12 +59,6 @@ export const shipment = createQueryKeys("shipment", {
   events: (shipmentId: NonNullable<Shipment["id"]>, limit: number) => ({
     queryKey: ["events", shipmentId, limit],
     queryFn: async () => apiService.shipmentEventService.list({ shipmentId, limit }),
-  }),
-  // Every reported arrival and departure on the shipment's stops, newest first,
-  // with what became of each when the stop times were settled.
-  trackingEvents: (shipmentId: NonNullable<Shipment["id"]>) => ({
-    queryKey: ["tracking-events", shipmentId],
-    queryFn: async ({ signal }) => listShipmentTrackingEventsGraphQL(shipmentId, { signal }),
   }),
   // Every check call on the shipment's moves, newest first: dispatcher calls,
   // carrier posts through the tracking link, and agent reports.

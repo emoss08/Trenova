@@ -225,6 +225,23 @@ func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	assert.Contains(t, f.perms.asked, "assistant:create", "the person must be allowed to use it")
 }
 
+// A task handed over from a palette question is answered inline too: what the
+// delegate returns reaches a reply with nothing beside it.
+func TestOpenDelegate_KeepsAPaletteQuestionsDelegateInline(t *testing.T) {
+	t.Parallel()
+
+	f := newDelegateFixture()
+	f.request.Inline = true
+
+	opened, err := f.svc.OpenDelegate(t.Context(), f.request)
+	require.NoError(t, err)
+
+	assert.True(t, opened.Request.Inline)
+	assert.False(t, opened.Request.Publishes)
+	assert.False(t, opened.Request.KeepsDocuments())
+	assert.NotContains(t, opened.Turn.Held, "publish_artifact")
+}
+
 // Every check is made again when the task is handed over, against the records
 // as they are now.
 func TestOpenDelegate_DeclinesWhatThePersonOrTheAllowlistNoLongerAllows(t *testing.T) {

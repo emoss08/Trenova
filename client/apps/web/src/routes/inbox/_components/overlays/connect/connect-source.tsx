@@ -364,7 +364,7 @@ function StepBody({
                     <span className="text-foreground-subtle text-sm">{text.detail}</span>
                   </span>
                   {source.soon ? (
-                    <em className="bg-surface-hover text-foreground-subtle rounded-full px-1.75 py-0.5 text-2xs not-italic">
+                    <em className="bg-surface-hover text-foreground-subtle rounded-badge px-1.75 py-0.5 text-2xs not-italic">
                       {t("Soon")}
                     </em>
                   ) : (
@@ -456,7 +456,7 @@ function StepBody({
                 aria-pressed={provider === key}
                 onClick={() => setProvider(provider === key ? null : key)}
                 className={cn(
-                  "ui-focus-ring inline-flex h-5.5 items-center rounded-full px-2 text-xs transition-colors",
+                  "ui-focus-ring inline-flex h-5.5 items-center rounded-badge px-2 text-xs transition-colors",
                   provider === key
                     ? "bg-ink text-ink-foreground"
                     : "bg-surface-hover text-foreground-muted hover:text-foreground",

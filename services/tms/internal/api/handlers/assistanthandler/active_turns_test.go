@@ -109,8 +109,14 @@ func TestActiveTurns_ListsTheCallersRepliesInProgress(t *testing.T) {
 	assert.Equal(t, userID, records.asked.UserID, "only the caller's own replies are listed")
 	assert.Equal(t, orgID, records.asked.TenantInfo.OrgID)
 	assert.Equal(t, buID, records.asked.TenantInfo.BuID)
-	assert.ElementsMatch(t, conversation.PageBoundOrigins(), records.asked.ExcludeOrigins,
-		"a reply on an import or formula page is read on that page, not listed")
+	assert.ElementsMatch(t,
+		[]conversation.ThreadOrigin{
+			conversation.ThreadOriginAsk,
+			conversation.ThreadOriginImport,
+			conversation.ThreadOriginFormula,
+		},
+		records.asked.ExcludeOrigins,
+		"a reply in the palette or on an import or formula page is read there, not listed")
 
 	var body map[string][]map[string]any
 	require.NoError(t, sonic.Unmarshal(recorder.Body.Bytes(), &body))

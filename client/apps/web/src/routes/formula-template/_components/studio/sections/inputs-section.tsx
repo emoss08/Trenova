@@ -34,7 +34,7 @@ function Tag({ tone, children }: { tone: "neutral" | "danger" | "warning"; child
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full px-1.5 text-2xs",
+        "shrink-0 rounded-badge px-1.5 text-2xs",
         tone === "danger" && "bg-danger-subtle text-danger-subtle-foreground",
         tone === "warning" && "bg-warning-subtle text-warning-subtle-foreground",
         tone === "neutral" && "bg-surface-hover text-foreground-muted",

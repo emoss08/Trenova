@@ -34,11 +34,17 @@ type DailyBriefingResult struct {
 
 // BriefingRetentionResult reports what the retention sweep removed.
 type BriefingRetentionResult struct {
-	Deleted            int `json:"deleted"`
-	DeletedBoardBriefs int `json:"deletedBoardBriefs"`
+	Deleted                 int `json:"deleted"`
+	DeletedBoardBriefs      int `json:"deletedBoardBriefs"`
+	DeletedAccountingBriefs int `json:"deletedAccountingBriefs"`
 }
 
 type ShipmentBriefResult struct {
+	Generation int  `json:"generation"`
+	Narrated   bool `json:"narrated"`
+}
+
+type AccountingBriefResult struct {
 	Generation int  `json:"generation"`
 	Narrated   bool `json:"narrated"`
 }

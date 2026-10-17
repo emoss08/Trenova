@@ -43,7 +43,7 @@ export function SettlementQueueRowsSkeleton() {
               </div>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <Skeleton className="h-2 w-16" />
-                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-badge" />
               </div>
             </div>
           </div>
@@ -60,7 +60,7 @@ function QueueSkeleton() {
         <Skeleton className="h-8 w-full" />
         <div className="flex flex-wrap gap-1">
           {CHIP_WIDTHS.map((width, index) => (
-            <Skeleton key={index} className={cn("h-5 rounded-full", width)} />
+            <Skeleton key={index} className={cn("h-5 rounded-badge", width)} />
           ))}
         </div>
       </div>
@@ -80,8 +80,8 @@ function DetailSkeleton() {
     <div className="flex flex-col gap-4 p-3">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-badge" />
+          <Skeleton className="h-5 w-24 rounded-badge" />
           <Skeleton className="ml-auto h-2.5 w-40" />
         </div>
         <KpiStripSkeleton count={4} minItemWidth="8rem" sub={false} />

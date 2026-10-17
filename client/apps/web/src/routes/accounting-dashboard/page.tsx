@@ -9,8 +9,8 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { CoinsHandIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
+import { AccountingBriefing } from "./_components/accounting-briefing";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
-import { AccountingQuickLinks } from "./_components/accounting-quick-links";
 import { AgingCard } from "./_components/aging-card";
 import { ARKpiRow } from "./_components/ar-kpi-row";
 import { CashFlowForecastCard } from "./_components/cash-flow-forecast-card";
@@ -37,12 +37,10 @@ export function AccountingDashboardPage() {
         title: t("Accounting"),
         description: t("Receivables health, collections, and cash-flow at a glance."),
         actions: canRecordPayment ? (
-          <Link to="/accounting/ar/payments?panelType=create">
-            <Button size="sm">
-              <CoinsHandIcon className="size-4" />
-              {t("Record payment")}
-            </Button>
-          </Link>
+          <Button size="sm" render={<Link to="/accounting/ar/payments?panelType=create" />}>
+            <CoinsHandIcon className="size-4" />
+            {t("Record payment")}
+          </Button>
         ) : undefined,
       }}
     >
@@ -56,6 +54,8 @@ export function AccountingDashboardPage() {
         />
       ) : (
         <>
+          <AccountingBriefing />
+
           <ARKpiRow />
 
           <div className="grid gap-4 xl:grid-cols-2">
@@ -68,16 +68,14 @@ export function AccountingDashboardPage() {
             <CollectionsPerformanceCard />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <TopOverdueCustomersCard />
-            <CollectionsWorklistCard />
+          <div className="grid gap-4 xl:grid-cols-5">
+            <CollectionsWorklistCard className="xl:col-span-3" />
+            <TopOverdueCustomersCard className="xl:col-span-2" />
           </div>
 
           {/* Findings about money earned and not collected belong beside the
               worklist that collects it, not on a page of their own. */}
           <PageInsightsCard surface="Accounting" title={t("Cash insights")} />
-
-          <AccountingQuickLinks />
         </>
       )}
     </PageLayout>

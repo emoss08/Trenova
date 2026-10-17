@@ -625,7 +625,7 @@ function ReadableResultBody({ value }: { value: unknown }) {
               {shaped.labels.map((label, index) => (
                 <li
                   key={`${label}-${index}`}
-                  className="bg-sunken text-foreground max-w-full truncate rounded-full px-2 py-px"
+                  className="bg-sunken text-foreground max-w-full truncate rounded-badge px-2 py-px"
                 >
                   {label}
                 </li>

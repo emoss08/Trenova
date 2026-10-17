@@ -98,6 +98,39 @@ func TestThreadOrigin_PageBoundConversationsAreNeitherListedNorKept(t *testing.T
 	}
 }
 
+// Only a palette question, until it is kept, has nothing beside its answer.
+func TestThreadOrigin_AnswersInline(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, ThreadOriginAsk.AnswersInline())
+	for _, origin := range AllThreadOrigins() {
+		if origin != ThreadOriginAsk {
+			assert.False(t, origin.AnswersInline(), string(origin))
+		}
+	}
+}
+
+// A reply in the palette or on a page is read where it was asked; one in a
+// conversation is announced and listed wherever the person is.
+func TestThreadOrigin_AnsweredInPlace(t *testing.T) {
+	t.Parallel()
+
+	for _, origin := range []ThreadOrigin{
+		ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula,
+	} {
+		assert.True(t, origin.AnsweredInPlace(), string(origin))
+	}
+	for _, origin := range []ThreadOrigin{
+		ThreadOriginPanel, ThreadOriginDesk, ThreadOriginWatchtower, ThreadOriginBriefing,
+	} {
+		assert.False(t, origin.AnsweredInPlace(), string(origin))
+	}
+	assert.ElementsMatch(t,
+		[]ThreadOrigin{ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula},
+		AnsweredInPlaceOrigins(),
+	)
+}
+
 // Pinned facts are kept as the person meant them: tidied, without blanks or
 // repeats, in the order they were pinned.
 func TestNormalizePinnedFacts_TidiesWithoutReordering(t *testing.T) {

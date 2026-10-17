@@ -1,15 +1,28 @@
+import { assistant } from "@/lib/queries/assistant";
 import type { ConversationSchedule } from "@/types/assistant";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { DeskScheduleCard } from "../conversation/desk-schedule-card";
+import { cadenceLabel, nextRunLabel, scheduleLine } from "@/lib/schedule-labels";
 import {
-  cadenceLabel,
-  nextRunLabel,
+  mergeSchedule,
+  orderSchedules,
   patchScheduleList,
-  scheduleLine,
+  patchSchedulePages,
+  type SchedulePages,
+  useCreateSchedule,
 } from "../conversation/desk-schedules";
+
+const server = vi.hoisted(() => ({ post: vi.fn() }));
+
+vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
+  return { ...actual, api: { ...actual.api, post: server.post } };
+});
 
 const t: TranslateFn = (message, ...args) =>
   (message ?? "").replace(/\{(\d)\}/g, (_, index: string) => String(args[Number(index)]));
@@ -33,6 +46,7 @@ function schedule(overrides: Partial<ConversationSchedule> = {}): ConversationSc
     nextRunAt: 1791203400,
     lastTurnId: null,
     createdAt: saturdayNoon,
+    threadTitle: "",
     ...overrides,
   };
 }
@@ -81,8 +95,124 @@ describe("patchScheduleList", () => {
   });
 });
 
+/*
+A pause, resume or run is answered with the schedule but not its
+conversation's title, which has not changed. Writing that answer over a row on
+the Scheduled page must not blank where the row says its answers go.
+*/
+describe("mergeSchedule", () => {
+  it("keeps the conversation title an answer leaves out", () => {
+    const shown = schedule({ threadTitle: "AR follow-ups" });
+    const answered = schedule({ enabled: false });
+
+    expect(mergeSchedule(shown, answered)).toEqual({ ...answered, threadTitle: "AR follow-ups" });
+  });
+
+  it("takes a title the answer does carry", () => {
+    const shown = schedule({ threadTitle: "AR follow-ups" });
+    const answered = schedule({ threadTitle: "Receivables" });
+
+    expect(mergeSchedule(shown, answered)).toBe(answered);
+  });
+
+  it("keeps the title through a change written into a conversation's cards", () => {
+    const list = { items: [schedule({ threadTitle: "AR follow-ups" })], total: 1 };
+
+    expect(patchScheduleList(list, "csch_1", schedule({ enabled: false }))?.items).toEqual([
+      schedule({ enabled: false, threadTitle: "AR follow-ups" }),
+    ]);
+  });
+});
+
+describe("patchSchedulePages", () => {
+  const first = schedule({ id: "csch_1", threadTitle: "AR follow-ups" });
+  const second = schedule({ id: "csch_2" });
+  const third = schedule({ id: "csch_3" });
+  const pages: SchedulePages = {
+    pages: [
+      { items: [first, second], total: 3 },
+      { items: [third], total: 3 },
+    ],
+    pageParams: [0, 2],
+  };
+
+  it("replaces a schedule on whichever page holds it, keeping its title", () => {
+    const paused = schedule({ id: "csch_1", enabled: false });
+
+    expect(patchSchedulePages(pages, "csch_1", paused)).toEqual({
+      pages: [
+        { items: [{ ...paused, threadTitle: "AR follow-ups" }, second], total: 3 },
+        { items: [third], total: 3 },
+      ],
+      pageParams: [0, 2],
+    });
+  });
+
+  it("removes a schedule and lowers every page's total", () => {
+    expect(patchSchedulePages(pages, "csch_3", null)).toEqual({
+      pages: [
+        { items: [first, second], total: 2 },
+        { items: [], total: 2 },
+      ],
+      pageParams: [0, 2],
+    });
+  });
+
+  it("leaves pages alone for a schedule they do not hold, and nothing read as nothing", () => {
+    expect(patchSchedulePages(pages, "csch_9", null)).toBe(pages);
+    expect(patchSchedulePages(pages, "csch_9", schedule({ id: "csch_9" }))).toBe(pages);
+    expect(patchSchedulePages(undefined, "csch_1", null)).toBeUndefined();
+  });
+});
+
+/*
+The Scheduled page lists what will fire soonest first and the paused ones
+after, the order the server reads them in, so one paused or resumed on the
+page moves to its group at once.
+*/
+describe("orderSchedules", () => {
+  it("puts the ones that fire first, soonest first, then the paused ones", () => {
+    const later = schedule({ id: "csch_later", nextRunAt: 2_000 });
+    const soonest = schedule({ id: "csch_soon", nextRunAt: 1_000 });
+    const unslotted = schedule({ id: "csch_none", nextRunAt: null });
+    const pausedSoon = schedule({ id: "csch_ps", enabled: false, nextRunAt: 500 });
+    const pausedLater = schedule({ id: "csch_pl", enabled: false, nextRunAt: 3_000 });
+
+    expect(
+      orderSchedules([pausedLater, unslotted, later, pausedSoon, soonest]).map((item) => item.id),
+    ).toEqual(["csch_soon", "csch_later", "csch_none", "csch_ps", "csch_pl"]);
+  });
+
+  it("breaks a tie on the next run by the newest made, then the id", () => {
+    const older = schedule({ id: "csch_a", nextRunAt: 1_000, createdAt: 10 });
+    const newer = schedule({ id: "csch_b", nextRunAt: 1_000, createdAt: 20 });
+    const sameTimeLowId = schedule({ id: "csch_c", nextRunAt: 1_000, createdAt: 20 });
+    const sameTimeHighId = schedule({ id: "csch_d", nextRunAt: 1_000, createdAt: 20 });
+
+    expect(
+      orderSchedules([older, sameTimeLowId, newer, sameTimeHighId]).map((item) => item.id),
+    ).toEqual(["csch_d", "csch_c", "csch_b", "csch_a"]);
+  });
+
+  it("leaves the list it was given as it was", () => {
+    const given = [
+      schedule({ id: "csch_2", nextRunAt: 2 }),
+      schedule({ id: "csch_1", nextRunAt: 1 }),
+    ];
+
+    orderSchedules(given);
+    expect(given.map((item) => item.id)).toEqual(["csch_2", "csch_1"]);
+  });
+});
+
+/** Opens a schedule's menu and chooses one of its actions. */
+async function chooseFromMenu(action: string, scope: HTMLElement = document.body) {
+  fireEvent.click(within(scope).getByRole("button", { name: "Schedule actions" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: action }));
+}
+
 describe("DeskScheduleCard", () => {
-  it("shows the schedule under its heading, with pause and delete", () => {
+  it("shows the schedule under its heading, with pause and delete in its menu", async () => {
     const onToggle = vi.fn();
     const onDelete = vi.fn();
     render(
@@ -100,13 +230,37 @@ describe("DeskScheduleCard", () => {
     expect(screen.getByText("What's blocking the billing queue?")).toBeTruthy();
     expect(screen.getByText("Every weekday · 7:30 AM · next Mon, Oct 5 · 7:30 AM")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(screen.queryByRole("button", { name: "Pause" })).toBeNull();
+    await chooseFromMenu("Pause");
     expect(onToggle).toHaveBeenCalledWith(expect.objectContaining({ id: "csch_1" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await chooseFromMenu("Delete");
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "csch_1" }));
   });
 
-  it("offers to resume a paused schedule and dims it", () => {
+  it("opens the editor on the schedule from its card", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <DeskScheduleCard
+          schedule={schedule()}
+          now={saturdayNoon}
+          timezone={chicago}
+          onToggle={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    await chooseFromMenu("Edit");
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Edit schedule")).toBeInTheDocument();
+    expect(screen.getByLabelText("What to ask")).toHaveValue("What's blocking the billing queue?");
+    expect(screen.getByLabelText("Frequency")).toHaveTextContent("every weekday");
+    expect(screen.getByLabelText("Time of day")).toHaveTextContent("7:30 AM");
+    expect(screen.queryByRole("group", { name: "Day of the week" })).toBeNull();
+  });
+
+  it("offers to resume a paused schedule and dims it", async () => {
     const { container } = render(
       <DeskScheduleCard
         schedule={schedule({ enabled: false })}
@@ -117,8 +271,10 @@ describe("DeskScheduleCard", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
     expect(container.querySelector(".dk-sch-r.dk-off")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Schedule actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Resume" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Pause" })).toBeNull();
   });
 
   it("says the schedule was deleted once it is gone, and nothing while loading", () => {
@@ -208,5 +364,46 @@ describe("a schedule read in another language", () => {
     await setLocale("zh-CN");
     expect(cadenceLabel(schedule(), translate)).toBe("每个工作日 · 上午7:30");
     await setLocale("es");
+  });
+});
+
+/*
+A conversation opened with "/schedule every Friday at 10:15, …" is named for
+its request when the schedule is saved. The name the Desk shows for the open
+conversation, in its top bar and its rail, is read again once it is.
+*/
+describe("useCreateSchedule", () => {
+  it("reads the conversation again so the name it was given shows", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const threadKey = assistant.thread("athr_1").queryKey;
+    client.setQueryData(threadKey, { id: "athr_1", title: "" });
+    server.post.mockResolvedValue({
+      schedule: {
+        ...schedule(),
+        prompt: "Send me a list of delivered shipments",
+        cronExpression: "15 10 * * 5",
+      },
+      message: {
+        id: "amsg_1",
+        threadId: "athr_1",
+        sequence: 0,
+        role: "User",
+        kind: "Schedule",
+        scheduleId: "csch_1",
+        content: "/schedule every Friday at 10:15, send me a list of delivered shipments",
+        createdAt: saturdayNoon,
+      },
+    });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useCreateSchedule("athr_1"), { wrapper });
+
+    result.current.create("/schedule every Friday at 10:15, send me a list of delivered shipments");
+
+    await waitFor(() => expect(client.getQueryState(threadKey)?.isInvalidated).toBe(true));
+    expect(server.post).toHaveBeenCalledWith("/assistant/threads/athr_1/schedules/", {
+      content: "/schedule every Friday at 10:15, send me a list of delivered shipments",
+    });
   });
 });

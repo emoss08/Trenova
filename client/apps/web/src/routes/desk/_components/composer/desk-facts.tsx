@@ -124,7 +124,7 @@ export function DeskFactsBar({ thread }: { thread: AssistantThread }) {
           <Button
             variant="bare"
             size="bare"
-            className="h-5.5 gap-1 rounded-full border border-dashed border-dsk-b-strong px-1.75 text-dsk-subtle transition-colors duration-150 hover:border-dsk-fg hover:text-dsk-fg"
+            className="h-5.5 gap-1 rounded-badge border border-dashed border-dsk-b-strong px-1.75 text-dsk-subtle transition-colors duration-150 hover:border-dsk-fg hover:text-dsk-fg"
             aria-label={t("Pin a fact")}
             onClick={() => setAdding(true)}
           >

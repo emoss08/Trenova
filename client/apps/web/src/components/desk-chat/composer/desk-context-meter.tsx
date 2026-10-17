@@ -175,7 +175,7 @@ export function DeskContextMeter({
         variant="bare"
         size="bare"
         className={cn(
-          "h-7 min-w-7 justify-center gap-1.25 rounded-full px-1.5 text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          "h-7 min-w-7 justify-center gap-1.25 rounded-badge px-1.5 text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
           open && "bg-dsk-hover text-dsk-fg",
           compacting && "[&_.dk-cx-ring]:animate-[dk-spin_1.1s_linear_infinite]",
         )}

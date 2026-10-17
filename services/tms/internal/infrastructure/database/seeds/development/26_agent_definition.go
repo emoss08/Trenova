@@ -381,12 +381,12 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Enabled:           false,
 		},
 		{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			Name:              "Help",
-			Icon:              agentdefinition.IconSparkle,
-			Accent:            agentdefinition.AccentSlate,
-			Description:       "Explains how to do things in Trenova and answers quick questions from " +
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Name:           "Help",
+			Icon:           agentdefinition.IconSparkle,
+			Accent:         agentdefinition.AccentSlate,
+			Description: "Explains how to do things in Trenova and answers quick questions from " +
 				"the command palette. Reads what the person may read; changes nothing.",
 			Template:          agentdefinition.TemplateGeneralAssistant,
 			Instructions:      agentdefinition.TemplateGeneralAssistant.StarterInstructions(),
@@ -449,6 +449,52 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			},
 			Enabled: true,
 		},
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateLoadMonitor,
+			agentdefinition.IconRadar, agentdefinition.AccentSky),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateDetentionDesk,
+			agentdefinition.IconGauge, agentdefinition.AccentAmber),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateCredentialDesk,
+			agentdefinition.IconClipboard, agentdefinition.AccentTeal),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateCarrierRiskDesk,
+			agentdefinition.IconShield, agentdefinition.AccentRose),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateEDIDesk,
+			agentdefinition.IconFile, agentdefinition.AccentIndigo),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateServiceFailureDesk,
+			agentdefinition.IconHeadset, agentdefinition.AccentViolet),
+		watchtowerDesk(orgID, buID, agentdefinition.TemplateCashApplication,
+			agentdefinition.IconBanknote, agentdefinition.AccentEmeral),
+	}
+}
+
+func watchtowerDesk(
+	orgID, buID pulid.ID,
+	template agentdefinition.Template,
+	icon, accent string,
+) *agentdefinition.Definition {
+	return &agentdefinition.Definition{
+		OrganizationID:  orgID,
+		BusinessUnitID:  buID,
+		Name:            template.Label(),
+		Icon:            icon,
+		Accent:          accent,
+		Description:     template.Description(),
+		Template:        template,
+		Instructions:    template.StarterInstructions(),
+		ToolNames:       template.StarterTools(),
+		AutonomyCeiling: template.StarterCeiling(),
+		TriggerMode:     template.StarterTrigger(),
+		EventKinds:      template.StarterEvents(),
+		CronExpression:  template.StarterCron(),
+		CronTimezone:    "America/Los_Angeles",
+		OutputMode:      agentdefinition.OutputReport,
+		ShadowMode:      true,
+		ContextProviders: []agentdefinition.ContextProvider{
+			agentdefinition.ContextOrganization,
+			agentdefinition.ContextClock,
+			agentdefinition.ContextTools,
+			agentdefinition.ContextMemory,
+		},
+		Enabled: true,
 	}
 }
 

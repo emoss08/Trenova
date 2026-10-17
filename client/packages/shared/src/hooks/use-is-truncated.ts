@@ -1,28 +1,43 @@
 import { useCallback, useState } from "react";
 
-function overflows(node: HTMLElement) {
-  return node.scrollWidth > node.clientWidth;
+/**
+ * Which way the text is cut off: `inline` for one line clipped by its width,
+ * `block` for text clamped to a number of lines and clipped by its height.
+ */
+export type TruncationAxis = "inline" | "block";
+
+function overflows(node: HTMLElement, axis: TruncationAxis) {
+  return axis === "inline"
+    ? node.scrollWidth > node.clientWidth
+    : node.scrollHeight > node.clientHeight;
 }
 
 /**
- * Whether a single-line element's text is cut off by its own width, kept current by a
- * ResizeObserver so a tooltip that repeats the text appears only while the text is clipped.
+ * Whether an element's text is cut off by its own box, kept current by a
+ * ResizeObserver: a single line clipped by its width, or (`block`) clamped
+ * lines clipped by their height. A tooltip that repeats the text, or a "Show
+ * more" that releases it, appears only while the text is clipped.
  */
-export function useIsTruncated<T extends HTMLElement>(): [(node: T | null) => void, boolean] {
+export function useIsTruncated<T extends HTMLElement>(
+  axis: TruncationAxis = "inline",
+): [(node: T | null) => void, boolean] {
   const [truncated, setTruncated] = useState(false);
-  const ref = useCallback((node: T | null) => {
-    if (!node) {
-      return;
-    }
-    setTruncated(overflows(node));
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-    const observer = new ResizeObserver(() => setTruncated(overflows(node)));
-    observer.observe(node);
+  const ref = useCallback(
+    (node: T | null) => {
+      if (!node) {
+        return;
+      }
+      setTruncated(overflows(node, axis));
+      if (typeof ResizeObserver === "undefined") {
+        return;
+      }
+      const observer = new ResizeObserver(() => setTruncated(overflows(node, axis)));
+      observer.observe(node);
 
-    return () => observer.disconnect();
-  }, []);
+      return () => observer.disconnect();
+    },
+    [axis],
+  );
 
   return [ref, truncated];
 }

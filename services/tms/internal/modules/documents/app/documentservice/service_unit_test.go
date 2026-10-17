@@ -170,6 +170,13 @@ func (m *mockDocRepo) UpdateIntelligence(
 	return m.UpdateIntelligenceFn(ctx, req)
 }
 
+func (m *mockDocRepo) RecordDetectedSignature(
+	context.Context,
+	*documentports.RecordDetectedSignatureRequest,
+) (bool, error) {
+	return false, nil
+}
+
 func (m *mockDocRepo) PromoteVersion(
 	ctx context.Context,
 	req *documentports.PromoteDocumentVersionRequest,

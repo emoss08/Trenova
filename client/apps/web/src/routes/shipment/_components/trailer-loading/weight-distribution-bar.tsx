@@ -54,7 +54,7 @@ export function AxleWeightDisplay({
                 {axleLabel(axle.axle)}
               </span>
               {!axle.compliant && (
-                <span className="bg-danger-subtle text-destructive rounded-full px-1.5 py-px text-3xs font-semibold">
+                <span className="bg-danger-subtle text-destructive rounded-badge px-1.5 py-px text-3xs font-semibold">
                   OVER
                 </span>
               )}

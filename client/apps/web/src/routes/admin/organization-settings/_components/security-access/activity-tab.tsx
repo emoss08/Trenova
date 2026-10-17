@@ -1,554 +1,125 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@trenova/shared/components/ui/table";
+import { InfoPopover } from "@/components/info-popover";
+import { useResetTableSearchParams } from "@/hooks/data-table/use-reset-table-search-params";
 import {
   activityViewParser,
   activityViewValues,
   type ActivityViewValue,
 } from "@/hooks/use-organization-setting-state";
-import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { organization } from "@/lib/queries/organization";
-import { cn, formatIdentityProviderName, toTitleCase } from "@trenova/shared/lib/utils";
-import type {
-  AuthEvent,
-  ExternalIdentity,
-  MFAAuthenticator,
-  RiskDecision,
-} from "@trenova/shared/types/iam";
-import { useQuery } from "@tanstack/react-query";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   ActivityIcon,
+  type IconComponent,
   Key01Icon,
   LinkExternal01Icon,
   Lock01Icon,
   ShieldAlertIcon,
 } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
-import type { ReactNode } from "react";
-import { memo, useCallback, useMemo, useState } from "react";
-import { OuterContent } from "./layout";
-import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
-import { firstAllowed, useSecurityAccess } from "./use-security-access";
-import { outcomeVariant, riskVariant } from "./utils";
+import {
+  SegmentedControl,
+  type SegmentedControlItem,
+} from "@trenova/shared/components/ui/segmented-control";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { useQueryState } from "nuqs";
+import { lazy, useCallback, useMemo } from "react";
+import { firstAllowed, useSecurityAccess } from "./use-security-access";
 
-const activityViewOptions: Array<{ value: ActivityViewValue; label: string }> = [
-  { value: "auth", label: "Auth events" },
-  { value: "risk", label: "Risk decisions" },
-  { value: "identities", label: "External identities" },
-  { value: "mfa", label: "MFA authenticators" },
-];
+const AuthEventsTable = lazy(() => import("./activity/auth-events-table"));
+const RiskDecisionsTable = lazy(() => import("./activity/risk-decisions-table"));
+const ExternalIdentitiesTable = lazy(() => import("./activity/external-identities-table"));
+const MFAAuthenticatorsTable = lazy(() => import("./activity/mfa-authenticators-table"));
 
-const activityViewButtonLabels: Record<ActivityViewValue, string> = defineLabels({
-  auth: "Auth events",
+const ACTIVITY_VIEW_LABELS = defineLabels({
+  auth: "Sign-ins",
   risk: "Risk decisions",
   identities: "External identities",
-  mfa: "MFA authenticators",
-});
+  mfa: "Two-factor devices",
+} as const);
 
-function getActivityViewIcon(view: ActivityViewValue) {
-  switch (view) {
-    case "auth":
-      return Key01Icon;
-    case "risk":
-      return ShieldAlertIcon;
-    case "identities":
-      return LinkExternal01Icon;
-    case "mfa":
-      return Lock01Icon;
-  }
-}
+const ACTIVITY_VIEW_ICONS: Record<ActivityViewValue, IconComponent> = {
+  auth: Key01Icon,
+  risk: ShieldAlertIcon,
+  identities: LinkExternal01Icon,
+  mfa: Lock01Icon,
+};
 
-export function ActivityTab({ organizationId }: { organizationId: string }) {
+/**
+ * Every sign-in, the risk checks run on them, the identities linked from your providers and the
+ * two-factor devices people have enrolled, one table at a time. Each is the shared data table,
+ * so it searches, filters, sorts and pages on the server like every other list in the product.
+ */
+export function ActivityTab() {
   const t = useT();
-
   const access = useSecurityAccess();
+  const resetTable = useResetTableSearchParams();
   const [requestedView, setActivityView] = useQueryState("activityView", activityViewParser);
   const activityView =
     firstAllowed(requestedView, activityViewValues, access.activity) ?? requestedView;
-  const [search, setSearch] = useState("");
-  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
-  const handleActivityViewChange = useCallback(
-    (value: ActivityViewValue) => {
-      void setActivityView(value);
-    },
-    [setActivityView],
-  );
-
-  return (
-    <OuterContent>
-      <ConsoleToolbar
-        title={t("Activity console")}
-        description={t(
-          "Authentication outcomes, risk decisions, linked identities, and MFA devices.",
-        )}
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder={t("Search activity")}
-        action={
-          <ActivityViewSelect value={activityView} onValueChange={handleActivityViewChange} />
-        }
-      />
-      <ActivityViewControls
-        organizationId={organizationId}
-        activeView={activityView}
-        onViewChange={handleActivityViewChange}
-      />
-      <ActivityTableSection
-        organizationId={organizationId}
-        view={activityView}
-        search={normalizedSearch}
-      />
-    </OuterContent>
-  );
-}
-
-const ActivityViewSelect = memo(function ActivityViewSelect({
-  value,
-  onValueChange,
-}: {
-  value: ActivityViewValue;
-  onValueChange: (value: ActivityViewValue) => void;
-}) {
-  const t = useT();
-  const access = useSecurityAccess();
-  const options = useMemo(
-    () => activityViewOptions.filter((option) => access.activity[option.value]),
+  const viewItems = useMemo<SegmentedControlItem<ActivityViewValue>[]>(
+    () =>
+      activityViewValues
+        .filter((view) => access.activity[view])
+        .map((view) => ({
+          value: view,
+          label: ACTIVITY_VIEW_LABELS[view],
+          icon: ACTIVITY_VIEW_ICONS[view],
+        })),
     [access.activity],
   );
+  const handleActivityViewChange = useCallback(
+    (value: ActivityViewValue) => {
+      if (value === activityView) {
+        return;
+      }
+      resetTable();
+      void setActivityView(value);
+    },
+    [activityView, resetTable, setActivityView],
+  );
 
   return (
-    <Select
-      value={value}
-      items={options}
-      onValueChange={(nextValue) => onValueChange(nextValue as ActivityViewValue)}
-    >
-      <SelectTrigger className="h-7 w-44 text-xs">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {t(option.label)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-});
-
-const ActivityViewControls = memo(function ActivityViewControls({
-  organizationId,
-  activeView,
-  onViewChange,
-}: {
-  organizationId: string;
-  activeView: ActivityViewValue;
-  onViewChange: (value: ActivityViewValue) => void;
-}) {
-  const access = useSecurityAccess();
-  const authEventsQuery = useQuery({
-    ...organization.authEvents(organizationId),
-    enabled: access.activity.auth,
-  });
-  const riskQuery = useQuery({
-    ...organization.riskDecisions(organizationId),
-    enabled: access.activity.risk,
-  });
-  const externalIdentityQuery = useQuery({
-    ...organization.externalIdentities(organizationId),
-    enabled: access.activity.identities,
-  });
-  const mfaQuery = useQuery({
-    ...organization.mfaAuthenticators(organizationId),
-    enabled: access.activity.mfa,
-  });
-  const counts: Record<ActivityViewValue, number> = {
-    auth: authEventsQuery.data?.length ?? 0,
-    risk: riskQuery.data?.length ?? 0,
-    identities: externalIdentityQuery.data?.length ?? 0,
-    mfa: mfaQuery.data?.length ?? 0,
-  };
-
-  return (
-    <div className="grid gap-3 md:grid-cols-4">
-      {activityViewValues
-        .filter((view) => access.activity[view])
-        .map((view) => (
-          <ActivityViewButton
-            key={view}
-            view={view}
-            active={activeView === view}
-            count={counts[view]}
-            onViewChange={onViewChange}
-          />
-        ))}
-    </div>
-  );
-});
-
-const ActivityViewButton = memo(function ActivityViewButton({
-  view,
-  active,
-  count,
-  onViewChange,
-}: {
-  view: ActivityViewValue;
-  active: boolean;
-  count: number;
-  onViewChange: (value: ActivityViewValue) => void;
-}) {
-  const Icon = getActivityViewIcon(view);
-
-  return (
-    <button
-      type="button"
-      className={cn(
-        "bg-background hover:border-brand hover:bg-brand/20 flex items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors",
-        active && "border-brand bg-brand/20 hover:bg-brand/30",
-      )}
-      onClick={() => onViewChange(view)}
-    >
-      <span className="flex items-center gap-2 text-sm font-medium">
-        <span className="text-muted-foreground [&_svg]:size-4">
-          <Icon />
-        </span>
-        {activityViewButtonLabels[view]}
-      </span>
-      <Badge variant={active ? "info" : "neutral"}>{count}</Badge>
-    </button>
-  );
-});
-
-function ActivityTableSection({
-  organizationId,
-  view,
-  search,
-}: {
-  organizationId: string;
-  view: ActivityViewValue;
-  search: string;
-}) {
-  switch (view) {
-    case "risk":
-      return <RiskDecisionsSection organizationId={organizationId} search={search} />;
-    case "identities":
-      return <ExternalIdentitiesSection organizationId={organizationId} search={search} />;
-    case "mfa":
-      return <MFAAuthenticatorsSection organizationId={organizationId} search={search} />;
-    case "auth":
-    default:
-      return <AuthEventsSection organizationId={organizationId} search={search} />;
-  }
-}
-
-function AuthEventsSection({ organizationId, search }: { organizationId: string; search: string }) {
-  const t = useT();
-
-  const authEventsQuery = useQuery(organization.authEvents(organizationId));
-  const records = useMemo(
-    () =>
-      (authEventsQuery.data ?? []).filter((item) =>
-        [item.provider, item.outcome, item.riskOutcome, item.ipAddress, item.errorCode]
-          .join(" ")
-          .toLowerCase()
-          .includes(search),
-      ),
-    [authEventsQuery.data, search],
-  );
-
-  if (authEventsQuery.isError) {
-    return <ErrorState label={t("Authentication events could not be loaded.")} />;
-  }
-
-  return <AuthEventsTable records={records} isLoading={authEventsQuery.isLoading} />;
-}
-
-function RiskDecisionsSection({
-  organizationId,
-  search,
-}: {
-  organizationId: string;
-  search: string;
-}) {
-  const t = useT();
-
-  const riskQuery = useQuery(organization.riskDecisions(organizationId));
-  const records = useMemo(
-    () =>
-      (riskQuery.data ?? []).filter((item) =>
-        [item.outcome, item.reason, item.signals.join(" ")]
-          .join(" ")
-          .toLowerCase()
-          .includes(search),
-      ),
-    [riskQuery.data, search],
-  );
-
-  if (riskQuery.isError) {
-    return <ErrorState label={t("Risk decisions could not be loaded.")} />;
-  }
-
-  return <RiskDecisionsTable records={records} isLoading={riskQuery.isLoading} />;
-}
-
-function ExternalIdentitiesSection({
-  organizationId,
-  search,
-}: {
-  organizationId: string;
-  search: string;
-}) {
-  const t = useT();
-
-  const externalIdentityQuery = useQuery(organization.externalIdentities(organizationId));
-  const records = useMemo(
-    () =>
-      (externalIdentityQuery.data ?? []).filter((item) =>
-        [item.externalEmail, item.externalUsername, item.externalSubject]
-          .join(" ")
-          .toLowerCase()
-          .includes(search),
-      ),
-    [externalIdentityQuery.data, search],
-  );
-
-  if (externalIdentityQuery.isError) {
-    return <ErrorState label={t("External identities could not be loaded.")} />;
-  }
-
-  return <ExternalIdentitiesTable records={records} isLoading={externalIdentityQuery.isLoading} />;
-}
-
-function MFAAuthenticatorsSection({
-  organizationId,
-  search,
-}: {
-  organizationId: string;
-  search: string;
-}) {
-  const t = useT();
-
-  const mfaQuery = useQuery(organization.mfaAuthenticators(organizationId));
-  const records = useMemo(
-    () =>
-      (mfaQuery.data ?? []).filter((item) =>
-        [item.name, item.type, item.enabled ? "enabled" : "disabled"]
-          .join(" ")
-          .toLowerCase()
-          .includes(search),
-      ),
-    [mfaQuery.data, search],
-  );
-
-  if (mfaQuery.isError) {
-    return <ErrorState label={t("MFA authenticators could not be loaded.")} />;
-  }
-
-  return <MFAAuthenticatorsTable records={records} isLoading={mfaQuery.isLoading} />;
-}
-
-function AuthEventsTable({ records, isLoading }: { records: AuthEvent[]; isLoading: boolean }) {
-  const t = useT();
-
-  return (
-    <ActivityTableShell
-      isLoading={isLoading}
-      rowCount={records.length}
-      emptyLabel={t("No authentication events found.")}
-      headers={["Provider", "Outcome", "Risk", "When", "Detail"]}
-    >
-      {records.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell>
-            <div className="font-medium">{formatIdentityProviderName(item.provider)}</div>
-            <div className="text-muted-foreground text-xs">
-              {item.ipAddress || t("No IP captured")}
-            </div>
-          </TableCell>
-          <TableCell>
-            <Badge variant={outcomeVariant(item.outcome)}>{toTitleCase(item.outcome)}</Badge>
-          </TableCell>
-          <TableCell>
-            <Badge variant={riskVariant(item.riskOutcome)}>{toTitleCase(item.riskOutcome)}</Badge>
-          </TableCell>
-          <TableCell className="text-muted-foreground">
-            {formatUnixDateTimeOrDash(item.occurredAt)}
-          </TableCell>
-          <TableCell className="text-muted-foreground max-w-72 truncate">
-            {item.errorCode || item.riskSignals.join(", ") || "-"}
-          </TableCell>
-        </TableRow>
-      ))}
-    </ActivityTableShell>
-  );
-}
-
-function RiskDecisionsTable({
-  records,
-  isLoading,
-}: {
-  records: RiskDecision[];
-  isLoading: boolean;
-}) {
-  const t = useT();
-
-  return (
-    <ActivityTableShell
-      isLoading={isLoading}
-      rowCount={records.length}
-      emptyLabel={t("No risk decisions found.")}
-      headers={["Outcome", "Reason", "Signals", "When"]}
-    >
-      {records.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell>
-            <Badge variant={riskVariant(item.outcome)}>{toTitleCase(item.outcome)}</Badge>
-          </TableCell>
-          <TableCell className="max-w-80 truncate">{item.reason || "-"}</TableCell>
-          <TableCell className="text-muted-foreground max-w-80 truncate">
-            {item.signals.join(", ") || "-"}
-          </TableCell>
-          <TableCell className="text-muted-foreground">
-            {formatUnixDateTimeOrDash(item.createdAt)}
-          </TableCell>
-        </TableRow>
-      ))}
-    </ActivityTableShell>
-  );
-}
-
-function ExternalIdentitiesTable({
-  records,
-  isLoading,
-}: {
-  records: ExternalIdentity[];
-  isLoading: boolean;
-}) {
-  const t = useT();
-
-  return (
-    <ActivityTableShell
-      isLoading={isLoading}
-      rowCount={records.length}
-      emptyLabel={t("No external identities found.")}
-      headers={["Identity", "Subject", "Last login", "Created"]}
-    >
-      {records.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell>
-            <div className="font-medium">{item.externalEmail || "-"}</div>
-            <div className="text-muted-foreground text-xs">{item.externalUsername || "-"}</div>
-          </TableCell>
-          <TableCell className="max-w-80 truncate">{item.externalSubject}</TableCell>
-          <TableCell className="text-muted-foreground">
-            {item.lastLoginAt ? formatUnixDateTimeOrDash(item.lastLoginAt) : t("Never")}
-          </TableCell>
-          <TableCell className="text-muted-foreground">
-            {formatUnixDateTimeOrDash(item.createdAt)}
-          </TableCell>
-        </TableRow>
-      ))}
-    </ActivityTableShell>
-  );
-}
-
-function MFAAuthenticatorsTable({
-  records,
-  isLoading,
-}: {
-  records: MFAAuthenticator[];
-  isLoading: boolean;
-}) {
-  const t = useT();
-
-  return (
-    <ActivityTableShell
-      isLoading={isLoading}
-      rowCount={records.length}
-      emptyLabel={t("No MFA authenticators found.")}
-      headers={["Authenticator", "Status", "Verified", "Last used"]}
-    >
-      {records.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell>
-            <div className="font-medium">{item.name}</div>
-            <div className="text-muted-foreground text-xs">{item.type.toUpperCase()}</div>
-          </TableCell>
-          <TableCell>
-            <Badge variant={item.enabled ? "success" : "danger"}>
-              {item.enabled ? t("Enabled") : t("Disabled")}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-muted-foreground">
-            {item.verifiedAt ? formatUnixDateTimeOrDash(item.verifiedAt) : t("Not verified")}
-          </TableCell>
-          <TableCell className="text-muted-foreground">
-            {item.lastUsedAt ? formatUnixDateTimeOrDash(item.lastUsedAt) : t("Never")}
-          </TableCell>
-        </TableRow>
-      ))}
-    </ActivityTableShell>
-  );
-}
-
-function ActivityTableShell({
-  isLoading,
-  rowCount,
-  emptyLabel,
-  headers,
-  children,
-}: {
-  isLoading: boolean;
-  rowCount: number;
-  emptyLabel: string;
-  headers: string[];
-  children: ReactNode;
-}) {
-  const t = useT();
-
-  if (isLoading) {
-    return <RowSkeleton rows={5} />;
-  }
-
-  if (rowCount === 0) {
-    return (
-      <EmptyState
-        icon={<ActivityIcon />}
-        label={emptyLabel}
-        description={t("Try a different filter.")}
-      />
-    );
-  }
-
-  return (
-    <div className="bg-background overflow-hidden rounded-lg border">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {headers.map((header) => (
-                <TableHead key={header}>{header}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>{children}</TableBody>
-        </Table>
-      </div>
-    </div>
+    <section aria-label={t("Activity")} className="flex min-w-0 flex-col gap-3">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex items-center gap-2">
+          <ActivityIcon aria-hidden className="text-foreground-subtle size-3.5" />
+          <h3 className="text-sm font-semibold">{t("Activity")}</h3>
+          <InfoPopover title={t("Activity")}>
+            {t(
+              "Sign-in outcomes, the risk checks run on them, identities linked from your providers and the two-factor devices people have enrolled.",
+            )}
+          </InfoPopover>
+        </div>
+        {viewItems.length > 1 ? (
+          <div className="max-w-full overflow-x-auto sm:ml-auto">
+            <SegmentedControl
+              aria-label={t("Activity view")}
+              items={viewItems}
+              value={activityView}
+              onValueChange={handleActivityViewChange}
+            />
+          </div>
+        ) : null}
+      </header>
+      {activityView === "auth" ? (
+        <DataTableLazyComponent key="auth">
+          <AuthEventsTable />
+        </DataTableLazyComponent>
+      ) : null}
+      {activityView === "risk" ? (
+        <DataTableLazyComponent key="risk">
+          <RiskDecisionsTable />
+        </DataTableLazyComponent>
+      ) : null}
+      {activityView === "identities" ? (
+        <DataTableLazyComponent key="identities">
+          <ExternalIdentitiesTable />
+        </DataTableLazyComponent>
+      ) : null}
+      {activityView === "mfa" ? (
+        <DataTableLazyComponent key="mfa">
+          <MFAAuthenticatorsTable />
+        </DataTableLazyComponent>
+      ) : null}
+    </section>
   );
 }

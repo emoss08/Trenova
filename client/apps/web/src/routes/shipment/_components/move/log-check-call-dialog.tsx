@@ -115,9 +115,6 @@ export function LogCheckCallDialog({
         queryKey: shipment.checkCalls(shipmentId).queryKey,
       });
       if (isStopVisit(result.checkCall.kind)) {
-        void queryClient.invalidateQueries({
-          queryKey: shipment.trackingEvents(shipmentId).queryKey,
-        });
         void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       }
       if (result.outcome === "Refused" || result.outcome === "Pending") {

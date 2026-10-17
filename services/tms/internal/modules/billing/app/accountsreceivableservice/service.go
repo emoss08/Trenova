@@ -26,6 +26,8 @@ type Service struct {
 	analyticsRepo customerledgerports.ARAnalyticsRepository
 }
 
+var _ customerledgerports.ARSnapshotReader = (*Service)(nil)
+
 func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.accounts-receivable"),

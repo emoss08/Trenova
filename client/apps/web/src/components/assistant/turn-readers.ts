@@ -10,8 +10,7 @@
  * no longer exists. Releasing the readers first is what makes sign-out quiet.
  *
  * Releasing only lets go of the reader. It never stops a turn: that is the
- * server's to do at sign-out, and a person closing a palette or leaving a
- * page has not asked for their answer to be thrown away.
+ * server's to do at sign-out.
  */
 const readers = new Set<AbortController>();
 

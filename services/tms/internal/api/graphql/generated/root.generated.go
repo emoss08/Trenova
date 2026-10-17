@@ -108,6 +108,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/routingguideexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/schedulingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/scimgrouprolemappingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/securityactivityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/selectoptionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/selfserviceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailureexec"
@@ -173,6 +174,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -215,6 +217,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -345,6 +348,7 @@ type ResolverRoot interface {
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
+	AuthEvent() AuthEventResolver
 	BriefingSection() BriefingSectionResolver
 	CaptureBatch() CaptureBatchResolver
 	CaptureCoverSheet() CaptureCoverSheetResolver
@@ -407,6 +411,7 @@ type ResolverRoot interface {
 	EdiTransfer() EdiTransferResolver
 	EquipmentContinuity() EquipmentContinuityResolver
 	EscrowAccount() EscrowAccountResolver
+	ExternalIdentity() ExternalIdentityResolver
 	ExtractionEvalCase() ExtractionEvalCaseResolver
 	ExtractionEvalResult() ExtractionEvalResultResolver
 	ExtractionEvalRun() ExtractionEvalRunResolver
@@ -477,6 +482,7 @@ type ResolverRoot interface {
 	LeaveControl() LeaveControlResolver
 	LeaveEntitlement() LeaveEntitlementResolver
 	LocationCategory() LocationCategoryResolver
+	MFAAuthenticator() MFAAuthenticatorResolver
 	Mutation() MutationResolver
 	MyAgent() MyAgentResolver
 	MyPTOBalance() MyPTOBalanceResolver
@@ -502,6 +508,7 @@ type ResolverRoot interface {
 	PortalTraining() PortalTrainingResolver
 	Query() QueryResolver
 	ReviewRating() ReviewRatingResolver
+	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
 	RoutingGuideEntry() RoutingGuideEntryResolver
 	SafetyScorecard() SafetyScorecardResolver
@@ -535,8 +542,10 @@ type ResolverRoot interface {
 	TriageStopTimes() TriageStopTimesResolver
 	TriageView() TriageViewResolver
 	User() UserResolver
+	WatchtowerAgentWork() WatchtowerAgentWorkResolver
 	WatchtowerItem() WatchtowerItemResolver
 	WatchtowerItemEvent() WatchtowerItemEventResolver
+	WatchtowerRecord() WatchtowerRecordResolver
 	Worker() WorkerResolver
 	WorkerBenefitEnrollment() WorkerBenefitEnrollmentResolver
 	WorkerChecklist() WorkerChecklistResolver
@@ -917,6 +926,14 @@ type AuditEntryResolver interface {
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)
 }
 
+type AuthEventResolver interface {
+	UserID(ctx context.Context, obj *iam.AuthEvent) (*string, error)
+	IdentityProviderID(ctx context.Context, obj *iam.AuthEvent) (*string, error)
+	Outcome(ctx context.Context, obj *iam.AuthEvent) (string, error)
+	RiskOutcome(ctx context.Context, obj *iam.AuthEvent) (string, error)
+	User(ctx context.Context, obj *iam.AuthEvent) (*tenant.User, error)
+}
+
 type BriefingSectionResolver interface {
 	Read(ctx context.Context, obj *briefing.Section) (string, error)
 }
@@ -1282,6 +1299,10 @@ type EquipmentContinuityResolver interface {
 
 type EscrowAccountResolver interface {
 	AnnualInterestRate(ctx context.Context, obj *driverpay.EscrowAccount) (string, error)
+}
+
+type ExternalIdentityResolver interface {
+	User(ctx context.Context, obj *iam.ExternalIdentity) (*tenant.User, error)
 }
 
 type ExtractionEvalCaseResolver interface {
@@ -1811,6 +1832,11 @@ type LeaveEntitlementResolver interface {
 
 type LocationCategoryResolver interface {
 	FacilityType(ctx context.Context, obj *locationcategory.LocationCategory) (*locationcategory.FacilityType, error)
+}
+
+type MFAAuthenticatorResolver interface {
+	Type(ctx context.Context, obj *iam.MFAAuthenticator) (string, error)
+	User(ctx context.Context, obj *iam.MFAAuthenticator) (*tenant.User, error)
 }
 
 type MutationResolver interface {
@@ -2368,6 +2394,8 @@ type MutationResolver interface {
 	CommentOnWatchtowerItem(ctx context.Context, id string, body string) (*watchtower.Event, error)
 	ResolveWatchtowerItem(ctx context.Context, id string, input gqlmodel.ResolveWatchtowerItemInput) (*watchtower.Item, error)
 	ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error)
+	MarkWatchtowerItemSeen(ctx context.Context, id string) (*watchtower.Item, error)
+	WakeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -2609,6 +2637,7 @@ type QueryResolver interface {
 	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
 	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error)
 	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
+	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
 	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
@@ -3106,6 +3135,11 @@ type QueryResolver interface {
 	ShiftSwapRequest(ctx context.Context, id string) (*worker.ShiftSwapRequest, error)
 	Rota(ctx context.Context, filter *gqlmodel.RotaFilterInput) (*gqlmodel.Rota, error)
 	ScimGroupRoleMappings(ctx context.Context, input gqlmodel.DataTableConnectionInput, directoryID string) (*gqlmodel.SCIMGroupRoleMappingConnection, error)
+	AuthEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuthEventConnection, error)
+	RiskDecisions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RiskDecisionConnection, error)
+	ExternalIdentities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExternalIdentityConnection, error)
+	MfaAuthenticators(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.MFAAuthenticatorConnection, error)
+	ScimDirectories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SCIMDirectoryConnection, error)
 	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
 	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.WorkerPolicy, error)
 	WorkerPolicy(ctx context.Context, id string) (*worker.WorkerPolicy, error)
@@ -3195,6 +3229,8 @@ type QueryResolver interface {
 	WatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	WatchtowerItemHistory(ctx context.Context, id string, limit *int) ([]*watchtower.Event, error)
 	WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error)
+	WatchtowerCleared(ctx context.Context, since int) (int, error)
+	WatchtowerHandOffAgents(ctx context.Context) ([]*agentdefinition.Definition, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
@@ -3261,6 +3297,12 @@ type QueryResolver interface {
 
 type ReviewRatingResolver interface {
 	Score(ctx context.Context, obj *worker.ReviewRating) (*int, error)
+}
+
+type RiskDecisionResolver interface {
+	UserID(ctx context.Context, obj *iam.RiskDecision) (*string, error)
+	Outcome(ctx context.Context, obj *iam.RiskDecision) (string, error)
+	User(ctx context.Context, obj *iam.RiskDecision) (*tenant.User, error)
 }
 
 type RoleResolver interface {
@@ -3454,6 +3496,12 @@ type UserResolver interface {
 	CurrentOrganization(ctx context.Context, obj *tenant.User) (*tenant.Organization, error)
 }
 
+type WatchtowerAgentWorkResolver interface {
+	Agent(ctx context.Context, obj *watchtower.AgentWork) (*agentdefinition.Definition, error)
+	HandedByID(ctx context.Context, obj *watchtower.AgentWork) (*string, error)
+	HandedBy(ctx context.Context, obj *watchtower.AgentWork) (*tenant.User, error)
+}
+
 type WatchtowerItemResolver interface {
 	SubjectType(ctx context.Context, obj *watchtower.Item) (*agent.SubjectType, error)
 	SubjectID(ctx context.Context, obj *watchtower.Item) (*string, error)
@@ -3466,11 +3514,24 @@ type WatchtowerItemResolver interface {
 	ResolutionNote(ctx context.Context, obj *watchtower.Item) (*string, error)
 	ResolvedByID(ctx context.Context, obj *watchtower.Item) (*string, error)
 	ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error)
+	DueLabel(ctx context.Context, obj *watchtower.Item) (*string, error)
+	DueSource(ctx context.Context, obj *watchtower.Item) (*watchtower.DueSource, error)
+	Record(ctx context.Context, obj *watchtower.Item) (*watchtower.RecordRef, error)
+	Facts(ctx context.Context, obj *watchtower.Item) ([]*gqlmodel.WatchtowerFact, error)
+	Trail(ctx context.Context, obj *watchtower.Item) ([]*gqlmodel.WatchtowerTrailEvent, error)
+	SuggestedAgentID(ctx context.Context, obj *watchtower.Item) (*string, error)
+	SuggestedAgent(ctx context.Context, obj *watchtower.Item) (*agentdefinition.Definition, error)
+	AgentWork(ctx context.Context, obj *watchtower.Item) (*watchtower.AgentWork, error)
 }
 
 type WatchtowerItemEventResolver interface {
 	ActorID(ctx context.Context, obj *watchtower.Event) (*string, error)
 	Actor(ctx context.Context, obj *watchtower.Event) (*tenant.User, error)
+}
+
+type WatchtowerRecordResolver interface {
+	Kind(ctx context.Context, obj *watchtower.RecordRef) (string, error)
+	Noun(ctx context.Context, obj *watchtower.RecordRef) (string, error)
 }
 
 type WorkerResolver interface {
@@ -3804,6 +3865,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		routingguideexec.Shard,
 		schedulingexec.Shard,
 		scimgrouprolemappingexec.Shard,
+		securityactivityexec.Shard,
 		selectoptionsexec.Shard,
 		selfserviceexec.Shard,
 		servicefailureexec.Shard,
@@ -3909,6 +3971,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ApiKey":                             func() any { return r.ApiKey() },
 			"ApprovalDelegation":                 func() any { return r.ApprovalDelegation() },
 			"AuditEntry":                         func() any { return r.AuditEntry() },
+			"AuthEvent":                          func() any { return r.AuthEvent() },
 			"BriefingSection":                    func() any { return r.BriefingSection() },
 			"CaptureBatch":                       func() any { return r.CaptureBatch() },
 			"CaptureCoverSheet":                  func() any { return r.CaptureCoverSheet() },
@@ -3971,6 +4034,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"EdiTransfer":                        func() any { return r.EdiTransfer() },
 			"EquipmentContinuity":                func() any { return r.EquipmentContinuity() },
 			"EscrowAccount":                      func() any { return r.EscrowAccount() },
+			"ExternalIdentity":                   func() any { return r.ExternalIdentity() },
 			"ExtractionEvalCase":                 func() any { return r.ExtractionEvalCase() },
 			"ExtractionEvalResult":               func() any { return r.ExtractionEvalResult() },
 			"ExtractionEvalRun":                  func() any { return r.ExtractionEvalRun() },
@@ -4041,6 +4105,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"LeaveControl":                       func() any { return r.LeaveControl() },
 			"LeaveEntitlement":                   func() any { return r.LeaveEntitlement() },
 			"LocationCategory":                   func() any { return r.LocationCategory() },
+			"MFAAuthenticator":                   func() any { return r.MFAAuthenticator() },
 			"Mutation":                           func() any { return r.Mutation() },
 			"MyAgent":                            func() any { return r.MyAgent() },
 			"MyPTOBalance":                       func() any { return r.MyPTOBalance() },
@@ -4066,6 +4131,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PortalTraining":                     func() any { return r.PortalTraining() },
 			"Query":                              func() any { return r.Query() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
+			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
@@ -4099,8 +4165,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"TriageStopTimes":                    func() any { return r.TriageStopTimes() },
 			"TriageView":                         func() any { return r.TriageView() },
 			"User":                               func() any { return r.User() },
+			"WatchtowerAgentWork":                func() any { return r.WatchtowerAgentWork() },
 			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
 			"WatchtowerItemEvent":                func() any { return r.WatchtowerItemEvent() },
+			"WatchtowerRecord":                   func() any { return r.WatchtowerRecord() },
 			"Worker":                             func() any { return r.Worker() },
 			"WorkerBenefitEnrollment":            func() any { return r.WorkerBenefitEnrollment() },
 			"WorkerChecklist":                    func() any { return r.WorkerChecklist() },
@@ -5817,7 +5885,87 @@ type ARCustomerProfile {
   delinquencyScore: Float!
 }
 
+"What a phrase or action of the accounting brief leads to."
+enum AccountingBriefingLink {
+  "The open invoices."
+  OpenInvoices
+  "The invoices past their due date."
+  Overdue
+  "The balance more than 90 days past due."
+  PastNinety
+  "The invoices in dispute."
+  Disputed
+  "Cash received and not yet applied to an invoice."
+  UnappliedCash
+  "The customer with the most past due; the segment carries its customerId."
+  TopCustomer
+  "Invoices that pass 90 days past due within the week."
+  CrossingNinety
+  "Invoices falling due in the next 7 days, worth a reminder before they are late."
+  DueSoon
+  "Promises to pay that lapsed unpaid; one customer's when the segment carries its customerId."
+  BrokenPromise
+  "Promises to pay coming due in the next 2 days."
+  PromisesDue
+  "Past-due customers with no collections contact in 14 days."
+  Uncontacted
+  "Collections follow-ups that have come round."
+  FollowUpsDue
+  "Short payments leaving small balances open, candidates to write off."
+  ShortPayRemainders
+  "Invoices still in draft, not yet sent to the customer."
+  Drafts
+  "No cash recorded in the last 91 days against what was billed."
+  NoCollections
+  "Invoices falling due in the next 30 days, when none fall due this week."
+  DueThisMonth
+}
+
+"A run of the accounting brief's sentence, and the finding it names when it names one."
+type AccountingBriefingSegment {
+  text: String!
+  "Where the phrase leads, when it names a finding the dashboard links to."
+  link: AccountingBriefingLink
+  "The customer the phrase names, for a TopCustomer or single BrokenPromise link."
+  customerId: ID
+}
+
+"One thing worth doing today, worked out from the same figures as the brief."
+type AccountingBriefingAction {
+  link: AccountingBriefingLink!
+  "How many invoices, customers, promises or payments it covers; zero when it is not counted."
+  count: Int!
+  "The money it covers, in minor units; zero when it covers none."
+  amountMinor: Int!
+  "The customer it is about, when it is about one."
+  customerId: ID
+  customerName: String
+}
+
+"""
+The day's brief at the top of the accounting dashboard. It leads with what the
+headline figures do not show: missed promises to pay, invoices about to pass 90
+days past due, customers nobody has contacted, and what falls due next. The
+findings are computed from the ledger and the collections worklist first and the
+wording written second, and every figure a model writes is checked against them;
+a brief no model narrated is complete and reads plainer. It is written before the
+workday and again when the findings it cites no longer hold, a few times a day at
+most.
+"""
+type AccountingBriefing {
+  segments: [AccountingBriefingSegment!]!
+  "What to do about the findings, most pressing first."
+  actions: [AccountingBriefingAction!]!
+  "True when a model's wording was accepted."
+  narrated: Boolean!
+  generatedAt: Timestamp!
+  "Counts the briefs written today; a new one restarts the reveal on the page."
+  generation: Int!
+}
+
 extend type Query {
+  "Today's accounting brief, written on first read when the morning's has not been."
+  accountingBriefing: AccountingBriefing!
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arOpenItems(customerId: ID, asOfDate: Timestamp): [AROpenItem!]!
   arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
@@ -28938,6 +29086,148 @@ extend type Query {
   ): SCIMGroupRoleMappingConnection!
 }
 `, BuiltIn: false},
+	{Name: "../schema/security_activity.graphqls", Input: `"A sign-in, sign-out, password reset or other authentication step, and what came of it."
+type AuthEvent {
+  id: ID!
+  "Null for an attempt that never matched an account."
+  userId: ID
+  "Set when the attempt went through a federated identity provider."
+  identityProviderId: ID
+  "How the person authenticated (password, mfa, an identity provider) or what the event records (session.logout, password_reset.request)."
+  provider: String!
+  "success, challenge, denied or failed."
+  outcome: String!
+  ipAddress: String!
+  userAgent: String!
+  authenticatorAal: Int!
+  federationFal: Int!
+  mfaState: String!
+  "allow, challenge or deny."
+  riskOutcome: String!
+  riskSignals: [String!]!
+  errorCode: String!
+  occurredAt: Timestamp!
+  createdAt: Timestamp!
+  user: User
+}
+
+type AuthEventEdge {
+  node: AuthEvent!
+  cursor: String!
+}
+
+type AuthEventConnection {
+  edges: [AuthEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"What the risk checks decided about a sign-in."
+type RiskDecision {
+  id: ID!
+  "Null when the decision was reached before the account was known."
+  userId: ID
+  "allow, challenge or deny."
+  outcome: String!
+  signals: [String!]!
+  reason: String!
+  createdAt: Timestamp!
+  user: User
+}
+
+type RiskDecisionEdge {
+  node: RiskDecision!
+  cursor: String!
+}
+
+type RiskDecisionConnection {
+  edges: [RiskDecisionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"An account at an identity provider linked to a person here."
+type ExternalIdentity {
+  id: ID!
+  userId: ID!
+  identityProviderId: ID!
+  externalSubject: String!
+  externalUsername: String!
+  externalEmail: String!
+  "Zero until the person first signs in through the provider."
+  lastLoginAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  user: User
+}
+
+type ExternalIdentityEdge {
+  node: ExternalIdentity!
+  cursor: String!
+}
+
+type ExternalIdentityConnection {
+  edges: [ExternalIdentityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A second factor a person has enrolled. Its secret never leaves the server."
+type MFAAuthenticator {
+  id: ID!
+  userId: ID!
+  "totp or webauthn."
+  type: String!
+  name: String!
+  enabled: Boolean!
+  "Zero while the enrolment is still pending."
+  verifiedAt: Timestamp!
+  lastUsedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  user: User
+}
+
+type MFAAuthenticatorEdge {
+  node: MFAAuthenticator!
+  cursor: String!
+}
+
+type MFAAuthenticatorConnection {
+  edges: [MFAAuthenticatorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SCIMDirectory {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  tenantSlug: String!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type SCIMDirectoryEdge {
+  node: SCIMDirectory!
+  cursor: String!
+}
+
+type SCIMDirectoryConnection {
+  edges: [SCIMDirectoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  authEvents(input: DataTableConnectionInput!): AuthEventConnection!
+  riskDecisions(input: DataTableConnectionInput!): RiskDecisionConnection!
+  externalIdentities(input: DataTableConnectionInput!): ExternalIdentityConnection!
+  mfaAuthenticators(input: DataTableConnectionInput!): MFAAuthenticatorConnection!
+  scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
+}
+`, BuiltIn: false},
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
@@ -33859,6 +34149,80 @@ enum WatchtowerItemEventKind {
   Reopened
   SourceResolved
   SourceReopened
+  "The item was handed to an agent, which is now working it."
+  HandedOff
+}
+
+"Where an item's due time came from."
+enum WatchtowerDueSource {
+  "The organization's due time for the item's severity."
+  Policy
+  "A deadline the record itself reports, such as a dock closing or a certificate lapsing."
+  Source
+  "A person set or cleared it."
+  Person
+}
+
+"How an agent handed an item is getting on."
+enum WatchtowerAgentStatus {
+  Working
+  "Waiting on a person: a change to approve, or a run that stopped."
+  NeedsYou
+  Done
+}
+
+"The phases an agent's work on an item goes through, in order."
+enum WatchtowerAgentStep {
+  "Reading the record the item is about."
+  Read
+  "Working out what to do and drafting it."
+  Decide
+  "Asking a person to approve what it drafted."
+  Approve
+}
+
+"One fact about the record behind an item, as the source reports it."
+type WatchtowerFact {
+  label: String!
+  "The value in words; absent when the fact is an instant."
+  value: String
+  "The instant the fact names, for the reader's own clock."
+  at: Timestamp
+}
+
+"One of the events that led to an item, oldest first."
+type WatchtowerTrailEvent {
+  "When it happened; absent when the source does not know."
+  at: Timestamp
+  text: String!
+}
+
+"The record an item is about, for the button that opens it."
+type WatchtowerRecord {
+  "The kind of record, as the permission registry names it."
+  kind: String!
+  "The kind in the reader's words."
+  noun: String!
+  "The record's name or number; blank when the source has none."
+  label: String!
+}
+
+"An agent working an item: who, how far along, and what it last said."
+type WatchtowerAgentWork {
+  agentId: ID!
+  agent: AgentDefinition
+  runId: ID!
+  status: WatchtowerAgentStatus!
+  "How many of the steps are behind it; equal to the step count once it is done."
+  step: Int!
+  steps: [WatchtowerAgentStep!]!
+  "What the run last said: its summary, or why it stopped."
+  note: String!
+  "The run stopped before it finished."
+  failed: Boolean!
+  handedAt: Timestamp!
+  handedById: ID
+  handedBy: User
 }
 
 "How loudly an item asks to be looked at."
@@ -33920,6 +34284,23 @@ type WatchtowerItem {
   "How many times it has escalated for being overdue."
   escalationLevel: Int!
   lastEscalatedAt: Timestamp
+  "What happens at the due time, when the record reports its own deadline."
+  dueLabel: String
+  "Where the due time came from; absent while there is none."
+  dueSource: WatchtowerDueSource
+  "The record the item is about; absent when it is about no one record."
+  record: WatchtowerRecord
+  "The facts about the record that matter here, at most six."
+  facts: [WatchtowerFact!]!
+  "What is at stake: loads, money, a customer, a clause."
+  impact: [String!]!
+  "The events that led here, oldest first."
+  trail: [WatchtowerTrailEvent!]!
+  "The agent best placed to take the item: one that subscribes to its event."
+  suggestedAgentId: ID
+  suggestedAgent: AgentDefinition
+  "The agent the item was handed to and how far along it is; absent until it is handed off."
+  agentWork: WatchtowerAgentWork
 }
 
 "One line of an exception's history. The history is never edited."
@@ -33992,6 +34373,10 @@ type WatchtowerKindSummary {
 type WatchtowerCounts {
   unresolved: Int!
   critical: Int!
+  "Open and not snoozed: what the queue shows."
+  active: Int!
+  "Critical, open and not snoozed."
+  activeCritical: Int!
   unseen: Int!
   unseenCritical: Int!
   "Open, not snoozed and past their due time."
@@ -34068,6 +34453,10 @@ extend type Query {
   watchtowerItemHistory(id: ID!, limit: Int = 100): [WatchtowerItemEvent!]!
   "The resolutions a person may pick."
   watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
+  "How many items this reader resolved or snoozed since an instant, of the kinds they may see."
+  watchtowerCleared(since: Timestamp!): Int!
+  "The agents an item can be handed to: every enabled agent that runs on its own."
+  watchtowerHandOffAgents: [AgentDefinition!]!
 }
 
 extend type Mutation {
@@ -34093,6 +34482,10 @@ extend type Mutation {
   resolveWatchtowerItem(id: ID!, input: ResolveWatchtowerItemInput!): WatchtowerItem!
   "Opens a resolved exception again."
   reopenWatchtowerItem(id: ID!, input: ReopenWatchtowerItemInput!): WatchtowerItem!
+  "Records that this reader opened an item, so it stops showing as new to them."
+  markWatchtowerItemSeen(id: ID!): WatchtowerItem!
+  "Brings a snoozed exception back before its time."
+  wakeWatchtowerItem(id: ID!, expectedVersion: Int): WatchtowerItem!
 }
 `, BuiltIn: false},
 	{Name: "../schema/worker.graphqls", Input: `enum WorkerType {

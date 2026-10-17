@@ -37,15 +37,17 @@
    severity, an accent is a category, and Geist blue marks what you can follow
    and what you have hold of — links and focus.
 
-   Blue sits in the blue arc, where three other things live, so that arc is
-   pinned apart the way the warm one is:
+   Every colour is a step on a Geist ramp, spent the way Geist spends it: the
+   200 step is a tint, the 400 step its hairline, the 700 step a solid and the
+   900 step text (dark mode takes the dark ramp's 200, 400 and 900). Info is
+   Geist blue itself, as it is on Vercel, so the info tone is written against
+   --hue-brand. The categories Geist has no ramp for (sky, indigo, and an
+   amber kept clear of warning) take the blue ramp's lightness and chroma at
+   their own hue, trimmed to sRGB.
 
-     info 222  →  sky 232  →  brand 258  →  indigo 283
+   The categories in the blue arc stay clear of the brand:
 
-   Brand keeps at least 20° from each neighbour and 30° from info, because a
-   link and an "In transit" badge share a row in nearly every table. Info is a
-   steel cyan at low chroma for the same reason: it is told from the blue by
-   saturation as well as by hue.
+     sky 232  →  brand 258  →  indigo 283
 
    The warm arc keeps its own floor:
 
@@ -55,21 +57,21 @@
 
    The eight categorical hues carry no meaning. Meaning is the tone ladder in
    layer 2 — encoding a warning in `amber` here would say a chart series is a
-   warning. Teal, violet and rose sit on Geist's teal, purple and pink.
+   warning. Teal, violet, rose and emerald are Geist's teal, purple, pink and
+   green.
    --------------------------------------------------------------------------- */
 
 :root {
   --hue-neutral: 0;
   --hue-brand: 258;
-  --hue-info: 222;
 
   --hue-indigo: 283;
   --hue-teal: 182;
   --hue-amber: 98;
   --hue-rose: 2;
-  --hue-emerald: 148;
+  --hue-emerald: 147;
   --hue-sky: 232;
-  --hue-violet: 306;
+  --hue-violet: 305;
   --hue-slate: 260;
 }
 
@@ -78,20 +80,25 @@
    --------------------------------------------------------------------------- */
 
 :root {
-  /* Two radii, not seven -------------------------------------------------
+  /* Three radii, not seven ----------------------------------------------
      `rounded-md` (1032 uses), `rounded-lg` (780), bare `rounded` (268),
      `rounded-sm` (108), `rounded-2xl` (99) and `rounded-xl` (46) were six
-     different corners for the same two jobs, which is the same as having
-     none: nothing could be told apart by its corner. There are two now, and
-     the mapping block below points the whole Tailwind scale at them, so no
-     call site changes and no seventh value can be invented.
+     different corners for the same jobs, which is the same as having none:
+     nothing could be told apart by its corner. The mapping block below points
+     the whole Tailwind scale at these, so no call site changes and no new
+     value can be invented.
 
-       control  buttons, inputs, badges, chips, menu rows
+       label    badges, status labels, counts, chips, filter pills
+       control  buttons, inputs, menu rows
        surface  cards, panels, dialogs, popovers, table containers
 
-     `rounded-full` is untouched; a pill is a third thing, not a radius. */
+     Corners are tight, as Vercel's are. A badge or a chip is a small label
+     with a 4px corner, never a pill: `rounded-badge`, not `rounded-full`.
+     `rounded-full` is left for what is actually round — avatars, status dots,
+     switch tracks and icon-only round buttons. */
+  --radius-label: 0.25rem; /* 4px */
   --radius-control: 0.375rem; /* 6px */
-  --radius-surface: 0.5rem; /* 8px */
+  --radius-surface: 0.375rem; /* 6px */
   --radius: var(--radius-control);
 
   /* Surfaces -------------------------------------------------------------
@@ -177,8 +184,9 @@
      series. It marks affordance, never severity, never the primary button and
      never the active nav row, which is a neutral fill as it is on Vercel.
 
-     Info is a steel cyan, 36° away and at under half the chroma, so a blue
-     link beside an "In transit" badge is two different things at a glance. */
+     Info is the same Geist blue, as it is on Vercel: a link is told from an
+     "In transit" badge by its form (bare text against a tinted label), not
+     by a second blue. */
   --brand: oklch(0.56 0.207 var(--hue-brand));
   --brand-hover: oklch(0.517 0.188 var(--hue-brand));
   --brand-foreground: oklch(1 0 0);
@@ -219,31 +227,31 @@
   --danger: oklch(0.581 0.206 25);
   --danger-hover: oklch(0.55 0.196 25);
   --danger-foreground: oklch(0.55 0.196 25);
-  --danger-subtle: oklch(0.967 0.016 17);
-  --danger-subtle-foreground: oklch(0.52 0.19 25);
-  --danger-border: oklch(0.913 0.041 18);
+  --danger-subtle: oklch(0.955 0.022 17.5);
+  --danger-subtle-foreground: oklch(0.55 0.197 25);
+  --danger-border: oklch(0.914 0.041 18);
 
   --warning: oklch(0.817 0.164 76);
   --warning-hover: oklch(0.78 0.16 74);
   --warning-on-solid: oklch(0.307 0.077 44);
   --warning-foreground: oklch(0.528 0.13 55);
-  --warning-subtle: oklch(0.976 0.024 83);
-  --warning-subtle-foreground: oklch(0.5 0.123 55);
-  --warning-border: oklch(0.909 0.09 85);
+  --warning-subtle: oklch(0.968 0.041 90);
+  --warning-subtle-foreground: oklch(0.528 0.132 54);
+  --warning-border: oklch(0.91 0.104 87);
 
   --success: oklch(0.535 0.127 147);
   --success-hover: oklch(0.49 0.12 147);
   --success-foreground: oklch(0.515 0.125 147);
-  --success-subtle: oklch(0.976 0.02 145);
-  --success-subtle-foreground: oklch(0.47 0.115 147);
-  --success-border: oklch(0.906 0.07 146);
+  --success-subtle: oklch(0.969 0.026 145);
+  --success-subtle-foreground: oklch(0.516 0.125 147);
+  --success-border: oklch(0.916 0.071 146);
 
-  --info: oklch(0.5 0.085 var(--hue-info));
-  --info-hover: oklch(0.445 0.08 var(--hue-info));
-  --info-foreground: oklch(0.47 0.082 var(--hue-info));
-  --info-subtle: oklch(0.955 0.02 var(--hue-info));
-  --info-subtle-foreground: oklch(0.415 0.075 var(--hue-info));
-  --info-border: oklch(0.88 0.04 var(--hue-info));
+  --info: oklch(0.56 0.207 var(--hue-brand));
+  --info-hover: oklch(0.517 0.188 var(--hue-brand));
+  --info-foreground: oklch(0.533 0.188 var(--hue-brand));
+  --info-subtle: oklch(0.965 0.017 var(--hue-brand));
+  --info-subtle-foreground: oklch(0.533 0.188 var(--hue-brand));
+  --info-border: oklch(0.914 0.042 var(--hue-brand));
 
   --neutral: oklch(0.51 0 0);
   --neutral-hover: oklch(0.42 0 0);
@@ -386,9 +394,13 @@
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
   --dsk-vendor-groq: oklch(0.657 0.206 31.7);
   --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
-  --dsk-gem-1: oklch(0.651 0.178 259.1);
-  --dsk-gem-2: oklch(0.651 0.191 295.9);
-  --dsk-gem-3: oklch(0.731 0.166 7.7);
+  /* Nova's colours: the sweep round its badge, blue through violet to rose. */
+  --nova-1: oklch(0.651 0.178 259.1);
+  --nova-2: oklch(0.651 0.191 295.9);
+  --nova-3: oklch(0.731 0.166 7.7);
+  --dsk-gem-1: var(--nova-1);
+  --dsk-gem-2: var(--nova-2);
+  --dsk-gem-3: var(--nova-3);
 
   /* The sky over the Desk's greeting: a wash of the part of the day behind
      the first line of the front page. It is weather, not decoration, so it is
@@ -421,13 +433,13 @@
      written out rather than borrowed from an accent so the audit can hold it to
      AA on every ground code sits on: --card, --sunken, and --surface-hover
      under a Desk reply's code block. */
-  --syntax-keyword: oklch(0.5 0.17 var(--hue-violet));
-  --syntax-string: oklch(0.5 0.11 var(--hue-emerald));
-  --syntax-number: oklch(0.5 0.1 var(--hue-amber));
+  --syntax-keyword: oklch(0.471 0.22 var(--hue-violet));
+  --syntax-string: oklch(0.516 0.125 var(--hue-emerald));
+  --syntax-number: oklch(0.5 0.103 var(--hue-amber));
   --syntax-property: oklch(0.5 0.1 var(--hue-sky));
-  --syntax-function: oklch(0.5 0.17 var(--hue-indigo));
-  --syntax-type: oklch(0.5 0.085 var(--hue-teal));
-  --syntax-meta: oklch(0.5 0.16 var(--hue-rose));
+  --syntax-function: oklch(0.5 0.19 var(--hue-indigo));
+  --syntax-type: oklch(0.52 0.091 var(--hue-teal));
+  --syntax-meta: oklch(0.535 0.188 var(--hue-rose));
 
   /* Series ---------------------------------------------------------------
      Comparison charts give every model and every provider a hue of its own,
@@ -460,40 +472,40 @@
 
      -on-subtle is darkened well below the solid in light mode; the solid at
      L 0.55 on its own 14% tint only reaches ~3.2:1, short of AA for body text. */
-  --accent-indigo: oklch(0.55 0.185 var(--hue-indigo));
-  --accent-indigo-subtle: oklch(0.952 0.023 var(--hue-indigo));
-  --accent-indigo-on-subtle: oklch(0.42 0.17 var(--hue-indigo));
-  --accent-indigo-border: oklch(0.878 0.06 var(--hue-indigo));
+  --accent-indigo: oklch(0.58 0.2 var(--hue-indigo));
+  --accent-indigo-subtle: oklch(0.966 0.017 var(--hue-indigo));
+  --accent-indigo-on-subtle: oklch(0.5 0.19 var(--hue-indigo));
+  --accent-indigo-border: oklch(0.914 0.043 var(--hue-indigo));
 
-  --accent-teal: oklch(0.55 0.093 var(--hue-teal));
-  --accent-teal-subtle: oklch(0.952 0.028 var(--hue-teal));
-  --accent-teal-on-subtle: oklch(0.42 0.071 var(--hue-teal));
-  --accent-teal-border: oklch(0.878 0.055 var(--hue-teal));
+  --accent-teal: oklch(0.65 0.114 var(--hue-teal));
+  --accent-teal-subtle: oklch(0.969 0.023 var(--hue-teal));
+  --accent-teal-on-subtle: oklch(0.52 0.091 var(--hue-teal));
+  --accent-teal-border: oklch(0.926 0.056 var(--hue-teal));
 
-  --accent-amber: oklch(0.55 0.112 var(--hue-amber));
-  --accent-amber-subtle: oklch(0.952 0.032 var(--hue-amber));
-  --accent-amber-on-subtle: oklch(0.42 0.086 var(--hue-amber));
-  --accent-amber-border: oklch(0.878 0.06 var(--hue-amber));
+  --accent-amber: oklch(0.8 0.16 var(--hue-amber));
+  --accent-amber-subtle: oklch(0.966 0.02 var(--hue-amber));
+  --accent-amber-on-subtle: oklch(0.5 0.103 var(--hue-amber));
+  --accent-amber-border: oklch(0.914 0.05 var(--hue-amber));
 
-  --accent-rose: oklch(0.55 0.17 var(--hue-rose));
-  --accent-rose-subtle: oklch(0.952 0.024 var(--hue-rose));
-  --accent-rose-on-subtle: oklch(0.42 0.15 var(--hue-rose));
-  --accent-rose-border: oklch(0.878 0.062 var(--hue-rose));
+  --accent-rose: oklch(0.636 0.212 var(--hue-rose));
+  --accent-rose-subtle: oklch(0.958 0.021 var(--hue-rose));
+  --accent-rose-on-subtle: oklch(0.535 0.188 var(--hue-rose));
+  --accent-rose-border: oklch(0.91 0.041 var(--hue-rose));
 
-  --accent-emerald: oklch(0.55 0.124 var(--hue-emerald));
-  --accent-emerald-subtle: oklch(0.952 0.028 var(--hue-emerald));
-  --accent-emerald-on-subtle: oklch(0.42 0.095 var(--hue-emerald));
-  --accent-emerald-border: oklch(0.878 0.055 var(--hue-emerald));
+  --accent-emerald: oklch(0.647 0.146 var(--hue-emerald));
+  --accent-emerald-subtle: oklch(0.969 0.026 var(--hue-emerald));
+  --accent-emerald-on-subtle: oklch(0.516 0.125 var(--hue-emerald));
+  --accent-emerald-border: oklch(0.916 0.071 var(--hue-emerald));
 
-  --accent-sky: oklch(0.55 0.105 var(--hue-sky));
-  --accent-sky-subtle: oklch(0.952 0.025 var(--hue-sky));
-  --accent-sky-on-subtle: oklch(0.42 0.08 var(--hue-sky));
-  --accent-sky-border: oklch(0.878 0.055 var(--hue-sky));
+  --accent-sky: oklch(0.58 0.118 var(--hue-sky));
+  --accent-sky-subtle: oklch(0.966 0.02 var(--hue-sky));
+  --accent-sky-on-subtle: oklch(0.5 0.102 var(--hue-sky));
+  --accent-sky-border: oklch(0.914 0.05 var(--hue-sky));
 
-  --accent-violet: oklch(0.55 0.185 var(--hue-violet));
-  --accent-violet-subtle: oklch(0.952 0.029 var(--hue-violet));
-  --accent-violet-on-subtle: oklch(0.42 0.165 var(--hue-violet));
-  --accent-violet-border: oklch(0.878 0.062 var(--hue-violet));
+  --accent-violet: oklch(0.555 0.182 var(--hue-violet));
+  --accent-violet-subtle: oklch(0.967 0.02 var(--hue-violet));
+  --accent-violet-on-subtle: oklch(0.471 0.22 var(--hue-violet));
+  --accent-violet-border: oklch(0.918 0.043 var(--hue-violet));
 
   --accent-slate: oklch(0.51 0 0);
   --accent-slate-subtle: oklch(0.961 0 0);
@@ -605,31 +617,31 @@
   --danger: oklch(0.626 0.193 23);
   --danger-hover: oklch(0.67 0.19 23);
   --danger-foreground: oklch(0.698 0.193 22);
-  --danger-subtle: oklch(0.221 0.038 18);
-  --danger-subtle-foreground: oklch(0.75 0.151 22);
-  --danger-border: oklch(0.32 0.08 20);
+  --danger-subtle: oklch(0.259 0.059 19);
+  --danger-subtle-foreground: oklch(0.698 0.193 22);
+  --danger-border: oklch(0.352 0.104 21);
 
   --warning: oklch(0.817 0.164 76);
   --warning-hover: oklch(0.85 0.138 78);
   --warning-on-solid: oklch(0.22 0.04 70);
   --warning-foreground: oklch(0.772 0.165 65);
-  --warning-subtle: oklch(0.226 0.048 74);
-  --warning-subtle-foreground: oklch(0.8 0.15 70);
-  --warning-border: oklch(0.33 0.07 66);
+  --warning-subtle: oklch(0.25 0.055 66);
+  --warning-subtle-foreground: oklch(0.772 0.165 64);
+  --warning-border: oklch(0.356 0.076 67);
 
   --success: oklch(0.645 0.145 147);
   --success-hover: oklch(0.69 0.14 147);
   --success-foreground: oklch(0.731 0.142 148);
-  --success-subtle: oklch(0.228 0.043 151);
-  --success-subtle-foreground: oklch(0.77 0.13 148);
-  --success-border: oklch(0.32 0.065 149);
+  --success-subtle: oklch(0.271 0.055 150);
+  --success-subtle-foreground: oklch(0.732 0.142 148);
+  --success-border: oklch(0.345 0.091 147);
 
-  --info: oklch(0.72 0.085 var(--hue-info));
-  --info-hover: oklch(0.77 0.08 var(--hue-info));
-  --info-foreground: oklch(0.78 0.08 var(--hue-info));
-  --info-subtle: oklch(0.29 0.045 var(--hue-info));
-  --info-subtle-foreground: oklch(0.87 0.06 var(--hue-info));
-  --info-border: oklch(0.39 0.06 var(--hue-info));
+  --info: oklch(0.717 0.148 var(--hue-brand));
+  --info-hover: oklch(0.77 0.118 var(--hue-brand));
+  --info-foreground: oklch(0.717 0.148 var(--hue-brand));
+  --info-subtle: oklch(0.255 0.055 var(--hue-brand));
+  --info-subtle-foreground: oklch(0.717 0.148 var(--hue-brand));
+  --info-border: oklch(0.34 0.097 var(--hue-brand));
 
   --neutral: oklch(0.709 0 0);
   --neutral-hover: oklch(0.77 0 0);
@@ -663,48 +675,48 @@
   --series-11: oklch(0.72 0.15 288);
   --series-12: oklch(0.72 0.142 168);
 
-  --syntax-keyword: oklch(0.8 0.12 var(--hue-violet));
-  --syntax-string: oklch(0.8 0.12 var(--hue-emerald));
-  --syntax-number: oklch(0.8 0.11 var(--hue-amber));
-  --syntax-property: oklch(0.8 0.1 var(--hue-sky));
-  --syntax-function: oklch(0.8 0.09 var(--hue-indigo));
-  --syntax-type: oklch(0.8 0.1 var(--hue-teal));
-  --syntax-meta: oklch(0.8 0.11 var(--hue-rose));
+  --syntax-keyword: oklch(0.699 0.179 var(--hue-violet));
+  --syntax-string: oklch(0.732 0.142 var(--hue-emerald));
+  --syntax-number: oklch(0.8 0.13 var(--hue-amber));
+  --syntax-property: oklch(0.718 0.13 var(--hue-sky));
+  --syntax-function: oklch(0.72 0.15 var(--hue-indigo));
+  --syntax-type: oklch(0.744 0.132 var(--hue-teal));
+  --syntax-meta: oklch(0.693 0.189 var(--hue-rose));
 
-  --accent-indigo: oklch(0.72 0.146 var(--hue-indigo));
-  --accent-indigo-subtle: oklch(0.285 0.06 var(--hue-indigo));
-  --accent-indigo-on-subtle: oklch(0.85 0.074 var(--hue-indigo));
-  --accent-indigo-border: oklch(0.38 0.084 var(--hue-indigo));
+  --accent-indigo: oklch(0.71 0.156 var(--hue-indigo));
+  --accent-indigo-subtle: oklch(0.258 0.058 var(--hue-indigo));
+  --accent-indigo-on-subtle: oklch(0.71 0.156 var(--hue-indigo));
+  --accent-indigo-border: oklch(0.348 0.1 var(--hue-indigo));
 
-  --accent-teal: oklch(0.72 0.089 var(--hue-teal));
-  --accent-teal-subtle: oklch(0.285 0.048 var(--hue-teal));
-  --accent-teal-on-subtle: oklch(0.85 0.06 var(--hue-teal));
-  --accent-teal-border: oklch(0.38 0.064 var(--hue-teal));
+  --accent-teal: oklch(0.744 0.132 var(--hue-teal));
+  --accent-teal-subtle: oklch(0.251 0.04 var(--hue-teal));
+  --accent-teal-on-subtle: oklch(0.744 0.132 var(--hue-teal));
+  --accent-teal-border: oklch(0.325 0.056 var(--hue-teal));
 
-  --accent-amber: oklch(0.72 0.111 var(--hue-amber));
-  --accent-amber-subtle: oklch(0.285 0.058 var(--hue-amber));
-  --accent-amber-on-subtle: oklch(0.85 0.063 var(--hue-amber));
-  --accent-amber-border: oklch(0.38 0.077 var(--hue-amber));
+  --accent-amber: oklch(0.8 0.15 var(--hue-amber));
+  --accent-amber-subtle: oklch(0.258 0.053 var(--hue-amber));
+  --accent-amber-on-subtle: oklch(0.8 0.15 var(--hue-amber));
+  --accent-amber-border: oklch(0.348 0.072 var(--hue-amber));
 
-  --accent-rose: oklch(0.72 0.145 var(--hue-rose));
-  --accent-rose-subtle: oklch(0.285 0.064 var(--hue-rose));
-  --accent-rose-on-subtle: oklch(0.85 0.083 var(--hue-rose));
-  --accent-rose-border: oklch(0.38 0.087 var(--hue-rose));
+  --accent-rose: oklch(0.693 0.189 var(--hue-rose));
+  --accent-rose-subtle: oklch(0.263 0.059 var(--hue-rose));
+  --accent-rose-on-subtle: oklch(0.693 0.189 var(--hue-rose));
+  --accent-rose-border: oklch(0.321 0.089 var(--hue-rose));
 
-  --accent-emerald: oklch(0.72 0.111 var(--hue-emerald));
-  --accent-emerald-subtle: oklch(0.285 0.056 var(--hue-emerald));
-  --accent-emerald-on-subtle: oklch(0.85 0.069 var(--hue-emerald));
-  --accent-emerald-border: oklch(0.38 0.077 var(--hue-emerald));
+  --accent-emerald: oklch(0.732 0.142 var(--hue-emerald));
+  --accent-emerald-subtle: oklch(0.271 0.055 var(--hue-emerald));
+  --accent-emerald-on-subtle: oklch(0.732 0.142 var(--hue-emerald));
+  --accent-emerald-border: oklch(0.345 0.091 var(--hue-emerald));
 
-  --accent-sky: oklch(0.72 0.111 var(--hue-sky));
-  --accent-sky-subtle: oklch(0.285 0.056 var(--hue-sky));
-  --accent-sky-on-subtle: oklch(0.85 0.072 var(--hue-sky));
-  --accent-sky-border: oklch(0.38 0.077 var(--hue-sky));
+  --accent-sky: oklch(0.71 0.144 var(--hue-sky));
+  --accent-sky-subtle: oklch(0.258 0.053 var(--hue-sky));
+  --accent-sky-on-subtle: oklch(0.71 0.144 var(--hue-sky));
+  --accent-sky-border: oklch(0.348 0.071 var(--hue-sky));
 
-  --accent-violet: oklch(0.72 0.157 var(--hue-violet));
-  --accent-violet-subtle: oklch(0.285 0.064 var(--hue-violet));
-  --accent-violet-on-subtle: oklch(0.85 0.093 var(--hue-violet));
-  --accent-violet-border: oklch(0.38 0.087 var(--hue-violet));
+  --accent-violet: oklch(0.699 0.179 var(--hue-violet));
+  --accent-violet-subtle: oklch(0.259 0.062 var(--hue-violet));
+  --accent-violet-on-subtle: oklch(0.699 0.179 var(--hue-violet));
+  --accent-violet-border: oklch(0.358 0.115 var(--hue-violet));
 
   --accent-slate: oklch(0.709 0 0);
   --accent-slate-subtle: oklch(0.239 0 0);
@@ -881,9 +893,13 @@
   --dsk-vendor-gemini-soft: oklch(0.733 0.137 262.9);
   --dsk-vendor-groq: oklch(0.657 0.206 31.7);
   --dsk-vendor-mistral: oklch(0.665 0.214 37.6);
-  --dsk-gem-1: oklch(0.651 0.178 259.1);
-  --dsk-gem-2: oklch(0.651 0.191 295.9);
-  --dsk-gem-3: oklch(0.731 0.166 7.7);
+  /* Nova's colours: the sweep round its badge, blue through violet to rose. */
+  --nova-1: oklch(0.651 0.178 259.1);
+  --nova-2: oklch(0.651 0.191 295.9);
+  --nova-3: oklch(0.731 0.166 7.7);
+  --dsk-gem-1: var(--nova-1);
+  --dsk-gem-2: var(--nova-2);
+  --dsk-gem-3: var(--nova-3);
 
   /* Colour on a near-black ground reads weaker at the same mix, so the sky
      takes a little more of it. */
@@ -1220,11 +1236,12 @@
   --color-invert-foreground: var(--invert-foreground);
 
   /* Radius ----------------------------------------------------------------
-     Seven names, two values. The whole Tailwind scale is pointed at the two
-     real radii so `rounded-md` on a button and `rounded-2xl` on a card land on
-     the corner each of them should have had, without touching 2,300 call
-     sites. A new `rounded-3xl` cannot introduce an eighth corner because
-     there is nowhere for it to land. */
+     The whole Tailwind scale is pointed at the real radii so `rounded-md` on
+     a button and `rounded-2xl` on a card land on the corner each of them
+     should have had, without touching 2,300 call sites. A new `rounded-3xl`
+     cannot introduce another corner because there is nowhere for it to land.
+     `rounded-badge` is the label corner. */
+  --radius-badge: var(--radius-label);
   --radius-sm: var(--radius-control);
   --radius-md: var(--radius-control);
   --radius-lg: var(--radius-surface);
@@ -2099,29 +2116,24 @@
    build, a test or a type check. check-design-tokens.mjs asserts that every
    @utility declared here reaches the compiled stylesheet. */
 
-/* Focus landed on the element itself. */
-/* Nova's mark: a ring painted with a conic sweep of three categorical accents,
-   so it reads as Nova's own and never as a tone. The sweep starts from
-   --nova-angle, which nova-turn animates, so the colours travel round a ring
-   that stays where it is. */
-@utility nova-ring {
+/* Nova's badge: a disc with a hollow centre, painted with a conic sweep of
+   Nova's three colours. The centre is cut by a mask rather than filled, so the
+   badge sits on any surface. The sweep starts from --nova-angle, which
+   nova-turn animates, so the colours travel round a badge that stays where it
+   is. */
+@utility nova-badge {
   border-radius: 9999px;
   background: conic-gradient(
     from calc(200deg + var(--nova-angle)),
-    var(--accent-indigo),
-    var(--accent-violet),
-    var(--accent-rose),
-    var(--accent-indigo)
+    var(--nova-1),
+    var(--nova-2),
+    var(--nova-3),
+    var(--nova-1)
   );
-  mask: radial-gradient(
-    farthest-side,
-    transparent 53.5%,
-    black 55%,
-    black 86.5%,
-    transparent 88%
-  );
+  mask: radial-gradient(farthest-side, transparent 57%, black 61%);
 }
 
+/* Focus landed on the element itself. */
 @utility ui-focus-ring {
   &:focus-visible {
     outline: none;

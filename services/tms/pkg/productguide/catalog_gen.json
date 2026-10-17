@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9a99065e6731581ae6bd587b5ba744e59cdd6e8f93d56e50ecc6ed3dd96eb999",
+  "version": "sha256:b4b74e102955e1a16c95454d581e70c9cab1c720f8c4f8b0bd0274f87d12389d",
   "modules": [
     {
       "id": "home",
@@ -182,7 +182,7 @@
         "Accounting dashboard"
       ],
       "description": "Receivables health, collections, and cash-flow at a glance.",
-      "summary": "The accounting dashboard is the landing page of Accounting management. It shows the health of receivables at a glance: **AR outstanding**, **Days sales outstanding**, **Collection effectiveness**, **Unapplied cash** and the **Overdue** share, followed by a **DSO trend** chart, a **Cash-flow forecast — 90 days**, an **Aging** breakdown, **Collections performance**, the **Top overdue customers** and a **Collections worklist**.\n\nControllers, AR clerks and collections staff use it to decide where to spend the day: which customers to chase, how much cash is waiting to be applied, and how collections are trending. Until the first invoice posts from billing, the page shows **Nothing on the books yet** instead of the figures.",
+      "summary": "The accounting dashboard is the landing page of Accounting management. It opens with the day's brief, which leads with what the figures below it do not show: a customer who missed a promise to pay, invoices about to pass 90 days past due, past-due customers nobody has contacted in two weeks, promises and invoices coming due in the next few days, how much of the past-due balance one customer holds, small short-paid balances that could be written off, invoices still sitting in draft, and a book where no cash has been recorded at all. Under it, the next steps open the page where each gets done. Below them are the figures at a glance: **AR outstanding**, **Days sales outstanding**, **Collection effectiveness**, **Unapplied cash** and the **Overdue** share, followed by the **Days sales outstanding** trend, a **Cash-flow forecast**, an **Aging** breakdown, **Collections performance**, the **Collections worklist** and the **Top overdue customers**, and the **Cash insights** found in the book.\n\nControllers, AR clerks and collections staff use it to decide where to spend the day: which customers to chase, how much cash is waiting to be applied, and how collections are trending. Until the first invoice posts from billing, the page shows **Nothing on the books yet** instead of the figures.",
       "requires": [
         {
           "resource": "accounts_receivable",
@@ -196,9 +196,29 @@
         "receivables dashboard",
         "DSO",
         "collections dashboard",
-        "cash flow forecast"
+        "cash flow forecast",
+        "accounting brief",
+        "receivables briefing"
       ],
       "tasks": [
+        {
+          "title": "Read the day's brief",
+          "keywords": [
+            "accounting brief",
+            "receivables summary",
+            "morning brief",
+            "what needs attention today",
+            "next steps",
+            "missed promise to pay",
+            "about to pass 90 days"
+          ],
+          "steps": [
+            "Open [Accounting](/accounting). The brief is at the top of the page.",
+            "Select an underlined phrase to open what it names: a missed promise opens that customer in [Collections](/accounting/ar/collections), invoices about to pass 90 days open [AR aging](/accounting/ar/aging), customers due a call open the due list in Collections, invoices falling due open [Open items](/accounting/ar/open-items), and a customer that holds much of the past-due balance opens in the [Customer ledger](/accounting/ar/customer-ledger).",
+            "Use the next steps under the brief to work through the day, most pressing first: call about a missed promise, call about invoices before they pass 90 days, contact customers not reached in 14 days, post invoices still in draft, check that payments are being recorded, work the follow-ups that are due, confirm promises coming due, send reminders or statements for invoices falling due, clear small short-pay balances and apply unapplied cash.",
+            "The line under the brief says when it was written, and is marked with the assist mark when an AI provider worded it from the computed figures. Without a provider the brief reads plainer and says the same thing."
+          ]
+        },
         {
           "title": "Check how receivables are doing",
           "keywords": [
@@ -225,9 +245,9 @@
           ],
           "steps": [
             "Open [Accounting](/accounting).",
-            "Look at **Top overdue customers** and the **Collections worklist**. Worklist rows show how far past due an invoice is and flag **Disputed** and **Short-paid** invoices.",
-            "Select a customer or worklist row to open that customer in the [Customer ledger](/accounting/ar/customer-ledger).",
-            "Select **View aging** to see every customer's balance by age, or **Open items** to see every outstanding invoice."
+            "Look at the **Collections worklist** and **Top overdue customers**. Worklist rows show how far past due an invoice is and flag **Disputed** and **Short-paid** invoices.",
+            "Select a worklist row to open that customer in [Collections](/accounting/ar/collections), or a top overdue customer to open it in the [Customer ledger](/accounting/ar/customer-ledger).",
+            "Select **Open collections** to work the whole queue, or **View aging** to see every customer's balance by age."
           ]
         },
         {
@@ -239,7 +259,7 @@
           ],
           "steps": [
             "Open [Accounting](/accounting).",
-            "In the **Aging** card, switch between the snapshot and trend views with the buttons in the card header."
+            "In the **Aging** panel, switch between **Snapshot** and **Trend** in the panel header. The trend view adds a range of 13, 26 or 52 weeks beside it."
           ]
         },
         {
@@ -255,9 +275,10 @@
           ]
         }
       ],
-      "notes": "Opening the dashboard needs read access to accounts receivable. **Record payment** only appears for people who can create customer payments.\n\nThe quick links at the bottom of the page jump to the other accounting pages, such as [Manual journals](/accounting/manual-journals), [Journal reversals](/accounting/journal-reversals), [Bank receipts](/accounting/reconciliation/bank-receipts), [Trial balance](/accounting/reports/trial-balance) and [Balance sheet](/accounting/reports/balance-sheet).",
+      "notes": "Opening the dashboard needs read access to accounts receivable. **Record payment** only appears for people who can create customer payments.\n\nThe brief is written for the organization before the workday and again when the figures it cites change, checked at most every half hour and a few times a day at most, so two people reading it see the same words.\n\nThe other accounting pages, such as [Manual journals](/accounting/manual-journals), [Journal reversals](/accounting/journal-reversals), [Bank receipts](/accounting/reconciliation/bank-receipts), [Trial balance](/accounting/reports/trial-balance) and [Balance sheet](/accounting/reports/balance-sheet), are in the Accounting panel beside the page.",
       "related": [
         "/accounting/ar/aging",
+        "/accounting/ar/collections",
         "/accounting/ar/open-items",
         "/accounting/ar/payments",
         "/accounting/ar/customer-ledger"
@@ -9063,7 +9084,7 @@
             "Open the conversation from [Desk](/desk).",
             "In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.",
             "To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).",
-            "To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.",
+            "To delete it, hover over it in the rail and select **Delete conversation** (the bin). It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.",
             "Select **Workspace** in the top bar (or press ⌘\\\\ / Ctrl+\\\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation."
           ]
         },
@@ -9494,7 +9515,8 @@
           "steps": [
             "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\". You can also type /schedule, then the when and the request.",
             "Instead of an answer, a **Scheduled** card appears: **Results will post into this conversation**. The card shows the request, how often it runs and when it runs next.",
-            "On the card, select **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**."
+            "On the card, open **Schedule actions** (the three dots) and select **Edit** to change it, **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**.",
+            "To see every request you have scheduled, across all of your conversations, open [Scheduled requests](/desk/scheduled) from **Scheduled** in the sidebar. You can run, pause, resume or delete each one there."
           ]
         },
         {
@@ -9800,6 +9822,7 @@
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
+        "/desk/scheduled",
         "/triage",
         "/admin/agent-control"
       ],
@@ -10236,6 +10259,137 @@
       "inNavigation": false
     },
     {
+      "path": "/desk/scheduled",
+      "name": "Scheduled",
+      "module": "desk",
+      "breadcrumb": [
+        "Desk",
+        "Scheduled"
+      ],
+      "description": "**Scheduled requests** lists every request you asked Desk to repeat, such as \"every Monday at 8am, send me invoices more than 60 days past due\", across all of your conversations.",
+      "summary": "**Scheduled requests** lists every request you asked Desk to repeat, such as \"every Monday at 8am, send me invoices more than 60 days past due\", across all of your conversations. Open it from **Scheduled** in the [Desk](/desk) sidebar.\n\nEach run asks the conversation's agent the request again, with the access you have at the time it runs, and the answer posts into the conversation the request was made in. A request runs at the time it names on your own clock, or your organization's when you have not set one.\n\nRequests that will run are listed under **Coming up**, the soonest first. Each shows how often it runs and when it runs next, the conversation its answers post into, and when it last ran. Paused requests are listed under **Paused**.",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "scheduled requests",
+        "edit a schedule",
+        "change a schedule",
+        "my schedules",
+        "recurring requests",
+        "recurring reports",
+        "scheduled reports",
+        "automations",
+        "what have I scheduled",
+        "see my schedules",
+        "stop a schedule",
+        "cancel a schedule",
+        "pause a schedule",
+        "every morning report",
+        "daily report",
+        "weekly report",
+        "run a schedule now"
+      ],
+      "tasks": [
+        {
+          "title": "See what you have scheduled",
+          "keywords": [
+            "my schedules",
+            "what have I scheduled",
+            "recurring requests",
+            "list schedules"
+          ],
+          "steps": [
+            "Open [Scheduled requests](/desk/scheduled).",
+            "**Coming up** lists the requests that will run, the soonest first. **Paused** lists the ones that will not run until you resume them.",
+            "The line under each request says how often it runs and when it runs next. The line below that names the conversation its answers post into and when it last ran, or **Hasn't run yet**.",
+            "Select the conversation's name to open it and read the answers."
+          ]
+        },
+        {
+          "title": "Run a scheduled request now",
+          "keywords": [
+            "run now",
+            "run it again",
+            "try my schedule",
+            "test a schedule"
+          ],
+          "steps": [
+            "On [Scheduled requests](/desk/scheduled), select **Run now** on the request. It runs even when it is paused.",
+            "A note says it is running and where the answer will post. Select **Open** on the note to go to the conversation.",
+            "Its next scheduled run is not changed."
+          ]
+        },
+        {
+          "title": "Change a scheduled request",
+          "keywords": [
+            "edit schedule",
+            "change schedule time",
+            "change what it asks",
+            "reschedule",
+            "change day"
+          ],
+          "steps": [
+            "On [Scheduled requests](/desk/scheduled), or on the request's **Scheduled** card in its conversation, open **Schedule actions** (the three dots) and select **Edit**.",
+            "Change **What to ask**. Under **Cadence**, choose how often it runs (every day, every weekday or every week), the time it runs at, and for every week the day it runs on. The time is on the clock the request was made on, which the editor names.",
+            "Select **Save**. The request's next run is worked out again from the new time."
+          ]
+        },
+        {
+          "title": "Pause or resume a scheduled request",
+          "keywords": [
+            "pause",
+            "stop for now",
+            "resume",
+            "turn off a schedule",
+            "turn on a schedule"
+          ],
+          "steps": [
+            "On [Scheduled requests](/desk/scheduled), open **Schedule actions** (the three dots) on the request and select **Pause**. It moves to **Paused** and does not run until you resume it.",
+            "To start it again, open **Schedule actions** on it under **Paused** and select **Resume**."
+          ]
+        },
+        {
+          "title": "Delete a scheduled request",
+          "keywords": [
+            "delete schedule",
+            "cancel schedule",
+            "remove schedule",
+            "stop for good"
+          ],
+          "steps": [
+            "On [Scheduled requests](/desk/scheduled), open **Schedule actions** (the three dots) on the request and select **Delete**.",
+            "The row asks **Delete this schedule?** Select **Delete** to remove it, or **Cancel** to keep it.",
+            "Answers it already posted stay in the conversation. Its card there says **Schedule deleted**."
+          ]
+        },
+        {
+          "title": "Schedule a new request",
+          "keywords": [
+            "new schedule",
+            "add schedule",
+            "schedule a report",
+            "recurring report"
+          ],
+          "steps": [
+            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\". You can also type /schedule, then the when and the request.",
+            "A **Scheduled** card appears in the conversation, and the request is listed on [Scheduled requests](/desk/scheduled)."
+          ]
+        }
+      ],
+      "notes": "- Answers post only into the conversation the request was made in. They are not emailed. - Deleting a conversation deletes the requests scheduled in it, and they stop running at once. A conversation with scheduled requests asks before it is deleted and lists the ones that will go with it. - A conversation can keep up to 25 scheduled requests, and you can keep up to 100 in all. - If you lose access to a conversation's agent, its scheduled requests stop running. You can still pause or delete them. - **Run now** needs permission to ask agents. Without it you can still pause, resume and delete your requests.",
+      "related": [
+        "/desk"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
+    },
+    {
       "path": "/desk/watchtower",
       "name": "Watchtower",
       "module": "desk",
@@ -10243,8 +10397,8 @@
         "Desk",
         "Watchtower"
       ],
-      "description": "Watchtower is a live feed on the Desk of everything across the operation that is worth a look, newest first.",
-      "summary": "Watchtower is a live feed on the Desk of everything across the operation that is worth a look, newest first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, truck arrivals and departures that could not be recorded on their stop, and accounting sync problems.\n\nEach item shows a coloured dot for its severity (Critical, Warning or Info), a title, a short summary, what kind of event it is and how long ago it happened. Items that arrived since your last visit have their titles in heavier text. You only see the kinds of items whose records you are allowed to open. An item leaves the feed when the problem behind it is resolved, or when someone dismisses it. The number next to **Watchtower** in the Desk sidebar is how many open items you can see.",
+      "description": "Watchtower is the Desk's queue of everything across the operation that needs someone, worked one item at a time, soonest deadline first.",
+      "summary": "Watchtower is the Desk's queue of everything across the operation that needs someone, worked one item at a time, soonest deadline first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, late or missed stops, missing PODs, exhausted tenders, missing check calls, truck arrivals and departures that could not be recorded on their stop, accounting sync problems and factoring.\n\nThe queue down the left is grouped by how long is left before each item's deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** (more than a day out) and **For your information** (no deadline). Each row shows the kind of item on a tile coloured by severity (red for Critical, amber for Warning), its title, the record it is about, and the countdown when the deadline is less than a day away. A blue dot marks an item you have not opened yet. When an agent is working an item, the row shows the agent instead and says it is on it, or that it needs you. Across the top, the bar shows how many items you have cleared today out of all of them, and **On it** shows a ring for each agent at work; select a ring to open that item.\n\nThe middle of the page is the item in front of you: a clock counting down to its deadline and what happens then (such as \"Minneapolis dock closes in\"), what kind of item it is and when it was raised, its title and summary, **At stake** (the loads, money or customers involved), a button that opens the record it is about with its key facts, the events that led to it, and either the agent working it with its progress or the agent best placed to take it.\n\nYou only see the kinds of items whose records you are allowed to open. An item leaves the queue when you mark it done, when you snooze it, or when the problem behind it clears. The number next to **Watchtower** in the Desk sidebar is how many items are in the queue.",
       "requires": [
         {
           "resource": "assistant",
@@ -10262,66 +10416,60 @@
         "alerts feed",
         "exceptions feed",
         "exception feed",
+        "exception queue",
         "notifications",
         "things to look at",
         "operational alerts",
         "AI monitoring",
         "failed agent runs",
         "agent exceptions",
-        "quarantined EDI"
+        "quarantined EDI",
+        "deadlines"
       ],
       "tasks": [
         {
-          "title": "Review what needs attention",
+          "title": "Work through the queue",
           "keywords": [
             "check alerts",
             "what went wrong",
             "exceptions today",
-            "open alerts"
+            "open alerts",
+            "next item",
+            "keyboard"
           ],
           "steps": [
             "Open the [Desk](/desk) and select **Watchtower** in the sidebar, or go straight to [Watchtower](/desk/watchtower).",
-            "Read down the list. The newest items are at the top, and new ones since your last visit have their titles in heavier text.",
-            "Opening Watchtower marks everything in it as seen, so those items are no longer counted as new the next time you come back."
+            "The queue opens on the item with the soonest deadline. Select any row to open it instead.",
+            "Use the arrows under the card, or press J (or the down arrow) for the next item and K (or the up arrow) for the previous one.",
+            "Opening an item marks it as seen, so its blue dot goes away."
           ]
         },
         {
-          "title": "Filter by severity or kind of event",
+          "title": "Mark an item done",
           "keywords": [
-            "show only critical",
-            "filter alerts",
-            "critical alerts",
-            "by event type"
+            "clear alert",
+            "resolve",
+            "close alert",
+            "finished",
+            "remove from queue"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower).",
-            "In the row of chips across the top, select **Critical**, **Warning** or **Info** to show only items of that severity. You can turn on more than one.",
-            "After the severity chips come one chip per kind of event that has open items, each with its count, such as service failures, EDI quarantined or credentials expiring. Select one or more to narrow the list to those kinds.",
-            "Select a chip again to turn it off. With every chip off, the feed shows everything."
+            "Open [Watchtower](/desk/watchtower) on the item.",
+            "Select **Done**, or press E. The card slides away, the next item takes its place and the cleared count goes up.",
+            "If the item changed while you had it open, it comes back as it is now. Look at it again and select **Done** if it still is."
           ]
         },
         {
-          "title": "Open the record behind an item",
+          "title": "Snooze an item",
           "keywords": [
-            "go to the shipment",
-            "view the source",
-            "jump to record"
+            "later",
+            "put aside",
+            "remind me tomorrow",
+            "hide until tomorrow"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select the arrow (**Open the record**) to go to the page of the record the item is about. Items that have no record don't show the arrow."
-          ]
-        },
-        {
-          "title": "Ask an agent about an item",
-          "keywords": [
-            "investigate alert",
-            "explain this exception",
-            "ask AI about alert"
-          ],
-          "steps": [
-            "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the record behind the item. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet."
+            "Open [Watchtower](/desk/watchtower) on the item.",
+            "Select **Snooze**, or press S. The item leaves the queue until eight tomorrow morning in your time zone, then comes back on its own."
           ]
         },
         {
@@ -10332,40 +10480,63 @@
             "assign to agent"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select **Hand off**. This button appears only on items about a record an agent can work on.",
-            "A message tells you what happened. If agents are set up to handle that kind of event, the item goes to them and the message names them. If none is, the message says **No agent subscribes to this yet** and names an agent that could take it. If no agent at all can take it, you see **No agent can take this one yet**."
+            "Open [Watchtower](/desk/watchtower) on the item.",
+            "Select **Hand off**, or press H, to give it to the agent the card suggests. To choose another agent, select the arrow beside **Hand off** and pick one from the list.",
+            "The agent starts at once. The item stays in the queue, now showing the agent and a bar of its steps: reading the record, working out what to do, and asking you to approve.",
+            "**Hand off** appears only on items about a record an agent can work on, and only while no agent is working the item."
           ]
         },
         {
-          "title": "Dismiss an item",
+          "title": "Approve what an agent drafted",
           "keywords": [
-            "clear alert",
-            "hide item",
-            "remove from feed",
-            "close alert"
+            "agent needs me",
+            "review agent work",
+            "approve agent change"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select the X (**Dismiss**). The item comes off Watchtower for everyone in your organization. The record behind it doesn't change: a dismissed service failure is still a service failure on its own page."
+            "Open [Watchtower](/desk/watchtower) on an item whose agent needs you; its row says so.",
+            "Select **Review & approve** in the agent's panel. [Decisions](/desk/decisions) opens on the change the agent proposed.",
+            "If the agent's run stopped before it finished, the panel says why and offers **See the run** instead."
           ]
         },
         {
-          "title": "Rate an item raised by an agent",
+          "title": "Ask an agent about an item",
           "keywords": [
-            "thumbs up",
-            "thumbs down",
-            "agent feedback",
-            "rate insight"
+            "investigate alert",
+            "explain this exception",
+            "ask AI about alert"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) and hover an item raised by an agent's work: an insight, proposal, plan, failed agent run or agent exception.",
-            "Select the thumbs up (**Helpful**) or thumbs down (**Not helpful**). The rating is saved right away, and a small box opens where you can say why. You can close it without answering.",
-            "Select the same thumb again to take the rating back."
+            "Open [Watchtower](/desk/watchtower) on the item.",
+            "Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the item: the agent sees the record behind it, its deadline, its facts and what is at stake. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet."
+          ]
+        },
+        {
+          "title": "Open the record behind an item",
+          "keywords": [
+            "go to the shipment",
+            "view the source",
+            "jump to record"
+          ],
+          "steps": [
+            "Open [Watchtower](/desk/watchtower) on the item.",
+            "Select the record button under **At stake**. It names the record and its key facts, and opens the record's page."
+          ]
+        },
+        {
+          "title": "See the critical items",
+          "keywords": [
+            "show only critical",
+            "critical alerts",
+            "what is on fire"
+          ],
+          "steps": [
+            "On the Desk's **Today** page, select the link that says how many items are critical in Watchtower, or the **Critical** block of the morning briefing.",
+            "Watchtower opens on the first critical item in the queue."
           ]
         }
       ],
-      "notes": "- You need read access to the assistant to open the Desk, and read access to Watchtower to open this page. Inside it, you only see each kind of item if you can read that kind of record. For example, EDI items need EDI access and credential items need driver access. - Dismissing, handing off and marking items seen need update access to Watchtower. - **Ask about this** appears only when you have at least one agent available. **Hand off** appears only on items about a record an agent can work on. - When nothing is open, the page says **Nothing is asking for you**.",
+      "notes": "- You need read access to the assistant to open the Desk, and read access to Watchtower to open this page. Inside it, you only see each kind of item if you can read that kind of record. For example, EDI items need EDI access and credential items need driver access. - Marking items done, snoozing them and handing them off need update access to Watchtower. With read access only, the bar says you can read the items but not act on them. - A deadline the record reports itself, such as a dock closing or a certificate lapsing, is the item's deadline. Otherwise the deadline comes from the due times for each severity in dispatch controls. - **Ask about this** needs at least one agent available to you. - When nothing is left, the page says **All clear** and how many items you cleared today.",
       "related": [
         "/desk",
         "/desk/decisions",

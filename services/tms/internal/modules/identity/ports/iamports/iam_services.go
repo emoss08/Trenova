@@ -142,4 +142,5 @@ type IAMService interface {
 		orgID pulid.ID,
 		limit int,
 	) ([]*iam.MFAAuthenticator, error)
+	IAMConnections
 }

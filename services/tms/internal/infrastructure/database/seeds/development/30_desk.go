@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -22,6 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -48,10 +53,12 @@ type DeskSeed struct {
 // alone, "Ask about this" opens a thread on a real subject, and "Hand off"
 // has something to hand off.
 //
-// A handful of rows are written directly, for the kinds whose sources are not
-// seeded at all — hours of service, weather, a credential sweep. Those carry
-// no subject on purpose: offering to hand one to an agent would be offering
-// to work on nothing.
+// The queue the Watchtower page works through is written directly: an item in
+// each deadline lane, agents working, waiting on a person and done, an overdue
+// detention clock, items with a trail and items with no deadline. Those about
+// a seeded shipment or driver carry it as their subject, so they can be handed
+// off; the rest carry none, because offering to hand one to an agent would be
+// offering to work on nothing.
 //
 // The briefing is deterministic and un-narrated, which is exactly what a
 // briefing looks like on an installation with no provider reachable — a
@@ -79,15 +86,19 @@ func NewDeskSeed() *DeskSeed {
 }
 
 type deskSeedRefs struct {
-	org        *tenant.Organization
-	messages   []*inboundmessage.InboundMessage
-	proposals  []*agent.AgentProposal
-	plans      []*agent.AgentPlan
-	failedRuns []*agent.AgentRun
-	exceptions []*agent.AgentException
-	insights   []*insight.Insight
-	agentNames map[pulid.ID]string
-	now        int64
+	org         *tenant.Organization
+	readerID    pulid.ID
+	messages    []*inboundmessage.InboundMessage
+	proposals   []*agent.AgentProposal
+	plans       []*agent.AgentPlan
+	failedRuns  []*agent.AgentRun
+	exceptions  []*agent.AgentException
+	insights    []*insight.Insight
+	agentNames  map[pulid.ID]string
+	definitions map[agentdefinition.Template]*agentdefinition.Definition
+	shipments   map[string]*shipment.Shipment
+	workers     []*worker.Worker
+	now         int64
 }
 
 func (s *DeskSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -133,6 +144,9 @@ func (s *DeskSeed) loadRefs(
 	}
 
 	refs := &deskSeedRefs{org: org, now: timeutils.NowUnix()}
+	if admin, adminErr := sc.GetUserByUsername(ctx, "admin"); adminErr == nil {
+		refs.readerID = admin.ID
+	}
 
 	cols := inboundmessagecol.InboundMessageColumns
 	refs.messages = make([]*inboundmessage.InboundMessage, 0, 4)
@@ -150,6 +164,9 @@ func (s *DeskSeed) loadRefs(
 	}
 
 	if err = refs.loadAgentWork(ctx, tx); err != nil {
+		return nil, err
+	}
+	if err = refs.loadQueueRefs(ctx, tx); err != nil {
 		return nil, err
 	}
 
@@ -239,8 +256,14 @@ func (r *deskSeedRefs) loadAgentNames(ctx context.Context, tx bun.Tx) error {
 	}
 
 	byDefinition := make(map[pulid.ID]string, len(definitions))
+	r.definitions = make(map[agentdefinition.Template]*agentdefinition.Definition, len(definitions))
 	for _, definition := range definitions {
 		byDefinition[definition.ID] = definition.Name
+		if definition.Template != "" && definition.Enabled {
+			if _, taken := r.definitions[definition.Template]; !taken {
+				r.definitions[definition.Template] = definition
+			}
+		}
 	}
 
 	runs := make([]*agent.AgentRun, 0, 16)
@@ -297,106 +320,59 @@ func (s *DeskSeed) insertItems(
 		inputs = append(inputs, watchtowersources.DescribeException(entity))
 	}
 
-	items := make([]*watchtower.Item, 0, len(inputs)+5)
+	policy := (*dispatchcontrol.DispatchControl)(nil).ExceptionPolicy()
+	queue := s.queueItems(refs, refs.readerID)
+	items := make([]*watchtower.Item, 0, len(inputs)+len(queue.items)+1)
 	for _, input := range inputs {
-		items = append(items, &watchtower.Item{
-			ID:             pulid.MustNew("wt_"),
-			OrganizationID: refs.org.ID,
-			BusinessUnitID: refs.org.BusinessUnitID,
-			SourceKind:     input.SourceKind,
-			SourceID:       input.SourceID,
-			Severity:       input.Severity,
-			Title:          input.Title,
-			Summary:        input.Summary,
-			SubjectType:    input.SubjectType,
-			SubjectID:      input.SubjectID,
-			EventKind:      input.EventKind,
-			Path:           input.Path,
-			OccurredAt:     input.OccurredAt,
-		})
+		input.TenantInfo = pagination.TenantInfo{OrgID: refs.org.ID, BuID: refs.org.BusinessUnitID}
+		item := watchtowerservice.ItemFromInput(input)
+		item.ID = pulid.MustNew("wt_")
+		item.Status = watchtower.StatusOpen
+		if item.DueAt == nil {
+			due := watchtowerservice.DueAt(policy, item.Severity, refs.now)
+			item.DueAt = &due
+			item.DueSource = watchtower.DueSourcePolicy
+		}
+		items = append(items, item)
 	}
-
+	items = append(items, queue.items...)
 	items = append(items, s.standingItems(refs)...)
 
+	if len(queue.runs) > 0 {
+		if _, err := tx.NewInsert().Model(&queue.runs).Exec(ctx); err != nil {
+			return fmt.Errorf("insert watchtower agent runs: %w", err)
+		}
+	}
 	if _, err := tx.NewInsert().Model(&items).Exec(ctx); err != nil {
 		return fmt.Errorf("insert watchtower items: %w", err)
+	}
+	if len(queue.reads) > 0 {
+		if _, err := tx.NewInsert().Model(&queue.reads).Exec(ctx); err != nil {
+			return fmt.Errorf("insert watchtower item reads: %w", err)
+		}
 	}
 
 	return nil
 }
 
-// standingItems round out the feed so every severity and several kinds are on
-// it. They deliberately carry no subject: the records they stand for are not
-// seeded, so offering to hand one to an agent would offer to work on nothing.
 func (s *DeskSeed) standingItems(refs *deskSeedRefs) []*watchtower.Item {
 	resolved := refs.now - 2*deskSeedHour
-	build := func(
-		kind watchtower.SourceKind,
-		sourceID string,
-		severity watchtower.Severity,
-		title string,
-		summary string,
-		occurredAt int64,
-	) *watchtower.Item {
-		return &watchtower.Item{
+
+	return []*watchtower.Item{
+		{
 			ID:             pulid.MustNew("wt_"),
 			OrganizationID: refs.org.ID,
 			BusinessUnitID: refs.org.BusinessUnitID,
-			SourceKind:     kind,
-			SourceID:       sourceID,
-			Severity:       severity,
-			Title:          title,
-			Summary:        summary,
-			OccurredAt:     occurredAt,
-		}
-	}
-
-	closed := build(
-		watchtower.SourceServiceFailure,
-		"seed-watchtower-service-failure",
-		watchtower.SeverityWarning,
-		"Service failure closed: late delivery on the Columbus lane",
-		"Root cause recorded as receiver congestion; no charge raised.",
-		refs.now-deskSeedDay,
-	)
-	closed.ResolvedAt = &resolved
-	closed.Status = watchtower.StatusResolved
-	closed.ResolutionCode = watchtower.ResolutionCleared
-
-	return []*watchtower.Item{
-		build(
-			watchtower.SourceHOSViolation,
-			"seed-watchtower-hos",
-			watchtower.SeverityCritical,
-			"Hours of service: driver over the 14-hour window",
-			"The clock ran out 22 minutes before the appointment; the move needs reassigning.",
-			refs.now-45*60,
-		),
-		build(
-			watchtower.SourceWorkerCredential,
-			"seed-watchtower-credential",
-			watchtower.SeverityWarning,
-			"Three credentials expiring for one driver",
-			"Medical card, hazmat endorsement and annual review all fall inside 30 days.",
-			refs.now-5*deskSeedHour,
-		),
-		build(
-			watchtower.SourceBillingException,
-			"seed-watchtower-billing",
-			watchtower.SeverityWarning,
-			"Billing blocked: accessorial has no rate",
-			"A detention charge was added by hand and matches no agreement line.",
-			refs.now-7*deskSeedHour,
-		),
-		build(
-			watchtower.SourceWeatherAlert,
-			"seed-watchtower-weather",
-			watchtower.SeverityInfo,
-			"Winter storm warning across I-80 in Nebraska",
-			"Two moves are routed through the warned counties tomorrow morning.",
-			refs.now-deskSeedHour,
-		),
-		closed,
+			SourceKind:     watchtower.SourceServiceFailure,
+			SourceID:       "seed-watchtower-service-failure",
+			Severity:       watchtower.SeverityWarning,
+			Title:          "Service failure closed: late delivery on the Columbus lane",
+			Summary:        "Root cause recorded as receiver congestion; no charge raised.",
+			OccurredAt:     refs.now - deskSeedDay,
+			ResolvedAt:     &resolved,
+			Status:         watchtower.StatusResolved,
+			ResolutionCode: watchtower.ResolutionCleared,
+		},
 	}
 }
 

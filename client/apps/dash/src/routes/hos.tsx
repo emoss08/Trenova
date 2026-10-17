@@ -103,7 +103,7 @@ function ClockHero({ state }: { state: MyHosState }) {
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Badge variant={duty.variant}>{t(duty.label)}</Badge>
         {state.currentVehicleId ? (
-          <span className="inline-flex max-w-40 items-center gap-1 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
+          <span className="inline-flex max-w-40 items-center gap-1 rounded-badge border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
             <Truck01Icon className="size-3.5 shrink-0" />
             <span className="truncate font-mono">{state.currentVehicleId}</span>
           </span>

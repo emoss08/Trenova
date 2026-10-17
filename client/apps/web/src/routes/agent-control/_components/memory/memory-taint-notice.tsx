@@ -12,6 +12,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { memorySourceLabel } from "../activity/agent-badges";
+import { ScrollBox } from "../kit/layout";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 
 type TaintDecision = { memory: AgentMemorySuggestion; action: "review" | "retire" };
@@ -70,51 +71,56 @@ export function MemoryTaintNotice({ canDecide }: { canDecide: boolean }) {
             {decide.error instanceof Error ? decide.error.message : t("That didn't go through")}
           </span>
         ) : null}
-        <ul aria-label={t("Memories that taint every turn")} className="flex flex-col gap-1.5">
-          {tainting.map((memory) => {
-            const busy = decide.isPending && decide.variables?.memory.id === memory.id;
+        <ScrollBox label={t("Memories that taint every turn")} size="sm" surface="warning">
+          <ul
+            aria-label={t("Memories that taint every turn")}
+            className="flex flex-col gap-1.5 p-px"
+          >
+            {tainting.map((memory) => {
+              const busy = decide.isPending && decide.variables?.memory.id === memory.id;
 
-            return (
-              <li
-                key={memory.id}
-                className="bg-card text-foreground ring-foreground/10 flex flex-wrap items-start gap-2 rounded-md px-2 py-1.5 ring-1"
-              >
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-sm leading-snug">{memory.content}</span>
-                  <span className="text-foreground-muted text-xs">
-                    {t(
-                      "{0} · {1, plural, one {read # time} other {read # times}}",
-                      memorySourceLabel(memory.source, t),
-                      formatNumber(memory.useCount),
-                    )}
+              return (
+                <li
+                  key={memory.id}
+                  className="bg-card text-foreground ring-foreground/10 flex flex-wrap items-start gap-2 rounded-md px-2 py-1.5 ring-1"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm leading-snug">{memory.content}</span>
+                    <span className="text-foreground-muted text-xs">
+                      {t(
+                        "{0} · {1, plural, one {read # time} other {read # times}}",
+                        memorySourceLabel(memory.source, t),
+                        formatNumber(memory.useCount),
+                      )}
+                    </span>
                   </span>
-                </span>
-                {canDecide ? (
-                  <span className="flex shrink-0 gap-1">
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      isLoading={busy && decide.variables?.action === "review"}
-                      disabled={decide.isPending}
-                      onClick={() => decide.mutate({ memory, action: "review" })}
-                    >
-                      {t("Reviewed, keep it")}
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      isLoading={busy && decide.variables?.action === "retire"}
-                      disabled={decide.isPending}
-                      onClick={() => decide.mutate({ memory, action: "retire" })}
-                    >
-                      {t("Retire")}
-                    </Button>
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+                  {canDecide ? (
+                    <span className="flex shrink-0 gap-1">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        isLoading={busy && decide.variables?.action === "review"}
+                        disabled={decide.isPending}
+                        onClick={() => decide.mutate({ memory, action: "review" })}
+                      >
+                        {t("Reviewed, keep it")}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        isLoading={busy && decide.variables?.action === "retire"}
+                        disabled={decide.isPending}
+                        onClick={() => decide.mutate({ memory, action: "retire" })}
+                      >
+                        {t("Retire")}
+                      </Button>
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </ScrollBox>
       </AlertDescription>
     </Alert>
   );

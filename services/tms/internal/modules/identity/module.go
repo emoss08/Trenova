@@ -57,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/securitybriefingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
@@ -88,6 +89,7 @@ func SharedOptions() fx.Option {
 			iamrepository.NewAccessSettingsRepository,
 			iamrepository.NewAuthEventHistoryRepository,
 			iamrepository.NewMFARepository,
+			iamrepository.NewSecurityBriefingRepository,
 			ssoconfigrepository.New,
 			ssoidentitylinkrepository.New,
 			datarententionrepository.New,
@@ -132,6 +134,8 @@ func SharedOptions() fx.Option {
 			accesssettingsservice.New,
 			func(s *accesssettingsservice.Service) iamports.RoleActivationPolicy { return s },
 			func(s *accesssettingsservice.Service) iamports.AccessSettingsService { return s },
+			securitybriefingservice.New,
+			func(s *securitybriefingservice.Service) iamports.SecurityBriefingService { return s },
 			func(s *orgstructureservice.Service) readscopeservice.TeamDirectory { return s },
 			func(s *readscopeservice.Service) permissionports.ScopePolicy { return s },
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },

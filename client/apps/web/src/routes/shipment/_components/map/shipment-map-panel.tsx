@@ -226,8 +226,8 @@ function LiveMapSyncOverlay({
 }) {
   const t = useT();
 
-  const connectionState = useRealtimeStore.use.connectionState();
-  const lastEventAt = useRealtimeStore.use.lastEventAt();
+  const connectionState = useRealtimeStore((s) => s.connectionState);
+  const lastEventAt = useRealtimeStore((s) => s.lastEventAt);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {

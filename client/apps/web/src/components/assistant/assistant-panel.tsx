@@ -7,18 +7,7 @@ import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
-import { Trash01Icon } from "@trenova/shared/components/icons";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -33,6 +22,9 @@ import { AssistantHistory } from "./assistant-history";
 import { AssistantHome } from "./assistant-home";
 import { AssistantSidebar } from "./assistant-sidebar";
 import type { AssistantThreads } from "./use-assistant-threads";
+import { DeleteConversationCard } from "./delete-conversation-card";
+import { useDeleteConversation } from "./use-delete-conversation";
+import { forgetThreadSchedules } from "./thread-schedules";
 import { useStartConversation } from "./use-start-conversation";
 
 type AssistantPanelProps = {
@@ -68,7 +60,6 @@ export function AssistantPanel({
   const sidebarCollapsed = useAssistantStore((state) => state.sidebarCollapsed);
   const setSidebarCollapsed = useAssistantStore((state) => state.setSidebarCollapsed);
   const toggleSidebar = useAssistantStore((state) => state.toggleSidebar);
-  const [deleting, setDeleting] = useState<AssistantThread | null>(null);
   const [searchSignal, setSearchSignal] = useState(0);
   const { threads, agents, agentsById, activeThread, agentsUnavailable, isLoading } = data;
   const full = layout === "full";
@@ -92,14 +83,19 @@ export function AssistantPanel({
   const deleteMutation = useApiMutation({
     mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
-      setDeleting(null);
       if (activeThread?.id === id) {
         setActiveThreadId(null);
       }
+      // Its schedules were deleted with it.
+      forgetThreadSchedules(queryClient, id);
       await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
     },
     resourceName: "Conversation",
   });
+  // A conversation with schedules asks before it goes; any other is deleted
+  // at once.
+  const deletion = useDeleteConversation((thread) => deleteMutation.mutate(thread.id));
+  const askDelete = useLatestCallback(deletion.ask);
 
   const openInDesk = useCallback(
     (threadId: string, artifactId?: string | null) => {
@@ -111,11 +107,11 @@ export function AssistantPanel({
   );
   const actions = useMemo<AssistantThreadActions>(
     () => ({
-      onDelete: setDeleting,
+      onDelete: askDelete,
       onDownloadTranscript: (thread) => downloadAssistantTranscript(thread.id),
       onOpenInDesk: (thread) => openInDesk(thread.id),
     }),
-    [openInDesk],
+    [askDelete, openInDesk],
   );
 
   // Full screen, ⌘K searches the conversations here rather than opening the
@@ -232,32 +228,12 @@ export function AssistantPanel({
         </div>
       )}
 
-      <AlertDialog open={deleting !== null} onOpenChange={(next) => !next && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <Trash01Icon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete this conversation?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "“{0}” and everything the assistant looked up in it will be removed. Proposals that were already approved are not undone.",
-                deleting?.title || t("Untitled conversation"),
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Keep it")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
-              disabled={deleteMutation.isPending}
-            >
-              {t("Delete conversation")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConversationCard
+        thread={deletion.asking}
+        pending={deleteMutation.isPending}
+        onConfirm={deletion.confirm}
+        onClose={deletion.cancel}
+      />
     </>
   );
 }

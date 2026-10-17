@@ -186,7 +186,7 @@ async function auditTokenLayer() {
   }
 
   // The colours themselves: AA on every pair the design leans on, every value
-  // inside sRGB, and the three hues around the brand still apart.
+  // inside sRGB, and the hues around the brand still apart.
   problems.push(...auditPalette(src));
 
   // Compile for real and confirm each declared utility reaches the output.

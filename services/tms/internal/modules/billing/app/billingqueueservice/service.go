@@ -72,11 +72,12 @@ type Params struct {
 	// The review reads: issues and activity, the shipment's paperwork and
 	// detention evidence, the contract's accessorials, and the driver to ask
 	// for a missing signature.
-	ReviewRepo     billingqueueports.BillingQueueReviewRepository `optional:"true"`
-	DocumentRepo   documentports.DocumentRepository               `optional:"true"`
-	OccurrenceRepo detentionports.DetentionOccurrenceRepository   `optional:"true"`
-	AgreementRepo  rateagreementports.RateAgreementRepository     `optional:"true"`
-	DriverNotifier *drivernotificationservice.Service             `optional:"true"`
+	ReviewRepo      billingqueueports.BillingQueueReviewRepository `optional:"true"`
+	DocumentRepo    documentports.DocumentRepository               `optional:"true"`
+	OccurrenceRepo  detentionports.DetentionOccurrenceRepository   `optional:"true"`
+	AgreementRepo   rateagreementports.RateAgreementRepository     `optional:"true"`
+	DriverNotifier  *drivernotificationservice.Service             `optional:"true"`
+	DocumentContent documentports.DocumentContentService           `optional:"true"`
 }
 
 type service struct {
@@ -107,6 +108,7 @@ type service struct {
 	occurrenceRepo       detentionports.DetentionOccurrenceRepository
 	agreementRepo        rateagreementports.RateAgreementRepository
 	drivers              driverNotifier
+	documentContent      documentports.DocumentContentService
 }
 
 //nolint:gocritic // dependency injection
@@ -139,6 +141,7 @@ func New(p Params) billingqueueports.BillingQueueService {
 		occurrenceRepo:       p.OccurrenceRepo,
 		agreementRepo:        p.AgreementRepo,
 		drivers:              notifierOrNil(p.DriverNotifier),
+		documentContent:      p.DocumentContent,
 	}
 }
 

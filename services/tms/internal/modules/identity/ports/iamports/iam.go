@@ -60,6 +60,11 @@ type ListSCIMGroupRoleMappingConnectionRequest struct {
 	SCIMGroupRoleMappingColumns []string                 `json:"-"`
 }
 
+type ListIAMConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
+}
+
 type IAMRepository interface {
 	ListIdentityProviders(ctx context.Context, req ListIAMRequest) ([]*iam.IdentityProvider, error)
 	GetIdentityProvider(
@@ -143,4 +148,28 @@ type IAMRepository interface {
 		orgID pulid.ID,
 		limit int,
 	) ([]*iam.MFAAuthenticator, error)
+	IAMConnections
+}
+
+type IAMConnections interface {
+	ListAuthEventsConnection(
+		ctx context.Context,
+		req *ListIAMConnectionRequest,
+	) (*pagination.CursorListResult[*iam.AuthEvent], error)
+	ListRiskDecisionsConnection(
+		ctx context.Context,
+		req *ListIAMConnectionRequest,
+	) (*pagination.CursorListResult[*iam.RiskDecision], error)
+	ListExternalIdentitiesConnection(
+		ctx context.Context,
+		req *ListIAMConnectionRequest,
+	) (*pagination.CursorListResult[*iam.ExternalIdentity], error)
+	ListMFAAuthenticatorsConnection(
+		ctx context.Context,
+		req *ListIAMConnectionRequest,
+	) (*pagination.CursorListResult[*iam.MFAAuthenticator], error)
+	ListSCIMDirectoriesConnection(
+		ctx context.Context,
+		req *ListIAMConnectionRequest,
+	) (*pagination.CursorListResult[*iam.SCIMDirectory], error)
 }

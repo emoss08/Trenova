@@ -358,67 +358,89 @@ var ItemTable = buncolgen.TableInfo{
 //	q.Where(ItemColumns.ID.Eq(), id)           // WHERE wti.id = ?
 //	q.Order(ItemColumns.CreatedAt.OrderDesc())  // ORDER BY wti.created_at DESC
 var ItemColumns = struct {
-	ID              buncolgen.Column // "id" → qualified: "wti.id"
-	BusinessUnitID  buncolgen.Column // "business_unit_id" → qualified: "wti.business_unit_id"
-	OrganizationID  buncolgen.Column // "organization_id" → qualified: "wti.organization_id"
-	SourceKind      buncolgen.Column // "source_kind" → qualified: "wti.source_kind"
-	SourceID        buncolgen.Column // "source_id" → qualified: "wti.source_id"
-	Severity        buncolgen.Column // "severity" → qualified: "wti.severity"
-	Title           buncolgen.Column // "title" → qualified: "wti.title"
-	Summary         buncolgen.Column // "summary" → qualified: "wti.summary"
-	SubjectType     buncolgen.Column // "subject_type" → qualified: "wti.subject_type"
-	SubjectID       buncolgen.Column // "subject_id" → qualified: "wti.subject_id"
-	EventKind       buncolgen.Column // "event_kind" → qualified: "wti.event_kind"
-	Path            buncolgen.Column // "path" → qualified: "wti.path"
-	OccurredAt      buncolgen.Column // "occurred_at" → qualified: "wti.occurred_at"
-	ResolvedAt      buncolgen.Column // "resolved_at" → qualified: "wti.resolved_at"
-	Status          buncolgen.Column // "status" → qualified: "wti.status"
-	AssigneeID      buncolgen.Column // "assignee_id" → qualified: "wti.assignee_id"
-	DueAt           buncolgen.Column // "due_at" → qualified: "wti.due_at"
-	SnoozedUntil    buncolgen.Column // "snoozed_until" → qualified: "wti.snoozed_until"
-	AcknowledgedAt  buncolgen.Column // "acknowledged_at" → qualified: "wti.acknowledged_at"
-	ResolutionCode  buncolgen.Column // "resolution_code" → qualified: "wti.resolution_code"
-	ResolutionNote  buncolgen.Column // "resolution_note" → qualified: "wti.resolution_note"
-	ResolvedByID    buncolgen.Column // "resolved_by_id" → qualified: "wti.resolved_by_id"
-	SourceClearedAt buncolgen.Column // "source_cleared_at" → qualified: "wti.source_cleared_at"
-	EscalationLevel buncolgen.Column // "escalation_level" → qualified: "wti.escalation_level"
-	LastEscalatedAt buncolgen.Column // "last_escalated_at" → qualified: "wti.last_escalated_at"
-	Version         buncolgen.Column // "version" → qualified: "wti.version"
-	CreatedAt       buncolgen.Column // "created_at" → qualified: "wti.created_at"
-	UpdatedAt       buncolgen.Column // "updated_at" → qualified: "wti.updated_at"
-	Inserted        buncolgen.Column // "inserted" → qualified: "wti.inserted"
-	Reopened        buncolgen.Column // "reopened" → qualified: "wti.reopened"
+	ID                buncolgen.Column // "id" → qualified: "wti.id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "wti.business_unit_id"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "wti.organization_id"
+	SourceKind        buncolgen.Column // "source_kind" → qualified: "wti.source_kind"
+	SourceID          buncolgen.Column // "source_id" → qualified: "wti.source_id"
+	Severity          buncolgen.Column // "severity" → qualified: "wti.severity"
+	Title             buncolgen.Column // "title" → qualified: "wti.title"
+	Summary           buncolgen.Column // "summary" → qualified: "wti.summary"
+	SubjectType       buncolgen.Column // "subject_type" → qualified: "wti.subject_type"
+	SubjectID         buncolgen.Column // "subject_id" → qualified: "wti.subject_id"
+	EventKind         buncolgen.Column // "event_kind" → qualified: "wti.event_kind"
+	Path              buncolgen.Column // "path" → qualified: "wti.path"
+	OccurredAt        buncolgen.Column // "occurred_at" → qualified: "wti.occurred_at"
+	ResolvedAt        buncolgen.Column // "resolved_at" → qualified: "wti.resolved_at"
+	Status            buncolgen.Column // "status" → qualified: "wti.status"
+	AssigneeID        buncolgen.Column // "assignee_id" → qualified: "wti.assignee_id"
+	DueAt             buncolgen.Column // "due_at" → qualified: "wti.due_at"
+	SnoozedUntil      buncolgen.Column // "snoozed_until" → qualified: "wti.snoozed_until"
+	AcknowledgedAt    buncolgen.Column // "acknowledged_at" → qualified: "wti.acknowledged_at"
+	ResolutionCode    buncolgen.Column // "resolution_code" → qualified: "wti.resolution_code"
+	ResolutionNote    buncolgen.Column // "resolution_note" → qualified: "wti.resolution_note"
+	ResolvedByID      buncolgen.Column // "resolved_by_id" → qualified: "wti.resolved_by_id"
+	SourceClearedAt   buncolgen.Column // "source_cleared_at" → qualified: "wti.source_cleared_at"
+	EscalationLevel   buncolgen.Column // "escalation_level" → qualified: "wti.escalation_level"
+	LastEscalatedAt   buncolgen.Column // "last_escalated_at" → qualified: "wti.last_escalated_at"
+	DueLabel          buncolgen.Column // "due_label" → qualified: "wti.due_label"
+	DueSource         buncolgen.Column // "due_source" → qualified: "wti.due_source"
+	RecordKind        buncolgen.Column // "record_kind" → qualified: "wti.record_kind"
+	RecordLabel       buncolgen.Column // "record_label" → qualified: "wti.record_label"
+	Facts             buncolgen.Column // "facts" → qualified: "wti.facts"
+	Impact            buncolgen.Column // "impact" → qualified: "wti.impact"
+	Trail             buncolgen.Column // "trail" → qualified: "wti.trail"
+	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "wti.agent_definition_id"
+	AgentRunID        buncolgen.Column // "agent_run_id" → qualified: "wti.agent_run_id"
+	AgentHandedAt     buncolgen.Column // "agent_handed_at" → qualified: "wti.agent_handed_at"
+	AgentHandedByID   buncolgen.Column // "agent_handed_by_id" → qualified: "wti.agent_handed_by_id"
+	Version           buncolgen.Column // "version" → qualified: "wti.version"
+	CreatedAt         buncolgen.Column // "created_at" → qualified: "wti.created_at"
+	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "wti.updated_at"
+	Inserted          buncolgen.Column // "inserted" → qualified: "wti.inserted"
+	Reopened          buncolgen.Column // "reopened" → qualified: "wti.reopened"
 }{
-	ID:              buncolgen.NewColumn("id", "wti"),
-	BusinessUnitID:  buncolgen.NewColumn("business_unit_id", "wti"),
-	OrganizationID:  buncolgen.NewColumn("organization_id", "wti"),
-	SourceKind:      buncolgen.NewColumn("source_kind", "wti"),
-	SourceID:        buncolgen.NewColumn("source_id", "wti"),
-	Severity:        buncolgen.NewColumn("severity", "wti"),
-	Title:           buncolgen.NewColumn("title", "wti"),
-	Summary:         buncolgen.NewColumn("summary", "wti"),
-	SubjectType:     buncolgen.NewColumn("subject_type", "wti"),
-	SubjectID:       buncolgen.NewColumn("subject_id", "wti"),
-	EventKind:       buncolgen.NewColumn("event_kind", "wti"),
-	Path:            buncolgen.NewColumn("path", "wti"),
-	OccurredAt:      buncolgen.NewColumn("occurred_at", "wti"),
-	ResolvedAt:      buncolgen.NewColumn("resolved_at", "wti"),
-	Status:          buncolgen.NewColumn("status", "wti"),
-	AssigneeID:      buncolgen.NewColumn("assignee_id", "wti"),
-	DueAt:           buncolgen.NewColumn("due_at", "wti"),
-	SnoozedUntil:    buncolgen.NewColumn("snoozed_until", "wti"),
-	AcknowledgedAt:  buncolgen.NewColumn("acknowledged_at", "wti"),
-	ResolutionCode:  buncolgen.NewColumn("resolution_code", "wti"),
-	ResolutionNote:  buncolgen.NewColumn("resolution_note", "wti"),
-	ResolvedByID:    buncolgen.NewColumn("resolved_by_id", "wti"),
-	SourceClearedAt: buncolgen.NewColumn("source_cleared_at", "wti"),
-	EscalationLevel: buncolgen.NewColumn("escalation_level", "wti"),
-	LastEscalatedAt: buncolgen.NewColumn("last_escalated_at", "wti"),
-	Version:         buncolgen.NewColumn("version", "wti"),
-	CreatedAt:       buncolgen.NewColumn("created_at", "wti"),
-	UpdatedAt:       buncolgen.NewColumn("updated_at", "wti"),
-	Inserted:        buncolgen.NewColumn("inserted", "wti"),
-	Reopened:        buncolgen.NewColumn("reopened", "wti"),
+	ID:                buncolgen.NewColumn("id", "wti"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "wti"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "wti"),
+	SourceKind:        buncolgen.NewColumn("source_kind", "wti"),
+	SourceID:          buncolgen.NewColumn("source_id", "wti"),
+	Severity:          buncolgen.NewColumn("severity", "wti"),
+	Title:             buncolgen.NewColumn("title", "wti"),
+	Summary:           buncolgen.NewColumn("summary", "wti"),
+	SubjectType:       buncolgen.NewColumn("subject_type", "wti"),
+	SubjectID:         buncolgen.NewColumn("subject_id", "wti"),
+	EventKind:         buncolgen.NewColumn("event_kind", "wti"),
+	Path:              buncolgen.NewColumn("path", "wti"),
+	OccurredAt:        buncolgen.NewColumn("occurred_at", "wti"),
+	ResolvedAt:        buncolgen.NewColumn("resolved_at", "wti"),
+	Status:            buncolgen.NewColumn("status", "wti"),
+	AssigneeID:        buncolgen.NewColumn("assignee_id", "wti"),
+	DueAt:             buncolgen.NewColumn("due_at", "wti"),
+	SnoozedUntil:      buncolgen.NewColumn("snoozed_until", "wti"),
+	AcknowledgedAt:    buncolgen.NewColumn("acknowledged_at", "wti"),
+	ResolutionCode:    buncolgen.NewColumn("resolution_code", "wti"),
+	ResolutionNote:    buncolgen.NewColumn("resolution_note", "wti"),
+	ResolvedByID:      buncolgen.NewColumn("resolved_by_id", "wti"),
+	SourceClearedAt:   buncolgen.NewColumn("source_cleared_at", "wti"),
+	EscalationLevel:   buncolgen.NewColumn("escalation_level", "wti"),
+	LastEscalatedAt:   buncolgen.NewColumn("last_escalated_at", "wti"),
+	DueLabel:          buncolgen.NewColumn("due_label", "wti"),
+	DueSource:         buncolgen.NewColumn("due_source", "wti"),
+	RecordKind:        buncolgen.NewColumn("record_kind", "wti"),
+	RecordLabel:       buncolgen.NewColumn("record_label", "wti"),
+	Facts:             buncolgen.NewColumn("facts", "wti"),
+	Impact:            buncolgen.NewColumn("impact", "wti"),
+	Trail:             buncolgen.NewColumn("trail", "wti"),
+	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "wti"),
+	AgentRunID:        buncolgen.NewColumn("agent_run_id", "wti"),
+	AgentHandedAt:     buncolgen.NewColumn("agent_handed_at", "wti"),
+	AgentHandedByID:   buncolgen.NewColumn("agent_handed_by_id", "wti"),
+	Version:           buncolgen.NewColumn("version", "wti"),
+	CreatedAt:         buncolgen.NewColumn("created_at", "wti"),
+	UpdatedAt:         buncolgen.NewColumn("updated_at", "wti"),
+	Inserted:          buncolgen.NewColumn("inserted", "wti"),
+	Reopened:          buncolgen.NewColumn("reopened", "wti"),
 }
 
 // ItemFieldMap maps JSON API field names to database column names.
@@ -426,34 +448,45 @@ var ItemColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Item.GetStaticFieldMap().
 var ItemFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"sourceKind":      "source_kind",
-	"sourceId":        "source_id",
-	"severity":        "severity",
-	"title":           "title",
-	"summary":         "summary",
-	"subjectType":     "subject_type",
-	"subjectId":       "subject_id",
-	"eventKind":       "event_kind",
-	"path":            "path",
-	"occurredAt":      "occurred_at",
-	"resolvedAt":      "resolved_at",
-	"status":          "status",
-	"assigneeId":      "assignee_id",
-	"dueAt":           "due_at",
-	"snoozedUntil":    "snoozed_until",
-	"acknowledgedAt":  "acknowledged_at",
-	"resolutionCode":  "resolution_code",
-	"resolutionNote":  "resolution_note",
-	"resolvedById":    "resolved_by_id",
-	"sourceClearedAt": "source_cleared_at",
-	"escalationLevel": "escalation_level",
-	"lastEscalatedAt": "last_escalated_at",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"sourceKind":        "source_kind",
+	"sourceId":          "source_id",
+	"severity":          "severity",
+	"title":             "title",
+	"summary":           "summary",
+	"subjectType":       "subject_type",
+	"subjectId":         "subject_id",
+	"eventKind":         "event_kind",
+	"path":              "path",
+	"occurredAt":        "occurred_at",
+	"resolvedAt":        "resolved_at",
+	"status":            "status",
+	"assigneeId":        "assignee_id",
+	"dueAt":             "due_at",
+	"snoozedUntil":      "snoozed_until",
+	"acknowledgedAt":    "acknowledged_at",
+	"resolutionCode":    "resolution_code",
+	"resolutionNote":    "resolution_note",
+	"resolvedById":      "resolved_by_id",
+	"sourceClearedAt":   "source_cleared_at",
+	"escalationLevel":   "escalation_level",
+	"lastEscalatedAt":   "last_escalated_at",
+	"dueLabel":          "due_label",
+	"dueSource":         "due_source",
+	"recordKind":        "record_kind",
+	"recordLabel":       "record_label",
+	"facts":             "facts",
+	"impact":            "impact",
+	"trail":             "trail",
+	"agentDefinitionId": "agent_definition_id",
+	"agentRunId":        "agent_run_id",
+	"agentHandedAt":     "agent_handed_at",
+	"agentHandedById":   "agent_handed_by_id",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
 }
 
 // ItemInsertableColumns lists column names suitable for INSERT statements on the "watchtower_items" table.
@@ -484,6 +517,17 @@ var ItemInsertableColumns = []string{
 	"source_cleared_at",
 	"escalation_level",
 	"last_escalated_at",
+	"due_label",
+	"due_source",
+	"record_kind",
+	"record_label",
+	"facts",
+	"impact",
+	"trail",
+	"agent_definition_id",
+	"agent_run_id",
+	"agent_handed_at",
+	"agent_handed_by_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -539,34 +583,45 @@ func ItemApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Selec
 //	ItemFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ItemFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	SourceKind      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceKind" → DB: "source_kind"
-	SourceID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceId" → DB: "source_id"
-	Severity        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "severity" → DB: "severity"
-	Title           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
-	Summary         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
-	SubjectType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
-	SubjectID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
-	EventKind       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventKind" → DB: "event_kind"
-	Path            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "path" → DB: "path"
-	OccurredAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
-	ResolvedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
-	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	AssigneeID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assigneeId" → DB: "assignee_id"
-	DueAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueAt" → DB: "due_at"
-	SnoozedUntil    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedUntil" → DB: "snoozed_until"
-	AcknowledgedAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgedAt" → DB: "acknowledged_at"
-	ResolutionCode  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionCode" → DB: "resolution_code"
-	ResolutionNote  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionNote" → DB: "resolution_note"
-	ResolvedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
-	SourceClearedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceClearedAt" → DB: "source_cleared_at"
-	EscalationLevel func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escalationLevel" → DB: "escalation_level"
-	LastEscalatedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastEscalatedAt" → DB: "last_escalated_at"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	SourceKind        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceKind" → DB: "source_kind"
+	SourceID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceId" → DB: "source_id"
+	Severity          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "severity" → DB: "severity"
+	Title             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
+	Summary           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	EventKind         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventKind" → DB: "event_kind"
+	Path              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "path" → DB: "path"
+	OccurredAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "occurredAt" → DB: "occurred_at"
+	ResolvedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	AssigneeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assigneeId" → DB: "assignee_id"
+	DueAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueAt" → DB: "due_at"
+	SnoozedUntil      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedUntil" → DB: "snoozed_until"
+	AcknowledgedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgedAt" → DB: "acknowledged_at"
+	ResolutionCode    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionCode" → DB: "resolution_code"
+	ResolutionNote    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionNote" → DB: "resolution_note"
+	ResolvedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
+	SourceClearedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceClearedAt" → DB: "source_cleared_at"
+	EscalationLevel   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escalationLevel" → DB: "escalation_level"
+	LastEscalatedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastEscalatedAt" → DB: "last_escalated_at"
+	DueLabel          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueLabel" → DB: "due_label"
+	DueSource         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueSource" → DB: "due_source"
+	RecordKind        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordKind" → DB: "record_kind"
+	RecordLabel       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordLabel" → DB: "record_label"
+	Facts             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "facts" → DB: "facts"
+	Impact            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "impact" → DB: "impact"
+	Trail             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trail" → DB: "trail"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	AgentRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	AgentHandedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentHandedAt" → DB: "agent_handed_at"
+	AgentHandedByID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentHandedById" → DB: "agent_handed_by_id"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -643,6 +698,39 @@ var ItemFilter = struct {
 	LastEscalatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lastEscalatedAt", op, value)
 	},
+	DueLabel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("dueLabel", op, value)
+	},
+	DueSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("dueSource", op, value)
+	},
+	RecordKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("recordKind", op, value)
+	},
+	RecordLabel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("recordLabel", op, value)
+	},
+	Facts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("facts", op, value)
+	},
+	Impact: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("impact", op, value)
+	},
+	Trail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("trail", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentRunId", op, value)
+	},
+	AgentHandedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentHandedAt", op, value)
+	},
+	AgentHandedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentHandedById", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
 	},
@@ -651,5 +739,139 @@ var ItemFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// Read — table "watchtower_item_reads", alias "wtr"
+// ---------------------------------------------------------------------------
+
+// ReadTable holds the table name, alias, and primary key columns
+// for the "watchtower_item_reads" table. The alias "wtr" is used in all generated
+// SQL fragments (e.g. "wtr.id = ?").
+var ReadTable = buncolgen.TableInfo{
+	Name:       "watchtower_item_reads",
+	Alias:      "wtr",
+	PrimaryKey: []string{"item_id", "user_id", "business_unit_id", "organization_id"},
+}
+
+// ReadColumns provides type-safe column references for the "watchtower_item_reads" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ReadColumns.ID.String())
+//	// SELECT wtr.id FROM watchtower_item_reads AS wtr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ReadColumns.ID.Eq(), id)           // WHERE wtr.id = ?
+//	q.Order(ReadColumns.CreatedAt.OrderDesc())  // ORDER BY wtr.created_at DESC
+var ReadColumns = struct {
+	ItemID         buncolgen.Column // "item_id" → qualified: "wtr.item_id"
+	UserID         buncolgen.Column // "user_id" → qualified: "wtr.user_id"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "wtr.business_unit_id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "wtr.organization_id"
+	SeenAt         buncolgen.Column // "seen_at" → qualified: "wtr.seen_at"
+}{
+	ItemID:         buncolgen.NewColumn("item_id", "wtr"),
+	UserID:         buncolgen.NewColumn("user_id", "wtr"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "wtr"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "wtr"),
+	SeenAt:         buncolgen.NewColumn("seen_at", "wtr"),
+}
+
+// ReadFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Read.GetStaticFieldMap().
+var ReadFieldMap = map[string]string{
+	"itemId":         "item_id",
+	"userId":         "user_id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"seenAt":         "seen_at",
+}
+
+// ReadInsertableColumns lists column names suitable for INSERT statements on the "watchtower_item_reads" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ReadInsertableColumns = []string{
+	"item_id",
+	"user_id",
+	"business_unit_id",
+	"organization_id",
+	"seen_at",
+}
+
+// ReadScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE wtr.organization_id = ? AND wtr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	watchtowercol.ReadScopeTenant(sq, ti).
+//		Where(watchtowercol.ReadColumns.ID.Eq(), id)
+func ReadScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, ReadColumns.OrganizationID, ReadColumns.BusinessUnitID, ti)
+}
+
+// ReadScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return watchtowercol.ReadScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(watchtowercol.ReadColumns.ID.In(), bun.List(ids))
+//	})
+func ReadScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, ReadColumns.OrganizationID, ReadColumns.BusinessUnitID, ti)
+}
+
+// ReadScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return watchtowercol.ReadScopeTenantDelete(dq, req.TenantInfo).
+//			Where(watchtowercol.ReadColumns.ID.Eq(), id)
+//	})
+func ReadScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, ReadColumns.OrganizationID, ReadColumns.BusinessUnitID, ti)
+}
+
+// ReadApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(watchtowercol.ReadApplyTenant(tenantInfo))
+func ReadApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(ReadColumns.OrganizationID, ReadColumns.BusinessUnitID, ti)
+}
+
+// ReadFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "watchtower_item_reads" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ReadFilter.ItemID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "itemId", Operator: "eq", Value: value}
+var ReadFilter = struct {
+	ItemID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "itemId" → DB: "item_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	SeenAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "seenAt" → DB: "seen_at"
+}{
+	ItemID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("itemId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("userId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	SeenAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("seenAt", op, value)
 	},
 }

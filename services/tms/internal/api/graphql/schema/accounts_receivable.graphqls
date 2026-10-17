@@ -216,7 +216,87 @@ type ARCustomerProfile {
   delinquencyScore: Float!
 }
 
+"What a phrase or action of the accounting brief leads to."
+enum AccountingBriefingLink {
+  "The open invoices."
+  OpenInvoices
+  "The invoices past their due date."
+  Overdue
+  "The balance more than 90 days past due."
+  PastNinety
+  "The invoices in dispute."
+  Disputed
+  "Cash received and not yet applied to an invoice."
+  UnappliedCash
+  "The customer with the most past due; the segment carries its customerId."
+  TopCustomer
+  "Invoices that pass 90 days past due within the week."
+  CrossingNinety
+  "Invoices falling due in the next 7 days, worth a reminder before they are late."
+  DueSoon
+  "Promises to pay that lapsed unpaid; one customer's when the segment carries its customerId."
+  BrokenPromise
+  "Promises to pay coming due in the next 2 days."
+  PromisesDue
+  "Past-due customers with no collections contact in 14 days."
+  Uncontacted
+  "Collections follow-ups that have come round."
+  FollowUpsDue
+  "Short payments leaving small balances open, candidates to write off."
+  ShortPayRemainders
+  "Invoices still in draft, not yet sent to the customer."
+  Drafts
+  "No cash recorded in the last 91 days against what was billed."
+  NoCollections
+  "Invoices falling due in the next 30 days, when none fall due this week."
+  DueThisMonth
+}
+
+"A run of the accounting brief's sentence, and the finding it names when it names one."
+type AccountingBriefingSegment {
+  text: String!
+  "Where the phrase leads, when it names a finding the dashboard links to."
+  link: AccountingBriefingLink
+  "The customer the phrase names, for a TopCustomer or single BrokenPromise link."
+  customerId: ID
+}
+
+"One thing worth doing today, worked out from the same figures as the brief."
+type AccountingBriefingAction {
+  link: AccountingBriefingLink!
+  "How many invoices, customers, promises or payments it covers; zero when it is not counted."
+  count: Int!
+  "The money it covers, in minor units; zero when it covers none."
+  amountMinor: Int!
+  "The customer it is about, when it is about one."
+  customerId: ID
+  customerName: String
+}
+
+"""
+The day's brief at the top of the accounting dashboard. It leads with what the
+headline figures do not show: missed promises to pay, invoices about to pass 90
+days past due, customers nobody has contacted, and what falls due next. The
+findings are computed from the ledger and the collections worklist first and the
+wording written second, and every figure a model writes is checked against them;
+a brief no model narrated is complete and reads plainer. It is written before the
+workday and again when the findings it cites no longer hold, a few times a day at
+most.
+"""
+type AccountingBriefing {
+  segments: [AccountingBriefingSegment!]!
+  "What to do about the findings, most pressing first."
+  actions: [AccountingBriefingAction!]!
+  "True when a model's wording was accepted."
+  narrated: Boolean!
+  generatedAt: Timestamp!
+  "Counts the briefs written today; a new one restarts the reveal on the page."
+  generation: Int!
+}
+
 extend type Query {
+  "Today's accounting brief, written on first read when the morning's has not been."
+  accountingBriefing: AccountingBriefing!
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arOpenItems(customerId: ID, asOfDate: Timestamp): [AROpenItem!]!
   arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!

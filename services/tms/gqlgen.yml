@@ -3046,6 +3046,49 @@ models:
         resolver: true
       overdue:
         resolver: true
+      dueLabel:
+        resolver: true
+      dueSource:
+        resolver: true
+      record:
+        resolver: true
+      facts:
+        resolver: true
+      trail:
+        resolver: true
+      suggestedAgentId:
+        resolver: true
+      suggestedAgent:
+        resolver: true
+      agentWork:
+        resolver: true
+  WatchtowerRecord:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.RecordRef
+    fields:
+      kind:
+        resolver: true
+      noun:
+        resolver: true
+  WatchtowerAgentWork:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentWork
+    fields:
+      agent:
+        resolver: true
+      handedById:
+        resolver: true
+      handedBy:
+        resolver: true
+  WatchtowerDueSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.DueSource
+  WatchtowerAgentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStatus
+  WatchtowerAgentStep:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStep
   WatchtowerItemEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Event
@@ -4746,9 +4789,50 @@ models:
     fields:
       type:
         resolver: true
+  SCIMDirectory:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SCIMDirectory
   SCIMGroupRoleMapping:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/iam.SCIMGroupRoleMapping
+  AuthEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.AuthEvent
+    fields:
+      userId:
+        resolver: true
+      identityProviderId:
+        resolver: true
+      outcome:
+        resolver: true
+      riskOutcome:
+        resolver: true
+      user:
+        resolver: true
+  RiskDecision:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.RiskDecision
+    fields:
+      userId:
+        resolver: true
+      outcome:
+        resolver: true
+      user:
+        resolver: true
+  ExternalIdentity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.ExternalIdentity
+    fields:
+      user:
+        resolver: true
+  MFAAuthenticator:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/iam.MFAAuthenticator
+    fields:
+      type:
+        resolver: true
+      user:
+        resolver: true
   ServiceFailure:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure.ServiceFailure
@@ -5280,6 +5364,18 @@ models:
   ARDashboardKPIs:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARDashboardKPIs
+  AccountingBriefingLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief.Link
+  AccountingBriefingSegment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports.AccountingBriefingSegment
+  AccountingBriefing:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports.AccountingBriefing
+  AccountingBriefingAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports.AccountingBriefingAction
   ARDSOTrendPoint:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARDSOTrendPoint

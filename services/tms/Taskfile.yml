@@ -3,12 +3,12 @@
 version: "3"
 
 vars:
-  ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
+  REPO_DIR: "{{.TASKFILE_DIR}}/../.."
   BUILD_DIR: ./build
   CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
-  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/dev/compose.yml"
-  CLIENT_DIR: "{{.ROOT_DIR}}/client"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.REPO_DIR}}/dev/compose.yml"
+  CLIENT_DIR: "{{.REPO_DIR}}/client"
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
@@ -193,8 +193,8 @@ tasks:
     desc: Build the Postgres image with pgvector for the integration suite
     cmds:
       - >-
-        docker build -f {{.ROOT_DIR}}/deploy/Dockerfile.postgres
-        -t {{.TEST_POSTGRES_LOCAL_IMAGE}} {{.ROOT_DIR}}/deploy
+        docker build -f {{.REPO_DIR}}/deploy/Dockerfile.postgres
+        -t {{.TEST_POSTGRES_LOCAL_IMAGE}} {{.REPO_DIR}}/deploy
 
   test-db-down:
     desc: Stop the shared integration-test Postgres

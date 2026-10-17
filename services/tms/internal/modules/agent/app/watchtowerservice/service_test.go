@@ -25,6 +25,7 @@ type stubRepo struct {
 
 	items    map[string]*watchtower.Item
 	cursor   *watchtower.Cursor
+	reads    map[pulid.ID]map[pulid.ID]bool
 	lastList watchtowerports.ListWatchtowerItemsQuery
 	resolved []watchtowerports.ResolveMissingWatchtowerItemsRequest
 	events   []*watchtower.Event
@@ -232,6 +233,50 @@ func (r *stubRepo) SetCursor(
 	return cursor, nil
 }
 
+func (r *stubRepo) MarkRead(_ context.Context, read *watchtower.Read) error {
+	if r.reads == nil {
+		r.reads = map[pulid.ID]map[pulid.ID]bool{}
+	}
+	if r.reads[read.UserID] == nil {
+		r.reads[read.UserID] = map[pulid.ID]bool{}
+	}
+	r.reads[read.UserID][read.ItemID] = true
+
+	return nil
+}
+
+func (r *stubRepo) ListReadItemIDs(
+	_ context.Context,
+	req watchtowerports.ListWatchtowerReadsRequest,
+) (map[pulid.ID]struct{}, error) {
+	out := map[pulid.ID]struct{}{}
+	for _, id := range req.ItemIDs {
+		if r.reads[req.UserID][id] {
+			out[id] = struct{}{}
+		}
+	}
+
+	return out, nil
+}
+
+type stubRunRepo struct {
+	agentports.AgentRunRepository
+
+	runs map[pulid.ID]*agent.AgentRun
+}
+
+func (r *stubRunRepo) GetByID(
+	_ context.Context,
+	req agentports.GetAgentRunByIDRequest,
+) (*agent.AgentRun, error) {
+	run, ok := r.runs[req.ID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Agent run not found")
+	}
+
+	return run, nil
+}
+
 type stubDefinitions struct {
 	agentdefinitionports.AgentDefinitionRepository
 
@@ -323,6 +368,7 @@ func newService(
 		Definitions: &stubDefinitions{},
 		Sources:     sources,
 		Dismisser:   NewDismisser(DismisserParams{Exceptions: exceptions}),
+		Exceptions:  exceptions,
 	})
 	svc.now = func() int64 { return 1_700_000_000 }
 

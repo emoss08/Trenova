@@ -270,7 +270,7 @@ function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) 
             <li key={exception.code} className="flex items-start gap-2 text-xs">
               <span
                 className={cn(
-                  "mt-0.5 inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
+                  "mt-0.5 inline-flex rounded-badge px-1.5 py-px text-2xs font-medium",
                   exception.severity === "Critical"
                     ? "bg-danger-subtle text-danger-subtle-foreground"
                     : "bg-warning-subtle text-warning-subtle-foreground",

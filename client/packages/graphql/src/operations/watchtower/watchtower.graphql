@@ -34,26 +34,66 @@ fragment WatchtowerItemFields on WatchtowerItem {
   sourceClearedAt
   escalationLevel
   lastEscalatedAt
-}
-
-fragment WatchtowerItemEventFields on WatchtowerItemEvent {
-  id
-  itemId
-  kind
-  actorId
-  actor {
+  dueLabel
+  dueSource
+  record {
+    kind
+    noun
+    label
+  }
+  facts {
+    label
+    value
+    at
+  }
+  impact
+  trail {
+    at
+    text
+  }
+  suggestedAgentId
+  suggestedAgent {
     id
     name
+    description
+    icon
+    accent
+    template
   }
-  fromValue
-  toValue
-  note
-  createdAt
+  agentWork {
+    agentId
+    runId
+    status
+    step
+    steps
+    note
+    failed
+    handedAt
+    agent {
+      id
+      name
+      description
+      icon
+      accent
+      template
+    }
+  }
+}
+
+fragment WatchtowerAgentFields on AgentDefinition {
+  id
+  name
+  description
+  icon
+  accent
+  template
 }
 
 fragment WatchtowerCountsFields on WatchtowerCounts {
   unresolved
   critical
+  active
+  activeCritical
   unseen
   unseenCritical
   overdue
@@ -90,18 +130,6 @@ query WatchtowerCounts {
   }
 }
 
-mutation MarkWatchtowerSeen($seenAt: Timestamp) {
-  markWatchtowerSeen(seenAt: $seenAt) {
-    ...WatchtowerCountsFields
-  }
-}
-
-mutation DismissWatchtowerItem($id: ID!) {
-  dismissWatchtowerItem(id: $id) {
-    ...WatchtowerItemFields
-  }
-}
-
 mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
   handOffWatchtowerItem(id: $id, input: $input) {
     item {
@@ -135,53 +163,9 @@ query WatchtowerItemDetail($id: ID!) {
   }
 }
 
-query WatchtowerItemHistory($id: ID!, $limit: Int) {
-  watchtowerItemHistory(id: $id, limit: $limit) {
-    ...WatchtowerItemEventFields
-  }
-}
-
-query WatchtowerResolutionCodes {
-  watchtowerResolutionCodes {
-    code
-    label
-    requiresNote
-  }
-}
-
-mutation AssignWatchtowerItem($id: ID!, $input: AssignWatchtowerItemInput!) {
-  assignWatchtowerItem(id: $id, input: $input) {
-    ...WatchtowerItemFields
-  }
-}
-
-mutation AcknowledgeWatchtowerItem($id: ID!, $expectedVersion: Int) {
-  acknowledgeWatchtowerItem(id: $id, expectedVersion: $expectedVersion) {
-    ...WatchtowerItemFields
-  }
-}
-
-mutation StartWatchtowerItem($id: ID!, $expectedVersion: Int) {
-  startWatchtowerItem(id: $id, expectedVersion: $expectedVersion) {
-    ...WatchtowerItemFields
-  }
-}
-
 mutation SnoozeWatchtowerItem($id: ID!, $input: SnoozeWatchtowerItemInput!) {
   snoozeWatchtowerItem(id: $id, input: $input) {
     ...WatchtowerItemFields
-  }
-}
-
-mutation SetWatchtowerItemDue($id: ID!, $input: SetWatchtowerItemDueInput!) {
-  setWatchtowerItemDue(id: $id, input: $input) {
-    ...WatchtowerItemFields
-  }
-}
-
-mutation CommentOnWatchtowerItem($id: ID!, $body: String!) {
-  commentOnWatchtowerItem(id: $id, body: $body) {
-    ...WatchtowerItemEventFields
   }
 }
 
@@ -191,8 +175,18 @@ mutation ResolveWatchtowerItem($id: ID!, $input: ResolveWatchtowerItemInput!) {
   }
 }
 
-mutation ReopenWatchtowerItem($id: ID!, $input: ReopenWatchtowerItemInput!) {
-  reopenWatchtowerItem(id: $id, input: $input) {
+query WatchtowerCleared($since: Timestamp!) {
+  watchtowerCleared(since: $since)
+}
+
+query WatchtowerHandOffAgents {
+  watchtowerHandOffAgents {
+    ...WatchtowerAgentFields
+  }
+}
+
+mutation MarkWatchtowerItemSeen($id: ID!) {
+  markWatchtowerItemSeen(id: $id) {
     ...WatchtowerItemFields
   }
 }

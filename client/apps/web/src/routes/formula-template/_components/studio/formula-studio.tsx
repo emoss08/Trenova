@@ -11,7 +11,7 @@ import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-templat
 import { apiService } from "@/services/api";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -197,7 +197,7 @@ function RailTabs() {
             {item.value === "scenarios" && scenarios.total > 0 && (
               <span
                 className={cn(
-                  "rounded-full px-1.5 font-mono text-2xs tabular-nums",
+                  "rounded-badge px-1.5 font-mono text-2xs tabular-nums",
                   allPass
                     ? "bg-success-subtle text-success-subtle-foreground"
                     : "bg-danger-subtle text-danger-subtle-foreground",
@@ -216,7 +216,7 @@ function RailTabs() {
           onClick={() => setTab("nova")}
           className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
         >
-          <NovaMark className="fs-nova-ring size-3" />
+          <NovaBadge size="xs" className="fs-nova-badge" />
           {t("Nova")}
           {novaBusy && <Spinner className="size-3" />}
         </button>

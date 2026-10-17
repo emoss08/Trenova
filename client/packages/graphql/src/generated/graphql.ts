@@ -529,6 +529,41 @@ export type AccountingBackfillStatus =
   | 'Queued'
   | 'Running';
 
+/** What a phrase or action of the accounting brief leads to. */
+export type AccountingBriefingLink =
+  /** Promises to pay that lapsed unpaid; one customer's when the segment carries its customerId. */
+  | 'BrokenPromise'
+  /** Invoices that pass 90 days past due within the week. */
+  | 'CrossingNinety'
+  /** The invoices in dispute. */
+  | 'Disputed'
+  /** Invoices still in draft, not yet sent to the customer. */
+  | 'Drafts'
+  /** Invoices falling due in the next 7 days, worth a reminder before they are late. */
+  | 'DueSoon'
+  /** Invoices falling due in the next 30 days, when none fall due this week. */
+  | 'DueThisMonth'
+  /** Collections follow-ups that have come round. */
+  | 'FollowUpsDue'
+  /** No cash recorded in the last 91 days against what was billed. */
+  | 'NoCollections'
+  /** The open invoices. */
+  | 'OpenInvoices'
+  /** The invoices past their due date. */
+  | 'Overdue'
+  /** The balance more than 90 days past due. */
+  | 'PastNinety'
+  /** Promises to pay coming due in the next 2 days. */
+  | 'PromisesDue'
+  /** Short payments leaving small balances open, candidates to write off. */
+  | 'ShortPayRemainders'
+  /** The customer with the most past due; the segment carries its customerId. */
+  | 'TopCustomer'
+  /** Cash received and not yet applied to an invoice. */
+  | 'UnappliedCash'
+  /** Past-due customers with no collections contact in 14 days. */
+  | 'Uncontacted';
+
 /** How the link to the accounting system is doing right now. */
 export type AccountingConnectionStatus =
   /** Calls succeed. */
@@ -1642,14 +1677,6 @@ export type AssignShiftInput = {
   notes?: string | null | undefined;
   shiftTemplateId: string | number;
   workerId: string | number;
-};
-
-export type AssignWatchtowerItemInput = {
-  /** The new owner; omit to leave the exception with nobody. */
-  assigneeId?: string | number | null | undefined;
-  /** The version the person was looking at; a newer one refuses the change. */
-  expectedVersion?: number | null | undefined;
-  note?: string | null | undefined;
 };
 
 export type AssignWorkerPtoPolicyInput = {
@@ -6382,11 +6409,6 @@ export type RenewAccountingCertificateInput = {
   connectionId: string | number;
 };
 
-export type ReopenWatchtowerItemInput = {
-  expectedVersion?: number | null | undefined;
-  note?: string | null | undefined;
-};
-
 export type ReportBandInput = {
   edges?: Array<number> | null | undefined;
   width?: number | null | undefined;
@@ -7116,13 +7138,6 @@ export type SetOrderChargeAllocationsInput = {
   orderId: string | number;
 };
 
-export type SetWatchtowerItemDueInput = {
-  /** The new due time; omit to clear it. */
-  dueAt?: number | null | undefined;
-  expectedVersion?: number | null | undefined;
-  note?: string | null | undefined;
-};
-
 export type SettleMyAgentSuggestionInput = {
   id: string | number;
   /** Switched, SentThrough, Kept or PassedOver. A suggestion already settled keeps its outcome. */
@@ -7794,10 +7809,6 @@ export type StopType =
   | 'SplitDelivery'
   | 'SplitPickup';
 
-export type StopVisitKind =
-  | 'Arrival'
-  | 'Departure';
-
 export type SubmitMyExpenseInput = {
   amountMinor: number;
   description: string;
@@ -7936,23 +7947,6 @@ export type TrackingEventOutcome =
   | 'Pending'
   | 'Refused'
   | 'Superseded';
-
-/** Who reported a stop arrival or departure. */
-export type TrackingEventSource =
-  | 'Agent'
-  | 'Carrier'
-  | 'Dispatcher'
-  | 'Driver'
-  | 'EDI'
-  | 'Telematics';
-
-/** How a reported visit was tied to its stop. */
-export type TrackingMatchMethod =
-  | 'Direct'
-  | 'Inferred'
-  | 'Location'
-  | 'StopReference'
-  | 'StopRole';
 
 export type TrainingCategory =
   | 'Compliance'
@@ -8777,22 +8771,30 @@ export type WaiveWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
-/** What happened to an exception, one line of its history. */
-export type WatchtowerItemEventKind =
-  | 'Acknowledged'
-  | 'Assigned'
-  | 'Commented'
-  | 'Created'
-  | 'DueChanged'
-  | 'Escalated'
-  | 'Reopened'
-  | 'Resolved'
-  | 'Snoozed'
-  | 'SourceReopened'
-  | 'SourceResolved'
-  | 'Started'
-  | 'Unassigned'
-  | 'Woke';
+/** How an agent handed an item is getting on. */
+export type WatchtowerAgentStatus =
+  | 'Done'
+  /** Waiting on a person: a change to approve, or a run that stopped. */
+  | 'NeedsYou'
+  | 'Working';
+
+/** The phases an agent's work on an item goes through, in order. */
+export type WatchtowerAgentStep =
+  /** Asking a person to approve what it drafted. */
+  | 'Approve'
+  /** Working out what to do and drafting it. */
+  | 'Decide'
+  /** Reading the record the item is about. */
+  | 'Read';
+
+/** Where an item's due time came from. */
+export type WatchtowerDueSource =
+  /** A person set or cleared it. */
+  | 'Person'
+  /** The organization's due time for the item's severity. */
+  | 'Policy'
+  /** A deadline the record itself reports, such as a dock closing or a certificate lapsing. */
+  | 'Source';
 
 /** Where an exception is in its owner's hands. */
 export type WatchtowerItemStatus =
@@ -9686,6 +9688,11 @@ export type ArCustomerStatementQueryVariables = Exact<{
 
 
 export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, description: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
+
+export type AccountingBriefingQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountingBriefingQuery = { accountingBriefing: { narrated: boolean, generatedAt: number, generation: number, segments: Array<{ text: string, link: AccountingBriefingLink | null, customerId: string | null }>, actions: Array<{ link: AccountingBriefingLink, count: number, amountMinor: number, customerId: string | null, customerName: string | null }> } };
 
 export type ArDashboardKpisQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -16663,6 +16670,57 @@ export type ScimGroupRoleMappingsTableQueryVariables = Exact<{
 
 export type ScimGroupRoleMappingsTableQuery = { scimGroupRoleMappings: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingTableRowFieldsFragment': ScimGroupRoleMappingTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type ScimDirectoryFieldsFragment = { id: string, organizationId: string, businessUnitId: string, tenantSlug: string, enabled: boolean, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ScimDirectoryFieldsFragment' };
+
+export type ScimDirectoriesListQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ScimDirectoriesListQuery = { scimDirectories: { edges: Array<{ node: { ' $fragmentRefs'?: { 'ScimDirectoryFieldsFragment': ScimDirectoryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type SecurityActivityUserFieldsFragment = { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'SecurityActivityUserFieldsFragment' };
+
+export type AuthEventTableRowFieldsFragment = { id: string, userId: string | null, identityProviderId: string | null, provider: string, outcome: string, ipAddress: string, userAgent: string, authenticatorAal: number, federationFal: number, mfaState: string, riskOutcome: string, riskSignals: Array<string>, errorCode: string, occurredAt: number, createdAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'AuthEventTableRowFieldsFragment' };
+
+export type AuthEventsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AuthEventsTableQuery = { authEvents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuthEventTableRowFieldsFragment': AuthEventTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RiskDecisionTableRowFieldsFragment = { id: string, userId: string | null, outcome: string, signals: Array<string>, reason: string, createdAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'RiskDecisionTableRowFieldsFragment' };
+
+export type RiskDecisionsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type RiskDecisionsTableQuery = { riskDecisions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RiskDecisionTableRowFieldsFragment': RiskDecisionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ExternalIdentityTableRowFieldsFragment = { id: string, userId: string, identityProviderId: string, externalSubject: string, externalUsername: string, externalEmail: string, lastLoginAt: number, createdAt: number, updatedAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'ExternalIdentityTableRowFieldsFragment' };
+
+export type ExternalIdentitiesTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ExternalIdentitiesTableQuery = { externalIdentities: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExternalIdentityTableRowFieldsFragment': ExternalIdentityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type MfaAuthenticatorTableRowFieldsFragment = { id: string, userId: string, type: string, name: string, enabled: boolean, verifiedAt: number, lastUsedAt: number, createdAt: number, updatedAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'MfaAuthenticatorTableRowFieldsFragment' };
+
+export type MfaAuthenticatorsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type MfaAuthenticatorsTableQuery = { mfaAuthenticators: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MfaAuthenticatorTableRowFieldsFragment': MfaAuthenticatorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type SelectOptionsQueryVariables = Exact<{
   input: SelectOptionsInput;
 }>;
@@ -17119,13 +17177,6 @@ export type ShipmentEventsQuery = { shipmentEvents: Array<
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentOwnershipEvent_Fragment': ShipmentEventFields_ShipmentOwnershipEvent_Fragment } }
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentTenderEvent_Fragment': ShipmentEventFields_ShipmentTenderEvent_Fragment } }
   > };
-
-export type ShipmentTrackingEventsQueryVariables = Exact<{
-  shipmentId: string | number;
-}>;
-
-
-export type ShipmentTrackingEventsQuery = { shipmentTrackingEvents: Array<{ id: string, shipmentMoveId: string, stopId: string, source: TrackingEventSource, kind: StopVisitKind, matchMethod: TrackingMatchMethod, eventAt: number, receivedAt: number, sourceStatus: string | null, outcome: TrackingEventOutcome, outcomeReason: string | null }> };
 
 export type ShipmentBillingReadinessQueryVariables = Exact<{
   shipmentId: string | number;
@@ -17758,11 +17809,11 @@ export type UserTableQueryVariables = Exact<{
 
 export type UserTableQuery = { users: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
+export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, dueLabel: string | null, dueSource: WatchtowerDueSource | null, impact: Array<string>, suggestedAgentId: string | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, record: { kind: string, noun: string, label: string } | null, facts: Array<{ label: string, value: string | null, at: number | null }>, trail: Array<{ at: number | null, text: string }>, suggestedAgent: { id: string, name: string, description: string, icon: string, accent: string, template: AgentTemplate | null } | null, agentWork: { agentId: string, runId: string, status: WatchtowerAgentStatus, step: number, steps: Array<WatchtowerAgentStep>, note: string, failed: boolean, handedAt: number, agent: { id: string, name: string, description: string, icon: string, accent: string, template: AgentTemplate | null } | null } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
 
-export type WatchtowerItemEventFieldsFragment = { id: string, itemId: string, kind: WatchtowerItemEventKind, actorId: string | null, fromValue: string, toValue: string, note: string, createdAt: number, actor: { id: string, name: string } | null } & { ' $fragmentName'?: 'WatchtowerItemEventFieldsFragment' };
+export type WatchtowerAgentFieldsFragment = { id: string, name: string, description: string, icon: string, accent: string, template: AgentTemplate | null } & { ' $fragmentName'?: 'WatchtowerAgentFieldsFragment' };
 
-export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, unseen: number, unseenCritical: number, overdue: number, unassigned: number, mine: number, mineOverdue: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
+export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, active: number, activeCritical: number, unseen: number, unseenCritical: number, overdue: number, unassigned: number, mine: number, mineOverdue: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
 
 export type WatchtowerFeedQueryVariables = Exact<{
   input: WatchtowerItemsInput;
@@ -17775,20 +17826,6 @@ export type WatchtowerCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type WatchtowerCountsQuery = { watchtowerCounts: { ' $fragmentRefs'?: { 'WatchtowerCountsFieldsFragment': WatchtowerCountsFieldsFragment } } };
-
-export type MarkWatchtowerSeenMutationVariables = Exact<{
-  seenAt?: number | null | undefined;
-}>;
-
-
-export type MarkWatchtowerSeenMutation = { markWatchtowerSeen: { ' $fragmentRefs'?: { 'WatchtowerCountsFieldsFragment': WatchtowerCountsFieldsFragment } } };
-
-export type DismissWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DismissWatchtowerItemMutation = { dismissWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
 export type HandOffWatchtowerItemMutationVariables = Exact<{
   id: string | number;
@@ -17805,43 +17842,6 @@ export type WatchtowerItemDetailQueryVariables = Exact<{
 
 export type WatchtowerItemDetailQuery = { watchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
-export type WatchtowerItemHistoryQueryVariables = Exact<{
-  id: string | number;
-  limit?: number | null | undefined;
-}>;
-
-
-export type WatchtowerItemHistoryQuery = { watchtowerItemHistory: Array<{ ' $fragmentRefs'?: { 'WatchtowerItemEventFieldsFragment': WatchtowerItemEventFieldsFragment } }> };
-
-export type WatchtowerResolutionCodesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type WatchtowerResolutionCodesQuery = { watchtowerResolutionCodes: Array<{ code: WatchtowerResolutionCode, label: string, requiresNote: boolean }> };
-
-export type AssignWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-  input: AssignWatchtowerItemInput;
-}>;
-
-
-export type AssignWatchtowerItemMutation = { assignWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
-
-export type AcknowledgeWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-  expectedVersion?: number | null | undefined;
-}>;
-
-
-export type AcknowledgeWatchtowerItemMutation = { acknowledgeWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
-
-export type StartWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-  expectedVersion?: number | null | undefined;
-}>;
-
-
-export type StartWatchtowerItemMutation = { startWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
-
 export type SnoozeWatchtowerItemMutationVariables = Exact<{
   id: string | number;
   input: SnoozeWatchtowerItemInput;
@@ -17849,22 +17849,6 @@ export type SnoozeWatchtowerItemMutationVariables = Exact<{
 
 
 export type SnoozeWatchtowerItemMutation = { snoozeWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
-
-export type SetWatchtowerItemDueMutationVariables = Exact<{
-  id: string | number;
-  input: SetWatchtowerItemDueInput;
-}>;
-
-
-export type SetWatchtowerItemDueMutation = { setWatchtowerItemDue: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
-
-export type CommentOnWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-  body: string;
-}>;
-
-
-export type CommentOnWatchtowerItemMutation = { commentOnWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemEventFieldsFragment': WatchtowerItemEventFieldsFragment } } };
 
 export type ResolveWatchtowerItemMutationVariables = Exact<{
   id: string | number;
@@ -17874,13 +17858,24 @@ export type ResolveWatchtowerItemMutationVariables = Exact<{
 
 export type ResolveWatchtowerItemMutation = { resolveWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
-export type ReopenWatchtowerItemMutationVariables = Exact<{
-  id: string | number;
-  input: ReopenWatchtowerItemInput;
+export type WatchtowerClearedQueryVariables = Exact<{
+  since: number;
 }>;
 
 
-export type ReopenWatchtowerItemMutation = { reopenWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+export type WatchtowerClearedQuery = { watchtowerCleared: number };
+
+export type WatchtowerHandOffAgentsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WatchtowerHandOffAgentsQuery = { watchtowerHandOffAgents: Array<{ ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } }> };
+
+export type MarkWatchtowerItemSeenMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MarkWatchtowerItemSeenMutation = { markWatchtowerItemSeen: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
 export type WorkerChecklistTemplateItemFieldsFragment = { id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'WorkerChecklistTemplateItemFieldsFragment' };
 
@@ -18835,7 +18830,7 @@ export { AccountingInboundChangeFieldsFragmentDoc, AccountingInboundOverviewDocu
 export { AccountingMappingFieldsFragmentDoc, AccountingReferenceObjectFieldsFragmentDoc, AccountingProviderProfileFieldsFragmentDoc, AccountingAppSettingsFieldsFragmentDoc, AccountingConnectionFieldsFragmentDoc, AccountingWebhookSubscriptionSummaryFieldsFragmentDoc, AccountingPreparedCertificateFieldsFragmentDoc, AccountingSyncStatusFieldsFragmentDoc, AccountingSyncRecordFieldsFragmentDoc, AccountingBackfillFieldsFragmentDoc, AccountingSyncStatusDocument, SaveAccountingAppDocument, RemoveAccountingAppDocument, AccountingMappingSummaryDocument, AccountingMappingsDocument, AccountingReferenceObjectsDocument, ConfirmAccountingMappingsDocument, RejectAccountingMappingDocument, SetAccountingMappingDocument, ClearAccountingMappingDocument, CreateAccountingReferenceRecordDocument, RefreshAccountingReferenceDataDocument, CompleteAccountingSetupDocument, StartAccountingAuthorizationDocument, FinishAccountingAuthorizationDocument, ChooseAccountingCompanyDocument, PrepareAccountingCertificateDocument, ConnectAccountingWithCertificateDocument, RenewAccountingCertificateDocument, DisconnectAccountingSystemDocument, CheckAccountingConnectionDocument, AccountingSyncSummaryDocument, AccountingSyncRecordsDocument, AccountingSyncRecordDocument, AccountingSyncAttemptsDocument, AccountingSyncObjectStatesDocument, AccountingBackfillsDocument, ChooseAccountingSyncModeDocument, EnableAccountingSyncDocument, UpdateAccountingSyncSettingsDocument, PauseAccountingSyncDocument, ResumeAccountingSyncDocument, RetryAccountingSyncDocument, ReleaseAccountingSyncDocument, SkipAccountingSyncDocument, RedateAccountingSyncDocument, RequestAccountingBackfillDocument, ChangeAccountingBackfillDocument } from "./documents/accounting-sync/operations";
 export { AccountingSyncRecordTableDocument } from "./documents/accounting-sync/table";
 export { LateChargeAssessmentResultFieldsFragmentDoc, LateChargePreviewDocument, AssessLateChargesDocument } from "./documents/accounts-receivable/late-charges";
-export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArCollectionPerformanceDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
+export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, AccountingBriefingDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArCollectionPerformanceDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
 export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentMatchDocument, RecordMyAgentSuggestionDocument, SettleMyAgentSuggestionDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, SetAgentUnattendedRoleDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
@@ -18982,6 +18977,8 @@ export { RoleTableRowFieldsFragmentDoc, RoleTableDocument } from "./documents/ro
 export { RoutingGuideEntryFieldsFragmentDoc, RoutingGuideRowFieldsFragmentDoc, RoutingGuideTableDocument, RoutingGuideOptionsDocument, MatchRoutingGuideDocument } from "./documents/routing-guide/table";
 export { ShiftTemplatesDocument, RotaDocument, WorkerShiftAssignmentsDocument, WorkerAvailabilityPreferencesDocument, ShiftSwapRequestsDocument, CreateShiftTemplateDocument, UpdateShiftTemplateDocument, AssignWorkerShiftDocument, EndWorkerShiftAssignmentDocument, SetWorkerAvailabilityPreferenceDocument, ProposeShiftSwapDocument, TransitionShiftSwapDocument } from "./documents/scheduling/operations";
 export { ScimGroupRoleMappingTableRowFieldsFragmentDoc, ScimGroupRoleMappingsTableDocument } from "./documents/scim-group-role-mapping/table";
+export { ScimDirectoryFieldsFragmentDoc, ScimDirectoriesListDocument } from "./documents/security-activity/scim-directories";
+export { SecurityActivityUserFieldsFragmentDoc, AuthEventTableRowFieldsFragmentDoc, RiskDecisionTableRowFieldsFragmentDoc, ExternalIdentityTableRowFieldsFragmentDoc, MfaAuthenticatorTableRowFieldsFragmentDoc, AuthEventsTableDocument, RiskDecisionsTableDocument, ExternalIdentitiesTableDocument, MfaAuthenticatorsTableDocument } from "./documents/security-activity/table";
 export { SelectOptionsDocument } from "./documents/select-options/options";
 export { WorkerPoliciesDocument, WorkerPolicyComplianceDocument, WorkerPolicyAcknowledgementsDocument, ProfileChangeRequestsDocument, CreateWorkerPolicyDocument, UpdateWorkerPolicyDocument, DecideProfileChangeDocument } from "./documents/self-service/operations";
 export { ServiceFailureReasonCodeTableRowFieldsFragmentDoc, ServiceFailureReasonCodeTableDocument } from "./documents/service-failure-reason-code/table";
@@ -18993,7 +18990,7 @@ export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, Shipme
 export { CheckCallFieldsFragmentDoc, CarrierTrackingLinkFieldsFragmentDoc, ShipmentCheckCallsDocument, CarrierTrackingLinkDocument, LogCheckCallDocument, IssueCarrierTrackingLinkDocument, RevokeCarrierTrackingLinkDocument } from "./documents/shipment/check-calls";
 export { CustomerTrackingLinkFieldsFragmentDoc, CustomerStatusNotificationFieldsFragmentDoc, CustomerTrackingLinksDocument, CustomerStatusNotificationsDocument, IssueCustomerTrackingLinkDocument, RevokeCustomerTrackingLinkDocument } from "./documents/shipment/customer-tracking";
 export { DeskRecordShipmentsDocument } from "./documents/shipment/desk-record";
-export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentTrackingEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, TransferShipmentToBillingDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
+export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, TransferShipmentToBillingDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
@@ -19007,7 +19004,7 @@ export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskTractorInspec
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
-export { WatchtowerItemFieldsFragmentDoc, WatchtowerItemEventFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, MarkWatchtowerSeenDocument, DismissWatchtowerItemDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, WatchtowerItemHistoryDocument, WatchtowerResolutionCodesDocument, AssignWatchtowerItemDocument, AcknowledgeWatchtowerItemDocument, StartWatchtowerItemDocument, SnoozeWatchtowerItemDocument, SetWatchtowerItemDueDocument, CommentOnWatchtowerItemDocument, ResolveWatchtowerItemDocument, ReopenWatchtowerItemDocument } from "./documents/watchtower/watchtower";
+export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument } from "./documents/worker-desk/desk";

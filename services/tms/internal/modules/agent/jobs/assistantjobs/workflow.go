@@ -310,9 +310,10 @@ func withPriority(
 }
 
 // notifyUnseen tells the person who asked that their reply ended, when nobody
-// was reading when it did: they closed the tab, signed in somewhere else, or
-// asked from the palette and moved on. A reply they stopped themselves is not
-// news to them, and a caller waiting on the result already has it.
+// was reading when it did: they closed the tab or signed in somewhere else. A
+// reply they stopped themselves is not news to them, a caller waiting on the
+// result already has it, and the activity leaves a reply answered in place
+// (the palette, an import or formula page) where it was asked.
 func (w *Workflows) notifyUnseen(
 	ctx workflow.Context,
 	stream *agentflow.Stream,

@@ -1,340 +1,257 @@
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { conversationPath } from "@/lib/conversation-path";
-import {
-  dismissWatchtowerItem,
-  handOffWatchtowerItem,
-  markWatchtowerSeen,
-  type WatchtowerItem,
-  type WatchtowerSeverity,
-  type WatchtowerSourceKind,
-} from "@/lib/graphql/watchtower";
-import { assistant } from "@/lib/queries/assistant";
-import { attention } from "@/lib/queries/attention";
-import { watchtower } from "@/lib/queries/watchtower";
-import { apiService } from "@/services/api";
-import { useAssistantStore } from "@/stores/assistant-store";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { usePermission } from "@/hooks/use-permission";
+import type { WatchtowerItem } from "@/lib/graphql/watchtower";
+import { watchtower, watchtowerQueueQuery } from "@/lib/queries/watchtower";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { MessageChatSquareIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { toast } from "@trenova/shared/components/ui/toast";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import { QueueClear, QueueHeader, QueueLayout } from "../queue/queue";
+import {
+  QUEUE_NAV_CLASS,
+  QueueBar,
+  QueueBarSpacer,
+  QueueButton,
+  QueueNav,
+} from "../queue/queue-bar";
+import { QueueGroupHeader, QueueList, type QueueSection } from "../queue/queue-list";
+import { WatchtowerHandOff } from "./hand-off-menu";
+import { WatchtowerItemCard } from "./item-card";
 import { WatchtowerItemRow } from "./item-row";
-import { ALL_SEVERITIES, isUnseen, toggleFilter } from "./severity";
-import { EXCEPTION_VIEWS, exceptionViewFilter, type ExceptionView } from "./exception";
-import { ExceptionSheet } from "./exception-sheet";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { groupByLane, laneLabel } from "./lanes";
+import { OnItStrip } from "./on-it-strip";
+import { useWatchtowerActions } from "./use-watchtower-actions";
+import { WatchtowerSkeleton } from "./watchtower-skeleton";
 
-const nowInSeconds = () => Math.floor(Date.now() / 1000);
+/** The address parameters a link lands on the queue with: an item, a severity, a kind. */
+const FOCUS_PARAMS = ["item", "severities", "kinds"] as const;
+
+function focusMatch(searchParams: URLSearchParams): ((item: WatchtowerItem) => boolean) | null {
+  const itemId = searchParams.get("item");
+  if (itemId) {
+    return (item) => item.id === itemId;
+  }
+  const severities = searchParams.get("severities")?.split(",").filter(Boolean) ?? [];
+  if (severities.length > 0) {
+    return (item) => severities.includes(item.severity);
+  }
+  const kinds = searchParams.get("kinds")?.split(",").filter(Boolean) ?? [];
+  if (kinds.length > 0) {
+    return (item) => kinds.includes(item.sourceKind);
+  }
+  return null;
+}
 
 /**
- * The watchtower: everything the system noticed, newest first.
+ * The Watchtower, worked one item at a time, soonest deadline first.
  *
- * It is a projection rather than a union of eleven queries — the sources stay
- * authoritative and an item resolves when its record does — so this reads one
- * list, pages it by time, and carries the reader's own cursor for the unseen
- * line. Filtering by kind or severity is a different question, not the same
- * one asked again, so each filter is part of the query key.
- *
- * Opening the feed marks it seen. That is deliberate: the cursor answers
- * "what is new since I last looked", and the act of looking is what moves it.
+ * The queue down the left is grouped by how long is left — act now, today,
+ * coming up, and nothing due — with the agents already on something in a
+ * strip above it. The card in the middle is the item in front of the person,
+ * and the bar under it walks the queue and acts on the item: snooze, done, or
+ * hand it to an agent. A link that names an item, a severity or a kind (a
+ * notification, the briefing's "Critical" block) lands on the first item it
+ * names.
  */
 export function WatchtowerFeed() {
   const t = useT();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [now] = useState(nowInSeconds);
-  const [kinds, setKinds] = useState<WatchtowerSourceKind[]>([]);
-  const [severities, setSeverities] = useState<WatchtowerSeverity[]>([]);
-  const [view, setView] = useState<ExceptionView>("all");
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const user = useAuthStore((state) => state.user);
+  const timezone = resolveUserTimezone(user?.timezone);
+  const now = useNow("minute");
+  const [since] = useState(() => getStartOfDay(new Date(), timezone));
+  const { allowed: canAct } = usePermission(Resource.Watchtower, Operation.Update);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const queue = useInfiniteQuery(watchtowerQueueQuery());
+  const clearedQuery = useQuery(watchtower.cleared(since));
   const countsQuery = useQuery(watchtower.counts());
-  const filter = useMemo(
-    () => ({ kinds, severities, unresolvedOnly: true, ...exceptionViewFilter(view) }),
-    [kinds, severities, view],
-  );
-  const feedQuery = useQuery(watchtower.feed(filter));
 
-  const refresh = useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: watchtower._def }),
-      queryClient.invalidateQueries({ queryKey: attention._def }),
-    ]);
-  }, [queryClient]);
+  const lanes = useMemo(() => {
+    const byId = new Map<string, WatchtowerItem>();
+    for (const page of queue.data?.pages ?? []) {
+      for (const item of page.items) {
+        if (!byId.has(item.id)) {
+          byId.set(item.id, item);
+        }
+      }
+    }
+    return groupByLane([...byId.values()], now);
+  }, [now, queue.data]);
+  const ordered = useMemo(() => lanes.flatMap((lane) => lane.items), [lanes]);
 
-  // The cursor the feed draws its line against. Held here rather than read
-  // from the page so that marking the feed seen stops drawing the line
-  // without waiting for every row to come back.
-  const [seenAt, setSeenAt] = useState<number | null>(null);
-  const servedSeenAt = feedQuery.data?.seenAt ?? 0;
-  const line = seenAt ?? servedSeenAt;
+  const actions = useWatchtowerActions({
+    items: ordered,
+    now,
+    timezone,
+    since,
+    keysEnabled: canAct,
+  });
+  const { current, select } = actions;
 
+  // A link names what to land on; the queue opens on the first item it
+  // names, reading on until it is loaded, and the address then forgets it so
+  // going back does not land there again.
+  const match = focusMatch(searchParams);
+  const focusing = match !== null;
+  const targetId = match === null ? null : (ordered.find(match)?.id ?? null);
+  const { fetchNextPage, hasNextPage, isFetchingNextPage, isPending } = queue;
   useEffect(() => {
-    if (feedQuery.data === undefined) {
+    if (!focusing || isPending) {
       return;
     }
-    let cancelled = false;
-    void markWatchtowerSeen().then((counts) => {
-      if (!cancelled) {
-        queryClient.setQueryData(watchtower.counts().queryKey, counts);
+    if (targetId !== null) {
+      select(targetId);
+    } else if (hasNextPage) {
+      if (!isFetchingNextPage) {
+        void fetchNextPage();
       }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-    // Once per visit: the cursor answers "since I last looked", and looking
-    // twice at the same page is one look.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const dismissMutation = useApiMutation({
-    mutationFn: (item: WatchtowerItem) => dismissWatchtowerItem(item.id),
-    onSuccess: refresh,
-    resourceName: "Watchtower item",
-  });
-
-  const handOffMutation = useApiMutation({
-    mutationFn: (item: WatchtowerItem) => handOffWatchtowerItem(item.id),
-    onSuccess: async (result) => {
-      if (result.runId !== null) {
-        toast.success(t("An agent is working on it"));
-      } else if (result.subscribers.length > 0) {
-        toast.success(t("Handed to {0}", result.subscribers.map((agent) => agent.name).join(", ")));
-      } else if (result.candidates.length > 0) {
-        toast.info(t("No agent subscribes to this yet"), {
-          description: t(
-            "{0} could take it — start one from AI Control.",
-            result.candidates[0].name,
-          ),
-        });
-      } else {
-        toast.info(t("No agent can take this one yet"));
-      }
-      await refresh();
-    },
-    resourceName: "Watchtower item",
-  });
-
-  // Asking about an item opens a conversation on the record it stands for, so
-  // the agent starts with the subject rather than with the question "which
-  // shipment?". The agent is the one the person last talked to, on the same
-  // rule the ask box uses.
-  const agentsQuery = useQuery(assistant.myAgents());
-  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
-  const askAgent =
-    agentsQuery.data?.find((agent) => agent.id === lastAgentId) ?? agentsQuery.data?.[0] ?? null;
-
-  const askMutation = useApiMutation({
-    mutationFn: (item: WatchtowerItem) => {
-      if (askAgent === null) {
-        throw new Error(t("No agents are available to ask"));
-      }
-
-      return apiService.assistantService.startThread(askAgent.id, {
-        origin: "Watchtower",
-        subjectType: item.subjectType ?? undefined,
-        subjectId: item.subjectId ?? undefined,
-      });
-    },
-    onSuccess: (thread) => navigate(conversationPath(thread.id)),
-    resourceName: "Conversation",
-  });
-
-  const items = feedQuery.data?.items ?? [];
-  const counts = countsQuery.data;
-  const busy = dismissMutation.isPending || handOffMutation.isPending || askMutation.isPending;
-  const canAsk = askAgent !== null;
-
-  const viewCount = (value: ExceptionView): number | undefined => {
-    switch (value) {
-      case "mine":
-        return counts?.mine;
-      case "unassigned":
-        return counts?.unassigned;
-      case "overdue":
-        return counts?.overdue;
-      default:
-        return counts?.unresolved;
+      return;
     }
-  };
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        FOCUS_PARAMS.forEach((name) => next.delete(name));
+        return next;
+      },
+      { replace: true },
+    );
+  }, [
+    fetchNextPage,
+    focusing,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+    select,
+    setSearchParams,
+    targetId,
+  ]);
+
+  if (queue.isPending) {
+    return <WatchtowerSkeleton />;
+  }
+
+  const cleared = clearedQuery.data ?? 0;
+  const open = countsQuery.data?.active ?? ordered.length;
+  const total = cleared + open;
+  const working = ordered.filter((item) => item.agentWork?.status === "Working");
+
+  const sections: QueueSection[] = lanes.map(({ lane, items }) => ({
+    key: lane,
+    className: `dk-w3-l-${lane}`,
+    header: (
+      <QueueGroupHeader
+        label={<b className="dk-w3-lt">{laneLabel(t, lane)}</b>}
+        count={items.length}
+      />
+    ),
+    rows: items.map((item) => ({
+      key: item.id,
+      render: () => (
+        <WatchtowerItemRow
+          item={item}
+          now={now}
+          selected={current?.id === item.id}
+          onSelect={() => select(item.id)}
+        />
+      ),
+    })),
+  }));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-desk-hairline flex flex-wrap items-center gap-3 border-b px-4 py-3">
-        <SegmentedControl<ExceptionView>
-          aria-label={t("Which exceptions to show")}
-          value={view}
-          onValueChange={setView}
-          items={EXCEPTION_VIEWS.map((value) => ({
-            value,
-            label: viewLabel(t, value),
-            caption: viewCount(value),
-          }))}
-        />
-        {counts !== undefined && counts.mineOverdue > 0 && (
-          <span className="text-danger text-xs">
-            {t(
-              "{0, plural, one {# of yours is overdue} other {# of yours are overdue}}",
-              counts.mineOverdue,
-            )}
-          </span>
-        )}
-      </div>
-      <div className="border-desk-hairline flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
-        {ALL_SEVERITIES.map((severity) => (
-          <FilterChip
-            key={severity}
-            label={severityLabel(t, severity)}
-            active={severities.includes(severity)}
-            onClick={() => setSeverities((current) => toggleFilter(current, severity))}
+    <QueueLayout
+      label={t("Watchtower")}
+      className="dk-w3"
+      aside={
+        <>
+          <QueueHeader
+            title={t("Watchtower")}
+            progressLabel={t("{0} of {1} cleared", cleared, total)}
+            done={cleared}
+            total={total}
           />
-        ))}
-
-        {counts && counts.byKind.length > 0 && (
-          <span aria-hidden className="bg-desk-hairline mx-1 h-5 w-px" />
-        )}
-
-        {counts?.byKind.map((row) => (
-          <FilterChip
-            key={row.kind}
-            label={row.label}
-            count={row.count}
-            active={kinds.includes(row.kind)}
-            onClick={() => setKinds((current) => toggleFilter(current, row.kind))}
-          />
-        ))}
-      </div>
-
-      <ScrollArea className="min-h-0 flex-1">
-        {feedQuery.isLoading ? (
-          <div className="flex flex-col gap-2 p-4">
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
-          </div>
-        ) : items.length === 0 ? (
-          <EmptySheet
-            className="my-10"
-            title={t("Nothing is asking for you")}
-            description={t(
-              "Failed runs, service failures, expiring credentials, quarantined EDI and anything else worth a look will appear here as it happens.",
-            )}
-            sketch={
-              <div className="flex flex-col gap-3">
-                <GhostLine className="w-2/3" />
-                <GhostLine className="w-1/2" />
-                <GhostLine className="w-3/5" />
-              </div>
+          {working.length > 0 && (
+            <OnItStrip working={working} selectedId={current?.id ?? null} onSelect={select} />
+          )}
+          <QueueList
+            label={t("Watchtower queue")}
+            sections={sections}
+            selectedKey={current?.id ?? null}
+            empty={<div className="dk-dc2-qe">{t("All clear")}</div>}
+            onEndReached={
+              hasNextPage && !isFetchingNextPage ? () => void fetchNextPage() : undefined
             }
           />
-        ) : (
-          <ul className="flex flex-col">
-            {items.map((item) => (
-              <WatchtowerItemRow
-                key={item.id}
-                item={item}
-                unseen={isUnseen(item.occurredAt, line)}
-                now={now}
-                busy={busy}
-                onAsk={canAsk ? (value) => askMutation.mutate(value) : undefined}
-                onHandOff={(value) => handOffMutation.mutate(value)}
-                onDismiss={(value) => dismissMutation.mutate(value)}
-                onOpen={(value) => setOpenItemId(value.id)}
-              />
-            ))}
-          </ul>
-        )}
-      </ScrollArea>
-
-      {feedQuery.data?.hasNextPage && (
-        <div className="border-desk-hairline flex justify-center border-t p-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setSeenAt(line)}
-            disabled={feedQuery.isFetching}
-          >
-            {t("There is more below")}
+        </>
+      }
+    >
+      {queue.isError ? (
+        <div className="dk-dc2-clear">
+          <b>{t("The queue could not be read")}</b>
+          <Button size="sm" variant="outline" onClick={() => void queue.refetch()}>
+            {t("Try again")}
           </Button>
         </div>
+      ) : current ? (
+        <WatchtowerItemCard
+          key={current.id}
+          item={current}
+          timezone={timezone}
+          leaving={actions.leaving}
+          onReviewAndApprove={actions.reviewAndApprove}
+        />
+      ) : (
+        <QueueClear
+          title={t("All clear")}
+          body={t(
+            "{0, plural, one {You cleared # today.} other {You cleared # today.}} New signals show up here the moment they happen.",
+            cleared,
+          )}
+        />
       )}
-
-      <ExceptionSheet
-        itemId={openItemId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setOpenItemId(null);
-          }
-        }}
-      />
-    </div>
+      {current && (
+        <QueueBar>
+          <QueueNav onPrevious={actions.previous} onNext={actions.next} />
+          <Button
+            variant="quiet"
+            size="bare"
+            className={cn(QUEUE_NAV_CLASS, "dk-w3-ask ml-1.5 inline-flex h-7.5 items-center")}
+            onClick={actions.ask}
+            disabled={!actions.canAsk}
+            title={t("Ask about this")}
+          >
+            <MessageChatSquareIcon aria-hidden className="size-3.5" />
+            <span>{t("Ask about this")}</span>
+          </Button>
+          <QueueBarSpacer />
+          {canAct ? (
+            <>
+              <QueueButton shortcut="S" onClick={actions.snooze}>
+                {t("Snooze")}
+              </QueueButton>
+              <QueueButton shortcut="E" onClick={actions.done}>
+                {t("Done")}
+              </QueueButton>
+              {current.agentWork === null && current.subjectId !== null && (
+                <WatchtowerHandOff
+                  suggested={current.suggestedAgent}
+                  open={actions.menuOpen}
+                  onOpenChange={actions.setMenuOpen}
+                  onHandOff={actions.handOff}
+                  disabled={actions.handingOff}
+                />
+              )}
+            </>
+          ) : (
+            <span className="dk-dc2-qe">{t("You can read these, but not act on them.")}</span>
+          )}
+        </QueueBar>
+      )}
+    </QueueLayout>
   );
-}
-
-function viewLabel(t: (value: string) => string, view: ExceptionView): string {
-  switch (view) {
-    case "mine":
-      return t("Mine");
-    case "unassigned":
-      return t("Unassigned");
-    case "overdue":
-      return t("Overdue");
-    default:
-      return t("All");
-  }
-}
-
-function FilterChip({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string;
-  count?: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      variant="bare"
-      size="bare"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "flex gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
-        active
-          ? "bg-foreground text-background"
-          : "text-muted-foreground hover:text-foreground ring-foreground/10 ring-1",
-      )}
-    >
-      {label}
-      {count !== undefined && (
-        <Badge
-          variant="neutral"
-          className={cn("h-4 px-1 tabular-nums", active && "bg-background/20 text-background")}
-        >
-          {count}
-        </Badge>
-      )}
-    </Button>
-  );
-}
-
-function severityLabel(t: (value: string) => string, severity: WatchtowerSeverity): string {
-  switch (severity) {
-    case "Critical":
-      return t("Critical");
-    case "Warning":
-      return t("Warning");
-    default:
-      return t("Info");
-  }
 }

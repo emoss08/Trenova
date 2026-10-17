@@ -165,7 +165,7 @@ function RecentFailuresSkeleton() {
           <Skeleton className="mt-0.5 size-4 shrink-0 rounded-sm" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Skeleton className="h-5 w-32 rounded-full" />
+              <Skeleton className="h-5 w-32 rounded-badge" />
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-2.5 w-28" />
             </div>

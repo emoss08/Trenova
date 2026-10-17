@@ -1,4 +1,3 @@
-import { createSelectors } from "@trenova/shared/lib/utils";
 import type { RainViewerData } from "@/types/shipment-map";
 import type { SetStateAction } from "react";
 import { create } from "zustand";
@@ -17,7 +16,7 @@ interface ShipmentMapState {
   setIsFullscreen: (fullscreen: SetStateAction<boolean>) => void;
 }
 
-const baseStore = create<ShipmentMapState>()(
+export const useShipmentMapStore = create<ShipmentMapState>()(
   devtools(
     persist(
       (set) => ({
@@ -49,5 +48,3 @@ const baseStore = create<ShipmentMapState>()(
     ),
   ),
 );
-
-export const useShipmentMapStore = createSelectors(baseStore);

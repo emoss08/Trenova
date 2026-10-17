@@ -77,6 +77,13 @@ const PATHS = {
       <circle cx="18" cy="12" r="1" />
     </>
   ),
+  moreV: (
+    <>
+      <circle cx="12" cy="6" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="12" cy="18" r="1" />
+    </>
+  ),
   receipt: <path d="M7 3.5h10v17l-2.5-1.5-2.5 1.5-2.5-1.5L7 20.5zM10 8h4M10 11.5h4" />,
   truck: (
     <path d="M3 7h11v9H3zM14 10h3.5l2.5 3v3h-6M7 18.5a1.5 1.5 0 1 0 0-.1M17 18.5a1.5 1.5 0 1 0 0-.1" />

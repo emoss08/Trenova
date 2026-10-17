@@ -1454,6 +1454,12 @@ export const conversationScheduleSchema = z.object({
   nextRunAt: z.number().nullish(),
   lastTurnId: z.string().nullish(),
   createdAt: z.number(),
+  /**
+   * The title of the conversation the answers post into, read with the list.
+   * Empty for an untitled conversation, and on a schedule just made or
+   * changed, which the server answers without it.
+   */
+  threadTitle: z.string().optional().default(""),
 });
 
 export const conversationScheduleListSchema = z.object({

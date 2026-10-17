@@ -1,9 +1,11 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { stubLayout } from "@/test/layout";
+import { api } from "@trenova/shared/lib/api";
 import type { AssistantThread } from "@/types/assistant";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   DeskRailShelf,
@@ -21,6 +23,35 @@ import { DeskRail, type DeskRailProps } from "../desk-rail";
 const DAY = 24 * 60 * 60;
 
 const state = vi.hoisted(() => ({ live: new Set<string>() }));
+/** How many requests are scheduled in each conversation, as the server lists them. */
+const scheduled = vi.hoisted(() => ({ byThread: new Map<string, number>() }));
+
+vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      get: vi.fn(async (url: string) => {
+        const threadId = /^\/assistant\/threads\/([^/]+)\/schedules\//.exec(url)?.[1];
+        if (threadId === undefined) {
+          throw new Error(`unexpected read of ${url}`);
+        }
+        const items = Array.from({ length: scheduled.byThread.get(threadId) ?? 0 }, (_, index) => ({
+          id: `csch_${index}`,
+          threadId,
+          userId: "usr_1",
+          prompt: `Request ${index + 1}`,
+          cadence: "stored",
+          cronExpression: "0 8 * * 1",
+          enabled: true,
+          createdAt: 0,
+        }));
+        return { items, total: items.length };
+      }),
+    },
+  };
+});
 
 vi.mock("@/components/assistant/use-active-turns", () => ({
   useLiveThreadIds: () => state.live,
@@ -125,8 +156,25 @@ function RailHarness({
         {...handlers}
         {...rest}
       />
+      <LocationProbe />
     </MemoryRouter>
   );
+}
+
+/** Presses delete on the row with this title, which asks in a dialog. */
+function askToDelete(title: string) {
+  const row = screen.getByText(title, { selector: ".dk-sb-t" }).closest(".dk-sb-c") as HTMLElement;
+  fireEvent.click(within(row).getByRole("button", { name: "Delete conversation" }));
+}
+
+/** Answers the question asked before a conversation with schedules is deleted. */
+function answerDelete(answer: "Delete" | "Cancel" = "Delete") {
+  fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: answer }));
+}
+
+/** Where the rail has sent the reader, for a place's link to be checked against. */
+function LocationProbe() {
+  return <span data-testid="location">{useLocation().pathname}</span>;
 }
 
 function renderRail(options: RailOptions = {}) {
@@ -137,8 +185,11 @@ function renderRail(options: RailOptions = {}) {
     onDelete: vi.fn(),
   };
   const onLoadMore = vi.fn<(shelf: DeskShelfKey) => void>();
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const element = (next: RailOptions) => (
-    <RailHarness {...next} handlers={handlers} onLoadMore={onLoadMore} />
+    <QueryClientProvider client={queryClient}>
+      <RailHarness {...next} handlers={handlers} onLoadMore={onLoadMore} />
+    </QueryClientProvider>
   );
   const view = render(element(options));
 
@@ -155,6 +206,7 @@ let restoreLayout = () => {};
 
 beforeEach(() => {
   state.live = new Set();
+  scheduled.byThread = new Map();
   useDeskSettingsStore.setState({ collapsedShelves: [] });
   restoreLayout = stubLayout(320);
 });
@@ -330,21 +382,49 @@ describe("DeskRail", () => {
     expect(dot()).toHaveClass("dk-s-new");
   });
 
-  it("pins in one click and deletes only after asking again", () => {
-    vi.useFakeTimers();
+  it("pins in one click and deletes a conversation with no schedules without asking", async () => {
     const subject = thread({ id: "a", title: "Blocked invoices" });
     const { handlers } = renderRail({ threads: [subject] });
 
     fireEvent.click(screen.getByRole("button", { name: "Pin conversation" }));
     expect(handlers.onSetPinned).toHaveBeenCalledWith(subject, true);
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
+    askToDelete("Blocked invoices");
+
+    await waitFor(() => expect(handlers.onDelete).toHaveBeenCalledWith(subject));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("asks before deleting a conversation with schedules, and lists them", async () => {
+    scheduled.byThread.set("a", 2);
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const { handlers } = renderRail({ threads: [subject] });
+
+    askToDelete("Blocked invoices");
+
+    const card = within(await screen.findByRole("alertdialog"));
+    expect(card.getByText("Delete “Blocked invoices”?")).toBeVisible();
+    expect(card.getByText("Request 1")).toBeVisible();
+    expect(card.getByText("Request 2")).toBeVisible();
     expect(handlers.onDelete).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-    expect(handlers.onDelete).toHaveBeenCalledWith(subject);
+
+    answerDelete();
+
+    await waitFor(() => expect(handlers.onDelete).toHaveBeenCalledWith(subject));
+  });
+
+  it("keeps a conversation with schedules when the question is cancelled", async () => {
+    scheduled.byThread.set("a", 1);
+    const subject = thread({ id: "a", title: "Blocked invoices" });
+    const { handlers } = renderRail({ threads: [subject] });
+
+    askToDelete("Blocked invoices");
+    await screen.findByRole("alertdialog");
+    answerDelete("Cancel");
+
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(handlers.onDelete).not.toHaveBeenCalled();
+    expect(screen.getByText("Blocked invoices").closest(".dk-sb-c")).not.toHaveClass("dk-out");
   });
 
   // The rail is given the conversation with its new pin a task after the
@@ -384,22 +464,16 @@ describe("DeskRail", () => {
 
   // The rail is given shelves without a deleted conversation a task after the
   // delete is sent; the row must not come back in between.
-  it("keeps a deleted row slid out until the shelves drop it", () => {
-    vi.useFakeTimers();
+  it("keeps a deleted row slid out until the shelves drop it", async () => {
     const subject = thread({ id: "a", title: "Blocked invoices" });
     const other = thread({ id: "b", title: "Late loads" });
     const { handlers, update } = renderRail({ threads: [subject, other] });
     const row = () => screen.queryByText("Blocked invoices")?.closest(".dk-sb-c");
 
-    const ask = within(row() as HTMLElement).getByRole("button", { name: "Delete conversation" });
-    fireEvent.click(ask);
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    askToDelete("Blocked invoices");
+    await waitFor(() => expect(handlers.onDelete).toHaveBeenCalledWith(subject));
     update({ threads: [subject, other] });
 
-    expect(handlers.onDelete).toHaveBeenCalledWith(subject);
     expect(row()).toHaveClass("dk-out");
 
     update({ threads: [other] });
@@ -407,29 +481,16 @@ describe("DeskRail", () => {
     expect(row()).toBeUndefined();
   });
 
-  it("shows a deleted row again when a refused delete brings it back", () => {
-    vi.useFakeTimers();
+  it("shows a deleted row again when a refused delete brings it back", async () => {
     const subject = thread({ id: "a", title: "Blocked invoices" });
-    const { update } = renderRail({ threads: [subject] });
+    const { handlers, update } = renderRail({ threads: [subject] });
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
+    askToDelete("Blocked invoices");
+    await waitFor(() => expect(handlers.onDelete).toHaveBeenCalledWith(subject));
     update({ threads: [] });
     update({ threads: [subject] });
 
     expect(screen.getByText("Blocked invoices").closest(".dk-sb-c")).not.toHaveClass("dk-out");
-  });
-
-  it("drops the delete question when the pointer leaves the row", () => {
-    renderRail({ threads: [thread({ id: "a", title: "Blocked invoices" })] });
-
-    fireEvent.click(screen.getByRole("button", { name: "Delete conversation" }));
-    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-    fireEvent.mouseLeave(screen.getByText("Blocked invoices").closest(".dk-sb-c") as Element);
-    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 
   it("shows the places with what waits at each", () => {
@@ -439,6 +500,23 @@ describe("DeskRail", () => {
     const decisions = screen.getByRole("button", { name: /Decisions/ });
     expect(decisions).toHaveTextContent("6");
     expect(decisions.querySelector(".dk-sb-ct")).toHaveClass("dk-w");
+  });
+
+  it("opens the scheduled requests from their place, and lights it while they are open", () => {
+    renderRail();
+
+    const scheduled = screen.getByRole("button", { name: "Scheduled" });
+    expect(scheduled).not.toHaveClass("text-dsk-fg");
+    fireEvent.click(scheduled);
+    expect(screen.getByTestId("location")).toHaveTextContent("/desk/scheduled");
+  });
+
+  it("lights Scheduled, not Today, on the scheduled requests", () => {
+    renderRail({ place: "scheduled" });
+
+    expect(screen.getByRole("button", { name: "Scheduled" })).toHaveAttribute("data-k", "n:sched");
+    expect(screen.getByRole("button", { name: "Scheduled" })).toHaveClass("text-dsk-fg");
+    expect(document.querySelector('[data-k="n:today"]')).not.toHaveClass("text-dsk-fg");
   });
 
   it("leaves out the places a person may not open", () => {

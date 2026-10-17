@@ -1,4 +1,4 @@
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { ShortcutKeys } from "./palette-parts";
@@ -62,12 +62,12 @@ export function PaletteFooter({
             </>
           ) : aside.kind === "question" ? (
             <>
-              <NovaMark className="size-3.5" />
+              <NovaBadge size="sm" />
               <span>{t("Nova will answer this")}</span>
             </>
           ) : (
             <>
-              <NovaMark className="size-3.5" />
+              <NovaBadge size="sm" />
               <span>{t("End with ? to ask Nova")}</span>
             </>
           )}

@@ -41,12 +41,14 @@ func TruncateRunes(value string, maxLength int) string {
 
 func Ellipsize(value string, maxLength int) string {
 	value = strings.TrimSpace(value)
-	truncated := TruncateRunes(value, maxLength)
-	if truncated == value {
+	if TruncateRunes(value, maxLength) == value {
 		return value
 	}
+	if maxLength <= 0 {
+		return ""
+	}
 
-	return strings.TrimRight(truncated, " ") + "…"
+	return strings.TrimRight(TruncateRunes(value, maxLength-1), " ") + "…"
 }
 
 // FirstSentence returns the text up to and including its first full stop,

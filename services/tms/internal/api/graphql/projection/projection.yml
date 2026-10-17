@@ -5,6 +5,8 @@ aliases:
     assignee: assigneeId
     resolvedBy: resolvedById
     overdue: dueAt
+    suggestedAgentId: eventKind
+    suggestedAgent: eventKind
   WatchtowerItemEvent:
     actor: actorId
   Invoice:
@@ -141,6 +143,14 @@ aliases:
     equipmentStatus: status
   Trailer:
     equipmentStatus: status
+  AuthEvent:
+    user: userId
+  RiskDecision:
+    user: userId
+  ExternalIdentity:
+    user: userId
+  MFAAuthenticator:
+    user: userId
 
 virtuals:
   JournalSourceInfo:
@@ -220,6 +230,8 @@ virtuals:
   WatchtowerItem:
     - seen
     - kindLabel
+    - record
+    - agentWork
   CaptureCoverSheet:
     - payload
     - qrCode
@@ -551,6 +563,7 @@ modelOverrides:
   ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentMoveEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentBriefing: github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief.Brief
   ShipmentAssignmentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentCarrierEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentTenderEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event

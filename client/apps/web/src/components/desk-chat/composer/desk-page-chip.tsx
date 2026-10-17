@@ -1,5 +1,6 @@
 import { derivePageContext, stripAppTitle } from "@/components/assistant/page-context";
 import { usePageContext } from "@/components/assistant/use-page-context";
+import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { useRecentPages } from "@/stores/recent-pages-store";
 import type { AssistantPageContext } from "@/types/assistant";
@@ -40,17 +41,27 @@ function isAskablePage(path: string): boolean {
  * At the Desk it is the last page the person had open before coming in: the
  * Desk is a room of its own, so the page that matters is the one they walked
  * in from, the shipment list they were looking at when they thought of the
- * question. Asked from the assistant over a page (`onScreen`), it is the page
+ * question — or, for a conversation started about something on the Desk (a
+ * Watchtower item), that thing. Asked from the assistant over a page (`onScreen`), it is the page
  * on screen, read with its filters and table at send time.
  */
-export function useDeskPage({ onScreen = false }: { onScreen?: boolean } = {}) {
+export function useDeskPage({
+  onScreen = false,
+  threadId,
+}: { onScreen?: boolean; threadId?: string } = {}) {
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
+  const attached = useDeskAttachedPageStore((state) =>
+    threadId === undefined ? undefined : state.pages[threadId],
+  );
   const recent = useRecentPages(organizationId ?? undefined);
   const share = useDeskStore((state) => state.sharePage);
   const setShare = useDeskStore((state) => state.setSharePage);
   const { pathname } = useLocation();
   const readScreen = usePageContext();
   const page = useMemo<DeskPage | null>(() => {
+    if (attached !== undefined) {
+      return { path: attached.path, title: attached.title || attached.path };
+    }
     if (onScreen) {
       if (!isAskablePage(pathname)) {
         return null;
@@ -61,18 +72,21 @@ export function useDeskPage({ onScreen = false }: { onScreen?: boolean } = {}) {
       return { path: pathname, title: title || pathname };
     }
     return recent.find((candidate) => isAskablePage(candidate.path)) ?? null;
-  }, [onScreen, pathname, recent]);
+  }, [attached, onScreen, pathname, recent]);
 
   const context = useCallback((): AssistantPageContext | null => {
     if (!share || !page) {
       return null;
+    }
+    if (attached !== undefined) {
+      return attached;
     }
     if (onScreen) {
       return readScreen();
     }
     const derived = derivePageContext({ pathname: page.path, search: "", title: page.title });
     return derived ? { ...derived, title: page.title } : null;
-  }, [onScreen, page, readScreen, share]);
+  }, [attached, onScreen, page, readScreen, share]);
 
   return { page, share: share && page !== null, setShare, context, onScreen };
 }

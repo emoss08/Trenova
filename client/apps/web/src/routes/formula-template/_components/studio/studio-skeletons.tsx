@@ -131,7 +131,7 @@ export function NovaPaneSkeleton() {
         <div className="bg-card flex flex-col gap-2 rounded-xl border p-3">
           <Skeleton className="h-4 w-2/5" />
           <div className="flex items-center gap-2">
-            <Skeleton className="h-7 w-40 rounded-full" />
+            <Skeleton className="h-7 w-40 rounded-badge" />
             <span className="flex-1" />
             <Skeleton className="h-7 w-7 rounded-full" />
           </div>
@@ -148,7 +148,7 @@ export function StudioSkeleton({ className }: { className?: string }) {
       <div className="flex h-13 items-center gap-3 border-b px-3">
         <Skeleton className="size-7 rounded-md" />
         <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-5 w-64 rounded-full max-[760px]:hidden" />
+        <Skeleton className="h-5 w-64 rounded-badge max-[760px]:hidden" />
         <span className="flex-1" />
         <Skeleton className="h-7 w-32" />
         <Skeleton className="h-7 w-20" />

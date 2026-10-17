@@ -55,7 +55,7 @@ export function AttentionCountBadge({
         attention.count,
       )}
       className={cn(
-        "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-2xs leading-none font-semibold tabular-nums",
+        "inline-flex h-4 min-w-4 items-center justify-center rounded-badge px-1 text-2xs leading-none font-semibold tabular-nums",
         ATTENTION_PILL_CLASSES[attention.tone],
         className,
       )}

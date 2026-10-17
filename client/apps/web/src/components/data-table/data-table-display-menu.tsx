@@ -290,7 +290,7 @@ export default function DataTableDisplayMenu({
                   trailing={
                     <span className="text-muted-foreground flex items-center gap-1">
                       {formatRuleCount > 0 ? (
-                        <span className="bg-muted flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs tabular-nums">
+                        <span className="bg-muted flex h-5 min-w-5 items-center justify-center rounded-badge px-1.5 text-xs tabular-nums">
                           {formatRuleCount}
                         </span>
                       ) : null}

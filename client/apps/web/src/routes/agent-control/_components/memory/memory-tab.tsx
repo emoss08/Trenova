@@ -79,7 +79,7 @@ export default function MemoryTab() {
   const [{ panelType, [MEMORY_STARTER_PARAM]: starterKind }, setStarter] =
     useQueryStates(starterParsers);
 
-  const byMeaning = Boolean(retrievalQuery.data?.settings.activeModelKey);
+  const wordsOnly = Boolean(retrievalQuery.data) && !retrievalQuery.data?.settings.activeModelKey;
   const learningOff = controlQuery.data?.learningOff ?? false;
   const empty = totalQuery.data === 0;
   // With nothing to list there is no table to hold the create panel, so a link
@@ -140,22 +140,20 @@ export default function MemoryTab() {
 
   return (
     <div className="tabp">
-      <p className="lead">
-        {t("Agents read these before they answer.")}
-        {retrievalQuery.data && !byMeaning && (
-          <>
-            {" "}
-            {rt("They're found by their words until <link>search by meaning</link> is on.", {
+      {(wordsOnly || learningOff) && (
+        <p className="lead">
+          {wordsOnly &&
+            rt("Memories are found by their words until <link>search by meaning</link> is on.", {
               link: (children) => (
                 <button type="button" className="lnk" onClick={() => go({ tab: "retrieval" })}>
                   {children}
                 </button>
               ),
             })}
-          </>
-        )}
-        {learningOff && <> {t("Learning is off, so agents won't suggest new ones.")}</>}
-      </p>
+          {wordsOnly && learningOff && " "}
+          {learningOff && t("Learning is off, so agents won't suggest new ones.")}
+        </p>
+      )}
       <OrganizationProfile canManage={canManage} />
       <MemoryUsageNotice />
       <MemoryTaintNotice canDecide={canManage} />

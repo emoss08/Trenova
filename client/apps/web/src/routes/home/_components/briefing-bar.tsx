@@ -1,22 +1,16 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ActionPill } from "@/components/action-pill";
 import { PageBarControls } from "@/components/navigation/rail-page-bar";
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { partOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { TimeFormat } from "@trenova/shared/types/user";
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  Grid01Icon,
-  Lock01Icon,
-} from "@trenova/shared/components/icons";
+import { CheckIcon, Grid01Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -117,12 +111,6 @@ function buildChips(
   return chips.filter((chip) => chip.count > 0);
 }
 
-const CHIP_DOT: Record<Chip["tone"], string> = {
-  danger: "bg-destructive",
-  warning: "bg-warning",
-  brand: "bg-brand",
-};
-
 export type BriefingBarProps = {
   attention: AttentionSummary | undefined;
   analytics: ShipmentAnalyticsData;
@@ -174,9 +162,9 @@ export function BriefingBar({
           <div className="flex min-h-5.5 flex-wrap items-center gap-x-2 gap-y-1">
             {loading ? (
               <>
-                <Skeleton className="h-5 w-28 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
-                <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-5 w-28 rounded-badge" />
+                <Skeleton className="h-5 w-20 rounded-badge" />
+                <Skeleton className="h-5 w-24 rounded-badge" />
               </>
             ) : total === 0 ? (
               <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -194,18 +182,17 @@ export function BriefingBar({
                   {t("{0} {1} you", total, total === 1 ? t("item needs") : t("items need"))}
                 </span>
                 {chips.map((chip) => (
-                  <Link
+                  <ActionPill
                     key={`${chip.label}-${chip.href}`}
                     to={chip.href}
-                    className="group border-border bg-card text-muted-foreground hover:text-foreground flex h-5.5 items-center gap-1.5 rounded-full border px-2 text-xs transition-colors"
+                    tone={chip.tone}
+                    className="h-5.5"
                   >
-                    <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
                     <span className="font-table text-foreground font-medium tabular-nums">
                       {chip.count}
                     </span>
                     <span>{t(chip.label)}</span>
-                    <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                  </Link>
+                  </ActionPill>
                 ))}
               </>
             )}

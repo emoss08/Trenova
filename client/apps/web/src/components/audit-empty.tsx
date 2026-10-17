@@ -36,7 +36,7 @@ export function AuditEmpty({ title, description, className }: AuditEmptyProps) {
                 <span className="flex items-center gap-2">
                   <GhostLine className={`h-2 ${entry.name}`} />
                   <span
-                    className={`border-border/70 block h-4 rounded-full border ${entry.pill}`}
+                    className={`border-border/70 block h-4 rounded-badge border ${entry.pill}`}
                   />
                 </span>
                 <GhostLine className={entry.summary} />

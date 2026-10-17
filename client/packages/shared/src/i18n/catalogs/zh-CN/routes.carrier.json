@@ -6,6 +6,7 @@
   "About {0} per matched lookup at this depth.": "在此深度下,每次匹配的查询约 {0}。",
   "Active insurance coverage on file for this carrier.": "此承运商已登录的有效保险。",
   "Add contact": "新增联系人",
+  "Add policy": "新增策略",
   "Add the carrier's USDOT number on the Identity tab and save, then vet it to see its authority, insurance and safety record.": "在“身份”标签页添加该承运商的 USDOT 编号并保存,然后对其进行核验以查看其授权、保险和安全记录。",
   "Additional details": "其他细节",
   "Additional remit-to address details such as suite number or PO box.": "汇款地址的补充信息，例如楼层室号或邮政信箱。",

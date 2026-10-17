@@ -16,7 +16,7 @@ import {
   type IconComponent,
 } from "@trenova/shared/components/icons";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
@@ -101,7 +101,7 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
       <div className="scrollbar-overlay flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2 pt-3 pb-2">
         <RailRow
           active={folder.kind === "briefing"}
-          leading={<NovaMark spin="hover" className="size-3.5" />}
+          leading={<NovaBadge size="sm" spin="hover" />}
           label={t("Briefing")}
           onClick={() => onSelect(BRIEFING)}
         />
@@ -348,7 +348,7 @@ function RailRow({
           className={cn(
             "font-mono text-xs tabular-nums",
             tone === "loud"
-              ? "bg-warning text-warning-on-solid flex h-4.5 min-w-5 items-center justify-center rounded-full px-1.5 font-semibold"
+              ? "bg-warning text-warning-on-solid flex h-4.5 min-w-5 items-center justify-center rounded-badge px-1.5 font-semibold"
               : "text-foreground-subtle",
           )}
         >

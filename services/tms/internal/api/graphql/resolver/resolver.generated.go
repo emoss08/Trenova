@@ -103,6 +103,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/routingguideresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/scimgrouprolemappingresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/securityactivityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoptionsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selfserviceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
@@ -198,6 +199,7 @@ type Resolver struct {
 	apiKey                             *apikeyresolver.ApiKeyResolver
 	approvalDelegation                 *orgstructureresolver.ApprovalDelegationResolver
 	auditEntry                         *auditlogresolver.AuditEntryResolver
+	authEvent                          *securityactivityresolver.AuthEventResolver
 	briefingSection                    *briefingresolver.BriefingSectionResolver
 	captureBatch                       *captureresolver.CaptureBatchResolver
 	captureCoverSheet                  *captureresolver.CaptureCoverSheetResolver
@@ -260,6 +262,7 @@ type Resolver struct {
 	ediTransfer                        *ediresolver.EdiTransferResolver
 	equipmentContinuity                *equipmentcontinuityresolver.EquipmentContinuityResolver
 	escrowAccount                      *driversettlementresolver.EscrowAccountResolver
+	externalIdentity                   *securityactivityresolver.ExternalIdentityResolver
 	extractionEvalCase                 *extractionevalresolver.ExtractionEvalCaseResolver
 	extractionEvalResult               *extractionevalresolver.ExtractionEvalResultResolver
 	extractionEvalRun                  *extractionevalresolver.ExtractionEvalRunResolver
@@ -330,6 +333,7 @@ type Resolver struct {
 	leaveControl                       *workerleaveresolver.LeaveControlResolver
 	leaveEntitlement                   *workerleaveresolver.LeaveEntitlementResolver
 	locationCategory                   *locationcategoryresolver.LocationCategoryResolver
+	mFAAuthenticator                   *securityactivityresolver.MFAAuthenticatorResolver
 	mutation                           *mutationResolver
 	myAgent                            *agentdefinitionresolver.MyAgentResolver
 	myPTOBalance                       *driverportalresolver.MyPTOBalanceResolver
@@ -355,6 +359,7 @@ type Resolver struct {
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
 	query                              *queryResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
+	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
 	routingGuideEntry                  *routingguideresolver.RoutingGuideEntryResolver
 	safetyScorecard                    *workersafetyresolver.SafetyScorecardResolver
@@ -388,8 +393,10 @@ type Resolver struct {
 	triageStopTimes                    *inboundreplyresolver.TriageStopTimesResolver
 	triageView                         *inboundmessageresolver.TriageViewResolver
 	user                               *tenantresolver.UserResolver
+	watchtowerAgentWork                *watchtowerresolver.WatchtowerAgentWorkResolver
 	watchtowerItem                     *watchtowerresolver.WatchtowerItemResolver
 	watchtowerItemEvent                *watchtowerresolver.WatchtowerItemEventResolver
+	watchtowerRecord                   *watchtowerresolver.WatchtowerRecordResolver
 	worker                             *workerresolver.WorkerResolver
 	workerBenefitEnrollment            *benefitsresolver.WorkerBenefitEnrollmentResolver
 	workerChecklist                    *workerchecklistresolver.WorkerChecklistResolver
@@ -442,6 +449,7 @@ func FromServices(s *Services) *Resolver {
 	accountsreceivableDeps := &accountsreceivableresolver.Deps{
 		Core:                      s.Core,
 		AccountsReceivableService: s.AccountsReceivableService,
+		AccountingBriefs:          s.AccountingBriefs,
 	}
 	accounttypeDeps := &accounttyperesolver.Deps{
 		Core:               s.Core,
@@ -912,6 +920,10 @@ func FromServices(s *Services) *Resolver {
 		Core:       s.Core,
 		IamService: s.IamService,
 	}
+	securityactivityDeps := &securityactivityresolver.Deps{
+		Core:       s.Core,
+		IamService: s.IamService,
+	}
 	selectoptionsDeps := &selectoptionsresolver.Deps{
 		Core:                         s.Core,
 		OrganizationService:          s.OrganizationService,
@@ -1190,6 +1202,7 @@ func FromServices(s *Services) *Resolver {
 		apiKey:                       &apikeyresolver.ApiKeyResolver{Deps: apikeyDeps},
 		approvalDelegation:           &orgstructureresolver.ApprovalDelegationResolver{Deps: orgstructureDeps},
 		auditEntry:                   &auditlogresolver.AuditEntryResolver{Deps: auditlogDeps},
+		authEvent:                    &securityactivityresolver.AuthEventResolver{Deps: securityactivityDeps},
 		briefingSection:              &briefingresolver.BriefingSectionResolver{Deps: briefingDeps},
 		captureBatch:                 &captureresolver.CaptureBatchResolver{Deps: captureDeps},
 		captureCoverSheet:            &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps},
@@ -1255,6 +1268,7 @@ func FromServices(s *Services) *Resolver {
 		ediTransfer:                  &ediresolver.EdiTransferResolver{Deps: ediDeps},
 		equipmentContinuity:          &equipmentcontinuityresolver.EquipmentContinuityResolver{Deps: equipmentcontinuityDeps},
 		escrowAccount:                &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps},
+		externalIdentity:             &securityactivityresolver.ExternalIdentityResolver{Deps: securityactivityDeps},
 		extractionEvalCase:           &extractionevalresolver.ExtractionEvalCaseResolver{Deps: extractionevalDeps},
 		extractionEvalResult:         &extractionevalresolver.ExtractionEvalResultResolver{Deps: extractionevalDeps},
 		extractionEvalRun:            &extractionevalresolver.ExtractionEvalRunResolver{Deps: extractionevalDeps},
@@ -1337,6 +1351,7 @@ func FromServices(s *Services) *Resolver {
 		leaveControl:                       &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps},
 		leaveEntitlement:                   &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps},
 		locationCategory:                   &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps},
+		mFAAuthenticator:                   &securityactivityresolver.MFAAuthenticatorResolver{Deps: securityactivityDeps},
 		mutation: &mutationResolver{
 			accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 			agentMutation:                 &agentMutation{Deps: agentDeps},
@@ -1541,6 +1556,7 @@ func FromServices(s *Services) *Resolver {
 			routingguideQuery:             &routingguideQuery{Deps: routingguideDeps},
 			schedulingQuery:               &schedulingQuery{Deps: schedulingDeps},
 			scimgrouprolemappingQuery:     &scimgrouprolemappingQuery{Deps: scimgrouprolemappingDeps},
+			securityactivityQuery:         &securityactivityQuery{Deps: securityactivityDeps},
 			selectoptionsQuery:            &selectoptionsQuery{Deps: selectoptionsDeps},
 			selfserviceQuery:              &selfserviceQuery{Deps: selfserviceDeps},
 			servicefailureQuery:           &servicefailureQuery{Deps: servicefailureDeps},
@@ -1576,6 +1592,7 @@ func FromServices(s *Services) *Resolver {
 			workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 		},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
+		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
 		routingGuideEntry:            &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps},
 		safetyScorecard:              &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps},
@@ -1609,8 +1626,10 @@ func FromServices(s *Services) *Resolver {
 		triageStopTimes:              &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps},
 		triageView:                   &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps},
 		user:                         &tenantresolver.UserResolver{Deps: tenantDeps},
+		watchtowerAgentWork:          &watchtowerresolver.WatchtowerAgentWorkResolver{Deps: watchtowerDeps},
 		watchtowerItem:               &watchtowerresolver.WatchtowerItemResolver{Deps: watchtowerDeps},
 		watchtowerItemEvent:          &watchtowerresolver.WatchtowerItemEventResolver{Deps: watchtowerDeps},
+		watchtowerRecord:             &watchtowerresolver.WatchtowerRecordResolver{Deps: watchtowerDeps},
 		worker:                       &workerresolver.WorkerResolver{Deps: workerDeps},
 		workerBenefitEnrollment:      &benefitsresolver.WorkerBenefitEnrollmentResolver{Deps: benefitsDeps},
 		workerChecklist:              &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps},
@@ -1891,6 +1910,10 @@ func (r *Resolver) AuditEntry() generated.AuditEntryResolver {
 	return r.auditEntry
 }
 
+func (r *Resolver) AuthEvent() generated.AuthEventResolver {
+	return r.authEvent
+}
+
 func (r *Resolver) BriefingSection() generated.BriefingSectionResolver {
 	return r.briefingSection
 }
@@ -2142,6 +2165,10 @@ func (r *Resolver) EquipmentContinuity() generated.EquipmentContinuityResolver {
 
 func (r *Resolver) EscrowAccount() generated.EscrowAccountResolver {
 	return r.escrowAccount
+}
+
+func (r *Resolver) ExternalIdentity() generated.ExternalIdentityResolver {
+	return r.externalIdentity
 }
 
 func (r *Resolver) ExtractionEvalCase() generated.ExtractionEvalCaseResolver {
@@ -2442,6 +2469,10 @@ func (r *Resolver) LocationCategory() generated.LocationCategoryResolver {
 	return r.locationCategory
 }
 
+func (r *Resolver) MFAAuthenticator() generated.MFAAuthenticatorResolver {
+	return r.mFAAuthenticator
+}
+
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return r.mutation
 }
@@ -2721,6 +2752,7 @@ type queryResolver struct {
 	*routingguideQuery
 	*schedulingQuery
 	*scimgrouprolemappingQuery
+	*securityactivityQuery
 	*selectoptionsQuery
 	*selfserviceQuery
 	*servicefailureQuery
@@ -2758,6 +2790,10 @@ type queryResolver struct {
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {
 	return r.reviewRating
+}
+
+func (r *Resolver) RiskDecision() generated.RiskDecisionResolver {
+	return r.riskDecision
 }
 
 func (r *Resolver) Role() generated.RoleResolver {
@@ -2892,12 +2928,20 @@ func (r *Resolver) User() generated.UserResolver {
 	return r.user
 }
 
+func (r *Resolver) WatchtowerAgentWork() generated.WatchtowerAgentWorkResolver {
+	return r.watchtowerAgentWork
+}
+
 func (r *Resolver) WatchtowerItem() generated.WatchtowerItemResolver {
 	return r.watchtowerItem
 }
 
 func (r *Resolver) WatchtowerItemEvent() generated.WatchtowerItemEventResolver {
 	return r.watchtowerItemEvent
+}
+
+func (r *Resolver) WatchtowerRecord() generated.WatchtowerRecordResolver {
+	return r.watchtowerRecord
 }
 
 func (r *Resolver) Worker() generated.WorkerResolver {
@@ -3217,6 +3261,7 @@ type (
 	routingguideQuery               = routingguideresolver.QueryResolver
 	schedulingQuery                 = schedulingresolver.QueryResolver
 	scimgrouprolemappingQuery       = scimgrouprolemappingresolver.QueryResolver
+	securityactivityQuery           = securityactivityresolver.QueryResolver
 	selectoptionsQuery              = selectoptionsresolver.QueryResolver
 	selfserviceQuery                = selfserviceresolver.QueryResolver
 	servicefailureQuery             = servicefailureresolver.QueryResolver

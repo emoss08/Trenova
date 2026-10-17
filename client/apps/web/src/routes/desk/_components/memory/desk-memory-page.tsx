@@ -386,7 +386,7 @@ export function DeskMemoryPage() {
                 role="tab"
                 aria-selected={sameFilter(filter, chip.filter)}
                 className={cn(
-                  "h-7 gap-1.5 rounded-full px-2.5 text-sm",
+                  "h-7 gap-1.5 rounded-badge px-2.5 text-sm",
                   sameFilter(filter, chip.filter)
                     ? "bg-dsk-ink text-dsk-ink-fg"
                     : "text-dsk-muted hover:text-dsk-fg",

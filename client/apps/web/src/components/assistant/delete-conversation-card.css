@@ -1,0 +1,111 @@
+/* The question asked before a conversation with scheduled requests is
+   deleted: a small card in the Desk's palette over a soft scrim, the way the
+   Desk's search and settings sit over the page. */
+.dk-dcf-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--dsk-canvas) 55%, transparent);
+  backdrop-filter: blur(3px);
+  animation: dk-dcf-fade 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.dk-dcf {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  background: var(--dsk-raised);
+  box-shadow:
+    var(--dsk-lift-hi),
+    0 0 0 1px var(--dsk-b-sub);
+  color: var(--dsk-fg);
+  transform: translate(-50%, -50%);
+  outline: none;
+  animation: dk-dcf-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.dk-dcf-t {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.dk-dcf-d {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--dsk-muted);
+}
+.dk-dcf-l {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+}
+.dk-dcf-r {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  color: var(--dsk-muted);
+}
+.dk-dcf-r > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.dk-dcf-r > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-dcf-r b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-dcf-r em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-dcf-f {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+@keyframes dk-dcf-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dk-dcf-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 6px)) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-dcf-scrim,
+  .dk-dcf {
+    animation: none;
+  }
+}

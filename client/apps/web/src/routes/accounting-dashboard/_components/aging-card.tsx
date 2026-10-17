@@ -1,7 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AGING_BUCKETS, agingChartConfig } from "@/components/accounting/aging-buckets";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -9,14 +7,21 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@trenova/shared/components/ui/chart";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { SectionPanel } from "@/components/section-panel";
 import { ar } from "@/lib/queries/ar";
-import { formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
-import { RangeToggle } from "./range-toggle";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import {
+  ChartBodySkeleton,
+  PANEL_CHART_HEIGHT,
+  PanelChartBody,
+  PanelQuiet,
+} from "./dashboard-panel";
+import { DEFAULT_TREND_RANGE, RangeToggle, type TrendRangeWeeks } from "./range-toggle";
 
 type AgingView = "snapshot" | "trend";
 
@@ -24,30 +29,29 @@ export function AgingCard() {
   const t = useT();
 
   const [view, setView] = useState<AgingView>("snapshot");
+  const [range, setRange] = useState<TrendRangeWeeks>(DEFAULT_TREND_RANGE);
 
   return (
-    <Card className="gap-0 p-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{t("Aging")}</CardTitle>
-        <div className="flex gap-1">
-          {(["snapshot", "trend"] as const).map((option) => (
-            <Button
-              key={option}
-              type="button"
-              size="sm"
-              variant={view === option ? "secondary" : "ghost"}
-              onClick={() => setView(option)}
-              className="h-7 px-2 text-xs capitalize"
-            >
-              {option}
-            </Button>
-          ))}
+    <SectionPanel
+      title={t("Aging")}
+      hint={view === "snapshot" ? t("open balance by days past due") : undefined}
+      action={
+        <div className="flex items-center gap-2">
+          {view === "trend" ? <RangeToggle value={range} onChange={setRange} /> : null}
+          <SegmentedControl<AgingView>
+            aria-label={t("Aging view")}
+            value={view}
+            onValueChange={setView}
+            items={[
+              { value: "snapshot", label: t("Snapshot") },
+              { value: "trend", label: t("Trend") },
+            ]}
+          />
         </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        {view === "snapshot" ? <AgingSnapshot /> : <AgingTrend />}
-      </CardContent>
-    </Card>
+      }
+    >
+      {view === "snapshot" ? <AgingSnapshot /> : <AgingTrend range={range} />}
+    </SectionPanel>
   );
 }
 
@@ -68,20 +72,16 @@ function AgingSnapshot() {
   );
 
   if (isLoading) {
-    return <Skeleton className="h-56 w-full" />;
+    return <ChartBodySkeleton label={t("Loading aging")} />;
   }
 
   const totalOpen = (buckets?.totalOpenMinor ?? 0) / 100;
   if (chartData.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-        {t("Nothing outstanding — all caught up")}
-      </div>
-    );
+    return <PanelQuiet>{t("Nothing outstanding — all caught up")}</PanelQuiet>;
   }
 
   return (
-    <div className="flex h-56 items-center gap-4">
+    <div className={cn("flex items-center gap-4 p-3", PANEL_CHART_HEIGHT)}>
       <div className="relative h-full flex-1">
         <ChartContainer config={agingChartConfig} className="h-full w-full">
           <PieChart>
@@ -115,11 +115,9 @@ function AgingSnapshot() {
           const share = totalOpen > 0 ? (amount / totalOpen) * 100 : 0;
           return (
             <div key={bucket.key} className="flex items-center gap-2 text-xs">
-              <span className={`size-2 shrink-0 rounded-full ${bucket.dotClass}`} />
+              <span className={cn("size-2 shrink-0 rounded-full", bucket.dotClass)} />
               <span className="text-muted-foreground w-10">{t(bucket.label)}</span>
-              <span className="flex-1 text-right font-medium tabular-nums">
-                {formatCurrency(amount)}
-              </span>
+              <span className="flex-1 text-right tabular-nums">{formatCurrency(amount)}</span>
               <span className="text-muted-foreground w-9 text-right tabular-nums">
                 {share.toFixed(0)}%
               </span>
@@ -131,10 +129,9 @@ function AgingSnapshot() {
   );
 }
 
-function AgingTrend() {
+function AgingTrend({ range }: { range: TrendRangeWeeks }) {
   const t = useT();
 
-  const [range, setRange] = useState<number>(13);
   const { data: trend, isLoading } = useQuery(ar.agingTrend(range));
 
   const chartData = useMemo(
@@ -151,23 +148,16 @@ function AgingTrend() {
   );
 
   if (isLoading) {
-    return <Skeleton className="h-56 w-full" />;
+    return <ChartBodySkeleton label={t("Loading the aging trend")} />;
   }
 
   if (chartData.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-        {t("No open receivables history yet")}
-      </div>
-    );
+    return <PanelQuiet>{t("No open receivables history yet")}</PanelQuiet>;
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-end">
-        <RangeToggle value={range} onChange={setRange} />
-      </div>
-      <ChartContainer config={agingChartConfig} className="h-[196px] w-full">
+    <PanelChartBody>
+      <ChartContainer config={agingChartConfig} className="h-full w-full">
         <AreaChart data={chartData} margin={{ left: 4, right: 12, top: 8 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
@@ -194,6 +184,6 @@ function AgingTrend() {
           <ChartLegend content={<ChartLegendContent />} />
         </AreaChart>
       </ChartContainer>
-    </div>
+    </PanelChartBody>
   );
 }

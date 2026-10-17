@@ -1,62 +1,52 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  assignWatchtowerItem,
-  fetchWatchtowerFeed,
-  resolveWatchtowerItem,
-  setWatchtowerItemDue,
-} from "../watchtower";
+import { fetchWatchtowerFeed, resolveWatchtowerItem, snoozeWatchtowerItem } from "../watchtower";
 
 const mocks = vi.hoisted(() => ({ requestGraphQL: vi.fn() }));
 
 vi.mock("@trenova/shared/lib/graphql", () => ({ requestGraphQL: mocks.requestGraphQL }));
 
-const variablesOf = (call: number) =>
-  (mocks.requestGraphQL.mock.calls[call][0] as { variables: Record<string, unknown> }).variables;
+const requestOf = (call: number) =>
+  mocks.requestGraphQL.mock.calls[call][0] as {
+    variables: Record<string, unknown>;
+    idempotencyKey?: string;
+  };
+const variablesOf = (call: number) => requestOf(call).variables;
 
 describe("watchtower exception changes", () => {
   beforeEach(() => {
     mocks.requestGraphQL.mockReset();
     mocks.requestGraphQL.mockResolvedValue({
-      assignWatchtowerItem: { id: "wt_1" },
       resolveWatchtowerItem: { id: "wt_1" },
-      setWatchtowerItemDue: { id: "wt_1" },
+      snoozeWatchtowerItem: { id: "wt_1" },
     });
   });
 
-  it("sends the version the person saw and no note when the note is blank", async () => {
-    await assignWatchtowerItem({ id: "wt_1", version: 4, assigneeId: "usr_9", note: "   " });
-
-    expect(variablesOf(0)).toEqual({
-      id: "wt_1",
-      input: { assigneeId: "usr_9", note: null, expectedVersion: 4 },
-    });
-  });
-
-  it("leaves an exception with nobody when no owner is chosen", async () => {
-    await assignWatchtowerItem({ id: "wt_1", version: 1, assigneeId: null });
-
-    expect(variablesOf(0)).toEqual({
-      id: "wt_1",
-      input: { assigneeId: null, note: null, expectedVersion: 1 },
-    });
-  });
-
-  it("clears a due time with an explicit null", async () => {
-    await setWatchtowerItemDue({ id: "wt_1", version: 2, dueAt: null });
-
-    expect(variablesOf(0)).toEqual({
-      id: "wt_1",
-      input: { dueAt: null, note: null, expectedVersion: 2 },
-    });
-  });
-
-  it("trims the note it resolves with", async () => {
+  it("trims the note it resolves with and sends the version the person saw", async () => {
     await resolveWatchtowerItem({ id: "wt_1", version: 3, code: "Other", note: "  Phoned in " });
 
     expect(variablesOf(0)).toEqual({
       id: "wt_1",
       input: { code: "Other", note: "Phoned in", expectedVersion: 3 },
     });
+  });
+
+  it("snoozes with no note when the note is blank, under the key it was given", async () => {
+    await snoozeWatchtowerItem(
+      { id: "wt_1", version: 4, until: 1_800_000_000, note: "   " },
+      { idempotencyKey: "key-1" },
+    );
+
+    expect(variablesOf(0)).toEqual({
+      id: "wt_1",
+      input: { until: 1_800_000_000, note: null, expectedVersion: 4 },
+    });
+    expect(requestOf(0).idempotencyKey).toBe("key-1");
+  });
+
+  it("sends no key when none is given", async () => {
+    await resolveWatchtowerItem({ id: "wt_1", version: 1, code: "Fixed" });
+
+    expect(requestOf(0).idempotencyKey).toBeUndefined();
   });
 });
 

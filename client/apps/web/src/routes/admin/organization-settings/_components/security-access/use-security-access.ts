@@ -11,6 +11,8 @@ export type ManageAccess = {
 };
 
 export type SecurityAccess = {
+  briefing: boolean;
+  pages: { users: boolean; apiKeys: boolean };
   identityProviders: ManageAccess;
   scimDirectories: ManageAccess;
   accessPolicies: ManageAccess;
@@ -42,13 +44,21 @@ export function securityAccess(check: Check): SecurityAccess {
     mfa: check(Resource.MFAAuthenticator, Operation.Read),
   };
 
+  const briefing = check(Resource.Organization, Operation.Read);
+
   return {
+    briefing,
+    pages: {
+      users: check(Resource.User, Operation.Read),
+      apiKeys: check(Resource.APIKey, Operation.Read),
+    },
     identityProviders,
     scimDirectories,
     accessPolicies,
     provisioningAudit,
     activity,
     tabs: {
+      overview: briefing,
       "sign-in": identityProviders.read,
       provisioning: scimDirectories.read || provisioningAudit,
       policies: accessPolicies.read,

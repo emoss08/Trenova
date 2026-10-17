@@ -523,6 +523,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
+	runtimeContext.Inline = req.Inline
 	runtimeContext.DecisionRequests = tools.offers(requestDecisionName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as

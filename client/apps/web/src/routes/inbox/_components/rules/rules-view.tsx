@@ -141,7 +141,7 @@ function AddRow({ onStart }: { onStart: () => void }) {
           ),
         })}
       </span>
-      <em className="bg-surface-hover text-foreground-subtle group-hover:bg-ink group-hover:text-ink-foreground rounded-full px-2.5 py-1 text-sm whitespace-nowrap not-italic transition-colors @max-2xl:hidden">
+      <em className="bg-surface-hover text-foreground-subtle group-hover:bg-ink group-hover:text-ink-foreground rounded-badge px-2.5 py-1 text-sm whitespace-nowrap not-italic transition-colors @max-2xl:hidden">
         {t("New rule")}
       </em>
     </button>

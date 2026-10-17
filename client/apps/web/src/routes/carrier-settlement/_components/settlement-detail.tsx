@@ -908,7 +908,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
             {match.varianceMinor !== 0 && (
               <span
                 className={cn(
-                  "ml-auto inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
+                  "ml-auto inline-flex rounded-badge px-1.5 py-px text-2xs font-medium",
                   "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
                 )}
                 title={t("Invoice total minus the expected buy rate")}

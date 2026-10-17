@@ -79,7 +79,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         type="button"
         disabled={pending}
         onClick={() => void release()}
-        className="inline-flex cursor-pointer rounded-full bg-info-subtle px-1.5 py-px text-2xs font-medium text-info-foreground hover:bg-info-subtle dark:text-info-foreground dark:hover:bg-info-subtle"
+        className="inline-flex cursor-pointer rounded-badge bg-info-subtle px-1.5 py-px text-2xs font-medium text-info-foreground hover:bg-info-subtle dark:text-info-foreground dark:hover:bg-info-subtle"
         title={t("On hold: {0}. Click to release so the event settles normally.", row.holdReason)}
       >
         {t("Held")}
@@ -93,7 +93,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         type="button"
         disabled={pending}
         onClick={() => setDialogOpen(true)}
-        className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center rounded-full px-1 py-px opacity-0 transition-opacity group-hover/row:opacity-100"
+        className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center rounded-badge px-1 py-px opacity-0 transition-opacity group-hover/row:opacity-100"
         title={t("Hold this pay event — it skips settlement generation until released")}
         aria-label={t("Hold pay event")}
       >

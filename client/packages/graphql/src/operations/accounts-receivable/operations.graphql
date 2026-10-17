@@ -110,6 +110,26 @@ query ArCustomerStatement($customerId: ID!, $startDate: Timestamp, $asOfDate: Ti
   }
 }
 
+query AccountingBriefing {
+  accountingBriefing {
+    segments {
+      text
+      link
+      customerId
+    }
+    actions {
+      link
+      count
+      amountMinor
+      customerId
+      customerName
+    }
+    narrated
+    generatedAt
+    generation
+  }
+}
+
 query ArDashboardKpis {
   arDashboardKpis {
     asOfDate

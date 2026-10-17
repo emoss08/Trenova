@@ -77,7 +77,7 @@ export function DeskDictate({
     <Button
       variant="bare"
       size="bare"
-      className="dk-dict h-7.5 gap-2 rounded-full pr-1.5 pl-2.5 text-xs"
+      className="dk-dict h-7.5 gap-2 rounded-badge pr-1.5 pl-2.5 text-xs"
       title={t("Stop dictating")}
       aria-label={t("Stop dictating")}
       onClick={dictation.toggleFromDraft}

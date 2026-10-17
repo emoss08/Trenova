@@ -62,6 +62,8 @@ func TestDailyBriefingWorkflow_WritesEachDueOrganizationInItsOwnChild(t *testing
 		})
 	env.OnActivity(a.WriteShipmentBriefActivity, mock.Anything, mock.Anything).
 		Return(&ShipmentBriefResult{Generation: 1}, nil)
+	env.OnActivity(a.WriteAccountingBriefActivity, mock.Anything, mock.Anything).
+		Return(&AccountingBriefResult{Generation: 1}, nil)
 
 	env.ExecuteWorkflow(DailyBriefingWorkflow)
 
@@ -102,7 +104,7 @@ func TestDailyBriefingWorkflow_AnHourWithNobodyDue(t *testing.T) {
 	assert.Empty(t, result.FailedOrganizations)
 }
 
-func TestWriteOrganizationBriefingWorkflow_WritesTheShipmentBoardBriefAfterTheMorning(
+func TestWriteOrganizationBriefingWorkflow_WritesTheBoardAndAccountingBriefsAfterTheMorning(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -127,6 +129,14 @@ func TestWriteOrganizationBriefingWorkflow_WritesTheShipmentBoardBriefAfterTheMo
 			return &ShipmentBriefResult{Generation: 1, Narrated: true}, nil
 		}).
 		Once()
+	var accountingFor pulid.ID
+	env.OnActivity(a.WriteAccountingBriefActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *OrganizationBriefingInput) (*AccountingBriefResult, error) {
+			order = append(order, "accounting")
+			accountingFor = input.OrganizationID
+			return &AccountingBriefResult{Generation: 1, Narrated: true}, nil
+		}).
+		Once()
 
 	env.ExecuteWorkflow(WriteOrganizationBriefingWorkflow,
 		&OrganizationBriefingInput{TenantWorkItem: workItem("org_a"), Now: 100},
@@ -136,8 +146,9 @@ func TestWriteOrganizationBriefingWorkflow_WritesTheShipmentBoardBriefAfterTheMo
 	var result OrganizationBriefingResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, OrganizationBriefingResult{Written: 3, Narrated: 2}, result)
-	assert.Equal(t, []string{"morning", "board"}, order)
+	assert.Equal(t, []string{"morning", "board", "accounting"}, order)
 	assert.Equal(t, pulid.ID("org_a"), boardFor)
+	assert.Equal(t, pulid.ID("org_a"), accountingFor)
 	env.AssertExpectations(t)
 }
 
@@ -154,6 +165,9 @@ func TestWriteOrganizationBriefingWorkflow_AFailedBoardBriefKeepsTheMorning(t *t
 		Once()
 	env.OnActivity(a.WriteShipmentBriefActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("board", "Broken", errors.New("x")))
+	env.OnActivity(a.WriteAccountingBriefActivity, mock.Anything, mock.Anything).
+		Return(&AccountingBriefResult{Generation: 1}, nil).
+		Once()
 
 	env.ExecuteWorkflow(WriteOrganizationBriefingWorkflow,
 		&OrganizationBriefingInput{TenantWorkItem: workItem("org_a"), Now: 100},
@@ -163,4 +177,32 @@ func TestWriteOrganizationBriefingWorkflow_AFailedBoardBriefKeepsTheMorning(t *t
 	var result OrganizationBriefingResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, 3, result.Written)
+	env.AssertExpectations(t)
+}
+
+func TestWriteOrganizationBriefingWorkflow_AFailedAccountingBriefKeepsTheMorning(t *testing.T) {
+	t.Parallel()
+
+	var s testsuite.WorkflowTestSuite
+	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(&Activities{})
+
+	var a *Activities
+	env.OnActivity(a.WriteOrganizationBriefingActivity, mock.Anything, mock.Anything).
+		Return(&OrganizationBriefingResult{Written: 3, Narrated: 2}, nil).
+		Once()
+	env.OnActivity(a.WriteShipmentBriefActivity, mock.Anything, mock.Anything).
+		Return(&ShipmentBriefResult{Generation: 1}, nil).
+		Once()
+	env.OnActivity(a.WriteAccountingBriefActivity, mock.Anything, mock.Anything).
+		Return(nil, temporal.NewNonRetryableApplicationError("ledger", "Broken", errors.New("x")))
+
+	env.ExecuteWorkflow(WriteOrganizationBriefingWorkflow,
+		&OrganizationBriefingInput{TenantWorkItem: workItem("org_a"), Now: 100},
+	)
+
+	require.NoError(t, env.GetWorkflowError())
+	var result OrganizationBriefingResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, OrganizationBriefingResult{Written: 3, Narrated: 2}, result)
 }

@@ -1,0 +1,23 @@
+fragment SCIMDirectoryFields on SCIMDirectory {
+  id
+  organizationId
+  businessUnitId
+  tenantSlug
+  enabled
+  createdAt
+  updatedAt
+}
+
+query SCIMDirectoriesList($input: DataTableConnectionInput!) {
+  scimDirectories(input: $input) {
+    edges {
+      node {
+        ...SCIMDirectoryFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

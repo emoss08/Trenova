@@ -604,7 +604,7 @@ function DayCell({
       <div className="flex items-center justify-between" style={{ height: HEADER_HEIGHT - 2 }}>
         <span
           className={cn(
-            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 leading-none tabular-nums",
+            "inline-flex h-5 min-w-5 items-center justify-center rounded-badge px-1 leading-none tabular-nums",
             day.isToday && "bg-primary text-primary-foreground font-semibold",
             firstOfMonth && !day.isToday && "font-semibold",
           )}
@@ -616,7 +616,7 @@ function DayCell({
         {selectionDays !== null ? (
           <span
             data-testid="pto-selection-pill"
-            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-2xs leading-none font-semibold duration-150"
+            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-badge px-1.5 py-0.5 text-2xs leading-none font-semibold duration-150"
           >
             {t("{0, plural, one {# day} other {# days}}", selectionDays)}
           </span>

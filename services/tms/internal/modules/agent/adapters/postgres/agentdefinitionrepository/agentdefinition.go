@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -307,6 +308,40 @@ func (r *repository) ListEnabledByTrigger(
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list agent definitions by trigger: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListEnabledForEvents(
+	ctx context.Context,
+	req agentdefinitionports.ListAgentDefinitionsForEventsRequest,
+) ([]*agentdefinition.Definition, error) {
+	if len(req.EventKinds) == 0 {
+		return []*agentdefinition.Definition{}, nil
+	}
+	kinds := make([]string, 0, len(req.EventKinds))
+	for _, kind := range req.EventKinds {
+		kinds = append(kinds, string(kind))
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
+		cols := agentdefinitioncol.DefinitionColumns
+		entities := make([]*agentdefinition.Definition, 0, len(kinds))
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
+					Where(cols.Enabled.IsTrue()).
+					Where(cols.TriggerMode.Eq(), agentdefinition.TriggerEvent).
+					Where(cols.EventKinds.Qualified()+" && ?::text[]", pgdialect.Array(kinds))
+			}).
+			Order(cols.Name.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent definitions for events: %w", err)
 		}
 
 		return entities, nil

@@ -123,7 +123,7 @@ function AttentionSkeleton() {
         <div className="flex items-center gap-2">
           <Skeleton className="size-3.5 rounded-sm" />
           <Skeleton className="h-3.5 w-24" />
-          <Skeleton className="h-4 w-5 rounded-full" />
+          <Skeleton className="h-4 w-5 rounded-badge" />
         </div>
         <Skeleton className="h-6 w-28 rounded-md" />
       </header>
@@ -138,7 +138,7 @@ function AttentionSkeleton() {
               <Skeleton className="h-3 w-40" />
             </span>
             <span className="flex items-center gap-2">
-              <Skeleton className="h-4 w-16 rounded-full" />
+              <Skeleton className="h-4 w-16 rounded-badge" />
               <Skeleton className="size-4 rounded-sm" />
             </span>
           </li>

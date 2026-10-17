@@ -6,6 +6,7 @@ type KpiStripSkeletonProps = {
   size?: "md" | "lg";
   sub?: boolean;
   minItemWidth?: string;
+  bare?: boolean;
   className?: string;
 };
 
@@ -14,10 +15,11 @@ export function KpiStripSkeleton({
   size = "md",
   sub = true,
   minItemWidth,
+  bare,
   className,
 }: KpiStripSkeletonProps) {
   return (
-    <KpiStrip minItemWidth={minItemWidth} className={className}>
+    <KpiStrip minItemWidth={minItemWidth} bare={bare} className={className}>
       {Array.from({ length: count }, (_, index) => (
         <KpiStripItem
           key={index}

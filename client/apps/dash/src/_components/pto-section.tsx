@@ -205,7 +205,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
                 type="button"
                 onClick={() => setType(value)}
                 className={cn(
-                  "rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors",
+                  "rounded-badge border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors",
                   type === value && "border-primary bg-primary text-primary-foreground",
                 )}
               >

@@ -111,9 +111,9 @@ describe("announceReplyReady", () => {
     expect(markRead).toHaveBeenCalledWith(["ntf_1"]);
   });
 
-  // A palette question nobody kept is not in the list; the live replies were
-  // the one place holding its title, and they are read before being refreshed.
-  it("names an unlisted conversation from the reply that was writing in it", async () => {
+  // A conversation this tab's list does not hold is still named by the live
+  // reply that was writing in it, read before the list is refreshed.
+  it("names a conversation the list does not hold from the reply that was writing in it", async () => {
     queryClient.setQueryData(assistant.activeTurns().queryKey, {
       items: [
         {

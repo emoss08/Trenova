@@ -75,15 +75,28 @@ series. As on Vercel, the active nav row is a neutral fill with the ink on it an
 the active tab is underlined in ink, not blue. It is never the primary button and never a severity.
 If you are about to write `bg-brand` on a button, you want `variant="default"`.
 
-Brand blue shares the blue arc with three other things, so that arc is pinned apart:
+Every colour is a step on a Geist ramp, spent the way Geist spends it:
+
+| Rung | Geist step (light) | Geist step (dark) |
+|---|---|---|
+| `--x-subtle` (tint) | 200 | 200 |
+| `--x-border` (hairline) | 400 | 400 |
+| `--x` (solid) | 700, or 800–900 where white text needs it | 700–900, whichever carries the dark ink |
+| `--x-foreground`, `--x-subtle-foreground` | 900 | 900 |
+
+Danger is Geist red, warning Geist amber, success Geist green, and **info is Geist
+blue itself**, written against `--hue-brand`, as it is on Vercel. A link and an "In
+transit" badge are told apart by their form (bare text against a tinted label), not
+by a second blue. The categories teal, violet, rose and emerald are Geist's teal,
+purple, pink and green; sky, indigo and amber have no Geist ramp and take the blue
+ramp's lightness and chroma at their own hue, trimmed to sRGB. The categories in the
+blue arc stay clear of the brand:
 
 ```
-info 222  →  sky 232  →  brand 258  →  indigo 283
+sky 232  →  brand 258  →  indigo 283
 ```
 
-Brand keeps 30° from info and 20° from each category. Info is a steel cyan at
-under half of the brand's chroma for the same reason: a link and an "In transit"
-badge share a row in nearly every table, and they must not read as one thing.
+Brand keeps 20° from each.
 
 The warm arc keeps its own floor:
 
@@ -231,19 +244,23 @@ in a cell takes no weight class at all.
 
 ## Radius
 
-Two values, plus the pill.
+Corners are tight, as Vercel's are.
 
-| Token | Value | For |
-|---|---|---|
-| `--radius-control` | 6px | buttons, inputs, chips, menu rows |
-| `--radius-surface` | 8px | cards, panels, dialogs, popovers, table containers |
-| `rounded-full` | — | badges and avatars |
+| Token | Utility | Value | For |
+|---|---|---|---|
+| `--radius-label` | `rounded-badge` | 4px | badges, status labels, counts, chips, filter pills |
+| `--radius-control` | `rounded-sm`, `rounded-md` | 6px | buttons, inputs, menu rows |
+| `--radius-surface` | `rounded-lg` and up | 6px | cards, panels, dialogs, popovers, table containers |
+| — | `rounded-full` | — | what is actually round: avatars, status dots, switch tracks, icon-only round buttons |
 
-There were seven in use — `rounded-md` 1,032 times, `rounded-lg` 780, bare
+A label is never a pill. A badge, a count or a chip with text in it takes
+`rounded-badge`; `rounded-full` on anything that holds a word is the defect.
+
+There were seven corners in use — `rounded-md` 1,032 times, `rounded-lg` 780, bare
 `rounded` 268, `rounded-sm` 108, `rounded-2xl` 99, `rounded-xl` 46 — which is the
 same as having none, because nothing could be told apart by its corner. The whole
-Tailwind scale is now pointed at the two real values, so existing call sites are
-unchanged and an eighth corner has nowhere to land.
+Tailwind scale is now pointed at the real values, so existing call sites are
+unchanged and another corner has nowhere to land.
 
 ## Density
 
@@ -465,7 +482,10 @@ breaking an acronym ("EDI Partner" → "EDI partner").
 
 A row of figures is one joined strip divided by hairlines, not a row of floating
 cards: `KpiStrip` with `KpiStripItem` (`components/kpi/kpi-strip.tsx`). Label over
-number, no decorative icon, the delta as small toned text with an arrow. A `tone`
+number, no decorative icon, the delta as small toned text with an arrow. Under a
+page brief, whose sections are open rather than carded, the strip takes `bare`:
+the same joined cells between two hairlines, with no box, and the first figure
+lined up with the brief above it. A `tone`
 puts a status dot beside the label; `onClick` makes the cell a filter and `active`
 fills it with the selection colour.
 
@@ -652,6 +672,31 @@ wrong promise for a rate or a settlement, and it is the glyph every generated
 interface spends. The assistant's launcher uses `AssistantMark`,
 the same diamond with a centre point that breathes on hover.
 
+## The Nova badge
+
+Nova is shown by one mark, `NovaBadge` (`@trenova/shared/components/ui/nova-badge`): a
+disc with a hollow centre, swept with Nova's three colours (`--nova-1` to `--nova-3`,
+blue through violet to rose, in both themes). The `nova-badge` utility in `tokens.css`
+paints it and cuts the centre with a mask, so it sits on a panel, a well or the canvas
+alike; never draw it again with a filled `::after`, which only matches one surface.
+
+Wear it wherever the interface names Nova or shows what Nova wrote, read or is doing:
+the "Nova" line heading a sentence it speaks (AI control, the setup guide, Triage's
+briefing), "Written by Nova" under a brief, an Ask Nova row or button. A machine
+suggestion that is not Nova speaking keeps `AssistMark`.
+
+| `size` | px | For |
+|---|---|---|
+| `xs` | 12 | beside small print: an "as of" line, a chip, a lane label |
+| `sm` | 14 | in a row, a button or a footer hint |
+| `md` | 16 | a section header, a field's leading slot (the default) |
+| `lg` | 20 | heading a sentence Nova speaks |
+| `xl` | 24 | heading a pane |
+
+`spin` runs the colours round the badge, which stays still: `"always"` while Nova is
+working, `"hover"` while the pointer or focus is on the nearest `group`, `"none"` at
+rest. Nothing spins at rest, and reduced motion stops it.
+
 ## Badge
 
 Two axes, neither of them a colour.
@@ -670,9 +715,9 @@ Variants used to be named by colour — `purple`, `orange`, `teal`. Once a varia
 is called `purple` there is no correct answer to "what colour is a tender?", so
 every caller answered differently. That is what the split above prevents.
 
-A badge is a pill. It is the one thing on screen that is never a container, and
-the shape says so before the colour does — which is also why it is the only
-component that does not take one of the two radii.
+A badge is a label with a 4px corner (`rounded-badge`), tighter than a control's,
+so it reads as a mark on the row rather than as something to press. It is never a
+pill.
 
 ## Status metadata
 
@@ -1006,7 +1051,7 @@ one tool at a time because an approver reads the tool once. The keys are shown a
 next to the buttons they mirror, not explained in prose.
 
 **The composer carries context, not chrome.** What a person hands over with their words
-rides as chips inside the box: a file as a `rounded-full` chip with its name and progress, a
+rides as chips inside the box: a file as a `rounded-badge` chip with its name and progress, a
 named record as a chip with the at-sign mark, and the page as the existing pin chip, which
 also says how many rows or filters it carries. A slash lists commands ahead of the agent's
 questions; a command with slots is filled in the box, its empty slots shown as a hint row

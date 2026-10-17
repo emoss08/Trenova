@@ -1,7 +1,7 @@
 import type { EditorRange } from "@/components/formula-editor/highlight-range";
 import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaExplainResponse } from "@trenova/shared/types/formula-template";
@@ -76,7 +76,7 @@ export function ExplainPanel({
     <div className="bg-card overflow-hidden rounded-lg border" aria-busy={loading || undefined}>
       <div className="flex flex-col gap-2 px-3.5 pt-3 pb-3">
         <div className="flex items-center gap-2">
-          <NovaMark spin={loading ? "always" : "none"} className="size-3.5" />
+          <NovaBadge size="sm" spin={loading ? "always" : "none"} />
           <span className="text-sm font-semibold">{t("What this charges")}</span>
           <span className="flex-1" />
           {data && (

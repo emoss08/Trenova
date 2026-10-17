@@ -1561,6 +1561,17 @@ type AuditEntryEdge struct {
 	Cursor string       `json:"cursor"`
 }
 
+type AuthEventConnection struct {
+	Edges      []*AuthEventEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type AuthEventEdge struct {
+	Node   *iam.AuthEvent `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
 type BackfillJurisdictionMilesInput struct {
 	PeriodStart int `json:"periodStart"`
 	PeriodEnd   int `json:"periodEnd"`
@@ -4531,6 +4542,17 @@ type ExportTableViewInput struct {
 	Format string `json:"format"`
 }
 
+type ExternalIdentityConnection struct {
+	Edges      []*ExternalIdentityEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type ExternalIdentityEdge struct {
+	Node   *iam.ExternalIdentity `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
 type ExtractionEvalCaseConnection struct {
 	Edges      []*ExtractionEvalCaseEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
@@ -5959,6 +5981,17 @@ type LogInboundExceptionInput struct {
 	// What was short, over or damaged: pallets, cases, pieces.
 	Unit string  `json:"unit"`
 	Note *string `json:"note,omitempty"`
+}
+
+type MFAAuthenticatorConnection struct {
+	Edges      []*MFAAuthenticatorEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type MFAAuthenticatorEdge struct {
+	Node   *iam.MFAAuthenticator `json:"node"`
+	Cursor string                `json:"cursor"`
 }
 
 type ManualJournalConnection struct {
@@ -7592,6 +7625,17 @@ type ReviseDeskMemoryInput struct {
 	Version int                `json:"version"`
 }
 
+type RiskDecisionConnection struct {
+	Edges      []*RiskDecisionEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type RiskDecisionEdge struct {
+	Node   *iam.RiskDecision `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
 type RoleConnection struct {
 	Edges      []*RoleEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
@@ -7692,6 +7736,17 @@ type RunReportInput struct {
 	Format       string         `json:"format"`
 	Params       map[string]any `json:"params,omitempty"`
 	ViewID       *string        `json:"viewId,omitempty"`
+}
+
+type SCIMDirectoryConnection struct {
+	Edges      []*SCIMDirectoryEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type SCIMDirectoryEdge struct {
+	Node   *iam.SCIMDirectory `json:"node"`
+	Cursor string             `json:"cursor"`
 }
 
 type SCIMGroupRoleMappingConnection struct {
@@ -11082,8 +11137,12 @@ type WaiveWorkerTrainingInput struct {
 
 // The feed in numbers, for a badge and a set of filter chips.
 type WatchtowerCounts struct {
-	Unresolved     int `json:"unresolved"`
-	Critical       int `json:"critical"`
+	Unresolved int `json:"unresolved"`
+	Critical   int `json:"critical"`
+	// Open and not snoozed: what the queue shows.
+	Active int `json:"active"`
+	// Critical, open and not snoozed.
+	ActiveCritical int `json:"activeCritical"`
 	Unseen         int `json:"unseen"`
 	UnseenCritical int `json:"unseenCritical"`
 	// Open, not snoozed and past their due time.
@@ -11096,6 +11155,15 @@ type WatchtowerCounts struct {
 	MineOverdue int                      `json:"mineOverdue"`
 	ByKind      []*WatchtowerKindSummary `json:"byKind"`
 	SeenAt      int                      `json:"seenAt"`
+}
+
+// One fact about the record behind an item, as the source reports it.
+type WatchtowerFact struct {
+	Label string `json:"label"`
+	// The value in words; absent when the fact is an instant.
+	Value *string `json:"value,omitempty"`
+	// The instant the fact names, for the reader's own clock.
+	At *int `json:"at,omitempty"`
 }
 
 // What a hand-off did. With a run, an agent is already working on the item;
@@ -11153,6 +11221,13 @@ type WatchtowerKindSummary struct {
 	Kind  watchtower.SourceKind `json:"kind"`
 	Label string                `json:"label"`
 	Count int                   `json:"count"`
+}
+
+// One of the events that led to an item, oldest first.
+type WatchtowerTrailEvent struct {
+	// When it happened; absent when the source does not know.
+	At   *int   `json:"at,omitempty"`
+	Text string `json:"text"`
 }
 
 type WithdrawInvoiceDisputeInput struct {

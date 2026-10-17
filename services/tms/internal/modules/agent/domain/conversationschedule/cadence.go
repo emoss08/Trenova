@@ -3,6 +3,7 @@ package conversationschedule
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -202,17 +203,92 @@ func ParseRequest(text string) (*Request, error) {
 		)
 	}
 
-	label, days := cadenceOf(unit)
-	cron := fmt.Sprintf("%d %d * * %s", minute, hour, days)
-	if err = cronutils.Validate(cron); err != nil {
-		return nil, fmt.Errorf("schedule cadence: %w", err)
+	label, cron, err := cadenceAt(unit, hour, minute)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Request{
 		Prompt:         capitalise(prompt),
-		Cadence:        label + " · " + clockLabel(hour, minute),
+		Cadence:        label,
 		CronExpression: cron,
 	}, nil
+}
+
+// cadenceAt is a cadence as the person reads it, "Every weekday · 7:30 AM",
+// and the same cadence as a five-field cron.
+func cadenceAt(unit string, hour, minute int) (label, cron string, err error) {
+	days, field := cadenceOf(unit)
+	cron = fmt.Sprintf("%d %d * * %s", minute, hour, field)
+	if err = cronutils.Validate(cron); err != nil {
+		return "", "", fmt.Errorf("schedule cadence: %w", err)
+	}
+
+	return days + " · " + clockLabel(hour, minute), cron, nil
+}
+
+// Repeats are how often a schedule can run, as the editor offers them: every
+// day, every weekday, or one day of the week. They are the cadences a
+// message can ask for, so a schedule made either way can be edited either way.
+var Repeats = []string{
+	"day",
+	"weekday",
+	"monday",
+	"tuesday",
+	"wednesday",
+	"thursday",
+	"friday",
+	"saturday",
+	"sunday",
+}
+
+// editTimePattern is a time as a time field sends it: "07:30", "17:05".
+var editTimePattern = regexp.MustCompile(`^([01]?\d|2[0-3]):([0-5]\d)$`)
+
+// Edit is a schedule's request and cadence as a person changed them: what to
+// ask, how often (one of Repeats) and at what time on a 24-hour clock.
+type Edit struct {
+	Prompt string
+	Repeat string
+	Time   string
+}
+
+// Change applies an edit, reporting each field it cannot take on its own
+// name. The schedule keeps its own clock: "8:00" is still 8:00 where it was
+// made. Nothing changes unless the whole edit is valid.
+func (s *Schedule) Change(edit Edit, multiErr *errortypes.MultiError) {
+	repeat := strings.ToLower(strings.TrimSpace(edit.Repeat))
+	if !slices.Contains(Repeats, repeat) {
+		multiErr.Add("repeat", errortypes.ErrInvalid, "Choose how often it runs")
+	}
+	clock := editTimePattern.FindStringSubmatch(strings.TrimSpace(edit.Time))
+	if clock == nil {
+		multiErr.Add("time", errortypes.ErrInvalid, "Enter a time of day, such as 08:00")
+	}
+	if multiErr.HasErrors() {
+		return
+	}
+
+	hour, _ := strconv.Atoi(clock[1])
+	minute, _ := strconv.Atoi(clock[2])
+	label, cron, err := cadenceAt(repeat, hour, minute)
+	if err != nil {
+		multiErr.Add("time", errortypes.ErrInvalid, "Enter a time of day, such as 08:00")
+		return
+	}
+
+	changed := *s
+	changed.Prompt = capitalise(strings.TrimSpace(edit.Prompt))
+	changed.Cadence = label
+	changed.CronExpression = cron
+	changed.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return
+	}
+
+	s.Prompt = changed.Prompt
+	s.Cadence = changed.Cadence
+	s.CronExpression = changed.CronExpression
 }
 
 // cadenceOf is the label and the cron day-of-week field for a unit.

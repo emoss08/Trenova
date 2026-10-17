@@ -91,6 +91,8 @@ func (r *repository) Create(
 					return fmt.Errorf("insert schedule message: %w", err)
 				}
 
+				// An unnamed conversation takes the schedule's name in the
+				// same statement, so a name given to it meanwhile is kept.
 				threadCols := conversationcol.ThreadColumns
 				if _, err = tx.NewUpdate().
 					Model((*conversation.Thread)(nil)).
@@ -99,6 +101,12 @@ func (r *repository) Create(
 					Where(threadCols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
 					Set(threadCols.LastMessageAt.Set(), now).
 					Set(threadCols.UpdatedAt.Set(), now).
+					Set(
+						threadCols.Title.SetExpr(
+							"CASE WHEN NULLIF(BTRIM({}), '') IS NULL THEN NULLIF(?, '') ELSE {} END",
+						),
+						req.ThreadTitle,
+					).
 					Exec(txCtx); err != nil {
 					return fmt.Errorf("touch thread: %w", err)
 				}
@@ -146,26 +154,27 @@ func (r *repository) Get(
 func (r *repository) List(
 	ctx context.Context,
 	req conversationscheduleports.ListConversationSchedulesRequest,
-) (*pagination.ListResult[*conversationschedule.Schedule], error) {
+) (*pagination.ListResult[*conversationscheduleports.ListedConversationSchedule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (
-		*pagination.ListResult[*conversationschedule.Schedule], error,
+		*pagination.ListResult[*conversationscheduleports.ListedConversationSchedule], error,
 	) {
-		cols := conversationschedulecol.ScheduleColumns
-
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultListLimit
 		}
 		limit = min(limit, maxListLimit)
 
-		entities := make([]*conversationschedule.Schedule, 0, limit)
-		total, err := r.db.DBForContext(ctx).
+		entities := make([]*conversationscheduleports.ListedConversationSchedule, 0, limit)
+		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			ColumnExpr(conversationschedulecol.ScheduleTable.All()).
+			ColumnExpr(threadTitleColumn()).
+			Join(threadJoin()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.scoped(sq, req.TenantInfo, req.UserID, req.ThreadID)
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
+			})
+		total, err := ordered(query, req.Order).
 			Limit(int64(limit)).
 			Offset(int64(max(req.Offset, 0))).
 			ScanAndCount(ctx)
@@ -174,11 +183,48 @@ func (r *repository) List(
 			return nil, err
 		}
 
-		return &pagination.ListResult[*conversationschedule.Schedule]{
+		return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
 			Items: entities,
 			Total: int(total),
 		}, nil
 	})
+}
+
+// threadTitleColumn reads a schedule's conversation title beside it, empty
+// for a conversation never named.
+func threadTitleColumn() string {
+	return conversationcol.ThreadColumns.Title.Expr("COALESCE({}, '')") + " AS thread_title"
+}
+
+// threadJoin reads a schedule's conversation with it. The thread is joined on
+// its whole key, tenant included, so a title is only ever read from the
+// schedule's own organization.
+func threadJoin() string {
+	cols := conversationschedulecol.ScheduleColumns
+	threadCols := conversationcol.ThreadColumns
+
+	return "JOIN " + conversationcol.ThreadTable.As(conversationcol.ThreadTable.Alias) +
+		" ON " + threadCols.ID.EqColumn(cols.ThreadID) +
+		" AND " + threadCols.OrganizationID.EqColumn(cols.OrganizationID) +
+		" AND " + threadCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)
+}
+
+// ordered sorts a list of schedules. By next run, the ones that will fire
+// come first, soonest first, and the paused ones follow; a schedule with no
+// next slot sorts last within its group. Each order ends on the id, so a page
+// boundary never splits or repeats a row.
+func ordered(
+	sq *bun.SelectQuery,
+	order conversationscheduleports.ConversationScheduleOrder,
+) *bun.SelectQuery {
+	cols := conversationschedulecol.ScheduleColumns
+	if order == conversationscheduleports.ConversationScheduleOrderNextRun {
+		return sq.Order(cols.Enabled.OrderDesc()).
+			OrderExpr(cols.NextRunAt.Expr("{} ASC NULLS LAST")).
+			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc())
+	}
+
+	return sq.Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc())
 }
 
 func (r *repository) Count(
@@ -270,6 +316,9 @@ func (r *repository) UpdateState(
 					Where(cols.UserID.Eq(), schedule.UserID).
 					Where(cols.Version.Eq(), ov)
 			}).
+			Set(cols.Prompt.Set(), schedule.Prompt).
+			Set(cols.Cadence.Set(), schedule.Cadence).
+			Set(cols.CronExpression.Set(), schedule.CronExpression).
 			Set(cols.Enabled.Set(), schedule.Enabled).
 			Set(cols.NextRunAt.Set(), schedule.NextRunAt).
 			Set(cols.Version.Set(), schedule.Version).

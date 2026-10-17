@@ -89,6 +89,7 @@ func (s *Service) RouteDocument(
 		ClassifierSource:    strings.TrimSpace(parsed.ClassifierSource),
 		ProviderFingerprint: strings.TrimSpace(parsed.ProviderFingerprint),
 		Reason:              strings.TrimSpace(parsed.Reason),
+		Signature:           convertSignatureReading(parsed.Signature),
 	}, nil
 }
 

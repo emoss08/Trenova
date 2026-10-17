@@ -99,7 +99,7 @@ const STAGE_TONE: Record<Stage["key"], string> = {
 
 function VersionChip({ version }: { version: number }) {
   return (
-    <span className="bg-surface-hover text-foreground-muted rounded-full px-1.5 font-mono text-2xs tabular-nums">
+    <span className="bg-surface-hover text-foreground-muted rounded-badge px-1.5 font-mono text-2xs tabular-nums">
       v{version}
     </span>
   );
@@ -132,7 +132,7 @@ function Lifecycle() {
   if (mode === "create" || !template) {
     return (
       <ol aria-label={t("Lifecycle")} className="flex items-center gap-1.5 text-xs">
-        <li className="bg-card flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium">
+        <li className="bg-card flex items-center gap-1.5 rounded-badge border px-2 py-0.5 font-medium">
           <span className="fs-stage-dot bg-brand text-brand size-1.75 rounded-full" />
           {t("New")}
         </li>
@@ -152,7 +152,7 @@ function Lifecycle() {
   if (template.status === "Inactive") {
     return (
       <ol aria-label={t("Lifecycle")} className="flex items-center text-xs">
-        <li className="bg-card text-foreground-muted flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium">
+        <li className="bg-card text-foreground-muted flex items-center gap-1.5 rounded-badge border px-2 py-0.5 font-medium">
           <span className="bg-foreground-subtle size-1.75 rounded-full" />
           {t("Archived · v{0}", version)}
         </li>
@@ -177,7 +177,7 @@ function Lifecycle() {
               <li
                 aria-current="step"
                 className={cn(
-                  "bg-card flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium transition-opacity",
+                  "bg-card flex items-center gap-1.5 rounded-badge border px-2 py-0.5 font-medium transition-opacity",
                   goingBack && "opacity-60",
                 )}
               >
@@ -194,7 +194,7 @@ function Lifecycle() {
                   "flex items-center gap-1.5",
                   past ? "text-foreground-muted" : "text-foreground-subtle",
                   marksSave &&
-                    "border-warning-border text-warning rounded-full border border-dashed px-2 py-0.5",
+                    "border-warning-border text-warning rounded-badge border border-dashed px-2 py-0.5",
                 )}
               >
                 {past && !marksSave ? (
@@ -209,7 +209,7 @@ function Lifecycle() {
                 )}
                 {stage.label}
                 {marksSave && (
-                  <span className="bg-warning-subtle text-warning-subtle-foreground rounded-full px-1.5 text-2xs">
+                  <span className="bg-warning-subtle text-warning-subtle-foreground rounded-badge px-1.5 text-2xs">
                     {t("on save")}
                   </span>
                 )}

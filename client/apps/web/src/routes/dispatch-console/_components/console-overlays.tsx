@@ -31,15 +31,15 @@ const TenderDialog = lazy(() =>
  * transient state rather than the board layout.
  */
 export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
-  const dragPreview = useDispatchConsoleStore.use.dragPreview();
-  const preflight = useDispatchConsoleStore.use.preflight();
-  const closePreflight = useDispatchConsoleStore.use.closePreflight();
-  const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
-  const closeCarrierAssign = useDispatchConsoleStore.use.closeCarrierAssign();
-  const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
-  const closeCarrierCancel = useDispatchConsoleStore.use.closeCarrierCancel();
-  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
-  const closeTender = useDispatchConsoleStore.use.closeTender();
+  const dragPreview = useDispatchConsoleStore((s) => s.dragPreview);
+  const preflight = useDispatchConsoleStore((s) => s.preflight);
+  const closePreflight = useDispatchConsoleStore((s) => s.closePreflight);
+  const carrierAssignTarget = useDispatchConsoleStore((s) => s.carrierAssignTarget);
+  const closeCarrierAssign = useDispatchConsoleStore((s) => s.closeCarrierAssign);
+  const carrierCancelTarget = useDispatchConsoleStore((s) => s.carrierCancelTarget);
+  const closeCarrierCancel = useDispatchConsoleStore((s) => s.closeCarrierCancel);
+  const tenderTarget = useDispatchConsoleStore((s) => s.tenderTarget);
+  const closeTender = useDispatchConsoleStore((s) => s.closeTender);
 
   return (
     <>

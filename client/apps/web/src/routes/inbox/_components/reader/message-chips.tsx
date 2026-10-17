@@ -26,7 +26,7 @@ import { KindTag } from "./kind-tag";
 import { openMenuFrom } from "./menu-anchor";
 
 const CHIP =
-  "inline-flex h-6 items-center gap-1.5 rounded-full pr-2.5 pl-2 text-sm whitespace-nowrap transition-colors";
+  "inline-flex h-6 items-center gap-1.5 rounded-badge pr-2.5 pl-2 text-sm whitespace-nowrap transition-colors";
 
 function Chip({ className, children }: { className?: string; children: ReactNode }) {
   return (

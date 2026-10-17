@@ -135,4 +135,18 @@ describe("AgentReflections", () => {
     expect(screen.getByText(/read content written outside the organization/)).toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "Lessons" })).not.toBeInTheDocument();
   });
+
+  it("keeps every look back in one scroll box under the heading", async () => {
+    api.fetchRecentAgentReflections.mockResolvedValue([
+      reflection({ id: "arfl_1", notes: "Nothing new about Acme." }),
+      reflection({ id: "arfl_2", notes: "The Laredo lane ran as usual." }),
+    ]);
+
+    renderPanel();
+
+    const box = await screen.findByRole("region", { name: "What agents learned" });
+    expect(within(box).getByText("Nothing new about Acme.")).toBeInTheDocument();
+    expect(within(box).getByText("The Laredo lane ran as usual.")).toBeInTheDocument();
+    expect(within(box).queryByRole("heading", { name: "What agents learned" })).toBeNull();
+  });
 });

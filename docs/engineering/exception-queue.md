@@ -93,14 +93,61 @@ A source never overwrites the owner, the status or the resolution, and never low
 that escalation raised. Retention deletes resolved items after 30 days except one a person
 resolved whose source is still open, so the resolution is not lost while the problem persists.
 
+## Due times and deadlines
+
+An item's due time comes from one of three places, recorded in `due_source`:
+
+| `due_source` | Means | Set by |
+|---|---|---|
+| `Source` | A deadline the record itself reports: a dock that closes, a certificate that lapses, free time that runs out. It carries a `due_label` ("Minneapolis dock closes") | the source, through `WatchtowerItemInput.Deadline` |
+| `Policy` | The organization's due time for the item's severity | routing (below) |
+| `Person` | A person moved or cleared it (`setWatchtowerItemDue`) | the exception workflow |
+
+A label belongs only to a source deadline (`ck_watchtower_items_due_label`). A source's
+deadline moves with the source on every refresh (`planUpsert` → `takeDeadline`) unless a
+person set the due time, which then holds; a deadline the source stops reporting is cleared
+so routing can apply the policy (`dropDeadline`). A person who clears the due time leaves the
+item with none: routing does not give it one back. Escalation never moves a source deadline
+— the dock closes when it closes — and an overdue item with one escalates again only after
+`exception_escalation_minutes` since the last escalation, not on every sweep.
+
+## What an item carries for the queue
+
+Sources also describe the record an item is about (`record_kind`, a permission-registry
+kind, and `record_label`), up to six `facts` (a label with a value, or with an instant the
+reader's clock formats), up to six `impact` phrases ("4 tendered loads", "$18,400
+freight") and up to eight `trail` events that led to it. All are normalized in
+`watchtower.Item.Normalize` and refreshed on every upsert. `watchtowersources` fills them
+from the record being described, never with an extra read.
+
+## Agents on an item
+
+Handing an item to a named agent (`handOffWatchtowerItem` with `agentDefinitionId`) starts
+the run and records it on the item (`agent_definition_id`, `agent_run_id`,
+`agent_handed_at`, `agent_handed_by_id`) with a `HandedOff` event; the item becomes
+`InProgress`. A second hand-off is refused while the run is still working. How far along the
+agent is, `agentWork`, is worked out on read from the run (`Item.AgentWorkFrom`): Pending and
+GatheringContext are step 1 of 3 (reading the record), Diagnosing step 2 (working out what to
+do), AwaitingDecision waits on a person to approve, Completed is done with the run's summary,
+and Failed waits on a person with the run's error. The run is read through the
+`AgentRunByID` dataloader; the suggested agent, the first enabled event-triggered agent that
+subscribes to the item's event, through `SuggestedAgentByEventKind`.
+
+## Seen
+
+Each reader's opened items are kept in `watchtower_item_reads` (`markWatchtowerItemSeen`).
+An item is seen when the reader opened it or it occurred before their cursor
+(`watchtower_cursors`, which `markWatchtowerSeen` still moves). `unseen` and
+`unseenCritical` leave out what the reader opened.
+
 ## Routing
 
 New and reopened items, and open items that have never had a due time, are routed by the
 projector:
 
-- **Due time**: `now` plus the organization's minutes for the item's severity
-  (`exception_due_critical_minutes` 60, `exception_due_warning_minutes` 240,
-  `exception_due_info_minutes` 1440; each 5 to 10080). Due times depend on severity only.
+- **Due time**: when the source reports no deadline, `now` plus the organization's minutes
+  for the item's severity (`exception_due_critical_minutes` 60,
+  `exception_due_warning_minutes` 240, `exception_due_info_minutes` 1440; each 5 to 10080).
 - **Owner**: the shipment's owner (`WatchtowerItemInput.OwnerID`, filled by the shipment
   sources), else `exception_default_assignee_id`. Each candidate must hold watchtower read and
   read on the item's source resource; one who cannot see the item is skipped. A routed owner is
@@ -157,15 +204,22 @@ six kinds carry the shipment owner for routing.
 
 `WatchtowerItem` carries `status`, `assignee`, `dueAt`, `overdue`, `snoozedUntil`,
 `acknowledgedAt`, `resolutionCode`, `resolutionNote`, `resolvedBy`, `sourceClearedAt`,
-`escalationLevel` and `lastEscalatedAt`. `watchtowerItems` filters by `statuses`,
+`escalationLevel` and `lastEscalatedAt`, and for the queue `dueLabel`, `dueSource`, `record`,
+`facts`, `impact`, `trail`, `suggestedAgentId`, `suggestedAgent` and `agentWork`. `watchtowerItems` filters by `statuses`,
 `assignedToMe`, `assigneeIds`, `unassigned`, `overdueOnly` and `subjectId`, and `orderByDue`
 reads soonest due first with undated items last (the cursor then encodes the due time).
-`watchtowerCounts` adds `overdue`, `unassigned`, `mine` and `mineOverdue`.
+`watchtowerCounts` adds `overdue`, `unassigned`, `mine` and `mineOverdue`, and `active` and
+`activeCritical` (open and not snoozed: what the queue shows, and what the Desk's rail, the
+Today page and the briefing count). The queue reads `statuses: [Open, Acknowledged,
+InProgress]` with `orderByDue`, which `idx_watchtower_items_queue` serves.
 
-Queries: `watchtowerItem`, `watchtowerItemHistory`, `watchtowerResolutionCodes`. Mutations:
-`assignWatchtowerItem`, `acknowledgeWatchtowerItem`, `startWatchtowerItem`,
-`snoozeWatchtowerItem`, `setWatchtowerItemDue`, `commentOnWatchtowerItem`,
-`resolveWatchtowerItem`, `reopenWatchtowerItem`. Each needs watchtower read or update and read
+Queries: `watchtowerItem`, `watchtowerItemHistory`, `watchtowerResolutionCodes`,
+`watchtowerCleared(since)` (items the reader resolved, or snoozed and still snoozed, since an
+instant) and `watchtowerHandOffAgents`. Mutations: `assignWatchtowerItem`,
+`acknowledgeWatchtowerItem`, `startWatchtowerItem`, `snoozeWatchtowerItem`,
+`wakeWatchtowerItem` (a person waking a snoozed item early),
+`setWatchtowerItemDue`, `commentOnWatchtowerItem`, `resolveWatchtowerItem`,
+`reopenWatchtowerItem` and `markWatchtowerItemSeen`. Each needs watchtower read or update and read
 on the item's source resource; the assignee check is the same pair, evaluated for the assignee.
 
 ## Agent tools
@@ -189,9 +243,26 @@ person's attestations and have no tool.
 
 ## Web
 
-The Desk watchtower has four views: All (newest first), Mine, Unassigned and Overdue (soonest
-due first), with counts. Each row shows the status, owner and due time; its title opens the
-exception sheet, which holds the details, the actions (acknowledge, start, assign, snooze,
-change due time, resolve, reopen), a comment box and the history. Dispatch controls carry an
-"Exception queue" card for the due times, escalation interval and cap, default owner,
-escalation contact and the two source graces.
+The Desk's Watchtower (`routes/desk/_components/watchtower`) is a queue worked one item at a
+time, in the room Decisions uses (`routes/desk/_components/queue`, the shared queue, card,
+bar and progress pieces). The queue is grouped into deadline lanes — act now (four hours or
+less, or past), today, coming up, and no deadline — with the agents at work in an "On it"
+strip above it; the card shows the deadline clock, what is at stake, the record, the trail and
+the agent's progress or suggestion. One hook, `useWatchtowerActions`, drives the buttons and
+the keys (J/K and the arrows, H, E, S, from the `watchtower` group of `keybinds.config.ts`).
+Done resolves with `Fixed` and Snooze sets the item aside until eight tomorrow morning in the
+reader's time zone; both take the row off the cached queue and move the counts at once, and
+raise no toast, because the person watched the card leave. A write that fails puts the row
+back as the server now has it: a version mismatch (a source refreshed the item while it was
+open) shows the fresh card with nothing more said, and any other failure is reported through
+`handleMutationError`. Every write sends an idempotency key. Watchtower notices and agent run
+notices are applied by `lib/watchtower-realtime.ts`: the notice's entity is merged into the
+cached row first (`applyNoticeToQueue`: version, status, due time, severity, title and summary,
+never older than the row), so a press made before the read lands is made at the current
+version, and then the one item is read and placed in the cached queue rather than refetched.
+A source refresh that changes nothing about an item writes nothing and publishes nothing
+(`Item.Unchanged`), and a sweep that resolves items whose source cleared publishes one bulk
+notice, so the queue never holds a version the server has moved past. "Ask about this" starts a conversation on the
+item's subject with the item attached as its page context (`desk-attached-page-store`).
+Dispatch controls carry an "Exception queue" card for the due times, escalation interval and
+cap, default owner, escalation contact and the two source graces.

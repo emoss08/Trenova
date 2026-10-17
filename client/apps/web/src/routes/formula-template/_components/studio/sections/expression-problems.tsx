@@ -61,7 +61,7 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "ui-focus-ring flex h-5 items-center gap-1 rounded-full px-2 text-2xs transition-colors",
+        "ui-focus-ring flex h-5 items-center gap-1 rounded-badge px-2 text-2xs transition-colors",
         active
           ? "bg-foreground text-background"
           : "text-foreground-muted hover:bg-surface-hover hover:text-foreground",

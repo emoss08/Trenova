@@ -5,22 +5,19 @@ import {
   accessPolicySchema,
   accessSettingsSchema,
   authEventsSchema,
-  externalIdentitiesSchema,
   identityProviderSchema,
   identityProvidersSchema,
-  mfaAuthenticatorsSchema,
   provisioningAuditRecordsSchema,
   riskDecisionsSchema,
-  scimDirectoryListSchema,
   scimDirectorySchema,
   scimGroupRoleMappingListSchema,
   scimGroupRoleMappingSchema,
   scimTokenCreateResponseSchema,
   scimTokensSchema,
+  securityBriefingSchema,
   type AccessPolicy,
   type IdentityProvider,
   type SCIMDirectory,
-  type SCIMDirectoryListResponse,
   type SCIMGroupRoleMapping,
   type SCIMGroupRoleMappingListResponse,
 } from "@trenova/shared/types/iam";
@@ -150,20 +147,6 @@ export class OrganizationService {
 
   public async deleteIdentityProvider(organizationId: string, providerId: string) {
     await api.delete(`${this.base_url}/${organizationId}/iam/identity-providers/${providerId}`);
-  }
-
-  public async listSCIMDirectories(
-    organizationId: string,
-    params?: { limit?: number; offset?: number },
-  ) {
-    const searchParams = new URLSearchParams();
-    if (params?.limit != null) searchParams.set("limit", String(params.limit));
-    if (params?.offset != null) searchParams.set("offset", String(params.offset));
-    const qs = searchParams.toString();
-    const response = await api.get<SCIMDirectoryListResponse>(
-      `${this.base_url}/${organizationId}/iam/scim/directories${qs ? `?${qs}` : ""}`,
-    );
-    return safeParse(scimDirectoryListSchema, response, "SCIMDirectories");
   }
 
   public async createSCIMDirectory(organizationId: string, data: SCIMDirectory) {
@@ -310,13 +293,10 @@ export class OrganizationService {
     return safeParse(riskDecisionsSchema, response, "RiskDecisions");
   }
 
-  public async listExternalIdentities(organizationId: string) {
-    const response = await api.get(`${this.base_url}/${organizationId}/iam/external-identities`);
-    return safeParse(externalIdentitiesSchema, response, "ExternalIdentities");
-  }
-
-  public async listMFAAuthenticators(organizationId: string) {
-    const response = await api.get(`${this.base_url}/${organizationId}/iam/mfa-authenticators`);
-    return safeParse(mfaAuthenticatorsSchema, response, "MFAAuthenticators");
+  public async getSecurityBriefing(organizationId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`${this.base_url}/${organizationId}/iam/security-briefing`, {
+      signal: options?.signal,
+    });
+    return safeParse(securityBriefingSchema, response, "SecurityBriefing");
   }
 }

@@ -4,6 +4,7 @@ aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, sugge
 related:
   - /desk/decisions
   - /desk/watchtower
+  - /desk/scheduled
   - /triage
   - /admin/agent-control
 covers:
@@ -89,7 +90,7 @@ Keywords: pin chat, delete conversation, export transcript, rename conversation,
 1. Open the conversation from [Desk](/desk).
 2. In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.
 3. To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).
-4. To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.
+4. To delete it, hover over it in the rail and select **Delete conversation** (the bin). It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.
 5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation.
 
 ### Steer an agent while it is replying
@@ -266,7 +267,8 @@ Keywords: hand off, handoff, transfer, pass to another agent, switch agent keep 
 Keywords: schedule, recurring, every morning, every weekday, every Monday, daily report, run automatically
 1. In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: "every weekday at 7:30am, list shipments still not dispatched for today". You can also type /schedule, then the when and the request.
 2. Instead of an answer, a **Scheduled** card appears: **Results will post into this conversation**. The card shows the request, how often it runs and when it runs next.
-3. On the card, select **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**.
+3. On the card, open **Schedule actions** (the three dots) and select **Edit** to change it, **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**.
+4. To see every request you have scheduled, across all of your conversations, open [Scheduled requests](/desk/scheduled) from **Scheduled** in the sidebar. You can run, pause, resume or delete each one there.
 
 ### Follow a task an agent handed to another agent
 Keywords: delegate, asked another agent, sub-agent, agent asked agent

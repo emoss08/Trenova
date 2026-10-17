@@ -301,7 +301,7 @@ function AuditCardsSkeleton() {
             <div className="flex flex-1 flex-col gap-1.5">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-5 w-14 rounded-full" />
+                <Skeleton className="h-5 w-14 rounded-badge" />
               </div>
               <Skeleton className="h-3 w-32" />
             </div>

@@ -87,7 +87,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 39 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 54 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1159 writes: 640 GraphQL mutations and 519 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1161 writes: 642 GraphQL mutations and 519 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 425 |
-| Exempt | 700 |
+| Exempt | 701 |
 | — Security | 87 |
 | — Configuration | 270 |
-| — User preference | 39 |
+| — User preference | 40 |
 | — Infrastructure | 54 |
 | — Agent administration | 103 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
-| **Pending** | **34** |
-| Total | 1159 |
+| **Pending** | **35** |
+| Total | 1161 |
 
-Of the 459 writes an agent should be able to make, 425 have a tool (92%).
+Of the 460 writes an agent should be able to make, 425 have a tool (92%).
 
 ## Pending
 
@@ -157,6 +157,7 @@ The writes no tool performs yet, and what the tool would do.
 | inboundreply | `mutation unfileInboundAttachment` | Take an email attachment back off the shipment it was filed on. |
 | triage | `mutation reopenInboundConflict` | Reopen a settled duplicate-document or repeated-load conflict on a triage message |
 | triage | `mutation resolveInboundConflict` | Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
+| watchtower | `mutation wakeWatchtowerItem` | Bring a snoozed exception back before its time, the counterpart of snooze_exception. |
 
 ## By domain
 
@@ -327,7 +328,7 @@ The writes no tool performs yet, and what the tool would do.
 | triage | 8 | 0 | 6 | 2 |
 | user | 21 | 0 | 21 | 0 |
 | version | 1 | 0 | 1 | 0 |
-| watchtower | 11 | 7 | 4 | 0 |
+| watchtower | 13 | 7 | 5 | 1 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -2250,12 +2251,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation commentOnWatchtowerItem` | Tool: `comment_on_exception` |
 | `mutation dismissWatchtowerItem` | Tool: `dismiss_watchtower_item` |
 | `mutation handOffWatchtowerItem` | Exempt, agent-administration: Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead. |
+| `mutation markWatchtowerItemSeen` | Exempt, user-preference: Records that a person opened an item so it stops showing as new to them; it changes nothing anyone else sees. |
 | `mutation markWatchtowerSeen` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation reopenWatchtowerItem` | Tool: `reopen_exception` |
 | `mutation resolveWatchtowerItem` | Tool: `resolve_exception` |
 | `mutation setWatchtowerItemDue` | Tool: `set_exception_due` |
 | `mutation snoozeWatchtowerItem` | Tool: `snooze_exception` |
 | `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |
+| `mutation wakeWatchtowerItem` | Pending: Bring a snoozed exception back before its time, the counterpart of snooze_exception. |
 
 ### worker
 

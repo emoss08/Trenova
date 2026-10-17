@@ -173,7 +173,7 @@ export function InvoiceAdjustmentBatchPage() {
                         {row.submittedByName || row.submittedById || t("System")}
                       </p>
                     </div>
-                    <span className="rounded-full border px-2 py-0.5 text-xs">{row.status}</span>
+                    <span className="rounded-badge border px-2 py-0.5 text-xs">{row.status}</span>
                   </div>
                   <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
                     <DescriptionItem label={t("Total")}>{String(row.totalCount)}</DescriptionItem>
@@ -295,7 +295,7 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link
       to={to}
-      className="hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
+      className="hover:bg-muted inline-flex items-center gap-1 rounded-badge border px-3 py-1.5 text-xs"
     >
       <LinkExternal01Icon className="size-3.5" />
       {children}

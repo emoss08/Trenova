@@ -100,5 +100,5 @@ export function SettlementPeriodEmpty({
 }
 
 function GhostPill({ className }: { className?: string }) {
-  return <span className={cn("border-border/70 block h-4 rounded-full border", className)} />;
+  return <span className={cn("border-border/70 block h-4 rounded-badge border", className)} />;
 }

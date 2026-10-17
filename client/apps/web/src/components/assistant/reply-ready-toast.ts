@@ -46,8 +46,7 @@ export async function announceReplyReady(
   const { reply, queryClient, t } = options;
 
   // Read before the caches are refreshed: the list of live replies still
-  // names the conversation this reply was written in, and is the one place
-  // that knows the title of a palette question nobody kept.
+  // names the conversation this reply was written in.
   const cachedTitle = cachedConversationTitle(queryClient, reply.threadId);
 
   // The reply is over wherever it is shown: the markers clear and the
@@ -132,9 +131,9 @@ export function cachedConversationTitle(queryClient: QueryClient, threadId: stri
 }
 
 /**
- * Reads the conversation when nothing here holds it — a palette question
- * asked in another tab, most often. A conversation that cannot be read is
- * announced without its name rather than not at all.
+ * Reads the conversation when nothing here holds it — one asked in another
+ * tab, most often. A conversation that cannot be read is announced without
+ * its name rather than not at all.
  */
 async function fetchConversationTitle(
   queryClient: QueryClient,

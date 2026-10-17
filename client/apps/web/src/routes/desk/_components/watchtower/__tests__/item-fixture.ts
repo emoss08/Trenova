@@ -1,0 +1,52 @@
+import type { WatchtowerItem } from "@/lib/graphql/watchtower";
+
+/** One queue row as the WatchtowerItemFields fragment returns it. */
+export function watchtowerItem(overrides: Partial<WatchtowerItem> = {}): WatchtowerItem {
+  return {
+    id: "wt_1",
+    sourceKind: "EtaAtRisk",
+    sourceId: "shp_1",
+    severity: "Critical",
+    title: "SEED-SHP-007 will miss its delivery window",
+    summary: "Stuck behind the I-35 storm near Ames.",
+    subjectType: "Shipment",
+    subjectId: "shp_1",
+    eventKind: null,
+    path: "/shipment-management/shipments?panelType=edit&panelEntityId=shp_1",
+    occurredAt: 1_800_000_000 - 240,
+    resolvedAt: null,
+    seen: false,
+    kindLabel: "ETA at risk",
+    version: 3,
+    status: "Open",
+    assigneeId: null,
+    assignee: null,
+    dueAt: 1_800_000_000 + 190 * 60,
+    overdue: false,
+    snoozedUntil: null,
+    acknowledgedAt: null,
+    resolutionCode: null,
+    resolutionNote: null,
+    resolvedById: null,
+    resolvedBy: null,
+    sourceClearedAt: null,
+    escalationLevel: 0,
+    lastEscalatedAt: null,
+    dueLabel: "Minneapolis dock closes",
+    dueSource: "Source",
+    record: { kind: "shipment", noun: "Shipment", label: "SEED-SHP-007" },
+    facts: [
+      { label: "Customer", value: "Northline Foods", at: null },
+      { label: "Appointment", value: null, at: 1_800_000_000 + 3600 },
+    ],
+    impact: ["Northline Foods", "1 load"],
+    trail: [
+      { at: null, text: "Picked up at Ames" },
+      { at: null, text: "ETA moved past the appointment" },
+    ],
+    suggestedAgentId: null,
+    suggestedAgent: null,
+    agentWork: null,
+    ...overrides,
+  };
+}

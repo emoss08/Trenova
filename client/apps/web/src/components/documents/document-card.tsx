@@ -10,13 +10,16 @@ import {
   CheckCircleIcon,
   ClockRewindIcon,
   Download01Icon,
+  Edit05Icon,
   EyeIcon,
   SlashCircle01Icon,
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
+import { documentNeedsSignature } from "@/lib/document-signature";
 import { DocumentReviewBadge } from "./document-review-badge";
+import { DocumentSignatureBadge } from "./document-signature-badge";
 import { DocumentThumbnail } from "./document-thumbnail";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -29,6 +32,7 @@ interface DocumentCardProps {
   onVersions?: (document: Document) => void;
   onApprove?: (document: Document) => void;
   onReject?: (document: Document) => void;
+  onRecordSignature?: (document: Document) => void;
   isDeleting?: boolean;
   isReviewing?: boolean;
   className?: string;
@@ -54,6 +58,7 @@ export function DocumentCard({
   onVersions,
   onApprove,
   onReject,
+  onRecordSignature,
   isDeleting = false,
   isReviewing = false,
   className,
@@ -125,6 +130,7 @@ export function DocumentCard({
         </p>
         <div className="mt-1 flex flex-wrap gap-1">
           <DocumentReviewBadge document={document} />
+          {documentNeedsSignature(document) && <DocumentSignatureBadge document={document} />}
           {document.detectedKind && document.detectedKind !== "Other" && (
             <Badge variant="info" className="h-5 px-1.5 py-0 text-2xs">
               {document.detectedKind}
@@ -226,6 +232,16 @@ export function DocumentCard({
             aria-label={t("Reject document")}
           >
             <SlashCircle01Icon className="size-4" />
+          </Button>
+        )}
+        {onRecordSignature && documentNeedsSignature(document) && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onRecordSignature(document)}
+            aria-label={t("Record signature")}
+          >
+            <Edit05Icon className="size-4" />
           </Button>
         )}
         {onDelete && (

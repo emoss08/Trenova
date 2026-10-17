@@ -108,13 +108,13 @@ export function DashHomePage() {
               {formatCurrency(period.data.accruedGrossMinor / 100)}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
+              <span className="rounded-badge bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
                 {t("{0, plural, one {# load} other {# loads}}", period.data.eventCount)}
               </span>
-              <span className="rounded-full bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
+              <span className="rounded-badge bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
                 {formatRange(period.data.periodStart, period.data.periodEnd)}
               </span>
-              <span className="rounded-full bg-info-subtle px-2.5 py-1 text-xs font-medium text-info-subtle-foreground">
+              <span className="rounded-badge bg-info-subtle px-2.5 py-1 text-xs font-medium text-info-subtle-foreground">
                 {Math.max(0, daysUntil(period.data.payDate)) === 0
                   ? t("Settles today")
                   : t("Settles in {0}d", Math.max(0, daysUntil(period.data.payDate)))}

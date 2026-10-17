@@ -19,10 +19,8 @@ const ROW_ACTION_CLASS =
 export type DeskRailRowActions = {
   open: (thread: AssistantThread) => void;
   setPinned: (thread: AssistantThread, pinned: boolean) => void;
-  /** Asks once more before deleting: the row turns its actions into a Delete button. */
-  confirmDelete: (threadId: string) => void;
-  cancelDelete: () => void;
-  remove: (thread: AssistantThread) => void;
+  /** Deletes the conversation, asking first when its scheduled requests would go with it. */
+  askDelete: (thread: AssistantThread) => void;
 };
 
 type DeskRailThreadRowProps = {
@@ -31,7 +29,6 @@ type DeskRailThreadRowProps = {
   agentName: string | null;
   live: boolean;
   active: boolean;
-  confirming: boolean;
   leaving: boolean;
   /** When the reader's day began, so the row's time says the hour today and the date before. */
   today: number;
@@ -41,8 +38,7 @@ type DeskRailThreadRowProps = {
 
 /**
  * One conversation on the rail: a dot that says what it waits on, its name,
- * and pin and delete on hover. Delete asks once more,
- * inline, before it acts. It is renamed from its name in the top bar.
+ * and pin and delete on hover. It is renamed from its name in the top bar.
  *
  * Memoized by hand: it is drawn inside a virtual list, which is kept out of
  * the React Compiler, and the list re-renders on every scroll frame.
@@ -52,7 +48,6 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
   agentName,
   live,
   active,
-  confirming,
   leaving,
   today,
   timezone,
@@ -80,12 +75,7 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
       role="button"
       tabIndex={0}
       data-k={`c:${thread.id}`}
-      className={cn(
-        "dk-sb-i dk-sb-c",
-        active && "dk-on",
-        leaving && "dk-out",
-        confirming && "dk-cf",
-      )}
+      className={cn("dk-sb-i dk-sb-c", active && "dk-on", leaving && "dk-out")}
       title={[
         agentName ?? t("Agent unavailable"),
         stateLabel(t, state),
@@ -95,7 +85,6 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
         .join(" · ")}
       onClick={() => actions.open(thread)}
       onKeyDown={openOnKey}
-      onMouseLeave={() => confirming && actions.cancelDelete()}
     >
       <RailDot state={state} />
       <span className="dk-sb-t">{title}</span>
@@ -104,40 +93,27 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => event.stopPropagation()}
       >
-        {confirming ? (
-          <Button
-            variant="bare"
-            size="bare"
-            className="h-5.5 animate-[dk-pop_180ms_var(--dk-spring)_both] rounded-md bg-danger px-2 text-xs font-medium text-dsk-on-solid transition-colors duration-150 hover:bg-danger-hover"
-            onClick={() => actions.remove(thread)}
-          >
-            {t("Delete")}
-          </Button>
-        ) : (
-          <>
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(ROW_ACTION_CLASS, pinned && "text-dsk-fg [&_svg_path]:fill-current")}
-              data-tip={pinned ? t("Unpin") : t("Pin")}
-              aria-label={pinned ? t("Unpin conversation") : t("Pin conversation")}
-              aria-pressed={pinned}
-              onClick={togglePin}
-            >
-              <DeskIcon name="pin" size={13} />
-            </Button>
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(ROW_ACTION_CLASS, "hover:text-dsk-error")}
-              data-tip={t("Delete")}
-              aria-label={t("Delete conversation")}
-              onClick={() => actions.confirmDelete(thread.id)}
-            >
-              <DeskIcon name="trash" size={13} />
-            </Button>
-          </>
-        )}
+        <Button
+          variant="bare"
+          size="bare"
+          className={cn(ROW_ACTION_CLASS, pinned && "text-dsk-fg [&_svg_path]:fill-current")}
+          data-tip={pinned ? t("Unpin") : t("Pin")}
+          aria-label={pinned ? t("Unpin conversation") : t("Pin conversation")}
+          aria-pressed={pinned}
+          onClick={togglePin}
+        >
+          <DeskIcon name="pin" size={13} />
+        </Button>
+        <Button
+          variant="bare"
+          size="bare"
+          className={cn(ROW_ACTION_CLASS, "hover:text-dsk-error")}
+          data-tip={t("Delete")}
+          aria-label={t("Delete conversation")}
+          onClick={() => actions.askDelete(thread)}
+        >
+          <DeskIcon name="trash" size={13} />
+        </Button>
       </span>
     </div>
   );

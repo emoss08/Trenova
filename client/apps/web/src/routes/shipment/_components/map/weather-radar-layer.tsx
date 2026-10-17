@@ -10,10 +10,10 @@ const REFRESH_INTERVAL = 10 * 60 * 1000;
 const PLAYBACK_INTERVAL = 500;
 
 function useWeatherRadar() {
-  const currentIndex = useShipmentMapStore.use.currentIndex();
-  const setCurrentIndex = useShipmentMapStore.use.setCurrentIndex();
-  const isPlaying = useShipmentMapStore.use.isPlaying();
-  const setIsPlaying = useShipmentMapStore.use.setIsPlaying();
+  const currentIndex = useShipmentMapStore((s) => s.currentIndex);
+  const setCurrentIndex = useShipmentMapStore((s) => s.setCurrentIndex);
+  const isPlaying = useShipmentMapStore((s) => s.isPlaying);
+  const setIsPlaying = useShipmentMapStore((s) => s.setIsPlaying);
   const hasInitialized = useRef(false);
 
   const { data } = useQuery({

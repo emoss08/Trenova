@@ -32,7 +32,8 @@ import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { ruleActionLabel, type CopyFormatters } from "./action-copy";
 import { CLASSIFICATION_DOT, INBOUND_CLASSIFICATIONS, classificationLabel } from "./classification";
-import { eventSnoozeOptions, snoozePresets, type SnoozePresetKey } from "./snooze-times";
+import { snoozePresets, type SnoozePresetKey } from "@/lib/snooze-presets";
+import { eventSnoozeOptions } from "./snooze-times";
 import type { SnoozeChoice, TriageActions } from "./use-triage-actions";
 
 /**

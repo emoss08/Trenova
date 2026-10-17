@@ -6,7 +6,7 @@ import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { pageDraftEditSchema, type FormulaProposal, type PageDraftEdit } from "@/types/page-draft";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
@@ -45,7 +45,7 @@ function FormulaPageChip() {
 
   return (
     <span className="fs-page-chip" title={t("Nova reads the editor as it is, saved or not")}>
-      <span className="text-dsk-muted flex h-7 min-w-0 items-center gap-1.5 rounded-full pr-2 text-sm">
+      <span className="text-dsk-muted flex h-7 min-w-0 items-center gap-1.5 rounded-badge pr-2 text-sm">
         <span className="dk-pc-ic">
           <DeskIcon name="file" size={12} stroke={2} />
         </span>
@@ -306,7 +306,7 @@ export function NovaPane() {
         disclaimer: t("Nova can be wrong. Every amount it shows is the formula engine's."),
         emptyState: (dock) => (
           <div className="dk-c flex flex-col items-center gap-2 px-4 pt-10 pb-4 text-center">
-            <NovaMark className="size-5.5" />
+            <NovaBadge size="lg" />
             <h3 className="text-xl font-semibold">
               {analysis.empty ? t("How should this price a load?") : t("What should we change?")}
             </h3>

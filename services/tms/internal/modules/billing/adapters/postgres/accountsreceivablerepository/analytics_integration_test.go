@@ -65,6 +65,20 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	require.NotNil(t, stats)
 	assert.GreaterOrEqual(t, stats.UnappliedCashMinor, int64(0))
 
+	drafts, err := repo.GetDraftInvoices(
+		ctx,
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: tenantInfo, AsOfDate: asOf},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, drafts)
+	assert.GreaterOrEqual(t, drafts.Count, 0)
+	if drafts.Count == 0 {
+		assert.Zero(t, drafts.AmountMinor)
+		assert.Zero(t, drafts.OldestCreatedAt)
+	} else {
+		assert.LessOrEqual(t, drafts.OldestCreatedAt, asOf)
+	}
+
 	series, err := repo.ListBalanceSeries(
 		ctx,
 		customerledgerports.ListARSeriesRequest{TenantInfo: tenantInfo, AsOfDate: asOf, Weeks: 13},

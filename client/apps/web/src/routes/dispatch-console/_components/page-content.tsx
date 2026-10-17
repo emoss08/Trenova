@@ -59,13 +59,13 @@ export function DispatchConsoleContent() {
     OrganizationCapability.AssetOperations,
   );
 
-  const setDragPreview = useDispatchConsoleStore.use.setDragPreview();
-  const openPreflight = useDispatchConsoleStore.use.openPreflight();
-  const preflight = useDispatchConsoleStore.use.preflight();
-  const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
-  const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
-  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
-  const resetConsole = useDispatchConsoleStore.use.reset();
+  const setDragPreview = useDispatchConsoleStore((s) => s.setDragPreview);
+  const openPreflight = useDispatchConsoleStore((s) => s.openPreflight);
+  const preflight = useDispatchConsoleStore((s) => s.preflight);
+  const carrierAssignTarget = useDispatchConsoleStore((s) => s.carrierAssignTarget);
+  const carrierCancelTarget = useDispatchConsoleStore((s) => s.carrierCancelTarget);
+  const tenderTarget = useDispatchConsoleStore((s) => s.tenderTarget);
+  const resetConsole = useDispatchConsoleStore((s) => s.reset);
 
   // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
   useEffect(() => resetConsole, [resetConsole]);

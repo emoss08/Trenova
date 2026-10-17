@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import "./_components/onboarding.css";
 import { Metadata } from "@/components/metadata";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -124,7 +125,7 @@ function NovaPending() {
   return (
     <div>
       <div className="nv-who">
-        <span className="nv-mark" data-busy="true" aria-hidden="true" />
+        <NovaBadge size="lg" spin="always" />
         <b>{t("Nova")}</b>
         <span>{t("Setup guide")}</span>
       </div>

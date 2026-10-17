@@ -242,8 +242,9 @@ names the token to use instead.
   a hue. The palette is Vercel's Geist: every grey is a true neutral (chroma 0), the canvas
   is #fafafa under white panels, and the ink is #171717. The brand is Geist blue at 258 and
   is spent only on links, focus and selection; the active nav row is a neutral fill and the
-  active tab is underlined in ink. The blue arc is pinned apart — info 222 → sky 232 →
-  brand 258 → indigo 283 — and so is the warm one — danger 25 → warning 76 → amber 98.
+  active tab is underlined in ink. Every colour is a step on a Geist ramp (200 tint, 400
+  hairline, 700 solid, 900 text); info is Geist blue itself, as on Vercel. Sky and indigo stay
+  20° from the brand, and the warm arc is pinned apart — danger 25 → warning 76 → amber 98.
 - Labels are sentence case; no `uppercase tracking-wider` on section labels, column heads
   or badges. Form controls spend `ui-field`, filled controls `ui-press`, skeletons
   `ui-shimmer`. Motion answers an action — nothing loops on a working screen.
@@ -290,8 +291,12 @@ names the token to use instead.
   design-system doc.
 - Machine suggestions are marked with `AssistMark` from `@trenova/shared/components/ui/assist-mark`
   (a real `IconComponent`). The sparkle and magic-wand glyphs are not exported; never draw one.
-- Two radii: `--radius-control` (6px) for controls, `--radius-surface` (8px) for containers.
-  The whole `rounded-*` scale points at them; a badge is `rounded-full`.
+- Nova is marked with `NovaBadge` from `@trenova/shared/components/ui/nova-badge`, sized with
+  `size` (`xs`…`xl`), never redrawn in a stylesheet. See "The Nova badge" in the design-system doc.
+- Tight corners, as on Vercel: `rounded-badge` (4px) for badges, counts and chips,
+  `--radius-control` (6px) for controls, `--radius-surface` (6px) for containers. The whole
+  `rounded-*` scale points at them. A label is never a pill: `rounded-full` is only for what
+  is actually round (avatars, dots, switch tracks, icon-only round buttons).
 - Weight means something: 400 body, 500 label, 600 heading. A value in a cell takes no
   weight class at all.
 - Row rhythm is `--row-h` / `--row-h-compact` / `--row-head-h` / `--cell-px`. A denser table

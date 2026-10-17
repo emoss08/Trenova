@@ -345,7 +345,7 @@ function CounterSummary({ offer }: { offer: LiveTenderOffer }) {
           <span className="text-muted-foreground tabular-nums">{t("· margin {0}", margin)}</span>
         )}
         {offer.status === "Countered" && offer.counterNeedsApproval && (
-          <Badge variant="warning" className="h-4 rounded-full px-1.5 text-3xs">
+          <Badge variant="warning" className="h-4 rounded-badge px-1.5 text-3xs">
             {t("Needs approval")}
           </Badge>
         )}

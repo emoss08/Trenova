@@ -1,3 +1,4 @@
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import type { AIControlSegment } from "@/lib/graphql/ai-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -36,7 +37,7 @@ export function NovaSummary({
     <section className="hero rh">
       <div className="hero-s">
         <span className="who">
-          <span className={cn("dm", working && "spin")} />
+          <NovaBadge size="lg" spin={working ? "always" : "none"} />
           <b>{t("Nova")}</b>
           <span>{context}</span>
         </span>

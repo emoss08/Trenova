@@ -173,9 +173,6 @@ export function MoveCard({
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
-        void queryClient.invalidateQueries({
-          queryKey: shipment.trackingEvents(move.shipmentId).queryKey,
-        });
       }
     },
     onError: (error: Error) => {

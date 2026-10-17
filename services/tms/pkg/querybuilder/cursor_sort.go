@@ -52,12 +52,7 @@ func (p CursorSortPlan) Columns() []pagination.CursorValueColumn {
 	return columns
 }
 
-func ApplyFiltersWithoutSort[T domaintypes.PostgresSearchable](
-	query *bun.SelectQuery,
-	tableAlias string,
-	filter *pagination.QueryOptions,
-	entity T,
-) *bun.SelectQuery {
+func withoutSort(filter *pagination.QueryOptions) *pagination.QueryOptions {
 	filterCopy := *filter
 	filterCopy.Sort = nil
 	filterCopy.Cursor = pagination.CursorInfo{}
@@ -66,7 +61,25 @@ func ApplyFiltersWithoutSort[T domaintypes.PostgresSearchable](
 	filterCopy.CursorError = nil
 	filterCopy.UseCursor = false
 
-	return ApplyFilters(query, tableAlias, &filterCopy, entity)
+	return &filterCopy
+}
+
+func ApplyFiltersWithoutSort[T domaintypes.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	filter *pagination.QueryOptions,
+	entity T,
+) *bun.SelectQuery {
+	return ApplyFilters(query, tableAlias, withoutSort(filter), entity)
+}
+
+func ApplyFiltersWithoutSortOrTenantScope[T domaintypes.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	filter *pagination.QueryOptions,
+	entity T,
+) *bun.SelectQuery {
+	return ApplyFiltersWithoutTenantScope(query, tableAlias, withoutSort(filter), entity)
 }
 
 func ApplyCursorFilters[T domaintypes.PostgresSearchable](

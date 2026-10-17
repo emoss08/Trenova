@@ -25,7 +25,7 @@ export function MatchingListSkeleton({ label }: { label: string }) {
         <div key={index} className="rounded-lg border p-2.5 text-xs" aria-hidden>
           <div className="flex items-center justify-between gap-2">
             <Skeleton className={cn("inline-block h-2.5 align-middle", NUMBER_WIDTHS[index])} />
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-badge" />
           </div>
           <div className="mt-1">
             <Skeleton className={cn("inline-block h-2.5 align-middle", BILL_TO_WIDTHS[index])} />
@@ -109,8 +109,8 @@ export function MatchingWorkspaceSkeleton() {
               </div>
               <Skeleton className="h-8 w-full" />
               <div className="flex flex-wrap gap-1">
-                <Skeleton className="h-5 w-28 rounded-full" />
-                <Skeleton className="h-5 w-10 rounded-full" />
+                <Skeleton className="h-5 w-28 rounded-badge" />
+                <Skeleton className="h-5 w-10 rounded-badge" />
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-hidden">

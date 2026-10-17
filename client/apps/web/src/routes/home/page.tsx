@@ -198,12 +198,12 @@ function DivergenceChip({
   const t = useT();
 
   return (
-    <div className="border-border/70 bg-card text-2xs text-muted-foreground flex flex-wrap items-center gap-1.5 self-start rounded-full border py-0.5 pr-1 pl-2.5">
+    <div className="border-border/70 bg-card text-2xs text-muted-foreground flex flex-wrap items-center gap-1.5 self-start rounded-badge border py-0.5 pr-1 pl-2.5">
       <span>{t("Customized{0}", presetName ? ` ${t("from {0}", presetName)}` : "")}</span>
       <Button
         variant="ghost"
         size="xxs"
-        className="h-4.5 rounded-full px-1.5"
+        className="h-4.5 rounded-badge px-1.5"
         onClick={onReset}
         disabled={pending}
       >

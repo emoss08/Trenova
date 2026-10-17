@@ -43,6 +43,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// threadPageSize is how many of a conversation's schedules OfThread reads at
+// a time: the most the repository lists in one page.
+const threadPageSize = 100
+
 // announceTimeout bounds telling the person's tabs a schedule changed. It is
 // a hint riding on a request or an activity that has its own work to finish.
 const announceTimeout = 5 * time.Second
@@ -129,7 +133,10 @@ type Service struct {
 	now         func() int64
 }
 
-var _ conversationscheduleports.ConversationScheduleRunner = (*Service)(nil)
+var (
+	_ conversationscheduleports.ConversationScheduleRunner  = (*Service)(nil)
+	_ conversationscheduleports.ConversationThreadSchedules = (*Service)(nil)
+)
 
 func New(p Params) *Service {
 	return &Service{
@@ -159,6 +166,12 @@ func (s *Service) requireAutomation(ctx context.Context, tenant pagination.Tenan
 
 // NewRunner is the same service, as what a firing schedule asks to run.
 func NewRunner(s *Service) conversationscheduleports.ConversationScheduleRunner {
+	return s
+}
+
+// NewThreadSchedules is the same service, as what deleting a conversation
+// asks to settle its schedules.
+func NewThreadSchedules(s *Service) conversationscheduleports.ConversationThreadSchedules {
 	return s
 }
 
@@ -241,6 +254,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 				Kind:    conversation.MessageKindSchedule,
 				Content: text,
 			},
+			ThreadTitle: conversation.TitleFrom(schedule.Prompt),
 		},
 	)
 	if err != nil {
@@ -322,10 +336,11 @@ func (s *Service) timezoneFor(
 }
 
 // ListRequest pages through one person's schedules, in one conversation when
-// ThreadID is set.
+// ThreadID is set, in Order (newest first when it is empty).
 type ListRequest struct {
 	ThreadID pulid.ID
 	Actor    permissionports.RequestActor
+	Order    conversationscheduleports.ConversationScheduleOrder
 	Limit    int
 	Offset   int
 }
@@ -333,7 +348,7 @@ type ListRequest struct {
 func (s *Service) List(
 	ctx context.Context,
 	req ListRequest,
-) (*pagination.ListResult[*conversationschedule.Schedule], error) {
+) (*pagination.ListResult[*conversationscheduleports.ListedConversationSchedule], error) {
 	tenant := tenantOf(req.Actor)
 	if req.ThreadID.IsNotNil() {
 		// Reading a conversation's schedules is reading the conversation.
@@ -350,6 +365,7 @@ func (s *Service) List(
 		UserID:     req.Actor.UserID,
 		ThreadID:   req.ThreadID,
 		TenantInfo: tenant,
+		Order:      req.Order,
 		Limit:      req.Limit,
 		Offset:     req.Offset,
 	})
@@ -405,6 +421,43 @@ func (s *Service) SetEnabled(
 	return updated, nil
 }
 
+// Edit changes what a schedule asks, how often and when. Its next slot is
+// worked out again from the new cadence, its Temporal schedule follows, and
+// its card and row show the change. A schedule that runs needs automation,
+// the same as one being made; a paused one can be edited without it.
+func (s *Service) Edit(
+	ctx context.Context,
+	req ScheduleRequest,
+	edit conversationschedule.Edit,
+) (*conversationschedule.Schedule, error) {
+	schedule, err := s.schedules.Get(ctx, req.get())
+	if err != nil {
+		return nil, err
+	}
+	if schedule.Enabled {
+		if err = s.requireAutomation(ctx, tenantOf(req.Actor)); err != nil {
+			return nil, err
+		}
+	}
+
+	multiErr := errortypes.NewMultiError()
+	schedule.Change(edit, multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	schedule.NextRunAt = schedule.Next(s.now())
+
+	updated, err := s.schedules.UpdateState(ctx, schedule)
+	if err != nil {
+		return nil, err
+	}
+
+	s.syncer.Sync(ctx, updated)
+	s.announce(ctx, updated, actionUpdated)
+
+	return updated, nil
+}
+
 // Delete removes a schedule. Its card stays in the conversation and says it
 // was deleted.
 func (s *Service) Delete(ctx context.Context, req ScheduleRequest) error {
@@ -420,6 +473,44 @@ func (s *Service) Delete(ctx context.Context, req ScheduleRequest) error {
 	s.announce(ctx, schedule, actionDeleted)
 
 	return nil
+}
+
+// OfThread reads every schedule a person's conversation keeps, a page at a
+// time, so a conversation that went past MaxPerThread in a race still has
+// each one read.
+func (s *Service) OfThread(
+	ctx context.Context,
+	req conversationscheduleports.ThreadSchedulesRequest,
+) ([]*conversationschedule.Schedule, error) {
+	schedules := make([]*conversationschedule.Schedule, 0, conversationschedule.MaxPerThread)
+	for {
+		page, err := s.schedules.List(ctx, conversationscheduleports.ListConversationSchedulesRequest{
+			UserID:     req.UserID,
+			ThreadID:   req.ThreadID,
+			TenantInfo: req.TenantInfo,
+			Limit:      threadPageSize,
+			Offset:     len(schedules),
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range page.Items {
+			schedule := item.Schedule
+			schedules = append(schedules, &schedule)
+		}
+		if len(page.Items) == 0 || len(schedules) >= page.Total {
+			return schedules, nil
+		}
+	}
+}
+
+// Forget takes the schedules of a deleted conversation off the scheduler and
+// tells their owner's tabs each one is gone.
+func (s *Service) Forget(ctx context.Context, schedules []*conversationschedule.Schedule) {
+	for _, schedule := range schedules {
+		s.syncer.Remove(ctx, schedule.ID)
+		s.announce(ctx, schedule, actionDeleted)
+	}
 }
 
 // RunNow asks a schedule's request at once, paused or not, and returns the

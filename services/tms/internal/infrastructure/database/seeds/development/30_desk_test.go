@@ -5,9 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -44,12 +47,63 @@ func deskRefs(t *testing.T) *deskSeedRefs {
 	}
 }
 
-// The tower stores a path and opens it; a path that is not an application
-// path is refused, and a seeded row carrying one would fail at db-seed.
-func TestDeskSeed_EveryStandingItemIsValid(t *testing.T) {
-	seed := NewDeskSeed()
+func queueRefs(t *testing.T) *deskSeedRefs {
+	t.Helper()
 
-	for _, item := range seed.standingItems(deskRefs(t)) {
+	refs := deskRefs(t)
+	refs.readerID = pulid.MustNew("usr_")
+	refs.shipments = map[string]*shipment.Shipment{}
+	for _, pro := range []string{
+		"SEED-SHP-001", "SEED-SHP-002", "SEED-SHP-004", "SEED-SHP-007", "SEED-SHP-008",
+	} {
+		refs.shipments[pro] = &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: pro}
+	}
+	refs.workers = []*worker.Worker{
+		{ID: pulid.MustNew("wrk_"), FirstName: "Dana", LastName: "Ortiz"},
+		{ID: pulid.MustNew("wrk_"), FirstName: "Tom", LastName: "Reyes"},
+	}
+	refs.definitions = map[agentdefinition.Template]*agentdefinition.Definition{}
+	for _, template := range []agentdefinition.Template{
+		agentdefinition.TemplateCarrierRiskDesk,
+		agentdefinition.TemplateDetentionDesk,
+		agentdefinition.TemplateCredentialDesk,
+		agentdefinition.TemplateLoadMonitor,
+	} {
+		refs.definitions[template] = &agentdefinition.Definition{
+			ID:       pulid.MustNew("adef_"),
+			Template: template,
+		}
+	}
+
+	return refs
+}
+
+func seededQueue(t *testing.T) (*deskSeedRefs, *queueSeed) {
+	t.Helper()
+
+	refs := queueRefs(t)
+	return refs, NewDeskSeed().queueItems(refs, refs.readerID)
+}
+
+func lane(item *watchtower.Item, now int64) string {
+	if item.DueAt == nil {
+		return "fyi"
+	}
+	left := *item.DueAt - now
+	switch {
+	case left <= 4*3600:
+		return "now"
+	case left <= 24*3600:
+		return "today"
+	default:
+		return "later"
+	}
+}
+
+func TestDeskSeed_EveryQueueItemIsValid(t *testing.T) {
+	_, queue := seededQueue(t)
+
+	for _, item := range queue.items {
 		multiErr := errortypes.NewMultiError()
 		item.Validate(multiErr)
 		assert.Falsef(t, multiErr.HasErrors(),
@@ -57,51 +111,125 @@ func TestDeskSeed_EveryStandingItemIsValid(t *testing.T) {
 	}
 }
 
-// A standing item stands in for a record that is not seeded. Offering to hand
-// one to an agent would be offering to work on nothing, so none may carry a
-// subject — and that is a property of the data, not of the UI that reads it.
-func TestDeskSeed_StandingItemsNameNoSubject(t *testing.T) {
-	for _, item := range NewDeskSeed().standingItems(deskRefs(t)) {
-		assert.Emptyf(t, item.SubjectType,
-			"%q names a subject, but nothing is seeded behind it", item.Title)
-		assert.Truef(t, item.SubjectID.IsNil(),
-			"%q names a subject id, but nothing is seeded behind it", item.Title)
+func TestDeskSeed_QueueFillsEveryDeadlineLane(t *testing.T) {
+	refs, queue := seededQueue(t)
+
+	counts := map[string]int{}
+	for _, item := range queue.items {
+		counts[lane(item, refs.now)]++
 	}
+
+	assert.Equal(t, map[string]int{"now": 5, "today": 1, "later": 3, "fyi": 2}, counts)
 }
 
-// The feed is only worth looking at if it spans severities: one colour
-// everywhere shows nothing about how the feed reads.
-func TestDeskSeed_StandingItemsSpanSeverities(t *testing.T) {
-	seen := map[watchtower.Severity]bool{}
-	for _, item := range NewDeskSeed().standingItems(deskRefs(t)) {
-		seen[item.Severity] = true
+func TestDeskSeed_QueueHasAgentsWorkingWaitingAndDone(t *testing.T) {
+	_, queue := seededQueue(t)
+
+	runs := make(map[pulid.ID]*agent.AgentRun, len(queue.runs))
+	for _, run := range queue.runs {
+		runs[run.ID] = run
+	}
+	statuses := map[watchtower.AgentStatus]int{}
+	for _, item := range queue.items {
+		if !item.HasAgent() {
+			continue
+		}
+		run, ok := runs[item.AgentRunID]
+		require.Truef(t, ok, "%q is handed to a run the seed does not write", item.Title)
+		work := item.AgentWorkFrom(run)
+		statuses[work.Status]++
+		assert.Equal(t, watchtower.StatusInProgress, item.Status,
+			"an item an agent works is in progress")
 	}
 
-	for _, severity := range []watchtower.Severity{
-		watchtower.SeverityInfo,
-		watchtower.SeverityWarning,
-		watchtower.SeverityCritical,
-	} {
-		assert.Truef(t, seen[severity], "no standing item is %s", severity)
-	}
+	assert.Equal(t, map[watchtower.AgentStatus]int{
+		watchtower.AgentStatusWorking:  2,
+		watchtower.AgentStatusNeedsYou: 1,
+		watchtower.AgentStatusDone:     1,
+	}, statuses)
 }
 
-// One resolved item, so the "unresolved only" filter has something to hide.
-func TestDeskSeed_OneStandingItemIsAlreadyResolved(t *testing.T) {
-	resolved := 0
-	for _, item := range NewDeskSeed().standingItems(deskRefs(t)) {
-		if item.IsResolved() {
-			resolved++
-			assert.Equal(t, watchtower.StatusResolved, item.Status,
-				"a resolved row must say so, or the table's resolution check refuses it")
-			assert.Equal(t, watchtower.ResolutionCleared, item.ResolutionCode)
-		} else {
-			assert.NotEqual(t, watchtower.StatusResolved, item.Status)
+func TestDeskSeed_QueueCarriesAnOverdueDetentionClock(t *testing.T) {
+	refs, queue := seededQueue(t)
+
+	for _, item := range queue.items {
+		if item.SourceKind != watchtower.SourceDetentionOccurrence {
+			continue
+		}
+		require.NotNil(t, item.DueAt)
+		assert.Less(t, *item.DueAt, refs.now, "the detention clock is already running")
+		assert.Equal(t, "Detention is accruing", item.DueLabel)
+		assert.Equal(t, watchtower.DueSourceSource, item.DueSource)
+		return
+	}
+	t.Fatal("no detention item is seeded")
+}
+
+func TestDeskSeed_QueueHasTrailsAndItemsWithoutADeadline(t *testing.T) {
+	_, queue := seededQueue(t)
+
+	trails, undated := 0, 0
+	for _, item := range queue.items {
+		if len(item.Trail) > 0 {
+			trails++
+		}
+		if item.DueAt == nil {
+			undated++
+			assert.Equal(t, watchtower.DueSourcePerson, item.DueSource,
+				"an undated item says a person left it without one, so routing leaves it alone")
 		}
 	}
 
-	assert.Equal(t, 1, resolved,
-		"the feed needs exactly one resolved row for the filter to be worth trying")
+	assert.Equal(t, 4, trails)
+	assert.Equal(t, 2, undated)
+}
+
+func TestDeskSeed_QueueMarksSomeItemsSeenForTheReader(t *testing.T) {
+	refs, queue := seededQueue(t)
+
+	seen := make(map[pulid.ID]bool, len(queue.reads))
+	for _, read := range queue.reads {
+		assert.Equal(t, refs.readerID, read.UserID)
+		seen[read.ItemID] = true
+	}
+	unseen := 0
+	for _, item := range queue.items {
+		if !seen[item.ID] {
+			unseen++
+		}
+	}
+
+	assert.Equal(t, 4, unseen)
+}
+
+func TestDeskSeed_QueueSubjectsAreSeededRecords(t *testing.T) {
+	refs, queue := seededQueue(t)
+
+	known := map[pulid.ID]bool{}
+	for _, entity := range refs.shipments {
+		known[entity.ID] = true
+	}
+	for _, entity := range refs.workers {
+		known[entity.ID] = true
+	}
+	for _, item := range queue.items {
+		if item.SubjectID.IsNil() {
+			assert.Emptyf(t, item.EventKind,
+				"%q names an event to hand off on, but has no subject", item.Title)
+			continue
+		}
+		assert.Truef(t, known[item.SubjectID], "%q is about a record the seed did not load",
+			item.Title)
+	}
+}
+
+func TestDeskSeed_TheStandingItemIsAlreadyResolved(t *testing.T) {
+	items := NewDeskSeed().standingItems(deskRefs(t))
+
+	require.Len(t, items, 1)
+	assert.True(t, items[0].IsResolved())
+	assert.Equal(t, watchtower.StatusResolved, items[0].Status)
+	assert.Equal(t, watchtower.ResolutionCleared, items[0].ResolutionCode)
 }
 
 func TestDeskSeed_TheBriefingIsValid(t *testing.T) {
@@ -139,9 +267,10 @@ func TestDeskSeed_TheBriefingCountsAgreeWithWhatIsSeeded(t *testing.T) {
 	}
 }
 
-// Every path the seed writes is checked the same way the store checks it.
-func TestDeskSeed_EveryStandingPathIsAnApplicationPath(t *testing.T) {
-	for _, item := range NewDeskSeed().standingItems(deskRefs(t)) {
+func TestDeskSeed_EveryQueuePathIsAnApplicationPath(t *testing.T) {
+	_, queue := seededQueue(t)
+
+	for _, item := range queue.items {
 		if item.Path == "" {
 			continue
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
@@ -198,6 +199,7 @@ type Params struct {
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
 	AccountsReceivableService    *accountsreceivableservice.Service
+	AccountingBriefs             accountingbriefports.AccountingBriefingReader
 	CustomerPaymentService       customerpaymentports.CustomerPaymentService
 	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
 	InvoiceDisputeRepo           invoiceports.InvoiceDisputeRepository
@@ -428,6 +430,7 @@ type Services struct {
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
 	AccountsReceivableService    *accountsreceivableservice.Service
+	AccountingBriefs             accountingbriefports.AccountingBriefingReader
 	CustomerPaymentService       customerpaymentports.CustomerPaymentService
 	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
 	InvoiceDisputeRepo           invoiceports.InvoiceDisputeRepository
@@ -663,6 +666,7 @@ func newServices(p *Params) *Services {
 		AccessorialChargeService:     p.AccessorialChargeService,
 		AccountTypeService:           p.AccountTypeService,
 		AccountsReceivableService:    p.AccountsReceivableService,
+		AccountingBriefs:             p.AccountingBriefs,
 		CustomerPaymentService:       p.CustomerPaymentService,
 		CustomerPaymentRepo:          p.CustomerPaymentRepo,
 		InvoiceDisputeRepo:           p.InvoiceDisputeRepo,

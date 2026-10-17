@@ -25,7 +25,6 @@ export function OrganizationSettingsPage() {
         title: t("Organization settings"),
         description: t("Manage your organization profile, compliance, and security settings"),
       }}
-      className="p-0"
     >
       <LazyComponent fallback={<OrganizationSettingsSkeleton />}>
         <OrganizationSettingsForm />

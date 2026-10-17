@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useEffect, useState } from "react";
@@ -98,7 +98,7 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
     <div className="ci">
       <div className="ci-in">
         <span className="ci-k">
-          <span className="ci-o" />
+          <NovaBadge size="md" />
           {t("New agent")}
         </span>
         <h1>{t("What should it do?")}</h1>
@@ -142,7 +142,7 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
                                   type="button"
                                   variant="secondary"
                                   size="xxs"
-                                  className="text-muted-foreground hover:text-foreground h-6.5 max-w-48 shrink-0 rounded-full px-2.5 text-xs font-normal"
+                                  className="text-muted-foreground hover:text-foreground h-6.5 max-w-48 shrink-0 rounded-badge px-2.5 text-xs font-normal"
                                   onClick={() =>
                                     form.setValue("description", example, { shouldDirty: true })
                                   }
@@ -160,12 +160,12 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
                       <Button
                         type="button"
                         variant="default"
-                        className="ml-auto shrink-0"
+                        className="group ml-auto shrink-0"
                         shortcut={formatShortcut("↵")}
                         disabled={!description.trim()}
                         onClick={draft}
                       >
-                        <AssistMark className="size-3.5" />
+                        <NovaBadge size="sm" spin="hover" />
                         {t("Draft it")}
                       </Button>
                     ) : (
@@ -205,7 +205,11 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
             {steps.slice(0, step + 1).map((label, index) => (
               <div key={label} className={index === step ? "ci-st cur" : "ci-st"}>
                 <span className="ck">
-                  {index < step ? <Ic n="check" s={12} w={2.4} /> : <span className="border-border-strong border-t-foreground inline-block size-3 animate-spin rounded-full border-[1.5px]" />}
+                  {index < step ? (
+                    <Ic n="check" s={12} w={2.4} />
+                  ) : (
+                    <span className="border-border-strong border-t-foreground inline-block size-3 animate-spin rounded-full border-[1.5px]" />
+                  )}
                 </span>
                 <span className="tx">{label}</span>
               </div>

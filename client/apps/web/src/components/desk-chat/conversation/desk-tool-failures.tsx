@@ -53,7 +53,7 @@ export function DeskBulkList({
               variant="bare"
               size="bare"
               className={cn(
-                "h-6 gap-1.5 rounded-full pr-2.25 pl-1.75 text-xs text-dsk-fg2 transition-colors duration-120",
+                "h-6 gap-1.5 rounded-badge pr-2.25 pl-1.75 text-xs text-dsk-fg2 transition-colors duration-120",
                 reason === text && "dk-on",
               )}
               aria-pressed={reason === text}

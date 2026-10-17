@@ -4,8 +4,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useLocation } from "react-router";
 import "@/components/desk-chat/desk-frame.css";
 
-/** How wide each of the rail's places is drawn: Today, Watchtower, Decisions, Memory. */
-const PLACE_WIDTHS = [38, 58, 52, 44] as const;
+/** How wide each of the rail's places is drawn: Today, Watchtower, Decisions, Scheduled, Memory. */
+const PLACE_WIDTHS = [38, 58, 52, 54, 44] as const;
 
 /**
  * The rail's six shelves, from pinned to older, each a heading over

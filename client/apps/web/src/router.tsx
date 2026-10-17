@@ -2316,6 +2316,16 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
+                path: "scheduled",
+                loader: createPrefetchLoader(
+                  lazyPrefetch(() => import("@/routes/desk/scheduled-page")),
+                ),
+                async lazy() {
+                  const { DeskScheduledRoutePage } = await import("@/routes/desk/scheduled-page");
+                  return { Component: DeskScheduledRoutePage };
+                },
+              },
+              {
                 path: "memory",
                 loader: createPrefetchLoader(
                   lazyPrefetch(() => import("@/routes/desk/memory-page")),

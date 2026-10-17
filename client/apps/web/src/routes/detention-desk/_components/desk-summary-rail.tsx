@@ -1,10 +1,10 @@
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   formatDetentionMinutes,
   type DeskFloorStats,
   type DeskSummary,
 } from "@trenova/shared/lib/detention";
-import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { DeskMoney } from "./desk-money";
 
 type DeskSummaryRailProps = {
@@ -21,7 +21,7 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
   const t = useT();
 
   return (
-    <KpiStrip>
+    <KpiStrip className="border-none rounded-none">
       <KpiStripItem
         label={t("Collectable now")}
         value={<DeskMoney value={summary.amountAtRisk} />}

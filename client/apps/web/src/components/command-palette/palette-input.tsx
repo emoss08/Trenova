@@ -1,4 +1,4 @@
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { dropdownMenuSurfaceClassName } from "@trenova/shared/components/ui/dropdown-menu";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -22,7 +22,7 @@ function Chip({
   removeLabel?: string;
 }) {
   return (
-    <span className="animate-pop-in bg-sunken text-foreground ring-border-subtle inline-flex h-6 max-w-56 shrink-0 items-center gap-1.5 rounded-full pr-1 pl-2 text-sm font-medium ring-1 ring-inset">
+    <span className="animate-pop-in bg-sunken text-foreground ring-border-subtle inline-flex h-6 max-w-56 shrink-0 items-center gap-1.5 rounded-badge pr-1 pl-2 text-sm font-medium ring-1 ring-inset">
       {children}
       {onRemove && (
         <button
@@ -105,7 +105,7 @@ export function PaletteInput({
         <SearchLgIcon className="text-foreground-faint size-4.25 shrink-0" strokeWidth={1.75} />
         {askSubject && (
           <Chip onRemove={onClearAskSubject} removeLabel={t("Stop asking about this")}>
-            <NovaMark className="size-3 shrink-0" />
+            <NovaBadge size="xs" className="shrink-0" />
             <span className="truncate">{askSubject}</span>
           </Chip>
         )}

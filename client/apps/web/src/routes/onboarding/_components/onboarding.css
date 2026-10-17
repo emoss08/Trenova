@@ -157,33 +157,6 @@
   color: var(--dsk-fg2);
 }
 
-.nv-mark {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  flex: none;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 200deg,
-    var(--dsk-gem-1),
-    var(--dsk-gem-2),
-    var(--dsk-gem-3),
-    var(--dsk-gem-1)
-  );
-}
-
-.nv-mark::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--canvas);
-}
-
-.nv-mark[data-busy="true"] {
-  animation: nv-spin 1.6s linear infinite;
-}
-
 .nv-thk {
   display: inline-block;
   margin-top: 10px;

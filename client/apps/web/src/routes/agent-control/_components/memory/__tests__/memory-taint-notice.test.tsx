@@ -69,6 +69,8 @@ describe("MemoryTaintNotice", () => {
     const list = await screen.findByRole("list", { name: "Memories that taint every turn" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByText(/2 memories hold every write/)).toBeTruthy();
+    const box = screen.getByRole("region", { name: "Memories that taint every turn" });
+    expect(box).toContainElement(list);
   });
 
   it("reviews the version the person read, not whatever is stored now", async () => {

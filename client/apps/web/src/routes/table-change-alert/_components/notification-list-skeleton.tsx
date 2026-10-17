@@ -40,8 +40,8 @@ export function NotificationListSkeleton() {
                   </span>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-5 w-14 rounded-full" />
+                  <Skeleton className="h-5 w-16 rounded-badge" />
+                  <Skeleton className="h-5 w-14 rounded-badge" />
                   <Skeleton className={cn("h-2", TABLE_NAME_WIDTHS[index])} />
                   <Skeleton className="h-2 w-12" />
                 </div>

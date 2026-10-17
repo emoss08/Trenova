@@ -26,34 +26,6 @@
 .dk-pg-in.dk-narrow {
   max-width: 720px;
 }
-.dk-pg-h {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.dk-pg-k {
-  font: 500 11px var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dsk-subtle);
-}
-.dk-pg-h h1 {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  color: var(--dsk-fg);
-  line-height: 1.15;
-}
-.dk-pg-h p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--dsk-muted);
-  max-width: 60ch;
-  text-wrap: pretty;
-}
 @media (max-width: 640px) {
   .dk-pg-in {
     padding: 24px 16px 48px;

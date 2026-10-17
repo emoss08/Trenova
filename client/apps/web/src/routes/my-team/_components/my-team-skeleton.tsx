@@ -91,7 +91,7 @@ function AttentionSkeleton() {
         <div className="flex items-center gap-2">
           <Skeleton className="size-3.5 rounded-sm" />
           <Skeleton className="h-3.5 w-32" />
-          <Skeleton className="h-4 w-5 rounded-full" />
+          <Skeleton className="h-4 w-5 rounded-badge" />
         </div>
         <Skeleton className="h-3 w-28" />
       </header>
@@ -104,8 +104,8 @@ function AttentionSkeleton() {
             <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
               <IdentitySkeleton nameWidth={index === 0 ? "w-28" : "w-24"} small />
               <span className="flex items-center gap-1">
-                <Skeleton className="h-4 w-20 rounded-full" />
-                {index === 0 ? <Skeleton className="h-4 w-24 rounded-full" /> : null}
+                <Skeleton className="h-4 w-20 rounded-badge" />
+                {index === 0 ? <Skeleton className="h-4 w-24 rounded-badge" /> : null}
               </span>
             </div>
             <Skeleton className="size-4 rounded-sm" />
@@ -236,7 +236,7 @@ function CoverSkeleton() {
           <li key={index} className="flex flex-col gap-1.5 px-3 py-2">
             <span className="flex items-center justify-between gap-2">
               <Skeleton className={cn("h-3", index === 0 ? "w-24" : "w-28")} />
-              <Skeleton className="h-4 w-14 rounded-full" />
+              <Skeleton className="h-4 w-14 rounded-badge" />
             </span>
             <Skeleton className="h-2.5 w-36" />
           </li>

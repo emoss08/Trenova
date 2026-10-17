@@ -26,7 +26,7 @@ export function ValueSourceTag({ source }: { source: FormulaValueSource }) {
   const t = useT();
   const style = SOURCE_STYLES[source];
   return (
-    <span className={cn("shrink-0 rounded-full px-1.5 text-2xs", style.className)}>
+    <span className={cn("shrink-0 rounded-badge px-1.5 text-2xs", style.className)}>
       {t(style.label)}
     </span>
   );

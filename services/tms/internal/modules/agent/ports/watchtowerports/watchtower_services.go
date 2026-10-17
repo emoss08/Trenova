@@ -27,6 +27,11 @@ type WatchtowerItemInput struct {
 	Path        string
 	OccurredAt  int64
 	OwnerID     pulid.ID
+	Deadline    *watchtower.Deadline
+	Record      *watchtower.RecordRef
+	Facts       []watchtower.Fact
+	Impact      []string
+	Trail       []watchtower.TrailEvent
 }
 
 // WatchtowerProjector is what a source calls as its records open and close.
@@ -93,6 +98,8 @@ type WatchtowerPage struct {
 type WatchtowerCounts struct {
 	Unresolved     int
 	Critical       int
+	Active         int
+	ActiveCritical int
 	UnseenCritical int
 	Unseen         int
 	Overdue        int
@@ -172,6 +179,10 @@ type ReopenExceptionRequest struct {
 	Note string
 }
 
+type UnsnoozeExceptionRequest struct {
+	ExceptionTarget
+}
+
 type ExceptionHistoryRequest struct {
 	TenantInfo pagination.TenantInfo
 	ItemID     pulid.ID
@@ -224,6 +235,11 @@ type ExceptionService interface {
 		req *ReopenExceptionRequest,
 		actor *permissionports.RequestActor,
 	) (*watchtower.Item, error)
+	UnsnoozeException(
+		ctx context.Context,
+		req *UnsnoozeExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
 	ExceptionHistory(
 		ctx context.Context,
 		req *ExceptionHistoryRequest,
@@ -259,6 +275,22 @@ type WatchtowerService interface {
 		req HandOffWatchtowerItemRequest,
 		actor *permissionports.RequestActor,
 	) (*HandOffWatchtowerItemResult, error)
+	HandOffAgents(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+	) ([]*agentdefinition.Definition, error)
+	MarkItemSeen(
+		ctx context.Context,
+		req GetWatchtowerItemRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	Cleared(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+		since int64,
+	) (int, error)
 	// Backfill fills the feed from every source's snapshot; Reconcile
 	// resolves what the sources no longer report as open and adds what they
 	// do. Both run per tenant.

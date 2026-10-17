@@ -61,7 +61,7 @@ function CitationChip({ source }: { source: WebSource }) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t("{0} on {1}, opens in a new tab", source.title, source.site)}
-        className="ui-focus-ring bg-muted text-foreground-muted hover:bg-surface-hover hover:text-foreground mx-0.5 inline-flex h-4.5 max-w-44 items-center gap-1 rounded-full px-1.5 align-middle text-2xs no-underline transition-colors"
+        className="ui-focus-ring bg-muted text-foreground-muted hover:bg-surface-hover hover:text-foreground mx-0.5 inline-flex h-4.5 max-w-44 items-center gap-1 rounded-badge px-1.5 align-middle text-2xs no-underline transition-colors"
       >
         <SourceMark source={source} className="size-2.5" />
         <span className="truncate">{source.site}</span>

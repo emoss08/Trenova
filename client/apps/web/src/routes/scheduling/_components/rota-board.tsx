@@ -337,7 +337,7 @@ function DayHeading({ date, today, compact }: { date: number; today: boolean; co
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full px-1.5 py-px leading-tight tabular-nums",
+          "inline-flex items-center gap-1 rounded-badge px-1.5 py-px leading-tight tabular-nums",
           today ? "bg-primary text-primary-foreground" : "text-foreground",
         )}
       >
@@ -418,7 +418,7 @@ function RotaCell({
       {day.assignmentCount > 0 ? (
         <span
           className={cn(
-            "bg-background/80 absolute rounded-full px-1 text-3xs leading-none font-semibold tabular-nums",
+            "bg-background/80 absolute rounded-badge px-1 text-3xs leading-none font-semibold tabular-nums",
             mode === "detail" ? "top-1 right-1" : "top-0.5 right-0.5",
           )}
         >

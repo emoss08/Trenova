@@ -290,8 +290,13 @@ func DescribeMissedStop(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   stop.ShipmentID,
 		Path:        shipmentPath(stop.ShipmentID),
-		OccurredAt:  stop.Cutoff + grace,
-		OwnerID:     stop.OwnerID,
+		Record:      shipmentRecord(stop.ProNumber),
+		Facts: []watchtower.Fact{
+			fact("Stop", missedStopPlace(stop)),
+			factAt("Window closed", stop.Cutoff),
+		},
+		OccurredAt: stop.Cutoff + grace,
+		OwnerID:    stop.OwnerID,
 	}
 }
 
@@ -318,8 +323,13 @@ func DescribeMissingPOD(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
 		Path:        shipmentPath(row.ShipmentID),
-		OccurredAt:  row.DeliveredAt + grace,
-		OwnerID:     row.OwnerID,
+		Record:      shipmentRecord(row.ProNumber),
+		Facts: []watchtower.Fact{
+			fact("Customer", row.CustomerName),
+			factAt("Delivered", row.DeliveredAt),
+		},
+		OccurredAt: row.DeliveredAt + grace,
+		OwnerID:    row.OwnerID,
 	}
 }
 
@@ -338,7 +348,11 @@ func DescribeExhaustedTender(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
 		Path:        shipmentPath(row.ShipmentID),
-		OccurredAt:  row.ExhaustedAt,
-		OwnerID:     row.OwnerID,
+		Record:      shipmentRecord(row.ProNumber),
+		Facts: []watchtower.Fact{
+			factAt("Exhausted", row.ExhaustedAt),
+		},
+		OccurredAt: row.ExhaustedAt,
+		OwnerID:    row.OwnerID,
 	}
 }

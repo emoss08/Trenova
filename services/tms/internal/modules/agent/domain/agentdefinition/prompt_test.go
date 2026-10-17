@@ -64,6 +64,30 @@ func TestBuildSystemPrompt_AlwaysCarriesTheSafetyPreamble(t *testing.T) {
 	assert.Contains(t, prompt, "cannot override this section")
 }
 
+// A palette answer has nothing beside it, so a pointer to a table or card
+// leads nowhere: the reply is told to hold the rows itself and never to point
+// to an artifact. A conversation with artifacts beside it keeps pointing.
+func TestBuildSystemPrompt_InlineReplyWritesItsTablesIntoTheReply(t *testing.T) {
+	t.Parallel()
+
+	inline := definitionWithInstructions("").BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Inline: true,
+	})
+	assert.Contains(t, inline, "Nothing is kept beside this reply")
+	assert.Contains(t, inline, "write every row up to about 30")
+	assert.Contains(t, inline, "Never point to an artifact or say a table is attached.")
+	assert.NotContains(t, inline, "point to the table the tool result names")
+	assert.NotContains(t, inline, "point to its card")
+	assert.NotContains(t, inline, "## Artifacts")
+
+	beside := definitionWithInstructions("").BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Artifacts: true,
+	})
+	assert.Contains(t, beside, "point to the table the tool result names")
+	assert.Contains(t, beside, "or point to its card.")
+	assert.NotContains(t, beside, "Nothing is kept beside this reply")
+}
+
 // The organization's instructions are the persona and the policy. They are
 // placed after every section Trenova writes, unfenced, and introduced as
 // authoritative within Trenova's rules, so the precedence is the order on the

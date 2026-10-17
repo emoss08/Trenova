@@ -158,7 +158,14 @@ type ARPaymentStats struct {
 	ReversedLast30Count   int   `json:"reversedLast30Count"`
 }
 
+type ARDraftInvoices struct {
+	Count           int   `json:"count"`
+	AmountMinor     int64 `json:"amountMinor"`
+	OldestCreatedAt int64 `json:"oldestCreatedAt"`
+}
+
 type ARAnalyticsRepository interface {
+	GetDraftInvoices(ctx context.Context, req GetARAnalyticsRequest) (*ARDraftInvoices, error)
 	GetPaymentStats(
 		ctx context.Context,
 		req GetARAnalyticsRequest,
@@ -195,4 +202,24 @@ type ARAnalyticsRepository interface {
 		ctx context.Context,
 		req GetARCustomerSnapshotRequest,
 	) (*ARCustomerSnapshot, error)
+}
+
+type ARSnapshotReader interface {
+	ListOpenItems(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		customerID pulid.ID,
+		asOfDate int64,
+	) ([]*AROpenItem, error)
+	GetDashboardKPIs(ctx context.Context, req GetARAnalyticsRequest) (*ARDashboardKPIs, error)
+	GetPaymentStats(ctx context.Context, req GetARAnalyticsRequest) (*ARPaymentStats, error)
+	GetDraftInvoices(ctx context.Context, req GetARAnalyticsRequest) (*ARDraftInvoices, error)
+	GetCollectionPerformance(
+		ctx context.Context,
+		req GetARCollectionMetricsRequest,
+	) (*ARCollectionPerformance, error)
+	ListTopOverdueCustomers(
+		ctx context.Context,
+		req ListARTopOverdueCustomersRequest,
+	) ([]*ARTopOverdueCustomer, error)
 }

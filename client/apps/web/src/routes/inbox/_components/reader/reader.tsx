@@ -85,7 +85,7 @@ function ReaderSkeleton() {
         <Skeleton className="size-6 rounded-full" />
         <Skeleton className="h-3.5 w-48" />
       </div>
-      <Skeleton className="h-6 w-40 rounded-full" />
+      <Skeleton className="h-6 w-40 rounded-badge" />
       <Skeleton className="h-28 w-full" />
     </div>
   );

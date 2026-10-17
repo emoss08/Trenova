@@ -18,14 +18,39 @@ type GetConversationScheduleRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
-// ListConversationSchedulesRequest pages through one person's schedules,
-// newest first, in one conversation when ThreadID is set.
+// ConversationScheduleOrder is the order a list of schedules is read in.
+type ConversationScheduleOrder string
+
+const (
+	// ConversationScheduleOrderNewest reads the latest made first, the order
+	// a conversation's cards were asked in.
+	ConversationScheduleOrderNewest ConversationScheduleOrder = "Newest"
+
+	// ConversationScheduleOrderNextRun reads the schedules that run soonest
+	// first and the paused ones after them, the order a person scans what is
+	// coming up.
+	ConversationScheduleOrderNextRun ConversationScheduleOrder = "NextRun"
+)
+
+// ListConversationSchedulesRequest pages through one person's schedules, in
+// one conversation when ThreadID is set, newest first unless Order says
+// otherwise.
 type ListConversationSchedulesRequest struct {
 	UserID     pulid.ID
 	ThreadID   pulid.ID
 	TenantInfo pagination.TenantInfo
+	Order      ConversationScheduleOrder
 	Limit      int
 	Offset     int
+}
+
+// ListedConversationSchedule is a schedule with the title of the
+// conversation its answers post into, read in the same query, so a list
+// across conversations can say where each one goes.
+type ListedConversationSchedule struct {
+	conversationschedule.Schedule `bun:",extend"`
+
+	ThreadTitle string `json:"threadTitle" bun:"thread_title,scanonly"`
 }
 
 // CountConversationSchedulesRequest counts one person's schedules, in one
@@ -44,10 +69,13 @@ type ListConversationSchedulesAcrossTenantsRequest struct {
 }
 
 // CreateConversationScheduleRequest saves a schedule together with the
-// message that draws its card in the conversation.
+// message that draws its card in the conversation. ThreadTitle names the
+// conversation when it has no name yet: one opened with a schedule has no
+// reply to be named from until the schedule first runs.
 type CreateConversationScheduleRequest struct {
-	Schedule *conversationschedule.Schedule
-	Message  conversation.Message
+	Schedule    *conversationschedule.Schedule
+	Message     conversation.Message
+	ThreadTitle string
 }
 
 // RecordConversationScheduleRunRequest records that a run started.
@@ -75,14 +103,14 @@ type ConversationScheduleRepository interface {
 	List(
 		ctx context.Context,
 		req ListConversationSchedulesRequest,
-	) (*pagination.ListResult[*conversationschedule.Schedule], error)
+	) (*pagination.ListResult[*ListedConversationSchedule], error)
 	Count(ctx context.Context, req CountConversationSchedulesRequest) (int, error)
 	ListAcrossTenants(
 		ctx context.Context,
 		req ListConversationSchedulesAcrossTenantsRequest,
 	) ([]*conversationschedule.Schedule, error)
-	// UpdateState writes whether the schedule is on and its next slot,
-	// guarded by its version.
+	// UpdateState writes what the schedule asks, its cadence, whether it is
+	// on and its next slot, guarded by its version.
 	UpdateState(
 		ctx context.Context,
 		schedule *conversationschedule.Schedule,

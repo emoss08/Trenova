@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/stretchr/testify/assert"
@@ -51,15 +52,29 @@ func (b boardBriefs) DeleteBefore(
 	return b.deletes.next(req.BeforeDate), nil
 }
 
-func TestBriefingRetentionAlsoClearsOldBoardBriefs(t *testing.T) {
+type accountingBriefs struct {
+	accountingbriefports.AccountingBriefRepository
+	deletes *pagedDeletes
+}
+
+func (b accountingBriefs) DeleteBefore(
+	_ context.Context,
+	req *accountingbriefports.DeleteAccountingBriefsBeforeRequest,
+) (int, error) {
+	return b.deletes.next(req.BeforeDate), nil
+}
+
+func TestBriefingRetentionAlsoClearsOldBoardAndAccountingBriefs(t *testing.T) {
 	t.Parallel()
 
 	morning := &pagedDeletes{pages: []int{retentionBatch, 4}}
 	board := &pagedDeletes{pages: []int{retentionBatch, retentionBatch, 7}}
+	accounting := &pagedDeletes{pages: []int{retentionBatch, 2}}
 	a := &Activities{
-		l:         zap.NewNop(),
-		repo:      morningBriefs{deletes: morning},
-		boardRepo: boardBriefs{deletes: board},
+		l:              zap.NewNop(),
+		repo:           morningBriefs{deletes: morning},
+		boardRepo:      boardBriefs{deletes: board},
+		accountingRepo: accountingBriefs{deletes: accounting},
 	}
 
 	var s testsuite.WorkflowTestSuite
@@ -74,5 +89,8 @@ func TestBriefingRetentionAlsoClearsOldBoardBriefs(t *testing.T) {
 	assert.Equal(t, retentionBatch+4, result.Deleted)
 	assert.Equal(t, 2*retentionBatch+7, result.DeletedBoardBriefs)
 	require.Len(t, board.cutoffs, 3)
-	assert.Equal(t, morning.cutoffs[0], board.cutoffs[0], "both kinds of brief keep the same window")
+	assert.Equal(t, retentionBatch+2, result.DeletedAccountingBriefs)
+	require.Len(t, accounting.cutoffs, 2)
+	assert.Equal(t, morning.cutoffs[0], board.cutoffs[0], "every kind of brief keeps the same window")
+	assert.Equal(t, morning.cutoffs[0], accounting.cutoffs[0], "every kind of brief keeps the same window")
 }

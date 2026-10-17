@@ -23,19 +23,11 @@ import {
 } from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
+import { Edit02Icon, Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useQueryState, useQueryStates } from "nuqs";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
-import {
-  ChipArrayField,
-  ConsoleToolbar,
-  EmptyState,
-  ErrorState,
-  MetaLine,
-  ProviderLogo,
-  RowSkeleton,
-} from "./shared";
+import { ChipArrayField, EmptyState, ErrorState, MetaLine, PanelSearch, PanelToolbar, ProviderLogo, RowSkeleton, SecuritySection } from "./shared";
 import { useSecurityAccess } from "./use-security-access";
 import {
   emptyProvider,
@@ -166,28 +158,37 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
   );
 
   return (
-    <div className="space-y-3">
-      <ConsoleToolbar
-        title={t("Identity providers")}
-        description={t("OIDC sign-in providers available to this organization.")}
-        search={search}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder={t("Search providers, domains, or issuer")}
-        action={
-          canCreate ? (
-            <Button size="sm" onClick={onCreateProvider}>
-              <PlusIcon />
-              {t("Add provider")}
-            </Button>
-          ) : undefined
-        }
-      />
+    <SecuritySection
+      title={t("Identity providers")}
+      icon={<Key01Icon />}
+      count={providers.length}
+      help={t(
+        "OIDC providers people can sign in with. Enforcing single sign-on on a provider stops password sign-in for the domains it covers.",
+      )}
+      action={
+        canCreate ? (
+          <Button size="sm" onClick={onCreateProvider}>
+            <PlusIcon />
+            {t("New provider")}
+          </Button>
+        ) : null
+      }
+    >
+      {providers.length > 0 ? (
+        <PanelToolbar>
+          <PanelSearch
+            value={search}
+            onChange={handleSearchChange}
+            placeholder={t("Search providers, domains or issuer")}
+          />
+        </PanelToolbar>
+      ) : null}
       {isLoading ? (
-        <RowSkeleton rows={3} />
+        <RowSkeleton rows={2} label={t("Loading identity providers")} />
       ) : isError ? (
         <ErrorState label={t("Identity providers could not be loaded.")} />
       ) : filteredProviders.length > 0 ? (
-        <div className="bg-background overflow-hidden rounded-lg border">
+        <div className="divide-border-subtle divide-y">
           {filteredProviders.map((provider) => (
             <ProviderRow
               key={provider.id}
@@ -211,7 +212,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
           }
         />
       )}
-    </div>
+    </SecuritySection>
   );
 });
 
@@ -338,7 +339,7 @@ const ProviderRow = memo(function ProviderRow({
   const access = useSecurityAccess().identityProviders;
 
   return (
-    <div className="grid gap-3 border-b p-3 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
+    <div className="grid gap-3 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="bg-muted/30 flex size-9 items-center justify-center rounded-md border">
@@ -346,10 +347,10 @@ const ProviderRow = memo(function ProviderRow({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium">
+              <span className="text-sm font-medium">
                 {formatIdentityProviderName(provider.name) || t("OIDC provider")}
               </span>
-              <Badge variant={provider.enabled ? "success" : "danger"}>
+              <Badge variant={provider.enabled ? "success" : "neutral"}>
                 {provider.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
               {provider.enforceSso && <Badge variant="warning">{t("SSO enforced")}</Badge>}
@@ -375,19 +376,21 @@ const ProviderRow = memo(function ProviderRow({
       </div>
       <div className="flex justify-end gap-2">
         {access.update ? (
-          <Button size="sm" variant="outline" onClick={() => onEditProvider(provider)}>
+          <Button size="sm" variant="ghost" onClick={() => onEditProvider(provider)}>
+            <Edit02Icon />
             {t("Edit")}
           </Button>
         ) : null}
         {access.remove ? (
           <Button
-            size="sm"
-            variant="destructive"
+            size="icon-sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            aria-label={t("Delete {0}", formatIdentityProviderName(provider.name))}
             onClick={() => onDeleteProvider(provider.id)}
             disabled={isDeleting}
           >
             <Trash01Icon />
-            {t("Delete")}
           </Button>
         ) : null}
       </div>

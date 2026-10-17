@@ -1,5 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -31,7 +31,7 @@ export function NovaButton({
       aria-busy={busy || undefined}
       {...props}
     >
-      <NovaMark spin={busy ? "always" : "none"} className="fs-nova-ring size-3" />
+      <NovaBadge size="xs" spin={busy ? "always" : "none"} className="fs-nova-badge" />
       {children}
     </Button>
   );

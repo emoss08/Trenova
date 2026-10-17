@@ -41,7 +41,7 @@ export function BulkBillingTransferCandidateRowsSkeleton() {
             </span>
           </span>
           <Skeleton className={cn("h-2.5", CUSTOMER_WIDTHS[index])} />
-          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-badge" />
           <Skeleton className="h-2.5 w-16" />
           <Skeleton className="ml-auto h-2.5 w-14" />
         </li>

@@ -909,22 +909,6 @@ query ShipmentEvents($input: ShipmentEventsInput!) {
   }
 }
 
-query ShipmentTrackingEvents($shipmentId: ID!) {
-  shipmentTrackingEvents(shipmentId: $shipmentId) {
-    id
-    shipmentMoveId
-    stopId
-    source
-    kind
-    matchMethod
-    eventAt
-    receivedAt
-    sourceStatus
-    outcome
-    outcomeReason
-  }
-}
-
 query ShipmentBillingReadiness($shipmentId: ID!) {
   shipmentBillingReadiness(shipmentId: $shipmentId) {
     shipmentId

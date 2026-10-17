@@ -4,12 +4,14 @@ package accountsreceivableresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	accountingbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 )
 
 type Deps struct {
 	*base.Core
 	AccountsReceivableService *accountsreceivableservice.Service
+	AccountingBriefs          accountingbriefports.AccountingBriefingReader
 }
 
 type QueryResolver struct{ *Deps }

@@ -145,7 +145,7 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
                 variant="bare"
                 size="bare"
                 className={cn(
-                  "dk-ag-on h-7 gap-2 rounded-full pr-3 pl-1 text-sm font-medium disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+                  "dk-ag-on h-7 gap-2 rounded-badge pr-3 pl-1 text-sm font-medium disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
                   caps.enabled ? "bg-dsk-hover text-dsk-fg" : "bg-dsk-sunken text-dsk-muted",
                 )}
                 aria-pressed={caps.enabled}

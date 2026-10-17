@@ -86,7 +86,7 @@ export function TuneUpsSkeleton() {
               <SkText w={row.evidence} />
             </span>
           </div>
-          <SkBlock w={88} h={22} r="full" />
+          <SkBlock w={88} h={22} r={4} />
           <div className="nd-a">
             <SkIconButton />
             <SkBlock w={72} h={28} />
