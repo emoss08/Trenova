@@ -1,4 +1,4 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
 import { AccountingDashboardPage } from "../page";
@@ -110,9 +110,11 @@ describe("accounting dashboard empty state", () => {
     mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(
-      await screen.findByText(/Nothing is owed to you and no cash is waiting to be applied\./),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
+        /Nothing is owed to you and no cash is waiting to be applied\./,
+      ),
+    );
   });
 
   it("does not brief a book that has never invoiced", async () => {

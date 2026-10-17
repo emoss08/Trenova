@@ -274,16 +274,17 @@ func TestNarrationCannotCiteAChangeWithoutABaseline(t *testing.T) {
 		OpenMinor:      4_606_200,
 		OpenInvoices:   35,
 		DSOTenths:      450,
-		DSODeltaTenths: 300,
+		DSODeltaTenths: 125,
 	}
 	_, ok := AcceptNarration([]accountingbriefports.AccountingBriefingSegment{
-		{Text: "DSO is 45.0 days, up 30.0 over four weeks."},
+		{Text: "DSO is 45.0 days, up 12.5 over four weeks."},
 	}, facts, facts.Links())
 	assert.True(t, ok, "a change from a real baseline may be cited")
 
-	facts.DSODeltaTenths = 450
+	facts.DSODeltaTenths = 575
+	require.False(t, facts.HasDSOBaseline())
 	_, ok = AcceptNarration([]accountingbriefports.AccountingBriefingSegment{
-		{Text: "DSO is 45.0 days, up 30.0 over four weeks."},
+		{Text: "DSO is 45.0 days, up 57.5 over four weeks."},
 	}, facts, facts.Links())
 	assert.False(t, ok, "a change nothing computed is rejected")
 }

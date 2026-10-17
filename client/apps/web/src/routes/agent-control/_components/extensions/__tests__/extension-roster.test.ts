@@ -2,6 +2,7 @@ import type { AgentExtensionCatalogItem } from "@/types/agent-extension";
 import { describe, expect, it } from "vitest";
 import {
   ALL_CATEGORIES,
+  capabilityHolder,
   dailyUsageShare,
   extensionState,
   filterExtensions,
@@ -19,6 +20,9 @@ function extension(overrides: Partial<AgentExtensionCatalogItem>): AgentExtensio
     description: "",
     category: "WebResearch",
     categoryLabel: "Web research",
+    capability: "WebResearch",
+    capabilityLabel: "Web research",
+    capabilityHeldBy: "",
     brandDomain: "exa.ai",
     docsUrl: "",
     websiteUrl: "",
@@ -48,6 +52,20 @@ describe("extensionState", () => {
     expect(extensionState(extension({ enabled: true, configured: true }))).toBe("on");
     expect(extensionState(extension({ enabled: true, configured: false }))).toBe("needsSetup");
     expect(extensionState(extension({ enabled: false, configured: true }))).toBe("off");
+  });
+});
+
+describe("capabilityHolder", () => {
+  it("names the vendor that already serves the capability while this one is off", () => {
+    expect(capabilityHolder(extension({ enabled: false, capabilityHeldBy: "Exa" }))).toBe("Exa");
+  });
+
+  it("is empty when nothing else serves the capability", () => {
+    expect(capabilityHolder(extension({ enabled: false, capabilityHeldBy: "" }))).toBe("");
+  });
+
+  it("does not stand in the way of an extension that is already on", () => {
+    expect(capabilityHolder(extension({ enabled: true, capabilityHeldBy: "Exa" }))).toBe("");
   });
 });
 

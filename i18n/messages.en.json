@@ -9986,6 +9986,15 @@
       "routes/admin"
     ]
   },
+  "A signature a person recorded must name who recorded it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.": {
     "sites": 1,
     "scope": [
@@ -15649,7 +15658,7 @@
     ]
   },
   "Activity": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -19650,7 +19659,7 @@
     ]
   },
   "Advanced": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -22304,11 +22313,12 @@
     ]
   },
   "Allowed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -33343,15 +33353,6 @@
       "routes/auth"
     ]
   },
-  "Authentication events could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Authentication policy": {
     "sites": 2,
     "scope": [
@@ -33383,22 +33384,14 @@
       "go/other"
     ]
   },
-  "Authenticator": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Authenticator app": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Authenticator app. Asks for a code when you sign in.": {
@@ -36782,6 +36775,15 @@
       "go/other"
     ]
   },
+  "Basic": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Basic auth password": {
     "sites": 2,
     "scope": [
@@ -39529,13 +39531,14 @@
     ]
   },
   "Blocked": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/desk",
       "routes/dispatch-console"
     ]
@@ -40353,14 +40356,13 @@
     ]
   },
   "Brief as of {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-dashboard",
-      "routes/admin",
-      "routes/shipment"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Brief date is required": {
@@ -40716,6 +40718,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Browser": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Bucket": {
@@ -42381,7 +42392,7 @@
     ]
   },
   "Cancel": {
-    "sites": 317,
+    "sites": 319,
     "scope": [
       "go",
       "ts"
@@ -46799,6 +46810,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Challenged": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Change": {
@@ -65031,7 +65051,7 @@
     ]
   },
   "Created": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -69332,6 +69352,15 @@
       "go/other"
     ]
   },
+  "Date not legible": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Date of Birth": {
     "sites": 1,
     "scope": [
@@ -70757,12 +70786,13 @@
     ]
   },
   "Decision": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk",
       "routes/invoice-approval",
       "routes/worker"
@@ -76389,6 +76419,15 @@
       "apps/web/components"
     ]
   },
+  "Device": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Device is required": {
     "sites": 2,
     "scope": [
@@ -77063,7 +77102,7 @@
     ]
   },
   "Disabled": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -79678,6 +79717,15 @@
       "go/other"
     ]
   },
+  "Document intelligence reads every queued proof of delivery whose signature nobody has read yet and marks it signed or unsigned. PODs a person already marked, and PODs uploaded without machine reading, are left as they are.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Document is invalid": {
     "sites": 20,
     "scope": [
@@ -79688,7 +79736,7 @@
     ]
   },
   "Document is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -87016,7 +87064,7 @@
     ]
   },
   "Email": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -87028,6 +87076,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/admin",
       "routes/auth",
       "routes/carrier",
       "routes/collections",
@@ -88830,7 +88879,7 @@
     ]
   },
   "Enabled": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -91692,6 +91741,15 @@
       "go/other"
     ]
   },
+  "Error code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Error code cannot be longer than 100 characters": {
     "sites": 1,
     "scope": [
@@ -92545,13 +92603,14 @@
     ]
   },
   "Event": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/worker"
@@ -98312,15 +98371,6 @@
       "routes/admin"
     ]
   },
-  "External identities could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "External integration configuration and synchronization": {
     "sites": 1,
     "scope": [
@@ -99487,7 +99537,7 @@
     ]
   },
   "Failed": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -117594,7 +117644,7 @@
     ]
   },
   "IP address": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -130103,7 +130153,7 @@
     ]
   },
   "Last login": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -130326,6 +130376,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Last sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Last sign-in: {0}": {
@@ -131843,6 +131902,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Leave empty when the date beside the signature can't be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Leave ended": {
@@ -133957,11 +134025,12 @@
     ]
   },
   "Linked": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox",
       "routes/worker"
     ]
@@ -135302,12 +135371,11 @@
     ]
   },
   "Loading activity": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control",
       "routes/shipment"
     ]
@@ -138706,15 +138774,6 @@
       "go/other"
     ]
   },
-  "MFA authenticators could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "MJ": {
     "sites": 2,
     "scope": [
@@ -140982,6 +141041,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Marked by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Marked false positive": {
@@ -152014,15 +152082,6 @@
       "routes/desk"
     ]
   },
-  "No IP captured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No Longer Differs": {
     "sites": 1,
     "scope": [
@@ -152030,15 +152089,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "No MFA authenticators found.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No Open Item": {
@@ -152820,15 +152870,6 @@
     ]
   },
   "No audit entries yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "No authentication events found.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154831,15 +154872,6 @@
       "routes/agent-control"
     ]
   },
-  "No external identities found.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No extracted text": {
     "sites": 1,
     "scope": [
@@ -155342,6 +155374,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "No identities linked yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No identity providers configured": {
@@ -157418,6 +157459,15 @@
       "routes/shipment"
     ]
   },
+  "No queued POD is waiting for its signature to be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No rate": {
     "sites": 2,
     "scope": [
@@ -157979,7 +158029,7 @@
       "routes/admin"
     ]
   },
-  "No risk decisions found.": {
+  "No risk decisions recorded yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -158600,6 +158650,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No sign-ins recorded yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No sign-ins recorded yet.": {
@@ -159297,6 +159356,15 @@
       "routes/reports"
     ]
   },
+  "No two-factor devices enrolled yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No uncovered moves in the current window.": {
     "sites": 1,
     "scope": [
@@ -159694,6 +159762,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Nobody has read the signature yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nobody has worked this account yet. Calls, emails, notes and promises appear here.": {
@@ -161055,6 +161132,15 @@
       "apps/web/lib"
     ]
   },
+  "Not finished": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Not finished yet": {
     "sites": 1,
     "scope": [
@@ -161155,6 +161241,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Not identified": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Not in any document. Drag a page into one to file it.": {
@@ -162032,12 +162127,11 @@
     ]
   },
   "Not verified": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -166468,7 +166562,7 @@
     ]
   },
   "Off": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -167250,7 +167344,7 @@
     ]
   },
   "On": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -169199,6 +169293,24 @@
       "go/other"
     ]
   },
+  "Only a person can re-read the signatures on queued PODs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person can record whether a document is signed": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a person can review a document": {
     "sites": 1,
     "scope": [
@@ -169439,6 +169551,17 @@
       "go"
     ],
     "areas": [
+      "go/other"
+    ]
+  },
+  "Only a signed document has a signing date": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
       "go/other"
     ]
   },
@@ -170892,6 +171015,15 @@
     ]
   },
   "Only the current version of a document can be reviewed. Review the latest version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only the current version of a document can have its signature recorded. Record it on the latest version instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -184523,13 +184655,14 @@
     ]
   },
   "Person": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -198004,6 +198137,24 @@
       "go/other"
     ]
   },
+  "Read POD signatures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Read POD signatures again?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Read Ramp card transactions for fuel spend. Ramp runs on commercial Visa, so its rows carry the merchant and amount but not the gallons an IFTA return needs.": {
     "sites": 1,
     "scope": [
@@ -198178,11 +198329,12 @@
     ]
   },
   "Read from the document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib"
     ]
   },
@@ -198311,6 +198463,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Read signatures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Read so far, by kind": {
@@ -199375,7 +199536,7 @@
     ]
   },
   "Reason": {
-    "sites": 70,
+    "sites": 71,
     "scope": [
       "go",
       "ts"
@@ -202007,6 +202168,16 @@
       "go/other"
     ]
   },
+  "Record signature": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/billing-queue"
+    ]
+  },
   "Record stop arrival": {
     "sites": 1,
     "scope": [
@@ -203869,11 +204040,12 @@
     ]
   },
   "Refused": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -214502,12 +214674,11 @@
     ]
   },
   "Risk": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/carrier",
       "routes/carrier-sourcing"
     ]
@@ -214519,6 +214690,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Risk check": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Risk check allowed a sign-in": {
@@ -214567,15 +214747,6 @@
     ]
   },
   "Risk decisions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Risk decisions could not be loaded.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -218742,7 +218913,7 @@
     ]
   },
   "Save": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "ts"
     ],
@@ -220169,6 +220340,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Say whether the receiver signed it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Say whether the receiver signed this document. Your answer is final: reading the document again won't change it, and billing checks the proof of delivery against it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Say whether the schedule should run": {
@@ -222260,15 +222449,6 @@
       "routes/intake"
     ]
   },
-  "Search activity": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Search addresses": {
     "sites": 1,
     "scope": [
@@ -222579,15 +222759,6 @@
     "areas": [
       "go/other",
       "routes/agent-control"
-    ]
-  },
-  "Search depth must be auto, fast or deep": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Search driver or number": {
@@ -223756,6 +223927,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Security key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Security notices always reach you in Trenova": {
@@ -230337,12 +230517,13 @@
     ]
   },
   "Set up": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/factoring-company",
       "routes/fuel-purchase",
@@ -235707,7 +235888,7 @@
     ]
   },
   "Signals": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -235716,18 +235897,46 @@
     ]
   },
   "Signature": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "routes/policies",
       "template/factoring.noa.pdf"
     ]
   },
   "Signature cannot exceed 150 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signature detection is not available on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signature not read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Signature status must be Signed, Unsigned or Unknown": {
     "sites": 1,
     "scope": [
       "go"
@@ -235746,12 +235955,13 @@
     ]
   },
   "Signed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
@@ -235851,6 +236061,33 @@
       "apps/web/components"
     ]
   },
+  "Signed on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Signed on {0}, marked by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Signed on {0}, read from the document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Signed out": {
     "sites": 1,
     "scope": [
@@ -235930,6 +236167,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Signing date can't be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Signing date is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Signing in": {
@@ -242945,7 +243200,7 @@
     ]
   },
   "Subject": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -243584,7 +243839,7 @@
     ]
   },
   "Succeeded": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -243592,6 +243847,7 @@
     "areas": [
       "apps/web/types",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
@@ -247045,6 +247301,15 @@
     ]
   },
   "Tenant ID is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tenant is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -260837,6 +261102,15 @@
       "routes/random-testing"
     ]
   },
+  "The same web search agents already know — regulations, agency guidance, industry news — run on the organization's Parallel account. Parallel reads pages built with JavaScript and PDFs, and a fast search costs a fifth of a standard one. Turn it on in place of Exa; agents keep the same tools.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The same words, ignoring case and surrounding spaces.": {
     "sites": 1,
     "scope": [
@@ -266245,6 +266519,15 @@
     ]
   },
   "This document can no longer be filed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This document changed since you opened it; refresh and try again": {
     "sites": 1,
     "scope": [
       "go"
@@ -276964,15 +277247,6 @@
       "routes/admin"
     ]
   },
-  "Try a different filter.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Try a draft agent once against live data with every write simulated, writing nothing": {
     "sites": 1,
     "scope": [
@@ -279878,6 +280152,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Unknown person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Unknown profile field": {
     "sites": 1,
     "scope": [
@@ -280796,11 +281079,12 @@
     ]
   },
   "Unsigned": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/agent-control"
     ]
   },
@@ -284735,7 +285019,7 @@
     ]
   },
   "Verified": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -284745,7 +285029,6 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/carrier",
       "routes/jurisdiction-rule",
@@ -289416,6 +289699,15 @@
       "go/other"
     ]
   },
+  "Web research": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Web search": {
     "sites": 1,
     "scope": [
@@ -289423,6 +289715,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Web search for agents from Parallel, the lowest-cost search an organization can bring.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Webhook Secret": {
@@ -298820,7 +299121,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accounting-dashboard"
+      "apps/web/components"
     ]
   },
   "Written by a run that had read text from outside the organization; until a person reviews it, an agent that reads it is treated as having read that text too.": {
@@ -300083,6 +300384,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "You don't have permission to change this document": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You don't have permission to do that.": {
@@ -309319,6 +309629,24 @@
       "apps/web/components"
     ]
   },
+  "the {0} extension cannot search the web": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "the {0} extension has no connector": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "their team": {
     "sites": 1,
     "scope": [
@@ -315450,6 +315778,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Reading # POD again} other {Reading # PODs again}}. Each billing item updates when its POD is read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {Recorded # purchase.} other {Recorded # purchases.}}": {
     "sites": 1,
     "scope": [
@@ -320101,6 +320438,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is already on and gives agents the same tools. Turn it off before turning on {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is already on and gives agents the same tools. Turn it off before turning this one on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} is already queued to be sent again": {

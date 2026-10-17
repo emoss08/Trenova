@@ -16,22 +16,25 @@ import (
 )
 
 type stubExtensionGate struct {
-	active map[agentextension.Type]agentextension.Availability
+	active agentextension.Active
 	calls  int
 }
 
-func (g *stubExtensionGate) ActiveExtensions(
+func (g *stubExtensionGate) ActiveCapabilities(
 	context.Context,
 	pagination.TenantInfo,
-) (map[agentextension.Type]agentextension.Availability, error) {
+) (agentextension.Active, error) {
 	g.calls++
 
 	return g.active, nil
 }
 
 func webGate(availability agentextension.Availability) *stubExtensionGate {
-	return &stubExtensionGate{active: map[agentextension.Type]agentextension.Availability{
-		agentextension.TypeExa: availability,
+	return &stubExtensionGate{active: agentextension.Active{
+		agentextension.CapabilityWebResearch: {
+			Type:         agentextension.TypeExa,
+			Availability: availability,
+		},
 	}}
 }
 
@@ -153,7 +156,7 @@ func TestRun_AnExtensionTurnedOffIsNeitherOfferedNorRun(t *testing.T) {
 	t.Parallel()
 
 	result, completion := runWithExtensions(t, extensionRun{
-		gate:       &stubExtensionGate{active: map[agentextension.Type]agentextension.Availability{}},
+		gate:       &stubExtensionGate{active: agentextension.Active{}},
 		definition: []string{agentextension.ToolWebSearch, "create_report"},
 		turns: []*agentports.ChatCompletionResult{
 			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),

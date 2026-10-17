@@ -216,14 +216,21 @@ func (r *runRepository) GetByID(
 
 type extensionGate struct{}
 
-func (extensionGate) ActiveExtensions(
+func (extensionGate) ActiveCapabilities(
 	context.Context,
 	pagination.TenantInfo,
-) (map[agentextension.Type]agentextension.Availability, error) {
-	types := agentextension.AllTypes()
-	active := make(map[agentextension.Type]agentextension.Availability, len(types))
-	for _, typ := range types {
-		active[typ] = agentextension.AvailabilityAllAgents
+) (agentextension.Active, error) {
+	capabilities := agentextension.AllCapabilities()
+	active := make(agentextension.Active, len(capabilities))
+	for _, capability := range capabilities {
+		types := agentextension.TypesFor(capability)
+		if len(types) == 0 {
+			continue
+		}
+		active[capability] = agentextension.ActiveExtension{
+			Type:         types[0],
+			Availability: agentextension.AvailabilityAllAgents,
+		}
 	}
 
 	return active, nil

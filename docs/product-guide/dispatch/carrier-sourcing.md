@@ -1,6 +1,6 @@
 ---
 path: /dispatch/carrier-sourcing
-aliases: [find carriers, carrier search, carrier lookup, FMCSA lookup, USDOT lookup, new carriers, carrier onboarding]
+aliases: [find carriers, carrier search, carrier lookup, FMCSA lookup, USDOT lookup, new carriers, carrier onboarding, find a trucking company, carrier for a brokered load]
 related:
   - /dispatch/carriers
   - /dispatch/carrier-monitoring

@@ -205,7 +205,7 @@ func TestEveryExtensionToolIsRegistered(t *testing.T) {
 
 	for _, typ := range agentextension.AllTypes() {
 		spec, _ := agentextension.SpecFor(typ)
-		for _, name := range spec.Tools {
+		for _, name := range spec.Tools() {
 			assert.Contains(t, registered, name, "%s declares %s but no tool is registered", typ, name)
 		}
 	}

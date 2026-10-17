@@ -3,18 +3,19 @@ package agentextension
 type Type string
 
 const (
-	TypeExa = Type("Exa")
+	TypeExa      = Type("Exa")
+	TypeParallel = Type("Parallel")
 )
 
 func AllTypes() []Type {
-	return []Type{TypeExa}
+	return []Type{TypeExa, TypeParallel}
 }
 
 func (t Type) String() string { return string(t) }
 
 func (t Type) IsValid() bool {
 	switch t {
-	case TypeExa:
+	case TypeExa, TypeParallel:
 		return true
 	default:
 		return false

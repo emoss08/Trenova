@@ -2557,7 +2557,7 @@
       ],
       "policy": {
         "kind": "action",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "update",
         "scope": "tenant",
         "defaultTier": "Propose",
@@ -10479,7 +10479,7 @@
       },
       "policy": {
         "kind": "action",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "update",
         "scope": "tenant",
         "defaultTier": "Propose",
@@ -11985,7 +11985,7 @@
       },
       "policy": {
         "kind": "action",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "update",
         "scope": "tenant",
         "defaultTier": "Propose",
@@ -13814,7 +13814,7 @@
       },
       "policy": {
         "kind": "query",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -18490,7 +18490,7 @@
       },
       "policy": {
         "kind": "query",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -27396,7 +27396,7 @@
       "policy": {
         "kind": "action",
         "resource": "invoice",
-        "operation": "update",
+        "operation": "post",
         "scope": "tenant",
         "defaultTier": "Propose",
         "maxTier": "Propose",
@@ -27442,7 +27442,7 @@
       "policy": {
         "kind": "action",
         "resource": "invoice",
-        "operation": "update",
+        "operation": "post",
         "scope": "tenant",
         "defaultTier": "Propose",
         "maxTier": "Propose",
@@ -43552,7 +43552,7 @@
       },
       "policy": {
         "kind": "action",
-        "resource": "detention_policy",
+        "resource": "detention",
         "operation": "update",
         "scope": "tenant",
         "defaultTier": "Propose",
@@ -43804,7 +43804,7 @@
       "policy": {
         "kind": "runtime",
         "resource": "assistant",
-        "operation": "update",
+        "operation": "read",
         "scope": "run",
         "defaultTier": "AutoExecute",
         "maxTier": "AutoExecute",

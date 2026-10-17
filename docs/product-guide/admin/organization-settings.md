@@ -54,7 +54,7 @@ Keywords: security briefing, MFA, two-factor, dormant accounts, failed sign-ins,
    opens on **Overview**.
 2. Read **Recommendations**, worst first. Each one says what was found and offers the step that
    settles it, such as **Open users**, **Open policies** or **Review API keys**. Checks that hold
-   are folded under **checks passed**.
+   are folded under a line that counts the checks passed.
 3. **Without two-factor** lists the members who still sign in with a password alone. Each person
    turns two-factor on from their own security settings.
 4. **Idle sign-out**, among the figures, shows how long an idle browser stays signed in and how

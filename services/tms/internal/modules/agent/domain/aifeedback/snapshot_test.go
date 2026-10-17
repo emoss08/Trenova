@@ -27,9 +27,9 @@ func TestNewTurnSnapshot_BoundsWhatItKeeps(t *testing.T) {
 		Tools:    tools,
 	})
 
-	assert.Equal(t, MaxSnapshotTextRunes+1, utf8.RuneCountInString(snapshot.Question))
+	assert.Equal(t, MaxSnapshotTextRunes, utf8.RuneCountInString(snapshot.Question))
 	assert.True(t, strings.HasSuffix(snapshot.Question, "…"))
-	assert.Equal(t, MaxSnapshotTextRunes+1, utf8.RuneCountInString(snapshot.Answer))
+	assert.Equal(t, MaxSnapshotTextRunes, utf8.RuneCountInString(snapshot.Answer))
 	assert.Len(t, snapshot.Tools, MaxSnapshotToolLines)
 	assert.Equal(t, 5, snapshot.OmittedTools)
 	assert.Equal(t, "Found 3 loads", snapshot.Tools[0].Summary, "a summary is one line")

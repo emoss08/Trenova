@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -22,13 +23,20 @@ import { toAgentPanelRow, toSaveRequest } from "../agents/agent-form-schema";
 import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "../kit/ic";
 import { Tile } from "../kit/marks";
-import { extensionState, holdsExtension, withExtensionTools } from "./extension-roster";
+import {
+  capabilityHolder,
+  extensionState,
+  holdsExtension,
+  withExtensionTools,
+} from "./extension-roster";
 import { Button } from "@trenova/shared/components/ui/button";
 
 const SEARCH_DEPTH_LABELS: Record<string, string> = defineLabels({
   auto: "Auto",
   fast: "Fast",
   deep: "Deep",
+  basic: "Basic",
+  advanced: "Advanced",
 });
 
 /** The daily limits offered as steps; a saved limit outside them is offered too. */
@@ -123,7 +131,8 @@ export function ExtensionDetail({
     ? (config?.fields.find((field) => field.key === keyField.key)?.hasValue ?? false)
     : false;
   const on = extensionState(item) === "on";
-  const canTurnOn = !keyField || stored || key.trim() !== "";
+  const heldBy = capabilityHolder(item);
+  const canTurnOn = heldBy === "" && (!keyField || stored || key.trim() !== "");
   const availability = config?.availability ?? item.availability;
 
   const refresh = async () => {
@@ -204,6 +213,16 @@ export function ExtensionDetail({
             <Ic n="shield" s={12} />
             {item.dataNotice}
           </p>
+          {heldBy !== "" && (
+            <Alert size="sm" variant="info" className="mt8">
+              <AlertDescription>
+                {t(
+                  "{0} is already on and gives agents the same tools. Turn it off before turning this one on.",
+                  heldBy,
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
         <div className="pd-s">
           <h4>{t("Connection")}</h4>

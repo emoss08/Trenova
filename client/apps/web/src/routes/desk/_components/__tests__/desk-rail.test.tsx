@@ -1,7 +1,6 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { stubLayout } from "@/test/layout";
-import { api } from "@trenova/shared/lib/api";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";

@@ -14,16 +14,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-type extensionState map[agentextension.Type]agentextension.Availability
+type extensionState agentextension.Active
 
-func (e extensionState) offers(name string) (agentextension.Type, bool) {
-	typ, isExtension := agentextension.ExtensionForTool(name)
-	if !isExtension {
-		return "", true
-	}
-	_, active := e[typ]
-
-	return typ, active
+func (e extensionState) offers(name string) bool {
+	return agentextension.Active(e).Offers(name)
 }
 
 type toolSelection struct {
@@ -39,15 +33,14 @@ func validateToolSelection(selection toolSelection, multiErr *errortypes.MultiEr
 	actions := selection.actions
 	queries := selection.queries
 	for idx, name := range definition.ToolNames {
-		if typ, offered := selection.extensions.offers(name); !offered &&
-			!selection.previouslyHeld(name) {
+		if !selection.extensions.offers(name) && !selection.previouslyHeld(name) {
 			multiErr.Add(
 				fmt.Sprintf("toolNames[%d]", idx),
 				errortypes.ErrInvalid,
 				fmt.Sprintf(
-					"%q comes with the %s extension, which is not turned on for this "+
+					"%q comes with an extension that is not turned on for this "+
 						"organization. Turn it on under AI Control, Extensions first",
-					name, typ,
+					name,
 				),
 			)
 			continue
@@ -136,14 +129,15 @@ func (e extensionState) entry(
 	tool catalogTool,
 	kind agentdefinitionports.ToolCatalogKind,
 ) (agentdefinitionports.ToolCatalogEntry, bool) {
-	typ, offered := e.offers(tool.Name())
-	if !offered {
+	if !e.offers(tool.Name()) {
 		return agentdefinitionports.ToolCatalogEntry{}, false
 	}
 
 	entry := catalogEntry(tool, kind)
-	entry.Extension = typ
-	entry.GrantedToEveryAgent = typ != "" && e[typ] == agentextension.AvailabilityAllAgents
+	if served, ok := agentextension.Active(e).Serving(tool.Name()); ok {
+		entry.Extension = served.Type
+		entry.GrantedToEveryAgent = served.Availability == agentextension.AvailabilityAllAgents
+	}
 
 	return entry, true
 }
