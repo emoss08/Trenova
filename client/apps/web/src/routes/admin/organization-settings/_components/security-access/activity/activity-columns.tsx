@@ -96,10 +96,15 @@ function userColumn<TData extends { user?: ActivityUser }>(
   };
 }
 
-function timestampColumn<TData extends Record<string, unknown>>(
-  t: TranslateFn,
-  { key, label, never }: { key: keyof TData & string; label: string; never?: string },
-): ColumnDef<TData> {
+function timestampColumn<TData extends Record<string, unknown>>({
+  key,
+  label,
+  never,
+}: {
+  key: keyof TData & string;
+  label: string;
+  never?: string;
+}): ColumnDef<TData> {
   return {
     accessorKey: key,
     header: label,
@@ -250,7 +255,7 @@ export function authEventColumns(t: TranslateFn): ColumnDef<AuthEventRow>[] {
         defaultFilterOperator: "contains",
       },
     },
-    timestampColumn<AuthEventRow>(t, { key: "occurredAt", label: t("When") }),
+    timestampColumn<AuthEventRow>({ key: "occurredAt", label: t("When") }),
   ];
 }
 
@@ -321,7 +326,7 @@ export function riskDecisionColumns(t: TranslateFn): ColumnDef<RiskDecisionRow>[
         defaultFilterOperator: "contains",
       },
     },
-    timestampColumn<RiskDecisionRow>(t, { key: "createdAt", label: t("When") }),
+    timestampColumn<RiskDecisionRow>({ key: "createdAt", label: t("When") }),
   ];
 }
 
@@ -371,12 +376,12 @@ export function externalIdentityColumns(t: TranslateFn): ColumnDef<ExternalIdent
         defaultFilterOperator: "contains",
       },
     },
-    timestampColumn<ExternalIdentityRow>(t, {
+    timestampColumn<ExternalIdentityRow>({
       key: "lastLoginAt",
       label: t("Last sign-in"),
       never: t("Never"),
     }),
-    timestampColumn<ExternalIdentityRow>(t, { key: "createdAt", label: t("Linked") }),
+    timestampColumn<ExternalIdentityRow>({ key: "createdAt", label: t("Linked") }),
   ];
 }
 
@@ -429,12 +434,12 @@ export function mfaAuthenticatorColumns(t: TranslateFn): ColumnDef<MFAAuthentica
         defaultFilterOperator: "eq",
       },
     },
-    timestampColumn<MFAAuthenticatorRow>(t, {
+    timestampColumn<MFAAuthenticatorRow>({
       key: "verifiedAt",
       label: t("Set up"),
       never: t("Not finished"),
     }),
-    timestampColumn<MFAAuthenticatorRow>(t, {
+    timestampColumn<MFAAuthenticatorRow>({
       key: "lastUsedAt",
       label: t("Last used"),
       never: t("Never"),
