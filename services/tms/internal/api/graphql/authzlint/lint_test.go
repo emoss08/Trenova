@@ -268,8 +268,7 @@ func TestAgentSafetyResolversAreAuthorized(t *testing.T) {
 	}
 
 	for _, key := range []string{
-		"QueryResolver.AgentToolPolicies",
-		"QueryResolver.AgentToolPolicyConnection",
+		"QueryResolver.AgentToolRuleConnection",
 		"QueryResolver.AgentSafetySummary",
 		"QueryResolver.AgentSafety",
 		"QueryResolver.AgentToolHolders",
@@ -339,11 +338,11 @@ func TestAgentQualityResolversAreAuthorized(t *testing.T) {
 	for _, key := range []string{
 		"QueryResolver.AgentQualityOverview",
 		"QueryResolver.AgentQuality",
-		"QueryResolver.AgentQualityAgents",
-		"QueryResolver.AgentWorstRatedAnswers",
-		"QueryResolver.AgentSuiteRuns",
+		"QueryResolver.AgentQualityAgentConnection",
+		"QueryResolver.AgentWorstRatedAnswerConnection",
+		"QueryResolver.AgentSuiteRunConnection",
 		"QueryResolver.AgentSuiteRun",
-		"QueryResolver.AgentSuiteRunCases",
+		"QueryResolver.AgentSuiteRunCaseConnection",
 		"QueryResolver.AgentQualityControl",
 		"MutationResolver.RunAgentSuite",
 		"MutationResolver.UpdateAgentQualityControl",

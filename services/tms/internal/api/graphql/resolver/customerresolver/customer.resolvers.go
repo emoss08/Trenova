@@ -17,26 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *CustomerBillingProfileResolver) BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error) {
-	return legacyBillingCycleType(obj), nil
-}
-
-func (r *CustomerBillingProfileResolver) BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error) {
-	// The anchor only means a weekday on the weekly cycles; on a monthly cycle it
-	// is a day of the month, which this field cannot express.
-	if obj.BillingCycle != customer.BillingCycleWeekly &&
-		obj.BillingCycle != customer.BillingCycleBiWeekly {
-		return nil, nil
-	}
-	day := int(obj.BillingCycleAnchorDay)
-
-	return &day, nil
-}
-
-func (r *CustomerBillingProfileResolver) ConsolidationLookbackDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return 0, nil
-}
-
 func (r *CustomerBillingProfileResolver) MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
 	return base.NullDecimalToStringPtr(obj.MinConsolidatedAmount), nil
 }
@@ -49,41 +29,6 @@ func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj 
 	return obj.CreditBalance.String(), nil
 }
 
-func (r *CustomerBillingProfileResolver) InvoiceMethod(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceMethod, error) {
-	if obj.InvoiceDelivery != customer.InvoiceDeliveryConsolidated {
-		return gqlmodel.CustomerInvoiceMethodIndividual, nil
-	}
-	if obj.InvoiceDetail == customer.InvoiceDetailSummary {
-		return gqlmodel.CustomerInvoiceMethodSummary, nil
-	}
-
-	return gqlmodel.CustomerInvoiceMethodSummaryWithDetail, nil
-}
-
-func (r *CustomerBillingProfileResolver) AllowInvoiceConsolidation(ctx context.Context, obj *customer.CustomerBillingProfile) (bool, error) {
-	return obj.InvoiceDelivery == customer.InvoiceDeliveryConsolidated, nil
-}
-
-func (r *CustomerBillingProfileResolver) ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return 0, nil
-}
-
-func (r *CustomerBillingProfileResolver) ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error) {
-	switch obj.SplitBy {
-	case customer.InvoiceSplitKeyCustomerAndPONumber:
-		return gqlmodel.CustomerConsolidationGroupByPONumber, nil
-	case customer.InvoiceSplitKeyCustomerAndShipmentBOL:
-		return gqlmodel.CustomerConsolidationGroupByBOL, nil
-	case customer.InvoiceSplitKeyCustomerAndOrigin,
-		customer.InvoiceSplitKeyCustomerAndDestination:
-		return gqlmodel.CustomerConsolidationGroupByLocation, nil
-	default:
-		// Order and ServiceType have no legacy equivalent, and Division never had
-		// an entity behind it, so both collapse to None as the old value did.
-		return gqlmodel.CustomerConsolidationGroupByNone, nil
-	}
-}
-
 func (r *CustomerBillingProfileResolver) InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
 	return int(obj.InvoiceCopies), nil
 }
@@ -94,10 +39,6 @@ func (r *CustomerBillingProfileResolver) LateChargeRate(ctx context.Context, obj
 
 func (r *CustomerBillingProfileResolver) GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
 	return int(obj.GracePeriodDays), nil
-}
-
-func (r *CustomerBillingProfileResolver) InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error) {
-	return gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional, nil
 }
 
 func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {
@@ -151,8 +92,4 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 			IncludeEmailProfile:   true,
 		},
 	})
-}
-
-func (r *CustomerEmailProfileResolver) FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error) {
-	return "", nil
 }

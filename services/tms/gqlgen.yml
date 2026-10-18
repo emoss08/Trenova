@@ -4723,22 +4723,6 @@ models:
     fields:
       factoringCompany:
         resolver: true
-      invoiceAdjustmentSupportingDocumentPolicy:
-        resolver: true
-      billingCycleType:
-        resolver: true
-      billingCycleDayOfWeek:
-        resolver: true
-      invoiceMethod:
-        resolver: true
-      allowInvoiceConsolidation:
-        resolver: true
-      consolidationPeriodDays:
-        resolver: true
-      consolidationLookbackDays:
-        resolver: true
-      consolidationGroupBy:
-        resolver: true
       minConsolidatedAmount:
         resolver: true
       arAccountId:

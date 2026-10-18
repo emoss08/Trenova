@@ -250,54 +250,6 @@ func (r *InvoiceLineResolver) AllocationPercent(ctx context.Context, obj *invoic
 	return base.NullDecimalStringPtr(obj.AllocationPercent), nil
 }
 
-func (r *MutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	ids := make([]pulid.ID, 0, len(shipmentIds))
-	for _, raw := range shipmentIds {
-		id, parseErr := pulid.MustParse(raw)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		ids = append(ids, id)
-	}
-
-	return r.InvoiceService.CreateFromShipments(
-		ctx,
-		&invoiceports.CreateInvoiceFromShipmentsRequest{
-			ShipmentIDs:    ids,
-			TenantInfo:     base.TenantInfo(authCtx),
-			OffCycleReason: stringutils.FromPtr(offCycleReason),
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-}
-
-func (r *MutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	id, err := pulid.MustParse(orderID)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.InvoiceService.CreateFromOrder(
-		ctx,
-		&invoiceports.CreateInvoiceFromOrderRequest{
-			OrderID:        id,
-			TenantInfo:     base.TenantInfo(authCtx),
-			OffCycleReason: stringutils.FromPtr(offCycleReason),
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-}
-
 func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {

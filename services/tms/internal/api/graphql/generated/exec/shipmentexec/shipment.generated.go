@@ -1150,19 +1150,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
 			{
-				Name:       "transferShipmentToBilling",
-				NonNull:    true,
-				IsResolver: true,
-				HasChild:   true,
-				ChildType:  "BillingQueueItem",
-				Args:       field_Mutation_transferShipmentToBilling_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransferShipmentToBilling(ctx, fc.Args["input"].(gqlmodel.ShipmentTransferToBillingInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
-			},
-			{
 				Name:       "transferShipmentToBillingItems",
 				NonNull:    true,
 				IsResolver: true,
@@ -2566,15 +2553,6 @@ var Shard = &gqlexec.Shard{
 					return obj.IsDetention, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:     "detentionOccurrenceId",
-				ChildErr: errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
-					return obj.DetentionOccurrenceID, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
 				Name:     "version",
@@ -9821,7 +9799,6 @@ type resolverMutation interface {
 	UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error)
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
-	TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.BillingQueueItem, error)
 	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
 	BulkTransferShipmentsToBilling(ctx context.Context, input gqlmodel.ShipmentBulkTransferToBillingInput) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error)
 	CalculateShipmentTotals(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentTotalsResponse, error)
@@ -10099,19 +10076,6 @@ func field_Mutation_transferShipmentOwnership_args(ctx context.Context, ec *gqle
 		return nil, err
 	}
 	args["input"] = arg1
-	return args, nil
-}
-
-func field_Mutation_transferShipmentToBilling_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.ShipmentTransferToBillingInput, error) {
-			return unmarshalNShipmentTransferToBillingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTransferToBillingInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -10747,7 +10711,7 @@ func unmarshalInputShipmentAdditionalChargeInput(ctx context.Context, ec *gqlexe
 		asMap["unit"] = 1
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentId", "accessorialChargeId", "isSystemGenerated", "method", "amount", "unit", "fuelSurchargeProgramId", "detentionOccurrenceId", "version", "allocations"}
+	fieldsInOrder := [...]string{"id", "shipmentId", "accessorialChargeId", "isSystemGenerated", "method", "amount", "unit", "fuelSurchargeProgramId", "version", "allocations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10810,13 +10774,6 @@ func unmarshalInputShipmentAdditionalChargeInput(ctx context.Context, ec *gqlexe
 				return it, err
 			}
 			it.FuelSurchargeProgramID = data
-		case "detentionOccurrenceId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detentionOccurrenceId"))
-			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.DetentionOccurrenceID = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)

@@ -396,41 +396,11 @@ type AgentQualityAgentConnection {
   totalCount: Int
 }
 
-input AgentQualityAgentsInput {
-  "Days of ratings and scores to read, 30 by default, at most 365."
-  window: Int
-  first: Int
-  after: String
-}
-
-input AgentWorstRatedAnswersInput {
-  agentDefinitionId: ID
-  window: Int
-  first: Int
-  after: String
-}
-
-input AgentSuiteRunsInput {
-  agentDefinitionId: ID
-  statuses: [AgentSuiteRunStatus!]
-  first: Int
-  after: String
-}
-
-input AgentSuiteRunCasesInput {
-  suiteRunId: ID!
-  first: Int
-  after: String
-}
-
 extend type Query {
   "The organization's AI quality over the last window days."
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
   "One agent's quality over the last window days."
   agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
-  "Every agent with its satisfaction, quality line and last suite run, a page at a time."
-  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection!
-    @deprecated(reason: "Use agentQualityAgentConnection, which takes the data table's filters and sort.")
   """
   Every agent with its satisfaction, quality line and last suite run over the
   last window days, a page at a time. Filters on name, enabled, openRegression
@@ -441,9 +411,6 @@ extend type Query {
     window: Int = 30
     input: DataTableConnectionInput!
   ): AgentQualityAgentConnection!
-  "The answers people liked least, a page at a time."
-  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection!
-    @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
   """
   The thousand answers people liked least over the last window days, most
   disliked first, a page at a time. Filters on question, agentName,
@@ -455,17 +422,12 @@ extend type Query {
     window: Int = 30
     input: DataTableConnectionInput!
   ): AgentWorstRatedAnswerConnection!
-  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection!
-    @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   "Suite runs a page at a time, newest first unless sorted, for one agent or all of them."
   agentSuiteRunConnection(
     agentDefinitionId: ID
     input: DataTableConnectionInput!
   ): AgentSuiteRunConnection!
   agentSuiteRun(id: ID!): AgentSuiteRun
-  "A suite run's cases in the order they were asked."
-  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection!
-    @deprecated(reason: "Use agentSuiteRunCaseConnection, which takes the data table's filters and sort.")
   "A suite run's cases a page at a time, in the order they were asked unless sorted."
   agentSuiteRunCaseConnection(
     suiteRunId: ID!

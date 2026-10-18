@@ -139,7 +139,6 @@ type AgentEgressCount struct {
 }
 
 type AgentSafetyService interface {
-	ToolPolicies() []AgentToolPolicyView
 	ToolPolicy(name string) (AgentToolPolicyView, bool)
 	ListToolPolicies(
 		ctx context.Context,

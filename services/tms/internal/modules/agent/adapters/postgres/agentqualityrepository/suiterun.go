@@ -235,64 +235,6 @@ func (r *suiteRunRepository) Last(
 	})
 }
 
-func (r *suiteRunRepository) List(
-	ctx context.Context,
-	req agentqualityports.ListAgentSuiteRunsRequest,
-) (*agentqualityports.AgentSuiteRunPage, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*agentqualityports.AgentSuiteRunPage, error) {
-			cols := agentqualitycol.SuiteRunColumns
-			limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
-			dba := r.db.DBForContext(ctx)
-
-			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo)
-				if req.AgentDefinitionID.IsNotNil() {
-					sq = sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-				}
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
-				}
-
-				return sq
-			}
-
-			page := &agentqualityports.AgentSuiteRunPage{}
-			if req.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*agentquality.SuiteRun)(nil)).
-					WhereGroup(" AND ", scope).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count agent suite runs: %w", err)
-				}
-				page.TotalCount = new(int(total))
-			}
-
-			items := make([]*agentquality.SuiteRun, 0, limit+1)
-			if err := dba.NewSelect().
-				Model(&items).
-				WhereGroup(" AND ", scope).
-				Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(int64(limit + 1)).
-				Offset(int64(max(req.Offset, 0))).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list agent suite runs: %w", err)
-			}
-
-			if len(items) > limit {
-				page.HasNextPage = true
-				items = items[:limit]
-			}
-			page.Items = items
-
-			return page, nil
-		},
-	)
-}
-
 func (r *suiteRunRepository) ListConnection(
 	ctx context.Context,
 	req *agentqualityports.ListAgentSuiteRunConnectionRequest,

@@ -4337,7 +4337,7 @@ func unmarshalInputReportRunsFilterInput(ctx context.Context, ec *gqlexec.Exec, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"definitionId", "mineOnly", "statuses"}
+	fieldsInOrder := [...]string{"definitionId", "statuses"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4351,13 +4351,6 @@ func unmarshalInputReportRunsFilterInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.DefinitionID = data
-		case "mineOnly":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mineOnly"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.MineOnly = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
 			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)

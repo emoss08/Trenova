@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
@@ -544,32 +543,6 @@ func (r *QueryResolver) AgentDraftingAvailable(ctx context.Context) (bool, error
 	}
 
 	return r.AgentDraftingService.Available(ctx, base.TenantInfo(authCtx))
-}
-
-func (r *QueryResolver) MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	found, err := matchAgent(ctx, r.AgentRecommender, actorutil.FromAuthContext(authCtx), agentMatchInput{
-		text:           input.Text,
-		currentAgentID: input.CurrentAgentID,
-	})
-	if err != nil || found == nil || found.Agent == nil {
-		return nil, err
-	}
-
-	tools := make([]string, 0, len(found.Tools))
-	for _, tool := range found.Tools {
-		tools = append(tools, tool.Name)
-	}
-
-	return &gqlmodel.MyAgentRecommendation{
-		Agent:   found.Agent,
-		Current: found.Outcome == agentsuggestion.MatchCurrentAgent,
-		Tools:   tools,
-	}, nil
 }
 
 func (r *QueryResolver) MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error) {

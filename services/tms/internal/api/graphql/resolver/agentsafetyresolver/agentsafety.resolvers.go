@@ -52,34 +52,6 @@ func (r *AgentToolSafetyResolver) Policy(ctx context.Context, obj *agentports.Ag
 	return r.AgentToolSafetyPolicy(obj)
 }
 
-func (r *QueryResolver) AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead); err != nil {
-		return nil, err
-	}
-
-	return toolPolicyViewsToModel(r.AgentSafetyService.ToolPolicies()), nil
-}
-
-func (r *QueryResolver) AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
-	table := toolPolicyConnectionRequest(&input)
-	table.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
-
-	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &agentports.ListAgentToolPoliciesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Table:      table,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return toolPolicyPageToModel(page), nil
-}
-
 func (r *QueryResolver) AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {

@@ -8825,6 +8825,15 @@
       "apps/web/components"
     ]
   },
+  "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A request with this Idempotency-Key is still being processed; retry once it finishes": {
     "sites": 1,
     "scope": [
@@ -67603,7 +67612,7 @@
     ]
   },
   "Cursor is invalid": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -173121,15 +173130,6 @@
       "go/other"
     ]
   },
-  "Only the user who requested a report run can cancel it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only the view owner can delete this view": {
     "sites": 1,
     "scope": [
@@ -244031,7 +244031,7 @@
     ]
   },
   "Status is invalid": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -264999,15 +264999,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "The sign-in authorized several companies. Reload the page and connect again to choose one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/graphql"
     ]
   },
   "The sign-in is added by Trenova; do not send it as a detail": {

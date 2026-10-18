@@ -493,16 +493,14 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 	}
 
 	return r.AgentControlService.Update(ctx, &agentports.UpdateAgentControlRequest{
-		ShadowMode:             input.ShadowMode,
-		EarnedAutonomy:         input.EarnedAutonomy,
-		PromotionThreshold:     input.PromotionThreshold,
-		BillingAgentEnabled:    input.BillingAgentEnabled,
-		DecisionTimeoutSeconds: input.DecisionTimeoutSeconds,
-		AITrainingConsent:      input.AiTrainingConsent,
-		PersonMonthlyMessages:  input.PersonMonthlyMessages,
-		LearningOff:            input.LearningOff,
-		Version:                base.Int64Ptr(input.Version),
-		TenantInfo:             base.TenantInfo(authCtx),
+		ShadowMode:            input.ShadowMode,
+		EarnedAutonomy:        input.EarnedAutonomy,
+		PromotionThreshold:    input.PromotionThreshold,
+		AITrainingConsent:     input.AiTrainingConsent,
+		PersonMonthlyMessages: input.PersonMonthlyMessages,
+		LearningOff:           input.LearningOff,
+		Version:               base.Int64Ptr(input.Version),
+		TenantInfo:            base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 

@@ -1081,8 +1081,6 @@ is built from the same parts. The answer is one of four outcomes:
 
 Each but `NoMatch` names, best first, at most three tools: the agent's matched tools, or
 for `NoAgent` the tools that would answer it, with the first sentence of each description.
-`myAgentRecommendation`, the query this replaced, is deprecated and answered from the
-match, so a tab still on the previous release keeps working.
 
 - **Who is eligible.** `OtherUsableAgents`, the list the hand-off note reads: enabled
   chat agents in the person's audience that `AgentsUsable` allows at `assistant:create`,

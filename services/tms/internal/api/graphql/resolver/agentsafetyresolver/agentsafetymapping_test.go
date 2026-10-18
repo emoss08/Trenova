@@ -3,13 +3,7 @@ package agentsafetyresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dbtype"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,45 +25,6 @@ func TestAgentSafetyIDsKeepsNullApartFromEmpty(t *testing.T) {
 
 	_, err = agentSafetyIDs([]string{"not an id"})
 	require.Error(t, err)
-}
-
-// The deprecated connection's own filters become the table's field filters,
-// so both connections narrow the rules through the same code.
-func TestToolPolicyConnectionRequestLeavesAbsentFiltersOpen(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, memtable.Request{},
-		toolPolicyConnectionRequest(&gqlmodel.AgentToolPolicyConnectionInput{}))
-
-	first := 25
-	after := "cursor"
-	query := "email"
-	egress := agent.EgressExternalRecipient
-	resource := "customer"
-	kind := agent.ToolKindAction
-	alone := false
-	req := toolPolicyConnectionRequest(&gqlmodel.AgentToolPolicyConnectionInput{
-		First:             &first,
-		After:             &after,
-		Query:             &query,
-		Egress:            &egress,
-		Resource:          &resource,
-		Kind:              &kind,
-		RunsWithoutPerson: &alone,
-	})
-	assert.Equal(t, 25, req.First)
-	assert.Equal(t, "cursor", req.After)
-	assert.Equal(t, "email", req.Query)
-	assert.Equal(t, []domaintypes.FieldFilter{
-		{Field: "egress", Operator: dbtype.OpEqual, Value: "external_recipient"},
-		{Field: "resource", Operator: dbtype.OpEqual, Value: "customer"},
-		{Field: "kind", Operator: dbtype.OpEqual, Value: "action"},
-		{
-			Field:    agentsafetyservice.FieldRunsWithoutPerson,
-			Operator: dbtype.OpEqual,
-			Value:    false,
-		},
-	}, req.FieldFilters)
 }
 
 func TestAgentToolSafetyPageToModelEndsOnTheLastEdge(t *testing.T) {
