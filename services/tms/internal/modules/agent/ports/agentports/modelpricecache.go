@@ -8,8 +8,10 @@ import (
 // CachedModelPrice is one model's price per million tokens from a reference
 // catalog, as decimal strings so nothing is lost on the way through the store.
 type CachedModelPrice struct {
-	Input  string `json:"i"`
-	Output string `json:"o,omitempty"`
+	Input      string `json:"i"`
+	Output     string `json:"o,omitempty"`
+	CacheRead  string `json:"cr,omitempty"`
+	CacheWrite string `json:"cw,omitempty"`
 }
 
 // ModelPriceCacheRepository shares a reference price catalog across replicas,

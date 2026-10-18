@@ -488,7 +488,9 @@ func (p *Provider) CostFor(usage TokenUsage) *decimal.Decimal {
 	if !p.Priced() {
 		return nil
 	}
-	cost := p.promptCost(usage).Add(perMillion(*p.OutputCostPerMillion, usage.Output))
+	inputTier, outputTier := p.tierFor(usage)
+	cost := p.promptCost(usage).Mul(inputTier).
+		Add(perMillion(*p.OutputCostPerMillion, usage.Output).Mul(outputTier))
 
 	return &cost
 }
@@ -514,6 +516,10 @@ func (p *Provider) CostForTask(t Task, usage TokenUsage) *decimal.Decimal {
 // CacheReadPrice is what a cached prompt token costs per million: the price
 // entered for it, or the protocol's usual share of the input price.
 func (p *Provider) CacheReadPrice() *decimal.Decimal {
+	if card, ok := p.listPrice(); ok {
+		return p.cachePrice(p.CacheReadCostPerMillion, card.CacheReadMultiple)
+	}
+
 	return p.cachePrice(p.CacheReadCostPerMillion, p.Kind.CacheReadMultiple())
 }
 
@@ -521,6 +527,10 @@ func (p *Provider) CacheReadPrice() *decimal.Decimal {
 // million: the price entered for it, or the protocol's usual multiple of the
 // input price.
 func (p *Provider) CacheWritePrice() *decimal.Decimal {
+	if card, ok := p.listPrice(); ok {
+		return p.cachePrice(p.CacheWriteCostPerMillion, card.CacheWriteMultiple)
+	}
+
 	return p.cachePrice(p.CacheWriteCostPerMillion, p.Kind.CacheWriteMultiple())
 }
 

@@ -74,6 +74,26 @@ func TestListModels_ReadsOpenRouterPricesPerMillion(t *testing.T) {
 	assert.True(t, models[1].Embedding)
 }
 
+func TestListReferencePrices_ReadsCachePricesPerMillion(t *testing.T) {
+	t.Parallel()
+
+	server := serveModels(t, map[string]string{"/models": `{"data":[
+		{"id":"openai/gpt-6-luna","pricing":{"prompt":"0.000001","completion":"0.000008",
+		 "input_cache_read":"0.0000001","input_cache_write":"0"}},
+		{"id":"openai/gpt-6.1-sol","pricing":{"prompt":"0.000002","completion":"0.00001"}}
+	]}`})
+
+	models, err := ListReferencePrices(t.Context(), server.Client(), server.URL+"/models")
+	require.NoError(t, err)
+	require.Len(t, models, 2)
+
+	luna := models[0]
+	require.NotNil(t, luna.CacheReadCostPerMillion)
+	assert.Equal(t, "0.1", luna.CacheReadCostPerMillion.String())
+	assert.Nil(t, luna.CacheWriteCostPerMillion, "a zero price is no price")
+	assert.Nil(t, models[1].CacheReadCostPerMillion)
+}
+
 func TestListModels_ReadsABareArrayWithPricesAlreadyPerMillion(t *testing.T) {
 	t.Parallel()
 
