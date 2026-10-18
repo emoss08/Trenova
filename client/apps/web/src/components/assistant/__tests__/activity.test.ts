@@ -27,6 +27,7 @@ function step(overrides: Partial<ToolStep> & { name: string }): ToolStep {
     effect: toolEffect(overrides.name, overrides.effect),
     summary: "",
     durationSeconds: null,
+    reasoning: "",
     ...overrides,
   };
 }
@@ -388,6 +389,7 @@ describe("stepsFromExchanges", () => {
         effect: "navigate",
         summary: "Report library",
         durationSeconds: 3,
+        reasoning: "",
       },
     ]);
   });

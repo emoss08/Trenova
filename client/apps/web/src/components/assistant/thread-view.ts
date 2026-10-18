@@ -9,6 +9,8 @@ export type ToolExchange = {
   result: AssistantMessage | null;
   /** The call is not in view; it was rebuilt from its result. */
   orphan?: boolean;
+  /** What the model thought in the reply that asked for the call; absent when it kept none. */
+  reasoning?: string;
   /**
    * On a delegate_task call: the steps the other agent took on the task, in
    * order, the task itself first. They belong under the call and nowhere else.
@@ -114,8 +116,9 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];
         orphans = [];
+        const reasoning = message.reasoning?.text || undefined;
         for (const call of message.toolCalls ?? []) {
-          const exchange: ToolExchange = { call, result: null };
+          const exchange: ToolExchange = { call, result: null, reasoning };
           tools.push(exchange);
           openCalls.set(call.id, exchange);
         }

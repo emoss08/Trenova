@@ -44,6 +44,7 @@ function handOff(): ToolStep {
     effect: "delegate",
     summary: "Shipment Desk",
     durationSeconds: 4,
+    reasoning: "",
     delegate: {
       kind: "saved",
       messages: [

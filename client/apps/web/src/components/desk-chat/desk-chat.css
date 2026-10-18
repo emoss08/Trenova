@@ -8311,28 +8311,6 @@
   font: 0.92em var(--font-mono);
   color: var(--dsk-subtle);
 }
-/* "Why this step?" in a footnote's card: the agent's own account of the step */
-.dk-why {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--dsk-b-sub);
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--dsk-fg2);
-  white-space: normal;
-}
-.dk-why > span {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  gap: 8px;
-}
-.dk-why em {
-  font-style: normal;
-  color: var(--dsk-subtle);
-}
 /* dock: the undo window after an approval */
 .dk-udo {
   position: relative;

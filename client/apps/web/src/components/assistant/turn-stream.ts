@@ -10,7 +10,6 @@ import type {
   SendMessageResult,
   RetryKind,
   SavedMemory,
-  StepRationale,
   ToolEffect,
   ToolVerdict,
   WatchedRecordChange,
@@ -51,8 +50,6 @@ export type ToolSegment = {
   finishedAt?: number;
   /** Set on a delegate_task call: the other agent's work on the task, nested under it. */
   delegate?: DelegateProgress;
-  /** Why the agent took the step, when it said. */
-  why?: StepRationale | null;
   /** The person's other agents a find_tools answer named as holding what this agent lacks. */
   handOffAgents?: readonly string[];
   /** The records the call's result described, as the server read them from it. */
@@ -96,6 +93,12 @@ export type ReasoningSegment = {
   text: string;
   /** Closed once the reply or a tool call begins; the thought is then finished. */
   closed: boolean;
+  /**
+   * The calls the reply that thought this asked for, once that reply is
+   * finished; each of them shows this thought as its reasoning. Absent while
+   * the reply is still being written.
+   */
+  callIds?: readonly string[];
 };
 
 export type TurnSegment = TextSegment | ToolSegment | ReasoningSegment;
@@ -164,8 +167,21 @@ function appendDelta(segments: TurnSegment[], text: string): TurnSegment[] {
 }
 
 /** A message boundary: the open text is the model's finished message. */
-function closeMessage(segments: TurnSegment[], content: string): TurnSegment[] {
-  const closed = closeReasoning(segments);
+/**
+ * A reply is finished. Its open text and thought close, and its thought is
+ * given to the calls it asked for: a thought not yet given to any calls is
+ * this reply's, since every earlier reply was finished, and so given, first.
+ */
+function closeMessage(
+  segments: TurnSegment[],
+  content: string,
+  callIds: readonly string[],
+): TurnSegment[] {
+  const closed = closeReasoning(segments).map((segment) =>
+    segment.kind === "reasoning" && segment.callIds === undefined
+      ? { ...segment, callIds }
+      : segment,
+  );
   const last = closed.at(-1);
   if (last && last.kind === "text" && !last.closed) {
     return [
@@ -200,7 +216,6 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
             name: data.name,
             arguments: data.arguments ?? segment.arguments,
             effect: data.effect ?? segment.effect,
-            why: data.why ?? segment.why,
           }
         : segment,
     );
@@ -215,7 +230,6 @@ function startTool(segments: TurnSegment[], data: ToolStartedData): TurnSegment[
       status: "running",
       content: "",
       effect: data.effect,
-      why: data.why,
     },
   ];
 }
@@ -547,17 +561,18 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
 
     case "message": {
       const scope = delegateScope(event.data);
+      const callIds = (event.data.toolCalls ?? []).map((call) => call.id);
       if (scope !== "") {
         const content = event.data.content;
         return updateDelegate(state, scope, event.data.agentId ?? "", (delegate) => ({
           ...delegate,
-          segments: closeMessage(delegate.segments, content),
+          segments: closeMessage(delegate.segments, content, callIds),
         }));
       }
       return {
         ...state,
         status: "working",
-        segments: closeMessage(state.segments, event.data.content),
+        segments: closeMessage(state.segments, event.data.content, callIds),
       };
     }
 

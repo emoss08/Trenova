@@ -285,13 +285,6 @@ func renderCall(b *strings.Builder, call *CallSummary) {
 		requested := &call.ToolCalls[idx]
 		fmt.Fprintf(b, "- asks for `%s` `%s`\n", requested.Name,
 			compactJSON(requested.Arguments, argsLimit))
-		if requested.Why != nil {
-			fmt.Fprintf(b, "  - why: saw %q, because %q", requested.Why.Saw, requested.Why.Because)
-			if requested.Why.InsteadOf != "" {
-				fmt.Fprintf(b, ", instead of %q", requested.Why.InsteadOf)
-			}
-			b.WriteString("\n")
-		}
 	}
 	if len(call.ToolCalls) > 0 {
 		b.WriteString("\n")
