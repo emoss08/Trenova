@@ -8,7 +8,7 @@
 .DS_Store
 vite-app
 tmp/
-node_modules/
+node_modules
 .modules/
 dist/
 build/
