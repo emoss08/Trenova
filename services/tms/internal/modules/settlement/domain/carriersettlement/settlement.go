@@ -93,6 +93,7 @@ type CarrierSettlementLine struct {
 	ShipmentID     *pulid.ID     `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	MoveID         *pulid.ID     `json:"moveId"         bun:"move_id,type:VARCHAR(100),nullzero"`
 	ProNumber      string        `json:"proNumber"      bun:"pro_number,type:VARCHAR(100),nullzero"`
+	AddedByAgent   bool          `json:"addedByAgent"   bun:"added_by_agent,type:BOOLEAN,notnull,default:false"`
 	CreatedAt      int64         `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

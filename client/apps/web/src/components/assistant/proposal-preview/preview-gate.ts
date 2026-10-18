@@ -6,9 +6,11 @@ import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
  * - `loading`: nothing is on screen yet, so there is nothing to approve.
  * - `stale`: the record changed or went away since the proposal; the server
  *   refuses the approval, so it is not offered. Rejecting still is.
- * - `unavailable`: the preview could not be read. Approving is still allowed
- *   and goes without a digest, which the server records as not reviewed; the
- *   surface says so beside the button.
+ * - `unavailable`: the preview could not be read. An internal or personal
+ *   change may still be approved, without a digest, which the server records
+ *   as not reviewed; the surface says so beside the button. A change the
+ *   server requires to be reviewed (money, what a customer or a driver sees,
+ *   what is sent outside, or anything a tainted run proposed) cannot be.
  * - `ready`: the digest names exactly what the person was shown.
  */
 export type ApprovalGate =
@@ -40,8 +42,8 @@ export function approvalGate<T extends { digest: string; stale: boolean }>(
   return { state: "loading" };
 }
 
-export function canApprove(gate: ApprovalGate): boolean {
-  return gate.state === "ready" || gate.state === "unavailable";
+export function canApprove(gate: ApprovalGate, reviewRequired = false): boolean {
+  return gate.state === "ready" || (gate.state === "unavailable" && !reviewRequired);
 }
 
 /** The digest a decision carries: what the person was shown, or nothing when nothing was. */
@@ -69,10 +71,12 @@ export function isPreviewRefusal(error: unknown): boolean {
 
 /**
  * The digests a batch approval sends: one for each proposal whose preview the
- * person was actually shown, in the order the batch runs. A proposal they
- * never opened goes without one and is recorded as approved unreviewed, which
- * is the truth; sending a digest fetched behind their back would claim a
- * review that did not happen.
+ * person was actually shown, in the order the batch runs. An internal change
+ * they never opened goes without one and is recorded as approved unreviewed,
+ * which is the truth; sending a digest fetched behind their back would claim a
+ * review that did not happen. A change the server requires reviewed is never
+ * sent without one: `unreviewedRequired` names those, and the surface shows
+ * each of their previews before it approves the batch.
  */
 export function batchPreviewDigests(
   ids: readonly string[],
@@ -90,4 +94,17 @@ export function batchPreviewDigests(
   }
 
   return digests;
+}
+
+/**
+ * The proposals of a batch that need their preview shown before they can be
+ * approved and have not had it shown, in batch order.
+ */
+export function unreviewedRequired<P extends { id: string; reviewRequired?: boolean | null }>(
+  proposals: readonly P[],
+  shown: ReadonlyMap<string, string>,
+): P[] {
+  return proposals.filter(
+    (proposal) => proposal.reviewRequired === true && (shown.get(proposal.id) ?? "") === "",
+  );
 }

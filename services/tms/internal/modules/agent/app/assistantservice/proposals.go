@@ -733,6 +733,7 @@ func toAssistantProposal(
 		SimulatedAt:     proposal.SimulatedAt,
 		Simulation:      proposal.Simulation,
 		CreatedAt:       proposal.CreatedAt,
+		ReviewRequired:  proposal.ApprovalNeedsReview(),
 	}
 	if proposal.PlanID != nil {
 		out.PlanID = *proposal.PlanID

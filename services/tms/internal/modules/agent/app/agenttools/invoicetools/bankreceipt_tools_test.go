@@ -35,6 +35,16 @@ type fakeReceiptMatcher struct {
 	matched       *bankreceiptports.MatchBankReceiptRequest
 	previewed     *bankreceiptports.MatchBankReceiptRequest
 	actor         *permissionports.RequestActor
+	payment       *customerpayment.Payment
+	suggestions   []*bankreceiptports.BankReceiptMatchSuggestion
+	suggestErr    error
+}
+
+func (f *fakeReceiptMatcher) SuggestMatches(
+	_ context.Context,
+	_ *bankreceiptports.GetBankReceiptRequest,
+) ([]*bankreceiptports.BankReceiptMatchSuggestion, error) {
+	return f.suggestions, f.suggestErr
 }
 
 func (f *fakeReceiptMatcher) Get(
@@ -50,6 +60,9 @@ func (f *fakeReceiptMatcher) PreviewMatch(
 	actor *permissionports.RequestActor,
 ) (*bankreceiptservice.MatchPreview, error) {
 	f.previewed = req
+	if f.payment != nil {
+		return f.previewMatch(f.payment, actor)
+	}
 
 	return f.previewMatch(&customerpayment.Payment{
 		ID:           req.PaymentID,

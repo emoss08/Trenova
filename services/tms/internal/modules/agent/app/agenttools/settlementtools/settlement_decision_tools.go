@@ -29,6 +29,21 @@ type SettlementBook[E any] interface {
 	) (*E, error)
 }
 
+type adjustmentBound int
+
+const (
+	unbounded adjustmentBound = iota
+	addedLineBound
+	removedLineBound
+)
+
+const addedLineBoundText = "Runs on its own only while the settlement is not yet approved and the " +
+	"line is within the organization's money limits for agents; any other call waits for a person."
+
+const removedLineBoundText = "Runs on its own only when an agent added the line, the settlement " +
+	"is not yet approved and the line is within the organization's money limits for agents; any " +
+	"other call waits for a person."
+
 type settlementDecision struct {
 	name             string
 	description      string
@@ -40,6 +55,7 @@ type settlementDecision struct {
 	maxTier          agent.AutonomyTier
 	reversible       bool
 	holdsWhenTainted bool
+	bound            adjustmentBound
 	rationale        string
 	properties       map[string]any
 	required         []string
@@ -105,6 +121,19 @@ func (t *SettlementDecisionTool[E]) Policy() agentports.ToolPolicy {
 	if len(t.decision.egress) > 1 {
 		policy.Classify = common.ClassifyAsMoney
 	}
+	switch t.decision.bound {
+	case addedLineBound:
+		policy.Condition = &agentports.TierCondition{
+			Description: addedLineBoundText,
+			Bounds:      t.withinBounds,
+		}
+	case removedLineBound:
+		policy.Condition = &agentports.TierCondition{
+			Description: removedLineBoundText,
+			Bounds:      t.withinBounds,
+		}
+	case unbounded:
+	}
 	if t.decision.holdsWhenTainted {
 		policy.TaintHold = &agentports.TaintHold{
 			Description: "Its text is what payroll or the payee reads next, so a run that has " +
@@ -156,6 +185,52 @@ func (t *SettlementDecisionTool[E]) plan(
 	}
 
 	return t.book.PlanAction(ctx, req)
+}
+
+func (t *SettlementDecisionTool[E]) withinBounds(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+) agentports.MoneyBound {
+	if t.book == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+	req, err := t.request(&params)
+	if err != nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+	plan, err := t.book.PlanAction(ctx, req)
+	if err != nil || plan == nil || plan.Before == nil || t.ledger.Editable == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+	if !t.ledger.Editable(plan.Before) {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
+	}
+	if plan.Refused() {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+
+	switch t.decision.bound {
+	case addedLineBound:
+		if req.Adjustment == nil {
+			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		}
+		return agentports.WithinMoneyBound(req.Adjustment.AmountMinor)
+	case removedLineBound:
+		if t.ledger.Line == nil {
+			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		}
+		line, found := t.ledger.Line(plan.Before, req.LineID)
+		if !found || !line.Manual {
+			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		}
+		if !line.AddedByAgent {
+			return agentports.OutsideMoneyBound(agent.HeldByMoneyAgentLine)
+		}
+		return agentports.WithinMoneyBound(line.AmountMinor)
+	case unbounded:
+	}
+
+	return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 }
 
 func (t *SettlementDecisionTool[E]) Validate(

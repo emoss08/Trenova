@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 646.
+Tools listed: 649.
 
 ## The model
 
@@ -27,6 +27,17 @@ max tier, its class's ceiling and any condition the call's record must meet.
 Work a customer or a driver can see, or that is sent outside the organization,
 never runs past Ask first. Earned autonomy moves a tool up one tier after a
 streak of clean approvals, and never past those limits.
+
+**Money.** A money write runs at most Ask first, so a new money tool asks a
+person by default. It runs on its own only on a tool whose condition proves the
+call is within bounds: the records it touches are in the state the tool
+requires, and the amount it moves is within the organization's money limits for
+agents in AI Control, which are a ceiling on one change and a cap on each run
+and on each day in both the number of changes and the total moved. The day is
+the organization's own and counts every agent. A call outside any bound, or
+whose bounds or limits cannot be read, is filed as a proposal that names the
+bound it exceeded, and a run that has read outside text never moves money on
+its own at all.
 
 **Taint.** Some tools return text written outside the organization: an inbound
 message, a document, an EDI transaction, a bank receipt, a weather alert, a
@@ -59,13 +70,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 269 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 25 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 44 |
-| Money | Moves or commits money. | Automatic | Yes | 106 |
+| Money | Moves or commits money. A call runs on its own only when its tool proves it is within bounds. | Ask first | Yes | 106 |
 
 ## Reads only
 
@@ -257,6 +268,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List vehicle positions (`list_vehicle_positions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List watchtower items (`list_watchtower_items`) | Reads only | Automatic | — | When the record is marked, from inbound message, EDI, weather or run record | Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen. |
 | List weather alerts (`list_weather_alerts`) | Reads only | Automatic | — | Always, from weather | Reads National Weather Service alert text; nothing changes and nothing is sent. |
+| List web watches (`list_web_watches`) | Reads only | Automatic | — | — | Lists the web watches set for the person; it changes nothing, reaches no one, and returns only what the agents wrote when they set them. |
 | List worker checklists (`list_worker_checklists`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker credentials (`list_worker_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker injuries (`list_worker_injuries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -516,6 +528,7 @@ Changes records only people inside the organization see.
 | Split move at relay (`split_move_at_relay`) | Inside the organization | Propose | — | — | Adds a move and turns a delivery into a relay inside Trenova; the two new windows are times only a person can vouch for, so a person always approves it. |
 | Start performance review (`start_performance_review`) | Inside the organization | Ask first | — | — | Opens a draft review inside Trenova; the worker sees nothing, and delete_performance_review removes the draft. |
 | Start worker checklist (`start_worker_checklist`) | Inside the organization | Ask first | — | — | Opens a checklist on the worker inside Trenova; nothing is sent, and cancel_worker_checklist cancels it. |
+| Stop web watch (`stop_web_watch`) | Inside the organization | Automatic | — | Carries outside text into later runs | Stops a scheduled search the person set; it changes no record and reaches nobody. |
 | Submit carrier settlement (`submit_carrier_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit driver settlement (`submit_driver_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit manual journal (`submit_manual_journal`) | Inside the organization | Ask first | — | — | Moves a draft journal into the approval queue inside Trenova; an approver decides and it books nothing until a person posts it. |
@@ -565,6 +578,7 @@ Changes records only people inside the organization see.
 | Wait until (`wait_until`) | Inside the organization | Automatic | — | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
 | Wake exception (`wake_exception`) | Inside the organization | Ask first | — | — | Puts a snoozed exception back in the open queue inside Trenova; nothing outside changes and it can be snoozed again. |
 | Wake inbound message (`wake_inbound_message`) | Inside the organization | Automatic | — | — | Puts a parked message back in front of the people working Triage; nothing is sent. |
+| Watch web (`watch_web`) | Inside the organization | Automatic | — | Carries outside text into later runs | Sets a scheduled search on the organization's web research vendor for the person; it changes no record, reaches nobody, and ends on its own or when stopped. |
 | Withdraw invoice dispute (`withdraw_invoice_dispute`) | Inside the organization | Ask first | A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections. | — | Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute. |
 
 ## Seen by a customer
@@ -651,14 +665,14 @@ Sends to someone outside the organization.
 
 ## Money
 
-Moves or commits money.
+Moves or commits money. A call runs on its own only when its tool proves it is within bounds.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
 | Accept carrier invoice match (`accept_carrier_invoice_match`) | Money | Propose | — | — | Clears a carrier's invoice for payment; only a person approves what the organization pays. |
 | Accept carrier invoice match with variance (`accept_carrier_invoice_match_with_variance`) | Money | Propose | — | — | Agrees to pay a carrier more or less than the load was expected to cost; only a person approves it. |
-| Add carrier settlement adjustment (`add_carrier_settlement_adjustment`) | Money | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
-| Add driver settlement adjustment (`add_driver_settlement_adjustment`) | Money | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
+| Add carrier settlement adjustment (`add_carrier_settlement_adjustment`) | Money | Automatic | Runs on its own only while the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person. Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
+| Add driver settlement adjustment (`add_driver_settlement_adjustment`) | Money | Automatic | Runs on its own only while the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person. Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
 | Add order charge (`add_order_charge`) | Money | Ask first | — | — | Adds to what the customer is billed; nothing is invoiced or sent, and remove_order_charge takes it off until it is invoiced. |
 | Add shipment charge (`add_shipment_charge`) | Money | Ask first | — | — | Adds to what the customer is billed for the shipment. |
 | Adjust escrow account (`adjust_escrow_account`) | Money | Propose | — | — | Moves money held in escrow for an owner-operator; only a person moves it. |
@@ -689,7 +703,7 @@ Moves or commits money.
 | Close fiscal period (`close_fiscal_period`) | Money | Propose | — | — | Ends posting to a period of the books a person signs off; only a person closes one. |
 | Commit invoice run (`commit_invoice_run`) | Money | Propose | — | — | Issues the invoices a run proposes and advances the customers' billing period; only a person commits a run. |
 | Commit rate import (`commit_rate_import`) | Money | Propose | — | — | Changes the rates an agreement prices shipments at; only a person applies a rate sheet. |
-| Correct charge code (`correct_charge_code`) | Money | Automatic | — | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
+| Correct charge code (`correct_charge_code`) | Money | Automatic | Runs on its own only while nothing has been invoiced from the billing queue item and the change to its total is within the organization's money limits for agents; any other call waits for a person. | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
 | Correct fuel index price (`correct_fuel_index_price`) | Money | Propose | — | — | Moves the price every fuel surcharge on this index is computed from, which changes what customers are charged; only a person sets it. |
 | Create carrier (`create_carrier`) | Inside the organization, money | Ask first | Each call is classified by what it reaches. A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it. | — | Adds a carrier inside Trenova that colleagues can then book; nothing is sent. Payment and remit-to details decide where money goes, so a call that sets them is money and runs only on a person's approval. |
 | Create invoice (`create_invoice`) | Money | Propose | — | — | Turns freight into receivables and takes it off the billing queue and any statement; only a person decides what is billed and when. |
@@ -702,13 +716,13 @@ Moves or commits money.
 | Issue pay advance (`issue_pay_advance`) | Money | Propose | — | — | Records money handed to a driver that their pay then repays; only a person records it. |
 | Locate trailer (`locate_trailer`) | Money | Propose | — | — | Adds an empty move to the trailer's last shipment and re-rates it, which can change what that customer is charged, so it runs only on a person's approval. |
 | Lock fiscal period (`lock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person locks a period. |
-| Match bank receipt (`match_bank_receipt`) | Money | Automatic | — | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
+| Match bank receipt (`match_bank_receipt`) | Money | Automatic | Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person. | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
 | Open escrow account (`open_escrow_account`) | Money | Propose | — | — | Sets escrow terms under an owner-operator's lease that their pay is then withheld against; only a person agrees them. |
 | Open fiscal period (`open_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person opens a period. |
 | Pay driver now (`pay_driver_now`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Approves, posts and records a payment to a driver in one step; only a person pays someone. |
 | Post carrier settlement (`post_carrier_settlement`) | Money | Propose | — | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post carrier settlements (`post_carrier_settlements`) | Money | Propose | — | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_carrier_settlement, and may untick any of them. |
-| Post customer payment (`post_customer_payment`) | Money | Automatic | — | — | Records a customer payment and applies it to invoices. |
+| Post customer payment (`post_customer_payment`) | Money | Automatic | Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person. | — | Records a customer payment and applies it to invoices. |
 | Post driver settlement (`post_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post driver settlements (`post_driver_settlements`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_driver_settlement, and may untick any of them. |
 | Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |
@@ -725,8 +739,8 @@ Moves or commits money.
 | Record tender response (`record_tender_response`) | Sent outside the organization, money | Ask first | Each call is classified by what it reaches. Recording an acceptance, a counter or a carrier backing out moves money or the carrier off the move, so it is a proposal a person decides; a decline runs once a person approves it. | — | An acceptance commits the organization to pay the carrier and sends them the rate confirmation; a decline sends the next carrier its offer; a carrier backing out voids its rate confirmation and offers the load to others. None is undone by recording another answer. |
 | Release accounting sync (`release_accounting_sync`) | Money | Propose | — | — | Sends documents a review policy held for a person to the organization's books; only a person releases them. |
 | Release factoring reserve (`release_factoring_reserve`) | Money | Propose | — | — | Books the factor's reserve remittance to the general ledger; only a person's approval runs it. |
-| Remove carrier settlement adjustment (`remove_carrier_settlement_adjustment`) | Money | Automatic | — | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
-| Remove driver settlement adjustment (`remove_driver_settlement_adjustment`) | Money | Automatic | — | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
+| Remove carrier settlement adjustment (`remove_carrier_settlement_adjustment`) | Money | Automatic | Runs on its own only when an agent added the line, the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person. | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
+| Remove driver settlement adjustment (`remove_driver_settlement_adjustment`) | Money | Automatic | Runs on its own only when an agent added the line, the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person. | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
 | Remove order charge (`remove_order_charge`) | Money | Ask first | — | — | Lowers what the customer is billed; nothing is invoiced or sent, and add_order_charge puts it back. |
 | Reopen fiscal period (`reopen_fiscal_period`) | Money | Propose | — | — | Lets postings land again in books a person closed; only a person reopens a period. |
 | Request journal reversal (`request_journal_reversal`) | Money | Propose | — | — | Commits the organization to taking a posted entry back out of the ledger, approved at once where approval is off; only a person requests a reversal. |

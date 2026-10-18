@@ -8,6 +8,7 @@ import {
   gateDigest,
   isPreviewConflict,
   isPreviewRefusal,
+  unreviewedRequired,
 } from "../proposal-preview/preview-gate";
 import {
   PREVIEW_WARNING_CODES,
@@ -164,9 +165,9 @@ describe("preview warnings", () => {
     ).toBe(
       "The rate needs review: No rate agreement covers this lane, so this shipment is priced at zero",
     );
-    expect(
-      previewWarningTone({ code: "rate_coverage", args: [], message: "", reasons: [] }),
-    ).toBe("warning");
+    expect(previewWarningTone({ code: "rate_coverage", args: [], message: "", reasons: [] })).toBe(
+      "warning",
+    );
   });
 
   it("shows the server's words for a code this client does not know", () => {
@@ -193,5 +194,53 @@ describe("preview warnings", () => {
 
     expect(visibleWarnings(warnings, { inPlan: true }).map((w) => w.code)).toEqual(["withheld"]);
     expect(visibleWarnings(warnings, { inPlan: false })).toHaveLength(2);
+  });
+});
+
+describe("changes the server approves only once reviewed", () => {
+  it("cannot be approved without a preview, though an internal change can", () => {
+    const unavailable = approvalGate({ data: undefined, isPending: false, isError: true });
+
+    expect(canApprove(unavailable, true)).toBe(false);
+    expect(canApprove(unavailable, false)).toBe(true);
+    expect(canApprove(unavailable)).toBe(true);
+  });
+
+  it("can be approved once the preview is on screen", () => {
+    const ready = approvalGate({
+      data: { digest: "sha256:a", stale: false },
+      isPending: false,
+      isError: false,
+    });
+
+    expect(canApprove(ready, true)).toBe(true);
+  });
+
+  it("names the batch's reviewed changes whose preview was never shown, in batch order", () => {
+    const proposals = [
+      { id: "aprop_1", reviewRequired: true },
+      { id: "aprop_2", reviewRequired: false },
+      { id: "aprop_3", reviewRequired: true },
+      { id: "aprop_4", reviewRequired: true },
+    ];
+    const shown = new Map([
+      ["aprop_3", "sha256:c"],
+      ["aprop_4", ""],
+    ]);
+
+    expect(unreviewedRequired(proposals, shown).map((proposal) => proposal.id)).toEqual([
+      "aprop_1",
+      "aprop_4",
+    ]);
+    expect(
+      unreviewedRequired(
+        proposals,
+        new Map([
+          ["aprop_1", "a"],
+          ["aprop_3", "c"],
+          ["aprop_4", "d"],
+        ]),
+      ),
+    ).toEqual([]);
   });
 });

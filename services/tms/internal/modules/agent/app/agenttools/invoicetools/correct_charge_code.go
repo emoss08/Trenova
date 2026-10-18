@@ -100,14 +100,18 @@ func chargeLineSchema() map[string]any {
 
 func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceBillingQueue,
-		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierPropose,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceBillingQueue,
+		Operation:   permission.OpUpdate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: correctChargeBoundText,
+			Bounds:      t.withinBounds,
+		},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,

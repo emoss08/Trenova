@@ -25,6 +25,8 @@ type Deps struct {
 	AgentControlService       agentports.AgentControlService
 }
 
+type AgentControlResolver struct{ *Deps }
+
 type AgentDecisionResolver struct{ *Deps }
 
 type AgentEvaluationResolver struct{ *Deps }

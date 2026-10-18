@@ -492,6 +492,19 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
+	callCeiling, err := base.ParseMinorPtr("agentMoneyCallCeiling", input.AgentMoneyCallCeiling)
+	if err != nil {
+		return nil, err
+	}
+	runAmount, err := base.ParseMinorPtr("agentMoneyRunAmount", input.AgentMoneyRunAmount)
+	if err != nil {
+		return nil, err
+	}
+	dayAmount, err := base.ParseMinorPtr("agentMoneyDayAmount", input.AgentMoneyDayAmount)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.AgentControlService.Update(ctx, &agentports.UpdateAgentControlRequest{
 		ShadowMode:             input.ShadowMode,
 		EarnedAutonomy:         input.EarnedAutonomy,
@@ -501,8 +514,15 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		AITrainingConsent:      input.AiTrainingConsent,
 		PersonMonthlyMessages:  input.PersonMonthlyMessages,
 		LearningOff:            input.LearningOff,
-		Version:                base.Int64Ptr(input.Version),
-		TenantInfo:             base.TenantInfo(authCtx),
+		AgentMoney: agentports.AgentMoneyLimitsUpdate{
+			CallCeilingMinor: callCeiling,
+			RunCalls:         input.AgentMoneyRunCalls,
+			RunAmountMinor:   runAmount,
+			DayCalls:         input.AgentMoneyDayCalls,
+			DayAmountMinor:   dayAmount,
+		},
+		Version:    base.Int64Ptr(input.Version),
+		TenantInfo: base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -895,4 +915,20 @@ func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*g
 		Proposals:  r.HasPermission(ctx, authCtx, permission.ResourceAgentProposal, permission.OpRead),
 		Exceptions: r.HasPermission(ctx, authCtx, permission.ResourceAgentException, permission.OpRead),
 	}), nil
+}
+
+func (r *AgentControlResolver) AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+	return base.MinorString(obj.AgentMoneyCallCeilingMinor), nil
+}
+
+func (r *AgentControlResolver) AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+	return base.MinorString(obj.AgentMoneyRunAmountMinor), nil
+}
+
+func (r *AgentControlResolver) AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+	return base.MinorString(obj.AgentMoneyDayAmountMinor), nil
+}
+
+func (r *AgentProposalResolver) ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error) {
+	return obj.ApprovalNeedsReview(), nil
 }

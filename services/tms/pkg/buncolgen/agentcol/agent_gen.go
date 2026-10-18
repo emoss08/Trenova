@@ -877,6 +877,7 @@ var AgentProposalColumns = struct {
 	Taint                 buncolgen.Column // "taint" → qualified: "ap.taint"
 	EgressClass           buncolgen.Column // "egress_class" → qualified: "ap.egress_class"
 	HeldBy                buncolgen.Column // "held_by" → qualified: "ap.held_by"
+	MoneyMinor            buncolgen.Column // "money_minor" → qualified: "ap.money_minor"
 	TraceID               buncolgen.Column // "trace_id" → qualified: "ap.trace_id"
 	SpanID                buncolgen.Column // "span_id" → qualified: "ap.span_id"
 	StepKey               buncolgen.Column // "step_key" → qualified: "ap.step_key"
@@ -915,6 +916,7 @@ var AgentProposalColumns = struct {
 	Taint:                 buncolgen.NewColumn("taint", "ap"),
 	EgressClass:           buncolgen.NewColumn("egress_class", "ap"),
 	HeldBy:                buncolgen.NewColumn("held_by", "ap"),
+	MoneyMinor:            buncolgen.NewColumn("money_minor", "ap"),
 	TraceID:               buncolgen.NewColumn("trace_id", "ap"),
 	SpanID:                buncolgen.NewColumn("span_id", "ap"),
 	StepKey:               buncolgen.NewColumn("step_key", "ap"),
@@ -959,6 +961,7 @@ var AgentProposalFieldMap = map[string]string{
 	"taint":                 "taint",
 	"egressClass":           "egress_class",
 	"heldBy":                "held_by",
+	"moneyMinor":            "money_minor",
 	"traceId":               "trace_id",
 	"spanId":                "span_id",
 	"stepKey":               "step_key",
@@ -1001,6 +1004,7 @@ var AgentProposalInsertableColumns = []string{
 	"taint",
 	"egress_class",
 	"held_by",
+	"money_minor",
 	"trace_id",
 	"span_id",
 	"step_key",
@@ -1105,6 +1109,7 @@ var AgentProposalFilter = struct {
 	Taint                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	EgressClass           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "egressClass" → DB: "egress_class"
 	HeldBy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldBy" → DB: "held_by"
+	MoneyMinor            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "moneyMinor" → DB: "money_minor"
 	TraceID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	SpanID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
 	StepKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
@@ -1198,6 +1203,9 @@ var AgentProposalFilter = struct {
 	},
 	HeldBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("heldBy", op, value)
+	},
+	MoneyMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("moneyMinor", op, value)
 	},
 	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("traceId", op, value)

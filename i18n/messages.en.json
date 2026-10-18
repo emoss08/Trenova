@@ -7495,6 +7495,15 @@
       "go/other"
     ]
   },
+  "A payment, a receipt match, a charge correction or a settlement adjustment runs without a person only when its record matches exactly and it fits every limit here. Anything past a limit waits for a person, who sees which limit it reached. A run that read outside text never moves money on its own. Set a limit to 0 to have a person approve every money change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A pending model needs a model key": {
     "sites": 1,
     "scope": [
@@ -7572,6 +7581,15 @@
     ]
   },
   "A person approved this and the replay no longer proposes it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A person approves every change": {
     "sites": 1,
     "scope": [
       "ts"
@@ -8825,6 +8843,15 @@
       "apps/web/components"
     ]
   },
+  "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A request with this Idempotency-Key is still being processed; retry once it finishes": {
     "sites": 1,
     "scope": [
@@ -9348,6 +9375,28 @@
       "ts"
     ],
     "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A run's number of changes cannot be more than the day's": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
+    ]
+  },
+  "A run's total cannot be more than the day's": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
       "routes/agent-control"
     ]
   },
@@ -10399,6 +10448,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A stub money write within its bounds.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A subject id needs its type": {
@@ -48244,6 +48302,24 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Changes in a day, across every agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Changes in one run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Changes may run without asking": {
     "sites": 1,
     "scope": [
@@ -70490,6 +70566,24 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Day's change count reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Day's money limit reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Daylight movement only": {
@@ -127698,6 +127792,15 @@
       "routes/agent-control"
     ]
   },
+  "Its preview could not be read, and this change is approved only once you've seen it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Its reversal": {
     "sites": 1,
     "scope": [
@@ -134682,6 +134785,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Line a person added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Line category is invalid": {
@@ -147227,6 +147339,15 @@
       "go/other"
     ]
   },
+  "Modifications must be a JSON object of the parameters changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Modify PTO policies": {
     "sites": 1,
     "scope": [
@@ -147648,6 +147769,24 @@
       "routes/agent-control"
     ]
   },
+  "Money agents move on their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Money bounds not shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Money code / check number": {
     "sites": 1,
     "scope": [
@@ -147664,6 +147803,42 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Money limits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Money limits for agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Money limits unreadable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Money on their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Money owed to the company by customers": {
@@ -147691,6 +147866,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Money tool with no bounds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Monitor": {
@@ -148265,6 +148449,15 @@
       "go/other"
     ]
   },
+  "Most every agent may move in a day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Most freedom any agent gets": {
     "sites": 1,
     "scope": [
@@ -148299,6 +148492,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Most one change may move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Most one run may move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Most pages": {
@@ -162435,6 +162646,15 @@
       "routes/invoice"
     ]
   },
+  "Not an exact match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not answered yet": {
     "sites": 1,
     "scope": [
@@ -163155,7 +163375,7 @@
     ]
   },
   "Not now": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -170043,6 +170263,17 @@
       "routes/rate-agreement"
     ]
   },
+  "One change cannot be more than a run's total": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
+    ]
+  },
   "One customer": {
     "sites": 2,
     "scope": [
@@ -173113,15 +173344,6 @@
     ]
   },
   "Only the target organization can reject this EDI connection": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only the user who requested a report run can cancel it": {
     "sites": 1,
     "scope": [
       "go"
@@ -178896,6 +179118,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Over the per-change limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Over the road": {
@@ -191768,6 +191999,15 @@
       "routes/shipment"
     ]
   },
+  "Preview of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Preview only": {
     "sites": 1,
     "scope": [
@@ -191914,12 +192154,13 @@
     ]
   },
   "Previews of proposed changes are not available": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "api/graphql",
+      "api/handlers"
     ]
   },
   "Previous": {
@@ -204307,6 +204548,15 @@
       "routes/intake"
     ]
   },
+  "Record past the point agents change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Record payment": {
     "sites": 5,
     "scope": [
@@ -216432,7 +216682,7 @@
     ]
   },
   "Review {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -219500,6 +219750,24 @@
     ]
   },
   "Run {0} now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Run's change count reached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Run's money limit reached": {
     "sites": 1,
     "scope": [
       "ts"
@@ -253036,6 +253304,15 @@
       "routes/factoring-submission"
     ]
   },
+  "The amount must be between 0 and 1,000,000,000.00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The amount paid back to the factor cannot be negative": {
     "sites": 1,
     "scope": [
@@ -261168,6 +261445,15 @@
       "routes/factoring-company"
     ]
   },
+  "The number of changes must be between 0 and 10,000": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.": {
     "sites": 1,
     "scope": [
@@ -268929,6 +269215,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This change must be reviewed before it is approved. Open its preview, check what it would do, then approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This changed since it was drafted. Read it again before approving.": {
@@ -284941,6 +285236,15 @@
       "routes/desk"
     ]
   },
+  "Up to {0} a change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Up to {0} agents": {
     "sites": 1,
     "scope": [
@@ -287795,6 +288099,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Value cannot be more precise than a cent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Value cannot be negative": {
     "sites": 2,
     "scope": [
@@ -287868,6 +288181,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Value is too large": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Value must be a boolean": {
@@ -316855,6 +317177,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# must be opened before these can be approved} other {# must be opened before these can be approved}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# needs a look} other {# need a look}}": {
     "sites": 4,
     "scope": [
@@ -319715,6 +320046,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {Review # change before approving: it is approved only once you've seen its preview} other {Review # changes before approving: each is approved only once you've seen its preview}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {Running # step} other {Running # steps}}": {
     "sites": 1,
     "scope": [
@@ -320236,6 +320576,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0, plural, one {Waiting for # preview to load} other {Waiting for # previews to load}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Waiting for a print to Trenova, # minute left} other {Waiting for a print to Trenova, # minutes left}}": {
@@ -321010,6 +321359,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} a change · {1} changes or {2} a run · {3} changes or {4} a day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} a load": {

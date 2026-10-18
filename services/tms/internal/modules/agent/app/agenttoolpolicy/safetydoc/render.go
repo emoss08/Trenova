@@ -48,8 +48,9 @@ var classes = map[agent.EgressClass]classInfo{
 		meaning: "Sends to someone outside the organization.",
 	},
 	agent.EgressMoney: {
-		title:   "Money",
-		meaning: "Moves or commits money.",
+		title: "Money",
+		meaning: "Moves or commits money. A call runs on its own only when its tool proves " +
+			"it is within bounds.",
 	},
 }
 
@@ -105,6 +106,17 @@ max tier, its class's ceiling and any condition the call's record must meet.
 Work a customer or a driver can see, or that is sent outside the organization,
 never runs past Ask first. Earned autonomy moves a tool up one tier after a
 streak of clean approvals, and never past those limits.
+
+**Money.** A money write runs at most Ask first, so a new money tool asks a
+person by default. It runs on its own only on a tool whose condition proves the
+call is within bounds: the records it touches are in the state the tool
+requires, and the amount it moves is within the organization's money limits for
+agents in AI Control, which are a ceiling on one change and a cap on each run
+and on each day in both the number of changes and the total moved. The day is
+the organization's own and counts every agent. A call outside any bound, or
+whose bounds or limits cannot be read, is filed as a proposal that names the
+bound it exceeded, and a run that has read outside text never moves money on
+its own at all.
 
 **Taint.** Some tools return text written outside the organization: an inbound
 message, a document, an EDI transaction, a bank receipt, a weather alert, a

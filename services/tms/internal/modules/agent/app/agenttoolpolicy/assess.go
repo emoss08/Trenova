@@ -2,6 +2,7 @@ package agenttoolpolicy
 
 import (
 	"context"
+	"math"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -77,6 +78,12 @@ func bestCase(
 	attended := !definition.IsBackground()
 	policy := in.Policy
 	policy.Condition = nil
+	if in.Policy.Bounded() {
+		policy.Condition = &agentports.TierCondition{
+			Description: in.Policy.Condition.Description,
+			Bounds:      withinBounds,
+		}
+	}
 	policy.TaintHold = nil
 
 	classes := in.Policy.Egress
@@ -94,6 +101,7 @@ func bestCase(
 			Unattended:      !attended,
 			TierSetByPerson: TierSetByPerson(definition, policy.Name, in.Trust),
 			Taint:           taint,
+			MoneyAllowance:  unspentAllowance,
 		})
 		if idx == 0 || decision.Tier.Above(best.Tier) {
 			best = decision
@@ -111,10 +119,13 @@ func worstCase(
 ) Decision {
 	policy := in.Policy
 	policy.Classify = fixedCall(in.Policy.HighestEgress())
-	if in.Policy.Condition != nil {
-		policy.Condition = &agentports.TierCondition{
-			Description: in.Policy.Condition.Description,
-			Limit:       heldToProposal,
+	if condition := in.Policy.Condition; condition != nil {
+		policy.Condition = &agentports.TierCondition{Description: condition.Description}
+		if condition.Limit != nil {
+			policy.Condition.Limit = heldToProposal
+		}
+		if condition.Bounds != nil {
+			policy.Condition.Bounds = outsideBounds
 		}
 	}
 	if in.Policy.TaintHold != nil {
@@ -166,6 +177,24 @@ func fixedCall(class agent.EgressClass) classifier {
 
 func heldToProposal(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
+}
+
+func withinBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+	return agentports.WithinMoneyBound(0)
+}
+
+func outsideBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+	return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+}
+
+func unspentAllowance(context.Context) (agent.MoneyAllowance, error) {
+	return agent.MoneyAllowance{Limits: agent.MoneyLimits{
+		CallCeilingMinor: math.MaxInt64,
+		RunCalls:         math.MaxInt,
+		RunAmountMinor:   math.MaxInt64,
+		DayCalls:         math.MaxInt,
+		DayAmountMinor:   math.MaxInt64,
+	}}, nil
 }
 
 func alwaysHeld(agentports.ToolExecuteParams) bool {

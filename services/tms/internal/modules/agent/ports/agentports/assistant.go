@@ -190,6 +190,7 @@ type AssistantProposal struct {
 	DecidedAt       *int64   `json:"decidedAt"`
 	DecidedByUserID pulid.ID `json:"decidedByUserId"`
 	DecisionNote    string   `json:"decisionNote"`
+	ReviewRequired  bool     `json:"reviewRequired"`
 }
 
 // ProposalEdits is what a pending proposal holds as changed once a person

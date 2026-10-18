@@ -601,6 +601,7 @@ func applyTaint(
 	taint *agent.RunTaint,
 ) {
 	proposal.EgressClass = action.Egress
+	proposal.MoneyMinor = action.MoneyMinor
 	proposal.HeldBy = slices.Clone(action.HeldBy)
 	if proposal.HeldBy == nil {
 		proposal.HeldBy = []string{}

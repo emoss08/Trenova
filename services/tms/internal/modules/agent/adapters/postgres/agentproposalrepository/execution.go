@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -196,5 +197,49 @@ func (r *repository) CountExecutedTool(
 		}
 
 		return int(count), nil
+	})
+}
+
+type automaticMoneyRow struct {
+	Calls       int   `bun:"calls"`
+	AmountMinor int64 `bun:"amount_minor"`
+}
+
+func (r *repository) SumAutomaticMoney(
+	ctx context.Context,
+	req agentports.SumAutomaticMoneyRequest,
+) (agent.MoneyUse, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agent.MoneyUse, error) {
+		cols := agentcol.AgentProposalColumns
+
+		row := new(automaticMoneyRow)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agent.AgentProposal)(nil)).
+			ColumnExpr(buncolgen.Count("calls")).
+			ColumnExpr(cols.MoneyMinor.Expr("COALESCE(SUM(ABS({})), 0) AS amount_minor")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
+					Where(cols.AutonomyTier.Eq(), agent.TierAutoExecute).
+					Where(cols.MoneyMinor.IsNotNull()).
+					Where(cols.ExecutedAt.IsNotNull()).
+					Where(cols.SimulatedAt.IsNull())
+				if req.Since > 0 {
+					sq = sq.Where(cols.ExecutedAt.Gte(), req.Since)
+				}
+				if req.RunID.IsNotNil() {
+					sq = sq.Where(cols.RunID.Eq(), req.RunID)
+				}
+
+				return sq
+			}).
+			Scan(ctx, row)
+		if err != nil {
+			r.l.Error("failed to sum automatic money writes", zap.Error(err))
+
+			return agent.MoneyUse{}, fmt.Errorf("sum automatic money writes: %w", err)
+		}
+
+		return agent.MoneyUse{Calls: row.Calls, AmountMinor: row.AmountMinor}, nil
 	})
 }

@@ -56,9 +56,20 @@ func (c EgressClass) Leaves() bool {
 	}
 }
 
+func (c EgressClass) ApprovalNeedsReview() bool {
+	switch c {
+	case EgressNone, EgressPersonal, EgressInternal:
+		return false
+	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient, EgressMoney:
+		return true
+	default:
+		return true
+	}
+}
+
 func (c EgressClass) Ceiling() AutonomyTier {
 	switch c {
-	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient:
+	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient, EgressMoney:
 		return TierActWithApproval
 	default:
 		return TierAutoExecute

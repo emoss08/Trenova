@@ -532,6 +532,27 @@ func (s *Service) versionAfter(ctx context.Context, proposal *agent.AgentProposa
 	return &version
 }
 
+func (s *Service) CallEgress(
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+) (agent.EgressClass, bool) {
+	if s.tools == nil || proposal == nil {
+		return "", false
+	}
+	tool, ok := s.tools.Get(proposal.ToolName)
+	if !ok {
+		return "", false
+	}
+
+	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
+
+	return tool.Policy().Classified(agentports.ToolExecuteParams{
+		OrganizationID: proposal.OrganizationID,
+		BusinessUnitID: proposal.BusinessUnitID,
+		Params:         params,
+	}).Egress, true
+}
+
 // CheckModifications validates what an approver changed before the decision
 // that carries it is recorded: the merged parameters must fit the tool's
 // schema, and a tool that checks its own arguments gets to check them. It

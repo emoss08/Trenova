@@ -49,6 +49,10 @@ type bankReceiptMatcher interface {
 		req *bankreceiptservice.PreviewMatchPaymentRequest,
 		actor *permissionports.RequestActor,
 	) (*bankreceiptservice.MatchPreview, error)
+	SuggestMatches(
+		ctx context.Context,
+		req *bankreceiptports.GetBankReceiptRequest,
+	) ([]*bankreceiptports.BankReceiptMatchSuggestion, error)
 }
 
 type customerPaymentPoster interface {
@@ -128,14 +132,18 @@ func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 
 func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceBankReceipt,
-		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceBankReceipt,
+		Operation:   permission.OpUpdate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: matchReceiptBoundText,
+			Bounds:      t.withinBounds,
+		},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     "Matches a bank receipt to a posted payment, closing its reconciliation.",
@@ -314,14 +322,18 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 
 func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceCustomerPayment,
-		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceCustomerPayment,
+		Operation:   permission.OpCreate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: postPaymentBoundText,
+			Bounds:      t.withinBounds,
+		},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
@@ -341,6 +353,7 @@ func (t *PostCustomerPaymentTool) Target(params map[string]any) (agentports.Tool
 type postPaymentArgs struct {
 	request   *customerpaymentports.PostCustomerPaymentRequest
 	receiptID pulid.ID
+	receipt   *bankreceipt.BankReceipt
 }
 
 func (t *PostCustomerPaymentTool) Execute(
@@ -460,6 +473,7 @@ func (t *PostCustomerPaymentTool) arguments(
 		args.request.ReferenceNumber = receipt.ReferenceNumber
 	}
 	args.receiptID = receiptID
+	args.receipt = receipt
 
 	return args, nil
 }

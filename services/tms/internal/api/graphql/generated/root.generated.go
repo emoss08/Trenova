@@ -314,6 +314,7 @@ type ResolverRoot interface {
 	AccountingSyncAttempt() AccountingSyncAttemptResolver
 	AccountingSyncAttentionGroup() AccountingSyncAttentionGroupResolver
 	AccountingSyncRecord() AccountingSyncRecordResolver
+	AgentControl() AgentControlResolver
 	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentDraft() AgentDraftResolver
@@ -733,6 +734,12 @@ type AccountingSyncRecordResolver interface {
 	SkippedBy(ctx context.Context, obj *accountingsync.AccountingSyncRecord) (*tenant.User, error)
 }
 
+type AgentControlResolver interface {
+	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
+}
+
 type AgentDecisionResolver interface {
 	TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error)
 	Preview(ctx context.Context, obj *agent.AgentDecision) (*agent.ProposalPreview, error)
@@ -835,6 +842,7 @@ type AgentProposalResolver interface {
 	ParameterFields(ctx context.Context, obj *agent.AgentProposal) ([]*toolschema.Field, error)
 	Modifications(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error)
 	EgressClass(ctx context.Context, obj *agent.AgentProposal) (*agent.EgressClass, error)
+	ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error)
 	TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error)
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
 }
@@ -3939,6 +3947,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AccountingSyncAttempt":              func() any { return r.AccountingSyncAttempt() },
 			"AccountingSyncAttentionGroup":       func() any { return r.AccountingSyncAttentionGroup() },
 			"AccountingSyncRecord":               func() any { return r.AccountingSyncRecord() },
+			"AgentControl":                       func() any { return r.AgentControl() },
 			"AgentDecision":                      func() any { return r.AgentDecision() },
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentDraft":                         func() any { return r.AgentDraft() },
@@ -6260,8 +6269,10 @@ type AgentProposal {
   taint: AgentRunTaint
   "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
   egressClass: AgentEgressClass
-  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption."
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds."
   heldBy: [String!]!
+  "Approving it needs the digest of the preview the approver was shown: it moves money, reaches a customer, a driver or someone outside, or was proposed after the run read outside text."
+  reviewRequired: Boolean!
   "The trace of the tool call the write was proposed in. Empty for a proposal recorded before traces were kept."
   traceId: String!
   "The proposing tool call's trace in the tracing backend, when one is configured and the proposal has a trace."
@@ -6408,6 +6419,16 @@ type AgentControl {
   personMonthlyMessages: Int!
   "Agents no longer look back over their work to keep what they learned as memory."
   learningOff: Boolean!
+  "The most one money change an agent makes on its own may move. 0 holds every money change for a person."
+  agentMoneyCallCeiling: Decimal!
+  "The most money changes one agent run or turn may make on its own."
+  agentMoneyRunCalls: Int!
+  "The most money one agent run or turn may move on its own."
+  agentMoneyRunAmount: Decimal!
+  "The most money changes the organization's agents may make on their own in a day, in its timezone."
+  agentMoneyDayCalls: Int!
+  "The most money the organization's agents may move on their own in a day, in its timezone."
+  agentMoneyDayAmount: Decimal!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -6846,6 +6867,16 @@ input AgentControlInput {
   personMonthlyMessages: Int
   "Absent leaves whether agents learn from their work as it is."
   learningOff: Boolean
+  "Absent leaves the most one automatic money change may move as it is."
+  agentMoneyCallCeiling: Decimal
+  "Absent leaves the number of automatic money changes a run may make as it is."
+  agentMoneyRunCalls: Int
+  "Absent leaves the money a run may move on its own as it is."
+  agentMoneyRunAmount: Decimal
+  "Absent leaves the number of automatic money changes a day may hold as it is."
+  agentMoneyDayCalls: Int
+  "Absent leaves the money the agents may move on their own in a day as it is."
+  agentMoneyDayAmount: Decimal
   """
   The version the person loaded. When someone saved since, the update is
   refused with who saved, when and what they changed. Absent applies the

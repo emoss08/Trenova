@@ -84,6 +84,12 @@ type CountExecutedToolRequest struct {
 	Since        int64
 }
 
+type SumAutomaticMoneyRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	RunID      pulid.ID
+}
+
 // ListAgentProposalsByThreadRequest fetches every proposal raised during one
 // assistant conversation, so reopening a thread shows what is still waiting on a
 // decision rather than only what the last turn returned.
@@ -211,4 +217,5 @@ type AgentProposalRepository interface {
 		req SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
+	SumAutomaticMoney(ctx context.Context, req SumAutomaticMoneyRequest) (agent.MoneyUse, error)
 }

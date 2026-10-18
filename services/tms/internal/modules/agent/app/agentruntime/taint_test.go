@@ -47,10 +47,13 @@ func runTainted(
 }
 
 func moneyTool() *agenttest.StubActionTool {
+	amount := int64(10_000)
+
 	return &agenttest.StubActionTool{
-		ToolName: "apply_payment",
-		Tier:     agent.TierAutoExecute,
-		Egress:   agent.EgressMoney,
+		ToolName:   "apply_payment",
+		Tier:       agent.TierAutoExecute,
+		Egress:     agent.EgressMoney,
+		MoneyMinor: &amount,
 	}
 }
 
@@ -268,7 +271,7 @@ func TestRun_AToolThatReadsOutsideContentTaintsTheRunAndHoldsMoney(t *testing.T)
 	assert.Equal(t, 1, announced[0].Marks)
 }
 
-func TestRun_ACleanRunStillMovesMoneyOnItsOwn(t *testing.T) {
+func TestRun_ACleanRunStillMovesMoneyOnItsOwnWithinBounds(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
@@ -278,6 +281,7 @@ func TestRun_ACleanRunStillMovesMoneyOnItsOwn(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+	rt.budgets = &moneyBudgets{limits: roomyMoneyLimits()}
 
 	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
@@ -288,6 +292,8 @@ func TestRun_ACleanRunStillMovesMoneyOnItsOwn(t *testing.T) {
 	assert.Equal(t, 1, pay.Calls)
 	require.Len(t, run.result.Actions, 1)
 	assert.True(t, run.result.Actions[0].Executed)
+	require.NotNil(t, run.result.Actions[0].MoneyMinor)
+	assert.Equal(t, int64(10_000), *run.result.Actions[0].MoneyMinor)
 	assert.False(t, run.result.Actions[0].Tainted)
 	assert.False(t, run.result.Taint.Tainted())
 	assert.Empty(t, run.tainted())
@@ -433,6 +439,7 @@ func TestDecideCall_UsesTheTaintTheCallWasMadeWith(t *testing.T) {
 	pay := moneyTool()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+	rt.budgets = &moneyBudgets{limits: roomyMoneyLimits()}
 	req := &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),

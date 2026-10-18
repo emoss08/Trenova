@@ -781,6 +781,7 @@ var CarrierSettlementLineColumns = struct {
 	ShipmentID     buncolgen.Column // "shipment_id" → qualified: "carstll.shipment_id"
 	MoveID         buncolgen.Column // "move_id" → qualified: "carstll.move_id"
 	ProNumber      buncolgen.Column // "pro_number" → qualified: "carstll.pro_number"
+	AddedByAgent   buncolgen.Column // "added_by_agent" → qualified: "carstll.added_by_agent"
 	CreatedAt      buncolgen.Column // "created_at" → qualified: "carstll.created_at"
 	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "carstll.updated_at"
 }{
@@ -797,6 +798,7 @@ var CarrierSettlementLineColumns = struct {
 	ShipmentID:     buncolgen.NewColumn("shipment_id", "carstll"),
 	MoveID:         buncolgen.NewColumn("move_id", "carstll"),
 	ProNumber:      buncolgen.NewColumn("pro_number", "carstll"),
+	AddedByAgent:   buncolgen.NewColumn("added_by_agent", "carstll"),
 	CreatedAt:      buncolgen.NewColumn("created_at", "carstll"),
 	UpdatedAt:      buncolgen.NewColumn("updated_at", "carstll"),
 }
@@ -819,6 +821,7 @@ var CarrierSettlementLineFieldMap = map[string]string{
 	"shipmentId":     "shipment_id",
 	"moveId":         "move_id",
 	"proNumber":      "pro_number",
+	"addedByAgent":   "added_by_agent",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
 }
@@ -839,6 +842,7 @@ var CarrierSettlementLineInsertableColumns = []string{
 	"shipment_id",
 	"move_id",
 	"pro_number",
+	"added_by_agent",
 	"created_at",
 	"updated_at",
 }
@@ -906,6 +910,7 @@ var CarrierSettlementLineFilter = struct {
 	ShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
 	MoveID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "moveId" → DB: "move_id"
 	ProNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
+	AddedByAgent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addedByAgent" → DB: "added_by_agent"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
@@ -947,6 +952,9 @@ var CarrierSettlementLineFilter = struct {
 	},
 	ProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("proNumber", op, value)
+	},
+	AddedByAgent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("addedByAgent", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)

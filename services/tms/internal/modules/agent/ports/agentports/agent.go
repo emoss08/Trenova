@@ -356,6 +356,7 @@ type UpdateAgentControlRequest struct {
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool
+	AgentMoney            AgentMoneyLimitsUpdate
 	// Version is the version the person loaded. When it is given and someone
 	// saved since, the update is refused with what they changed; absent, the
 	// update applies to whatever is there.
@@ -444,12 +445,27 @@ type CheckToolBudgetRequest struct {
 	Unrecorded int
 }
 
+type AgentMoneyLimitsUpdate struct {
+	CallCeilingMinor *int64
+	RunCalls         *int
+	RunAmountMinor   *int64
+	DayCalls         *int
+	DayAmountMinor   *int64
+}
+
+type MoneyAllowanceRequest struct {
+	Definition *agentdefinition.Definition
+	RunID      pulid.ID
+	Unrecorded agent.MoneyUse
+}
+
 // AgentBudgetService enforces an agent's caps and reports where it stands.
 type AgentBudgetService interface {
 	// CheckRun says whether the agent may start another run or turn now.
 	CheckRun(ctx context.Context, definition *agentdefinition.Definition) (BudgetRefusal, error)
 	// CheckTool says whether the agent may execute the tool once more today.
 	CheckTool(ctx context.Context, req CheckToolBudgetRequest) (BudgetRefusal, error)
+	MoneyAllowance(ctx context.Context, req MoneyAllowanceRequest) (agent.MoneyAllowance, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
 	// WithinBusinessHours says whether the agent may make a change on its
 	// own now, reading its business-hours window in its own zone or the

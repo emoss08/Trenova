@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -336,4 +336,11 @@ func (f *fakeProposalRepo) ExpirePendingByThread(
 	agentports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	return 0, nil
+}
+
+func (r *fakeProposalRepo) SumAutomaticMoney(
+	context.Context,
+	agentports.SumAutomaticMoneyRequest,
+) (agent.MoneyUse, error) {
+	return agent.MoneyUse{}, nil
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
@@ -199,11 +200,12 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 	tierParams := runToolParams(req, call.ID, call.Arguments)
 	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{
-		Policy:     policy,
-		Params:     tierParams,
-		Definition: req.Definition,
-		Unattended: req.Unattended,
-		Taint:      decisionTaint(p.taint, p.afterExternal),
+		Policy:         policy,
+		Params:         tierParams,
+		Definition:     req.Definition,
+		Unattended:     req.Unattended,
+		Taint:          decisionTaint(p.taint, p.afterExternal),
+		MoneyAllowance: s.moneyAllowance(req, proposedSoFar),
 	})
 	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
 	tier, heldForHours := s.heldForBusinessHours(ctx, req, tier)
@@ -232,6 +234,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		ToolCallID: call.ID,
 		Egress:     decision.Egress,
 		HeldBy:     decision.HeldBy,
+		MoneyMinor: decision.MoneyMinor,
 		Tainted:    p.taint.Tainted() || p.afterExternal,
 	}
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
@@ -239,6 +242,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 	if heldForHours {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByBusinessHours)
+	}
+	if tier != agent.TierAutoExecute {
+		action.MoneyMinor = nil
 	}
 	source := decision.Source
 	if heldForExternal || heldForHours {
@@ -414,6 +420,42 @@ func (s *Service) withinBudget(
 	return refusedOutcome(aitrace.OutcomeOverBudget, message,
 		"Tool %q was not run. %s Tell the person, and do not retry it.",
 		toolName, message), true
+}
+
+func (s *Service) moneyAllowance(
+	req *agentports.RunRequest,
+	soFar []agentports.PendingAction,
+) agenttoolpolicy.MoneyAllowanceReader {
+	if s.budgets == nil {
+		return nil
+	}
+
+	return func(ctx context.Context) (agent.MoneyAllowance, error) {
+		allowance, err := s.budgets.MoneyAllowance(ctx, agentports.MoneyAllowanceRequest{
+			Definition: req.Definition,
+			RunID:      req.RunID,
+			Unrecorded: unrecordedMoney(soFar),
+		})
+		if err != nil {
+			s.logger.Warn("agent money limits could not be read; the write waits for a person",
+				zap.Error(err))
+		}
+
+		return allowance, err
+	}
+}
+
+func unrecordedMoney(actions []agentports.PendingAction) agent.MoneyUse {
+	use := agent.MoneyUse{}
+	for i := range actions {
+		action := &actions[i]
+		if action.Executed && !action.Simulated && action.MoneyMinor != nil {
+			use.Calls++
+			use.AmountMinor += intutils.Abs(*action.MoneyMinor)
+		}
+	}
+
+	return use
 }
 
 // executedCount is how many times this turn already ran a tool for real. Those
@@ -750,6 +792,10 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 			reasons = append(reasons, "this turn read text written outside the organization")
 		case agenttoolpolicy.HeldByBusinessHours:
 			reasons = append(reasons, "it is outside this agent's business hours")
+		default:
+			if reason, ok := moneyHeldReasons[key]; ok {
+				reasons = append(reasons, reason)
+			}
 		}
 	}
 	if len(reasons) == 0 {
@@ -757,6 +803,29 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 	}
 
 	return " It waits because " + strings.Join(reasons, ", and because ") + "."
+}
+
+var moneyHeldReasons = map[string]string{
+	agent.HeldByMoneyUnbounded: "this tool moves money and cannot show that a call is " +
+		"within the limits it may run in on its own",
+	agent.HeldByMoneyUnproven: "it could not be shown that this change is within the " +
+		"limits it may run in on its own",
+	agent.HeldByMoneyExactMatch: "the money does not match its records exactly by " +
+		"amount and reference",
+	agent.HeldByMoneyRecordState: "the record is past the point where an agent may " +
+		"change its money on its own",
+	agent.HeldByMoneyAgentLine:    "a person added that line, so a person removes it",
+	agent.HeldByMoneyLimitsUnread: "the organization's money limits for agents could not be read",
+	agent.HeldByMoneyCallCeiling: "the amount is more than one automatic change may " +
+		"move",
+	agent.HeldByMoneyRunCalls: "this run has already made as many automatic money " +
+		"changes as it may",
+	agent.HeldByMoneyRunAmount: "it would take this run past the money it may move on " +
+		"its own",
+	agent.HeldByMoneyDayCalls: "the organization's agents have made as many automatic " +
+		"money changes today as they may",
+	agent.HeldByMoneyDayAmount: "it would take the organization's agents past the money " +
+		"they may move on their own today",
 }
 
 func egressReason(egress agent.EgressClass) string {

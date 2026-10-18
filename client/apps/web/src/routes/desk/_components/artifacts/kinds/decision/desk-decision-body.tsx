@@ -10,7 +10,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
+import {
+  batchPreviewDigests,
+  unreviewedRequired,
+} from "@/components/assistant/proposal-preview/preview-gate";
+import { useCallback, useState } from "react";
 import { Notice } from "../artifact-body-parts";
+import { ReviewedChange, ReviewedPlan } from "./decision-review";
 
 /** Where a decision stands, read from the proposals or plan behind it. */
 function decisionState(statuses: readonly string[]): "pending" | "approved" | "dismissed" {
@@ -29,6 +35,11 @@ const DECISION_ROWS = 8;
  * make it here. Approving and setting aside go through the same decision
  * mutations as the approval box, and the state follows the proposals however
  * they are decided.
+ *
+ * A change the server approves only with the digest of a preview the person
+ * was shown has its preview drawn here, and Approve waits until every one of
+ * them is on screen; the approval carries each digest. Internal changes go
+ * without one and are recorded as approved unreviewed.
  */
 export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
@@ -62,19 +73,43 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
           ? "dismissed"
           : "approved"
       : decisionState(proposals.map((proposal) => proposal.status));
-  const ids = proposals
-    .filter((proposal) => proposal.status === "Pending")
-    .map((proposal) => proposal.id);
+  const pending = proposals.filter((proposal) => proposal.status === "Pending");
+  const ids = pending.map((proposal) => proposal.id);
+
+  const [shown, setShown] = useState<ReadonlyMap<string, string>>(new Map());
+  const onShown = useCallback((id: string, digest: string) => {
+    setShown((previous) =>
+      previous.get(id) === digest ? previous : new Map(previous).set(id, digest),
+    );
+  }, []);
+  const planReviewed = plan !== null && proposals.some((proposal) => proposal.reviewRequired);
+  const reviewing = plan !== null ? [] : pending.filter((proposal) => proposal.reviewRequired);
+  const unseen =
+    plan !== null
+      ? planReviewed && (shown.get(plan.id) ?? "") === ""
+        ? 1
+        : 0
+      : unreviewedRequired(pending, shown).length;
 
   const decide = useApiMutation({
     mutationFn: async (decision: "Accepted" | "Rejected") => {
-      const input = { decision, reasonCode: decision === "Rejected" ? "not_now" : "" };
+      const approving = decision === "Accepted";
+      const input = { decision, reasonCode: approving ? "" : "not_now" };
       if (plan !== null) {
-        await decideMyPlan(plan.id, input);
+        await decideMyPlan(plan.id, {
+          ...input,
+          previewDigest: approving ? shown.get(plan.id) : undefined,
+        });
       } else if (ids.length === 1) {
-        await decideMyProposal(ids[0], input);
+        await decideMyProposal(ids[0], {
+          ...input,
+          previewDigest: approving ? shown.get(ids[0]) : undefined,
+        });
       } else {
-        await decideMyProposals(ids, input);
+        await decideMyProposals(ids, {
+          ...input,
+          previewDigests: approving ? batchPreviewDigests(ids, shown) : undefined,
+        });
       }
     },
     onSuccess: () => invalidateProposalViews(queryClient, artifact.threadId),
@@ -127,6 +162,13 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
           <div className="dk-ax-decm">{t("+ {0} more", proposals.length - DECISION_ROWS)}</div>
         )}
       </div>
+      {state === "pending" && planReviewed && plan !== null && (
+        <ReviewedPlan planId={plan.id} onShown={onShown} />
+      )}
+      {state === "pending" &&
+        reviewing.map((proposal) => (
+          <ReviewedChange key={proposal.id} proposal={proposal} onShown={onShown} />
+        ))}
       {state === "pending" && ids.length + (plan !== null ? 1 : 0) > 0 && (
         <div className="dk-ax-acts">
           <Button
@@ -137,7 +179,18 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
             {t("Not now")}
           </Button>
           <span className="flex-1" />
-          <Button disabled={decide.isPending} onClick={() => decide.mutate("Accepted")}>
+          {unseen > 0 && (
+            <span className="text-muted-foreground text-sm">
+              {t(
+                "{0, plural, one {Waiting for # preview to load} other {Waiting for # previews to load}}",
+                unseen,
+              )}
+            </span>
+          )}
+          <Button
+            disabled={decide.isPending || unseen > 0}
+            onClick={() => decide.mutate("Accepted")}
+          >
             {t("{0, plural, one {Approve # change} other {Approve # changes}}", proposals.length)}
           </Button>
         </div>

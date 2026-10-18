@@ -1,4 +1,6 @@
+import { decimalToCents } from "@/lib/decimal-cents";
 import type { AgentControl } from "@/lib/graphql/agent-control";
+import { formatMinor } from "@trenova/shared/lib/benefits";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Ic, type IcName } from "../kit/ic";
 import { SecH } from "../kit/layout";
@@ -46,6 +48,15 @@ export function OrganizationWide({
           ? t("{0} per person", control.personMonthlyMessages.toLocaleString())
           : t("Unlimited"),
       on: control.personMonthlyMessages > 0,
+    },
+    {
+      icon: "dollar",
+      label: t("Money on their own"),
+      value:
+        control.agentMoneyCallCeiling === "0.00" || control.agentMoneyRunCalls === 0
+          ? t("A person approves every change")
+          : t("Up to {0} a change", formatMinor(decimalToCents(control.agentMoneyCallCeiling))),
+      on: control.agentMoneyCallCeiling !== "0.00" && control.agentMoneyRunCalls > 0,
     },
     {
       icon: "database",

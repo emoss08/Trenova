@@ -113,6 +113,7 @@ func (s *Service) Update(
 	if req.LearningOff != nil {
 		control.LearningOff = *req.LearningOff
 	}
+	applyAgentMoney(control, &req.AgentMoney)
 
 	me := errortypes.NewMultiError()
 	consentChanged := s.applyTrainingConsent(control, req.AITrainingConsent, actor, me)
@@ -145,7 +146,7 @@ func (s *Service) Update(
 		PreviousState:  jsonutils.MustToJSON(&previous),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment(agentControlAuditComment(consentChanged, updated))); err != nil {
+	}, agentControlAuditOptions(ctx, consentChanged, &previous, updated)...); err != nil {
 		s.l.Error("failed to log agent control audit", zap.Error(err))
 	}
 
@@ -273,12 +274,60 @@ func (s *Service) applyTrainingConsent(
 	return control.SetAITrainingConsent(*consent, userID, s.now())
 }
 
-func agentControlAuditComment(consentChanged bool, control *tenant.AgentControl) string {
+func applyAgentMoney(control *tenant.AgentControl, update *agentports.AgentMoneyLimitsUpdate) {
+	if update.CallCeilingMinor != nil {
+		control.AgentMoneyCallCeilingMinor = *update.CallCeilingMinor
+	}
+	if update.RunCalls != nil {
+		control.AgentMoneyRunCalls = *update.RunCalls
+	}
+	if update.RunAmountMinor != nil {
+		control.AgentMoneyRunAmountMinor = *update.RunAmountMinor
+	}
+	if update.DayCalls != nil {
+		control.AgentMoneyDayCalls = *update.DayCalls
+	}
+	if update.DayAmountMinor != nil {
+		control.AgentMoneyDayAmountMinor = *update.DayAmountMinor
+	}
+}
+
+func agentControlAuditOptions(
+	ctx context.Context,
+	consentChanged bool,
+	previous, updated *tenant.AgentControl,
+) []auditports.LogOption {
+	moneyChanged := agentMoneyChanged(previous, updated)
+	options := []auditports.LogOption{
+		auditservice.WithComment(agentControlAuditComment(consentChanged, moneyChanged, updated)),
+		auditservice.WithRequest(ctx),
+	}
+	if moneyChanged {
+		options = append(options, auditservice.WithCritical())
+	}
+
+	return options
+}
+
+func agentMoneyChanged(previous, updated *tenant.AgentControl) bool {
+	return previous.AgentMoneyCallCeilingMinor != updated.AgentMoneyCallCeilingMinor ||
+		previous.AgentMoneyRunCalls != updated.AgentMoneyRunCalls ||
+		previous.AgentMoneyRunAmountMinor != updated.AgentMoneyRunAmountMinor ||
+		previous.AgentMoneyDayCalls != updated.AgentMoneyDayCalls ||
+		previous.AgentMoneyDayAmountMinor != updated.AgentMoneyDayAmountMinor
+}
+
+func agentControlAuditComment(
+	consentChanged, moneyChanged bool,
+	control *tenant.AgentControl,
+) string {
 	switch {
 	case consentChanged && control.AITrainingConsent:
 		return "AI training consent granted"
 	case consentChanged:
 		return "AI training consent withdrawn"
+	case moneyChanged:
+		return "Agent money limits changed"
 	default:
 		return "Agent control updated"
 	}

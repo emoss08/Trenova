@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,6 +49,14 @@ func validQuery() Spec {
 	}
 }
 
+func boundedAt(
+	amountMinor int64,
+) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+		return agentports.WithinMoneyBound(amountMinor)
+	}
+}
+
 func holdToPropose(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
@@ -61,6 +69,19 @@ func TestValidate_AcceptsWellFormedSpecs(t *testing.T) {
 	t.Parallel()
 
 	require.NoError(t, Validate([]Spec{validAction(), validQuery()}))
+}
+
+func TestValidate_AcceptsABoundedMoneyWrite(t *testing.T) {
+	t.Parallel()
+
+	spec := validAction()
+	spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
+	spec.Policy.Condition = &agentports.TierCondition{
+		Description: "Runs on its own only within the organization's bounds.",
+		Bounds:      boundedAt(100),
+	}
+
+	require.NoError(t, Validate([]Spec{spec}))
 }
 
 /*
@@ -355,7 +376,50 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 				spec.Policy.Condition = &agentports.TierCondition{Limit: holdToPropose}
 				return []Spec{spec}
 			},
-			reason: "condition needs both a description and a limit",
+			reason: "condition needs a description and a limit or bounds",
+		},
+		{
+			name: "a condition holds a limit or bounds",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Condition = &agentports.TierCondition{Description: "Holds a call."}
+				return []Spec{spec}
+			},
+			reason: "condition needs a description and a limit or bounds",
+		},
+		{
+			name: "a money write past Ask first proves its bounds",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
+				return []Spec{spec}
+			},
+			reason: "max tier AutoExecute is above ActWithApproval",
+		},
+		{
+			name: "a money write past Ask first proves its bounds with more than a limit",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
+				spec.Policy.Condition = &agentports.TierCondition{
+					Description: "Holds a call.",
+					Limit:       holdToPropose,
+				}
+				return []Spec{spec}
+			},
+			reason: "max tier AutoExecute is above ActWithApproval",
+		},
+		{
+			name: "only a money write is bounded",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Condition = &agentports.TierCondition{
+					Description: "Within bounds.",
+					Bounds:      boundedAt(100),
+				}
+				return []Spec{spec}
+			},
+			reason: "it moves no money",
 		},
 		{
 			name: "a runtime tool never leaves",

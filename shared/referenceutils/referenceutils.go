@@ -65,3 +65,26 @@ func Plausible(candidate string) bool {
 
 	return hasDigit.MatchString(candidate)
 }
+
+func Same(a, b string) bool {
+	left, right := strings.TrimSpace(a), strings.TrimSpace(b)
+
+	return left != "" && strings.EqualFold(left, right)
+}
+
+func Mentions(reference string, sources ...string) bool {
+	reference = strings.TrimSpace(reference)
+	if reference == "" {
+		return false
+	}
+
+	for _, source := range sources {
+		for _, match := range token.FindAllString(source, -1) {
+			if strings.EqualFold(match, reference) {
+				return true
+			}
+		}
+	}
+
+	return false
+}

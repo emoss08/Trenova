@@ -995,6 +995,16 @@ export type AgentContextProvider =
   | 'User';
 
 export type AgentControlInput = {
+  /** Absent leaves the most one automatic money change may move as it is. */
+  agentMoneyCallCeiling?: string | null | undefined;
+  /** Absent leaves the money the agents may move on their own in a day as it is. */
+  agentMoneyDayAmount?: string | null | undefined;
+  /** Absent leaves the number of automatic money changes a day may hold as it is. */
+  agentMoneyDayCalls?: number | null | undefined;
+  /** Absent leaves the money a run may move on its own as it is. */
+  agentMoneyRunAmount?: string | null | undefined;
+  /** Absent leaves the number of automatic money changes a run may make as it is. */
+  agentMoneyRunCalls?: number | null | undefined;
   /** Absent leaves training consent as it is. Only a signed-in person can change it. */
   aiTrainingConsent?: boolean | null | undefined;
   /** @deprecated Enable or disable the billing exception agent definition instead */
@@ -10175,7 +10185,7 @@ export type UpdateAgentCapabilitiesMutationVariables = Exact<{
 
 export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10194,7 +10204,7 @@ export type AiTrainingExportHistoryQueryVariables = Exact<{ [key: string]: never
 
 export type AiTrainingExportHistoryQuery = { aiTrainingExportHistory: Array<{ exportId: string, examples: number, trainExamples: number, validationExamples: number, consentGrantedAt: number, exportedAt: number }> };
 
-export type PendingProposalFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
+export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
 export type PendingPlanFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, planStatus: AgentPlanStatus, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingPlanFieldsFragment' };
 

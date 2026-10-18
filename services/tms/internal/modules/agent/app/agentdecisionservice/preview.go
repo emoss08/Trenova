@@ -16,6 +16,7 @@ import (
 const (
 	previewRefusalStale    = "preview_stale"
 	previewRefusalConflict = "preview_conflict"
+	previewRefusalRequired = "preview_required"
 	sha256HexLength        = 64
 )
 
@@ -36,7 +37,11 @@ type shownPreview struct {
 //   - A digest the decider sent that no longer matches is a conflict, and
 //     nothing is recorded: a person only approves what they were shown.
 //   - An approval without a digest is recorded, with the preview it ran
-//     against, as not reviewed.
+//     against, as not reviewed, but only for an internal or personal write
+//     from a run that read nothing from outside. A change that moves money,
+//     that a customer or a driver sees, that is sent outside the
+//     organization, or that a tainted run proposed is refused until its
+//     decider has been shown its preview.
 //
 // A rejection records only the digest its decider sent. A plan's step
 // arrives with the preview the plan was decided on, projected from the
@@ -57,11 +62,18 @@ func (s *Service) settlePreview(
 		return &shownPreview{digest: req.PreviewDigest}, nil
 	}
 
+	needsReview := s.needsReview(proposal, req.Modifications)
+
 	if req.StepPreview != nil {
+		reviewed := req.StepPreviewReviewed && req.StepPreview.Digest != ""
+		if needsReview && !reviewed {
+			return nil, agent.ReviewRequiredError()
+		}
+
 		return &shownPreview{
 			preview:       req.StepPreview,
 			digest:        req.StepPreview.Digest,
-			reviewed:      req.StepPreviewReviewed && req.StepPreview.Digest != "",
+			reviewed:      reviewed,
 			targetVersion: req.StepPreview.TargetVersion,
 		}, nil
 	}
@@ -70,7 +82,14 @@ func (s *Service) settlePreview(
 	// own: after the steps before it have run, its record has moved by design,
 	// and the plan settled what was approved.
 	if s.previews == nil || req.WithinPlan {
+		if needsReview {
+			return nil, agent.ReviewRequiredError()
+		}
+
 		return &shownPreview{}, nil
+	}
+	if needsReview && req.PreviewDigest == "" {
+		return nil, agent.ReviewRequiredError()
 	}
 
 	previewReq := &agentports.ProposalPreviewRequest{
@@ -111,7 +130,27 @@ func (s *Service) settlePreview(
 	}, nil
 }
 
+func (s *Service) needsReview(proposal *agent.AgentProposal, modifications map[string]any) bool {
+	if proposal.ApprovalNeedsReview() {
+		return true
+	}
+	if len(modifications) == 0 {
+		return false
+	}
+	if s.executor == nil {
+		return true
+	}
+
+	egress, known := s.executor.CallEgress(proposal, modifications)
+
+	return !known || egress.ApprovalNeedsReview()
+}
+
 func previewRefusal(err error) string {
+	if agent.IsReviewRequired(err) {
+		return previewRefusalRequired
+	}
+
 	var conflict *errortypes.ConflictError
 	if errors.As(err, &conflict) {
 		return previewRefusalConflict

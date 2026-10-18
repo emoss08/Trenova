@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -48,6 +48,13 @@ func (f *fakeBudgets) CheckTool(
 	f.asked = req.ToolName
 
 	return f.refusal, nil
+}
+
+func (f *fakeBudgets) MoneyAllowance(
+	context.Context,
+	agentports.MoneyAllowanceRequest,
+) (agent.MoneyAllowance, error) {
+	return agent.MoneyAllowance{}, nil
 }
 
 func (f *fakeBudgets) Status(

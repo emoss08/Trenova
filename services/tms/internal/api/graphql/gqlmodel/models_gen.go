@@ -899,6 +899,16 @@ type AgentControlInput struct {
 	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
 	// Absent leaves whether agents learn from their work as it is.
 	LearningOff *bool `json:"learningOff,omitempty"`
+	// Absent leaves the most one automatic money change may move as it is.
+	AgentMoneyCallCeiling *string `json:"agentMoneyCallCeiling,omitempty"`
+	// Absent leaves the number of automatic money changes a run may make as it is.
+	AgentMoneyRunCalls *int `json:"agentMoneyRunCalls,omitempty"`
+	// Absent leaves the money a run may move on its own as it is.
+	AgentMoneyRunAmount *string `json:"agentMoneyRunAmount,omitempty"`
+	// Absent leaves the number of automatic money changes a day may hold as it is.
+	AgentMoneyDayCalls *int `json:"agentMoneyDayCalls,omitempty"`
+	// Absent leaves the money the agents may move on their own in a day as it is.
+	AgentMoneyDayAmount *string `json:"agentMoneyDayAmount,omitempty"`
 	// The version the person loaded. When someone saved since, the update is
 	// refused with who saved, when and what they changed. Absent applies the
 	// update to whatever is there.

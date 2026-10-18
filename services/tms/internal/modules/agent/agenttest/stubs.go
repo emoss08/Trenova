@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -224,6 +224,7 @@ type StubActionTool struct {
 	Egress agent.EgressClass
 	// CarriesTaint hands the tool the run's taint, as remember is.
 	CarriesTaint bool
+	MoneyMinor   *int64
 }
 
 func (t *StubActionTool) Name() string        { return t.ToolName }
@@ -253,7 +254,7 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 		operation = permission.OpUpdate
 	}
 
-	return agentports.ToolPolicy{
+	policy := agentports.ToolPolicy{
 		Name:          t.ToolName,
 		Kind:          agent.ToolKindAction,
 		Resource:      resource,
@@ -269,6 +270,17 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     "A stub write.",
 	}
+	if egress == agent.EgressMoney && t.MoneyMinor != nil {
+		amount := *t.MoneyMinor
+		policy.Condition = &agentports.TierCondition{
+			Description: "A stub money write within its bounds.",
+			Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+				return agentports.WithinMoneyBound(amount)
+			},
+		}
+	}
+
+	return policy
 }
 
 func (t *StubActionTool) Execute(

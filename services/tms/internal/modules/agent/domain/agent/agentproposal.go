@@ -85,6 +85,7 @@ type AgentProposal struct {
 	Taint       *RunTaint   `json:"taint"       bun:"taint,type:JSONB,nullzero"`
 	EgressClass EgressClass `json:"egressClass" bun:"egress_class,type:VARCHAR(30),nullzero"`
 	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,notnull"`
+	MoneyMinor  *int64      `json:"moneyMinor"  bun:"money_minor,type:BIGINT,nullzero"`
 
 	// TraceID and SpanID are the tool span the write was decided in, so a
 	// decision made later links back to it; StepKey is the ledger step that

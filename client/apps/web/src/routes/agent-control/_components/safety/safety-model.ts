@@ -120,6 +120,17 @@ export const HELD_BY_KEYS = [
   "personal_exemption",
   "shadow_mode",
   "simulation_mode",
+  "money_unbounded",
+  "money_unproven",
+  "money_exact_match",
+  "money_record_state",
+  "money_agent_line",
+  "money_limits_unread",
+  "money_call_ceiling",
+  "money_run_calls",
+  "money_run_amount",
+  "money_day_calls",
+  "money_day_amount",
 ] as const;
 
 /** Every reason a held tool goes no further, before or after outside text, each once. */
@@ -151,6 +162,28 @@ export function heldByLabel(t: TranslateFn, key: string): string {
       return t("Shadow mode");
     case "simulation_mode":
       return t("Simulation");
+    case "money_unbounded":
+      return t("Money tool with no bounds");
+    case "money_unproven":
+      return t("Money bounds not shown");
+    case "money_exact_match":
+      return t("Not an exact match");
+    case "money_record_state":
+      return t("Record past the point agents change");
+    case "money_agent_line":
+      return t("Line a person added");
+    case "money_limits_unread":
+      return t("Money limits unreadable");
+    case "money_call_ceiling":
+      return t("Over the per-change limit");
+    case "money_run_calls":
+      return t("Run's change count reached");
+    case "money_run_amount":
+      return t("Run's money limit reached");
+    case "money_day_calls":
+      return t("Day's change count reached");
+    case "money_day_amount":
+      return t("Day's money limit reached");
     default:
       return key;
   }

@@ -433,3 +433,10 @@ func (m *stubProposalRepo) ExpirePendingByThread(
 ) (int, error) {
 	return 0, nil
 }
+
+func (s *stubProposalRepo) SumAutomaticMoney(
+	context.Context,
+	agentports.SumAutomaticMoneyRequest,
+) (agent.MoneyUse, error) {
+	return agent.MoneyUse{}, nil
+}

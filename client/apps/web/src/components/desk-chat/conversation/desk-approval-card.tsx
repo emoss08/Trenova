@@ -1,6 +1,10 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
-import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  canApprove,
+  gateDigest,
+  unreviewedRequired,
+} from "@/components/assistant/proposal-preview/preview-gate";
 import {
   useApprovalGate,
   usePlanPreview,
@@ -100,24 +104,35 @@ function ProposalCard({
   const queryClient = useQueryClient();
   const { proposal } = entry;
   const view = presentProposal(proposal);
-  const previewQuery = useProposalPreview({ scope: "mine", id: proposal.id });
-  const approval = useApprovalGate(previewQuery);
-  const facts = approvalFacts(previewQuery.data, t);
-
   // Wording the person changed on the draft and sent for approval is kept on
   // the proposal, and goes with the approval as a modification of what the
-  // agent proposed. Deciding clears it on the server.
+  // agent proposed. Deciding clears it on the server. The preview is of the
+  // change with those edits, so its digest is what the approval carries.
   const edits =
     proposal.pendingModifications && Object.keys(proposal.pendingModifications).length > 0
       ? proposal.pendingModifications
       : null;
+  const previewQuery = useProposalPreview({
+    scope: "mine",
+    id: proposal.id,
+    modifications: edits,
+  });
+  const approval = useApprovalGate(previewQuery);
+  const facts = approvalFacts(previewQuery.data, t);
+  const previewDigest = gateDigest(approval.gate);
+
   const mutation = useMutation({
     mutationFn: () =>
       decideMyProposal(
         proposal.id,
         edits
-          ? { decision: "Modified", reasonCode: "modified_from_desk", modifications: edits }
-          : { decision: "Accepted", reasonCode: "", previewDigest: gateDigest(approval.gate) },
+          ? {
+              decision: "Modified",
+              reasonCode: "modified_from_desk",
+              modifications: edits,
+              previewDigest,
+            }
+          : { decision: "Accepted", reasonCode: "", previewDigest },
       ),
     onMutate: () =>
       hold(undo, {
@@ -146,7 +161,7 @@ function ProposalCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = canApprove(approval.gate) && !mutation.isPending;
+  const approvable = canApprove(approval.gate, proposal.reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -157,6 +172,7 @@ function ProposalCard({
     <CardRow
       title={view.title}
       facts={facts}
+      unreviewable={approval.gate.state === "unavailable" && proposal.reviewRequired}
       reversible={view.reversible}
       changed={approval.changed}
       stale={approval.gate.state === "stale"}
@@ -233,7 +249,8 @@ function PlanCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = canApprove(approval.gate) && !mutation.isPending;
+  const reviewRequired = steps.some((step) => step.reviewRequired);
+  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -244,6 +261,7 @@ function PlanCard({
     <CardRow
       title={title}
       facts={facts}
+      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
       countLabel={t("{0, plural, one {# step} other {# steps}}", plan.stepCount)}
       reversible={reversible}
       changed={approval.changed}
@@ -273,6 +291,10 @@ function BatchCard({
   const sample = approvalFacts(previewQuery.data, t);
   const facts: ApprovalFacts = { ...sample, count: proposals.length };
   const reversible = proposals.every((proposal) => presentProposal(proposal).reversible);
+  // Only the first change's preview is on this row. Changes the server takes
+  // only once their preview has been shown are approved from Review, where
+  // each of them is read; the rest may be approved from here, unreviewed.
+  const needsReview = unreviewedRequired(proposals, new Map()).length;
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -306,7 +328,7 @@ function BatchCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = !mutation.isPending;
+  const approvable = needsReview === 0 && !mutation.isPending;
   const approve = () => mutation.mutate();
   useApproveShortcut(approveRef, approve, approvable);
 
@@ -314,6 +336,7 @@ function BatchCard({
     <CardRow
       title={view.title}
       facts={facts}
+      reviewFirst={needsReview}
       reversible={reversible}
       changed={false}
       approvable={approvable}
@@ -348,6 +371,8 @@ function CardRow({
   countLabel,
   reversible,
   changed,
+  unreviewable = false,
+  reviewFirst = 0,
   stale = false,
   approvable,
   onApprove,
@@ -363,6 +388,10 @@ function CardRow({
   changed: boolean;
   /** Records changed since the agent drafted it; the server will not take an approval. */
   stale?: boolean;
+  /** Its preview could not be read, and the server approves it only once one is shown. */
+  unreviewable?: boolean;
+  /** How many changes of a batch must have their preview read in Review before approving. */
+  reviewFirst?: number;
   approvable: boolean;
   onApprove: () => void;
   onReview: () => void;
@@ -468,6 +497,15 @@ function CardRow({
         <span className="dk-dcx-d">
           {changed ? (
             t("This changed since it was drafted. Read it again before approving.")
+          ) : unreviewable ? (
+            t(
+              "Its preview could not be read, and this change is approved only once you've seen it.",
+            )
+          ) : reviewFirst > 0 ? (
+            t(
+              "{0, plural, one {Review # change before approving: it is approved only once you've seen its preview} other {Review # changes before approving: each is approved only once you've seen its preview}}",
+              reviewFirst,
+            )
           ) : facts.field ? (
             <>
               {facts.field.label} <span className="sr-only">{t("from")}</span>
@@ -478,24 +516,47 @@ function CardRow({
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
         </span>
       </span>
-      <Button variant="quiet" size="sm" className={cn(warnButton, leadButton)} onClick={onReview}>
-        {t("Review")}
-      </Button>
-      <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
-        {t("Not now")}
-      </Button>
-      <Button
-        size="sm"
-        className={cn("dk-apv-b", approveButton)}
-        disabled={!approvable}
-        aria-keyshortcuts="Meta+Enter"
-        onClick={onApprove}
-      >
-        {t("Approve")}
-        <span className="dk-kbd" aria-hidden>
-          ⌘↵
-        </span>
-      </Button>
+      {reviewFirst > 0 ? (
+        <>
+          <Button
+            variant="quiet"
+            size="sm"
+            className={cn(warnButton, leadButton)}
+            onClick={onDefer}
+          >
+            {t("Not now")}
+          </Button>
+          <Button size="sm" className={approveButton} onClick={onReview}>
+            {t("Review {0}", reviewFirst)}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            variant="quiet"
+            size="sm"
+            className={cn(warnButton, leadButton)}
+            onClick={onReview}
+          >
+            {t("Review")}
+          </Button>
+          <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
+            {t("Not now")}
+          </Button>
+          <Button
+            size="sm"
+            className={cn("dk-apv-b", approveButton)}
+            disabled={!approvable}
+            aria-keyshortcuts="Meta+Enter"
+            onClick={onApprove}
+          >
+            {t("Approve")}
+            <span className="dk-kbd" aria-hidden>
+              ⌘↵
+            </span>
+          </Button>
+        </>
+      )}
     </div>
   );
 }

@@ -25,6 +25,8 @@ const (
 	HeldByBusinessHours = "business_hours"
 )
 
+type MoneyAllowanceReader func(context.Context) (agent.MoneyAllowance, error)
+
 type DecideInput struct {
 	Policy          agentports.ToolPolicy
 	Params          agentports.ToolExecuteParams
@@ -32,13 +34,15 @@ type DecideInput struct {
 	Unattended      bool
 	TierSetByPerson bool
 	Taint           *agent.RunTaint
+	MoneyAllowance  MoneyAllowanceReader
 }
 
 type Decision struct {
-	Tier   agent.AutonomyTier
-	Egress agent.EgressClass
-	HeldBy []string
-	Source agent.TierSource
+	Tier       agent.AutonomyTier
+	Egress     agent.EgressClass
+	HeldBy     []string
+	Source     agent.TierSource
+	MoneyMinor *int64
 }
 
 func HeldWhenTainted(class agent.EgressClass) bool {
@@ -62,7 +66,12 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	if call.MaxTier.IsValid() {
 		decision.lower(call.MaxTier, HeldByEgressClass)
 	}
-	decision.lower(call.Egress.Ceiling(), HeldByEgressClass)
+	taintHolds := policy.TaintHolds(in.Params, call) && (in.Taint == nil || in.Taint.Tainted())
+	if call.Egress == agent.EgressMoney {
+		decision.boundMoney(ctx, &in, taintHolds)
+	} else {
+		decision.lower(call.Egress.Ceiling(), HeldByEgressClass)
+	}
 
 	if policy.Condition != nil && policy.Condition.Limit != nil {
 		decision.lower(conditionLimit(ctx, policy.Condition, in.Params), HeldByCondition)
@@ -75,9 +84,12 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 		decision.lower(maxTier(policy), HeldByToolMax)
 	}
 
-	if policy.TaintHolds(in.Params, call) && (in.Taint == nil || in.Taint.Tainted()) {
+	if taintHolds {
 		decision.lower(agent.TierActWithApproval, HeldByTainted)
 		decision.hold(HeldByTainted)
+	}
+	if decision.Tier != agent.TierAutoExecute {
+		decision.MoneyMinor = nil
 	}
 
 	return decision
@@ -156,6 +168,57 @@ func TierSetByPerson(
 	}
 
 	return trust == nil || !trust.HoldsEarnedTier(definition.ToolTiers[toolName])
+}
+
+func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds bool) {
+	if d.Tier != agent.TierAutoExecute {
+		return
+	}
+	if !in.Policy.Bounded() {
+		d.lower(agent.TierActWithApproval, agent.HeldByMoneyUnbounded)
+		return
+	}
+	if taintHolds {
+		return
+	}
+	if held, amount := moneyHeld(ctx, in); held != "" {
+		d.lower(agent.TierActWithApproval, held)
+	} else {
+		d.MoneyMinor = &amount
+	}
+}
+
+func moneyHeld(ctx context.Context, in *DecideInput) (held string, amountMinor int64) {
+	check, proven := provenBound(ctx, in)
+	if !proven {
+		return agent.HeldByMoneyUnproven, 0
+	}
+	if !check.Within {
+		if slices.Contains(agent.MoneyConditionHeldByKeys(), check.Held) {
+			return check.Held, 0
+		}
+		return agent.HeldByMoneyUnproven, 0
+	}
+	if in.MoneyAllowance == nil {
+		return agent.HeldByMoneyLimitsUnread, 0
+	}
+
+	allowance, err := in.MoneyAllowance(ctx)
+	if err != nil {
+		return agent.HeldByMoneyLimitsUnread, 0
+	}
+
+	return allowance.Exceeded(check.AmountMinor), check.AmountMinor
+}
+
+func provenBound(ctx context.Context, in *DecideInput) (bound agentports.MoneyBound, proven bool) {
+	defer func() {
+		if recover() != nil {
+			bound, proven = agentports.MoneyBound{}, false
+		}
+	}()
+
+	return in.Policy.Condition.Bounds(ctx, in.Params), true
 }
 
 func (d *Decision) lower(limit agent.AutonomyTier, key string) {

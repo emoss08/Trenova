@@ -42,7 +42,7 @@ func (r *repository) GetOrCreate(
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.AgentControl, error) {
 	newDefault := func() *tenant.AgentControl {
-		return &tenant.AgentControl{
+		control := &tenant.AgentControl{
 			BusinessUnitID:     tenantInfo.BuID,
 			OrganizationID:     tenantInfo.OrgID,
 			ShadowMode:         true,
@@ -50,6 +50,9 @@ func (r *repository) GetOrCreate(
 			BriefingEnabled:    true,
 			BriefingHourLocal:  tenant.DefaultBriefingHourLocal,
 		}
+		control.ApplyAgentMoneyDefaults()
+
+		return control
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.AgentControl]{
@@ -117,6 +120,11 @@ func (r *repository) Update(
 			Set(cols.PromotionThreshold.Set(), entity.PromotionThreshold).
 			Set(cols.PersonMonthlyMessages.Set(), entity.PersonMonthlyMessages).
 			Set(cols.LearningOff.Set(), entity.LearningOff).
+			Set(cols.AgentMoneyCallCeilingMinor.Set(), entity.AgentMoneyCallCeilingMinor).
+			Set(cols.AgentMoneyRunCalls.Set(), entity.AgentMoneyRunCalls).
+			Set(cols.AgentMoneyRunAmountMinor.Set(), entity.AgentMoneyRunAmountMinor).
+			Set(cols.AgentMoneyDayCalls.Set(), entity.AgentMoneyDayCalls).
+			Set(cols.AgentMoneyDayAmountMinor.Set(), entity.AgentMoneyDayAmountMinor).
 			Set(cols.AITrainingConsent.Set(), entity.AITrainingConsent).
 			Set(cols.AITrainingConsentChangedAt.Set(), entity.AITrainingConsentChangedAt).
 			Set(cols.AITrainingConsentChangedByID.Set(), entity.AITrainingConsentChangedByID).

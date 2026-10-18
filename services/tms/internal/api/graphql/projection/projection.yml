@@ -1,4 +1,8 @@
 aliases:
+  AgentControl:
+    agentMoneyCallCeiling: agentMoneyCallCeilingMinor
+    agentMoneyRunAmount: agentMoneyRunAmountMinor
+    agentMoneyDayAmount: agentMoneyDayAmountMinor
   TenderOffer:
     counterMarginPercent: counterMargin
   WatchtowerItem:
@@ -206,6 +210,7 @@ virtuals:
     - decisionTimeoutSeconds
   AgentProposal:
     - run
+    - reviewRequired
     - parameterFields
     - modifications
     - traceUrl
@@ -571,6 +576,9 @@ modelOverrides:
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
 
 always:
+  AgentProposal:
+    - tainted
+    - egressClass
   WatchtowerItem:
     - status
     - resolvedAt

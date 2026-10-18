@@ -47,6 +47,7 @@ function node(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode
   return {
     __typename: "AgentProposal",
     id: "aprop_1",
+    reviewRequired: false,
     organizationId: "org_1",
     businessUnitId: "bu_1",
     runId: "arun_1",

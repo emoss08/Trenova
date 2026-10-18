@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -158,6 +158,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 		steps = append(steps, &agent.AgentProposal{
 			ID: pulid.MustNew("ap_"), OrganizationID: orgID, BusinessUnitID: buID, RunID: runID,
 			ToolName: "assign_move", Status: agent.ProposalStatusPending, PlanStep: i,
+			EgressClass: agent.EgressInternal,
 		})
 	}
 
@@ -288,4 +289,46 @@ func TestDecide_RefusesAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
 	require.ErrorContains(t, err, "Shipment Desk")
 	assert.Empty(t, h.decider.decided)
 	assert.Empty(t, h.plans.statuses)
+}
+
+func (f *fakeSteps) SumAutomaticMoney(
+	context.Context,
+	agentports.SumAutomaticMoneyRequest,
+) (agent.MoneyUse, error) {
+	return agent.MoneyUse{}, nil
+}
+
+func TestDecide_AGatedPlanApprovedUnseenIsRefusedBeforeAnyStep(t *testing.T) {
+	t.Parallel()
+
+	for name, gate := range map[string]func(*agent.AgentProposal){
+		"money":   func(step *agent.AgentProposal) { step.EgressClass = agent.EgressMoney },
+		"tainted": func(step *agent.AgentProposal) { step.Tainted = true },
+		"unknown": func(step *agent.AgentProposal) { step.EgressClass = "" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			h := newHarness(t, 3, false)
+			gate(h.steps.steps[1])
+
+			_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+
+			require.Error(t, err)
+			assert.True(t, agent.IsReviewRequired(err))
+			assert.Empty(t, h.decider.decided, "no step is decided")
+			assert.Empty(t, h.plans.statuses, "the plan is not claimed")
+		})
+	}
+}
+
+func TestDecide_AGatedPlanCanAlwaysBeRejectedUnseen(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 2, false)
+	h.steps.steps[0].EgressClass = agent.EgressExternalRecipient
+	h.req.Decision = agent.DecisionRejected
+
+	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
 }

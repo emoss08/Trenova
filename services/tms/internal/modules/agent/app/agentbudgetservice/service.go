@@ -5,18 +5,24 @@ package agentbudgetservice
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var errNoDefinition = errors.New("money limits are read for an agent, and none was given")
 
 type Params struct {
 	fx.In
@@ -26,6 +32,7 @@ type Params struct {
 	Runs          agentports.AgentRunRepository
 	Proposals     agentports.AgentProposalRepository
 	Organizations tenantports.OrganizationRepository
+	Controls      tenantports.AgentControlRepository
 }
 
 type Service struct {
@@ -33,8 +40,21 @@ type Service struct {
 	usage     costReader
 	runs      runCounter
 	proposals toolCounter
+	money     moneyCounter
+	controls  controlReader
 	zones     timezoneReader
 	now       func() int64
+}
+
+type moneyCounter interface {
+	SumAutomaticMoney(
+		ctx context.Context,
+		req agentports.SumAutomaticMoneyRequest,
+	) (agent.MoneyUse, error)
+}
+
+type controlReader interface {
+	GetOrCreate(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.AgentControl, error)
 }
 
 type costReader interface {
@@ -64,6 +84,8 @@ func New(p Params) agentports.AgentBudgetService {
 		usage:     p.Usage,
 		runs:      p.Runs,
 		proposals: p.Proposals,
+		money:     p.Proposals,
+		controls:  p.Controls,
 		zones:     organizationZones{organizations: p.Organizations, logger: p.Logger},
 		now:       timeutils.NowUnix,
 	}
@@ -156,6 +178,51 @@ func (s *Service) CheckTool(
 	}
 
 	return agentports.BudgetRefusal{}, nil
+}
+
+func (s *Service) MoneyAllowance(
+	ctx context.Context,
+	req agentports.MoneyAllowanceRequest,
+) (agent.MoneyAllowance, error) {
+	if req.Definition == nil {
+		return agent.MoneyAllowance{}, errNoDefinition
+	}
+
+	tenantInfo := tenantOf(req.Definition)
+	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return agent.MoneyAllowance{}, fmt.Errorf("read agent money limits: %w", err)
+	}
+
+	day, err := s.money.SumAutomaticMoney(ctx, agentports.SumAutomaticMoneyRequest{
+		TenantInfo: tenantInfo,
+		Since:      s.windows(ctx, tenantInfo).dayStart,
+	})
+	if err != nil {
+		return agent.MoneyAllowance{}, err
+	}
+
+	run := agent.MoneyUse{}
+	if req.RunID.IsNotNil() {
+		if run, err = s.money.SumAutomaticMoney(ctx, agentports.SumAutomaticMoneyRequest{
+			TenantInfo: tenantInfo,
+			RunID:      req.RunID,
+		}); err != nil {
+			return agent.MoneyAllowance{}, err
+		}
+	}
+
+	return agent.MoneyAllowance{
+		Limits: agent.MoneyLimits{
+			CallCeilingMinor: control.AgentMoneyCallCeilingMinor,
+			RunCalls:         control.AgentMoneyRunCalls,
+			RunAmountMinor:   control.AgentMoneyRunAmountMinor,
+			DayCalls:         control.AgentMoneyDayCalls,
+			DayAmountMinor:   control.AgentMoneyDayAmountMinor,
+		},
+		Run: run.Plus(req.Unrecorded),
+		Day: day.Plus(req.Unrecorded),
+	}, nil
 }
 
 func (s *Service) Status(

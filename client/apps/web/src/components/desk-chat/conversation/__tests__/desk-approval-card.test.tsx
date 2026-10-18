@@ -11,6 +11,7 @@ import { DeskApprovalCard } from "../desk-approval-card";
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
 const decideMyProposal = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const decideMyProposals = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
@@ -20,7 +21,7 @@ vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
 
 vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideMyProposal: (...args: unknown[]) => decideMyProposal(...args),
-  decideMyProposals: vi.fn(),
+  decideMyProposals: (...args: unknown[]) => decideMyProposals(...args),
   decideMyPlan: vi.fn(),
   decideAgentProposal: vi.fn(),
 }));
@@ -33,6 +34,7 @@ afterEach(() => {
   cleanup();
   fetchProposalPreview.mockReset();
   decideMyProposal.mockReset();
+  decideMyProposals.mockReset();
 });
 
 /* services.AssistantProposal as the thread's routes serve it; outside any plan. */
@@ -56,6 +58,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     decidedAt: null,
     decidedByUserId: "",
     decisionNote: "",
+    reviewRequired: true,
     ...overrides,
   };
 }
@@ -68,19 +71,20 @@ function entryOf(proposals: AssistantProposal[]): ApprovalEntry {
   return first;
 }
 
-function renderCard() {
+function renderCard(proposals: AssistantProposal[] = [proposal()]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const approveRef = { current: null as (() => void) | null };
   const undo = { start: vi.fn(), scheduled: vi.fn(), clear: vi.fn() };
   const onDecided = vi.fn();
+  const onReview = vi.fn();
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <DeskApprovalCard
           threadId="athr_1"
-          entry={entryOf([proposal()])}
+          entry={entryOf(proposals)}
           approveRef={approveRef}
-          onReview={vi.fn()}
+          onReview={onReview}
           onDefer={vi.fn()}
           onDecided={onDecided}
           undo={undo}
@@ -89,7 +93,7 @@ function renderCard() {
     </QueryClientProvider>,
   );
 
-  return { approveRef, undo, onDecided };
+  return { approveRef, undo, onDecided, onReview };
 }
 
 const approve = () => screen.getByRole("button", { name: /^Approve/ });
@@ -191,5 +195,93 @@ describe("DeskApprovalCard for a change that creates records", () => {
     await waitFor(() => expect(approve()).toBeEnabled());
     expect(screen.queryByText(/shipments/)).toBeNull();
     expect(screen.queryByText(/^on /)).toBeNull();
+  });
+});
+
+/**
+ * The server approves a change that moves money, reaches a customer, a driver
+ * or someone outside, or was proposed after outside text was read, only with
+ * the digest of a preview the person was shown (services.AssistantProposal
+ * reviewRequired). Internal and personal changes may still go unreviewed.
+ */
+describe("DeskApprovalCard and changes that must be reviewed", () => {
+  it("keeps Approve off when a reviewed change's preview cannot be read", async () => {
+    fetchProposalPreview.mockRejectedValue(new Error("preview service down"));
+    const { approveRef } = renderCard([proposal({ reviewRequired: true })]);
+
+    expect(
+      await screen.findByText(
+        "Its preview could not be read, and this change is approved only once you've seen it.",
+      ),
+    ).toBeInTheDocument();
+    expect(approve()).toBeDisabled();
+    expect(approveRef.current).toBeNull();
+  });
+
+  it("still approves an internal change unreviewed when its preview cannot be read", async () => {
+    fetchProposalPreview.mockRejectedValue(new Error("preview service down"));
+    renderCard([proposal({ reviewRequired: false })]);
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
+    expect(decideMyProposal).toHaveBeenCalledWith(
+      "aprop_1",
+      expect.objectContaining({ decision: "Accepted", previewDigest: undefined }),
+    );
+  });
+
+  it("approves edited wording with the digest of the preview of those edits", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:edited" }));
+    renderCard([proposal({ reviewRequired: true, pendingModifications: { status: "AtRisk" } })]);
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    expect(fetchProposalPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "aprop_1", modifications: { status: "AtRisk" } }),
+      expect.anything(),
+    );
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
+    expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
+      decision: "Modified",
+      reasonCode: "modified_from_desk",
+      modifications: { status: "AtRisk" },
+      previewDigest: "sha256:edited",
+    });
+  });
+
+  it("sends a batch with changes that must be reviewed to Review rather than approving it", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:first" }));
+    const { onReview, approveRef } = renderCard([
+      proposal({ id: "aprop_1", reviewRequired: true }),
+      proposal({ id: "aprop_2", reviewRequired: true, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    const review = await screen.findByRole("button", { name: "Review 2" });
+    expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
+    expect(approveRef.current).toBeNull();
+    fireEvent.click(review);
+    expect(onReview).toHaveBeenCalledTimes(1);
+    expect(decideMyProposals).not.toHaveBeenCalled();
+  });
+
+  it("approves a batch of internal changes from the card", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:first" }));
+    decideMyProposals.mockResolvedValue([
+      { proposalId: "aprop_1", decision: { commitsAt: null }, error: null },
+      { proposalId: "aprop_2", decision: { commitsAt: null }, error: null },
+    ]);
+    renderCard([
+      proposal({ id: "aprop_1", reviewRequired: false }),
+      proposal({ id: "aprop_2", reviewRequired: false, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposals).toHaveBeenCalledTimes(1));
+    expect(decideMyProposals).toHaveBeenCalledWith(
+      ["aprop_1", "aprop_2"],
+      expect.objectContaining({ decision: "Accepted", previewDigests: [] }),
+    );
   });
 });

@@ -1419,6 +1419,7 @@ var SettlementLineColumns = struct {
 	AdvanceID            buncolgen.Column // "advance_id" → qualified: "dstll.advance_id"
 	EscrowAccountID      buncolgen.Column // "escrow_account_id" → qualified: "dstll.escrow_account_id"
 	ProNumber            buncolgen.Column // "pro_number" → qualified: "dstll.pro_number"
+	AddedByAgent         buncolgen.Column // "added_by_agent" → qualified: "dstll.added_by_agent"
 	CreatedAt            buncolgen.Column // "created_at" → qualified: "dstll.created_at"
 	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "dstll.updated_at"
 }{
@@ -1443,6 +1444,7 @@ var SettlementLineColumns = struct {
 	AdvanceID:            buncolgen.NewColumn("advance_id", "dstll"),
 	EscrowAccountID:      buncolgen.NewColumn("escrow_account_id", "dstll"),
 	ProNumber:            buncolgen.NewColumn("pro_number", "dstll"),
+	AddedByAgent:         buncolgen.NewColumn("added_by_agent", "dstll"),
 	CreatedAt:            buncolgen.NewColumn("created_at", "dstll"),
 	UpdatedAt:            buncolgen.NewColumn("updated_at", "dstll"),
 }
@@ -1473,6 +1475,7 @@ var SettlementLineFieldMap = map[string]string{
 	"advanceId":            "advance_id",
 	"escrowAccountId":      "escrow_account_id",
 	"proNumber":            "pro_number",
+	"addedByAgent":         "added_by_agent",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
 }
@@ -1501,6 +1504,7 @@ var SettlementLineInsertableColumns = []string{
 	"advance_id",
 	"escrow_account_id",
 	"pro_number",
+	"added_by_agent",
 	"created_at",
 	"updated_at",
 }
@@ -1591,6 +1595,7 @@ var SettlementLineFilter = struct {
 	AdvanceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advanceId" → DB: "advance_id"
 	EscrowAccountID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escrowAccountId" → DB: "escrow_account_id"
 	ProNumber            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
+	AddedByAgent         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addedByAgent" → DB: "added_by_agent"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
@@ -1656,6 +1661,9 @@ var SettlementLineFilter = struct {
 	},
 	ProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("proNumber", op, value)
+	},
+	AddedByAgent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("addedByAgent", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)

@@ -1,5 +1,7 @@
+import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type { AgentControl } from "@/lib/graphql/agent-control";
 import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 /** The organization-wide settings as the policy editor holds them. */
@@ -8,6 +10,37 @@ export const policyFormSchema = z.object({
   promotionThreshold: z.number().int().min(1).max(1000),
   learnsFromWork: z.boolean(),
   personMonthlyMessages: z.number().int().min(0),
+  agentMoney: z
+    .object({
+      callCeilingCents: z.number().int().min(0).max(100_000_000_000),
+      runCalls: z.number().int().min(0).max(10_000),
+      runAmountCents: z.number().int().min(0).max(100_000_000_000),
+      dayCalls: z.number().int().min(0).max(10_000),
+      dayAmountCents: z.number().int().min(0).max(100_000_000_000),
+    })
+    .superRefine((money, ctx) => {
+      if (money.callCeilingCents > money.runAmountCents) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["callCeilingCents"],
+          message: translate("One change cannot be more than a run's total"),
+        });
+      }
+      if (money.runAmountCents > money.dayAmountCents) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["runAmountCents"],
+          message: translate("A run's total cannot be more than the day's"),
+        });
+      }
+      if (money.runCalls > money.dayCalls) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["runCalls"],
+          message: translate("A run's number of changes cannot be more than the day's"),
+        });
+      }
+    }),
   aiTrainingConsent: z.boolean(),
   version: z.number(),
 });
@@ -20,6 +53,13 @@ export function toPolicyForm(control: AgentControl): PolicyFormValues {
     promotionThreshold: control.promotionThreshold,
     learnsFromWork: !control.learningOff,
     personMonthlyMessages: control.personMonthlyMessages,
+    agentMoney: {
+      callCeilingCents: decimalToCents(control.agentMoneyCallCeiling),
+      runCalls: control.agentMoneyRunCalls,
+      runAmountCents: decimalToCents(control.agentMoneyRunAmount),
+      dayCalls: control.agentMoneyDayCalls,
+      dayAmountCents: decimalToCents(control.agentMoneyDayAmount),
+    },
     aiTrainingConsent: control.aiTrainingConsent,
     version: control.version,
   };
@@ -41,6 +81,11 @@ export function toControlInput(
     promotionThreshold: values.promotionThreshold,
     learningOff: !values.learnsFromWork,
     personMonthlyMessages: values.personMonthlyMessages,
+    agentMoneyCallCeiling: centsToDecimal(values.agentMoney.callCeilingCents),
+    agentMoneyRunCalls: values.agentMoney.runCalls,
+    agentMoneyRunAmount: centsToDecimal(values.agentMoney.runAmountCents),
+    agentMoneyDayCalls: values.agentMoney.dayCalls,
+    agentMoneyDayAmount: centsToDecimal(values.agentMoney.dayAmountCents),
     version: values.version,
     ...(values.aiTrainingConsent === loaded.aiTrainingConsent
       ? {}

@@ -193,6 +193,25 @@ before anything is written, for `Accepted` and `Modified`:
 - otherwise the decision records `preview`, `preview_digest`, `preview_target_version` and
   `preview_reviewed` (the decision named the digest).
 
+**A digest is required by class.** An approval of a proposal whose class is money,
+customer-visible, driver-visible or external recipient, or that is tainted, must name the
+digest of the preview its decider was shown (`AgentProposal.ApprovalNeedsReview`; a proposal
+with no recorded class counts as one, so the rule fails closed). An approver's edits are
+classified again from the tool's policy with the merged parameters
+(`proposalexecutor.CallEgress`), so an edit that makes an internal write reach a customer
+needs the preview too. Without one the approval is refused before anything is recorded with
+the business error "This change must be reviewed before it is approved"
+(`agent.ReviewRequiredError`, detail `preview_required`; the decide span is marked
+`preview_required`). Internal and personal writes from a run that read nothing from outside
+may still be approved without a digest and are recorded unreviewed, as before. The rule
+lives in `settlePreview`, which every path goes through: single and batch GraphQL decisions,
+the person's own decisions from a conversation (undo window included), plans, the REST
+handlers and the commit of an approval when its undo window closes. A plan step that arrives
+without a reviewed plan preview, and a decision made where no preview service is wired, are
+refused the same way when the step is gated, and `agentplanservice` refuses a plan with any
+pending gated step that is approved without its plan digest before it claims the plan.
+Rejections never need one.
+
 A rejection is never refused over its preview — a person can always say no — and records
 only the digest it was sent, when it is one.
 
@@ -207,8 +226,8 @@ different change, never the same one again. It is not part of the decision's has
 form. A digest mismatch on an approval (of a
 proposal or a plan) is the only `ConflictError` the decide path returns; a preview whose
 changes fail validation is a validation error. A batch (`decideAgentProposals`) takes one
-digest per proposal: a mismatch fails that proposal alone, and a proposal without one is
-approved unreviewed. Withheld parts do not block an approval; the count is recorded in the
+digest per proposal: a mismatch fails that proposal alone, a gated proposal without one is
+refused alone, and an internal one without one is approved unreviewed. Withheld parts do not block an approval; the count is recorded in the
 decision's preview.
 
 A plan's steps may be filed by several agents of one turn (the conversation's agent and
@@ -228,11 +247,21 @@ an untargeted step keeps the stop at the first failure.
 `decideMyProposals` is `decideAgentProposals` for proposals raised in the caller's own
 conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
 `AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
-person had read. The approval box keeps a batch's rows mounted behind its folded **Details**
-(`keepDetailsMounted`), so the first five (`BATCH_OPEN_LIMIT`) read their previews as the box
-appears and an approval made without opening **Details** sends their digests: a batch is
-reviewed by default. A row past the first five reads its preview only once it is opened, and
-the box says how many were not previewed before such an approval records them unreviewed.
+person had read. The thread's proposals carry `reviewRequired` and GraphQL's `AgentProposal`
+has the same field, both computed by the server from the rule above, so the client never
+keeps its own list of classes. In the Desk:
+
+- the approval card above the composer shows one change's preview. It keeps Approve off for
+  a gated change whose preview cannot be read (`canApprove(gate, reviewRequired)`), and an
+  edited draft is approved with the digest of the preview of those edits. A batch with a
+  gated change offers "Review n" in place of Approve and sends the person to the decision;
+- the decision artifact (`kinds/decision`) draws the preview of every gated change, or of
+  the plan when a step is gated, and keeps Approve off until each is on screen and current;
+  the approval carries every digest (`batchPreviewDigests`). A preview of a record that moved
+  is shown but never counts;
+- the Decisions queue records each preview as its card is read, and "Decide all together"
+  keeps Approve off, naming how many must still be opened, until every gated change in the
+  batch has been read (`unreviewedRequired`).
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
@@ -398,6 +427,20 @@ bulk tools only when an administrator adds them in AI control.
 | `myProposalPreview(id, modifications)`, `myPlanPreview(id)` | `assistant:read` and the proposal or plan raised in one of the caller's conversations (`AssertOwnProposal`, `AssertOwnPlan`, the latter with `MayUseAgent`) |
 | `AgentDecision.preview` | the decision's reader; filtered again for them |
 | `AgentDecision.previewDigest`, `previewReviewed` | columns |
+
+REST callers, integrations among them, use the same digests. They read the preview first
+and echo its `digest` when they decide; a gated proposal resolved without one is refused:
+
+| Route | Needs |
+|---|---|
+| `GET /api/v1/agent-proposals/:proposalID/preview/` (optional `?modifications=` a URL-encoded JSON object of the parameters an approval would change) | `agent_proposal:read` |
+| `GET /api/v1/agent-plans/:planID/preview/` | `agent_proposal:read` |
+| `POST /api/v1/agent-proposals/:proposalID/resolve/` with `previewDigest` and `note` | `agent_proposal:update` |
+| `POST /api/v1/agent-plans/:planID/resolve/` with `previewDigest` and `note` | `agent_proposal:update` |
+
+The preview is computed for the caller exactly as the decision computes it, so the digest
+matches. Deciding stays a person's act: an API key is refused by the decision service
+whatever it sends.
 
 Previews are root queries rather than a field of `AgentProposal`: a per-row computation on a
 list would break the dataloader rule, and the arguments differ per call. The inputs

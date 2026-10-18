@@ -903,7 +903,8 @@ starts a turn on it.
    told about the first in the old order (files, agent, page, budget, room,
    history), never about a cancellation. The guard's classifier runs beside the
    context build (memories, retrieval embedding), which writes nothing, so a
-   refusal discards it; the classifier fails open after 3s. A refusal the
+   refusal discards it; the classifier fails open after 3s, and on any other failure, unless
+   `RefuseWhenUnavailable` is set, when either refuses the turn. A refusal the
    person can act on is non-retryable and its message reaches the reader as
    written.
 2. **The loop** runs in workflow code, as above.
@@ -1563,9 +1564,24 @@ allowed values, the parameter's first sentence), and a key the tool does not
 take is answered with the parameters it does. The model's own call is never
 changed; the thread records what it sent.
 
+**Money runs on its own only within bounds.** The money class runs at most Ask first. A
+money tool may run a call automatically only when its `TierCondition.Bounds` proves the call
+within bounds (`agenttoolpolicy.Decide`): its own record checks (an exact remittance or
+receipt match, an uninvoiced billing item, a settlement not yet approved, a line an agent
+added) and the amount it moves, which `agentbudgetservice.MoneyAllowance` holds against the
+organization's money limits for agents in `agent_controls` (one change's ceiling; a run's and
+a day's count and total, the day in the organization's zone and across every agent). The
+allowance counts automatic money writes already recorded (`agent_proposals.money_minor`,
+written only for a write that ran on its own) plus the turn's own unrecorded ones. A call
+outside a bound, or whose bounds or limits cannot be read, is filed as a proposal whose
+`HeldBy` names the bound (`money_call_ceiling`, `money_run_calls`, `money_exact_match`, …),
+and a tainted turn never reads the bounds at all. Two turns running at once each see what the
+other has recorded, not what it has run and not yet recorded, so the day's caps can be passed
+by at most one turn's unrecorded writes per concurrent turn.
+
 A proposal's result says why it waits (`heldReason`: the tool's tier, the
 agent's ceiling, a change that is always a person's, what it would reach, a
-condition, outside content, business hours), a permission denial says what to
+condition, outside content, business hours, or the money bound it exceeded), a permission denial says what to
 tell the person and not to try another way (`deniedAdvice`), and `remember`
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it

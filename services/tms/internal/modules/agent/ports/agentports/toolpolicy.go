@@ -94,12 +94,26 @@ func (p ToolPolicy) EgressCeiling() agent.AutonomyTier {
 
 	ceiling := agent.TierPropose
 	for _, class := range p.Egress {
-		if class.Ceiling().Above(ceiling) {
-			ceiling = class.Ceiling()
+		if limit := p.ClassCeiling(class); limit.Above(ceiling) {
+			ceiling = limit
 		}
 	}
 
 	return ceiling
+}
+
+//nolint:gocritic // ToolPolicy is held and passed by value, as its other methods take it
+func (p ToolPolicy) ClassCeiling(class agent.EgressClass) agent.AutonomyTier {
+	if class == agent.EgressMoney && p.Bounded() {
+		return agent.TierAutoExecute
+	}
+
+	return class.Ceiling()
+}
+
+//nolint:gocritic // ToolPolicy is held and passed by value, as its other methods take it
+func (p ToolPolicy) Bounded() bool {
+	return p.Condition != nil && p.Condition.Bounds != nil
 }
 
 func (p ToolPolicy) TaintHolds(params ToolExecuteParams, call CallPolicy) bool {
@@ -118,6 +132,21 @@ type CallPolicy struct {
 type TierCondition struct {
 	Description string
 	Limit       func(context.Context, ToolExecuteParams) agent.AutonomyTier
+	Bounds      func(context.Context, ToolExecuteParams) MoneyBound
+}
+
+type MoneyBound struct {
+	Within      bool
+	Held        string
+	AmountMinor int64
+}
+
+func WithinMoneyBound(amountMinor int64) MoneyBound {
+	return MoneyBound{Within: true, AmountMinor: amountMinor}
+}
+
+func OutsideMoneyBound(held string) MoneyBound {
+	return MoneyBound{Held: held}
 }
 
 type TaintHold struct {

@@ -239,7 +239,7 @@ function ProposalCard({
   const facts = useMemo(() => approvalFacts(preview, t), [preview, t]);
   const rows = useMemo(() => (preview ? diffRows(preview, t) : null), [preview, t]);
 
-  const approvable = canApprove(approval.gate);
+  const approvable = canApprove(approval.gate, node.reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
   useEffect(() => {
@@ -375,7 +375,8 @@ function PlanCard({
     [stepsQuery.data],
   );
 
-  const approvable = canApprove(approval.gate);
+  const reviewRequired = stepsQuery.data?.some((step) => step.reviewRequired) ?? true;
+  const approvable = canApprove(approval.gate, reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
   useEffect(() => {

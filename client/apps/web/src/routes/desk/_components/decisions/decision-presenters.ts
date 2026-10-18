@@ -76,6 +76,7 @@ export function asAssistantProposal(node: PlanStepNode): AssistantProposal {
     decidedAt: null,
     decidedByUserId: "",
     decisionNote: "",
+    reviewRequired: node.reviewRequired,
   };
 }
 
