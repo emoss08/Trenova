@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -20,6 +21,7 @@ import (
 )
 
 type queryLog struct {
+	mu      sync.Mutex
 	queries []string
 }
 
@@ -27,6 +29,8 @@ func (l *queryLog) Match(expected, actual string) error {
 	if !strings.Contains(actual, expected) {
 		return fmt.Errorf("query %q does not contain %q", actual, expected)
 	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if !slices.Contains(l.queries, actual) {
 		l.queries = append(l.queries, actual)
 	}
