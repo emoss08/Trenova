@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
@@ -870,11 +871,11 @@ type AssistantService interface {
 		req DeskSearchRequest,
 	) ([]DeskSearchResult, error)
 	ThreadBudget(ctx context.Context, req GetThreadRequest) (*ThreadBudget, error)
-	BrowserAvailability(
+	CommandAvailability(
 		ctx context.Context,
-		req *BrowserAvailabilityRequest,
+		req *CommandAvailabilityRequest,
 		actor *permissionports.RequestActor,
-	) (*BrowserAvailability, error)
+	) (*CommandAvailability, error)
 	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
 	ListThreadProposals(
 		ctx context.Context,
@@ -1024,13 +1025,15 @@ type MentionPage struct {
 	HasMore bool               `json:"hasMore"`
 }
 
-type BrowserAvailabilityRequest struct {
+type CommandAvailabilityRequest struct {
 	AgentID    pulid.ID
 	TenantInfo pagination.TenantInfo
 }
 
-type BrowserAvailability struct {
-	Available bool `json:"available"`
+// CommandAvailability is the extension commands (/browser, /search) the
+// person can send an agent, so the composer offers only those.
+type CommandAvailability struct {
+	Commands []agentextension.Command `json:"commands"`
 }
 
 // ThreadBudget is where a conversation's agent stands against its monthly

@@ -11488,6 +11488,15 @@
       "go/other"
     ]
   },
+  "A web search is done by this conversation's agent; send it without naming another": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A week a manager has signed off waits here until payroll picks it up.": {
     "sites": 1,
     "scope": [
@@ -222439,6 +222448,15 @@
       "go/other"
     ]
   },
+  "Say what to search the web for after /search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say what was counted: pallets, cases, pieces": {
     "sites": 1,
     "scope": [
@@ -225543,6 +225561,15 @@
     "areas": [
       "apps/web/components",
       "go/other"
+    ]
+  },
+  "Search the web and answer from what it finds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Search titles, tools, turns…": {
@@ -313769,6 +313796,15 @@
       "apps/web/components"
     ]
   },
+  "what to look up on the web": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "whoever the office finds": {
     "sites": 1,
     "scope": [
@@ -321538,6 +321574,15 @@
   },
   "{0} cannot run document extraction: {1}": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} cannot search the web. Web research has to be turned on, the agent has to hold its web tools, and you need permission to use them.": {
+    "sites": 1,
     "scope": [
       "go"
     ],

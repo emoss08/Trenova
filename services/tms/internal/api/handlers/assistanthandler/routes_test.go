@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -47,11 +48,11 @@ func (e *readOnlyEngine) Check(
 type reachedService struct {
 	agentports.AssistantService
 
-	reached      bool
-	listed       *agentports.ListThreadsRequest
-	counted      *agentports.CountThreadShelvesRequest
-	browser      *agentports.BrowserAvailabilityRequest
-	browserActor *permissionports.RequestActor
+	reached       bool
+	listed        *agentports.ListThreadsRequest
+	counted       *agentports.CountThreadShelvesRequest
+	commands      *agentports.CommandAvailabilityRequest
+	commandsActor *permissionports.RequestActor
 }
 
 func (s *reachedService) ListThreads(
@@ -112,16 +113,18 @@ func (s *reachedService) SaveProposalEdits(
 	return &agentports.ProposalEdits{}, nil
 }
 
-func (s *reachedService) BrowserAvailability(
+func (s *reachedService) CommandAvailability(
 	_ context.Context,
-	req *agentports.BrowserAvailabilityRequest,
+	req *agentports.CommandAvailabilityRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.BrowserAvailability, error) {
+) (*agentports.CommandAvailability, error) {
 	s.reached = true
-	s.browser = req
-	s.browserActor = actor
+	s.commands = req
+	s.commandsActor = actor
 
-	return &agentports.BrowserAvailability{Available: true}, nil
+	return &agentports.CommandAvailability{
+		Commands: []agentextension.Command{agentextension.CommandSearch},
+	}, nil
 }
 
 func call(t *testing.T, method, path, body string) (*reachedService, int) {
@@ -222,26 +225,26 @@ func TestStartingAConversationStillNeedsMoreThanReading(t *testing.T) {
 	assert.False(t, service.reached)
 }
 
-func TestBrowserAvailabilityNeedsOnlyTheAssistant(t *testing.T) {
+func TestCommandAvailabilityNeedsOnlyTheAssistant(t *testing.T) {
 	t.Parallel()
 
 	agentID := pulid.MustNew("agdef_")
 	service, status := call(
-		t, http.MethodGet, "/assistant/agents/"+agentID.String()+"/browser/", "",
+		t, http.MethodGet, "/assistant/agents/"+agentID.String()+"/commands/", "",
 	)
 
 	assert.Equal(t, http.StatusOK, status)
-	require.NotNil(t, service.browser)
-	assert.Equal(t, agentID, service.browser.AgentID)
-	require.NotNil(t, service.browserActor)
-	assert.Equal(t, service.browserActor.OrganizationID, service.browser.TenantInfo.OrgID)
-	assert.Equal(t, service.browserActor.UserID, service.browser.TenantInfo.UserID)
+	require.NotNil(t, service.commands)
+	assert.Equal(t, agentID, service.commands.AgentID)
+	require.NotNil(t, service.commandsActor)
+	assert.Equal(t, service.commandsActor.OrganizationID, service.commands.TenantInfo.OrgID)
+	assert.Equal(t, service.commandsActor.UserID, service.commands.TenantInfo.UserID)
 }
 
-func TestBrowserAvailabilityRefusesAMalformedAgent(t *testing.T) {
+func TestCommandAvailabilityRefusesAMalformedAgent(t *testing.T) {
 	t.Parallel()
 
-	service, status := call(t, http.MethodGet, "/assistant/agents/not-an-id/browser/", "")
+	service, status := call(t, http.MethodGet, "/assistant/agents/not-an-id/commands/", "")
 
 	assert.NotEqual(t, http.StatusOK, status)
 	assert.False(t, service.reached)

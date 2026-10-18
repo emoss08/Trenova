@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -161,7 +162,10 @@ type RunRequest struct {
 	// this conversation. The turn runs that agent on it instead of asking
 	// its own model.
 	Directed *DirectedTask
-	Browser  bool
+	// Command is the extension command the person opened the turn with
+	// (/browser, /search). The turn loads the command's tools and is held to
+	// them.
+	Command agentextension.Command
 
 	UsagePurpose kernelports.AIUsagePurpose
 }

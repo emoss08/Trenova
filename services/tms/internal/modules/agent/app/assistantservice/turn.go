@@ -140,7 +140,8 @@ func (s *Service) prepareTurn(
 	content := strings.TrimSpace(req.Content)
 	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	resumesWait := req.ResumeWaitID.IsNotNil()
-	browserTask, browser := agentextension.BrowserTask(content)
+	command, commandTask, commanded := agentextension.ParseCommand(content)
+	commandSpec, _ := agentextension.CommandSpecFor(command)
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case content == "" && !followUp && !resumesWait:
@@ -162,13 +163,10 @@ func (s *Service) prepareTurn(
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A task for another agent can be at most {0} characters",
 			agentruntime.MaxDelegateTaskRunes)
-	case browser && req.DirectedAgentID.IsNotNil():
-		multiErr.Add("directedAgentId", errortypes.ErrInvalid,
-			"Work in the browser is done by this conversation's agent; "+
-				"send it without naming another")
-	case browser && browserTask == "":
-		multiErr.Add("content", errortypes.ErrRequired,
-			"Say what to do in the browser after /browser")
+	case commanded && req.DirectedAgentID.IsNotNil():
+		multiErr.Add("directedAgentId", errortypes.ErrInvalid, commandSpec.DirectedReason)
+	case commanded && commandTask == "":
+		multiErr.Add("content", errortypes.ErrRequired, commandSpec.MissingTaskReason)
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -194,8 +192,8 @@ func (s *Service) prepareTurn(
 		return nil, nil, err
 	}
 	definition, history := checks.definition, checks.history
-	if browser {
-		if err = s.assertWorksInBrowser(ctx, actor, definition); err != nil {
+	if commanded {
+		if err = s.assertHonoursCommand(ctx, actor, definition, command); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -275,7 +273,7 @@ func (s *Service) prepareTurn(
 		runReq.Publishes = s.artifacts != nil && !runReq.Inline
 		plan.Inline = runReq.Inline
 		runReq.Directed = checks.directed
-		runReq.Browser = browser
+		runReq.Command = command
 		plan.Timezone = runReq.Context.Timezone
 		plan.Records = runReq.Records
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()

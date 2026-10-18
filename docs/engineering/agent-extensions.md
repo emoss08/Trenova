@@ -30,6 +30,7 @@ and every tool call agree on which vendor answers.
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
 | Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
+| Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
 Settings reuse the integration field spec (`domain/configspec`) and the encrypted secret codec
@@ -57,6 +58,64 @@ tool is offered asks it through `Offers`, `Grants` and `Serving`:
 Tool use is authorized on the capability's own resource (`web_research` read; `portal_automation`
 read to look and update to act; `data_analysis` read). Managing extensions, and the portal sites and task history,
 needs `agent_extension` read and update.
+
+## Extension commands: /browser and /search
+
+A person can hold a Desk turn to one extension by starting the message with its slash
+command: `/browser` works the request on the organization's portal sites (portal automation),
+`/search` answers it from the public web (web research). Both are entries in one registry, and
+nothing on either side names a particular command outside it.
+
+- **The registry.** `agentextension.AllCommands` lists the commands and `CommandSpecFor` gives
+  each one's capability, the tools of which the turn needs at least one to honour it
+  (`Requires`: `read_portal` or `act_on_portal` for `/browser`, `web_search` for `/search`), and
+  the words a person is refused with (`MissingTaskReason`, `DirectedReason`,
+  `UnavailableReason`, harvested for translation by `shared/cmd/i18n-extract`).
+  `ParseCommand` reads a message the same way for every command: the command alone or
+  followed by whitespace, in any case, at the start of the message.
+- **Offered only where it can be honoured.** The composer asks
+  `GET /assistant/agents/:agentID/commands/` (assistant read), which answers
+  `{"commands": [...]}`: the commands whose extension is active, whose required tool the agent
+  holds (or the extension gives every agent), and which the person may use.
+  `agentruntime.Service.AvailableCommands` decides it from the same held tools, grants and
+  permission checks a turn's tool set is built from, reading the organization's extensions once
+  for all of them. The client keeps only the names it has a command for
+  (`extensionCommandsNamed`), so a newer server never shows a command the client cannot fill.
+  Turning an extension on or off invalidates the assistant queries, so a command appears or goes
+  at once; with no extension on, no command is listed.
+- **Checked again when sent.** `PrepareTurn` refuses a command whose agent cannot honour it, a
+  command with nothing after it, and one handed to another agent (`directedAgentId`): a directed
+  task runs the other agent without the conversation's own model, so nothing would hold it.
+- **Held to its extension.** The turn carries `RunRequest.Command`, kept on `TurnState.Command`
+  so the workflow's turn sees it (a state from before carries `browser: true`, read as
+  `/browser`). `OpenTurn` loads the command's tools the person may use even on a turn whose
+  tools are narrowed, and sends the model the command's directive with the person's words in
+  place of the command. A reply that ends the turn without calling any of the capability's tools,
+  and without asking the person a question, is sent back once with the command's correction
+  (`holdToCommand`, behind the command's own change id: `agent-loop-browser-guard`,
+  `agent-loop-search-guard`); a second such reply stands, so a request the extension cannot
+  serve still ends in an answer. Another extension's tools do not count.
+- The words are sent as typed, command and all, so the conversation keeps them as written and a
+  queued or retried message is still the same request. Typed while a reply is under way, a
+  command is queued rather than steered (`isExtensionRequest`): a steer is more words for the
+  turn already running, which is not held.
+
+### Adding an extension command
+
+1. Add the command to `AllCommands` and its spec to `commands` in
+   `agentextension/command.go`. `TestEveryCommandIsServedByItsCapability` checks that its
+   required tools belong to its capability and that each refusal is written.
+2. Add its directive, correction, retry reason and a new change id to `commandHolds` in
+   `agentruntime/command.go`, and list the change id under "Waiting on in-flight executions" in
+   [agent-runtime.md](agent-runtime.md). `TestEveryCommandHasAHold` fails until it has one, and
+   refuses a change id another command uses.
+3. Add a case to `commandCases` in the runtime's and the assistant service's `command*_test.go`;
+   `TestCommandCasesCoverEveryCommand` fails until both cover it.
+4. On the client, add it to `EXTENSION_COMMANDS` in `composer-commands.ts` with
+   `extensionCommand({ name, description, slots })`, give it an icon in `COMMAND_ICONS`
+   (`desk-slash.tsx`), and add a case to `desk-composer-extension-commands.test.tsx`.
+5. Run `task i18n`, translate the new strings, and describe the command in the Desk product
+   guide (`docs/product-guide/desk/index.md`, then `guide:generate`).
 
 ## Outside content holds every later write for a person
 

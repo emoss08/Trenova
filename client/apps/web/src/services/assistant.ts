@@ -16,7 +16,7 @@ import {
   mentionPageSchema,
   deskSearchResultListSchema,
   threadBudgetSchema,
-  browserAvailabilitySchema,
+  commandAvailabilitySchema,
   type DeskSearchKind,
   type MentionPageKind,
   type MentionSearchType,
@@ -605,12 +605,12 @@ export class AssistantService {
     return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
   }
 
-  /** Whether the person can send this agent to the browser with /browser. */
-  public async browserAvailability(agentId: string, { signal }: { signal?: AbortSignal } = {}) {
-    const response = await api.get(`/assistant/agents/${encodeURIComponent(agentId)}/browser/`, {
+  /** The extension commands (/browser, /search) the person can send this agent. */
+  public async commandAvailability(agentId: string, { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/agents/${encodeURIComponent(agentId)}/commands/`, {
       signal,
     });
-    return safeParse(browserAvailabilitySchema, response, "Browser Availability");
+    return safeParse(commandAvailabilitySchema, response, "Command Availability");
   }
 
   /** Asks the people who run AI Control for what the person ran out of. */

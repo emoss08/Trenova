@@ -49,6 +49,9 @@ var messageFields = map[string]struct{}{
 	"WebhookKeyLabel":          {},
 	"LedgerUnavailableReason":  {},
 	"InboundUnavailableReason": {},
+	"MissingTaskReason":        {},
+	"DirectedReason":           {},
+	"UnavailableReason":        {},
 }
 
 var labelMethods = map[string]struct{}{

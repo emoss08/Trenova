@@ -43,10 +43,13 @@ import {
   BROWSER_COMMAND,
   commandEntries,
   COMPACT_COMMAND,
+  EXTENSION_COMMANDS,
+  extensionCommandsNamed,
   fillCommand,
-  isBrowserRequest,
+  isExtensionRequest,
   isScheduleRequest,
   parseSlashCommand,
+  SEARCH_COMMAND,
   SLASH_COMMANDS,
   slotHint,
   splitScheduleSlots,
@@ -294,49 +297,87 @@ describe("slash commands in another language", () => {
 });
 
 /*
-/browser is offered only where the person can send the agent to the browser,
-so it is never one of the shared commands. Where it is offered it is filled
-like any command, and what is sent is the command with the person's words,
-which the server reads.
+An extension command (/browser, /search) is offered only where the person can
+send the agent to that extension, so none is one of the shared commands. Where
+one is offered it is filled like any command, and what is sent is the command
+with the person's words, which the server reads.
 */
-describe("/browser", () => {
-  it("is not offered unless the composer passes it in", () => {
-    expect(SLASH_COMMANDS.some((command) => command.name === "browser")).toBe(false);
-    expect(parseSlashCommand("/browser check the slot")).toBeNull();
-    expect(commandEntries("bro", []).map((entry) => entry.label)).toEqual([]);
+const EXTENSION_CASES = [
+  {
+    command: BROWSER_COMMAND,
+    prefix: "bro",
+    words: "check the 9am slot at Acme DC",
+  },
+  {
+    command: SEARCH_COMMAND,
+    prefix: "sea",
+    words: "FMCSA hours of service changes this year",
+  },
+] as const;
+
+describe("extension commands", () => {
+  it("lists every extension command once, browser then search", () => {
+    expect(EXTENSION_COMMANDS.map((command) => command.name)).toEqual(["browser", "search"]);
   });
 
-  it("is listed and filled where the composer passes it in", () => {
-    expect(commandEntries("bro", [], [BROWSER_COMMAND]).map((entry) => entry.label)).toEqual([
-      "/browser",
-    ]);
+  describe.each(EXTENSION_CASES)("/$command.name", ({ command, prefix, words }) => {
+    it("is not offered unless the composer passes it in", () => {
+      expect(SLASH_COMMANDS.some((shared) => shared.name === command.name)).toBe(false);
+      expect(parseSlashCommand(`/${command.name} ${words}`)).toBeNull();
+      expect(commandEntries(prefix, []).map((entry) => entry.label)).toEqual([]);
+    });
 
-    const parsed = parseSlashCommand("/browser check the 9am slot at Acme DC", [BROWSER_COMMAND]);
-    expect(parsed?.command).toBe(BROWSER_COMMAND);
-    expect(parsed?.args).toEqual(["check the 9am slot at Acme DC"]);
-    expect(parsed?.complete).toBe(true);
-    expect(parseSlashCommand("/browser ", [BROWSER_COMMAND])?.complete).toBe(false);
-  });
+    it("is listed and filled where the composer passes it in", () => {
+      expect(commandEntries(prefix, [], [command]).map((entry) => entry.label)).toEqual([
+        `/${command.name}`,
+      ]);
 
-  it("sends the command with the person's words for the server to read", () => {
-    expect(fillCommand(BROWSER_COMMAND, [" check the 9am slot at Acme DC "])).toBe(
-      "/browser check the 9am slot at Acme DC",
-    );
+      const parsed = parseSlashCommand(`/${command.name} ${words}`, [command]);
+      expect(parsed?.command).toBe(command);
+      expect(parsed?.args).toEqual([words]);
+      expect(parsed?.complete).toBe(true);
+      expect(parseSlashCommand(`/${command.name} `, [command])?.complete).toBe(false);
+    });
+
+    it("sends the command with the person's words for the server to read", () => {
+      expect(fillCommand(command, [` ${words} `])).toBe(`/${command.name} ${words}`);
+    });
   });
 });
 
-describe("isBrowserRequest", () => {
-  it("reads the command the way the server does", () => {
-    expect(isBrowserRequest("/browser check the 9am slot")).toBe(true);
-    expect(isBrowserRequest("  /BROWSER look up PO 4512 ")).toBe(true);
-    expect(isBrowserRequest("/browser\nbook the slot")).toBe(true);
-    expect(isBrowserRequest("/browser")).toBe(true);
+describe("extensionCommandsNamed", () => {
+  it("keeps the commands the server named, in the order they are listed", () => {
+    expect(extensionCommandsNamed(["search", "browser"])).toEqual([
+      BROWSER_COMMAND,
+      SEARCH_COMMAND,
+    ]);
+    expect(extensionCommandsNamed(["search"])).toEqual([SEARCH_COMMAND]);
   });
 
-  it("ignores another word that starts the same, or the command later in a sentence", () => {
-    expect(isBrowserRequest("/browsers list them")).toBe(false);
-    expect(isBrowserRequest("/browse the portal")).toBe(false);
-    expect(isBrowserRequest("use /browser to check")).toBe(false);
-    expect(isBrowserRequest("")).toBe(false);
+  it("ignores a name this client has no command for", () => {
+    expect(extensionCommandsNamed(["teleport"])).toEqual([]);
+    expect(extensionCommandsNamed([])).toEqual([]);
+  });
+});
+
+describe("isExtensionRequest", () => {
+  it("reads each command the way the server does", () => {
+    expect(isExtensionRequest("/browser check the 9am slot")).toBe(true);
+    expect(isExtensionRequest("  /BROWSER look up PO 4512 ")).toBe(true);
+    expect(isExtensionRequest("/browser\nbook the slot")).toBe(true);
+    expect(isExtensionRequest("/browser")).toBe(true);
+    expect(isExtensionRequest("/search diesel price outlook")).toBe(true);
+    expect(isExtensionRequest(" /Search\tFMCSA rules")).toBe(true);
+    expect(isExtensionRequest("/search")).toBe(true);
+  });
+
+  it("ignores another word that starts the same, another command, or one later in a sentence", () => {
+    expect(isExtensionRequest("/browsers list them")).toBe(false);
+    expect(isExtensionRequest("/browse the portal")).toBe(false);
+    expect(isExtensionRequest("/searching for it")).toBe(false);
+    expect(isExtensionRequest("use /browser to check")).toBe(false);
+    expect(isExtensionRequest("/status S12345")).toBe(false);
+    expect(isExtensionRequest("/")).toBe(false);
+    expect(isExtensionRequest("")).toBe(false);
   });
 });

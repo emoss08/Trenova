@@ -89,9 +89,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
 	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
 	api.GET(
-		"/agents/:agentID/browser/",
+		"/agents/:agentID/commands/",
 		h.pm.RequirePermission(resource, permission.OpRead),
-		h.browserAvailability,
+		h.commandAvailability,
 	)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.GET(
@@ -829,7 +829,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"results": results})
 }
 
-func (h *Handler) browserAvailability(c *gin.Context) {
+func (h *Handler) commandAvailability(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	actor := requestActorFromAuthContext(authCtx)
 
@@ -839,9 +839,9 @@ func (h *Handler) browserAvailability(c *gin.Context) {
 		return
 	}
 
-	availability, err := h.service.BrowserAvailability(
+	availability, err := h.service.CommandAvailability(
 		c.Request.Context(),
-		&agentports.BrowserAvailabilityRequest{
+		&agentports.CommandAvailabilityRequest{
 			AgentID:    agentID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},

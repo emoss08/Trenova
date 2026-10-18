@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -71,7 +72,9 @@ type Turn struct {
 	// directed is a task the person handed straight to another agent, which
 	// the turn runs instead of asking its own model.
 	directed *agentports.DirectedTask
-	browser  bool
+	// command is the extension command the person opened the turn with, and
+	// the turn is held to it.
+	command agentextension.Command
 	// opened are the marks the turn's own subject, attachments and memories
 	// added when it opened, announced once the loop starts.
 	opened []agent.TaintMark
@@ -279,7 +282,11 @@ type TurnState struct {
 	// Directed is a task the person handed straight to another agent. A
 	// state from before it was kept has none.
 	Directed *agentports.DirectedTask `json:"directed,omitempty"`
-	Browser  bool                     `json:"browser,omitempty"`
+	// Command is the extension command the turn is held to.
+	Command agentextension.Command `json:"command,omitempty"`
+	// Browser is how a state from before Command was kept said the turn was
+	// held to /browser. It is read, never written.
+	Browser bool `json:"browser,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
 	// announced. The turn's whole taint is Result.Taint.
 	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
@@ -332,7 +339,7 @@ func (t *Turn) State() TurnState {
 		Delegates:       slices.Clone(t.delegates),
 		Delegations:     t.delegations,
 		Directed:        t.directed,
-		Browser:         t.browser,
+		Command:         t.command,
 		ExternalContent: t.external,
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
@@ -401,12 +408,20 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		delegates:    state.Delegates,
 		delegations:  state.Delegations,
 		directed:     state.Directed,
-		browser:      state.Browser,
+		command:      state.heldCommand(),
 		opened:       state.TaintOpened,
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
 	}
+}
+
+func (s TurnState) heldCommand() agentextension.Command {
+	if s.Command == "" && s.Browser {
+		return agentextension.CommandBrowser
+	}
+
+	return s.Command
 }
 
 func cloneToolMemories(byTool map[string][]pulid.ID) map[string][]pulid.ID {
@@ -525,7 +540,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		attachments: len(runtimeContext.Attachments) > 0 ||
 			conversation.CarriesAttachments(history),
 	})
-	browser := req.Browser && s.pinBrowser(tools)
+	var command agentextension.Command
+	if req.Command != "" && s.pinCommand(tools, req.Command) {
+		command = req.Command
+	}
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	runtimeContext.Inline = req.Inline
@@ -559,8 +577,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages, shortened := replayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
 	input := req.Input
-	if browser {
-		input = browserInput(input)
+	if command != "" {
+		input = commandInput(command, input)
 	}
 	var attached agentdefinition.RenderedAttachments
 	if req.Delegation == nil {
@@ -613,7 +631,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		},
 		delegates:    delegates,
 		directed:     directedTask(req),
-		browser:      browser,
+		command:      command,
 		opened:       opened,
 		external:     req.AfterExternalContent,
 		world:        s.watchWorld(ctx, req, now),
