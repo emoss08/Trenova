@@ -97,7 +97,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1169 writes: 639 GraphQL mutations and 530 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1169 writes: 639 GraphQL mutations and 530 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
@@ -408,7 +408,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation updateAgentControl`<br>twin `PUT /api/v1/agent-controls/` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
+| `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
 | `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 
 ### agentdefinition

@@ -22,11 +22,6 @@ import {
   type UpdateOrderChargeMutation,
   type ChargeAllocationInput,
 } from "@trenova/graphql/generated/graphql";
-import {
-  createInvoicesFromOrder,
-  createInvoicesFromShipments,
-  type CreatedInvoice,
-} from "@/lib/graphql/invoice";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 import type { OrderFormValues } from "@trenova/shared/types/order";
@@ -132,28 +127,6 @@ export async function detachOrderShipment(
   });
 
   return data.detachOrderShipment;
-}
-
-/**
- * Bills the order and returns the primary payer's invoice. A split-billed order
- * produces one invoice per payer; use createInvoicesFromOrder for all of them.
- * `offCycleReason` is required only when the customer is on a statement.
- */
-export async function createInvoiceFromOrder(
-  orderId: string,
-  offCycleReason?: string,
-): Promise<CreatedInvoice> {
-  const result = await createInvoicesFromOrder(orderId, offCycleReason);
-  return result.primary;
-}
-
-/** See createInvoiceFromOrder for what `offCycleReason` means. */
-export async function createInvoiceFromShipments(
-  shipmentIds: string[],
-  offCycleReason?: string,
-): Promise<CreatedInvoice> {
-  const result = await createInvoicesFromShipments(shipmentIds, offCycleReason);
-  return result.primary;
 }
 
 export async function addOrderCharge(
