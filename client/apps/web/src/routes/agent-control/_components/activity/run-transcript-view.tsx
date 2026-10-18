@@ -5,7 +5,7 @@ import type { AgentRunTranscript } from "@/lib/graphql/agent-activity-tables";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useMemo } from "react";
-import { ReasoningDisclosure } from "./reasoning-disclosure";
+import { ReasoningDisclosure } from "@/components/assistant/reasoning-disclosure";
 import { transcriptBlocks, type TranscriptBlock } from "./run-transcript";
 
 /**

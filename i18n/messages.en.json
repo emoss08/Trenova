@@ -37707,15 +37707,6 @@
       "apps/web/components"
     ]
   },
-  "Because": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Before": {
     "sites": 4,
     "scope": [
@@ -115820,15 +115811,6 @@
       "apps/web/components"
     ]
   },
-  "Hide reasoning": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Hide rows that failed": {
     "sites": 1,
     "scope": [
@@ -122729,15 +122711,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Instead of": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Instruction": {
@@ -222785,15 +222758,6 @@
       "routes/formula-template"
     ]
   },
-  "Saw": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Say how it was resolved": {
     "sites": 1,
     "scope": [
@@ -268652,7 +268616,6 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -274459,7 +274422,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Thought it through": {
@@ -274468,7 +274431,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Thousands separator": {
@@ -300570,15 +300533,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Why this step?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Why this wording": {

@@ -348,7 +348,7 @@ describe("reduceTurn restarts and refusals", () => {
     ]);
 
     expect(state.segments).toEqual([
-      { kind: "reasoning", text: "Look it up first.", closed: true },
+      { kind: "reasoning", text: "Look it up first.", closed: true, callIds: ["c1"] },
       { kind: "text", text: "Let me check S1.", closed: true },
       {
         kind: "tool",

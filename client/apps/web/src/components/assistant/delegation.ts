@@ -176,8 +176,9 @@ function savedSteps(messages: readonly AssistantMessage[]): ToolStep[] {
   const open = new Map<string, ToolExchange>();
   for (const message of messages) {
     if (message.role === "Assistant") {
+      const reasoning = message.reasoning?.text || undefined;
       const exchanges = (message.toolCalls ?? []).map((call) => {
-        const exchange: ToolExchange = { call, result: null };
+        const exchange: ToolExchange = { call, result: null, reasoning };
         open.set(call.id, exchange);
         return exchange;
       });

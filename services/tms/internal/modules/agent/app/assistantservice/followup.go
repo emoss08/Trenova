@@ -209,8 +209,7 @@ func ranWith(proposal *agent.AgentProposal, decisions []*agent.AgentDecision) st
 
 	parts := make([]string, 0, len(values))
 	for _, key := range slices.Sorted(maps.Keys(values)) {
-		if key == agentruntime.StepRationaleParam || strings.HasSuffix(key, "Id") ||
-			strings.HasSuffix(key, "Ids") {
+		if strings.HasSuffix(key, "Id") || strings.HasSuffix(key, "Ids") {
 			continue
 		}
 		parts = append(parts, key+": "+argumentText(values[key]))

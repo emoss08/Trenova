@@ -249,7 +249,6 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			return s.finish(result, completion, fx), nil
 		}
 
-		liftRationales(completion.ToolCalls)
 		assistantTurn := conversation.Message{
 			Role:              conversation.RoleAssistant,
 			Content:           completion.Text,
@@ -552,7 +551,6 @@ func (s *Service) emitToolStarted(effects TurnEffects, call *agentports.ToolCall
 			Name:      call.Name,
 			Arguments: call.Arguments,
 			Effect:    s.ToolEffect(call.Name),
-			Why:       call.Why,
 		},
 	})
 }

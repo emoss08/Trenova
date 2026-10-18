@@ -37,6 +37,7 @@ function liveStep(overrides: Partial<ToolStep> = {}): ToolStep {
     effect: "delegate",
     summary: "",
     durationSeconds: null,
+    reasoning: "",
     delegate: {
       kind: "live",
       progress: { ...emptyDelegateProgress("agdef_rb"), agentName: "Report Builder" },
