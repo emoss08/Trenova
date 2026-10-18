@@ -101,7 +101,7 @@ Keywords: rotate key, new API key, key rotation, expired key, leaked key
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
 1. Open [AI control](/admin/agent-control) and select **Providers**.
 2. Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage
-   AI, Gemini, OpenAI, or for a model on your own hardware. It fills in the endpoint, the
+   AI, Gemini or OpenAI. It fills in the endpoint, the
    model and the **Embedding** task.
 3. An embedding model serves nothing else, so leave the other tasks under **What it handles** for a
    separate provider. Anthropic has no embedding endpoint.

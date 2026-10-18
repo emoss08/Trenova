@@ -1,5 +1,5 @@
 {
-  "version": "sha256:31d8c5d71283fd694f7b6e58d89c9a9fa57417073d0cb83c5b769c64a5c45948",
+  "version": "sha256:f42546f5fca8bb4475b58456aeae8a877538c863b41ec23367ff45e0359b0418",
   "modules": [
     {
       "id": "home",
@@ -2640,7 +2640,7 @@
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Providers**.",
-            "Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage AI, Gemini, OpenAI, or for a model on your own hardware. It fills in the endpoint, the model and the **Embedding** task.",
+            "Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage AI, Gemini or OpenAI. It fills in the endpoint, the model and the **Embedding** task.",
             "An embedding model serves nothing else, so leave the other tasks under **What it handles** for a separate provider. Anthropic has no embedding endpoint.",
             "Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding input** to how the endpoint tells a stored document from a search query.",
             "Paste the key, select **Test draft**, then **Save & close**. The test asks for one embedding and fails when the model returns a different size; a provider that fails is saved off."
