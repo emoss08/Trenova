@@ -126,6 +126,7 @@ export const HELD_BY_KEYS = [
   "money_record_state",
   "money_agent_line",
   "money_limits_unread",
+  "money_currency",
   "money_call_ceiling",
   "money_run_calls",
   "money_run_amount",
@@ -174,6 +175,8 @@ export function heldByLabel(t: TranslateFn, key: string): string {
       return t("Line a person added");
     case "money_limits_unread":
       return t("Money limits unreadable");
+    case "money_currency":
+      return t("Not in the functional currency");
     case "money_call_ceiling":
       return t("Over the per-change limit");
     case "money_run_calls":

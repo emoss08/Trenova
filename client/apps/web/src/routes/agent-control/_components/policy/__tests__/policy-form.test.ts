@@ -122,4 +122,35 @@ describe("money limits", () => {
     expect(issues({ ...loaded.agentMoney, runCalls: 51 })).toEqual(["agentMoney.runCalls"]);
     expect(issues({ ...loaded.agentMoney, dayCalls: -1 })).toContain("agentMoney.dayCalls");
   });
+
+  it("says what is wrong with a limit in words, never in cents", () => {
+    const messages = (agentMoney: Record<string, unknown>) =>
+      Object.fromEntries(
+        (
+          policyFormSchema.safeParse({
+            ...loaded,
+            agentMoney: { ...loaded.agentMoney, ...agentMoney },
+          }).error?.issues ?? []
+        ).map((issue) => [issue.path.join("."), issue.message]),
+      );
+
+    expect(messages({ dayAmountCents: 100_000_000_001 })).toEqual({
+      "agentMoney.dayAmountCents": "An amount can be at most 1,000,000,000",
+    });
+    expect(messages({ dayCalls: 10_001 })).toEqual({
+      "agentMoney.dayCalls": "At most 10,000 changes",
+    });
+    expect(messages({ callCeilingCents: Number.NaN })).toEqual({
+      "agentMoney.callCeilingCents": "Enter an amount",
+    });
+    expect(messages({ runCalls: undefined })).toEqual({
+      "agentMoney.runCalls": "Enter a number of changes",
+    });
+    expect(messages({ runCalls: 2.5 })).toEqual({
+      "agentMoney.runCalls": "Enter a whole number of changes",
+    });
+    expect(messages({ runAmountCents: -1 })["agentMoney.runAmountCents"]).toBe(
+      "An amount cannot be below 0",
+    );
+  });
 });

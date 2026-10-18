@@ -8,6 +8,7 @@ import {
   approvalGate,
   isPreviewConflict,
   isPreviewRefusal,
+  reviewRequiredFor,
   type ApprovalGate,
 } from "./preview-gate";
 
@@ -163,5 +164,10 @@ export function useDraftPreview({
     gate: current ? approval.gate : LOADING,
     current,
     refused,
+    reviewRequired: reviewRequiredFor(
+      current ? previewQuery.data : undefined,
+      false,
+      modifications !== null,
+    ),
   };
 }

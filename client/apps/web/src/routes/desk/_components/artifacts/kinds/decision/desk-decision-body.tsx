@@ -14,9 +14,14 @@ import {
   batchPreviewDigests,
   unreviewedRequired,
 } from "@/components/assistant/proposal-preview/preview-gate";
-import { useCallback, useState } from "react";
 import { Notice } from "../artifact-body-parts";
-import { ReviewedChange, ReviewedPlan } from "./decision-review";
+import {
+  ReviewBlocker,
+  ReviewedChange,
+  ReviewedPlan,
+  reviewTally,
+  useReviewReports,
+} from "@/components/assistant/proposal-preview/reviewed-change";
 
 /** Where a decision stands, read from the proposals or plan behind it. */
 function decisionState(statuses: readonly string[]): "pending" | "approved" | "dismissed" {
@@ -76,20 +81,18 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
   const pending = proposals.filter((proposal) => proposal.status === "Pending");
   const ids = pending.map((proposal) => proposal.id);
 
-  const [shown, setShown] = useState<ReadonlyMap<string, string>>(new Map());
-  const onShown = useCallback((id: string, digest: string) => {
-    setShown((previous) =>
-      previous.get(id) === digest ? previous : new Map(previous).set(id, digest),
-    );
-  }, []);
+  const { reports, shown, onReport } = useReviewReports();
   const planReviewed = plan !== null && proposals.some((proposal) => proposal.reviewRequired);
   const reviewing = plan !== null ? [] : pending.filter((proposal) => proposal.reviewRequired);
-  const unseen =
+  const tally = reviewTally(
     plan !== null
-      ? planReviewed && (shown.get(plan.id) ?? "") === ""
-        ? 1
-        : 0
-      : unreviewedRequired(pending, shown).length;
+      ? planReviewed
+        ? [plan.id]
+        : []
+      : unreviewedRequired(pending, shown).map((proposal) => proposal.id),
+    reports,
+  );
+  const unseen = tally.loading + tally.failed + tally.stale;
 
   const decide = useApiMutation({
     mutationFn: async (decision: "Accepted" | "Rejected") => {
@@ -163,11 +166,11 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
         )}
       </div>
       {state === "pending" && planReviewed && plan !== null && (
-        <ReviewedPlan planId={plan.id} onShown={onShown} />
+        <ReviewedPlan planId={plan.id} onReport={onReport} />
       )}
       {state === "pending" &&
         reviewing.map((proposal) => (
-          <ReviewedChange key={proposal.id} proposal={proposal} onShown={onShown} />
+          <ReviewedChange key={proposal.id} proposal={proposal} onReport={onReport} />
         ))}
       {state === "pending" && ids.length + (plan !== null ? 1 : 0) > 0 && (
         <div className="dk-ax-acts">
@@ -179,14 +182,7 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
             {t("Not now")}
           </Button>
           <span className="flex-1" />
-          {unseen > 0 && (
-            <span className="text-muted-foreground text-sm">
-              {t(
-                "{0, plural, one {Waiting for # preview to load} other {Waiting for # previews to load}}",
-                unseen,
-              )}
-            </span>
-          )}
+          <ReviewBlocker tally={tally} />
           <Button
             disabled={decide.isPending || unseen > 0}
             onClick={() => decide.mutate("Accepted")}

@@ -472,6 +472,7 @@ func FromServices(s *Services) *Resolver {
 		ApprovalCommitter:         s.ApprovalCommitter,
 		AgentTools:                s.AgentTools,
 		AgentControlService:       s.AgentControlService,
+		AccountingControlRepo:     s.AccountingControlRepo,
 	}
 	agentdefinitionDeps := &agentdefinitionresolver.Deps{
 		Core:                   s.Core,

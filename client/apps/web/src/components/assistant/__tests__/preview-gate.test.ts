@@ -8,6 +8,7 @@ import {
   gateDigest,
   isPreviewConflict,
   isPreviewRefusal,
+  reviewRequiredFor,
   unreviewedRequired,
 } from "../proposal-preview/preview-gate";
 import {
@@ -242,5 +243,21 @@ describe("changes the server approves only once reviewed", () => {
         ]),
       ),
     ).toEqual([]);
+  });
+});
+
+describe("reviewRequiredFor", () => {
+  it("follows the preview of the change as it would be approved", () => {
+    expect(reviewRequiredFor({ reviewRequired: true }, false, true)).toBe(true);
+    expect(reviewRequiredFor({ reviewRequired: false }, true, true)).toBe(false);
+  });
+
+  it("keeps the proposal's word until a preview is read", () => {
+    expect(reviewRequiredFor(undefined, true, false)).toBe(true);
+    expect(reviewRequiredFor(undefined, false, false)).toBe(false);
+  });
+
+  it("counts an edited change as one that must be reviewed until its preview says", () => {
+    expect(reviewRequiredFor(undefined, false, true)).toBe(true);
   });
 });

@@ -206,6 +206,7 @@ virtuals:
     - label
     - usable
   AgentControl:
+    - agentMoneyCurrency
     - billingAgentEnabled
     - decisionTimeoutSeconds
   AgentProposal:

@@ -12,6 +12,7 @@ fragment AgentControlFields on AgentControl {
   agentMoneyRunAmount
   agentMoneyDayCalls
   agentMoneyDayAmount
+  agentMoneyCurrency
   aiTrainingConsent
   aiTrainingConsentChangedAt
   version

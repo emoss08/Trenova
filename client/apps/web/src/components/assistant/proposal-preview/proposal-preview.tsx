@@ -210,15 +210,19 @@ export function ChangedNotice() {
 }
 
 /**
- * The preview could not be read. Approving stays possible, without a digest,
- * and the decision is recorded as made without one; the notice says so.
+ * The preview could not be read. An internal or personal change may still be
+ * approved, without a digest, and the decision is recorded as made without
+ * one; the notice says so. A change that must be reviewed cannot be approved
+ * until it loads, and the notice says that instead.
  */
 export function PreviewFailedNotice({
   onRetry,
   retrying,
+  reviewRequired = false,
 }: {
   onRetry: () => void;
   retrying: boolean;
+  reviewRequired?: boolean;
 }) {
   const t = useT();
 
@@ -226,9 +230,13 @@ export function PreviewFailedNotice({
     <Alert size="sm" variant="warning">
       <AlertTriangleIcon />
       <AlertDescription>
-        {t(
-          "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
-        )}
+        {reviewRequired
+          ? t(
+              "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
+            )
+          : t(
+              "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
+            )}
       </AlertDescription>
       <AlertAction>
         <Button size="xs" variant="outline" onClick={onRetry} isLoading={retrying}>
@@ -267,6 +275,7 @@ export function PreviewLoadState<T>({
   density = "full",
   fallback,
   loading,
+  reviewRequired = false,
   children,
 }: {
   query: {
@@ -280,6 +289,8 @@ export function PreviewLoadState<T>({
   fallback?: ReactNode;
   /** What stands in while the first read runs; a skeleton unless the surface shows its own. */
   loading?: ReactNode;
+  /** The change cannot be approved without this preview, which a failure says. */
+  reviewRequired?: boolean;
   children: (data: T) => ReactNode;
 }) {
   if (query.data !== undefined) {
@@ -293,7 +304,11 @@ export function PreviewLoadState<T>({
   if (query.isError) {
     return (
       <>
-        <PreviewFailedNotice onRetry={() => void query.refetch()} retrying={query.isFetching} />
+        <PreviewFailedNotice
+          onRetry={() => void query.refetch()}
+          retrying={query.isFetching}
+          reviewRequired={reviewRequired}
+        />
         {fallback}
       </>
     );

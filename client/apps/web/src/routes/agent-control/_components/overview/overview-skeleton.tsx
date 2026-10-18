@@ -24,6 +24,7 @@ const POLICY_ROWS = [
   { label: 112, value: 76 },
   { label: 112, value: 22 },
   { label: 52, value: 92 },
+  { label: 48, value: 86 },
 ] as const;
 const USAGE_COLUMNS = 6;
 const USAGE_ROWS = 6;

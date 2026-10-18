@@ -435,6 +435,11 @@ type AgentControl {
   agentMoneyDayCalls: Int!
   "The most money the organization's agents may move on their own in a day, in its timezone."
   agentMoneyDayAmount: Decimal!
+  """
+  The organization's functional currency, which the money limits are set in.
+  A money change in any other currency waits for a person.
+  """
+  agentMoneyCurrency: String!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!

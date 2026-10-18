@@ -135,6 +135,7 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     gate,
     current: previewCurrent,
     refused,
+    reviewRequired,
   } = useDraftPreview({ target, modifications: valid ? changes : null });
 
   // A record-subset field lists every record proposed, each with what the
@@ -153,7 +154,7 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
   );
 
   const reasonMissing = request.withReason?.required === true && reason.trim() === "";
-  const previewAllows = target === undefined || (canApprove(gate) && !refused);
+  const previewAllows = target === undefined || (canApprove(gate, reviewRequired) && !refused);
   const canConfirm = !isPending && valid && changeCount > 0 && !reasonMissing && previewAllows;
 
   const set = (name: string, value: string) => {
@@ -337,7 +338,11 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
                 className={cn("min-w-0", !previewCurrent && "opacity-60")}
                 aria-busy={!previewCurrent}
               >
-                <PreviewLoadState query={previewQuery} changed={approval.changed}>
+                <PreviewLoadState
+                  query={previewQuery}
+                  changed={approval.changed}
+                  reviewRequired={reviewRequired}
+                >
                   {(preview) => <ProposalPreview preview={preview} density="full" />}
                 </PreviewLoadState>
               </div>

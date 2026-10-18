@@ -7360,6 +7360,15 @@
       "routes/settings"
     ]
   },
+  "A number of changes cannot be below 0": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A number where the executive can be reached about the summary.": {
     "sites": 1,
     "scope": [
@@ -7495,7 +7504,7 @@
       "go/other"
     ]
   },
-  "A payment, a receipt match, a charge correction or a settlement adjustment runs without a person only when its record matches exactly and it fits every limit here. Anything past a limit waits for a person, who sees which limit it reached. A run that read outside text never moves money on its own. Set a limit to 0 to have a person approve every money change.": {
+  "A payment, a receipt match, a charge correction or a settlement adjustment runs without a person only when its record matches exactly and it fits every limit here. Anything past a limit waits for a person, who sees which limit it reached. A run that read outside text never moves money on its own, except that a payment or a receipt match may after reading only bank receipts, which it reads again from your records. Set the most one change may move, or the changes in one run, to 0 to have a person approve every money change.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -18460,6 +18469,15 @@
       "routes/formula-template"
     ]
   },
+  "Added By Agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Added accessorial": {
     "sites": 1,
     "scope": [
@@ -23589,6 +23607,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Amounts are in {0}, your organization's functional currency. A change in any other currency always waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Amounts cannot be negative": {
     "sites": 1,
     "scope": [
@@ -24359,6 +24386,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An amount can be at most {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "An amount cannot be below 0": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An announcement is at most {0} characters": {
@@ -32965,6 +33010,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At most {0} changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "At most {0} characters": {
@@ -48426,6 +48480,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Changes to review before approving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
@@ -91051,6 +91114,15 @@
       "routes/agent-control"
     ]
   },
+  "Enter a number of changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Enter a pairing code": {
     "sites": 2,
     "scope": [
@@ -91183,6 +91255,15 @@
       "go/other"
     ]
   },
+  "Enter a whole number of changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Enter a whole number of sheets": {
     "sites": 1,
     "scope": [
@@ -91217,6 +91298,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Enter an amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Enter an amount with at most two decimal places": {
@@ -163244,6 +163334,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "Not in the functional currency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not in the guide": {
     "sites": 1,
     "scope": [
@@ -192005,7 +192104,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Preview only": {
@@ -296299,6 +296398,15 @@
       "apps/web/components"
     ]
   },
+  "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What this would change could not be worked out; the values it would run with are shown instead.": {
     "sites": 1,
     "scope": [
@@ -315392,6 +315500,24 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# change has changed since it was drafted and can only be set aside} other {# changes have changed since they were drafted and can only be set aside}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# change waits on you} other {# changes wait on you}}": {
     "sites": 1,
     "scope": [
@@ -317177,15 +317303,6 @@
       "apps/web/components"
     ]
   },
-  "{0, plural, one {# must be opened before these can be approved} other {# must be opened before these can be approved}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0, plural, one {# needs a look} other {# need a look}}": {
     "sites": 4,
     "scope": [
@@ -317628,6 +317745,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# preview could not be loaded; try it again above} other {# previews could not be loaded; try them again above}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# previous rate} other {# previous rates}} found": {
@@ -320584,7 +320710,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Waiting for a print to Trenova, # minute left} other {Waiting for a print to Trenova, # minutes left}}": {

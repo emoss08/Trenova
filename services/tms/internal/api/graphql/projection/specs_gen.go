@@ -2889,6 +2889,10 @@ func init() {
 				FieldMapKey: "agentMoneyDayAmountMinor",
 			},
 			{
+				Name:    "agentMoneyCurrency",
+				Special: "agentMoneyCurrency",
+			},
+			{
 				Name:    "billingAgentEnabled",
 				Special: "billingAgentEnabled",
 			},

@@ -1,5 +1,5 @@
 import type { DecisionFocus } from "@/stores/assistant-store";
-import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
+import type { AssistantArtifact, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { classifyPlan } from "./plan-state";
 import { classifyProposal } from "./proposal-state";
 
@@ -45,6 +45,25 @@ export type ApprovalEntry =
 
 export function proposalKey(id: string): string {
   return `proposal:${id}`;
+}
+
+/**
+ * The decision request the agent raised for an entry: the one naming any of
+ * its proposals, or its plan. Members are keyed, so a proposal is looked up by
+ * its key, not its bare id.
+ */
+export function decisionArtifactFor(
+  entry: ApprovalEntry,
+  artifacts: readonly Pick<AssistantArtifact, "id" | "kind" | "proposalId" | "planId">[],
+): string | null {
+  const artifact = artifacts.find(
+    (candidate) =>
+      candidate.kind === "decision_request" &&
+      ((candidate.proposalId !== "" && entry.members.includes(proposalKey(candidate.proposalId))) ||
+        (entry.kind === "plan" && candidate.planId !== "" && candidate.planId === entry.plan.id)),
+  );
+
+  return artifact?.id ?? null;
 }
 
 export function planKey(id: string): string {

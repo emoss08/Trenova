@@ -1569,15 +1569,38 @@ money tool may run a call automatically only when its `TierCondition.Bounds` pro
 within bounds (`agenttoolpolicy.Decide`): its own record checks (an exact remittance or
 receipt match, an uninvoiced billing item, a settlement not yet approved, a line an agent
 added) and the amount it moves, which `agentbudgetservice.MoneyAllowance` holds against the
-organization's money limits for agents in `agent_controls` (one change's ceiling; a run's and
-a day's count and total, the day in the organization's zone and across every agent). The
-allowance counts automatic money writes already recorded (`agent_proposals.money_minor`,
-written only for a write that ran on its own) plus the turn's own unrecorded ones. A call
-outside a bound, or whose bounds or limits cannot be read, is filed as a proposal whose
-`HeldBy` names the bound (`money_call_ceiling`, `money_run_calls`, `money_exact_match`, …),
-and a tainted turn never reads the bounds at all. Two turns running at once each see what the
-other has recorded, not what it has run and not yet recorded, so the day's caps can be passed
-by at most one turn's unrecorded writes per concurrent turn.
+organization's money limits for agents in `agent_controls` (one change's ceiling, where 0
+holds every call; a run's and a day's count and total, the day in the organization's zone
+and across every agent). The limits are amounts in the organization's functional currency
+(`accounting_controls.functional_currency_code`): every bound returns the currency of the
+amount it counts, a write in any other currency is held as `money_currency`, and the totals
+count only functional-currency writes (`agent_proposals.money_currency`, beside
+`money_minor`). The allowance counts automatic money writes already recorded and executed
+(`money_minor` is written only for a write that ran on its own; a write that failed moved
+nothing and counts against nothing) plus the turn's own unrecorded ones, its delegates', and
+the delegating turn's: `DispatchCall.MoneySpent` and `DelegateCall.MoneySpent` carry them in
+workflow code, so a delegate's turn starts from what the turn that handed it the task moved,
+and the turn after a delegation counts what the delegate moved. A simulated run counts its
+simulated writes against its own run and against the day, so it is held where the real run
+would be. A gross change is counted, never a net one: `correct_charge_code` counts every
+charge it adds, removes or changes in full. A call outside a bound, or whose bounds, limits,
+currency or day cannot be read (a timezone that cannot be read holds the write rather than
+drawing the day in UTC), is filed as a proposal whose `HeldBy` names the bound
+(`money_call_ceiling`, `money_run_calls`, `money_exact_match`, …).
+
+A tainted turn never moves money on its own, with one exception a tool declares and the
+validator checks: a bound that reads a record again from the organization's own records, and
+takes the amount, the customer and the references from it rather than from the call, may
+vouch for having read that record (`TierCondition.Vouches`, `MoneyBound.Reread`). Only a bank
+receipt can be vouched for (`TaintSource.Rereadable`); `post_customer_payment` and
+`match_bank_receipt` vouch for it, so a run that read only bank receipts may post or match
+within the limits. The hold lifts only when the turn's taint is known, every source it holds
+is one the tool declares, and the bound actually re-read it; any other outside content (web,
+email, a document, a portal, a delegate's), and a bound that did not re-read the receipt,
+hold the write as before, and the bounds are not read at all for a source the tool cannot
+vouch for. Two turns running at once each see what the other has recorded, not what it has
+run and not yet recorded, so the day's caps can be passed by at most one turn's unrecorded
+writes per concurrent turn.
 
 A proposal's result says why it waits (`heldReason`: the tool's tier, the
 agent's ceiling, a change that is always a person's, what it would reach, a

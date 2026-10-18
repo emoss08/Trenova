@@ -8,6 +8,7 @@ package agentresolver
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -931,4 +932,13 @@ func (r *AgentControlResolver) AgentMoneyDayAmount(ctx context.Context, obj *ten
 
 func (r *AgentProposalResolver) ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error) {
 	return obj.ApprovalNeedsReview(), nil
+}
+
+func (r *AgentControlResolver) AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+	books, err := r.AccountingControlRepo.GetByOrgID(ctx, obj.OrganizationID)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ToUpper(strings.TrimSpace(books.FunctionalCurrencyCode)), nil
 }

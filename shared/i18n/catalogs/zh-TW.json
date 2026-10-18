@@ -879,6 +879,7 @@
   "Add the customer's DOT number before vetting them as a broker": "將客戶核驗為貨運經紀前,請先新增其 DOT 編號",
   "Add the factor's schedule inbox": "新增承購公司接收清單的收件匣",
   "Add, correct or remove rates every organization is taxed at": "新增、更正或移除適用於所有組織的稅率",
+  "Added By Agent": "由代理新增",
   "Additional Charge ID": "額外費用 ID",
   "Additional charge ID duplicates {0}": "額外費用 ID 與 {0} 重複",
   "Additional charge ID must not be provided when creating a shipment": "建立運單時不得提供附加費用 ID",

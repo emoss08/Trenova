@@ -42,6 +42,25 @@ export function approvalGate<T extends { digest: string; stale: boolean }>(
   return { state: "loading" };
 }
 
+/**
+ * Whether approving needs the preview's digest, by the rule the server applies
+ * to the change as it would be approved. A preview read for exactly that
+ * change says so, the approver's edits applied. Until one is, the proposal's
+ * own word stands, and an edited change needs it: an edit can move a change
+ * into a class that must be reviewed.
+ */
+export function reviewRequiredFor(
+  preview: { reviewRequired: boolean } | undefined,
+  proposalReviewRequired: boolean,
+  edited: boolean,
+): boolean {
+  if (preview !== undefined) {
+    return preview.reviewRequired;
+  }
+
+  return proposalReviewRequired || edited;
+}
+
 export function canApprove(gate: ApprovalGate, reviewRequired = false): boolean {
   return gate.state === "ready" || (gate.state === "unavailable" && !reviewRequired);
 }

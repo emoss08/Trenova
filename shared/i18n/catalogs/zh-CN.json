@@ -879,6 +879,7 @@
   "Add the customer's DOT number before vetting them as a broker": "将客户核验为货运经纪前,请先添加其 DOT 编号",
   "Add the factor's schedule inbox": "添加保理公司接收清单的收件箱",
   "Add, correct or remove rates every organization is taxed at": "添加、更正或移除适用于所有组织的税率",
+  "Added By Agent": "由代理添加",
   "Additional Charge ID": "附加费用 ID",
   "Additional charge ID duplicates {0}": "额外费用 ID 与 {0} 重复",
   "Additional charge ID must not be provided when creating a shipment": "创建运单时不得提供附加费用 ID",

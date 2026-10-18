@@ -1,5 +1,9 @@
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
-import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  canApprove,
+  gateDigest,
+  reviewRequiredFor,
+} from "@/components/assistant/proposal-preview/preview-gate";
 import type { EditorFocus } from "@/components/assistant/proposal-editor";
 import {
   askAgentMessage,
@@ -239,7 +243,8 @@ function ProposalCard({
   const facts = useMemo(() => approvalFacts(preview, t), [preview, t]);
   const rows = useMemo(() => (preview ? diffRows(preview, t) : null), [preview, t]);
 
-  const approvable = canApprove(approval.gate, node.reviewRequired);
+  const reviewRequired = reviewRequiredFor(preview, node.reviewRequired, false);
+  const approvable = canApprove(approval.gate, reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
   useEffect(() => {
@@ -283,6 +288,7 @@ function ProposalCard({
         query={previewQuery}
         changed={approval.changed}
         fallback={<Highlights rows={view.highlights} />}
+        reviewRequired={reviewRequired}
       >
         {(data) =>
           rows && rows.length > 0 ? (
@@ -375,7 +381,11 @@ function PlanCard({
     [stepsQuery.data],
   );
 
-  const reviewRequired = stepsQuery.data?.some((step) => step.reviewRequired) ?? true;
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    stepsQuery.data?.some((step) => step.reviewRequired) ?? true,
+    false,
+  );
   const approvable = canApprove(approval.gate, reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
@@ -402,7 +412,11 @@ function PlanCard({
       </h1>
       {node.summary !== "" && <p className="dk-dc2-why">{node.summary}</p>}
       <div className="dk-dc2-full">
-        <PreviewLoadState query={previewQuery} changed={approval.changed}>
+        <PreviewLoadState
+          query={previewQuery}
+          changed={approval.changed}
+          reviewRequired={reviewRequired}
+        >
           {(plan) => (
             <PlanPreview
               plan={plan}

@@ -333,6 +333,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
+				Name:       "agentMoneyCurrency",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.AgentControl)
+					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyCurrency(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "billingAgentEnabled",
 				NonNull:  true,
 				ChildErr: errNoChild4,
@@ -445,7 +457,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decision",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return obj.Decision, nil
@@ -454,7 +466,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "modifications",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return obj.Modifications, nil
@@ -464,7 +476,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasonCode",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return obj.ReasonCode, nil
@@ -474,7 +486,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "note",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return obj.Note, nil
@@ -484,7 +496,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "traceId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return obj.TraceID, nil
@@ -495,7 +507,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "traceUrl",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentDecision)
 					return gqlexec.Resolver[resolverAgentDecision](ec, "AgentDecision").TraceURL(ctx, obj)
@@ -645,7 +657,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").SubjectType(ctx, obj)
@@ -665,7 +677,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "input",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return obj.Input, nil
@@ -685,7 +697,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "promptVersion",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return obj.PromptVersion, nil
@@ -695,7 +707,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "model",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return obj.Model, nil
@@ -715,7 +727,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reply",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return obj.Reply, nil
@@ -727,7 +739,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Actions(ctx, obj)
@@ -738,7 +750,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "comparison",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Comparison(ctx, obj)
@@ -769,7 +781,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "checks",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Checks(ctx, obj)
@@ -780,7 +792,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "judge",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Judge(ctx, obj)
@@ -800,7 +812,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "fingerprint",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return gqlexec.Resolver[resolverAgentEvaluation](ec, "AgentEvaluation").Fingerprint(ctx, obj)
@@ -828,7 +840,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorMessage",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Evaluation)
 					return obj.ErrorMessage, nil
@@ -941,7 +953,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentEvaluationEdge)
 					return obj.Cursor, nil
@@ -953,7 +965,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.EvidenceRef)
 					return obj.Type, nil
@@ -963,7 +975,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.EvidenceRef)
 					return obj.ID, nil
@@ -973,7 +985,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "note",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.EvidenceRef)
 					return obj.Note, nil
@@ -1065,7 +1077,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "attemptSummary",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentException)
 					return obj.AttemptSummary, nil
@@ -1106,7 +1118,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "resolutionNotes",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentException)
 					return obj.ResolutionNotes, nil
@@ -1192,7 +1204,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentExceptionEdge)
 					return obj.Cursor, nil
@@ -1282,7 +1294,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "subjectLabel",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Memory)
 					return obj.SubjectLabel, nil
@@ -1292,7 +1304,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Memory)
 					return obj.ToolName, nil
@@ -1302,7 +1314,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "content",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Memory)
 					return obj.Content, nil
@@ -1607,7 +1619,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentMemoryEdge)
 					return obj.Cursor, nil
@@ -1629,7 +1641,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "patternKey",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.MemoryEvidence)
 					return obj.PatternKey, nil
@@ -1669,7 +1681,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.MemoryEvidence)
 					return obj.Reason, nil
@@ -1679,7 +1691,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quotes",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.MemoryEvidence)
 					return obj.Quotes, nil
@@ -1709,7 +1721,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "signals",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.MemoryEvidence)
 					return obj.Signals, nil
@@ -1793,7 +1805,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "title",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentPlan)
 					return obj.Title, nil
@@ -1803,7 +1815,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentPlan)
 					return obj.Summary, nil
@@ -1852,7 +1864,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failureError",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentPlan)
 					return obj.FailureError, nil
@@ -1983,7 +1995,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentPlanEdge)
 					return obj.Cursor, nil
@@ -2035,7 +2047,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.ToolName, nil
@@ -2045,7 +2057,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolParams",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.ToolParams, nil
@@ -2067,7 +2079,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rationale",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.Rationale, nil
@@ -2108,7 +2120,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "executionError",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.ExecutionError, nil
@@ -2147,7 +2159,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "simulation",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Simulation(ctx, obj)
@@ -2171,7 +2183,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "modifications",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Modifications(ctx, obj)
@@ -2212,7 +2224,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "heldBy",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.HeldBy, nil
@@ -2234,7 +2246,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "traceId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.TraceID, nil
@@ -2245,7 +2257,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "traceUrl",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").TraceURL(ctx, obj)
@@ -2331,7 +2343,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentProposalEdge)
 					return obj.Cursor, nil
@@ -2343,7 +2355,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return obj.Name, nil
@@ -2353,7 +2365,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return obj.Label, nil
@@ -2363,7 +2375,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return obj.Description, nil
@@ -2393,7 +2405,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "options",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return obj.Options, nil
@@ -2441,7 +2453,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "resource",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return gqlexec.Resolver[resolverAgentProposalField](ec, "AgentProposalField").Resource(ctx, obj)
@@ -2475,7 +2487,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Choice)
 					return obj.Label, nil
@@ -2627,7 +2639,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notes",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.Notes, nil
@@ -2647,7 +2659,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "model",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.Model, nil
@@ -2677,7 +2689,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorMessage",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.ErrorMessage, nil
@@ -2775,7 +2787,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "content",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.ReflectionChange)
 					return obj.Content, nil
@@ -2785,7 +2797,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.ReflectionChange)
 					return obj.Reason, nil
@@ -2841,7 +2853,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentReflectionEdge)
 					return obj.Cursor, nil
@@ -2873,7 +2885,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "detail",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.ReflectionSignal)
 					return obj.Detail, nil
@@ -2945,7 +2957,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.Summary, nil
@@ -2985,7 +2997,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "workflowId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.WorkflowID, nil
@@ -2995,7 +3007,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modelIdentifier",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.ModelIdentifier, nil
@@ -3005,7 +3017,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "promptVersion",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.PromptVersion, nil
@@ -3015,7 +3027,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inputContextHash",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.InputContextHash, nil
@@ -3043,7 +3055,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorMessage",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.ErrorMessage, nil
@@ -3082,7 +3094,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "traceId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.TraceID, nil
@@ -3093,7 +3105,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "traceUrl",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").TraceURL(ctx, obj)
@@ -3124,7 +3136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delegateCallId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.DelegateCallID, nil
@@ -3222,7 +3234,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentRunEdge)
 					return obj.Cursor, nil
@@ -3280,7 +3292,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "role",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.Role, nil
@@ -3290,7 +3302,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.Kind, nil
@@ -3300,7 +3312,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "content",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.Content, nil
@@ -3310,7 +3322,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reasoning",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.Reasoning, nil
@@ -3331,7 +3343,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolCallId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.ToolCallID, nil
@@ -3341,7 +3353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.ToolName, nil
@@ -3361,7 +3373,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolVerdict",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.ToolVerdict, nil
@@ -3371,7 +3383,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolSummary",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.ToolSummary, nil
@@ -3391,7 +3403,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delegateCallId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptMessage)
 					return obj.DelegateCallID, nil
@@ -3423,7 +3435,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptToolCall)
 					return obj.ID, nil
@@ -3433,7 +3445,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptToolCall)
 					return obj.Name, nil
@@ -3442,7 +3454,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "arguments",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TranscriptToolCall)
 					return obj.Arguments, nil
@@ -3464,7 +3476,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TaintMark)
 					return obj.ToolName, nil
@@ -3474,7 +3486,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "callId",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TaintMark)
 					return obj.CallID, nil
@@ -3506,7 +3518,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "entityType",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.RecordRef)
 					return obj.EntityType, nil
@@ -3516,7 +3528,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.RecordRef)
 					return obj.ID, nil
@@ -3538,7 +3550,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agentName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentports.ToolPromotion)
 					return obj.AgentName, nil
@@ -3548,7 +3560,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentports.ToolPromotion)
 					return obj.ToolName, nil
@@ -4051,6 +4063,7 @@ type resolverAgentControl interface {
 	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
 	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
 	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error)
 }
 
 type resolverAgentDecision interface {
@@ -4142,9 +4155,9 @@ var (
 	errNoChild3  = errors.New("field of type ID does not have child fields")
 	errNoChild4  = errors.New("field of type Boolean does not have child fields")
 	errNoChild5  = errors.New("field of type Decimal does not have child fields")
-	errNoChild6  = errors.New("field of type AgentDecisionType does not have child fields")
-	errNoChild7  = errors.New("field of type JSON does not have child fields")
-	errNoChild8  = errors.New("field of type String does not have child fields")
+	errNoChild6  = errors.New("field of type String does not have child fields")
+	errNoChild7  = errors.New("field of type AgentDecisionType does not have child fields")
+	errNoChild8  = errors.New("field of type JSON does not have child fields")
 	errNoChild9  = errors.New("field of type AgentEvaluationStatus does not have child fields")
 	errNoChild10 = errors.New("field of type AgentRunTrigger does not have child fields")
 	errNoChild11 = errors.New("field of type AgentExceptionCategory does not have child fields")

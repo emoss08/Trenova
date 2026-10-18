@@ -4,6 +4,7 @@ import {
   MAX_BATCH_PROPOSALS,
   approvalQueue,
   currentEntry,
+  decisionArtifactFor,
   focusKeys,
   holdsFocus,
   isDeferred,
@@ -285,5 +286,40 @@ describe("holdsFocus", () => {
     expect(holdsFocus(planEntry, { proposalIds: ["a"], planId: "" })).toBe(false);
     expect(holdsFocus(batch, { proposalIds: ["b"], planId: "" })).toBe(true);
     expect(holdsFocus(batch, { proposalIds: [], planId: "apl_1" })).toBe(false);
+  });
+});
+
+describe("decisionArtifactFor", () => {
+  const request = (id: string, proposalId: string, planId = "") => ({
+    id,
+    kind: "decision_request" as const,
+    proposalId,
+    planId,
+  });
+
+  it("finds the decision request naming any proposal of a batch", () => {
+    const [batch] = approvalQueue(
+      [proposal({ id: "aprop_1" }), proposal({ id: "aprop_2", arguments: { invoiceId: "inv_2" } })],
+      [],
+      null,
+      1_000,
+    );
+
+    expect(batch?.kind).toBe("batch");
+    expect(
+      decisionArtifactFor(batch!, [request("aart_other", "aprop_9"), request("aart_1", "aprop_2")]),
+    ).toBe("aart_1");
+  });
+
+  it("finds the one for a single proposal and nothing for another kind of artifact", () => {
+    const [single] = approvalQueue([proposal({ id: "aprop_1" })], [], null, 1_000);
+
+    expect(decisionArtifactFor(single!, [request("aart_1", "aprop_1")])).toBe("aart_1");
+    expect(
+      decisionArtifactFor(single!, [
+        { id: "aart_2", kind: "document", proposalId: "aprop_1", planId: "" },
+      ]),
+    ).toBeNull();
+    expect(decisionArtifactFor(single!, [])).toBeNull();
   });
 });

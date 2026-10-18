@@ -70,6 +70,7 @@ describe("labels", () => {
       "money_record_state",
       "money_agent_line",
       "money_limits_unread",
+      "money_currency",
       "money_call_ceiling",
       "money_run_calls",
       "money_run_amount",

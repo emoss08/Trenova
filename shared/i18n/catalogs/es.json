@@ -879,6 +879,7 @@
   "Add the customer's DOT number before vetting them as a broker": "Agregue el número DOT del cliente antes de verificarlo como agente de carga",
   "Add the factor's schedule inbox": "Agregue el buzón de relaciones de la empresa de factoraje",
   "Add, correct or remove rates every organization is taxed at": "Añadir, corregir o eliminar los tipos impositivos que se aplican a todas las organizaciones",
+  "Added By Agent": "Añadido por un agente",
   "Additional Charge ID": "ID del cargo adicional",
   "Additional charge ID duplicates {0}": "El ID del cargo adicional duplica {0}",
   "Additional charge ID must not be provided when creating a shipment": "No debe indicarse el ID del cargo adicional al crear un envío",

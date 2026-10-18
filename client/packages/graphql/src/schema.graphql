@@ -3777,6 +3777,11 @@ type AgentControl {
   """
   agentMoneyCallCeiling: Decimal!
   """
+  The organization's functional currency, which the money limits are set in.
+  A money change in any other currency waits for a person.
+  """
+  agentMoneyCurrency: String!
+  """
   The most money the organization's agents may move on their own in a day, in its timezone.
   """
   agentMoneyDayAmount: Decimal!
@@ -4819,6 +4824,10 @@ type AgentPlanPreview {
   digest: String!
   planId: ID!
   """
+  An approval is refused without the digest: a step waiting on it must be reviewed.
+  """
+  reviewRequired: Boolean!
+  """
   A step's record has changed since the plan was proposed; it can only be rejected.
   """
   stale: Boolean!
@@ -5343,6 +5352,13 @@ type AgentProposalPreview {
   This is the preview recorded when the proposal was decided, not one computed now.
   """
   recorded: Boolean!
+  """
+  An approval of this change, with the modifications this preview was asked
+  for, is refused without the digest: the change moves money, reaches a
+  customer, a driver or someone outside the organization, or was proposed
+  after the run read outside content.
+  """
+  reviewRequired: Boolean!
   """
   The record the proposal was made against has changed or is gone; it can only be rejected.
   """

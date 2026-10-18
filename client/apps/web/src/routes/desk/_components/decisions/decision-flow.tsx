@@ -520,7 +520,7 @@ export function DecisionFlow() {
                         {t("All {0}", current.tool)}
                         {batchUnreviewed.length > 0
                           ? ` · ${t(
-                              "{0, plural, one {# must be opened before these can be approved} other {# must be opened before these can be approved}}",
+                              "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}",
                               batchUnreviewed.length,
                             )}`
                           : unopened > 0 && ` · ${t("{0} not opened yet", unopened)}`}

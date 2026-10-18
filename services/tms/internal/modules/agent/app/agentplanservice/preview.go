@@ -2,7 +2,6 @@ package agentplanservice
 
 import (
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -45,10 +44,7 @@ func (s *Service) settlePreview(
 	if req.Decision != agent.DecisionAccepted {
 		return nil, nil //nolint:nilnil // no preview settles a rejection
 	}
-	gated := slices.ContainsFunc(steps, func(step *agent.AgentProposal) bool {
-		return step != nil && step.Status == agent.ProposalStatusPending &&
-			step.ApprovalNeedsReview()
-	})
+	gated := agent.PlanNeedsReview(steps)
 	if gated && (s.previews == nil || req.PreviewDigest == "") {
 		return nil, agent.ReviewRequiredError()
 	}

@@ -738,6 +738,7 @@ type AgentControlResolver interface {
 	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
 	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
 	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error)
 }
 
 type AgentDecisionResolver interface {
@@ -6429,6 +6430,11 @@ type AgentControl {
   agentMoneyDayCalls: Int!
   "The most money the organization's agents may move on their own in a day, in its timezone."
   agentMoneyDayAmount: Decimal!
+  """
+  The organization's functional currency, which the money limits are set in.
+  A money change in any other currency waits for a person.
+  """
+  agentMoneyCurrency: String!
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -8089,6 +8095,8 @@ type AgentPlanPreview {
   stale: Boolean!
   withheldCount: Int!
   computedAt: Timestamp!
+  "An approval is refused without the digest: a step waiting on it must be reviewed."
+  reviewRequired: Boolean!
 }
 
 "The digest of the preview a person was shown for one proposal of a batch."

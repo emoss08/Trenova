@@ -1,6 +1,6 @@
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
-import type { ApprovalEntry } from "@/components/assistant/approval-queue";
+import { decisionArtifactFor, type ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
 import { askAnswerIds, liveAskRequest } from "@/components/assistant/ask-requests";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
@@ -565,16 +565,11 @@ export function DeskThread({
   const holding = undo.state.phase !== "idle";
 
   const reviewEntry = (entry: ApprovalEntry) => {
-    const artifact = artifacts.find(
-      (candidate) =>
-        candidate.kind === "decision_request" &&
-        ((candidate.proposalId !== "" && entry.members.includes(candidate.proposalId)) ||
-          (entry.kind === "plan" && candidate.planId === entry.plan.id)),
-    );
+    const artifactId = decisionArtifactFor(entry, artifacts);
     if (!artifactHost) {
-      onOpenInDesk?.(artifact?.id ?? null);
-    } else if (artifact) {
-      openArtifact(artifact.id);
+      onOpenInDesk?.(artifactId);
+    } else if (artifactId !== null) {
+      openArtifact(artifactId);
     } else {
       setWorkspaceOpen?.(true);
     }

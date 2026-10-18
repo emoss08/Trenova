@@ -735,6 +735,7 @@ export function createAIState(anchor, scenario) {
       agentMoneyRunAmount: "5000.00",
       agentMoneyDayCalls: 50,
       agentMoneyDayAmount: "25000.00",
+      agentMoneyCurrency: "USD",
       aiTrainingConsent: false,
       aiTrainingConsentChangedAt: null,
       version: 7,

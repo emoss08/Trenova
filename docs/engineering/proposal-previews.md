@@ -199,14 +199,25 @@ digest of the preview its decider was shown (`AgentProposal.ApprovalNeedsReview`
 with no recorded class counts as one, so the rule fails closed). An approver's edits are
 classified again from the tool's policy with the merged parameters
 (`proposalexecutor.CallEgress`), so an edit that makes an internal write reach a customer
-needs the preview too. Without one the approval is refused before anything is recorded with
+needs the preview too; `proposalexecutor.ReviewRequired` is the whole rule, and both the
+decision service and the preview service apply it. A plan needs its digest when any step
+still waiting does (`agent.PlanNeedsReview`). Every proposal the server files is classified,
+the auto-assign planner's included (`dispatchautoassignservice` asks the executor, as the
+recorder asks the tool), so an internal write is not held by a missing class. Without one the approval is refused before anything is recorded with
 the business error "This change must be reviewed before it is approved"
 (`agent.ReviewRequiredError`, detail `preview_required`; the decide span is marked
 `preview_required`). Internal and personal writes from a run that read nothing from outside
 may still be approved without a digest and are recorded unreviewed, as before. The rule
 lives in `settlePreview`, which every path goes through: single and batch GraphQL decisions,
-the person's own decisions from a conversation (undo window included), plans, the REST
-handlers and the commit of an approval when its undo window closes. A plan step that arrives
+the person's own decisions from a conversation (undo window included), plans and the REST
+handlers. A proposal is checked when its approval is recorded; at the close of its undo
+window the decision already recorded, with the version it pinned, stands, and nothing is
+checked again. A plan is different: its steps are decided only when the window closes, so
+the plan is settled again then, against the reason, note and digest the person approved it
+with. `approveDeferred` keeps them on the plan (`agent_plans.approval_*`) as well as handing
+them to the commit workflow, so commit-now without its workflow commits the same approval; a
+plan that reaches its commit without the preview it needs goes back to waiting on the person
+and the caller is refused with the review error rather than told it committed. A plan step that arrives
 without a reviewed plan preview, and a decision made where no preview service is wired, are
 refused the same way when the step is gated, and `agentplanservice` refuses a plan with any
 pending gated step that is approved without its plan digest before it claims the plan.
@@ -249,16 +260,27 @@ conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
 `AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
 person had read. The thread's proposals carry `reviewRequired` and GraphQL's `AgentProposal`
 has the same field, both computed by the server from the rule above, so the client never
-keeps its own list of classes. In the Desk:
+keeps its own list of classes. `AgentProposalPreview.reviewRequired` is the same rule applied
+to the change the preview was asked for, the approver's modifications included, and
+`AgentPlanPreview.reviewRequired` the plan's; the client follows the preview's word once it is
+read and the proposal's until then, counting an edited change as gated until its preview
+says otherwise (`reviewRequiredFor`), so Approve is never offered where the server would
+refuse it. A preview that cannot be read says, for a gated change, that it must be read
+before it can be approved (`PreviewFailedNotice` with `reviewRequired`), rather than that an
+approval would be recorded unreviewed. In the Desk:
 
 - the approval card above the composer shows one change's preview. It keeps Approve off for
   a gated change whose preview cannot be read (`canApprove(gate, reviewRequired)`), and an
   edited draft is approved with the digest of the preview of those edits. A batch with a
-  gated change offers "Review n" in place of Approve and sends the person to the decision;
+  gated change offers "Review n" in place of Approve, which opens each gated change's
+  preview under the card (`ReviewedChange`); once each is on screen and current, Approve
+  returns and carries their digests. "Review" on a card opens the decision request the
+  agent raised for it (`decisionArtifactFor`, matched by the members' keys);
 - the decision artifact (`kinds/decision`) draws the preview of every gated change, or of
   the plan when a step is gated, and keeps Approve off until each is on screen and current;
-  the approval carries every digest (`batchPreviewDigests`). A preview of a record that moved
-  is shown but never counts;
+  the approval carries every digest (`batchPreviewDigests`). What still holds it is said by
+  cause (`ReviewBlocker`): a preview still loading, one that failed to load, and a record that
+  moved since, which is shown but never counts and can only be set aside;
 - the Decisions queue records each preview as its card is read, and "Decide all together"
   keeps Approve off, naming how many must still be opened, until every gated change in the
   batch has been read (`unreviewedRequired`).
@@ -429,7 +451,9 @@ bulk tools only when an administrator adds them in AI control.
 | `AgentDecision.previewDigest`, `previewReviewed` | columns |
 
 REST callers, integrations among them, use the same digests. They read the preview first
-and echo its `digest` when they decide; a gated proposal resolved without one is refused:
+and echo its `digest` when they decide; a gated proposal resolved without one is refused.
+The preview's `reviewRequired` says, for the modifications it was read with, whether the
+digest is needed:
 
 | Route | Needs |
 |---|---|

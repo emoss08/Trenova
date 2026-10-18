@@ -1,8 +1,34 @@
 import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type { AgentControl } from "@/lib/graphql/agent-control";
 import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
+
+/** The most an agent money limit may be, in whole units of the currency. */
+const MAX_MONEY_LIMIT = 1_000_000_000;
+/** The most money changes a run or a day may be allowed. */
+const MAX_CHANGE_LIMIT = 10_000;
+
+function moneyLimit() {
+  return z
+    .number({ error: () => translate("Enter an amount") })
+    .int()
+    .min(0, { error: () => translate("An amount cannot be below 0") })
+    .max(MAX_MONEY_LIMIT * 100, {
+      error: () => translate("An amount can be at most {0}", formatNumber(MAX_MONEY_LIMIT)),
+    });
+}
+
+function changeLimit() {
+  return z
+    .number({ error: () => translate("Enter a number of changes") })
+    .int({ error: () => translate("Enter a whole number of changes") })
+    .min(0, { error: () => translate("A number of changes cannot be below 0") })
+    .max(MAX_CHANGE_LIMIT, {
+      error: () => translate("At most {0} changes", formatNumber(MAX_CHANGE_LIMIT)),
+    });
+}
 
 /** The organization-wide settings as the policy editor holds them. */
 export const policyFormSchema = z.object({
@@ -12,11 +38,11 @@ export const policyFormSchema = z.object({
   personMonthlyMessages: z.number().int().min(0),
   agentMoney: z
     .object({
-      callCeilingCents: z.number().int().min(0).max(100_000_000_000),
-      runCalls: z.number().int().min(0).max(10_000),
-      runAmountCents: z.number().int().min(0).max(100_000_000_000),
-      dayCalls: z.number().int().min(0).max(10_000),
-      dayAmountCents: z.number().int().min(0).max(100_000_000_000),
+      callCeilingCents: moneyLimit(),
+      runCalls: changeLimit(),
+      runAmountCents: moneyLimit(),
+      dayCalls: changeLimit(),
+      dayAmountCents: moneyLimit(),
     })
     .superRefine((money, ctx) => {
       if (money.callCeilingCents > money.runAmountCents) {

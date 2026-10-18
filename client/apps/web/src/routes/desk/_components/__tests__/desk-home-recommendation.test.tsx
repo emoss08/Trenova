@@ -61,6 +61,10 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
       queryKey: ["browser", agentId],
       queryFn: () => ({ available: false }),
     }),
+    commands: (agentId: string) => ({
+      queryKey: ["assistant-commands", agentId],
+      queryFn: () => ({ commands: [] }),
+    }),
     myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
     agentMatch: (text: string, currentAgentId: string | null, contextKinds: readonly string[]) => ({

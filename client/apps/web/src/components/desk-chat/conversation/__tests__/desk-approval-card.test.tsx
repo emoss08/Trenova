@@ -1,28 +1,37 @@
 import { approvalQueue, type ApprovalEntry } from "@/components/assistant/approval-queue";
-import { preview, record } from "@/components/assistant/__tests__/preview-fixtures";
-import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agent-preview";
-import type { AssistantProposal } from "@/types/assistant";
+import { planPreview, preview, record } from "@/components/assistant/__tests__/preview-fixtures";
+import type {
+  PlanPreview,
+  ProposalPreview,
+  ProposalPreviewRequest,
+} from "@/lib/graphql/agent-preview";
+import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskApprovalCard } from "../desk-approval-card";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
+const fetchPlanPreview =
+  vi.fn<(request: { scope: string; id: string }, options?: unknown) => Promise<PlanPreview>>();
 const decideMyProposal = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const decideMyProposals = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+const decideMyPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 
 vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
   fetchProposalPreview: (request: ProposalPreviewRequest, options?: unknown) =>
     fetchProposalPreview(request, options),
+  fetchPlanPreview: (request: { scope: string; id: string }, options?: unknown) =>
+    fetchPlanPreview(request, options),
 }));
 
 vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideMyProposal: (...args: unknown[]) => decideMyProposal(...args),
   decideMyProposals: (...args: unknown[]) => decideMyProposals(...args),
-  decideMyPlan: vi.fn(),
+  decideMyPlan: (...args: unknown[]) => decideMyPlan(...args),
   decideAgentProposal: vi.fn(),
 }));
 
@@ -33,8 +42,10 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   fetchProposalPreview.mockReset();
+  fetchPlanPreview.mockReset();
   decideMyProposal.mockReset();
   decideMyProposals.mockReset();
+  decideMyPlan.mockReset();
 });
 
 /* services.AssistantProposal as the thread's routes serve it; outside any plan. */
@@ -63,15 +74,38 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
   };
 }
 
-function entryOf(proposals: AssistantProposal[]): ApprovalEntry {
-  const [first] = approvalQueue(proposals, [], null, 1_000);
+/* services.AssistantPlan as the thread's routes serve it. */
+function plan(overrides: Partial<AssistantPlan> = {}): AssistantPlan {
+  return {
+    id: "apl_1",
+    runId: "arun_1",
+    title: "Reprice two loads",
+    summary: "",
+    status: "Pending",
+    stepCount: 2,
+    completedSteps: 0,
+    failedStep: null,
+    failureError: "",
+    decidedAt: null,
+    decidedByUserId: "",
+    expiresAt: 0,
+    hold: null,
+    createdAt: 100,
+    agentId: null,
+    agentName: null,
+    ...overrides,
+  };
+}
+
+function entryOf(proposals: AssistantProposal[], plans: AssistantPlan[] = []): ApprovalEntry {
+  const [first] = approvalQueue(proposals, plans, null, 1_000);
   if (!first) {
     throw new Error("nothing waiting");
   }
   return first;
 }
 
-function renderCard(proposals: AssistantProposal[] = [proposal()]) {
+function renderCard(proposals: AssistantProposal[] = [proposal()], plans: AssistantPlan[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const approveRef = { current: null as (() => void) | null };
   const undo = { start: vi.fn(), scheduled: vi.fn(), clear: vi.fn() };
@@ -82,7 +116,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()]) {
       <MemoryRouter>
         <DeskApprovalCard
           threadId="athr_1"
-          entry={entryOf(proposals)}
+          entry={entryOf(proposals, plans)}
           approveRef={approveRef}
           onReview={onReview}
           onDefer={vi.fn()}
@@ -250,19 +284,151 @@ describe("DeskApprovalCard and changes that must be reviewed", () => {
     });
   });
 
-  it("sends a batch with changes that must be reviewed to Review rather than approving it", async () => {
-    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:first" }));
+  it("opens each change of a batch that must be reviewed and approves with their digests", async () => {
+    fetchProposalPreview.mockImplementation(async (request) =>
+      preview({ proposalId: request.id, digest: `sha256:${request.id}` }),
+    );
+    decideMyProposals.mockResolvedValue([
+      { proposalId: "aprop_1", decision: { commitsAt: null }, error: null },
+      { proposalId: "aprop_2", decision: { commitsAt: null }, error: null },
+      { proposalId: "aprop_3", decision: { commitsAt: null }, error: null },
+    ]);
     const { onReview, approveRef } = renderCard([
       proposal({ id: "aprop_1", reviewRequired: true }),
-      proposal({ id: "aprop_2", reviewRequired: true, arguments: { shipmentId: "shp_2" } }),
+      proposal({ id: "aprop_2", reviewRequired: false, arguments: { shipmentId: "shp_2" } }),
+      proposal({ id: "aprop_3", reviewRequired: true, arguments: { shipmentId: "shp_3" } }),
     ]);
 
     const review = await screen.findByRole("button", { name: "Review 2" });
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     expect(approveRef.current).toBeNull();
     fireEvent.click(review);
-    expect(onReview).toHaveBeenCalledTimes(1);
+    expect(onReview).not.toHaveBeenCalled();
+
+    const reviewed = await screen.findByRole("group", {
+      name: "Changes to review before approving",
+    });
+    expect(within(reviewed).getAllByRole("region", { name: /^Preview of / })).toHaveLength(2);
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() => expect(decideMyProposals).toHaveBeenCalledTimes(1));
+    expect(decideMyProposals).toHaveBeenCalledWith(
+      ["aprop_1", "aprop_2", "aprop_3"],
+      expect.objectContaining({
+        decision: "Accepted",
+        previewDigests: [
+          { proposalId: "aprop_1", digest: "sha256:aprop_1" },
+          { proposalId: "aprop_3", digest: "sha256:aprop_3" },
+        ],
+      }),
+    );
+  });
+
+  it("says why a reviewed batch still cannot be approved", async () => {
+    fetchProposalPreview.mockImplementation(async (request) => {
+      if (request.id === "aprop_2") {
+        throw new Error("preview unavailable");
+      }
+      return preview({
+        proposalId: request.id,
+        digest: `sha256:${request.id}`,
+        stale: request.id === "aprop_3",
+      });
+    });
+    renderCard([
+      proposal({ id: "aprop_1", reviewRequired: true }),
+      proposal({ id: "aprop_2", reviewRequired: true, arguments: { shipmentId: "shp_2" } }),
+      proposal({ id: "aprop_3", reviewRequired: true, arguments: { shipmentId: "shp_3" } }),
+    ]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Review 3" }));
+
+    expect(
+      await screen.findByText(
+        "1 change has changed since it was drafted and can only be set aside · 1 preview could not be loaded; try it again above",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review 2" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     expect(decideMyProposals).not.toHaveBeenCalled();
+  });
+
+  it("holds an edited change for its preview even when the change as proposed needs none", async () => {
+    fetchProposalPreview.mockRejectedValue(new Error("preview unavailable"));
+    renderCard([
+      proposal({
+        reviewRequired: false,
+        pendingModifications: { status: "Cancelled" },
+      }),
+    ]);
+
+    await waitFor(() => expect(fetchProposalPreview).toHaveBeenCalled());
+    await act(async () => {});
+    expect(fetchProposalPreview.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ modifications: { status: "Cancelled" } }),
+    );
+    expect(approve()).toBeDisabled();
+  });
+
+  it("approves an edit that its preview says needs no review even when the proposal did", async () => {
+    fetchProposalPreview.mockResolvedValue(
+      preview({ digest: "sha256:edited", reviewRequired: false }),
+    );
+    renderCard([proposal({ reviewRequired: true, pendingModifications: { status: "Delayed" } })]);
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
+    expect(decideMyProposal).toHaveBeenCalledWith(
+      "aprop_1",
+      expect.objectContaining({ decision: "Modified", previewDigest: "sha256:edited" }),
+    );
+  });
+
+  it("keeps a plan with a step that must be reviewed off until its preview is in", async () => {
+    let release: ((value: PlanPreview) => void) | null = null;
+    fetchPlanPreview.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    decideMyPlan.mockResolvedValue({ commitsAt: null });
+    renderCard(
+      [
+        proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: true }),
+        proposal({ id: "aprop_2", planId: "apl_1", planStep: 2, reviewRequired: false }),
+      ],
+      [plan()],
+    );
+
+    expect(approve()).toBeDisabled();
+    await waitFor(() => expect(release).not.toBeNull());
+    await act(async () => release!(planPreview({ digest: "sha256:plan", reviewRequired: true })));
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyPlan).toHaveBeenCalledTimes(1));
+    expect(decideMyPlan).toHaveBeenCalledWith(
+      "apl_1",
+      expect.objectContaining({ previewDigest: "sha256:plan" }),
+    );
+  });
+
+  it("keeps a plan with a step that must be reviewed off when its preview cannot be read", async () => {
+    fetchPlanPreview.mockRejectedValue(new Error("preview unavailable"));
+    renderCard(
+      [
+        proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: true }),
+        proposal({ id: "aprop_2", planId: "apl_1", planStep: 2, reviewRequired: false }),
+      ],
+      [plan()],
+    );
+
+    await waitFor(() => expect(fetchPlanPreview).toHaveBeenCalled());
+    await act(async () => {});
+    expect(approve()).toBeDisabled();
+    expect(decideMyPlan).not.toHaveBeenCalled();
   });
 
   it("approves a batch of internal changes from the card", async () => {

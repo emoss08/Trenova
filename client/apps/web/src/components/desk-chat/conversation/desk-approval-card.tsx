@@ -3,8 +3,15 @@ import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import {
   canApprove,
   gateDigest,
+  reviewRequiredFor,
   unreviewedRequired,
 } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  ReviewBlocker,
+  ReviewedChange,
+  reviewTally,
+  useReviewReports,
+} from "@/components/assistant/proposal-preview/reviewed-change";
 import {
   useApprovalGate,
   usePlanPreview,
@@ -24,7 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, type MutableRefObject } from "react";
+import { useEffect, useState, type MutableRefObject } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskIcon } from "../desk-icons";
 import {
@@ -161,7 +168,12 @@ function ProposalCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = canApprove(approval.gate, proposal.reviewRequired) && !mutation.isPending;
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    proposal.reviewRequired,
+    edits !== null,
+  );
+  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -172,7 +184,7 @@ function ProposalCard({
     <CardRow
       title={view.title}
       facts={facts}
-      unreviewable={approval.gate.state === "unavailable" && proposal.reviewRequired}
+      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
       reversible={view.reversible}
       changed={approval.changed}
       stale={approval.gate.state === "stale"}
@@ -249,7 +261,11 @@ function PlanCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const reviewRequired = steps.some((step) => step.reviewRequired);
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    steps.some((step) => step.reviewRequired),
+    false,
+  );
   const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
@@ -291,14 +307,22 @@ function BatchCard({
   const sample = approvalFacts(previewQuery.data, t);
   const facts: ApprovalFacts = { ...sample, count: proposals.length };
   const reversible = proposals.every((proposal) => presentProposal(proposal).reversible);
-  // Only the first change's preview is on this row. Changes the server takes
-  // only once their preview has been shown are approved from Review, where
-  // each of them is read; the rest may be approved from here, unreviewed.
-  const needsReview = unreviewedRequired(proposals, new Map()).length;
+  // Only the first change's preview is on this row. A change the server takes
+  // only once its preview has been shown is read here first: Review opens
+  // each of their previews under the row, and the batch carries their digests.
+  // The rest may be approved from here, unreviewed.
+  const [reviewing, setReviewing] = useState(false);
+  const { reports, shown, onReport } = useReviewReports();
+  const gated = proposals.filter((proposal) => proposal.reviewRequired);
+  const unreviewed = unreviewedRequired(proposals, shown);
+  const needsReview = unreviewed.length;
+  const tally = reviewTally(
+    unreviewed.map((proposal) => proposal.id),
+    reports,
+  );
 
   const mutation = useMutation({
-    mutationFn: () =>
-      decideBatch(queryClient, proposals, { approving: true, shownDigests: new Map() }),
+    mutationFn: () => decideBatch(queryClient, proposals, { approving: true, shownDigests: shown }),
     onMutate: () =>
       hold(undo, {
         key: entry.key,
@@ -333,17 +357,32 @@ function BatchCard({
   useApproveShortcut(approveRef, approve, approvable);
 
   return (
-    <CardRow
-      title={view.title}
-      facts={facts}
-      reviewFirst={needsReview}
-      reversible={reversible}
-      changed={false}
-      approvable={approvable}
-      onApprove={approve}
-      onReview={() => onReview(entry)}
-      onDefer={onDefer}
-    />
+    <>
+      <CardRow
+        title={view.title}
+        facts={facts}
+        reviewFirst={needsReview}
+        reviewOpen={reviewing}
+        reversible={reversible}
+        changed={false}
+        approvable={approvable}
+        onApprove={approve}
+        onReview={needsReview > 0 ? () => setReviewing(true) : () => onReview(entry)}
+        onDefer={onDefer}
+      />
+      {reviewing && gated.length > 0 && (
+        <div
+          className="flex min-w-0 flex-col gap-3 px-3 pt-1 pb-2"
+          role="group"
+          aria-label={t("Changes to review before approving")}
+        >
+          {gated.map((proposal) => (
+            <ReviewedChange key={proposal.id} proposal={proposal} onReport={onReport} />
+          ))}
+          <ReviewBlocker tally={tally} />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -373,6 +412,7 @@ function CardRow({
   changed,
   unreviewable = false,
   reviewFirst = 0,
+  reviewOpen = false,
   stale = false,
   approvable,
   onApprove,
@@ -392,6 +432,8 @@ function CardRow({
   unreviewable?: boolean;
   /** How many changes of a batch must have their preview read in Review before approving. */
   reviewFirst?: number;
+  /** Their previews are open under the row; Review has nothing more to open. */
+  reviewOpen?: boolean;
   approvable: boolean;
   onApprove: () => void;
   onReview: () => void;
@@ -526,7 +568,13 @@ function CardRow({
           >
             {t("Not now")}
           </Button>
-          <Button size="sm" className={approveButton} onClick={onReview}>
+          <Button
+            size="sm"
+            className={approveButton}
+            onClick={onReview}
+            disabled={reviewOpen}
+            aria-expanded={reviewOpen}
+          >
             {t("Review {0}", reviewFirst)}
           </Button>
         </>

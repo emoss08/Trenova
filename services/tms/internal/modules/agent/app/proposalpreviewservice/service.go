@@ -243,9 +243,10 @@ func (s *Service) ForPlan(
 
 	reader := s.accessFor(req.Viewer)
 	preview := &agent.PlanPreview{
-		PlanID:     plan.ID,
-		Steps:      make([]agent.PlanStepPreview, 0, len(steps)),
-		ComputedAt: s.now(),
+		PlanID:         plan.ID,
+		Steps:          make([]agent.PlanStepPreview, 0, len(steps)),
+		ComputedAt:     s.now(),
+		ReviewRequired: agent.PlanNeedsReview(steps),
 	}
 
 	pending := make([]*draft, 0, len(steps))
