@@ -57,9 +57,9 @@ vi.mock("@/lib/queries/briefing", () => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
-    browser: (agentId: string) => ({
-      queryKey: ["browser", agentId],
-      queryFn: () => ({ available: false }),
+    commands: (agentId: string) => ({
+      queryKey: ["assistant-commands", agentId],
+      queryFn: () => ({ commands: [] }),
     }),
     myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
     providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
