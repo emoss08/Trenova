@@ -230,56 +230,6 @@ func TestOpenAIChatEmbed_LeavesDimensionsToTheExtraBodyWhenItNamesThem(t *testin
 	assert.Equal(t, "embed-model", body["model"], "the extra body cannot redirect the model")
 }
 
-func TestOllamaEmbed_UsesTheNativeEndpointWithNomicPrefixes(t *testing.T) {
-	t.Parallel()
-
-	server, capture := embedServer(t, func(body map[string]any) any {
-		inputs, _ := body["input"].([]any)
-		vectors := make([][]float32, 0, len(inputs))
-		for range inputs {
-			vectors = append(vectors, vectorOf(6, 1))
-		}
-
-		return map[string]any{
-			"model":             "nomic-embed-text:latest",
-			"embeddings":        vectors,
-			"prompt_eval_count": 14,
-		}
-	})
-
-	provider := embeddingProvider(
-		aiprovider.KindOllama, server.URL, 6, aiprovider.EmbeddingInputStyleNomicPrefix,
-	)
-	adapter := NewOllamaAdapter().(Embedder)
-
-	resp, err := adapter.Embed(
-		t.Context(),
-		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "one", "two"),
-	)
-	require.NoError(t, err)
-
-	path, _, body := capture.snapshot()
-	assert.Equal(t, "/api/embed", path)
-	assert.EqualValues(t, 6, body["dimensions"])
-	assert.Equal(
-		t,
-		[]string{"search_document: one", "search_document: two"},
-		inputsOf(t, body),
-	)
-	assert.Len(t, resp.Vectors, 2)
-	assert.Equal(t, 14, resp.InputTokens)
-	assert.Equal(t, "nomic-embed-text:latest", resp.ModelIdentifier)
-
-	_, err = adapter.Embed(
-		t.Context(),
-		embedCallFor(provider, aiusageports.EmbeddingPurposeQuery, "late deliveries"),
-	)
-	require.NoError(t, err)
-
-	_, _, body = capture.snapshot()
-	assert.Equal(t, []string{"search_query: late deliveries"}, inputsOf(t, body))
-}
-
 func TestEmbed_WrongDimensionIsANonRetryableConfigurationError(t *testing.T) {
 	t.Parallel()
 
@@ -309,14 +259,16 @@ func TestEmbed_RejectsAReplyWithTheWrongNumberOfVectors(t *testing.T) {
 	t.Parallel()
 
 	server, _ := embedServer(t, func(map[string]any) any {
-		return map[string]any{"embeddings": [][]float32{vectorOf(4, 1)}}
+		return map[string]any{
+			"data": []map[string]any{{"index": 0, "embedding": vectorOf(4, 1)}},
+		}
 	})
 
 	provider := embeddingProvider(
-		aiprovider.KindOllama, server.URL, 4, aiprovider.EmbeddingInputStyleNone,
+		aiprovider.KindOpenAIChat, server.URL, 4, aiprovider.EmbeddingInputStyleNone,
 	)
 
-	_, err := NewOllamaAdapter().(Embedder).Embed(
+	_, err := NewOpenAIChatAdapter().(Embedder).Embed(
 		t.Context(),
 		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "one", "two"),
 	)
@@ -387,7 +339,6 @@ func TestRegistry_HasNoEmbedderForAnthropic(t *testing.T) {
 	for _, kind := range []aiprovider.Kind{
 		aiprovider.KindOpenAIResponses,
 		aiprovider.KindOpenAIChat,
-		aiprovider.KindOllama,
 	} {
 		embedder, embedErr := registry.Embedder(kind)
 		require.NoError(t, embedErr, kind)

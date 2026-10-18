@@ -180,7 +180,7 @@ func ForModel(schema map[string]any) map[string]any {
 }
 
 // ForPortableModel is ForModel for a server that speaks OpenAI's protocol
-// without being OpenAI, Gemini's compatible endpoint and Ollama among them:
+// without being OpenAI, Gemini's compatible endpoint and vLLM among them:
 // it also leaves out examples, which Gemini's schema has no keyword for, and
 // the local-date-time format, which is this package's own and no server
 // knows. The shape is said in the parameter's description either way, and

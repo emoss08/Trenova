@@ -535,7 +535,7 @@ const SHOTS = [
     scenario: {},
     query: "?tab=providers",
     act: async (page) => {
-      await page.locator(".pl-t", { hasText: "Local Ollama" }).click();
+      await page.locator(".pl-t", { hasText: "Local LM Studio" }).click();
       await page.waitForTimeout(800);
     },
   },
@@ -666,7 +666,7 @@ const SHOTS = [
   {
     name: "provider-create-local",
     scenario: {},
-    query: "?tab=providers&panelType=create&panelEntityId=ollama",
+    query: "?tab=providers&panelType=create&panelEntityId=vllm",
     act: (page) => page.waitForTimeout(1500),
   },
   {

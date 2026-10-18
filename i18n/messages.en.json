@@ -169115,42 +169115,6 @@
       "routes/desk"
     ]
   },
-  "Ollama": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama embeddings (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "On": {
     "sites": 22,
     "scope": [

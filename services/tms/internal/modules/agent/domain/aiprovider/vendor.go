@@ -60,8 +60,6 @@ func (p *Provider) Vendor() string {
 		return "anthropic"
 	case KindOpenAIResponses:
 		return "openai"
-	case KindOllama:
-		return "ollama"
 	case KindOpenAIChat:
 		return ""
 	default:

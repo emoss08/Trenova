@@ -187,8 +187,8 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 
 	minted := 0
 	current := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
-		{ID: "ollama_call_0_get_shipment", SynthesizedID: true, Name: "get_shipment"},
-		{ID: "ollama_call_1_get_customer", SynthesizedID: true, Name: "get_customer"},
+		{ID: "call_0", SynthesizedID: true, Name: "get_shipment"},
+		{ID: "call_1", SynthesizedID: true, Name: "get_customer"},
 		{ID: "toolu_unique", Name: "get_worker"},
 	}}
 	distinctCallIDs(current, map[string]struct{}{}, func() string {
@@ -197,8 +197,8 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	})
 
 	assert.Equal(t, 2, minted)
-	assert.NotEqual(t, "ollama_call_0_get_shipment", current.ToolCalls[0].ID)
-	assert.NotEqual(t, "ollama_call_1_get_customer", current.ToolCalls[1].ID)
+	assert.NotEqual(t, "call_0", current.ToolCalls[0].ID)
+	assert.NotEqual(t, "call_1", current.ToolCalls[1].ID)
 	assert.False(t, current.ToolCalls[0].SynthesizedID, "a minted id is the loop's own")
 	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
 
@@ -222,7 +222,7 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 	synthesized := func() *agentports.ChatCompletionResult {
 		return &agentports.ChatCompletionResult{
 			ToolCalls: []agentports.ToolCall{{
-				ID:            "ollama_call_0_search_worker",
+				ID:            "call_0",
 				SynthesizedID: true,
 				Name:          "search_worker",
 				Arguments:     map[string]any{"query": "Maria"},
@@ -254,7 +254,7 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 	require.Len(t, observed, 2)
 	assert.NotEqual(t, observed[0], observed[1], "each call is keyed on an id of its own")
 	for _, id := range observed {
-		assert.NotContains(t, id, "ollama_call_", "a made-up id never reaches what keys on it")
+		assert.NotEqual(t, "call_0", id, "a made-up id never reaches what keys on it")
 	}
 	pairs := map[string]int{}
 	for _, message := range result.Messages {

@@ -1,7 +1,6 @@
 package modeladapter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -153,22 +152,4 @@ func TestOpenAIResponsesAdapter_StreamReadsCachedInputTokens(t *testing.T) {
 
 	assert.Equal(t, 1500, resp.InputTokens)
 	assert.Equal(t, 1024, resp.CacheReadTokens)
-}
-
-func TestOllamaAdapter_ReportsNoPromptCache(t *testing.T) {
-	t.Parallel()
-
-	body := strings.Join([]string{
-		`{"model":"model-d","message":{"role":"assistant","content":"Done."},"done":true,"done_reason":"stop","prompt_eval_count":30,"eval_count":2}`,
-	}, "\n") + "\n"
-	server, _ := streamServer(t, "application/x-ndjson", body)
-
-	resp, _ := streamWith(t, NewOllamaAdapter(), callFor(
-		aiprovider.KindOllama, server.URL, &Request{Messages: UserMessage("hi")},
-	))
-
-	assert.Equal(t, 30, resp.InputTokens)
-	assert.Zero(t, resp.CacheReadTokens)
-	assert.Zero(t, resp.CacheWriteTokens)
-	assert.False(t, aiprovider.KindOllama.CachesOutsideInput())
 }

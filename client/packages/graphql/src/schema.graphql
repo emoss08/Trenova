@@ -1125,7 +1125,6 @@ type AIProviderKeyInfo {
 
 enum AIProviderKind {
   AnthropicMessages
-  Ollama
   OpenAIChat
   OpenAIResponses
 }
@@ -1134,21 +1133,15 @@ enum AIProviderKind {
 type AIProviderModelOption {
   """Tokens of context, when the endpoint or the model id says."""
   contextWindow: Int
-  """
-  When the provider released the model (for a local server, when it was pulled), when the endpoint says.
-  """
+  """When the provider released the model, when the endpoint says."""
   createdAt: Timestamp
   displayName: String!
   embedding: Boolean!
   id: String!
   inputCostPerMillion: Decimal
-  """A local server has it in memory now."""
-  loaded: Boolean!
   outputCostPerMillion: Decimal
   """Where the prices came from; null when there are none."""
   priceSource: AIModelPriceSource
-  """Bytes on disk, for a model a local server holds."""
-  sizeBytes: Float
 }
 
 """

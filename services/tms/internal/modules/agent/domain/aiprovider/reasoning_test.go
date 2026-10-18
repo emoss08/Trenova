@@ -24,8 +24,8 @@ func TestReasoningEffort(t *testing.T) {
 	assert.False(t, ReasoningEffort("Max").Enabled(), "an unknown value is never sent")
 }
 
-// A model that reasons by default — the GPT-5 family, a thinking Ollama
-// model — keeps reasoning at its own default when nothing is sent, so Off
+// A model that reasons by default — the GPT-5 family, an open-weight
+// thinking model — keeps reasoning at its own default when nothing is sent, so Off
 // cannot turn it off. None says so explicitly; Minimal asks for the least
 // reasoning the model allows.
 func TestReasoningEffort_NoneAndMinimalAreSentExplicitly(t *testing.T) {

@@ -10186,7 +10186,6 @@ extend type Mutation {
   AnthropicMessages
   OpenAIResponses
   OpenAIChat
-  Ollama
 }
 
 enum AIStructuredOutputMode {
@@ -10494,16 +10493,12 @@ type AIProviderModelOption {
   displayName: String!
   "Tokens of context, when the endpoint or the model id says."
   contextWindow: Int
-  "Bytes on disk, for a model a local server holds."
-  sizeBytes: Float
-  "A local server has it in memory now."
-  loaded: Boolean!
   embedding: Boolean!
   inputCostPerMillion: Decimal
   outputCostPerMillion: Decimal
   "Where the prices came from; null when there are none."
   priceSource: AIModelPriceSource
-  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  "When the provider released the model, when the endpoint says."
   createdAt: Timestamp
 }
 

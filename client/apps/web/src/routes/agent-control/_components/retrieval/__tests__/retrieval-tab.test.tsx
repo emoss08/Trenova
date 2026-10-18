@@ -111,7 +111,7 @@ beforeEach(() => {
   api.updateAIRetrievalSettings.mockImplementation(async () => status());
   api.fetchAIProviders.mockResolvedValue([
     { id: "aiprv_2", name: "Backup", enabled: true, priority: 20, tasks: ["Embedding"] },
-    { id: "aiprv_1", name: "Local Ollama", enabled: true, priority: 10, tasks: ["Embedding"] },
+    { id: "aiprv_1", name: "Local LM Studio", enabled: true, priority: 10, tasks: ["Embedding"] },
   ]);
 });
 
@@ -152,7 +152,7 @@ describe("RetrievalTab", () => {
       await screen.findByText(/Everything is searchable by meaning under/),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "4 items that failed" })).toBeInTheDocument();
-    expect(await screen.findByText("Routed to Local Ollama")).toBeInTheDocument();
+    expect(await screen.findByText("Routed to Local LM Studio")).toBeInTheDocument();
   });
 
   it("says nothing handles Embedding and sends the person to Providers", async () => {

@@ -109,7 +109,7 @@ function facts(state) {
   const ai = state.ai;
   const on = ai.agents.filter((agent) => agent.node.enabled);
   const shadow = on.filter((agent) => agent.node.shadowMode);
-  const keyless = ai.providers.find((provider) => !provider.node.hasApiKey && provider.node.kind !== "Ollama" && !provider.node.allowPrivateNetwork);
+  const keyless = ai.providers.find((provider) => !provider.node.hasApiKey && !provider.node.allowPrivateNetwork);
   return {
     providersOn: enabledProviders(ai).length,
     providersTotal: ai.providers.length,

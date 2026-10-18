@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -501,14 +501,14 @@ func TestApplyReorderPutsTheRescuerAheadOfTheFailingProvider(t *testing.T) {
 	t.Parallel()
 
 	tuneUp := open("aitu_order", aituneup.KindReorderProviders)
-	tuneUp.ProviderID = pulid.ID("aip_ollama")
+	tuneUp.ProviderID = pulid.ID("aip_local")
 	tuneUp.OtherProviderID = pulid.ID("aip_vllm")
 	f := newFixture(t, tuneUp)
 	f.providers.providers = []*aiprovider.Provider{
 		{ID: "aip_cloud", Name: "Cloud", Enabled: true},
 		{ID: "aip_vllm", Name: "vLLM", Enabled: true},
 		{ID: "aip_other", Name: "Other", Enabled: false},
-		{ID: "aip_ollama", Name: "Ollama", Enabled: true},
+		{ID: "aip_local", Name: "Local", Enabled: true},
 	}
 
 	view, err := f.svc.Apply(t.Context(), &aituneupports.AITuneUpDecisionRequest{
@@ -516,9 +516,9 @@ func TestApplyReorderPutsTheRescuerAheadOfTheFailingProvider(t *testing.T) {
 	}, actor)
 	require.NoError(t, err)
 	require.Len(t, f.provSvc.reordered, 1)
-	assert.Equal(t, []pulid.ID{"aip_cloud", "aip_ollama", "aip_vllm", "aip_other"}, f.provSvc.reordered[0])
+	assert.Equal(t, []pulid.ID{"aip_cloud", "aip_local", "aip_vllm", "aip_other"}, f.provSvc.reordered[0])
 	require.NotNil(t, view.Provider)
-	assert.Equal(t, "Ollama", view.Provider.Name)
+	assert.Equal(t, "Local", view.Provider.Name)
 	assert.Equal(t, "vLLM", view.OtherProvider.Name)
 }
 
@@ -526,10 +526,10 @@ func TestApplyAssignTaskGivesTheProviderTheTask(t *testing.T) {
 	t.Parallel()
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
-	tuneUp.ProviderID = pulid.ID("aip_ollama")
+	tuneUp.ProviderID = pulid.ID("aip_local")
 	tuneUp.Task = aiprovider.TaskEmbedding
 	f := newFixture(t, tuneUp)
-	f.providers.providers = []*aiprovider.Provider{{ID: "aip_ollama", Name: "Ollama", Enabled: true}}
+	f.providers.providers = []*aiprovider.Provider{{ID: "aip_local", Name: "Local", Enabled: true}}
 
 	_, err := f.svc.Apply(t.Context(), &aituneupports.AITuneUpDecisionRequest{
 		TenantInfo: tenantInfo, ID: tuneUp.ID, Version: 2,
@@ -543,7 +543,7 @@ func TestApplyLeavesTheTuneUpOpenWhenTheChangeFails(t *testing.T) {
 	t.Parallel()
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
-	tuneUp.ProviderID = pulid.ID("aip_ollama")
+	tuneUp.ProviderID = pulid.ID("aip_local")
 	tuneUp.Task = aiprovider.TaskEmbedding
 	f := newFixture(t, tuneUp)
 	f.provSvc.fail = errors.New("refused")

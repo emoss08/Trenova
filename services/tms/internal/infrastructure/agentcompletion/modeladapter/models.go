@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -47,8 +46,6 @@ type ModelInfo struct {
 	ID                   string
 	DisplayName          string
 	ContextWindow        int
-	SizeBytes            int64
-	Loaded               bool
 	Embedding            bool
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
@@ -63,8 +60,6 @@ func ListModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error) {
 		return listOpenAIModels(ctx, call, call.Provider.ResolvedBaseURL()+"/v1/models")
 	case aiprovider.KindOpenAIChat:
 		return listOpenAIModels(ctx, call, call.Provider.ResolvedBaseURL()+"/models")
-	case aiprovider.KindOllama:
-		return listOllamaModels(ctx, call)
 	default:
 		return nil, fmt.Errorf("unsupported provider kind %q", call.Provider.Kind)
 	}
@@ -404,75 +399,6 @@ func scaled(perToken *decimal.Decimal) *decimal.Decimal {
 	return &value
 }
 
-type ollamaTags struct {
-	Models []struct {
-		Name       string `json:"name"`
-		Model      string `json:"model"`
-		Size       int64  `json:"size"`
-		ModifiedAt string `json:"modified_at"`
-		Details    struct {
-			Family   string   `json:"family"`
-			Families []string `json:"families"`
-		} `json:"details"`
-	} `json:"models"`
-}
-
-type ollamaRunning struct {
-	Models []struct {
-		Name          string `json:"name"`
-		Model         string `json:"model"`
-		ContextLength int    `json:"context_length"`
-	} `json:"models"`
-}
-
-func listOllamaModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error) {
-	base := call.Provider.ResolvedBaseURL()
-	headers := bearerHeaders(call.APIKey)
-
-	var tags ollamaTags
-	if err := getModelList(ctx, call.Client, base+"/api/tags", headers, &tags); err != nil {
-		return nil, err
-	}
-
-	loaded := make(map[string]int, 4)
-	var running ollamaRunning
-	if err := getModelList(ctx, call.Client, base+"/api/ps", headers, &running); err == nil {
-		for _, model := range running.Models {
-			loaded[stringutils.FirstNonEmptyTrimmed(model.Model, model.Name)] = model.ContextLength
-		}
-	}
-
-	models := make([]ModelInfo, 0, len(tags.Models))
-	for _, model := range tags.Models {
-		id := stringutils.FirstNonEmptyTrimmed(model.Model, model.Name)
-		if id == "" {
-			continue
-		}
-		contextLength, isLoaded := loaded[id]
-		models = append(models, withKnownWindow(ModelInfo{
-			ID:            id,
-			DisplayName:   model.Name,
-			SizeBytes:     model.Size,
-			CreatedAt:     unixFromRFC3339(model.ModifiedAt),
-			Loaded:        isLoaded,
-			ContextWindow: contextLength,
-			Embedding: IsEmbeddingModelID(id) ||
-				ollamaEmbeddingFamily(model.Details.Family, model.Details.Families),
-		}))
-	}
-
-	return dedupeModels(models), nil
-}
-
-func unixFromRFC3339(value string) int64 {
-	parsed, err := time.Parse(time.RFC3339Nano, strings.TrimSpace(value))
-	if err != nil {
-		return 0
-	}
-
-	return positiveUnix(parsed.Unix())
-}
-
 func unixFromAny(value any) int64 {
 	switch typed := value.(type) {
 	case float64:
@@ -497,16 +423,6 @@ func positiveUnix(value int64) int64 {
 	}
 
 	return value
-}
-
-func ollamaEmbeddingFamily(family string, families []string) bool {
-	for _, name := range append([]string{family}, families...) {
-		if strings.HasSuffix(strings.ToLower(name), "bert") {
-			return true
-		}
-	}
-
-	return false
 }
 
 func withKnownWindow(info ModelInfo) ModelInfo {

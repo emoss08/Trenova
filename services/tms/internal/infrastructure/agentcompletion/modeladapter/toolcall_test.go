@@ -240,46 +240,6 @@ func TestOpenAIChatAdapter_ToleratesUnparseableArguments(t *testing.T) {
 	assert.Empty(t, resp.ToolCalls[0].Arguments)
 }
 
-func TestOllamaAdapter_ToolCallRoundTrip(t *testing.T) {
-	t.Parallel()
-
-	server, captured := captureServer(t, map[string]any{
-		"model": "test-model",
-		"message": map[string]any{
-			"role":    "assistant",
-			"content": "",
-			"tool_calls": []map[string]any{{
-				"function": map[string]any{
-					"name": "lookup_shipment",
-					// Ollama sends arguments as an object, unlike OpenAI's string.
-					"arguments": map[string]any{"number": "S12345"},
-				},
-			}},
-		},
-		"prompt_eval_count": 6,
-		"eval_count":        2,
-	})
-
-	resp, err := NewOllamaAdapter().Complete(t.Context(), callFor(
-		aiprovider.KindOllama,
-		server.URL,
-		&Request{
-			System:   "sys",
-			Messages: UserMessage("Where is S12345?"),
-			Tools:    lookupTool(),
-		},
-	))
-	require.NoError(t, err)
-
-	require.Len(t, resp.ToolCalls, 1)
-	assert.Equal(t, "S12345", resp.ToolCalls[0].Arguments["number"])
-	// The protocol supplies no call id, so one is synthesized for pairing.
-	assert.NotEmpty(t, resp.ToolCalls[0].ID)
-
-	assert.Contains(t, *captured, "tools")
-	assert.NotContains(t, *captured, "format", "a schema must not ride alongside tools")
-}
-
 func TestOpenAIResponsesAdapter_ToolCallRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -393,13 +353,6 @@ func TestAdapters_OmitToolFieldsWhenNoToolsOffered(t *testing.T) {
 				"choices": []map[string]any{
 					{"message": map[string]any{"role": "assistant", "content": "hi"}},
 				},
-			},
-		},
-		{
-			"ollama", aiprovider.KindOllama, NewOllamaAdapter(),
-			map[string]any{
-				"model":   "m",
-				"message": map[string]any{"role": "assistant", "content": "hi"},
 			},
 		},
 	}

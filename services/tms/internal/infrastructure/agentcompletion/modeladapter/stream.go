@@ -220,28 +220,6 @@ func readSSE(r io.Reader, handle func(event, data string) error) error {
 	return flush()
 }
 
-// readNDJSON hands each non-empty line to handle. Ollama streams this way: one
-// JSON object per line, no framing beyond the newline.
-func readNDJSON(r io.Reader, handle func(line []byte) error) error {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64<<10), maxStreamLineBytes)
-
-	for scanner.Scan() {
-		line := bytes.TrimSpace(scanner.Bytes())
-		if len(line) == 0 {
-			continue
-		}
-		if err := handle(line); err != nil {
-			return err
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("read provider stream: %w", err)
-	}
-
-	return nil
-}
-
 // streamError is a failure the provider reported inside an otherwise healthy
 // stream. It is retryable when the provider says the fault is on its side.
 func streamError(errType, message string) error {

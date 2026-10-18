@@ -103,7 +103,7 @@ describe("tuneUpCopy", () => {
       tuneUp({
         kind: "ReorderProviders",
         agent: null,
-        provider: { id: "aip_o", name: "Local Ollama", kind: "Ollama" },
+        provider: { id: "aip_o", name: "Local LM Studio", kind: "OpenAIChat" },
         otherProvider: { id: "aip_v", name: "Workstation vLLM", kind: "OpenAIChat" },
         evidence: {
           ...tuneUp({}).evidence,
@@ -115,10 +115,10 @@ describe("tuneUpCopy", () => {
       t,
       labels,
     );
-    expect(titleText(copy.title)).toBe("Put Local Ollama ahead of Workstation vLLM");
-    expect(strongText(copy.title)).toEqual(["Local Ollama"]);
+    expect(titleText(copy.title)).toBe("Put Local LM Studio ahead of Workstation vLLM");
+    expect(strongText(copy.title)).toEqual(["Local LM Studio"]);
     expect(copy.evidence).toBe(
-      "Workstation vLLM failed 24 times in 30 days; Local Ollama answered 22 of them",
+      "Workstation vLLM failed 24 times in 30 days; Local LM Studio answered 22 of them",
     );
     expect(copy.gain).toBe("Fewer retries on 2 tasks");
 
@@ -126,7 +126,7 @@ describe("tuneUpCopy", () => {
       tuneUp({
         kind: "ReorderProviders",
         agent: null,
-        provider: { id: "aip_o", name: "Local Ollama", kind: "Ollama" },
+        provider: { id: "aip_o", name: "Local LM Studio", kind: "OpenAIChat" },
         otherProvider: { id: "aip_v", name: "Workstation vLLM", kind: "OpenAIChat" },
         evidence: { ...tuneUp({}).evidence, tasks: ["General"] },
       }),
@@ -162,16 +162,16 @@ describe("tuneUpCopy", () => {
         kind: "AssignTask",
         agent: null,
         task: "Embedding",
-        provider: { id: "aip_o", name: "Local Ollama", kind: "Ollama" },
+        provider: { id: "aip_o", name: "Local LM Studio", kind: "OpenAIChat" },
         evidence: { ...tuneUp({}).evidence, model: "nomic-embed-text" },
       }),
       t,
       labels,
     );
-    expect(titleText(copy.title)).toBe("Give Embedding to Local Ollama");
+    expect(titleText(copy.title)).toBe("Give Embedding to Local LM Studio");
     expect(strongText(copy.title)).toEqual(["Embedding"]);
     expect(copy.evidence).toBe(
-      "Nothing handles it, so search matches words only. Local Ollama already serves nomic-embed-text",
+      "Nothing handles it, so search matches words only. Local LM Studio already serves nomic-embed-text",
     );
     expect(copy.gain).toBe("Search by meaning");
 
@@ -180,12 +180,12 @@ describe("tuneUpCopy", () => {
         kind: "AssignTask",
         agent: null,
         task: "DocumentExtraction",
-        provider: { id: "aip_o", name: "Local Ollama", kind: "Ollama" },
+        provider: { id: "aip_o", name: "Local LM Studio", kind: "OpenAIChat" },
       }),
       t,
       labels,
     );
-    expect(other.evidence).toBe("Nothing handles it now. Local Ollama can take it");
+    expect(other.evidence).toBe("Nothing handles it now. Local LM Studio can take it");
     expect(other.gain).toBe("Task DocumentExtraction starts working");
   });
 

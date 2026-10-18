@@ -4,15 +4,9 @@ import { translate } from "@trenova/shared/i18n/runtime";
 /**
  * A provider is identified by the wire protocol it speaks rather than the vendor
  * operating it, which is why one "OpenAI-compatible" entry covers vLLM, SGLang,
- * OpenRouter, Groq and the rest. Ollama is separate because its compatible
- * endpoint ignores JSON schemas while its native one honours them.
+ * OpenRouter, Groq and the rest.
  */
-export const aiProviderKindSchema = z.enum([
-  "AnthropicMessages",
-  "OpenAIResponses",
-  "OpenAIChat",
-  "Ollama",
-]);
+export const aiProviderKindSchema = z.enum(["AnthropicMessages", "OpenAIResponses", "OpenAIChat"]);
 
 export const structuredOutputModeSchema = z.enum(["JSONSchema", "JSONMode", "Prompted"]);
 

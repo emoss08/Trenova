@@ -1,19 +1,13 @@
 package agentevalgate_test
 
 import (
-	"context"
 	"flag"
-	"net/http"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/testutil/ollamaembed"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,40 +21,14 @@ func TestRecordEmbeddingFixture(t *testing.T) {
 		t.Skip("pass -record to re-record " + agentevalgate.EmbeddingFixturePath)
 	}
 
-	baseURL := strings.TrimSpace(os.Getenv(agentevalgate.OllamaURLEnv))
-	if baseURL == "" {
-		baseURL = agentevalgate.DefaultOllamaURL
-	}
-
+	baseURL := ollamaembed.BaseURLFromEnv()
 	dimensions := airetrieval.Dimensions768
-	provider := &aiprovider.Provider{
-		Kind:                aiprovider.KindOllama,
-		BaseURL:             baseURL,
-		Model:               agentevalgate.EmbeddingFixtureModel,
-		EmbeddingDimensions: &dimensions,
-		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNomicPrefix,
-	}
-	embedder, err := modeladapter.NewRegistry().Embedder(aiprovider.KindOllama)
-	require.NoError(t, err)
-	client := &http.Client{Timeout: recordTimeout}
-
-	embed := func(
-		ctx context.Context,
-		purpose aiusageports.EmbeddingPurpose,
-		inputs []string,
-	) ([][]float32, error) {
-		response, embedErr := embedder.Embed(ctx, &modeladapter.EmbedCall{
-			Provider: provider,
-			Client:   client,
-			Purpose:  purpose,
-			Inputs:   inputs,
-		})
-		if embedErr != nil {
-			return nil, embedErr
-		}
-
-		return response.Vectors, nil
-	}
+	embed := ollamaembed.New(ollamaembed.Params{
+		BaseURL:    baseURL,
+		Model:      agentevalgate.EmbeddingFixtureModel,
+		Dimensions: dimensions,
+		Timeout:    recordTimeout,
+	}).Embed
 
 	kit := newKit(t)
 	suites := loadSuites(t, kit)

@@ -1,7 +1,6 @@
 package modeladapter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -462,56 +461,6 @@ func TestOpenAIResponsesAdapter_SendsMinimalWithTheChain(t *testing.T) {
 	require.NotNil(t, reasoning)
 	assert.Equal(t, "minimal", reasoning["effort"])
 	assert.Equal(t, []any{"reasoning.encrypted_content"}, (*captured)["include"])
-}
-
-// A thinking Ollama model thinks unless told not to, so None sends
-// think:false rather than leaving the field out; Off still leaves it out.
-func TestOllamaAdapter_SendsThinkFalseOnlyForNone(t *testing.T) {
-	t.Parallel()
-
-	body := `{"model":"qwen","message":{"role":"assistant","content":"Hi"},"done":true,"done_reason":"stop","prompt_eval_count":1,"eval_count":1}` + "\n"
-
-	server, captured := streamServer(t, "application/x-ndjson", body)
-	_, _, _ = streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
-		aiprovider.KindOllama, server.URL, aiprovider.ReasoningNone,
-		&Request{Messages: UserMessage("hi")},
-	))
-	think, sent := (*captured)["think"]
-	require.True(t, sent)
-	assert.Equal(t, false, think)
-
-	offServer, offCaptured := streamServer(t, "application/x-ndjson", body)
-	_, _, _ = streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
-		aiprovider.KindOllama, offServer.URL, aiprovider.ReasoningOff,
-		&Request{Messages: UserMessage("hi")},
-	))
-	_, offSent := (*offCaptured)["think"]
-	assert.False(t, offSent)
-}
-
-// Ollama reports a thinking model's reasoning in its own field when asked.
-func TestOllamaAdapter_ReadsThinkingAndAsksForItWhenConfigured(t *testing.T) {
-	t.Parallel()
-
-	body := strings.Join([]string{
-		`{"model":"qwen","message":{"role":"assistant","content":"","thinking":"Weighing "},"done":false}`,
-		`{"model":"qwen","message":{"role":"assistant","content":"","thinking":"the options."},"done":false}`,
-		`{"model":"qwen","message":{"role":"assistant","content":"Friday."},"done":true,"done_reason":"stop","prompt_eval_count":1,"eval_count":2}`,
-	}, "\n") + "\n"
-	server, captured := streamServer(t, "application/x-ndjson", body)
-
-	resp, deltas, thoughts := streamWithReasoning(t, NewOllamaAdapter(), reasoningCall(
-		aiprovider.KindOllama,
-		server.URL,
-		aiprovider.ReasoningMedium,
-		&Request{Messages: UserMessage("when?")},
-	))
-
-	assert.Equal(t, []string{"Weighing ", "the options."}, thoughts)
-	assert.Equal(t, []string{"Friday."}, deltas)
-	require.NotNil(t, resp.Reasoning)
-	assert.Equal(t, "Weighing the options.", resp.Reasoning.Text)
-	assert.Equal(t, true, (*captured)["think"])
 }
 
 // A thread can change model between turns. A signature Anthropic issued

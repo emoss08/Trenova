@@ -15,7 +15,6 @@ import { HuggingFaceLogo } from "./huggingface";
 import { LMStudioLogo } from "./lmstudio";
 import { MetaLogo } from "./meta";
 import { MistralLogo } from "./mistral";
-import { OllamaLogo } from "./ollama";
 import { OpenAILogo } from "./openai";
 import { OpenRouterLogo } from "./openrouter";
 import { ParallelLogo } from "./parallel";
@@ -32,7 +31,7 @@ export type BrandMark = ComponentType<{ className?: string }>;
  *
  * Each keeps its vendor's own colours, and is used to name that vendor in a
  * list of endpoints and nothing else. A vendor whose mark is black (Anthropic,
- * OpenAI, Ollama, Groq, LM Studio) draws it in the text colour, so it stays
+ * OpenAI, Groq, LM Studio) draws it in the text colour, so it stays
  * legible in either theme. The coloured marks are taken from LobeHub's icon
  * set (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub). The
  * extension vendors' marks come from Brandfetch; E2B publishes only a raster
@@ -45,7 +44,6 @@ const MARKS_BY_PRESET: Record<string, BrandMark> = {
   bedrock: BedrockLogo,
   deepinfra: DeepInfraLogo,
   voyage: VoyageLogo,
-  ollama: OllamaLogo,
   vllm: VLLMLogo,
   lmstudio: LMStudioLogo,
   groq: GroqLogo,
@@ -67,7 +65,6 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "azure.microsoft.com": AzureLogo,
   "deepinfra.com": DeepInfraLogo,
   "voyageai.com": VoyageLogo,
-  "ollama.com": OllamaLogo,
   "vllm.ai": VLLMLogo,
   "lmstudio.ai": LMStudioLogo,
   "mistral.ai": MistralLogo,
